@@ -1,13 +1,14 @@
 "use client";
 
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 export default function Search({ placeholder }: { placeholder: string }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const { replace } = useRouter();
+	const searchRef = useRef<HTMLInputElement>(null);
 	//const [searchSuggs, setSearchSuggs] = useState([] as Array<{}>);
 	const [searchFieldSuggs, setSearchFieldSuggs] = useState([] as Array<string>);
 	const [searchType, setSearchType] = useState("Samples");
@@ -72,13 +73,23 @@ export default function Search({ placeholder }: { placeholder: string }) {
 					<ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
 						{["Projects", "Samples", "Sequences", "Occurences", "Assays"].map((type) => (
 							<li key={type}>
-								<a onClick={() => setSearchType(type)}>{type}</a>
+								<a
+									onClick={() => {
+										setSearchType(type);
+										if (searchRef.current) {
+											searchRef.current.focus();
+										}
+									}}
+								>
+									{type}
+								</a>
 							</li>
 						))}
 					</ul>
 				</div>
 				<input
 					id="searchInput"
+					ref={searchRef}
 					type="text"
 					className="grow"
 					placeholder={`Search ${searchType}...`}
