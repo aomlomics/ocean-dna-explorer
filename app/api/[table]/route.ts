@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 		const query = parseSearchParams(searchParams);
 
 		//@ts-ignore
-		const result = prisma[table].findMany(query);
+		const result = await prisma[table].findMany(query);
 
 		return Response.json({ message: "Success", result });
 	} catch (err) {
