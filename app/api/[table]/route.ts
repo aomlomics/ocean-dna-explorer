@@ -19,7 +19,6 @@ export async function GET(
 
 	try {
 		const { searchParams } = new URL(request.url);
-		console.log(searchParams);
 
 		const query = {
 			orderBy: {
