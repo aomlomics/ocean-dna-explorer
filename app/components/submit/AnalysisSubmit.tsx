@@ -373,11 +373,11 @@ export default function AnalysisSubmit() {
 	return (
 		<>
 			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
-				<div className="space-y-6">
+				<div className="space-y-6 -mt-8">
 					{analyses.map(
 						(a, i) =>
 							a && (
-								<div key={i} id={`analysis_${i}`} className="card bg-base-300 shadow-xl p-6 relative">
+								<div key={i} id={`analysis_${i}`} className="card bg-base-100 shadow-xl p-6 relative">
 									{analyses[i] && (
 										<div className="space-y-4">
 											<h2 className="text-xl font-semibold text-base-content mb-4">
@@ -400,7 +400,7 @@ export default function AnalysisSubmit() {
 																handleFileChange(e);
 																parseAnalysis(e.currentTarget.files, i);
 															}}
-															className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full [&::file-selector-button]:text-white"
+															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 														/>
 													</label>
 													<div className="flex items-center self-end mb-[10.5px]">
@@ -427,7 +427,7 @@ export default function AnalysisSubmit() {
 																	disabled={!!loading}
 																	accept=".tsv"
 																	onChange={handleFileChange}
-																	className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full [&::file-selector-button]:text-white"
+																	className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 																/>
 															</label>
 															<div className="flex items-center self-end mb-[10.5px]">
@@ -452,7 +452,7 @@ export default function AnalysisSubmit() {
 																	disabled={!!loading}
 																	accept=".tsv"
 																	onChange={handleFileChange}
-																	className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full [&::file-selector-button]:text-white"
+																	className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 																/>
 															</label>
 															<div className="flex items-center self-end mb-[10.5px]">
@@ -554,7 +554,7 @@ export default function AnalysisSubmit() {
 			</div>
 
 			{!!loading && (
-				<div className="text-center mt-4 text-base-content/80">Loading, please do not close the website</div>
+				<div className="text-center mt-1 text-base-content/80">Loading, please do not close the website</div>
 			)}
 		</>
 	);
