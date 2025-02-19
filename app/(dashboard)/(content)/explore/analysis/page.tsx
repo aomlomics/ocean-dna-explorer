@@ -16,7 +16,7 @@ export default async function Analysis() {
 						enum: asv_method
 					},
 					{
-						field: "target_gene",
+						field: { rel: "Assay", f: "target_gene" },
 						label: "Target Gene",
 						type: "select",
 						enum: target_gene
