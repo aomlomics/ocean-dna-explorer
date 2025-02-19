@@ -1,8 +1,6 @@
 "use client";
 
 import { convertDBEnum } from "@/app/helpers/utils";
-// import { Pluralize } from "@/types/types";
-import { Prisma } from "@prisma/client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 
