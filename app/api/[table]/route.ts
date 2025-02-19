@@ -1,4 +1,3 @@
-import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@prisma/client";
 
 export const dynamicParams = false;
