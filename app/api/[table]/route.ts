@@ -1,14 +1,5 @@
 import { Prisma } from "@prisma/client";
-
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
-	const tables = Object.keys(Prisma.ModelName);
-
-	return tables.map((t) => ({
-		table: t.toLowerCase()
-	}));
-}
+import { prisma } from "@/app/helpers/prisma";
 
 export async function GET(
 	request: Request,
@@ -16,33 +7,41 @@ export async function GET(
 ) {
 	const table = (await params).table;
 
-	try {
-		const { searchParams } = new URL(request.url);
+	if (
+		Object.keys(Prisma.ModelName)
+			.map((s) => s.toLowerCase())
+			.includes(table)
+	) {
+		try {
+			const { searchParams } = new URL(request.url);
 
-		const query = {
-			orderBy: {
-				id: "asc"
-			}
-		} as {
-			orderBy: { id: Prisma.SortOrder };
-			where?: Record<string, any>;
-		};
+			const query = {
+				orderBy: {
+					id: "asc"
+				}
+			} as {
+				orderBy: { id: Prisma.SortOrder };
+				where?: Record<string, any>;
+			};
 
-		searchParams.forEach((value, key) => {
-			if (query.where) {
-				query.where[key] = { contains: value };
-			} else {
-				query.where = { [key]: { contains: value } };
-			}
-		});
+			searchParams.forEach((value, key) => {
+				if (query.where) {
+					query.where[key] = { contains: value };
+				} else {
+					query.where = { [key]: { contains: value } };
+				}
+			});
 
-		//@ts-ignore
-		const result = await prisma[table].findMany(query);
+			//@ts-ignore
+			const result = await prisma[table].findMany(query);
 
-		return Response.json(result);
-	} catch (err) {
-		const error = err as Error;
+			return Response.json(result);
+		} catch (err) {
+			const error = err as Error;
 
-		return Response.json({ error: error.message }, { status: 400 });
+			return Response.json({ error: error.message }, { status: 400 });
+		}
+	} else {
+		return Response.json({ error: "Invalid model name", status: 400 });
 	}
 }
