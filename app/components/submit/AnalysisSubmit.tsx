@@ -10,6 +10,7 @@ import analysisDeleteAction from "../../helpers/actions/analysis/delete/analysis
 import { DeleteAction, SubmitAction } from "@/types/types";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
+import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -53,6 +54,11 @@ export default function AnalysisSubmit() {
 	const [submitted, setSubmitted] = useState(false);
 	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
 	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
+
+	// Modal state for submission feedback
+	const [showModal, setShowModal] = useState(false);
+	const [modalMessage, setModalMessage] = useState("");
+	const [isError, setIsError] = useState(false);
 
 	//scroll newest analysis box into view
 	useEffect(() => {
@@ -235,12 +241,6 @@ export default function AnalysisSubmit() {
 			if (analysis_run_name && analysis_run_name !== "\u200b") {
 				//analysis file
 				setLoading(analysis_run_name);
-				//{
-				//	analysis: a,
-				//	file: allFormData.get(a.analysis_run_name) as File,
-				//	submitAction: analysisSubmitAction,
-				//	skipBlob = true
-				//}
 				const { error: analysisError, result: analysisResult } = await analysisFileSubmit({
 					analysis_run_name,
 					file: allFormData.get(analysis_run_name) as File,
@@ -250,6 +250,9 @@ export default function AnalysisSubmit() {
 
 				if (analysisError) {
 					hasError = true;
+					setIsError(true);
+					setModalMessage("An error occurred during submission.");
+					setShowModal(true);
 					setErrorObj({
 						global: "An error occurred during submission.",
 						status: "❌ Submission Failed"
@@ -273,6 +276,9 @@ export default function AnalysisSubmit() {
 					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name);
 
 					hasError = true;
+					setIsError(true);
+					setModalMessage("An error occurred during submission.");
+					setShowModal(true);
 					setErrorObj({
 						global: "An error occurred during submission.",
 						status: "❌ Submission Failed"
@@ -300,6 +306,9 @@ export default function AnalysisSubmit() {
 					// });
 
 					hasError = true;
+					setIsError(true);
+					setModalMessage("An error occurred during submission.");
+					setShowModal(true);
 					setErrorObj({
 						global: "An error occurred during submission.",
 						status: "❌ Submission Failed"
@@ -310,10 +319,21 @@ export default function AnalysisSubmit() {
 			}
 		}
 
-		if (!hasError) {
+		if (hasError) {
+			setIsError(true);
+			setModalMessage("An error occurred during submission.");
+			setShowModal(true);
+			setErrorObj({
+				global: "An error occurred during submission.",
+				status: "❌ Submission Failed"
+			});
+			setSubmitted(false);
+		} else {
 			const successMessage =
 				"Analysis successfully submitted! You will be redirected to the project page in 5 seconds...";
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			setIsError(false);
+			setModalMessage(successMessage);
+			setShowModal(true);
 			setResponseObj({
 				global: successMessage,
 				status: "✅ Analysis Submission Successful"
@@ -503,6 +523,8 @@ export default function AnalysisSubmit() {
 					</div>
 				</div>
 			</form>
+
+			<SubmissionStatusModal isOpen={showModal} isError={isError} message={modalMessage} />
 
 			{/* Status Messages */}
 			<div className="flex-grow mt-8">

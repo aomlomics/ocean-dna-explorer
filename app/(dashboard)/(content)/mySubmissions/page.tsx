@@ -58,7 +58,7 @@ export default async function MySubmissions() {
 				{/* Projects Section */}
 				<div className="card bg-base-200 shadow-xl min-h-[260px] h-fit hover:shadow-2xl transition-shadow overflow-hidden">
 					<div className="card-body">
-						<div className="w-full h-full flex flex-col">
+						<div className="w-full h-full flex flex-col relative">
 							<div>
 								<h2 className="text-2xl text-primary mb-4">Projects:</h2>
 								{projects.length === 0 ? (
@@ -108,9 +108,9 @@ export default async function MySubmissions() {
 				</div>
 
 				{/* Analyses Section */}
-				<div className="card bg-base-200 shadow-xl min-h-[260px] h-fit hover:shadow-2xl transition-shadow">
+				<div className="card bg-base-200 shadow-xl min-h-[260px] h-fit hover:shadow-2xl transition-shadow overflow-hidden">
 					<div className="card-body">
-						<div className="w-full h-full flex flex-col">
+						<div className="w-full h-full flex flex-col relative">
 							<div>
 								<h2 className="text-2xl text-primary mb-4">Analyses:</h2>
 								{analyses.length === 0 ? (
@@ -146,7 +146,7 @@ export default async function MySubmissions() {
 							</div>
 						</div>
 						{analyses.length === 0 && (
-							<div className="absolute bottom-6 right-6 w-1/2 h-48 translate-x-1/4 translate-y-1/4">
+							<div className="absolute bottom-6 right-6 w-1/2 h-40 translate-x-1/4 translate-y-1/4">
 								<Image
 									src="/images/analysis_outline_image.svg"
 									alt="Analysis Upload Illustration"

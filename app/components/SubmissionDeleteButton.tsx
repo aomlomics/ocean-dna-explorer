@@ -75,7 +75,7 @@ export default function SubmissionDeleteButton({
 				<button
 					onClick={handleDelete}
 					disabled={isDeleting || isDeleted}
-					className="btn btn-sm bg-primary text-error-content hover:bg-error"
+					className="btn btn-sm bg-primary text-neutral-content hover:bg-error"
 				>
 					{isDeleting ? "Deleting..." : "Delete"}
 				</button>
