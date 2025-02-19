@@ -32,7 +32,6 @@ export default function Table({
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			table,
 			take: take.toString(),
 			page: (page + dir).toString()
 		});
@@ -44,7 +43,7 @@ export default function Table({
 			}
 		}
 
-		preload(`/api/pagination?${query.toString()}`, fetcher);
+		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
 	}
 
 	//filters in the column header
@@ -77,7 +76,6 @@ export default function Table({
 
 	//api call
 	let query = new URLSearchParams({
-		table,
 		take: take.toString(),
 		page: page.toString()
 	});
@@ -88,7 +86,7 @@ export default function Table({
 			query.set("where", JSON.stringify(where));
 		}
 	}
-	const { data, error, isLoading } = useSWR(`/api/pagination?${query.toString()}`, fetcher);
+	const { data, error, isLoading } = useSWR(`/api/pagination/${table}?${query.toString()}`, fetcher);
 	if (isLoading) return <LoadingTable />;
 	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 

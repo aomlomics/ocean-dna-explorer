@@ -1,4 +1,5 @@
-import { parseSearchParams } from "@/app/helpers/utils";
+import { prisma } from "@/app/helpers/prisma";
+import { parsePaginationSearchParams } from "@/app/helpers/utils";
 import { Prisma } from "@prisma/client";
 
 export const dynamicParams = false;
@@ -17,12 +18,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const query = parseSearchParams(searchParams);
+		const query = parsePaginationSearchParams(searchParams);
 
-		//@ts-ignore
-		const result = prisma[table].findMany(query);
+		const [result, count] = await prisma.$transaction([
+			//@ts-ignore
+			prisma[table].findMany(query),
+			//@ts-ignore
+			prisma[table].count({ where: query.where })
+		]);
 
-		return Response.json({ message: "Success", result });
+		return Response.json({ message: "Success", result, count });
 	} catch (err) {
 		const error = err as Error;
 
