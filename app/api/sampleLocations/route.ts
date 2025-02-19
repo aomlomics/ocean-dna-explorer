@@ -62,6 +62,6 @@ export async function GET(request: Request) {
 	} catch (err) {
 		const error = err as Error;
 
-		return Response.json({ error: error.message }, { status: 400 });
+		return Response.json({ message: "Error", error: error.message }, { status: 400 });
 	}
 }

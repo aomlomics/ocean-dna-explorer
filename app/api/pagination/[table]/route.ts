@@ -82,9 +82,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 		} catch (err) {
 			const error = err as Error;
 
-			return Response.json({ error: error.message }, { status: 400 });
+			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ error: "Invalid model name", status: 400 });
+		return Response.json({ message: "Error", error: "Invalid model name" }, { status: 400 });
 	}
 }

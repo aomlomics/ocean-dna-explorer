@@ -35,13 +35,13 @@ export async function GET(
 			//@ts-ignore
 			const result = await prisma[table].findMany(query);
 
-			return Response.json(result);
+			return Response.json({ message: "Success", result });
 		} catch (err) {
 			const error = err as Error;
 
-			return Response.json({ error: error.message }, { status: 400 });
+			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ error: "Invalid model name", status: 400 });
+		return Response.json({ message: "Error", error: "Invalid model name" }, { status: 400 });
 	}
 }
