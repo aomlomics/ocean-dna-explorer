@@ -3,7 +3,7 @@ import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ table: string }> }) {
-	const table = (await params).table;
+	const { table } = await params;
 
 	if (
 		Object.keys(Prisma.ModelName)
