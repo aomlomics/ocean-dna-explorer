@@ -196,7 +196,7 @@ export function convertDBEnum(dbEnum: Record<string, string>) {
 	return newEnum;
 }
 
-function parseNestedJson(json: string) {
+export function parseNestedJson(json: string) {
 	let parsed;
 
 	try {
@@ -212,84 +212,4 @@ function parseNestedJson(json: string) {
 	}
 
 	return parsed;
-}
-
-export function parsePaginationSearchParams(searchParams: URLSearchParams) {
-	const query = {
-		orderBy: {
-			id: "asc"
-		}
-	} as {
-		orderBy: { id: Prisma.SortOrder };
-		take: number;
-		skip?: number;
-		cursor?: { id: number };
-		include?: { _count: { select: Record<string, boolean> } };
-		where?: Record<string, any>;
-	};
-
-	const orderBy = searchParams.get("orderBy");
-	if (orderBy) {
-		query.orderBy = JSON.parse(orderBy);
-	}
-
-	const take = searchParams.get("take");
-	if (!take) {
-		throw new Error("take is required");
-	}
-	query.take = parseInt(take);
-
-	const page = searchParams.get("page");
-	//const cursorId = searchParams.get("cursorId");
-	if (page) {
-		//offset pagination
-		query.skip = (parseInt(page) - 1) * query.take;
-	}
-	//} else if (cursorId) {
-	//	const dir = searchParams.get("dir");
-	//	//cursor pagination
-	//	findMany.skip = 1;
-	//	findMany.cursor = {
-	//		id: parseInt(cursorId)
-	//	};
-	//	if (dir) {
-	//		findMany.take *= parseInt(dir);
-	//	}
-	//}
-
-	const whereStr = searchParams.get("where");
-	if (whereStr) {
-		query.where = parseNestedJson(whereStr);
-	}
-
-	const relCounts = searchParams.get("relCounts");
-	if (relCounts) {
-		query.include = {
-			_count: {
-				select: relCounts
-					.split(",")
-					.reduce((acc: Record<string, boolean>, rel: string) => ({ ...acc, [rel]: true }), {})
-			}
-		};
-	}
-
-	return query;
-}
-
-export function parseSearchParams(searchParams: URLSearchParams) {
-	const query = {
-		orderBy: {
-			id: "asc"
-		}
-	} as {
-		orderBy: { id: Prisma.SortOrder };
-		where?: Record<string, any>;
-	};
-
-	const whereStr = searchParams.get("where");
-	if (whereStr) {
-		query.where = parseNestedJson(whereStr);
-	}
-
-	return query;
 }
