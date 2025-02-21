@@ -10,7 +10,7 @@ import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 
 export default function TaxaGrid({
-	cols = 5,
+	cols = 4,
 	where,
 	orderBy
 }: {
