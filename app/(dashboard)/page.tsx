@@ -83,10 +83,10 @@ export default async function Home() {
 
 							<div className="flex flex-col items-start gap-4">
 								<Link
-									href="/data"
+									href="/explore"
 									className="btn btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white hover:bg-primary transition-all duration-300"
 								>
-									Start Searching
+									Explore Data
 								</Link>
 							</div>
 						</div>
@@ -99,7 +99,7 @@ export default async function Home() {
 					href="#dataSummary"
 					className="relative inline-block after:absolute after:content-[''] after:inset-[-40px] after:cursor-pointer"
 				>
-					<p className="text-primary text-xl font-medium mb-2">Explore Our Data</p>
+					<p className="text-primary text-xl font-medium mb-2">Data Summary</p>
 					<div className="animate-bounce">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"

@@ -1,4 +1,3 @@
-import DataDisplay from "@/app/components/DataDisplay";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import { ReactNode } from "react";
@@ -42,7 +41,7 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 			}
 		}
 
-		const relevantSamples = await tx.sample.count({
+		const relevantSamplesCount = await tx.sample.count({
 			where: {
 				Occurrences: {
 					some: {
@@ -52,7 +51,7 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 			}
 		});
 		const samplesCount = await tx.sample.count();
-		const prevalence = (relevantSamples / samplesCount) * 100;
+		const prevalence = (relevantSamplesCount / samplesCount) * 100;
 
 		return { feature, taxaCounts, prevalence };
 	});
