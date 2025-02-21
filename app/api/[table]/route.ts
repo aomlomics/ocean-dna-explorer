@@ -151,6 +151,7 @@ export async function GET(
 				);
 			}
 
+			//TODO: replace database error message with generic error message
 			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
