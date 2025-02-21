@@ -99,7 +99,7 @@ export default async function Home() {
 					href="#dataSummary"
 					className="relative inline-block after:absolute after:content-[''] after:inset-[-40px] after:cursor-pointer"
 				>
-					<p className="text-primary text-xl font-medium mb-2">Explore Our Data</p>
+					<p className="text-primary text-xl font-medium mb-2">Data Summary</p>
 					<div className="animate-bounce">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
