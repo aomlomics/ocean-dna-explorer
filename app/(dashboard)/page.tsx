@@ -83,10 +83,10 @@ export default async function Home() {
 
 							<div className="flex flex-col items-start gap-4">
 								<Link
-									href="/data"
+									href="/explore"
 									className="btn btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white hover:bg-primary transition-all duration-300"
 								>
-									Start Searching
+									Explore Data
 								</Link>
 							</div>
 						</div>
