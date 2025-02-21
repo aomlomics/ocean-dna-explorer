@@ -13,35 +13,113 @@ export async function GET(
 			.includes(table)
 	) {
 		try {
-			const { searchParams } = new URL(request.url);
-
 			const query = {
 				orderBy: {
 					id: "asc"
 				}
 			} as {
-				orderBy: { id: Prisma.SortOrder };
+				orderBy: { [key: string]: Prisma.SortOrder };
+				include?: Record<string, any>;
 				where?: Record<string, any>;
+				take?: number;
 			};
 
-			searchParams.forEach((value, key) => {
-				if (query.where) {
-					query.where[key] = { contains: value };
-				} else {
-					query.where = { [key]: { contains: value } };
+			const { searchParams } = new URL(request.url);
+
+			//relations
+			const include = searchParams.get("include");
+			if (include) {
+				searchParams.delete("include");
+				query.include = {};
+				let includeVal = { select: { id: true } } as any;
+
+				//include all fields in relations
+				const allFields = searchParams.get("includeAllFields");
+				if (allFields) {
+					searchParams.delete("includeAllFields");
+					if (allFields.toLowerCase() === "true") {
+						includeVal = true;
+					} else if (allFields.toLowerCase() !== "false") {
+						return Response.json(
+							{
+								message: "Error",
+								error: `Invalid value for includeAllFields: ${allFields}. Value must be "true" or "false".`
+							},
+							{ status: 400 }
+						);
+					}
 				}
-			});
+
+				include.split(",").forEach((incl) => (query.include![incl[0].toUpperCase() + incl.slice(1)] = includeVal));
+			}
+
+			const ids = searchParams.get("ids");
+			if (ids) {
+				//list of ids
+				searchParams.delete("ids");
+
+				const parsedIds = [] as number[];
+				for (const id of ids.split(",")) {
+					if (id) {
+						const parsed = parseInt(id);
+						if (Number.isNaN(parsed)) {
+							return Response.json({ message: "Error", error: `Invalid ID: ${id}.` }, { status: 400 });
+						}
+						parsedIds.push(parsed);
+					}
+				}
+
+				query.where = {
+					id: {
+						in: parsedIds
+					}
+				};
+			} else {
+				//limit
+				const take = searchParams.get("limit");
+				if (take) {
+					searchParams.delete("limit");
+					query.take = parseInt(take);
+					if (Number.isNaN(query.take)) {
+						return Response.json({ message: "Error", error: `Invalid limit: ${take}.` }, { status: 400 });
+					}
+				}
+
+				//filtering
+				searchParams.forEach((value, key) => {
+					if (query.where) {
+						query.where[key] = { contains: value };
+					} else {
+						query.where = { [key]: { contains: value } };
+					}
+				});
+			}
 
 			//@ts-ignore
 			const result = await prisma[table].findMany(query);
 
-			return Response.json({ message: "Success", result });
+			if (result) {
+				return Response.json({ message: "Success", result });
+			} else {
+				return Response.json(
+					{ message: "Error", error: `No ${table} matching the search parameters could be found.` },
+					{ status: 400 }
+				);
+			}
 		} catch (err) {
 			const error = err as Error;
+
+			//bad select/include
+			const splt = error.message.split("Unknown field ");
+			if (splt.length > 1) {
+				const unknownField = splt[splt.length - 1].split(" ")[0];
+
+				return Response.json({ message: "Error", error: `Invalid field: ${unknownField}.` }, { status: 400 });
+			}
 
 			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ message: "Error", error: "Invalid model name" }, { status: 400 });
+		return Response.json({ message: "Error", error: `Invalid table name: ${table}.` }, { status: 400 });
 	}
 }
