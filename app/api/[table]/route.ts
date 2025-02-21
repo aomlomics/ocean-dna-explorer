@@ -19,6 +19,7 @@ export async function GET(
 				}
 			} as {
 				orderBy: { [key: string]: Prisma.SortOrder };
+				select?: Record<string, any>;
 				include?: Record<string, any>;
 				where?: Record<string, any>;
 				take?: number;
@@ -26,31 +27,44 @@ export async function GET(
 
 			const { searchParams } = new URL(request.url);
 
+			//selecting fields
+			const fields = searchParams.get("fields");
+			if (fields) {
+				searchParams.delete("fields");
+				query.select = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
+			}
+
 			//relations
-			const include = searchParams.get("include");
-			if (include) {
-				searchParams.delete("include");
-				query.include = {};
-				let includeVal = { select: { id: true } } as any;
+			const relations = searchParams.get("relations");
+			if (relations) {
+				searchParams.delete("relations");
 
 				//include all fields in relations
-				const allFields = searchParams.get("includeAllFields");
+				let includeVal = { select: { id: true } } as any;
+				const allFields = searchParams.get("relationsAllFields");
 				if (allFields) {
-					searchParams.delete("includeAllFields");
+					searchParams.delete("relationsAllFields");
 					if (allFields.toLowerCase() === "true") {
 						includeVal = true;
 					} else if (allFields.toLowerCase() !== "false") {
 						return Response.json(
 							{
 								message: "Error",
-								error: `Invalid value for includeAllFields: ${allFields}. Value must be "true" or "false".`
+								error: `Invalid value for relationsAllFields: \`${allFields}\`. Value must be \`true\` or \`false\`.`
 							},
 							{ status: 400 }
 						);
 					}
 				}
 
-				include.split(",").forEach((incl) => (query.include![incl[0].toUpperCase() + incl.slice(1)] = includeVal));
+				const relsObj = relations
+					.split(",")
+					.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
+				if (query.select) {
+					query.select = { ...query.select, ...relsObj };
+				} else {
+					query.include = relsObj;
+				}
 			}
 
 			const ids = searchParams.get("ids");
@@ -63,7 +77,7 @@ export async function GET(
 					if (id) {
 						const parsed = parseInt(id);
 						if (Number.isNaN(parsed)) {
-							return Response.json({ message: "Error", error: `Invalid ID: ${id}.` }, { status: 400 });
+							return Response.json({ message: "Error", error: `Invalid ID: \`${id}\`.` }, { status: 400 });
 						}
 						parsedIds.push(parsed);
 					}
@@ -81,7 +95,7 @@ export async function GET(
 					searchParams.delete("limit");
 					query.take = parseInt(take);
 					if (Number.isNaN(query.take)) {
-						return Response.json({ message: "Error", error: `Invalid limit: ${take}.` }, { status: 400 });
+						return Response.json({ message: "Error", error: `Invalid limit: \`${take}\`.` }, { status: 400 });
 					}
 				}
 
@@ -120,6 +134,6 @@ export async function GET(
 			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ message: "Error", error: `Invalid table name: ${table}.` }, { status: 400 });
+		return Response.json({ message: "Error", error: `Invalid table name: \`${table}\`.` }, { status: 400 });
 	}
 }

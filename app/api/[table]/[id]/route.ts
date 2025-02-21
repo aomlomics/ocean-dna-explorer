@@ -24,36 +24,50 @@ export async function GET(
 				}
 			} as {
 				where: { id: number };
+				select?: Record<string, any>;
 				include?: Record<string, any>;
 			};
 
 			const { searchParams } = new URL(request.url);
 
+			//selecting fields
+			const fields = searchParams.get("fields");
+			if (fields) {
+				searchParams.delete("fields");
+				query.select = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
+			}
+
 			//relations
-			const include = searchParams.get("include");
-			if (include) {
-				searchParams.delete("include");
-				query.include = {};
-				let includeVal = { select: { id: true } } as any;
+			const relations = searchParams.get("relations");
+			if (relations) {
+				searchParams.delete("relations");
 
 				//include all fields in relations
-				const allFields = searchParams.get("includeAllFields");
+				let includeVal = { select: { id: true } } as any;
+				const allFields = searchParams.get("relationsAllFields");
 				if (allFields) {
-					searchParams.delete("includeAllFields");
+					searchParams.delete("relationsAllFields");
 					if (allFields.toLowerCase() === "true") {
 						includeVal = true;
 					} else if (allFields.toLowerCase() !== "false") {
 						return Response.json(
 							{
 								message: "Error",
-								error: `Invalid value for includeAllFields: ${allFields}. Value must be "true" or "false".`
+								error: `Invalid value for relationsAllFields: \`${allFields}\`. Value must be \`true\` or \`false\`.`
 							},
 							{ status: 400 }
 						);
 					}
 				}
 
-				include.split(",").forEach((incl) => (query.include![incl[0].toUpperCase() + incl.slice(1)] = includeVal));
+				const relsObj = relations
+					.split(",")
+					.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
+				if (query.select) {
+					query.select = { ...query.select, ...relsObj };
+				} else {
+					query.include = relsObj;
+				}
 			}
 
 			//@ts-ignore
@@ -81,6 +95,6 @@ export async function GET(
 			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ message: "Error", error: `Invalid table name: ${table}.` }, { status: 400 });
+		return Response.json({ message: "Error", error: `Invalid table name: \`${table}\`.` }, { status: 400 });
 	}
 }
