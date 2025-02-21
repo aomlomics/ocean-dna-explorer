@@ -19,7 +19,7 @@ export default function DeleteConfirmModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-			<div className="bg-base-100 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+			<div className="bg-base-100 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 text-center">
 				<h3 className="text-lg font-bold text-primary mb-2">Confirm Deletion</h3>
 				<p className="mb-2 font-light">
 					Are you sure you want to delete project <span className="font-light">{projectId}</span>?

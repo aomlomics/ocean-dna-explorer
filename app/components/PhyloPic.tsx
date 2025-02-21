@@ -1,5 +1,6 @@
 import { Taxonomy } from "@prisma/client";
 import Image from "next/image";
+import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
 export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const errorImg = <>?</>;
@@ -56,7 +57,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 				className="tooltip tooltip-bottom tooltip-primary w-full h-full"
 				data-tip={`${imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}: ${imageDetails.title}`}
 			>
-				<Image src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
+				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority={true} fill className="object-contain" />
 			</div>
 		</div>
 	);
