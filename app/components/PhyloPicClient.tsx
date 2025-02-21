@@ -104,17 +104,12 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 					className="tooltip tooltip-bottom tooltip-primary w-full h-full"
 					data-tip={`${imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}: ${imageDetails.title}`}
 				>
-					<ThemeAwarePhyloPic 
-						src={imageUrl} 
-						alt="Image of taxonomy" 
-						fill 
-						className="object-contain" 
-					/>
+					<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
 				</div>
 			) : loading ? (
 				<span className="loading loading-spinner loading-lg h-full"></span>
 			) : (
-				<div className="text-center text-5xl">?</div>
+				<div className="text-center text-base-content/80">No Image</div>
 			)}
 		</div>
 	);

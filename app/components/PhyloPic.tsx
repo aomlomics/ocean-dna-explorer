@@ -3,7 +3,7 @@ import Image from "next/image";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
 export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
-	const errorImg = <>?</>;
+	const errorImg = <>No Image</>;
 
 	let ranksBySpecificity = ["species", "genus", "family", "order", "class", "phylum", "kingdom"] as Array<
 		keyof typeof taxonomy
