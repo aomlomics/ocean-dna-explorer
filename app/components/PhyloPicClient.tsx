@@ -1,7 +1,6 @@
 "use client";
 
 import { Taxonomy } from "@prisma/client";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
