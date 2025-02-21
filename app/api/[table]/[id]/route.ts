@@ -10,7 +10,7 @@ export async function GET(
 	if (
 		Object.keys(Prisma.ModelName)
 			.map((s) => s.toLowerCase())
-			.includes(table)
+			.includes(table.toLowerCase())
 	) {
 		try {
 			const parsedId = parseInt(id);
@@ -53,7 +53,7 @@ export async function GET(
 						return Response.json(
 							{
 								message: "Error",
-								error: `Invalid value for relationsAllFields: \`${allFields}\`. Value must be \`true\` or \`false\`.`
+								error: `Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`
 							},
 							{ status: 400 }
 						);
@@ -85,16 +85,30 @@ export async function GET(
 			const error = err as Error;
 
 			//bad select/include
-			const splt = error.message.split("Unknown field ");
-			if (splt.length > 1) {
-				const unknownField = splt[splt.length - 1].split(" ")[0];
+			const unknownFieldSplit = error.message.split("Unknown field ");
+			if (unknownFieldSplit.length > 1) {
+				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
-				return Response.json({ message: "Error", error: `Invalid field: ${unknownField}.` }, { status: 400 });
+				return Response.json(
+					{ message: "Error", error: `No field named '${unknownField}' exists on ${table} entries.` },
+					{ status: 400 }
+				);
+			}
+
+			//bad where
+			const unknownArgSplit = error.message.split("Unknown argument ");
+			if (unknownArgSplit.length > 1) {
+				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
+
+				return Response.json(
+					{ message: "Error", error: `No field named '${unknownArg}' exists on ${table} entries.` },
+					{ status: 400 }
+				);
 			}
 
 			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ message: "Error", error: `Invalid table name: \`${table}\`.` }, { status: 400 });
+		return Response.json({ message: "Error", error: `Invalid table name: '${table}'.` }, { status: 400 });
 	}
 }
