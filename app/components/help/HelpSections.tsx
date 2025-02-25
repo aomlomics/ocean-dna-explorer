@@ -59,7 +59,8 @@ export const helpSections: Section[] = [
 					An occurrence represents a specific event or instance in our system. Think of it as a snapshot of something
 					that happened at a particular moment.
 				</p>
-				<div className="bg-base-200 p-4 rounded-md mb-4 text-base-content">
+				{/* Example of a code block */}
+				{/* <div className="bg-base-200 p-4 rounded-md mb-4 text-base-content">
 					<pre>
 						<code>
 							{`{
@@ -69,7 +70,7 @@ export const helpSections: Section[] = [
 }`}
 						</code>
 					</pre>
-				</div>
+				</div> */}
 			</>
 		),
 		subsections: [
