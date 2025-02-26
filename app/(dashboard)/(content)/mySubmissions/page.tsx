@@ -45,7 +45,7 @@ export default async function MySubmissions() {
 					<div className="scale-150 pointer-events-none">
 						<UserButton afterSignOutUrl="/" showName={false} />
 					</div>
-					<h1 className="text-3xl font-bold text-primary">Submissions Manager</h1>
+					<h1 className="text-3xl font-medium text-primary">Submissions Manager</h1>
 				</div>
 				<p className="text-md text-base-content">
 					View and manage your uploads. Deleting a project will also delete its associated analyses. You can delete
@@ -60,7 +60,7 @@ export default async function MySubmissions() {
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col relative">
 							<div>
-								<h2 className="text-2xl text-primary mb-4">Projects:</h2>
+								<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>
 								{projects.length === 0 ? (
 									<>
 										<p className="text-base text-base-content mb-6">
@@ -112,7 +112,7 @@ export default async function MySubmissions() {
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col relative">
 							<div>
-								<h2 className="text-2xl text-primary mb-4">Analyses:</h2>
+								<h2 className="text-2xl text-primary font-medium mb-4">Analyses:</h2>
 								{analyses.length === 0 ? (
 									<>
 										<p className="text-base text-base-content mb-6">

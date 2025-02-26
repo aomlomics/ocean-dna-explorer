@@ -8,22 +8,30 @@ export default function Help() {
 			<ActiveSectionTracker />
 
 			{/* Sidebar navigation */}
-			<aside className="w-64 border-r border-base-300 p-6 sticky top-0 h-screen overflow-y-auto">
+			<aside className="w-64 border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
 				<nav>
-					<h2 className="text-xl font-bold mb-4 pt-3">Contents</h2>
-					<ul className="space-y-4">
+					<h2 className="text-xl mb-6 px-2">Contents</h2>
+					<ul className="space-y-5">
 						{/* Map through sections to generate navigation */}
-						{helpSections.map((section) => (
-							<li key={section.id}>
-								<a href={`#${section.id}`} className="block mb-2 hover:text-primary">
+						{helpSections.map((section, index) => (
+							<li key={section.id} className="mb-1">
+								<a
+									href={`#${section.id}`}
+									className="block py-1 px-2 hover:text-primary transition-colors main-section-link"
+									data-section-index={index}
+								>
 									{section.title}
 								</a>
+
 								{/* Render subsection navigation if they exist */}
-								{section.subsections && (
-									<ul className="border-l border-base-300 ml-2 space-y-2">
+								{section.subsections && section.subsections.length > 0 && (
+									<ul className="mt-2 mb-1 ml-2 space-y-1 border-l border-base-300 pl-2">
 										{section.subsections.map((subsection) => (
-											<li key={subsection.id} className="pl-4">
-												<a href={`#${subsection.id}`} className="text-sm hover:text-primary">
+											<li key={subsection.id}>
+												<a
+													href={`#${subsection.id}`}
+													className="block py-1 px-2 text-sm hover:text-primary transition-colors"
+												>
 													{subsection.title}
 												</a>
 											</li>
@@ -36,22 +44,22 @@ export default function Help() {
 				</nav>
 			</aside>
 
-			{/* Main content area */}
-			<main className="flex-1 p-8 max-w-4xl">
+			{/* Main content area with sections */}
+			<main className="flex-1 p-6 md:p-8">
 				{/* Map through sections to generate content */}
-				{helpSections.map((section) => (
-					<section key={section.id} id={section.id} className="mt-12 first:mt-0">
-						<h2 className="text-3xl font-bold mb-6">{section.title}</h2>
-						<div>{section.content}</div>
+				{helpSections.map((section, index) => (
+					<section key={section.id} id={section.id} data-section-index={index} className="mb-24">
+						<h2 className="text-3xl font-semibold text-primary mb-6">{section.title}</h2>
+						<div className="prose max-w-none">{section.content}</div>
 
 						{/* Render subsections if they exist */}
 						{section.subsections && section.subsections.length > 0 && (
-							<div className="border-l-2 border-base-300 pl-6 mt-8">
+							<div className="space-y-12 mt-8">
 								{section.subsections.map((subsection) => (
-									<section key={subsection.id} id={subsection.id} className="mt-8 first:mt-0">
-										<h3 className="text-2xl font-semibold mb-4">{subsection.title}</h3>
-										<div>{subsection.content}</div>
-									</section>
+									<div key={subsection.id} id={subsection.id}>
+										<h3 className="text-2xl font-semibold text-base-content mb-4">{subsection.title}</h3>
+										<div className="prose max-w-none">{subsection.content}</div>
+									</div>
 								))}
 							</div>
 						)}

@@ -26,7 +26,7 @@ export default function DeleteConfirmModal({
 				</p>
 				{associatedAnalyses.length > 0 && (
 					<div className="mb-2">
-						<p className="text-md text-base-content mb-2">This will also delete the following analyses:</p>
+						<p className="text-md text-base-content">This will also delete the following analyses:</p>
 						<ul className="list-disc list-inside space-y-1 bg-base-100 p-3 rounded-lg">
 							{associatedAnalyses.map((analysis) => (
 								<li key={analysis.analysis_run_name} className="text-md text-base-content">
