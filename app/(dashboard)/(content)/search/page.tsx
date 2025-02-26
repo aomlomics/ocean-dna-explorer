@@ -81,7 +81,7 @@ export default async function Dashboard() {
 					{/* Sample Cards */}
 					<div className="grid gap-4">
 						{[1, 2, 3].map((item) => (
-							<div key={item} className="card bg-base-100 shadow-xl">
+							<div key={item} className="card bg-base-100 shadow-sm">
 								<div className="card-body">
 									<h3 className="card-title">Sample {item}</h3>
 									<div className="divider"></div>

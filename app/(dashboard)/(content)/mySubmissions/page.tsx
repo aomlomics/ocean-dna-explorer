@@ -56,7 +56,7 @@ export default async function MySubmissions() {
 			{/* Content Section */}
 			<div className="grid lg:grid-cols-2 gap-8">
 				{/* Projects Section */}
-				<div className="card bg-base-200 shadow-xl min-h-[260px] h-fit hover:shadow-2xl transition-shadow overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col relative">
 							<div>
@@ -108,7 +108,7 @@ export default async function MySubmissions() {
 				</div>
 
 				{/* Analyses Section */}
-				<div className="card bg-base-200 shadow-xl min-h-[260px] h-fit hover:shadow-2xl transition-shadow overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col relative">
 							<div>

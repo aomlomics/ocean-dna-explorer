@@ -109,7 +109,7 @@ export default function ProjectSubmit() {
 	}
 
 	return (
-		<div className="p-6 bg-base-100 rounded-lg shadow-xl -mt-6">
+		<div className="p-6 bg-base-100 rounded-lg shadow-sm -mt-6">
 			<div className="min-h-[400px] mx-auto">
 				<form className="flex-1 space-y-8 flex flex-col items-center" onSubmit={handleSubmit}>
 					<div className="w-[400px]">

@@ -377,7 +377,7 @@ export default function AnalysisSubmit() {
 					{analyses.map(
 						(a, i) =>
 							a && (
-								<div key={i} id={`analysis_${i}`} className="card bg-base-100 shadow-xl p-6 relative">
+								<div key={i} id={`analysis_${i}`} className="card bg-base-100 shadow-sm p-6 relative">
 									{analyses[i] && (
 										<div className="space-y-4">
 											<h2 className="text-xl font-semibold text-base-content mb-4">
@@ -489,7 +489,7 @@ export default function AnalysisSubmit() {
 					{analyses[analyses.length - 1] !== "\u200b" && (
 						<div className="flex justify-center">
 							<button
-								className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-xl"
+								className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm"
 								type="button"
 								disabled={!!loading}
 								onClick={() => setAnalyses([...analyses, "\u200b"])}

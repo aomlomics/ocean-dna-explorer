@@ -9,7 +9,7 @@ import DeleteConfirmModal from "@/app/components/DeleteConfirmationModal";
 const Toast = ({ message, type }: { message: string; type: "success" | "error" }) => {
 	return (
 		<div
-			className={`fixed bottom-6 right-6 z-50 px-6 py-3 rounded-lg shadow-xl 
+			className={`fixed bottom-6 right-6 z-50 px-6 py-3 rounded-lg shadow-sm 
 			${type === "success" ? "bg-success text-success-content" : "bg-error text-error-content"}
 			animate-fade-in-up text-lg
 		`}

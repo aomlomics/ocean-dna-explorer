@@ -184,7 +184,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 							const imagePath = `/images/${assay}_icon.svg`;
 
 							return (
-								<div key={index} className="card bg-base-300 shadow-md">
+								<div key={index} className="card bg-base-300 shadow-sm">
 									<div className="card-body">
 										<div className="flex items-center gap-4">
 											<div className="w-16 h-16">
