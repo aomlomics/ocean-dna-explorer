@@ -1,5 +1,5 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { Taxonomy } from "@prisma/client";
+import { Prisma, Taxonomy } from "@prisma/client";
 import { ZodObject, ZodEnum, ZodNumber } from "zod";
 
 export async function fetcher(url: string) {
@@ -194,4 +194,22 @@ export function convertDBEnum(dbEnum: Record<string, string>) {
 	}
 
 	return newEnum;
+}
+
+export function parseNestedJson(json: string) {
+	let parsed;
+
+	try {
+		parsed = JSON.parse(json); // object -> object, number -> number, string -> catch block
+	} catch {
+		return json;
+	}
+
+	if (typeof parsed === "object") {
+		for (const [key, value] of Object.entries(parsed)) {
+			parsed[key] = parseNestedJson(value as string);
+		}
+	}
+
+	return parsed;
 }

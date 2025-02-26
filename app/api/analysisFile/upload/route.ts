@@ -1,5 +1,5 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(request: Request) {
 	const body = (await request.json()) as HandleUploadBody;
@@ -15,15 +15,9 @@ export async function POST(request: Request) {
 				// Generate a client token for the browser to upload the file
 				// ⚠️ Authenticate and authorize users before generating the token.
 				// Otherwise, you're allowing anonymous uploads.
-				const user = await currentUser();
-				if (!user) {
+				const { userId } = await auth();
+				if (!userId) {
 					throw new Error("Unauthorized");
-				}
-				const fromValidEmail = user.emailAddresses.some(
-					(e) => e.emailAddress.endsWith("noaa.gov") || e.emailAddress.endsWith("msstate.edu")
-				);
-				if (!fromValidEmail) {
-					throw new Error("Forbidden");
 				}
 
 				return {

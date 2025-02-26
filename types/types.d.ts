@@ -19,3 +19,21 @@ export type SubmitActionReturn = Promise<{
 	result?: Record<string, any>;
 	error?: string;
 }>;
+
+export type Pluralize<T extends string> = T extends `${infer S}sis`
+	? `${S}ses`
+	: T extends `${infer S}ay`
+	? `${S}ays`
+	: T extends `${infer S}ey`
+	? `${S}eys`
+	: T extends `${infer S}iy`
+	? `${S}iys`
+	: T extends `${infer S}oy`
+	? `${S}oys`
+	: T extends `${infer S}uy`
+	? `${S}uys`
+	: T extends `${infer S}y`
+	? `${S}ies`
+	: T extends `${infer S}s`
+	? T
+	: `${T}s`;

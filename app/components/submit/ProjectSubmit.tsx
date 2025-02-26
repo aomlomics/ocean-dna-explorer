@@ -4,6 +4,7 @@ import projectUploadAction from "@/app/helpers/actions/projectSubmit";
 import { useRouter } from "next/navigation";
 import { FormEvent, useReducer, useState } from "react";
 import ProgressCircle from "./ProgressCircle";
+import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -24,6 +25,11 @@ export default function ProjectSubmit() {
 		sample: null,
 		library: null
 	});
+
+	// Modal (popup) state after project submission
+	const [showModal, setShowModal] = useState(false);
+	const [modalMessage, setModalMessage] = useState("");
+	const [isError, setIsError] = useState(false);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, files } = e.target;
@@ -60,6 +66,9 @@ export default function ProjectSubmit() {
 			const result = await projectUploadAction(formData);
 
 			if (result.error) {
+				setIsError(true);
+				setModalMessage(result.error);
+				setShowModal(true);
 				setErrorObj({
 					global: result.error,
 					status: "❌ Submission Failed",
@@ -69,13 +78,14 @@ export default function ProjectSubmit() {
 			} else if (result.message) {
 				const successMessage =
 					"Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds...";
-				await new Promise((resolve) => setTimeout(resolve, 100));
+				setIsError(false);
+				setModalMessage(successMessage);
+				setShowModal(true);
 				setResponseObj({
 					project: "Success!",
 					samples: "Success!",
 					library: "Success!",
 					submission: "Success!",
-					global: successMessage,
 					status: "✅ Project Submission Successful"
 				});
 
@@ -84,6 +94,9 @@ export default function ProjectSubmit() {
 				}, 5000);
 			}
 		} catch (error) {
+			setIsError(true);
+			setModalMessage("An error occurred during submission.");
+			setShowModal(true);
 			setErrorObj({
 				global: "An error occurred during submission.",
 				status: "❌ Submission Failed",
@@ -96,7 +109,7 @@ export default function ProjectSubmit() {
 	}
 
 	return (
-		<div className="p-6 bg-base-300 rounded-lg -mt-6">
+		<div className="p-6 bg-base-100 rounded-lg shadow-xl -mt-6">
 			<div className="min-h-[400px] mx-auto">
 				<form className="flex-1 space-y-8 flex flex-col items-center" onSubmit={handleSubmit}>
 					<div className="w-[400px]">
@@ -112,7 +125,7 @@ export default function ProjectSubmit() {
 									disabled={!!loading || submitted}
 									accept=".tsv"
 									onChange={handleFileChange}
-									className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full [&::file-selector-button]:text-white"
+									className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 								/>
 								<ProgressCircle
 									hasFile={!!fileStates["project"]}
@@ -136,7 +149,7 @@ export default function ProjectSubmit() {
 									disabled={!!loading || submitted}
 									accept=".tsv"
 									onChange={handleFileChange}
-									className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full [&::file-selector-button]:text-white"
+									className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 								/>
 								<ProgressCircle
 									hasFile={!!fileStates["sample"]}
@@ -160,7 +173,7 @@ export default function ProjectSubmit() {
 									disabled={!!loading || submitted}
 									accept=".tsv"
 									onChange={handleFileChange}
-									className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full [&::file-selector-button]:text-white"
+									className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 								/>
 								<ProgressCircle
 									hasFile={!!fileStates["library"]}
@@ -180,33 +193,7 @@ export default function ProjectSubmit() {
 					</button>
 				</form>
 
-				{/* Status Messages */}
-				<div className="flex-grow mt-8">
-					{(responseObj.status || errorObj.status) && (
-						<div
-							className={`
-							p-6 rounded-lg mx-auto max-w-lg  ${
-								errorObj.status ? "bg-error/10 border-2 border-error" : "bg-success/10 border-2 border-success"
-							}
-						`}
-						>
-							<h3 className={`text-lg font-bold mb-2 ${errorObj.status ? "text-error" : "text-success"}`}>
-								{errorObj.status ? "Submission Failed" : "Project Submitted Successfully"}
-							</h3>
-							<p className="text-base text-base-content">
-								{errorObj.status
-									? errorObj.global
-									: "Please stay on this page. You will be redirected to submit your analysis files in a few seconds..."}
-							</p>
-							{responseObj.status && (
-								<div className="mt-4 flex items-center justify-center gap-2">
-									<span className="loading loading-spinner loading-sm"></span>
-									<span className="text-base-content/80 text-sm">Redirecting...</span>
-								</div>
-							)}
-						</div>
-					)}
-				</div>
+				<SubmissionStatusModal isOpen={showModal} isError={isError} message={modalMessage} />
 			</div>
 		</div>
 	);

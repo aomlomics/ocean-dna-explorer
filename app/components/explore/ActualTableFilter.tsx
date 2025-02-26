@@ -12,9 +12,9 @@ type RangeValue = {
 type FilterValue = string | RangeValue | undefined;
 
 type FilterConfig = {
-	field: string;
 	label: string;
 	type: "select" | "multiselect" | "date" | "range";
+	field: string | { rel: string; f: string };
 	options?: string[];
 	enum?: Record<string, string>;
 	gte?: number;
@@ -35,17 +35,32 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 	const activeFilterCount = Object.keys(activeFilters).length;
 
 	// When someone changes a filter, update the URL
-	function handleFilterChange(field: string, value: FilterValue) {
+	function handleFilterChange(field: string | { rel: string; f: string }, value: FilterValue) {
 		const params = new URLSearchParams(searchParams);
 
 		if (value === undefined || value === "") {
-			params.delete(field);
+			if (typeof field === "string") {
+				params.delete(field);
+			} else {
+				params.delete(field.rel);
+			}
 		} else if (typeof value === "string") {
-			params.set(field, value);
+			if (typeof field === "string") {
+				params.set(field, value);
+			} else {
+				params.set(field.rel, JSON.stringify({ [field.f]: value }));
+			}
 		} else if (typeof value === "object") {
+			//range
 			const temp = {} as RangeValue;
 
-			const valObj = params.get(field);
+			let valObj;
+			if (typeof field === "string") {
+				valObj = params.get(field);
+			} else {
+				valObj = params.get(field.rel);
+			}
+
 			if (valObj) {
 				const parsedValObj = JSON.parse(valObj);
 
@@ -64,14 +79,21 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 				temp.lte = value.lte;
 			}
 
-			params.set(field, JSON.stringify(temp));
+			if (typeof field === "string") {
+				params.set(field, JSON.stringify(temp));
+			} else {
+				params.set(field.rel, JSON.stringify(temp));
+			}
 		}
 
 		router.push(`?${params.toString()}`);
 	}
-	const handleFilterDebounce = useDebouncedCallback((field: string, value: FilterValue) => {
-		handleFilterChange(field, value);
-	}, 100);
+	const handleFilterDebounce = useDebouncedCallback(
+		(field: string | { rel: string; f: string }, value: FilterValue) => {
+			handleFilterChange(field, value);
+		},
+		100
+	);
 
 	function safeJsonParse(str: string) {
 		try {
@@ -110,12 +132,12 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 			{/* List of all available filters */}
 			<div className="divide-y divide-base-300">
 				{tableConfig.map((filter) => (
-					<div key={filter.field} className="collapse bg-base-100">
+					<div key={typeof filter.field === "string" ? filter.field : filter.field.f} className="collapse bg-base-100">
 						<input type="checkbox" className="collapse-toggle" />
 						<div className="collapse-title">
 							<div className="flex flex-col items-start gap-1">
 								<span className="font-medium text-base-content">{filter.label}</span>
-								{activeFilters[filter.field] !== undefined && (
+								{typeof filter.field === "string" && activeFilters[filter.field] !== undefined ? (
 									<span className="text-sm text-base-content/70">
 										{typeof safeJsonParse(activeFilters[filter.field]) === "object"
 											? (JSON.parse(activeFilters[filter.field]).gte || filter.gte) +
@@ -123,6 +145,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 											  (JSON.parse(activeFilters[filter.field]).lte || filter.lte)
 											: activeFilters[filter.field]}
 									</span>
+								) : (
+									typeof filter.field === "object" &&
+									activeFilters[filter.field.rel] !== undefined && (
+										<span className="text-sm text-base-content/70">
+											{JSON.parse(activeFilters[filter.field.rel])[filter.field.f]}
+										</span>
+									)
 								)}
 							</div>
 						</div>
@@ -130,7 +159,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 							{filter.type === "select" ? (
 								<select
 									className="select select-bordered w-full"
-									value={typeof activeFilters[filter.field] === "object" ? "" : activeFilters[filter.field] || ""}
+									value={
+										typeof filter.field === "string"
+											? activeFilters[filter.field] || ""
+											: searchParams.get(filter.field.rel)
+											? JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f]
+											: ""
+									}
 									onChange={(e) => handleFilterChange(filter.field, e.target.value || undefined)}
 								>
 									<option value="">Any</option>
@@ -159,9 +194,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 												max={filter.lte}
 												className="range"
 												defaultValue={
-													(JSON.parse(searchParams.get(filter.field) as string) &&
-														JSON.parse(searchParams.get(filter.field) as string).gte) ||
-													filter.gte
+													typeof filter.field === "string"
+														? (JSON.parse(searchParams.get(filter.field) as string) &&
+																JSON.parse(searchParams.get(filter.field) as string).gte) ||
+														  filter.gte
+														: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
+																JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].gte) ||
+														  filter.gte
 												}
 												onChange={(e) => {
 													handleFilterDebounce(
@@ -183,9 +222,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 													min={filter.gte}
 													max={filter.lte}
 													defaultValue={
-														(JSON.parse(searchParams.get(filter.field) as string) &&
-															JSON.parse(searchParams.get(filter.field) as string).gte) ||
-														filter.gte
+														typeof filter.field === "string"
+															? (JSON.parse(searchParams.get(filter.field) as string) &&
+																	JSON.parse(searchParams.get(filter.field) as string).gte) ||
+															  filter.gte
+															: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
+																	JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].gte) ||
+															  filter.gte
 													}
 													onChange={(e) => {
 														handleFilterDebounce(
@@ -210,9 +253,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 												max={filter.lte}
 												className="range"
 												defaultValue={
-													(JSON.parse(searchParams.get(filter.field) as string) &&
-														JSON.parse(searchParams.get(filter.field) as string).lte) ||
-													filter.lte
+													typeof filter.field === "string"
+														? (JSON.parse(searchParams.get(filter.field) as string) &&
+																JSON.parse(searchParams.get(filter.field) as string).lte) ||
+														  filter.lte
+														: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
+																JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].lte) ||
+														  filter.lte
 												}
 												onChange={(e) => {
 													handleFilterDebounce(
@@ -234,9 +281,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 													min={filter.gte}
 													max={filter.lte}
 													defaultValue={
-														(JSON.parse(searchParams.get(filter.field) as string) &&
-															JSON.parse(searchParams.get(filter.field) as string).lte) ||
-														filter.lte
+														typeof filter.field === "string"
+															? (JSON.parse(searchParams.get(filter.field) as string) &&
+																	JSON.parse(searchParams.get(filter.field) as string).lte) ||
+															  filter.lte
+															: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
+																	JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].lte) ||
+															  filter.lte
 													}
 													onChange={(e) => {
 														handleFilterDebounce(
@@ -293,7 +344,13 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 					<button
 						onClick={() => {
 							const params = new URLSearchParams(searchParams);
-							tableConfig.forEach((config) => params.delete(config.field));
+							tableConfig.forEach((config) => {
+								if (typeof config.field === "string") {
+									params.delete(config.field);
+								} else {
+									params.delete(config.field.rel);
+								}
+							});
 							router.push(`?${params.toString()}`);
 						}}
 						className="btn btn-ghost btn-sm w-full"

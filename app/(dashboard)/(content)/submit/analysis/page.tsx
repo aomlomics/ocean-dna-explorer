@@ -8,33 +8,31 @@ export default function Analysis() {
 			<section className="text-center space-y-6">
 				<h1 className="text-5xl font-semibold text-primary">Submit Analysis</h1>
 				<div className="max-w-3xl mx-auto space-y-4 text-lg text-base-content">
-					<p>Ready to contribute new insights? Upload your analysis files here. They must be for an existing NODE Project. You may submit multiple analyses for a Project at once.</p>
-					<p className="max-w-3xl mx-auto space-y-4 text-lg text-base-content">
-						First time submitting an analysis?{" "}
+					<p>
+						Ready to contribute new insights? Upload your analysis files here. They must be for an existing NODE
+						project. Need help? Check out the{" "}
 						<Link href="https://noaa-omics-dmg.readthedocs.io/en/latest/" className="text-primary hover:underline">
-							Check out the NOAA 'Omics Data Management Guide.
+							NOAA 'Omics Data Management Guide.
 						</Link>
 					</p>
-				</div>
-			</section>
 
-			{/* Submission Card */}
-			<section>
-				<div className="card bg-base-200 shadow-xl">
-					<div className="card-body">
-						<div className="flex items-center gap-3 mb-6 p-3 bg-primary/5 rounded-lg">
-							<div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-							<div className="space-y-1">
-								<span className="text-base-content block">
-									Each analysis requires metadata, features, and occurrences
-								</span>
-								<span className="text-sm text-base-content">Files must be in TSV format</span>
-							</div>
-						</div>
-						<AnalysisSubmit />
+					{/* Requirements Section */}
+					<div className="flex items-center justify-center gap-2 text-base-content text-lg">
+						<svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+						<span>All files must be in TSV format and follow the template structure exactly</span>
 					</div>
 				</div>
 			</section>
+
+			{/* Main Content */}
+			<AnalysisSubmit />
 		</main>
 	);
 }
