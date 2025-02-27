@@ -1,6 +1,6 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { Prisma, Taxonomy } from "@prisma/client";
-import { ZodObject, ZodEnum, ZodNumber } from "zod";
+import { Taxonomy } from "@prisma/client";
+import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable } from "zod";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -32,9 +32,32 @@ export function isEmpty(obj: Object) {
 	return true;
 }
 
-export function isDeadValue(val: string) {
-	const deadValues = ["not applicable", "not collected", "not given", "missing"];
-	return deadValues.includes(val);
+export function getZodType(field: any): { optional?: boolean; type?: string; values?: string[] } {
+	let shape = {} as { optional?: boolean; type?: string; values?: string[] };
+
+	if (field instanceof ZodOptional) {
+		shape.optional = true;
+	} else if (field instanceof ZodNumber) {
+		//TODO: detect if number is int or float
+		shape.type = "number";
+	} else if (field instanceof ZodString) {
+		shape.type = "string";
+	} else if (field instanceof ZodDate) {
+		shape.type = "date";
+	} else if (field instanceof ZodEnum) {
+		//DeadBoolean
+		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
+			shape.type = "boolean";
+			shape.values = Object.keys(DeadBooleanEnum);
+		}
+	}
+
+	try {
+		const res = getZodType(field.unwrap());
+		return { ...res, ...shape };
+	} catch {
+		return shape;
+	}
 }
 
 //this function is barebones, basic, and probably dangerous in some way
