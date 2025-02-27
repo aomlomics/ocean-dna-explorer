@@ -32,11 +32,6 @@ export function isEmpty(obj: Object) {
 	return true;
 }
 
-export function isDeadValue(val: string) {
-	const deadValues = ["not applicable", "not collected", "not given", "missing"];
-	return deadValues.includes(val);
-}
-
 export function getZodType(field: any): { optional?: boolean; type?: string; values?: string[] } {
 	let shape = {} as { optional?: boolean; type?: string; values?: string[] };
 
