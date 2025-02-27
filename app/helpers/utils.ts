@@ -350,7 +350,7 @@ export function parseApiQuery(
 				}
 
 				if (type === "string") {
-					query.where![key] = { contains: value };
+					query.where![key] = { contains: value, mode: "insensitive" };
 				} else if (type === "number") {
 					query.where![key] = parseInt(value);
 				} else {
