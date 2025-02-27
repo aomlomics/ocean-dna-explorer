@@ -1,16 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/helpers/prisma";
+import { parseApiQuery } from "@/app/helpers/utils";
 
-export async function GET(
-	request: Request,
-	{ params }: { params: Promise<{ table: Uncapitalize<Prisma.ModelName>; id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ table: string; id: string }> }) {
 	const { table, id } = await params;
+	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
 	if (
 		Object.keys(Prisma.ModelName)
 			.map((s) => s.toLowerCase())
-			.includes(table.toLowerCase())
+			.includes(lowercaseTable)
 	) {
 		try {
 			const parsedId = parseInt(id);
@@ -18,60 +17,23 @@ export async function GET(
 				return Response.json({ message: "Error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
 			}
 
-			const query = {
-				where: {
-					id: parsedId
-				}
-			} as {
-				where: { id: number };
-				select?: Record<string, any>;
-				include?: Record<string, any>;
-			};
-
 			const { searchParams } = new URL(request.url);
 
-			//selecting fields
-			const fields = searchParams.get("fields");
-			if (fields) {
-				searchParams.delete("fields");
-				query.select = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
-			}
-
-			//relations
-			const relations = searchParams.get("relations");
-			if (relations) {
-				searchParams.delete("relations");
-
-				//include all fields in relations
-				let includeVal = { select: { id: true } } as any;
-				const allFields = searchParams.get("relationsAllFields");
-				if (allFields) {
-					searchParams.delete("relationsAllFields");
-					if (allFields.toLowerCase() === "true") {
-						includeVal = true;
-					} else if (allFields.toLowerCase() !== "false") {
-						return Response.json(
-							{
-								message: "Error",
-								error: `Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`
-							},
-							{ status: 400 }
-						);
-					}
+			const query = parseApiQuery(
+				lowercaseTable,
+				searchParams,
+				{
+					skipIds: true,
+					skipLimit: true,
+					skipFilters: true
+				},
+				{
+					filters: { id: parseInt(id) }
 				}
-
-				const relsObj = relations
-					.split(",")
-					.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
-				if (query.select) {
-					query.select = { ...query.select, ...relsObj };
-				} else {
-					query.include = relsObj;
-				}
-			}
+			);
 
 			//@ts-ignore
-			const result = await prisma[table].findUnique(query);
+			const result = await prisma[lowercaseTable].findUnique(query);
 
 			if (result) {
 				return Response.json({ message: "Success", result });
@@ -90,7 +52,7 @@ export async function GET(
 				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
 				return Response.json(
-					{ message: "Error", error: `No field named '${unknownField}' exists on ${table} entries.` },
+					{ message: "Error", error: `No field named '${unknownField}' exists on table named '${table}'.` },
 					{ status: 400 }
 				);
 			}
@@ -101,12 +63,12 @@ export async function GET(
 				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
 
 				return Response.json(
-					{ message: "Error", error: `No field named '${unknownArg}' exists on ${table} entries.` },
+					{ message: "Error", error: `No field named '${unknownArg}' exists on table named '${table}'.` },
 					{ status: 400 }
 				);
 			}
 
-			//TODO: replace database error message with generic error message
+			//TODO: replace database error messages with generic error message
 			return Response.json({ message: "Error", error: error.message }, { status: 400 });
 		}
 	} else {

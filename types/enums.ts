@@ -39,8 +39,8 @@ export const DeadBooleanEnum = {
 };
 
 export const TableToEnumSchema = {
-	sample: SampleScalarFieldEnumSchema,
 	project: ProjectScalarFieldEnumSchema,
+	sample: SampleScalarFieldEnumSchema,
 	assay: AssayScalarFieldEnumSchema,
 	library: LibraryScalarFieldEnumSchema,
 	analysis: AnalysisScalarFieldEnumSchema,
@@ -51,8 +51,8 @@ export const TableToEnumSchema = {
 };
 
 export const TableToSchema = {
-	sample: SampleSchema,
 	project: ProjectSchema,
+	sample: SampleSchema,
 	assay: AssaySchema,
 	library: LibrarySchema,
 	analysis: AnalysisSchema,

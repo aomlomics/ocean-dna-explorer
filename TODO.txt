@@ -1,11 +1,8 @@
 allow list of any field for filtering
 update test data
 put assays on the /assays page from https://docs.google.com/spreadsheets/d/1oo0IxREWktfN5bSqo7b3qD5olk-8VWgWCDQcf__X3hU/edit?gid=520397534#gid=520397534 (incomplete)
-filtering on number fields errors, need to check the type of field before building query (numbers don't have "contains")
 page to display entire schema, including collapses for tables, required/optional fields, and their types
 make filters not case sensitive
 potentially add default limit (1000, 10000?) to all queries
-
-api route to get all fields for a table (ex: /api/project/fields) send luke email when done
 
 allow editing uploads (edit history)
