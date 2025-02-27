@@ -1,5 +1,5 @@
-import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { Taxonomy } from "@prisma/client";
+import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
+import { Prisma, Taxonomy } from "@prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable } from "zod";
 
 export async function fetcher(url: string) {
@@ -235,4 +235,132 @@ export function parseNestedJson(json: string) {
 	}
 
 	return parsed;
+}
+
+export function parseApiQuery(
+	table: Uncapitalize<Prisma.ModelName>,
+	searchParams: URLSearchParams,
+	skip?: {
+		skipFields?: boolean;
+		skipRelations?: boolean;
+		skipIds?: boolean;
+		skipLimit?: boolean;
+		skipFilters?: boolean;
+	},
+	defaults?: {
+		fields?: Record<string, boolean>;
+		relations?: Record<string, boolean | { select: { id: true } }>;
+		ids?: number[];
+		limit?: number;
+		filters?: Record<string, string | number>;
+	}
+) {
+	const query = {} as {
+		// orderBy?: Record<string, Prisma.SortOrder>;
+		select?: Record<string, any>;
+		include?: Record<string, any>;
+		where?: Record<string, any>;
+		take?: number;
+	};
+
+	//selecting fields
+	if (!skip?.skipFields) {
+		const fields = searchParams.get("fields");
+		if (fields) {
+			searchParams.delete("fields");
+			query.select = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
+		}
+	}
+
+	//relations
+	if (!skip?.skipRelations) {
+		const relations = searchParams.get("relations");
+		if (relations) {
+			searchParams.delete("relations");
+
+			//include all fields in relations
+			let includeVal = { select: { id: true } } as boolean | { select: { id: true } };
+			const allFields = searchParams.get("relationsAllFields");
+			if (allFields) {
+				searchParams.delete("relationsAllFields");
+				if (allFields.toLowerCase() === "true") {
+					includeVal = true;
+				} else if (allFields.toLowerCase() !== "false") {
+					throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
+				}
+			}
+
+			const relsObj = relations
+				.split(",")
+				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
+			if (query.select) {
+				query.select = { ...query.select, ...relsObj };
+			} else {
+				query.include = relsObj;
+			}
+		}
+	}
+
+	const ids = searchParams.get("ids");
+	if (!skip?.skipIds && ids) {
+		//list of ids
+		searchParams.delete("ids");
+
+		const parsedIds = [] as number[];
+		for (const id of ids.split(",")) {
+			if (id) {
+				const parsed = parseInt(id);
+				if (Number.isNaN(parsed)) {
+					throw new Error(`Invalid ID: '${id}'. ID must be an integer.`);
+				}
+				parsedIds.push(parsed);
+			}
+		}
+
+		query.where = {
+			id: {
+				in: parsedIds
+			}
+		};
+	} else {
+		//limit
+		if (!skip?.skipLimit) {
+			const take = searchParams.get("limit");
+			if (take) {
+				searchParams.delete("limit");
+				query.take = parseInt(take);
+				if (Number.isNaN(query.take)) {
+					throw new Error(`Invalid limit: '${take}'. Limit must be an integer.`);
+				} else if (query.take < 1) {
+					throw new Error(`Invalid limit: '${take}'. Limit must be a positive integer.`);
+				}
+			}
+		}
+
+		//filtering
+		if (!skip?.skipFilters) {
+			query.where = {} as Record<string, any>;
+			const shape = TableToSchema[table].shape;
+			searchParams.forEach((value, key) => {
+				const type = getZodType(shape[key as keyof typeof shape]).type;
+				if (!type) {
+					throw new Error(
+						`Could not find type of '${key}'. Make sure a field named '${key}' exists on table named '${table}'.`
+					);
+				}
+
+				if (type === "string") {
+					query.where![key] = { contains: value, mode: "insensitive" };
+				} else if (type === "number") {
+					query.where![key] = parseInt(value);
+				} else {
+					query.where![key] = value;
+				}
+			});
+		} else if (defaults?.filters) {
+			query.where = defaults.filters;
+		}
+	}
+
+	return query;
 }
