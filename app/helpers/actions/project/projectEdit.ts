@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "../../prisma";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { ProjectPartialSchema } from "@/prisma/generated/zod";
 
 export default async function projectEditAction(formData: FormData) {
 	console.log("project edit");
@@ -46,7 +47,7 @@ export default async function projectEditAction(formData: FormData) {
 				}
 			});
 
-			await tx.fieldEdit.createMany({
+			await tx.change.createMany({
 				data: Array.from(formData.entries()).map(([field, value]) => ({
 					editId: edit.id,
 					field,
@@ -59,7 +60,11 @@ export default async function projectEditAction(formData: FormData) {
 				where: {
 					project_id
 				},
-				data: Object.fromEntries(formData)
+				data: ProjectPartialSchema.parse(Object.fromEntries(formData), {
+					errorMap: (error, ctx) => {
+						return { message: `AnalysisSchema: ${ctx.defaultError}` };
+					}
+				})
 			});
 		});
 

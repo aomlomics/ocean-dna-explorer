@@ -39,8 +39,23 @@ export default function SubmissionEditButton({
 		//check if data has been changed
 		const submitFormData = new FormData();
 		for (const [field, value] of formData.entries()) {
-			if (value != data[field]) {
-				submitFormData.append(field, value);
+			if (value && data[field] && !(value instanceof File)) {
+				const type = getZodType(shape[field as keyof typeof shape]).type;
+
+				if (type === "boolean" && value in DeadBooleanEnum) {
+					if (DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] != data[field]) {
+						submitFormData.append(field, DeadBooleanEnum[value as keyof typeof DeadBooleanEnum]);
+					}
+				} else {
+					if (value in DeadValueEnum) {
+						if (DeadValueEnum[value as keyof typeof DeadValueEnum] != data[field]) {
+							//@ts-ignore Typescript thinks you can only index enums with a number, value is a string, this works fine
+							submitFormData.append(field, DeadValueEnum[value]);
+						}
+					} else if (value != data[field]) {
+						submitFormData.append(field, value);
+					}
+				}
 			}
 		}
 
@@ -52,13 +67,19 @@ export default function SubmissionEditButton({
 
 		submitFormData.append("target", data[titleField]);
 
+		for (const [k, v] of submitFormData.entries()) {
+			console.log(k, v);
+		}
+
 		try {
+			//TODO: display loading
 			const result = await action(submitFormData);
 			if (result.message === "Success") {
 				console.log("success");
+				modalRef.current?.close();
 			} else {
 				//TODO: set error
-				console.log("error");
+				console.log(result.error);
 			}
 		} catch {
 			//TODO: set error
