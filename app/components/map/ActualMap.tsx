@@ -62,7 +62,6 @@ export default function ActualMap({
 		}
 		points = clusteredLocations;
 	}
-	console.log(points);
 
 	const centerStart = { lat: 25.7617, lng: -80.8918 };
 	const ARCGIS_API_KEY = process.env.ARCGIS_KEY;

@@ -1,5 +1,5 @@
 import { FieldErrors } from "react-hook-form/dist/types/errors";
-import InfoButton from "@/app/components/tourmalineForm/InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 import React from "react";
 
 export default function TaxonomicTab({

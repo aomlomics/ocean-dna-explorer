@@ -1,5 +1,5 @@
 import { FieldErrors } from "react-hook-form/dist/types/errors";
-import InfoButton from "@/app/components/tourmalineForm/InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 
 // Filtering step will be significantly different once we decide how to implement it
 export default function FilteringTab({ register, errors }: { register: any; errors: FieldErrors<any> }) {

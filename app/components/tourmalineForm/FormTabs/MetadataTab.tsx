@@ -1,5 +1,5 @@
 import { FieldErrors } from "react-hook-form/dist/types/errors";
-import InfoButton from "@/app/components/tourmalineForm/InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 
 export default function MetadataTab({ register, errors }: { register: any; errors: FieldErrors<any> }) {
 	return (

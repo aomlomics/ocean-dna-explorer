@@ -1,5 +1,5 @@
 import { FieldErrors } from "react-hook-form/dist/types/errors";
-import InfoButton from "@/app/components/tourmalineForm/InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 import TextField from "@/app/components/tourmalineForm/TextField";
 import ErrorMessage from "@/app/components/tourmalineForm/ErrorMessage";
 
