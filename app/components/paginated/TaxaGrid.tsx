@@ -10,7 +10,7 @@ import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 
 export default function TaxaGrid({
-	cols = 5,
+	cols = 4,
 	where,
 	orderBy
 }: {
@@ -22,7 +22,6 @@ export default function TaxaGrid({
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			table: "taxonomy",
 			take: (cols ** 2).toString(),
 			page: (page + dir).toString()
 		});
@@ -33,11 +32,10 @@ export default function TaxaGrid({
 			query.set("orderBy", JSON.stringify(orderBy));
 		}
 
-		preload(`/api/pagination?${query.toString()}`, fetcher);
+		preload(`/api/pagination/taxonomy?${query.toString()}`, fetcher);
 	}
 
 	let query = new URLSearchParams({
-		table: "taxonomy",
 		take: (cols ** 2).toString(),
 		page: page.toString()
 	});
@@ -47,7 +45,7 @@ export default function TaxaGrid({
 	if (orderBy) {
 		query.set("orderBy", JSON.stringify(orderBy));
 	}
-	const { data, error, isLoading } = useSWR(`/api/pagination?${query.toString()}`, fetcher);
+	const { data, error, isLoading } = useSWR(`/api/pagination/taxonomy?${query.toString()}`, fetcher);
 	if (isLoading) return <LoadingTaxaGrid cols={cols} />;
 	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 

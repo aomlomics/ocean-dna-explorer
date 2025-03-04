@@ -1,4 +1,24 @@
-import { AnalysisScalarFieldEnumSchema, AssayScalarFieldEnumSchema, AssignmentScalarFieldEnumSchema, FeatureScalarFieldEnumSchema, LibraryScalarFieldEnumSchema, OccurrenceOptionalDefaultsSchema, OccurrenceScalarFieldEnumSchema, ProjectScalarFieldEnumSchema, SampleScalarFieldEnumSchema, TaxonomyScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import {
+	AnalysisScalarFieldEnumSchema,
+	AnalysisSchema,
+	AssayScalarFieldEnumSchema,
+	AssaySchema,
+	AssignmentScalarFieldEnumSchema,
+	AssignmentSchema,
+	FeatureScalarFieldEnumSchema,
+	FeatureSchema,
+	LibraryScalarFieldEnumSchema,
+	LibrarySchema,
+	OccurrenceOptionalDefaultsSchema,
+	OccurrenceScalarFieldEnumSchema,
+	OccurrenceSchema,
+	ProjectScalarFieldEnumSchema,
+	ProjectSchema,
+	SampleScalarFieldEnumSchema,
+	SampleSchema,
+	TaxonomyScalarFieldEnumSchema,
+	TaxonomySchema
+} from "@/prisma/generated/zod";
 
 export enum DeadValueEnum {
 	"not applicable" = -9999,
@@ -19,8 +39,8 @@ export const DeadBooleanEnum = {
 };
 
 export const TableToEnumSchema = {
-	sample: SampleScalarFieldEnumSchema,
 	project: ProjectScalarFieldEnumSchema,
+	sample: SampleScalarFieldEnumSchema,
 	assay: AssayScalarFieldEnumSchema,
 	library: LibraryScalarFieldEnumSchema,
 	analysis: AnalysisScalarFieldEnumSchema,
@@ -28,4 +48,16 @@ export const TableToEnumSchema = {
 	feature: FeatureScalarFieldEnumSchema,
 	assignment: AssignmentScalarFieldEnumSchema,
 	taxonomy: TaxonomyScalarFieldEnumSchema
-}
+};
+
+export const TableToSchema = {
+	project: ProjectSchema,
+	sample: SampleSchema,
+	assay: AssaySchema,
+	library: LibrarySchema,
+	analysis: AnalysisSchema,
+	occurrence: OccurrenceSchema,
+	feature: FeatureSchema,
+	assignment: AssignmentSchema,
+	taxonomy: TaxonomySchema
+};

@@ -4,17 +4,13 @@ import UnderConstruction from "@/app/components/UnderConstruction";
 export default function Api() {
 	return (
 		<main className="flex flex-col grow p-8 max-w-7xl mx-auto space-y-10">
-			<div className="text-red-500">
-				<UnderConstruction message="API is coming soon! This page's documentation is not active, it's an example of the content in the future. The API is not operational at the moment." />
-			</div>
-
 			{/* API Introduction Section */}
 			<section className="relative">
 				<div className="text-center space-y-6 relative z-10">
 					<h1 className="text-6xl font-semibold text-primary tracking-tight">API Usage</h1>
 					<div className="max-w-3xl mx-auto space-y-4 text-lg text-base-content/90">
 						<p>
-							Access NODE's comprehensive eDNA datasets programmatically through RESTful APIs. Build applications,
+							Access NODE's comprehensive eDNA datasets programmatically through a RESTful API. Build applications,
 							conduct analyses, and integrate environmental DNA data directly into your research workflow using your
 							preferred programming language.
 						</p>

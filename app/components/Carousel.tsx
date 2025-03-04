@@ -18,7 +18,15 @@ const carouselImgSrc = [
 	`/images/carousel/chimaera.jpg`,
 	`/images/carousel/fish_m.jpg`,
 	`/images/carousel/hydroid.jpg`,
-	`/images/carousel/pricklefish_m.jpg`
+	`/images/carousel/pricklefish_m.jpg`,
+	`/images/carousel/apr16_1_hires.jpg`,
+	`/images/carousel/brain_coral.jpg`,
+	`/images/carousel/coral_florida.jpg`,
+	`/images/carousel/ex2206_dive03_medusa_hires.jpg`,
+	`/images/carousel/jelly3_hires.jpg`,
+	`/images/carousel/lancetfish.jpg`,
+	`/images/carousel/silky_medusa_colobonema_sericeum.jpg`,
+	`/images/carousel/siphonophore_800.jpg`
 ];
 
 export default function Carousel() {

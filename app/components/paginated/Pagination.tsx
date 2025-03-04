@@ -30,7 +30,6 @@ export default function Pagination({
 	const [page, setPage] = useState(1);
 
 	let query = new URLSearchParams({
-		table,
 		take: take.toString(),
 		page: page.toString()
 	});
@@ -45,7 +44,7 @@ export default function Pagination({
 	if (relCounts) {
 		query.set("relCounts", relCounts.toString());
 	}
-	const { data, error, isLoading } = useSWR(`/api/pagination?${query.toString()}`, fetcher, {
+	const { data, error, isLoading } = useSWR(`/api/pagination/${table}?${query.toString()}`, fetcher, {
 		keepPreviousData: true
 	});
 	if (isLoading) return <LoadingPagination />;
@@ -53,7 +52,6 @@ export default function Pagination({
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			table,
 			take: take.toString(),
 			page: page.toString()
 		});
@@ -64,7 +62,7 @@ export default function Pagination({
 			query.set("relCounts", relCounts.toString());
 		}
 
-		preload(`/api/pagination?${query.toString()}`, fetcher);
+		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
 	}
 
 	return (

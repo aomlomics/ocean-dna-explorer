@@ -1,7 +1,10 @@
 import { prisma } from "@/app/helpers/prisma";
+import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@prisma/client";
 
-export async function GET(request: Request) {
+export async function GET(request: Request, { params }: { params: Promise<{ table: string }> }) {
+	const { table } = await params;
+
 	try {
 		const { searchParams } = new URL(request.url);
 
@@ -47,24 +50,6 @@ export async function GET(request: Request) {
 		//	}
 		//}
 
-		function parseNestedJson(json: string) {
-			let parsed;
-
-			try {
-				parsed = JSON.parse(json); // object -> object, number -> number, string -> catch block
-			} catch {
-				return json;
-			}
-
-			if (typeof parsed === "object") {
-				for (const [key, value] of Object.entries(parsed)) {
-					parsed[key] = parseNestedJson(value as string);
-				}
-			}
-
-			return parsed;
-		}
-
 		const whereStr = searchParams.get("where");
 		if (whereStr) {
 			query.where = parseNestedJson(whereStr);
@@ -81,22 +66,17 @@ export async function GET(request: Request) {
 			};
 		}
 
-		const table = searchParams.get("table") as Uncapitalize<Prisma.ModelName>;
-		if (table) {
-			const [result, count] = await prisma.$transaction([
-				//@ts-ignore
-				prisma[table].findMany(query),
-				//@ts-ignore
-				prisma[table].count({ where: query.where })
-			]);
+		const [result, count] = await prisma.$transaction([
+			//@ts-ignore
+			prisma[table].findMany(query),
+			//@ts-ignore
+			prisma[table].count({ where: query.where })
+		]);
 
-			return Response.json({ message: "Success", result, count });
-		} else {
-			return Response.json({ error: "No table specified." }, { status: 400 });
-		}
+		return Response.json({ message: "Success", result, count });
 	} catch (err) {
 		const error = err as Error;
 
-		return Response.json({ error: error.message }, { status: 400 });
+		return Response.json({ message: "Error", error: error.message }, { status: 400 });
 	}
 }
