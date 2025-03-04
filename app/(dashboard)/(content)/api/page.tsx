@@ -7,8 +7,8 @@ export default function API() {
 			{/* Invisible component that handles scroll tracking */}
 			<ActiveSectionTracker />
 
-			{/* Sidebar navigation */}
-			<aside className="w-64 border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
+			{/* Sidebar navigation - Add min-width to prevent squishing */}
+			<aside className="w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
 				<nav>
 					<h2 className="text-xl mb-6 px-2">Contents</h2>
 					<ul className="space-y-5">
@@ -44,8 +44,8 @@ export default function API() {
 				</nav>
 			</aside>
 
-			{/* Main content area with sections */}
-			<main className="flex-1 p-6 md:p-8">
+			{/* Main content area - Add overflow handling */}
+			<main className="flex-1 p-6 md:p-8 overflow-x-auto">
 				{/* Map through sections to generate content */}
 				{apiSections.map((section, index) => (
 					<section key={section.id} id={section.id} data-section-index={index} className="mb-24">

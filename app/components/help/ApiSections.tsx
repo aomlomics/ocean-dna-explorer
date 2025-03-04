@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
-import Link from "next/link";
+import CodeBlock from './CodeBlock'
+import InlineCode from './InlineCode'
 
 // Define types for our content structure
 export type Subsection = {
@@ -52,60 +53,62 @@ export const apiSections: Section[] = [
 				title: "Quick Start",
 				content: (
 					<>
-						<p className="mb-4">Here are some examples of how to get data in various environments:</p>
+						<div className="mb-4">Here are some examples of how to get data in various environments:</div>
 						
-						<h4 className="font-medium mb-2">Raw JSON responses in browser:</h4>
-						<p className="mb-4">
-							Simply navigate to any API endpoint in your browser to see the raw JSON response <a href="#url-structure" className="text-primary">by building the URL</a>. There are many browser extensions which make JSON more readable in browser:
-						</p>
-						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`https://node.example.org/api/tables`}
+						<div className="mb-4">
+							Raw JSON responses in browser:
 						</div>
+						<InlineCode code="https://api.opaldata.org/api/tables" />
 						
-						<h4 className="font-medium mb-2">Python example:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`import requests`}<br />
-							{`import json`}<br />
-							<br />
-							{`# Make API request`}<br />
-							<br />
-							{`url = "https://node.example.org/api/tables"`}<br />
-							{`response = requests.get(url)`}<br />
-							<br />
-							{`# Check if request was successful`}<br />
-							<br />
-							{`if response.status_code == 200:`}<br />
-							<br />
-							{`    # Parse and print JSON response`}<br />
-							<br />
-							{`    data = response.json()`}<br />
-							{`    print(json.dumps(data, indent=2))`}<br />
-							<br />
-							{`else:`}<br />
-							{`    print(f"Error: {response.status_code}")`}
+						<div className="mb-4 mt-4">
+							Python example:
 						</div>
+						<CodeBlock 
+							language="python"
+							code={`import requests
+import json
+
+# Make API request
+url = "https://api.opaldata.org/api/project"
+response = requests.get(url)
+
+# Check if request was successful
+if response.status_code == 200:
+    # Parse JSON response
+    data = response.json()
+    results = data['result']
+    print(json.dumps(results, indent=2))
+else:
+    print(f"Error: {response.status_code}")
+    if response.content:
+        print(f"Error message: {response.json()['error']}")`}
+						/>
 						
-						<h4 className="font-medium mb-2">R example:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`library(httr)`}<br />
-							{`library(jsonlite)`}<br />
-							<br />
-							{`# Make API request`}<br />
-							<br />
-							{`url <- "https://node.example.org/api/tables"`}<br />
-							{`response <- GET(url)`}<br />
-							<br />
-							{`# Check if request was successful`}<br />
-							<br />
-							{`if (status_code(response) == 200) {`}<br />
-							{`    # Parse and print JSON response`}<br />
-							{`    data <- fromJSON(rawToChar(response$content))`}<br />
-							{`    print(data)`}<br />
-							{`} else {`}<br />
-							{`    print(paste("Error:", status_code(response)))`}<br />
-							{`}`}
+						<div className="mb-4 mt-4">
+							R example:
 						</div>
+						<CodeBlock 
+							language="r"
+							code={`library(httr)
+library(jsonlite)
+
+# Make API request
+url <- "https://api.opaldata.org/api/project"
+response <- GET(url)
+
+# Check if request was successful
+if (http_status(response)$category == "Success") {
+  # Parse JSON response
+  data <- content(response, "text") %>% fromJSON()
+  results <- data$result
+  print(results)
+} else {
+  print(paste("Error:", http_status(response)$reason))
+  if (length(content(response)) > 0) {
+    print(paste("Error message:", content(response)$error))
+  }
+}`}
+						/>
 					</>
 				)
 			}
@@ -202,10 +205,6 @@ export const apiSections: Section[] = [
 								</tbody>
 							</table>
 						</div>
-						
-						<p className="mb-4">
-							For a complete list of fields for each table, use the <code className="px-1 py-0.5 bg-base-200 rounded">/api/[table]/fields</code> endpoint.
-						</p>
 					</>
 				)
 			}
@@ -228,22 +227,15 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">API requests follow this general pattern:</p>
-						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`https://node.example.org/api/[endpoint]?[parameter]&[parameter]&...`}
+						<div className="mb-4">
+							<InlineCode code="https://node.example.org/api/[endpoint]?[parameter]&[parameter]&..." />
 						</div>
 						
-						<p className="mb-4">
-							Where:
-						</p>
+						<p className="mb-4">Where:</p>
 						<ul className="list-disc ml-6 mb-4">
-							<li><code className="px-1 py-0.5 bg-base-200 rounded">[endpoint]</code> is the name of the API endpoint (e.g., <code className="px-1 py-0.5 bg-base-200 rounded">tables</code>, <code className="px-1 py-0.5 bg-base-200 rounded">project</code>, <code className="px-1 py-0.5 bg-base-200 rounded">sample</code>)</li>
-							<li><code className="px-1 py-0.5 bg-base-200 rounded">[parameters]</code> are optional query parameters to filter, sort, or limit results</li>
+							<li>[endpoint] is the name of the API endpoint</li>
+							<li>[parameters] are optional query parameters</li>
 						</ul>
-						
-						<p className="mb-4">
-							The base URL is followed by the API endpoint and any query parameters.
-						</p>
 					</>
 				)
 			},
@@ -252,25 +244,12 @@ export const apiSections: Section[] = [
 				title: "Query Parameter Syntax",
 				content: (
 					<>
-						<p className="mb-4">
-							Query parameters are added to the URL after a question mark (<code className="px-1 py-0.5 bg-base-200 rounded">?</code>) and follow this format:
-						</p>
+						<p className="mb-4">Query parameters follow this format: parameter=value</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`parameter=value`}
+						<p className="mb-4">For example, to select specific fields:</p>
+						<div className="mb-4">
+							<InlineCode code="/api/project?fields=id,project_name" />
 						</div>
-						
-						<p className="mb-4">
-							For example, to select specific fields from a table:
-						</p>
-						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`/api/project?fields=id,project_name`}
-						</div>
-						
-						<p className="mb-4">
-							This requests only the <code className="px-1 py-0.5 bg-base-200 rounded">id</code> and <code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> fields from the project table.
-						</p>
 					</>
 				)
 			},
@@ -279,21 +258,10 @@ export const apiSections: Section[] = [
 				title: "Multiple Parameters",
 				content: (
 					<>
-						<p className="mb-4">
-							You can combine multiple parameters using an ampersand (<code className="px-1 py-0.5 bg-base-200 rounded">&</code>):
-						</p>
-						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`/api/project?fields=id,project_name&limit=10`}
+						<p className="mb-4">Combine multiple parameters using an ampersand:</p>
+						<div className="mb-4">
+							<InlineCode code="/api/project?fields=id,project_name&limit=10" />
 						</div>
-						
-						<p className="mb-4">
-							This example requests only the <code className="px-1 py-0.5 bg-base-200 rounded">id</code> and <code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> fields and limits the results to 10 records.
-						</p>
-						
-						<p className="mb-4">
-							Parameters can be combined in any order to create complex queries.
-						</p>
 					</>
 				)
 			},
@@ -305,18 +273,18 @@ export const apiSections: Section[] = [
 						<p className="mb-4">Here are some example URLs to help you understand query construction:</p>
 						
 						<h4 className="font-medium mb-2">Basic query:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`/api/project?fields=id,project_name`}
+						<div className="mb-4">
+							<InlineCode code="/api/project?fields=id,project_name" />
 						</div>
 						
 						<h4 className="font-medium mb-2">With relations:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`/api/project?fields=id,project_name&relations=samples`}
+						<div className="mb-4">
+							<InlineCode code="/api/project?fields=id,project_name&relations=samples" />
 						</div>
 						
 						<h4 className="font-medium mb-2">With filtering:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`/api/project?project_name=Gomecc4&limit=5`}
+						<div className="mb-4">
+							<InlineCode code="/api/project?project_name=Gomecc4&limit=5" />
 						</div>
 						
 						<p className="mb-4">
@@ -343,34 +311,39 @@ export const apiSections: Section[] = [
 				title: "Get All Tables",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Endpoint:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/tables</code>
-						</p>
+						<div className="mb-4">
+							Endpoint: /api/tables
+						</div>
 						
 						<p className="mb-4">
 							Returns a list of all available tables in the database. Use this to discover what data is available through the API.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/tables</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="https://api.opaldata.org/api/tables" />
+						</div>
 						
-						<p className="mb-4">
-							<strong>Example Response:</strong>
-						</p>
+						<div className="mb-4">
+							Example Response:
+						</div>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": [
     "project",
     "sample",
+    "assay",
+    "library",
     "analysis",
+    "occurrence",
     "feature",
+    "assignment",
     "taxonomy"
   ]
 }`}
-						</div>
+						/>
 					</>
 				)
 			},
@@ -379,33 +352,49 @@ export const apiSections: Section[] = [
 				title: "Get Table Fields",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Endpoint:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/[table]/fields</code>
-						</p>
-						
-						<p className="mb-4">
-							Returns a list of all fields available for a specific table, including their data types.
-						</p>
-						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project/fields</code>
-						</p>
-						
-						<p className="mb-4">
-							<strong>Example Response:</strong>
-						</p>
-						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
-  "message": "Success",
-  "result": {
-    "id": { "type": "number" },
-    "project_name": { "type": "string" },
-    "description": { "type": "string" },
-    "created_at": { "type": "date" }
-  }
-}`}
+						<div className="mb-4">
+							Endpoint: /api/[table]/fields
 						</div>
+						
+						<div className="mb-4 mt-4">
+							Example URL: <InlineCode code="/api/project" />
+						</div>
+						
+						<div className="mb-4">
+							Example Response:
+						</div>
+						<CodeBlock 
+							language="json"
+							code={`{
+  "message": "Success",
+  "result": [{
+    "id": 1,
+    "project_id": "noaa-aoml-gomecc4",
+    "userId": "user_2de7fXfAmCCpbB6yr6PbK0Esc9f",
+    "dateSubmitted": "2025-03-03T16:26:52.455Z",
+    "recordedBy": "Luke Thompson",
+    "recordedByID": "https://orcid.org/0000-0002-3911-1280",
+    "project_contact": "Luke Thompson",
+    "institution": "NOAA/AOML",
+    "institutionID": "https://www.aoml.noaa.gov/omics",
+    "project_name": "eDNA from Gulf of Mexico Ecosystems and Carbon Cruise 2021 (GOMECC-4)",
+    "study_factor": "water column spatial series",
+    "detection_type": "multi taxon detection",
+    "license": "http://creativecommons.org/publicdomain/zero/1.0/legalcode",
+    "rightsHolder": "US Government",
+    "accessRights": "no rights reserved",
+    "informationWithheld": "no information withheld",
+    "dataGeneralizations": "no data generalizations",
+    "bibliographicCitation": "https://doi.org/10.1101/2024.07.30.605667",
+    "associated_resource": "http://www.earthmicrobiome.org/",
+    "mod_date": "2024-10-31T04:00:00.000Z",
+    "checkls_ver": "1.1",
+    "seq_archive": "PRJNA887898",
+    "code_repo": "https://github.com/aomlomics/gomecc",
+    "expedition_id": "GOMECC-4 (2021)"
+  }]
+}`}
+						/>
 					</>
 				)
 			},
@@ -414,35 +403,32 @@ export const apiSections: Section[] = [
 				title: "Query Table Data",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Endpoint:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/[table]</code>
-						</p>
+						<div className="mb-4">
+							Endpoint: /api/[table]
+						</div>
 						
 						<p className="mb-4">
 							Returns multiple records from a specific table. This endpoint supports various query parameters for filtering, 
 							selecting fields, including relations, and limiting results.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?fields=id,project_name&limit=5</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?fields=id,project_name" />
+						</div>
 						
-						<p className="mb-4">
-							<strong>Example Response:</strong>
-						</p>
+						<div className="mb-4">
+							Example Response:
+						</div>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": [
-    { "id": 1, "project_name": "Gulf of Mexico Metabarcoding" },
-    { "id": 2, "project_name": "Atlantic Coastal eDNA Survey" },
-    { "id": 3, "project_name": "GOMECC4" },
-    { "id": 4, "project_name": "Pacific Microbiome Initiative" },
-    { "id": 5, "project_name": "Caribbean Coral Microbiome Study" }
+    { "id": 1, "project_name": "eDNA from Gulf of Mexico Ecosystems and Carbon Cruise 2021 (GOMECC-4)" }
   ]
 }`}
-						</div>
+						/>
 					</>
 				)
 			},
@@ -451,33 +437,45 @@ export const apiSections: Section[] = [
 				title: "Get Single Record",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Endpoint:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/[table]/[id]</code>
-						</p>
+						<div className="mb-4">
+							Endpoint: /api/[table]/[id]
+						</div>
 						
-						<p className="mb-4">
+						<div className="mb-4 mt-4">
+							Example URL: <InlineCode code="http://localhost:3000/api/taxonomy/22" />
+						</div>
+						
+						<div className="mb-4 mt-4">
 							Returns a single record from a table based on its ID. This endpoint supports parameters for 
 							selecting specific fields and including related data.
-						</p>
+						</div>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project/3?fields=id,project_name,description</code>
-						</p>
+						<div className="mb-4">
+							Example Response:
+						</div>
 						
-						<p className="mb-4">
-							<strong>Example Response:</strong>
-						</p>
-						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": {
-    "id": 3,
-    "project_name": "GOMECC4",
-    "description": "Gulf of Mexico Ecosystems and Carbon Cycle Cruise 4"
+    "id": 22,
+    "taxonomy": "Eukaryota;Obazoa;Opisthokonta;Metazoa;Arthropoda;Crustacea;Maxillopoda;Centropages;Centropages_furcatus;",
+    "verbatimIdentification": "Eukaryota;Obazoa;Opisthokonta;Metazoa;Arthropoda;Crustacea;Maxillopoda;Centropages;Centropages_furcatus;",
+    "domain": null,
+    "kingdom": "Eukaryota",
+    "supergroup": "Obazoa",
+    "division": "Opisthokonta",
+    "subdivision": "Metazoa",
+    "phylum": null,
+    "class": "Arthropoda",
+    "order": "Crustacea",
+    "family": "Maxillopoda",
+    "genus": "Centropages",
+    "species": "Centropages furcatus"
   }
 }`}
-						</div>
+						/>
 					</>
 				)
 			}
@@ -499,17 +497,17 @@ export const apiSections: Section[] = [
 				title: "Field Selection",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Parameter:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">fields=field1,field2,field3</code>
-						</p>
+						<div className="mb-4">
+							Parameter: fields=field1,field2,field3
+						</div>
 						
 						<p className="mb-4">
 							Specifies which fields to include in the response. When omitted, all fields are returned.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?fields=id,project_name,dateSubmitted</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?fields=id,project_name,dateSubmitted" />
+						</div>
 						
 						<p className="mb-4">
 							This example returns only the <code className="px-1 py-0.5 bg-base-200 rounded">id</code>, <code className="px-1 py-0.5 bg-base-200 rounded">project_name</code>, and <code className="px-1 py-0.5 bg-base-200 rounded">dateSubmitted</code> fields for each project.
@@ -522,17 +520,17 @@ export const apiSections: Section[] = [
 				title: "Field Filtering",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Parameter:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">fieldName=value</code>
-						</p>
+						<div className="mb-4">
+							Parameter: fieldName=value
+						</div>
 						
 						<p className="mb-4">
 							Filters results to return only records where the specified field contains the provided value.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?project_name=Test</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?project_name=Test" />
+						</div>
 						
 						<p className="mb-4">
 							This example returns all projects where the <code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> field contains "Test".
@@ -545,18 +543,18 @@ export const apiSections: Section[] = [
 				title: "Relations",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Parameter:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">relations=relation1,relation2</code>
-						</p>
+						<div className="mb-4">
+							Parameter: relations=relation1,relation2
+						</div>
 						
 						<p className="mb-4">
 							Includes related data from other tables in the response. The relation names can be lowercase or capitalized 
 							and must be plural, separated by commas.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?relations=samples,analyses</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?relations=samples,analyses" />
+						</div>
 						
 						<p className="mb-4">
 							This example returns all projects along with their related samples and analyses. By default, only the ID 
@@ -570,17 +568,17 @@ export const apiSections: Section[] = [
 				title: "Relation Field Options",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Parameter:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">relationsAllFields=true</code> or <code className="px-1 py-0.5 bg-base-200 rounded">relationsAllFields=false</code>
-						</p>
+						<div className="mb-4">
+							Parameter: relationsAllFields=true or relationsAllFields=false
+						</div>
 						
 						<p className="mb-4">
 							Controls whether to include only the ID field on relations (default), or to include all fields.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?relations=samples&relationsAllFields=true</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?relations=samples&relationsAllFields=true" />
+						</div>
 						
 						<p className="mb-4">
 							This example returns all projects along with all fields from their related samples, not just the sample IDs.
@@ -593,18 +591,18 @@ export const apiSections: Section[] = [
 				title: "ID Filtering",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Parameter:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">ids=1,2,4,7</code>
-						</p>
+						<div className="mb-4">
+							Parameter: ids=1,2,4,7
+						</div>
 						
 						<p className="mb-4">
 							Filters results to return only records with the specified IDs. IDs must be numbers greater than 0, 
 							separated by commas.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?ids=1,2,3</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?ids=1,2,3" />
+						</div>
 						
 						<p className="mb-4">
 							This example returns only projects with IDs 1, 2, and 3.
@@ -617,17 +615,19 @@ export const apiSections: Section[] = [
 				title: "Result Limiting",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Parameter:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">limit=number</code>
-						</p>
+						<div className="mb-4">
+							Parameter: limit=number
+						</div>
 						
 						<p className="mb-4">
 							Limits the number of results returned. Must be a positive number.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?limit=20</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <span className="inline-block" style={{minWidth: 'auto'}}>
+								<InlineCode code="/api/project?limit=20" />
+							</span>
+						</div>
 						
 						<p className="mb-4">
 							This example limits the results to 20 projects.
@@ -653,27 +653,28 @@ export const apiSections: Section[] = [
 				title: "Basic Query",
 				content: (
 					<>
-						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?fields=id,project_name</code>
-						</p>
+						<div className="mb-4">
+							Example URL: <InlineCode code="/api/project?fields=id,project_name" />
+						</div>
 						
 						<p className="mb-4">
 							This simple query returns just the ID and name of all projects.
 						</p>
 						
-						<p className="mb-4">
-							<strong>Example Response:</strong>
-						</p>
+						<div className="mb-4">
+							Example Response:
+						</div>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": [
     { "id": 1, "project_name": "Gulf of Mexico Metabarcoding" },
     { "id": 2, "project_name": "Atlantic Coastal eDNA Survey" }
   ]
 }`}
-						</div>
+						/>
 					</>
 				)
 			},
@@ -683,7 +684,7 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?relations=samples&relationsAllFields=true</code>
+							Example URL: <InlineCode code="/api/project?relations=samples&relationsAllFields=true" />
 						</p>
 						
 						<p className="mb-4">
@@ -691,11 +692,12 @@ export const apiSections: Section[] = [
 						</p>
 						
 						<p className="mb-4">
-							<strong>Example Response:</strong>
+							Example Response:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": [
     {
@@ -719,7 +721,7 @@ export const apiSections: Section[] = [
     }
   ]
 }`}
-						</div>
+						/>
 					</>
 				)
 			},
@@ -729,7 +731,7 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?project_name=Test&institution=University</code>
+							Example URL: <InlineCode code="/api/project?project_name=Test&institution=University" />
 						</p>
 						
 						<p className="mb-4">
@@ -737,11 +739,12 @@ export const apiSections: Section[] = [
 						</p>
 						
 						<p className="mb-4">
-							<strong>Example Response:</strong>
+							Example Response:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": [
     {
@@ -752,7 +755,7 @@ export const apiSections: Section[] = [
     }
   ]
 }`}
-						</div>
+						/>
 					</>
 				)
 			},
@@ -762,7 +765,7 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project?fields=id,project_name&relations=samples&limit=5</code>
+							Example URL: <InlineCode code="/api/project?fields=id,project_name&relations=samples&limit=5" />
 						</p>
 						
 						<p className="mb-4">
@@ -770,11 +773,12 @@ export const apiSections: Section[] = [
 						</p>
 						
 						<p className="mb-4">
-							<strong>Example Response:</strong>
+							Example Response:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": [
     {
@@ -795,7 +799,7 @@ export const apiSections: Section[] = [
     }
   ]
 }`}
-						</div>
+						/>
 					</>
 				)
 			},
@@ -805,7 +809,7 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							<strong>Example URL:</strong> <code className="px-1 py-0.5 bg-base-200 rounded">/api/project/5?fields=id,project_name&relations=samples</code>
+							Example URL: <InlineCode code="/api/project/5?fields=id,project_name&relations=samples" />
 						</p>
 						
 						<p className="mb-4">
@@ -813,11 +817,12 @@ export const apiSections: Section[] = [
 						</p>
 						
 						<p className="mb-4">
-							<strong>Example Response:</strong>
+							Example Response:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-							{`{
+						<CodeBlock 
+							language="json"
+							code={`{
   "message": "Success",
   "result": {
     "id": 5,
@@ -829,7 +834,7 @@ export const apiSections: Section[] = [
     ]
   }
 }`}
-						</div>
+						/>
 					</>
 				)
 			}
