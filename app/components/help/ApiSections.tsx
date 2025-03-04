@@ -34,15 +34,15 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							The NODE API allows you to access all available data in the database through simple HTTP requests.
-							The API is designed to be simple, consistent, and easy to use, returning responses in JSON format.
+							NODE provides a RESTful API allows you to access all available data in the database through HTTP requests.
+							The API has several <a href="#api-endpoints" className="text-primary">endpoints</a> and <a href="#query-parameter-syntax" className="text-primary">parameters</a>, allowing you to parse through our data with flexible queries.
 						</p>
 						<p className="mb-4">
-							You can use this API to query projects, samples, analyses, features, and taxonomic information
+							You can use this API to query the entire database for projects, samples, analyses, features, and taxonomic information
 							for integration into your own applications, data analysis workflows, or visualizations.
 						</p>
 						<p className="mb-4">
-							The API is public and requires no authentication or API keys to use.
+							The API is public and requires no authentication or API keys to use. GET requests are the only type supported.
 						</p>
 					</>
 				)
@@ -52,25 +52,59 @@ export const apiSections: Section[] = [
 				title: "Quick Start",
 				content: (
 					<>
-						<p className="mb-4">Here are quick examples for accessing the API:</p>
+						<p className="mb-4">Here are some examples of how to get data in various environments:</p>
 						
-						<h4 className="font-medium mb-2">Viewing JSON in browser:</h4>
+						<h4 className="font-medium mb-2">Raw JSON responses in browser:</h4>
 						<p className="mb-4">
-							Simply navigate to any API endpoint in your browser to see the raw JSON response:
-							<br />
-							<code className="px-2 py-1 bg-base-200 rounded">https://node.example.org/api/tables</code>
+							Simply navigate to any API endpoint in your browser to see the raw JSON response <a href="#url-structure" className="text-primary">by building the URL</a>. There are many browser extensions which make JSON more readable in browser:
 						</p>
 						
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
+							{`https://node.example.org/api/tables`}
+						</div>
+						
 						<h4 className="font-medium mb-2">Python example:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
-							{`# Python example`}<br />
-							{`# Will add actual implementation later`}
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
+							{`import requests`}<br />
+							{`import json`}<br />
+							<br />
+							{`# Make API request`}<br />
+							<br />
+							{`url = "https://node.example.org/api/tables"`}<br />
+							{`response = requests.get(url)`}<br />
+							<br />
+							{`# Check if request was successful`}<br />
+							<br />
+							{`if response.status_code == 200:`}<br />
+							<br />
+							{`    # Parse and print JSON response`}<br />
+							<br />
+							{`    data = response.json()`}<br />
+							{`    print(json.dumps(data, indent=2))`}<br />
+							<br />
+							{`else:`}<br />
+							{`    print(f"Error: {response.status_code}")`}
 						</div>
 						
 						<h4 className="font-medium mb-2">R example:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
-							{`# R example`}<br />
-							{`# Will add actual implementation later`}
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
+							{`library(httr)`}<br />
+							{`library(jsonlite)`}<br />
+							<br />
+							{`# Make API request`}<br />
+							<br />
+							{`url <- "https://node.example.org/api/tables"`}<br />
+							{`response <- GET(url)`}<br />
+							<br />
+							{`# Check if request was successful`}<br />
+							<br />
+							{`if (status_code(response) == 200) {`}<br />
+							{`    # Parse and print JSON response`}<br />
+							{`    data <- fromJSON(rawToChar(response$content))`}<br />
+							{`    print(data)`}<br />
+							{`} else {`}<br />
+							{`    print(paste("Error:", status_code(response)))`}<br />
+							{`}`}
 						</div>
 					</>
 				)
@@ -83,8 +117,9 @@ export const apiSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					Understanding the database schema is essential for effectively querying the API. 
-					This section provides an overview of the tables and their relationships.
+					This section shows the relationships between tables in the database, and what fields are available for each table. 
+					This will help you effectively <a href="#relations" className="text-primary">query relations</a> and 
+					<a href="#query-parameter-syntax" className="text-primary"> filter by fields</a>.
 				</p>
 			</>
 		),
@@ -94,15 +129,16 @@ export const apiSections: Section[] = [
 				title: "Entity Relationship Diagram",
 				content: (
 					<>
-						<p className="mb-4">The following diagram shows the relationships between tables in the database:</p>
+						<p className="mb-4">
+							The following diagram shows the relationships between tables in the database:
+						</p>
 						
 						<div className="border p-4 rounded-md mb-4 bg-base-200 text-center">
 							{`<mermaid diagram here>`}
 						</div>
 						
 						<p className="mb-4">
-							This diagram shows how different entities relate to each other. Understanding these relationships 
-							will help you construct more effective queries, especially when using the <code className="px-1 py-0.5 bg-base-200 rounded">relations</code> parameter.
+							Use this diagram as a reference when constructing queries with the <a href="#relations" className="text-primary">relations</a> parameter.
 						</p>
 					</>
 				)
@@ -193,8 +229,8 @@ export const apiSections: Section[] = [
 					<>
 						<p className="mb-4">API requests follow this general pattern:</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
-							{`https://node.example.org/api/[endpoint]?[parameters]`}
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
+							{`https://node.example.org/api/[endpoint]?[parameter]&[parameter]&...`}
 						</div>
 						
 						<p className="mb-4">
@@ -220,7 +256,7 @@ export const apiSections: Section[] = [
 							Query parameters are added to the URL after a question mark (<code className="px-1 py-0.5 bg-base-200 rounded">?</code>) and follow this format:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`parameter=value`}
 						</div>
 						
@@ -228,7 +264,7 @@ export const apiSections: Section[] = [
 							For example, to select specific fields from a table:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`/api/project?fields=id,project_name`}
 						</div>
 						
@@ -247,7 +283,7 @@ export const apiSections: Section[] = [
 							You can combine multiple parameters using an ampersand (<code className="px-1 py-0.5 bg-base-200 rounded">&</code>):
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`/api/project?fields=id,project_name&limit=10`}
 						</div>
 						
@@ -269,17 +305,17 @@ export const apiSections: Section[] = [
 						<p className="mb-4">Here are some example URLs to help you understand query construction:</p>
 						
 						<h4 className="font-medium mb-2">Basic query:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`/api/project?fields=id,project_name`}
 						</div>
 						
 						<h4 className="font-medium mb-2">With relations:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`/api/project?fields=id,project_name&relations=samples`}
 						</div>
 						
 						<h4 className="font-medium mb-2">With filtering:</h4>
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`/api/project?project_name=Gomecc4&limit=5`}
 						</div>
 						
@@ -323,7 +359,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -359,7 +395,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": {
@@ -395,7 +431,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -432,7 +468,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": {
@@ -629,7 +665,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -658,7 +694,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -704,7 +740,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -737,7 +773,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -780,7 +816,7 @@ export const apiSections: Section[] = [
 							<strong>Example Response:</strong>
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": {
@@ -819,7 +855,7 @@ export const apiSections: Section[] = [
 							Successful API responses have a consistent structure:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
   "result": [
@@ -855,7 +891,7 @@ export const apiSections: Section[] = [
 							Error responses follow this structure:
 						</p>
 						
-						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Error",
   "error": "Description of what went wrong"
