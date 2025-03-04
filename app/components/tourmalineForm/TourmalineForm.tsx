@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 //import { getRemoteUrl } from '@/app/helpers/utils';
 import { serialize } from "object-to-formdata";
-import InfoButton from "@/app/components/tourmalineForm/InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 import { schema, SchemaData } from "@/app/components/tourmalineForm/schema";
 
 import DenoiseMethodTab from "@/app/components/tourmalineForm/FormTabs/DenoiseMethodTab";

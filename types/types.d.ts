@@ -1,10 +1,11 @@
-import projectSubmitAction from "@/app/helpers/actions/projectSubmit";
+import projectSubmitAction from "@/app/helpers/actions/project/projectSubmit";
+import projectEditAction from "@/app/helpers/actions/project/projectEdit";
 import analysisSubmitAction from "@/app/helpers/actions/analysis/submit/analysisSubmit";
-import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
-
+import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
 import analysisDeleteAction from "@/app/helpers/actions/analysis/delete/analysisDelete";
+import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubmit";
 import assignDeleteAction from "@/app/helpers/actions/analysis/delete/assignDelete";
+import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
 
 export type SubmitAction =
 	| typeof projectSubmitAction
@@ -13,6 +14,8 @@ export type SubmitAction =
 	| typeof occSubmitAction;
 
 export type DeleteAction = typeof analysisDeleteAction | typeof assignDeleteAction;
+
+export type EditAction = typeof analysisEditAction | typeof projectEditAction;
 
 export type SubmitActionReturn = Promise<{
 	message: string;

@@ -6,6 +6,9 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
+import SubmissionEditButton from "@/app/components/SubmissionEditButton";
+import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
+import projectEditAction from "@/app/helpers/actions/project/projectEdit";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -82,12 +85,21 @@ export default async function MySubmissions() {
 												>
 													{proj.project_id}
 												</Link>
-												<SubmissionDeleteButton
-													field="project_id"
-													value={proj.project_id}
-													action={projectDeleteAction}
-													associatedAnalyses={analysesMap[proj.project_id] || []}
-												/>
+												<div className="flex gap-3">
+													<SubmissionEditButton
+														table="project"
+														titleField="project_id"
+														data={proj}
+														action={projectEditAction}
+														noDisplay={["id", "userId", "dateSubmitted"]}
+													/>
+													<SubmissionDeleteButton
+														field="project_id"
+														value={proj.project_id}
+														action={projectDeleteAction}
+														associatedAnalyses={analysesMap[proj.project_id] || []}
+													/>
+												</div>
 											</div>
 										))}
 									</div>
@@ -134,11 +146,21 @@ export default async function MySubmissions() {
 												>
 													{a.analysis_run_name}
 												</Link>
-												<SubmissionDeleteButton
-													field={"analysis_run_name"}
-													value={a.analysis_run_name}
-													action={analysisDeleteAction}
-												/>
+												<div className="flex gap-3">
+													<SubmissionEditButton
+														table="analysis"
+														titleField="analysis_run_name"
+														data={a}
+														action={analysisEditAction}
+														noDisplay={["id", "userId", "dateSubmitted"]}
+														noEdit={["project_id", "assay_name"]}
+													/>
+													<SubmissionDeleteButton
+														field="analysis_run_name"
+														value={a.analysis_run_name}
+														action={analysisDeleteAction}
+													/>
+												</div>
 											</div>
 										))}
 									</div>

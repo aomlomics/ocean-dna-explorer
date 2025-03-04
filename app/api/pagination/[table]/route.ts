@@ -2,6 +2,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@prisma/client";
 
+//TODO: convert to server action
 export async function GET(request: Request, { params }: { params: Promise<{ table: string }> }) {
 	const { table } = await params;
 
