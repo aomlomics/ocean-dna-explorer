@@ -126,7 +126,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 		}
 
 		const project = ProjectOptionalDefaultsSchema.parse(
-			{ ...projectCol, userId: userId, dateSubmitted: new Date() },
+			{ ...projectCol, userId: userId },
 			{
 				errorMap: (error, ctx) => {
 					return { message: `ProjectSchema: ${ctx.defaultError}` };

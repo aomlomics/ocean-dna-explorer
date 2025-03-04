@@ -10,6 +10,7 @@ type ProjSampleAvgLocs = {
 	id: number;
 };
 
+//TODO: convert to server action
 export async function GET(request: Request) {
 	//maps enum to only its numeric values, discarding the string values
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
