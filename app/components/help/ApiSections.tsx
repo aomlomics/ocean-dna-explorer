@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
-import CodeBlock from './CodeBlock'
-import InlineCode from './InlineCode'
-
+import CodeBlock from "./CodeBlock";
+import InlineCode from "./InlineCode";
+import SchemaDisplay from "../SchemaDisplay";
 // Define types for our content structure
 export type Subsection = {
 	id: string; // Used for anchor links and React keys
@@ -23,7 +23,7 @@ export const apiSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					The NODE API provides programmatic access to marine genomic data. This documentation will help you understand 
+					The NODE API provides programmatic access to marine genomic data. This documentation will help you understand
 					how to use the API to query and retrieve data from the NODE platform.
 				</p>
 			</>
@@ -36,14 +36,23 @@ export const apiSections: Section[] = [
 					<>
 						<p className="mb-4">
 							NODE provides a RESTful API allows you to access all available data in the database through HTTP requests.
-							The API has several <a href="#api-endpoints" className="text-primary">endpoints</a> and <a href="#query-parameter-syntax" className="text-primary">parameters</a>, allowing you to parse through our data with flexible queries.
+							The API has several{" "}
+							<a href="#api-endpoints" className="text-primary">
+								endpoints
+							</a>{" "}
+							and{" "}
+							<a href="#query-parameter-syntax" className="text-primary">
+								parameters
+							</a>
+							, allowing you to parse through our data with flexible queries.
 						</p>
 						<p className="mb-4">
-							You can use this API to query the entire database for projects, samples, analyses, features, and taxonomic information
-							for integration into your own applications, data analysis workflows, or visualizations.
+							You can use this API to query the entire database for projects, samples, analyses, features, and taxonomic
+							information for integration into your own applications, data analysis workflows, or visualizations.
 						</p>
 						<p className="mb-4">
-							The API is public and requires no authentication or API keys to use. GET requests are the only type supported.
+							The API is public and requires no authentication or API keys to use. GET requests are the only type
+							supported.
 						</p>
 					</>
 				)
@@ -54,40 +63,42 @@ export const apiSections: Section[] = [
 				content: (
 					<>
 						<div className="mb-4">Here are some examples of how to get data in various environments:</div>
-						
-						<div className="mb-4">
-							Raw JSON responses in browser:
-						</div>
+
+						<div className="mb-4">Raw JSON responses in browser:</div>
 						<InlineCode code="https://api.opaldata.org/api/tables" />
-						
-						<div className="mb-4 mt-4">
-							Python example:
-						</div>
-						<CodeBlock 
+
+						<div className="mb-4 mt-4">Python (+ Pandas) example:</div>
+						<CodeBlock
 							language="python"
 							code={`import requests
 import json
+import pandas as pd
 
-# Make API request
-url = "https://api.opaldata.org/api/project"
+# Make API request to desired endpoint
+url = "http://localhost:3000/api/project"
 response = requests.get(url)
 
 # Check if request was successful
 if response.status_code == 200:
-    # Parse JSON response
+    # Parse JSON response and print it
     data = response.json()
     results = data['result']
+    print("JSON Response:")
     print(json.dumps(results, indent=2))
+
+    # Convert to DataFrame and print it
+    df = pd.DataFrame(results)
+    print("--------------------")
+    print("DataFrame:")
+    print(df)
 else:
     print(f"Error: {response.status_code}")
     if response.content:
         print(f"Error message: {response.json()['error']}")`}
 						/>
-						
-						<div className="mb-4 mt-4">
-							R example:
-						</div>
-						<CodeBlock 
+
+						<div className="mb-4 mt-4">R example:</div>
+						<CodeBlock
 							language="r"
 							code={`library(httr)
 library(jsonlite)
@@ -120,9 +131,17 @@ if (http_status(response)$category == "Success") {
 		content: (
 			<>
 				<p className="mb-4">
-					This section shows the relationships between tables in the database, and what fields are available for each table. 
-					This will help you effectively <a href="#relations" className="text-primary">query relations</a> and 
-					<a href="#query-parameter-syntax" className="text-primary"> filter by fields</a>.
+					This section shows the relationships between tables in the database, and what fields are available for each
+					table. This will help you effectively{" "}
+					<a href="#relations" className="text-primary">
+						query relations
+					</a>{" "}
+					and
+					<a href="#query-parameter-syntax" className="text-primary">
+						{" "}
+						filter by fields
+					</a>
+					.
 				</p>
 			</>
 		),
@@ -132,16 +151,16 @@ if (http_status(response)$category == "Success") {
 				title: "Entity Relationship Diagram",
 				content: (
 					<>
+						<p className="mb-4">The following diagram shows the relationships between tables in the database:</p>
+
+						<div className="border p-4 rounded-md mb-4 bg-base-200 text-center"></div>
+
 						<p className="mb-4">
-							The following diagram shows the relationships between tables in the database:
-						</p>
-						
-						<div className="border p-4 rounded-md mb-4 bg-base-200 text-center">
-							{`<mermaid diagram here>`}
-						</div>
-						
-						<p className="mb-4">
-							Use this diagram as a reference when constructing queries with the <a href="#relations" className="text-primary">relations</a> parameter.
+							Use this diagram as a reference when constructing queries with the{" "}
+							<a href="#relations" className="text-primary">
+								relations
+							</a>{" "}
+							parameter.
 						</p>
 					</>
 				)
@@ -152,59 +171,10 @@ if (http_status(response)$category == "Success") {
 				content: (
 					<>
 						<p className="mb-4">
-							The NODE database consists of several tables that represent different types of data. 
-							Each table has a set of fields that can be queried and filtered.
+							The dropdown menus below show the fields available for each table in NODE. You can use this information in
+							your API requests to query and filter on specific fields.
 						</p>
-						
-						<h4 className="font-medium mt-6 mb-2">Projects Table</h4>
-						<div className="overflow-x-auto mb-6">
-							<table className="table table-zebra w-full">
-								<thead>
-									<tr>
-										<th>Field</th>
-										<th>Type</th>
-										<th>Description</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td>id</td>
-										<td>integer</td>
-										<td>Unique identifier for the project</td>
-									</tr>
-									<tr>
-										<td>project_name</td>
-										<td>string</td>
-										<td>Name of the project</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-						
-						<h4 className="font-medium mt-6 mb-2">Samples Table</h4>
-						<div className="overflow-x-auto mb-6">
-							<table className="table table-zebra w-full">
-								<thead>
-									<tr>
-										<th>Field</th>
-										<th>Type</th>
-										<th>Description</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td>id</td>
-										<td>integer</td>
-										<td>Unique identifier for the sample</td>
-									</tr>
-									<tr>
-										<td>sample_id</td>
-										<td>string</td>
-										<td>External identifier for the sample</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
+						<SchemaDisplay />
 					</>
 				)
 			}
@@ -227,10 +197,12 @@ if (http_status(response)$category == "Success") {
 				content: (
 					<>
 						<p className="mb-4">API requests follow this general pattern:</p>
-						<div className="mb-4">
-							<InlineCode code="https://node.example.org/api/[endpoint]?[parameter]&[parameter]&..." />
+						<div className="p-4 my-6 bg-base-200 border-l-4 border-primary rounded-md shadow-sm">
+							<div className="text-xl break-all">
+								https://node.example.org/api/[endpoint]?[parameter]&[parameter]&...
+							</div>
 						</div>
-						
+
 						<p className="mb-4">Where:</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>[endpoint] is the name of the API endpoint</li>
@@ -245,7 +217,7 @@ if (http_status(response)$category == "Success") {
 				content: (
 					<>
 						<p className="mb-4">Query parameters follow this format: parameter=value</p>
-						
+
 						<p className="mb-4">For example, to select specific fields:</p>
 						<div className="mb-4">
 							<InlineCode code="/api/project?fields=id,project_name" />
@@ -271,24 +243,25 @@ if (http_status(response)$category == "Success") {
 				content: (
 					<>
 						<p className="mb-4">Here are some example URLs to help you understand query construction:</p>
-						
+
 						<h4 className="font-medium mb-2">Basic query:</h4>
 						<div className="mb-4">
 							<InlineCode code="/api/project?fields=id,project_name" />
 						</div>
-						
+
 						<h4 className="font-medium mb-2">With relations:</h4>
 						<div className="mb-4">
 							<InlineCode code="/api/project?fields=id,project_name&relations=samples" />
 						</div>
-						
+
 						<h4 className="font-medium mb-2">With filtering:</h4>
 						<div className="mb-4">
 							<InlineCode code="/api/project?project_name=Gomecc4&limit=5" />
 						</div>
-						
+
 						<p className="mb-4">
-							These examples demonstrate different ways to query the API. You can adjust them to suit your specific needs.
+							These examples demonstrate different ways to query the API. You can adjust them to suit your specific
+							needs.
 						</p>
 					</>
 				)
@@ -300,9 +273,7 @@ if (http_status(response)$category == "Success") {
 		title: "API Endpoints",
 		content: (
 			<>
-				<p className="mb-4">
-					This section documents all available API endpoints and their functionality.
-				</p>
+				<p className="mb-4">This section documents all available API endpoints and their functionality.</p>
 			</>
 		),
 		subsections: [
@@ -311,23 +282,20 @@ if (http_status(response)$category == "Success") {
 				title: "Get All Tables",
 				content: (
 					<>
-						<div className="mb-4">
-							Endpoint: /api/tables
-						</div>
-						
+						<div className="mb-4">Endpoint: /api/tables</div>
+
 						<p className="mb-4">
-							Returns a list of all available tables in the database. Use this to discover what data is available through the API.
+							Returns a list of all available tables in the database. Use this to discover what data is available
+							through the API.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="https://api.opaldata.org/api/tables" />
 						</div>
-						
-						<div className="mb-4">
-							Example Response:
-						</div>
-						
-						<CodeBlock 
+
+						<div className="mb-4">Example Response:</div>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -352,18 +320,14 @@ if (http_status(response)$category == "Success") {
 				title: "Get Table Fields",
 				content: (
 					<>
-						<div className="mb-4">
-							Endpoint: /api/[table]/fields
-						</div>
-						
+						<div className="mb-4">Endpoint: /api/[table]/fields</div>
+
 						<div className="mb-4 mt-4">
 							Example URL: <InlineCode code="/api/project" />
 						</div>
-						
-						<div className="mb-4">
-							Example Response:
-						</div>
-						<CodeBlock 
+
+						<div className="mb-4">Example Response:</div>
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -403,24 +367,20 @@ if (http_status(response)$category == "Success") {
 				title: "Query Table Data",
 				content: (
 					<>
-						<div className="mb-4">
-							Endpoint: /api/[table]
-						</div>
-						
+						<div className="mb-4">Endpoint: /api/[table]</div>
+
 						<p className="mb-4">
-							Returns multiple records from a specific table. This endpoint supports various query parameters for filtering, 
-							selecting fields, including relations, and limiting results.
+							Returns multiple records from a specific table. This endpoint supports various query parameters for
+							filtering, selecting fields, including relations, and limiting results.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?fields=id,project_name" />
 						</div>
-						
-						<div className="mb-4">
-							Example Response:
-						</div>
-						
-						<CodeBlock 
+
+						<div className="mb-4">Example Response:</div>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -437,24 +397,20 @@ if (http_status(response)$category == "Success") {
 				title: "Get Single Record",
 				content: (
 					<>
-						<div className="mb-4">
-							Endpoint: /api/[table]/[id]
-						</div>
-						
+						<div className="mb-4">Endpoint: /api/[table]/[id]</div>
+
 						<div className="mb-4 mt-4">
 							Example URL: <InlineCode code="http://localhost:3000/api/taxonomy/22" />
 						</div>
-						
+
 						<div className="mb-4 mt-4">
-							Returns a single record from a table based on its ID. This endpoint supports parameters for 
-							selecting specific fields and including related data.
+							Returns a single record from a table based on its ID. This endpoint supports parameters for selecting
+							specific fields and including related data.
 						</div>
-						
-						<div className="mb-4">
-							Example Response:
-						</div>
-						
-						<CodeBlock 
+
+						<div className="mb-4">Example Response:</div>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -487,7 +443,8 @@ if (http_status(response)$category == "Success") {
 		content: (
 			<>
 				<p className="mb-4">
-					Query parameters allow you to customize your API requests. This section details all available parameters and how to use them.
+					Query parameters allow you to customize your API requests. This section details all available parameters and
+					how to use them.
 				</p>
 			</>
 		),
@@ -497,20 +454,20 @@ if (http_status(response)$category == "Success") {
 				title: "Field Selection",
 				content: (
 					<>
-						<div className="mb-4">
-							Parameter: fields=field1,field2,field3
-						</div>
-						
+						<div className="mb-4">Parameter: fields=field1,field2,field3</div>
+
 						<p className="mb-4">
 							Specifies which fields to include in the response. When omitted, all fields are returned.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?fields=id,project_name,dateSubmitted" />
 						</div>
-						
+
 						<p className="mb-4">
-							This example returns only the <code className="px-1 py-0.5 bg-base-200 rounded">id</code>, <code className="px-1 py-0.5 bg-base-200 rounded">project_name</code>, and <code className="px-1 py-0.5 bg-base-200 rounded">dateSubmitted</code> fields for each project.
+							This example returns only the <code className="px-1 py-0.5 bg-base-200 rounded">id</code>,{" "}
+							<code className="px-1 py-0.5 bg-base-200 rounded">project_name</code>, and{" "}
+							<code className="px-1 py-0.5 bg-base-200 rounded">dateSubmitted</code> fields for each project.
 						</p>
 					</>
 				)
@@ -520,20 +477,19 @@ if (http_status(response)$category == "Success") {
 				title: "Field Filtering",
 				content: (
 					<>
-						<div className="mb-4">
-							Parameter: fieldName=value
-						</div>
-						
+						<div className="mb-4">Parameter: fieldName=value</div>
+
 						<p className="mb-4">
 							Filters results to return only records where the specified field contains the provided value.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?project_name=Test" />
 						</div>
-						
+
 						<p className="mb-4">
-							This example returns all projects where the <code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> field contains "Test".
+							This example returns all projects where the{" "}
+							<code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> field contains "Test".
 						</p>
 					</>
 				)
@@ -543,21 +499,19 @@ if (http_status(response)$category == "Success") {
 				title: "Relations",
 				content: (
 					<>
-						<div className="mb-4">
-							Parameter: relations=relation1,relation2
-						</div>
-						
+						<div className="mb-4">Parameter: relations=relation1,relation2</div>
+
 						<p className="mb-4">
-							Includes related data from other tables in the response. The relation names can be lowercase or capitalized 
-							and must be plural, separated by commas.
+							Includes related data from other tables in the response. The relation names can be lowercase or
+							capitalized and must be plural, separated by commas.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?relations=samples,analyses" />
 						</div>
-						
+
 						<p className="mb-4">
-							This example returns all projects along with their related samples and analyses. By default, only the ID 
+							This example returns all projects along with their related samples and analyses. By default, only the ID
 							field is included for related records.
 						</p>
 					</>
@@ -568,20 +522,19 @@ if (http_status(response)$category == "Success") {
 				title: "Relation Field Options",
 				content: (
 					<>
-						<div className="mb-4">
-							Parameter: relationsAllFields=true or relationsAllFields=false
-						</div>
-						
+						<div className="mb-4">Parameter: relationsAllFields=true or relationsAllFields=false</div>
+
 						<p className="mb-4">
 							Controls whether to include only the ID field on relations (default), or to include all fields.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?relations=samples&relationsAllFields=true" />
 						</div>
-						
+
 						<p className="mb-4">
-							This example returns all projects along with all fields from their related samples, not just the sample IDs.
+							This example returns all projects along with all fields from their related samples, not just the sample
+							IDs.
 						</p>
 					</>
 				)
@@ -591,22 +544,18 @@ if (http_status(response)$category == "Success") {
 				title: "ID Filtering",
 				content: (
 					<>
-						<div className="mb-4">
-							Parameter: ids=1,2,4,7
-						</div>
-						
+						<div className="mb-4">Parameter: ids=1,2,4,7</div>
+
 						<p className="mb-4">
-							Filters results to return only records with the specified IDs. IDs must be numbers greater than 0, 
+							Filters results to return only records with the specified IDs. IDs must be numbers greater than 0,
 							separated by commas.
 						</p>
-						
+
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?ids=1,2,3" />
 						</div>
-						
-						<p className="mb-4">
-							This example returns only projects with IDs 1, 2, and 3.
-						</p>
+
+						<p className="mb-4">This example returns only projects with IDs 1, 2, and 3.</p>
 					</>
 				)
 			},
@@ -615,23 +564,18 @@ if (http_status(response)$category == "Success") {
 				title: "Result Limiting",
 				content: (
 					<>
+						<div className="mb-4">Parameter: limit=number</div>
+
+						<p className="mb-4">Limits the number of results returned. Must be a positive number.</p>
+
 						<div className="mb-4">
-							Parameter: limit=number
-						</div>
-						
-						<p className="mb-4">
-							Limits the number of results returned. Must be a positive number.
-						</p>
-						
-						<div className="mb-4">
-							Example URL: <span className="inline-block" style={{minWidth: 'auto'}}>
+							Example URL:{" "}
+							<span className="inline-block" style={{ minWidth: "auto" }}>
 								<InlineCode code="/api/project?limit=20" />
 							</span>
 						</div>
-						
-						<p className="mb-4">
-							This example limits the results to 20 projects.
-						</p>
+
+						<p className="mb-4">This example limits the results to 20 projects.</p>
 					</>
 				)
 			}
@@ -656,16 +600,12 @@ if (http_status(response)$category == "Success") {
 						<div className="mb-4">
 							Example URL: <InlineCode code="/api/project?fields=id,project_name" />
 						</div>
-						
-						<p className="mb-4">
-							This simple query returns just the ID and name of all projects.
-						</p>
-						
-						<div className="mb-4">
-							Example Response:
-						</div>
-						
-						<CodeBlock 
+
+						<p className="mb-4">This simple query returns just the ID and name of all projects.</p>
+
+						<div className="mb-4">Example Response:</div>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -686,16 +626,14 @@ if (http_status(response)$category == "Success") {
 						<p className="mb-4">
 							Example URL: <InlineCode code="/api/project?relations=samples&relationsAllFields=true" />
 						</p>
-						
+
 						<p className="mb-4">
 							This query returns all projects along with complete information about their related samples.
 						</p>
-						
-						<p className="mb-4">
-							Example Response:
-						</p>
-						
-						<CodeBlock 
+
+						<p className="mb-4">Example Response:</p>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -733,16 +671,15 @@ if (http_status(response)$category == "Success") {
 						<p className="mb-4">
 							Example URL: <InlineCode code="/api/project?project_name=Test&institution=University" />
 						</p>
-						
+
 						<p className="mb-4">
-							This query returns projects where the project_name contains "Test" AND the institution contains "University".
+							This query returns projects where the project_name contains "Test" AND the institution contains
+							"University".
 						</p>
-						
-						<p className="mb-4">
-							Example Response:
-						</p>
-						
-						<CodeBlock 
+
+						<p className="mb-4">Example Response:</p>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -767,16 +704,12 @@ if (http_status(response)$category == "Success") {
 						<p className="mb-4">
 							Example URL: <InlineCode code="/api/project?fields=id,project_name&relations=samples&limit=5" />
 						</p>
-						
-						<p className="mb-4">
-							This query combines field selection, relations, and a result limit.
-						</p>
-						
-						<p className="mb-4">
-							Example Response:
-						</p>
-						
-						<CodeBlock 
+
+						<p className="mb-4">This query combines field selection, relations, and a result limit.</p>
+
+						<p className="mb-4">Example Response:</p>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -811,16 +744,14 @@ if (http_status(response)$category == "Success") {
 						<p className="mb-4">
 							Example URL: <InlineCode code="/api/project/5?fields=id,project_name&relations=samples" />
 						</p>
-						
+
 						<p className="mb-4">
 							This query retrieves a single project by ID, with selected fields and related samples.
 						</p>
-						
-						<p className="mb-4">
-							Example Response:
-						</p>
-						
-						<CodeBlock 
+
+						<p className="mb-4">Example Response:</p>
+
+						<CodeBlock
 							language="json"
 							code={`{
   "message": "Success",
@@ -856,10 +787,8 @@ if (http_status(response)$category == "Success") {
 				title: "Success Structure",
 				content: (
 					<>
-						<p className="mb-4">
-							Successful API responses have a consistent structure:
-						</p>
-						
+						<p className="mb-4">Successful API responses have a consistent structure:</p>
+
 						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Success",
@@ -868,11 +797,12 @@ if (http_status(response)$category == "Success") {
   ]
 }`}
 						</div>
-						
+
 						<p className="mb-4">
-							The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Success" for successful requests.
+							The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Success"
+							for successful requests.
 						</p>
-						
+
 						<p className="mb-4">
 							The <code className="px-1 py-0.5 bg-base-200 rounded">result</code> field will contain either:
 						</p>
@@ -880,10 +810,8 @@ if (http_status(response)$category == "Success") {
 							<li>An array of objects (for multiple results)</li>
 							<li>A single object (for single record requests)</li>
 						</ul>
-						
-						<p className="mb-4">
-							[Additional response format details coming soon]
-						</p>
+
+						<p className="mb-4">[Additional response format details coming soon]</p>
 					</>
 				)
 			},
@@ -892,28 +820,26 @@ if (http_status(response)$category == "Success") {
 				title: "Error Structure",
 				content: (
 					<>
-						<p className="mb-4">
-							Error responses follow this structure:
-						</p>
-						
+						<p className="mb-4">Error responses follow this structure:</p>
+
 						<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
 							{`{
   "message": "Error",
   "error": "Description of what went wrong"
 }`}
 						</div>
-						
+
 						<p className="mb-4">
-							The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Error" when something goes wrong.
+							The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Error"
+							when something goes wrong.
 						</p>
-						
+
 						<p className="mb-4">
-							The <code className="px-1 py-0.5 bg-base-200 rounded">error</code> field contains a human-readable description of the error.
+							The <code className="px-1 py-0.5 bg-base-200 rounded">error</code> field contains a human-readable
+							description of the error.
 						</p>
-						
-						<p className="mb-4">
-							[Additional error response details coming soon]
-						</p>
+
+						<p className="mb-4">[Additional error response details coming soon]</p>
 					</>
 				)
 			}
@@ -929,41 +855,37 @@ if (http_status(response)$category == "Success") {
 
 					<div>
 						<h4 className="font-medium mb-2">Q: Do I need an API key to use the NODE API?</h4>
-						<p>
-							A: No, the NODE API is currently open and does not require authentication or API keys.
-						</p>
+						<p>A: No, the NODE API is currently open and does not require authentication or API keys.</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: Are there rate limits for API usage?</h4>
 						<p>
-							A: While there are no strict rate limits currently in place, we ask that you be considerate with your API usage. 
-							For applications requiring high-volume requests, please contact us.
+							A: While there are no strict rate limits currently in place, we ask that you be considerate with your API
+							usage. For applications requiring high-volume requests, please contact us.
 						</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: I'm not familiar with APIs. How do I get started?</h4>
 						<p>
-							A: An API (Application Programming Interface) allows computers to talk to each other. To use our API, 
-							you'll need to make HTTP requests to our endpoints. The simplest way to start is by pasting one of our 
-							example URLs into your browser's address bar to see the raw JSON response. For more advanced usage, 
-							you can use programming languages like Python, R, or JavaScript.
+							A: An API (Application Programming Interface) allows computers to talk to each other. To use our API,
+							you'll need to make HTTP requests to our endpoints. The simplest way to start is by pasting one of our
+							example URLs into your browser's address bar to see the raw JSON response. For more advanced usage, you
+							can use programming languages like Python, R, or JavaScript.
 						</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: How do I report issues with the API?</h4>
-						<p>
-							A: Please submit any API issues through our GitHub repository's issue tracker.
-						</p>
+						<p>A: Please submit any API issues through our GitHub repository's issue tracker.</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: How do I cite data obtained through the API?</h4>
 						<p>
-							A: Please cite the NODE platform and the specific projects from which you obtained data. 
-							Each project has citation information available through the web interface.
+							A: Please cite the NODE platform and the specific projects from which you obtained data. Each project has
+							citation information available through the web interface.
 						</p>
 					</div>
 				</div>
