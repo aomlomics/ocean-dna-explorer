@@ -1,9 +1,11 @@
 import Link from "next/link";
 import UnderConstruction from "@/app/components/UnderConstruction";
+import SchemaDisplay from "@/app/components/SchemaDisplay";
 
 export default function Api() {
 	return (
 		<main className="flex flex-col grow p-8 max-w-7xl mx-auto space-y-10">
+			<SchemaDisplay />
 			{/* API Introduction Section */}
 			<section className="relative">
 				<div className="text-center space-y-6 relative z-10">

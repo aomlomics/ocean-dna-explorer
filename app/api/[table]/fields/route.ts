@@ -11,15 +11,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			.map((s) => s.toLowerCase())
 			.includes(lowercaseTable)
 	) {
-		const keys = TableToEnumSchema[lowercaseTable as keyof typeof TableToEnumSchema]._def.values;
+		const fields = TableToEnumSchema[lowercaseTable as keyof typeof TableToEnumSchema]._def.values;
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
-		for (const k of keys) {
-			const shape = TableToSchema[lowercaseTable as keyof typeof TableToSchema].shape;
-			const type = getZodType(shape[k as keyof typeof shape]);
+		const shape = TableToSchema[lowercaseTable as keyof typeof TableToSchema].shape;
+		for (const f of fields) {
+			const type = getZodType(shape[f as keyof typeof shape]);
 			if (!type.type) {
-				throw new Error(`Could not find type of ${k}.`);
+				throw new Error(`Could not find type of ${f}.`);
 			}
-			result[k] = type;
+			result[f] = type;
 		}
 
 		return Response.json({
