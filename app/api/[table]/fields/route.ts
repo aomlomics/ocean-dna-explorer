@@ -13,8 +13,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 	) {
 		const fields = TableToEnumSchema[lowercaseTable as keyof typeof TableToEnumSchema]._def.values;
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
+		const shape = TableToSchema[lowercaseTable as keyof typeof TableToSchema].shape;
 		for (const f of fields) {
-			const shape = TableToSchema[lowercaseTable as keyof typeof TableToSchema].shape;
 			const type = getZodType(shape[f as keyof typeof shape]);
 			if (!type.type) {
 				throw new Error(`Could not find type of ${f}.`);
