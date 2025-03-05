@@ -1,5 +1,6 @@
 import { apiSections } from "@/app/components/help/ApiSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
+import SchemaDisplay from "@/app/components/SchemaDisplay";
 
 export default function API() {
 	return (
