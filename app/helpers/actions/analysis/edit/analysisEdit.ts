@@ -28,14 +28,19 @@ export default async function analysisEditAction(formData: FormData) {
 				where: {
 					analysis_run_name
 				},
-				select: Array.from(formData.keys()).reduce(
-					(acc, field) => ({ ...acc, [field]: true }),
-					{}
-				) as Prisma.AnalysisSelect
+				select: {
+					userId: true,
+					...(Array.from(formData.keys()).reduce(
+						(acc, field) => ({ ...acc, [field]: true }),
+						{}
+					) as Prisma.AnalysisSelect)
+				}
 			});
 
 			if (!analysis) {
 				return `No analysis with analysis_run_name of '${analysis_run_name}' found.`;
+			} else if (userId !== analysis.userId) {
+				return "Unauthorized action. You are not the owner of this analysis.";
 			}
 
 			const edit = await tx.edit.create({
