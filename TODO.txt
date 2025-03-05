@@ -7,3 +7,4 @@ style feature page
 add more data to taxonomy page
 add more filters for explore pages
 make ALL enums actually work
+make api allow lists for all fields
