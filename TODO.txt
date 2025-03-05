@@ -1,8 +1,9 @@
-allow list of any field for filtering
-update test data
-put assays on the /assays page from https://docs.google.com/spreadsheets/d/1oo0IxREWktfN5bSqo7b3qD5olk-8VWgWCDQcf__X3hU/edit?gid=520397534#gid=520397534 (incomplete)
-page to display entire schema, including collapses for tables, required/optional fields, and their types
-potentially add default limit (1000, 10000?) to all queries
-key for map on landing page
-
-allow editing uploads (edit history)
+assays explore pages with libraries on assay page
+display edit history on project and analysis page
+update dead values
+flesh out content on help page
+make search functional
+style feature page
+add more data to taxonomy page
+add more filters for explore pages
+make ALL enums actually work

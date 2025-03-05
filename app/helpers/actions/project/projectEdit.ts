@@ -28,14 +28,19 @@ export default async function projectEditAction(formData: FormData) {
 				where: {
 					project_id
 				},
-				select: Array.from(formData.keys()).reduce(
-					(acc, field) => ({ ...acc, [field]: true }),
-					{}
-				) as Prisma.ProjectSelect
+				select: {
+					userId: true,
+					...(Array.from(formData.keys()).reduce(
+						(acc, field) => ({ ...acc, [field]: true }),
+						{}
+					) as Prisma.ProjectSelect)
+				}
 			});
 
 			if (!project) {
 				return `No project with project_id of '${project_id}' found.`;
+			} else if (userId !== project.userId) {
+				return "Unauthorized action. You are not the owner of this project.";
 			}
 
 			const edit = await tx.edit.create({
