@@ -30,6 +30,10 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name',
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
 
+export const EditScalarFieldEnumSchema = z.enum(['id','dateEdited','project_id','analysis_run_name']);
+
+export const ChangeScalarFieldEnumSchema = z.enum(['id','editId','field','oldValue','newValue']);
+
 export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
@@ -190,6 +194,7 @@ export type ProjectPartial = z.infer<typeof ProjectPartialSchema>
 
 export const ProjectOptionalDefaultsSchema = ProjectSchema.merge(z.object({
   id: z.number().int().optional(),
+  dateSubmitted: z.coerce.date().optional(),
 }))
 
 export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSchema>
@@ -537,6 +542,7 @@ export type AnalysisPartial = z.infer<typeof AnalysisPartialSchema>
 
 export const AnalysisOptionalDefaultsSchema = AnalysisSchema.merge(z.object({
   id: z.number().int().optional(),
+  dateSubmitted: z.coerce.date().optional(),
 }))
 
 export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSchema>
@@ -672,3 +678,65 @@ export const TaxonomyOptionalDefaultsSchema = TaxonomySchema.merge(z.object({
 }))
 
 export type TaxonomyOptionalDefaults = z.infer<typeof TaxonomyOptionalDefaultsSchema>
+
+/////////////////////////////////////////
+// EDIT SCHEMA
+/////////////////////////////////////////
+
+export const EditSchema = z.object({
+  id: z.number().int(),
+  dateEdited: z.coerce.date(),
+  project_id: z.string().nullish(),
+  analysis_run_name: z.string().nullish(),
+})
+
+export type Edit = z.infer<typeof EditSchema>
+
+/////////////////////////////////////////
+// EDIT PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const EditPartialSchema = EditSchema.partial()
+
+export type EditPartial = z.infer<typeof EditPartialSchema>
+
+// EDIT OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const EditOptionalDefaultsSchema = EditSchema.merge(z.object({
+  id: z.number().int().optional(),
+  dateEdited: z.coerce.date().optional(),
+}))
+
+export type EditOptionalDefaults = z.infer<typeof EditOptionalDefaultsSchema>
+
+/////////////////////////////////////////
+// CHANGE SCHEMA
+/////////////////////////////////////////
+
+export const ChangeSchema = z.object({
+  id: z.number().int(),
+  editId: z.number().int(),
+  field: z.string(),
+  oldValue: z.string(),
+  newValue: z.string(),
+})
+
+export type Change = z.infer<typeof ChangeSchema>
+
+/////////////////////////////////////////
+// CHANGE PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const ChangePartialSchema = ChangeSchema.partial()
+
+export type ChangePartial = z.infer<typeof ChangePartialSchema>
+
+// CHANGE OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const ChangeOptionalDefaultsSchema = ChangeSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type ChangeOptionalDefaults = z.infer<typeof ChangeOptionalDefaultsSchema>

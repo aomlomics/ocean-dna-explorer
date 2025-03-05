@@ -1,6 +1,6 @@
 "use client";
 
-import projectUploadAction from "@/app/helpers/actions/projectSubmit";
+import projectUploadAction from "@/app/helpers/actions/project/projectSubmit";
 import { useRouter } from "next/navigation";
 import { FormEvent, useReducer, useState } from "react";
 import ProgressCircle from "./ProgressCircle";

@@ -5,11 +5,14 @@ import {
 	AssaySchema,
 	AssignmentScalarFieldEnumSchema,
 	AssignmentSchema,
+	ChangeScalarFieldEnumSchema,
+	ChangeSchema,
+	EditScalarFieldEnumSchema,
+	EditSchema,
 	FeatureScalarFieldEnumSchema,
 	FeatureSchema,
 	LibraryScalarFieldEnumSchema,
 	LibrarySchema,
-	OccurrenceOptionalDefaultsSchema,
 	OccurrenceScalarFieldEnumSchema,
 	OccurrenceSchema,
 	ProjectScalarFieldEnumSchema,
@@ -47,7 +50,9 @@ export const TableToEnumSchema = {
 	occurrence: OccurrenceScalarFieldEnumSchema,
 	feature: FeatureScalarFieldEnumSchema,
 	assignment: AssignmentScalarFieldEnumSchema,
-	taxonomy: TaxonomyScalarFieldEnumSchema
+	taxonomy: TaxonomyScalarFieldEnumSchema,
+	edit: EditScalarFieldEnumSchema,
+	change: ChangeScalarFieldEnumSchema
 };
 
 export const TableToSchema = {
@@ -59,5 +64,7 @@ export const TableToSchema = {
 	occurrence: OccurrenceSchema,
 	feature: FeatureSchema,
 	assignment: AssignmentSchema,
-	taxonomy: TaxonomySchema
+	taxonomy: TaxonomySchema,
+	edit: EditSchema,
+	change: ChangeSchema
 };

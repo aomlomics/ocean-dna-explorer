@@ -292,11 +292,12 @@ model Project {
     id            Int      @id @default(autoincrement())
     project_id    String   @unique
     userId        String
-    dateSubmitted DateTime
+    dateSubmitted DateTime @default(now())
 
     // Relations
     Samples  Sample[]
     Analyses Analysis[]
+    Edits    Edit[]
 
     // Data
     // Project
@@ -629,7 +630,7 @@ model Analysis {
     id                Int      @id @default(autoincrement())
     analysis_run_name String   @unique
     userId            String
-    dateSubmitted     DateTime
+    dateSubmitted     DateTime @default(now())
 
     // Relations
     project_id  String
@@ -638,6 +639,7 @@ model Analysis {
     Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
     Occurrences Occurrence[]
     Assignments Assignment[]
+    Edits       Edit[]
 
     // Data
     // Bioinformatics
@@ -782,7 +784,7 @@ model Taxonomy {
     // Relations
     Assignments Assignment[]
 
-    //Data
+    // Data
     verbatimIdentification String
     domain                 String?
     kingdom                String?
@@ -795,4 +797,29 @@ model Taxonomy {
     family                 String?
     genus                  String?
     species                String?
+}
+
+model Edit {
+    id         Int      @id @default(autoincrement())
+    dateEdited DateTime @default(now())
+
+    // Relations
+    project_id        String?
+    Project           Project?  @relation(fields: [project_id], references: [project_id])
+    analysis_run_name String?
+    Analysis          Analysis? @relation(fields: [analysis_run_name], references: [analysis_run_name])
+    Changes           Change[]
+}
+
+model Change {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    editId Int
+    Edit   Edit @relation(fields: [editId], references: [id])
+
+    // Data
+    field    String
+    oldValue String
+    newValue String
 }
