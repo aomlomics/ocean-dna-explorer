@@ -85,3 +85,23 @@ export const TableToSchema = {
 	edit: EditSchema,
 	change: ChangeSchema
 };
+
+export const EXPLORE_ROUTES = {
+	project: "Projects",
+	sample: "Samples",
+	assay: "Assays",
+	// library: {
+	// 	name: "Libraries",
+	// 	description:
+	// 		"Sequencing preparation details for each Sample-Assay combination, including barcoding approach, sequencing platform, and adapter information."
+	// },
+	analysis: "Analyses",
+	// occurrence: {
+	// 	name: "Occurrences",
+	// 	description:
+	// 		"Individual detection records linking samples to specific DNA sequences (Features), including their quantified abundance."
+	// },
+	feature: "Features",
+	// assignment: { name: "Assignments", description: "Some description." },
+	taxonomy: "Taxonomies"
+};
