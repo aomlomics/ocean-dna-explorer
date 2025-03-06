@@ -1,4 +1,3 @@
-display edit history on project and analysis page
 flesh out content on help page
 make search functional
 style feature page
