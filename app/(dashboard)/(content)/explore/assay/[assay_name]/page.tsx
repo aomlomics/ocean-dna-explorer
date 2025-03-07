@@ -57,7 +57,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				</div>
 
 				<div className="space-y-4">
-					<div className="grid grid-cols-2 gap-4">
+					<div className="grid grid-cols-2 gap-8">
 						<div className="stat bg-base-200 p-6">
 							<div className="text-lg font-medium text-base-content/70">Total Samples</div>
 							<div className="text-base mt-1">{assay.Samples.length}</div>
