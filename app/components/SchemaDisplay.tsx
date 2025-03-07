@@ -22,7 +22,7 @@ export default function SchemaDisplay() {
 	return (
 		<div>
 			{tables.map(([tableName, fields]) => (
-				<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
+				<div key={tableName} className="collapse collapse-arrow bg-base-100 border-base-300 border">
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold">{tableName}</div>
 					<div className="collapse-content text-sm overflow-x-auto">
@@ -38,7 +38,7 @@ export default function SchemaDisplay() {
 							</thead>
 							<tbody>
 								{Object.entries(fields).map(([f, info]) => (
-									<tr>
+									<tr key={f}>
 										<td>{f}</td>
 										<td>{info.type}</td>
 										<td>{info.optional?.toString()}</td>

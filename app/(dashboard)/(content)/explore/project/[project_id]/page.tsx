@@ -6,6 +6,7 @@ import Table from "@/app/components/paginated/Table";
 import BarChart from "@/app/components/charts/BarChart";
 import { randomColors } from "@/app/helpers/utils";
 import DataDisplay from "@/app/components/DataDisplay";
+import EditHistory from "@/app/components/EditHistory";
 
 export default async function Project_Id({ params }: { params: Promise<{ project_id: string }> }) {
 	let { project_id } = await params;
@@ -95,7 +96,10 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 			<div className="grid grid-cols-4 gap-8 mb-3">
 				<div className="col-span-4">
 					<header>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
+						<div className="flex gap-2 items-center">
+							<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
+							<EditHistory relationField="project_id" entry={project_id} />
+						</div>
 						<p className="text-lg text-base-content/70">{project.project_name}</p>
 					</header>
 				</div>

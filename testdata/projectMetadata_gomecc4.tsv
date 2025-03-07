@@ -26,7 +26,7 @@ M	Boolean	0 | 1	PCR	1	pcr_0_1	1
 O	free text		PCR	"Thermo Fisher Scientific, QuantStudio 6"	thermocycler	Eppendorf Mastercycler Nexus Thermal Cycler		
 O	numeric		PCR	22	amplificationReactionVolume	13		
 M	free text		PCR	MiFish	assay_name		ssu16sv4v5	ssu18sv9
-R	free text		PCR		assay_validation	not provided		
+R	free text		PCR		assay_validation	missing: not provided		
 M	free text		PCR	verteberate	targetTaxonomicAssay		16S rRNA gene sequencing targeting the V4-V5 region using primers 515F and 926R	18S rRNA gene sequencing targeting the V9 region using primers 1391f and EukBr”
 R	free text		PCR	teleost	targetTaxonomicScope		"Prokaryotes, including Bacteria and Archaea"	"Eukaryotes, with a focus on microbial eukaryotic lineages"
 R	controlled vocabulary	12S rRNA | 16S rRNA | 18S rRNA | 23S rRNA | 28S rRNA | rbcL | CytB | COI | COII | COIII | nifH | ITS | ND1 | ND2 | ND3 | ND4 | ND5 | ND6 | amoA | rpoB | rpoC1 | rpoC2 | matK | trnH | trnL | psbK | D-loop |  | other	PCR	COI	target_gene		16S rRNA	18S rRNA
