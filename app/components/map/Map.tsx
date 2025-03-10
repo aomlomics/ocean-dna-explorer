@@ -12,6 +12,7 @@ export default function Map({
 	title,
 	iconSize,
 	table,
+	legend,
 	cluster = false
 }: {
 	locations: any[];
@@ -19,7 +20,18 @@ export default function Map({
 	title?: string;
 	iconSize?: number;
 	table: Uncapitalize<Prisma.ModelName>;
+	legend?: Record<string, string>;
 	cluster?: boolean;
 }) {
-	return <ActualMap locations={locations} id={id} title={title} iconSize={iconSize} table={table} cluster={cluster} />;
+	return (
+		<ActualMap
+			locations={locations}
+			id={id}
+			title={title}
+			iconSize={iconSize}
+			table={table}
+			legend={legend}
+			cluster={cluster}
+		/>
+	);
 }

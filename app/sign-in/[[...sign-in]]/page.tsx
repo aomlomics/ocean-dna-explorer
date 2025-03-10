@@ -11,7 +11,7 @@ export default function Page() {
 				appearance={{
 					elements: {
 						formButtonPrimary: "text-primary hover:bg-primary/80",
-						card: "bg-base-200 shadow-md p-8",
+						card: "bg-base-200 shadow-sm p-8",
 						headerTitle: "text-primary text-3xl font-semibold",
 						headerSubtitle: "text-primary font-normal",
 						socialButtonsBlockButton: "bg-base-300 text-base-content font-normal hover:bg-base-400",
@@ -29,7 +29,7 @@ export default function Page() {
 			<div className="pt-8"></div>
 			<button
 				onClick={() => router.back()}
-				className="btn bg-base-200 shadow-md text-primary font-normal hover:bg-base-300"
+				className="btn bg-base-200 shadow-sm text-primary font-normal hover:bg-base-300"
 			>
 				Return to Previous Page
 			</button>

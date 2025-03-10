@@ -30,6 +30,7 @@ generator zod {
 //      % = PERCENT_
 //      ( = PAREN1_
 //      ) = PAREN2_
+//      : = COLON_
 // extra rules for @map that STARTS WITH a number (0-99 only):
 //      convert number to string representation in ALLCAPS
 //      terminate with __
@@ -39,10 +40,18 @@ generator zod {
 enum DeadBoolean {
     false
     true
-    not_applicable @map("not applicable")
-    not_collected  @map("not collected")
-    not_provided   @map("not provided")
-    missing
+    not_applicableCOLON__control_sample                                   @map("not applicable: control sample")
+    not_applicableCOLON__sample_group                                     @map("not applicable: sample group")
+    not_applicable                                                        @map("not applicable")
+    missingCOLON__not_collectedCOLON__synthetic_construct                 @map("missing: not collected: synthetic construct")
+    missingCOLON__not_collectedCOLON__lab_stock                           @map("missing: not collected: lab stock")
+    missingCOLON__not_collectedCOLON__third_party_data                    @map("missing: not collected: third party data")
+    missingCOLON__not_collected                                           @map("missing: not collected")
+    missingCOLON__not_providedCOLON__data_agreement_established_pre__2023 @map("missing: not provided: data agreement established pre-2023")
+    missingCOLON__not_provided                                            @map("missing: not provided")
+    missingCOLON__restricted_accessCOLON__endangered_species              @map("missing: restricted access: endangered species")
+    missingCOLON__restricted_accessCOLON__human__identifiable             @map("missing: restricted access: human-identifiable")
+    missingCOLON__restricted_access                                       @map("missing: restricted access")
 }
 
 enum detection_type {
@@ -292,11 +301,12 @@ model Project {
     id            Int      @id @default(autoincrement())
     project_id    String   @unique
     userId        String
-    dateSubmitted DateTime
+    dateSubmitted DateTime @default(now())
 
     // Relations
     Samples  Sample[]
     Analyses Analysis[]
+    Edits    Edit[]
 
     // Data
     // Project
@@ -629,7 +639,7 @@ model Analysis {
     id                Int      @id @default(autoincrement())
     analysis_run_name String   @unique
     userId            String
-    dateSubmitted     DateTime
+    dateSubmitted     DateTime @default(now())
 
     // Relations
     project_id  String
@@ -638,6 +648,7 @@ model Analysis {
     Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
     Occurrences Occurrence[]
     Assignments Assignment[]
+    Edits       Edit[]
 
     // Data
     // Bioinformatics
@@ -782,7 +793,7 @@ model Taxonomy {
     // Relations
     Assignments Assignment[]
 
-    //Data
+    // Data
     verbatimIdentification String
     domain                 String?
     kingdom                String?
@@ -795,4 +806,29 @@ model Taxonomy {
     family                 String?
     genus                  String?
     species                String?
+}
+
+model Edit {
+    id         Int      @id @default(autoincrement())
+    dateEdited DateTime @default(now())
+
+    // Relations
+    project_id        String?
+    Project           Project?  @relation(fields: [project_id], references: [project_id])
+    analysis_run_name String?
+    Analysis          Analysis? @relation(fields: [analysis_run_name], references: [analysis_run_name])
+    Changes           Change[]
+}
+
+model Change {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    editId Int
+    Edit   Edit @relation(fields: [editId], references: [id])
+
+    // Data
+    field    String
+    oldValue String
+    newValue String
 }

@@ -11,7 +11,7 @@ export default function SubmissionStatusModal({ isOpen, isError, message }: Subm
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-			<div className="bg-base-100 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 text-center text-base-content">
+			<div className="bg-base-100 p-6 rounded-lg shadow-sm max-w-md w-full mx-4 text-center text-base-content">
 				<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
 					{isError ? "Submission Failed" : "Project Submitted Successfully"}
 				</h3>

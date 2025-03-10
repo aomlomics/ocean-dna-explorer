@@ -120,7 +120,14 @@ export default async function Home() {
 				</div>
 				<div className="flex gap-8">
 					<div className="h-[500px] w-1/2 rounded-lg overflow-hidden">
-						<Map locations={locations} id="samp_name" title="project_id" table="project" iconSize={16} />
+						<Map
+							locations={locations}
+							id="samp_name"
+							title="project_id"
+							table="project"
+							iconSize={16}
+							legend={projectColors}
+						/>
 					</div>
 					<div className="w-1/2">
 						<DataSummary />
@@ -181,7 +188,7 @@ export default async function Home() {
 							projects NO_0062 and NO_0066.
 						</p>
 					</div>
-					<div className="shadow-md p-8 rounded-lg justify-center mx-auto max-w-fit">
+					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit">
 						<div className="flex justify-center items-center gap-20">
 							<div className="relative h-24 w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">

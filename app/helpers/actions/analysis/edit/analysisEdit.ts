@@ -1,7 +1,9 @@
 "use server";
 
 import { prisma } from "@/app/helpers/prisma";
+import { AnalysisPartialSchema } from "@/prisma/generated/zod";
 import { auth } from "@clerk/nextjs/server";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export default async function analysisEditAction(formData: FormData) {
@@ -18,13 +20,64 @@ export default async function analysisEditAction(formData: FormData) {
 	}
 	formData.delete("target");
 
+	//TODO: validate all fields are valid analysis fields
+
 	try {
-		await prisma.analysis.update({
-			where: {
-				analysis_run_name
-			},
-			data: Object.fromEntries(formData)
+		const error = await prisma.$transaction(async (tx) => {
+			const analysis = await tx.analysis.findUnique({
+				where: {
+					analysis_run_name
+				},
+				select: {
+					userId: true,
+					...(Array.from(formData.keys()).reduce(
+						(acc, field) => ({ ...acc, [field]: true }),
+						{}
+					) as Prisma.AnalysisSelect)
+				}
+			});
+
+			if (!analysis) {
+				return `No analysis with analysis_run_name of '${analysis_run_name}' found.`;
+			} else if (userId !== analysis.userId) {
+				return "Unauthorized action. You are not the owner of this analysis.";
+			}
+
+			const edit = await tx.edit.create({
+				data: {
+					analysis_run_name
+				},
+				select: {
+					id: true
+				}
+			});
+
+			await tx.change.createMany({
+				data: Array.from(formData.entries()).map(([field, value]) => ({
+					editId: edit.id,
+					field,
+					oldValue: analysis[field as keyof typeof analysis]
+						? analysis[field as keyof typeof analysis]!.toString()
+						: "",
+					newValue: value.toString()
+				}))
+			});
+
+			await tx.analysis.update({
+				where: {
+					analysis_run_name
+				},
+				data: AnalysisPartialSchema.parse(Object.fromEntries(formData), {
+					errorMap: (error, ctx) => {
+						return { message: `AnalysisSchema: ${ctx.defaultError}` };
+					}
+				})
+			});
 		});
+
+		if (error) {
+			return { message: "Error", error };
+		}
 
 		revalidatePath("/explore");
 		return { message: "Success" };

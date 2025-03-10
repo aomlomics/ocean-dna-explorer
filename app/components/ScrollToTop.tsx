@@ -35,7 +35,7 @@ export default function ScrollToTop() {
 			{isVisible && (
 				<button
 					onClick={scrollToTop}
-					className={`fixed right-8 p-4 bg-base-200 text-white rounded-full shadow-lg hover:bg-primary transition-all duration-300 z-50 ${
+					className={`fixed right-8 p-4 bg-base-300 text-white rounded-full shadow-sm hover:bg-primary transition-all duration-300 z-50 ${
 						isNearFooter ? "bottom-24" : "bottom-8"
 					}`}
 					aria-label="Scroll to top"

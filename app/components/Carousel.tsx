@@ -11,7 +11,7 @@ const carouselImgSrc = [
 	`/images/carousel/squid_m.jpg`,
 	`/images/carousel/polar_bear_m.jpg`,
 	`/images/carousel/school_of_fish.jpg`,
-	`/images/carousel/sculpin_on_coral_m.jpg`,
+	// `/images/carousel/sculpin_on_coral_m.jpg`,
 	`/images/carousel/adobe_copepod.jpeg`,
 	`/images/carousel/adobe_jellyfish.jpeg`,
 	`/images/carousel/bobtail_m.jpg`,
