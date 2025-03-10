@@ -115,10 +115,10 @@ module.exports = {
 
 					"primary": "#233D7F",    // Brand dark blue
 
-					"base-100": "#e2e6f0",      // Was background-main
-					"base-200": "#d8dde8",      // Was div-base
-					"base-300": "#cdd4e2",     // Was div-elevated
-					"base-400": "#c2cade", // Was interactive-active
+					"base-100": "#F4F3F2",      // Was background-main
+					"base-200": "#EAEAEE",      // Was div-base
+					"base-300": "#E3E3E9",     // Was div-elevated
+					"base-400": "#DFDFE6", // Was interactive-active
 					"base-content": "#2D3748",   // Was text-main
 					"secondary-content": "#4A5568", // Was text-muted
 					"neutral-content": "#FFFFFF",   // Was text-inverse

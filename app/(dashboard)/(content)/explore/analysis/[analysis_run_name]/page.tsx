@@ -5,6 +5,7 @@ import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import OccDownloadButton from "@/app/components/OccDownloadButton";
 import DataDisplay from "@/app/components/DataDisplay";
+import EditHistory from "@/app/components/EditHistory";
 
 export default async function Analysis_Run_name({ params }: { params: Promise<{ analysis_run_name: string }> }) {
 	const { analysis_run_name } = await params;
@@ -64,7 +65,11 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 			<div className="grid grid-cols-2 gap-8">
 				<div className="col-span-2">
 					<header>
-						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+						<div className="flex gap-2 items-center">
+							<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+							<EditHistory relationField="analysis_run_name" entry={analysis_run_name} />
+						</div>
+
 						<div className="bg-base-200 -ml-3.5 text-semibold">
 							<OccDownloadButton
 								text={"Download Occurrence Table"}

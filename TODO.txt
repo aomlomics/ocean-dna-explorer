@@ -1,9 +1,10 @@
-assays explore pages with libraries on assay page
-display edit history on project and analysis page
-update dead values
 flesh out content on help page
 make search functional
 style feature page
 add more data to taxonomy page
 add more filters for explore pages
 make ALL enums actually work
+make loading page of landing page a skeleton
+go through metadata file standards (https://nextjs.org/docs/app/api-reference/file-conventions/metadata)
+clean up images folder, maybe moving them to the blob server
+update logo, parallel lines in DNA

@@ -1,97 +1,72 @@
-import Link from "next/link";
-import UnderConstruction from "@/app/components/UnderConstruction";
+import { apiSections } from "@/app/components/help/ApiSections";
+import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
 import SchemaDisplay from "@/app/components/SchemaDisplay";
 
-export default function Api() {
+export default function API() {
 	return (
-		<main className="flex flex-col grow p-8 max-w-7xl mx-auto space-y-10">
-			<SchemaDisplay />
-			{/* API Introduction Section */}
-			<section className="relative">
-				<div className="text-center space-y-6 relative z-10">
-					<h1 className="text-6xl font-semibold text-primary tracking-tight">API Usage</h1>
-					<div className="max-w-3xl mx-auto space-y-4 text-lg text-base-content/90">
-						<p>
-							Access NODE's comprehensive eDNA datasets programmatically through a RESTful API. Build applications,
-							conduct analyses, and integrate environmental DNA data directly into your research workflow using your
-							preferred programming language.
-						</p>
-						<p className="font-bold">GET requests only.</p>
-					</div>
-				</div>
-				<div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent -z-10 rounded-3xl"></div>
-			</section>
+		<div className="flex min-h-screen">
+			{/* Invisible component that handles scroll tracking */}
+			<ActiveSectionTracker />
 
-			{/* Quick Start Guide */}
-			<section className="relative">
-				<div className="absolute left-0 top-10 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
-				{/* <h2 className="text-3xl text-primary mb-12 text-center">Implementation Guide</h2> */}
-				<h2 className="text-3xl text-primary mb-20 text-center"></h2>
-				<div className="grid md:grid-cols-3 gap-12">
-					<div className="relative">
-						<div className="text-7xl font-bold text-primary/20 absolute -top-8 -left-4">1</div>
-						<div className="relative z-10 mt-8">
-							<h3 className="text-xl font-semibold mb-3">Authentication</h3>
-							<p className="text-base-content/80 leading-relaxed">
-								Generate your API key through the dashboard. This unique identifier enables secure access to NODE's data
-								endpoints.
-							</p>
-						</div>
-					</div>
-					<div className="relative">
-						<div className="text-7xl font-bold text-primary/20 absolute -top-8 -left-4">2</div>
-						<div className="relative z-10 mt-8">
-							<h3 className="text-xl font-semibold mb-3">Request Formation</h3>
-							<p className="text-base-content/80 leading-relaxed">
-								Structure HTTP requests with your API key and desired parameters to query specific datasets or subsets.
-							</p>
-						</div>
-					</div>
-					<div className="relative">
-						<div className="text-7xl font-bold text-primary/20 absolute -top-8 -left-4">3</div>
-						<div className="relative z-10 mt-8">
-							<h3 className="text-xl font-semibold mb-3">Data Integration</h3>
-							<p className="text-base-content/80 leading-relaxed">
-								Process JSON responses containing standardized eDNA data ready for integration into your analysis
-								pipeline.
-							</p>
-						</div>
-					</div>
-				</div>
-			</section>
+			{/* Sidebar navigation - Add min-width to prevent squishing */}
+			<aside className="w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
+				<nav>
+					<h2 className="text-xl mb-6 px-2">Contents</h2>
+					<ul className="space-y-5">
+						{/* Map through sections to generate navigation */}
+						{apiSections.map((section, index) => (
+							<li key={section.id} className="mb-1">
+								<a
+									href={`#${section.id}`}
+									className="block py-1 px-2 hover:text-primary transition-colors main-section-link"
+									data-section-index={index}
+								>
+									{section.title}
+								</a>
 
-			{/* Code Example */}
-			<section className="bg-base-200/50 rounded-2xl p-8 backdrop-blur-sm border border-base-300">
-				<h2 className="text-2xl text-primary mb-6">Example Implementation</h2>
-				<div className="grid md:grid-cols-2 gap-8">
-					<div className="space-y-4">
-						<p className="text-base-content/80 leading-relaxed">
-							Retrieve eDNA samples from specific locations or time periods using our RESTful endpoints. The example
-							shows a basic query for samples with taxonomic filtering.
-						</p>
-						<div className="space-y-2">
-							<div className="flex items-center gap-2">
-								<div className="w-2 h-2 rounded-full bg-primary"></div>
-								<span className="text-sm text-base-content/70">Returns JSON formatted data</span>
+								{/* Render subsection navigation if they exist */}
+								{section.subsections && section.subsections.length > 0 && (
+									<ul className="mt-2 mb-1 ml-2 space-y-1 border-l border-base-300 pl-2">
+										{section.subsections.map((subsection) => (
+											<li key={subsection.id}>
+												<a
+													href={`#${subsection.id}`}
+													className="block py-1 px-2 text-sm hover:text-primary transition-colors"
+												>
+													{subsection.title}
+												</a>
+											</li>
+										))}
+									</ul>
+								)}
+							</li>
+						))}
+					</ul>
+				</nav>
+			</aside>
+
+			{/* Main content area - Add overflow handling */}
+			<main className="flex-1 p-6 md:p-8 overflow-x-auto">
+				{/* Map through sections to generate content */}
+				{apiSections.map((section, index) => (
+					<section key={section.id} id={section.id} data-section-index={index} className="mb-24">
+						<h2 className="text-3xl font-semibold text-primary mb-6">{section.title}</h2>
+						<div className="prose max-w-none">{section.content}</div>
+
+						{/* Render subsections if they exist */}
+						{section.subsections && section.subsections.length > 0 && (
+							<div className="space-y-12 mt-8">
+								{section.subsections.map((subsection) => (
+									<div key={subsection.id} id={subsection.id}>
+										<h3 className="text-2xl font-semibold text-base-content mb-4">{subsection.title}</h3>
+										<div className="prose max-w-none">{subsection.content}</div>
+									</div>
+								))}
 							</div>
-							<div className="flex items-center gap-2">
-								<div className="w-2 h-2 rounded-full bg-primary"></div>
-								<span className="text-sm text-base-content/70">
-									Can be accessed using your preferred programming language
-								</span>
-							</div>
-						</div>
-					</div>
-					<div className="bg-base-300 p-6 rounded-xl -mt-16 font-mono text-sm shadow-inner">
-						<p className="text-primary">GET https://api.node.org/v1/samples</p>
-						<p className="text-base-content/70 mt-4">Headers:</p>
-						<p className="text-base-content ml-4">Authorization: Bearer YOUR_API_KEY</p>
-						<p className="text-base-content">Content-Type: application/json</p>
-						<p className="text-base-content/70 mt-4">Query Parameters:</p>
-						<p className="text-base-content ml-4">taxonomy=Salmonidae&limit=100</p>
-					</div>
-				</div>
-			</section>
-		</main>
+						)}
+					</section>
+				))}
+			</main>
+		</div>
 	);
 }

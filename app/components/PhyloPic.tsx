@@ -33,7 +33,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	//use result of GBIF API to query PhyloPics for the vector image
 	const objectIDs =
 		`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
-		`${gbifTaxonomy.genus ? gbifTaxonomy.genus + "," : ""}` +
+		`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
 		`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
 		`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
 		`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +

@@ -349,12 +349,30 @@ export function parseApiQuery(
 					);
 				}
 
-				if (type === "string") {
-					query.where![key] = { contains: value, mode: "insensitive" };
-				} else if (type === "number") {
-					query.where![key] = parseInt(value);
+				const arr = value.split(",");
+				if (arr.length > 1) {
+					query.where!.OR = [];
+					if (type === "string") {
+						for (const val of arr) {
+							query.where!.OR.push({ [key]: { contains: val, mode: "insensitive" } });
+						}
+					} else if (type === "number") {
+						for (const val of arr) {
+							query.where!.OR.push({ [key]: parseInt(val) });
+						}
+					} else {
+						for (const val of arr) {
+							query.where!.OR.push({ [key]: val });
+						}
+					}
 				} else {
-					query.where![key] = value;
+					if (type === "string") {
+						query.where![key] = { contains: value, mode: "insensitive" };
+					} else if (type === "number") {
+						query.where![key] = parseInt(value);
+					} else {
+						query.where![key] = value;
+					}
 				}
 			});
 		} else if (defaults?.filters) {

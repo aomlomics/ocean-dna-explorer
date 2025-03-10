@@ -114,7 +114,7 @@ export default function Submit() {
 			<section className="max-w-[1400px] mx-auto mt-6 md:mt-8 mb-12 md:mb-16">
 				<div className="grid md:grid-cols-2 gap-6 md:gap-8">
 					{/* Project Card */}
-					<div className="card bg-base-200 shadow-xl min-h-[220px] sm:min-h-[260px] relative overflow-hidden hover:shadow-2xl transition-shadow">
+					<div className="card bg-base-200 shadow-sm min-h-[220px] sm:min-h-[260px] relative overflow-hidden hover:shadow-md transition-shadow">
 						<div className="card-body">
 							<div className="w-full h-full flex flex-col">
 								<div>
@@ -142,7 +142,7 @@ export default function Submit() {
 					</div>
 
 					{/* Analysis Card */}
-					<div className="card bg-base-200 shadow-xl min-h-[220px] sm:min-h-[260px] relative overflow-hidden hover:shadow-2xl transition-shadow">
+					<div className="card bg-base-200 shadow-sm min-h-[220px] sm:min-h-[260px] relative overflow-hidden hover:shadow-md transition-shadow">
 						<div className="card-body">
 							<div className="w-full h-full flex flex-col">
 								<div>
