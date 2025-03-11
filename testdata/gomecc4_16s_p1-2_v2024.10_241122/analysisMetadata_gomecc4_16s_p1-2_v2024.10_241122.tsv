@@ -1,7 +1,7 @@
 field_name	values
 project_id	noaa-aoml-gomecc4
 assay_name	ssu16sv4v5
-analysis_run_name	gomecc4-16s-p12-v2024.10
+analysis_run_name	gomecc4_16s_p1-2_v2024.10_241122
 sop_bioinformatics	https://github.com/aomlomics/tourmaline/tree/develop
 trim_method	qiime2-amplicon-2024.10; Cutadapt 4.9
 trim_param	"Trim forward reads of reverse complement of reverse primer, and reverse reads of reverse complement of forward primer. Then trim forward reads of forward primer, and reverse reads of reverse primer. Minimum length of 1 bp. "
