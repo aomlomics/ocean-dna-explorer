@@ -15,6 +15,7 @@ export default function ActualMap({
 	title,
 	iconSize = 25,
 	table,
+	legend,
 	cluster = false
 }: {
 	locations: Record<string, any>[];
@@ -22,6 +23,7 @@ export default function ActualMap({
 	title?: string;
 	iconSize?: number;
 	table: Uncapitalize<Prisma.ModelName>;
+	legend?: Record<string, string>;
 	cluster?: boolean;
 }) {
 	const [zoomLevel, setZoomLevel] = useState(5);
@@ -34,6 +36,28 @@ export default function ActualMap({
 		});
 
 		return null;
+	}
+
+	function LegendControl() {
+		if (!legend) {
+			return null;
+		}
+
+		return (
+			<div className="leaflet-bottom leaflet-right leaflet-control leaflet-bar map-legend mr-5 mb-8 !border-none card bg-base-100 card-xs shadow-sm card-body px-3 py-1 block">
+				{Object.entries(legend).map(([key, color]) => (
+					<div key={key} className="flex gap-2 items-center">
+						<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
+						<Link
+							href={`/explore/${table}/${encodeURIComponent(key)}`}
+							className="!w-auto !h-auto !bg-transparent !text-primary hover:underline"
+						>
+							{key}
+						</Link>
+					</div>
+				))}
+			</div>
+		);
 	}
 
 	let points = locations;
@@ -70,6 +94,7 @@ export default function ActualMap({
 		<div className="flex flex-col items-start h-full w-full">
 			<MapContainer className="w-full h-full grow" center={centerStart} zoom={zoomLevel}>
 				<ZoomControl />
+				<LegendControl />
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
 					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_API_KEY}`}
