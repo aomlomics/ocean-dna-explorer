@@ -54,7 +54,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 		<div className="w-full h-full relative flex flex-col items-center justify-center">
 			<div
 				className="tooltip tooltip-bottom tooltip-primary w-full h-full"
-				data-tip={`${imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}: ${imageDetails.title}`}
+				data-tip={`Image of ${imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}: ${imageDetails.title}`}
 			>
 				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority={true} fill className="object-contain" />
 			</div>
