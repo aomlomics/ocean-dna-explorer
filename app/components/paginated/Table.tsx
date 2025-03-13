@@ -50,8 +50,6 @@ export default function Table({
 	function applyFilters(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 
-		console.log("test");
-
 		const formData = new FormData(e.currentTarget);
 
 		let take = parseInt(formData.get("take") as string);
@@ -90,23 +88,37 @@ export default function Table({
 	if (isLoading) return <LoadingTable />;
 	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 
-	const headers = TableToEnumSchema[table]._def.values.filter((e) => {
+	const userDefinedHeaders = [] as string[];
+	const headers = TableToEnumSchema[table]._def.values.reduce((acc: string[], head) => {
 		//remove database field
 		//displaying title header differently, so removing it
-		if (e === "id" || e === title) {
-			return false;
+		if (head === "id" || head === title) {
+			return acc;
 		}
+
 		//remove all headers where the value is assumed to be the same
 		if (where) {
-			for (const head in where) {
-				if (e === head) {
-					return false;
+			for (const h in where) {
+				if (head === h) {
+					return acc;
 				}
 			}
 		}
 
-		return true;
-	});
+		//split user defined fields into individual headers
+		if (head === "userDefined") {
+			if (data.result[0].userDefined) {
+				for (const h in data.result[0].userDefined) {
+					userDefinedHeaders.push(h);
+					acc.push(h);
+				}
+			}
+		} else {
+			acc.push(head);
+		}
+
+		return acc;
+	}, []);
 
 	return (
 		<form id={`${table}TableForm`} onSubmit={applyFilters} className="w-full h-full flex flex-col">
@@ -262,6 +274,7 @@ export default function Table({
 														defaultValue={!!whereFilter[head] ? whereFilter[head].contains : ""}
 														type="text"
 														className="grow"
+														disabled={userDefinedHeaders.includes(head)}
 													/>
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
@@ -287,27 +300,40 @@ export default function Table({
 						</tr>
 					</thead>
 					<tbody>
-						{/* Value Cell */}
-						{data.result.reduce((acc: ReactNode[], row: any, i: number) => {
-							//node to render
+						{/* Value Row */}
+						{data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
+							//row
 							acc.push(
 								<tr key={i} className="border-base-100 border-b-2">
 									<th>{row[title]}</th>
 									{headers.reduce((acc: ReactNode[], head, i) => {
 										if (!headersFilter[head]) {
 											//cell
-											acc.push(
-												<td
-													className={`whitespace-nowrap ${i ? "border-base-100 border-l-2" : ""} ${
-														row[head] !== null ? "" : "bg-base-300"
-													}`}
-													key={row[head] + "child" + i}
-												>
-													{row[head] in DeadValueEnum && typeof row[head] === "number"
-														? DeadValueEnum[row[head]]
-														: row[head]}
-												</td>
-											);
+											if (userDefinedHeaders.includes(head)) {
+												acc.push(
+													<td
+														className={`whitespace-nowrap ${i ? "border-base-100 border-l-2" : ""} ${
+															row.userDefined[head] !== null ? "" : "bg-base-300"
+														}`}
+														key={row.userDefined[head] + "child" + i}
+													>
+														{row.userDefined[head]}
+													</td>
+												);
+											} else {
+												acc.push(
+													<td
+														className={`whitespace-nowrap ${i ? "border-base-100 border-l-2" : ""} ${
+															row[head] !== null ? "" : "bg-base-300"
+														}`}
+														key={row[head] + "child" + i}
+													>
+														{row[head] in DeadValueEnum && typeof row[head] === "number"
+															? DeadValueEnum[row[head]]
+															: row[head]}
+													</td>
+												);
+											}
 										}
 
 										return acc;

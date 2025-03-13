@@ -8,6 +8,10 @@ generator js {
     provider = "prisma-client-js"
 }
 
+generator json {
+    provider = "prisma-json-types-generator"
+}
+
 //generator dbml {
 //    provider   = "prisma-dbml-generator"
 //    outputName = "OpalERD.dbml"
@@ -333,7 +337,9 @@ model Project {
     code_repo             String?
 
     // User Defined
-    expedition_id String?
+    /// [UserDefinedType]
+    userDefined Json?
+    // expedition_id String?
 }
 
 model Sample {
@@ -348,16 +354,6 @@ model Sample {
     Occurrences Occurrence[]
 
     // Data
-    // User Defined
-    serial_number     String?
-    materialSampleID  String?
-    line_id           String?
-    station_id        String?
-    ctd_cast_number   String?
-    ctd_bottle_number String?
-    replicate_number  String?
-    extract_id        String?
-
     // Sample Collection
     samp_category                  String
     /// @zod.custom.use(z.coerce.number())
@@ -522,10 +518,20 @@ model Sample {
     org_nitro            Float?
 
     // User Defined
-    phaeopigments String?
-    ammonium      String?
-    phosphate     String?
-    silicate      String?
+    /// [UserDefinedType]
+    userDefined Json?
+    // serial_number     String?
+    // materialSampleID  String?
+    // line_id           String?
+    // station_id        String?
+    // ctd_cast_number   String?
+    // ctd_bottle_number String?
+    // replicate_number  String?
+    // extract_id        String?
+    // phaeopigments     String?
+    // ammonium          String?
+    // phosphate         String?
+    // silicate          String?
 }
 
 model Assay {
@@ -629,9 +635,11 @@ model Library {
     /// @zod.custom.use(z.coerce.number().int())
     input_read_count    Int?
 
-    // User Defined (library)
-    seq_samp_id         String?
-    associatedSequences String?
+    // User Defined
+    /// [UserDefinedType]
+    userDefined Json?
+    // seq_samp_id         String?
+    // associatedSequences String?
 }
 
 //Analyses
@@ -817,18 +825,8 @@ model Edit {
     Project           Project?  @relation(fields: [project_id], references: [project_id])
     analysis_run_name String?
     Analysis          Analysis? @relation(fields: [analysis_run_name], references: [analysis_run_name])
-    Changes           Change[]
-}
-
-model Change {
-    id Int @id @default(autoincrement())
-
-    // Relations
-    editId Int
-    Edit   Edit @relation(fields: [editId], references: [id])
 
     // Data
-    field    String
-    oldValue String
-    newValue String
+    /// [ChangesType]
+    changes Json
 }

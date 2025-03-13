@@ -5,9 +5,6 @@ export default async function EditHistory({ relationField, entry }: { relationFi
 		where: {
 			[relationField]: entry
 		},
-		include: {
-			Changes: true
-		},
 		orderBy: {
 			dateEdited: "desc"
 		}
@@ -41,8 +38,8 @@ export default async function EditHistory({ relationField, entry }: { relationFi
 						<li className="min-w-[450px]" key={edit.id}>
 							<div className="text-base text-base-content pb-2">{edit.dateEdited.toString()}</div>
 							<div className="flex flex-col gap-2">
-								{edit.Changes.map((c) => (
-									<div key={c.field + c.id} className="pl-8 flex flex-col items-start gap-1">
+								{edit.changes.map((c, i) => (
+									<div key={c.field + i} className="pl-8 flex flex-col items-start gap-1">
 										<div className="text-sm font-medium text-base-content/70">{c.field}</div>
 										<div className="flex">
 											<p className="bg-base-200 px-2 py-1 rounded-md">{c.oldValue}</p> <p className="px-2 py-1">🠢</p>{" "}
