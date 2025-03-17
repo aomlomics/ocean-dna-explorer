@@ -822,9 +822,9 @@ model Edit {
 
     // Relations
     project_id        String?
-    Project           Project?  @relation(fields: [project_id], references: [project_id])
+    Project           Project?  @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     analysis_run_name String?
-    Analysis          Analysis? @relation(fields: [analysis_run_name], references: [analysis_run_name])
+    Analysis          Analysis? @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
 
     // Data
     /// [ChangesType]

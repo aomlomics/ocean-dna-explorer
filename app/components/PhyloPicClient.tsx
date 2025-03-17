@@ -38,7 +38,6 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 
 						//get only the taxonomies that match the specific rank
 						//TODO: check GBIF API docs to do this step in the previous fetch
-						//have to replace our database class field with the proper keyword
 						gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank)[0];
 						if (gbifTaxonomy) {
 							mostSpecificRank = rank;

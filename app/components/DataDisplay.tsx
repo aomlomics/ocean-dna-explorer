@@ -43,7 +43,7 @@ export default function DataDisplay({
 									}
 
 									acc.push(
-										<tr key={userDefinedField}>
+										<tr key={userDefinedField + "_userDefined"}>
 											<td className="flex flex-col gap-1">
 												{fieldNode}
 												{valueNode}

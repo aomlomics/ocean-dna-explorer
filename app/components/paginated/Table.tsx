@@ -189,12 +189,12 @@ export default function Table({
 							</div>
 							{/* Header Names Section */}
 							<ul className="p-2 pt-0 w-full max-h-[200px] overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-300">
-								{headers.reduce((acc: ReactNode[], head) => {
+								{headers.reduce((acc: ReactNode[], head, i) => {
 									//only render the header name if it is selected in the header name filter
 									if (head.toLowerCase().includes(columnsFilter.toLowerCase())) {
 										//Header Name
 										acc.push(
-											<li key={head + "_dropdown"} className="form-control">
+											<li key={head + "_dropdown" + i} className="form-control">
 												<label className="label cursor-pointer justify-start p-1">
 													<input
 														type="checkbox"
@@ -257,12 +257,12 @@ export default function Table({
 									</label>
 								</label>
 							</th>
-							{headers.reduce((acc: ReactNode[], head) => {
+							{headers.reduce((acc: ReactNode[], head, i) => {
 								//only render the header if it is selected in the header filter
 								if (!headersFilter[head]) {
 									//Header
 									acc.push(
-										<td key={head}>
+										<td key={head + i}>
 											<label className="form-control w-full max-w-xs">
 												<div>
 													<span>{head}</span>
@@ -306,16 +306,16 @@ export default function Table({
 							acc.push(
 								<tr key={i} className="border-base-100 border-b-2">
 									<th>{row[title]}</th>
-									{headers.reduce((acc: ReactNode[], head, i) => {
+									{headers.reduce((acc: ReactNode[], head, j) => {
 										if (!headersFilter[head]) {
 											//cell
 											if (userDefinedHeaders.includes(head)) {
 												acc.push(
 													<td
-														className={`whitespace-nowrap ${i ? "border-base-100 border-l-2" : ""} ${
+														className={`whitespace-nowrap ${j ? "border-base-100 border-l-2" : ""} ${
 															row.userDefined[head] !== null ? "" : "bg-base-300"
 														}`}
-														key={row.userDefined[head] + "child" + i}
+														key={row.userDefined[head] + "child" + j}
 													>
 														{row.userDefined[head]}
 													</td>
@@ -323,10 +323,10 @@ export default function Table({
 											} else {
 												acc.push(
 													<td
-														className={`whitespace-nowrap ${i ? "border-base-100 border-l-2" : ""} ${
+														className={`whitespace-nowrap ${j ? "border-base-100 border-l-2" : ""} ${
 															row[head] !== null ? "" : "bg-base-300"
 														}`}
-														key={row[head] + "child" + i}
+														key={row[head] + "child" + j}
 													>
 														{row[head] in DeadValueEnum && typeof row[head] === "number"
 															? DeadValueEnum[row[head]]
