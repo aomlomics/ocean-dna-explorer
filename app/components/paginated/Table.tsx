@@ -264,8 +264,9 @@ export default function Table({
 									acc.push(
 										<td key={head + i}>
 											<label className="form-control w-full max-w-xs">
-												<div>
-													<span>{head}</span>
+												<div className="flex justify-between">
+													<div>{head}</div>
+													{userDefinedHeaders.includes(head) && <div>User Defined</div>}
 												</div>
 												{/* Value Filter */}
 												<label className="input input-bordered input-xs flex items-center gap-2">
