@@ -2,7 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { replaceDead } from "@/app/helpers/utils";
+import { parseSchemaToObject } from "@/app/helpers/utils";
 import {
 	AssignmentOptionalDefaultsSchema,
 	AssignmentPartial,
@@ -59,7 +59,7 @@ export default async function assignSubmitAction(formData: FormData): SubmitActi
 							console.log(currentLine[j]);
 						}
 						//feature table
-						replaceDead(
+						parseSchemaToObject(
 							currentLine[j],
 							assignFileHeaders[j],
 							featureRow,
@@ -68,7 +68,7 @@ export default async function assignSubmitAction(formData: FormData): SubmitActi
 						);
 
 						//assignment table
-						replaceDead(
+						parseSchemaToObject(
 							currentLine[j],
 							assignFileHeaders[j],
 							assignmentRow,
@@ -77,7 +77,7 @@ export default async function assignSubmitAction(formData: FormData): SubmitActi
 						);
 
 						//taxonomy table
-						replaceDead(
+						parseSchemaToObject(
 							currentLine[j],
 							assignFileHeaders[j],
 							taxonomyRow,

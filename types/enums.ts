@@ -5,8 +5,6 @@ import {
 	AssaySchema,
 	AssignmentScalarFieldEnumSchema,
 	AssignmentSchema,
-	ChangeScalarFieldEnumSchema,
-	ChangeSchema,
 	EditScalarFieldEnumSchema,
 	EditSchema,
 	FeatureScalarFieldEnumSchema,
@@ -68,8 +66,7 @@ export const TableToEnumSchema = {
 	feature: FeatureScalarFieldEnumSchema,
 	assignment: AssignmentScalarFieldEnumSchema,
 	taxonomy: TaxonomyScalarFieldEnumSchema,
-	edit: EditScalarFieldEnumSchema,
-	change: ChangeScalarFieldEnumSchema
+	edit: EditScalarFieldEnumSchema
 };
 
 export const TableToSchema = {
@@ -82,8 +79,7 @@ export const TableToSchema = {
 	feature: FeatureSchema,
 	assignment: AssignmentSchema,
 	taxonomy: TaxonomySchema,
-	edit: EditSchema,
-	change: ChangeSchema
+	edit: EditSchema
 };
 
 export const EXPLORE_ROUTES = {

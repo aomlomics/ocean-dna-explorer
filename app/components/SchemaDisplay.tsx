@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { getZodType } from "../helpers/utils";
 
 export default function SchemaDisplay() {
-	const tables = Object.keys(Prisma.ModelName).reduce((acc, tableName) => {
+	//TODO: display user defined fields currently in the database
+	const tables = Object.keys(Prisma.ModelName).map((tableName) => {
 		const fields = TableToEnumSchema[tableName.toLowerCase() as keyof typeof TableToEnumSchema]._def.values;
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
 		const shape = TableToSchema[tableName.toLowerCase() as keyof typeof TableToSchema].shape;
@@ -15,9 +16,8 @@ export default function SchemaDisplay() {
 			result[f] = type;
 		}
 
-		acc.push([tableName, result]);
-		return acc;
-	}, [] as [string, Record<string, ReturnType<typeof getZodType>>][]);
+		return [tableName, result] as [string, typeof result];
+	});
 
 	return (
 		<div>
@@ -26,7 +26,7 @@ export default function SchemaDisplay() {
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold">{tableName}</div>
 					<div className="collapse-content text-sm overflow-x-auto">
-						<table className="table table-zebra">
+						<table className="table table-zebra table-fixed">
 							{/* head */}
 							<thead>
 								<tr>

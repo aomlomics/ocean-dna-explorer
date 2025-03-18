@@ -43,24 +43,20 @@ export default async function analysisEditAction(formData: FormData) {
 				return "Unauthorized action. You are not the owner of this analysis.";
 			}
 
-			const edit = await tx.edit.create({
+			await tx.edit.create({
 				data: {
-					analysis_run_name
+					analysis_run_name,
+					changes: Array.from(formData.entries()).map(([field, value]) => ({
+						field,
+						oldValue: analysis[field as keyof typeof analysis]
+							? analysis[field as keyof typeof analysis]!.toString()
+							: "",
+						newValue: value.toString()
+					}))
 				},
 				select: {
 					id: true
 				}
-			});
-
-			await tx.change.createMany({
-				data: Array.from(formData.entries()).map(([field, value]) => ({
-					editId: edit.id,
-					field,
-					oldValue: analysis[field as keyof typeof analysis]
-						? analysis[field as keyof typeof analysis]!.toString()
-						: "",
-					newValue: value.toString()
-				}))
 			});
 
 			await tx.analysis.update({

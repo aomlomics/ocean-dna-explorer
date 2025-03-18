@@ -39,21 +39,28 @@ export default function SubmissionEditButton({
 		//check if data has been changed
 		const submitFormData = new FormData();
 		for (const [field, value] of formData.entries()) {
-			if (value && data[field] && !(value instanceof File)) {
+			if (value && !(value instanceof File)) {
 				const type = getZodType(shape[field as keyof typeof shape]).type;
 
-				if (type === "boolean" && value in DeadBooleanEnum) {
-					if (DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] != data[field]) {
-						submitFormData.append(field, DeadBooleanEnum[value as keyof typeof DeadBooleanEnum]);
-					}
-				} else {
-					if (value in DeadValueEnum) {
-						if (DeadValueEnum[value as keyof typeof DeadValueEnum] != data[field]) {
-							//@ts-ignore Typescript thinks you can only index enums with a number, value is a string, this works fine
-							submitFormData.append(field, DeadValueEnum[value]);
-						}
-					} else if (value != data[field]) {
+				if (field.startsWith("userDefined")) {
+					const userDefinedField = field.split(":")[1];
+					if (data.userDefined[userDefinedField] && value != data.userDefined[userDefinedField]) {
 						submitFormData.append(field, value);
+					}
+				} else if (data[field]) {
+					if (type === "boolean" && value in DeadBooleanEnum) {
+						if (DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] != data[field]) {
+							submitFormData.append(field, DeadBooleanEnum[value as keyof typeof DeadBooleanEnum]);
+						}
+					} else {
+						if (value in DeadValueEnum) {
+							if (DeadValueEnum[value as keyof typeof DeadValueEnum] != data[field]) {
+								//@ts-ignore Typescript thinks you can only index enums with a number, value is a string, this works fine
+								submitFormData.append(field, DeadValueEnum[value]);
+							}
+						} else if (value != data[field]) {
+							submitFormData.append(field, value);
+						}
 					}
 				}
 			}
@@ -182,6 +189,33 @@ export default function SubmissionEditButton({
 									// 		/>
 									// 	</fieldset>
 									// );
+								} else if (type === "json") {
+									for (const userDefinedField in value) {
+										acc.push(
+											<fieldset key={userDefinedField} className="fieldset">
+												<legend className="fieldset-legend flex gap-2">
+													<h2>{userDefinedField}</h2>
+													<InfoButton infoText="string" />
+												</legend>
+												{value[userDefinedField] && value[userDefinedField].length > 100 ? (
+													<textarea
+														name={"userDefined:" + userDefinedField}
+														className="textarea textarea-primary w-full"
+														disabled={noEdit && noEdit.includes(userDefinedField)}
+														defaultValue={value[userDefinedField]}
+													/>
+												) : (
+													<input
+														name={"userDefined:" + userDefinedField}
+														type="text"
+														className="input input-primary w-full"
+														disabled={noEdit && noEdit.includes(userDefinedField)}
+														defaultValue={value[userDefinedField]}
+													/>
+												)}
+											</fieldset>
+										);
+									}
 								}
 							}
 
