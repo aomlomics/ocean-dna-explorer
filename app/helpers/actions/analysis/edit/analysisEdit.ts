@@ -50,17 +50,19 @@ export default async function analysisEditAction(formData: FormData) {
 				data: {
 					//make changes to analysis
 					...Object.fromEntries(formData),
-					//add edit to edit history
-					editHistory: analysis.editHistory.concat({
-						dateEdited: new Date(),
-						changes: Array.from(formData.entries()).map(([field, value]) => ({
-							field,
-							oldValue: analysis[field as keyof typeof analysis]
-								? analysis[field as keyof typeof analysis]!.toString()
-								: "",
-							newValue: value.toString()
-						}))
-					})
+					//add edit to start of edit history
+					editHistory: [
+						{
+							dateEdited: new Date(),
+							changes: Array.from(formData.entries()).map(([field, value]) => ({
+								field,
+								oldValue: analysis[field as keyof typeof analysis]
+									? analysis[field as keyof typeof analysis]!.toString()
+									: "",
+								newValue: value.toString()
+							}))
+						}
+					].concat(analysis.editHistory)
 				}
 			});
 		});

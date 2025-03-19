@@ -56,7 +56,7 @@ export type InputJsonValueType = z.infer<typeof InputJsonValueSchema>;
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userId','dateSubmitted','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','study_factor','detection_type','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','userDefined']);
+export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userId','dateSubmitted','editHistory','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','study_factor','detection_type','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','userDefined']);
 
 export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','project_id','samp_category','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','sample_derived_from','sample_composed_of','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','userDefined']);
 
@@ -64,7 +64,7 @@ export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','neg_cont_ty
 
 export const LibraryScalarFieldEnumSchema = z.enum(['id','library_id','assay_name','samp_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','biosample_accession','input_read_count','userDefined']);
 
-export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','userId','dateSubmitted','project_id','assay_name','sop_bioinformatics','trim_method','trim_param','demux_tool','demux_max_mismatch','merge_tool','merge_min_overlap','min_len_cutoff','min_len_tool','error_rate_tool','error_rate_type','error_rate_cutoff','chimera_check_method','chimera_check_param','otu_clust_tool','otu_clust_cutoff','min_reads_cutoff','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_id_cutoff','tax_class_query_cutoff','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_trunc_len_f','dada2pe_trunc_len_r','dada2_trim_left_f','dada2pe_trim_left_r','dada2_max_ee_f','dada2pe_max_ee_r','dada2_trunc_q','dada2_pooling_method','dada2_chimera_method','dada2_min_fold_parent_over_abundance','dada2_n_reads_learn','deblur_trim_length','deblur_sample_stats','deblur_mean_error','deblur_indel_prob','deblur_indel_max','deblur_min_reads','deblur_min_size','repseq_min_length','repseq_max_length','repseq_min_abundance','repseq_min_prevalence','discard_untrimmed']);
+export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','userId','dateSubmitted','editHistory','project_id','assay_name','sop_bioinformatics','trim_method','trim_param','demux_tool','demux_max_mismatch','merge_tool','merge_min_overlap','min_len_cutoff','min_len_tool','error_rate_tool','error_rate_type','error_rate_cutoff','chimera_check_method','chimera_check_param','otu_clust_tool','otu_clust_cutoff','min_reads_cutoff','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_id_cutoff','tax_class_query_cutoff','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_trunc_len_f','dada2pe_trunc_len_r','dada2_trim_left_f','dada2pe_trim_left_r','dada2_max_ee_f','dada2pe_max_ee_r','dada2_trunc_q','dada2_pooling_method','dada2_chimera_method','dada2_min_fold_parent_over_abundance','dada2_n_reads_learn','deblur_trim_length','deblur_sample_stats','deblur_mean_error','deblur_indel_prob','deblur_indel_max','deblur_min_reads','deblur_min_size','repseq_min_length','repseq_max_length','repseq_min_abundance','repseq_min_prevalence','discard_untrimmed']);
 
 export const OccurrenceScalarFieldEnumSchema = z.enum(['id','samp_name','analysis_run_name','featureid','organismQuantity']);
 
@@ -74,13 +74,11 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name',
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
 
-export const EditScalarFieldEnumSchema = z.enum(['id','dateEdited','project_id','analysis_run_name','changes']);
-
 export const SortOrderSchema = z.enum(['asc','desc']);
 
-export const NullableJsonNullValueInputSchema = z.enum(['DbNull','JsonNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value);
-
 export const JsonNullValueInputSchema = z.enum(['JsonNull',]).transform((value) => (value === 'JsonNull' ? Prisma.JsonNull : value));
+
+export const NullableJsonNullValueInputSchema = z.enum(['DbNull','JsonNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
 
@@ -205,6 +203,10 @@ export const ProjectSchema = z.object({
   project_id: z.string(),
   userId: z.string(),
   dateSubmitted: z.coerce.date(),
+  /**
+   * [EditHistoryType]
+   */
+  editHistory: JsonValueSchema,
   recordedBy: z.string(),
   recordedByID: z.string().nullish(),
   project_contact: z.string(),
@@ -246,6 +248,10 @@ export type ProjectPartial = z.infer<typeof ProjectPartialSchema>
 export const ProjectOptionalDefaultsSchema = ProjectSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
+  /**
+   * [EditHistoryType]
+   */
+  editHistory: JsonValueSchema,
 }))
 
 export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSchema>
@@ -514,6 +520,10 @@ export const AnalysisSchema = z.object({
   analysis_run_name: z.string(),
   userId: z.string(),
   dateSubmitted: z.coerce.date(),
+  /**
+   * [EditHistoryType]
+   */
+  editHistory: JsonValueSchema,
   project_id: z.string(),
   assay_name: z.string(),
   sop_bioinformatics: z.string().nullish(),
@@ -588,6 +598,10 @@ export type AnalysisPartial = z.infer<typeof AnalysisPartialSchema>
 export const AnalysisOptionalDefaultsSchema = AnalysisSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
+  /**
+   * [EditHistoryType]
+   */
+  editHistory: JsonValueSchema,
 }))
 
 export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSchema>
@@ -723,38 +737,3 @@ export const TaxonomyOptionalDefaultsSchema = TaxonomySchema.merge(z.object({
 }))
 
 export type TaxonomyOptionalDefaults = z.infer<typeof TaxonomyOptionalDefaultsSchema>
-
-/////////////////////////////////////////
-// EDIT SCHEMA
-/////////////////////////////////////////
-
-export const EditSchema = z.object({
-  id: z.number().int(),
-  dateEdited: z.coerce.date(),
-  project_id: z.string().nullish(),
-  analysis_run_name: z.string().nullish(),
-  /**
-   * [ChangesType]
-   */
-  changes: JsonValueSchema,
-})
-
-export type Edit = z.infer<typeof EditSchema>
-
-/////////////////////////////////////////
-// EDIT PARTIAL SCHEMA
-/////////////////////////////////////////
-
-export const EditPartialSchema = EditSchema.partial()
-
-export type EditPartial = z.infer<typeof EditPartialSchema>
-
-// EDIT OPTIONAL DEFAULTS SCHEMA
-//------------------------------------------------------
-
-export const EditOptionalDefaultsSchema = EditSchema.merge(z.object({
-  id: z.number().int().optional(),
-  dateEdited: z.coerce.date().optional(),
-}))
-
-export type EditOptionalDefaults = z.infer<typeof EditOptionalDefaultsSchema>
