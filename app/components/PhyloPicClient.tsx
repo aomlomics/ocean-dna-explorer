@@ -1,7 +1,6 @@
 "use client";
 
 import { Taxonomy } from "@prisma/client";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
@@ -39,7 +38,6 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 
 						//get only the taxonomies that match the specific rank
 						//TODO: check GBIF API docs to do this step in the previous fetch
-						//have to replace our database class field with the proper keyword
 						gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank)[0];
 						if (gbifTaxonomy) {
 							mostSpecificRank = rank;
@@ -104,17 +102,12 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 					className="tooltip tooltip-bottom tooltip-primary w-full h-full"
 					data-tip={`${imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}: ${imageDetails.title}`}
 				>
-					<ThemeAwarePhyloPic 
-						src={imageUrl} 
-						alt="Image of taxonomy" 
-						fill 
-						className="object-contain" 
-					/>
+					<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
 				</div>
 			) : loading ? (
 				<span className="loading loading-spinner loading-lg h-full"></span>
 			) : (
-				<div className="text-center text-5xl">?</div>
+				<div className="text-center text-base-content/80">No Image</div>
 			)}
 		</div>
 	);

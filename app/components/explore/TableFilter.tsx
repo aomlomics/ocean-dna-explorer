@@ -2,13 +2,13 @@ import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
 
 type FilterConfig = {
-	field: string;
 	label: string;
 	type: "select" | "multiselect" | "date" | "range";
+	field: string | { rel: string; f: string };
 	options?: string[];
 	enum?: Record<string, string>;
-	min?: number; // Add these for range type filters
-	max?: number; // Add these for range type filters
+	gte?: number;
+	lte?: number;
 };
 
 export default function TableFilter({ tableConfig }: { tableConfig: FilterConfig[] }) {

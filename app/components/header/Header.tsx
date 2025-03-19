@@ -6,6 +6,7 @@ import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
+import { EXPLORE_ROUTES } from "@/types/enums";
 
 export default function Header() {
 	return (
@@ -50,13 +51,7 @@ export default function Header() {
 						<TabDropdown
 							tabName="Explore"
 							route="/explore"
-							dropdown={[
-								{ label: "Projects", href: "/explore/project" },
-								{ label: "Samples", href: "/explore/sample" },
-								{ label: "Analyses", href: "/explore/analysis" },
-								{ label: "Features", href: "/explore/feature" },
-								{ label: "Taxonomies", href: "/explore/taxonomy" }
-							]}
+							dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
 						/>
 						<TabButton tabName="Search" route="/search" />
 						<TabDropdown
@@ -67,7 +62,6 @@ export default function Header() {
 								{ label: "Analysis", href: "/submit/analysis" }
 							]}
 						/>
-						<TabButton tabName="Assays" route="/assays" />
 						<TabButton tabName="Tourmaline" route="/tourmaline" />
 						<TabButton tabName="API" route="/api" />
 						<TabButton tabName="Help" route="/help" />

@@ -58,7 +58,7 @@ function DataSummaryItem({ title, value, href }: { title: string; value: number;
 	return (
 		<Link
 			href={href}
-			className="bg-base-200 hover:bg-base-300 active:bg-interactive-active p-6 rounded-lg text-center shadow-md transition-colors"
+			className="bg-base-200 hover:bg-base-300 active:bg-interactive-active p-6 rounded-lg text-center shadow-sm transition-colors"
 		>
 			<h3 className="text-main text-lg mb-2">{title}</h3>
 			<p className="text-primary text-3xl font-bold">{value.toLocaleString()}</p>

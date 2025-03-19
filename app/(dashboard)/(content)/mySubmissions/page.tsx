@@ -88,10 +88,7 @@ export default async function MySubmissions() {
 								) : (
 									<div className="flex flex-col gap-3 mt-2">
 										{projects.map((proj) => (
-											<div
-												key={proj.project_id}
-												className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
-											>
+											<div key={proj.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
 												<Link
 													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 													className="text-primary hover:text-info-focus hover:underline transition-colors"

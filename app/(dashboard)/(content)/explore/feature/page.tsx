@@ -23,8 +23,8 @@ export default async function Feature() {
 						field: "sequenceLength",
 						label: "Sequence Length",
 						type: "range",
-						min: minMaxSeqLength._min.sequenceLength as number,
-						max: minMaxSeqLength._max.sequenceLength as number
+						gte: minMaxSeqLength._min.sequenceLength as number,
+						lte: minMaxSeqLength._max.sequenceLength as number
 					}
 				]}
 			/>

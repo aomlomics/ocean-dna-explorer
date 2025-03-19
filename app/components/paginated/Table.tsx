@@ -32,7 +32,6 @@ export default function Table({
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			table,
 			take: take.toString(),
 			page: (page + dir).toString()
 		});
@@ -44,14 +43,12 @@ export default function Table({
 			}
 		}
 
-		preload(`/api/pagination?${query.toString()}`, fetcher);
+		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
 	}
 
 	//filters in the column header
 	function applyFilters(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-
-		console.log("test");
 
 		const formData = new FormData(e.currentTarget);
 
@@ -77,7 +74,6 @@ export default function Table({
 
 	//api call
 	let query = new URLSearchParams({
-		table,
 		take: take.toString(),
 		page: page.toString()
 	});
@@ -88,27 +84,41 @@ export default function Table({
 			query.set("where", JSON.stringify(where));
 		}
 	}
-	const { data, error, isLoading } = useSWR(`/api/pagination?${query.toString()}`, fetcher);
+	const { data, error, isLoading } = useSWR(`/api/pagination/${table}?${query.toString()}`, fetcher);
 	if (isLoading) return <LoadingTable />;
 	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 
-	const headers = TableToEnumSchema[table]._def.values.filter((e) => {
+	const userDefinedHeaders = [] as string[];
+	const headers = TableToEnumSchema[table]._def.values.reduce((acc: string[], head) => {
 		//remove database field
 		//displaying title header differently, so removing it
-		if (e === "id" || e === title) {
-			return false;
+		if (head === "id" || head === title) {
+			return acc;
 		}
+
 		//remove all headers where the value is assumed to be the same
 		if (where) {
-			for (const head in where) {
-				if (e === head) {
-					return false;
+			for (const h in where) {
+				if (head === h) {
+					return acc;
 				}
 			}
 		}
 
-		return true;
-	});
+		//split user defined fields into individual headers
+		if (head === "userDefined") {
+			if (data.result[0].userDefined) {
+				for (const h in data.result[0].userDefined) {
+					userDefinedHeaders.push(h);
+					acc.push(h);
+				}
+			}
+		} else {
+			acc.push(head);
+		}
+
+		return acc;
+	}, []);
 
 	return (
 		<form id={`${table}TableForm`} onSubmit={applyFilters} className="w-full h-full flex flex-col">
@@ -179,12 +189,12 @@ export default function Table({
 							</div>
 							{/* Header Names Section */}
 							<ul className="p-2 pt-0 w-full max-h-[200px] overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-300">
-								{headers.reduce((acc: ReactNode[], head) => {
+								{headers.reduce((acc: ReactNode[], head, i) => {
 									//only render the header name if it is selected in the header name filter
 									if (head.toLowerCase().includes(columnsFilter.toLowerCase())) {
 										//Header Name
 										acc.push(
-											<li key={head + "_dropdown"} className="form-control">
+											<li key={head + "_dropdown" + i} className="form-control">
 												<label className="label cursor-pointer justify-start p-1">
 													<input
 														type="checkbox"
@@ -247,12 +257,12 @@ export default function Table({
 									</label>
 								</label>
 							</th>
-							{headers.reduce((acc: ReactNode[], head) => {
+							{headers.reduce((acc: ReactNode[], head, i) => {
 								//only render the header if it is selected in the header filter
 								if (!headersFilter[head]) {
 									//Header
 									acc.push(
-										<td key={head}>
+										<td key={head + i}>
 											<label className="form-control w-full max-w-xs">
 												<div>
 													<span>{head}</span>
@@ -264,6 +274,7 @@ export default function Table({
 														defaultValue={!!whereFilter[head] ? whereFilter[head].contains : ""}
 														type="text"
 														className="grow"
+														disabled={userDefinedHeaders.includes(head)}
 													/>
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
@@ -289,27 +300,40 @@ export default function Table({
 						</tr>
 					</thead>
 					<tbody>
-						{/* Value Cell */}
-						{data.result.reduce((acc: ReactNode[], row: any, i: number) => {
-							//node to render
+						{/* Value Row */}
+						{data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
+							//row
 							acc.push(
 								<tr key={i} className="border-base-100 border-b-2">
 									<th>{row[title]}</th>
-									{headers.reduce((acc: ReactNode[], head, i) => {
+									{headers.reduce((acc: ReactNode[], head, j) => {
 										if (!headersFilter[head]) {
 											//cell
-											acc.push(
-												<td
-													className={`whitespace-nowrap ${i ? "border-base-100 border-l-2" : ""} ${
-														row[head] !== null ? "" : "bg-base-300"
-													}`}
-													key={row[head] + "child" + i}
-												>
-													{row[head] in DeadValueEnum && typeof row[head] === "number"
-														? DeadValueEnum[row[head]]
-														: row[head]}
-												</td>
-											);
+											if (userDefinedHeaders.includes(head)) {
+												acc.push(
+													<td
+														className={`whitespace-nowrap ${j ? "border-base-100 border-l-2" : ""} ${
+															row.userDefined[head] !== null ? "" : "bg-base-300"
+														}`}
+														key={row.userDefined[head] + "child" + j}
+													>
+														{row.userDefined[head]}
+													</td>
+												);
+											} else {
+												acc.push(
+													<td
+														className={`whitespace-nowrap ${j ? "border-base-100 border-l-2" : ""} ${
+															row[head] !== null ? "" : "bg-base-300"
+														}`}
+														key={row[head] + "child" + j}
+													>
+														{row[head] in DeadValueEnum && typeof row[head] === "number"
+															? DeadValueEnum[row[head]]
+															: row[head]}
+													</td>
+												);
+											}
 										}
 
 										return acc;
