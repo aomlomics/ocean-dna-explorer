@@ -190,6 +190,7 @@ export default function SubmissionEditButton({
 									// 	</fieldset>
 									// );
 								} else if (type === "json") {
+									//TODO: add indicator for user defined section
 									for (const userDefinedField in value) {
 										acc.push(
 											<fieldset key={userDefinedField} className="fieldset">

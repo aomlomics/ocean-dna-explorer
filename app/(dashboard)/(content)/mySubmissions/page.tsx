@@ -20,11 +20,21 @@ export default async function MySubmissions() {
 		prisma.project.findMany({
 			where: {
 				userId
+			},
+			omit: {
+				editHistory: true,
+				userId: true,
+				dateSubmitted: true
 			}
 		}),
 		prisma.analysis.findMany({
 			where: {
 				userId
+			},
+			omit: {
+				editHistory: true,
+				userId: true,
+				dateSubmitted: true
 			}
 		})
 	]);
@@ -91,7 +101,7 @@ export default async function MySubmissions() {
 														titleField="project_id"
 														data={proj}
 														action={projectEditAction}
-														noDisplay={["id", "userId", "dateSubmitted"]}
+														noDisplay={["id"]}
 													/>
 													<SubmissionDeleteButton
 														field="project_id"
@@ -152,7 +162,7 @@ export default async function MySubmissions() {
 														titleField="analysis_run_name"
 														data={a}
 														action={analysisEditAction}
-														noDisplay={["id", "userId", "dateSubmitted"]}
+														noDisplay={["id"]}
 														noEdit={["project_id", "assay_name"]}
 													/>
 													<SubmissionDeleteButton

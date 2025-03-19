@@ -12,11 +12,6 @@ generator json {
     provider = "prisma-json-types-generator"
 }
 
-//generator dbml {
-//    provider   = "prisma-dbml-generator"
-//    outputName = "OpalERD.dbml"
-//}
-
 generator zod {
     provider                         = "zod-prisma-types"
     createInputTypes                 = false
@@ -306,11 +301,12 @@ model Project {
     project_id    String   @unique
     userId        String
     dateSubmitted DateTime @default(now())
+    /// [EditHistoryType]
+    editHistory   Json     @default("[]")
 
     // Relations
     Samples  Sample[]
     Analyses Analysis[]
-    Edits    Edit[]
 
     // Data
     // Project
@@ -648,6 +644,8 @@ model Analysis {
     analysis_run_name String   @unique
     userId            String
     dateSubmitted     DateTime @default(now())
+    /// [EditHistoryType]
+    editHistory       Json     @default("[]")
 
     // Relations
     project_id  String
@@ -656,7 +654,6 @@ model Analysis {
     Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
     Occurrences Occurrence[]
     Assignments Assignment[]
-    Edits       Edit[]
 
     // Data
     // Bioinformatics
@@ -814,19 +811,4 @@ model Taxonomy {
     family                 String?
     genus                  String?
     species                String?
-}
-
-model Edit {
-    id         Int      @id @default(autoincrement())
-    dateEdited DateTime @default(now())
-
-    // Relations
-    project_id        String?
-    Project           Project?  @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    analysis_run_name String?
-    Analysis          Analysis? @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
-
-    // Data
-    /// [ChangesType]
-    changes Json
 }

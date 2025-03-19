@@ -1,10 +1,9 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "../../prisma";
-import { revalidatePath } from "next/cache";
+import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@prisma/client";
-import { ProjectPartialSchema } from "@/prisma/generated/zod";
+import { revalidatePath } from "next/cache";
 
 export default async function projectEditAction(formData: FormData) {
 	console.log("project edit");
@@ -30,6 +29,7 @@ export default async function projectEditAction(formData: FormData) {
 				},
 				select: {
 					userId: true,
+					editHistory: true,
 					...(Array.from(formData.keys()).reduce((acc, field) => {
 						if (field.startsWith("userDefined") && !acc.userDefined) {
 							acc.userDefined = true;
@@ -48,59 +48,52 @@ export default async function projectEditAction(formData: FormData) {
 				return "Unauthorized action. You are not the owner of this project.";
 			}
 
-			await tx.edit.create({
-				data: {
-					project_id,
-					changes: Array.from(formData.entries()).reduce((acc, [field, value]) => {
-						if (field.startsWith("userDefined") && project.userDefined) {
-							const userDefinedField = field.split(":")[1];
-							acc.push({
-								field: userDefinedField,
-								oldValue: project.userDefined[userDefinedField] || "",
-								newValue: value as string
-							});
-						} else {
-							acc.push({
-								field,
-								oldValue: project[field as keyof typeof project]?.toString() || "",
-								newValue: value.toString()
-							});
-						}
-
-						return acc;
-					}, [] as PrismaJson.ChangesType)
-				},
-				select: {
-					id: true
-				}
-			});
-
-			//replace changed fields in userDefined to new values
-			const userDefined = { ...project.userDefined };
-			if (userDefined) {
-				for (const entry of formData.entries()) {
-					if (entry[0].startsWith("userDefined")) {
-						const userDefinedField = entry[0].split(":")[1];
-						if (userDefinedField in userDefined) {
-							userDefined[userDefinedField] = entry[1] as string;
-						}
-					}
-				}
-			}
-
 			await tx.project.update({
 				where: {
 					project_id
 				},
-				//@ts-ignore potential issue with JSON field userDefined
-				data: ProjectPartialSchema.parse(
-					{ ...Object.fromEntries(formData), userDefined },
-					{
-						errorMap: (error, ctx) => {
-							return { message: `AnalysisSchema: ${ctx.defaultError}` };
+				data: {
+					//make changes to project
+					...Object.fromEntries(formData),
+					//replace changed fields in userDefined with new values
+					userDefined: {
+						//keep previous user defined data
+						...project.userDefined,
+						//override any changed fields
+						...Array.from(formData.entries()).reduce((acc, [field, value]) => {
+							if (project.userDefined && field.startsWith("userDefined")) {
+								const userDefinedField = field.split(":")[1];
+								if (userDefinedField in project.userDefined) {
+									acc[userDefinedField] = value as string;
+								}
+							}
+
+							return acc;
+						}, {} as PrismaJson.UserDefinedType)
+					},
+					//add edit to start of edit history
+					editHistory: [
+						{
+							dateEdited: new Date(),
+							changes: Array.from(formData.entries()).map(([field, value]) => {
+								if (field.startsWith("userDefined") && project.userDefined) {
+									const userDefinedField = field.split(":")[1];
+									return {
+										field: userDefinedField,
+										oldValue: project.userDefined[userDefinedField] || "",
+										newValue: value as string
+									};
+								} else {
+									return {
+										field,
+										oldValue: project[field as keyof typeof project]?.toString() || "",
+										newValue: value.toString()
+									};
+								}
+							})
 						}
-					}
-				)
+					].concat(project.editHistory)
+				}
 			});
 		});
 
