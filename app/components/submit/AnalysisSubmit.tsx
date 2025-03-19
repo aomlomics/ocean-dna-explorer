@@ -237,10 +237,19 @@ export default function AnalysisSubmit() {
 		const allFormData = new FormData(event.currentTarget);
 		let hasError = false;
 
+		let analysis_i = 0;
 		for (const analysis_run_name of analyses) {
 			if (analysis_run_name && analysis_run_name !== "\u200b") {
 				//analysis file
 				setLoading(analysis_run_name);
+				const element = document.getElementById(`analysis_${analysis_i}`);
+				if (element) {
+					element.scrollIntoView({
+						block: "start",
+						behavior: "smooth"
+					});
+				}
+
 				const { error: analysisError, result: analysisResult } = await analysisFileSubmit({
 					analysis_run_name,
 					file: allFormData.get(analysis_run_name) as File,
@@ -317,6 +326,8 @@ export default function AnalysisSubmit() {
 					break;
 				}
 			}
+
+			analysis_i++;
 		}
 
 		if (hasError) {
@@ -503,20 +514,6 @@ export default function AnalysisSubmit() {
 						<button
 							className="btn btn-primary text-white w-[200px]"
 							disabled={!!loading || submitted || !analyses.every((a) => a && checkAnalysisFiles(a, fileStates))}
-							onClick={() => {
-								for (let i = 0; i < analyses.length - 1; i++) {
-									if (analyses[i] !== null) {
-										const element = document.getElementById(`analysis_${i}`);
-										if (element) {
-											element.scrollIntoView({
-												block: "start",
-												behavior: "smooth"
-											});
-											break;
-										}
-									}
-								}
-							}}
 						>
 							{loading || submitted ? <span className="loading loading-spinner loading-sm"></span> : "Submit"}
 						</button>
