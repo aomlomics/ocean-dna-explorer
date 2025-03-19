@@ -9,11 +9,13 @@ export default function SchemaDisplay() {
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
 		const shape = TableToSchema[tableName.toLowerCase() as keyof typeof TableToSchema].shape;
 		for (const f of fields) {
-			const type = getZodType(shape[f as keyof typeof shape]);
-			if (!type.type) {
-				throw new Error(`Could not find type of ${f}.`);
+			if (f !== "userDefined") {
+				const type = getZodType(shape[f as keyof typeof shape]);
+				if (!type.type) {
+					throw new Error(`Could not find type of ${f}.`);
+				}
+				result[f] = type;
 			}
-			result[f] = type;
 		}
 
 		return [tableName, result] as [string, typeof result];

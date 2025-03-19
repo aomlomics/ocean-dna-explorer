@@ -49,7 +49,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) return <>Project not found</>;
-	const { _count: _, Samples: __, Analyses: ___, ...justProject } = project;
+	const { _count: _, Samples: __, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
 		(acc, a) => ({ ...acc, [a.assay_name]: { target_gene: a.Assay.target_gene } }),
@@ -98,7 +98,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 					<header>
 						<div className="flex gap-2 items-center">
 							<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
-							<EditHistory relationField="project_id" entry={project_id} />
+							<EditHistory editHistory={project.editHistory} />
 						</div>
 						<p className="text-lg text-base-content/70">{project.project_name}</p>
 					</header>

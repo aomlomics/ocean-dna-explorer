@@ -40,6 +40,7 @@ export default async function analysisSubmitAction(formData: FormData): SubmitAc
 	//analysis
 	console.log("analysis");
 	const dbAnalysis = await prisma.analysis.create({
+		//@ts-ignore issue with Json database type
 		data: AnalysisOptionalDefaultsSchema.parse(
 			{ ...analysisCol, userId: userId },
 			{
