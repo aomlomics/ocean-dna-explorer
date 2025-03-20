@@ -144,7 +144,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 									<li key={analysis.analysis_run_name}>
 										<Link
 											href={`/explore/analysis/${analysis.analysis_run_name}`}
-											className="text-base-content hover:text-primary"
+											className="text-base-content hover:text-primary break-all"
 										>
 											{analysis.analysis_run_name}
 										</Link>
