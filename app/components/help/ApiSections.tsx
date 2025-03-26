@@ -104,7 +104,7 @@ else:
 library(jsonlite)
 
 # Make API request
-url <- "https://api.opaldata.org/api/project"
+url <- "${process.env.NEXT_PUBLIC_URL}/api/project"
 response <- GET(url)
 
 # Check if request was successful
@@ -199,7 +199,7 @@ if (http_status(response)$category == "Success") {
 						<p className="mb-4">API requests follow this general pattern:</p>
 						<div className="p-4 my-6 bg-base-200 border-l-4 border-primary rounded-md shadow-sm">
 							<div className="text-xl break-all">
-								https://node.example.org/api/[endpoint]?[parameter]&[parameter]&...
+								{process.env.NEXT_PUBLIC_URL}/api/[endpoint]?[parameter]&[parameter]&...
 							</div>
 						</div>
 
@@ -290,7 +290,7 @@ if (http_status(response)$category == "Success") {
 						</p>
 
 						<div className="mb-4">
-							Example URL: <InlineCode code="https://api.opaldata.org/api/tables" />
+							Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/tables`} />
 						</div>
 
 						<div className="mb-4">Example Response:</div>
