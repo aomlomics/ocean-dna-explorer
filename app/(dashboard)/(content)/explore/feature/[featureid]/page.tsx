@@ -1,3 +1,4 @@
+import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
@@ -104,40 +105,7 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 				<h2 className="text-primary text-2xl">Prevalence</h2>
 				<div>Found in {prevalence.toFixed(2)}% of samples.</div>
 			</div>
-			{/* TODO: make dropdowns separate component */}
-			<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300">
-				<div tabIndex={0} role="button" className="stat focus:bg-base-300 w-full p-6 flex justify-between items-center">
-					<div>
-						<div className="text-lg font-medium text-base-content/70">Assays</div>
-					</div>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						className="text-base-content/70"
-					>
-						<path d="m6 9 6 6 6-6" />
-					</svg>
-				</div>
-				<ul
-					tabIndex={0}
-					className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-				>
-					{assays.map((assay_name) => (
-						<li key={assay_name}>
-							<Link href={`/explore/assay/${assay_name}`} className="text-base-content hover:text-primary break-all">
-								{assay_name}
-							</Link>
-						</li>
-					))}
-				</ul>
-			</div>
+			<DropdownLinkBox title="Assays" content={assays} linkPrefix="/explore/assay" />
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Occurrences" />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
