@@ -4,11 +4,11 @@ module.exports = {
 	generateRobotsTxt: true,
 	robotsTxtOptions: {
 		policies: [
-		  {
-			userAgent: "*",
-			allow: "/",
-			disallow: ["/sign-in/", "/mySubmissions/", "/submit/", "/api/analysisFile/", "/api/sampleLocations/", "/api/pagination/"]
-		  }
+			{
+				userAgent: "*",
+				allow: "/",
+				disallow: ["/sign-in/", "/mySubmissions/", "/submit/", "/api/analysisFile/", "/api/sampleLocations/", "/api/pagination/"]
+			}
 		]
-	  }
-  }
+	}
+}
