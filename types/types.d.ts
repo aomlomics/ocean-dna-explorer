@@ -40,3 +40,11 @@ export type Pluralize<T extends string> = T extends `${infer S}sis`
 	: T extends `${infer S}s`
 	? T
 	: `${T}s`;
+
+declare global {
+	namespace PrismaJson {
+		type UserDefinedType = Record<string, string>;
+		type ChangesType = { field: string; oldValue: string; newValue: string }[];
+		type EditHistoryType = { dateEdited: Date; changes: ChangesType }[];
+	}
+}

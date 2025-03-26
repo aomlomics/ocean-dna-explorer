@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/app/helpers/prisma";
-import { replaceDead } from "@/app/helpers/utils";
+import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { SubmitActionReturn } from "@/types/types";
 import { auth } from "@clerk/nextjs/server";
@@ -26,7 +26,7 @@ export default async function analysisSubmitAction(formData: FormData): SubmitAc
 
 			//Analysis
 			if (currentLine[0]) {
-				replaceDead(
+				parseSchemaToObject(
 					currentLine[1].replace(/[\r\n]+/gm, ""),
 					currentLine[0],
 					analysisCol,
@@ -40,6 +40,7 @@ export default async function analysisSubmitAction(formData: FormData): SubmitAc
 	//analysis
 	console.log("analysis");
 	const dbAnalysis = await prisma.analysis.create({
+		//@ts-ignore issue with Json database type
 		data: AnalysisOptionalDefaultsSchema.parse(
 			{ ...analysisCol, userId: userId },
 			{

@@ -36,7 +36,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 		}
 	});
 	if (!analysis) return <>Analysis not found</>;
-	const { _count: _, Occurrences: __, ...justAnalysis } = analysis;
+	const { _count: _, Occurrences: __, editHistory: ___, ...justAnalysis } = analysis;
 
 	return (
 		<div className="space-y-8">
@@ -67,7 +67,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 					<header>
 						<div className="flex gap-2 items-center">
 							<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
-							<EditHistory relationField="analysis_run_name" entry={analysis_run_name} />
+							<EditHistory editHistory={analysis.editHistory} />
 						</div>
 
 						<div className="bg-base-200 -ml-3.5 text-semibold">

@@ -1,8 +1,7 @@
 "use server";
 
-import { prisma } from "@/app/helpers/prisma";
-import { AnalysisPartialSchema } from "@/prisma/generated/zod";
 import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -30,6 +29,7 @@ export default async function analysisEditAction(formData: FormData) {
 				},
 				select: {
 					userId: true,
+					editHistory: true,
 					...(Array.from(formData.keys()).reduce(
 						(acc, field) => ({ ...acc, [field]: true }),
 						{}
@@ -43,35 +43,27 @@ export default async function analysisEditAction(formData: FormData) {
 				return "Unauthorized action. You are not the owner of this analysis.";
 			}
 
-			const edit = await tx.edit.create({
-				data: {
-					analysis_run_name
-				},
-				select: {
-					id: true
-				}
-			});
-
-			await tx.change.createMany({
-				data: Array.from(formData.entries()).map(([field, value]) => ({
-					editId: edit.id,
-					field,
-					oldValue: analysis[field as keyof typeof analysis]
-						? analysis[field as keyof typeof analysis]!.toString()
-						: "",
-					newValue: value.toString()
-				}))
-			});
-
 			await tx.analysis.update({
 				where: {
 					analysis_run_name
 				},
-				data: AnalysisPartialSchema.parse(Object.fromEntries(formData), {
-					errorMap: (error, ctx) => {
-						return { message: `AnalysisSchema: ${ctx.defaultError}` };
-					}
-				})
+				data: {
+					//make changes to analysis
+					...Object.fromEntries(formData),
+					//add edit to start of edit history
+					editHistory: [
+						{
+							dateEdited: new Date(),
+							changes: Array.from(formData.entries()).map(([field, value]) => ({
+								field,
+								oldValue: analysis[field as keyof typeof analysis]
+									? analysis[field as keyof typeof analysis]!.toString()
+									: "",
+								newValue: value.toString()
+							}))
+						}
+					].concat(analysis.editHistory)
+				}
 			});
 		});
 

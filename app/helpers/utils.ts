@@ -1,6 +1,7 @@
 import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
 import { Prisma, Taxonomy } from "@prisma/client";
-import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable } from "zod";
+import { JsonValue } from "@prisma/client/runtime/library";
+import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable, ZodLazy } from "zod";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -44,6 +45,9 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.type = "string";
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
+	} else if (field instanceof ZodLazy) {
+		//JSON
+		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
 		//DeadBoolean
 		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
@@ -75,11 +79,11 @@ function checkZodType(field: any, type: any) {
 	}
 }
 
-//replace DeadValues in number fields with enum values
-export function replaceDead(
+//parse a field value into a given object only if it exists in the schema
+export function parseSchemaToObject(
 	field: string,
 	fieldName: string,
-	obj: Record<string, string | number | boolean | null>,
+	obj: Record<string, string | number | boolean | JsonValue | null>,
 	schema: ZodObject<any>,
 	fieldOptionsEnum: ZodEnum<any>
 ) {

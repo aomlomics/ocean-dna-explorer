@@ -2,7 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { replaceDead } from "@/app/helpers/utils";
+import { parseSchemaToObject } from "@/app/helpers/utils";
 import {
 	AnalysisOptionalDefaultsSchema,
 	AnalysisScalarFieldEnumSchema,
@@ -32,6 +32,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 	}
 
 	try {
+		let project = {} as Prisma.ProjectCreateInput;
 		const assays = {} as Record<string, Prisma.AssayCreateManyInput>;
 		const libraries = [] as Prisma.LibraryCreateManyInput[];
 		const samples = [] as Prisma.SampleCreateManyInput[];
@@ -50,89 +51,73 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 			//parse file
 			const projectFileLines = (await (formData.get("project") as File).text()).replace(/[\r]+/gm, "").split("\n");
 			const projectFileHeaders = projectFileLines[0].split("\t");
-			const field_name_i = projectFileHeaders.indexOf("field_name");
+			const userDefined = {} as PrismaJson.UserDefinedType;
 			//iterate over each row
 			for (let i = 1; i < projectFileLines.length; i++) {
 				const currentLine = projectFileLines[i].split("\t");
+				const field = currentLine[projectFileHeaders.indexOf("field_name")];
+				const value = currentLine[projectFileHeaders.indexOf("project_level")];
 
-				//Project Level
-				//project table
-				replaceDead(
-					currentLine[projectFileHeaders.indexOf("project_level")],
-					currentLine[field_name_i],
-					projectCol,
-					ProjectOptionalDefaultsSchema,
-					ProjectScalarFieldEnumSchema
-				);
-				//assay table
-				replaceDead(
-					currentLine[projectFileHeaders.indexOf("project_level")],
-					currentLine[field_name_i],
-					projectCol,
-					AssayOptionalDefaultsSchema,
-					AssayScalarFieldEnumSchema
-				);
+				//User defined
+				if (currentLine[projectFileHeaders.indexOf("section")] === "User defined") {
+					userDefined[field] = value;
+				} else {
+					//Project Level
+					//project table
+					parseSchemaToObject(value, field, projectCol, ProjectOptionalDefaultsSchema, ProjectScalarFieldEnumSchema);
+					//assay table
+					parseSchemaToObject(value, field, projectCol, AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema);
 
-				//library table
-				replaceDead(
-					currentLine[projectFileHeaders.indexOf("project_level")],
-					currentLine[field_name_i],
-					projectCol,
-					LibraryOptionalDefaultsSchema,
-					LibraryScalarFieldEnumSchema
-				);
+					//library table
+					parseSchemaToObject(value, field, projectCol, LibraryOptionalDefaultsSchema, LibraryScalarFieldEnumSchema);
 
-				//analysis table
-				replaceDead(
-					currentLine[projectFileHeaders.indexOf("project_level")],
-					currentLine[field_name_i],
-					projectCol,
-					AnalysisOptionalDefaultsSchema,
-					AnalysisScalarFieldEnumSchema
-				);
+					//analysis table
+					parseSchemaToObject(value, field, projectCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
 
-				//Assay Levels
-				for (let i = projectFileHeaders.indexOf("project_level") + 1; i < projectFileHeaders.length; i++) {
-					//flip table from long to wide
-					//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
-					//and whose values are an object representing a single "row"
-					if (currentLine[i]) {
-						//Assays
-						if (!assayCols[projectFileHeaders[i]]) {
-							assayCols[projectFileHeaders[i]] = {};
+					//Assay Levels
+					for (let i = projectFileHeaders.indexOf("project_level") + 1; i < projectFileHeaders.length; i++) {
+						//flip table from long to wide
+						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
+						//and whose values are an object representing a single "row"
+						if (currentLine[i]) {
+							//Assays
+							if (!assayCols[projectFileHeaders[i]]) {
+								assayCols[projectFileHeaders[i]] = {};
+							}
+							parseSchemaToObject(
+								currentLine[i],
+								field,
+								assayCols[projectFileHeaders[i]],
+								AssayOptionalDefaultsSchema,
+								AssayScalarFieldEnumSchema
+							);
+
+							//Libraries
+							if (!libraryCols[projectFileHeaders[i]]) {
+								libraryCols[projectFileHeaders[i]] = {};
+							}
+							parseSchemaToObject(
+								currentLine[i],
+								field,
+								libraryCols[projectFileHeaders[i]],
+								LibraryOptionalDefaultsSchema,
+								LibraryScalarFieldEnumSchema
+							);
 						}
-						replaceDead(
-							currentLine[i],
-							currentLine[field_name_i],
-							assayCols[projectFileHeaders[i]],
-							AssayOptionalDefaultsSchema,
-							AssayScalarFieldEnumSchema
-						);
-
-						//Libraries
-						if (!libraryCols[projectFileHeaders[i]]) {
-							libraryCols[projectFileHeaders[i]] = {};
-						}
-						replaceDead(
-							currentLine[i],
-							currentLine[field_name_i],
-							libraryCols[projectFileHeaders[i]],
-							LibraryOptionalDefaultsSchema,
-							LibraryScalarFieldEnumSchema
-						);
 					}
 				}
 			}
-		}
 
-		const project = ProjectOptionalDefaultsSchema.parse(
-			{ ...projectCol, userId: userId },
-			{
-				errorMap: (error, ctx) => {
-					return { message: `ProjectSchema: ${ctx.defaultError}` };
+			//@ts-ignore issue with typing of JSON field userDefined
+			project = ProjectOptionalDefaultsSchema.parse(
+				{ ...projectCol, userId: userId, userDefined },
+				{
+					errorMap: (error, ctx) => {
+						return { message: `ProjectSchema: ${ctx.defaultError}` };
+					}
 				}
-			}
-		) as Prisma.ProjectCreateInput;
+			);
+		}
 
 		//Library file
 		console.log("library file");
@@ -140,77 +125,97 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 		{
 			//parse file
 			const libraryFileLines = (await (formData.get("library") as File).text()).replace(/[\r]+/gm, "").split("\n");
-			libraryFileLines.splice(0, 6); //TODO: parse comments out logically instead of hard-coded
-			const libraryFileHeaders = libraryFileLines[0].split("\t");
+			let sectionRow = null as null | string[];
+			let libraryFileHeaders = null as null | string[];
 			//iterate over each row
 			for (let i = 1; i < libraryFileLines.length; i++) {
 				const currentLine = libraryFileLines[i].split("\t");
 
-				const samp_name = currentLine[libraryFileHeaders.indexOf("samp_name")];
-				if (samp_name) {
-					const assayRow = {} as AssayPartial;
-					const libraryRow = {} as LibraryPartial;
-
-					//iterate over each column
-					for (let j = 0; j < libraryFileHeaders.length; j++) {
-						//assay table
-						replaceDead(
-							currentLine[j],
-							libraryFileHeaders[j],
-							assayRow,
-							AssayOptionalDefaultsSchema,
-							AssayScalarFieldEnumSchema
-						);
-
-						//library table
-						replaceDead(
-							currentLine[j],
-							libraryFileHeaders[j],
-							libraryRow,
-							LibraryOptionalDefaultsSchema,
-							LibraryScalarFieldEnumSchema
-						);
+				// remove comments
+				if (currentLine[0][0] === "#") {
+					if (currentLine[0].toLowerCase() === "# section") {
+						sectionRow = currentLine;
 					}
+				} else {
+					if (sectionRow === null) {
+						throw new Error("No section information provided for libraries.");
+					} else if (libraryFileHeaders === null) {
+						libraryFileHeaders = currentLine;
+					} else if (currentLine[libraryFileHeaders.indexOf("samp_name")]) {
+						const assayRow = {} as AssayPartial;
+						const libraryRow = {} as LibraryPartial;
+						const userDefined = {} as PrismaJson.UserDefinedType;
 
-					if (assayRow.assay_name) {
-						sampToAssay[samp_name] = assayRow.assay_name;
-						libToAssay[currentLine[libraryFileHeaders.indexOf("library_id")]] = assayRow.assay_name;
+						//iterate over each column
+						for (let j = 0; j < libraryFileHeaders.length; j++) {
+							//User defined
+							if (sectionRow[j] === "User defined") {
+								userDefined[libraryFileHeaders[j]] = currentLine[j];
+							} else {
+								//assay table
+								parseSchemaToObject(
+									currentLine[j],
+									libraryFileHeaders[j],
+									assayRow,
+									AssayOptionalDefaultsSchema,
+									AssayScalarFieldEnumSchema
+								);
 
-						//if the assay doesn't exist yet, add it to the assays array
-						//TODO: do not create new assays, as they should ALL already exist in the database
-						if (!assays[assayRow.assay_name]) {
-							//TODO: build assay object from projectMetadata
-							assays[assayRow.assay_name] = AssayOptionalDefaultsSchema.parse(
-								//TODO: use assay_name field, not column header
-								{
-									//least specific overrides most specific
-									...assayRow,
-									...assayCols[assayRow.assay_name],
-									...projectCol
-								},
-								{
-									errorMap: (error, ctx) => {
-										return { message: `AssaySchema: ${ctx.defaultError}` };
-									}
-								}
-							);
+								//library table
+								parseSchemaToObject(
+									currentLine[j],
+									libraryFileHeaders[j],
+									libraryRow,
+									LibraryOptionalDefaultsSchema,
+									LibraryScalarFieldEnumSchema
+								);
+							}
 						}
 
-						libraries.push(
-							LibraryOptionalDefaultsSchema.parse(
-								{
-									//least specific overrides most specific
-									...libraryRow,
-									...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
-									...projectCol
-								},
-								{
-									errorMap: (error, ctx) => {
-										return { message: `LibrarySchema: ${ctx.defaultError}` };
+						if (libraryRow.samp_name && assayRow.assay_name) {
+							sampToAssay[libraryRow.samp_name] = assayRow.assay_name;
+							libToAssay[currentLine[libraryFileHeaders.indexOf("library_id")]] = assayRow.assay_name;
+
+							//if the assay doesn't exist yet, add it to the assays array
+							//TODO: do not create new assays, as they should ALL already exist in the database
+							if (!assays[assayRow.assay_name]) {
+								//TODO: build assay object from projectMetadata
+								assays[assayRow.assay_name] = AssayOptionalDefaultsSchema.parse(
+									//TODO: use assay_name field, not column header
+									{
+										//least specific overrides most specific
+										...assayRow,
+										...assayCols[assayRow.assay_name],
+										...projectCol
+									},
+									{
+										errorMap: (error, ctx) => {
+											return { message: `AssaySchema: ${ctx.defaultError}` };
+										}
 									}
-								}
-							)
-						);
+								);
+							}
+
+							libraries.push(
+								//@ts-ignore issue with typing of JSON field userDefined
+								LibraryOptionalDefaultsSchema.parse(
+									{
+										//least specific overrides most specific
+										...libraryRow,
+										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
+										...projectCol,
+										userDefined
+									},
+									{
+										errorMap: (error, ctx) => {
+											return { message: `LibrarySchema: ${ctx.defaultError}` };
+										}
+									}
+								)
+							);
+						} else {
+							throw new Error("Missing samp_name or assay_name in Library metadata.");
+						}
 					}
 				}
 			}
@@ -221,45 +226,64 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 		//code block to force garbage collection
 		{
 			const sampleFileLines = (await (formData.get("sample") as File).text()).replace(/[\r]+/gm, "").split("\n");
-			sampleFileLines.splice(0, 6); //TODO: parse comments out logically instead of hard-coded
-			const sampleFileHeaders = sampleFileLines[0].split("\t");
+			let sectionRow = null as null | string[];
+			let sampleFileHeaders = null as null | string[];
 			//iterate over each row
 			for (let i = 1; i < sampleFileLines.length; i++) {
 				const currentLine = sampleFileLines[i].split("\t");
-				if (currentLine[sampleFileHeaders.indexOf("samp_name")]) {
-					const sampleRow = {} as SamplePartial;
 
-					for (let j = 0; j < sampleFileHeaders.length; j++) {
-						//assay table
-						replaceDead(
-							currentLine[j],
-							sampleFileHeaders[j],
-							sampleRow,
-							SampleOptionalDefaultsSchema,
-							SampleScalarFieldEnumSchema
-						);
+				// remove comments
+				if (currentLine[0][0] === "#") {
+					if (currentLine[0].toLowerCase() === "# section") {
+						sectionRow = currentLine;
 					}
+				} else {
+					if (sectionRow === null) {
+						throw new Error("No section information provided for samples.");
+					} else if (sampleFileHeaders === null) {
+						sampleFileHeaders = currentLine;
+					} else if (currentLine[sampleFileHeaders.indexOf("samp_name")]) {
+						const sampleRow = {} as SamplePartial;
+						const userDefined = {} as PrismaJson.UserDefinedType;
 
-					if (sampleRow.samp_name) {
-						samples.push(
-							//@ts-ignore Zod enum mapping issue
-							SampleOptionalDefaultsSchema.parse(
-								{
-									//construct from least specific to most specific
-									...sampleRow,
-									project_id: projectCol.project_id,
-									assay_name: sampToAssay[sampleRow.samp_name]
-								},
-								{
-									errorMap: (error, ctx) => {
-										return { message: `SampleSchema: ${ctx.defaultError}` };
+						for (let j = 0; j < sampleFileHeaders.length; j++) {
+							//User defined
+							if (sectionRow[j] === "User defined") {
+								userDefined[sampleFileHeaders[j]] = currentLine[j];
+							} else {
+								//assay table
+								parseSchemaToObject(
+									currentLine[j],
+									sampleFileHeaders[j],
+									sampleRow,
+									SampleOptionalDefaultsSchema,
+									SampleScalarFieldEnumSchema
+								);
+							}
+						}
+
+						if (sampleRow.samp_name) {
+							samples.push(
+								//@ts-ignore issue with typing of JSON field userDefined
+								SampleOptionalDefaultsSchema.parse(
+									{
+										//construct from least specific to most specific
+										...sampleRow,
+										project_id: projectCol.project_id,
+										assay_name: sampToAssay[sampleRow.samp_name],
+										userDefined
+									},
+									{
+										errorMap: (error, ctx) => {
+											return { message: `SampleSchema: ${ctx.defaultError}` };
+										}
 									}
-								}
-							)
-						);
-					}
+								)
+							);
+						}
 
-					//TODO: add rel_cont_id to assays
+						//TODO: add rel_cont_id to assays
+					}
 				}
 			}
 		}
