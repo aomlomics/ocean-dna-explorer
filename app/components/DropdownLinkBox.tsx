@@ -7,7 +7,7 @@ export default function DropdownLinkBox({
 	linkPrefix
 }: {
 	title: string;
-	count?: number;
+	count: number;
 	content: string[];
 	linkPrefix: string;
 }) {
@@ -16,7 +16,7 @@ export default function DropdownLinkBox({
 			<div tabIndex={0} role="button" className="stat focus:bg-base-300 w-full p-6 flex justify-between items-center">
 				<div>
 					<div className="text-lg font-medium text-base-content/70">{title}</div>
-					{!!count && <div className="text-2xl font-medium mt-1">{count}</div>}
+					<div className="text-2xl font-medium mt-1">{count}</div>
 				</div>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

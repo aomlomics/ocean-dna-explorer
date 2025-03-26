@@ -105,7 +105,12 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 				<h2 className="text-primary text-2xl">Prevalence</h2>
 				<div>Found in {prevalence.toFixed(2)}% of samples.</div>
 			</div>
-			<DropdownLinkBox title="Assays" content={assays} linkPrefix="/explore/assay" />
+			<DropdownLinkBox
+				title="Assays Generated With"
+				count={assays.length}
+				content={assays}
+				linkPrefix="/explore/assay"
+			/>
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Occurrences" />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
