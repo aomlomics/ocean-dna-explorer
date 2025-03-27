@@ -1,12 +1,14 @@
+import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
+import Link from "next/link";
 import { ReactNode } from "react";
 
 export default async function Featureid({ params }: { params: Promise<{ featureid: string }> }) {
 	let { featureid } = await params;
 	featureid = decodeURIComponent(featureid);
 
-	const { feature, taxaCounts, prevalence } = await prisma.$transaction(async (tx) => {
+	const { feature, taxaCounts, prevalence, assays } = await prisma.$transaction(async (tx) => {
 		const feature = await tx.feature.findUnique({
 			where: {
 				featureid
@@ -53,7 +55,21 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 		const samplesCount = await tx.sample.count();
 		const prevalence = (relevantSamplesCount / samplesCount) * 100;
 
-		return { feature, taxaCounts, prevalence };
+		const assignmentAssays = await tx.assignment.findMany({
+			where: {
+				featureid
+			},
+			select: {
+				Analysis: {
+					select: {
+						assay_name: true
+					}
+				}
+			}
+		});
+		const assays = [...new Set(assignmentAssays.map((a) => a.Analysis.assay_name))];
+
+		return { feature, taxaCounts, prevalence, assays };
 	});
 
 	if (!feature) return <>Feature not found</>;
@@ -89,6 +105,12 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 				<h2 className="text-primary text-2xl">Prevalence</h2>
 				<div>Found in {prevalence.toFixed(2)}% of samples.</div>
 			</div>
+			<DropdownLinkBox
+				title="Assays Generated With"
+				count={assays.length}
+				content={assays}
+				linkPrefix="/explore/assay"
+			/>
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Occurrences" />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
