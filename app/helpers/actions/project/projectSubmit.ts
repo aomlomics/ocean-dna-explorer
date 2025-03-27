@@ -108,9 +108,9 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 				}
 			}
 
-			//@ts-ignore issue with typing of JSON field userDefined
+			//@ts-ignore issue with Json database type
 			project = ProjectOptionalDefaultsSchema.parse(
-				{ ...projectCol, userId: userId, userDefined },
+				{ ...projectCol, userId: userId, userDefined, editHistory: "JsonNull" },
 				{
 					errorMap: (error, ctx) => {
 						return { message: `ProjectSchema: ${ctx.defaultError}` };
@@ -197,7 +197,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 							}
 
 							libraries.push(
-								//@ts-ignore issue with typing of JSON field userDefined
+								//@ts-ignore issue with JSON database type
 								LibraryOptionalDefaultsSchema.parse(
 									{
 										//least specific overrides most specific
@@ -264,7 +264,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 
 						if (sampleRow.samp_name) {
 							samples.push(
-								//@ts-ignore issue with typing of JSON field userDefined
+								//@ts-ignore issue with Json database type
 								SampleOptionalDefaultsSchema.parse(
 									{
 										//construct from least specific to most specific

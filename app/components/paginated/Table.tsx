@@ -5,9 +5,10 @@ import { Prisma } from "@prisma/client";
 import { FormEvent, ReactNode, useState } from "react";
 import useSWR, { preload } from "swr";
 import { useDebouncedCallback } from "use-debounce";
-import { fetcher } from "../../helpers/utils";
+import { fetcher, getZodType } from "../../helpers/utils";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
+import { SampleSchema } from "@/prisma/generated/zod";
 
 export default function Table({
 	table,
@@ -21,7 +22,9 @@ export default function Table({
 	const [take, setTake] = useState(50);
 	const [page, setPage] = useState(1);
 
-	const [whereFilter, setWhereFilter] = useState({} as Record<string, { contains: string; mode: "insensitive" }>);
+	const [whereFilter, setWhereFilter] = useState(
+		{} as Record<string, { contains: string; mode: "insensitive" } | number | string>
+	);
 
 	const [columnsFilter, setColumnsFilter] = useState("");
 	const handleColFilter = useDebouncedCallback((f) => {
@@ -57,10 +60,22 @@ export default function Table({
 
 		const temp = {} as typeof whereFilter;
 		for (const [key, value] of formData.entries()) {
-			if (typeof value === "string")
-				if (value.trim()) {
+			const type = getZodType(SampleSchema.shape[key as keyof typeof SampleSchema.shape]).type;
+			if (!type) {
+				throw new Error(
+					`Could not find type of '${key}'. Make sure a field named '${key}' exists on table named '${table}'.`
+				);
+			}
+
+			if (typeof value === "string" && value.trim()) {
+				if (type === "string") {
 					temp[key] = { contains: value, mode: "insensitive" };
+				} else if (type === "number") {
+					temp[key] = parseInt(value);
+				} else {
+					temp[key] = value;
 				}
+			}
 		}
 		setTake(take);
 		setWhereFilter(temp);
@@ -238,7 +253,13 @@ export default function Table({
 									<label className="input input-bordered input-xs flex items-center gap-2">
 										<input
 											name={title}
-											defaultValue={!!whereFilter[title] ? whereFilter[title].contains : ""}
+											defaultValue={
+												!whereFilter[title]
+													? ""
+													: typeof whereFilter[title] === "object"
+													? whereFilter[title].contains
+													: whereFilter[title]
+											}
 											type="text"
 											className="grow"
 										/>
@@ -277,7 +298,13 @@ export default function Table({
 												<label className="input input-bordered input-xs flex items-center gap-2">
 													<input
 														name={head}
-														defaultValue={!!whereFilter[head] ? whereFilter[head].contains : ""}
+														defaultValue={
+															!whereFilter[head]
+																? ""
+																: typeof whereFilter[head] === "object"
+																? whereFilter[head].contains
+																: whereFilter[head]
+														}
 														type="text"
 														className="grow"
 														disabled={userDefinedHeaders.includes(head)}

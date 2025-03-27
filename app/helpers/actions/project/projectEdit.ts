@@ -48,6 +48,26 @@ export default async function projectEditAction(formData: FormData) {
 				return "Unauthorized action. You are not the owner of this project.";
 			}
 
+			const newEdit = {
+				dateEdited: new Date(),
+				changes: Array.from(formData.entries()).map(([field, value]) => {
+					if (field.startsWith("userDefined") && project.userDefined) {
+						const userDefinedField = field.split(":")[1];
+						return {
+							field: userDefinedField,
+							oldValue: project.userDefined[userDefinedField] || "",
+							newValue: value as string
+						};
+					} else {
+						return {
+							field,
+							oldValue: project[field as keyof typeof project]?.toString() || "",
+							newValue: value.toString()
+						};
+					}
+				})
+			};
+
 			await tx.project.update({
 				where: {
 					project_id
@@ -72,27 +92,7 @@ export default async function projectEditAction(formData: FormData) {
 						}, {} as PrismaJson.UserDefinedType)
 					},
 					//add edit to start of edit history
-					editHistory: [
-						{
-							dateEdited: new Date(),
-							changes: Array.from(formData.entries()).map(([field, value]) => {
-								if (field.startsWith("userDefined") && project.userDefined) {
-									const userDefinedField = field.split(":")[1];
-									return {
-										field: userDefinedField,
-										oldValue: project.userDefined[userDefinedField] || "",
-										newValue: value as string
-									};
-								} else {
-									return {
-										field,
-										oldValue: project[field as keyof typeof project]?.toString() || "",
-										newValue: value.toString()
-									};
-								}
-							})
-						}
-					].concat(project.editHistory)
+					editHistory: project.editHistory ? [newEdit].concat(project.editHistory) : [newEdit]
 				}
 			});
 		});

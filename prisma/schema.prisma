@@ -302,7 +302,7 @@ model Project {
     userId        String
     dateSubmitted DateTime @default(now())
     /// [EditHistoryType]
-    editHistory   Json     @default("[]")
+    editHistory   Json?
 
     // Relations
     Samples  Sample[]
@@ -645,7 +645,7 @@ model Analysis {
     userId            String
     dateSubmitted     DateTime @default(now())
     /// [EditHistoryType]
-    editHistory       Json     @default("[]")
+    editHistory       Json?
 
     // Relations
     project_id  String
