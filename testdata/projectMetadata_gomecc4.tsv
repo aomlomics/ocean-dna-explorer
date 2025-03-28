@@ -125,3 +125,4 @@ O	integer		Bioinformatics		repseq_max_length
 O	numeric		Bioinformatics		repseq_min_abundance			
 O	numeric		Bioinformatics		repseq_min_prevalence			
 O	boolean		Bioinformatics		discard_untrimmed	FALSE		
+M	controlled vocabulary	targeted | metabarcoding | other	Project	metabarcoding	assay_type	metabarcoding		

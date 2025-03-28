@@ -381,8 +381,20 @@ enum diss_org_nitro_unit {
 }
 
 enum diss_oxygen_unit {
-    //TODO: FILL IN
-    pass
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    mLFSLASH_L        @map("mL/L")
+    // µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
 }
 
 enum nitrate_unit {

@@ -216,7 +216,7 @@ export const diss_org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLAS
 
 export type diss_org_nitro_unitType = `${z.infer<typeof diss_org_nitro_unitSchema>}`
 
-export const diss_oxygen_unitSchema = z.enum(['pass']);
+export const diss_oxygen_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','mLFSLASH_L','mmolFSLASH_kg','parts_per_million','other']);
 
 export type diss_oxygen_unitType = `${z.infer<typeof diss_oxygen_unitSchema>}`
 
