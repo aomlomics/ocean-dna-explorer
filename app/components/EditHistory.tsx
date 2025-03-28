@@ -1,4 +1,4 @@
-export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType }) {
+export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (
 		<div className="dropdown dropdown-hover">
 			<div tabIndex={0} role="button" className="stat flex justify-between items-center p-0">
@@ -22,7 +22,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 				tabIndex={0}
 				className="dropdown-content bg-base-300 rounded-box z-[1] p-2 shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
 			>
-				{editHistory.length > 0 ? (
+				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (
 						<li className="min-w-[450px]" key={i}>
 							<div className="text-base text-base-content pb-2">{edit.dateEdited.toString()}</div>

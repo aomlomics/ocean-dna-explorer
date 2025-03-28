@@ -76,8 +76,6 @@ export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimId
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
-export const JsonNullValueInputSchema = z.enum(['JsonNull',]).transform((value) => (value === 'JsonNull' ? Prisma.JsonNull : value));
-
 export const NullableJsonNullValueInputSchema = z.enum(['DbNull','JsonNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
@@ -308,7 +306,7 @@ export const ProjectSchema = z.object({
   /**
    * [EditHistoryType]
    */
-  editHistory: JsonValueSchema,
+  editHistory: JsonValueSchema.nullable(),
   recordedBy: z.string(),
   recordedByID: z.string().nullish(),
   project_contact: z.string(),
@@ -352,10 +350,6 @@ export type ProjectPartial = z.infer<typeof ProjectPartialSchema>
 export const ProjectOptionalDefaultsSchema = ProjectSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
-  /**
-   * [EditHistoryType]
-   */
-  editHistory: JsonValueSchema,
 }))
 
 export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSchema>
@@ -679,7 +673,7 @@ export const AnalysisSchema = z.object({
   /**
    * [EditHistoryType]
    */
-  editHistory: JsonValueSchema,
+  editHistory: JsonValueSchema.nullable(),
   project_id: z.string(),
   assay_name: z.string(),
   sop_bioinformatics: z.string().nullish(),
@@ -759,10 +753,6 @@ export type AnalysisPartial = z.infer<typeof AnalysisPartialSchema>
 export const AnalysisOptionalDefaultsSchema = AnalysisSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
-  /**
-   * [EditHistoryType]
-   */
-  editHistory: JsonValueSchema,
 }))
 
 export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSchema>

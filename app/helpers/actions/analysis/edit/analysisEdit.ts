@@ -44,6 +44,17 @@ export default async function analysisEditAction(formData: FormData) {
 				return "Unauthorized action. You are not the owner of this analysis.";
 			}
 
+			const newEdit = {
+				dateEdited: new Date(),
+				changes: Array.from(formData.entries()).map(([field, value]) => ({
+					field,
+					oldValue: analysis[field as keyof typeof analysis]
+						? analysis[field as keyof typeof analysis]!.toString()
+						: "",
+					newValue: value.toString()
+				}))
+			};
+
 			await tx.analysis.update({
 				where: {
 					analysis_run_name
@@ -52,18 +63,7 @@ export default async function analysisEditAction(formData: FormData) {
 					//make changes to analysis
 					...AnalysisPartialSchema.parse(Object.fromEntries(formData)),
 					//add edit to start of edit history
-					editHistory: [
-						{
-							dateEdited: new Date(),
-							changes: Array.from(formData.entries()).map(([field, value]) => ({
-								field,
-								oldValue: analysis[field as keyof typeof analysis]
-									? analysis[field as keyof typeof analysis]!.toString()
-									: "",
-								newValue: value.toString()
-							}))
-						}
-					].concat(analysis.editHistory || [])
+					editHistory: analysis.editHistory ? [newEdit].concat(analysis.editHistory) : [newEdit]
 				}
 			});
 		});
