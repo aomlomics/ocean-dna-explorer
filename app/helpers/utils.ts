@@ -39,8 +39,11 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
 	} else if (field instanceof ZodNumber) {
-		//TODO: detect if number is int or float
-		shape.type = "number";
+		if (field._def.checks[0] && field._def.checks[0].kind === "int") {
+			shape.type = "integer";
+		} else {
+			shape.type = "float";
+		}
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
 	} else if (field instanceof ZodDate) {
@@ -360,9 +363,13 @@ export function parseApiQuery(
 						for (const val of arr) {
 							query.where!.OR.push({ [key]: { contains: val, mode: "insensitive" } });
 						}
-					} else if (type === "number") {
+					} else if (type === "integer") {
 						for (const val of arr) {
 							query.where!.OR.push({ [key]: parseInt(val) });
+						}
+					} else if (type === "float") {
+						for (const val of arr) {
+							query.where!.OR.push({ [key]: parseFloat(val) });
 						}
 					} else {
 						for (const val of arr) {
@@ -372,8 +379,10 @@ export function parseApiQuery(
 				} else {
 					if (type === "string") {
 						query.where![key] = { contains: value, mode: "insensitive" };
-					} else if (type === "number") {
+					} else if (type === "integer") {
 						query.where![key] = parseInt(value);
+					} else if (type === "float") {
+						query.where![key] = parseFloat(value);
 					} else {
 						query.where![key] = value;
 					}

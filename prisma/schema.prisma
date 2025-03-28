@@ -310,14 +310,17 @@ model Project {
 
     // Data
     // Project
-    recordedBy      String
-    recordedByID    String?
-    project_contact String
-    institution     String?
-    institutionID   String?
-    project_name    String
-    study_factor    String?
-    detection_type  String
+    recordedBy        String
+    recordedByID      String?
+    project_contact   String
+    institution       String?
+    institutionID     String?
+    project_name      String
+    study_factor      String?
+    detection_type    String
+    neg_cont_0_1      DeadBoolean?
+    parent_project_id String?
+    pos_cont_0_1      DeadBoolean?
 
     // Data Management
     license               String?
@@ -331,6 +334,10 @@ model Project {
     checkls_ver           String
     seq_archive           String?
     code_repo             String?
+
+    // Sample Collection
+    /// @zod.custom.use(z.coerce.number().int())
+    biological_rep Int?
 
     // User Defined
     /// [UserDefinedType]
@@ -353,9 +360,9 @@ model Sample {
     // Sample Collection
     samp_category                  String
     /// @zod.custom.use(z.coerce.number())
-    decimalLatitude                Float
+    decimalLatitude                Float?
     /// @zod.custom.use(z.coerce.number())
-    decimalLongitude               Float
+    decimalLongitude               Float?
     verbatimLatitude               String?
     verbatimLongitude              String?
     verbatimCoordinateSystem       String?
@@ -369,9 +376,9 @@ model Sample {
     verbatimEventTime              String?
     verbatimDateEnd                String?
     verbatimTimeEnd                String?
-    env_broad_scale                String // fixed
-    env_local_scale                String // fixed
-    env_medium                     String // fixed
+    env_broad_scale                String? // fixed
+    env_local_scale                String? // fixed
+    env_medium                     String? // fixed
     habitat_natural_artificial_0_1 DeadBoolean?
     samp_collect_method            String?
     samp_collect_device            String?
@@ -541,8 +548,8 @@ model Assay {
 
     // Data
     // Quality Assurance
-    neg_cont_type    String
-    pos_cont_type    String
+    neg_cont_type    String?
+    pos_cont_type    String?
     sterilise_method String?
 
     // PCR
@@ -551,14 +558,14 @@ model Assay {
     /// @zod.custom.use(z.coerce.number())
     amplificationReactionVolume  Float?
     assay_validation             String?
-    targetTaxonomicAssay         String
+    targetTaxonomicAssay         String?
     targetTaxonomicScope         String?
     target_gene                  String
     target_subfragment           String?
     /// @zod.custom.use(z.coerce.number())
     ampliconSize                 Float?
-    pcr_primer_forward           String
-    pcr_primer_reverse           String
+    pcr_primer_forward           String?
+    pcr_primer_reverse           String?
     pcr_primer_name_forward      String?
     pcr_primer_name_reverse      String?
     pcr_primer_reference_forward String?
@@ -740,6 +747,12 @@ model Analysis {
     /// @zod.custom.use(z.coerce.number())
     repseq_min_prevalence                Float?
     discard_untrimmed                    DeadBoolean?
+    /// @zod.custom.use(z.coerce.number().int())
+    otu_num_tax_assigned                 Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    output_otu_num                       Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    output_read_count                    Int?
 }
 
 model Occurrence {
