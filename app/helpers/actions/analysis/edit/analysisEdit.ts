@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { AnalysisPartialSchema } from "@/prisma/generated/zod";
 
 export default async function analysisEditAction(formData: FormData) {
 	console.log("analysis edit");
@@ -60,7 +61,7 @@ export default async function analysisEditAction(formData: FormData) {
 				},
 				data: {
 					//make changes to analysis
-					...Object.fromEntries(formData),
+					...AnalysisPartialSchema.parse(Object.fromEntries(formData)),
 					//add edit to start of edit history
 					editHistory: analysis.editHistory ? [newEdit].concat(analysis.editHistory) : [newEdit]
 				}

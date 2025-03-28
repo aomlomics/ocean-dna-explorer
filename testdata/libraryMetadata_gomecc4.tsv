@@ -4,7 +4,7 @@
 # Water											
 # section	PCR	PCR	Library preparation sequencing	Library preparation sequencing	Library preparation sequencing	Library preparation sequencing	Library preparation sequencing	Library preparation sequencing	Library preparation sequencing	User defined	User defined
 # example	MiFish	20240802_pcr1	lib20230922	GTGAATAT	AACAAGCC	S1_R1.fastq	S1_R2.fastq		20485		
-samp_name	assay_name	pcr_plate_id	library_id	mid_forward	mid_reverse	filename	filename2	seq_run_id	input_read_count	seq_samp_id	associatedSequences
+samp_name	assay_name	pcr_plate_id	lib_id	mid_forward	mid_reverse	filename	filename2	seq_run_id	input_read_count	seq_samp_id	associatedSequences
 GOMECC4_NegativeControl_1	ssu16sv4v5	not applicable	GOMECC16S_Neg1	TAGCAGCT	CGTCGCTA	GOMECC16S_Neg1_S499_L001_R1_001.fastq.gz	GOMECC16S_Neg1_S499_L001_R2_001.fastq.gz	20220613_Amplicon_PE250	29319	AND12585A494	https://www.ncbi.nlm.nih.gov/sra/SRR26148505 | https://www.ncbi.nlm.nih.gov/biosample/SAMN37516589 | https://www.ncbi.nlm.nih.gov/bioproject/PRJNA887898
 GOMECC4_NegativeControl_2	ssu16sv4v5	not applicable	GOMECC16S_Neg2	TAGCAGCT	CTAGAGCT	GOMECC16S_Neg2_S500_L001_R1_001.fastq.gz	GOMECC16S_Neg2_S500_L001_R2_001.fastq.gz	20220613_Amplicon_PE250	30829	AND12585A495	https://www.ncbi.nlm.nih.gov/sra/SRR26148503 | https://www.ncbi.nlm.nih.gov/biosample/SAMN37516590 | https://www.ncbi.nlm.nih.gov/bioproject/PRJNA887898
 GOMECC4_CAMPECHE_Sta90_Deep_A	ssu16sv4v5	gomecc4-16s-p3-r1	GOMECC16S_Plate3_1	CGAGAGTT	ACGACGTG	GOMECC16S_Plate3_1_S193_L001_R1_001.fastq.gz	GOMECC16S_Plate3_1_S193_L001_R2_001.fastq.gz	20220613_Amplicon_PE250	21255	AND12585A191	https://www.ncbi.nlm.nih.gov/sra/SRR26148452 | https://www.ncbi.nlm.nih.gov/biosample/SAMN37516374 | https://www.ncbi.nlm.nih.gov/bioproject/PRJNA887898
