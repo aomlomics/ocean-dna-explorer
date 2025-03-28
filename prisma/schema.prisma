@@ -30,6 +30,7 @@ generator zod {
 //      ( = PAREN1_
 //      ) = PAREN2_
 //      : = COLON_
+//      / = FSLASH_
 // extra rules for @map that STARTS WITH a number (0-99 only):
 //      convert number to string representation in ALLCAPS
 //      terminate with __
@@ -295,6 +296,351 @@ enum dada2_chimera_method {
     pooled
 }
 
+enum lib_conc_unit {
+    ngFSLASH_µL @map("ng/µL")
+    nM
+    pM
+    other
+}
+
+enum checksum_method {
+    MD5
+    SHA__256 @map("SHA-256")
+    CRC__32  @map("CRC-32")
+    other
+}
+
+enum assay_type {
+    targeted
+    metabarcoding
+    other
+}
+
+enum diss_inorg_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_inorg_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_org_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_oxygen_unit {
+    //TODO: FILL IN
+    pass
+}
+
+enum nitrate_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum nitrite_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum org_matter_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum org_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum part_org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum part_org_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_diss_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_inorg_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_nitro_content_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_part_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum concentration_unit {
+    ngFSLASH_µl     @map("ng/µl")
+    copiesFSLASH_µl @map("copies/µl")
+    other
+}
+
+enum pump_flow_rate_unit {
+    m3FSLASH_s   @map("m3/s")
+    m3FSLASH_min @map("m3/min")
+    m3FSLASH_h   @map("m3/h")
+    LFSLASH_s    @map("L/s")
+    LFSLASH_min  @map("L/min")
+    LFSLASH_h    @map("L/h")
+    other
+}
+
 // Models
 model Project {
     id            Int      @id @default(autoincrement())
@@ -391,6 +737,8 @@ model Sample {
     samp_store_sol               String?
     samp_store_dur               String? // fixed
     samp_store_method_additional String?
+    dna_store_loc                String?
+    samp_store_loc               String?
 
     // Sample Preparation
     samp_mat_process          String?
@@ -418,6 +766,11 @@ model Sample {
     /// @zod.custom.use(z.coerce.number())
     prepped_samp_store_dur    Float?
     prep_method_additional    String?
+    prefilter_material        String?
+    /// @zod.custom.use(z.coerce.number())
+    pump_flow_rate            Float?
+    pump_flow_rate_unit       String?
+    stationed_sample_dur      String?
 
     // Sample Relations
     sample_derived_from     String? // fixed
@@ -440,85 +793,110 @@ model Sample {
     /// @zod.custom.use(z.coerce.number().int())
     pool_dna_num                    Int?
     nucl_acid_ext_method_additional String?
+    concentration_unit              String?
+    date_ext                        String?
 
     // Environment
-    samp_weather         String?
+    samp_weather           String?
     /// @zod.custom.use(z.coerce.number())
-    minimumDepthInMeters Float?
+    minimumDepthInMeters   Float?
     /// @zod.custom.use(z.coerce.number())
-    maximumDepthInMeters Float?
+    maximumDepthInMeters   Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_depth_water_col  Float?
+    tot_depth_water_col    Float?
     /// @zod.custom.use(z.coerce.number())
-    elev                 Float?
+    elev                   Float?
     /// @zod.custom.use(z.coerce.number())
-    temp                 Float?
+    temp                   Float?
     /// @zod.custom.use(z.coerce.number())
-    chlorophyll          Float?
+    chlorophyll            Float?
     /// @zod.custom.use(z.coerce.number())
-    light_intensity      Float?
+    light_intensity        Float?
     /// @zod.custom.use(z.coerce.number())
-    misc_param           Float?
+    misc_param             Float?
     /// @zod.custom.use(z.coerce.number())
-    ph                   Float?
-    ph_meth              String?
+    ph                     Float?
+    ph_meth                String?
     /// @zod.custom.use(z.coerce.number())
-    salinity             Float?
+    salinity               Float?
     /// @zod.custom.use(z.coerce.number())
-    suspend_part_matter  Float?
-    tidal_stage          String?
+    suspend_part_matter    Float?
+    tidal_stage            String?
     /// @zod.custom.use(z.coerce.number())
-    turbidity            Float?
+    turbidity              Float?
     /// @zod.custom.use(z.coerce.number())
-    water_current        Float?
-    solar_irradiance     String?
-    wind_direction       String?
+    water_current          Float?
+    solar_irradiance       String?
+    wind_direction         String?
     /// @zod.custom.use(z.coerce.number())
-    wind_speed           Float?
+    wind_speed             Float?
     /// @zod.custom.use(z.coerce.number())
-    diss_inorg_carb      Float?
+    diss_inorg_carb        Float?
     /// @zod.custom.use(z.coerce.number())
-    diss_inorg_nitro     Float?
+    diss_inorg_nitro       Float?
     /// @zod.custom.use(z.coerce.number())
-    diss_org_carb        Float?
+    diss_org_carb          Float?
     /// @zod.custom.use(z.coerce.number())
-    diss_org_nitro       Float?
+    diss_org_nitro         Float?
     /// @zod.custom.use(z.coerce.number())
-    diss_oxygen          Float?
+    diss_oxygen            Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_diss_nitro       Float?
+    tot_diss_nitro         Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_inorg_nitro      Float?
+    tot_inorg_nitro        Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_nitro            Float?
+    tot_nitro              Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_part_carb        Float?
+    tot_part_carb          Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_org_carb         Float?
+    tot_org_carb           Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_org_c_meth       Float?
+    tot_org_c_meth         Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_nitro_content    Float?
+    tot_nitro_content      Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_nitro_cont_meth  Float?
+    tot_nitro_cont_meth    Float?
     /// @zod.custom.use(z.coerce.number())
-    tot_carb             Float?
+    tot_carb               Float?
     /// @zod.custom.use(z.coerce.number())
-    part_org_carb        Float?
+    part_org_carb          Float?
     /// @zod.custom.use(z.coerce.number())
-    part_org_nitro       Float?
+    part_org_nitro         Float?
     /// @zod.custom.use(z.coerce.number())
-    nitrate              Float?
+    nitrate                Float?
     /// @zod.custom.use(z.coerce.number())
-    nitrite              Float?
+    nitrite                Float?
     /// @zod.custom.use(z.coerce.number())
-    nitro                Float?
+    nitro                  Float?
     /// @zod.custom.use(z.coerce.number())
-    org_carb             Float?
+    org_carb               Float?
     /// @zod.custom.use(z.coerce.number())
-    org_matter           Float?
+    org_matter             Float?
     /// @zod.custom.use(z.coerce.number())
-    org_nitro            Float?
+    org_nitro              Float?
+    diss_inorg_carb_unit   String?
+    diss_inorg_nitro_unit  String?
+    diss_org_carb_unit     String?
+    diss_org_nitro_unit    String?
+    diss_oxygen_unit       String?
+    nitrate_unit           String?
+    nitrite_unit           String?
+    nitro_unit             String?
+    org_carb_unit          String?
+    org_matter_unit        String?
+    org_nitro_unit         String?
+    part_org_carb_unit     String?
+    part_org_nitro_unit    String?
+    tot_carb_unit          String?
+    tot_diss_nitro_unit    String?
+    tot_inorg_nitro_unit   String?
+    tot_nitro_content_unit String?
+    tot_nitro_unit         String?
+    tot_org_carb_unit      String?
+    tot_part_carb_unit     String?
+
+    // Quality Assurrance
+    rel_cont_id String?
 
     // User Defined
     /// [UserDefinedType]
@@ -598,16 +976,13 @@ model Assay {
     pcr_analysis_software        String?
     pcr_method_additional        String?
 
-    // PCR (library)
-    pcr_plate_id String?
-
-    // Quality Assurrance (samples)
-    rel_cont_id String?
+    // Project
+    assay_type String
 }
 
 model Library {
-    id         Int    @id @default(autoincrement())
-    library_id String @unique
+    id     Int    @id @default(autoincrement())
+    lib_id String @unique
 
     // Relations
     assay_name String
@@ -617,26 +992,56 @@ model Library {
 
     //Data
     // Library Preparation Sequencing
-    barcoding_pcr_appr    String?
-    platform              String?
-    instrument            String? // fixed
-    seq_kit               String?
-    lib_layout            String?
-    sequencing_location   String?
-    adapter_forward       String?
-    adapter_reverse       String?
-    lib_screen            String?
-    seq_method_additional String?
-
-    // Library Preparation Sequencing (library)
-    mid_forward         String?
-    mid_reverse         String?
-    filename            String?
-    filename2           String?
-    seq_run_id          String?
-    biosample_accession String?
+    barcoding_pcr_appr               String?
+    platform                         String?
+    instrument                       String? // fixed
+    seq_kit                          String?
+    lib_layout                       String?
+    sequencing_location              String?
+    adapter_forward                  String?
+    adapter_reverse                  String?
+    lib_screen                       String?
+    seq_method_additional            String?
+    mid_forward                      String?
+    mid_reverse                      String?
+    filename                         String?
+    filename2                        String?
+    seq_run_id                       String?
+    biosample_accession              String?
     /// @zod.custom.use(z.coerce.number().int())
-    input_read_count    Int?
+    input_read_count                 Int?
+    checksum_filename                String?
+    checksum_filename2               String?
+    /// @zod.custom.use(z.coerce.number())
+    lib_conc                         Float?
+    lib_conc_meth                    String?
+    lib_conc_unit                    String?
+    /// @zod.custom.use(z.coerce.number())
+    phix_perc                        Float?
+    checksum_method                  String?
+    /// @zod.custom.use(z.coerce.number())
+    pcr2_amplificationReactionVolume Float?
+    pcr2_analysis_software           String?
+    /// @zod.custom.use(z.coerce.number())
+    pcr2_annealingTemp               Float?
+    pcr2_commercial_mm               String?
+    pcr2_cond                        String?
+    pcr2_custom_mm                   String?
+    /// @zod.custom.use(z.coerce.number().int())
+    pcr2_cycles                      Int?
+    /// @zod.custom.use(z.coerce.number())
+    pcr2_dna_vol                     Float?
+    pcr2_method_additional           String?
+    pcr2_plate_id                    String?
+    pcr2_thermocycler                String?
+
+    // PCR
+    pcr_plate_id         String?
+    block_ref            String?
+    block_seq            String?
+    block_taxa           String?
+    inhibition_check     String?
+    inhibition_check_0_1 DeadBoolean?
 
     // User Defined
     /// [UserDefinedType]
@@ -753,6 +1158,8 @@ model Analysis {
     output_otu_num                       Int?
     /// @zod.custom.use(z.coerce.number().int())
     output_read_count                    Int?
+    otu_final_description                String?
+    otu_raw_description                  String?
 }
 
 model Occurrence {

@@ -56,15 +56,15 @@ export type InputJsonValueType = z.infer<typeof InputJsonValueSchema>;
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userId','dateSubmitted','editHistory','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','study_factor','detection_type','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','userDefined']);
+export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userId','dateSubmitted','editHistory','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','study_factor','detection_type','neg_cont_0_1','parent_project_id','pos_cont_0_1','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep','userDefined']);
 
-export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','project_id','samp_category','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','sample_derived_from','sample_composed_of','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','userDefined']);
+export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','project_id','samp_category','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate','pump_flow_rate_unit','stationed_sample_dur','sample_derived_from','sample_composed_of','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','concentration_unit','date_ext','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','rel_cont_id','userDefined']);
 
-export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','neg_cont_type','pos_cont_type','sterilise_method','pcr_0_1','thermocycler','amplificationReactionVolume','assay_validation','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','ampliconSize','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','pcr_primer_reference_forward','pcr_primer_reference_reverse','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','commercial_mm','custom_mm','pcr_dna_vol','pcr_rep','nucl_acid_amp','pcr_cond','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','pcr_plate_id','rel_cont_id']);
+export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','neg_cont_type','pos_cont_type','sterilise_method','pcr_0_1','thermocycler','amplificationReactionVolume','assay_validation','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','ampliconSize','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','pcr_primer_reference_forward','pcr_primer_reference_reverse','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','commercial_mm','custom_mm','pcr_dna_vol','pcr_rep','nucl_acid_amp','pcr_cond','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','assay_type']);
 
-export const LibraryScalarFieldEnumSchema = z.enum(['id','library_id','assay_name','samp_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','biosample_accession','input_read_count','userDefined']);
+export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','assay_name','samp_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','biosample_accession','input_read_count','checksum_filename','checksum_filename2','lib_conc','lib_conc_meth','lib_conc_unit','phix_perc','checksum_method','pcr2_amplificationReactionVolume','pcr2_analysis_software','pcr2_annealingTemp','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_cycles','pcr2_dna_vol','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check','inhibition_check_0_1','userDefined']);
 
-export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','userId','dateSubmitted','editHistory','project_id','assay_name','sop_bioinformatics','trim_method','trim_param','demux_tool','demux_max_mismatch','merge_tool','merge_min_overlap','min_len_cutoff','min_len_tool','error_rate_tool','error_rate_type','error_rate_cutoff','chimera_check_method','chimera_check_param','otu_clust_tool','otu_clust_cutoff','min_reads_cutoff','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_id_cutoff','tax_class_query_cutoff','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_trunc_len_f','dada2pe_trunc_len_r','dada2_trim_left_f','dada2pe_trim_left_r','dada2_max_ee_f','dada2pe_max_ee_r','dada2_trunc_q','dada2_pooling_method','dada2_chimera_method','dada2_min_fold_parent_over_abundance','dada2_n_reads_learn','deblur_trim_length','deblur_sample_stats','deblur_mean_error','deblur_indel_prob','deblur_indel_max','deblur_min_reads','deblur_min_size','repseq_min_length','repseq_max_length','repseq_min_abundance','repseq_min_prevalence','discard_untrimmed']);
+export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','userId','dateSubmitted','editHistory','project_id','assay_name','sop_bioinformatics','trim_method','trim_param','demux_tool','demux_max_mismatch','merge_tool','merge_min_overlap','min_len_cutoff','min_len_tool','error_rate_tool','error_rate_type','error_rate_cutoff','chimera_check_method','chimera_check_param','otu_clust_tool','otu_clust_cutoff','min_reads_cutoff','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_id_cutoff','tax_class_query_cutoff','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_trunc_len_f','dada2pe_trunc_len_r','dada2_trim_left_f','dada2pe_trim_left_r','dada2_max_ee_f','dada2pe_max_ee_r','dada2_trunc_q','dada2_pooling_method','dada2_chimera_method','dada2_min_fold_parent_over_abundance','dada2_n_reads_learn','deblur_trim_length','deblur_sample_stats','deblur_mean_error','deblur_indel_prob','deblur_indel_max','deblur_min_reads','deblur_min_size','repseq_min_length','repseq_max_length','repseq_min_abundance','repseq_min_prevalence','discard_untrimmed','otu_num_tax_assigned','output_otu_num','output_read_count','otu_final_description','otu_raw_description']);
 
 export const OccurrenceScalarFieldEnumSchema = z.enum(['id','samp_name','analysis_run_name','featureid','organismQuantity']);
 
@@ -190,6 +190,106 @@ export const dada2_chimera_methodSchema = z.enum(['consensus','none','pooled']);
 
 export type dada2_chimera_methodType = `${z.infer<typeof dada2_chimera_methodSchema>}`
 
+export const lib_conc_unitSchema = z.enum(['ngFSLASH_µL','nM','pM','other']);
+
+export type lib_conc_unitType = `${z.infer<typeof lib_conc_unitSchema>}`
+
+export const checksum_methodSchema = z.enum(['MD5','SHA__256','CRC__32','other']);
+
+export type checksum_methodType = `${z.infer<typeof checksum_methodSchema>}`
+
+export const assay_typeSchema = z.enum(['targeted','metabarcoding','other']);
+
+export type assay_typeType = `${z.infer<typeof assay_typeSchema>}`
+
+export const diss_inorg_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type diss_inorg_carb_unitType = `${z.infer<typeof diss_inorg_carb_unitSchema>}`
+
+export const diss_inorg_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type diss_inorg_nitro_unitType = `${z.infer<typeof diss_inorg_nitro_unitSchema>}`
+
+export const diss_org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type diss_org_carb_unitType = `${z.infer<typeof diss_org_carb_unitSchema>}`
+
+export const diss_org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type diss_org_nitro_unitType = `${z.infer<typeof diss_org_nitro_unitSchema>}`
+
+export const diss_oxygen_unitSchema = z.enum(['pass']);
+
+export type diss_oxygen_unitType = `${z.infer<typeof diss_oxygen_unitSchema>}`
+
+export const nitrate_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type nitrate_unitType = `${z.infer<typeof nitrate_unitSchema>}`
+
+export const nitrite_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type nitrite_unitType = `${z.infer<typeof nitrite_unitSchema>}`
+
+export const nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type nitro_unitType = `${z.infer<typeof nitro_unitSchema>}`
+
+export const org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type org_carb_unitType = `${z.infer<typeof org_carb_unitSchema>}`
+
+export const org_matter_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type org_matter_unitType = `${z.infer<typeof org_matter_unitSchema>}`
+
+export const org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type org_nitro_unitType = `${z.infer<typeof org_nitro_unitSchema>}`
+
+export const part_org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type part_org_carb_unitType = `${z.infer<typeof part_org_carb_unitSchema>}`
+
+export const part_org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type part_org_nitro_unitType = `${z.infer<typeof part_org_nitro_unitSchema>}`
+
+export const tot_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_carb_unitType = `${z.infer<typeof tot_carb_unitSchema>}`
+
+export const tot_diss_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_diss_nitro_unitType = `${z.infer<typeof tot_diss_nitro_unitSchema>}`
+
+export const tot_inorg_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_inorg_nitro_unitType = `${z.infer<typeof tot_inorg_nitro_unitSchema>}`
+
+export const tot_nitro_content_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_nitro_content_unitType = `${z.infer<typeof tot_nitro_content_unitSchema>}`
+
+export const tot_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_nitro_unitType = `${z.infer<typeof tot_nitro_unitSchema>}`
+
+export const tot_org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_org_carb_unitType = `${z.infer<typeof tot_org_carb_unitSchema>}`
+
+export const tot_part_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
+
+export type tot_part_carb_unitType = `${z.infer<typeof tot_part_carb_unitSchema>}`
+
+export const concentration_unitSchema = z.enum(['ngFSLASH_µl','copiesFSLASH_µl','other']);
+
+export type concentration_unitType = `${z.infer<typeof concentration_unitSchema>}`
+
+export const pump_flow_rate_unitSchema = z.enum(['m3FSLASH_s','m3FSLASH_min','m3FSLASH_h','LFSLASH_s','LFSLASH_min','LFSLASH_h','other']);
+
+export type pump_flow_rate_unitType = `${z.infer<typeof pump_flow_rate_unitSchema>}`
+
 /////////////////////////////////////////
 // MODELS
 /////////////////////////////////////////
@@ -199,6 +299,8 @@ export type dada2_chimera_methodType = `${z.infer<typeof dada2_chimera_methodSch
 /////////////////////////////////////////
 
 export const ProjectSchema = z.object({
+  neg_cont_0_1: DeadBooleanSchema.nullish(),
+  pos_cont_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
   project_id: z.string(),
   userId: z.string(),
@@ -215,6 +317,7 @@ export const ProjectSchema = z.object({
   project_name: z.string(),
   study_factor: z.string().nullish(),
   detection_type: z.string(),
+  parent_project_id: z.string().nullish(),
   license: z.string().nullish(),
   rightsHolder: z.string().nullish(),
   accessRights: z.string().nullish(),
@@ -226,6 +329,7 @@ export const ProjectSchema = z.object({
   checkls_ver: z.string(),
   seq_archive: z.string().nullish(),
   code_repo: z.string().nullish(),
+  biological_rep: z.coerce.number().int().nullish(),
   /**
    * [UserDefinedType]
    */
@@ -268,8 +372,8 @@ export const SampleSchema = z.object({
   samp_name: z.string(),
   project_id: z.string(),
   samp_category: z.string(),
-  decimalLatitude: z.coerce.number(),
-  decimalLongitude: z.coerce.number(),
+  decimalLatitude: z.coerce.number().nullish(),
+  decimalLongitude: z.coerce.number().nullish(),
   verbatimLatitude: z.string().nullish(),
   verbatimLongitude: z.string().nullish(),
   verbatimCoordinateSystem: z.string().nullish(),
@@ -282,9 +386,9 @@ export const SampleSchema = z.object({
   verbatimEventTime: z.string().nullish(),
   verbatimDateEnd: z.string().nullish(),
   verbatimTimeEnd: z.string().nullish(),
-  env_broad_scale: z.string(),
-  env_local_scale: z.string(),
-  env_medium: z.string(),
+  env_broad_scale: z.string().nullish(),
+  env_local_scale: z.string().nullish(),
+  env_medium: z.string().nullish(),
   samp_collect_method: z.string().nullish(),
   samp_collect_device: z.string().nullish(),
   samp_size: z.coerce.number().nullish(),
@@ -293,6 +397,8 @@ export const SampleSchema = z.object({
   samp_store_sol: z.string().nullish(),
   samp_store_dur: z.string().nullish(),
   samp_store_method_additional: z.string().nullish(),
+  dna_store_loc: z.string().nullish(),
+  samp_store_loc: z.string().nullish(),
   samp_mat_process: z.string().nullish(),
   filter_onsite_dur: z.string().nullish(),
   size_frac_low: z.coerce.number().nullish(),
@@ -309,6 +415,10 @@ export const SampleSchema = z.object({
   prepped_samp_store_sol: z.string().nullish(),
   prepped_samp_store_dur: z.coerce.number().nullish(),
   prep_method_additional: z.string().nullish(),
+  prefilter_material: z.string().nullish(),
+  pump_flow_rate: z.coerce.number().nullish(),
+  pump_flow_rate_unit: z.string().nullish(),
+  stationed_sample_dur: z.string().nullish(),
   sample_derived_from: z.string().nullish(),
   sample_composed_of: z.string().nullish(),
   biological_rep_relation: z.string().nullish(),
@@ -325,6 +435,8 @@ export const SampleSchema = z.object({
   ratioOfAbsorbance260_280: z.number().nullish(),
   pool_dna_num: z.coerce.number().int().nullish(),
   nucl_acid_ext_method_additional: z.string().nullish(),
+  concentration_unit: z.string().nullish(),
+  date_ext: z.string().nullish(),
   samp_weather: z.string().nullish(),
   minimumDepthInMeters: z.coerce.number().nullish(),
   maximumDepthInMeters: z.coerce.number().nullish(),
@@ -366,6 +478,27 @@ export const SampleSchema = z.object({
   org_carb: z.coerce.number().nullish(),
   org_matter: z.coerce.number().nullish(),
   org_nitro: z.coerce.number().nullish(),
+  diss_inorg_carb_unit: z.string().nullish(),
+  diss_inorg_nitro_unit: z.string().nullish(),
+  diss_org_carb_unit: z.string().nullish(),
+  diss_org_nitro_unit: z.string().nullish(),
+  diss_oxygen_unit: z.string().nullish(),
+  nitrate_unit: z.string().nullish(),
+  nitrite_unit: z.string().nullish(),
+  nitro_unit: z.string().nullish(),
+  org_carb_unit: z.string().nullish(),
+  org_matter_unit: z.string().nullish(),
+  org_nitro_unit: z.string().nullish(),
+  part_org_carb_unit: z.string().nullish(),
+  part_org_nitro_unit: z.string().nullish(),
+  tot_carb_unit: z.string().nullish(),
+  tot_diss_nitro_unit: z.string().nullish(),
+  tot_inorg_nitro_unit: z.string().nullish(),
+  tot_nitro_content_unit: z.string().nullish(),
+  tot_nitro_unit: z.string().nullish(),
+  tot_org_carb_unit: z.string().nullish(),
+  tot_part_carb_unit: z.string().nullish(),
+  rel_cont_id: z.string().nullish(),
   /**
    * [UserDefinedType]
    */
@@ -399,19 +532,19 @@ export const AssaySchema = z.object({
   pcr_0_1: DeadBooleanSchema,
   id: z.number().int(),
   assay_name: z.string(),
-  neg_cont_type: z.string(),
-  pos_cont_type: z.string(),
+  neg_cont_type: z.string().nullish(),
+  pos_cont_type: z.string().nullish(),
   sterilise_method: z.string().nullish(),
   thermocycler: z.string().nullish(),
   amplificationReactionVolume: z.coerce.number().nullish(),
   assay_validation: z.string().nullish(),
-  targetTaxonomicAssay: z.string(),
+  targetTaxonomicAssay: z.string().nullish(),
   targetTaxonomicScope: z.string().nullish(),
   target_gene: z.string(),
   target_subfragment: z.string().nullish(),
   ampliconSize: z.coerce.number().nullish(),
-  pcr_primer_forward: z.string(),
-  pcr_primer_reverse: z.string(),
+  pcr_primer_forward: z.string().nullish(),
+  pcr_primer_reverse: z.string().nullish(),
   pcr_primer_name_forward: z.string().nullish(),
   pcr_primer_name_reverse: z.string().nullish(),
   pcr_primer_reference_forward: z.string().nullish(),
@@ -435,8 +568,7 @@ export const AssaySchema = z.object({
   pcr_cycles: z.coerce.number().nullish(),
   pcr_analysis_software: z.string().nullish(),
   pcr_method_additional: z.string().nullish(),
-  pcr_plate_id: z.string().nullish(),
-  rel_cont_id: z.string().nullish(),
+  assay_type: z.string(),
 })
 
 export type Assay = z.infer<typeof AssaySchema>
@@ -463,8 +595,9 @@ export type AssayOptionalDefaults = z.infer<typeof AssayOptionalDefaultsSchema>
 /////////////////////////////////////////
 
 export const LibrarySchema = z.object({
+  inhibition_check_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
-  library_id: z.string(),
+  lib_id: z.string(),
   assay_name: z.string(),
   samp_name: z.string(),
   barcoding_pcr_appr: z.string().nullish(),
@@ -484,6 +617,29 @@ export const LibrarySchema = z.object({
   seq_run_id: z.string().nullish(),
   biosample_accession: z.string().nullish(),
   input_read_count: z.coerce.number().int().nullish(),
+  checksum_filename: z.string().nullish(),
+  checksum_filename2: z.string().nullish(),
+  lib_conc: z.coerce.number().nullish(),
+  lib_conc_meth: z.string().nullish(),
+  lib_conc_unit: z.string().nullish(),
+  phix_perc: z.coerce.number().nullish(),
+  checksum_method: z.string().nullish(),
+  pcr2_amplificationReactionVolume: z.coerce.number().nullish(),
+  pcr2_analysis_software: z.string().nullish(),
+  pcr2_annealingTemp: z.coerce.number().nullish(),
+  pcr2_commercial_mm: z.string().nullish(),
+  pcr2_cond: z.string().nullish(),
+  pcr2_custom_mm: z.string().nullish(),
+  pcr2_cycles: z.coerce.number().int().nullish(),
+  pcr2_dna_vol: z.coerce.number().nullish(),
+  pcr2_method_additional: z.string().nullish(),
+  pcr2_plate_id: z.string().nullish(),
+  pcr2_thermocycler: z.string().nullish(),
+  pcr_plate_id: z.string().nullish(),
+  block_ref: z.string().nullish(),
+  block_seq: z.string().nullish(),
+  block_taxa: z.string().nullish(),
+  inhibition_check: z.string().nullish(),
   /**
    * [UserDefinedType]
    */
@@ -580,6 +736,11 @@ export const AnalysisSchema = z.object({
   repseq_max_length: z.coerce.number().int().nullish(),
   repseq_min_abundance: z.coerce.number().nullish(),
   repseq_min_prevalence: z.coerce.number().nullish(),
+  otu_num_tax_assigned: z.coerce.number().int().nullish(),
+  output_otu_num: z.coerce.number().int().nullish(),
+  output_read_count: z.coerce.number().int().nullish(),
+  otu_final_description: z.string().nullish(),
+  otu_raw_description: z.string().nullish(),
 })
 
 export type Analysis = z.infer<typeof AnalysisSchema>

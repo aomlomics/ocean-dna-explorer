@@ -281,8 +281,6 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 								)
 							);
 						}
-
-						//TODO: add rel_cont_id to assays
 					}
 				}
 			}
