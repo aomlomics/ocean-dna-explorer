@@ -39,7 +39,7 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
 	} else if (field instanceof ZodNumber) {
-		if (field._def.checks[0] && field._def.checks[0].kind === "int") {
+		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
 		} else {
 			shape.type = "float";
