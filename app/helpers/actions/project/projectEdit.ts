@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { ProjectPartialSchema } from "@/prisma/generated/zod";
 
 export default async function projectEditAction(formData: FormData) {
 	console.log("project edit");
@@ -74,7 +75,7 @@ export default async function projectEditAction(formData: FormData) {
 				},
 				data: {
 					//make changes to project
-					...Object.fromEntries(formData),
+					...ProjectPartialSchema.parse(Object.fromEntries(formData)),
 					//replace changed fields in userDefined with new values
 					userDefined: {
 						//keep previous user defined data

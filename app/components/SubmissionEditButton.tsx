@@ -156,7 +156,7 @@ export default function SubmissionEditButton({
 											/>
 										</fieldset>
 									);
-								} else if (type === "number") {
+								} else if (type === "float" || type === "integer") {
 									acc.push(
 										<fieldset key={field} className="fieldset">
 											<legend className="fieldset-legend flex gap-2">
