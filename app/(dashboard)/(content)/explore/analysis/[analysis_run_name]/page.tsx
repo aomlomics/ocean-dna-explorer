@@ -68,6 +68,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 						<div className="flex gap-2 items-center">
 							<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
 							<EditHistory editHistory={analysis.editHistory} />
+							{analysis.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 						</div>
 
 						<div className="bg-base-200 -ml-3.5 text-semibold">

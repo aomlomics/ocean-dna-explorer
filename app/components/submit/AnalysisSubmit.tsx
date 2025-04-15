@@ -11,6 +11,9 @@ import { DeleteAction, SubmitAction } from "@/types/types";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
+import { Project } from "@prisma/client";
+import projectFindUniqueAction from "@/app/helpers/actions/project/projectFindUnique";
+import InfoButton from "../InfoButton";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -53,6 +56,8 @@ export default function AnalysisSubmit() {
 	const [loading, setLoading] = useState("");
 	const [submitted, setSubmitted] = useState(false);
 	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
+	const [project, setProject] = useState<Project | null>(null);
+	const [project_isPrivate, setProject_isPrivate] = useState(false);
 	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
 
 	// Modal state for submission feedback
@@ -90,6 +95,24 @@ export default function AnalysisSubmit() {
 						tempAList[i] = currentLine[1].replace(/[\r\n]+/gm, "");
 						setAnalyses(tempAList);
 						return;
+					}
+
+					if (currentLine[0] === "project_id") {
+						if (project) {
+							if (currentLine[1] !== project.project_id) {
+								setErrorObj({ global: "All analyses must be for the same project." });
+								return;
+							}
+						} else {
+							const result = await projectFindUniqueAction(currentLine[1]);
+							if (result.message == "Success" && result.project) {
+								setProject_isPrivate(result.project.isPrivate || false);
+								setProject(result.project);
+							} else if (result.error) {
+								setErrorObj({ global: result.error });
+								return;
+							}
+						}
 					}
 				}
 
@@ -235,6 +258,7 @@ export default function AnalysisSubmit() {
 		setSubmitted(true);
 
 		const allFormData = new FormData(event.currentTarget);
+		const isPrivate = allFormData.get("isPrivate");
 		let hasError = false;
 
 		let analysis_i = 0;
@@ -254,6 +278,7 @@ export default function AnalysisSubmit() {
 					analysis_run_name,
 					file: allFormData.get(analysis_run_name) as File,
 					submitAction: analysisSubmitAction,
+					fieldsToSet: { isPrivate },
 					skipBlob: true
 				});
 
@@ -277,7 +302,10 @@ export default function AnalysisSubmit() {
 					file: allFormData.get(`${analysis_run_name}_assign`) as File,
 					fileSuffix: "_assign",
 					submitAction: assignSubmitAction,
-					fieldsToSet: { analysis_run_name: analysisResult!.analysis_run_name }
+					fieldsToSet: {
+						analysis_run_name: analysisResult!.analysis_run_name,
+						isPrivate
+					}
 				});
 
 				if (assignError) {
@@ -303,7 +331,10 @@ export default function AnalysisSubmit() {
 					file: allFormData.get(`${analysis_run_name}_occ`) as File,
 					fileSuffix: "_occ",
 					submitAction: occSubmitAction,
-					fieldsToSet: { analysis_run_name: analysisResult!.analysis_run_name }
+					fieldsToSet: {
+						analysis_run_name: analysisResult!.analysis_run_name,
+						isPrivate
+					}
 				});
 
 				if (occError) {
@@ -359,13 +390,17 @@ export default function AnalysisSubmit() {
 	}
 
 	// To Carter: there is a rare case where the submit button is disabled if you delete an analysis
-	const handleDeleteAnalysis = (index: number) => {
-		const analysisToDelete = analyses[index];
+	const handleDeleteAnalysis = (i: number) => {
+		const analysisToDelete = analyses[i];
 
 		// Update analyses array
 		setAnalyses((prev) => {
 			const newAnalyses = [...prev];
-			newAnalyses[index] = null;
+			// TODO: This is what's causing the Submit button to remain disabled after you delete an analysis. It uses "\u200b" instead of null to maintain an order to the analyses array. Changing it to "\u200b" causes other bugs that need to be resolved to fix everything.
+			newAnalyses[i] = null;
+			if (newAnalyses.every((e) => e === "\u200b" || e === null)) {
+				setProject(null);
+			}
 			return newAnalyses;
 		});
 
@@ -383,8 +418,25 @@ export default function AnalysisSubmit() {
 
 	return (
 		<>
+			{project && <div className="text-center w-full">Analyses for project: {project.project_id}</div>}
+
 			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
 				<div className="space-y-6 -mt-8">
+					<fieldset className="fieldset bg-base-100">
+						<label className="fieldset-label flex gap-2">
+							<input
+								name="isPrivate"
+								type="checkbox"
+								className="checkbox"
+								checked={project_isPrivate}
+								onChange={(e) => setProject_isPrivate(e.currentTarget.checked)}
+								disabled={project?.isPrivate || false}
+							/>
+							<div>Private submission</div>
+							<InfoButton infoText="" />
+						</label>
+					</fieldset>
+
 					{analyses.map(
 						(a, i) =>
 							a && (

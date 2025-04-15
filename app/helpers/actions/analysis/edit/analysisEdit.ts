@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { AnalysisPartialSchema } from "@/prisma/generated/zod";
+import { AnalysisPartialSchema } from "@/prisma/schema/generated/zod";
 
 export default async function analysisEditAction(formData: FormData) {
 	console.log("analysis edit");

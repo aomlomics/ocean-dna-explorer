@@ -52,8 +52,9 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 			<div className="grid grid-cols-2 gap-8">
 				<div className="col-span-2">
-					<header>
+					<header className="flex gap-2 items-center">
 						<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
+						{assay.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 					</header>
 				</div>
 

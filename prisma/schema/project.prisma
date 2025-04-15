@@ -3,6 +3,9 @@ model Project {
     project_id    String   @unique
     userId        String
     dateSubmitted DateTime @default(now())
+    isPrivate     Boolean?
+    /// [UserDefinedType]
+    userDefined   Json?
     /// [EditHistoryType]
     editHistory   Json?
 
@@ -42,14 +45,15 @@ model Project {
     biological_rep Int?
 
     // User Defined
-    /// [UserDefinedType]
-    userDefined Json?
     // expedition_id String?
 }
 
 model Sample {
-    id        Int    @id @default(autoincrement())
-    samp_name String @unique
+    id          Int      @id @default(autoincrement())
+    samp_name   String   @unique
+    isPrivate   Boolean?
+    /// [UserDefinedType]
+    userDefined Json?
 
     // Relations
     project_id  String
@@ -255,8 +259,6 @@ model Sample {
     rel_cont_id String?
 
     // User Defined
-    /// [UserDefinedType]
-    userDefined Json?
     // serial_number     String?
     // materialSampleID  String?
     // line_id           String?
@@ -272,8 +274,9 @@ model Sample {
 }
 
 model Assay {
-    id         Int    @id @default(autoincrement())
-    assay_name String @unique
+    id         Int      @id @default(autoincrement())
+    assay_name String   @unique
+    isPrivate  Boolean?
 
     // Relations
     Samples   Sample[]
@@ -337,8 +340,11 @@ model Assay {
 }
 
 model Library {
-    id     Int    @id @default(autoincrement())
-    lib_id String @unique
+    id          Int      @id @default(autoincrement())
+    lib_id      String   @unique
+    isPrivate   Boolean?
+    /// [UserDefinedType]
+    userDefined Json?
 
     // Relations
     assay_name String
@@ -400,8 +406,6 @@ model Library {
     inhibition_check_0_1 DeadBoolean?
 
     // User Defined
-    /// [UserDefinedType]
-    userDefined Json?
     // seq_samp_id         String?
     // associatedSequences String?
 }

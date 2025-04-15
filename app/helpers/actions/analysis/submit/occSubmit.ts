@@ -2,7 +2,7 @@
 
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
+import { OccurrenceOptionalDefaultsSchema } from "@/prisma/schema/generated/zod";
 import { SubmitActionReturn } from "@/types/types";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
@@ -17,10 +17,29 @@ export default async function OccSubmitAction(formData: FormData): SubmitActionR
 		const analysis_run_name = formData.get("analysis_run_name") as string;
 		console.log(`${analysis_run_name} occurrences submit`);
 
+		const isPrivate = formData.get("isPrivate") ? true : false;
+
 		//Occurrence file
 		//parsing file inside transaction to reduce memory usage, since this file is large
 		await prisma.$transaction(
 			async (tx) => {
+				//check if the associated analysis is private, and throw an error if it is private but the submission is public
+				const analysis = await tx.analysis.findUnique({
+					where: {
+						analysis_run_name
+					},
+					select: {
+						isPrivate: true
+					}
+				});
+				if (!analysis) {
+					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
+				} else if (analysis.isPrivate && !isPrivate) {
+					throw new Error(
+						`Analysis with analysis_run_name of ${analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
+					);
+				}
+
 				const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
 				console.log(`${analysis_run_name}_occ file`);
@@ -52,7 +71,8 @@ export default async function OccSubmitAction(formData: FormData): SubmitActionR
 											samp_name,
 											featureid,
 											organismQuantity,
-											analysis_run_name
+											analysis_run_name,
+											isPrivate
 										},
 										{
 											errorMap: (error, ctx) => {

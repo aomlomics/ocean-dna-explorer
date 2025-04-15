@@ -8,16 +8,18 @@ import { useDebouncedCallback } from "use-debounce";
 import { fetcher, getZodType } from "../../helpers/utils";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
-import { SampleSchema } from "@/prisma/generated/zod";
+import { SampleSchema } from "@/prisma/schema/generated/zod";
 
 export default function Table({
 	table,
 	title,
-	where
+	where,
+	omit = ["isPrivate"]
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	title: string;
 	where?: Record<string, any>;
+	omit?: string[];
 }) {
 	const [take, setTake] = useState(50);
 	const [page, setPage] = useState(1);
@@ -112,12 +114,12 @@ export default function Table({
 		}
 
 		//remove all headers where the value is assumed to be the same
-		if (where) {
-			for (const h in where) {
-				if (head === h) {
-					return acc;
-				}
-			}
+		if (where && Object.keys(where).includes(head)) {
+			return acc;
+		}
+
+		if (omit.includes(head)) {
+			return acc;
 		}
 
 		//split user defined fields into individual headers

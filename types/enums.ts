@@ -17,7 +17,7 @@ import {
 	SampleSchema,
 	TaxonomyScalarFieldEnumSchema,
 	TaxonomySchema
-} from "@/prisma/generated/zod";
+} from "@/prisma/schema/generated/zod";
 
 export enum DeadValueEnum {
 	"not applicable: control sample" = -9999,

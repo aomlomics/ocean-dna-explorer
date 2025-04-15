@@ -100,6 +100,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 						<div className="flex gap-2 items-center">
 							<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
 							<EditHistory editHistory={project.editHistory} />
+							{project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 						</div>
 						<p className="text-lg text-base-content/70">{project.project_name}</p>
 					</header>
@@ -138,7 +139,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 					<div className="bg-base-200 p-6 h-full">
 						<h2 className="text-lg font-medium text-base-content/70 mb-4">Project Information</h2>
 						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay data={justProject} omit={["id", "project_id", "userId", "project_name"]} />
+							<DataDisplay data={justProject} omit={["id", "project_id", "userId", "project_name", "isPrivate"]} />
 						</div>
 					</div>
 				</div>

@@ -17,7 +17,7 @@ import {
 	SampleScalarFieldEnumSchema,
 	ProjectOptionalDefaultsSchema,
 	ProjectScalarFieldEnumSchema
-} from "@/prisma/generated/zod";
+} from "@/prisma/schema/generated/zod";
 import { SubmitActionReturn } from "@/types/types";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
@@ -44,6 +44,8 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 		const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
 		const libToAssay = {} as Record<string, string>; //object to relate libraries to their assay_name values
 
+		const isPrivate = formData.get("isPrivate") ? true : false;
+
 		//Project file
 		console.log("project file");
 		//code block to force garbage collection
@@ -62,6 +64,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 				if (currentLine[projectFileHeaders.indexOf("section")] === "User defined") {
 					userDefined[field] = value;
 				} else {
+					// TODO: move "if (fieldOptionsEnum.options.includes(fieldName))" from parseSchemaToObject into here as an if-else-if block to allow for error handling if NONE of the schemas have this field
 					//Project Level
 					//project table
 					parseSchemaToObject(value, field, projectCol, ProjectOptionalDefaultsSchema, ProjectScalarFieldEnumSchema);
@@ -110,7 +113,13 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 
 			//@ts-ignore issue with Json database type
 			project = ProjectOptionalDefaultsSchema.parse(
-				{ ...projectCol, userId: userId, userDefined, editHistory: "JsonNull" },
+				{
+					...projectCol,
+					userId,
+					isPrivate,
+					userDefined,
+					editHistory: "JsonNull"
+				},
 				{
 					errorMap: (error, ctx) => {
 						return { message: `ProjectSchema: ${ctx.defaultError}` };
@@ -204,7 +213,8 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 										...libraryRow,
 										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
 										...projectCol,
-										userDefined
+										userDefined,
+										isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -271,7 +281,8 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 										...sampleRow,
 										project_id: projectCol.project_id,
 										assay_name: sampToAssay[sampleRow.samp_name],
-										userDefined
+										userDefined,
+										isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -298,6 +309,12 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 				//assays and samples
 				console.log("assays and samples");
 				for (let a of Object.values(assays)) {
+					const existingAssay = await tx.assay.findUnique({
+						where: {
+							assay_name: a.assay_name
+						}
+					});
+
 					const reducedSamples = samples.reduce((filtered, samp) => {
 						if (sampToAssay[samp.samp_name] === a.assay_name) {
 							filtered.push({
@@ -315,12 +332,14 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 							assay_name: a.assay_name
 						},
 						update: {
+							isPrivate: isPrivate && existingAssay && existingAssay.isPrivate,
 							Samples: {
 								connectOrCreate: reducedSamples
 							}
 						},
 						create: {
 							...a,
+							isPrivate,
 							Samples: {
 								connectOrCreate: reducedSamples
 							}
@@ -329,6 +348,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 				}
 
 				//libraries
+				// TODO: update isPrivate on entries that are skipped because of skipDuplicates
 				await tx.library.createMany({
 					data: libraries,
 					skipDuplicates: true

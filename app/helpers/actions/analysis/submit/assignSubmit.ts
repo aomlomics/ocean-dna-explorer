@@ -13,7 +13,7 @@ import {
 	TaxonomyOptionalDefaultsSchema,
 	TaxonomyPartial,
 	TaxonomyScalarFieldEnumSchema
-} from "@/prisma/generated/zod";
+} from "@/prisma/schema/generated/zod";
 import { SubmitActionReturn } from "@/types/types";
 import { auth } from "@clerk/nextjs/server";
 
@@ -23,132 +23,157 @@ export default async function assignSubmitAction(formData: FormData): SubmitActi
 		return { message: "Error", error: "Unauthorized" };
 	}
 
-	const analysis_run_name = formData.get("analysis_run_name") as string;
-	console.log(`${analysis_run_name} assignment submit`);
+	try {
+		const analysis_run_name = formData.get("analysis_run_name") as string;
+		console.log(`${analysis_run_name} assignment submit`);
 
-	//Feature file
-	//parsing file inside transaction to reduce memory usage, since this file is large
-	await prisma.$transaction(
-		async (tx) => {
-			const features = [] as Prisma.FeatureCreateManyInput[];
-			const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
-			const assignments = [] as AssignmentPartial[];
+		const isPrivate = formData.get("isPrivate") ? true : false;
 
-			console.log(`${analysis_run_name}_assign file`);
-			let assignFileLines;
-			//fetch files from blob storage
-			const url = JSON.parse(formData.get("file") as string).url;
-			const file = await fetch(url);
-			const fileText = await file.text();
-			assignFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
-			const assignFileHeaders = assignFileLines[0].split("\t");
-
-			//iterate over each row
-			for (let i = 1; i < assignFileLines.length; i++) {
-				const currentLine = assignFileLines[i].split("\t");
-
-				if (currentLine[assignFileHeaders.indexOf("featureid")]) {
-					const featureRow = {} as FeaturePartial;
-					const assignmentRow = {} as AssignmentPartial;
-					const taxonomyRow = {} as TaxonomyPartial;
-
-					//iterate over each column
-					for (let j = 0; j < assignFileHeaders.length; j++) {
-						if (assignFileHeaders[j] === "Confidence\r") {
-							console.log("---------");
-							console.log(currentLine[j]);
-						}
-						//feature table
-						parseSchemaToObject(
-							currentLine[j],
-							assignFileHeaders[j],
-							featureRow,
-							FeatureOptionalDefaultsSchema,
-							FeatureScalarFieldEnumSchema
-						);
-
-						//assignment table
-						parseSchemaToObject(
-							currentLine[j],
-							assignFileHeaders[j],
-							assignmentRow,
-							AssignmentOptionalDefaultsSchema,
-							AssignmentScalarFieldEnumSchema
-						);
-
-						//taxonomy table
-						parseSchemaToObject(
-							currentLine[j],
-							assignFileHeaders[j],
-							taxonomyRow,
-							TaxonomyOptionalDefaultsSchema,
-							TaxonomyScalarFieldEnumSchema
-						);
+		//Feature file
+		//parsing file inside transaction to reduce memory usage, since this file is large
+		await prisma.$transaction(
+			async (tx) => {
+				//check if the associated analysis is private, and throw an error if it is private but the submission is public
+				const analysis = await tx.analysis.findUnique({
+					where: {
+						analysis_run_name
+					},
+					select: {
+						isPrivate: true
 					}
-
-					features.push(
-						FeatureOptionalDefaultsSchema.parse(
-							{ ...featureRow, sequenceLength: featureRow.dna_sequence?.length },
-							{
-								errorMap: (error, ctx) => {
-									return { message: `FeatureSchema (${analysis_run_name}): ${ctx.defaultError}` };
-								}
-							}
-						)
-					);
-
-					//assignments can only be parsed after inserting the analyses
-					assignments.push(assignmentRow);
-
-					taxonomies.push(
-						TaxonomyOptionalDefaultsSchema.parse(taxonomyRow, {
-							errorMap: (error, ctx) => {
-								return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
-							}
-						})
+				});
+				if (!analysis) {
+					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
+				} else if (analysis.isPrivate && !isPrivate) {
+					throw new Error(
+						`Analysis with analysis_run_name of ${analysis_run_name} is private. Assignments can't be public if the associated analysis is private.`
 					);
 				}
-			}
 
-			//upload to database
-			//features
-			console.log("features");
-			await tx.feature.createMany({
-				data: features,
-				skipDuplicates: true
-			});
+				const features = [] as Prisma.FeatureCreateManyInput[];
+				const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
+				const assignments = [] as Prisma.AssignmentCreateManyInput[];
 
-			//taxonomies
-			console.log("taxonomies");
-			await tx.taxonomy.createMany({
-				data: taxonomies,
-				skipDuplicates: true
-			});
+				console.log(`${analysis_run_name}_assign file`);
+				let assignFileLines;
+				//fetch files from blob storage
+				const url = JSON.parse(formData.get("file") as string).url;
+				const file = await fetch(url);
+				const fileText = await file.text();
+				assignFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
+				const assignFileHeaders = assignFileLines[0].split("\t");
 
-			//assignments
-			console.log("assignments");
-			await tx.assignment.createMany({
-				data: assignments.map((a) =>
-					AssignmentOptionalDefaultsSchema.parse(
-						{
-							...a,
-							analysis_run_name
-						},
-						{
-							errorMap: (error, ctx) => {
-								return {
-									message: `AssignmentSchema (${analysis_run_name}, ${a.featureid}, ${a.Confidence}): ${ctx.defaultError}`
-								};
+				//iterate over each row
+				for (let i = 1; i < assignFileLines.length; i++) {
+					const currentLine = assignFileLines[i].split("\t");
+
+					if (currentLine[assignFileHeaders.indexOf("featureid")]) {
+						const featureRow = {} as FeaturePartial;
+						const assignmentRow = {} as AssignmentPartial;
+						const taxonomyRow = {} as TaxonomyPartial;
+
+						//iterate over each column
+						for (let j = 0; j < assignFileHeaders.length; j++) {
+							if (assignFileHeaders[j] === "Confidence\r") {
+								console.log("---------");
+								console.log(currentLine[j]);
 							}
-						}
-					)
-				)
-			});
-		},
-		{
-			timeout: 1 * 60 * 1000
-		}
-	);
+							//feature table
+							parseSchemaToObject(
+								currentLine[j],
+								assignFileHeaders[j],
+								featureRow,
+								FeatureOptionalDefaultsSchema,
+								FeatureScalarFieldEnumSchema
+							);
 
-	return { message: "Success" };
+							//assignment table
+							parseSchemaToObject(
+								currentLine[j],
+								assignFileHeaders[j],
+								assignmentRow,
+								AssignmentOptionalDefaultsSchema,
+								AssignmentScalarFieldEnumSchema
+							);
+
+							//taxonomy table
+							parseSchemaToObject(
+								currentLine[j],
+								assignFileHeaders[j],
+								taxonomyRow,
+								TaxonomyOptionalDefaultsSchema,
+								TaxonomyScalarFieldEnumSchema
+							);
+						}
+
+						features.push(
+							FeatureOptionalDefaultsSchema.parse(
+								{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length },
+								{
+									errorMap: (error, ctx) => {
+										return { message: `FeatureSchema (${analysis_run_name}): ${ctx.defaultError}` };
+									}
+								}
+							)
+						);
+
+						assignments.push(
+							AssignmentOptionalDefaultsSchema.parse(
+								{
+									...assignmentRow,
+									isPrivate,
+									analysis_run_name
+								},
+								{
+									errorMap: (error, ctx) => {
+										return {
+											message: `AssignmentSchema (${analysis_run_name}, ${assignmentRow.featureid}, ${assignmentRow.Confidence}): ${ctx.defaultError}`
+										};
+									}
+								}
+							)
+						);
+
+						taxonomies.push(
+							TaxonomyOptionalDefaultsSchema.parse(taxonomyRow, {
+								errorMap: (error, ctx) => {
+									return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
+								}
+							})
+						);
+					}
+				}
+
+				//upload to database
+				//features
+				// TODO: update isPrivate on entries that are skipped because of skipDuplicates
+				console.log("features");
+				await tx.feature.createMany({
+					data: features,
+					skipDuplicates: true
+				});
+
+				//taxonomies
+				// TODO: update isPrivate on entries that are skipped because of skipDuplicates
+				console.log("taxonomies");
+				await tx.taxonomy.createMany({
+					data: taxonomies,
+					skipDuplicates: true
+				});
+
+				//assignments
+				console.log("assignments");
+				await tx.assignment.createMany({
+					data: assignments
+				});
+			},
+			{ timeout: 1 * 60 * 1000 }
+		);
+
+		return { message: "Success" };
+	} catch (err) {
+		const error = err as Error;
+		console.error(error.message);
+		return { message: "Error", error: error.message };
+	}
 }

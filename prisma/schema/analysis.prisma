@@ -3,6 +3,7 @@ model Analysis {
     analysis_run_name String   @unique
     userId            String
     dateSubmitted     DateTime @default(now())
+    isPrivate         Boolean?
     /// [EditHistoryType]
     editHistory       Json?
 
@@ -91,13 +92,13 @@ model Analysis {
     /// @zod.custom.use(z.coerce.number().int())
     deblur_min_size                      Int?
     /// @zod.custom.use(z.coerce.number().int())
-    repseq_min_length                    Int?
+    repseqs_min_length                   Int?
     /// @zod.custom.use(z.coerce.number().int())
-    repseq_max_length                    Int?
+    repseqs_max_length                   Int?
     /// @zod.custom.use(z.coerce.number())
-    repseq_min_abundance                 Float?
+    repseqs_min_abundance                Float?
     /// @zod.custom.use(z.coerce.number())
-    repseq_min_prevalence                Float?
+    repseqs_min_prevalence               Float?
     discard_untrimmed                    DeadBoolean?
     /// @zod.custom.use(z.coerce.number().int())
     otu_num_tax_assigned                 Int?
@@ -107,10 +108,17 @@ model Analysis {
     output_read_count                    Int?
     otu_final_description                String?
     otu_raw_description                  String?
+    qiime2_version                       String?
+    tourmaline_asv_method                String?
+    /// @zod.custom.use(z.coerce.number())
+    skl_confidence                       Float?
+    /// @zod.custom.use(z.coerce.number())
+    min_consensus                        Float?
 }
 
 model Occurrence {
-    id Int @id @default(autoincrement())
+    id        Int      @id @default(autoincrement())
+    isPrivate Boolean?
 
     // Relations
     samp_name         String
@@ -128,7 +136,8 @@ model Occurrence {
 }
 
 model Assignment {
-    id Int @id @default(autoincrement())
+    id        Int      @id @default(autoincrement())
+    isPrivate Boolean?
 
     // Relations
     analysis_run_name String
@@ -146,8 +155,9 @@ model Assignment {
 }
 
 model Feature {
-    id        Int    @id @default(autoincrement())
-    featureid String @unique
+    id        Int      @id @default(autoincrement())
+    featureid String   @unique
+    isPrivate Boolean?
 
     // Relations
     Occurrences Occurrence[]
@@ -159,8 +169,9 @@ model Feature {
 }
 
 model Taxonomy {
-    id       Int    @id @default(autoincrement())
-    taxonomy String @unique
+    id        Int      @id @default(autoincrement())
+    taxonomy  String   @unique
+    isPrivate Boolean?
 
     // Relations
     Assignments Assignment[]

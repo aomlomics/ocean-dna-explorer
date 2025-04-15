@@ -10,6 +10,7 @@ import SubmissionEditButton from "@/app/components/SubmissionEditButton";
 import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
 import projectEditAction from "@/app/helpers/actions/project/projectEdit";
 
+// TODO: add ability to toggle isPrivate
 export default async function MySubmissions() {
 	const { userId } = await auth();
 	if (!userId) {
@@ -101,7 +102,7 @@ export default async function MySubmissions() {
 														titleField="project_id"
 														data={proj}
 														action={projectEditAction}
-														noDisplay={["id"]}
+														noDisplay={["id", "isPrivate"]}
 													/>
 													<SubmissionDeleteButton
 														field="project_id"
@@ -162,7 +163,7 @@ export default async function MySubmissions() {
 														titleField="analysis_run_name"
 														data={a}
 														action={analysisEditAction}
-														noDisplay={["id"]}
+														noDisplay={["id", "isPrivate"]}
 														noEdit={["project_id", "assay_name"]}
 													/>
 													<SubmissionDeleteButton

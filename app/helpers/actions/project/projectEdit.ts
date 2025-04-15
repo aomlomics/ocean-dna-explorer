@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { ProjectPartialSchema } from "@/prisma/generated/zod";
+import { ProjectPartialSchema } from "@/prisma/schema/generated/zod";
 
 export default async function projectEditAction(formData: FormData) {
 	console.log("project edit");

@@ -1,7 +1,18 @@
 import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
 import { Prisma, Taxonomy } from "@prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
-import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable, ZodLazy } from "zod";
+import {
+	ZodObject,
+	ZodEnum,
+	ZodNumber,
+	ZodOptional,
+	ZodBigInt,
+	ZodString,
+	ZodDate,
+	ZodNullable,
+	ZodLazy,
+	ZodBoolean
+} from "zod";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -38,6 +49,8 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
+	} else if (field instanceof ZodBoolean) {
+		shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";

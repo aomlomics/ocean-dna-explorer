@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			orderBy: { id: Prisma.SortOrder };
 			take: number;
 			skip?: number;
-			cursor?: { id: number };
+			// cursor?: { id: number };
 			include?: { _count: { select: Record<string, boolean> } };
 			where?: Record<string, any>;
 		};
