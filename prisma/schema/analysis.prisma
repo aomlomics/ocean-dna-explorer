@@ -3,7 +3,8 @@ model Analysis {
     analysis_run_name String   @unique
     userId            String
     dateSubmitted     DateTime @default(now())
-    isPrivate         Boolean?
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate         Boolean
     /// [EditHistoryType]
     editHistory       Json?
 
@@ -117,8 +118,9 @@ model Analysis {
 }
 
 model Occurrence {
-    id        Int      @id @default(autoincrement())
-    isPrivate Boolean?
+    id        Int     @id @default(autoincrement())
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate Boolean
 
     // Relations
     samp_name         String
@@ -136,8 +138,9 @@ model Occurrence {
 }
 
 model Assignment {
-    id        Int      @id @default(autoincrement())
-    isPrivate Boolean?
+    id        Int     @id @default(autoincrement())
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate Boolean
 
     // Relations
     analysis_run_name String
@@ -155,9 +158,10 @@ model Assignment {
 }
 
 model Feature {
-    id        Int      @id @default(autoincrement())
-    featureid String   @unique
-    isPrivate Boolean?
+    id        Int     @id @default(autoincrement())
+    featureid String  @unique
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate Boolean
 
     // Relations
     Occurrences Occurrence[]
@@ -169,9 +173,10 @@ model Feature {
 }
 
 model Taxonomy {
-    id        Int      @id @default(autoincrement())
-    taxonomy  String   @unique
-    isPrivate Boolean?
+    id        Int     @id @default(autoincrement())
+    taxonomy  String  @unique
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate Boolean
 
     // Relations
     Assignments Assignment[]

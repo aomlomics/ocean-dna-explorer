@@ -169,7 +169,7 @@ export default function AnalysisSubmit() {
 		submitAction: SubmitAction;
 		fieldsToSet?: Record<string, any>;
 		skipBlob?: boolean;
-	}): Promise<{ error?: boolean; result?: Record<string, any> }> {
+	}): Promise<{ error?: boolean }> {
 		const formData = new FormData();
 		formData.set("analysis_run_name", analysis_run_name);
 		for (const [key, val] of Object.entries(fieldsToSet)) {
@@ -179,7 +179,6 @@ export default function AnalysisSubmit() {
 		let blob = {} as PutBlobResult;
 
 		let error;
-		let result;
 
 		try {
 			if (skipBlob) {
@@ -205,9 +204,6 @@ export default function AnalysisSubmit() {
 				setResponseObj({
 					[`${analysis_run_name}${fileSuffix}`]: response.message
 				});
-				if (response.result) {
-					result = response.result;
-				}
 			} else {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: "Unknown error."
@@ -228,7 +224,7 @@ export default function AnalysisSubmit() {
 			});
 		}
 
-		return { error, result };
+		return { error };
 	}
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -274,7 +270,7 @@ export default function AnalysisSubmit() {
 					});
 				}
 
-				const { error: analysisError, result: analysisResult } = await analysisFileSubmit({
+				const { error: analysisError } = await analysisFileSubmit({
 					analysis_run_name,
 					file: allFormData.get(analysis_run_name) as File,
 					submitAction: analysisSubmitAction,
@@ -303,14 +299,14 @@ export default function AnalysisSubmit() {
 					fileSuffix: "_assign",
 					submitAction: assignSubmitAction,
 					fieldsToSet: {
-						analysis_run_name: analysisResult!.analysis_run_name,
+						analysis_run_name,
 						isPrivate
 					}
 				});
 
 				if (assignError) {
 					//remove analysis from database
-					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name);
+					await dbDelete(analysisDeleteAction, analysis_run_name);
 
 					hasError = true;
 					setIsError(true);
@@ -332,13 +328,13 @@ export default function AnalysisSubmit() {
 					fileSuffix: "_occ",
 					submitAction: occSubmitAction,
 					fieldsToSet: {
-						analysis_run_name: analysisResult!.analysis_run_name,
+						analysis_run_name,
 						isPrivate
 					}
 				});
 
 				if (occError) {
-					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name);
+					await dbDelete(analysisDeleteAction, analysis_run_name);
 					//remove analyses, features, and taxonomies from database
 					// await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name, {
 					// 	dbFeatures: assignResult!.dbFeatures,

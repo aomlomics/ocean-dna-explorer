@@ -17,12 +17,6 @@ export type DeleteAction = typeof analysisDeleteAction | typeof assignDeleteActi
 
 export type EditAction = typeof analysisEditAction | typeof projectEditAction;
 
-export type SubmitActionReturn = Promise<{
-	message: string;
-	result?: Record<string, any>;
-	error?: string;
-}>;
-
 export type Pluralize<T extends string> = T extends `${infer S}sis`
 	? `${S}ses`
 	: T extends `${infer S}ay`

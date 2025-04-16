@@ -3,7 +3,8 @@ model Project {
     project_id    String   @unique
     userId        String
     dateSubmitted DateTime @default(now())
-    isPrivate     Boolean?
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate     Boolean
     /// [UserDefinedType]
     userDefined   Json?
     /// [EditHistoryType]
@@ -49,9 +50,10 @@ model Project {
 }
 
 model Sample {
-    id          Int      @id @default(autoincrement())
-    samp_name   String   @unique
-    isPrivate   Boolean?
+    id          Int     @id @default(autoincrement())
+    samp_name   String  @unique
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate   Boolean
     /// [UserDefinedType]
     userDefined Json?
 
@@ -274,9 +276,10 @@ model Sample {
 }
 
 model Assay {
-    id         Int      @id @default(autoincrement())
-    assay_name String   @unique
-    isPrivate  Boolean?
+    id         Int     @id @default(autoincrement())
+    assay_name String  @unique
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate  Boolean
 
     // Relations
     Samples   Sample[]
@@ -340,9 +343,10 @@ model Assay {
 }
 
 model Library {
-    id          Int      @id @default(autoincrement())
-    lib_id      String   @unique
-    isPrivate   Boolean?
+    id          Int     @id @default(autoincrement())
+    lib_id      String  @unique
+    /// @zod.custom.use(z.enum(["true", "false"]).transform((v) => v === "true"))
+    isPrivate   Boolean
     /// [UserDefinedType]
     userDefined Json?
 

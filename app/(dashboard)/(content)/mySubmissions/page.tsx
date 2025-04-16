@@ -102,7 +102,7 @@ export default async function MySubmissions() {
 														titleField="project_id"
 														data={proj}
 														action={projectEditAction}
-														noDisplay={["id", "isPrivate"]}
+														privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
 													/>
 													<SubmissionDeleteButton
 														field="project_id"
@@ -163,8 +163,8 @@ export default async function MySubmissions() {
 														titleField="analysis_run_name"
 														data={a}
 														action={analysisEditAction}
-														noDisplay={["id", "isPrivate"]}
-														noEdit={["project_id", "assay_name"]}
+														disabled={["project_id", "assay_name"]}
+														privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
 													/>
 													<SubmissionDeleteButton
 														field="analysis_run_name"

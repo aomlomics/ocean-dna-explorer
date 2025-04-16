@@ -3,11 +3,10 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { OccurrenceOptionalDefaultsSchema } from "@/prisma/schema/generated/zod";
-import { SubmitActionReturn } from "@/types/types";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function OccSubmitAction(formData: FormData): SubmitActionReturn {
+export default async function OccSubmitAction(formData: FormData) {
 	const { userId } = await auth();
 	if (!userId) {
 		return { message: "Error", error: "Unauthorized" };

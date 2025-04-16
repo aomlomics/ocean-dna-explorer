@@ -2,7 +2,7 @@
 
 import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
 import { Prisma } from "@prisma/client";
-import { ReactNode, useRef } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
 import InfoButton from "./InfoButton";
 import { EditAction } from "@/types/types";
@@ -12,17 +12,22 @@ export default function SubmissionEditButton({
 	titleField,
 	data,
 	action,
-	noDisplay,
-	noEdit
+	omit = [],
+	disabled,
+	privateToggleDescription
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleField: string;
 	data: Record<string, any>;
 	action: EditAction;
-	noDisplay?: string[];
-	noEdit?: string[];
+	omit?: string[];
+	disabled?: string[];
+	privateToggleDescription?: string;
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
+	const [isPrivate, setIsPrivate] = useState(data.isPrivate);
+
+	omit = [...omit, "id", "isPrivate"];
 
 	const shape = TableToSchema[table].shape;
 
@@ -36,10 +41,16 @@ export default function SubmissionEditButton({
 		e.preventDefault();
 		const formData = new FormData(e.currentTarget);
 
-		//check if data has been changed
 		const submitFormData = new FormData();
+
+		//check if isPrivate has been changed
+		if (data.isPrivate !== isPrivate) {
+			submitFormData.append("isPrivate", isPrivate);
+		}
+
+		//check if data has been changed
 		for (const [field, value] of formData.entries()) {
-			if (value && !(value instanceof File)) {
+			if (!(value instanceof File)) {
 				const type = getZodType(shape[field as keyof typeof shape]).type;
 
 				if (field.startsWith("userDefined")) {
@@ -47,7 +58,7 @@ export default function SubmissionEditButton({
 					if (data.userDefined[userDefinedField] && value != data.userDefined[userDefinedField]) {
 						submitFormData.append(field, value);
 					}
-				} else if (data[field]) {
+				} else {
 					if (type === "boolean" && value in DeadBooleanEnum) {
 						if (DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] != data[field]) {
 							submitFormData.append(field, DeadBooleanEnum[value as keyof typeof DeadBooleanEnum]);
@@ -58,7 +69,7 @@ export default function SubmissionEditButton({
 								//@ts-ignore Typescript thinks you can only index enums with a number, value is a string, this works fine
 								submitFormData.append(field, DeadValueEnum[value]);
 							}
-						} else if (value != data[field]) {
+						} else if (value !== data[field] && !(value === "" && data[field] === null)) {
 							submitFormData.append(field, value);
 						}
 					}
@@ -73,10 +84,6 @@ export default function SubmissionEditButton({
 		}
 
 		submitFormData.append("target", data[titleField]);
-
-		for (const [k, v] of submitFormData.entries()) {
-			console.log(k, v);
-		}
 
 		try {
 			//TODO: display loading
@@ -106,8 +113,20 @@ export default function SubmissionEditButton({
 				<div className="modal-box">
 					<form onSubmit={onSubmit} className="flex flex-col gap-3">
 						<h2>Edit {table}</h2>
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend flex gap-2">
+								<h2>isPrivate</h2>
+								{privateToggleDescription && <InfoButton infoText={privateToggleDescription} dir="tooltip-right" />}
+							</legend>
+							<input
+								type="checkbox"
+								className="checkbox checkbox-primary"
+								checked={isPrivate}
+								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
+							/>
+						</fieldset>
 						{Object.entries(data).reduce((acc, [field, value]) => {
-							if (noDisplay && !noDisplay.includes(field)) {
+							if (!omit.includes(field)) {
 								const type = getZodType(shape[field as keyof typeof shape]).type;
 								if (!type) {
 									throw new Error(`Could not find type of '${field}'.`);
@@ -124,7 +143,7 @@ export default function SubmissionEditButton({
 												<textarea
 													name={field}
 													className="textarea textarea-primary w-full"
-													disabled={noEdit && noEdit.includes(field)}
+													disabled={disabled && disabled.includes(field)}
 													defaultValue={value}
 												/>
 											) : (
@@ -132,7 +151,7 @@ export default function SubmissionEditButton({
 													name={field}
 													type="text"
 													className="input input-primary w-full"
-													disabled={noEdit && noEdit.includes(field)}
+													disabled={disabled && disabled.includes(field)}
 													defaultValue={value}
 												/>
 											)}
@@ -149,7 +168,7 @@ export default function SubmissionEditButton({
 												name={field}
 												type="text"
 												className="input input-primary w-full"
-												disabled={noEdit && noEdit.includes(field)}
+												disabled={disabled && disabled.includes(field)}
 												defaultValue={
 													value in DeadBooleanEnum ? DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] : value
 												}
@@ -167,7 +186,7 @@ export default function SubmissionEditButton({
 												name={field}
 												type="text"
 												className="input input-primary w-full"
-												disabled={noEdit && noEdit.includes(field)}
+												disabled={disabled && disabled.includes(field)}
 												defaultValue={value in DeadValueEnum ? DeadValueEnum[value] : value}
 											/>
 										</fieldset>
@@ -184,7 +203,7 @@ export default function SubmissionEditButton({
 									// 			name={field}
 									// 			type="datetime-local"
 									// 			className="input input-primary w-full"
-									// 			disabled={noEdit && noEdit.includes(field)}
+									// 			disabled={disabled && disabled.includes(field)}
 									// 			defaultValue={value}
 									// 		/>
 									// 	</fieldset>
@@ -202,7 +221,7 @@ export default function SubmissionEditButton({
 													<textarea
 														name={"userDefined:" + userDefinedField}
 														className="textarea textarea-primary w-full"
-														disabled={noEdit && noEdit.includes(userDefinedField)}
+														disabled={disabled && disabled.includes(userDefinedField)}
 														defaultValue={value[userDefinedField]}
 													/>
 												) : (
@@ -210,7 +229,7 @@ export default function SubmissionEditButton({
 														name={"userDefined:" + userDefinedField}
 														type="text"
 														className="input input-primary w-full"
-														disabled={noEdit && noEdit.includes(userDefinedField)}
+														disabled={disabled && disabled.includes(userDefinedField)}
 														defaultValue={value[userDefinedField]}
 													/>
 												)}

@@ -303,7 +303,7 @@ export const AnalysisSchema = z.object({
   analysis_run_name: z.string(),
   userId: z.string(),
   dateSubmitted: z.coerce.date(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   /**
    * [EditHistoryType]
    */
@@ -401,7 +401,7 @@ export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSc
 
 export const OccurrenceSchema = z.object({
   id: z.number().int(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   samp_name: z.string(),
   analysis_run_name: z.string(),
   featureid: z.string(),
@@ -433,7 +433,7 @@ export type OccurrenceOptionalDefaults = z.infer<typeof OccurrenceOptionalDefaul
 
 export const AssignmentSchema = z.object({
   id: z.number().int(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   analysis_run_name: z.string(),
   featureid: z.string(),
   taxonomy: z.string(),
@@ -466,7 +466,7 @@ export type AssignmentOptionalDefaults = z.infer<typeof AssignmentOptionalDefaul
 export const FeatureSchema = z.object({
   id: z.number().int(),
   featureid: z.string(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   dna_sequence: z.string(),
   sequenceLength: z.number().int(),
 })
@@ -497,7 +497,7 @@ export type FeatureOptionalDefaults = z.infer<typeof FeatureOptionalDefaultsSche
 export const TaxonomySchema = z.object({
   id: z.number().int(),
   taxonomy: z.string(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   verbatimIdentification: z.string(),
   domain: z.string().nullish(),
   kingdom: z.string().nullish(),
@@ -542,7 +542,7 @@ export const ProjectSchema = z.object({
   project_id: z.string(),
   userId: z.string(),
   dateSubmitted: z.coerce.date(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   /**
    * [UserDefinedType]
    */
@@ -604,7 +604,7 @@ export const SampleSchema = z.object({
   dna_cleanup_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
   samp_name: z.string(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   /**
    * [UserDefinedType]
    */
@@ -767,7 +767,7 @@ export const AssaySchema = z.object({
   pcr_0_1: DeadBooleanSchema,
   id: z.number().int(),
   assay_name: z.string(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   neg_cont_type: z.string().nullish(),
   pos_cont_type: z.string().nullish(),
   sterilise_method: z.string().nullish(),
@@ -834,7 +834,7 @@ export const LibrarySchema = z.object({
   inhibition_check_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
   lib_id: z.string(),
-  isPrivate: z.boolean().nullish(),
+  isPrivate: z.enum(["true", "false"]).transform((v) => v === "true"),
   /**
    * [UserDefinedType]
    */

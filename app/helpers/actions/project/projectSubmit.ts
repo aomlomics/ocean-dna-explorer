@@ -18,12 +18,11 @@ import {
 	ProjectOptionalDefaultsSchema,
 	ProjectScalarFieldEnumSchema
 } from "@/prisma/schema/generated/zod";
-import { SubmitActionReturn } from "@/types/types";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 
 //https://clerk.com/docs/organizations/verify-user-permissions
-export default async function projectSubmitAction(formData: FormData): SubmitActionReturn {
+export default async function projectSubmitAction(formData: FormData) {
 	console.log("project submit");
 
 	const { userId } = await auth();
@@ -195,7 +194,8 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 										//least specific overrides most specific
 										...assayRow,
 										...assayCols[assayRow.assay_name],
-										...projectCol
+										...projectCol,
+										isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -312,6 +312,9 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 					const existingAssay = await tx.assay.findUnique({
 						where: {
 							assay_name: a.assay_name
+						},
+						select: {
+							isPrivate: true
 						}
 					});
 
@@ -332,14 +335,13 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 							assay_name: a.assay_name
 						},
 						update: {
-							isPrivate: isPrivate && existingAssay && existingAssay.isPrivate,
+							isPrivate: isPrivate && existingAssay && existingAssay.isPrivate ? true : false,
 							Samples: {
 								connectOrCreate: reducedSamples
 							}
 						},
 						create: {
 							...a,
-							isPrivate,
 							Samples: {
 								connectOrCreate: reducedSamples
 							}
@@ -348,11 +350,24 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 				}
 
 				//libraries
-				// TODO: update isPrivate on entries that are skipped because of skipDuplicates
 				await tx.library.createMany({
 					data: libraries,
 					skipDuplicates: true
 				});
+				//private
+				if (!isPrivate) {
+					await tx.library.updateMany({
+						where: {
+							lib_id: {
+								in: libraries.map((lib) => lib.lib_id)
+							},
+							isPrivate: true
+						},
+						data: {
+							isPrivate: false
+						}
+					});
+				}
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);

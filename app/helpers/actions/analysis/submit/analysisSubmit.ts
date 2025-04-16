@@ -3,10 +3,9 @@
 import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/schema/generated/zod";
-import { SubmitActionReturn } from "@/types/types";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function analysisSubmitAction(formData: FormData): SubmitActionReturn {
+export default async function analysisSubmitAction(formData: FormData) {
 	const { userId } = await auth();
 	if (!userId) {
 		return { message: "Error", error: "Unauthorized" };
@@ -43,7 +42,7 @@ export default async function analysisSubmitAction(formData: FormData): SubmitAc
 
 		//analysis
 		console.log("analysis");
-		const dbAnalysis = await prisma.$transaction(async (tx) => {
+		await prisma.$transaction(async (tx) => {
 			//check if the associated project is private, and throw an error if it is private but the submission is public
 			const project = await tx.project.findUnique({
 				where: {
@@ -61,7 +60,7 @@ export default async function analysisSubmitAction(formData: FormData): SubmitAc
 				);
 			}
 
-			const dbAnalysis = await tx.analysis.create({
+			await tx.analysis.create({
 				//@ts-ignore issue with Json database type
 				data: AnalysisOptionalDefaultsSchema.parse(
 					{ ...analysisCol, userId: userId, isPrivate, editHistory: "JsonNull" },
@@ -70,16 +69,11 @@ export default async function analysisSubmitAction(formData: FormData): SubmitAc
 							return { message: `AnalysisSchema: ${ctx.defaultError}` };
 						}
 					}
-				),
-				select: {
-					analysis_run_name: true
-				}
+				)
 			});
-
-			return dbAnalysis;
 		});
 
-		return { message: "Success", result: { analysis_run_name: dbAnalysis.analysis_run_name } };
+		return { message: "Success" };
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);

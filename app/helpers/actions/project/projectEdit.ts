@@ -75,7 +75,9 @@ export default async function projectEditAction(formData: FormData) {
 				},
 				data: {
 					//make changes to project
-					...ProjectPartialSchema.parse(Object.fromEntries(formData)),
+					...ProjectPartialSchema.parse(
+						Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
+					),
 					//replace changed fields in userDefined with new values
 					userDefined: {
 						//keep previous user defined data
@@ -96,6 +98,12 @@ export default async function projectEditAction(formData: FormData) {
 					editHistory: project.editHistory ? [newEdit].concat(project.editHistory) : [newEdit]
 				}
 			});
+
+			const isPrivate = formData.get("isPrivate");
+			if (isPrivate !== null) {
+				//TODO: update samples, assays, and libraries with isPrivate value
+				//TODO: if isPrivate === true, also update all analyses
+			}
 		});
 
 		if (error) {

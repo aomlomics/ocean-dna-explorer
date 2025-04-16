@@ -37,7 +37,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Occurrences: _, ...justSample } = sample;
+	const { Occurrences: _, Assays: __, ...justSample } = sample;
 
 	const featuresCount = {} as Record<string, number>;
 	for (const { featureid } of sample.Occurrences) {
@@ -105,7 +105,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Sample Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justSample} omit={["id", "project_id", "userId", "analysis_run_name", "assay_name"]} />
+						<DataDisplay data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
 					</div>
 				</div>
 			</div>

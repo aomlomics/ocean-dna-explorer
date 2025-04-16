@@ -14,10 +14,9 @@ import {
 	TaxonomyPartial,
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/schema/generated/zod";
-import { SubmitActionReturn } from "@/types/types";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function assignSubmitAction(formData: FormData): SubmitActionReturn {
+export default async function assignSubmitAction(formData: FormData) {
 	const { userId } = await auth();
 	if (!userId) {
 		return { message: "Error", error: "Unauthorized" };
@@ -108,7 +107,7 @@ export default async function assignSubmitAction(formData: FormData): SubmitActi
 
 						features.push(
 							FeatureOptionalDefaultsSchema.parse(
-								{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length },
+								{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length, isPrivate },
 								{
 									errorMap: (error, ctx) => {
 										return { message: `FeatureSchema (${analysis_run_name}): ${ctx.defaultError}` };
@@ -135,31 +134,60 @@ export default async function assignSubmitAction(formData: FormData): SubmitActi
 						);
 
 						taxonomies.push(
-							TaxonomyOptionalDefaultsSchema.parse(taxonomyRow, {
-								errorMap: (error, ctx) => {
-									return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
+							TaxonomyOptionalDefaultsSchema.parse(
+								{ ...taxonomyRow, isPrivate },
+								{
+									errorMap: (error, ctx) => {
+										return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
+									}
 								}
-							})
+							)
 						);
 					}
 				}
 
 				//upload to database
 				//features
-				// TODO: update isPrivate on entries that are skipped because of skipDuplicates
 				console.log("features");
 				await tx.feature.createMany({
 					data: features,
 					skipDuplicates: true
 				});
+				//private
+				if (!isPrivate) {
+					await tx.feature.updateMany({
+						where: {
+							featureid: {
+								in: features.map((feat) => feat.featureid)
+							},
+							isPrivate: true
+						},
+						data: {
+							isPrivate: false
+						}
+					});
+				}
 
 				//taxonomies
-				// TODO: update isPrivate on entries that are skipped because of skipDuplicates
 				console.log("taxonomies");
 				await tx.taxonomy.createMany({
 					data: taxonomies,
 					skipDuplicates: true
 				});
+				//private
+				if (!isPrivate) {
+					await tx.taxonomy.updateMany({
+						where: {
+							taxonomy: {
+								in: taxonomies.map((taxa) => taxa.taxonomy)
+							},
+							isPrivate: true
+						},
+						data: {
+							isPrivate: false
+						}
+					});
+				}
 
 				//assignments
 				console.log("assignments");

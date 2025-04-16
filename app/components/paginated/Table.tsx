@@ -14,7 +14,7 @@ export default function Table({
 	table,
 	title,
 	where,
-	omit = ["isPrivate"]
+	omit = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	title: string;
@@ -106,6 +106,7 @@ export default function Table({
 	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 
 	const userDefinedHeaders = [] as string[];
+	omit = [...omit, "isPrivate"];
 	const headers = TableToEnumSchema[table]._def.values.reduce((acc: string[], head) => {
 		//remove database field
 		//displaying title header differently, so removing it
