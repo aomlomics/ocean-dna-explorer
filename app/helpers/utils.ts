@@ -11,7 +11,8 @@ import {
 	ZodDate,
 	ZodNullable,
 	ZodLazy,
-	ZodBoolean
+	ZodBoolean,
+	ZodEffects
 } from "zod";
 
 export async function fetcher(url: string) {
@@ -51,6 +52,10 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.optional = true;
 	} else if (field instanceof ZodBoolean) {
 		shape.type = "boolean";
+	} else if (field instanceof ZodEffects) {
+		//zod transform (booleans)
+		//TODO: verify it's actually a boolean, and not some other field that uses zod transform
+		shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
@@ -66,6 +71,7 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
 		//DeadBoolean
+		//TODO: verify it's actually a DeadBoolean, and not some other enum
 		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
 			shape.type = "boolean";
 			shape.values = Object.keys(DeadBooleanEnum);
