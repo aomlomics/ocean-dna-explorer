@@ -61,11 +61,18 @@ export default async function analysisEditAction(formData: FormData) {
 				},
 				data: {
 					//make changes to analysis
-					...AnalysisPartialSchema.parse(Object.fromEntries(formData)),
+					...AnalysisPartialSchema.parse(
+						Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
+					),
 					//add edit to start of edit history
 					editHistory: analysis.editHistory ? [newEdit].concat(analysis.editHistory) : [newEdit]
 				}
 			});
+
+			const isPrivate = formData.get("isPrivate");
+			if (isPrivate !== null) {
+				//TODO: update occurrences, assignments, features, and taxonomies with isPrivate value
+			}
 		});
 
 		if (error) {
