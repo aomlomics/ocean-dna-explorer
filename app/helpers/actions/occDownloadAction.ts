@@ -1,6 +1,6 @@
 "use server";
 
-import { Occurrence, Prisma } from "@prisma/client";
+import { Occurrence, Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "../prisma";
 
 export default async function occDownloadAction(where: Prisma.OccurrenceWhereInput) {
