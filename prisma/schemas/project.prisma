@@ -284,7 +284,6 @@ model Sample {
     carbonate_unit            String?
     /// @zod.custom.use(z.coerce.number())
     hydrogen_ion              Float?
-    hydrogen_ion_unit         String?
     /// @zod.custom.use(z.coerce.number())
     nitrate_plus_nitrite      Float?
     nitrate_plus_nitrite_unit String?
@@ -307,6 +306,7 @@ model Sample {
     tot_alkalinity_unit       String?
     /// @zod.custom.use(z.coerce.number())
     transmittance             Float?
+    transmittance_unit        String?
 
     // Sectionless
     biosample_accession String?
