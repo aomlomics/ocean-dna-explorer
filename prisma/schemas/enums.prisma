@@ -1,0 +1,670 @@
+// @map rules:
+//      spaces = _
+//      dashes = __
+//      % = PERCENT_
+//      ( = PAREN1_
+//      ) = PAREN2_
+//      : = COLON_
+//      / = FSLASH_
+// extra rules for @map that STARTS WITH a number (0-99 only):
+//      convert number to string representation in ALLCAPS
+//      terminate with __
+//      if there are two words in the number (ex: 28 = twenty eight), separate the words with _
+//      EX: 28 = TWENTY_EIGHT__
+
+enum DeadBoolean {
+    false
+    true
+    not_applicableCOLON__control_sample                                   @map("not applicable: control sample")
+    not_applicableCOLON__sample_group                                     @map("not applicable: sample group")
+    not_applicable                                                        @map("not applicable")
+    missingCOLON__not_collectedCOLON__synthetic_construct                 @map("missing: not collected: synthetic construct")
+    missingCOLON__not_collectedCOLON__lab_stock                           @map("missing: not collected: lab stock")
+    missingCOLON__not_collectedCOLON__third_party_data                    @map("missing: not collected: third party data")
+    missingCOLON__not_collected                                           @map("missing: not collected")
+    missingCOLON__not_providedCOLON__data_agreement_established_pre__2023 @map("missing: not provided: data agreement established pre-2023")
+    missingCOLON__not_provided                                            @map("missing: not provided")
+    missingCOLON__restricted_accessCOLON__endangered_species              @map("missing: restricted access: endangered species")
+    missingCOLON__restricted_accessCOLON__human__identifiable             @map("missing: restricted access: human-identifiable")
+    missingCOLON__restricted_access                                       @map("missing: restricted access")
+}
+
+enum detection_type {
+    targeted_taxon_detection @map("targeted taxon detection")
+    multi_taxon_detection    @map("multi taxon detection")
+    other
+}
+
+enum neg_cont_type {
+    site_negative       @map("site negative")
+    field_negative      @map("field negative")
+    process_negative    @map("process negative")
+    extraction_negative @map("extraction negative")
+    PCR_negative        @map("PCR negative")
+    other
+}
+
+enum target_gene {
+    TWELVE__S_rRNA       @map("12S rRNA")
+    SIXTEEN__S_rRNA      @map("16S rRNA")
+    EIGHTEEN__S_rRNA     @map("18S rRNA")
+    TWENTY_THREE__S_rRNA @map("23S rRNA")
+    TWENTY_EIGHT__S_rRNA @map("28S rRNA")
+    rbcL
+    CytB
+    COI
+    COII
+    COIII
+    nifH
+    ITS
+    ND1
+    ND2
+    ND3
+    ND4
+    ND5
+    ND6
+    amoA
+    rpoB
+    rpoC1
+    rpoC2
+    matK
+    trnH
+    trnL
+    psbK
+    D__loop              @map("D-loop")
+    //empty option
+    other
+}
+
+enum probeQuencher {
+    Zero__End_Quencher_PAREN1_ZENPAREN2_  @map("Zero-End Quencher (ZEN)")
+    TAMRA
+    lowa_Black                            @map("lowa Black")
+    Minor_Groove_Binder_PAREN1_MGBPAREN2_ @map("Minor Groove Binder (MGB)")
+    Black_Hole_Quencher_PAREN1_BHQPAREN2_ @map("Black Hole Quencher (BHQ)")
+    other
+}
+
+enum barcoding_pcr_appr {
+    one__step_PCR   @map("one-step PCR")
+    two__step_PCR   @map("two-step PCR")
+    ligation__based @map("ligation-based")
+    other
+}
+
+enum platform {
+    ILLUMINA
+    BGISEQ
+    CAPILLARY
+    DNBSEQ
+    ELEMENT
+    GENAPSYS
+    GENEMIND
+    HELICOS
+    ION_TORRENT
+    LS454
+    OXFORD_NANOPORE
+    PACBIO_SMRT
+    TAPESTRI
+    VELA_DIAGNOSTICS
+    ULTIMA
+    other
+}
+
+enum lib_layout {
+    paired_end @map("paired end")
+    single_end @map("single end")
+    other
+}
+
+enum error_rate_type {
+    Phred_score         @map("Phred score")
+    expected_error_rate @map("expected error rate")
+    other
+}
+
+enum min_reads_cutoff_unit {
+    reads
+    PERCENT_ @map("%")
+    other
+}
+
+enum tax_assign_cat {
+    sequence_similarity  @map("sequence similarity")
+    sequence_composition @map("sequence composition")
+    phylogeny
+    probabilistic
+    other
+}
+
+enum samp_category {
+    sample
+    negative_control @map("negative control")
+    positive_control @map("positive control")
+    PCR_standard     @map("PCR standard")
+    other
+}
+
+enum verbatimCoordinateSystem {
+    decimal_degrees         @map("decimal degrees")
+    degrees_minutes_seconds @map("degrees minutes seconds")
+    UTM
+    other
+}
+
+enum verbatimSRS {
+    WGS84
+    NAD84
+    NAD27
+    GDA94
+    GDA2020
+    ETRS89
+    JGD2000
+    other
+}
+
+enum eventDurationUnit {
+    minutes
+    hours
+    days
+    months
+    years
+}
+
+enum samp_size_unit {
+    mL
+    L
+    mg
+    g
+    kg
+    cm2
+    m2
+    cm3
+    m3
+    other
+}
+
+enum samp_store_sol {
+    ethanol
+    sodium_acetate @map("sodium acetate")
+    longmire
+    lysis_buffer   @map("lysis buffer")
+    none
+    other
+}
+
+enum filter_material {
+    cellulose
+    cellulose_ester            @map("cellulose ester")
+    glass_fiber                @map("glass fiber")
+    thermoplastic_membrane     @map("thermoplastic membrane")
+    track_etched_polycarbonate @map("track etched polycarbonate")
+    nylon
+    other
+}
+
+enum precip_chem_prep {
+    ethanol
+    isopropanol
+    sodium_chloride @map("sodium chloride")
+    other
+}
+
+enum prepped_samp_store_sol {
+    ethanol
+    sodium_acetate @map("sodium acetate")
+    longmire
+    lysis_buffer   @map("lysis buffer")
+    none
+    other
+}
+
+enum samp_vol_we_dna_ext_unit {
+    mL
+    L
+    mg
+    g
+    kg
+    cm2
+    m2
+    cm3
+    m3
+    other
+}
+
+enum nucl_acid_ext_lysis {
+    physical
+    chemical
+    enzymatic
+    thermal
+    osmotic
+    other
+}
+
+enum nucl_acid_ext_sep {
+    column__based     @map("column-based")
+    magnetic_beads    @map("magnetic beads")
+    centrifugation
+    precipitation
+    phenol_chloroform @map("phenol chloroform")
+    g
+    electrophoresis
+    other
+}
+
+enum asv_method {
+    dada2pe
+    dada2se
+    deblur
+    other
+}
+
+enum dada2_pooling_method {
+    independent
+    pseudo
+    standard
+}
+
+enum dada2_chimera_method {
+    consensus
+    none
+    pooled
+}
+
+enum lib_conc_unit {
+    ngFSLASH_µL @map("ng/µL")
+    nM
+    pM
+    other
+}
+
+enum checksum_method {
+    MD5
+    SHA__256 @map("SHA-256")
+    CRC__32  @map("CRC-32")
+    other
+}
+
+enum assay_type {
+    targeted
+    metabarcoding
+    other
+}
+
+//TODO: use this for all the other enums of the same value
+// enum chemicalUnits {
+//     µM
+//     molFSLASH_m3      @map("mol/m3")
+//     mmolFSLASH_m3     @map("mmol/m3")
+//     µmolFSLASH_m3    @map("µmol/m3")
+//     molFSLASH_L       @map("mol/L")
+//     mmolFSLASH_L      @map("mmol/L")
+//     µmolFSLASH_L     @map("µmol/L")
+//     mgFSLASH_L        @map("mg/L")
+//     µgFSLASH_L       @map("µg/L")
+//     µmolFSLASH_kg    @map("µmol/kg")
+//     mmolFSLASH_kg     @map("mmol/kg")
+//     parts_per_million @map("parts per million")
+//     other
+// }
+
+enum diss_inorg_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_inorg_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_org_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum diss_oxygen_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    mLFSLASH_L        @map("mL/L")
+    // µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum nitrate_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum nitrite_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum org_matter_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum org_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum part_org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum part_org_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_diss_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_inorg_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_nitro_content_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_nitro_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_org_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum tot_part_carb_unit {
+    µM
+    molFSLASH_m3      @map("mol/m3")
+    mmolFSLASH_m3     @map("mmol/m3")
+    µmolFSLASH_m3    @map("µmol/m3")
+    molFSLASH_L       @map("mol/L")
+    mmolFSLASH_L      @map("mmol/L")
+    µmolFSLASH_L     @map("µmol/L")
+    mgFSLASH_L        @map("mg/L")
+    µgFSLASH_L       @map("µg/L")
+    µmolFSLASH_kg    @map("µmol/kg")
+    mmolFSLASH_kg     @map("mmol/kg")
+    parts_per_million @map("parts per million")
+    other
+}
+
+enum concentration_unit {
+    ngFSLASH_µl     @map("ng/µl")
+    copiesFSLASH_µl @map("copies/µl")
+    other
+}
+
+enum pump_flow_rate_unit {
+    m3FSLASH_s   @map("m3/s")
+    m3FSLASH_min @map("m3/min")
+    m3FSLASH_h   @map("m3/h")
+    LFSLASH_s    @map("L/s")
+    LFSLASH_min  @map("L/min")
+    LFSLASH_h    @map("L/h")
+    other
+}
+
+enum ammonium_unit {
+    micromole_per_liter @map("micromole per liter")
+    milligram_per_liter @map("milligram per liter")
+    parts_per_million   @map("parts per million")
+}
+
+enum phosphate_unit {
+    micromole_per_liter @map("micromole per liter")
+}
+
+enum pressure_unit {
+    atmosphere
+}
+
+enum silicate_unit {
+    micromole_per_liter @map("micromole per liter")
+}
+
+// enum tot_alkalinity_unit {
+// }
+
+// enum dna_yield_unit {
+// }

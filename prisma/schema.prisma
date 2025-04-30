@@ -1,0 +1,23 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("POSTGRES_PRISMA_URL")
+}
+
+generator js {
+    provider = "prisma-client"
+    output   = "../app/generated/prisma/client"
+}
+
+generator json {
+    provider = "prisma-json-types-generator"
+}
+
+generator zod {
+    provider                         = "zod-prisma-types"
+    createInputTypes                 = false
+    addIncludeType                   = false
+    addSelectType                    = false
+    writeNullishInModelTypes         = true
+    createOptionalDefaultValuesTypes = true
+    createPartialTypes               = true
+}

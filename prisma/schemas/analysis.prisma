@@ -1,0 +1,197 @@
+model Analysis {
+    id                Int      @id @default(autoincrement())
+    analysis_run_name String   @unique
+    userId            String
+    dateSubmitted     DateTime @default(now())
+    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    isPrivate         Boolean
+    /// [EditHistoryType]
+    editHistory       Json?
+
+    // Relations
+    project_id  String
+    Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    assay_name  String
+    Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
+    Occurrences Occurrence[]
+    Assignments Assignment[]
+
+    // Data
+    // Bioinformatics
+    sop_bioinformatics                   String?
+    trim_method                          String?
+    trim_param                           String?
+    demux_tool                           String?
+    /// @zod.custom.use(z.coerce.number().int())
+    demux_max_mismatch                   Int?
+    merge_tool                           String?
+    /// @zod.custom.use(z.coerce.number().int())
+    merge_min_overlap                    Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    min_len_cutoff                       Int?
+    min_len_tool                         String?
+    error_rate_tool                      String?
+    error_rate_type                      String?
+    /// @zod.custom.use(z.coerce.number())
+    error_rate_cutoff                    Float?
+    chimera_check_method                 String?
+    chimera_check_param                  String?
+    otu_clust_tool                       String?
+    /// @zod.custom.use(z.coerce.number())
+    otu_clust_cutoff                     Float?
+    /// @zod.custom.use(z.coerce.number())
+    min_reads_cutoff                     Float?
+    min_reads_cutoff_unit                String?
+    min_reads_tool                       String?
+    otu_db                               String?
+    otu_db_custom                        String?
+    tax_assign_cat                       String?
+    otu_seq_comp_appr                    String?
+    /// @zod.custom.use(z.coerce.number())
+    tax_class_id_cutoff                  Float?
+    /// @zod.custom.use(z.coerce.number())
+    tax_class_query_cutoff               Float?
+    tax_class_collapse                   String?
+    tax_class_other                      String?
+    screen_contam_method                 String?
+    screen_geograph_method               String?
+    screen_nontarget_method              String?
+    screen_other                         String?
+    bioinfo_method_additional            String?
+    asv_method                           String?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2_trunc_len_f                    Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2pe_trunc_len_r                  Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2_trim_left_f                    Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2pe_trim_left_r                  Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2_max_ee_f                       Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2pe_max_ee_r                     Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2_trunc_q                        Int?
+    dada2_pooling_method                 String?
+    dada2_chimera_method                 String?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2_min_fold_parent_over_abundance Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    dada2_n_reads_learn                  Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    deblur_trim_length                   Int?
+    deblur_sample_stats                  DeadBoolean?
+    /// @zod.custom.use(z.coerce.number())
+    deblur_mean_error                    Float?
+    /// @zod.custom.use(z.coerce.number())
+    deblur_indel_prob                    Float?
+    /// @zod.custom.use(z.coerce.number().int())
+    deblur_indel_max                     Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    deblur_min_reads                     Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    deblur_min_size                      Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    repseqs_min_length                   Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    repseqs_max_length                   Int?
+    /// @zod.custom.use(z.coerce.number())
+    repseqs_min_abundance                Float?
+    /// @zod.custom.use(z.coerce.number())
+    repseqs_min_prevalence               Float?
+    discard_untrimmed                    DeadBoolean?
+    /// @zod.custom.use(z.coerce.number().int())
+    otu_num_tax_assigned                 Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    output_otu_num                       Int?
+    /// @zod.custom.use(z.coerce.number().int())
+    output_read_count                    Int?
+    otu_final_description                String?
+    otu_raw_description                  String?
+    qiime2_version                       String?
+    tourmaline_asv_method                String?
+    /// @zod.custom.use(z.coerce.number())
+    skl_confidence                       Float?
+    /// @zod.custom.use(z.coerce.number())
+    min_consensus                        Float?
+}
+
+model Occurrence {
+    id        Int     @id @default(autoincrement())
+    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    isPrivate Boolean
+
+    // Relations
+    samp_name         String
+    Sample            Sample   @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    analysis_run_name String
+    Analysis          Analysis @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    featureid         String
+    Feature           Feature  @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+
+    // Data
+    /// @zod.custom.use(z.coerce.number().int())
+    organismQuantity Int
+
+    @@unique([analysis_run_name, samp_name, featureid])
+}
+
+model Assignment {
+    id        Int     @id @default(autoincrement())
+    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    isPrivate Boolean
+
+    // Relations
+    analysis_run_name String
+    Analysis          Analysis @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    featureid         String
+    Feature           Feature  @relation(fields: [featureid], references: [featureid])
+    taxonomy          String
+    Taxonomy          Taxonomy @relation(fields: [taxonomy], references: [taxonomy])
+
+    // Data
+    /// @zod.custom.use(z.coerce.number())
+    Confidence Float
+
+    @@unique([analysis_run_name, featureid])
+}
+
+model Feature {
+    id        Int     @id @default(autoincrement())
+    featureid String  @unique
+    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    isPrivate Boolean
+
+    // Relations
+    Occurrences Occurrence[]
+    Assignments Assignment[]
+
+    // Data
+    dna_sequence   String
+    sequenceLength Int
+}
+
+model Taxonomy {
+    id        Int     @id @default(autoincrement())
+    taxonomy  String  @unique
+    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    isPrivate Boolean
+
+    // Relations
+    Assignments Assignment[]
+
+    // Data
+    verbatimIdentification String
+    domain                 String?
+    kingdom                String?
+    supergroup             String?
+    division               String?
+    subdivision            String?
+    phylum                 String?
+    class                  String?
+    order                  String?
+    family                 String?
+    genus                  String?
+    species                String?
+}
