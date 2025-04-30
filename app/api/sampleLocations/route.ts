@@ -1,3 +1,4 @@
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { DeadValueEnum } from "@/types/enums";
 
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
 	try {
-		const rawLocations = await prisma.$transaction(async (tx) => {
+		const rawLocations = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const projectsRes = await tx.project.findMany({
 				select: {
 					project_id: true,

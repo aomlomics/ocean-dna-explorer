@@ -1,10 +1,10 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { OccurrenceOptionalDefaultsSchema } from "@/prisma/schema/generated/zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
+import { OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
 
 export default async function OccSubmitAction(formData: FormData) {
 	const { userId } = await auth();
@@ -16,12 +16,13 @@ export default async function OccSubmitAction(formData: FormData) {
 		const analysis_run_name = formData.get("analysis_run_name") as string;
 		console.log(`${analysis_run_name} occurrences submit`);
 
-		const isPrivate = formData.get("isPrivate") ? true : false;
+		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
 
 		//Occurrence file
 		//parsing file inside transaction to reduce memory usage, since this file is large
+		//TODO: move computation out of transaction
 		await prisma.$transaction(
-			async (tx) => {
+			async (tx: Prisma.TransactionClient) => {
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {

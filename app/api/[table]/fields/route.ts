@@ -1,6 +1,6 @@
 import { getZodType } from "@/app/helpers/utils";
 import { TableToEnumSchema, TableToSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ table: string }> }) {
 	const table = (await params).table;

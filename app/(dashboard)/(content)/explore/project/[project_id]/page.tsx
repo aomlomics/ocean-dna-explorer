@@ -53,8 +53,11 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 	const { _count: _, Samples: __, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
-		(acc, a) => ({ ...acc, [a.assay_name]: { target_gene: a.Assay.target_gene } }),
-		{} as Record<string, Record<string, string>>
+		(acc: Record<string, Record<string, string>>, a) => ({
+			...acc,
+			[a.assay_name]: { target_gene: a.Assay.target_gene }
+		}),
+		{}
 	);
 
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from

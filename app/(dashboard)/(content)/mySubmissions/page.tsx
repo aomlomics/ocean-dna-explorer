@@ -10,7 +10,6 @@ import SubmissionEditButton from "@/app/components/SubmissionEditButton";
 import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
 import projectEditAction from "@/app/helpers/actions/project/projectEdit";
 
-// TODO: add ability to toggle isPrivate
 export default async function MySubmissions() {
 	const { userId } = await auth();
 	if (!userId) {

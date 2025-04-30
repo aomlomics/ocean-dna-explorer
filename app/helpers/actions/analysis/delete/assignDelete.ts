@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 
@@ -17,7 +18,7 @@ export default async function assignDeleteAction(formData: FormData) {
 
 	//assignments
 	console.log("assignments delete");
-	await prisma.$transaction(async (tx) => {
+	await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 		for (const chunk of assignmentChunks) {
 			await tx.assignment.deleteMany({
 				where: {

@@ -1,20 +1,20 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
-import {
-	AssignmentOptionalDefaultsSchema,
-	AssignmentPartial,
-	AssignmentScalarFieldEnumSchema,
-	FeatureOptionalDefaultsSchema,
-	FeaturePartial,
-	FeatureScalarFieldEnumSchema,
-	TaxonomyOptionalDefaultsSchema,
-	TaxonomyPartial,
-	TaxonomyScalarFieldEnumSchema
-} from "@/prisma/schema/generated/zod";
 import { auth } from "@clerk/nextjs/server";
+import {
+	FeaturePartial,
+	AssignmentPartial,
+	TaxonomyPartial,
+	FeatureOptionalDefaultsSchema,
+	FeatureScalarFieldEnumSchema,
+	AssignmentOptionalDefaultsSchema,
+	AssignmentScalarFieldEnumSchema,
+	TaxonomyOptionalDefaultsSchema,
+	TaxonomyScalarFieldEnumSchema
+} from "@/prisma/generated/zod";
 
 export default async function assignSubmitAction(formData: FormData) {
 	const { userId } = await auth();
@@ -26,12 +26,13 @@ export default async function assignSubmitAction(formData: FormData) {
 		const analysis_run_name = formData.get("analysis_run_name") as string;
 		console.log(`${analysis_run_name} assignment submit`);
 
-		const isPrivate = formData.get("isPrivate") ? true : false;
+		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
 
 		//Feature file
 		//parsing file inside transaction to reduce memory usage, since this file is large
+		//TODO: move computation out of transaction
 		await prisma.$transaction(
-			async (tx) => {
+			async (tx: Prisma.TransactionClient) => {
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {

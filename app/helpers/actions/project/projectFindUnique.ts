@@ -1,6 +1,6 @@
 "use server";
 
-import { Project } from "@prisma/client";
+import { Project } from "@/app/generated/prisma/client";
 import { prisma } from "../../prisma";
 
 export default async function projectFindUniqueAction(

@@ -1,7 +1,7 @@
 import TableFilter from "@/app/components/explore/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import { asv_method, target_gene } from "@prisma/client";
+import { asv_method, target_gene } from "@/app/generated/prisma/client";
 import Link from "next/link";
 
 export default async function Analysis() {

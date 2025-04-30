@@ -2,6 +2,7 @@ import { prisma } from "@/app/helpers/prisma";
 import PhyloPic from "@/app/components/PhyloPic";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
+import { Prisma } from "@/app/generated/prisma/client";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -42,7 +43,7 @@ export default async function Taxonomy({ params }: { params: Promise<{ taxonomy:
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 
-	const { dbTaxonomy, samples } = await prisma.$transaction(async (tx) => {
+	const { dbTaxonomy, samples } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 		const dbTaxonomy = await tx.taxonomy.findUnique({
 			where: {
 				taxonomy

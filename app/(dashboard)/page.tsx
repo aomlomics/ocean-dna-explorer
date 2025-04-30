@@ -37,13 +37,13 @@ export default async function Home() {
 		}
 	});
 
-	const uniqueProjects = samples.reduce((acc, a) => {
+	const uniqueProjects = samples.reduce((acc: string[], a) => {
 		if (!acc.includes(a.project_id)) {
 			acc.push(a.project_id);
 		}
 
 		return acc;
-	}, [] as string[]);
+	}, []);
 	const colors = randomColors(uniqueProjects.length);
 	const projectColors = {} as Record<string, string>;
 	for (let i = 0; i < colors.length; i++) {

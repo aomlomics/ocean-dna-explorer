@@ -1,76 +1,78 @@
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import Pagination from "@/app/components/paginated/Pagination";
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import Link from "next/link";
 import { ReactNode } from "react";
 
 export default async function Featureid({ params }: { params: Promise<{ featureid: string }> }) {
 	let { featureid } = await params;
 	featureid = decodeURIComponent(featureid);
 
-	const { feature, taxaCounts, prevalence, assays } = await prisma.$transaction(async (tx) => {
-		const feature = await tx.feature.findUnique({
-			where: {
-				featureid
-			},
-			include: {
-				Assignments: {
-					distinct: ["taxonomy"],
-					select: {
-						taxonomy: true
-					}
+	const { feature, taxaCounts, prevalence, assays } = await prisma.$transaction(
+		async (tx: Prisma.TransactionClient) => {
+			const feature = await tx.feature.findUnique({
+				where: {
+					featureid
 				},
-				_count: {
-					select: {
-						Assignments: true
+				include: {
+					Assignments: {
+						distinct: ["taxonomy"],
+						select: {
+							taxonomy: true
+						}
+					},
+					_count: {
+						select: {
+							Assignments: true
+						}
 					}
 				}
-			}
-		});
+			});
 
-		const taxaCounts = [] as { taxonomy: string; count: number }[];
-		if (feature) {
-			for (const { taxonomy } of feature.Assignments) {
-				taxaCounts.push({
-					taxonomy,
-					count: await tx.assignment.count({
-						where: {
-							taxonomy,
+			const taxaCounts = [] as { taxonomy: string; count: number }[];
+			if (feature) {
+				for (const { taxonomy } of feature.Assignments) {
+					taxaCounts.push({
+						taxonomy,
+						count: await tx.assignment.count({
+							where: {
+								taxonomy,
+								featureid
+							}
+						})
+					});
+				}
+			}
+
+			const relevantSamplesCount = await tx.sample.count({
+				where: {
+					Occurrences: {
+						some: {
 							featureid
 						}
-					})
-				});
-			}
+					}
+				}
+			});
+			const samplesCount = await tx.sample.count();
+			const prevalence = (relevantSamplesCount / samplesCount) * 100;
+
+			const assignmentAssays = await tx.assignment.findMany({
+				where: {
+					featureid
+				},
+				select: {
+					Analysis: {
+						select: {
+							assay_name: true
+						}
+					}
+				}
+			});
+			const assays = [...new Set(assignmentAssays.map((a) => a.Analysis.assay_name))];
+
+			return { feature, taxaCounts, prevalence, assays };
 		}
-
-		const relevantSamplesCount = await tx.sample.count({
-			where: {
-				Occurrences: {
-					some: {
-						featureid
-					}
-				}
-			}
-		});
-		const samplesCount = await tx.sample.count();
-		const prevalence = (relevantSamplesCount / samplesCount) * 100;
-
-		const assignmentAssays = await tx.assignment.findMany({
-			where: {
-				featureid
-			},
-			select: {
-				Analysis: {
-					select: {
-						assay_name: true
-					}
-				}
-			}
-		});
-		const assays = [...new Set(assignmentAssays.map((a) => a.Analysis.assay_name))];
-
-		return { feature, taxaCounts, prevalence, assays };
-	});
+	);
 
 	if (!feature) return <>Feature not found</>;
 

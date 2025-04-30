@@ -1,7 +1,7 @@
 "use client";
 
 import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
 import InfoButton from "./InfoButton";

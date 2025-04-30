@@ -1,6 +1,6 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import occDownloadAction from "../helpers/actions/occDownloadAction";
 
 export default function OccDownloadButton({

@@ -1,25 +1,27 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
-import {
-	AnalysisOptionalDefaultsSchema,
-	AnalysisScalarFieldEnumSchema,
-	AssayOptionalDefaultsSchema,
-	AssayPartial,
-	AssayScalarFieldEnumSchema,
-	LibraryOptionalDefaultsSchema,
-	LibraryPartial,
-	LibraryScalarFieldEnumSchema,
-	SampleOptionalDefaultsSchema,
-	SamplePartial,
-	SampleScalarFieldEnumSchema,
-	ProjectOptionalDefaultsSchema,
-	ProjectScalarFieldEnumSchema
-} from "@/prisma/schema/generated/zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
+import {
+	ProjectOptionalDefaultsSchema,
+	ProjectScalarFieldEnumSchema,
+	PrimerOptionalDefaultsSchema,
+	PrimerScalarFieldEnumSchema,
+	AssayOptionalDefaultsSchema,
+	AssayScalarFieldEnumSchema,
+	LibraryOptionalDefaultsSchema,
+	LibraryScalarFieldEnumSchema,
+	AnalysisOptionalDefaultsSchema,
+	AnalysisScalarFieldEnumSchema,
+	AssayPartial,
+	LibraryPartial,
+	SamplePartial,
+	SampleOptionalDefaultsSchema,
+	SampleScalarFieldEnumSchema
+} from "@/prisma/generated/zod";
 
 //https://clerk.com/docs/organizations/verify-user-permissions
 export default async function projectSubmitAction(formData: FormData) {
@@ -32,11 +34,13 @@ export default async function projectSubmitAction(formData: FormData) {
 
 	try {
 		let project = {} as Prisma.ProjectCreateInput;
+		const primers = [] as Prisma.PrimerCreateManyInput[];
 		const assays = {} as Record<string, Prisma.AssayCreateManyInput>;
 		const libraries = [] as Prisma.LibraryCreateManyInput[];
 		const samples = [] as Prisma.SampleCreateManyInput[];
 
 		const projectCol = {} as Record<string, string>;
+		const primerCols = {} as Record<string, Record<string, string>>;
 		const assayCols = {} as Record<string, Record<string, string>>;
 		const libraryCols = {} as Record<string, Record<string, string>>;
 
@@ -67,6 +71,10 @@ export default async function projectSubmitAction(formData: FormData) {
 					//Project Level
 					//project table
 					parseSchemaToObject(value, field, projectCol, ProjectOptionalDefaultsSchema, ProjectScalarFieldEnumSchema);
+
+					//primer table
+					parseSchemaToObject(value, field, projectCol, PrimerOptionalDefaultsSchema, PrimerScalarFieldEnumSchema);
+
 					//assay table
 					parseSchemaToObject(value, field, projectCol, AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema);
 
@@ -82,6 +90,18 @@ export default async function projectSubmitAction(formData: FormData) {
 						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
 						//and whose values are an object representing a single "row"
 						if (currentLine[i]) {
+							//Primers
+							if (!primerCols[projectFileHeaders[i]]) {
+								primerCols[projectFileHeaders[i]] = {};
+							}
+							parseSchemaToObject(
+								currentLine[i],
+								field,
+								primerCols[projectFileHeaders[i]],
+								PrimerOptionalDefaultsSchema,
+								PrimerScalarFieldEnumSchema
+							);
+
 							//Assays
 							if (!assayCols[projectFileHeaders[i]]) {
 								assayCols[projectFileHeaders[i]] = {};
@@ -125,6 +145,23 @@ export default async function projectSubmitAction(formData: FormData) {
 					}
 				}
 			);
+
+			for (let p of Object.values(primerCols)) {
+				primers.push(
+					PrimerOptionalDefaultsSchema.parse(
+						{
+							...p,
+							...projectCol,
+							isPrivate
+						},
+						{
+							errorMap: (error, ctx) => {
+								return { message: `PrimerSchema: ${ctx.defaultError}` };
+							}
+						}
+					)
+				);
+			}
 		}
 
 		//Library file
@@ -261,7 +298,7 @@ export default async function projectSubmitAction(formData: FormData) {
 							if (sectionRow[j] === "User defined") {
 								userDefined[sampleFileHeaders[j]] = currentLine[j];
 							} else {
-								//assay table
+								//sample table
 								parseSchemaToObject(
 									currentLine[j],
 									sampleFileHeaders[j],
@@ -298,13 +335,35 @@ export default async function projectSubmitAction(formData: FormData) {
 		}
 
 		console.log("project transaction");
+		//TODO: move computation out of transaction
 		await prisma.$transaction(
-			async (tx) => {
+			async (tx: Prisma.TransactionClient) => {
 				//project
 				console.log("project");
 				await tx.project.create({
 					data: project
 				});
+
+				//primers
+				console.log("primers");
+				await tx.primer.createMany({
+					data: primers,
+					skipDuplicates: true
+				});
+				//private
+				if (!isPrivate) {
+					for (let p of primers) {
+						await tx.primer.updateMany({
+							where: {
+								pcr_primer_forward: p.pcr_primer_forward,
+								pcr_primer_reverse: p.pcr_primer_reverse
+							},
+							data: {
+								isPrivate: false
+							}
+						});
+					}
+				}
 
 				//assays and samples
 				console.log("assays and samples");

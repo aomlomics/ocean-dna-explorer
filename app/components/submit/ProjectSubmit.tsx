@@ -122,7 +122,7 @@ export default function ProjectSubmit() {
 					</fieldset>
 
 					<div className="w-[400px] !mt-0">
-						<label className="form-control w-full w-[400px]">
+						<label className="form-control w-[400px]">
 							<div className="label">
 								<span className="label-text text-base-content">Project Metadata File:</span>
 							</div>

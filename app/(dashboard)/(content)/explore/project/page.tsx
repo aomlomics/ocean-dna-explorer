@@ -2,11 +2,11 @@ import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
-import { detection_type } from "@prisma/client";
+import { detection_type, Prisma } from "@/app/generated/prisma/client";
 import Link from "next/link";
 
 export default async function Project() {
-	const { institutionOptions } = await prisma.$transaction(async (tx) => {
+	const { institutionOptions } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 		const instutitionRes = await tx.project.findMany({
 			distinct: ["institution"],
 			select: {

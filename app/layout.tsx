@@ -10,8 +10,10 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata = {
-	title: "NODE",
-	description: "NOAA Ocean DNA Explorer"
+	title: "Ocean DNA Explorer",
+	description:
+		"A data sharing platform, search engine, and visualization and analysis tool for ocean environmental DNA data.",
+	metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://www.oceandnaexplorer.org/")
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

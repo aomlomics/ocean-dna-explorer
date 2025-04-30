@@ -1,19 +1,7 @@
 import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
-import { Prisma, Taxonomy } from "@prisma/client";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
+import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodEffects } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
-import {
-	ZodObject,
-	ZodEnum,
-	ZodNumber,
-	ZodOptional,
-	ZodBigInt,
-	ZodString,
-	ZodDate,
-	ZodNullable,
-	ZodLazy,
-	ZodBoolean,
-	ZodEffects
-} from "zod";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);

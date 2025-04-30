@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 
@@ -12,7 +13,7 @@ export default async function projectDeleteAction(formData: FormData) {
 	const del = JSON.parse(formData.get("del") as string);
 
 	await prisma.$transaction(
-		async (tx) => {
+		async (tx: Prisma.TransactionClient) => {
 			//project delete
 			if (del.project_id) {
 				console.log("project delete");

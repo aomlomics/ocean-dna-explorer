@@ -11,9 +11,9 @@ import { DeleteAction, SubmitAction } from "@/types/types";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
-import { Project } from "@prisma/client";
 import projectFindUniqueAction from "@/app/helpers/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
+import { Project } from "@/app/generated/prisma/client";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -254,7 +254,7 @@ export default function AnalysisSubmit() {
 		setSubmitted(true);
 
 		const allFormData = new FormData(event.currentTarget);
-		const isPrivate = allFormData.get("isPrivate");
+		const isPrivate = allFormData.get("isPrivate") ? true : false;
 		let hasError = false;
 
 		let analysis_i = 0;

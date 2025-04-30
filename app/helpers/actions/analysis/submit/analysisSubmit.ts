@@ -1,8 +1,9 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
-import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/schema/generated/zod";
+import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function analysisSubmitAction(formData: FormData) {
@@ -14,7 +15,7 @@ export default async function analysisSubmitAction(formData: FormData) {
 	try {
 		const analysisCol = {} as Record<string, string>;
 
-		const isPrivate = formData.get("isPrivate") ? true : false;
+		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
 
 		//Analysis file
 		console.log("Analysis file");
@@ -42,7 +43,7 @@ export default async function analysisSubmitAction(formData: FormData) {
 
 		//analysis
 		console.log("analysis");
-		await prisma.$transaction(async (tx) => {
+		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			//check if the associated project is private, and throw an error if it is private but the submission is public
 			const project = await tx.project.findUnique({
 				where: {

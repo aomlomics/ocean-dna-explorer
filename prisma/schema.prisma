@@ -4,8 +4,10 @@ datasource db {
 }
 
 generator js {
-    provider = "prisma-client"
-    output   = "../app/generated/prisma/client"
+    provider            = "prisma-client-js"
+    output              = "../app/generated/prisma/client"
+    importFileExtension = ""
+    previewFeatures     = ["relationJoins"]
 }
 
 generator json {
@@ -14,6 +16,7 @@ generator json {
 
 generator zod {
     provider                         = "zod-prisma-types"
+    prismaClientPath                 = "@/app/generated/prisma/client"
     createInputTypes                 = false
     addIncludeType                   = false
     addSelectType                    = false

@@ -1,23 +1,25 @@
 import {
-	AnalysisScalarFieldEnumSchema,
-	AnalysisSchema,
-	AssayScalarFieldEnumSchema,
-	AssaySchema,
-	AssignmentScalarFieldEnumSchema,
-	AssignmentSchema,
-	FeatureScalarFieldEnumSchema,
-	FeatureSchema,
-	LibraryScalarFieldEnumSchema,
-	LibrarySchema,
-	OccurrenceScalarFieldEnumSchema,
-	OccurrenceSchema,
 	ProjectScalarFieldEnumSchema,
-	ProjectSchema,
 	SampleScalarFieldEnumSchema,
-	SampleSchema,
+	PrimerScalarFieldEnumSchema,
+	AssayScalarFieldEnumSchema,
+	LibraryScalarFieldEnumSchema,
+	AnalysisScalarFieldEnumSchema,
+	OccurrenceScalarFieldEnumSchema,
+	FeatureScalarFieldEnumSchema,
+	AssignmentScalarFieldEnumSchema,
 	TaxonomyScalarFieldEnumSchema,
+	ProjectSchema,
+	SampleSchema,
+	PrimerSchema,
+	AssaySchema,
+	LibrarySchema,
+	AnalysisSchema,
+	OccurrenceSchema,
+	FeatureSchema,
+	AssignmentSchema,
 	TaxonomySchema
-} from "@/prisma/schema/generated/zod";
+} from "@/prisma/generated/zod";
 
 export enum DeadValueEnum {
 	"not applicable: control sample" = -9999,
@@ -57,6 +59,7 @@ export const DeadBooleanEnum = {
 export const TableToEnumSchema = {
 	project: ProjectScalarFieldEnumSchema,
 	sample: SampleScalarFieldEnumSchema,
+	primer: PrimerScalarFieldEnumSchema,
 	assay: AssayScalarFieldEnumSchema,
 	library: LibraryScalarFieldEnumSchema,
 	analysis: AnalysisScalarFieldEnumSchema,
@@ -69,6 +72,7 @@ export const TableToEnumSchema = {
 export const TableToSchema = {
 	project: ProjectSchema,
 	sample: SampleSchema,
+	primer: PrimerSchema,
 	assay: AssaySchema,
 	library: LibrarySchema,
 	analysis: AnalysisSchema,

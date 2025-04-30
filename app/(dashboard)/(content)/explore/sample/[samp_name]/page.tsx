@@ -3,11 +3,12 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
+import { Prisma } from "@/app/generated/prisma/client";
 
 export default async function Samp_Name({ params }: { params: Promise<{ samp_name: string }> }) {
 	const { samp_name } = await params;
 
-	const { sample, analyses } = await prisma.$transaction(async (tx) => {
+	const { sample, analyses } = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 		const sample = await tx.sample.findUnique({
 			where: {
 				samp_name

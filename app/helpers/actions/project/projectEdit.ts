@@ -2,9 +2,10 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
-import { Prisma } from "@prisma/client";
-import { revalidatePath } from "next/cache";
-import { ProjectPartialSchema } from "@/prisma/schema/generated/zod";
+import { Prisma } from "@/app/generated/prisma/client";
+// import { revalidatePath } from "next/cache";
+import analysisEditAction from "../analysis/edit/analysisEdit";
+import { ProjectPartialSchema } from "@/prisma/generated/zod";
 
 export default async function projectEditAction(formData: FormData) {
 	console.log("project edit");
@@ -23,7 +24,8 @@ export default async function projectEditAction(formData: FormData) {
 	//TODO: validate all fields are valid project fields
 
 	try {
-		const error = await prisma.$transaction(async (tx) => {
+		//TODO: move computation out of transaction
+		const error = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const project = await tx.project.findUnique({
 				where: {
 					project_id
@@ -39,7 +41,12 @@ export default async function projectEditAction(formData: FormData) {
 						}
 
 						return acc;
-					}, {} as Record<string, true>) as Prisma.ProjectSelect)
+					}, {} as Record<string, true>) as Prisma.ProjectSelect),
+					Analyses: {
+						select: {
+							analysis_run_name: true
+						}
+					}
 				}
 			});
 
@@ -99,10 +106,110 @@ export default async function projectEditAction(formData: FormData) {
 				}
 			});
 
-			const isPrivate = formData.get("isPrivate");
-			if (isPrivate !== null) {
-				//TODO: update samples, assays, and libraries with isPrivate value
-				//TODO: if isPrivate === true, also update all analyses
+			const isPrivateForm = formData.get("isPrivate");
+			if (isPrivateForm !== null) {
+				const isPrivate = isPrivateForm === "true" ? true : false;
+
+				await tx.sample.updateMany({
+					where: {
+						project_id
+					},
+					data: {
+						isPrivate
+					}
+				});
+
+				await tx.library.updateMany({
+					where: {
+						Sample: {
+							project_id
+						}
+					},
+					data: {
+						isPrivate
+					}
+				});
+
+				if (isPrivate) {
+					await tx.assay.updateMany({
+						where: {
+							Samples: {
+								some: {
+									project_id
+								}
+								//TODO: fix this query to get all assays where all the samples that aren't related to the project_id are private
+								// every: {
+								// 	NOT: {
+								// 		project_id
+								// 	},
+								// 	isPrivate: true
+								// }
+							}
+						},
+						data: {
+							isPrivate: true
+						}
+					});
+
+					await tx.primer.updateMany({
+						where: {
+							Assays: {
+								some: {
+									Samples: {
+										some: {
+											project_id
+										}
+									}
+								},
+								every: {
+									isPrivate: true
+								}
+							}
+						},
+						data: {
+							isPrivate: true
+						}
+					});
+
+					//update all analyses of project to be private
+					for (let analysis of project.Analyses) {
+						const analysisFormData = new FormData();
+						analysisFormData.set("isPrivate", "true");
+						analysisFormData.set("target", analysis.analysis_run_name);
+						analysisEditAction(analysisFormData);
+					}
+				} else {
+					await tx.assay.updateMany({
+						where: {
+							Samples: {
+								some: {
+									project_id
+								}
+							}
+						},
+						data: {
+							isPrivate: false
+						}
+					});
+
+					await tx.primer.updateMany({
+						where: {
+							Assays: {
+								some: {
+									Samples: {
+										some: {
+											project_id
+										}
+									},
+									isPrivate: false
+								}
+							}
+						},
+						data: {
+							isPrivate: false
+						}
+					});
+				}
 			}
 		});
 
@@ -110,7 +217,7 @@ export default async function projectEditAction(formData: FormData) {
 			return { message: "Error", error };
 		}
 
-		revalidatePath("/explore");
+		// revalidatePath("/explore");
 		return { message: "Success" };
 	} catch (err) {
 		const error = err as Error;

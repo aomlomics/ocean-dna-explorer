@@ -1,14 +1,14 @@
 "use client";
 
 import { DeadValueEnum, TableToEnumSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useState } from "react";
 import useSWR, { preload } from "swr";
 import { useDebouncedCallback } from "use-debounce";
 import { fetcher, getZodType } from "../../helpers/utils";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
-import { SampleSchema } from "@/prisma/schema/generated/zod";
+import { SampleSchema } from "@/prisma/generated/zod";
 
 export default function Table({
 	table,
@@ -183,7 +183,7 @@ export default function Table({
 												setHeadersFilter({});
 											} else {
 												setHeadersFilter(
-													headers.reduce((acc, head) => {
+													headers.reduce((acc: Record<string, true>, head) => {
 														if (!headersFilter[head]) {
 															return { ...acc, [head]: true };
 														} else {

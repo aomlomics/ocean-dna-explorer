@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 
@@ -12,7 +13,7 @@ export default async function analysisDeleteAction(formData: FormData) {
 	const del = JSON.parse(formData.get("del") as string);
 
 	await prisma.$transaction(
-		async (tx) => {
+		async (tx: Prisma.TransactionClient) => {
 			//analysis delete
 			if (del.analysis_run_name) {
 				console.log("analysis delete");

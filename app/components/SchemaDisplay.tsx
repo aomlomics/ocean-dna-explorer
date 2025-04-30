@@ -1,5 +1,5 @@
 import { TableToEnumSchema, TableToSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "../helpers/utils";
 
 export default function SchemaDisplay() {
