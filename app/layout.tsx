@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						signIn: {
 							start: {
 								title: "Sign in to Submit Data",
-								__experimental_titleCombined: "Sign in to Submit Data",
+								// __experimental_titleCombined: "Sign in to Submit Data",
 								subtitle: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
 								// @ts-ignore - subtitleCombined is needed for the UI but not in types
 								subtitleCombined: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
@@ -41,14 +41,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 								actionText: "You must use a NOAA or MSState email address to sign in."
 							}
 						},
-						dividerText: "or",
-						formFieldLabel: {
-							emailAddress: "Email Address"
-						}
+						dividerText: "or"
+						// formFieldLabel: {
+						// 	emailAddress: "Email Address"
+						// }
 					}}
 					signInFallbackRedirectUrl="/dashboard"
-					fallbackRedirectUrl="/dashboard"
-					after_sign_in_url="/dashboard"
+					// fallbackRedirectUrl="/dashboard"
+					// after_sign_in_url="/dashboard"
 				>
 					{children}
 				</ClerkProvider>
