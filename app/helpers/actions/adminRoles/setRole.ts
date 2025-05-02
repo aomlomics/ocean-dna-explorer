@@ -1,5 +1,6 @@
 "use server";
 
+import { RoleHeirarchy } from "@/types/enums";
 import { Role } from "@/types/globals";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
@@ -8,18 +9,24 @@ export async function setRole(formData: FormData) {
 
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role as Role | undefined;
-	if (role !== "admin" && role !== "moderator") {
-		// return { message: "Not Authorized" };
-		return;
-	}
 
 	const id = formData.get("id") as string;
-	if (id === userId) {
-		// return { message: "Cannot edit own role" };
-		return;
-	}
 
 	try {
+		if (id === userId) {
+			throw new Error("Can't edit own role");
+		}
+
+		if (role !== "admin" && role !== "moderator") {
+			throw new Error("Not authorized");
+		}
+
+		//TODO: fix potential race condition
+		const user = await client.users.getUser(id);
+		if (!RoleHeirarchy[role].includes(user.publicMetadata.role as Role)) {
+			throw new Error("Not authorized");
+		}
+
 		const res = await client.users.updateUserMetadata(id, {
 			publicMetadata: { role: formData.get("role") }
 		});

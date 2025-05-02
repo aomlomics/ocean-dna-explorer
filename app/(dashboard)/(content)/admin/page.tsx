@@ -5,6 +5,7 @@ import { setRole } from "@/app/helpers/actions/adminRoles/setRole";
 import { removeRole } from "@/app/helpers/actions/adminRoles/removeRole";
 import { Role } from "@/types/globals";
 import { ReactNode } from "react";
+import { RoleHeirarchy } from "@/types/enums";
 
 export default async function Admin(params: { searchParams: Promise<{ search?: string }> }) {
 	const { userId, sessionClaims } = await auth();
@@ -24,7 +25,7 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 			<SearchUsers />
 
 			{users.reduce((acc: ReactNode[], user) => {
-				if (user.id !== userId) {
+				if (user.id !== userId && RoleHeirarchy[role].includes(user.publicMetadata.role as Role)) {
 					acc.push(
 						<div key={user.id}>
 							<div>
@@ -36,7 +37,7 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 								{user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress}
 							</div>
 
-							<div>Role: {user.publicMetadata.role as string}</div>
+							<div>Role: {user.publicMetadata.role as Role}</div>
 
 							{role === "admin" && (
 								<form action={setRole}>

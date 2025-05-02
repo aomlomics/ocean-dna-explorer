@@ -20,6 +20,7 @@ import {
 	AssignmentSchema,
 	TaxonomySchema
 } from "@/prisma/generated/zod";
+import { Role } from "./globals";
 
 export enum DeadValueEnum {
 	"not applicable: control sample" = -9999,
@@ -101,3 +102,9 @@ export const EXPLORE_ROUTES = {
 	// assignment: { name: "Assignments", description: "Some description." },
 	taxonomy: "Taxonomies"
 };
+
+export const RoleHeirarchy = {
+	admin: ["moderator", "contributor", undefined],
+	moderator: ["contributor", undefined],
+	contributor: []
+} as Record<Role, Array<Role | undefined>>;
