@@ -404,8 +404,3 @@ export function parseApiQuery(
 
 	return query;
 }
-
-export async function getRole(): Promise<Role | undefined> {
-	const { sessionClaims } = await auth();
-	return sessionClaims?.metadata.role;
-}

@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
-import { clerkClient } from "@clerk/nextjs/server";
-import { getRole } from "@/app/helpers/utils";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { SearchUsers } from "@/app/components/SearchUsers";
 import { setRole } from "@/app/helpers/actions/adminRoles/setRole";
 import { removeRole } from "@/app/helpers/actions/adminRoles/removeRole";
+import { Role } from "@/types/globals";
+import { ReactNode } from "react";
 
 export default async function Admin(params: { searchParams: Promise<{ search?: string }> }) {
-	const role = await getRole();
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role as Role | undefined;
 	if (role !== "admin" && role !== "moderator") {
 		redirect("/");
 	}
@@ -21,47 +23,51 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 		<>
 			<SearchUsers />
 
-			{users.map((user) => {
-				return (
-					<div key={user.id}>
-						<div>
-							{user.firstName} {user.lastName}
-						</div>
+			{users.reduce((acc: ReactNode[], user) => {
+				if (user.id !== userId) {
+					acc.push(
+						<div key={user.id}>
+							<div>
+								{user.firstName} {user.lastName}
+							</div>
 
-						<div>
-							Primary Email:{" "}
-							{user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress}
-						</div>
+							<div>
+								Primary Email:{" "}
+								{user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress}
+							</div>
 
-						<div>Role: {user.publicMetadata.role as string}</div>
+							<div>Role: {user.publicMetadata.role as string}</div>
 
-						{role === "admin" && (
+							{role === "admin" && (
+								<form action={setRole}>
+									<input type="hidden" value={user.id} name="id" />
+									<input type="hidden" value="moderator" name="role" />
+									<button type="submit" className="btn">
+										Make Moderator
+									</button>
+								</form>
+							)}
+
 							<form action={setRole}>
 								<input type="hidden" value={user.id} name="id" />
-								<input type="hidden" value="moderator" name="role" />
+								<input type="hidden" value="contributor" name="role" />
 								<button type="submit" className="btn">
-									Make Moderator
+									Make Contributor
 								</button>
 							</form>
-						)}
 
-						<form action={setRole}>
-							<input type="hidden" value={user.id} name="id" />
-							<input type="hidden" value="contributor" name="role" />
-							<button type="submit" className="btn">
-								Make Contributor
-							</button>
-						</form>
+							<form action={removeRole}>
+								<input type="hidden" value={user.id} name="id" />
+								<button type="submit" className="btn">
+									Remove Role
+								</button>
+							</form>
+						</div>
+					);
+				}
 
-						<form action={removeRole}>
-							<input type="hidden" value={user.id} name="id" />
-							<button type="submit" className="btn">
-								Remove Role
-							</button>
-						</form>
-					</div>
-				);
-			})}
+				return acc;
+			}, [])}
 		</>
 	);
 }
