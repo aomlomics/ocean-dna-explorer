@@ -17,9 +17,8 @@ const routes = {
 } as Record<string, { roles: Role[]; redirect?: string }>;
 
 export default clerkMiddleware(async (auth, req) => {
-	const { userId, sessionClaims } = await auth();
-
 	if (isProtectedRoute(req)) {
+		const { userId, sessionClaims } = await auth();
 		//accessing protected routes
 		if (userId) {
 			//signed in

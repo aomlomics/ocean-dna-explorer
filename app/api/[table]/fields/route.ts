@@ -24,11 +24,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			}
 		}
 
-		return Response.json({
-			message: "Success",
-			result
-		});
+		return Response.json({ statusMessage: "success", result });
 	} else {
-		return Response.json({ message: "Error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return Response.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
 	}
 }

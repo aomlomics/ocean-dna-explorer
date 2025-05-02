@@ -2,7 +2,6 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useRef } from "react";
 
 export default function TabDropdown({
 	tabName,

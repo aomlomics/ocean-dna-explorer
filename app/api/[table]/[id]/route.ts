@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 		try {
 			const parsedId = parseInt(id);
 			if (Number.isNaN(parsedId)) {
-				return Response.json({ message: "Error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
+				return Response.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
 			}
 
 			const { searchParams } = new URL(request.url);
@@ -36,10 +36,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			const result = await prisma[lowercaseTable].findUnique(query);
 
 			if (result) {
-				return Response.json({ message: "Success", result });
+				return Response.json({ statusMessage: "success", result });
 			} else {
 				return Response.json(
-					{ message: "Error", error: `No ${table} matching the search parameters could be found.` },
+					{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },
 					{ status: 400 }
 				);
 			}
@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
 				return Response.json(
-					{ message: "Error", error: `No field named '${unknownField}' exists on table named '${table}'.` },
+					{ statusMessage: "error", error: `No field named '${unknownField}' exists on table named '${table}'.` },
 					{ status: 400 }
 				);
 			}
@@ -63,15 +63,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
 
 				return Response.json(
-					{ message: "Error", error: `No field named '${unknownArg}' exists on table named '${table}'.` },
+					{ statusMessage: "error", error: `No field named '${unknownArg}' exists on table named '${table}'.` },
 					{ status: 400 }
 				);
 			}
 
 			//TODO: replace database error messages with generic error message
-			return Response.json({ message: "Error", error: error.message }, { status: 400 });
+			return Response.json({ statusMessage: "error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ message: "Error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return Response.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
 	}
 }

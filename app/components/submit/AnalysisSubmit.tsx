@@ -7,13 +7,13 @@ import { upload } from "@vercel/blob/client";
 import { useState, FormEvent, useReducer, useEffect } from "react";
 import analysisSubmitAction from "../../helpers/actions/analysis/submit/analysisSubmit";
 import analysisDeleteAction from "../../helpers/actions/analysis/delete/analysisDelete";
-import { DeleteAction, SubmitAction } from "@/types/globals";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
 import projectFindUniqueAction from "@/app/helpers/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
+import { Action } from "@/types/globals";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -104,12 +104,12 @@ export default function AnalysisSubmit() {
 								return;
 							}
 						} else {
-							const result = await projectFindUniqueAction(currentLine[1]);
-							if (result.message == "Success" && result.project) {
-								setProject_isPrivate(result.project.isPrivate || false);
-								setProject(result.project);
-							} else if (result.error) {
-								setErrorObj({ global: result.error });
+							const response = await projectFindUniqueAction(currentLine[1]);
+							if (response.statusMessage == "success" && response.result) {
+								setProject_isPrivate(response.result.isPrivate || false);
+								setProject(response.result);
+							} else if (response.statusMessage === "error") {
+								setErrorObj({ global: response.error });
 								return;
 							}
 						}
@@ -124,7 +124,7 @@ export default function AnalysisSubmit() {
 	}
 
 	async function dbDelete(
-		deleteAction: DeleteAction,
+		deleteAction: Action,
 		analysis_run_name: string,
 		del?: Record<string, number | number[] | string | string[]>
 	) {
@@ -134,14 +134,14 @@ export default function AnalysisSubmit() {
 		try {
 			const response = await deleteAction(formData);
 			//TODO: change how errors are handled (no longer returns response.error, now throws new error)
-			if (response.error) {
+			if (response.statusMessage === "error") {
 				setErrorObj({
 					[analysis_run_name]: response.error
 				});
-			} else if (response.message) {
+			} else if (response.statusMessage === "success") {
 				const tempResponseObj = { ...responseObj };
 				setResponseObj({
-					[analysis_run_name]: response.message
+					[analysis_run_name]: response.result
 				});
 			} else {
 				setErrorObj({
@@ -166,7 +166,7 @@ export default function AnalysisSubmit() {
 		analysis_run_name: string;
 		file: File;
 		fileSuffix?: string;
-		submitAction: SubmitAction;
+		submitAction: Action;
 		fieldsToSet?: Record<string, any>;
 		skipBlob?: boolean;
 	}): Promise<{ error?: boolean }> {
@@ -195,14 +195,14 @@ export default function AnalysisSubmit() {
 
 			//send request
 			const response = await submitAction(formData);
-			if (response.error) {
+			if (response.statusMessage === "error") {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: response.error
 				});
 				error = true;
-			} else if (response.message) {
+			} else if (response.statusMessage === "success") {
 				setResponseObj({
-					[`${analysis_run_name}${fileSuffix}`]: response.message
+					[`${analysis_run_name}${fileSuffix}`]: response.result
 				});
 			} else {
 				setErrorObj({

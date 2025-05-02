@@ -20,7 +20,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 
 			<ul
 				tabIndex={0}
-				className="dropdown-content bg-base-300 rounded-box z-[1] p-2 shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
+				className="dropdown-content bg-base-300 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
 			>
 				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (

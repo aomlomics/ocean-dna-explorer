@@ -60,10 +60,10 @@ export async function GET(request: Request) {
 			return rawLocations;
 		});
 
-		return Response.json({ message: "Success", rawLocations });
+		return Response.json({ statusMessage: "success", rawLocations });
 	} catch (err) {
 		const error = err as Error;
 
-		return Response.json({ message: "Error", error: error.message }, { status: 400 });
+		return Response.json({ statusMessage: "error", error: error.message }, { status: 400 });
 	}
 }

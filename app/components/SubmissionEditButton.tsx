@@ -6,7 +6,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
 import InfoButton from "./InfoButton";
-import { EditAction } from "@/types/globals";
+import { Action } from "@/types/globals";
 
 export default function SubmissionEditButton({
 	table,
@@ -20,7 +20,7 @@ export default function SubmissionEditButton({
 	table: Uncapitalize<Prisma.ModelName>;
 	titleField: string;
 	data: Record<string, any>;
-	action: EditAction;
+	action: Action;
 	omit?: string[];
 	disabled?: string[];
 	privateToggleDescription?: string;
@@ -89,7 +89,7 @@ export default function SubmissionEditButton({
 		try {
 			//TODO: display loading
 			const result = await action(submitFormData);
-			if (result.message === "Success") {
+			if (result.statusMessage === "success") {
 				console.log("success");
 				modalRef.current?.close();
 			} else {

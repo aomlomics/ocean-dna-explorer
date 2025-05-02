@@ -74,10 +74,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			prisma[table].count({ where: query.where })
 		]);
 
-		return Response.json({ message: "Success", result, count });
+		return Response.json({ statusMessage: "success", result, count });
 	} catch (err) {
 		const error = err as Error;
 
-		return Response.json({ message: "Error", error: error.message }, { status: 400 });
+		return Response.json({ statusMessage: "error", error: error.message }, { status: 400 });
 	}
 }

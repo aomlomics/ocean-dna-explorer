@@ -15,11 +15,12 @@ import {
 	TaxonomyOptionalDefaultsSchema,
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
+import { NetworkPacket } from "@/types/globals";
 
-export default async function assignSubmitAction(formData: FormData) {
+export default async function assignSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId } = await auth();
 	if (!userId) {
-		return { message: "Error", error: "Unauthorized" };
+		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
 	try {
@@ -199,10 +200,10 @@ export default async function assignSubmitAction(formData: FormData) {
 			{ timeout: 1 * 60 * 1000 }
 		);
 
-		return { message: "Success" };
+		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);
-		return { message: "Error", error: error.message };
+		return { statusMessage: "error", error: error.message };
 	}
 }

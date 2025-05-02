@@ -66,7 +66,7 @@ export default function ProjectSubmit() {
 			setLoading("submitting");
 			const result = await projectUploadAction(formData);
 
-			if (result.error) {
+			if (result.statusMessage === "error") {
 				setIsError(true);
 				setModalMessage(result.error);
 				setShowModal(true);
@@ -76,7 +76,7 @@ export default function ProjectSubmit() {
 					submission: "Failed"
 				});
 				setSubmitted(false);
-			} else if (result.message) {
+			} else if (result.statusMessage === "success") {
 				const successMessage =
 					"Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds...";
 				setIsError(false);

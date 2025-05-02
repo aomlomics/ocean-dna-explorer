@@ -2,8 +2,9 @@
 
 import { Occurrence, Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "../prisma";
+import { NetworkPacket } from "@/types/globals";
 
-export default async function occDownloadAction(where: Prisma.OccurrenceWhereInput) {
+export default async function occDownloadAction(where: Prisma.OccurrenceWhereInput): Promise<NetworkPacket> {
 	const result = await prisma.occurrence.findMany({ where });
 
 	const occurrences = {} as Record<string, Record<string, number>>;
@@ -37,5 +38,5 @@ export default async function occDownloadAction(where: Prisma.OccurrenceWhereInp
 			"\n";
 	}
 
-	return { message: "Success", file: new Blob([tsv], { type: "text/tsv;charset=utf-8;" }) };
+	return { statusMessage: "success", result: new Blob([tsv], { type: "text/tsv;charset=utf-8;" }) };
 }

@@ -7,16 +7,6 @@ import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubm
 import assignDeleteAction from "@/app/helpers/actions/analysis/delete/assignDelete";
 import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
 
-export type SubmitAction =
-	| typeof projectSubmitAction
-	| typeof analysisSubmitAction
-	| typeof assignSubmitAction
-	| typeof occSubmitAction;
-
-export type DeleteAction = typeof analysisDeleteAction | typeof assignDeleteAction;
-
-export type EditAction = typeof analysisEditAction | typeof projectEditAction;
-
 export type Pluralize<T extends string> = T extends `${infer S}sis`
 	? `${S}ses`
 	: T extends `${infer S}ay`
@@ -37,6 +27,18 @@ export type Pluralize<T extends string> = T extends `${infer S}sis`
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "submit" | "manageUsers";
+
+export type StatusMessage = "success" | "error";
+interface ErrorPacket {
+	statusMessage: "error";
+	error: string;
+}
+interface SuccessPacket {
+	statusMessage: "success";
+	result?: any;
+}
+export type NetworkPacket = ErrorPacket | SuccessPacket;
+export type Action = (FormData) => Promise<NetworkPacket>;
 
 declare global {
 	namespace PrismaJson {

@@ -22,14 +22,15 @@ import {
 	SampleOptionalDefaultsSchema,
 	SampleScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
+import { NetworkPacket } from "@/types/globals";
 
 //https://clerk.com/docs/organizations/verify-user-permissions
-export default async function projectSubmitAction(formData: FormData) {
+export default async function projectSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project submit");
 
 	const { userId } = await auth();
 	if (!userId) {
-		return { message: "Error", error: "Unauthorized" };
+		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
 	try {
@@ -432,10 +433,10 @@ export default async function projectSubmitAction(formData: FormData) {
 		);
 
 		revalidatePath("/explore");
-		return { message: "Success" };
+		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);
-		return { message: "Error", error: error.message };
+		return { statusMessage: "error", error: error.message };
 	}
 }

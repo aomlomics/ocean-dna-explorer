@@ -4,12 +4,13 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function analysisSubmitAction(formData: FormData) {
+export default async function analysisSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId } = await auth();
 	if (!userId) {
-		return { message: "Error", error: "Unauthorized" };
+		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
 	try {
@@ -74,10 +75,10 @@ export default async function analysisSubmitAction(formData: FormData) {
 			});
 		});
 
-		return { message: "Success" };
+		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);
-		return { message: "Error", error: error.message };
+		return { statusMessage: "error", error: error.message };
 	}
 }

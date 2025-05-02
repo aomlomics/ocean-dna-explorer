@@ -5,11 +5,12 @@ import { prisma } from "@/app/helpers/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
+import { NetworkPacket } from "@/types/globals";
 
-export default async function OccSubmitAction(formData: FormData) {
+export default async function OccSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId } = await auth();
 	if (!userId) {
-		return { message: "Error", error: "Unauthorized" };
+		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
 	try {
@@ -100,10 +101,10 @@ export default async function OccSubmitAction(formData: FormData) {
 		);
 
 		revalidatePath("/explore");
-		return { message: "Success" };
+		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);
-		return { message: "Error", error: error.message };
+		return { statusMessage: "error", error: error.message };
 	}
 }
