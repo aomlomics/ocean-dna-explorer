@@ -14,7 +14,7 @@ export default function Header() {
 			<div className="relative h-full flex justify-between items-center">
 				{/* Logo section */}
 				<div className="flex items-center">
-					<Link className="px-4 sm:px-6 lg:px-8 normal-case text-xl pt-1 h-24 w-64 flex flex-col items-center" href="/">
+					<Link className="px-4 sm:px-6 lg:px-8 normal-case text-xl pt-1 h-48 w-96 flex flex-col items-center" href="/">
 						<div className="avatar w-full h-full relative">
 							<NodeLogo
 								alt="NODE Logo"

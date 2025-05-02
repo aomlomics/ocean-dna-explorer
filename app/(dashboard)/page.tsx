@@ -70,7 +70,7 @@ export default async function Home() {
 
 							<div className="text-base-content -mt-1">
 								<span className="block text-[clamp(1.5rem,4.5vw,3.75rem)] font-light leading-tight mb-1">
-									to the <span className="text-primary font-light">NOAA Ocean DNA Explorer</span>
+									to the <span className="text-primary font-light">Ocean DNA Explorer</span>
 								</span>
 
 								<div className="text-[clamp(1rem,2.2vw,1.9rem)] leading-snug text-base-content max-w-3xl mb-8">
