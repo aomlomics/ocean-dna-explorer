@@ -19,7 +19,7 @@ export function SearchUsers() {
 			<form onSubmit={handleSubmit}>
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Search for users</legend>
-					<input type="text" name="search" className="input" placeholder="User Id" />
+					<input type="text" name="search" className="input" placeholder="Search" />
 				</fieldset>
 				<button className="btn" type="submit">
 					Submit

@@ -1,12 +1,13 @@
 "use server";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { checkRole } from "../../utils";
+import { getRole } from "../../utils";
 
 export async function setRole(formData: FormData) {
 	const client = await clerkClient();
 
-	if (!checkRole("admin")) {
+	const role = await getRole();
+	if (role !== "admin") {
 		// return { message: "Not Authorized" };
 		return;
 	}

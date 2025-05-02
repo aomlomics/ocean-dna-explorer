@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 import { clerkClient } from "@clerk/nextjs/server";
-import { checkRole } from "@/app/helpers/utils";
+import { getRole } from "@/app/helpers/utils";
 import { SearchUsers } from "@/app/components/SearchUsers";
 import { setRole } from "@/app/helpers/actions/adminRoles/setRole";
 import { removeRole } from "@/app/helpers/actions/adminRoles/removeRole";
 
 export default async function Admin(params: { searchParams: Promise<{ search?: string }> }) {
-	if (!checkRole("admin")) {
+	const role = await getRole();
+	if (role !== "admin" && role !== "moderator") {
 		redirect("/");
 	}
 
@@ -34,21 +35,15 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 
 						<div>Role: {user.publicMetadata.role as string}</div>
 
-						<form action={setRole}>
-							<input type="hidden" value={user.id} name="id" />
-							<input type="hidden" value="admin" name="role" />
-							<button type="submit" className="btn">
-								Make Admin
-							</button>
-						</form>
-
-						<form action={setRole}>
-							<input type="hidden" value={user.id} name="id" />
-							<input type="hidden" value="moderator" name="role" />
-							<button type="submit" className="btn">
-								Make Moderator
-							</button>
-						</form>
+						{role === "admin" && (
+							<form action={setRole}>
+								<input type="hidden" value={user.id} name="id" />
+								<input type="hidden" value="moderator" name="role" />
+								<button type="submit" className="btn">
+									Make Moderator
+								</button>
+							</form>
+						)}
 
 						<form action={setRole}>
 							<input type="hidden" value={user.id} name="id" />

@@ -405,7 +405,7 @@ export function parseApiQuery(
 	return query;
 }
 
-export async function checkRole(role: Role) {
+export async function getRole(): Promise<Role | undefined> {
 	const { sessionClaims } = await auth();
-	return sessionClaims?.metadata.role === role;
+	return sessionClaims?.metadata.role;
 }
