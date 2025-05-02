@@ -6,6 +6,7 @@ datasource db {
 generator js {
     provider            = "prisma-client-js"
     output              = "../app/generated/prisma/client"
+    runtime             = "edge-light"
     importFileExtension = ""
     previewFeatures     = ["relationJoins"]
 }

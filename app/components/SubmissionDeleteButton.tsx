@@ -1,6 +1,6 @@
 "use client";
 
-import { DeleteAction } from "@/types/types";
+import { DeleteAction } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";

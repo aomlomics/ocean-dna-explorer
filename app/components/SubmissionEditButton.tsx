@@ -5,7 +5,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
 import InfoButton from "./InfoButton";
-import { EditAction } from "@/types/types";
+import { EditAction } from "@/types/globals";
 
 export default function SubmissionEditButton({
 	table,

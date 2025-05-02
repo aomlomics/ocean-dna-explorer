@@ -7,7 +7,7 @@ import { upload } from "@vercel/blob/client";
 import { useState, FormEvent, useReducer, useEffect } from "react";
 import analysisSubmitAction from "../../helpers/actions/analysis/submit/analysisSubmit";
 import analysisDeleteAction from "../../helpers/actions/analysis/delete/analysisDelete";
-import { DeleteAction, SubmitAction } from "@/types/types";
+import { DeleteAction, SubmitAction } from "@/types/globals";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";

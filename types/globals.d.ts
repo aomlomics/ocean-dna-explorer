@@ -35,10 +35,18 @@ export type Pluralize<T extends string> = T extends `${infer S}sis`
 	? T
 	: `${T}s`;
 
+export type Role = "admin" | "moderator" | "contributor";
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;
 		type ChangesType = { field: string; oldValue: string; newValue: string }[];
 		type EditHistoryType = { dateEdited: Date; changes: ChangesType }[];
+	}
+
+	interface CustomJwtSessionClaims {
+		metadata: {
+			role?: Role;
+		};
 	}
 }

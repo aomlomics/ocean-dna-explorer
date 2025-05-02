@@ -34,11 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							start: {
 								title: "Sign in to Submit Data",
 								// __experimental_titleCombined: "Sign in to Submit Data",
-								subtitle: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
+								// subtitle: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
 								// @ts-ignore - subtitleCombined is needed for the UI but not in types
-								subtitleCombined: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
-								titleCombined: "Sign in to Submit Data",
-								actionText: "You must use a NOAA or MSState email address to sign in."
+								// subtitleCombined: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
+								titleCombined: "Sign in to Submit Data"
+								// actionText: "You must use a NOAA or MSState email address to sign in."
 							}
 						},
 						dividerText: "or"

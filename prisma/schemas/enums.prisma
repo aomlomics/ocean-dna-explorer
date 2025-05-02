@@ -668,3 +668,6 @@ enum silicate_unit {
 
 // enum dna_yield_unit {
 // }
+
+// enum transmittance_unit {
+// }
