@@ -1,4 +1,5 @@
-import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
+import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
+import { TableToSchema } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodEffects } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";

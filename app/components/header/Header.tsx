@@ -1,12 +1,10 @@
 import ThemeToggle from "./ThemeToggle";
 import Link from "next/link";
-import Image from "next/image";
-import { SignedIn, UserButton, SignedOut, SignInButton } from "@clerk/nextjs";
 import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
-import { EXPLORE_ROUTES } from "@/types/enums";
+import { EXPLORE_ROUTES } from "@/types/objects";
 
 export default function Header() {
 	return (

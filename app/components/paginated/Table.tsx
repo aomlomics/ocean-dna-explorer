@@ -1,6 +1,7 @@
 "use client";
 
-import { DeadValueEnum, TableToEnumSchema } from "@/types/enums";
+import { DeadValueEnum } from "@/types/enums";
+import { TableToEnumSchema } from "@/types/objects";
 import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useState } from "react";
 import useSWR, { preload } from "swr";

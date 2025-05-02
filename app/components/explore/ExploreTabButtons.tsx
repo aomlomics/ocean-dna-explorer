@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { EXPLORE_ROUTES } from "@/types/enums";
+import { EXPLORE_ROUTES } from "@/types/objects";
 
 export default function ExploreTabButtons() {
 	const pathname = usePathname();

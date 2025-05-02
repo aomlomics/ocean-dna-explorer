@@ -1,18 +1,14 @@
-import { redirect } from "next/navigation";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { SearchUsers } from "@/app/components/SearchUsers";
-import { setRole } from "@/app/helpers/actions/adminRoles/setRole";
-import { removeRole } from "@/app/helpers/actions/adminRoles/removeRole";
+import { setRole } from "@/app/helpers/actions/editRole";
+import { removeRole } from "@/app/helpers/actions/editRole";
 import { Role } from "@/types/globals";
 import { ReactNode } from "react";
-import { RoleHeirarchy } from "@/types/enums";
+import { RoleHeirarchy } from "@/types/objects";
 
 export default async function Admin(params: { searchParams: Promise<{ search?: string }> }) {
 	const { userId, sessionClaims } = await auth();
-	const role = sessionClaims?.metadata.role as Role | undefined;
-	if (role !== "admin" && role !== "moderator") {
-		redirect("/");
-	}
+	const role = sessionClaims?.metadata.role as Role;
 
 	const query = (await params.searchParams).search;
 

@@ -1,16 +1,41 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { Role } from "./types/globals";
 
-const isProtectedRoute = createRouteMatcher(["/submit(.*)", "/mySubmissions(.*)", "/admin(.*)"]);
+const isProtectedRoute = createRouteMatcher(["/mySubmissions(.*)", "/admin(.*)", "/submit(.*)"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isSubmitRoute = createRouteMatcher(["/submit(.*)"]);
+
+const routes = {
+	admin: {
+		roles: ["admin", "moderator"]
+	},
+	submit: {
+		roles: ["admin", "moderator", "contributor"],
+		redirect: "/"
+	}
+} as Record<string, { roles: Role[]; redirect?: string }>;
 
 export default clerkMiddleware(async (auth, req) => {
+	const { userId, sessionClaims } = await auth();
+
 	if (isProtectedRoute(req)) {
-		const role = (await auth()).sessionClaims?.metadata?.role;
-		if (isAdminRoute(req) && role !== "admin" && role !== "moderator") {
-			const url = new URL("/", req.url);
-			return NextResponse.redirect(url);
+		//accessing protected routes
+		if (userId) {
+			//signed in
+			const role = sessionClaims?.metadata?.role;
+
+			if (isAdminRoute(req) && (!role || !routes.admin.roles.includes(role))) {
+				//accessing admin routes without proper permissions
+				const url = new URL(routes.admin.redirect || "/", req.url);
+				return NextResponse.redirect(url);
+			} else if (isSubmitRoute(req) && (!role || !routes.submit.roles.includes(role))) {
+				//accessing submit routes without proper permissions
+				const url = new URL(routes.submit.redirect || "/", req.url);
+				return NextResponse.redirect(url);
+			}
 		} else {
+			//not signed in
 			await auth.protect();
 		}
 	}
