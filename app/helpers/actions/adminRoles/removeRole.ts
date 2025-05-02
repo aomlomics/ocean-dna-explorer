@@ -1,11 +1,32 @@
 "use server";
 
-import { clerkClient } from "@clerk/nextjs/server";
+import { RoleHeirarchy } from "@/types/enums";
+import { Role } from "@/types/globals";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export async function removeRole(formData: FormData) {
 	const client = await clerkClient();
 
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role as Role | undefined;
+
+	const id = formData.get("id") as string;
+
 	try {
+		if (id === userId) {
+			throw new Error("Can't edit own role");
+		}
+
+		if (role !== "admin" && role !== "moderator") {
+			throw new Error("Not authorized");
+		}
+
+		//TODO: fix potential race condition
+		const user = await client.users.getUser(id);
+		if (!RoleHeirarchy[role].includes(user.publicMetadata.role as Role)) {
+			throw new Error("Not authorized");
+		}
+
 		const res = await client.users.updateUserMetadata(formData.get("id") as string, {
 			publicMetadata: { role: null }
 		});
