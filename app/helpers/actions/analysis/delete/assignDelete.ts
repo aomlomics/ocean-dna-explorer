@@ -2,11 +2,14 @@
 
 import { prisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function assignDeleteAction(formData: FormData): Promise<NetworkPacket> {
-	const { userId } = await auth();
-	if (!userId) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

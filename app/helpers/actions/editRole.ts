@@ -9,6 +9,9 @@ async function editRole(id: string, newRole: Role | null): Promise<NetworkPacket
 
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
+	if (!userId) {
+		return { statusMessage: "error", error: "Unauthorized" };
+	}
 
 	if (typeof id !== "string" || !(newRole === null || Roles.includes(newRole))) {
 		return { statusMessage: "error", error: "Arguments must be string and Role" };

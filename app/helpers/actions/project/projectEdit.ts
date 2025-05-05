@@ -7,12 +7,15 @@ import { Prisma } from "@/app/generated/prisma/client";
 import analysisEditAction from "../analysis/edit/analysisEdit";
 import { ProjectPartialSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 
 export default async function projectEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project edit");
 
-	const { userId } = await auth();
-	if (!userId) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

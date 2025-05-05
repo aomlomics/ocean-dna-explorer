@@ -16,10 +16,13 @@ import {
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 
 export default async function assignSubmitAction(formData: FormData): Promise<NetworkPacket> {
-	const { userId } = await auth();
-	if (!userId) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

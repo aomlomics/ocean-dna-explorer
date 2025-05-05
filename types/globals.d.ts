@@ -26,7 +26,7 @@ export type Pluralize<T extends string> = T extends `${infer S}sis`
 	: `${T}s`;
 
 export type Role = "admin" | "moderator" | "contributor";
-export type Permission = "submit" | "manageUsers";
+export type Permission = "contribute" | "manageUsers";
 
 export type StatusMessage = "success" | "error";
 interface ErrorPacket {

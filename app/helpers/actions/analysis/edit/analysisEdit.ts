@@ -5,13 +5,16 @@ import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 import { AnalysisPartialSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 // import { revalidatePath } from "next/cache";
 
 export default async function analysisEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("analysis edit");
 
-	const { userId } = await auth();
-	if (!userId) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

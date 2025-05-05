@@ -4,11 +4,14 @@ import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function analysisSubmitAction(formData: FormData): Promise<NetworkPacket> {
-	const { userId } = await auth();
-	if (!userId) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

@@ -68,9 +68,10 @@ export const EXPLORE_ROUTES = {
 	taxonomy: "Taxonomies"
 };
 
-export const Roles = ["admin", "moderator", "contributor"];
-export const Permissions = ["submit", "manageUsers"];
+export const Roles = ["admin", "moderator", "contributor"] as Role[];
+export const Permissions = ["contribute", "manageUsers"] as Permission[];
 
+//undefined is a signed in user without a role
 export const RoleHeirarchy = {
 	admin: ["moderator", "contributor", undefined],
 	moderator: ["contributor", undefined],
@@ -78,7 +79,7 @@ export const RoleHeirarchy = {
 } as Record<NonNullable<Role>, Array<Role>>;
 
 export const RolePermissions = {
-	admin: ["submit", "manageUsers"],
-	moderator: ["submit", "manageUsers"],
-	contributor: ["submit"]
+	admin: ["contribute", "manageUsers"],
+	moderator: ["contribute", "manageUsers"],
+	contributor: ["contribute"]
 } as Record<NonNullable<Role>, Array<Permission>>;

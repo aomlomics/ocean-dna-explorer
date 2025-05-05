@@ -1,20 +1,21 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { Role } from "./types/globals";
+import { Permission, Role } from "./types/globals";
 
 const isProtectedRoute = createRouteMatcher(["/mySubmissions(.*)", "/admin(.*)", "/submit(.*)"]);
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-const isSubmitRoute = createRouteMatcher(["/submit(.*)"]);
+const isManageUsersRoute = createRouteMatcher(["/admin(.*)"]);
+const isContributeRoute = createRouteMatcher(["/submit(.*)"]);
 
 const routes = {
-	admin: {
-		roles: ["admin", "moderator"]
+	manageUsers: {
+		roles: ["admin", "moderator"],
+		redirect: "/"
 	},
-	submit: {
+	contribute: {
 		roles: ["admin", "moderator", "contributor"],
 		redirect: "/"
 	}
-} as Record<string, { roles: Role[]; redirect?: string }>;
+} as Record<Permission, { roles: Role[]; redirect: string }>;
 
 export default clerkMiddleware(async (auth, req) => {
 	if (isProtectedRoute(req)) {
@@ -24,13 +25,13 @@ export default clerkMiddleware(async (auth, req) => {
 			//signed in
 			const role = sessionClaims?.metadata?.role;
 
-			if (isAdminRoute(req) && (!role || !routes.admin.roles.includes(role))) {
-				//accessing admin routes without proper permissions
-				const url = new URL(routes.admin.redirect || "/", req.url);
+			if (isManageUsersRoute(req) && (!role || !routes.manageUsers.roles.includes(role))) {
+				//accessing manageUsers routes without proper permissions
+				const url = new URL(routes.manageUsers.redirect, req.url);
 				return NextResponse.redirect(url);
-			} else if (isSubmitRoute(req) && (!role || !routes.submit.roles.includes(role))) {
-				//accessing submit routes without proper permissions
-				const url = new URL(routes.submit.redirect || "/", req.url);
+			} else if (isContributeRoute(req) && (!role || !routes.contribute.roles.includes(role))) {
+				//accessing contribute routes without proper permissions
+				const url = new URL(routes.contribute.redirect, req.url);
 				return NextResponse.redirect(url);
 			}
 		} else {
