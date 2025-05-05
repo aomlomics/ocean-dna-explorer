@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
@@ -11,10 +10,15 @@ export default async function projectDeleteAction(formData: FormData): Promise<N
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
+
 	const del = JSON.parse(formData.get("del") as string);
 
 	await prisma.$transaction(
-		async (tx: Prisma.TransactionClient) => {
+		async (tx) => {
 			//project delete
 			if (del.project_id) {
 				console.log("project delete");

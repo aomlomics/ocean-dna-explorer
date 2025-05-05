@@ -24,7 +24,6 @@ import {
 } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 
-//https://clerk.com/docs/organizations/verify-user-permissions
 export default async function projectSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project submit");
 
@@ -32,6 +31,11 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
+
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
 
 	try {
 		let project = {} as Prisma.ProjectCreateInput;
@@ -336,9 +340,8 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 		}
 
 		console.log("project transaction");
-		//TODO: move computation out of transaction
 		await prisma.$transaction(
-			async (tx: Prisma.TransactionClient) => {
+			async (tx) => {
 				//project
 				console.log("project");
 				await tx.project.create({

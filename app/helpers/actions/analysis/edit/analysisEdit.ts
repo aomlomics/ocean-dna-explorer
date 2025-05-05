@@ -15,6 +15,11 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
+
 	const analysis_run_name = formData.get("target") as string;
 	if (!analysis_run_name) {
 		return { statusMessage: "error", error: "No target specified" };
@@ -23,11 +28,18 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 
 	const isPrivateForm = formData.get("isPrivate");
 
-	//TODO: validate all fields are valid analysis fields
-
 	try {
+		const analysisSelect = Array.from(formData.keys()).reduce(
+			(acc, field) => ({ ...acc, [field]: true }),
+			{}
+		) as Prisma.AnalysisSelect;
+
+		const analysisChanges = AnalysisPartialSchema.parse(
+			Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
+		);
+
 		const error = await prisma.$transaction(
-			async (tx: Prisma.TransactionClient) => {
+			async (tx) => {
 				const analysis = await tx.analysis.findUnique({
 					where: {
 						analysis_run_name
@@ -36,10 +48,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 						userId: true,
 						project_id: true,
 						editHistory: true,
-						...(Array.from(formData.keys()).reduce(
-							(acc, field) => ({ ...acc, [field]: true }),
-							{}
-						) as Prisma.AnalysisSelect)
+						...analysisSelect
 					}
 				});
 
@@ -79,9 +88,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					},
 					data: {
 						//make changes to analysis
-						...AnalysisPartialSchema.parse(
-							Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-						),
+						...analysisChanges,
 						//add edit to start of edit history
 						editHistory: analysis.editHistory ? [newEdit].concat(analysis.editHistory) : [newEdit]
 					}

@@ -16,17 +16,35 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
+
 	const project_id = formData.get("target") as string;
 	if (!project_id) {
 		return { statusMessage: "error", error: "No target specified" };
 	}
 	formData.delete("target");
 
-	//TODO: validate all fields are valid project fields
+	const isPrivateForm = formData.get("isPrivate");
 
 	try {
-		//TODO: move computation out of transaction
-		const error = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		const projectSelect = Array.from(formData.keys()).reduce((acc, field) => {
+			if (field.startsWith("userDefined") && !acc.userDefined) {
+				acc.userDefined = true;
+			} else {
+				acc[field] = true;
+			}
+
+			return acc;
+		}, {} as Record<string, true>) as Prisma.ProjectSelect;
+
+		const projectChanges = ProjectPartialSchema.parse(
+			Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
+		);
+
+		const error = await prisma.$transaction(async (tx) => {
 			const project = await tx.project.findUnique({
 				where: {
 					project_id
@@ -34,15 +52,7 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 				select: {
 					userId: true,
 					editHistory: true,
-					...(Array.from(formData.keys()).reduce((acc, field) => {
-						if (field.startsWith("userDefined") && !acc.userDefined) {
-							acc.userDefined = true;
-						} else {
-							acc[field] = true;
-						}
-
-						return acc;
-					}, {} as Record<string, true>) as Prisma.ProjectSelect),
+					...projectSelect,
 					Analyses: {
 						select: {
 							analysis_run_name: true
@@ -83,9 +93,7 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 				},
 				data: {
 					//make changes to project
-					...ProjectPartialSchema.parse(
-						Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-					),
+					...projectChanges,
 					//replace changed fields in userDefined with new values
 					userDefined: {
 						//keep previous user defined data
@@ -107,7 +115,6 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 				}
 			});
 
-			const isPrivateForm = formData.get("isPrivate");
 			if (isPrivateForm !== null) {
 				const isPrivate = isPrivateForm === "true" ? true : false;
 

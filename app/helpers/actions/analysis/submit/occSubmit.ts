@@ -13,6 +13,11 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
+
 	try {
 		const analysis_run_name = formData.get("analysis_run_name") as string;
 		console.log(`${analysis_run_name} occurrences submit`);
@@ -20,10 +25,59 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
 
 		//Occurrence file
-		//parsing file inside transaction to reduce memory usage, since this file is large
-		//TODO: move computation out of transaction
+		const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
+
+		console.log(`${analysis_run_name}_occ file`);
+		//code block to force garbage collection
+		{
+			let occFileLines;
+			//fetch from blob storage
+			const url = JSON.parse(formData.get("file") as string).url;
+			const file = await fetch(url);
+			const fileText = await file.text();
+			occFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
+			occFileLines.splice(0, 1); //TODO: parse comments out logically instead of hard-coded
+			const occFileHeaders = occFileLines[0].split("\t");
+
+			//iterate over each row
+			for (let i = 1; i < occFileLines.length; i++) {
+				const currentLine = occFileLines[i].split("\t");
+
+				if (currentLine[0]) {
+					//iterate over each column
+					for (let j = 1; j < occFileHeaders.length; j++) {
+						const samp_name = occFileHeaders[j];
+						const featureid = currentLine[0];
+						const organismQuantity = parseInt(currentLine[j]);
+
+						if (organismQuantity) {
+							//occurrence table
+							occurrences.push(
+								OccurrenceOptionalDefaultsSchema.parse(
+									{
+										samp_name,
+										featureid,
+										organismQuantity,
+										analysis_run_name,
+										isPrivate
+									},
+									{
+										errorMap: (error, ctx) => {
+											return {
+												message: `OccurrenceSchema (${analysis_run_name}, ${samp_name}, ${featureid}): ${ctx.defaultError}`
+											};
+										}
+									}
+								)
+							);
+						}
+					}
+				}
+			}
+		}
+
 		await prisma.$transaction(
-			async (tx: Prisma.TransactionClient) => {
+			async (tx) => {
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {
@@ -39,54 +93,6 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 					throw new Error(
 						`Analysis with analysis_run_name of ${analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
 					);
-				}
-
-				const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
-
-				console.log(`${analysis_run_name}_occ file`);
-				let occFileLines;
-				//fetch from blob storage
-				const url = JSON.parse(formData.get("file") as string).url;
-				const file = await fetch(url);
-				const fileText = await file.text();
-				occFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
-				occFileLines.splice(0, 1); //TODO: parse comments out logically instead of hard-coded
-				const occFileHeaders = occFileLines[0].split("\t");
-
-				//iterate over each row
-				for (let i = 1; i < occFileLines.length; i++) {
-					const currentLine = occFileLines[i].split("\t");
-
-					if (currentLine[0]) {
-						//iterate over each column
-						for (let j = 1; j < occFileHeaders.length; j++) {
-							const samp_name = occFileHeaders[j];
-							const featureid = currentLine[0];
-							const organismQuantity = parseInt(currentLine[j]);
-
-							if (organismQuantity) {
-								//occurrence table
-								occurrences.push(
-									OccurrenceOptionalDefaultsSchema.parse(
-										{
-											samp_name,
-											featureid,
-											organismQuantity,
-											analysis_run_name,
-											isPrivate
-										},
-										{
-											errorMap: (error, ctx) => {
-												return {
-													message: `OccurrenceSchema (${analysis_run_name}, ${samp_name}, ${featureid}): ${ctx.defaultError}`
-												};
-											}
-										}
-									)
-								);
-							}
-						}
-					}
 				}
 
 				//occurrences

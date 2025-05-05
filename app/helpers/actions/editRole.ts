@@ -2,13 +2,17 @@
 
 import { NetworkPacket, Role } from "@/types/globals";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { RoleHeirarchy, RolePermissions } from "@/types/objects";
+import { RoleHeirarchy, RolePermissions, Roles } from "@/types/objects";
 
 async function editRole(id: string, newRole: Role | null): Promise<NetworkPacket> {
 	const client = await clerkClient();
 
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
+
+	if (typeof id !== "string" || !(newRole === null || Roles.includes(newRole))) {
+		return { statusMessage: "error", error: "Arguments must be string and Role" };
+	}
 
 	if (id === userId) {
 		return { statusMessage: "error", error: "Can't edit own role" };

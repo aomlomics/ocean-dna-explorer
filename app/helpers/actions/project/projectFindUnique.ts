@@ -4,6 +4,10 @@ import { prisma } from "../../prisma";
 import { NetworkPacket } from "@/types/globals";
 
 export default async function projectFindUniqueAction(project_id: string): Promise<NetworkPacket> {
+	if (typeof project_id !== "string") {
+		return { statusMessage: "error", error: "Argument must be string" };
+	}
+
 	try {
 		const project = await prisma.project.findUnique({
 			where: {

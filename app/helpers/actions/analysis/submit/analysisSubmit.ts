@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
@@ -12,6 +11,11 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
+
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
 
 	try {
 		const analysisCol = {} as Record<string, string>;
@@ -42,9 +46,18 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 			}
 		}
 
+		const data = AnalysisOptionalDefaultsSchema.parse(
+			{ ...analysisCol, userId: userId, isPrivate, editHistory: "JsonNull" },
+			{
+				errorMap: (error, ctx) => {
+					return { message: `AnalysisSchema: ${ctx.defaultError}` };
+				}
+			}
+		);
+
 		//analysis
 		console.log("analysis");
-		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+		await prisma.$transaction(async (tx) => {
 			//check if the associated project is private, and throw an error if it is private but the submission is public
 			const project = await tx.project.findUnique({
 				where: {
@@ -64,14 +77,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 
 			await tx.analysis.create({
 				//@ts-ignore issue with Json database type
-				data: AnalysisOptionalDefaultsSchema.parse(
-					{ ...analysisCol, userId: userId, isPrivate, editHistory: "JsonNull" },
-					{
-						errorMap: (error, ctx) => {
-							return { message: `AnalysisSchema: ${ctx.defaultError}` };
-						}
-					}
-				)
+				data
 			});
 		});
 

@@ -1,46 +1,43 @@
-import { Prisma } from "../generated/prisma/client";
 import { prisma } from "../helpers/prisma";
 import Link from "next/link";
 
 export default async function DataSummary() {
-	const { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays } = await prisma.$transaction(
-		async (tx: Prisma.TransactionClient) => {
-			const projectCount = await tx.project.count();
-			const sampleCount = await tx.sample.count();
-			const taxaCount = await tx.taxonomy.count();
-			const featureCount = await tx.feature.count();
-			const uniqueAssays = (await tx.assay.findMany({
-				distinct: ["target_gene"],
-				select: {
-					target_gene: true
-				}
-			})) as { target_gene: string; count?: number }[];
+	const { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays } = await prisma.$transaction(async (tx) => {
+		const projectCount = await tx.project.count();
+		const sampleCount = await tx.sample.count();
+		const taxaCount = await tx.taxonomy.count();
+		const featureCount = await tx.feature.count();
+		const uniqueAssays = (await tx.assay.findMany({
+			distinct: ["target_gene"],
+			select: {
+				target_gene: true
+			}
+		})) as { target_gene: string; count?: number }[];
 
-			for (const a of uniqueAssays) {
-				//get count of features that were assigned using a particular target gene
-				//number of assignments = number of features (an assignment has only one feature)
-				const count = await tx.analysis.findFirst({
-					where: {
-						Assay: {
-							target_gene: a.target_gene
-						}
-					},
-					select: {
-						_count: {
-							select: {
-								Assignments: true
-							}
+		for (const a of uniqueAssays) {
+			//get count of features that were assigned using a particular target gene
+			//number of assignments = number of features (an assignment has only one feature)
+			const count = await tx.analysis.findFirst({
+				where: {
+					Assay: {
+						target_gene: a.target_gene
+					}
+				},
+				select: {
+					_count: {
+						select: {
+							Assignments: true
 						}
 					}
-				});
-				if (count) {
-					a.count = count._count.Assignments;
 				}
+			});
+			if (count) {
+				a.count = count._count.Assignments;
 			}
-
-			return { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays };
 		}
-	);
+
+		return { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays };
+	});
 
 	return (
 		<div>

@@ -68,6 +68,9 @@ export const EXPLORE_ROUTES = {
 	taxonomy: "Taxonomies"
 };
 
+export const Roles = ["admin", "moderator", "contributor"];
+export const Permissions = ["submit", "manageUsers"];
+
 export const RoleHeirarchy = {
 	admin: ["moderator", "contributor", undefined],
 	moderator: ["contributor", undefined],

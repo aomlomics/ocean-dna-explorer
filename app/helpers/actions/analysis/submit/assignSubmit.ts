@@ -23,17 +23,121 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	//TODO: use zod to validate the shape of the formData
+
 	try {
 		const analysis_run_name = formData.get("analysis_run_name") as string;
 		console.log(`${analysis_run_name} assignment submit`);
 
 		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
 
+		const features = [] as Prisma.FeatureCreateManyInput[];
+		const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
+		const assignments = [] as Prisma.AssignmentCreateManyInput[];
+
 		//Feature file
+		console.log(`${analysis_run_name}_assign file`);
+		//code block to force garbage collection
+		{
+			let assignFileLines;
+			//fetch files from blob storage
+			const url = JSON.parse(formData.get("file") as string).url;
+			const file = await fetch(url);
+			const fileText = await file.text();
+			assignFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
+			const assignFileHeaders = assignFileLines[0].split("\t");
+
+			//iterate over each row
+			for (let i = 1; i < assignFileLines.length; i++) {
+				const currentLine = assignFileLines[i].split("\t");
+
+				if (currentLine[assignFileHeaders.indexOf("featureid")]) {
+					const featureRow = {} as FeaturePartial;
+					const assignmentRow = {} as AssignmentPartial;
+					const taxonomyRow = {} as TaxonomyPartial;
+
+					//iterate over each column
+					for (let j = 0; j < assignFileHeaders.length; j++) {
+						if (assignFileHeaders[j] === "Confidence\r") {
+							console.log("---------");
+							console.log(currentLine[j]);
+						}
+						//feature table
+						parseSchemaToObject(
+							currentLine[j],
+							assignFileHeaders[j],
+							featureRow,
+							FeatureOptionalDefaultsSchema,
+							FeatureScalarFieldEnumSchema
+						);
+
+						//assignment table
+						parseSchemaToObject(
+							currentLine[j],
+							assignFileHeaders[j],
+							assignmentRow,
+							AssignmentOptionalDefaultsSchema,
+							AssignmentScalarFieldEnumSchema
+						);
+
+						//taxonomy table
+						parseSchemaToObject(
+							currentLine[j],
+							assignFileHeaders[j],
+							taxonomyRow,
+							TaxonomyOptionalDefaultsSchema,
+							TaxonomyScalarFieldEnumSchema
+						);
+					}
+
+					features.push(
+						FeatureOptionalDefaultsSchema.parse(
+							{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length, isPrivate },
+							{
+								errorMap: (error, ctx) => {
+									return { message: `FeatureSchema (${analysis_run_name}): ${ctx.defaultError}` };
+								}
+							}
+						)
+					);
+
+					assignments.push(
+						AssignmentOptionalDefaultsSchema.parse(
+							{
+								...assignmentRow,
+								isPrivate,
+								analysis_run_name
+							},
+							{
+								errorMap: (error, ctx) => {
+									return {
+										message: `AssignmentSchema (${analysis_run_name}, ${assignmentRow.featureid}, ${assignmentRow.Confidence}): ${ctx.defaultError}`
+									};
+								}
+							}
+						)
+					);
+
+					taxonomies.push(
+						TaxonomyOptionalDefaultsSchema.parse(
+							{ ...taxonomyRow, isPrivate },
+							{
+								errorMap: (error, ctx) => {
+									return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
+								}
+							}
+						)
+					);
+				}
+			}
+		}
+
 		//parsing file inside transaction to reduce memory usage, since this file is large
-		//TODO: move computation out of transaction
 		await prisma.$transaction(
-			async (tx: Prisma.TransactionClient) => {
+			async (tx) => {
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {
@@ -49,103 +153,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					throw new Error(
 						`Analysis with analysis_run_name of ${analysis_run_name} is private. Assignments can't be public if the associated analysis is private.`
 					);
-				}
-
-				const features = [] as Prisma.FeatureCreateManyInput[];
-				const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
-				const assignments = [] as Prisma.AssignmentCreateManyInput[];
-
-				console.log(`${analysis_run_name}_assign file`);
-				let assignFileLines;
-				//fetch files from blob storage
-				const url = JSON.parse(formData.get("file") as string).url;
-				const file = await fetch(url);
-				const fileText = await file.text();
-				assignFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
-				const assignFileHeaders = assignFileLines[0].split("\t");
-
-				//iterate over each row
-				for (let i = 1; i < assignFileLines.length; i++) {
-					const currentLine = assignFileLines[i].split("\t");
-
-					if (currentLine[assignFileHeaders.indexOf("featureid")]) {
-						const featureRow = {} as FeaturePartial;
-						const assignmentRow = {} as AssignmentPartial;
-						const taxonomyRow = {} as TaxonomyPartial;
-
-						//iterate over each column
-						for (let j = 0; j < assignFileHeaders.length; j++) {
-							if (assignFileHeaders[j] === "Confidence\r") {
-								console.log("---------");
-								console.log(currentLine[j]);
-							}
-							//feature table
-							parseSchemaToObject(
-								currentLine[j],
-								assignFileHeaders[j],
-								featureRow,
-								FeatureOptionalDefaultsSchema,
-								FeatureScalarFieldEnumSchema
-							);
-
-							//assignment table
-							parseSchemaToObject(
-								currentLine[j],
-								assignFileHeaders[j],
-								assignmentRow,
-								AssignmentOptionalDefaultsSchema,
-								AssignmentScalarFieldEnumSchema
-							);
-
-							//taxonomy table
-							parseSchemaToObject(
-								currentLine[j],
-								assignFileHeaders[j],
-								taxonomyRow,
-								TaxonomyOptionalDefaultsSchema,
-								TaxonomyScalarFieldEnumSchema
-							);
-						}
-
-						features.push(
-							FeatureOptionalDefaultsSchema.parse(
-								{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length, isPrivate },
-								{
-									errorMap: (error, ctx) => {
-										return { message: `FeatureSchema (${analysis_run_name}): ${ctx.defaultError}` };
-									}
-								}
-							)
-						);
-
-						assignments.push(
-							AssignmentOptionalDefaultsSchema.parse(
-								{
-									...assignmentRow,
-									isPrivate,
-									analysis_run_name
-								},
-								{
-									errorMap: (error, ctx) => {
-										return {
-											message: `AssignmentSchema (${analysis_run_name}, ${assignmentRow.featureid}, ${assignmentRow.Confidence}): ${ctx.defaultError}`
-										};
-									}
-								}
-							)
-						);
-
-						taxonomies.push(
-							TaxonomyOptionalDefaultsSchema.parse(
-								{ ...taxonomyRow, isPrivate },
-								{
-									errorMap: (error, ctx) => {
-										return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
-									}
-								}
-							)
-						);
-					}
 				}
 
 				//upload to database
