@@ -4,9 +4,14 @@ import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
-import { EXPLORE_ROUTES } from "@/types/objects";
+import { EXPLORE_ROUTES, RolePermissions } from "@/types/objects";
+import { auth } from "@clerk/nextjs/server";
+import { Role } from "@/types/globals";
 
-export default function Header() {
+export default async function Header() {
+	const { sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role as Role;
+
 	return (
 		<header className="top-0 z-header bg-base-100 border-b-4 border-primary h-24">
 			<div className="relative h-full flex justify-between items-center">
@@ -35,12 +40,15 @@ export default function Header() {
 
 				{/* Right side elements */}
 				<div className="flex items-center gap-4">
+					{role && RolePermissions[role].includes("manageUsers") && (
+						<Link href="/admin" className="btn">
+							Admin
+						</Link>
+					)}
 					{/* Theme toggle and User profile should be aligned */}
-					<div className="flex items-center gap-4">
-						<ThemeToggle />
-						<div className="mr-5 flex items-center">
-							<User />
-						</div>
+					<ThemeToggle />
+					<div className="mr-5 flex items-center">
+						<User />
 					</div>
 
 					{/* Rest of the tabs section */}
