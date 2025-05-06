@@ -454,7 +454,6 @@ model Library {
     pcr2_method_additional           String?
     pcr2_plate_id                    String?
     pcr2_thermocycler                String?
-    seq_samp_id                      String?
     associatedSequences              String?
 
     // PCR

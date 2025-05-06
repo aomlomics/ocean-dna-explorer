@@ -56,7 +56,7 @@ export type InputJsonValueType = z.infer<typeof InputJsonValueSchema>;
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','userId','dateSubmitted','isPrivate','editHistory','project_id','assay_name','sop_bioinformatics','trim_method','trim_param','demux_tool','demux_max_mismatch','merge_tool','merge_min_overlap','min_len_cutoff','min_len_tool','error_rate_tool','error_rate_type','error_rate_cutoff','chimera_check_method','chimera_check_param','otu_clust_tool','otu_clust_cutoff','min_reads_cutoff','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_id_cutoff','tax_class_query_cutoff','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_trunc_len_f','dada2pe_trunc_len_r','dada2_trim_left_f','dada2pe_trim_left_r','dada2_max_ee_f','dada2pe_max_ee_r','dada2_trunc_q','dada2_pooling_method','dada2_chimera_method','dada2_min_fold_parent_over_abundance','dada2_n_reads_learn','deblur_trim_length','deblur_sample_stats','deblur_mean_error','deblur_indel_prob','deblur_indel_max','deblur_min_reads','deblur_min_size','repseqs_min_length','repseqs_max_length','repseqs_min_abundance','repseqs_min_prevalence','discard_untrimmed','otu_num_tax_assigned','output_otu_num','output_read_count','otu_final_description','otu_raw_description','qiime2_version','tourmaline_asv_method','skl_confidence','min_consensus']);
+export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','userId','dateSubmitted','isPrivate','editHistory','project_id','assay_name','sop_bioinformatics','trim_method','trim_param','demux_tool','demux_max_mismatch','merge_tool','merge_min_overlap','min_len_cutoff','min_len_tool','error_rate_tool','error_rate_type','error_rate_cutoff','chimera_check_method','chimera_check_param','otu_clust_tool','otu_clust_cutoff','min_reads_cutoff','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_id_cutoff','tax_class_query_cutoff','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_trunc_len_f','dada2pe_trunc_len_r','dada2_trim_left_f','dada2pe_trim_left_r','dada2_max_ee_f','dada2pe_max_ee_r','dada2_trunc_q','dada2_pooling_method','dada2_chimera_method','dada2_min_fold_parent_over_abundance','dada2_n_reads_learn','deblur_trim_length','deblur_mean_error','deblur_indel_prob','deblur_indel_max','deblur_min_reads','deblur_min_size','repseqs_min_length','repseqs_max_length','repseqs_min_abundance','repseqs_min_prevalence','discard_untrimmed','otu_num_tax_assigned','output_otu_num','output_read_count','otu_final_description','otu_raw_description','qiime2_version','tourmaline_asv_method','skl_confidence','min_consensus','tourmaline_classify_method','blca_confidence']);
 
 export const RelationLoadStrategySchema = z.enum(['query','join']);
 
@@ -76,7 +76,7 @@ export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','isPrivate',
 
 export const PrimerScalarFieldEnumSchema = z.enum(['id','isPrivate','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','pcr_primer_reference_forward','pcr_primer_reference_reverse']);
 
-export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','isPrivate','userDefined','assay_name','samp_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','input_read_count','checksum_filename','checksum_filename2','lib_conc','lib_conc_meth','lib_conc_unit','phix_perc','checksum_method','pcr2_amplificationReactionVolume','pcr2_analysis_software','pcr2_annealingTemp','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_cycles','pcr2_dna_vol','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','seq_samp_id','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check','inhibition_check_0_1']);
+export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','isPrivate','userDefined','assay_name','samp_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','input_read_count','checksum_filename','checksum_filename2','lib_conc','lib_conc_meth','lib_conc_unit','phix_perc','checksum_method','pcr2_amplificationReactionVolume','pcr2_analysis_software','pcr2_annealingTemp','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_cycles','pcr2_dna_vol','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check','inhibition_check_0_1']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -308,6 +308,10 @@ export const silicate_unitSchema = z.enum(['micromole_per_liter']);
 
 export type silicate_unitType = `${z.infer<typeof silicate_unitSchema>}`
 
+export const tourmaline_classify_methodSchema = z.enum(['consensus__blast','naive__bayes','consensus__vsearch','bt2__blca']);
+
+export type tourmaline_classify_methodType = `${z.infer<typeof tourmaline_classify_methodSchema>}`
+
 /////////////////////////////////////////
 // MODELS
 /////////////////////////////////////////
@@ -317,7 +321,6 @@ export type silicate_unitType = `${z.infer<typeof silicate_unitSchema>}`
 /////////////////////////////////////////
 
 export const AnalysisSchema = z.object({
-  deblur_sample_stats: DeadBooleanSchema.nullish(),
   discard_untrimmed: DeadBooleanSchema.nullish(),
   id: z.number().int(),
   analysis_run_name: z.string(),
@@ -393,6 +396,8 @@ export const AnalysisSchema = z.object({
   tourmaline_asv_method: z.string().nullish(),
   skl_confidence: z.coerce.number().nullish(),
   min_consensus: z.coerce.number().nullish(),
+  tourmaline_classify_method: z.string().nullish(),
+  blca_confidence: z.coerce.number().nullish(),
 })
 
 export type Analysis = z.infer<typeof AnalysisSchema>
@@ -964,7 +969,6 @@ export const LibrarySchema = z.object({
   pcr2_method_additional: z.string().nullish(),
   pcr2_plate_id: z.string().nullish(),
   pcr2_thermocycler: z.string().nullish(),
-  seq_samp_id: z.string().nullish(),
   associatedSequences: z.string().nullish(),
   pcr_plate_id: z.string().nullish(),
   block_ref: z.string().nullish(),

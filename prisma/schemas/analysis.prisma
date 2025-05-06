@@ -81,7 +81,6 @@ model Analysis {
     dada2_n_reads_learn                  Int?
     /// @zod.custom.use(z.coerce.number().int())
     deblur_trim_length                   Int?
-    deblur_sample_stats                  DeadBoolean?
     /// @zod.custom.use(z.coerce.number())
     deblur_mean_error                    Float?
     /// @zod.custom.use(z.coerce.number())
@@ -115,6 +114,9 @@ model Analysis {
     skl_confidence                       Float?
     /// @zod.custom.use(z.coerce.number())
     min_consensus                        Float?
+    tourmaline_classify_method           String?
+    /// @zod.custom.use(z.coerce.number())
+    blca_confidence                      Float?
 }
 
 model Occurrence {

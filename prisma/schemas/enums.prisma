@@ -663,6 +663,13 @@ enum silicate_unit {
     micromole_per_liter @map("micromole per liter")
 }
 
+enum tourmaline_classify_method {
+    consensus__blast   @map("consensus-blast")
+    naive__bayes       @map("naive-bayes")
+    consensus__vsearch @map("consensus-vsearch")
+    bt2__blca          @map("bt2-blca")
+}
+
 // enum tot_alkalinity_unit {
 // }
 
