@@ -3,21 +3,64 @@
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-	const [theme, setTheme] = useState("dark");
+	const [theme, setTheme] = useState("");
+
+	// Initialize theme based on system preference or localStorage
+	useEffect(() => {
+		// Check localStorage first
+		const savedTheme = localStorage.getItem("theme");
+
+		// If no saved theme, check system preference
+		if (!savedTheme) {
+			const systemPreference = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+			setTheme(systemPreference);
+			applyTheme(systemPreference);
+		} else {
+			setTheme(savedTheme);
+			applyTheme(savedTheme);
+		}
+
+		// Force a small layout shift to trigger re-rendering of components
+		// This can help with components that don't properly respond to theme changes
+		setTimeout(() => {
+			window.dispatchEvent(new Event("resize"));
+		}, 50);
+	}, []);
+
+	// Apply theme to both data-theme attribute and dark class
+	const applyTheme = (newTheme: string) => {
+		// Set data-theme attribute for DaisyUI
+		document.documentElement.setAttribute("data-theme", newTheme);
+
+		// Toggle dark class for Tailwind
+		if (newTheme === "dark") {
+			document.documentElement.classList.add("dark");
+		} else {
+			document.documentElement.classList.remove("dark");
+		}
+	};
 
 	const toggleTheme = () => {
 		const newTheme = theme === "dark" ? "light" : "dark";
 		setTheme(newTheme);
-		document.documentElement.setAttribute("data-theme", newTheme);
-	};
+		applyTheme(newTheme);
+		localStorage.setItem("theme", newTheme);
 
-	useEffect(() => {
-		document.documentElement.setAttribute("data-theme", theme);
-	}, []);
+		// Force a small layout shift to trigger re-rendering of components
+		setTimeout(() => {
+			window.dispatchEvent(new Event("resize"));
+		}, 50);
+	};
 
 	return (
 		<label className="swap swap-rotate">
-			<input type="checkbox" checked={theme === "dark"} onChange={toggleTheme} />
+			<input
+				type="checkbox"
+				checked={theme === "dark"}
+				onChange={toggleTheme}
+				// Prevent initial flash by hiding until theme is determined
+				className={theme ? "" : "invisible"}
+			/>
 
 			{/* sun icon */}
 			<svg className="swap-on h-6 w-6 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

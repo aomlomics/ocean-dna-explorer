@@ -34,7 +34,6 @@
 
 @plugin "daisyui/theme" {
   name: "dark";
-  prefersdark: true;
   
   --color-primary: #64ABDC;
   --color-primary-content: #FFFFFF;
