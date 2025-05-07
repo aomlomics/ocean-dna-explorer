@@ -20,8 +20,36 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
+			<head>
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
+							(function() {
+								function getInitialTheme() {
+									// Check if theme is stored in localStorage
+									const storedTheme = localStorage.getItem('theme');
+									if (storedTheme) {
+										return storedTheme;
+									}
+									
+									// Check if user prefers dark mode
+									if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+										return 'dark';
+									}
+									
+									// Default to light theme
+									return 'light';
+								}
+
+								// Set the theme class on the document element
+								document.documentElement.setAttribute('data-theme', getInitialTheme());
+							})();
+						`,
+					}}
+				/>
+			</head>
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
-				<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
 					<ClerkAppearanceProvider>
 						{children}
 					</ClerkAppearanceProvider>

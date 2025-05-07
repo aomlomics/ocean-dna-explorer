@@ -25,16 +25,23 @@ export function ThemedUserButton() {
         baseTheme: isDark ? dark : undefined,
         elements: {
           userButtonPopoverCard: {
-            backgroundColor: isDark ? "#181c2a" : "#F4F3F2",
+            backgroundColor: isDark ? "#141824" : "#F4F3F2",
             color: isDark ? "#E2E8F0" : "#2D3748",
           },
           userButtonPopoverFooter: {
-            backgroundColor: isDark ? "#181c2a" : "#F4F3F2",
+            backgroundColor: isDark ? "#141824" : "#F4F3F2",
             borderTop: `1px solid ${isDark ? "#232942" : "#E3E3E9"}`,
           },
           userButtonOuterIdentifier: {
             color: isDark ? "#7DBAE5" : "#233D7F",
           },
+          userButtonTrigger: {
+            backgroundColor: isDark ? "#141824" : "#F4F3F2",
+            color: isDark ? "#E2E8F0" : "#2D3748",
+          },
+          // userButtonPopoverCustomItemButton: {
+          //   backgroundColor: isDark ? "#7DBAE5" : "#233D7F",
+          // }
         },
       }}
     >

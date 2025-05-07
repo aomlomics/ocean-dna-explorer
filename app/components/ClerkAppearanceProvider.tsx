@@ -53,13 +53,18 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
           connectedAccountButton: {
             color: isDark ? "#7DBAE5" : "#233D7F",
           },
+          card: "shadow-2xl p-10 rounded-2xl border-4",
+          logoImage: {
+            width: "1000px",
+            height: "40px"
+          }
         },
       }}
       localization={{
         signIn: {
           start: {
-            title: "Sign in uhhhh",
-            titleCombined: "Sign in uhhhh"
+            title: "Sign in to the Ocean DNA Explorer",
+            titleCombined: "Sign in to the Ocean DNA Explorer"
           }
         },
         dividerText: "or"
