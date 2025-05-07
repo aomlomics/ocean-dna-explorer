@@ -29,11 +29,29 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
           colorText: isDark ? "#E2E8F0" : "#2D3748",
         },
         elements: {
-          userPreviewMainIdentifier: {
-            color: isDark ? "#E2E8F0" : "#2D3748",
-          },
           userPreviewSecondaryIdentifier: {
-            color: isDark ? "#A0AEC0" : "#4A5568",
+            color: isDark ? "#7DBAE5" : "#233D7F", // Email and secondary text
+          },
+          cardActionLink: {
+            color: isDark ? "#7DBAE5" : "#233D7F", // "Update profile" link
+          },
+          profileSectionPrimaryButton: {
+            color: isDark ? "#7DBAE5" : "#233D7F", // Profile section primary button
+          },
+          navbarButtonText: {
+            color: isDark ? "#7DBAE5" : "#233D7F", // Navbar button text
+          },
+          navbarButtonIcon: {
+            color: isDark ? "#7DBAE5" : "#233D7F", // Navbar icon color
+          },
+          activeNavbarButtonIcon: {
+            color: isDark ? "#7DBAE5" : "#233D7F", // Active navbar icon color
+          },
+          connectedAccountPrimaryButton: {
+            color: isDark ? "#7DBAE5" : "#233D7F",
+          },
+          connectedAccountButton: {
+            color: isDark ? "#7DBAE5" : "#233D7F",
           },
         },
       }}

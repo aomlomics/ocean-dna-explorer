@@ -101,3 +101,13 @@
 .animate-fade-in-up {
   animation: fadeInUp 0.3s ease-out;
 }
+
+/* Clerk: Style 'Connect account' button text in profile/account */
+[data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
+  color: #233D7F;
+}
+@media (prefers-color-scheme: dark) {
+  [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
+    color: #7DBAE5;
+  }
+}
