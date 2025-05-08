@@ -1,14 +1,14 @@
 import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
-import analysisDeleteAction from "@/app/helpers/actions/analysis/delete/analysisDelete";
-import projectDeleteAction from "@/app/helpers/actions/analysis/delete/projectDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import projectDeleteAction from "@/app/actions/analysis/delete/projectDelete";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import SubmissionEditButton from "@/app/components/SubmissionEditButton";
-import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
-import projectEditAction from "@/app/helpers/actions/project/projectEdit";
+import analysisEditAction from "@/app/actions/analysis/edit/analysisEdit";
+import projectEditAction from "@/app/actions/project/projectEdit";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -101,7 +101,7 @@ export default async function MySubmissions() {
 														titleField="project_id"
 														data={proj}
 														action={projectEditAction}
-														noDisplay={["id"]}
+														privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
 													/>
 													<SubmissionDeleteButton
 														field="project_id"
@@ -162,8 +162,8 @@ export default async function MySubmissions() {
 														titleField="analysis_run_name"
 														data={a}
 														action={analysisEditAction}
-														noDisplay={["id"]}
-														noEdit={["project_id", "assay_name"]}
+														disabled={["project_id", "assay_name"]}
+														privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
 													/>
 													<SubmissionDeleteButton
 														field="analysis_run_name"

@@ -1,6 +1,6 @@
 import LoadingPaginationControls from "./LoadingPaginationControls";
 
-export default function LoadingPagination({ error }: { error?: string }) {
+export default function LoadingPagination() {
 	return (
 		<div className="space-y-6 p-6">
 			<LoadingPaginationControls />

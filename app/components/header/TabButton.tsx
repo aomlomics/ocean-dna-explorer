@@ -1,10 +1,9 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 export default function TabButton({ tabName, route }: { tabName: string; route: string }) {
-	const router = useRouter();
 	const pathname = usePathname();
 
 	// Special case for home route to prevent it from matching all paths

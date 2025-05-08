@@ -1,10 +1,11 @@
 "use client";
 
-import projectUploadAction from "@/app/helpers/actions/project/projectSubmit";
+import projectSubmitAction from "@/app/actions/project/projectSubmit";
 import { useRouter } from "next/navigation";
 import { FormEvent, useReducer, useState } from "react";
 import ProgressCircle from "./ProgressCircle";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
+import InfoButton from "../InfoButton";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -41,6 +42,7 @@ export default function ProjectSubmit() {
 
 	const allFilesPresent = fileStates.project && fileStates.sample && fileStates.library;
 
+	//TODO: allow users to click out of the Submission Failed popup window
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (submitted) return;
@@ -51,21 +53,21 @@ export default function ProjectSubmit() {
 		setSubmitted(true);
 
 		const formData = new FormData(event.currentTarget);
-		const fileTypes = ["project", "sample", "library"];
+		const files = ["project", "sample", "library"];
 
 		try {
-			// Process each file sequentially just for progress display
-			for (const fileType of fileTypes) {
-				setLoading(fileType);
+			// Process each file sequentially just for progress display (fake loading)
+			for (const f of files) {
+				setLoading(f);
 				await new Promise((resolve) => setTimeout(resolve, 500));
-				setResponseObj({ [fileType]: "File received" });
+				setResponseObj({ [f]: "File received" });
 			}
 
 			// All files processed, proceed with submission
 			setLoading("submitting");
-			const result = await projectUploadAction(formData);
+			const result = await projectSubmitAction(formData);
 
-			if (result.error) {
+			if (result.statusMessage === "error") {
 				setIsError(true);
 				setModalMessage(result.error);
 				setShowModal(true);
@@ -75,7 +77,7 @@ export default function ProjectSubmit() {
 					submission: "Failed"
 				});
 				setSubmitted(false);
-			} else if (result.message) {
+			} else if (result.statusMessage === "success") {
 				const successMessage =
 					"Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds...";
 				setIsError(false);
@@ -112,8 +114,16 @@ export default function ProjectSubmit() {
 		<div className="p-6 bg-base-100 rounded-lg shadow-sm -mt-6">
 			<div className="min-h-[400px] mx-auto">
 				<form className="flex-1 space-y-8 flex flex-col items-center" onSubmit={handleSubmit}>
-					<div className="w-[400px]">
-						<label className="form-control w-full">
+					<fieldset className="fieldset p-4 bg-base-100 w-[400px]">
+						<label className="fieldset-label flex gap-2">
+							<input name="isPrivate" type="checkbox" className="checkbox" />
+							<p>Private submission</p>
+							<InfoButton infoText="" />
+						</label>
+					</fieldset>
+
+					<div className="w-[400px] !mt-0">
+						<label className="form-control w-[400px]">
 							<div className="label">
 								<span className="label-text text-base-content">Project Metadata File:</span>
 							</div>

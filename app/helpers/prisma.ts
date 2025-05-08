@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client";
 // import fs from "fs";
 // import path from "path";
 
@@ -27,6 +27,23 @@ const prisma =
 				level: "warn"
 			}
 		]
+	}).$extends({
+		// query: {
+		// 	$allModels: {
+		// 		async findUnique({ model, operation, args, query }) {
+		// 			args.where = { isPrivate: false, ...args.where };
+		// 			return query(args);
+		// 		},
+		// 		async findMany({ model, operation, args, query }) {
+		// 			args.where = { isPrivate: false, ...args.where };
+		// 			return query(args);
+		// 		},
+		// 		async count({ model, operation, args, query }) {
+		// 			args.where = { isPrivate: false, ...args.where };
+		// 			return query(args);
+		// 		}
+		// 	}
+		// }
 	});
 
 // prisma.$on("query", (e) => {

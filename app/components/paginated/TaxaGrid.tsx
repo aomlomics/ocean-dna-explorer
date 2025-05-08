@@ -5,7 +5,7 @@ import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
 import PhyloPicClient from "../PhyloPicClient";
 import PaginationControls from "./PaginationControls";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 

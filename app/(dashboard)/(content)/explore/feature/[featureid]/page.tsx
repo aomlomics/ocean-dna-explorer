@@ -1,7 +1,6 @@
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
-import Link from "next/link";
 import { ReactNode } from "react";
 
 export default async function Featureid({ params }: { params: Promise<{ featureid: string }> }) {
@@ -79,7 +78,10 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 	return (
 		<div className="space-y-8">
 			<header>
-				<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
+				<div className="flex gap-2 items-center">
+					<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
+					{feature.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+				</div>
 				<p className="text-md text-base-content/70 break-all font-mono">{feature.dna_sequence}</p>
 			</header>
 			<div>

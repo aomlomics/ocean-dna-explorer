@@ -52,8 +52,9 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 			<div className="grid grid-cols-2 gap-8">
 				<div className="col-span-2">
-					<header>
+					<header className="flex gap-2 items-center">
 						<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
+						{assay.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 					</header>
 				</div>
 
@@ -79,7 +80,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justAssay} omit={["id", "assay_name"]} />
+						<DataDisplay data={justAssay} omit={["assay_name"]} />
 					</div>
 				</div>
 			</div>
@@ -97,7 +98,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 					role="tabpanel"
 					className="tab-content bg-base-100 border-base-300 rounded-box p-6 h-[400px] w-full overflow-hidden"
 				>
-					<Table table="library" title="library_id" where={{ assay_name }}></Table>
+					<Table table="library" title="lib_id" where={{ assay_name }}></Table>
 				</div>
 			</div>
 		</div>

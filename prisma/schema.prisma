@@ -3,10 +3,12 @@ datasource db {
     url      = env("POSTGRES_PRISMA_URL")
 }
 
-// Generators
 generator js {
-    provider        = "prisma-client-js"
-    previewFeatures = ["prismaSchemaFolder"]
+    provider            = "prisma-client-js"
+    output              = "../app/generated/prisma/client"
+    runtime             = "edge-light"
+    importFileExtension = ""
+    previewFeatures     = ["relationJoins"]
 }
 
 generator json {
@@ -15,6 +17,7 @@ generator json {
 
 generator zod {
     provider                         = "zod-prisma-types"
+    prismaClientPath                 = "@/app/generated/prisma/client"
     createInputTypes                 = false
     addIncludeType                   = false
     addSelectType                    = false

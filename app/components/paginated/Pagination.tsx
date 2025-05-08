@@ -1,6 +1,6 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";

@@ -1,7 +1,7 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
-import occDownloadAction from "../helpers/actions/occDownloadAction";
+import { Prisma } from "@/app/generated/prisma/client";
+import occDownloadAction from "../actions/occDownloadAction";
 
 export default function OccDownloadButton({
 	text,
@@ -13,10 +13,10 @@ export default function OccDownloadButton({
 	where: Prisma.OccurrenceWhereInput;
 }) {
 	async function download() {
-		const result = await occDownloadAction(where);
+		const response = await occDownloadAction(where);
 
-		if (result.file) {
-			const url = URL.createObjectURL(result.file);
+		if (response.statusMessage === "success") {
+			const url = URL.createObjectURL(response.result);
 			const link = document.createElement("a");
 			link.href = url;
 			link.setAttribute("download", `${filename}.tsv`);

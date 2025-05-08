@@ -1,2 +1,1 @@
-frontend/prisma/generated/zod/index.ts
-frontend/types/zodPrismaEnums.ts
+frontend/prisma/schema/generated/zod/index.ts

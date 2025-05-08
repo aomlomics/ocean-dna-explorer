@@ -1,7 +1,8 @@
-import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
-import { Prisma, Taxonomy } from "@prisma/client";
+import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
+import { TableToSchema } from "@/types/objects";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
+import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodEffects } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
-import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable, ZodLazy } from "zod";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -26,18 +27,17 @@ export async function fetcher(url: string) {
 //	return "https://opalserver-qnwedardvq-uc.a.run.app";
 //}
 
-export function isEmpty(obj: Object) {
-	for (const x in obj) {
-		if (obj.hasOwnProperty(x)) return false;
-	}
-	return true;
-}
-
 export function getZodType(field: any): { optional?: boolean; type?: string; values?: string[] } {
 	let shape = {} as { optional?: boolean; type?: string; values?: string[] };
 
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
+	} else if (field instanceof ZodBoolean) {
+		shape.type = "boolean";
+	} else if (field instanceof ZodEffects) {
+		//zod transform (booleans)
+		//TODO: verify it's actually a boolean, and not some other field that uses zod transform
+		shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
@@ -53,6 +53,7 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
 		//DeadBoolean
+		//TODO: verify it's actually a DeadBoolean, and not some other enum
 		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
 			shape.type = "boolean";
 			shape.values = Object.keys(DeadBooleanEnum);
@@ -270,6 +271,8 @@ export function parseApiQuery(
 		take?: number;
 	};
 
+	//TODO: use zod to validate searchParams
+
 	//selecting fields
 	if (!skip?.skipFields) {
 		const fields = searchParams.get("fields");
@@ -325,6 +328,7 @@ export function parseApiQuery(
 		}
 
 		query.where = {
+			isPrivate: false,
 			id: {
 				in: parsedIds
 			}
@@ -388,8 +392,10 @@ export function parseApiQuery(
 					}
 				}
 			});
+
+			query.where.isPrivate = false;
 		} else if (defaults?.filters) {
-			query.where = defaults.filters;
+			query.where = { ...defaults.filters, isPrivate: false };
 		}
 	}
 

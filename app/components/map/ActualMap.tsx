@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import { useState } from "react";
 import { DBSCAN } from "density-clustering";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
 
 export default function ActualMap({

@@ -97,6 +97,10 @@ export default async function Taxonomy({ params }: { params: Promise<{ taxonomy:
 
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full">
+			<header className="flex gap-2 items-center">
+				<h1 className="text-4xl font-semibold text-primary mb-2">{displayName}</h1>
+				{dbTaxonomy.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+			</header>
 			{/* Using sm breakpoint (640px) instead of md (768px) */}
 			<div className="grid grid-cols-1 gap-6 sm:grid-cols-12 sm:gap-8">
 				{/* Image section with centered content */}
@@ -105,7 +109,6 @@ export default async function Taxonomy({ params }: { params: Promise<{ taxonomy:
 						<PhyloPic taxonomy={dbTaxonomy} />
 					</div>
 					<div className="py-3 px-4 text-center">
-						<div className="text-lg font-medium">{displayName}</div>
 						<div className="text-base-content/80 text-sm mt-1">{samples.length} occurrences found in NODE</div>
 					</div>
 				</div>

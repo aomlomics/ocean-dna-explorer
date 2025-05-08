@@ -1,5 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@clerk/nextjs/server";
+import { RolePermissions } from "@/types/objects";
 
 export async function POST(request: Request) {
 	const body = (await request.json()) as HandleUploadBody;
@@ -15,8 +16,10 @@ export async function POST(request: Request) {
 				// Generate a client token for the browser to upload the file
 				// ⚠️ Authenticate and authorize users before generating the token.
 				// Otherwise, you're allowing anonymous uploads.
-				const { userId } = await auth();
-				if (!userId) {
+				const { userId, sessionClaims } = await auth();
+				const role = sessionClaims?.metadata.role;
+
+				if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 					throw new Error("Unauthorized");
 				}
 

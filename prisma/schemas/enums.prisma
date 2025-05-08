@@ -1,4 +1,3 @@
-// Enums
 // @map rules:
 //      spaces = _
 //      dashes = __
@@ -291,6 +290,23 @@ enum assay_type {
     metabarcoding
     other
 }
+
+//TODO: use this for all the other enums of the same value
+// enum chemicalUnits {
+//     µM
+//     molFSLASH_m3      @map("mol/m3")
+//     mmolFSLASH_m3     @map("mmol/m3")
+//     µmolFSLASH_m3    @map("µmol/m3")
+//     molFSLASH_L       @map("mol/L")
+//     mmolFSLASH_L      @map("mmol/L")
+//     µmolFSLASH_L     @map("µmol/L")
+//     mgFSLASH_L        @map("mg/L")
+//     µgFSLASH_L       @map("µg/L")
+//     µmolFSLASH_kg    @map("µmol/kg")
+//     mmolFSLASH_kg     @map("mmol/kg")
+//     parts_per_million @map("parts per million")
+//     other
+// }
 
 enum diss_inorg_carb_unit {
     µM
@@ -628,3 +644,37 @@ enum pump_flow_rate_unit {
     LFSLASH_h    @map("L/h")
     other
 }
+
+enum ammonium_unit {
+    micromole_per_liter @map("micromole per liter")
+    milligram_per_liter @map("milligram per liter")
+    parts_per_million   @map("parts per million")
+}
+
+enum phosphate_unit {
+    micromole_per_liter @map("micromole per liter")
+}
+
+enum pressure_unit {
+    atmosphere
+}
+
+enum silicate_unit {
+    micromole_per_liter @map("micromole per liter")
+}
+
+enum tourmaline_classify_method {
+    consensus__blast   @map("consensus-blast")
+    naive__bayes       @map("naive-bayes")
+    consensus__vsearch @map("consensus-vsearch")
+    bt2__blca          @map("bt2-blca")
+}
+
+// enum tot_alkalinity_unit {
+// }
+
+// enum dna_yield_unit {
+// }
+
+// enum transmittance_unit {
+// }
