@@ -1,9 +1,14 @@
 import { prisma } from "@/app/helpers/prisma";
 import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
+import { NextResponse } from "next/server";
+import { NetworkPacket } from "@/types/globals";
 
 //TODO: convert to server action
-export async function GET(request: Request, { params }: { params: Promise<{ table: string }> }) {
+export async function GET(
+	request: Request,
+	{ params }: { params: Promise<{ table: string }> }
+): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
 	try {
@@ -74,10 +79,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			prisma[table].count({ where: query.where })
 		]);
 
-		return Response.json({ statusMessage: "success", result, count });
+		return NextResponse.json({ statusMessage: "success", result, count });
 	} catch (err) {
 		const error = err as Error;
 
-		return Response.json({ statusMessage: "error", error: error.message }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
 	}
 }

@@ -1,5 +1,7 @@
 import { prisma } from "@/app/helpers/prisma";
 import { DeadValueEnum } from "@/types/enums";
+import { NetworkPacket } from "@/types/globals";
+import { NextResponse } from "next/server";
 
 type ProjSampleAvgLocs = {
 	_avg: {
@@ -11,7 +13,7 @@ type ProjSampleAvgLocs = {
 };
 
 //TODO: convert to server action
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {
 	//maps enum to only its numeric values, discarding the string values
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
@@ -59,10 +61,10 @@ export async function GET(request: Request) {
 			return rawLocations;
 		});
 
-		return Response.json({ statusMessage: "success", rawLocations });
+		return NextResponse.json({ statusMessage: "success", rawLocations });
 	} catch (err) {
 		const error = err as Error;
 
-		return Response.json({ statusMessage: "error", error: error.message }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
 	}
 }

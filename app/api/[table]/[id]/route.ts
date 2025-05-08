@@ -1,8 +1,13 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/utils";
+import { NetworkPacket } from "@/types/globals";
+import { NextResponse } from "next/server";
 
-export async function GET(request: Request, { params }: { params: Promise<{ table: string; id: string }> }) {
+export async function GET(
+	request: Request,
+	{ params }: { params: Promise<{ table: string; id: string }> }
+): Promise<NextResponse<NetworkPacket>> {
 	const { table, id } = await params;
 	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
@@ -14,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 		try {
 			const parsedId = parseInt(id);
 			if (Number.isNaN(parsedId)) {
-				return Response.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
+				return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
 			}
 
 			const { searchParams } = new URL(request.url);
@@ -36,9 +41,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			const result = await prisma[lowercaseTable].findUnique(query);
 
 			if (result) {
-				return Response.json({ statusMessage: "success", result });
+				return NextResponse.json({ statusMessage: "success", result });
 			} else {
-				return Response.json(
+				return NextResponse.json(
 					{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },
 					{ status: 400 }
 				);
@@ -51,7 +56,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			if (unknownFieldSplit.length > 1) {
 				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
-				return Response.json(
+				return NextResponse.json(
 					{ statusMessage: "error", error: `No field named '${unknownField}' exists on table named '${table}'.` },
 					{ status: 400 }
 				);
@@ -62,16 +67,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ tabl
 			if (unknownArgSplit.length > 1) {
 				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
 
-				return Response.json(
+				return NextResponse.json(
 					{ statusMessage: "error", error: `No field named '${unknownArg}' exists on table named '${table}'.` },
 					{ status: 400 }
 				);
 			}
 
 			//TODO: replace database error messages with generic error message
-			return Response.json({ statusMessage: "error", error: error.message }, { status: 400 });
+			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return Response.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
 	}
 }
