@@ -27,13 +27,6 @@ export async function fetcher(url: string) {
 //	return "https://opalserver-qnwedardvq-uc.a.run.app";
 //}
 
-export function isEmpty(obj: Object) {
-	for (const x in obj) {
-		if (obj.hasOwnProperty(x)) return false;
-	}
-	return true;
-}
-
 export function getZodType(field: any): { optional?: boolean; type?: string; values?: string[] } {
 	let shape = {} as { optional?: boolean; type?: string; values?: string[] };
 
@@ -278,6 +271,8 @@ export function parseApiQuery(
 		take?: number;
 	};
 
+	//TODO: use zod to validate searchParams
+
 	//selecting fields
 	if (!skip?.skipFields) {
 		const fields = searchParams.get("fields");
@@ -333,6 +328,7 @@ export function parseApiQuery(
 		}
 
 		query.where = {
+			isPrivate: false,
 			id: {
 				in: parsedIds
 			}
@@ -396,8 +392,10 @@ export function parseApiQuery(
 					}
 				}
 			});
+
+			query.where.isPrivate = false;
 		} else if (defaults?.filters) {
-			query.where = defaults.filters;
+			query.where = { ...defaults.filters, isPrivate: false };
 		}
 	}
 

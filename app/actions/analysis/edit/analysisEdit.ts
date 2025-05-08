@@ -3,11 +3,20 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
-import { AnalysisPartialSchema } from "@/prisma/generated/zod";
+import { AnalysisPartialSchema, AnalysisSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { z } from "zod";
 // import { revalidatePath } from "next/cache";
 
+const formSchema = AnalysisPartialSchema.merge(
+	z.object({
+		target: AnalysisSchema.shape.analysis_run_name,
+		isPrivate: ZodBooleanSchema
+	})
+);
+
+//TODO: test
 export default async function analysisEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("analysis edit");
 
@@ -21,25 +30,28 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 	if (!(formData instanceof FormData)) {
 		return { statusMessage: "error", error: "Argument must be FormData" };
 	}
-	//TODO: use zod to validate the shape of the formData
-
-	const analysis_run_name = formData.get("target") as string;
-	if (!analysis_run_name) {
-		return { statusMessage: "error", error: "No target specified" };
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => issue.message).join(" ")
+				: "Invalid data structure"
+		};
 	}
-	formData.delete("target");
 
-	const isPrivateForm = formData.get("isPrivate");
+	const { target: analysis_run_name, ...analysisChanges } = parsed.data;
 
 	try {
-		const analysisSelect = Array.from(formData.keys()).reduce(
+		const analysisSelect = Object.keys(analysisChanges).reduce(
 			(acc, field) => ({ ...acc, [field]: true }),
 			{}
 		) as Prisma.AnalysisSelect;
 
-		const analysisChanges = AnalysisPartialSchema.parse(
-			Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-		);
+		// const analysisChanges = AnalysisPartialSchema.parse(
+		// 	Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
+		// );
 
 		const error = await prisma.$transaction(
 			async (tx) => {
@@ -49,7 +61,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					},
 					select: {
 						userId: true,
-						project_id: true,
+						Project: true,
 						editHistory: true,
 						...analysisSelect
 					}
@@ -61,27 +73,18 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					return "Unauthorized action. You are not the owner of this analysis.";
 				}
 
-				const project = await tx.project.findUnique({
-					where: {
-						project_id: analysis.project_id
-					},
-					select: {
-						isPrivate: true
-					}
-				});
-
-				if (project!.isPrivate && isPrivateForm === "false") {
+				if (analysis.Project!.isPrivate && parsed.data.isPrivate === false) {
 					return "Analysis cannot be made public because parent Project is private. You must first make the parent Project public before making this Analysis public.";
 				}
 
 				const newEdit = {
 					dateEdited: new Date(),
-					changes: Array.from(formData.entries()).map(([field, value]) => ({
+					changes: Object.entries(analysisChanges).map(([field, value]) => ({
 						field,
 						oldValue: analysis[field as keyof typeof analysis]
 							? analysis[field as keyof typeof analysis]!.toString()
 							: "",
-						newValue: value.toString()
+						newValue: value ? value.toString() : ""
 					}))
 				};
 
@@ -97,8 +100,8 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					}
 				});
 
-				if (isPrivateForm !== null) {
-					const isPrivate = isPrivateForm === "true" ? true : false;
+				if (parsed.data.isPrivate !== null) {
+					const isPrivate = parsed.data.isPrivate ? true : false;
 
 					await tx.occurrence.updateMany({
 						where: {

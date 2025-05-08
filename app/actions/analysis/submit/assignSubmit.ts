@@ -13,11 +13,20 @@ import {
 	AssignmentOptionalDefaultsSchema,
 	AssignmentScalarFieldEnumSchema,
 	TaxonomyOptionalDefaultsSchema,
-	TaxonomyScalarFieldEnumSchema
+	TaxonomyScalarFieldEnumSchema,
+	AssignmentSchema
 } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { z } from "zod";
 
+const formSchema = z.object({
+	isPrivate: ZodBooleanSchema,
+	analysis_run_name: AssignmentSchema.shape.analysis_run_name,
+	url: z.string().url()
+});
+
+//TODO: test
 export default async function assignSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -29,32 +38,38 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 	if (!(formData instanceof FormData)) {
 		return { statusMessage: "error", error: "Argument must be FormData" };
 	}
-	//TODO: use zod to validate the shape of the formData
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
+				: "Invalid data structure."
+		};
+	}
 
 	try {
-		const analysis_run_name = formData.get("analysis_run_name") as string;
-		console.log(`${analysis_run_name} assignment submit`);
-
-		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
+		console.log(`${parsed.data.analysis_run_name} assignment submit`);
 
 		const features = [] as Prisma.FeatureCreateManyInput[];
 		const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
 		const assignments = [] as Prisma.AssignmentCreateManyInput[];
 
 		//Feature file
-		console.log(`${analysis_run_name}_assign file`);
+		console.log(`${parsed.data.analysis_run_name}_assign file`);
 		//code block to force garbage collection
 		{
 			let assignFileLines;
 			//fetch files from blob storage
-			const url = JSON.parse(formData.get("file") as string).url;
-			const file = await fetch(url);
+			const file = await fetch(parsed.data.url);
 			const fileText = await file.text();
 			assignFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
 			const assignFileHeaders = assignFileLines[0].split("\t");
 
 			//iterate over each row
 			for (let i = 1; i < assignFileLines.length; i++) {
+				// TODO: get extension of file and split accordingly
 				const currentLine = assignFileLines[i].split("\t");
 
 				if (currentLine[assignFileHeaders.indexOf("featureid")]) {
@@ -98,10 +113,10 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 					features.push(
 						FeatureOptionalDefaultsSchema.parse(
-							{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length, isPrivate },
+							{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length, isPrivate: parsed.data.isPrivate },
 							{
 								errorMap: (error, ctx) => {
-									return { message: `FeatureSchema (${analysis_run_name}): ${ctx.defaultError}` };
+									return { message: `FeatureSchema (${parsed.data.analysis_run_name}): ${ctx.defaultError}` };
 								}
 							}
 						)
@@ -111,13 +126,13 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 						AssignmentOptionalDefaultsSchema.parse(
 							{
 								...assignmentRow,
-								isPrivate,
-								analysis_run_name
+								isPrivate: parsed.data.isPrivate,
+								analysis_run_name: parsed.data.analysis_run_name
 							},
 							{
 								errorMap: (error, ctx) => {
 									return {
-										message: `AssignmentSchema (${analysis_run_name}, ${assignmentRow.featureid}, ${assignmentRow.Confidence}): ${ctx.defaultError}`
+										message: `AssignmentSchema (${parsed.data.analysis_run_name}, ${assignmentRow.featureid}, ${assignmentRow.Confidence}): ${ctx.defaultError}`
 									};
 								}
 							}
@@ -126,10 +141,10 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 					taxonomies.push(
 						TaxonomyOptionalDefaultsSchema.parse(
-							{ ...taxonomyRow, isPrivate },
+							{ ...taxonomyRow, isPrivate: parsed.data.isPrivate },
 							{
 								errorMap: (error, ctx) => {
-									return { message: `TaxonomySchema (${analysis_run_name}): ${ctx.defaultError}` };
+									return { message: `TaxonomySchema (${parsed.data.analysis_run_name}): ${ctx.defaultError}` };
 								}
 							}
 						)
@@ -144,17 +159,17 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {
-						analysis_run_name
+						analysis_run_name: parsed.data.analysis_run_name
 					},
 					select: {
 						isPrivate: true
 					}
 				});
 				if (!analysis) {
-					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
-				} else if (analysis.isPrivate && !isPrivate) {
+					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
+				} else if (analysis.isPrivate && !parsed.data.isPrivate) {
 					throw new Error(
-						`Analysis with analysis_run_name of ${analysis_run_name} is private. Assignments can't be public if the associated analysis is private.`
+						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Assignments can't be public if the associated analysis is private.`
 					);
 				}
 
@@ -166,7 +181,7 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					skipDuplicates: true
 				});
 				//private
-				if (!isPrivate) {
+				if (!parsed.data.isPrivate) {
 					await tx.feature.updateMany({
 						where: {
 							featureid: {
@@ -187,7 +202,7 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					skipDuplicates: true
 				});
 				//private
-				if (!isPrivate) {
+				if (!parsed.data.isPrivate) {
 					await tx.taxonomy.updateMany({
 						where: {
 							taxonomy: {

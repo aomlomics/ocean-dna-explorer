@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "../../prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 
 export default async function projectFindUniqueAction(project_id: string): Promise<NetworkPacket> {

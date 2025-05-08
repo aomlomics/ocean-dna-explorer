@@ -4,10 +4,18 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
-import { OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
+import { OccurrenceOptionalDefaultsSchema, OccurrenceSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { z } from "zod";
 
+const formSchema = z.object({
+	isPrivate: ZodBooleanSchema,
+	analysis_run_name: OccurrenceSchema.shape.analysis_run_name,
+	url: z.string().url()
+});
+
+//TODO: test
 export default async function OccSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -19,24 +27,29 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 	if (!(formData instanceof FormData)) {
 		return { statusMessage: "error", error: "Argument must be FormData" };
 	}
-	//TODO: use zod to validate the shape of the formData
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
+				: "Invalid data structure."
+		};
+	}
 
 	try {
-		const analysis_run_name = formData.get("analysis_run_name") as string;
-		console.log(`${analysis_run_name} occurrences submit`);
-
-		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
+		console.log(`${parsed.data.analysis_run_name} occurrences submit`);
 
 		//Occurrence file
 		const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
-		console.log(`${analysis_run_name}_occ file`);
+		console.log(`${parsed.data.analysis_run_name}_occ file`);
 		//code block to force garbage collection
 		{
 			let occFileLines;
 			//fetch from blob storage
-			const url = JSON.parse(formData.get("file") as string).url;
-			const file = await fetch(url);
+			const file = await fetch(parsed.data.url);
 			const fileText = await file.text();
 			occFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
 			occFileLines.splice(0, 1); //TODO: parse comments out logically instead of hard-coded
@@ -44,6 +57,7 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 
 			//iterate over each row
 			for (let i = 1; i < occFileLines.length; i++) {
+				// TODO: get extension of file and split accordingly
 				const currentLine = occFileLines[i].split("\t");
 
 				if (currentLine[0]) {
@@ -61,13 +75,13 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 										samp_name,
 										featureid,
 										organismQuantity,
-										analysis_run_name,
-										isPrivate
+										analysis_run_name: parsed.data.analysis_run_name,
+										isPrivate: parsed.data.isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
 											return {
-												message: `OccurrenceSchema (${analysis_run_name}, ${samp_name}, ${featureid}): ${ctx.defaultError}`
+												message: `OccurrenceSchema (${parsed.data.analysis_run_name}, ${samp_name}, ${featureid}): ${ctx.defaultError}`
 											};
 										}
 									}
@@ -84,17 +98,17 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {
-						analysis_run_name
+						analysis_run_name: parsed.data.analysis_run_name
 					},
 					select: {
 						isPrivate: true
 					}
 				});
 				if (!analysis) {
-					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
-				} else if (analysis.isPrivate && !isPrivate) {
+					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
+				} else if (analysis.isPrivate && !parsed.data.isPrivate) {
 					throw new Error(
-						`Analysis with analysis_run_name of ${analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
+						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
 					);
 				}
 

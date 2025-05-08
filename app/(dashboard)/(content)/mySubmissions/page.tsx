@@ -1,14 +1,14 @@
 import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
-import analysisDeleteAction from "@/app/helpers/actions/analysis/delete/analysisDelete";
-import projectDeleteAction from "@/app/helpers/actions/analysis/delete/projectDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import projectDeleteAction from "@/app/actions/analysis/delete/projectDelete";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import SubmissionEditButton from "@/app/components/SubmissionEditButton";
-import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
-import projectEditAction from "@/app/helpers/actions/project/projectEdit";
+import analysisEditAction from "@/app/actions/analysis/edit/analysisEdit";
+import projectEditAction from "@/app/actions/project/projectEdit";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();

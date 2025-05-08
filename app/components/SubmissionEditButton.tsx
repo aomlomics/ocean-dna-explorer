@@ -50,6 +50,7 @@ export default function SubmissionEditButton({
 		}
 
 		//check if data has been changed
+		const userDefined = {} as PrismaJson.UserDefinedType;
 		for (const [field, value] of formData.entries()) {
 			if (!(value instanceof File)) {
 				const type = getZodType(shape[field as keyof typeof shape]).type;
@@ -57,7 +58,8 @@ export default function SubmissionEditButton({
 				if (field.startsWith("userDefined")) {
 					const userDefinedField = field.split(":")[1];
 					if (data.userDefined[userDefinedField] && value != data.userDefined[userDefinedField]) {
-						submitFormData.append(field, value);
+						// submitFormData.append(field, value);
+						userDefined[field] = value;
 					}
 				} else {
 					if (type === "boolean" && value in DeadBooleanEnum) {
@@ -76,6 +78,9 @@ export default function SubmissionEditButton({
 					}
 				}
 			}
+		}
+		if (Object.keys(userDefined).length !== 0) {
+			submitFormData.append("userDefined", JSON.stringify(userDefined));
 		}
 
 		if (submitFormData.entries().next().done) {
@@ -112,6 +117,9 @@ export default function SubmissionEditButton({
 			</button>
 			<dialog ref={modalRef} className="modal">
 				<div className="modal-box">
+					<button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>
+						✕
+					</button>
 					<form onSubmit={onSubmit} className="flex flex-col gap-3">
 						<h2>Edit {table}</h2>
 						<fieldset className="fieldset">
@@ -213,7 +221,7 @@ export default function SubmissionEditButton({
 									//TODO: add indicator for user defined section
 									for (const userDefinedField in value) {
 										acc.push(
-											<fieldset key={userDefinedField} className="fieldset">
+											<fieldset key={userDefinedField + "userDefined"} className="fieldset">
 												<legend className="fieldset-legend flex gap-2">
 													<h2>{userDefinedField}</h2>
 													<InfoButton infoText="string" />

@@ -1,7 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { SearchUsers } from "@/app/components/SearchUsers";
-import { setRole } from "@/app/helpers/actions/editRole";
-import { removeRole } from "@/app/helpers/actions/editRole";
+import { setRole } from "@/app/actions/editRole";
+import { removeRole } from "@/app/actions/editRole";
 import { Role } from "@/types/globals";
 import { ReactNode } from "react";
 import { RoleHeirarchy } from "@/types/objects";

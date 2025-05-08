@@ -1,16 +1,16 @@
 "use client";
 
-import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
+import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
+import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 import { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { useState, FormEvent, useReducer, useEffect } from "react";
-import analysisSubmitAction from "../../helpers/actions/analysis/submit/analysisSubmit";
-import analysisDeleteAction from "../../helpers/actions/analysis/delete/analysisDelete";
+import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
+import analysisDeleteAction from "../../actions/analysis/delete/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
-import projectFindUniqueAction from "@/app/helpers/actions/project/projectFindUnique";
+import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
 import { Action } from "@/types/globals";
@@ -49,6 +49,7 @@ function checkAnalysisFiles(analysis: string, fileStates: Record<string, File | 
 	);
 }
 
+//TODO: split file
 export default function AnalysisSubmit() {
 	const router = useRouter();
 	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
@@ -190,7 +191,7 @@ export default function AnalysisSubmit() {
 					handleUploadUrl: "/api/analysisFile/upload",
 					multipart: true
 				});
-				formData.set("file", JSON.stringify(blob));
+				formData.set("url", blob.url);
 			}
 
 			//send request

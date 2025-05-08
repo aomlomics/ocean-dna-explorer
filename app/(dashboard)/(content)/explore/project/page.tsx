@@ -6,19 +6,15 @@ import { detection_type } from "@/app/generated/prisma/client";
 import Link from "next/link";
 
 export default async function Project() {
-	const { institutionOptions } = await prisma.$transaction(async (tx) => {
-		const instutitionRes = await tx.project.findMany({
-			distinct: ["institution"],
-			select: {
-				institution: true
-			}
-		});
-
-		return {
-			institutionOptions: instutitionRes.map((proj) => proj.institution)
-		};
+	const instutitionRes = await prisma.project.findMany({
+		distinct: ["institution"],
+		select: {
+			institution: true
+		}
 	});
-	if (!institutionOptions) return <>Loading...</>;
+	if (!instutitionRes) return <>Loading...</>;
+
+	const institutionOptions = instutitionRes.map((proj) => proj.institution);
 
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">

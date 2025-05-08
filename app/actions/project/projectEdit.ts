@@ -5,10 +5,19 @@ import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 // import { revalidatePath } from "next/cache";
 import analysisEditAction from "../analysis/edit/analysisEdit";
-import { ProjectPartialSchema } from "@/prisma/generated/zod";
+import { ProjectPartialSchema, ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { z } from "zod";
 
+const formSchema = ProjectPartialSchema.merge(
+	z.object({
+		target: ProjectSchema.shape.project_id,
+		isPrivate: ZodBooleanSchema
+	})
+);
+
+//TODO: test editing all types of fields
 export default async function projectEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project edit");
 
@@ -22,30 +31,28 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 	if (!(formData instanceof FormData)) {
 		return { statusMessage: "error", error: "Argument must be FormData" };
 	}
-	//TODO: use zod to validate the shape of the formData
-
-	const project_id = formData.get("target") as string;
-	if (!project_id) {
-		return { statusMessage: "error", error: "No target specified" };
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => issue.message).join(" ")
+				: "Invalid data structure"
+		};
 	}
-	formData.delete("target");
 
-	const isPrivateForm = formData.get("isPrivate");
+	const { target: project_id, ...projectChanges } = parsed.data;
 
 	try {
-		const projectSelect = Array.from(formData.keys()).reduce((acc, field) => {
-			if (field.startsWith("userDefined") && !acc.userDefined) {
-				acc.userDefined = true;
-			} else {
-				acc[field] = true;
-			}
+		const projectSelect = Object.keys(projectChanges).reduce(
+			(acc, field) => ({ ...acc, [field]: true }),
+			{}
+		) as Prisma.ProjectSelect;
 
-			return acc;
-		}, {} as Record<string, true>) as Prisma.ProjectSelect;
-
-		const projectChanges = ProjectPartialSchema.parse(
-			Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-		);
+		// const projectChanges = ProjectPartialSchema.parse(
+		// 	Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
+		// );
 
 		const error = await prisma.$transaction(async (tx) => {
 			const project = await tx.project.findUnique({
@@ -72,54 +79,52 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 
 			const newEdit = {
 				dateEdited: new Date(),
-				changes: Array.from(formData.entries()).map(([field, value]) => {
-					if (field.startsWith("userDefined") && project.userDefined) {
-						const userDefinedField = field.split(":")[1];
-						return {
-							field: userDefinedField,
-							oldValue: project.userDefined[userDefinedField] || "",
-							newValue: value as string
-						};
+				changes: Object.entries(projectChanges).reduce((acc, [field, value]) => {
+					if (field === "userDefined" && project.userDefined) {
+						for (let [userDefinedField, userDefinedValue] of Object.entries(value as PrismaJson.UserDefinedType)) {
+							acc.push({
+								field: userDefinedField,
+								oldValue: project.userDefined[userDefinedField] || "",
+								newValue: userDefinedValue.toString()
+							});
+						}
 					} else {
-						return {
+						acc.push({
 							field,
 							oldValue: project[field as keyof typeof project]?.toString() || "",
-							newValue: value.toString()
-						};
+							newValue: value ? value.toString() : ""
+						});
 					}
-				})
+
+					return acc;
+				}, [] as PrismaJson.ChangesType)
 			};
+
+			const updateData = {
+				//make changes to project
+				...projectChanges,
+				//add edit to start of edit history
+				editHistory: project.editHistory ? [newEdit].concat(project.editHistory) : [newEdit]
+			} as Prisma.ProjectUpdateInput;
+			if (projectChanges.userDefined) {
+				//replace changed fields in userDefined with new values
+				updateData.userDefined = {
+					//keep previous user defined data
+					...project.userDefined,
+					//override any changed fields
+					...(projectChanges.userDefined as PrismaJson.UserDefinedType)
+				};
+			}
 
 			await tx.project.update({
 				where: {
 					project_id
 				},
-				data: {
-					//make changes to project
-					...projectChanges,
-					//replace changed fields in userDefined with new values
-					userDefined: {
-						//keep previous user defined data
-						...project.userDefined,
-						//override any changed fields
-						...Array.from(formData.entries()).reduce((acc, [field, value]) => {
-							if (project.userDefined && field.startsWith("userDefined")) {
-								const userDefinedField = field.split(":")[1];
-								if (userDefinedField in project.userDefined) {
-									acc[userDefinedField] = value as string;
-								}
-							}
-
-							return acc;
-						}, {} as PrismaJson.UserDefinedType)
-					},
-					//add edit to start of edit history
-					editHistory: project.editHistory ? [newEdit].concat(project.editHistory) : [newEdit]
-				}
+				data: updateData
 			});
 
-			if (isPrivateForm !== null) {
-				const isPrivate = isPrivateForm === "true" ? true : false;
+			if (parsed.data.isPrivate !== null) {
+				const isPrivate = parsed.data.isPrivate ? true : false;
 
 				await tx.sample.updateMany({
 					where: {

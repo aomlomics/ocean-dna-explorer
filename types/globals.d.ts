@@ -1,11 +1,11 @@
-import projectSubmitAction from "@/app/helpers/actions/project/projectSubmit";
-import projectEditAction from "@/app/helpers/actions/project/projectEdit";
-import analysisSubmitAction from "@/app/helpers/actions/analysis/submit/analysisSubmit";
-import analysisEditAction from "@/app/helpers/actions/analysis/edit/analysisEdit";
-import analysisDeleteAction from "@/app/helpers/actions/analysis/delete/analysisDelete";
-import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubmit";
-import assignDeleteAction from "@/app/helpers/actions/analysis/delete/assignDelete";
-import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
+import projectSubmitAction from "@/app/actions/project/projectSubmit";
+import projectEditAction from "@/app/actions/project/projectEdit";
+import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
+import analysisEditAction from "@/app/actions/analysis/edit/analysisEdit";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
+import assignDeleteAction from "@/app/actions/analysis/delete/assignDelete";
+import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 
 export type Pluralize<T extends string> = T extends `${infer S}sis`
 	? `${S}ses`

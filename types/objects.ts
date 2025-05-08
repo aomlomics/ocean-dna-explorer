@@ -21,6 +21,7 @@ import {
 	TaxonomySchema
 } from "@/prisma/generated/zod";
 import { Permission, Role } from "./globals";
+import { z } from "zod";
 
 export const TableToEnumSchema = {
 	project: ProjectScalarFieldEnumSchema,
@@ -83,3 +84,34 @@ export const RolePermissions = {
 	moderator: ["contribute", "manageUsers"],
 	contributor: ["contribute"]
 } as Record<NonNullable<Role>, Array<Permission>>;
+
+// const MAX_FILE_SIZE = 5000000;
+export const EXT_TO_MIME = {
+	tsv: "text/tab-separated-values"
+};
+
+// export const ZodTableFile = z
+// 	.any()
+// 	.refine((files) => files?.length == 1, "File is required.")
+// 	// .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+// 	.refine(
+// 		(files) => Object.values(EXT_TO_MIME).includes(files?.[0]?.type),
+// 		Object.keys(EXT_TO_MIME)
+// 			.map((type) => type.split("/")[1])
+// 			.join(", ") + " files are accepted."
+// 	);
+
+//TODO: replace with native zod file validation when zod 4 releases
+export const ZodFileSchema = z.custom<File>((data) => {
+	return typeof window === "undefined" ? z.any() : data instanceof File;
+}, "Data is not a File");
+// .refine(
+// 	(file) => Object.values(EXT_TO_MIME).includes(file.type),
+// 	Object.keys(EXT_TO_MIME)
+// 		.map((type) => type.split("/")[1])
+// 		.join(", ") + " files are accepted."
+// );
+
+export const ZodBooleanSchema = z
+	.union([z.boolean(), z.literal("true"), z.literal("false"), z.literal("on")])
+	.transform((value) => value === true || value === "true" || value === "on");

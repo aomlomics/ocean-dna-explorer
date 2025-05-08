@@ -1,9 +1,9 @@
 "use server";
 
 import { Occurrence, Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "../prisma";
 import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
+import { prisma } from "../helpers/prisma";
 
 export default async function occDownloadAction(where: Prisma.OccurrenceWhereInput): Promise<NetworkPacket> {
 	console.log("occurrence download");

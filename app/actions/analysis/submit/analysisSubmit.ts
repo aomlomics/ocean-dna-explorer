@@ -4,9 +4,16 @@ import { prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, ZodBooleanSchema, ZodFileSchema } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 
+const formSchema = z.object({
+	isPrivate: ZodBooleanSchema,
+	file: ZodFileSchema
+});
+
+//TODO: test
 export default async function analysisSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -18,19 +25,26 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 	if (!(formData instanceof FormData)) {
 		return { statusMessage: "error", error: "Argument must be FormData" };
 	}
-	//TODO: use zod to validate the shape of the formData
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
+				: "Invalid data structure."
+		};
+	}
 
 	try {
 		const analysisCol = {} as Record<string, string>;
-
-		const isPrivate = formData.get("isPrivate") === "true" ? true : false;
 
 		//Analysis file
 		console.log("Analysis file");
 		//code block to force garbage collection
 		{
 			//parse file
-			const analysisFileLines = (await (formData.get("file") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			const analysisFileLines = (await parsed.data.file.text()).replace(/[\r]+/gm, "").split("\n");
 			//iterate over each row
 			for (let i = 1; i < analysisFileLines.length; i++) {
 				// TODO: get extension of file and split accordingly
@@ -50,7 +64,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		}
 
 		const data = AnalysisOptionalDefaultsSchema.parse(
-			{ ...analysisCol, userId: userId, isPrivate, editHistory: "JsonNull" },
+			{ ...analysisCol, userId: userId, isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
 			{
 				errorMap: (error, ctx) => {
 					return { message: `AnalysisSchema: ${ctx.defaultError}` };
@@ -72,7 +86,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 			});
 			if (!project) {
 				throw new Error(`Project with project_id of ${analysisCol.project_id} does not exist.`);
-			} else if (project.isPrivate && !isPrivate) {
+			} else if (project.isPrivate && !parsed.data.isPrivate) {
 				throw new Error(
 					`Project with project_id of ${analysisCol.project_id} is private. Analyses can't be public if the associated project is private.`
 				);

@@ -23,7 +23,15 @@ import {
 	SampleScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, ZodFileSchema, ZodBooleanSchema } from "@/types/objects";
+import { z } from "zod";
+
+const formSchema = z.object({
+	isPrivate: ZodBooleanSchema,
+	project: ZodFileSchema,
+	library: ZodFileSchema,
+	sample: ZodFileSchema
+});
 
 export default async function projectSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project submit");
@@ -38,7 +46,16 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 	if (!(formData instanceof FormData)) {
 		return { statusMessage: "error", error: "Argument must be FormData" };
 	}
-	//TODO: use zod to validate the shape of the formData
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
+				: "Invalid data structure."
+		};
+	}
 
 	try {
 		let project = {} as Prisma.ProjectCreateInput;
@@ -55,14 +72,15 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 		const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
 		const libToAssay = {} as Record<string, string>; //object to relate libraries to their assay_name values
 
-		const isPrivate = formData.get("isPrivate") ? true : false;
+		const isPrivate = parsed.data.isPrivate ? true : false;
 
 		//Project file
 		console.log("project file");
 		//code block to force garbage collection
 		{
 			//parse file
-			const projectFileLines = (await (formData.get("project") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			//TODO: try using papaparse or csv-parse instead
+			const projectFileLines = (await parsed.data.project.text()).replace(/[\r]+/gm, "").split("\n");
 			const projectFileHeaders = projectFileLines[0].split("\t");
 			const userDefined = {} as PrismaJson.UserDefinedType;
 			//iterate over each row
@@ -177,7 +195,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 		//code block to force garbage collection
 		{
 			//parse file
-			const libraryFileLines = (await (formData.get("library") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			const libraryFileLines = (await parsed.data.library.text()).replace(/[\r]+/gm, "").split("\n");
 			let sectionRow = null as null | string[];
 			let libraryFileHeaders = null as null | string[];
 			//iterate over each row
@@ -280,7 +298,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 		console.log("sample file");
 		//code block to force garbage collection
 		{
-			const sampleFileLines = (await (formData.get("sample") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			const sampleFileLines = (await parsed.data.sample.text()).replace(/[\r]+/gm, "").split("\n");
 			let sectionRow = null as null | string[];
 			let sampleFileHeaders = null as null | string[];
 			//iterate over each row
