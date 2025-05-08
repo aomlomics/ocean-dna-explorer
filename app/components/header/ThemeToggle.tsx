@@ -1,30 +1,15 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-	const [theme, setTheme] = useState("");
+	const { theme, setTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
 
-	// Initialize theme based on system preference or localStorage
+	// Only show the toggle after mounting to prevent hydration mismatch
 	useEffect(() => {
-		// Check localStorage first
-		const savedTheme = localStorage.getItem("theme");
-
-		// If no saved theme, check system preference
-		if (!savedTheme) {
-			const systemPreference = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-			setTheme(systemPreference);
-			applyTheme(systemPreference);
-		} else {
-			setTheme(savedTheme);
-			applyTheme(savedTheme);
-		}
-
-		// Force a small layout shift to trigger re-rendering of components
-		// This can help with components that don't properly respond to theme changes
-		setTimeout(() => {
-			window.dispatchEvent(new Event("resize"));
-		}, 50);
+		setMounted(true);
 	}, []);
 
 	// Apply theme to both data-theme attribute and dark class
@@ -40,26 +25,24 @@ export default function ThemeToggle() {
 		}
 	};
 
-	const toggleTheme = () => {
-		const newTheme = theme === "dark" ? "light" : "dark";
-		setTheme(newTheme);
-		applyTheme(newTheme);
-		localStorage.setItem("theme", newTheme);
+	// Handle theme changes
+	useEffect(() => {
+		if (mounted && theme) {
+			applyTheme(theme);
+		}
+	}, [theme, mounted]);
 
-		// Force a small layout shift to trigger re-rendering of components
-		setTimeout(() => {
-			window.dispatchEvent(new Event("resize"));
-		}, 50);
-	};
+	if (!mounted) {
+		return null;
+	}
 
 	return (
 		<label className="swap swap-rotate">
 			<input
 				type="checkbox"
 				checked={theme === "dark"}
-				onChange={toggleTheme}
-				// Prevent initial flash by hiding until theme is determined
-				className={theme ? "" : "invisible"}
+				onChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+				className=""
 			/>
 
 			{/* sun icon */}

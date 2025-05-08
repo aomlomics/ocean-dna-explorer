@@ -1,7 +1,8 @@
 import "@/styles/globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Source_Sans_3 } from "next/font/google";
 import ScrollToTop from "@/app/components/ScrollToTop";
+import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
+import { ThemeProvider } from "next-themes";
 
 const sourceSans = Source_Sans_3({
 	weight: ["300", "400", "500", "600", "700", "800"],
@@ -19,39 +20,40 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
+			<head>
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `
+							(function() {
+								function getInitialTheme() {
+									// Check if theme is stored in localStorage
+									const storedTheme = localStorage.getItem('theme');
+									if (storedTheme) {
+										return storedTheme;
+									}
+									
+									// Check if user prefers dark mode
+									if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+										return 'dark';
+									}
+									
+									// Default to light theme
+									return 'light';
+								}
+
+								// Set the theme class on the document element
+								document.documentElement.setAttribute('data-theme', getInitialTheme());
+							})();
+						`,
+					}}
+				/>
+			</head>
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
-				<ClerkProvider
-					appearance={{
-						elements: {
-							footer: "hidden",
-							logoImage: {
-								width: "1200px"
-							}
-						}
-					}}
-					localization={{
-						signIn: {
-							start: {
-								title: "Sign in to Submit Data",
-								// __experimental_titleCombined: "Sign in to Submit Data",
-								// subtitle: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
-								// @ts-ignore - subtitleCombined is needed for the UI but not in types
-								// subtitleCombined: "Sign in with a @noaa.gov Google account or @ngi.msstate.edu Microsoft account.",
-								titleCombined: "Sign in to Submit Data"
-								// actionText: "You must use a NOAA or MSState email address to sign in."
-							}
-						},
-						dividerText: "or"
-						// formFieldLabel: {
-						// 	emailAddress: "Email Address"
-						// }
-					}}
-					signInFallbackRedirectUrl="/dashboard"
-					// fallbackRedirectUrl="/dashboard"
-					// after_sign_in_url="/dashboard"
-				>
-					{children}
-				</ClerkProvider>
+				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
+					<ClerkAppearanceProvider>
+						{children}
+					</ClerkAppearanceProvider>
+				</ThemeProvider>
 				<ScrollToTop />
 			</body>
 		</html>
