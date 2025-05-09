@@ -48,11 +48,9 @@ export default function SubmissionDeleteButton({
 	const executeDelete = async () => {
 		setIsDeleting(true);
 		setShowModal(false);
-		const formData = new FormData();
-		formData.append("del", JSON.stringify({ [field]: value }));
 
 		try {
-			const result = await action(formData);
+			const result = await action(value);
 			if (result.statusMessage === "success") {
 				setIsDeleted(true);
 				setToast({ message: "Successfully deleted", type: "success" });

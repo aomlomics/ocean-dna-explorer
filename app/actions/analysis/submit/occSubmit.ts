@@ -10,12 +10,11 @@ import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
 import { z } from "zod";
 
 const formSchema = z.object({
-	isPrivate: ZodBooleanSchema,
+	isPrivate: ZodBooleanSchema.optional(),
 	analysis_run_name: OccurrenceSchema.shape.analysis_run_name,
 	url: z.string().url()
 });
 
-//TODO: test
 export default async function OccSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -49,9 +48,15 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		{
 			let occFileLines;
 			//fetch from blob storage
-			const file = await fetch(parsed.data.url);
-			const fileText = await file.text();
-			occFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
+			const response = await fetch(parsed.data.url);
+			if (!response.ok) {
+				return {
+					statusMessage: "error",
+					error: `Occurrence file for ${parsed.data.analysis_run_name} responded ${response.status}: ${response.statusText}.`
+				};
+			}
+			const text = await response.text();
+			occFileLines = text.replace(/[\r]+/gm, "").split("\n");
 			occFileLines.splice(0, 1); //TODO: parse comments out logically instead of hard-coded
 			const occFileHeaders = occFileLines[0].split("\t");
 
@@ -72,6 +77,7 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 							occurrences.push(
 								OccurrenceOptionalDefaultsSchema.parse(
 									{
+										userIds: [userId],
 										samp_name,
 										featureid,
 										organismQuantity,
@@ -111,6 +117,7 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
 					);
 				}
+				//TODO: check if user is associated with the analysis
 
 				//occurrences
 				console.log("occurrences");

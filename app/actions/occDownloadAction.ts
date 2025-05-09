@@ -8,10 +8,7 @@ import { prisma } from "../helpers/prisma";
 export default async function occDownloadAction(where: Prisma.OccurrenceWhereInput): Promise<NetworkPacket> {
 	console.log("occurrence download");
 
-	const { userId } = await auth();
-	if (!userId) {
-		return { statusMessage: "error", error: "Unauthorized" };
-	}
+	//TODO: check if occurrences are private, and if so only allow owners to download
 
 	if (typeof where !== "object") {
 		return { statusMessage: "error", error: "Argument must be object" };

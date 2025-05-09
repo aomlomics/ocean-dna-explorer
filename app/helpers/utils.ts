@@ -328,7 +328,6 @@ export function parseApiQuery(
 		}
 
 		query.where = {
-			isPrivate: false,
 			id: {
 				in: parsedIds
 			}
@@ -392,10 +391,8 @@ export function parseApiQuery(
 					}
 				}
 			});
-
-			query.where.isPrivate = false;
 		} else if (defaults?.filters) {
-			query.where = { ...defaults.filters, isPrivate: false };
+			query.where = defaults.filters;
 		}
 	}
 

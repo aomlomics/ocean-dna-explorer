@@ -1,7 +1,7 @@
 model Project {
     id            Int      @id @default(autoincrement())
     project_id    String   @unique
-    userId        String
+    userIds       String[]
     dateSubmitted DateTime @default(now())
     /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate     Boolean
@@ -51,8 +51,9 @@ model Project {
 }
 
 model Sample {
-    id          Int     @id @default(autoincrement())
-    samp_name   String  @unique
+    id          Int      @id @default(autoincrement())
+    samp_name   String   @unique
+    userIds     String[]
     /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate   Boolean
     /// [UserDefinedType]
@@ -317,8 +318,9 @@ model Sample {
 }
 
 model Assay {
-    id         Int     @id @default(autoincrement())
-    assay_name String  @unique
+    id         Int      @id @default(autoincrement())
+    assay_name String   @unique
+    userIds    String[]
     /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate  Boolean
 
@@ -379,7 +381,8 @@ model Assay {
 }
 
 model Primer {
-    id        Int     @id @default(autoincrement())
+    id        Int      @id @default(autoincrement())
+    userIds   String[]
     /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate Boolean
 
@@ -398,8 +401,9 @@ model Primer {
 }
 
 model Library {
-    id          Int     @id @default(autoincrement())
-    lib_id      String  @unique
+    id          Int      @id @default(autoincrement())
+    lib_id      String   @unique
+    userIds     String[]
     /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate   Boolean
     /// [UserDefinedType]

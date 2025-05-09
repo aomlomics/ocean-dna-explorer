@@ -60,7 +60,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 						analysis_run_name
 					},
 					select: {
-						userId: true,
+						userIds: true,
 						Project: true,
 						editHistory: true,
 						...analysisSelect
@@ -69,8 +69,8 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 
 				if (!analysis) {
 					return `No analysis with analysis_run_name of '${analysis_run_name}' found.`;
-				} else if (userId !== analysis.userId) {
-					return "Unauthorized action. You are not the owner of this analysis.";
+				} else if (!analysis.userIds.includes(userId)) {
+					return "Unauthorized action.";
 				}
 
 				if (analysis.Project!.isPrivate && parsed.data.isPrivate === false) {

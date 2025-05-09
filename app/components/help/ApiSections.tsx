@@ -16,6 +16,7 @@ export type Section = {
 	subsections?: Subsection[]; // Optional array of subsections
 };
 
+//TODO: do not hard-code API result examples
 export const apiSections: Section[] = [
 	{
 		id: "introduction",

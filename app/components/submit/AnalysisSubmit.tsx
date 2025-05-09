@@ -6,7 +6,7 @@ import { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { useState, FormEvent, useReducer, useEffect } from "react";
 import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
-import analysisDeleteAction from "../../actions/analysis/delete/analysisDelete";
+import analysisDeleteAction from "../../actions/analysis/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
@@ -24,22 +24,7 @@ function reducer(state: Record<string, string>, updates: Record<string, string>)
 }
 
 function checkAnalysisFiles(analysis: string, fileStates: Record<string, File | null>) {
-	console.log("Named analysis check:", {
-		analysis,
-		hasMetadata: !!fileStates[analysis] || (analysis !== "\u200b" && !!fileStates["\u200b"]),
-		hasFeatures: !!fileStates[`${analysis}_assign`],
-		hasOccurrences: !!fileStates[`${analysis}_occ`],
-		fileStates: {
-			metadata: fileStates[analysis] || fileStates["\u200b"],
-			features: fileStates[`${analysis}_assign`],
-			occurrences: fileStates[`${analysis}_occ`]
-		}
-	});
-
 	if (analysis === "\u200b") {
-		console.log("Current fileStates:", fileStates);
-		console.log("Current analyses:", analysis);
-		console.log("Files present?", !!fileStates["\u200b"]);
 		return !!fileStates["\u200b"];
 	}
 	return (
@@ -58,7 +43,7 @@ export default function AnalysisSubmit() {
 	const [submitted, setSubmitted] = useState(false);
 	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
 	const [project, setProject] = useState<Project | null>(null);
-	const [project_isPrivate, setProject_isPrivate] = useState(false);
+	const [isPrivate, setIsPrivate] = useState(false);
 	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
 
 	// Modal state for submission feedback
@@ -107,7 +92,7 @@ export default function AnalysisSubmit() {
 						} else {
 							const response = await projectFindUniqueAction(currentLine[1]);
 							if (response.statusMessage == "success" && response.result) {
-								setProject_isPrivate(response.result.isPrivate || false);
+								setIsPrivate(response.result.isPrivate);
 								setProject(response.result);
 							} else if (response.statusMessage === "error") {
 								setErrorObj({ global: response.error });
@@ -170,7 +155,7 @@ export default function AnalysisSubmit() {
 		submitAction: Action;
 		fieldsToSet?: Record<string, any>;
 		skipBlob?: boolean;
-	}): Promise<{ error?: boolean }> {
+	}): Promise<{ error?: string }> {
 		const formData = new FormData();
 		formData.set("analysis_run_name", analysis_run_name);
 		for (const [key, val] of Object.entries(fieldsToSet)) {
@@ -186,6 +171,7 @@ export default function AnalysisSubmit() {
 				formData.set("file", file);
 			} else {
 				//upload file to blob store
+				//TODO: make it so access isn't public
 				blob = await upload(file.name, file, {
 					access: "public",
 					handleUploadUrl: "/api/analysisFile/upload",
@@ -200,7 +186,7 @@ export default function AnalysisSubmit() {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: response.error
 				});
-				error = true;
+				error = response.error;
 			} else if (response.statusMessage === "success") {
 				setResponseObj({
 					[`${analysis_run_name}${fileSuffix}`]: response.result
@@ -209,17 +195,17 @@ export default function AnalysisSubmit() {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: "Unknown error."
 				});
-				error = true;
+				error = "Unknown error.";
 			}
 		} catch (err) {
 			setErrorObj({
 				[`${analysis_run_name}${fileSuffix}`]: `Error: ${(err as Error).message}.`
 			});
-			error = true;
+			error = `Error: ${(err as Error).message}.`;
 		}
 
 		if (!skipBlob) {
-			//delete file from blob store
+			// delete file from blob store
 			await fetch(`/api/analysisFile/delete?url=${blob.url}`, {
 				method: "DELETE"
 			});
@@ -255,7 +241,6 @@ export default function AnalysisSubmit() {
 		setSubmitted(true);
 
 		const allFormData = new FormData(event.currentTarget);
-		const isPrivate = allFormData.get("isPrivate") ? true : false;
 		let hasError = false;
 
 		let analysis_i = 0;
@@ -282,10 +267,10 @@ export default function AnalysisSubmit() {
 				if (analysisError) {
 					hasError = true;
 					setIsError(true);
-					setModalMessage("An error occurred during submission.");
+					setModalMessage(analysisError);
 					setShowModal(true);
 					setErrorObj({
-						global: "An error occurred during submission.",
+						global: analysisError,
 						status: "❌ Submission Failed"
 					});
 					setSubmitted(false);
@@ -306,15 +291,16 @@ export default function AnalysisSubmit() {
 				});
 
 				if (assignError) {
+					//TODO: fix deleting the analysis
 					//remove analysis from database
 					await dbDelete(analysisDeleteAction, analysis_run_name);
 
 					hasError = true;
 					setIsError(true);
-					setModalMessage("An error occurred during submission.");
+					setModalMessage(assignError);
 					setShowModal(true);
 					setErrorObj({
-						global: "An error occurred during submission.",
+						global: assignError,
 						status: "❌ Submission Failed"
 					});
 					setSubmitted(false);
@@ -335,6 +321,7 @@ export default function AnalysisSubmit() {
 				});
 
 				if (occError) {
+					//TODO: fix deleting the analysis
 					await dbDelete(analysisDeleteAction, analysis_run_name);
 					//remove analyses, features, and taxonomies from database
 					// await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name, {
@@ -344,10 +331,10 @@ export default function AnalysisSubmit() {
 
 					hasError = true;
 					setIsError(true);
-					setModalMessage("An error occurred during submission.");
+					setModalMessage(occError);
 					setShowModal(true);
 					setErrorObj({
-						global: "An error occurred during submission.",
+						global: occError,
 						status: "❌ Submission Failed"
 					});
 					setSubmitted(false);
@@ -358,16 +345,7 @@ export default function AnalysisSubmit() {
 			analysis_i++;
 		}
 
-		if (hasError) {
-			setIsError(true);
-			setModalMessage("An error occurred during submission.");
-			setShowModal(true);
-			setErrorObj({
-				global: "An error occurred during submission.",
-				status: "❌ Submission Failed"
-			});
-			setSubmitted(false);
-		} else {
+		if (!hasError) {
 			const successMessage =
 				"Analysis successfully submitted! You will be redirected to the project page in 5 seconds...";
 			setIsError(false);
@@ -425,8 +403,8 @@ export default function AnalysisSubmit() {
 								name="isPrivate"
 								type="checkbox"
 								className="checkbox"
-								checked={project_isPrivate}
-								onChange={(e) => setProject_isPrivate(e.currentTarget.checked)}
+								checked={isPrivate}
+								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
 								disabled={project?.isPrivate || false}
 							/>
 							<div>Private submission</div>

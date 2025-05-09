@@ -35,6 +35,7 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 					decimalLongitude: true
 				},
 				where: {
+					isPrivate: false,
 					AND: [
 						{
 							NOT: {

@@ -12,6 +12,7 @@ export async function GET(
 	const { table } = await params;
 
 	try {
+		//TODO: validate searchParams with zod
 		const { searchParams } = new URL(request.url);
 
 		const query = {
@@ -20,16 +21,21 @@ export async function GET(
 			}
 		} as {
 			orderBy: { id: Prisma.SortOrder };
-			take: number;
+			where?: Record<string, any>;
+			take?: number;
 			skip?: number;
 			// cursor?: { id: number };
 			include?: { _count: { select: Record<string, boolean> } };
-			where?: Record<string, any>;
 		};
 
 		const orderBy = searchParams.get("orderBy");
 		if (orderBy) {
 			query.orderBy = JSON.parse(orderBy);
+		}
+
+		const whereStr = searchParams.get("where");
+		if (whereStr) {
+			query.where = parseNestedJson(whereStr);
 		}
 
 		const take = searchParams.get("take");
@@ -55,11 +61,6 @@ export async function GET(
 		//		findMany.take *= parseInt(dir);
 		//	}
 		//}
-
-		const whereStr = searchParams.get("where");
-		if (whereStr) {
-			query.where = parseNestedJson(whereStr);
-		}
 
 		const relCounts = searchParams.get("relCounts");
 		if (relCounts) {
