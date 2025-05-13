@@ -43,7 +43,7 @@ export default function AnalysisSubmit() {
 	const [submitted, setSubmitted] = useState(false);
 	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
 	const [project, setProject] = useState<Project | null>(null);
-	const [isPrivate, setIsPrivate] = useState(false);
+	const [isPrivate, setIsPrivate] = useState(false); //TODO: (bug) adding analysis file unchecks box
 	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
 
 	// Modal state for submission feedback

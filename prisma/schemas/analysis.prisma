@@ -3,7 +3,6 @@ model Analysis {
     analysis_run_name String   @unique
     userIds           String[]
     dateSubmitted     DateTime @default(now())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate         Boolean
     /// [EditHistoryType]
     editHistory       Json?
@@ -122,7 +121,6 @@ model Analysis {
 model Occurrence {
     id        Int      @id @default(autoincrement())
     userIds   String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate Boolean
 
     // Relations
@@ -143,7 +141,6 @@ model Occurrence {
 model Assignment {
     id        Int      @id @default(autoincrement())
     userIds   String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate Boolean
 
     // Relations
@@ -165,7 +162,6 @@ model Feature {
     id        Int      @id @default(autoincrement())
     featureid String   @unique
     userIds   String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate Boolean
 
     // Relations
@@ -181,7 +177,6 @@ model Taxonomy {
     id        Int      @id @default(autoincrement())
     taxonomy  String   @unique
     userIds   String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate Boolean
 
     // Relations

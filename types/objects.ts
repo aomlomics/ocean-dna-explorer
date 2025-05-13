@@ -18,10 +18,21 @@ import {
 	OccurrenceSchema,
 	FeatureSchema,
 	AssignmentSchema,
-	TaxonomySchema
+	TaxonomySchema,
+	ProjectWithRelationsSchema,
+	SampleWithRelationsSchema,
+	PrimerWithRelationsSchema,
+	AssayWithRelationsSchema,
+	LibraryWithRelationsSchema,
+	AnalysisWithRelationsSchema,
+	OccurrenceWithRelationsSchema,
+	FeatureWithRelationsSchema,
+	AssignmentWithRelationsSchema,
+	TaxonomyWithRelationsSchema
 } from "@/prisma/generated/zod";
 import { Permission, Role } from "./globals";
-import { z } from "zod";
+import { z, ZodEnum } from "zod";
+import { Prisma } from "@/app/generated/prisma/client";
 
 export const TableToEnumSchema = {
 	project: ProjectScalarFieldEnumSchema,
@@ -34,7 +45,7 @@ export const TableToEnumSchema = {
 	feature: FeatureScalarFieldEnumSchema,
 	assignment: AssignmentScalarFieldEnumSchema,
 	taxonomy: TaxonomyScalarFieldEnumSchema
-};
+} as Record<Lowercase<Prisma.ModelName>, ZodEnum<[string, ...string[]]>>;
 
 export const TableToSchema = {
 	project: ProjectSchema,
@@ -47,7 +58,38 @@ export const TableToSchema = {
 	feature: FeatureSchema,
 	assignment: AssignmentSchema,
 	taxonomy: TaxonomySchema
-};
+} as Record<Lowercase<Prisma.ModelName>, any>; //TODO: type ZodObject properly
+
+//TODO: type ZodObject properly
+function schemaToRelations(fieldsEnumSchema: ZodEnum<[string, ...string[]]>, relationsSchema: any) {
+	const fields = new Set(Object.values(fieldsEnumSchema._def.values));
+	return Object.keys(relationsSchema._def.shape()).filter((f) => !fields.has(f));
+}
+export const TableToRelations = {
+	project: schemaToRelations(ProjectScalarFieldEnumSchema, ProjectWithRelationsSchema),
+	sample: schemaToRelations(SampleScalarFieldEnumSchema, SampleWithRelationsSchema),
+	primer: schemaToRelations(PrimerScalarFieldEnumSchema, PrimerWithRelationsSchema),
+	assay: schemaToRelations(AssayScalarFieldEnumSchema, AssayWithRelationsSchema),
+	library: schemaToRelations(LibraryScalarFieldEnumSchema, LibraryWithRelationsSchema),
+	analysis: schemaToRelations(AnalysisScalarFieldEnumSchema, AnalysisWithRelationsSchema),
+	occurrence: schemaToRelations(OccurrenceScalarFieldEnumSchema, OccurrenceWithRelationsSchema),
+	feature: schemaToRelations(FeatureScalarFieldEnumSchema, FeatureWithRelationsSchema),
+	assignment: schemaToRelations(AssignmentScalarFieldEnumSchema, AssignmentWithRelationsSchema),
+	taxonomy: schemaToRelations(TaxonomyScalarFieldEnumSchema, TaxonomyWithRelationsSchema)
+} as Record<Lowercase<Prisma.ModelName>, string[]>;
+
+export const TableDepluralize = {
+	projects: "project",
+	samples: "sample",
+	primers: "primer",
+	assays: "assay",
+	libraries: "library",
+	analyses: "analysis",
+	occurrences: "occurrence",
+	features: "feature",
+	assignments: "assignment",
+	taxonomies: "taxonomy"
+} as Record<string, Lowercase<Prisma.ModelName>>;
 
 export const EXPLORE_ROUTES = {
 	project: "Projects",

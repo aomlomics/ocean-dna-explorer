@@ -50,10 +50,6 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 			{}
 		) as Prisma.ProjectSelect;
 
-		// const projectChanges = ProjectPartialSchema.parse(
-		// 	Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-		// );
-
 		const error = await prisma.$transaction(async (tx) => {
 			const project = await tx.project.findUnique({
 				where: {

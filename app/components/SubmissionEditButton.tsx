@@ -38,6 +38,7 @@ export default function SubmissionEditButton({
 		modalRef.current?.close();
 	}
 
+	//TODO: (bug) when editing analyses, it says to edit way more fields than it should
 	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const formData = new FormData(e.currentTarget);

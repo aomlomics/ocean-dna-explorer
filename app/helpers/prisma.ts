@@ -143,3 +143,18 @@ export async function batchSubmit(
 		}
 	}
 }
+
+const secureFields = ["userIds"];
+export function stripSecureFields(queryResult: Record<string, any> | Record<string, any>[]) {
+	if (Array.isArray(queryResult)) {
+		for (let e of queryResult) {
+			for (let f of secureFields) {
+				delete e[f];
+			}
+		}
+	} else {
+		for (let f of secureFields) {
+			delete queryResult[f];
+		}
+	}
+}

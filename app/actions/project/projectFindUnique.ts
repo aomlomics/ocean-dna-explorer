@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, stripSecureFields } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 
 export default async function projectFindUniqueAction(project_id: string): Promise<NetworkPacket> {
@@ -9,14 +9,15 @@ export default async function projectFindUniqueAction(project_id: string): Promi
 	}
 
 	try {
-		const project = await prisma.project.findUnique({
+		const result = await prisma.project.findUnique({
 			where: {
 				project_id
 			}
 		});
 
-		if (project) {
-			return { statusMessage: "success", result: project };
+		if (result) {
+			stripSecureFields(result);
+			return { statusMessage: "success", result };
 		} else {
 			return { statusMessage: "error", error: `Project with project_id of ${project_id} does not exist.` };
 		}

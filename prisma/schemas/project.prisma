@@ -3,7 +3,6 @@ model Project {
     project_id    String   @unique
     userIds       String[]
     dateSubmitted DateTime @default(now())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate     Boolean
     /// [UserDefinedType]
     userDefined   Json?
@@ -54,7 +53,6 @@ model Sample {
     id          Int      @id @default(autoincrement())
     samp_name   String   @unique
     userIds     String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate   Boolean
     /// [UserDefinedType]
     userDefined Json?
@@ -321,7 +319,6 @@ model Assay {
     id         Int      @id @default(autoincrement())
     assay_name String   @unique
     userIds    String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate  Boolean
 
     // Relations
@@ -383,7 +380,6 @@ model Assay {
 model Primer {
     id        Int      @id @default(autoincrement())
     userIds   String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate Boolean
 
     // Relations
@@ -404,7 +400,6 @@ model Library {
     id          Int      @id @default(autoincrement())
     lib_id      String   @unique
     userIds     String[]
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate   Boolean
     /// [UserDefinedType]
     userDefined Json?

@@ -266,13 +266,23 @@ export function parseApiQuery(
 	skip?: {
 		skipFields?: boolean;
 		skipRelations?: boolean;
+		skipRelationsLimit?: boolean;
 		skipIds?: boolean;
 		skipLimit?: boolean;
 		skipFilters?: boolean;
 	},
 	defaults?: {
 		fields?: Record<string, boolean>;
-		relations?: Record<string, boolean | { select: { id: true } }>;
+		relations?: Record<
+			string,
+			| true
+			| { take: number }
+			| {
+					take?: number;
+					select: { id: true };
+			  }
+		>;
+		relationsLimit?: number;
 		ids?: number[];
 		limit?: number;
 		filters?: Record<string, string | number>;
@@ -301,21 +311,46 @@ export function parseApiQuery(
 		if (relations) {
 			searchParams.delete("relations");
 
-			//include all fields in relations
-			let includeVal = { select: { id: true } } as boolean | { select: { id: true } };
-			const allFields = searchParams.get("relationsAllFields");
-			if (allFields) {
-				searchParams.delete("relationsAllFields");
-				if (allFields.toLowerCase() === "true") {
-					includeVal = true;
-				} else if (allFields.toLowerCase() !== "false") {
-					throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
+			let relationVal = true as
+				| true
+				| { take: number }
+				| {
+						take?: number;
+						select: { id: true };
+				  };
+
+			//relations limit
+			if (!skip?.skipRelationsLimit) {
+				const relationsLimit = searchParams.get("relationsLimit");
+				if (relationsLimit) {
+					searchParams.delete("relationsLimit");
+					const take = parseInt(relationsLimit);
+					if (Number.isNaN(take)) {
+						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be an integer.`);
+					} else if (take < 1) {
+						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be a positive integer.`);
+					}
+
+					relationVal = { take };
 				}
+			}
+
+			//include all fields in relations
+			const allFields = searchParams.get("relationsAllFields");
+			searchParams.delete("relationsAllFields");
+			if (!allFields || allFields.toLowerCase() === "false") {
+				if (typeof relationVal === "boolean") {
+					relationVal = { select: { id: true } };
+				} else {
+					relationVal = { take: relationVal.take, select: { id: true } };
+				}
+			} else if (allFields.toLowerCase() !== "true") {
+				throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
 			}
 
 			const relsObj = relations
 				.split(",")
-				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
+				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: relationVal }), {});
 			if (query.select) {
 				query.select = { ...query.select, ...relsObj };
 			} else {

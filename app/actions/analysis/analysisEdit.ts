@@ -16,7 +16,6 @@ const formSchema = AnalysisPartialSchema.merge(
 	})
 );
 
-//TODO: test
 export default async function analysisEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("analysis edit");
 
@@ -49,10 +48,6 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 			{}
 		) as Prisma.AnalysisSelect;
 
-		// const analysisChanges = AnalysisPartialSchema.parse(
-		// 	Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-		// );
-
 		const error = await prisma.$transaction(
 			async (tx) => {
 				const analysis = await tx.analysis.findUnique({
@@ -81,9 +76,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					dateEdited: new Date(),
 					changes: Object.entries(analysisChanges).map(([field, value]) => ({
 						field,
-						oldValue: analysis[field as keyof typeof analysis]
-							? analysis[field as keyof typeof analysis]!.toString()
-							: "",
+						oldValue: analysis[field as keyof typeof analysis]?.toString() || "",
 						newValue: value ? value.toString() : ""
 					}))
 				};
@@ -190,7 +183,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					}
 				}
 			},
-			{ timeout: 0.5 * 60 * 1000 }
+			{ timeout: 1.5 * 60 * 1000 }
 		);
 
 		if (error) {

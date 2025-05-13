@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, stripSecureFields } from "@/app/helpers/prisma";
 import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
@@ -80,6 +80,7 @@ export async function GET(
 			prisma[table].count({ where: query.where })
 		]);
 
+		stripSecureFields(result);
 		return NextResponse.json({ statusMessage: "success", result, count });
 	} catch (err) {
 		const error = err as Error;
