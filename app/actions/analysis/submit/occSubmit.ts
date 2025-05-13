@@ -107,17 +107,19 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 						analysis_run_name: parsed.data.analysis_run_name
 					},
 					select: {
-						isPrivate: true
+						isPrivate: true,
+						userIds: true
 					}
 				});
 				if (!analysis) {
 					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
+				} else if (!analysis.userIds.includes(userId)) {
+					throw new Error("Unauthorized");
 				} else if (analysis.isPrivate && !parsed.data.isPrivate) {
 					throw new Error(
 						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
 					);
 				}
-				//TODO: check if user is associated with the analysis
 
 				//occurrences
 				console.log("occurrences");

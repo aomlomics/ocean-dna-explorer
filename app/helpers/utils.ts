@@ -1,7 +1,18 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
 import { TableToSchema } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
-import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodEffects } from "zod";
+import {
+	ZodObject,
+	ZodEnum,
+	ZodNumber,
+	ZodOptional,
+	ZodString,
+	ZodDate,
+	ZodLazy,
+	ZodBoolean,
+	ZodEffects,
+	ZodArray
+} from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
 
 export async function fetcher(url: string) {
@@ -35,7 +46,7 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 	} else if (field instanceof ZodBoolean) {
 		shape.type = "boolean";
 	} else if (field instanceof ZodEffects) {
-		//zod transform (booleans)
+		//zod transform (coerced booleans)
 		//TODO: verify it's actually a boolean, and not some other field that uses zod transform
 		shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
@@ -46,6 +57,10 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		}
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
+	} else if (field instanceof ZodArray) {
+		if (field._def.type instanceof ZodString) {
+			shape.type = "string[]";
+		}
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
 	} else if (field instanceof ZodLazy) {
@@ -270,8 +285,6 @@ export function parseApiQuery(
 		where?: Record<string, any>;
 		take?: number;
 	};
-
-	//TODO: use zod to validate searchParams
 
 	//selecting fields
 	if (!skip?.skipFields) {

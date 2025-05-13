@@ -28,7 +28,7 @@ export default function SubmissionEditButton({
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const [isPrivate, setIsPrivate] = useState(data.isPrivate);
 
-	omit = [...omit, "id", "isPrivate"];
+	omit = [...omit, "id", "isPrivate", "userIds"];
 
 	const shape = TableToSchema[table].shape;
 
