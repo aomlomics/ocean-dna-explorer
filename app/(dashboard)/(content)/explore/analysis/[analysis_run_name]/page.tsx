@@ -75,7 +75,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 							<OccDownloadButton
 								text={"Download Occurrence Table"}
 								filename={`${analysis_run_name}_occurrenceTable`}
-								where={{ analysis_run_name }}
+								analysis_run_name={analysis_run_name}
 							/>
 						</div>
 					</header>

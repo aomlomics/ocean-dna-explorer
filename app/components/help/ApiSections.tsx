@@ -3,6 +3,8 @@ import CodeBlock from "./CodeBlock";
 import InlineCode from "./InlineCode";
 import SchemaDisplay from "../SchemaDisplay";
 import { prisma } from "@/app/helpers/prisma";
+import ApiCodeBlock from "./ApiCodeBlock";
+import Link from "next/link";
 // Define types for our content structure
 export type Subsection = {
 	id: string; // Used for anchor links and React keys
@@ -17,15 +19,6 @@ export type Section = {
 	subsections?: Subsection[]; // Optional array of subsections
 };
 
-async function fetchWrapper(url: string) {
-	const response = await fetch(url);
-	if (!response.ok) {
-		return `An error occurred with the API call at "${url}".`;
-	}
-	return JSON.stringify(await response.json(), null, 2);
-}
-
-//TODO: do not hard-code API result examples
 export async function getApiSections() {
 	const [taxonomy, project] = await prisma.$transaction([
 		prisma.taxonomy.findFirst({
@@ -319,7 +312,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock language="json" code={await fetchWrapper(`${process.env.NEXT_PUBLIC_URL}/api/tables`)} />
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/tables`} />
 						</>
 					)
 				},
@@ -337,10 +330,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
-								language="json"
-								code={await fetchWrapper(`${process.env.NEXT_PUBLIC_URL}/api/project/relations`)}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project/relations`} />
 						</>
 					)
 				},
@@ -356,10 +346,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
-								language="json"
-								code={await fetchWrapper(`${process.env.NEXT_PUBLIC_URL}/api/primer/fields`)}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/primer/fields`} />
 						</>
 					)
 				},
@@ -380,10 +367,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
-								language="json"
-								code={await fetchWrapper(`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`)}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`} />
 						</>
 					)
 				},
@@ -404,10 +388,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
-								language="json"
-								code={await fetchWrapper(`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`)}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`} />
 						</>
 					)
 				}
@@ -554,6 +535,32 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">This example limits the results to 20 projects.</p>
 						</>
 					)
+				},
+				{
+					id: "relations-result-limiting",
+					title: "Relations Result Limiting",
+					content: (
+						<>
+							<div className="mb-4">Parameter: relationsLimit=number</div>
+
+							<p className="mb-4">
+								Limits the number of results returned when the{" "}
+								<Link className="link link-primary" href="#relations">
+									Relations
+								</Link>{" "}
+								parameter is used. This will cause an error if the relation is not a list. Must be a positive number.
+							</p>
+
+							<div className="mb-4">
+								Example URL:{" "}
+								<span className="inline-block" style={{ minWidth: "auto" }}>
+									<InlineCode code="/api/project?relations=Analyses&relationsLimit=3" />
+								</span>
+							</div>
+
+							<p className="mb-4">This example limits the list of related analyses to 3.</p>
+						</>
+					)
 				}
 			]
 		},
@@ -580,9 +587,9 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">This simple query returns just the ID and name of all projects.</p>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
+							<ApiCodeBlock
 								language="json"
-								code={await fetchWrapper(`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&limit=3`)}
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&limit=3`}
 							/>
 						</>
 					)
@@ -604,11 +611,9 @@ if (http_status(response)$category == "Success") {
 							</p>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
+							<ApiCodeBlock
 								language="json"
-								code={await fetchWrapper(
-									`${process.env.NEXT_PUBLIC_URL}/api/project?relations=analyses&relationsAllFields=true&relationsLimit=1&limit=3`
-								)}
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=analyses&relationsAllFields=true&relationsLimit=1&limit=3`}
 							/>
 						</>
 					)
@@ -631,11 +636,9 @@ if (http_status(response)$category == "Success") {
 							</p>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
+							<ApiCodeBlock
 								language="json"
-								code={await fetchWrapper(
-									`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc-4&institution=noaa`
-								)}
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc-4&institution=noaa`}
 							/>
 						</>
 					)
@@ -655,11 +658,9 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">This query combines field selection, relations, and a result limit.</p>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
+							<ApiCodeBlock
 								language="json"
-								code={await fetchWrapper(
-									`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&relations=samples&limit=3&relationsLimit=3`
-								)}
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&relations=samples&limit=3&relationsLimit=3`}
 							/>
 						</>
 					)
@@ -683,13 +684,11 @@ if (http_status(response)$category == "Success") {
 							</p>
 
 							<p className="mb-4">Example Response:</p>
-							<CodeBlock
+							<ApiCodeBlock
 								language="json"
-								code={await fetchWrapper(
-									`${process.env.NEXT_PUBLIC_URL}/api/project/${
-										project?.id || 1
-									}?fields=id,project_name&relations=samples&relationsLimit=3`
-								)}
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project/${
+									project?.id || 1
+								}?fields=id,project_name&relations=samples&relationsLimit=3`}
 							/>
 						</>
 					)

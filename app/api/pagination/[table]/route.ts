@@ -12,7 +12,6 @@ export async function GET(
 	const { table } = await params;
 
 	try {
-		//TODO: validate searchParams with zod
 		const { searchParams } = new URL(request.url);
 
 		const query = {

@@ -13,7 +13,7 @@ const routes = {
 	},
 	contribute: {
 		roles: ["admin", "moderator", "contributor"],
-		redirect: "/"
+		redirect: "/contribute"
 	}
 } as Record<Permission, { roles: Role[]; redirect: string }>;
 

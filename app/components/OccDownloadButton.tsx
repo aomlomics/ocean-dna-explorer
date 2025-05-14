@@ -1,19 +1,18 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import occDownloadAction from "../actions/occDownloadAction";
 
 export default function OccDownloadButton({
 	text,
 	filename,
-	where
+	analysis_run_name
 }: {
 	text: string;
 	filename: string;
-	where: Prisma.OccurrenceWhereInput;
+	analysis_run_name: string;
 }) {
 	async function download() {
-		const response = await occDownloadAction(where);
+		const response = await occDownloadAction(analysis_run_name);
 
 		if (response.statusMessage === "success") {
 			const url = URL.createObjectURL(response.result);

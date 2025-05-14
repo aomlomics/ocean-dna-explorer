@@ -45,10 +45,10 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.optional = true;
 	} else if (field instanceof ZodBoolean) {
 		shape.type = "boolean";
-	} else if (field instanceof ZodEffects) {
-		//zod transform (coerced booleans)
-		//TODO: verify it's actually a boolean, and not some other field that uses zod transform
-		shape.type = "boolean";
+		// } else if (field instanceof ZodEffects) {
+		// 	//zod transform (coerced booleans)
+		// 	//TODO: verify it's actually a boolean, and not some other field that uses zod transform
+		// 	shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
@@ -320,6 +320,7 @@ export function parseApiQuery(
 				  };
 
 			//relations limit
+			//TODO: (bug) breaks when relations isn't an array
 			if (!skip?.skipRelationsLimit) {
 				const relationsLimit = searchParams.get("relationsLimit");
 				if (relationsLimit) {
