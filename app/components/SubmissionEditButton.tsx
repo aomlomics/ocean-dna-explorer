@@ -28,7 +28,7 @@ export default function SubmissionEditButton({
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const [isPrivate, setIsPrivate] = useState(data.isPrivate);
 
-	omit = [...omit, "id", "isPrivate"];
+	omit = [...omit, "id", "isPrivate", "userIds"];
 
 	const shape = TableToSchema[table].shape;
 
@@ -38,6 +38,7 @@ export default function SubmissionEditButton({
 		modalRef.current?.close();
 	}
 
+	//TODO: (bug) when editing analyses, it adds many fields "changes" (that change nothing) to the edit history
 	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const formData = new FormData(e.currentTarget);

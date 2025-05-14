@@ -16,7 +16,6 @@ const formSchema = AnalysisPartialSchema.merge(
 	})
 );
 
-//TODO: test
 export default async function analysisEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("analysis edit");
 
@@ -49,10 +48,6 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 			{}
 		) as Prisma.AnalysisSelect;
 
-		// const analysisChanges = AnalysisPartialSchema.parse(
-		// 	Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-		// );
-
 		const error = await prisma.$transaction(
 			async (tx) => {
 				const analysis = await tx.analysis.findUnique({
@@ -60,7 +55,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 						analysis_run_name
 					},
 					select: {
-						userId: true,
+						userIds: true,
 						Project: true,
 						editHistory: true,
 						...analysisSelect
@@ -69,8 +64,8 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 
 				if (!analysis) {
 					return `No analysis with analysis_run_name of '${analysis_run_name}' found.`;
-				} else if (userId !== analysis.userId) {
-					return "Unauthorized action. You are not the owner of this analysis.";
+				} else if (!analysis.userIds.includes(userId)) {
+					return "Unauthorized action.";
 				}
 
 				if (analysis.Project!.isPrivate && parsed.data.isPrivate === false) {
@@ -81,9 +76,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					dateEdited: new Date(),
 					changes: Object.entries(analysisChanges).map(([field, value]) => ({
 						field,
-						oldValue: analysis[field as keyof typeof analysis]
-							? analysis[field as keyof typeof analysis]!.toString()
-							: "",
+						oldValue: analysis[field as keyof typeof analysis]?.toString() || "",
 						newValue: value ? value.toString() : ""
 					}))
 				};
@@ -190,7 +183,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 					}
 				}
 			},
-			{ timeout: 0.5 * 60 * 1000 }
+			{ timeout: 1.5 * 60 * 1000 }
 		);
 
 		if (error) {

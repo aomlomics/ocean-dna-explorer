@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, stripSecureFields } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -41,6 +41,7 @@ export async function GET(
 			const result = await prisma[lowercaseTable].findUnique(query);
 
 			if (result) {
+				stripSecureFields(result);
 				return NextResponse.json({ statusMessage: "success", result });
 			} else {
 				return NextResponse.json(

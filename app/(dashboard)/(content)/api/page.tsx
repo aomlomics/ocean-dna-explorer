@@ -1,7 +1,9 @@
-import { apiSections } from "@/app/components/help/ApiSections";
+import { getApiSections } from "@/app/components/help/ApiSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
 
-export default function API() {
+export default async function API() {
+	const apiSections = await getApiSections();
+
 	return (
 		<div className="flex min-h-screen">
 			{/* Invisible component that handles scroll tracking */}

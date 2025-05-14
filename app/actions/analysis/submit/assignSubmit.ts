@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { batchSubmit, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
 import {
@@ -21,12 +21,11 @@ import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
 import { z } from "zod";
 
 const formSchema = z.object({
-	isPrivate: ZodBooleanSchema,
+	isPrivate: ZodBooleanSchema.optional(),
 	analysis_run_name: AssignmentSchema.shape.analysis_run_name,
 	url: z.string().url()
 });
 
-//TODO: test
 export default async function assignSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -50,8 +49,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 	}
 
 	try {
-		console.log(`${parsed.data.analysis_run_name} assignment submit`);
-
 		const features = [] as Prisma.FeatureCreateManyInput[];
 		const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
 		const assignments = [] as Prisma.AssignmentCreateManyInput[];
@@ -62,9 +59,15 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 		{
 			let assignFileLines;
 			//fetch files from blob storage
-			const file = await fetch(parsed.data.url);
-			const fileText = await file.text();
-			assignFileLines = fileText.replace(/[\r]+/gm, "").split("\n");
+			const response = await fetch(parsed.data.url);
+			if (!response.ok) {
+				return {
+					statusMessage: "error",
+					error: `Assignment file for ${parsed.data.analysis_run_name} responded ${response.status}: ${response.statusText}.`
+				};
+			}
+			const text = await response.text();
+			assignFileLines = text.replace(/[\r]+/gm, "").split("\n");
 			const assignFileHeaders = assignFileLines[0].split("\t");
 
 			//iterate over each row
@@ -79,10 +82,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 					//iterate over each column
 					for (let j = 0; j < assignFileHeaders.length; j++) {
-						if (assignFileHeaders[j] === "Confidence\r") {
-							console.log("---------");
-							console.log(currentLine[j]);
-						}
 						//feature table
 						parseSchemaToObject(
 							currentLine[j],
@@ -113,7 +112,12 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 					features.push(
 						FeatureOptionalDefaultsSchema.parse(
-							{ ...featureRow, sequenceLength: featureRow.dna_sequence!.length, isPrivate: parsed.data.isPrivate },
+							{
+								...featureRow,
+								sequenceLength: featureRow.dna_sequence!.length,
+								userIds: [userId],
+								isPrivate: parsed.data.isPrivate
+							},
 							{
 								errorMap: (error, ctx) => {
 									return { message: `FeatureSchema (${parsed.data.analysis_run_name}): ${ctx.defaultError}` };
@@ -126,6 +130,7 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 						AssignmentOptionalDefaultsSchema.parse(
 							{
 								...assignmentRow,
+								userIds: [userId],
 								isPrivate: parsed.data.isPrivate,
 								analysis_run_name: parsed.data.analysis_run_name
 							},
@@ -141,7 +146,7 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 					taxonomies.push(
 						TaxonomyOptionalDefaultsSchema.parse(
-							{ ...taxonomyRow, isPrivate: parsed.data.isPrivate },
+							{ ...taxonomyRow, userIds: [userId], isPrivate: parsed.data.isPrivate },
 							{
 								errorMap: (error, ctx) => {
 									return { message: `TaxonomySchema (${parsed.data.analysis_run_name}): ${ctx.defaultError}` };
@@ -153,7 +158,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 			}
 		}
 
-		//parsing file inside transaction to reduce memory usage, since this file is large
 		await prisma.$transaction(
 			async (tx) => {
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
@@ -162,11 +166,14 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 						analysis_run_name: parsed.data.analysis_run_name
 					},
 					select: {
-						isPrivate: true
+						isPrivate: true,
+						userIds: true
 					}
 				});
 				if (!analysis) {
 					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
+				} else if (!analysis.userIds.includes(userId)) {
+					throw new Error("Unauthorized");
 				} else if (analysis.isPrivate && !parsed.data.isPrivate) {
 					throw new Error(
 						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Assignments can't be public if the associated analysis is private.`
@@ -175,46 +182,10 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 				//upload to database
 				//features
-				console.log("features");
-				await tx.feature.createMany({
-					data: features,
-					skipDuplicates: true
-				});
-				//private
-				if (!parsed.data.isPrivate) {
-					await tx.feature.updateMany({
-						where: {
-							featureid: {
-								in: features.map((feat) => feat.featureid)
-							},
-							isPrivate: true
-						},
-						data: {
-							isPrivate: false
-						}
-					});
-				}
+				await batchSubmit(tx, features, "feature", "featureid", userId, parsed.data.isPrivate);
 
 				//taxonomies
-				console.log("taxonomies");
-				await tx.taxonomy.createMany({
-					data: taxonomies,
-					skipDuplicates: true
-				});
-				//private
-				if (!parsed.data.isPrivate) {
-					await tx.taxonomy.updateMany({
-						where: {
-							taxonomy: {
-								in: taxonomies.map((taxa) => taxa.taxonomy)
-							},
-							isPrivate: true
-						},
-						data: {
-							isPrivate: false
-						}
-					});
-				}
+				await batchSubmit(tx, taxonomies, "taxonomy", "taxonomy", userId, parsed.data.isPrivate);
 
 				//assignments
 				console.log("assignments");

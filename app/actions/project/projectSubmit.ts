@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { batchSubmit, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
@@ -27,7 +27,7 @@ import { RolePermissions, ZodFileSchema, ZodBooleanSchema } from "@/types/object
 import { z } from "zod";
 
 const formSchema = z.object({
-	isPrivate: ZodBooleanSchema,
+	isPrivate: ZodBooleanSchema.optional(),
 	project: ZodFileSchema,
 	library: ZodFileSchema,
 	sample: ZodFileSchema
@@ -49,6 +49,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 	const formDataObject = Object.fromEntries(formData.entries());
 	const parsed = formSchema.safeParse(formDataObject);
 	if (!parsed.success) {
+		console.log(parsed.error.message);
 		return {
 			statusMessage: "error",
 			error: parsed.error.issues
@@ -160,7 +161,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 			project = ProjectOptionalDefaultsSchema.parse(
 				{
 					...projectCol,
-					userId,
+					userIds: [userId],
 					isPrivate,
 					userDefined,
 					editHistory: "JsonNull"
@@ -178,6 +179,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 						{
 							...p,
 							...projectCol,
+							userIds: [userId],
 							isPrivate
 						},
 						{
@@ -258,6 +260,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 										...assayRow,
 										...assayCols[assayRow.assay_name],
 										...projectCol,
+										userIds: [userId],
 										isPrivate
 									},
 									{
@@ -276,6 +279,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 										...libraryRow,
 										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
 										...projectCol,
+										userIds: [userId],
 										userDefined,
 										isPrivate
 									},
@@ -344,6 +348,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 										...sampleRow,
 										project_id: projectCol.project_id,
 										assay_name: sampToAssay[sampleRow.samp_name],
+										userIds: [userId],
 										userDefined,
 										isPrivate
 									},
@@ -370,21 +375,37 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				});
 
 				//primers
+				//features
 				console.log("primers");
-				await tx.primer.createMany({
-					data: primers,
-					skipDuplicates: true
-				});
-				//private
-				if (!isPrivate) {
-					for (let p of primers) {
-						await tx.primer.updateMany({
-							where: {
+				for (let p of primers) {
+					const primer = await tx.primer.upsert({
+						where: {
+							pcr_primer_forward_pcr_primer_reverse: {
 								pcr_primer_forward: p.pcr_primer_forward,
 								pcr_primer_reverse: p.pcr_primer_reverse
+							}
+						},
+						update: {
+							...(!isPrivate ? { isPrivate: false } : {}) //only update isPrivate if it's false
+						},
+						create: p,
+						select: {
+							userIds: true
+						}
+					});
+
+					if (!primer.userIds.includes(userId)) {
+						await tx.primer.update({
+							where: {
+								pcr_primer_forward_pcr_primer_reverse: {
+									pcr_primer_forward: p.pcr_primer_forward,
+									pcr_primer_reverse: p.pcr_primer_reverse
+								}
 							},
 							data: {
-								isPrivate: false
+								userIds: {
+									push: userId
+								}
 							}
 						});
 					}
@@ -398,7 +419,8 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 							assay_name: a.assay_name
 						},
 						select: {
-							isPrivate: true
+							isPrivate: true,
+							userIds: true
 						}
 					});
 
@@ -431,27 +453,23 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 							}
 						}
 					});
+
+					if (existingAssay && !existingAssay.userIds.includes(userId)) {
+						await tx.assay.update({
+							where: {
+								assay_name: a.assay_name
+							},
+							data: {
+								userIds: {
+									push: userId
+								}
+							}
+						});
+					}
 				}
 
 				//libraries
-				await tx.library.createMany({
-					data: libraries,
-					skipDuplicates: true
-				});
-				//private
-				if (!isPrivate) {
-					await tx.library.updateMany({
-						where: {
-							lib_id: {
-								in: libraries.map((lib) => lib.lib_id)
-							},
-							isPrivate: true
-						},
-						data: {
-							isPrivate: false
-						}
-					});
-				}
+				await batchSubmit(tx, libraries, "library", "lib_id", userId, isPrivate);
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);

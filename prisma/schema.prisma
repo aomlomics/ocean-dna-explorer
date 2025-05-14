@@ -23,5 +23,6 @@ generator zod {
     addSelectType                    = false
     writeNullishInModelTypes         = true
     createOptionalDefaultValuesTypes = true
+    createRelationValuesTypes        = true
     createPartialTypes               = true
 }

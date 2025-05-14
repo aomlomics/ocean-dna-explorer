@@ -9,11 +9,10 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 
 const formSchema = z.object({
-	isPrivate: ZodBooleanSchema,
+	isPrivate: ZodBooleanSchema.optional(),
 	file: ZodFileSchema
 });
 
-//TODO: test
 export default async function analysisSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -28,6 +27,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 	const formDataObject = Object.fromEntries(formData.entries());
 	const parsed = formSchema.safeParse(formDataObject);
 	if (!parsed.success) {
+		console.log(parsed.error.message);
 		return {
 			statusMessage: "error",
 			error: parsed.error.issues
@@ -64,7 +64,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		}
 
 		const data = AnalysisOptionalDefaultsSchema.parse(
-			{ ...analysisCol, userId: userId, isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
+			{ ...analysisCol, userIds: [userId], isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
 			{
 				errorMap: (error, ctx) => {
 					return { message: `AnalysisSchema: ${ctx.defaultError}` };

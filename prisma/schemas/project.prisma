@@ -1,9 +1,8 @@
 model Project {
     id            Int      @id @default(autoincrement())
     project_id    String   @unique
-    userId        String
+    userIds       String[]
     dateSubmitted DateTime @default(now())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate     Boolean
     /// [UserDefinedType]
     userDefined   Json?
@@ -51,9 +50,9 @@ model Project {
 }
 
 model Sample {
-    id          Int     @id @default(autoincrement())
-    samp_name   String  @unique
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id          Int      @id @default(autoincrement())
+    samp_name   String   @unique
+    userIds     String[]
     isPrivate   Boolean
     /// [UserDefinedType]
     userDefined Json?
@@ -317,9 +316,9 @@ model Sample {
 }
 
 model Assay {
-    id         Int     @id @default(autoincrement())
-    assay_name String  @unique
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id         Int      @id @default(autoincrement())
+    assay_name String   @unique
+    userIds    String[]
     isPrivate  Boolean
 
     // Relations
@@ -379,8 +378,8 @@ model Assay {
 }
 
 model Primer {
-    id        Int     @id @default(autoincrement())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id        Int      @id @default(autoincrement())
+    userIds   String[]
     isPrivate Boolean
 
     // Relations
@@ -398,9 +397,9 @@ model Primer {
 }
 
 model Library {
-    id          Int     @id @default(autoincrement())
-    lib_id      String  @unique
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id          Int      @id @default(autoincrement())
+    lib_id      String   @unique
+    userIds     String[]
     isPrivate   Boolean
     /// [UserDefinedType]
     userDefined Json?

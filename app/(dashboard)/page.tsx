@@ -18,6 +18,7 @@ export default async function Home() {
 			decimalLongitude: true
 		},
 		where: {
+			isPrivate: false,
 			AND: [
 				{
 					NOT: {

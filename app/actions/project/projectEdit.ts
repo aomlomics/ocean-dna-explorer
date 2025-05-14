@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 // import { revalidatePath } from "next/cache";
-import analysisEditAction from "../analysis/edit/analysisEdit";
+import analysisEditAction from "../analysis/analysisEdit";
 import { ProjectPartialSchema, ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
@@ -50,17 +50,13 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 			{}
 		) as Prisma.ProjectSelect;
 
-		// const projectChanges = ProjectPartialSchema.parse(
-		// 	Object.fromEntries(Array.from(formData).map(([key, value]) => [key, value === "" ? null : value]))
-		// );
-
 		const error = await prisma.$transaction(async (tx) => {
 			const project = await tx.project.findUnique({
 				where: {
 					project_id
 				},
 				select: {
-					userId: true,
+					userIds: true,
 					editHistory: true,
 					...projectSelect,
 					Analyses: {
@@ -73,8 +69,8 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 
 			if (!project) {
 				return `No project with project_id of '${project_id}' found.`;
-			} else if (userId !== project.userId) {
-				return "Unauthorized action. You are not the owner of this project.";
+			} else if (!project.userIds.includes(userId)) {
+				return "Unauthorized action.";
 			}
 
 			const newEdit = {

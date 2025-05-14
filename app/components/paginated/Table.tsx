@@ -36,6 +36,8 @@ export default function Table({
 
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, boolean>);
 
+	omit = [...omit, "isPrivate", "userIds"];
+
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
 			take: take.toString(),
@@ -107,7 +109,6 @@ export default function Table({
 	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 
 	const userDefinedHeaders = [] as string[];
-	omit = [...omit, "isPrivate"];
 	const headers = TableToEnumSchema[table]._def.values.reduce((acc: string[], head) => {
 		//remove database field
 		//displaying title header differently, so removing it

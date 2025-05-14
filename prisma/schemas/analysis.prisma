@@ -1,9 +1,8 @@
 model Analysis {
     id                Int      @id @default(autoincrement())
     analysis_run_name String   @unique
-    userId            String
+    userIds           String[]
     dateSubmitted     DateTime @default(now())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
     isPrivate         Boolean
     /// [EditHistoryType]
     editHistory       Json?
@@ -120,8 +119,8 @@ model Analysis {
 }
 
 model Occurrence {
-    id        Int     @id @default(autoincrement())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id        Int      @id @default(autoincrement())
+    userIds   String[]
     isPrivate Boolean
 
     // Relations
@@ -140,8 +139,8 @@ model Occurrence {
 }
 
 model Assignment {
-    id        Int     @id @default(autoincrement())
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id        Int      @id @default(autoincrement())
+    userIds   String[]
     isPrivate Boolean
 
     // Relations
@@ -160,9 +159,9 @@ model Assignment {
 }
 
 model Feature {
-    id        Int     @id @default(autoincrement())
-    featureid String  @unique
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id        Int      @id @default(autoincrement())
+    featureid String   @unique
+    userIds   String[]
     isPrivate Boolean
 
     // Relations
@@ -175,9 +174,9 @@ model Feature {
 }
 
 model Taxonomy {
-    id        Int     @id @default(autoincrement())
-    taxonomy  String  @unique
-    /// @zod.custom.use(z.union([z.boolean(), z.literal("true"), z.literal("false")]).transform((value) => value === true || value === "true"))
+    id        Int      @id @default(autoincrement())
+    taxonomy  String   @unique
+    userIds   String[]
     isPrivate Boolean
 
     // Relations

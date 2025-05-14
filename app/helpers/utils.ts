@@ -1,7 +1,18 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
 import { TableToSchema } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
-import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodEffects } from "zod";
+import {
+	ZodObject,
+	ZodEnum,
+	ZodNumber,
+	ZodOptional,
+	ZodString,
+	ZodDate,
+	ZodLazy,
+	ZodBoolean,
+	ZodEffects,
+	ZodArray
+} from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
 
 export async function fetcher(url: string) {
@@ -34,10 +45,10 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.optional = true;
 	} else if (field instanceof ZodBoolean) {
 		shape.type = "boolean";
-	} else if (field instanceof ZodEffects) {
-		//zod transform (booleans)
-		//TODO: verify it's actually a boolean, and not some other field that uses zod transform
-		shape.type = "boolean";
+		// } else if (field instanceof ZodEffects) {
+		// 	//zod transform (coerced booleans)
+		// 	//TODO: verify it's actually a boolean, and not some other field that uses zod transform
+		// 	shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
@@ -46,6 +57,10 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		}
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
+	} else if (field instanceof ZodArray) {
+		if (field._def.type instanceof ZodString) {
+			shape.type = "string[]";
+		}
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
 	} else if (field instanceof ZodLazy) {
@@ -251,13 +266,23 @@ export function parseApiQuery(
 	skip?: {
 		skipFields?: boolean;
 		skipRelations?: boolean;
+		skipRelationsLimit?: boolean;
 		skipIds?: boolean;
 		skipLimit?: boolean;
 		skipFilters?: boolean;
 	},
 	defaults?: {
 		fields?: Record<string, boolean>;
-		relations?: Record<string, boolean | { select: { id: true } }>;
+		relations?: Record<
+			string,
+			| true
+			| { take: number }
+			| {
+					take?: number;
+					select: { id: true };
+			  }
+		>;
+		relationsLimit?: number;
 		ids?: number[];
 		limit?: number;
 		filters?: Record<string, string | number>;
@@ -270,8 +295,6 @@ export function parseApiQuery(
 		where?: Record<string, any>;
 		take?: number;
 	};
-
-	//TODO: use zod to validate searchParams
 
 	//selecting fields
 	if (!skip?.skipFields) {
@@ -288,21 +311,47 @@ export function parseApiQuery(
 		if (relations) {
 			searchParams.delete("relations");
 
-			//include all fields in relations
-			let includeVal = { select: { id: true } } as boolean | { select: { id: true } };
-			const allFields = searchParams.get("relationsAllFields");
-			if (allFields) {
-				searchParams.delete("relationsAllFields");
-				if (allFields.toLowerCase() === "true") {
-					includeVal = true;
-				} else if (allFields.toLowerCase() !== "false") {
-					throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
+			let relationVal = true as
+				| true
+				| { take: number }
+				| {
+						take?: number;
+						select: { id: true };
+				  };
+
+			//relations limit
+			//TODO: (bug) breaks when relations isn't an array
+			if (!skip?.skipRelationsLimit) {
+				const relationsLimit = searchParams.get("relationsLimit");
+				if (relationsLimit) {
+					searchParams.delete("relationsLimit");
+					const take = parseInt(relationsLimit);
+					if (Number.isNaN(take)) {
+						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be an integer.`);
+					} else if (take < 1) {
+						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be a positive integer.`);
+					}
+
+					relationVal = { take };
 				}
+			}
+
+			//include all fields in relations
+			const allFields = searchParams.get("relationsAllFields");
+			searchParams.delete("relationsAllFields");
+			if (!allFields || allFields.toLowerCase() === "false") {
+				if (typeof relationVal === "boolean") {
+					relationVal = { select: { id: true } };
+				} else {
+					relationVal = { take: relationVal.take, select: { id: true } };
+				}
+			} else if (allFields.toLowerCase() !== "true") {
+				throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
 			}
 
 			const relsObj = relations
 				.split(",")
-				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
+				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: relationVal }), {});
 			if (query.select) {
 				query.select = { ...query.select, ...relsObj };
 			} else {
@@ -328,7 +377,6 @@ export function parseApiQuery(
 		}
 
 		query.where = {
-			isPrivate: false,
 			id: {
 				in: parsedIds
 			}
@@ -392,10 +440,8 @@ export function parseApiQuery(
 					}
 				}
 			});
-
-			query.where.isPrivate = false;
 		} else if (defaults?.filters) {
-			query.where = { ...defaults.filters, isPrivate: false };
+			query.where = defaults.filters;
 		}
 	}
 

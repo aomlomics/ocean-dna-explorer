@@ -1,24 +1,25 @@
 "use server";
 
-import { Occurrence, Prisma } from "@/app/generated/prisma/client";
+import { Occurrence } from "@/app/generated/prisma/client";
 import { NetworkPacket } from "@/types/globals";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "../helpers/prisma";
 
-export default async function occDownloadAction(where: Prisma.OccurrenceWhereInput): Promise<NetworkPacket> {
+export default async function occDownloadAction(analysis_run_name: string): Promise<NetworkPacket> {
 	console.log("occurrence download");
 
-	const { userId } = await auth();
-	if (!userId) {
-		return { statusMessage: "error", error: "Unauthorized" };
-	}
-
-	if (typeof where !== "object") {
-		return { statusMessage: "error", error: "Argument must be object" };
+	if (typeof analysis_run_name !== "string") {
+		return { statusMessage: "error", error: "Argument must be string" };
 	}
 
 	try {
-		const result = await prisma.occurrence.findMany({ where });
+		const result = await prisma.occurrence.findMany({
+			where: {
+				analysis_run_name
+			}
+		});
+		if (!result.length) {
+			return { statusMessage: "error", error: "No results found" };
+		}
 
 		const occurrences = {} as Record<string, Record<string, number>>;
 		const featAbundances = {} as Record<string, number>;

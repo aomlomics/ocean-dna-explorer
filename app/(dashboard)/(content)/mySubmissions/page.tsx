@@ -1,13 +1,13 @@
 import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
-import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
-import projectDeleteAction from "@/app/actions/analysis/delete/projectDelete";
+import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import projectDeleteAction from "@/app/actions/project/projectDelete";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import SubmissionEditButton from "@/app/components/SubmissionEditButton";
-import analysisEditAction from "@/app/actions/analysis/edit/analysisEdit";
+import analysisEditAction from "@/app/actions/analysis/analysisEdit";
 import projectEditAction from "@/app/actions/project/projectEdit";
 
 export default async function MySubmissions() {
@@ -19,21 +19,25 @@ export default async function MySubmissions() {
 	const [projects, analyses] = await prisma.$transaction([
 		prisma.project.findMany({
 			where: {
-				userId
+				userIds: {
+					has: userId
+				}
 			},
 			omit: {
 				editHistory: true,
-				userId: true,
+				userIds: true,
 				dateSubmitted: true
 			}
 		}),
 		prisma.analysis.findMany({
 			where: {
-				userId
+				userIds: {
+					has: userId
+				}
 			},
 			omit: {
 				editHistory: true,
-				userId: true,
+				userIds: true,
 				dateSubmitted: true
 			}
 		})

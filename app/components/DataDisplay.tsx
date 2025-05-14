@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ReactNode } from "react";
 
 export default function DataDisplay({ data, omit = [] }: { data: Record<string, any>; omit?: (keyof typeof data)[] }) {
-	omit = [...omit, "id", "userId", "isPrivate"];
+	omit = [...omit, "id", "userIds", "isPrivate"];
 
 	return (
 		<div className="overflow-x-hidden overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
