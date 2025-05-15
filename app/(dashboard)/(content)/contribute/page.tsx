@@ -1,11 +1,32 @@
-import roleApplicationAction from "@/app/actions/roleApplication";
-import { auth } from "@clerk/nextjs/server";
+"use client";
 
-export default async function Contribute() {
-	const { sessionClaims } = await auth();
+import roleApplicationAction from "@/app/actions/roleApplication";
+import { useAuth } from "@clerk/nextjs";
+import { FormEvent, useRef, useState } from "react";
+
+export default function Contribute() {
+	const modalRef = useRef<HTMLDialogElement>(null);
+	const [loading, setLoading] = useState(false);
+	const [result, setResult] = useState("");
+
+	const { sessionClaims } = useAuth();
 	const roleApplication = sessionClaims?.metadata.roleApplication;
 
-	const roleApplicationActionWithRole = roleApplicationAction.bind(null, "contributor");
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setLoading(true);
+		modalRef.current?.showModal();
+
+		const formData = new FormData(event.currentTarget);
+		const response = await roleApplicationAction("contributor", (formData.get("description") as string) || undefined);
+		if (response.statusMessage === "error") {
+			setResult(response.error);
+		} else if (response.statusMessage === "success") {
+			setResult(response.result || "Application submitted successfully!");
+		}
+
+		setLoading(false);
+	}
 
 	return (
 		<main className="max-w-7xl mx-auto p-6">
@@ -18,10 +39,13 @@ export default async function Contribute() {
 						Are you looking to contribute your data to Ocean DNA Explorer's growing collection? Sign up to be a
 						Contributor now!
 					</p>
-					{roleApplication ? (
-						<div>Thanks for applying!</div>
+					{roleApplication || result ? (
+						<div>
+							Thanks for applying! We will get to your application as soon as possible and notify you when you have been
+							accepted.
+						</div>
 					) : (
-						<form className="flex flex-col gap-5" action={roleApplicationActionWithRole}>
+						<form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 							<fieldset className="fieldset">
 								<legend className="fieldset-legend">Why would you like to contribute?</legend>
 								<textarea name="description" className="textarea textarea-primary h-24 w-full"></textarea>
@@ -32,6 +56,30 @@ export default async function Contribute() {
 					)}
 				</div>
 			</div>
+
+			<dialog ref={modalRef} className="modal">
+				<div className="modal-box">
+					<button
+						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+						onClick={(e) => {
+							e.preventDefault();
+							modalRef.current?.close();
+						}}
+					>
+						✕
+					</button>
+					{loading ? (
+						<div className="w-full flex justify-center">
+							<span className="loading loading-spinner loading-xl"></span>
+						</div>
+					) : (
+						<div>{result}</div>
+					)}
+				</div>
+				<form method="dialog" className="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
 		</main>
 	);
 }
