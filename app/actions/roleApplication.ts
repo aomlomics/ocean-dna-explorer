@@ -16,7 +16,7 @@ export default async function roleApplicationAction(role: Role, description?: st
 		return { statusMessage: "error", error: "Invalid role." };
 	}
 
-	if (typeof description !== "string") {
+	if (description && typeof description !== "string") {
 		return { statusMessage: "error", error: "Description must be string." };
 	}
 

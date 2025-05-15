@@ -6,6 +6,9 @@ import { FormEvent, useRef, useState } from "react";
 
 export default function Contribute() {
 	const modalRef = useRef<HTMLDialogElement>(null);
+	const modalXRef = useRef<HTMLButtonElement>(null);
+	const modalClickOffRef = useRef<HTMLButtonElement>(null);
+
 	const [loading, setLoading] = useState(false);
 	const [result, setResult] = useState("");
 
@@ -25,6 +28,8 @@ export default function Contribute() {
 			setResult(response.result || "Application submitted successfully!");
 		}
 
+		modalClickOffRef.current!.disabled = false;
+		modalXRef.current!.disabled = false;
 		setLoading(false);
 	}
 
@@ -60,6 +65,8 @@ export default function Contribute() {
 			<dialog ref={modalRef} className="modal">
 				<div className="modal-box">
 					<button
+						ref={modalXRef}
+						disabled
 						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 						onClick={(e) => {
 							e.preventDefault();
@@ -77,7 +84,9 @@ export default function Contribute() {
 					)}
 				</div>
 				<form method="dialog" className="modal-backdrop">
-					<button>close</button>
+					<button ref={modalClickOffRef} disabled>
+						close
+					</button>
 				</form>
 			</dialog>
 		</main>
