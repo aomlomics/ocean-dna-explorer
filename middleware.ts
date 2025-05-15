@@ -1,21 +1,21 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { Permission, Role } from "./types/globals";
+import { notFound } from "next/navigation";
 
-const isProtectedRoute = createRouteMatcher(["/mySubmissions(.*)", "/admin(.*)", "/submit(.*)"]);
+const isProtectedRoute = createRouteMatcher(["/mySubmissions(.*)", "/admin(.*)", "/submit(.*)", "/contribute(.*)"]);
 const isManageUsersRoute = createRouteMatcher(["/admin(.*)"]);
 const isContributeRoute = createRouteMatcher(["/submit(.*)"]);
 
 const routes = {
 	manageUsers: {
-		roles: ["admin", "moderator"],
-		redirect: "/"
+		roles: ["admin", "moderator"]
 	},
 	contribute: {
 		roles: ["admin", "moderator", "contributor"],
 		redirect: "/contribute"
 	}
-} as Record<Permission, { roles: Role[]; redirect: string }>;
+} as Record<Permission, { roles: Role[]; redirect?: string }>;
 
 export default clerkMiddleware(async (auth, req) => {
 	if (isProtectedRoute(req)) {
@@ -27,12 +27,20 @@ export default clerkMiddleware(async (auth, req) => {
 
 			if (isManageUsersRoute(req) && (!role || !routes.manageUsers.roles.includes(role))) {
 				//accessing manageUsers routes without proper permissions
-				const url = new URL(routes.manageUsers.redirect, req.url);
-				return NextResponse.redirect(url);
+				if (routes.manageUsers.redirect) {
+					const url = new URL(routes.manageUsers.redirect, req.url);
+					return NextResponse.redirect(url);
+				} else {
+					notFound();
+				}
 			} else if (isContributeRoute(req) && (!role || !routes.contribute.roles.includes(role))) {
 				//accessing contribute routes without proper permissions
-				const url = new URL(routes.contribute.redirect, req.url);
-				return NextResponse.redirect(url);
+				if (routes.contribute.redirect) {
+					const url = new URL(routes.contribute.redirect, req.url);
+					return NextResponse.redirect(url);
+				} else {
+					notFound();
+				}
 			}
 		} else {
 			//not signed in

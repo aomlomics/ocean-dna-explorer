@@ -50,6 +50,7 @@ declare global {
 	interface CustomJwtSessionClaims {
 		metadata: {
 			role?: Role;
+			roleApplication?: Role;
 		};
 	}
 }

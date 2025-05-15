@@ -43,13 +43,13 @@ async function editRole(id: string, newRole: Role | null): Promise<NetworkPacket
 	}
 }
 
-export async function setRole(formData: FormData) {
+export async function setRoleAction(formData: FormData) {
 	const id = formData.get("id") as string;
 	const role = formData.get("role") as Role;
 	await editRole(id, role);
 }
 
-export async function removeRole(formData: FormData) {
+export async function removeRoleAction(formData: FormData) {
 	const id = formData.get("id") as string;
 	await editRole(id, null);
 }
