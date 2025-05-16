@@ -52,7 +52,7 @@ export default function Contribute() {
 					) : (
 						<form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Why would you like to contribute?</legend>
+								<legend className="fieldset-legend">Tell us about your data</legend>
 								<textarea name="description" className="textarea textarea-primary h-24 w-full"></textarea>
 								<div className="label">Optional</div>
 							</fieldset>
