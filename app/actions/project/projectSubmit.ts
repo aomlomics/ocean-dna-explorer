@@ -87,7 +87,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 			//iterate over each row
 			for (let i = 1; i < projectFileLines.length; i++) {
 				const currentLine = projectFileLines[i].split("\t");
-				const field = currentLine[projectFileHeaders.indexOf("field_name")];
+				const field = currentLine[projectFileHeaders.indexOf("term_name")];
 				const value = currentLine[projectFileHeaders.indexOf("project_level")];
 
 				//User defined
