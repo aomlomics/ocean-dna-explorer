@@ -1,55 +1,87 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
+import { batchSubmit, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
-import {
-	AnalysisOptionalDefaultsSchema,
-	AnalysisScalarFieldEnumSchema,
-	AssayOptionalDefaultsSchema,
-	AssayPartial,
-	AssayScalarFieldEnumSchema,
-	LibraryOptionalDefaultsSchema,
-	LibraryPartial,
-	LibraryScalarFieldEnumSchema,
-	SampleOptionalDefaultsSchema,
-	SamplePartial,
-	SampleScalarFieldEnumSchema,
-	ProjectOptionalDefaultsSchema,
-	ProjectScalarFieldEnumSchema
-} from "@/prisma/generated/zod";
-import { SubmitActionReturn } from "@/types/types";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
+import {
+	ProjectOptionalDefaultsSchema,
+	ProjectScalarFieldEnumSchema,
+	PrimerOptionalDefaultsSchema,
+	PrimerScalarFieldEnumSchema,
+	AssayOptionalDefaultsSchema,
+	AssayScalarFieldEnumSchema,
+	LibraryOptionalDefaultsSchema,
+	LibraryScalarFieldEnumSchema,
+	AnalysisOptionalDefaultsSchema,
+	AnalysisScalarFieldEnumSchema,
+	AssayPartial,
+	LibraryPartial,
+	SamplePartial,
+	SampleOptionalDefaultsSchema,
+	SampleScalarFieldEnumSchema
+} from "@/prisma/generated/zod";
+import { NetworkPacket } from "@/types/globals";
+import { RolePermissions, ZodFileSchema, ZodBooleanSchema } from "@/types/objects";
+import { z } from "zod";
 
-//https://clerk.com/docs/organizations/verify-user-permissions
-export default async function projectSubmitAction(formData: FormData): SubmitActionReturn {
+const formSchema = z.object({
+	isPrivate: ZodBooleanSchema.optional(),
+	project: ZodFileSchema,
+	library: ZodFileSchema,
+	sample: ZodFileSchema
+});
+
+export default async function projectSubmitAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project submit");
 
-	const { userId } = await auth();
-	if (!userId) {
-		return { message: "Error", error: "Unauthorized" };
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
+		return { statusMessage: "error", error: "Unauthorized" };
+	}
+
+	if (!(formData instanceof FormData)) {
+		return { statusMessage: "error", error: "Argument must be FormData" };
+	}
+	const formDataObject = Object.fromEntries(formData.entries());
+	const parsed = formSchema.safeParse(formDataObject);
+	if (!parsed.success) {
+		console.log(parsed.error.message);
+		return {
+			statusMessage: "error",
+			error: parsed.error.issues
+				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
+				: "Invalid data structure."
+		};
 	}
 
 	try {
 		let project = {} as Prisma.ProjectCreateInput;
+		const primers = [] as Prisma.PrimerCreateManyInput[];
 		const assays = {} as Record<string, Prisma.AssayCreateManyInput>;
 		const libraries = [] as Prisma.LibraryCreateManyInput[];
 		const samples = [] as Prisma.SampleCreateManyInput[];
 
 		const projectCol = {} as Record<string, string>;
+		const primerCols = {} as Record<string, Record<string, string>>;
 		const assayCols = {} as Record<string, Record<string, string>>;
 		const libraryCols = {} as Record<string, Record<string, string>>;
 
 		const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
 		const libToAssay = {} as Record<string, string>; //object to relate libraries to their assay_name values
 
+		const isPrivate = parsed.data.isPrivate ? true : false;
+
 		//Project file
 		console.log("project file");
 		//code block to force garbage collection
 		{
 			//parse file
-			const projectFileLines = (await (formData.get("project") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			//TODO: try using papaparse or csv-parse instead
+			const projectFileLines = (await parsed.data.project.text()).replace(/[\r]+/gm, "").split("\n");
 			const projectFileHeaders = projectFileLines[0].split("\t");
 			const userDefined = {} as PrismaJson.UserDefinedType;
 			//iterate over each row
@@ -62,9 +94,14 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 				if (currentLine[projectFileHeaders.indexOf("section")] === "User defined") {
 					userDefined[field] = value;
 				} else {
+					// TODO: move "if (fieldOptionsEnum.options.includes(fieldName))" from parseSchemaToObject into here as an if-else-if block to allow for error handling if NONE of the schemas have this field
 					//Project Level
 					//project table
 					parseSchemaToObject(value, field, projectCol, ProjectOptionalDefaultsSchema, ProjectScalarFieldEnumSchema);
+
+					//primer table
+					parseSchemaToObject(value, field, projectCol, PrimerOptionalDefaultsSchema, PrimerScalarFieldEnumSchema);
+
 					//assay table
 					parseSchemaToObject(value, field, projectCol, AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema);
 
@@ -80,6 +117,18 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
 						//and whose values are an object representing a single "row"
 						if (currentLine[i]) {
+							//Primers
+							if (!primerCols[projectFileHeaders[i]]) {
+								primerCols[projectFileHeaders[i]] = {};
+							}
+							parseSchemaToObject(
+								currentLine[i],
+								field,
+								primerCols[projectFileHeaders[i]],
+								PrimerOptionalDefaultsSchema,
+								PrimerScalarFieldEnumSchema
+							);
+
 							//Assays
 							if (!assayCols[projectFileHeaders[i]]) {
 								assayCols[projectFileHeaders[i]] = {};
@@ -110,13 +159,37 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 
 			//@ts-ignore issue with Json database type
 			project = ProjectOptionalDefaultsSchema.parse(
-				{ ...projectCol, userId: userId, userDefined, editHistory: "JsonNull" },
+				{
+					...projectCol,
+					userIds: [userId],
+					isPrivate,
+					userDefined,
+					editHistory: "JsonNull"
+				},
 				{
 					errorMap: (error, ctx) => {
 						return { message: `ProjectSchema: ${ctx.defaultError}` };
 					}
 				}
 			);
+
+			for (let p of Object.values(primerCols)) {
+				primers.push(
+					PrimerOptionalDefaultsSchema.parse(
+						{
+							...p,
+							...projectCol,
+							userIds: [userId],
+							isPrivate
+						},
+						{
+							errorMap: (error, ctx) => {
+								return { message: `PrimerSchema: ${ctx.defaultError}` };
+							}
+						}
+					)
+				);
+			}
 		}
 
 		//Library file
@@ -124,7 +197,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 		//code block to force garbage collection
 		{
 			//parse file
-			const libraryFileLines = (await (formData.get("library") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			const libraryFileLines = (await parsed.data.library.text()).replace(/[\r]+/gm, "").split("\n");
 			let sectionRow = null as null | string[];
 			let libraryFileHeaders = null as null | string[];
 			//iterate over each row
@@ -186,7 +259,9 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 										//least specific overrides most specific
 										...assayRow,
 										...assayCols[assayRow.assay_name],
-										...projectCol
+										...projectCol,
+										userIds: [userId],
+										isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -204,7 +279,9 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 										...libraryRow,
 										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
 										...projectCol,
-										userDefined
+										userIds: [userId],
+										userDefined,
+										isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -225,7 +302,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 		console.log("sample file");
 		//code block to force garbage collection
 		{
-			const sampleFileLines = (await (formData.get("sample") as File).text()).replace(/[\r]+/gm, "").split("\n");
+			const sampleFileLines = (await parsed.data.sample.text()).replace(/[\r]+/gm, "").split("\n");
 			let sectionRow = null as null | string[];
 			let sampleFileHeaders = null as null | string[];
 			//iterate over each row
@@ -251,7 +328,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 							if (sectionRow[j] === "User defined") {
 								userDefined[sampleFileHeaders[j]] = currentLine[j];
 							} else {
-								//assay table
+								//sample table
 								parseSchemaToObject(
 									currentLine[j],
 									sampleFileHeaders[j],
@@ -271,7 +348,9 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 										...sampleRow,
 										project_id: projectCol.project_id,
 										assay_name: sampToAssay[sampleRow.samp_name],
-										userDefined
+										userIds: [userId],
+										userDefined,
+										isPrivate
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -295,9 +374,56 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 					data: project
 				});
 
+				//primers
+				//features
+				console.log("primers");
+				for (let p of primers) {
+					const primer = await tx.primer.upsert({
+						where: {
+							pcr_primer_forward_pcr_primer_reverse: {
+								pcr_primer_forward: p.pcr_primer_forward,
+								pcr_primer_reverse: p.pcr_primer_reverse
+							}
+						},
+						update: {
+							...(!isPrivate ? { isPrivate: false } : {}) //only update isPrivate if it's false
+						},
+						create: p,
+						select: {
+							userIds: true
+						}
+					});
+
+					if (!primer.userIds.includes(userId)) {
+						await tx.primer.update({
+							where: {
+								pcr_primer_forward_pcr_primer_reverse: {
+									pcr_primer_forward: p.pcr_primer_forward,
+									pcr_primer_reverse: p.pcr_primer_reverse
+								}
+							},
+							data: {
+								userIds: {
+									push: userId
+								}
+							}
+						});
+					}
+				}
+
 				//assays and samples
 				console.log("assays and samples");
 				for (let a of Object.values(assays)) {
+					const existingAssay = await tx.assay.findUnique({
+						where: {
+							assay_name: a.assay_name
+						},
+						select: {
+							isPrivate: true,
+							userIds: true
+						}
+					});
+
 					const reducedSamples = samples.reduce((filtered, samp) => {
 						if (sampToAssay[samp.samp_name] === a.assay_name) {
 							filtered.push({
@@ -315,6 +441,7 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 							assay_name: a.assay_name
 						},
 						update: {
+							isPrivate: isPrivate && existingAssay && existingAssay.isPrivate ? true : false,
 							Samples: {
 								connectOrCreate: reducedSamples
 							}
@@ -326,22 +453,32 @@ export default async function projectSubmitAction(formData: FormData): SubmitAct
 							}
 						}
 					});
+
+					if (existingAssay && !existingAssay.userIds.includes(userId)) {
+						await tx.assay.update({
+							where: {
+								assay_name: a.assay_name
+							},
+							data: {
+								userIds: {
+									push: userId
+								}
+							}
+						});
+					}
 				}
 
 				//libraries
-				await tx.library.createMany({
-					data: libraries,
-					skipDuplicates: true
-				});
+				await batchSubmit(tx, libraries, "library", "lib_id", userId, isPrivate);
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
 		revalidatePath("/explore");
-		return { message: "Success" };
+		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);
-		return { message: "Error", error: error.message };
+		return { statusMessage: "error", error: error.message };
 	}
 }

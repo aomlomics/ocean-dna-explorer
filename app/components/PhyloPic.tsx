@@ -1,4 +1,4 @@
-import { Taxonomy } from "@prisma/client";
+import { Taxonomy } from "@/app/generated/prisma/client";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
 export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {

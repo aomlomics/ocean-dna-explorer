@@ -1,6 +1,6 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
@@ -33,6 +33,7 @@ export default function Pagination({
 		take: take.toString(),
 		page: page.toString()
 	});
+
 	let whereQuery = {} as Record<string, string>;
 	if (where) {
 		whereQuery = { ...where };
@@ -41,9 +42,11 @@ export default function Pagination({
 		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
 	}
 	query.set("where", JSON.stringify(whereQuery));
+
 	if (relCounts) {
 		query.set("relCounts", relCounts.toString());
 	}
+
 	const { data, error, isLoading } = useSWR(`/api/pagination/${table}?${query.toString()}`, fetcher, {
 		keepPreviousData: true
 	});

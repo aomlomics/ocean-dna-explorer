@@ -1,7 +1,8 @@
 "use client";
 
-import { DeadValueEnum, TableToEnumSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
+import { DeadValueEnum } from "@/types/enums";
+import { TableToEnumSchema } from "@/types/objects";
+import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useState } from "react";
 import useSWR, { preload } from "swr";
 import { useDebouncedCallback } from "use-debounce";
@@ -13,11 +14,13 @@ import { SampleSchema } from "@/prisma/generated/zod";
 export default function Table({
 	table,
 	title,
-	where
+	where,
+	omit = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	title: string;
 	where?: Record<string, any>;
+	omit?: string[];
 }) {
 	const [take, setTake] = useState(50);
 	const [page, setPage] = useState(1);
@@ -32,6 +35,8 @@ export default function Table({
 	}, 300);
 
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, boolean>);
+
+	omit = [...omit, "isPrivate", "userIds"];
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
@@ -112,12 +117,12 @@ export default function Table({
 		}
 
 		//remove all headers where the value is assumed to be the same
-		if (where) {
-			for (const h in where) {
-				if (head === h) {
-					return acc;
-				}
-			}
+		if (where && Object.keys(where).includes(head)) {
+			return acc;
+		}
+
+		if (omit.includes(head)) {
+			return acc;
 		}
 
 		//split user defined fields into individual headers
@@ -180,7 +185,7 @@ export default function Table({
 												setHeadersFilter({});
 											} else {
 												setHeadersFilter(
-													headers.reduce((acc, head) => {
+													headers.reduce((acc: Record<string, true>, head) => {
 														if (!headersFilter[head]) {
 															return { ...acc, [head]: true };
 														} else {

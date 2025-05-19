@@ -1,53 +1,67 @@
 "use client";
 
-import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
-import { ReactNode, useRef } from "react";
+import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
+import { TableToSchema } from "@/types/objects";
+import { Prisma } from "@/app/generated/prisma/client";
+import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
 import InfoButton from "./InfoButton";
-import { EditAction } from "@/types/types";
+import { Action } from "@/types/globals";
 
 export default function SubmissionEditButton({
 	table,
 	titleField,
 	data,
 	action,
-	noDisplay,
-	noEdit
+	omit = [],
+	disabled,
+	privateToggleDescription
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleField: string;
 	data: Record<string, any>;
-	action: EditAction;
-	noDisplay?: string[];
-	noEdit?: string[];
+	action: Action;
+	omit?: string[];
+	disabled?: string[];
+	privateToggleDescription?: string;
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
+	const [isPrivate, setIsPrivate] = useState(data.isPrivate);
+
+	omit = [...omit, "id", "isPrivate", "userIds"];
 
 	const shape = TableToSchema[table].shape;
 
-	//TODO: add x button to modal
 	function onClose(e: React.MouseEvent<HTMLButtonElement>) {
 		e.preventDefault();
 		modalRef.current?.close();
 	}
 
+	//TODO: (bug) when editing analyses, it adds many fields "changes" (that change nothing) to the edit history
 	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		const formData = new FormData(e.currentTarget);
 
-		//check if data has been changed
 		const submitFormData = new FormData();
+
+		//check if isPrivate has been changed
+		if (data.isPrivate !== isPrivate) {
+			submitFormData.append("isPrivate", isPrivate);
+		}
+
+		//check if data has been changed
+		const userDefined = {} as PrismaJson.UserDefinedType;
 		for (const [field, value] of formData.entries()) {
-			if (value && !(value instanceof File)) {
+			if (!(value instanceof File)) {
 				const type = getZodType(shape[field as keyof typeof shape]).type;
 
 				if (field.startsWith("userDefined")) {
 					const userDefinedField = field.split(":")[1];
 					if (data.userDefined[userDefinedField] && value != data.userDefined[userDefinedField]) {
-						submitFormData.append(field, value);
+						// submitFormData.append(field, value);
+						userDefined[field] = value;
 					}
-				} else if (data[field]) {
+				} else {
 					if (type === "boolean" && value in DeadBooleanEnum) {
 						if (DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] != data[field]) {
 							submitFormData.append(field, DeadBooleanEnum[value as keyof typeof DeadBooleanEnum]);
@@ -58,12 +72,15 @@ export default function SubmissionEditButton({
 								//@ts-ignore Typescript thinks you can only index enums with a number, value is a string, this works fine
 								submitFormData.append(field, DeadValueEnum[value]);
 							}
-						} else if (value != data[field]) {
+						} else if (value !== data[field] && !(value === "" && data[field] === null)) {
 							submitFormData.append(field, value);
 						}
 					}
 				}
 			}
+		}
+		if (Object.keys(userDefined).length !== 0) {
+			submitFormData.append("userDefined", JSON.stringify(userDefined));
 		}
 
 		if (submitFormData.entries().next().done) {
@@ -74,14 +91,10 @@ export default function SubmissionEditButton({
 
 		submitFormData.append("target", data[titleField]);
 
-		for (const [k, v] of submitFormData.entries()) {
-			console.log(k, v);
-		}
-
 		try {
 			//TODO: display loading
 			const result = await action(submitFormData);
-			if (result.message === "Success") {
+			if (result.statusMessage === "success") {
 				console.log("success");
 				modalRef.current?.close();
 			} else {
@@ -104,10 +117,25 @@ export default function SubmissionEditButton({
 			</button>
 			<dialog ref={modalRef} className="modal">
 				<div className="modal-box">
+					<button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>
+						✕
+					</button>
 					<form onSubmit={onSubmit} className="flex flex-col gap-3">
 						<h2>Edit {table}</h2>
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend flex gap-2">
+								<h2>isPrivate</h2>
+								{privateToggleDescription && <InfoButton infoText={privateToggleDescription} dir="tooltip-right" />}
+							</legend>
+							<input
+								type="checkbox"
+								className="checkbox checkbox-primary"
+								checked={isPrivate}
+								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
+							/>
+						</fieldset>
 						{Object.entries(data).reduce((acc, [field, value]) => {
-							if (noDisplay && !noDisplay.includes(field)) {
+							if (!omit.includes(field)) {
 								const type = getZodType(shape[field as keyof typeof shape]).type;
 								if (!type) {
 									throw new Error(`Could not find type of '${field}'.`);
@@ -124,7 +152,7 @@ export default function SubmissionEditButton({
 												<textarea
 													name={field}
 													className="textarea textarea-primary w-full"
-													disabled={noEdit && noEdit.includes(field)}
+													disabled={disabled && disabled.includes(field)}
 													defaultValue={value}
 												/>
 											) : (
@@ -132,7 +160,7 @@ export default function SubmissionEditButton({
 													name={field}
 													type="text"
 													className="input input-primary w-full"
-													disabled={noEdit && noEdit.includes(field)}
+													disabled={disabled && disabled.includes(field)}
 													defaultValue={value}
 												/>
 											)}
@@ -149,7 +177,7 @@ export default function SubmissionEditButton({
 												name={field}
 												type="text"
 												className="input input-primary w-full"
-												disabled={noEdit && noEdit.includes(field)}
+												disabled={disabled && disabled.includes(field)}
 												defaultValue={
 													value in DeadBooleanEnum ? DeadBooleanEnum[value as keyof typeof DeadBooleanEnum] : value
 												}
@@ -167,7 +195,7 @@ export default function SubmissionEditButton({
 												name={field}
 												type="text"
 												className="input input-primary w-full"
-												disabled={noEdit && noEdit.includes(field)}
+												disabled={disabled && disabled.includes(field)}
 												defaultValue={value in DeadValueEnum ? DeadValueEnum[value] : value}
 											/>
 										</fieldset>
@@ -184,7 +212,7 @@ export default function SubmissionEditButton({
 									// 			name={field}
 									// 			type="datetime-local"
 									// 			className="input input-primary w-full"
-									// 			disabled={noEdit && noEdit.includes(field)}
+									// 			disabled={disabled && disabled.includes(field)}
 									// 			defaultValue={value}
 									// 		/>
 									// 	</fieldset>
@@ -193,7 +221,7 @@ export default function SubmissionEditButton({
 									//TODO: add indicator for user defined section
 									for (const userDefinedField in value) {
 										acc.push(
-											<fieldset key={userDefinedField} className="fieldset">
+											<fieldset key={userDefinedField + "userDefined"} className="fieldset">
 												<legend className="fieldset-legend flex gap-2">
 													<h2>{userDefinedField}</h2>
 													<InfoButton infoText="string" />
@@ -202,7 +230,7 @@ export default function SubmissionEditButton({
 													<textarea
 														name={"userDefined:" + userDefinedField}
 														className="textarea textarea-primary w-full"
-														disabled={noEdit && noEdit.includes(userDefinedField)}
+														disabled={disabled && disabled.includes(userDefinedField)}
 														defaultValue={value[userDefinedField]}
 													/>
 												) : (
@@ -210,7 +238,7 @@ export default function SubmissionEditButton({
 														name={"userDefined:" + userDefinedField}
 														type="text"
 														className="input input-primary w-full"
-														disabled={noEdit && noEdit.includes(userDefinedField)}
+														disabled={disabled && disabled.includes(userDefinedField)}
 														defaultValue={value[userDefinedField]}
 													/>
 												)}

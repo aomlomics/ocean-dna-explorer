@@ -18,6 +18,7 @@ export default async function Home() {
 			decimalLongitude: true
 		},
 		where: {
+			isPrivate: false,
 			AND: [
 				{
 					NOT: {
@@ -37,13 +38,13 @@ export default async function Home() {
 		}
 	});
 
-	const uniqueProjects = samples.reduce((acc, a) => {
+	const uniqueProjects = samples.reduce((acc: string[], a) => {
 		if (!acc.includes(a.project_id)) {
 			acc.push(a.project_id);
 		}
 
 		return acc;
-	}, [] as string[]);
+	}, []);
 	const colors = randomColors(uniqueProjects.length);
 	const projectColors = {} as Record<string, string>;
 	for (let i = 0; i < colors.length; i++) {
@@ -70,7 +71,7 @@ export default async function Home() {
 
 							<div className="text-base-content -mt-1">
 								<span className="block text-[clamp(1.5rem,4.5vw,3.75rem)] font-light leading-tight mb-1">
-									to the <span className="text-primary font-light">NOAA Ocean DNA Explorer</span>
+									to the <span className="text-primary font-light">Ocean DNA Explorer</span>
 								</span>
 
 								<div className="text-[clamp(1rem,2.2vw,1.9rem)] leading-snug text-base-content max-w-3xl mb-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import { DeleteAction } from "@/types/types";
+import { Action } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";
@@ -28,7 +28,7 @@ export default function SubmissionDeleteButton({
 }: {
 	field: string;
 	value: string;
-	action: DeleteAction;
+	action: Action;
 	associatedAnalyses?: { analysis_run_name: string }[];
 }) {
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -48,12 +48,10 @@ export default function SubmissionDeleteButton({
 	const executeDelete = async () => {
 		setIsDeleting(true);
 		setShowModal(false);
-		const formData = new FormData();
-		formData.append("del", JSON.stringify({ [field]: value }));
 
 		try {
-			const result = await action(formData);
-			if (result.message === "Success") {
+			const result = await action(value);
+			if (result.statusMessage === "success") {
 				setIsDeleted(true);
 				setToast({ message: "Successfully deleted", type: "success" });
 				setTimeout(() => {

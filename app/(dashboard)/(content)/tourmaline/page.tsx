@@ -1,5 +1,6 @@
+import UnderConstruction from "@/app/components/UnderConstruction";
 import Link from "next/link";
-import TourmalineForm from "@/app/components/tourmalineForm/TourmalineForm";
+// import TourmalineForm from "@/app/components/tourmalineForm/TourmalineForm";
 
 export default function Tourmaline() {
 	return (
@@ -24,7 +25,8 @@ export default function Tourmaline() {
 			</div>
 
 			<div className="mb-4 flex justify-center z-30 bg-base-200 rounded-3xl p-2 w-full max-w-5xl">
-				<TourmalineForm />
+				{/* <TourmalineForm /> */}
+				<UnderConstruction />
 			</div>
 		</div>
 	);

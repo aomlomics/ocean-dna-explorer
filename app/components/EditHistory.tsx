@@ -20,7 +20,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 
 			<ul
 				tabIndex={0}
-				className="dropdown-content bg-base-300 rounded-box z-[1] p-2 shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
+				className="dropdown-content bg-base-300 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
 			>
 				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (
@@ -31,9 +31,21 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 									<div key={change.field + i} className="pl-8 flex flex-col items-start gap-1">
 										<div className="text-sm font-medium text-base-content/70">{change.field}</div>
 										<div className="flex">
-											<p className="bg-base-200 px-2 py-1 rounded-md">{change.oldValue}</p>{" "}
+											<p
+												className={`bg-base-200 px-2 py-1 rounded-md ${
+													change.oldValue === "" ? "italic text-base-content/30" : ""
+												}`}
+											>
+												{change.oldValue === "" ? "<empty>" : change.oldValue}
+											</p>{" "}
 											<p className="px-2 py-1">🠢</p>{" "}
-											<p className="bg-base-200 px-2 py-1 rounded-md">{change.newValue}</p>
+											<p
+												className={`bg-base-200 px-2 py-1 rounded-md ${
+													change.newValue === "" ? "italic text-base-content/30" : ""
+												}`}
+											>
+												{change.newValue === "" ? "<empty>" : change.newValue}
+											</p>
 										</div>
 									</div>
 								))}

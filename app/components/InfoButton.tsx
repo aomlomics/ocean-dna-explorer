@@ -1,8 +1,14 @@
 import React from "react";
 
-export default function InfoButton({ infoText }: { infoText: string }) {
+export default function InfoButton({
+	infoText,
+	dir
+}: {
+	infoText: string;
+	dir?: "tooltip-bottom" | "tooltip-left" | "tooltip-right";
+}) {
 	return (
-		<div className="tooltip tooltip-secondary flex items-center" data-tip={infoText}>
+		<div className={`tooltip tooltip-secondary ${dir ? dir : ""} flex items-center`} data-tip={infoText}>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 24 24"

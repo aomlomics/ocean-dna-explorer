@@ -1,16 +1,19 @@
 "use client";
 
-import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
+import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
+import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 import { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
 import { useState, FormEvent, useReducer, useEffect } from "react";
-import analysisSubmitAction from "../../helpers/actions/analysis/submit/analysisSubmit";
-import analysisDeleteAction from "../../helpers/actions/analysis/delete/analysisDelete";
-import { DeleteAction, SubmitAction } from "@/types/types";
+import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
+import analysisDeleteAction from "../../actions/analysis/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
+import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
+import InfoButton from "../InfoButton";
+import { Project } from "@/app/generated/prisma/client";
+import { Action } from "@/types/globals";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -21,22 +24,7 @@ function reducer(state: Record<string, string>, updates: Record<string, string>)
 }
 
 function checkAnalysisFiles(analysis: string, fileStates: Record<string, File | null>) {
-	console.log("Named analysis check:", {
-		analysis,
-		hasMetadata: !!fileStates[analysis] || (analysis !== "\u200b" && !!fileStates["\u200b"]),
-		hasFeatures: !!fileStates[`${analysis}_assign`],
-		hasOccurrences: !!fileStates[`${analysis}_occ`],
-		fileStates: {
-			metadata: fileStates[analysis] || fileStates["\u200b"],
-			features: fileStates[`${analysis}_assign`],
-			occurrences: fileStates[`${analysis}_occ`]
-		}
-	});
-
 	if (analysis === "\u200b") {
-		console.log("Current fileStates:", fileStates);
-		console.log("Current analyses:", analysis);
-		console.log("Files present?", !!fileStates["\u200b"]);
 		return !!fileStates["\u200b"];
 	}
 	return (
@@ -46,6 +34,7 @@ function checkAnalysisFiles(analysis: string, fileStates: Record<string, File | 
 	);
 }
 
+//TODO: split file
 export default function AnalysisSubmit() {
 	const router = useRouter();
 	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
@@ -53,6 +42,8 @@ export default function AnalysisSubmit() {
 	const [loading, setLoading] = useState("");
 	const [submitted, setSubmitted] = useState(false);
 	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
+	const [project, setProject] = useState<Project | null>(null);
+	const [isPrivate, setIsPrivate] = useState(false); //TODO: (bug) adding analysis file unchecks box
 	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
 
 	// Modal state for submission feedback
@@ -91,6 +82,24 @@ export default function AnalysisSubmit() {
 						setAnalyses(tempAList);
 						return;
 					}
+
+					if (currentLine[0] === "project_id") {
+						if (project) {
+							if (currentLine[1] !== project.project_id) {
+								setErrorObj({ global: "All analyses must be for the same project." });
+								return;
+							}
+						} else {
+							const response = await projectFindUniqueAction(currentLine[1]);
+							if (response.statusMessage == "success" && response.result) {
+								setIsPrivate(response.result.isPrivate);
+								setProject(response.result);
+							} else if (response.statusMessage === "error") {
+								setErrorObj({ global: response.error });
+								return;
+							}
+						}
+					}
 				}
 
 				setErrorObj({ global: "Analysis Metadata file in wrong format." });
@@ -101,7 +110,7 @@ export default function AnalysisSubmit() {
 	}
 
 	async function dbDelete(
-		deleteAction: DeleteAction,
+		deleteAction: Action,
 		analysis_run_name: string,
 		del?: Record<string, number | number[] | string | string[]>
 	) {
@@ -111,14 +120,14 @@ export default function AnalysisSubmit() {
 		try {
 			const response = await deleteAction(formData);
 			//TODO: change how errors are handled (no longer returns response.error, now throws new error)
-			if (response.error) {
+			if (response.statusMessage === "error") {
 				setErrorObj({
 					[analysis_run_name]: response.error
 				});
-			} else if (response.message) {
+			} else if (response.statusMessage === "success") {
 				const tempResponseObj = { ...responseObj };
 				setResponseObj({
-					[analysis_run_name]: response.message
+					[analysis_run_name]: response.result
 				});
 			} else {
 				setErrorObj({
@@ -143,10 +152,10 @@ export default function AnalysisSubmit() {
 		analysis_run_name: string;
 		file: File;
 		fileSuffix?: string;
-		submitAction: SubmitAction;
+		submitAction: Action;
 		fieldsToSet?: Record<string, any>;
 		skipBlob?: boolean;
-	}): Promise<{ error?: boolean; result?: Record<string, any> }> {
+	}): Promise<{ error?: string }> {
 		const formData = new FormData();
 		formData.set("analysis_run_name", analysis_run_name);
 		for (const [key, val] of Object.entries(fieldsToSet)) {
@@ -156,56 +165,53 @@ export default function AnalysisSubmit() {
 		let blob = {} as PutBlobResult;
 
 		let error;
-		let result;
 
 		try {
 			if (skipBlob) {
 				formData.set("file", file);
 			} else {
 				//upload file to blob store
+				//TODO: make it so access isn't public
 				blob = await upload(file.name, file, {
 					access: "public",
 					handleUploadUrl: "/api/analysisFile/upload",
 					multipart: true
 				});
-				formData.set("file", JSON.stringify(blob));
+				formData.set("url", blob.url);
 			}
 
 			//send request
 			const response = await submitAction(formData);
-			if (response.error) {
+			if (response.statusMessage === "error") {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: response.error
 				});
-				error = true;
-			} else if (response.message) {
+				error = response.error;
+			} else if (response.statusMessage === "success") {
 				setResponseObj({
-					[`${analysis_run_name}${fileSuffix}`]: response.message
+					[`${analysis_run_name}${fileSuffix}`]: response.result
 				});
-				if (response.result) {
-					result = response.result;
-				}
 			} else {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: "Unknown error."
 				});
-				error = true;
+				error = "Unknown error.";
 			}
 		} catch (err) {
 			setErrorObj({
 				[`${analysis_run_name}${fileSuffix}`]: `Error: ${(err as Error).message}.`
 			});
-			error = true;
+			error = `Error: ${(err as Error).message}.`;
 		}
 
 		if (!skipBlob) {
-			//delete file from blob store
+			// delete file from blob store
 			await fetch(`/api/analysisFile/delete?url=${blob.url}`, {
 				method: "DELETE"
 			});
 		}
 
-		return { error, result };
+		return { error };
 	}
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,20 +256,21 @@ export default function AnalysisSubmit() {
 					});
 				}
 
-				const { error: analysisError, result: analysisResult } = await analysisFileSubmit({
+				const { error: analysisError } = await analysisFileSubmit({
 					analysis_run_name,
 					file: allFormData.get(analysis_run_name) as File,
 					submitAction: analysisSubmitAction,
+					fieldsToSet: { isPrivate },
 					skipBlob: true
 				});
 
 				if (analysisError) {
 					hasError = true;
 					setIsError(true);
-					setModalMessage("An error occurred during submission.");
+					setModalMessage(analysisError);
 					setShowModal(true);
 					setErrorObj({
-						global: "An error occurred during submission.",
+						global: analysisError,
 						status: "❌ Submission Failed"
 					});
 					setSubmitted(false);
@@ -277,19 +284,23 @@ export default function AnalysisSubmit() {
 					file: allFormData.get(`${analysis_run_name}_assign`) as File,
 					fileSuffix: "_assign",
 					submitAction: assignSubmitAction,
-					fieldsToSet: { analysis_run_name: analysisResult!.analysis_run_name }
+					fieldsToSet: {
+						analysis_run_name,
+						isPrivate
+					}
 				});
 
 				if (assignError) {
+					//TODO: fix deleting the analysis
 					//remove analysis from database
-					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name);
+					await dbDelete(analysisDeleteAction, analysis_run_name);
 
 					hasError = true;
 					setIsError(true);
-					setModalMessage("An error occurred during submission.");
+					setModalMessage(assignError);
 					setShowModal(true);
 					setErrorObj({
-						global: "An error occurred during submission.",
+						global: assignError,
 						status: "❌ Submission Failed"
 					});
 					setSubmitted(false);
@@ -303,11 +314,15 @@ export default function AnalysisSubmit() {
 					file: allFormData.get(`${analysis_run_name}_occ`) as File,
 					fileSuffix: "_occ",
 					submitAction: occSubmitAction,
-					fieldsToSet: { analysis_run_name: analysisResult!.analysis_run_name }
+					fieldsToSet: {
+						analysis_run_name,
+						isPrivate
+					}
 				});
 
 				if (occError) {
-					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name);
+					//TODO: fix deleting the analysis
+					await dbDelete(analysisDeleteAction, analysis_run_name);
 					//remove analyses, features, and taxonomies from database
 					// await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name, {
 					// 	dbFeatures: assignResult!.dbFeatures,
@@ -316,10 +331,10 @@ export default function AnalysisSubmit() {
 
 					hasError = true;
 					setIsError(true);
-					setModalMessage("An error occurred during submission.");
+					setModalMessage(occError);
 					setShowModal(true);
 					setErrorObj({
-						global: "An error occurred during submission.",
+						global: occError,
 						status: "❌ Submission Failed"
 					});
 					setSubmitted(false);
@@ -330,16 +345,7 @@ export default function AnalysisSubmit() {
 			analysis_i++;
 		}
 
-		if (hasError) {
-			setIsError(true);
-			setModalMessage("An error occurred during submission.");
-			setShowModal(true);
-			setErrorObj({
-				global: "An error occurred during submission.",
-				status: "❌ Submission Failed"
-			});
-			setSubmitted(false);
-		} else {
+		if (!hasError) {
 			const successMessage =
 				"Analysis successfully submitted! You will be redirected to the project page in 5 seconds...";
 			setIsError(false);
@@ -359,13 +365,17 @@ export default function AnalysisSubmit() {
 	}
 
 	// To Carter: there is a rare case where the submit button is disabled if you delete an analysis
-	const handleDeleteAnalysis = (index: number) => {
-		const analysisToDelete = analyses[index];
+	const handleDeleteAnalysis = (i: number) => {
+		const analysisToDelete = analyses[i];
 
 		// Update analyses array
 		setAnalyses((prev) => {
 			const newAnalyses = [...prev];
-			newAnalyses[index] = null;
+			// TODO: This is what's causing the Submit button to remain disabled after you delete an analysis. It uses "\u200b" instead of null to maintain an order to the analyses array. Changing it to "\u200b" causes other bugs that need to be resolved to fix everything.
+			newAnalyses[i] = null;
+			if (newAnalyses.every((e) => e === "\u200b" || e === null)) {
+				setProject(null);
+			}
 			return newAnalyses;
 		});
 
@@ -383,8 +393,25 @@ export default function AnalysisSubmit() {
 
 	return (
 		<>
+			{project && <div className="text-center w-full">Analyses for project: {project.project_id}</div>}
+
 			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
 				<div className="space-y-6 -mt-8">
+					<fieldset className="fieldset bg-base-100">
+						<label className="fieldset-label flex gap-2">
+							<input
+								name="isPrivate"
+								type="checkbox"
+								className="checkbox"
+								checked={isPrivate}
+								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
+								disabled={project?.isPrivate || false}
+							/>
+							<div>Private submission</div>
+							<InfoButton infoText="" />
+						</label>
+					</fieldset>
+
 					{analyses.map(
 						(a, i) =>
 							a && (

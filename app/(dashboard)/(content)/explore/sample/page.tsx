@@ -1,12 +1,63 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
+import { prisma } from "@/app/helpers/prisma";
+import { getOptions } from "@/app/helpers/utils";
+import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 
-export default async function Project() {
+export default async function Sample() {
+	const samples = await prisma.sample.findMany({
+		select: {
+			geo_loc_name: true,
+			env_broad_scale: true,
+			env_local_scale: true,
+			env_medium: true,
+			size_frac: true
+		}
+	});
+	if (!samples) return <>Loading...</>;
+
+	const filterOptions = getOptions(samples);
+	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
+
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
-			<TableFilter tableConfig={[]} />
+			<TableFilter
+				tableConfig={[
+					{
+						field: "geo_loc_name",
+						type: "select",
+						options: filterOptions.geo_loc_name
+					},
+					{
+						field: "env_broad_scale",
+						type: "select",
+						options: filterOptions.env_broad_scale
+					},
+					{
+						field: "env_local_scale",
+						type: "select",
+						options: filterOptions.env_local_scale
+					},
+					{
+						field: "env_medium",
+						type: "select",
+						options: filterOptions.env_medium
+					},
+					{
+						field: "habitat_natural_artificial_0_1",
+						type: "select",
+						options: Object.values(deadBooleanOptions),
+						optionsLabels: Object.keys(deadBooleanOptions)
+					},
+					{
+						field: "size_frac",
+						type: "select",
+						options: filterOptions.size_frac
+					}
+				]}
+			/>
 			<div className="space-y-6">
 				<div className="space-y-[-1px]">
 					<div className="border-b border-base-300">

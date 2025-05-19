@@ -1,0 +1,465 @@
+model Project {
+    id            Int      @id @default(autoincrement())
+    project_id    String   @unique
+    userIds       String[]
+    dateSubmitted DateTime @default(now())
+    isPrivate     Boolean
+    /// [UserDefinedType]
+    userDefined   Json?
+    /// [EditHistoryType]
+    editHistory   Json?
+
+    // Relations
+    Samples  Sample[]
+    Analyses Analysis[]
+
+    // Data
+    // Project
+    recordedBy           String
+    recordedByID         String?
+    project_contact      String
+    institution          String?
+    institutionID        String?
+    project_name         String
+    parent_project_id    String?
+    study_factor         String?
+    assay_type           String
+    neg_cont_0_1         DeadBoolean?
+    pos_cont_0_1         DeadBoolean?
+    expedition_id        String?
+    ship_crs_expocode    String?
+    woce_sect            String?
+    bioproject_accession String?
+
+    // Data Management
+    license               String?
+    rightsHolder          String?
+    accessRights          String?
+    informationWithheld   String?
+    dataGeneralizations   String?
+    bibliographicCitation String? // DOI
+    associated_resource   String?
+    mod_date              DateTime? // fixed
+    checkls_ver           String
+    seq_archive           String?
+    code_repo             String?
+
+    // Sample Collection
+    /// @zod.custom.use(z.coerce.number().int())
+    biological_rep Int?
+}
+
+model Sample {
+    id          Int      @id @default(autoincrement())
+    samp_name   String   @unique
+    userIds     String[]
+    isPrivate   Boolean
+    /// [UserDefinedType]
+    userDefined Json?
+
+    // Relations
+    project_id  String
+    Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    Assays      Assay[]
+    Libraries   Library[]
+    Occurrences Occurrence[]
+
+    // Data
+    // Sample Information
+    samp_category String
+    neg_cont_type String?
+    pos_cont_type String?
+
+    // Sample Collection
+    /// @zod.custom.use(z.coerce.number())
+    decimalLatitude                Float?
+    /// @zod.custom.use(z.coerce.number())
+    decimalLongitude               Float?
+    verbatimLatitude               String?
+    verbatimLongitude              String?
+    verbatimCoordinateSystem       String?
+    verbatimSRS                    String?
+    geo_loc_name                   String // fixed
+    eventDate                      String // fixed
+    /// @zod.custom.use(z.coerce.number())
+    eventDurationValue             Float?
+    eventDurationUnit              String?
+    verbatimEventDate              String?
+    verbatimEventTime              String?
+    verbatimDateEnd                String?
+    verbatimTimeEnd                String?
+    env_broad_scale                String? // fixed
+    env_local_scale                String? // fixed
+    env_medium                     String? // fixed
+    habitat_natural_artificial_0_1 DeadBoolean?
+    samp_collect_method            String?
+    samp_collect_device            String?
+    /// @zod.custom.use(z.coerce.number())
+    samp_size                      Float?
+    samp_size_unit                 String?
+    serial_number                  String?
+    line_id                        String?
+    station_id                     String?
+    ctd_cast_number                String?
+    ctd_bottle_number              String?
+    replicate_number               String?
+    samp_collect_notes             String?
+
+    // Sample Storage
+    samp_store_temp              Float?
+    samp_store_sol               String?
+    samp_store_dur               String? // fixed
+    samp_store_method_additional String?
+    dna_store_loc                String?
+    samp_store_loc               String?
+
+    // Sample Preparation
+    samp_mat_process          String?
+    filter_passive_active_0_1 DeadBoolean?
+    filter_onsite_dur         String? // fixed
+    /// @zod.custom.use(z.coerce.number())
+    size_frac_low             Float?
+    /// @zod.custom.use(z.coerce.number())
+    size_frac                 Float?
+    /// @zod.custom.use(z.coerce.number())
+    filter_diameter           Float?
+    /// @zod.custom.use(z.coerce.number())
+    filter_surface_area       Float?
+    filter_material           String?
+    filter_name               String?
+    precip_chem_prep          String?
+    /// @zod.custom.use(z.coerce.number())
+    precip_force_prep         Float?
+    /// @zod.custom.use(z.coerce.number())
+    precip_time_prep          Float?
+    /// @zod.custom.use(z.coerce.number())
+    precip_temp_prep          Float?
+    prepped_samp_store_temp   Float?
+    prepped_samp_store_sol    String?
+    /// @zod.custom.use(z.coerce.number())
+    prepped_samp_store_dur    Float?
+    prep_method_additional    String?
+    prefilter_material        String?
+    /// @zod.custom.use(z.coerce.number())
+    pump_flow_rate            Float?
+    pump_flow_rate_unit       String?
+    stationed_sample_dur      String?
+    extract_id                String?
+    extract_plate             String?
+    /// @zod.custom.use(z.coerce.number().int())
+    extract_well_number       Int?
+    extract_well_position     String?
+
+    // Sample Relations
+    materialSampleID        String?
+    sample_derived_from     String? // fixed
+    sample_composed_of      String? // fixed
+    rel_cont_id             String?
+    biological_rep_relation String? // fixed
+
+    // Nucleic Acid Extraction
+    samp_vol_we_dna_ext             Float?
+    samp_vol_we_dna_ext_unit        String?
+    nucl_acid_ext_lysis             String?
+    nucl_acid_ext_sep               String?
+    nucl_acid_ext                   String?
+    nucl_acid_ext_kit               String?
+    nucl_acid_ext_modify            String?
+    dna_cleanup_0_1                 DeadBoolean?
+    dna_cleanup_method              String?
+    concentration                   Float?
+    concentration_method            String?
+    ratioOfAbsorbance260_280        Float?
+    /// @zod.custom.use(z.coerce.number().int())
+    pool_dna_num                    Int?
+    nucl_acid_ext_method_additional String?
+    concentration_unit              String?
+    date_ext                        String?
+    dna_yield                       Float?
+    dna_yield_unit                  String?
+
+    // Environment
+    samp_weather              String?
+    /// @zod.custom.use(z.coerce.number())
+    minimumDepthInMeters      Float?
+    /// @zod.custom.use(z.coerce.number())
+    maximumDepthInMeters      Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_depth_water_col       Float?
+    /// @zod.custom.use(z.coerce.number())
+    elev                      Float?
+    /// @zod.custom.use(z.coerce.number())
+    temp                      Float?
+    /// @zod.custom.use(z.coerce.number())
+    chlorophyll               Float?
+    /// @zod.custom.use(z.coerce.number())
+    light_intensity           Float?
+    /// @zod.custom.use(z.coerce.number())
+    misc_param                Float?
+    /// @zod.custom.use(z.coerce.number())
+    ph                        Float?
+    ph_meth                   String?
+    /// @zod.custom.use(z.coerce.number())
+    salinity                  Float?
+    /// @zod.custom.use(z.coerce.number())
+    suspend_part_matter       Float?
+    tidal_stage               String?
+    /// @zod.custom.use(z.coerce.number())
+    turbidity                 Float?
+    /// @zod.custom.use(z.coerce.number())
+    water_current             Float?
+    solar_irradiance          String?
+    wind_direction            String?
+    /// @zod.custom.use(z.coerce.number())
+    wind_speed                Float?
+    /// @zod.custom.use(z.coerce.number())
+    diss_inorg_carb           Float?
+    /// @zod.custom.use(z.coerce.number())
+    diss_inorg_nitro          Float?
+    /// @zod.custom.use(z.coerce.number())
+    diss_org_carb             Float?
+    /// @zod.custom.use(z.coerce.number())
+    diss_org_nitro            Float?
+    /// @zod.custom.use(z.coerce.number())
+    diss_oxygen               Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_diss_nitro            Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_inorg_nitro           Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_nitro                 Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_part_carb             Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_org_carb              Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_org_c_meth            Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_nitro_content         Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_nitro_cont_meth       Float?
+    /// @zod.custom.use(z.coerce.number())
+    tot_carb                  Float?
+    /// @zod.custom.use(z.coerce.number())
+    part_org_carb             Float?
+    /// @zod.custom.use(z.coerce.number())
+    part_org_nitro            Float?
+    /// @zod.custom.use(z.coerce.number())
+    nitrate                   Float?
+    /// @zod.custom.use(z.coerce.number())
+    nitrite                   Float?
+    /// @zod.custom.use(z.coerce.number())
+    nitro                     Float?
+    /// @zod.custom.use(z.coerce.number())
+    org_carb                  Float?
+    /// @zod.custom.use(z.coerce.number())
+    org_matter                Float?
+    /// @zod.custom.use(z.coerce.number())
+    org_nitro                 Float?
+    diss_inorg_carb_unit      String?
+    diss_inorg_nitro_unit     String?
+    diss_org_carb_unit        String?
+    diss_org_nitro_unit       String?
+    diss_oxygen_unit          String?
+    nitrate_unit              String?
+    nitrite_unit              String?
+    nitro_unit                String?
+    org_carb_unit             String?
+    org_matter_unit           String?
+    org_nitro_unit            String?
+    part_org_carb_unit        String?
+    part_org_nitro_unit       String?
+    tot_carb_unit             String?
+    tot_diss_nitro_unit       String?
+    tot_inorg_nitro_unit      String?
+    tot_nitro_content_unit    String?
+    tot_nitro_unit            String?
+    tot_org_carb_unit         String?
+    tot_part_carb_unit        String?
+    ammonium                  String?
+    ammonium_unit             String?
+    /// @zod.custom.use(z.coerce.number())
+    carbonate                 Float?
+    carbonate_unit            String?
+    /// @zod.custom.use(z.coerce.number())
+    hydrogen_ion              Float?
+    /// @zod.custom.use(z.coerce.number())
+    nitrate_plus_nitrite      Float?
+    nitrate_plus_nitrite_unit String?
+    /// @zod.custom.use(z.coerce.number())
+    omega_arag                Float?
+    /// @zod.custom.use(z.coerce.number().int())
+    pco2                      Int?
+    pco2_unit                 String?
+    /// @zod.custom.use(z.coerce.number())
+    phosphate                 Float?
+    phosphate_unit            String?
+    /// @zod.custom.use(z.coerce.number().int())
+    pressure                  Int?
+    pressure_unit             String?
+    /// @zod.custom.use(z.coerce.number())
+    silicate                  Float?
+    silicate_unit             String?
+    /// @zod.custom.use(z.coerce.number())
+    tot_alkalinity            Float?
+    tot_alkalinity_unit       String?
+    /// @zod.custom.use(z.coerce.number())
+    transmittance             Float?
+    transmittance_unit        String?
+
+    // Sectionless
+    biosample_accession String?
+    organism            String?
+
+    // User defined
+    // phaeopigments     String?
+}
+
+model Assay {
+    id         Int      @id @default(autoincrement())
+    assay_name String   @unique
+    userIds    String[]
+    isPrivate  Boolean
+
+    // Relations
+    Samples            Sample[]
+    pcr_primer_forward String
+    pcr_primer_reverse String
+    Primer             Primer     @relation(fields: [pcr_primer_forward, pcr_primer_reverse], references: [pcr_primer_forward, pcr_primer_reverse], onDelete: Cascade)
+    Libraries          Library[]
+    Analyses           Analysis[]
+
+    // Data
+    // Quality Assurance
+    sterilise_method String?
+
+    // PCR
+    pcr_0_1                     DeadBoolean
+    thermocycler                String?
+    /// @zod.custom.use(z.coerce.number())
+    amplificationReactionVolume Float?
+    assay_validation            String?
+    targetTaxonomicAssay        String?
+    targetTaxonomicScope        String?
+    target_gene                 String
+    target_subfragment          String?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize                Float?
+    /// @zod.custom.use(z.coerce.number())
+    pcr_primer_vol_forward      Float?
+    /// @zod.custom.use(z.coerce.number())
+    pcr_primer_vol_reverse      Float?
+    /// @zod.custom.use(z.coerce.number())
+    pcr_primer_conc_forward     Float?
+    /// @zod.custom.use(z.coerce.number())
+    pcr_primer_conc_reverse     Float?
+    probeReporter               String?
+    probeQuencher               String?
+    probe_seq                   String?
+    probe_ref                   String?
+    /// @zod.custom.use(z.coerce.number())
+    probe_conc                  Float?
+    commercial_mm               String?
+    custom_mm                   String?
+    /// @zod.custom.use(z.coerce.number())
+    pcr_dna_vol                 Float?
+    /// @zod.custom.use(z.coerce.number().int())
+    pcr_rep                     Int?
+    nucl_acid_amp               String?
+    pcr_cond                    String?
+    annealingTemp               String?
+    /// @zod.custom.use(z.coerce.number())
+    pcr_cycles                  Float?
+    pcr_analysis_software       String?
+    pcr_method_additional       String?
+
+    // Project
+    assay_type String
+}
+
+model Primer {
+    id        Int      @id @default(autoincrement())
+    userIds   String[]
+    isPrivate Boolean
+
+    // Relations
+    Assays Assay[]
+
+    // Data
+    pcr_primer_forward           String
+    pcr_primer_reverse           String
+    pcr_primer_name_forward      String
+    pcr_primer_name_reverse      String
+    pcr_primer_reference_forward String?
+    pcr_primer_reference_reverse String?
+
+    @@unique([pcr_primer_forward, pcr_primer_reverse])
+}
+
+model Library {
+    id          Int      @id @default(autoincrement())
+    lib_id      String   @unique
+    userIds     String[]
+    isPrivate   Boolean
+    /// [UserDefinedType]
+    userDefined Json?
+
+    // Relations
+    assay_name String
+    Assay      Assay  @relation(fields: [assay_name], references: [assay_name])
+    samp_name  String
+    Sample     Sample @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+
+    // Data
+    // Library Preparation Sequencing
+    barcoding_pcr_appr               String?
+    platform                         String?
+    instrument                       String? // fixed
+    seq_kit                          String?
+    lib_layout                       String?
+    sequencing_location              String?
+    adapter_forward                  String?
+    adapter_reverse                  String?
+    lib_screen                       String?
+    seq_method_additional            String?
+    mid_forward                      String?
+    mid_reverse                      String?
+    filename                         String?
+    filename2                        String?
+    seq_run_id                       String
+    /// @zod.custom.use(z.coerce.number().int())
+    input_read_count                 Int?
+    checksum_filename                String?
+    checksum_filename2               String?
+    /// @zod.custom.use(z.coerce.number())
+    lib_conc                         Float?
+    lib_conc_meth                    String?
+    lib_conc_unit                    String?
+    /// @zod.custom.use(z.coerce.number())
+    phix_perc                        Float?
+    checksum_method                  String?
+    /// @zod.custom.use(z.coerce.number())
+    pcr2_amplificationReactionVolume Float?
+    pcr2_analysis_software           String?
+    /// @zod.custom.use(z.coerce.number())
+    pcr2_annealingTemp               Float?
+    pcr2_commercial_mm               String?
+    pcr2_cond                        String?
+    pcr2_custom_mm                   String?
+    /// @zod.custom.use(z.coerce.number().int())
+    pcr2_cycles                      Int?
+    /// @zod.custom.use(z.coerce.number())
+    pcr2_dna_vol                     Float?
+    pcr2_method_additional           String?
+    pcr2_plate_id                    String?
+    pcr2_thermocycler                String?
+    associatedSequences              String?
+
+    // PCR
+    pcr_plate_id         String?
+    block_ref            String?
+    block_seq            String?
+    block_taxa           String?
+    inhibition_check     String?
+    inhibition_check_0_1 DeadBoolean?
+}

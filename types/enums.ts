@@ -1,24 +1,3 @@
-import {
-	AnalysisScalarFieldEnumSchema,
-	AnalysisSchema,
-	AssayScalarFieldEnumSchema,
-	AssaySchema,
-	AssignmentScalarFieldEnumSchema,
-	AssignmentSchema,
-	FeatureScalarFieldEnumSchema,
-	FeatureSchema,
-	LibraryScalarFieldEnumSchema,
-	LibrarySchema,
-	OccurrenceScalarFieldEnumSchema,
-	OccurrenceSchema,
-	ProjectScalarFieldEnumSchema,
-	ProjectSchema,
-	SampleScalarFieldEnumSchema,
-	SampleSchema,
-	TaxonomyScalarFieldEnumSchema,
-	TaxonomySchema
-} from "@/prisma/generated/zod";
-
 export enum DeadValueEnum {
 	"not applicable: control sample" = -9999,
 	"not applicable: sample group",
@@ -52,48 +31,4 @@ export const DeadBooleanEnum = {
 	"missing: restricted access: endangered species": "missingCOLON__restricted_accessCOLON__endangered_species",
 	"missing: restricted access: human-identifiable": "missingCOLON__restricted_accessCOLON__human__identifiable",
 	"missing: restricted access": "missingCOLON__restricted_access"
-};
-
-export const TableToEnumSchema = {
-	project: ProjectScalarFieldEnumSchema,
-	sample: SampleScalarFieldEnumSchema,
-	assay: AssayScalarFieldEnumSchema,
-	library: LibraryScalarFieldEnumSchema,
-	analysis: AnalysisScalarFieldEnumSchema,
-	occurrence: OccurrenceScalarFieldEnumSchema,
-	feature: FeatureScalarFieldEnumSchema,
-	assignment: AssignmentScalarFieldEnumSchema,
-	taxonomy: TaxonomyScalarFieldEnumSchema
-};
-
-export const TableToSchema = {
-	project: ProjectSchema,
-	sample: SampleSchema,
-	assay: AssaySchema,
-	library: LibrarySchema,
-	analysis: AnalysisSchema,
-	occurrence: OccurrenceSchema,
-	feature: FeatureSchema,
-	assignment: AssignmentSchema,
-	taxonomy: TaxonomySchema
-};
-
-export const EXPLORE_ROUTES = {
-	project: "Projects",
-	sample: "Samples",
-	assay: "Assays",
-	// library: {
-	// 	name: "Libraries",
-	// 	description:
-	// 		"Sequencing preparation details for each Sample-Assay combination, including barcoding approach, sequencing platform, and adapter information."
-	// },
-	analysis: "Analyses",
-	// occurrence: {
-	// 	name: "Occurrences",
-	// 	description:
-	// 		"Individual detection records linking samples to specific DNA sequences (Features), including their quantified abundance."
-	// },
-	feature: "Features",
-	// assignment: { name: "Assignments", description: "Some description." },
-	taxonomy: "Taxonomies"
 };

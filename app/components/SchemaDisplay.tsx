@@ -1,9 +1,10 @@
-import { TableToEnumSchema, TableToSchema } from "@/types/enums";
-import { Prisma } from "@prisma/client";
+import { TableDepluralize, TableToEnumSchema, TableToRelations, TableToSchema } from "@/types/objects";
+import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "../helpers/utils";
+import Link from "next/link";
+import { stripSecureFields } from "../helpers/prisma";
 
 export default function SchemaDisplay() {
-	//TODO: display user defined fields currently in the database
 	const tables = Object.keys(Prisma.ModelName).map((tableName) => {
 		const fields = TableToEnumSchema[tableName.toLowerCase() as keyof typeof TableToEnumSchema]._def.values;
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
@@ -16,18 +17,41 @@ export default function SchemaDisplay() {
 				}
 				result[f] = type;
 			}
+			//TODO: display user defined fields currently in the database
 		}
 
-		return [tableName, result] as [string, typeof result];
+		stripSecureFields(result);
+		return [tableName, result] as [Prisma.ModelName, typeof result];
 	});
 
 	return (
 		<div>
 			{tables.map(([tableName, fields]) => (
-				<div key={tableName} className="collapse collapse-arrow bg-base-100 border-base-300 border">
+				<div
+					key={tableName}
+					id={tableName.toLowerCase()}
+					className="collapse collapse-arrow bg-base-100 border-base-300 border"
+				>
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold">{tableName}</div>
 					<div className="collapse-content text-sm overflow-x-auto">
+						<div className="flex gap-3">
+							Relations:{" "}
+							{TableToRelations[tableName.toLowerCase() as Lowercase<Prisma.ModelName>].map((rel) => (
+								<Link
+									className="link link-primary"
+									href={
+										rel.toLowerCase() in TableDepluralize
+											? "#" + TableDepluralize[rel.toLowerCase()]
+											: "#" + rel.toLowerCase()
+									}
+									key={rel}
+								>
+									{rel}
+								</Link>
+							))}
+						</div>
+
 						<table className="table table-zebra table-fixed">
 							{/* head */}
 							<thead>

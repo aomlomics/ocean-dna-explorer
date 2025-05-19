@@ -1,31 +1,39 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/TableFilter";
 import TaxaGrid from "@/app/components/paginated/TaxaGrid";
+import { prisma } from "@/app/helpers/prisma";
+import { getOptions } from "@/app/helpers/utils";
 import Link from "next/link";
 
 export default async function Taxonomy() {
+	const taxonomies = await prisma.taxonomy.findMany({
+		select: {
+			domain: true,
+			kingdom: true,
+			supergroup: true,
+			division: true,
+			subdivision: true,
+			phylum: true,
+			class: true,
+			order: true,
+			family: true,
+			genus: true,
+			species: true
+		}
+	});
+	if (!taxonomies) return <>Loading...</>;
+
+	const filterOptions = getOptions(taxonomies);
+
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
-					{
-						field: "taxonomic_rank",
-						label: "Taxonomic Rank",
+					...(Object.entries(filterOptions).map(([field, val]) => ({
+						field,
 						type: "select",
-						options: [
-							"domain",
-							"kingdom",
-							"supergroup",
-							"division",
-							"subdivision",
-							"phylum",
-							"taxonClass",
-							"order",
-							"family",
-							"genus",
-							"species"
-						]
-					}
+						options: val
+					})) as { field: string; type: "select"; options: string[] }[])
 				]}
 			/>
 			<div className="space-y-6">

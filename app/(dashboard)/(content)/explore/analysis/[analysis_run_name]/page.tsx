@@ -68,13 +68,14 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 						<div className="flex gap-2 items-center">
 							<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
 							<EditHistory editHistory={analysis.editHistory} />
+							{analysis.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 						</div>
 
 						<div className="bg-base-200 -ml-3.5 text-semibold">
 							<OccDownloadButton
 								text={"Download Occurrence Table"}
 								filename={`${analysis_run_name}_occurrenceTable`}
-								where={{ analysis_run_name }}
+								analysis_run_name={analysis_run_name}
 							/>
 						</div>
 					</header>
@@ -105,7 +106,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justAnalysis} omit={["id", "project_id", "userId", "analysis_run_name", "assay_name"]} />
+						<DataDisplay data={justAnalysis} omit={["project_id", "analysis_run_name", "assay_name"]} />
 					</div>
 				</div>
 			</div>

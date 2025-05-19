@@ -1,20 +1,23 @@
 import ThemeToggle from "./ThemeToggle";
 import Link from "next/link";
-import Image from "next/image";
-import { SignedIn, UserButton, SignedOut, SignInButton } from "@clerk/nextjs";
 import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
-import { EXPLORE_ROUTES } from "@/types/enums";
+import { EXPLORE_ROUTES, RolePermissions } from "@/types/objects";
+import { auth } from "@clerk/nextjs/server";
+import { Role } from "@/types/globals";
 
-export default function Header() {
+export default async function Header() {
+	const { sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role as Role;
+
 	return (
 		<header className="top-0 z-header bg-base-100 border-b-4 border-primary h-24">
 			<div className="relative h-full flex justify-between items-center">
 				{/* Logo section */}
 				<div className="flex items-center">
-					<Link className="px-4 sm:px-6 lg:px-8 normal-case text-xl pt-1 h-24 w-64 flex flex-col items-center" href="/">
+					<Link className="px-4 sm:px-6 lg:px-8 normal-case text-xl pt-1 h-48 w-96 flex flex-col items-center" href="/">
 						<div className="avatar w-full h-full relative">
 							<NodeLogo
 								alt="NODE Logo"
@@ -37,12 +40,15 @@ export default function Header() {
 
 				{/* Right side elements */}
 				<div className="flex items-center gap-4">
+					{role && RolePermissions[role].includes("manageUsers") && (
+						<Link href="/admin" className="btn">
+							Admin
+						</Link>
+					)}
 					{/* Theme toggle and User profile should be aligned */}
-					<div className="flex items-center gap-4">
-						<ThemeToggle />
-						<div className="mr-5 flex items-center">
-							<User />
-						</div>
+					<ThemeToggle />
+					<div className="mr-5 flex items-center">
+						<User />
 					</div>
 
 					{/* Rest of the tabs section */}
@@ -62,7 +68,8 @@ export default function Header() {
 								{ label: "Analysis", href: "/submit/analysis" }
 							]}
 						/>
-						<TabButton tabName="Tourmaline" route="/tourmaline" />
+						<TabButton tabName="Contribute" route="/contribute" />
+						{/* <TabButton tabName="Tourmaline" route="/tourmaline" /> */}
 						<TabButton tabName="API" route="/api" />
 						<TabButton tabName="Help" route="/help" />
 					</div>

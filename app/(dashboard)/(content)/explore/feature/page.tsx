@@ -21,7 +21,6 @@ export default async function Feature() {
 				tableConfig={[
 					{
 						field: "sequenceLength",
-						label: "Sequence Length",
 						type: "range",
 						gte: minMaxSeqLength._min.sequenceLength as number,
 						lte: minMaxSeqLength._max.sequenceLength as number

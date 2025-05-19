@@ -1,7 +1,8 @@
-import { DeadBooleanEnum, DeadValueEnum, TableToSchema } from "@/types/enums";
-import { Prisma, Taxonomy } from "@prisma/client";
+import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
+import { TableToSchema } from "@/types/objects";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
+import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
-import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodBigInt, ZodString, ZodDate, ZodNullable, ZodLazy } from "zod";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -26,18 +27,17 @@ export async function fetcher(url: string) {
 //	return "https://opalserver-qnwedardvq-uc.a.run.app";
 //}
 
-export function isEmpty(obj: Object) {
-	for (const x in obj) {
-		if (obj.hasOwnProperty(x)) return false;
-	}
-	return true;
-}
-
 export function getZodType(field: any): { optional?: boolean; type?: string; values?: string[] } {
 	let shape = {} as { optional?: boolean; type?: string; values?: string[] };
 
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
+	} else if (field instanceof ZodBoolean) {
+		shape.type = "boolean";
+		// } else if (field instanceof ZodEffects) {
+		// 	//zod transform (coerced booleans)
+		// 	//TODO: verify it's actually a boolean, and not some other field that uses zod transform
+		// 	shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
@@ -46,6 +46,10 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		}
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
+	} else if (field instanceof ZodArray) {
+		if (field._def.type instanceof ZodString) {
+			shape.type = "string[]";
+		}
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
 	} else if (field instanceof ZodLazy) {
@@ -53,6 +57,7 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
 		//DeadBoolean
+		//TODO: verify it's actually a DeadBoolean, and not some other enum
 		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
 			shape.type = "boolean";
 			shape.values = Object.keys(DeadBooleanEnum);
@@ -250,13 +255,23 @@ export function parseApiQuery(
 	skip?: {
 		skipFields?: boolean;
 		skipRelations?: boolean;
+		skipRelationsLimit?: boolean;
 		skipIds?: boolean;
 		skipLimit?: boolean;
 		skipFilters?: boolean;
 	},
 	defaults?: {
 		fields?: Record<string, boolean>;
-		relations?: Record<string, boolean | { select: { id: true } }>;
+		relations?: Record<
+			string,
+			| true
+			| { take: number }
+			| {
+					take?: number;
+					select: { id: true };
+			  }
+		>;
+		relationsLimit?: number;
 		ids?: number[];
 		limit?: number;
 		filters?: Record<string, string | number>;
@@ -285,21 +300,47 @@ export function parseApiQuery(
 		if (relations) {
 			searchParams.delete("relations");
 
-			//include all fields in relations
-			let includeVal = { select: { id: true } } as boolean | { select: { id: true } };
-			const allFields = searchParams.get("relationsAllFields");
-			if (allFields) {
-				searchParams.delete("relationsAllFields");
-				if (allFields.toLowerCase() === "true") {
-					includeVal = true;
-				} else if (allFields.toLowerCase() !== "false") {
-					throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
+			let relationVal = true as
+				| true
+				| { take: number }
+				| {
+						take?: number;
+						select: { id: true };
+				  };
+
+			//relations limit
+			//TODO: (bug) breaks when relations isn't an array
+			if (!skip?.skipRelationsLimit) {
+				const relationsLimit = searchParams.get("relationsLimit");
+				if (relationsLimit) {
+					searchParams.delete("relationsLimit");
+					const take = parseInt(relationsLimit);
+					if (Number.isNaN(take)) {
+						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be an integer.`);
+					} else if (take < 1) {
+						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be a positive integer.`);
+					}
+
+					relationVal = { take };
 				}
+			}
+
+			//include all fields in relations
+			const allFields = searchParams.get("relationsAllFields");
+			searchParams.delete("relationsAllFields");
+			if (!allFields || allFields.toLowerCase() === "false") {
+				if (typeof relationVal === "boolean") {
+					relationVal = { select: { id: true } };
+				} else {
+					relationVal = { take: relationVal.take, select: { id: true } };
+				}
+			} else if (allFields.toLowerCase() !== "true") {
+				throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
 			}
 
 			const relsObj = relations
 				.split(",")
-				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: includeVal }), {});
+				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: relationVal }), {});
 			if (query.select) {
 				query.select = { ...query.select, ...relsObj };
 			} else {
@@ -394,4 +435,31 @@ export function parseApiQuery(
 	}
 
 	return query;
+}
+
+export function getOptions(arr: Record<string, any>[]) {
+	//create object of sets with keys matching arr
+	const filterOptionsSet = {} as Record<keyof (typeof arr)[0], Set<any>>;
+	for (let field in arr[0]) {
+		filterOptionsSet[field as keyof (typeof arr)[0]] = new Set();
+	}
+
+	//fill sets with all possible values
+	for (let e of arr) {
+		for (let [field, value] of Object.entries(e)) {
+			if (value) {
+				filterOptionsSet[field as keyof typeof e].add(value);
+			}
+		}
+	}
+
+	//convert sets to arrays
+	const filterOptions = {} as Record<keyof (typeof arr)[0], any[]>;
+	for (let e in filterOptionsSet) {
+		filterOptions[e as keyof typeof filterOptions] = Array.from(
+			filterOptionsSet[e as keyof typeof filterOptionsSet]
+		).sort();
+	}
+
+	return filterOptions;
 }

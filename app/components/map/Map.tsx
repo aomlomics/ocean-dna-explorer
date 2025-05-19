@@ -1,6 +1,6 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import dynamic from "next/dynamic";
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 	ssr: false
