@@ -1,3 +1,4 @@
+import { RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
@@ -35,22 +36,25 @@ const prisma =
 				async $allOperations({ model, operation, args, query }) {
 					const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
 					if (readOperations.includes(operation)) {
-						const { userId } = await auth();
-						//@ts-ignore
-						args.where = {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!role || !RolePermissions[role].includes("manageUsers")) {
 							//@ts-ignore
-							...args.where,
-							OR: [
-								{
-									isPrivate: false
-								},
-								{
-									userIds: {
-										has: userId
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										isPrivate: false
+									},
+									{
+										userIds: {
+											has: userId
+										}
 									}
-								}
-							]
-						};
+								]
+							};
+						}
 					}
 
 					return await query(args);
