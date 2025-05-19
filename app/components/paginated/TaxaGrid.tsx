@@ -8,6 +8,7 @@ import PaginationControls from "./PaginationControls";
 import { Prisma } from "@/app/generated/prisma/client";
 import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
+import { useSearchParams } from "next/navigation";
 
 export default function TaxaGrid({
 	cols = 4,
@@ -18,7 +19,32 @@ export default function TaxaGrid({
 	where?: Prisma.TaxonomyWhereInput;
 	orderBy?: Prisma.TaxonomyOrderByWithAggregationInput;
 }) {
+	const searchParams = useSearchParams();
 	const [page, setPage] = useState(1);
+
+	let query = new URLSearchParams({
+		take: (cols ** 2).toString(),
+		page: page.toString()
+	});
+
+	let whereQuery = {} as Prisma.TaxonomyWhereInput;
+	if (where) {
+		whereQuery = { ...where };
+	}
+	if (searchParams.size) {
+		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
+	}
+	query.set("where", JSON.stringify(whereQuery));
+
+	if (orderBy) {
+		query.set("orderBy", JSON.stringify(orderBy));
+	}
+
+	const { data, error, isLoading } = useSWR(`/api/pagination/taxonomy?${query.toString()}`, fetcher, {
+		keepPreviousData: true
+	});
+	if (isLoading) return <LoadingTaxaGrid cols={cols} />;
+	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
@@ -34,20 +60,6 @@ export default function TaxaGrid({
 
 		preload(`/api/pagination/taxonomy?${query.toString()}`, fetcher);
 	}
-
-	let query = new URLSearchParams({
-		take: (cols ** 2).toString(),
-		page: page.toString()
-	});
-	if (where) {
-		query.set("where", JSON.stringify(where));
-	}
-	if (orderBy) {
-		query.set("orderBy", JSON.stringify(orderBy));
-	}
-	const { data, error, isLoading } = useSWR(`/api/pagination/taxonomy?${query.toString()}`, fetcher);
-	if (isLoading) return <LoadingTaxaGrid cols={cols} />;
-	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
 
 	return (
 		<div className="space-y-6 p-6">

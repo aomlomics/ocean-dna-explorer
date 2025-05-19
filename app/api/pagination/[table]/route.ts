@@ -7,7 +7,7 @@ import { NetworkPacket } from "@/types/globals";
 //TODO: convert to server action
 export async function GET(
 	request: Request,
-	{ params }: { params: Promise<{ table: string }> }
+	{ params }: { params: Promise<{ table: Uncapitalize<Prisma.ModelName> }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 

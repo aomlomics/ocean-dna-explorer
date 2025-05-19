@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
 
 type FilterConfig = {
-	label: string;
-	type: "select" | "multiselect" | "date" | "range";
+	type: "select" | "range";
 	field: string | { rel: string; f: string };
 	options?: string[];
+	optionsLabels?: string[];
 	enum?: Record<string, string>;
 	gte?: number;
 	lte?: number;

@@ -1,18 +1,7 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
 import { TableToSchema } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
-import {
-	ZodObject,
-	ZodEnum,
-	ZodNumber,
-	ZodOptional,
-	ZodString,
-	ZodDate,
-	ZodLazy,
-	ZodBoolean,
-	ZodEffects,
-	ZodArray
-} from "zod";
+import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
 
 export async function fetcher(url: string) {
@@ -446,4 +435,31 @@ export function parseApiQuery(
 	}
 
 	return query;
+}
+
+export function getOptions(arr: Record<string, any>[]) {
+	//create object of sets with keys matching arr
+	const filterOptionsSet = {} as Record<keyof (typeof arr)[0], Set<any>>;
+	for (let field in arr[0]) {
+		filterOptionsSet[field as keyof (typeof arr)[0]] = new Set();
+	}
+
+	//fill sets with all possible values
+	for (let e of arr) {
+		for (let [field, value] of Object.entries(e)) {
+			if (value) {
+				filterOptionsSet[field as keyof typeof e].add(value);
+			}
+		}
+	}
+
+	//convert sets to arrays
+	const filterOptions = {} as Record<keyof (typeof arr)[0], any[]>;
+	for (let e in filterOptionsSet) {
+		filterOptions[e as keyof typeof filterOptions] = Array.from(
+			filterOptionsSet[e as keyof typeof filterOptionsSet]
+		).sort();
+	}
+
+	return filterOptions;
 }
