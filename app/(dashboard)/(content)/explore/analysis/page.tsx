@@ -3,23 +3,61 @@ import Pagination from "@/app/components/paginated/Pagination";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { asv_method, target_gene } from "@/app/generated/prisma/client";
 import Link from "next/link";
+import { prisma } from "@/app/helpers/prisma";
+import { getOptions } from "@/app/helpers/utils";
 
 export default async function Analysis() {
+	const analyses = await prisma.analysis.findMany({
+		select: {
+			project_id: true,
+			assay_name: true,
+			sop_bioinformatics: true,
+			otu_clust_tool: true,
+			otu_db: true
+		}
+	});
+	if (!analyses) return <>Loading...</>;
+
+	const filterOptions = getOptions(analyses);
+
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
 						field: "asv_method",
-						label: "Analysis Method",
 						type: "select",
 						enum: asv_method
 					},
 					{
 						field: { rel: "Assay", f: "target_gene" },
-						label: "Target Gene",
 						type: "select",
 						enum: target_gene
+					},
+					{
+						field: "project_id",
+						type: "select",
+						options: filterOptions.project_id
+					},
+					{
+						field: "assay_name",
+						type: "select",
+						options: filterOptions.assay_name
+					},
+					{
+						field: "sop_bioinformatics",
+						type: "select",
+						options: filterOptions.sop_bioinformatics
+					},
+					{
+						field: "otu_clust_tool",
+						type: "select",
+						options: filterOptions.otu_clust_tool
+					},
+					{
+						field: "otu_db",
+						type: "select",
+						options: filterOptions.otu_db
 					}
 				]}
 			/>

@@ -23,7 +23,7 @@ model Project {
     project_name         String
     parent_project_id    String?
     study_factor         String?
-    // detection_type       String
+    assay_type           String
     neg_cont_0_1         DeadBoolean?
     pos_cont_0_1         DeadBoolean?
     expedition_id        String?
