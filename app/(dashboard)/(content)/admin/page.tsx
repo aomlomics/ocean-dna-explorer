@@ -1,11 +1,13 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { SearchUsers } from "@/app/components/SearchUsers";
-import { setRole } from "@/app/actions/editRole";
-import { removeRole } from "@/app/actions/editRole";
+import { setRoleAction } from "@/app/actions/editRole";
+import { removeRoleAction } from "@/app/actions/editRole";
 import { Role } from "@/types/globals";
 import { ReactNode } from "react";
 import { RoleHeirarchy } from "@/types/objects";
 
+//TODO: add email notification settings
+//TODO: add submission management
 export default async function Admin(params: { searchParams: Promise<{ search?: string }> }) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role as Role;
@@ -36,7 +38,7 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 							<div>Role: {user.publicMetadata.role as Role}</div>
 
 							{role === "admin" && (
-								<form action={setRole}>
+								<form action={setRoleAction}>
 									<input type="hidden" value={user.id} name="id" />
 									<input type="hidden" value="moderator" name="role" />
 									<button type="submit" className="btn">
@@ -45,7 +47,7 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 								</form>
 							)}
 
-							<form action={setRole}>
+							<form action={setRoleAction}>
 								<input type="hidden" value={user.id} name="id" />
 								<input type="hidden" value="contributor" name="role" />
 								<button type="submit" className="btn">
@@ -53,7 +55,7 @@ export default async function Admin(params: { searchParams: Promise<{ search?: s
 								</button>
 							</form>
 
-							<form action={removeRole}>
+							<form action={removeRoleAction}>
 								<input type="hidden" value={user.id} name="id" />
 								<button type="submit" className="btn">
 									Remove Role

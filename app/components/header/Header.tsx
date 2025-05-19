@@ -64,11 +64,11 @@ export default async function Header() {
 							tabName="Submit"
 							route="/submit"
 							dropdown={[
-								{ label: "Submit Project", href: "/submit/project" },
-								{ label: "Submit Analysis", href: "/submit/analysis" },
-								{ label: "Contribute", href: "/contribute" }
+								{ label: "Project", href: "/submit/project" },
+								{ label: "Analysis", href: "/submit/analysis" }
 							]}
 						/>
+						<TabButton tabName="Contribute" route="/contribute" />
 						{/* <TabButton tabName="Tourmaline" route="/tourmaline" /> */}
 						<TabButton tabName="API" route="/api" />
 						<TabButton tabName="Help" route="/help" />

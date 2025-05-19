@@ -32,7 +32,6 @@ export default function SubmissionEditButton({
 
 	const shape = TableToSchema[table].shape;
 
-	//TODO: add x button to modal
 	function onClose(e: React.MouseEvent<HTMLButtonElement>) {
 		e.preventDefault();
 		modalRef.current?.close();
