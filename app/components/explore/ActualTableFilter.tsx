@@ -12,10 +12,10 @@ type RangeValue = {
 type FilterValue = string | RangeValue | undefined;
 
 type FilterConfig = {
-	label: string;
-	type: "select" | "multiselect" | "date" | "range";
+	type: "select" | "range";
 	field: string | { rel: string; f: string };
 	options?: string[];
+	optionsLabels?: string[];
 	enum?: Record<string, string>;
 	gte?: number;
 	lte?: number;
@@ -106,39 +106,70 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 	return (
 		<div className="bg-base-100 rounded-lg border border-base-300 sticky top-6">
 			{/* Shows how many filters are being used */}
-			<div className="p-4 border-b border-base-300 bg-base-200/50">
-				<div className="flex items-center gap-3">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						className="text-primary"
-					>
-						<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-					</svg>
-					<h3 className="font-medium text-base-content">Filters</h3>
-				</div>
+			<div className="flex justify-between items-center p-4 border-b border-base-300 bg-base-200/50">
 				<div>
-					{activeFilterCount > 0 && <span className="text-sm text-base-content/70">{activeFilterCount} active</span>}
+					<div className="flex items-center gap-3">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							className="text-primary"
+						>
+							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+						</svg>
+						<h3 className="font-medium text-base-content">Filters</h3>
+					</div>
+					<div>
+						{activeFilterCount > 0 ? (
+							<span className="text-sm text-base-content/70">{activeFilterCount} active</span>
+						) : (
+							<span className="text-sm text-base-content/70">{"\u200b"}</span>
+						)}
+					</div>
 				</div>
+				{/* Button to clear all active filters */}
+				{/* TODO: reset all fields back to default */}
+				{activeFilterCount > 0 && (
+					<button
+						onClick={() => {
+							const params = new URLSearchParams(searchParams);
+							tableConfig.forEach((config) => {
+								if (typeof config.field === "string") {
+									params.delete(config.field);
+								} else {
+									params.delete(config.field.rel);
+								}
+							});
+							router.push(`?${params.toString()}`);
+						}}
+						className="btn btn-primary btn-sm"
+					>
+						Clear all filters
+					</button>
+				)}
 			</div>
 
 			{/* List of all available filters */}
 			<div className="divide-y divide-base-300">
 				{tableConfig.map((filter) => (
-					<div key={typeof filter.field === "string" ? filter.field : filter.field.f} className="collapse bg-base-100">
+					<div
+						key={typeof filter.field === "string" ? filter.field : filter.field.f}
+						className="collapse collapse-arrow bg-base-100"
+					>
 						<input type="checkbox" className="collapse-toggle" />
 						<div className="collapse-title">
 							<div className="flex flex-col items-start gap-1">
-								<span className="font-medium text-base-content">{filter.label}</span>
+								<span className="font-medium text-base-content">
+									{typeof filter.field === "string" ? filter.field : filter.field.f}
+								</span>
 								{typeof filter.field === "string" && activeFilters[filter.field] !== undefined ? (
-									<span className="text-sm text-base-content/70">
+									<span className="text-sm text-base-content/70 break-all">
 										{typeof safeJsonParse(activeFilters[filter.field]) === "object"
 											? (JSON.parse(activeFilters[filter.field]).gte || filter.gte) +
 											  " to " +
@@ -148,17 +179,17 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 								) : (
 									typeof filter.field === "object" &&
 									activeFilters[filter.field.rel] !== undefined && (
-										<span className="text-sm text-base-content/70">
+										<span className="text-sm text-base-content/70 break-all">
 											{JSON.parse(activeFilters[filter.field.rel])[filter.field.f]}
 										</span>
 									)
 								)}
 							</div>
 						</div>
-						<div className="collapse-content bg-base-200/30">
+						<div className="collapse-content bg-base-200/30 pt-0 !pb-0">
 							{filter.type === "select" ? (
 								<select
-									className="select select-bordered w-full"
+									className="select select-bordered w-full my-3"
 									value={
 										typeof filter.field === "string"
 											? activeFilters[filter.field] || ""
@@ -170,22 +201,22 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 								>
 									<option value="">Any</option>
 									{filter.enum
-										? Object.values(convertDBEnum(filter.enum)).map((option) => (
+										? Object.values(convertDBEnum(filter.enum)).map((option, i) => (
 												<option key={option} value={option}>
-													{option}
+													{filter.optionsLabels ? filter.optionsLabels[i] : option}
 												</option>
 										  ))
 										: filter.options &&
-										  filter.options.map((option) => (
+										  filter.options.map((option, i) => (
 												<option key={option} value={option}>
-													{option}
+													{filter.optionsLabels ? filter.optionsLabels[i] : option}
 												</option>
 										  ))}
 								</select>
 							) : (
 								filter.type === "range" && (
 									<div>
-										<div>
+										<div className="flex flex-col gap-2">
 											<h2>Min:</h2>
 											<input
 												id={`${filter.field}MinSlider`}
@@ -213,11 +244,11 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 													}
 												}}
 											/>
-											<div className="flex w-full justify-between px-2 text-xs">
+											<div className="flex gap-10 w-full px-2 text-xs">
 												<span>{filter.gte}</span>
 												<input
 													id={`${filter.field}MinInput`}
-													className="input input-sm"
+													className="input input-sm text-center"
 													type="number"
 													min={filter.gte}
 													max={filter.lte}
@@ -241,10 +272,10 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 														}
 													}}
 												/>
-												<span>{filter.lte}</span>
+												<span className="justify-self-end">{filter.lte}</span>
 											</div>
 										</div>
-										<div>
+										<div className="flex flex-col gap-2">
 											<h2>Max:</h2>
 											<input
 												id={`${filter.field}MaxSlider`}
@@ -272,11 +303,11 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 													}
 												}}
 											/>
-											<div className="flex w-full justify-between px-2 text-xs">
+											<div className="flex gap-10 w-full px-2 text-xs">
 												<span>{filter.gte}</span>
 												<input
 													id={`${filter.field}MaxInput`}
-													className="input input-sm"
+													className="input input-sm text-center"
 													type="number"
 													min={filter.gte}
 													max={filter.lte}
@@ -300,7 +331,7 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 														}
 													}}
 												/>
-												<span>{filter.lte}</span>
+												<span className="justify-self-end">{filter.lte}</span>
 											</div>
 											<button
 												className="btn btn-sm"
@@ -336,29 +367,6 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 					</div>
 				))}
 			</div>
-
-			{/* Button to clear all active filters */}
-			{/* TODO: reset all fields back to default */}
-			{activeFilterCount > 0 && (
-				<div className="p-4 border-t border-base-300 bg-base-200/50">
-					<button
-						onClick={() => {
-							const params = new URLSearchParams(searchParams);
-							tableConfig.forEach((config) => {
-								if (typeof config.field === "string") {
-									params.delete(config.field);
-								} else {
-									params.delete(config.field.rel);
-								}
-							});
-							router.push(`?${params.toString()}`);
-						}}
-						className="btn btn-ghost btn-sm w-full"
-					>
-						Clear all filters
-					</button>
-				</div>
-			)}
 		</div>
 	);
 }
