@@ -1,4 +1,4 @@
-requirement_level_code	field_type	controlled_vocabulary_options	section	example	term_name	project_level	ssu16sv4v5	ssu18sv9
+requirement_level_code	field_type	controlled_vocabulary_options	section	example	term_name	project_level	assay1	assay2
 M	free text		Project	José E. Crespo	recordedBy	Luke Thompson		
 R	free text		Project	https://orcid.org/0000-0002-1825-0097  |  https://orcid.org/0000-0002-1825-0098	recordedByID	https://orcid.org/0000-0002-3911-1280		
 M	free text		Project	John Doe	project_contact	Luke Thompson		
