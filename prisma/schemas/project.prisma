@@ -106,6 +106,7 @@ model Sample {
     samp_collect_notes             String?
 
     // Sample Storage
+    /// @zod.custom.use(z.coerce.number())
     samp_store_temp              Float?
     samp_store_sol               String?
     samp_store_dur               String? // fixed
@@ -117,8 +118,7 @@ model Sample {
     samp_mat_process          String?
     filter_passive_active_0_1 DeadBoolean?
     filter_onsite_dur         String? // fixed
-    /// @zod.custom.use(z.coerce.number())
-    size_frac_low             Float?
+    size_frac_low             String?
     /// @zod.custom.use(z.coerce.number())
     size_frac                 Float?
     /// @zod.custom.use(z.coerce.number())
@@ -134,10 +134,9 @@ model Sample {
     precip_time_prep          Float?
     /// @zod.custom.use(z.coerce.number())
     precip_temp_prep          Float?
-    prepped_samp_store_temp   Float?
+    prepped_samp_store_temp   String?
     prepped_samp_store_sol    String?
-    /// @zod.custom.use(z.coerce.number())
-    prepped_samp_store_dur    Float?
+    prepped_samp_store_dur    String?
     prep_method_additional    String?
     prefilter_material        String?
     /// @zod.custom.use(z.coerce.number())
@@ -158,6 +157,7 @@ model Sample {
     biological_rep_relation String? // fixed
 
     // Nucleic Acid Extraction
+    /// @zod.custom.use(z.coerce.number())
     samp_vol_we_dna_ext             Float?
     samp_vol_we_dna_ext_unit        String?
     nucl_acid_ext_lysis             String?
@@ -167,14 +167,17 @@ model Sample {
     nucl_acid_ext_modify            String?
     dna_cleanup_0_1                 DeadBoolean?
     dna_cleanup_method              String?
+    /// @zod.custom.use(z.coerce.number())
     concentration                   Float?
     concentration_method            String?
+    /// @zod.custom.use(z.coerce.number())
     ratioOfAbsorbance260_280        Float?
     /// @zod.custom.use(z.coerce.number().int())
     pool_dna_num                    Int?
     nucl_acid_ext_method_additional String?
     concentration_unit              String?
     date_ext                        String?
+    /// @zod.custom.use(z.coerce.number())
     dna_yield                       Float?
     dna_yield_unit                  String?
 
