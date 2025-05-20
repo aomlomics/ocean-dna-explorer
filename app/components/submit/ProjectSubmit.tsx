@@ -2,9 +2,8 @@
 
 import projectSubmitAction from "@/app/actions/project/projectSubmit";
 import { useRouter } from "next/navigation";
-import { FormEvent, useReducer, useState } from "react";
+import { FormEvent, useReducer, useRef, useState } from "react";
 import ProgressCircle from "./ProgressCircle";
-import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
 import InfoButton from "../InfoButton";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
@@ -28,7 +27,9 @@ export default function ProjectSubmit() {
 	});
 
 	// Modal (popup) state after project submission
-	const [showModal, setShowModal] = useState(false);
+	const modalRef = useRef<HTMLDialogElement>(null);
+	const modalXRef = useRef<HTMLButtonElement>(null);
+	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 	const [modalMessage, setModalMessage] = useState("");
 	const [isError, setIsError] = useState(false);
 
@@ -70,7 +71,7 @@ export default function ProjectSubmit() {
 			if (result.statusMessage === "error") {
 				setIsError(true);
 				setModalMessage(result.error);
-				setShowModal(true);
+				modalRef.current?.showModal();
 				setErrorObj({
 					global: result.error,
 					status: "❌ Submission Failed",
@@ -82,7 +83,9 @@ export default function ProjectSubmit() {
 					"Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds...";
 				setIsError(false);
 				setModalMessage(successMessage);
-				setShowModal(true);
+				modalRef.current?.showModal();
+				modalXRef.current!.disabled = true;
+				modalClickOffRef.current!.disabled = true;
 				setResponseObj({
 					project: "Success!",
 					samples: "Success!",
@@ -98,7 +101,7 @@ export default function ProjectSubmit() {
 		} catch (error) {
 			setIsError(true);
 			setModalMessage("An error occurred during submission.");
-			setShowModal(true);
+			modalRef.current?.showModal();
 			setErrorObj({
 				global: "An error occurred during submission.",
 				status: "❌ Submission Failed",
@@ -203,7 +206,33 @@ export default function ProjectSubmit() {
 					</button>
 				</form>
 
-				<SubmissionStatusModal isOpen={showModal} isError={isError} message={modalMessage} />
+				<dialog ref={modalRef} className="modal">
+					<div className="modal-box">
+						<button
+							ref={modalXRef}
+							className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+							onClick={(e) => {
+								e.preventDefault();
+								modalRef.current?.close();
+							}}
+						>
+							✕
+						</button>
+						<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
+							{isError ? "Submission Failed" : "Project Submitted Successfully"}
+						</h3>
+						<p className="mb-2 font-light">{modalMessage}</p>
+						{!isError && (
+							<div className="mt-4 flex items-center justify-center gap-2">
+								<span className="loading loading-spinner loading-sm"></span>
+								<span className="text-base-content/80 text-sm">Redirecting...</span>
+							</div>
+						)}
+					</div>
+					<form method="dialog" className="modal-backdrop">
+						<button ref={modalClickOffRef}>close</button>
+					</form>
+				</dialog>
 			</div>
 		</div>
 	);
