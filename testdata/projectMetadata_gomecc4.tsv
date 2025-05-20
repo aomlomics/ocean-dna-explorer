@@ -99,7 +99,7 @@ O	free text		Bioinformatics	"Distribution information was checked using FishBase
 O	free text		Bioinformatics	"Non-targeted species (i.e. domestic animals, humans and non-marine species) were removed from the curated OTU table and downstream data analyses. OTUs that were assigned to species in WoRMS were kept in the curated OTU table."	screen_nontarget_method			
 O	free text		Bioinformatics	NEED AN EXAMPLE HERE	screen_other			
 O	free text		Bioinformatics	"The min_reads_cutoff was 1 read, but singletons were kept if the same sequence was detected in multiple samples. Data was curated using r-package LULU, minimum_mismatch cutoff 90%"	bioinfo_method_additional			
-O	free text		User defined		expedition_id	GOMECC-4 (2021)		
+O	free text		Project		expedition_id	GOMECC-4 (2021)		
 M	free text		Bioinformatics	gomecc4-16S-p3-6_v2024.10 | gomecc4-16S-p3-6_repseqs | gomecc4-16S-p3-6_taxa	analysis_run_name		tourmaline-16S-09262022 | tourmaline-16S-09232022	tourmaline-18S-09222022
 R	controlled vocabulary	dada2pe | dada2se | deblur | other	Bioinformatics		asv_method	dada2pe		
 R	integer		Bioinformatics		dada2_trunc_len_f		230	120

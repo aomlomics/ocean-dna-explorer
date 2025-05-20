@@ -177,8 +177,8 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				primers.push(
 					PrimerOptionalDefaultsSchema.parse(
 						{
-							...p,
 							...projectCol,
+							...p,
 							userIds: [userId],
 							isPrivate
 						},
@@ -256,10 +256,10 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 								assays[assayRow.assay_name] = AssayOptionalDefaultsSchema.parse(
 									//TODO: use assay_name field, not column header
 									{
-										//least specific overrides most specific
-										...assayRow,
-										...assayCols[assayRow.assay_name],
+										//most specific overrides least specific
 										...projectCol,
+										...assayCols[assayRow.assay_name],
+										...assayRow,
 										userIds: [userId],
 										isPrivate
 									},
@@ -275,10 +275,10 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 								//@ts-ignore issue with JSON database type
 								LibraryOptionalDefaultsSchema.parse(
 									{
-										//least specific overrides most specific
-										...libraryRow,
-										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
+										//most specific overrides lease specific
 										...projectCol,
+										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
+										...libraryRow,
 										userIds: [userId],
 										userDefined,
 										isPrivate
@@ -344,7 +344,6 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 								//@ts-ignore issue with Json database type
 								SampleOptionalDefaultsSchema.parse(
 									{
-										//construct from least specific to most specific
 										...sampleRow,
 										project_id: projectCol.project_id,
 										assay_name: sampToAssay[sampleRow.samp_name],
