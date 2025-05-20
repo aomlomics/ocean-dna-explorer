@@ -46,7 +46,6 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		console.log(`${parsed.data.analysis_run_name}_occ file`);
 		//code block to force garbage collection
 		{
-			let occFileLines;
 			//fetch from blob storage
 			const response = await fetch(parsed.data.url);
 			if (!response.ok) {
@@ -56,8 +55,7 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 				};
 			}
 			const text = await response.text();
-			occFileLines = text.replace(/[\r]+/gm, "").split("\n");
-			occFileLines.splice(0, 1); //TODO: parse comments out logically instead of hard-coded
+			const occFileLines = text.replace(/[\r]+/gm, "").split("\n");
 			const occFileHeaders = occFileLines[0].split("\t");
 
 			//iterate over each row

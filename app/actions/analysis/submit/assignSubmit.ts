@@ -57,7 +57,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 		console.log(`${parsed.data.analysis_run_name}_assign file`);
 		//code block to force garbage collection
 		{
-			let assignFileLines;
 			//fetch files from blob storage
 			const response = await fetch(parsed.data.url);
 			if (!response.ok) {
@@ -67,7 +66,7 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 				};
 			}
 			const text = await response.text();
-			assignFileLines = text.replace(/[\r]+/gm, "").split("\n");
+			const assignFileLines = text.replace(/[\r]+/gm, "").split("\n");
 			const assignFileHeaders = assignFileLines[0].split("\t");
 
 			//iterate over each row

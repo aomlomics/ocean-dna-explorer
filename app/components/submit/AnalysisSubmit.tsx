@@ -73,24 +73,27 @@ export default function AnalysisSubmit() {
 				const f = files[0];
 
 				const lines = (await f.text()).replace(/[\r]+/gm, "").split("\n");
+				const headers = lines[0].split("\t");
 				for (let j = 1; j < lines.length; j++) {
 					const currentLine = lines[j].split("\t");
+					const field = currentLine[headers.indexOf("term_name")];
+					const value = currentLine[headers.indexOf("values")];
 
-					if (currentLine[0] === "analysis_run_name") {
+					if (field === "analysis_run_name") {
 						const tempAList = [...analyses];
-						tempAList[i] = currentLine[1].replace(/[\r\n]+/gm, "");
+						tempAList[i] = value;
 						setAnalyses(tempAList);
 						return;
 					}
 
-					if (currentLine[0] === "project_id") {
+					if (field === "project_id") {
 						if (project) {
-							if (currentLine[1] !== project.project_id) {
+							if (value !== project.project_id) {
 								setErrorObj({ global: "All analyses must be for the same project." });
 								return;
 							}
 						} else {
-							const response = await projectFindUniqueAction(currentLine[1]);
+							const response = await projectFindUniqueAction(value);
 							if (response.statusMessage == "success" && response.result) {
 								setIsPrivate(response.result.isPrivate);
 								setProject(response.result);

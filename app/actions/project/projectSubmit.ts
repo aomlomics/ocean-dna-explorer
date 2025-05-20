@@ -89,9 +89,10 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				const currentLine = projectFileLines[i].split("\t");
 				const field = currentLine[projectFileHeaders.indexOf("term_name")];
 				const value = currentLine[projectFileHeaders.indexOf("project_level")];
+				const section = currentLine[projectFileHeaders.indexOf("section")];
 
 				//User defined
-				if (currentLine[projectFileHeaders.indexOf("section")] === "User defined") {
+				if (section === "User defined") {
 					userDefined[field] = value;
 				} else {
 					// TODO: move "if (fieldOptionsEnum.options.includes(fieldName))" from parseSchemaToObject into here as an if-else-if block to allow for error handling if NONE of the schemas have this field

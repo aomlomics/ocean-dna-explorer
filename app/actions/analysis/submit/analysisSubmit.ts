@@ -45,20 +45,22 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		{
 			//parse file
 			const analysisFileLines = (await parsed.data.file.text()).replace(/[\r]+/gm, "").split("\n");
+			const analysisFileHeaders = analysisFileLines[0].split("\t");
+			const userDefined = {} as PrismaJson.UserDefinedType;
 			//iterate over each row
 			for (let i = 1; i < analysisFileLines.length; i++) {
 				// TODO: get extension of file and split accordingly
 				const currentLine = analysisFileLines[i].split("\t");
+				const field = currentLine[analysisFileHeaders.indexOf("term_name")];
+				const value = currentLine[analysisFileHeaders.indexOf("values")];
+				const section = currentLine[analysisFileHeaders.indexOf("section")];
 
 				//Analysis
-				if (currentLine[0]) {
-					parseSchemaToObject(
-						currentLine[1].replace(/[\r\n]+/gm, ""),
-						currentLine[0],
-						analysisCol,
-						AnalysisOptionalDefaultsSchema,
-						AnalysisScalarFieldEnumSchema
-					);
+				//User defined
+				if (section === "User defined") {
+					userDefined[field] = value;
+				} else {
+					parseSchemaToObject(value, field, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
 				}
 			}
 		}
