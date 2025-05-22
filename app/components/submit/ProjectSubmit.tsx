@@ -70,6 +70,7 @@ export default function ProjectSubmit() {
 
 			if (result.statusMessage === "error") {
 				setIsError(true);
+				console.log(result.error);
 				setModalMessage(result.error);
 				modalRef.current?.showModal();
 				setErrorObj({
@@ -221,7 +222,7 @@ export default function ProjectSubmit() {
 						<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
 							{isError ? "Submission Failed" : "Project Submitted Successfully"}
 						</h3>
-						<p className="mb-2 font-light">{modalMessage}</p>
+						<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
 						{!isError && (
 							<div className="mt-4 flex items-center justify-center gap-2">
 								<span className="loading loading-spinner loading-sm"></span>

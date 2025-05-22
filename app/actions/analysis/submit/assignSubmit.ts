@@ -48,11 +48,11 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 		};
 	}
 
-	try {
-		const features = [] as Prisma.FeatureCreateManyInput[];
-		const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
-		const assignments = [] as Prisma.AssignmentCreateManyInput[];
+	const features = [] as Prisma.FeatureCreateManyInput[];
+	const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
+	const assignments = [] as Prisma.AssignmentCreateManyInput[];
 
+	try {
 		//Feature file
 		console.log(`${parsed.data.analysis_run_name}_assign file`);
 		//code block to force garbage collection
@@ -198,7 +198,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

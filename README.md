@@ -50,7 +50,7 @@ Note: npm install will fail until you do the Local DB setup. You can view the fr
    \l
    ```
 4. Configure your .ENV file. **Please see our Env file section above for more info**:
-   - For the local database: `POSTGRES_PRISMA_URL=postgres://<username>:<password>@localhost/<database_name>?pgbouncer=true&connect_timeout=15`
+   - For the local database: `DATABASE_URL=postgres://<username>:<password>@localhost/<database_name>?pgbouncer=true&connect_timeout=15`
    - Replace `<username>`, `<password>`, and `<database_name>` with your own.
 
 ### Database Commands
@@ -183,5 +183,6 @@ There are helpful `.sh` scripts you can run with the `bash` command in `server/s
 The `restart.sh` script will restart the gunicorn process to allow you to view changes to code.
 The `start.sh` script will run the gunicorn process in a screen. Behavior is the same as when you run `attach.sh`.
 
-## Disclaimer  
+## Disclaimer
+
 This repository is a scientific product and is not official communication of the National Oceanic and Atmospheric Administration, or the United States Department of Commerce. All NOAA GitHub project code is provided on an 'as is' basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.

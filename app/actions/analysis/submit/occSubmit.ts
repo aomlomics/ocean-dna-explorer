@@ -37,11 +37,10 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		};
 	}
 
-	try {
-		console.log(`${parsed.data.analysis_run_name} occurrences submit`);
+	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
+	try {
 		//Occurrence file
-		const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
 		console.log(`${parsed.data.analysis_run_name}_occ file`);
 		//code block to force garbage collection
@@ -134,7 +133,6 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

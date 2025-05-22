@@ -27,7 +27,6 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 	const formDataObject = Object.fromEntries(formData.entries());
 	const parsed = formSchema.safeParse(formDataObject);
 	if (!parsed.success) {
-		console.log(parsed.error.message);
 		return {
 			statusMessage: "error",
 			error: parsed.error.issues
@@ -36,9 +35,9 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		};
 	}
 
-	try {
-		const analysisCol = {} as Record<string, string>;
+	const analysisCol = {} as Record<string, string>;
 
+	try {
 		//Analysis file
 		console.log("Analysis file");
 		//code block to force garbage collection
@@ -103,7 +102,6 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }
