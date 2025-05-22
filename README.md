@@ -50,7 +50,7 @@ Note: npm install will fail until you do the Local DB setup. You can view the fr
    \l
    ```
 4. Configure your .ENV file. **Please see our Env file section above for more info**:
-   - For the local database: `DATABASE_URL=postgres://<username>:<password>@localhost/<database_name>?pgbouncer=true&connect_timeout=15`
+   - For the local database: `POSTGRES_PRISMA_URL=postgres://<username>:<password>@localhost/<database_name>?pgbouncer=true&connect_timeout=15`
    - Replace `<username>`, `<password>`, and `<database_name>` with your own.
 
 ### Database Commands
