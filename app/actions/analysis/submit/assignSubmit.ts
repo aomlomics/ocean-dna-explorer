@@ -191,8 +191,8 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 				await tx.assignment.createMany({
 					data: assignments
 				});
-			},
-			{ timeout: 1 * 60 * 1000 }
+			}
+			// { timeout: 1 * 60 * 1000 }
 		);
 
 		return { statusMessage: "success" };

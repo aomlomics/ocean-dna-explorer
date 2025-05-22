@@ -123,10 +123,8 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 				await tx.occurrence.createMany({
 					data: occurrences
 				});
-			},
-			{
-				timeout: 1 * 60 * 1000
 			}
+			// { timeout: 1 * 60 * 1000 }
 		);
 
 		revalidatePath("/explore");

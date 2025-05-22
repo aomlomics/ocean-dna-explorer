@@ -55,8 +55,8 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 				// 		}
 				// 	}
 				// });
-			},
-			{ timeout: 1.5 * 60 * 1000 }
+			}
+			// { timeout: 1.5 * 60 * 1000 }
 		);
 
 		return { statusMessage: "success" };

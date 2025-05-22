@@ -545,8 +545,8 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 
 				//libraries
 				await batchSubmit(tx, libraries, "library", "lib_id", userId, isPrivate);
-			},
-			{ timeout: 0.5 * 60 * 1000 } //30 seconds
+			}
+			// { timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
 		revalidatePath("/explore");
