@@ -109,50 +109,91 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 						);
 					}
 
-					features.push(
-						FeatureOptionalDefaultsSchema.parse(
-							{
-								...featureRow,
-								sequenceLength: featureRow.dna_sequence!.length,
-								userIds: [userId],
-								isPrivate: parsed.data.isPrivate
-							},
-							{
-								errorMap: (error, ctx) => {
-									return { message: `FeatureSchema (${parsed.data.analysis_run_name}): ${ctx.defaultError}` };
-								}
+					//parse feature
+					const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
+						{
+							...featureRow,
+							sequenceLength: featureRow.dna_sequence!.length,
+							userIds: [userId],
+							isPrivate: parsed.data.isPrivate
+						},
+						{
+							errorMap: (error, ctx) => {
+								return {
+									message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+										featureRow[error.path[0] as keyof typeof featureRow]
+									}`
+								};
 							}
-						)
+						}
 					);
 
-					assignments.push(
-						AssignmentOptionalDefaultsSchema.parse(
-							{
-								...assignmentRow,
-								userIds: [userId],
-								isPrivate: parsed.data.isPrivate,
-								analysis_run_name: parsed.data.analysis_run_name
-							},
-							{
-								errorMap: (error, ctx) => {
-									return {
-										message: `AssignmentSchema (${parsed.data.analysis_run_name}, ${assignmentRow.featureid}, ${assignmentRow.Confidence}): ${ctx.defaultError}`
-									};
-								}
+					if (!parsedFeature.success) {
+						return {
+							statusMessage: "error",
+							error:
+								`Table: Feature\n` +
+								`Key: ${featureRow.featureid}\n\n` +
+								`${parsedFeature.error.issues.map((e) => e.message).join("\n\n")}`
+						};
+					}
+					features.push(parsedFeature.data);
+
+					//parse assignment
+					const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
+						{
+							...assignmentRow,
+							userIds: [userId],
+							isPrivate: parsed.data.isPrivate,
+							analysis_run_name: parsed.data.analysis_run_name
+						},
+						{
+							errorMap: (error, ctx) => {
+								return {
+									message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+										assignmentRow[error.path[0] as keyof typeof assignmentRow]
+									}`
+								};
 							}
-						)
+						}
 					);
 
-					taxonomies.push(
-						TaxonomyOptionalDefaultsSchema.parse(
-							{ ...taxonomyRow, userIds: [userId], isPrivate: parsed.data.isPrivate },
-							{
-								errorMap: (error, ctx) => {
-									return { message: `TaxonomySchema (${parsed.data.analysis_run_name}): ${ctx.defaultError}` };
-								}
+					if (!parsedAssignment.success) {
+						return {
+							statusMessage: "error",
+							error:
+								`Table: Assignment\n` +
+								`Key: ${assignmentRow.analysis_run_name}\n` +
+								`Key: ${assignmentRow.featureid}\n\n` +
+								`${parsedAssignment.error.issues.map((e) => e.message).join("\n\n")}`
+						};
+					}
+					assignments.push(parsedAssignment.data);
+
+					//parse taxonomy
+					const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(
+						{ ...taxonomyRow, userIds: [userId], isPrivate: parsed.data.isPrivate },
+						{
+							errorMap: (error, ctx) => {
+								return {
+									message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+										taxonomyRow[error.path[0] as keyof typeof taxonomyRow]
+									}`
+								};
 							}
-						)
+						}
 					);
+
+					if (!parsedTaxonomy.success) {
+						return {
+							statusMessage: "error",
+							error:
+								`Table: Taxonomy\n` +
+								`Key: ${taxonomyRow.taxonomy}\n\n` +
+								`${parsedTaxonomy.error.issues.map((e) => e.message).join("\n\n")}`
+						};
+					}
+					taxonomies.push(parsedTaxonomy.data);
 				}
 			}
 		}

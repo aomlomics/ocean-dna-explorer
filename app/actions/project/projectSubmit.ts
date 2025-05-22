@@ -296,8 +296,6 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 									},
 									{
 										errorMap: (error, ctx) => {
-											console.log(error);
-											console.log(ctx);
 											return {
 												message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
 													assayRow[error.path[0] as keyof typeof assayRow] || projectCol[error.path[0]]

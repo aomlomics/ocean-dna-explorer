@@ -64,14 +64,28 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 			}
 		}
 
-		const data = AnalysisOptionalDefaultsSchema.parse(
+		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
 			{ ...analysisCol, userIds: [userId], isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
 			{
 				errorMap: (error, ctx) => {
-					return { message: `AnalysisSchema: ${ctx.defaultError}` };
+					return {
+						message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+							analysisCol[error.path[0] as keyof typeof analysisCol]
+						}`
+					};
 				}
 			}
 		);
+
+		if (!parsedAnalysis.success) {
+			return {
+				statusMessage: "error",
+				error:
+					`Table: Analysis\n` +
+					`Key: ${analysisCol.analysis_run_name}\n\n` +
+					`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
+			};
+		}
 
 		//analysis
 		console.log("analysis");
@@ -95,7 +109,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 
 			await tx.analysis.create({
 				//@ts-ignore issue with Json database type
-				data
+				data: parsedAnalysis.data
 			});
 		});
 

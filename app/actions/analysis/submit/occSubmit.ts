@@ -70,26 +70,45 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 						const organismQuantity = parseInt(currentLine[j]);
 
 						if (organismQuantity) {
-							//occurrence table
-							occurrences.push(
-								OccurrenceOptionalDefaultsSchema.parse(
-									{
-										userIds: [userId],
-										samp_name,
-										featureid,
-										organismQuantity,
-										analysis_run_name: parsed.data.analysis_run_name,
-										isPrivate: parsed.data.isPrivate
-									},
-									{
-										errorMap: (error, ctx) => {
-											return {
-												message: `OccurrenceSchema (${parsed.data.analysis_run_name}, ${samp_name}, ${featureid}): ${ctx.defaultError}`
-											};
-										}
+							//parse occurrence
+							const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
+								{
+									userIds: [userId],
+									samp_name,
+									featureid,
+									organismQuantity,
+									analysis_run_name: parsed.data.analysis_run_name,
+									isPrivate: parsed.data.isPrivate
+								},
+								{
+									errorMap: (error, ctx) => {
+										return {
+											message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+												error.path[0] === "samp_name"
+													? samp_name
+													: error.path[0] === "featureid"
+													? featureid
+													: error.path[0] === "organismQuantity"
+													? organismQuantity
+													: undefined
+											}`
+										};
 									}
-								)
+								}
 							);
+
+							if (!parsedOccurrence.success) {
+								return {
+									statusMessage: "error",
+									error:
+										`Table: Occurrence\n` +
+										`Key: ${parsed.data.analysis_run_name}\n` +
+										`Key: ${samp_name}\n` +
+										`Key: ${featureid}\n\n` +
+										`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
+								};
+							}
+							occurrences.push(parsedOccurrence.data);
 						}
 					}
 				}

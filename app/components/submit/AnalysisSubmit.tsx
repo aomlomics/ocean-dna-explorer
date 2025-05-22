@@ -13,6 +13,7 @@ import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
 import { Action } from "@/types/globals";
+import Link from "next/link";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -399,7 +400,14 @@ export default function AnalysisSubmit() {
 
 	return (
 		<>
-			{project && <div className="text-center w-full">Analyses for project: {project.project_id}</div>}
+			{project && (
+				<div className="text-center w-full">
+					Analyses for project:{" "}
+					<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+						{project.project_id}
+					</Link>
+				</div>
+			)}
 
 			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
 				<div className="space-y-6 -mt-8">
@@ -569,7 +577,7 @@ export default function AnalysisSubmit() {
 					<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
 						{isError ? "Submission Failed" : "Project Submitted Successfully"}
 					</h3>
-					<p className="mb-2 font-light">{modalMessage}</p>
+					<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
 					{!isError && (
 						<div className="mt-4 flex items-center justify-center gap-2">
 							<span className="loading loading-spinner loading-sm"></span>
