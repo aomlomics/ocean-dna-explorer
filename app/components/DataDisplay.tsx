@@ -42,7 +42,7 @@ export default function DataDisplay({ data, omit = [] }: { data: Record<string, 
 										</td>
 									</tr>
 								);
-							} else {
+							} else if (value) {
 								acc.push(
 									<tr key={field}>
 										<td className="flex flex-col gap-1">

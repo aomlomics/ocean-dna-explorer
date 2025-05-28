@@ -37,16 +37,14 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 		};
 	}
 
-	try {
-		console.log(`${parsed.data.analysis_run_name} occurrences submit`);
+	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
+	try {
 		//Occurrence file
-		const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
 		console.log(`${parsed.data.analysis_run_name}_occ file`);
 		//code block to force garbage collection
 		{
-			let occFileLines;
 			//fetch from blob storage
 			const response = await fetch(parsed.data.url);
 			if (!response.ok) {
@@ -56,8 +54,7 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 				};
 			}
 			const text = await response.text();
-			occFileLines = text.replace(/[\r]+/gm, "").split("\n");
-			occFileLines.splice(0, 1); //TODO: parse comments out logically instead of hard-coded
+			const occFileLines = text.replace(/[\r]+/gm, "").split("\n");
 			const occFileHeaders = occFileLines[0].split("\t");
 
 			//iterate over each row
@@ -73,26 +70,45 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 						const organismQuantity = parseInt(currentLine[j]);
 
 						if (organismQuantity) {
-							//occurrence table
-							occurrences.push(
-								OccurrenceOptionalDefaultsSchema.parse(
-									{
-										userIds: [userId],
-										samp_name,
-										featureid,
-										organismQuantity,
-										analysis_run_name: parsed.data.analysis_run_name,
-										isPrivate: parsed.data.isPrivate
-									},
-									{
-										errorMap: (error, ctx) => {
-											return {
-												message: `OccurrenceSchema (${parsed.data.analysis_run_name}, ${samp_name}, ${featureid}): ${ctx.defaultError}`
-											};
-										}
+							//parse occurrence
+							const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
+								{
+									userIds: [userId],
+									samp_name,
+									featureid,
+									organismQuantity,
+									analysis_run_name: parsed.data.analysis_run_name,
+									isPrivate: parsed.data.isPrivate
+								},
+								{
+									errorMap: (error, ctx) => {
+										return {
+											message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+												error.path[0] === "samp_name"
+													? samp_name
+													: error.path[0] === "featureid"
+													? featureid
+													: error.path[0] === "organismQuantity"
+													? organismQuantity
+													: undefined
+											}`
+										};
 									}
-								)
+								}
 							);
+
+							if (!parsedOccurrence.success) {
+								return {
+									statusMessage: "error",
+									error:
+										`Table: Occurrence\n` +
+										`Key: ${parsed.data.analysis_run_name}\n` +
+										`Key: ${samp_name}\n` +
+										`Key: ${featureid}\n\n` +
+										`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
+								};
+							}
+							occurrences.push(parsedOccurrence.data);
 						}
 					}
 				}
@@ -127,16 +143,13 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 					data: occurrences
 				});
 			},
-			{
-				timeout: 1 * 60 * 1000
-			}
+			{ timeout: 1 * 60 * 1000 }
 		);
 
 		revalidatePath("/explore");
 		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

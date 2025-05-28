@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { batchSubmit, prisma } from "@/app/helpers/prisma";
+import { batchSubmit, handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
@@ -49,7 +49,6 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 	const formDataObject = Object.fromEntries(formData.entries());
 	const parsed = formSchema.safeParse(formDataObject);
 	if (!parsed.success) {
-		console.log(parsed.error.message);
 		return {
 			statusMessage: "error",
 			error: parsed.error.issues
@@ -58,23 +57,23 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 		};
 	}
 
+	let project = {} as Prisma.ProjectCreateInput;
+	const primers = [] as Prisma.PrimerCreateManyInput[];
+	const assays = {} as Record<string, Prisma.AssayCreateManyInput>;
+	const libraries = [] as Prisma.LibraryCreateManyInput[];
+	const samples = [] as Prisma.SampleCreateManyInput[];
+
+	const projectCol = {} as Record<string, string>;
+	const primerCols = {} as Record<string, Record<string, string>>;
+	const assayCols = {} as Record<string, Record<string, string>>;
+	const libraryCols = {} as Record<string, Record<string, string>>;
+
+	const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
+	const libToAssay = {} as Record<string, string>; //object to relate libraries to their assay_name values
+
+	const isPrivate = parsed.data.isPrivate ? true : false;
+
 	try {
-		let project = {} as Prisma.ProjectCreateInput;
-		const primers = [] as Prisma.PrimerCreateManyInput[];
-		const assays = {} as Record<string, Prisma.AssayCreateManyInput>;
-		const libraries = [] as Prisma.LibraryCreateManyInput[];
-		const samples = [] as Prisma.SampleCreateManyInput[];
-
-		const projectCol = {} as Record<string, string>;
-		const primerCols = {} as Record<string, Record<string, string>>;
-		const assayCols = {} as Record<string, Record<string, string>>;
-		const libraryCols = {} as Record<string, Record<string, string>>;
-
-		const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
-		const libToAssay = {} as Record<string, string>; //object to relate libraries to their assay_name values
-
-		const isPrivate = parsed.data.isPrivate ? true : false;
-
 		//Project file
 		console.log("project file");
 		//code block to force garbage collection
@@ -89,9 +88,10 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				const currentLine = projectFileLines[i].split("\t");
 				const field = currentLine[projectFileHeaders.indexOf("term_name")];
 				const value = currentLine[projectFileHeaders.indexOf("project_level")];
+				const section = currentLine[projectFileHeaders.indexOf("section")];
 
 				//User defined
-				if (currentLine[projectFileHeaders.indexOf("section")] === "User defined") {
+				if (section === "User defined") {
 					userDefined[field] = value;
 				} else {
 					// TODO: move "if (fieldOptionsEnum.options.includes(fieldName))" from parseSchemaToObject into here as an if-else-if block to allow for error handling if NONE of the schemas have this field
@@ -158,37 +158,68 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 			}
 
 			//@ts-ignore issue with Json database type
-			project = ProjectOptionalDefaultsSchema.parse(
+			const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
 				{
 					...projectCol,
 					userIds: [userId],
 					isPrivate,
-					userDefined,
+					userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
 					editHistory: "JsonNull"
 				},
 				{
 					errorMap: (error, ctx) => {
-						return { message: `ProjectSchema: ${ctx.defaultError}` };
+						return {
+							message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${projectCol[error.path[0]]}`
+						};
 					}
 				}
 			);
 
+			if (!parsedProject.success) {
+				return {
+					statusMessage: "error",
+					error:
+						`Table: Project\n` +
+						`Key: ${projectCol.project_id}\n\n` +
+						`${parsedProject.error.issues.map((e) => e.message).join("\n\n")}`
+				};
+			}
+
+			//@ts-ignore issue with Json database type
+			project = parsedProject.data;
+
 			for (let p of Object.values(primerCols)) {
-				primers.push(
-					PrimerOptionalDefaultsSchema.parse(
-						{
-							...projectCol,
-							...p,
-							userIds: [userId],
-							isPrivate
-						},
-						{
-							errorMap: (error, ctx) => {
-								return { message: `PrimerSchema: ${ctx.defaultError}` };
-							}
+				const parsedPrimer = PrimerOptionalDefaultsSchema.safeParse(
+					{
+						//most specific overrides least specific
+						...projectCol,
+						...p,
+						userIds: [userId],
+						isPrivate
+					},
+					{
+						errorMap: (error, ctx) => {
+							return {
+								message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+									p[error.path[0]] || projectCol[error.path[0]]
+								}`
+							};
 						}
-					)
+					}
 				);
+
+				if (!parsedPrimer.success) {
+					return {
+						statusMessage: "error",
+						error:
+							`Table: Primer\n` +
+							`Key: ${p.pcr_primer_forward || projectCol.pcr_primer_forward}\n` +
+							`Key: ${p.pcr_primer_reverse || projectCol.pcr_primer_reverse}\n\n` +
+							`${parsedPrimer.error.issues.map((e) => e.message).join("\n\n")}`
+					};
+				}
+
+				primers.push(parsedPrimer.data);
 			}
 		}
 
@@ -253,7 +284,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 							//TODO: do not create new assays, as they should ALL already exist in the database
 							if (!assays[assayRow.assay_name]) {
 								//TODO: build assay object from projectMetadata
-								assays[assayRow.assay_name] = AssayOptionalDefaultsSchema.parse(
+								const parsedAssay = AssayOptionalDefaultsSchema.safeParse(
 									//TODO: use assay_name field, not column header
 									{
 										//most specific overrides least specific
@@ -265,31 +296,61 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 									},
 									{
 										errorMap: (error, ctx) => {
-											return { message: `AssaySchema: ${ctx.defaultError}` };
+											return {
+												message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+													assayRow[error.path[0] as keyof typeof assayRow] || projectCol[error.path[0]]
+												}`
+											};
 										}
 									}
 								);
+
+								if (!parsedAssay.success) {
+									return {
+										statusMessage: "error",
+										error:
+											`Table: Assay\n` +
+											`Key: ${assayRow.assay_name}\n\n` +
+											`${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
+									};
+								}
+
+								assays[assayRow.assay_name] = parsedAssay.data;
 							}
 
-							libraries.push(
-								//@ts-ignore issue with JSON database type
-								LibraryOptionalDefaultsSchema.parse(
-									{
-										//most specific overrides lease specific
-										...projectCol,
-										...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
-										...libraryRow,
-										userIds: [userId],
-										userDefined,
-										isPrivate
-									},
-									{
-										errorMap: (error, ctx) => {
-											return { message: `LibrarySchema: ${ctx.defaultError}` };
-										}
+							const parsedLibrary = LibraryOptionalDefaultsSchema.safeParse(
+								{
+									//most specific overrides lease specific
+									...projectCol,
+									...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
+									...libraryRow,
+									userIds: [userId],
+									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
+									isPrivate
+								},
+								{
+									errorMap: (error, ctx) => {
+										return {
+											message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+												libraryRow[error.path[0] as keyof typeof libraryRow] || projectCol[error.path[0]]
+											}`
+										};
 									}
-								)
+								}
 							);
+
+							if (!parsedLibrary.success) {
+								return {
+									statusMessage: "error",
+									error:
+										`Table: Library\n` +
+										`Key: ${libraryRow.lib_id}\n\n` +
+										`${parsedLibrary.error.issues.map((e) => e.message).join("\n\n")}`
+								};
+							}
+
+							//@ts-ignore issue with Json database type
+							libraries.push(parsedLibrary.data);
 						} else {
 							throw new Error("Missing samp_name or assay_name in Library metadata.");
 						}
@@ -340,24 +401,37 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 						}
 
 						if (sampleRow.samp_name) {
-							samples.push(
-								//@ts-ignore issue with Json database type
-								SampleOptionalDefaultsSchema.parse(
-									{
-										...sampleRow,
-										project_id: projectCol.project_id,
-										assay_name: sampToAssay[sampleRow.samp_name],
-										userIds: [userId],
-										userDefined,
-										isPrivate
-									},
-									{
-										errorMap: (error, ctx) => {
-											return { message: `SampleSchema: ${ctx.defaultError}` };
-										}
+							const parsedSample = SampleOptionalDefaultsSchema.safeParse(
+								{
+									...sampleRow,
+									project_id: projectCol.project_id,
+									assay_name: sampToAssay[sampleRow.samp_name],
+									userIds: [userId],
+									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
+									isPrivate
+								},
+								{
+									errorMap: (error, ctx) => {
+										return {
+											message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+												sampleRow[error.path[0] as keyof typeof sampleRow]
+											}`
+										};
 									}
-								)
+								}
 							);
+
+							if (!parsedSample.success) {
+								return {
+									statusMessage: "error",
+									error:
+										`Table: Sample\n` +
+										`Key: ${sampleRow.samp_name}\n\n` +
+										`${parsedSample.error.issues.map((e) => e.message).join("\n\n")}`
+								};
+							}
+							//@ts-ignore issue with Json database type
+							samples.push(parsedSample.data);
 						}
 					}
 				}
@@ -475,9 +549,12 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 
 		revalidatePath("/explore");
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

@@ -4,16 +4,16 @@ import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
 import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 import { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
-import { useState, FormEvent, useReducer, useEffect } from "react";
+import { useState, FormEvent, useReducer, useEffect, useRef } from "react";
 import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
 import analysisDeleteAction from "../../actions/analysis/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
-import SubmissionStatusModal from "@/app/components/SubmissionStatusModal";
 import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
 import { Action } from "@/types/globals";
+import Link from "next/link";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -47,7 +47,9 @@ export default function AnalysisSubmit() {
 	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
 
 	// Modal state for submission feedback
-	const [showModal, setShowModal] = useState(false);
+	const modalRef = useRef<HTMLDialogElement>(null);
+	const modalXRef = useRef<HTMLButtonElement>(null);
+	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 	const [modalMessage, setModalMessage] = useState("");
 	const [isError, setIsError] = useState(false);
 
@@ -73,24 +75,27 @@ export default function AnalysisSubmit() {
 				const f = files[0];
 
 				const lines = (await f.text()).replace(/[\r]+/gm, "").split("\n");
+				const headers = lines[0].split("\t");
 				for (let j = 1; j < lines.length; j++) {
 					const currentLine = lines[j].split("\t");
+					const field = currentLine[headers.indexOf("term_name")];
+					const value = currentLine[headers.indexOf("values")];
 
-					if (currentLine[0] === "analysis_run_name") {
+					if (field === "analysis_run_name") {
 						const tempAList = [...analyses];
-						tempAList[i] = currentLine[1].replace(/[\r\n]+/gm, "");
+						tempAList[i] = value;
 						setAnalyses(tempAList);
 						return;
 					}
 
-					if (currentLine[0] === "project_id") {
+					if (field === "project_id") {
 						if (project) {
-							if (currentLine[1] !== project.project_id) {
+							if (value !== project.project_id) {
 								setErrorObj({ global: "All analyses must be for the same project." });
 								return;
 							}
 						} else {
-							const response = await projectFindUniqueAction(currentLine[1]);
+							const response = await projectFindUniqueAction(value);
 							if (response.statusMessage == "success" && response.result) {
 								setIsPrivate(response.result.isPrivate);
 								setProject(response.result);
@@ -268,7 +273,7 @@ export default function AnalysisSubmit() {
 					hasError = true;
 					setIsError(true);
 					setModalMessage(analysisError);
-					setShowModal(true);
+					modalRef.current?.showModal();
 					setErrorObj({
 						global: analysisError,
 						status: "❌ Submission Failed"
@@ -298,7 +303,7 @@ export default function AnalysisSubmit() {
 					hasError = true;
 					setIsError(true);
 					setModalMessage(assignError);
-					setShowModal(true);
+					modalRef.current?.showModal();
 					setErrorObj({
 						global: assignError,
 						status: "❌ Submission Failed"
@@ -332,7 +337,7 @@ export default function AnalysisSubmit() {
 					hasError = true;
 					setIsError(true);
 					setModalMessage(occError);
-					setShowModal(true);
+					modalRef.current?.showModal();
 					setErrorObj({
 						global: occError,
 						status: "❌ Submission Failed"
@@ -350,7 +355,9 @@ export default function AnalysisSubmit() {
 				"Analysis successfully submitted! You will be redirected to the project page in 5 seconds...";
 			setIsError(false);
 			setModalMessage(successMessage);
-			setShowModal(true);
+			modalRef.current?.showModal();
+			modalXRef.current!.disabled = true;
+			modalClickOffRef.current!.disabled = true;
 			setResponseObj({
 				global: successMessage,
 				status: "✅ Analysis Submission Successful"
@@ -393,7 +400,14 @@ export default function AnalysisSubmit() {
 
 	return (
 		<>
-			{project && <div className="text-center w-full">Analyses for project: {project.project_id}</div>}
+			{project && (
+				<div className="text-center w-full">
+					Analyses for project:{" "}
+					<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+						{project.project_id}
+					</Link>
+				</div>
+			)}
 
 			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
 				<div className="space-y-6 -mt-8">
@@ -548,7 +562,33 @@ export default function AnalysisSubmit() {
 				</div>
 			</form>
 
-			<SubmissionStatusModal isOpen={showModal} isError={isError} message={modalMessage} />
+			<dialog ref={modalRef} className="modal">
+				<div className="modal-box">
+					<button
+						ref={modalXRef}
+						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+						onClick={(e) => {
+							e.preventDefault();
+							modalRef.current?.close();
+						}}
+					>
+						✕
+					</button>
+					<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
+						{isError ? "Submission Failed" : "Project Submitted Successfully"}
+					</h3>
+					<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
+					{!isError && (
+						<div className="mt-4 flex items-center justify-center gap-2">
+							<span className="loading loading-spinner loading-sm"></span>
+							<span className="text-base-content/80 text-sm">Redirecting...</span>
+						</div>
+					)}
+				</div>
+				<form method="dialog" className="modal-backdrop">
+					<button ref={modalClickOffRef}>close</button>
+				</form>
+			</dialog>
 
 			{/* Status Messages */}
 			<div className="flex-grow mt-8">
