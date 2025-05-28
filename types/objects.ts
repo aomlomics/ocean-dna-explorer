@@ -95,13 +95,13 @@ export const RoleHeirarchy = {
 	admin: ["moderator", "contributor", undefined],
 	moderator: ["contributor", undefined],
 	contributor: []
-} as Record<NonNullable<Role>, Array<Role>>;
+} as Record<Role, Array<Role>>;
 
 export const RolePermissions = {
 	admin: ["contribute", "manageUsers"],
 	moderator: ["contribute", "manageUsers"],
 	contributor: ["contribute"]
-} as Record<NonNullable<Role>, Array<Permission>>;
+} as Record<Role, Array<Permission>>;
 
 // const MAX_FILE_SIZE = 5000000;
 export const EXT_TO_MIME = {
