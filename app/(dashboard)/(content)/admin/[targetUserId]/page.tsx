@@ -1,37 +1,45 @@
 import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
-import { removeRoleAction, setRoleAction } from "@/app/actions/editRole";
+import { banUserAction, deleteUserAction, removeRoleAction, setRoleAction } from "@/app/actions/manageUsers/editUser";
 import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
+import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
 import { Role } from "@/types/globals";
+import { RoleHeirarchy } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default async function UserId({ params }: { params: Promise<{ userId: string }> }) {
-	const { userId } = await params;
+export default async function UserId({ params }: { params: Promise<{ targetUserId: string }> }) {
+	const { targetUserId } = await params;
 
-	const { sessionClaims } = await auth();
+	const { userId, sessionClaims } = await auth();
+	if (userId === targetUserId) {
+		redirect("/admin");
+	}
 	const role = sessionClaims?.metadata.role as Role;
 
 	const client = await clerkClient();
 	let user;
 	try {
-		user = await client.users.getUser(userId);
+		user = await client.users.getUser(targetUserId);
 	} catch {
 		return <>Error: User not found</>;
 	}
+
+	const uneditable = !RoleHeirarchy[role].includes(user.publicMetadata.role as Role);
 
 	const [projects, analyses] = await prisma.$transaction([
 		prisma.project.findMany({
 			where: {
 				userIds: {
-					has: userId
+					has: targetUserId
 				}
 			}
 		}),
 		prisma.analysis.findMany({
 			where: {
 				userIds: {
-					has: userId
+					has: targetUserId
 				}
 			}
 		})
@@ -39,42 +47,66 @@ export default async function UserId({ params }: { params: Promise<{ userId: str
 
 	return (
 		<div className="grow flex flex-col gap-5">
-			<header>
-				<p className="text-2xl text-primary">
-					{user.firstName} {user.lastName}
-				</p>
-				<p className="text-lg text-base-content/70">
-					{user.emailAddresses.find((email: any) => email.id === user.primaryEmailAddressId)?.emailAddress}
-				</p>
+			<header className="flex gap-5 items-center justify-between">
+				<div>
+					<p className="text-2xl text-primary">
+						{user.firstName} {user.lastName}
+					</p>
+					<p className="text-lg text-base-content/70">
+						{user.emailAddresses.find((email: any) => email.id === user.primaryEmailAddressId)?.emailAddress}
+					</p>
+				</div>
+
+				<div className="flex gap-5">
+					<WarningButton
+						value={user.id}
+						buttonText="Delete User"
+						warningText="This will permanently delete the user and all of their submissions."
+						action={deleteUserAction}
+						redirectUrl="/admin"
+						disabled={uneditable}
+					/>
+
+					{/* TODO: test banning user */}
+					<WarningButton
+						value={user.id}
+						buttonText="Ban User"
+						warningText="This will prevent the user from being able to log in. They may be unbanned in the future, and their submissions will remain."
+						action={banUserAction}
+						redirectUrl="/admin"
+						disabled={uneditable}
+					/>
+				</div>
 			</header>
 
 			<div>
 				<div>
-					<span className="text-primary">Role:</span> {(user.publicMetadata.role as Role) || "No Role"}
+					<span className="text-primary">Role:</span> {(user.publicMetadata.role as Role) || "No Role"}{" "}
+					{uneditable && <span className="pl-5 text-base-content/50 italic">You may not edit users of this role</span>}
 				</div>
 
 				<div className="flex gap-3">
 					{role === "admin" && (
 						<form action={setRoleAction}>
-							<input type="hidden" value={user.id} name="id" />
+							<input type="hidden" value={user.id} name="targetUserId" />
 							<input type="hidden" value="moderator" name="role" />
-							<button type="submit" className="btn">
+							<button type="submit" className="btn" disabled={uneditable}>
 								Make Moderator
 							</button>
 						</form>
 					)}
 
 					<form action={setRoleAction}>
-						<input type="hidden" value={user.id} name="id" />
+						<input type="hidden" value={user.id} name="targetUserId" />
 						<input type="hidden" value="contributor" name="role" />
-						<button type="submit" className="btn">
+						<button type="submit" className="btn" disabled={uneditable}>
 							Make Contributor
 						</button>
 					</form>
 
 					<form action={removeRoleAction}>
-						<input type="hidden" value={user.id} name="id" />
-						<button type="submit" className="btn">
+						<input type="hidden" value={user.id} name="targetUserId" />
+						<button type="submit" className="btn" disabled={uneditable}>
 							Remove Role
 						</button>
 					</form>
@@ -101,6 +133,7 @@ export default async function UserId({ params }: { params: Promise<{ userId: str
 													field="analysis_run_name"
 													value={p.project_id}
 													action={analysisDeleteAction}
+													disabled={uneditable}
 												/>
 											</div>
 										</div>
@@ -132,6 +165,7 @@ export default async function UserId({ params }: { params: Promise<{ userId: str
 													field="analysis_run_name"
 													value={a.analysis_run_name}
 													action={analysisDeleteAction}
+													disabled={uneditable}
 												/>
 											</div>
 										</div>
