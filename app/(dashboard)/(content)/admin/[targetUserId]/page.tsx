@@ -1,5 +1,11 @@
 import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
-import { banUserAction, deleteUserAction, removeRoleAction, setRoleAction } from "@/app/actions/manageUsers/editUser";
+import {
+	banUserAction,
+	deleteUserAction,
+	removeRoleAction,
+	setRoleAction,
+	unbanUserAction
+} from "@/app/actions/manageUsers/editUser";
 import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
 import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
@@ -9,6 +15,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+//TODO: figure out why it's POSTing with every refresh
 export default async function UserId({ params }: { params: Promise<{ targetUserId: string }> }) {
 	const { targetUserId } = await params;
 
@@ -57,25 +64,38 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 					</p>
 				</div>
 
+				{user.banned && <div className="text-error/90 italic text-4xl">User is Banned</div>}
+
 				<div className="flex gap-5">
 					<WarningButton
 						value={user.id}
 						buttonText="Delete User"
 						warningText="This will permanently delete the user and all of their submissions."
 						action={deleteUserAction}
+						confirmText="delete"
 						redirectUrl="/admin"
 						disabled={uneditable}
 					/>
 
-					{/* TODO: test banning user */}
-					<WarningButton
-						value={user.id}
-						buttonText="Ban User"
-						warningText="This will prevent the user from being able to log in. They may be unbanned in the future, and their submissions will remain."
-						action={banUserAction}
-						redirectUrl="/admin"
-						disabled={uneditable}
-					/>
+					{user.banned ? (
+						<WarningButton
+							value={user.id}
+							buttonText="Unban User"
+							warningText="This will allow the banned user to log in again. All submissions previously made will remain."
+							confirmText="unban"
+							action={unbanUserAction}
+							disabled={uneditable}
+						/>
+					) : (
+						<WarningButton
+							value={user.id}
+							buttonText="Ban User"
+							warningText="This will prevent the user from being able to log in. They may be unbanned in the future, and their submissions will remain."
+							confirmText="ban"
+							action={banUserAction}
+							disabled={uneditable}
+						/>
+					)}
 				</div>
 			</header>
 
