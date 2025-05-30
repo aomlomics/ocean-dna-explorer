@@ -1,14 +1,19 @@
 "use client";
 
-import assignSubmitAction from "@/app/helpers/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/helpers/actions/analysis/submit/occSubmit";
+import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
+import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 import { PutBlobResult } from "@vercel/blob";
 import { upload } from "@vercel/blob/client";
-import { useState, FormEvent, useReducer } from "react";
-import analysisSubmitAction from "../../helpers/actions/analysis/submit/analysisSubmit";
-import analysisDeleteAction from "../../helpers/actions/analysis/delete/analysisDelete";
-import { DeleteAction, SubmitAction } from "@/types/types";
+import { useState, FormEvent, useReducer, useEffect, useRef } from "react";
+import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
+import analysisDeleteAction from "../../actions/analysis/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
+import { useRouter } from "next/navigation";
+import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
+import InfoButton from "../InfoButton";
+import { Project } from "@/app/generated/prisma/client";
+import { Action } from "@/types/globals";
+import Link from "next/link";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -18,11 +23,51 @@ function reducer(state: Record<string, string>, updates: Record<string, string>)
 	}
 }
 
+function checkAnalysisFiles(analysis: string, fileStates: Record<string, File | null>) {
+	if (analysis === "\u200b") {
+		return !!fileStates["\u200b"];
+	}
+	return (
+		(!!fileStates[analysis] || !!fileStates["\u200b"]) &&
+		!!fileStates[`${analysis}_assign`] &&
+		!!fileStates[`${analysis}_occ`]
+	);
+}
+
+//TODO: split file
 export default function AnalysisSubmit() {
-	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>); //fileName: message
-	const [errorObj, setErrorObj] = useReducer(reducer, {} as Record<string, string>); //fileName: message
-	const [loading, setLoading] = useState(""); //currently loading fileName
-	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>); //uses zero-width space as placeholder
+	const router = useRouter();
+	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
+	const [errorObj, setErrorObj] = useReducer(reducer, {} as Record<string, string>);
+	const [loading, setLoading] = useState("");
+	const [submitted, setSubmitted] = useState(false);
+	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
+	const [project, setProject] = useState<Project | null>(null);
+	const [isPrivate, setIsPrivate] = useState(false); //TODO: (bug) adding analysis file unchecks box
+	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
+
+	// Modal state for submission feedback
+	const modalRef = useRef<HTMLDialogElement>(null);
+	const modalXRef = useRef<HTMLButtonElement>(null);
+	const modalClickOffRef = useRef<HTMLButtonElement>(null);
+	const [modalMessage, setModalMessage] = useState("");
+	const [isError, setIsError] = useState(false);
+
+	//scroll newest analysis box into view
+	useEffect(() => {
+		for (let i = 1; i < analyses.length; i++) {
+			if (analyses[analyses.length - i] !== null) {
+				const element = document.getElementById(`analysis_${analyses.length - i}`);
+				if (element) {
+					element.scrollIntoView({
+						block: "start",
+						behavior: "smooth"
+					});
+					break;
+				}
+			}
+		}
+	}, [analyses]);
 
 	async function parseAnalysis(files: FileList | null, i: number) {
 		try {
@@ -30,14 +75,35 @@ export default function AnalysisSubmit() {
 				const f = files[0];
 
 				const lines = (await f.text()).replace(/[\r]+/gm, "").split("\n");
+				const headers = lines[0].split("\t");
 				for (let j = 1; j < lines.length; j++) {
 					const currentLine = lines[j].split("\t");
+					const field = currentLine[headers.indexOf("term_name")];
+					const value = currentLine[headers.indexOf("values")];
 
-					if (currentLine[0] === "analysis_run_name") {
+					if (field === "analysis_run_name") {
 						const tempAList = [...analyses];
-						tempAList[i] = currentLine[1].replace(/[\r\n]+/gm, "");
+						tempAList[i] = value;
 						setAnalyses(tempAList);
 						return;
+					}
+
+					if (field === "project_id") {
+						if (project) {
+							if (value !== project.project_id) {
+								setErrorObj({ global: "All analyses must be for the same project." });
+								return;
+							}
+						} else {
+							const response = await projectFindUniqueAction(value);
+							if (response.statusMessage == "success" && response.result) {
+								setIsPrivate(response.result.isPrivate);
+								setProject(response.result);
+							} else if (response.statusMessage === "error") {
+								setErrorObj({ global: response.error });
+								return;
+							}
+						}
 					}
 				}
 
@@ -49,7 +115,7 @@ export default function AnalysisSubmit() {
 	}
 
 	async function dbDelete(
-		deleteAction: DeleteAction,
+		deleteAction: Action,
 		analysis_run_name: string,
 		del?: Record<string, number | number[] | string | string[]>
 	) {
@@ -58,14 +124,15 @@ export default function AnalysisSubmit() {
 
 		try {
 			const response = await deleteAction(formData);
-			if (response.error) {
+			//TODO: change how errors are handled (no longer returns response.error, now throws new error)
+			if (response.statusMessage === "error") {
 				setErrorObj({
 					[analysis_run_name]: response.error
 				});
-			} else if (response.message) {
+			} else if (response.statusMessage === "success") {
 				const tempResponseObj = { ...responseObj };
 				setResponseObj({
-					[analysis_run_name]: response.message
+					[analysis_run_name]: response.result
 				});
 			} else {
 				setErrorObj({
@@ -90,10 +157,10 @@ export default function AnalysisSubmit() {
 		analysis_run_name: string;
 		file: File;
 		fileSuffix?: string;
-		submitAction: SubmitAction;
+		submitAction: Action;
 		fieldsToSet?: Record<string, any>;
 		skipBlob?: boolean;
-	}): Promise<{ error?: boolean; result?: Record<string, any> }> {
+	}): Promise<{ error?: string }> {
 		const formData = new FormData();
 		formData.set("analysis_run_name", analysis_run_name);
 		for (const [key, val] of Object.entries(fieldsToSet)) {
@@ -103,102 +170,145 @@ export default function AnalysisSubmit() {
 		let blob = {} as PutBlobResult;
 
 		let error;
-		let result;
 
 		try {
-			//only upload file to the blob server when on a hosted service
-			if (skipBlob || process.env.NODE_ENV === "development") {
+			if (skipBlob) {
 				formData.set("file", file);
 			} else {
+				//upload file to blob store
+				//TODO: make it so access isn't public
 				blob = await upload(file.name, file, {
 					access: "public",
 					handleUploadUrl: "/api/analysisFile/upload",
 					multipart: true
 				});
-				formData.set("file", JSON.stringify(blob));
+				formData.set("url", blob.url);
 			}
 
 			//send request
 			const response = await submitAction(formData);
-			if (response.error) {
+			if (response.statusMessage === "error") {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: response.error
 				});
-				error = true;
-			} else if (response.message) {
+				error = response.error;
+			} else if (response.statusMessage === "success") {
 				setResponseObj({
-					[`${analysis_run_name}${fileSuffix}`]: response.message
+					[`${analysis_run_name}${fileSuffix}`]: response.result
 				});
-				if (response.result) {
-					result = response.result;
-				}
 			} else {
 				setErrorObj({
 					[`${analysis_run_name}${fileSuffix}`]: "Unknown error."
 				});
-				error = true;
+				error = "Unknown error.";
 			}
 		} catch (err) {
 			setErrorObj({
 				[`${analysis_run_name}${fileSuffix}`]: `Error: ${(err as Error).message}.`
 			});
-			error = true;
+			error = `Error: ${(err as Error).message}.`;
 		}
 
-		//only delete file on the blob server when on a hosted service
-		if (process.env.NODE_ENV !== "development") {
+		if (!skipBlob) {
+			// delete file from blob store
 			await fetch(`/api/analysisFile/delete?url=${blob.url}`, {
 				method: "DELETE"
 			});
 		}
 
-		return { error, result };
+		return { error };
 	}
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const { name, files } = e.target;
+		// If this is the first metadata file (when analysis name is \u200b)
+		if (analyses.includes("\u200b") && !name.includes("_assign") && !name.includes("_occ")) {
+			setFileStates((prev) => ({
+				...prev,
+				"\u200b": files?.[0] || null,
+				[name]: files?.[0] || null // Also store under the actual name
+			}));
+		} else {
+			setFileStates((prev) => ({
+				...prev,
+				[name]: files?.[0] || null
+			}));
+		}
+	};
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		if (submitted) return;
 
 		setResponseObj({ reset: "true" });
 		setErrorObj({ reset: "true" });
 		setLoading("");
+		setSubmitted(true);
 
 		const allFormData = new FormData(event.currentTarget);
+		let hasError = false;
 
+		let analysis_i = 0;
 		for (const analysis_run_name of analyses) {
 			if (analysis_run_name && analysis_run_name !== "\u200b") {
 				//analysis file
 				setLoading(analysis_run_name);
-				//{
-				//	analysis: a,
-				//	file: allFormData.get(a.analysis_run_name) as File,
-				//	submitAction: analysisSubmitAction,
-				//	skipBlob = true
-				//}
-				const { error: analysisError, result: analysisResult } = await analysisFileSubmit({
+				const element = document.getElementById(`analysis_${analysis_i}`);
+				if (element) {
+					element.scrollIntoView({
+						block: "start",
+						behavior: "smooth"
+					});
+				}
+
+				const { error: analysisError } = await analysisFileSubmit({
 					analysis_run_name,
 					file: allFormData.get(analysis_run_name) as File,
 					submitAction: analysisSubmitAction,
+					fieldsToSet: { isPrivate },
 					skipBlob: true
 				});
 
 				if (analysisError) {
+					hasError = true;
+					setIsError(true);
+					setModalMessage(analysisError);
+					modalRef.current?.showModal();
+					setErrorObj({
+						global: analysisError,
+						status: "❌ Submission Failed"
+					});
+					setSubmitted(false);
 					break;
 				}
 
 				//assignments file
 				setLoading(`${analysis_run_name}_assign`);
-				const { error: assignError, result: assignResult } = await analysisFileSubmit({
+				const { error: assignError } = await analysisFileSubmit({
 					analysis_run_name,
 					file: allFormData.get(`${analysis_run_name}_assign`) as File,
 					fileSuffix: "_assign",
 					submitAction: assignSubmitAction,
-					fieldsToSet: { analysis_run_name: analysisResult!.analysis_run_name }
+					fieldsToSet: {
+						analysis_run_name,
+						isPrivate
+					}
 				});
 
 				if (assignError) {
+					//TODO: fix deleting the analysis
 					//remove analysis from database
-					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name);
+					await dbDelete(analysisDeleteAction, analysis_run_name);
 
+					hasError = true;
+					setIsError(true);
+					setModalMessage(assignError);
+					modalRef.current?.showModal();
+					setErrorObj({
+						global: assignError,
+						status: "❌ Submission Failed"
+					});
+					setSubmitted(false);
 					break;
 				}
 
@@ -209,42 +319,128 @@ export default function AnalysisSubmit() {
 					file: allFormData.get(`${analysis_run_name}_occ`) as File,
 					fileSuffix: "_occ",
 					submitAction: occSubmitAction,
-					fieldsToSet: { analysis_run_name: analysisResult!.analysis_run_name }
+					fieldsToSet: {
+						analysis_run_name,
+						isPrivate
+					}
 				});
 
 				if (occError) {
+					//TODO: fix deleting the analysis
+					await dbDelete(analysisDeleteAction, analysis_run_name);
 					//remove analyses, features, and taxonomies from database
-					await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name, {
-						dbFeatures: assignResult!.dbFeatures,
-						dbTaxonomies: assignResult!.dbTaxonomies
-					});
+					// await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name, {
+					// 	dbFeatures: assignResult!.dbFeatures,
+					// 	dbTaxonomies: assignResult!.dbTaxonomies
+					// });
 
+					hasError = true;
+					setIsError(true);
+					setModalMessage(occError);
+					modalRef.current?.showModal();
+					setErrorObj({
+						global: occError,
+						status: "❌ Submission Failed"
+					});
+					setSubmitted(false);
 					break;
 				}
 			}
+
+			analysis_i++;
+		}
+
+		if (!hasError) {
+			const successMessage =
+				"Analysis successfully submitted! You will be redirected to the project page in 5 seconds...";
+			setIsError(false);
+			setModalMessage(successMessage);
+			modalRef.current?.showModal();
+			modalXRef.current!.disabled = true;
+			modalClickOffRef.current!.disabled = true;
+			setResponseObj({
+				global: successMessage,
+				status: "✅ Analysis Submission Successful"
+			});
+
+			setTimeout(() => {
+				router.push(`/explore/project`);
+			}, 5000);
 		}
 
 		setLoading("");
 	}
 
+	// To Carter: there is a rare case where the submit button is disabled if you delete an analysis
+	const handleDeleteAnalysis = (i: number) => {
+		const analysisToDelete = analyses[i];
+
+		// Update analyses array
+		setAnalyses((prev) => {
+			const newAnalyses = [...prev];
+			// TODO: This is what's causing the Submit button to remain disabled after you delete an analysis. It uses "\u200b" instead of null to maintain an order to the analyses array. Changing it to "\u200b" causes other bugs that need to be resolved to fix everything.
+			newAnalyses[i] = null;
+			if (newAnalyses.every((e) => e === "\u200b" || e === null)) {
+				setProject(null);
+			}
+			return newAnalyses;
+		});
+
+		// Clean up fileStates
+		setFileStates((prev) => {
+			const newState = { ...prev };
+			if (analysisToDelete) {
+				delete newState[analysisToDelete];
+				delete newState[`${analysisToDelete}_assign`];
+				delete newState[`${analysisToDelete}_occ`];
+			}
+			return newState;
+		});
+	};
+
 	return (
 		<>
-			<form className="card-body" onSubmit={handleSubmit}>
-				<h1 className="text-primary">Analysis:</h1>
-				<div className="flex gap-5">
-					{/* {analyses.map((a, i) => ( */}
+			{project && (
+				<div className="text-center w-full">
+					Analyses for project:{" "}
+					<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+						{project.project_id}
+					</Link>
+				</div>
+			)}
+
+			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
+				<div className="space-y-6 -mt-8">
+					<fieldset className="fieldset bg-base-100">
+						<label className="fieldset-label flex gap-2">
+							<input
+								name="isPrivate"
+								type="checkbox"
+								className="checkbox"
+								checked={isPrivate}
+								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
+								disabled={project?.isPrivate || false}
+							/>
+							<div>Private submission</div>
+							<InfoButton infoText="" />
+						</label>
+					</fieldset>
+
 					{analyses.map(
 						(a, i) =>
 							a && (
-								<div key={i}>
+								<div key={i} id={`analysis_${i}`} className="card bg-base-100 shadow-sm p-6 relative">
 									{analyses[i] && (
-										<>
-											<div className="flex flex-col">
-												<h2 className="text-base-content">{analyses[i]}</h2>
-												<div className="flex">
-													<label className="form-control w-full max-w-xs">
+										<div className="space-y-4">
+											<h2 className="text-xl font-semibold text-base-content mb-4">
+												{analyses[i] === "\u200b" ? "New Analysis" : analyses[i]}
+											</h2>
+
+											<div className="space-y-4">
+												<div className="flex items-center gap-3">
+													<label className="form-control w-full">
 														<div className="label">
-															<span className="label-text text-base-content">Metadata:</span>
+															<span className="label-text text-base-content">Analysis Metadata File:</span>
 														</div>
 														<input
 															type="file"
@@ -252,22 +448,29 @@ export default function AnalysisSubmit() {
 															required
 															disabled={!!loading}
 															accept=".tsv"
-															onChange={(e) => parseAnalysis(e.currentTarget.files, i)}
-															className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full max-w-xs [&::file-selector-button]:text-white"
+															onChange={(e) => {
+																handleFileChange(e);
+																parseAnalysis(e.currentTarget.files, i);
+															}}
+															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 														/>
 													</label>
-													<ProgressCircle
-														response={responseObj[analyses[i]]}
-														error={errorObj[analyses[i]]}
-														loading={loading === analyses[i]}
-													/>
+													<div className="flex items-center self-end mb-[10.5px]">
+														<ProgressCircle
+															response={responseObj[analyses[i]]}
+															error={errorObj[analyses[i]]}
+															loading={loading === analyses[i]}
+															hasFile={!!fileStates["\u200b"] || !!fileStates[analyses[i]]}
+														/>
+													</div>
 												</div>
+
 												{analyses[i] !== "\u200b" && (
 													<>
-														<div className="flex">
-															<label className="form-control w-full max-w-xs">
+														<div className="flex items-center gap-3">
+															<label className="form-control w-full">
 																<div className="label">
-																	<span className="label-text text-base-content">Features:</span>
+																	<span className="label-text text-base-content">ASV Taxa/Features File:</span>
 																</div>
 																<input
 																	type="file"
@@ -275,19 +478,24 @@ export default function AnalysisSubmit() {
 																	required
 																	disabled={!!loading}
 																	accept=".tsv"
-																	className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full max-w-xs [&::file-selector-button]:text-white"
+																	onChange={handleFileChange}
+																	className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 																/>
 															</label>
-															<ProgressCircle
-																response={responseObj[`${analyses[i]}_assign`]}
-																error={errorObj[`${analyses[i]}_assign`]}
-																loading={loading === `${analyses[i]}_assign`}
-															/>
+															<div className="flex items-center self-end mb-[10.5px]">
+																<ProgressCircle
+																	response={responseObj[`${analyses[i]}_assign`]}
+																	error={errorObj[`${analyses[i]}_assign`]}
+																	loading={loading === `${analyses[i]}_assign`}
+																	hasFile={!!fileStates[`${analyses[i]}_assign`]}
+																/>
+															</div>
 														</div>
-														<div className="flex">
-															<label className="form-control w-full max-w-xs">
+
+														<div className="flex items-center gap-3">
+															<label className="form-control w-full">
 																<div className="label">
-																	<span className="label-text text-base-content">Occurrences:</span>
+																	<span className="label-text text-base-content">Occurrence Table File:</span>
 																</div>
 																<input
 																	type="file"
@@ -295,65 +503,123 @@ export default function AnalysisSubmit() {
 																	required
 																	disabled={!!loading}
 																	accept=".tsv"
-																	className="file-input file-input-bordered file-input-secondary bg-neutral-content w-full max-w-xs [&::file-selector-button]:text-white"
+																	onChange={handleFileChange}
+																	className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 																/>
 															</label>
-															<ProgressCircle
-																response={responseObj[`${analyses[i]}_occ`]}
-																error={errorObj[`${analyses[i]}_occ`]}
-																loading={loading === `${analyses[i]}_occ`}
-															/>
+															<div className="flex items-center self-end mb-[10.5px]">
+																<ProgressCircle
+																	response={responseObj[`${analyses[i]}_occ`]}
+																	error={errorObj[`${analyses[i]}_occ`]}
+																	loading={loading === `${analyses[i]}_occ`}
+																	hasFile={!!fileStates[`${analyses[i]}_occ`]}
+																/>
+															</div>
 														</div>
 													</>
 												)}
 											</div>
-											{/* {analyses.length > 1 && ( */}
-											{analyses.filter((a) => a !== null).length > 1 && (
-												<button
-													className="btn btn-error"
-													type="button"
-													disabled={!!loading}
-													onClick={() => {
-														//set removed analysis to null in array to maintain indices of other analyses
-														const tempAList = [...analyses];
-														tempAList[i] = null;
-														//clean up any trailing nulls
-														// BUG: array indices cause issue when analysis is removed using "-" button
-														// tempAList.findLast((a, i) => {
-														// 	if (a && a.analysis_run_name !== "\u200b") {
-														// 		return true;
-														// 	}
-														// 	tempAList.splice(i, 1);
-														// });
+										</div>
+									)}
 
-														setAnalyses(tempAList);
-													}}
-												>
-													-
-												</button>
-											)}
-										</>
+									{analyses.filter((a) => a !== null).length > 1 && (
+										<button
+											className="btn btn-sm absolute top-4 right-4 bg-base-200 hover:bg-base-200/80"
+											type="button"
+											disabled={!!loading}
+											onClick={() => {
+												handleDeleteAnalysis(i);
+											}}
+										>
+											<span className="text-base-content">×</span>
+										</button>
 									)}
 								</div>
 							)
 					)}
+
 					{analyses[analyses.length - 1] !== "\u200b" && (
+						<div className="flex justify-center">
+							<button
+								className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm"
+								type="button"
+								disabled={!!loading}
+								onClick={() => setAnalyses([...analyses, "\u200b"])}
+							>
+								<span className="text-base-content">+</span> Add Another Analysis to Submission
+							</button>
+						</div>
+					)}
+
+					<div className="flex justify-center mt-8">
 						<button
-							className="btn btn-success"
-							type="button"
-							disabled={!!loading}
-							onClick={() => setAnalyses([...analyses, "\u200b"])}
+							className="btn btn-primary text-white w-[200px]"
+							disabled={!!loading || submitted || !analyses.every((a) => a && checkAnalysisFiles(a, fileStates))}
 						>
-							+
+							{loading || submitted ? <span className="loading loading-spinner loading-sm"></span> : "Submit"}
 						</button>
+					</div>
+				</div>
+			</form>
+
+			<dialog ref={modalRef} className="modal">
+				<div className="modal-box">
+					<button
+						ref={modalXRef}
+						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+						onClick={(e) => {
+							e.preventDefault();
+							modalRef.current?.close();
+						}}
+					>
+						✕
+					</button>
+					<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
+						{isError ? "Submission Failed" : "Project Submitted Successfully"}
+					</h3>
+					<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
+					{!isError && (
+						<div className="mt-4 flex items-center justify-center gap-2">
+							<span className="loading loading-spinner loading-sm"></span>
+							<span className="text-base-content/80 text-sm">Redirecting...</span>
+						</div>
 					)}
 				</div>
+				<form method="dialog" className="modal-backdrop">
+					<button ref={modalClickOffRef}>close</button>
+				</form>
+			</dialog>
 
-				<button className="btn btn-primary" disabled={!!loading}>
-					Submit
-				</button>
-			</form>
-			{!!loading && <span className="text-base-content">Loading, please do not close the website</span>}
+			{/* Status Messages */}
+			<div className="flex-grow mt-8">
+				{(responseObj.status || errorObj.status) && (
+					<div
+						className={`
+						p-6 rounded-lg mx-auto max-w-lg
+						${errorObj.status ? "bg-error/10 border-2 border-error" : "bg-success/10 border-2 border-success"}
+					`}
+					>
+						<h3 className={`text-lg font-bold mb-2 ${errorObj.status ? "text-error" : "text-success"}`}>
+							{errorObj.status ? "Analysis Submission Failed" : "Analysis Submitted Successfully"}
+						</h3>
+						<p className="text-base text-base-content">
+							{errorObj.status
+								? errorObj.global
+								: "Please stay on this page. You will be redirected to the explore page in a few seconds..."}
+						</p>
+						{responseObj.status && (
+							<div className="mt-4 flex items-center justify-center gap-2">
+								<span className="loading loading-spinner loading-sm"></span>
+								<span className="text-base-content/80 text-sm">Redirecting...</span>
+							</div>
+						)}
+					</div>
+				)}
+			</div>
+
+			{!!loading && (
+				<div className="text-center mt-1 text-base-content/80">Loading, please do not close the website</div>
+			)}
 		</>
 	);
 }

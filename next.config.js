@@ -1,13 +1,9 @@
-/** @type {import("next").NextConfig} */
-const nextConfig = {
-	images: {
-		remotePatterns: [{
-			protocol: "https",
-			hostname: "img.daisyui.com",
-			port: "",
-			pathname: "/images/**"
-		  }]
-	}
-}
+/** @type {import('next').NextConfig} */
 
-module.exports = nextConfig
+module.exports = {
+	experimental: {
+		serverActions: {
+			bodySizeLimit: "3mb",
+		},
+	},
+}

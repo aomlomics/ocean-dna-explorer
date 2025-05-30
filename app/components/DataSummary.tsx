@@ -2,11 +2,31 @@ import { prisma } from "../helpers/prisma";
 import Link from "next/link";
 
 export default async function DataSummary() {
-	const { projectCount, sampleCount, featureCount, uniqueAssays } = await prisma.$transaction(async (tx) => {
-		const projectCount = await tx.project.count();
-		const sampleCount = await tx.sample.count();
-		const featureCount = await tx.feature.count();
+	const { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays } = await prisma.$transaction(async (tx) => {
+		const projectCount = await tx.project.count({
+			where: {
+				isPrivate: false
+			}
+		});
+		const sampleCount = await tx.sample.count({
+			where: {
+				isPrivate: false
+			}
+		});
+		const taxaCount = await tx.taxonomy.count({
+			where: {
+				isPrivate: false
+			}
+		});
+		const featureCount = await tx.feature.count({
+			where: {
+				isPrivate: false
+			}
+		});
 		const uniqueAssays = (await tx.assay.findMany({
+			where: {
+				isPrivate: false
+			},
 			distinct: ["target_gene"],
 			select: {
 				target_gene: true
@@ -18,6 +38,7 @@ export default async function DataSummary() {
 			//number of assignments = number of features (an assignment has only one feature)
 			const count = await tx.analysis.findFirst({
 				where: {
+					isPrivate: false,
 					Assay: {
 						target_gene: a.target_gene
 					}
@@ -35,7 +56,7 @@ export default async function DataSummary() {
 			}
 		}
 
-		return { projectCount, sampleCount, featureCount, uniqueAssays };
+		return { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays };
 	});
 
 	return (
@@ -43,9 +64,10 @@ export default async function DataSummary() {
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
 				<DataSummaryItem title="Projects" value={projectCount} href="/explore/project" />
 				<DataSummaryItem title="Samples" value={sampleCount} href="/explore/sample" />
+				<DataSummaryItem title="Observed Taxonomies" value={taxaCount} href="/explore/taxonomy" />
 				<DataSummaryItem title="Unique Sequence Features" value={featureCount} href="/explore/feature" />
 				{uniqueAssays.map((a) => (
-					<DataSummaryItem key={a.target_gene} title={a.target_gene} value={a.count || 0} href="/explore/" />
+					<DataSummaryItem key={a.target_gene} title={a.target_gene} value={a.count || 0} href="/explore/assay" />
 				))}
 			</div>
 		</div>
@@ -56,7 +78,7 @@ function DataSummaryItem({ title, value, href }: { title: string; value: number;
 	return (
 		<Link
 			href={href}
-			className="bg-base-200 hover:bg-base-300 active:bg-interactive-active p-6 rounded-lg text-center shadow-md transition-colors"
+			className="bg-base-200 hover:bg-base-300 active:bg-interactive-active p-6 rounded-lg text-center shadow-sm transition-colors"
 		>
 			<h3 className="text-main text-lg mb-2">{title}</h3>
 			<p className="text-primary text-3xl font-bold">{value.toLocaleString()}</p>

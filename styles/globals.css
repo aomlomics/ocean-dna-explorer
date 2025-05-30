@@ -1,6 +1,64 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: false;
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  
+  --color-primary: #233D7F;
+  --color-primary-content: #FFFFFF;
+  --color-secondary: #233D7F;
+  --color-secondary-content: #4A5568;
+  --color-accent: #7DBAE5;
+  --color-accent-focus: #4B95C3;
+  --color-accent-content: #E2E8F1;
+  --color-neutral: #3d4451;
+  --color-neutral-content: #FFFFFF;
+  --color-base-100: #F4F3F2;
+  --color-base-200: #EAEAEE;
+  --color-base-300: #E3E3E9;
+  --color-base-400: #DFDFE6;
+  --color-base-content: #2D3748;
+  --color-info: #EAF2FF;
+  --color-info-content: #D3E4FF;
+  --color-warning: #FFD700;
+  --color-warning-content: #1E2337;
+  --color-success: #4CAF50;
+  --color-success-content: #FFFFFF;
+  --color-error: #FF0000;
+  --color-error-content: #FFFFFF;
+  --color-map-colors: #FF6B6B;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  
+  --color-primary: #64ABDC;
+  --color-primary-content: #FFFFFF;
+  --color-secondary: #233D7F;
+  --color-secondary-content: #A0AEC0;
+  --color-accent: #7DBAE5;
+  --color-accent-focus: #4B95C3;
+  --color-accent-content: #E2E8F1;
+  --color-neutral: #3d4451;
+  --color-neutral-content: #1A1A1A;
+  --color-base-100: #141824;
+  --color-base-200: #1E2337;
+  --color-base-300: #232942;
+  --color-base-400: #385396;
+  --color-base-content: #E2E8F0;
+  --color-info: #2A3B6A;
+  --color-info-content: #314780;
+  --color-warning: #B8860B;
+  --color-warning-content: #1E2337;
+  --color-success: #2E8B57;
+  --color-success-content: #FFFFFF;
+  --color-error: #8B0000;
+  --color-error-content: #FFFFFF;
+  --color-map-colors: #FF6B6B;
+}
 
 @keyframes gradient-organic {
   0% {
@@ -27,4 +85,29 @@
 
 .animate-gradient-organic {
   animation: gradient-organic 20s ease-in-out infinite;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Clerk: Style 'Connect account' button text in profile/account */
+[data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
+  color: #233D7F;
+}
+@media (prefers-color-scheme: dark) {
+  [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
+    color: #7DBAE5;
+  }
 }

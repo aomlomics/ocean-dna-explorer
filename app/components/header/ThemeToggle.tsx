@@ -1,23 +1,49 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
-	const [theme, setTheme] = useState("dark");
+	const { theme, setTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
 
-	const toggleTheme = () => {
-		const newTheme = theme === "dark" ? "light" : "dark";
-		setTheme(newTheme);
+	// Only show the toggle after mounting to prevent hydration mismatch
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	// Apply theme to both data-theme attribute and dark class
+	const applyTheme = (newTheme: string) => {
+		// Set data-theme attribute for DaisyUI
 		document.documentElement.setAttribute("data-theme", newTheme);
+
+		// Toggle dark class for Tailwind
+		if (newTheme === "dark") {
+			document.documentElement.classList.add("dark");
+		} else {
+			document.documentElement.classList.remove("dark");
+		}
 	};
 
+	// Handle theme changes
 	useEffect(() => {
-		document.documentElement.setAttribute("data-theme", theme);
-	}, []);
+		if (mounted && theme) {
+			applyTheme(theme);
+		}
+	}, [theme, mounted]);
+
+	if (!mounted) {
+		return null;
+	}
 
 	return (
 		<label className="swap swap-rotate">
-			<input type="checkbox" checked={theme === "dark"} onChange={toggleTheme} />
+			<input
+				type="checkbox"
+				checked={theme === "dark"}
+				onChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+				className=""
+			/>
 
 			{/* sun icon */}
 			<svg className="swap-on h-6 w-6 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
