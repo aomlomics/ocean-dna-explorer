@@ -2,6 +2,7 @@ import { RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
+import { NetworkPacket } from "@/types/globals";
 // import fs from "fs";
 // import path from "path";
 
@@ -74,6 +75,7 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export { prisma };
 
+//database helper functions
 export async function batchSubmit(
 	prisma: any,
 	data: any[],
@@ -160,5 +162,19 @@ export function stripSecureFields(queryResult: Record<string, any> | Record<stri
 		for (let f of secureFields) {
 			delete queryResult[f];
 		}
+	}
+}
+
+export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): NetworkPacket {
+	if (err.code === "P2002") {
+		return {
+			statusMessage: "error",
+			error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[])[0]} already exists in database.`
+		};
+	} else {
+		return {
+			statusMessage: "error",
+			error: err.message
+		};
 	}
 }

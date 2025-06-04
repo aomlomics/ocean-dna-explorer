@@ -27,7 +27,6 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 	const formDataObject = Object.fromEntries(formData.entries());
 	const parsed = formSchema.safeParse(formDataObject);
 	if (!parsed.success) {
-		console.log(parsed.error.message);
 		return {
 			statusMessage: "error",
 			error: parsed.error.issues
@@ -36,41 +35,57 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		};
 	}
 
-	try {
-		const analysisCol = {} as Record<string, string>;
+	const analysisCol = {} as Record<string, string>;
 
+	try {
 		//Analysis file
 		console.log("Analysis file");
 		//code block to force garbage collection
 		{
 			//parse file
 			const analysisFileLines = (await parsed.data.file.text()).replace(/[\r]+/gm, "").split("\n");
+			const analysisFileHeaders = analysisFileLines[0].split("\t");
+			const userDefined = {} as PrismaJson.UserDefinedType;
 			//iterate over each row
 			for (let i = 1; i < analysisFileLines.length; i++) {
 				// TODO: get extension of file and split accordingly
 				const currentLine = analysisFileLines[i].split("\t");
+				const field = currentLine[analysisFileHeaders.indexOf("term_name")];
+				const value = currentLine[analysisFileHeaders.indexOf("values")];
+				const section = currentLine[analysisFileHeaders.indexOf("section")];
 
 				//Analysis
-				if (currentLine[0]) {
-					parseSchemaToObject(
-						currentLine[1].replace(/[\r\n]+/gm, ""),
-						currentLine[0],
-						analysisCol,
-						AnalysisOptionalDefaultsSchema,
-						AnalysisScalarFieldEnumSchema
-					);
+				//User defined
+				if (section === "User defined") {
+					userDefined[field] = value;
+				} else {
+					parseSchemaToObject(value, field, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
 				}
 			}
 		}
 
-		const data = AnalysisOptionalDefaultsSchema.parse(
+		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
 			{ ...analysisCol, userIds: [userId], isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
 			{
 				errorMap: (error, ctx) => {
-					return { message: `AnalysisSchema: ${ctx.defaultError}` };
+					return {
+						message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+							analysisCol[error.path[0] as keyof typeof analysisCol]
+						}`
+					};
 				}
 			}
 		);
+
+		if (!parsedAnalysis.success) {
+			return {
+				statusMessage: "error",
+				error:
+					`Table: Analysis\n` +
+					`Key: ${analysisCol.analysis_run_name}\n\n` +
+					`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
+			};
+		}
 
 		//analysis
 		console.log("analysis");
@@ -94,14 +109,13 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 
 			await tx.analysis.create({
 				//@ts-ignore issue with Json database type
-				data
+				data: parsedAnalysis.data
 			});
 		});
 
 		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

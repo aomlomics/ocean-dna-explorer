@@ -24,12 +24,14 @@ export default function SubmissionDeleteButton({
 	field,
 	value,
 	action,
-	associatedAnalyses = []
+	associatedAnalyses = [],
+	disabled
 }: {
 	field: string;
 	value: string;
 	action: Action;
 	associatedAnalyses?: { analysis_run_name: string }[];
+	disabled?: boolean;
 }) {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isDeleted, setIsDeleted] = useState(false);
@@ -72,7 +74,7 @@ export default function SubmissionDeleteButton({
 			<div className={`flex gap-3 items-center ${isDeleted ? "opacity-50" : ""}`}>
 				<button
 					onClick={handleDelete}
-					disabled={isDeleting || isDeleted}
+					disabled={disabled || isDeleting || isDeleted}
 					className="btn btn-sm bg-primary text-neutral-content hover:bg-error"
 				>
 					{isDeleting ? "Deleting..." : "Delete"}
