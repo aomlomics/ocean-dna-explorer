@@ -21,7 +21,7 @@
     "lint": "next lint",
     "seed": "node prisma/seed.ts",
     "postinstall": "prisma migrate deploy && prisma generate",
-    "postbuild": "tsc ./sitemap-index.ts"
+    "postbuild": "tsx ./sitemap-index.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.18.1",
