@@ -21,7 +21,7 @@
     "lint": "next lint",
     "seed": "node prisma/seed.ts",
     "postinstall": "prisma migrate deploy && prisma generate",
-    "postbuild": "npx tsx ./sitemap-index.ts"
+    "postbuild": "dotenv -c -- npx tsx ./sitemap-index.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.18.1",
@@ -40,6 +40,7 @@
     "cssnano": "^7.0.6",
     "csv-parse": "^5.6.0",
     "density-clustering": "^1.3.0",
+    "dotenv": "^16.5.0",
     "eslint": "^9.25.1",
     "eslint-config-next": "15.3.1",
     "formidable": "^3.5.4",
