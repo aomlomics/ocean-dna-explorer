@@ -14,7 +14,7 @@ export const metadata = {
 	title: "Ocean DNA Explorer",
 	description:
 		"A data sharing platform, search engine, and visualization and analysis tool for ocean environmental DNA data.",
-	metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://www.oceandnaexplorer.org/")
+	metadataBase: new URL(`${process.env.NODE_ENV === "production" ? "https" : "http"}://${process.env.NEXT_PUBLIC_URL}`)
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -44,15 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 								// Set the theme class on the document element
 								document.documentElement.setAttribute('data-theme', getInitialTheme());
 							})();
-						`,
+						`
 					}}
 				/>
 			</head>
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
 				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
-					<ClerkAppearanceProvider>
-						{children}
-					</ClerkAppearanceProvider>
+					<ClerkAppearanceProvider>{children}</ClerkAppearanceProvider>
 				</ThemeProvider>
 				<ScrollToTop />
 			</body>
