@@ -1,8 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
-import "dotenv/config";
 
-const SITE_URL = process.env.NEXT_PUBLIC_URL;
+//env variables don't seem to be loadable in postbuild scripts, have to hardcode the url instead
+const SITE_URL = "https://www.oceandnaexplorer.org";
 
 /**
  * 🗺️ Generates the main sitemap index file.
