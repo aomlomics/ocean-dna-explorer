@@ -2,17 +2,22 @@ import { prisma } from "@/app/helpers/prisma";
 import { MetadataRoute } from "next";
 
 export async function generateSitemaps() {
-	let count = await prisma.sample.count();
+	try {
+		let count = await prisma.sample.count();
 
-	const sitemaps = [];
-	let id = 0;
-	while (count > 0) {
-		sitemaps.push({ id });
-		count -= 50000; // Google's limit is 50,000 URLs per sitemap
-		id++;
+		const sitemaps = [];
+		let id = 0;
+		while (count > 0) {
+			sitemaps.push({ id });
+			count -= 50000; // Google's limit is 50,000 URLs per sitemap
+			id++;
+		}
+
+		return sitemaps;
+	} catch (err) {
+		console.log(err);
+		return [];
 	}
-
-	return sitemaps;
 }
 
 export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
