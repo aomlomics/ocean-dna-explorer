@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import "dotenv/config";
 
 const SITE_URL = process.env.NEXT_PUBLIC_URL;
 
