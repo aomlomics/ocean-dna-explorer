@@ -1,7 +1,8 @@
 export async function GET(request: Request) {
 	const SITE_URL = process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org";
 
-	return `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	return new Response(
+		`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
 		<loc>${SITE_URL}</loc>
 		<lastmod>${new Date()}</lastmod>
@@ -50,5 +51,7 @@ export async function GET(request: Request) {
 		<loc>${SITE_URL}/help</loc>
 		<lastmod>${new Date()}</lastmod>
 	</url>
-</urlset>`;
+</urlset>`,
+		{ headers: { "Content-Type": "text/xml" } }
+	);
 }
