@@ -3,14 +3,12 @@ import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { NetworkPacket } from "@/types/globals";
-// import fs from "fs";
-// import path from "path";
 
 //BLACK MAGIC DO NOT TOUCH
 //database initialization
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-const prisma =
+const unsafePrisma =
 	globalForPrisma.prisma ||
 	new PrismaClient({
 		log: [
@@ -31,49 +29,64 @@ const prisma =
 				level: "warn"
 			}
 		]
-	}).$extends({
-		query: {
-			$allModels: {
-				async $allOperations({ model, operation, args, query }) {
-					const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-						if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
-								OR: [
-									{
-										isPrivate: false
-									},
-									{
-										userIds: {
-											has: userId
-										}
-									}
-								]
-							};
-						}
-					}
-
-					return await query(args);
-				}
-			}
-		}
 	});
 
-// prisma.$on("query", (e) => {
-// 	const logFile = fs.createWriteStream(path.join(__dirname, "prisma.log"), { flags: "a" });
-// 	const logMessage = `Query: ${e.query}\nParams: ${e.params}\nDuration: ${e.duration}ms\n\n`;
-// 	logFile.write(logMessage);
-// 	console.log(logMessage);
-// });
+const publicPrisma = unsafePrisma.$extends({
+	query: {
+		$allModels: {
+			async $allOperations({ model, operation, args, query }) {
+				const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
+				if (readOperations.includes(operation)) {
+					//@ts-ignore
+					args.where = {
+						//@ts-ignore
+						...args.where,
+						isPrivate: false
+					};
+				}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+				return await query(args);
+			}
+		}
+	}
+});
 
-export { prisma };
+const prisma = unsafePrisma.$extends({
+	query: {
+		$allModels: {
+			async $allOperations({ model, operation, args, query }) {
+				const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
+				if (readOperations.includes(operation)) {
+					const { userId, sessionClaims } = await auth();
+					const role = sessionClaims?.metadata?.role;
+					if (!role || !RolePermissions[role].includes("manageUsers")) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							OR: [
+								{
+									isPrivate: false
+								},
+								{
+									userIds: {
+										has: userId
+									}
+								}
+							]
+						};
+					}
+				}
+
+				return await query(args);
+			}
+		}
+	}
+});
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = unsafePrisma;
+
+export { unsafePrisma, publicPrisma, prisma };
 
 //database helper functions
 export async function batchSubmit(

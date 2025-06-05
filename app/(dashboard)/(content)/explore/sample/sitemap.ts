@@ -1,9 +1,9 @@
-import { prisma } from "@/app/helpers/prisma";
+import { publicPrisma } from "@/app/helpers/prisma";
 import { MetadataRoute } from "next";
 
 export async function generateSitemaps() {
 	try {
-		let count = await prisma.sample.count();
+		let count = await publicPrisma.sample.count();
 
 		const sitemaps = [];
 		let id = 0;
@@ -23,7 +23,7 @@ export async function generateSitemaps() {
 export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
 	const skip = id * 50000;
 
-	const samples = await prisma.sample.findMany({
+	const samples = await publicPrisma.sample.findMany({
 		select: {
 			samp_name: true
 		},
