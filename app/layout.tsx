@@ -14,7 +14,7 @@ export const metadata = {
 	title: "Ocean DNA Explorer",
 	description:
 		"A data sharing platform, search engine, and visualization and analysis tool for ocean environmental DNA data.",
-	metadataBase: new URL(`${process.env.NODE_ENV === "production" ? "https" : "http"}://${process.env.NEXT_PUBLIC_URL}`)
+	metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org")
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
