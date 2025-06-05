@@ -21,7 +21,7 @@
     "lint": "next lint",
     "seed": "node prisma/seed.ts",
     "postinstall": "prisma migrate deploy && prisma generate",
-    "postbuild": "next-sitemap"
+    "postbuild": "dotenv -c -- npx tsx ./sitemap-index.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.18.1",
@@ -45,7 +45,6 @@
     "formidable": "^3.5.4",
     "leaflet": "^1.9.4",
     "next": "^15.3.1",
-    "next-sitemap": "^4.2.3",
     "next-themes": "^0.4.6",
     "object-to-formdata": "^4.5.1",
     "postcss": "^8.5.3",

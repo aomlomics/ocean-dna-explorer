@@ -67,6 +67,6 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
 			allow: "/",
 			disallow: ["/sign-in/", "/mySubmissions/", "/submit/", "/api/", "/admin/"]
 		},
-		sitemap: [`${process.env.NEXT_PUBLIC_URL}/sitemap.xml`, ...(await generateSitemapUrls())]
+		sitemap: [`${process.env.NEXT_PUBLIC_URL}/sitemap.xml`]
 	};
 }
