@@ -3,13 +3,37 @@ import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { NetworkPacket } from "@/types/globals";
+import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 
-//BLACK MAGIC DO NOT TOUCH
+type PrismaExtension = DynamicClientExtensionThis<
+	Prisma.TypeMap<
+		InternalArgs & {
+			result: {};
+			model: {};
+			query: {};
+			client: {};
+		},
+		{}
+	>,
+	Prisma.TypeMapCb<Prisma.PrismaClientOptions>,
+	{
+		result: {};
+		model: {};
+		query: {};
+		client: {};
+	}
+>;
+
 //database initialization
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as {
+	unsafePrisma: PrismaClient;
+	publicPrisma: PrismaExtension;
+	prisma: PrismaExtension;
+};
 
+//prisma client with no restrictions
 const unsafePrisma =
-	globalForPrisma.prisma ||
+	globalForPrisma.unsafePrisma ||
 	new PrismaClient({
 		log: [
 			// {
@@ -31,60 +55,70 @@ const unsafePrisma =
 		]
 	});
 
-const publicPrisma = unsafePrisma.$extends({
-	query: {
-		$allModels: {
-			async $allOperations({ model, operation, args, query }) {
-				const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
-				if (readOperations.includes(operation)) {
-					//@ts-ignore
-					args.where = {
-						//@ts-ignore
-						...args.where,
-						isPrivate: false
-					};
-				}
-
-				return await query(args);
-			}
-		}
-	}
-});
-
-const prisma = unsafePrisma.$extends({
-	query: {
-		$allModels: {
-			async $allOperations({ model, operation, args, query }) {
-				const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
-				if (readOperations.includes(operation)) {
-					const { userId, sessionClaims } = await auth();
-					const role = sessionClaims?.metadata?.role;
-					if (!role || !RolePermissions[role].includes("manageUsers")) {
+//prisma client that never can get private data
+const publicPrisma =
+	globalForPrisma.publicPrisma ||
+	unsafePrisma.$extends({
+		query: {
+			$allModels: {
+				async $allOperations({ model, operation, args, query }) {
+					const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
+					if (readOperations.includes(operation)) {
 						//@ts-ignore
 						args.where = {
 							//@ts-ignore
 							...args.where,
-							OR: [
-								{
-									isPrivate: false
-								},
-								{
-									userIds: {
-										has: userId
-									}
-								}
-							]
+							isPrivate: false
 						};
 					}
-				}
 
-				return await query(args);
+					return await query(args);
+				}
 			}
 		}
-	}
-});
+	});
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = unsafePrisma;
+//prisma client that can get private data only if current user is authorized to
+const prisma =
+	globalForPrisma.prisma ||
+	unsafePrisma.$extends({
+		query: {
+			$allModels: {
+				async $allOperations({ model, operation, args, query }) {
+					const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										isPrivate: false
+									},
+									{
+										userIds: {
+											has: userId
+										}
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			}
+		}
+	});
+
+if (process.env.NODE_ENV !== "production") {
+	globalForPrisma.unsafePrisma = unsafePrisma;
+	globalForPrisma.publicPrisma = publicPrisma;
+	globalForPrisma.prisma = prisma;
+}
 
 export { unsafePrisma, publicPrisma, prisma };
 
