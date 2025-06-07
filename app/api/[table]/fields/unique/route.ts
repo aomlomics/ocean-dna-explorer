@@ -6,46 +6,31 @@ import { NextResponse } from "next/server";
 
 export async function GET(
 	request: Request,
-	{ params }: { params: Promise<{ table: string; id: string }> }
+	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
-	const { table, id } = await params;
+	const { table } = await params;
 	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
 	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
 		try {
-			const parsedId = parseInt(id);
-			if (Number.isNaN(parsedId)) {
-				return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
-			}
-
 			const { searchParams } = new URL(request.url);
 
-			const query = parseApiQuery(
-				lowercaseTable,
-				searchParams,
-				{
-					skipDistinct: true,
-					skipIds: true,
-					skipLimit: true,
-					skipFilters: true
-				},
-				{
-					filters: { id: parseInt(id) }
-				}
-			);
-
 			//@ts-ignore
-			const result = await prisma[lowercaseTable].findUnique(query);
+			// const result = await prisma[lowercaseTable].findMany(query);
 
-			if (result) {
-				stripSecureFields(result);
-				return NextResponse.json({ statusMessage: "success", result });
-			} else {
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },
-					{ status: 400 }
-				);
-			}
+			// if (result) {
+			// 	stripSecureFields(result);
+			// 	return NextResponse.json({
+			// 		statusMessage: "success",
+			// 		result
+			// 	});
+			// } else {
+			// 	return NextResponse.json(
+			// 		{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },
+			// 		{ status: 400 }
+			// 	);
+			// }
+			return NextResponse.json({ statusMessage: "success" });
 		} catch (err) {
 			const error = err as Error;
 

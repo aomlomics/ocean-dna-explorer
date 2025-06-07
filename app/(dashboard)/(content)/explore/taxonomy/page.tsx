@@ -1,40 +1,33 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import TableFilter from "@/app/components/explore/TableFilter";
+import TableFilter from "@/app/components/explore/filters/TableFilter";
 import TaxaGrid from "@/app/components/paginated/TaxaGrid";
-import { prisma } from "@/app/helpers/prisma";
-import { getOptions } from "@/app/helpers/utils";
 import Link from "next/link";
 
 export default async function Taxonomy() {
-	const taxonomies = await prisma.taxonomy.findMany({
-		select: {
-			domain: true,
-			kingdom: true,
-			supergroup: true,
-			division: true,
-			subdivision: true,
-			phylum: true,
-			class: true,
-			order: true,
-			family: true,
-			genus: true,
-			species: true
-		}
-	});
-	if (!taxonomies) return <>Loading...</>;
-
-	const filterOptions = getOptions(taxonomies);
+	//TODO: make filters clump into a transaction
+	const levels = [
+		"domain",
+		"kingdom",
+		"supergroup",
+		"division",
+		"subdivision",
+		"phylum",
+		"class",
+		"order",
+		"family",
+		"genus",
+		"species"
+	];
 
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
 			<TableFilter
-				tableConfig={[
-					...(Object.entries(filterOptions).map(([field, val]) => ({
-						field,
-						type: "select",
-						options: val
-					})) as { field: string; type: "select"; options: string[] }[])
-				]}
+				tableConfig={levels.map((field) => ({
+					type: "selectGroup",
+					field,
+					group: "taxonomy",
+					table: "taxonomy"
+				}))}
 			/>
 			<div className="space-y-6">
 				<div className="space-y-[-1px]">
