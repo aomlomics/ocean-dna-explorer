@@ -79,8 +79,7 @@ const publicPrisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
-					if (readOperations.includes(operation)) {
+					if (!writeOperations.includes(operation)) {
 						//@ts-ignore
 						args.where = {
 							//@ts-ignore
@@ -102,7 +101,7 @@ const prisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation) || dataOperations.includes(operation)) {
+					if (!writeOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 						if (!role || !RolePermissions[role].includes("manageUsers")) {
@@ -137,7 +136,7 @@ const securePrisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation) || dataOperations.includes(operation)) {
+					if (!writeOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 						if (!role || !RolePermissions[role].includes("manageUsers")) {
@@ -187,7 +186,7 @@ const securePrisma =
 							}
 						}
 
-						if (readOperations.includes(operation)) {
+						if (!dataOperations.includes(operation)) {
 							//@ts-ignore
 							if (!args.select && !args.include) {
 								let omit = {};
