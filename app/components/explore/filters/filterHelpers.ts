@@ -1,7 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { ReadonlyURLSearchParams } from "next/navigation";
-import { ReactNode } from "react";
 
 export type FilterValue =
 	| string
@@ -22,8 +21,7 @@ export type SelectFilterConfig = {
 
 export type SelectGroupFilterConfig = {
 	type: "selectGroup";
-	field: string;
-	group: string;
+	group: ConfigField[];
 	table: Uncapitalize<Prisma.ModelName>;
 };
 
@@ -105,7 +103,17 @@ export function handleFilterChange(
 }
 
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {
-	return Object.fromEntries(
-		Array.from(searchParams.entries()).filter(([key]) => tableConfig.some((config) => config.field === key))
-	);
+	const fields = [] as string[];
+
+	for (let config of tableConfig) {
+		if (config.type === "selectGroup") {
+			for (let field of config.group) {
+				fields.push(typeof field === "string" ? field : field.f);
+			}
+		} else {
+			fields.push(typeof config.field === "string" ? config.field : config.field.f);
+		}
+	}
+
+	return Object.fromEntries(Array.from(searchParams.entries()).filter(([key]) => fields.some((f) => f === key)));
 }

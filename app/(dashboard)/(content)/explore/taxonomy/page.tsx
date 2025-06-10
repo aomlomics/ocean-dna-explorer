@@ -1,33 +1,20 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import TaxaGrid from "@/app/components/paginated/TaxaGrid";
+import { TaxonomicRanks } from "@/types/objects";
 import Link from "next/link";
 
 export default async function Taxonomy() {
-	//TODO: make filters clump into a transaction
-	const levels = [
-		"domain",
-		"kingdom",
-		"supergroup",
-		"division",
-		"subdivision",
-		"phylum",
-		"class",
-		"order",
-		"family",
-		"genus",
-		"species"
-	];
-
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
 			<TableFilter
-				tableConfig={levels.map((field) => ({
-					type: "selectGroup",
-					field,
-					group: "taxonomy",
-					table: "taxonomy"
-				}))}
+				tableConfig={[
+					{
+						type: "selectGroup",
+						group: TaxonomicRanks,
+						table: "taxonomy"
+					}
+				]}
 			/>
 			<div className="space-y-6">
 				<div className="space-y-[-1px]">

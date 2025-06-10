@@ -8,6 +8,7 @@ import PaginationControls from "./PaginationControls";
 import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
+import { NetworkPacket } from "@/types/globals";
 
 export default function Pagination({
 	table,
@@ -47,11 +48,16 @@ export default function Pagination({
 		query.set("relCounts", relCounts.toString());
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/pagination/${table}?${query.toString()}`, fetcher, {
-		keepPreviousData: true
-	});
+	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
+		`/api/pagination/${table}?${query.toString()}`,
+		fetcher,
+		{
+			keepPreviousData: true
+		}
+	);
 	if (isLoading) return <LoadingPagination />;
-	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
+	if (error) return <div>failed to load: {error}</div>;
+	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({

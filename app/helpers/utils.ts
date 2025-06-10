@@ -1,5 +1,5 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { TableToSchema } from "@/types/objects";
+import { RanksBySpecificity, TableToSchema } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
@@ -130,21 +130,7 @@ export function randomColors(num: number) {
 }
 
 export function getMostSpecificRank(taxonomy: Taxonomy) {
-	const ranksBySpecificity = [
-		"species",
-		"genus",
-		"family",
-		"order",
-		"taxonClass",
-		"phylum",
-		"subdivision",
-		"division",
-		"supergroup",
-		"kingdom",
-		"domain"
-	] as Array<keyof typeof taxonomy>;
-
-	for (const rank of ranksBySpecificity) {
+	for (const rank of RanksBySpecificity) {
 		if (taxonomy[rank]) {
 			return { rank, label: taxonomy[rank] as string };
 		}

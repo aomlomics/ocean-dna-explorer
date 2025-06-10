@@ -2,24 +2,13 @@ import { prisma } from "@/app/helpers/prisma";
 import PhyloPic from "@/app/components/PhyloPic";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
+import { TaxonomicRanks } from "@/types/objects";
+import { Taxonomy } from "@/prisma/generated/zod";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
-			const taxonomicFields = [
-				"domain",
-				"kingdom",
-				"supergroup",
-				"division",
-				"subdivision",
-				"phylum",
-				"class",
-				"order",
-				"family",
-				"genus",
-				"species"
-			];
-			return taxonomicFields.includes(key) && value;
+			return TaxonomicRanks.includes(key as keyof Taxonomy) && value;
 		})
 		.map(([key, value]) => ({
 			rank: key.charAt(0).toUpperCase() + key.slice(1),
@@ -38,7 +27,7 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	);
 }
 
-export default async function Taxonomy({ params }: { params: Promise<{ taxonomy: string }> }) {
+export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 

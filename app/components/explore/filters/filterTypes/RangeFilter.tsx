@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { FilterValue, handleFilterChange, RangeFilterConfig } from "../filterHelpers";
 
-export default function RangeFilter({ filter }: { filter: RangeFilterConfig }) {
+export default function RangeFilter({ config }: { config: RangeFilterConfig }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
@@ -20,130 +20,130 @@ export default function RangeFilter({ filter }: { filter: RangeFilterConfig }) {
 			<div className="flex flex-col gap-2">
 				<h2>Min:</h2>
 				<input
-					id={`${filter.field}MinSlider`}
+					id={`${config.field}MinSlider`}
 					type="range"
-					min={filter.gte}
-					max={filter.lte}
+					min={config.gte}
+					max={config.lte}
 					className="range"
 					defaultValue={
-						typeof filter.field === "string"
-							? (JSON.parse(searchParams.get(filter.field) as string) &&
-									JSON.parse(searchParams.get(filter.field) as string).gte) ||
-							  filter.gte
-							: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
-									JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].gte) ||
-							  filter.gte
+						typeof config.field === "string"
+							? (JSON.parse(searchParams.get(config.field) as string) &&
+									JSON.parse(searchParams.get(config.field) as string).gte) ||
+							  config.gte
+							: (JSON.parse(searchParams.get(config.field.rel) as string) &&
+									JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].gte) ||
+							  config.gte
 					}
 					onChange={(e) => {
-						handleFilterDebounce(filter.field, e.target.value ? { gte: parseInt(e.target.value) } : undefined);
-						const inp = document.getElementById(`${filter.field}MinInput`) as HTMLInputElement;
+						handleFilterDebounce(config.field, e.target.value ? { gte: parseInt(e.target.value) } : undefined);
+						const inp = document.getElementById(`${config.field}MinInput`) as HTMLInputElement;
 						if (inp) {
 							inp.value = e.target.value;
 						}
 					}}
 				/>
 				<div className="flex gap-10 w-full px-2 text-xs">
-					<span>{filter.gte}</span>
+					<span>{config.gte}</span>
 					<input
-						id={`${filter.field}MinInput`}
+						id={`${config.field}MinInput`}
 						className="input input-sm text-center"
 						type="number"
-						min={filter.gte}
-						max={filter.lte}
+						min={config.gte}
+						max={config.lte}
 						defaultValue={
-							typeof filter.field === "string"
-								? (JSON.parse(searchParams.get(filter.field) as string) &&
-										JSON.parse(searchParams.get(filter.field) as string).gte) ||
-								  filter.gte
-								: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
-										JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].gte) ||
-								  filter.gte
+							typeof config.field === "string"
+								? (JSON.parse(searchParams.get(config.field) as string) &&
+										JSON.parse(searchParams.get(config.field) as string).gte) ||
+								  config.gte
+								: (JSON.parse(searchParams.get(config.field.rel) as string) &&
+										JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].gte) ||
+								  config.gte
 						}
 						onChange={(e) => {
-							handleFilterDebounce(filter.field, e.target.value ? { gte: parseInt(e.target.value) } : undefined);
-							const slider = document.getElementById(`${filter.field}MinSlider`) as HTMLInputElement;
+							handleFilterDebounce(config.field, e.target.value ? { gte: parseInt(e.target.value) } : undefined);
+							const slider = document.getElementById(`${config.field}MinSlider`) as HTMLInputElement;
 							if (slider) {
 								slider.value = e.target.value;
 							}
 						}}
 					/>
-					<span className="justify-self-end">{filter.lte}</span>
+					<span className="justify-self-end">{config.lte}</span>
 				</div>
 			</div>
 			<div className="flex flex-col gap-2">
 				<h2>Max:</h2>
 				<input
-					id={`${filter.field}MaxSlider`}
+					id={`${config.field}MaxSlider`}
 					type="range"
-					min={filter.gte}
-					max={filter.lte}
+					min={config.gte}
+					max={config.lte}
 					className="range"
 					defaultValue={
-						typeof filter.field === "string"
-							? (JSON.parse(searchParams.get(filter.field) as string) &&
-									JSON.parse(searchParams.get(filter.field) as string).lte) ||
-							  filter.lte
-							: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
-									JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].lte) ||
-							  filter.lte
+						typeof config.field === "string"
+							? (JSON.parse(searchParams.get(config.field) as string) &&
+									JSON.parse(searchParams.get(config.field) as string).lte) ||
+							  config.lte
+							: (JSON.parse(searchParams.get(config.field.rel) as string) &&
+									JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].lte) ||
+							  config.lte
 					}
 					onChange={(e) => {
-						handleFilterDebounce(filter.field, e.target.value ? { lte: parseInt(e.target.value) } : undefined);
-						const inp = document.getElementById(`${filter.field}MaxInput`) as HTMLInputElement;
+						handleFilterDebounce(config.field, e.target.value ? { lte: parseInt(e.target.value) } : undefined);
+						const inp = document.getElementById(`${config.field}MaxInput`) as HTMLInputElement;
 						if (inp) {
 							inp.value = e.target.value;
 						}
 					}}
 				/>
 				<div className="flex gap-10 w-full px-2 text-xs">
-					<span>{filter.gte}</span>
+					<span>{config.gte}</span>
 					<input
-						id={`${filter.field}MaxInput`}
+						id={`${config.field}MaxInput`}
 						className="input input-sm text-center"
 						type="number"
-						min={filter.gte}
-						max={filter.lte}
+						min={config.gte}
+						max={config.lte}
 						defaultValue={
-							typeof filter.field === "string"
-								? (JSON.parse(searchParams.get(filter.field) as string) &&
-										JSON.parse(searchParams.get(filter.field) as string).lte) ||
-								  filter.lte
-								: (JSON.parse(searchParams.get(filter.field.rel) as string) &&
-										JSON.parse(searchParams.get(filter.field.rel) as string)[filter.field.f].lte) ||
-								  filter.lte
+							typeof config.field === "string"
+								? (JSON.parse(searchParams.get(config.field) as string) &&
+										JSON.parse(searchParams.get(config.field) as string).lte) ||
+								  config.lte
+								: (JSON.parse(searchParams.get(config.field.rel) as string) &&
+										JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].lte) ||
+								  config.lte
 						}
 						onChange={(e) => {
-							handleFilterDebounce(filter.field, e.target.value ? { lte: parseInt(e.target.value) } : undefined);
-							const slider = document.getElementById(`${filter.field}MaxSlider`) as HTMLInputElement;
+							handleFilterDebounce(config.field, e.target.value ? { lte: parseInt(e.target.value) } : undefined);
+							const slider = document.getElementById(`${config.field}MaxSlider`) as HTMLInputElement;
 							if (slider) {
 								slider.value = e.target.value;
 							}
 						}}
 					/>
-					<span className="justify-self-end">{filter.lte}</span>
+					<span className="justify-self-end">{config.lte}</span>
 				</div>
 				<button
 					className="btn btn-sm"
 					onClick={() => {
-						const inpMin = document.getElementById(`${filter.field}MinInput`) as HTMLInputElement;
+						const inpMin = document.getElementById(`${config.field}MinInput`) as HTMLInputElement;
 						if (inpMin) {
-							inpMin.value = filter.gte.toString();
+							inpMin.value = config.gte.toString();
 						}
-						const sliderMin = document.getElementById(`${filter.field}MinSlider`) as HTMLInputElement;
+						const sliderMin = document.getElementById(`${config.field}MinSlider`) as HTMLInputElement;
 						if (sliderMin) {
-							sliderMin.value = filter.gte.toString();
+							sliderMin.value = config.gte.toString();
 						}
 
-						const inpMax = document.getElementById(`${filter.field}MaxInput`) as HTMLInputElement;
+						const inpMax = document.getElementById(`${config.field}MaxInput`) as HTMLInputElement;
 						if (inpMax) {
-							inpMax.value = filter.lte.toString();
+							inpMax.value = config.lte.toString();
 						}
-						const sliderMax = document.getElementById(`${filter.field}MaxSlider`) as HTMLInputElement;
+						const sliderMax = document.getElementById(`${config.field}MaxSlider`) as HTMLInputElement;
 						if (sliderMax) {
-							sliderMax.value = filter.lte.toString();
+							sliderMax.value = config.lte.toString();
 						}
 
-						handleFilterChange(filter.field, undefined, searchParams, router);
+						handleFilterChange(config.field, undefined, searchParams, router);
 					}}
 				>
 					Clear

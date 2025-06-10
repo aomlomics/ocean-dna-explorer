@@ -4,23 +4,15 @@ import { useSearchParams, useRouter } from "next/navigation";
 import RangeFilter from "./filterTypes/RangeFilter";
 import { FilterConfig, getActiveFilters } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
+import { ReactNode } from "react";
 import SelectGroupFilter from "./filterTypes/SelectGroupFilter";
-import { useState } from "react";
+import Filter from "./filterTypes/Filter";
 
 // Main filter component that shows in the sidebar
 // Handles all the filters for a specific table (like projects or analyses)
 export default function ActualTableFilter({ tableConfig }: { tableConfig: FilterConfig[] }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const [whereByGroup, setWhereByGroup] = useState(
-		tableConfig.reduce((acc, filter) => {
-			if (filter.type === "selectGroup") {
-				acc[filter.group] = {};
-			}
-
-			return acc;
-		}, {} as Record<string, Record<string, string>>)
-	);
 
 	// Get what filters are currently active from the URL
 	const activeFilters = getActiveFilters(searchParams, tableConfig);
@@ -62,21 +54,14 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 						onClick={() => {
 							const params = new URLSearchParams(searchParams);
 							tableConfig.forEach((config) => {
-								if (typeof config.field === "string") {
-									params.delete(config.field);
+								if (config.type === "selectGroup") {
+									for (let field of config.group) {
+										params.delete(typeof field === "string" ? field : field.rel);
+									}
 								} else {
-									params.delete(config.field.rel);
+									params.delete(typeof config.field === "string" ? config.field : config.field.rel);
 								}
 							});
-							setWhereByGroup(
-								tableConfig.reduce((acc, filter) => {
-									if (filter.type === "selectGroup") {
-										acc[filter.group] = {};
-									}
-
-									return acc;
-								}, {} as Record<string, Record<string, string>>)
-							);
 							router.push(`?${params.toString()}`);
 						}}
 						className="btn btn-primary btn-sm"
@@ -88,58 +73,45 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 
 			{/* List of all available filters */}
 			<div className="divide-y divide-base-300">
-				{tableConfig.map((filter) => (
-					<div
-						key={typeof filter.field === "string" ? filter.field : filter.field.f}
-						className="collapse collapse-arrow bg-base-100"
-					>
-						<input type="checkbox" className="collapse-toggle" />
-						<div className="collapse-title">
-							<div className="flex flex-col items-start gap-1">
-								<span className="font-medium text-base-content">
-									{typeof filter.field === "string" ? filter.field : filter.field.f}
-								</span>
-								{typeof filter.field === "string" && activeFilters[filter.field] !== undefined ? (
-									<span className="text-sm text-base-content/70 break-all">
-										{filter.type === "range"
-											? (JSON.parse(activeFilters[filter.field]).gte || filter.gte) +
-											  " to " +
-											  (JSON.parse(activeFilters[filter.field]).lte || filter.lte)
-											: activeFilters[filter.field]}
-									</span>
-								) : (
-									typeof filter.field === "object" &&
-									activeFilters[filter.field.rel] !== undefined && (
-										<span className="text-sm text-base-content/70 break-all">
-											{JSON.parse(activeFilters[filter.field.rel])[filter.field.f]}
-										</span>
-									)
-								)}
-							</div>
-						</div>
-						<div className="collapse-content bg-base-200/30 pt-0 !pb-0">
-							{(() => {
-								switch (filter.type) {
-									case "select":
-										return <SelectFilter filter={filter} activeFilters={activeFilters} />;
-									case "range":
-										return <RangeFilter filter={filter} />;
-									case "selectGroup":
-										return (
-											<SelectGroupFilter
-												filter={filter}
-												activeFilters={activeFilters}
-												whereByGroup={whereByGroup}
-												setWhereByGroup={setWhereByGroup}
-											/>
-										);
-									default:
-										return <></>;
+				{tableConfig.reduce((acc: ReactNode[], config) => {
+					if (config.type === "select" || config.type === "enum") {
+						acc.push(
+							<Filter
+								fieldName={typeof config.field === "string" ? config.field : config.field.f}
+								value={
+									typeof config.field === "string" && activeFilters[config.field] !== undefined
+										? activeFilters[config.field]
+										: typeof config.field === "object" &&
+										  activeFilters[config.field.rel] !== undefined &&
+										  JSON.parse(activeFilters[config.field.rel])[config.field.f]
 								}
-							})()}
-						</div>
-					</div>
-				))}
+							>
+								<SelectFilter config={config} activeFilters={activeFilters} />
+							</Filter>
+						);
+					} else if (config.type === "range") {
+						acc.push(
+							<Filter
+								fieldName={typeof config.field === "string" ? config.field : config.field.f}
+								value={
+									typeof config.field === "string" && activeFilters[config.field] !== undefined
+										? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
+										  " to " +
+										  (JSON.parse(activeFilters[config.field]).lte || config.lte)
+										: typeof config.field === "object" &&
+										  activeFilters[config.field.rel] !== undefined &&
+										  JSON.parse(activeFilters[config.field.rel])[config.field.f]
+								}
+							>
+								<RangeFilter config={config} />
+							</Filter>
+						);
+					} else if (config.type === "selectGroup") {
+						acc.push(<SelectGroupFilter config={config} activeFilters={activeFilters} />);
+					}
+
+					return acc;
+				}, [])}
 			</div>
 		</div>
 	);
