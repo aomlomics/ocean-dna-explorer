@@ -24,6 +24,8 @@ type PrismaExtension = DynamicClientExtensionThis<
 	}
 >;
 
+const secureFields = ["userIds"];
+
 const writeOperations = [
 	"create",
 	"update",
@@ -129,7 +131,6 @@ const prisma =
 	});
 
 //prisma client that can get private data only if current user is authorized to and never includes secure fields
-const secureFields = ["userIds"];
 const securePrisma =
 	globalForPrisma.securePrisma ||
 	unsafePrisma.$extends({
