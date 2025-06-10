@@ -26,19 +26,27 @@ type PrismaExtension = DynamicClientExtensionThis<
 
 const secureFields = ["userIds"];
 
-const writeOperations = [
+const readOperations = [
+	"findUnique",
+	"findUniqueOrThrow",
+	"findFirst",
+	"findFirstOrThrow",
+	"findMany",
+	"count",
+	"aggregate",
+	"groupBy"
+];
+const omittableOperations = [
+	"findUnique",
+	"findFirst",
+	"findMany",
 	"create",
 	"update",
 	"upsert",
 	"delete",
-	"createMany",
 	"createManyAndReturn",
-	"updateMany",
-	"updateManyAndReturn",
-	"deleteMany"
+	"updateManyAndReturn"
 ];
-const readOperations = ["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany"];
-const dataOperations = ["count", "aggregate", "groupBy"];
 
 //database initialization
 const globalForPrisma = global as unknown as {
@@ -79,7 +87,7 @@ const publicPrisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					if (!writeOperations.includes(operation)) {
+					if (readOperations.includes(operation)) {
 						//@ts-ignore
 						args.where = {
 							//@ts-ignore
@@ -101,7 +109,7 @@ const prisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					if (!writeOperations.includes(operation)) {
+					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 						if (!role || !RolePermissions[role].includes("manageUsers")) {
@@ -136,7 +144,7 @@ const securePrisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					if (!writeOperations.includes(operation)) {
+					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 						if (!role || !RolePermissions[role].includes("manageUsers")) {
@@ -156,48 +164,47 @@ const securePrisma =
 								]
 							};
 						}
+					}
 
-						//remove secure fields from every part of the query
+					//remove secure fields from every part of the query
+					for (let [key, value] of Object.entries(args)) {
+						if (Array.isArray(value)) {
+							for (let field of secureFields) {
+								const index = value.indexOf(field);
+								if (index !== -1) {
+									value.splice(index, 1);
+								}
+							}
 
-						for (let [key, value] of Object.entries(args)) {
-							if (Array.isArray(value)) {
-								for (let field of secureFields) {
-									const index = value.indexOf(field);
-									if (index !== -1) {
-										value.splice(index, 1);
-									}
+							if (value.length === 0) {
+								//@ts-ignore
+								delete args[key];
+							}
+						} else if (typeof value === "object") {
+							for (let field of secureFields) {
+								if (field in value) {
+									delete value[field];
 								}
+							}
 
-								if (value.length === 0) {
-									//@ts-ignore
-									delete args[key];
-								}
-							} else if (typeof value === "object") {
-								for (let field of secureFields) {
-									if (field in value) {
-										delete value[field];
-									}
-								}
-
-								if (Object.keys(value).length === 0) {
-									//@ts-ignore
-									delete args[key];
-								}
+							if (Object.keys(value).length === 0) {
+								//@ts-ignore
+								delete args[key];
 							}
 						}
+					}
 
-						if (!dataOperations.includes(operation)) {
+					if (omittableOperations.includes(operation)) {
+						//@ts-ignore
+						if (!args.select && !args.include) {
+							let omit = {};
 							//@ts-ignore
-							if (!args.select && !args.include) {
-								let omit = {};
+							if (args.omit) {
 								//@ts-ignore
-								if (args.omit) {
-									//@ts-ignore
-									omit = args.omit;
-								}
-								//@ts-ignore
-								args.omit = { ...omit, ...secureFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}) };
+								omit = args.omit;
 							}
+							//@ts-ignore
+							args.omit = { ...omit, ...secureFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}) };
 						}
 					}
 
