@@ -1,5 +1,5 @@
 import { Prisma, PrismaPromise } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, stripSecureFields } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import { TableToEnumSchema } from "@/types/objects";
 import { NextResponse } from "next/server";
@@ -85,8 +85,13 @@ export async function GET(
 
 			const dbResult = (await prisma.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
 
+			for (let arr of dbResult) {
+				stripSecureFields(arr);
+			}
+
 			const allFields = [...params.map((e) => e[0]), ...extraFields];
 			const result = {} as Record<string, string[]>;
+
 			for (let i = 0; i < dbResult.length; i++) {
 				result[allFields[i]] = dbResult[i].reduce((acc, e) => {
 					if (e[allFields[i]]) {

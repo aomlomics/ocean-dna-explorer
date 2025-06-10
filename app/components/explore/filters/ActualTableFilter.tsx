@@ -73,10 +73,11 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 
 			{/* List of all available filters */}
 			<div className="divide-y divide-base-300">
-				{tableConfig.reduce((acc: ReactNode[], config) => {
+				{tableConfig.reduce((acc: ReactNode[], config, i) => {
 					if (config.type === "select" || config.type === "enum") {
 						acc.push(
 							<Filter
+								key={i}
 								fieldName={typeof config.field === "string" ? config.field : config.field.f}
 								value={
 									typeof config.field === "string" && activeFilters[config.field] !== undefined
@@ -92,6 +93,7 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 					} else if (config.type === "range") {
 						acc.push(
 							<Filter
+								key={i}
 								fieldName={typeof config.field === "string" ? config.field : config.field.f}
 								value={
 									typeof config.field === "string" && activeFilters[config.field] !== undefined
@@ -107,7 +109,7 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 							</Filter>
 						);
 					} else if (config.type === "selectGroup") {
-						acc.push(<SelectGroupFilter config={config} activeFilters={activeFilters} />);
+						acc.push(<SelectGroupFilter key={i} config={config} activeFilters={activeFilters} />);
 					}
 
 					return acc;
