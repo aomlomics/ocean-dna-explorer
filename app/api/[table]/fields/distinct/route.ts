@@ -54,8 +54,9 @@ export async function GET(
 			//assemble queries
 			const queries = [] as PrismaPromise<any>[];
 			//filtered
-			for (let [field, value] of params) {
-				delete where[field];
+			for (let field of Object.keys(where)) {
+				const temp = { ...where };
+				delete temp[field];
 
 				queries.push(
 					//@ts-ignore
@@ -64,13 +65,9 @@ export async function GET(
 						select: {
 							[field]: true
 						},
-						where: {
-							...where
-						}
+						where: temp
 					})
 				);
-
-				where[field] = value;
 			}
 			//extra fields
 			for (let field of extraFields) {
@@ -81,9 +78,7 @@ export async function GET(
 						select: {
 							[field]: true
 						},
-						where: {
-							...where
-						}
+						where
 					})
 				);
 			}
