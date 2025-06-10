@@ -1,5 +1,4 @@
-import { getZodType } from "@/app/helpers/utils";
-import { TableToEnumSchema, TableToRelations, TableToSchema } from "@/types/objects";
+import { TableToRelations } from "@/types/objects";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";

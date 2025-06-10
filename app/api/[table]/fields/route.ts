@@ -3,6 +3,7 @@ import { TableToEnumSchema, TableToSchema } from "@/types/objects";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
+import { stripSecureFields } from "@/app/helpers/prisma";
 
 export async function GET(
 	request: Request,
@@ -24,6 +25,8 @@ export async function GET(
 				result[f] = type;
 			}
 		}
+
+		stripSecureFields(result);
 
 		return NextResponse.json({ statusMessage: "success", result });
 	} else {

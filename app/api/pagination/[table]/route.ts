@@ -1,4 +1,4 @@
-import { prisma, stripSecureFields } from "@/app/helpers/prisma";
+import { securePrisma } from "@/app/helpers/prisma";
 import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
@@ -73,14 +73,13 @@ export async function GET(
 				};
 			}
 
-			const [result, count] = await prisma.$transaction([
+			const [result, count] = await securePrisma.$transaction([
 				//@ts-ignore
-				prisma[lowercaseTable].findMany(query),
+				securePrisma[lowercaseTable].findMany(query),
 				//@ts-ignore
-				prisma[lowercaseTable].count({ where: query.where })
+				securePrisma[lowercaseTable].count({ where: query.where })
 			]);
 
-			stripSecureFields(result);
 			return NextResponse.json({ statusMessage: "success", result, count });
 		} catch (err) {
 			const error = err as Error;

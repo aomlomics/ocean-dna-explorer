@@ -1,5 +1,5 @@
 import { Prisma, PrismaPromise } from "@/app/generated/prisma/client";
-import { prisma, stripSecureFields } from "@/app/helpers/prisma";
+import { securePrisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import { TableToEnumSchema } from "@/types/objects";
 import { NextResponse } from "next/server";
@@ -60,7 +60,7 @@ export async function GET(
 
 				queries.push(
 					//@ts-ignore
-					prisma[lowercaseTable].findMany({
+					securePrisma[lowercaseTable].findMany({
 						distinct: [field],
 						select: {
 							[field]: true
@@ -73,7 +73,7 @@ export async function GET(
 			for (let field of extraFields) {
 				queries.push(
 					//@ts-ignore
-					prisma[lowercaseTable].findMany({
+					securePrisma[lowercaseTable].findMany({
 						distinct: [field],
 						select: {
 							[field]: true
@@ -83,11 +83,11 @@ export async function GET(
 				);
 			}
 
-			const dbResult = (await prisma.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
+			const dbResult = (await securePrisma.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
 
-			for (let arr of dbResult) {
-				stripSecureFields(arr);
-			}
+			// for (let arr of dbResult) {
+			// 	stripSecureFields(arr);
+			// }
 
 			const allFields = [...params.map((e) => e[0]), ...extraFields];
 			const result = {} as Record<string, string[]>;

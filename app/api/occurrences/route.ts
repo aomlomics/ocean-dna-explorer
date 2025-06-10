@@ -1,5 +1,5 @@
 import { Occurrence } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { securePrisma } from "@/app/helpers/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 	}
 
 	try {
-		const result = await prisma.occurrence.findMany({
+		const result = await securePrisma.occurrence.findMany({
 			where: {
 				analysis_run_name
 			}
