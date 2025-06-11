@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
+import { DeadBooleanEnum } from "../../../types/enums";
 
 // Define types for our content structure
 export type Subsection = {
@@ -10,20 +11,20 @@ export type Subsection = {
 
 export type Section = {
 	id: string;
-	title: string;
-	content: ReactNode;
+	title: string; // Display text in navigation and headings
+	content: ReactNode; // Allows JSX content
 	subsections?: Subsection[]; // Optional array of subsections
 };
 
 export const helpSections: Section[] = [
 	{
 		id: "node-overview",
-		title: "NODE Overview",
+		title: "Overview",
 		content: (
 			<>
 				<p className="mb-4">
-					NODE (NOAA Ocean DNA Explorer) is a platform for exploring ocean DNA data. This help documentation will guide
-					you through the various features and functionalities of the platform.
+					ODE (Ocean DNA Explorer) is a platform for exploring ocean DNA data. This help documentation will guide
+					you through the various features of the platform.
 				</p>
 				<p className="mb-4">
 					Our goal is to make marine genomic data more accessible, interoperable, and usable for researchers,
@@ -33,16 +34,51 @@ export const helpSections: Section[] = [
 		),
 		subsections: [
 			{
+				id: "login-and-roles",
+				title: "Login and Roles",
+				content: (
+					<>
+						<p className="mb-4">ODE requires you to login to access certain features of the platform, like submitting data.</p>
+						<p className="mb-4">You can login with several account options, using the Sign-In button in the top right corner of the website. Rest assured, your personal data is not stored in our database. Authentication is handled by Clerk, a user management platform. You can delete your account at any time by clicking your profile picture in the top right corner of the website, and clicking "Manage Account" in the dropdown.</p>
+						<p className="mb-4">The roles available on ODE are listed below. Please note, Contributor is what you need to submit data, and the other roles are mostly for internal use by the ODE team:</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>Admin: Full access to the platform, including managing other user's roles, and can view both public and private data</li>
+							<li>Moderator: Similar to admin, except they cannot manage Admin's roles</li>
+							<li>Contributor: Allows you to submit data to the platform, privately or publically, and to access the Submissions Manager to view, delete, or edit your own submissions. Click <Link className="link link-primary font-bold" href="/contribute">HERE</Link> to request to be a Contributor.</li>
+							<li>Non-signed in User: View public datasets, query the API, browse the Explore pages, and use the Search page </li>
+						</ul>
+					</>
+				)
+			},
+			{
+				id: "submissions-manager",
+				title: "Submissions Manager",
+				content: (
+					<>
+						<p className="mb-4">If you have any role (Contributor or higher), you can access the Submissions Manager.</p>
+						<p className="mb-4">To find it, click your profile picture in the top right corner of the website, and then click "My Submissions" in the dropdown.</p>
+						<p className="mb-4">The Submissions Manager lets you:</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>View all of your project and analyses submitted to the platform</li>
+							<li>Delete any of your submissions</li>
+							<li>Make any Private data Publically visible (does NOT work vice versa)</li>
+							<li>Edit your submissions (change certain field's values without a full re-upload)</li>
+						</ul>
+					</>
+				)
+			},
+			{
 				id: "features-overview",
 				title: "Features Overview",
 				content: (
 					<>
-						<p className="mb-4">NODE provides several key features to help you work with marine genomic data:</p>
+						<p className="mb-4">ODE provides several key features to help you work with marine eDNA data:</p>
 						<ul className="list-disc ml-6 mb-4">
-							<li>Explore projects, samples, analyses, features, and taxonomies</li>
-							<li>Search across datasets using powerful query capabilities</li>
-							<li>Submit your own data in standardized formats</li>
-							<li>Download and reuse existing datasets</li>
+							<li>Explore projects, samples, analyses, features, and taxonomies with filters and a graphical user interface via the Explore page</li>
+							<li>Leverage the <Link className="link link-primary" href="/api">API</Link> to access data programmatically</li>
+							<li>Search across datasets using powerful query capabilities via the Search page</li>
+							<li>Submit your own data in standardized formats via the Submit page</li>
+							<li>Download and reuse existing datasets via the Download page</li>
 							<li>Visualize taxonomic information with integrated visualization tools</li>
 						</ul>
 					</>
@@ -54,7 +90,7 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							We welcome your feedback to improve NODE. If you encounter any issues or have suggestions for new
+							We welcome your feedback to improve ODE. If you encounter any issues or have suggestions for new
 							features, please let us know.
 						</p>
 						<p className="mb-4">
@@ -66,7 +102,7 @@ export const helpSections: Section[] = [
 								className="text-primary hover:underline"
 								target="_blank"
 							>
-								NODE GitHub Issues
+								ODE GitHub Issues
 							</Link>
 						</p>
 						<p className="mb-4">When reporting bugs, please include:</p>
@@ -77,6 +113,331 @@ export const helpSections: Section[] = [
 							<li>What actually happened</li>
 							<li>Screenshots if applicable</li>
 						</ul>
+					</>
+				)
+			}
+		]
+	},
+	{
+		id: "submit",
+		title: "Submit Data",
+		content: (
+			<>
+				<p className="mb-4 font-semibold">NOTE: You must have a role of at least{" "}<Link className="link link-primary" href="#login-and-roles">Contributor</Link> to submit data. </p>
+				<p className="mb-4">
+					This section will help guide you through the process of contributing your own data to the ODE platform. Once you have{" "}
+					<Link className="link link-primary" href="#data-format-rationale">
+						formatted
+					</Link>{" "} your data, you can submit eDNA projects and
+					analyses to share with the scientific community on the Ocean DNA Explorer, OBIS (Ocean Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
+				</p>
+			</>
+		),
+		subsections: [
+			{
+				id: "public-vs-private-data",
+				title: "Public vs Private Data",
+				content: (
+					<>
+						<p className="mb-4">
+							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
+							moderators and admins of ODE. You can make a private submission public at any time, but you cannot
+							make a public submission private.
+						</p>
+						<p className="mb-4"> We encourage users to submit data publicly. The purpose of the private submissions is in case a user is unsure of their data quality or if they are new to the submission process. </p>
+					</>
+				)
+			},
+			{
+				id: "data-format-rationale",
+				title: "Data Format Rationale",
+				content: (
+					<>
+						<p className="mb-4">
+							ODE's data format IS the{" "}
+							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
+								FAIRe eDNA standard
+							</Link>
+							, with a few modifications to allow for the enhanced features which ODE provides. The FAIRe (Findable, Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization, 
+							international collaboration that has developed a comprehensive metadata checklist specifically for eDNA data.
+						</p>
+						<p className="mb-4">
+							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128 
+							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, 
+							and bioinformatics. These terms are sourced from existing data standards including:
+						</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>MIxS (Minimum Information about any Sequence) and its extensions</li>
+							<li>Darwin Core (DwC) for biodiversity data</li>
+							<li>MIQE guidelines for quantitative PCR</li>
+							<li>MIEM guidelines for eDNA and eRNA metabarcoding</li>
+							<li>158 new terms specifically developed for eDNA procedures and datasets</li>
+						</ul>
+						<p className="mb-4">
+							This comprehensive approach ensures that eDNA datasets can be properly documented, discovered, and 
+							reused across the scientific community, supporting data-driven biodiversity management at broad scales.
+						</p>
+					</>
+				)
+			},
+			{
+				id: "amplicon-sequence-processing",
+				title: "Amplicon Sequence Processing (Tourmaline)",
+				content: (
+					<>
+						<p className="mb-4">
+							{" "}<Link className="link link-primary" href="https://github.com/aomlomics/tourmaline" target="_blank">Tourmaline</Link> is AOML Omic's own Amplicon Sequence Processing workflow. It gives you the raw taxonomic and abundance data, which gives you the raw data files to submit with each analysis.
+						</p>
+					</>
+				)
+			},
+			{
+				id: "faire-metadata-template",
+				title: "FAIRe Metadata Template",
+				content: (
+					<>
+						<p className="mb-4">
+							Metadata templates can be generated using{" "}
+							<Link
+								className="link link-primary"
+								href="https://github.com/baydenwillms/FAIReSheets/tree/FAIRe2NODE"
+								target="_blank"
+							>
+								FAIRe2NODE
+							</Link>
+							, a tool that creates standardized eDNA data templates directly in Google Sheets. It is NOAA's
+							implementation of the FAIRe (Findable, Accessible, Interoperable, and Reusable) eDNA templates, which
+							are part of a collaborative, international effort to standardize complex eDNA data and metadata.
+						</p>
+						<p className="mb-4">
+							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A
+							key feature is the ability to add your own User Defined terms to this checklist. When you run
+							FAIRe2NODE, any custom terms you've added will be included in your generated Google Sheets template,
+							ensuring all your relevant data fields are captured.
+						</p>
+						<p className="mb-4">
+							The checklist also provides controlled vocabularies for many fields, ensuring consistent data entry 
+							across the eDNA community. This standardization is crucial for data interoperability and reuse.
+						</p>
+						<p className="mb-4">
+							The generated templates for project, sample, experiment run, and analysis metadata are designed for
+							seamless submission to ODE. Once filled, data formatted with these templates can also be easily
+							prepared for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using the {" "}<Link className="link link-primary" href="#obis-gbif-submission">edna2obis</Link> tool.
+						</p>
+						<p className="mb-4">
+							To use FAIRe2NODE, you will need to run a Python script on your local computer. Access to the tool is
+							granted upon request by emailing bayden.willms@noaa.gov
+						</p>
+					</>
+				)
+			},
+			{
+				id: "fill-in-metadata-templates",
+				title: "Fill in Metadata Templates",
+				content: (
+					<>
+						<p className="mb-4">
+							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your
+							data is standardized and interoperable.
+						</p>
+
+						<h4 className="text-lg font-medium mb-2 mt-4">Handling Missing Data (Dead Values)</h4>
+						<p className="mb-4">
+							Data can be absent for many different reasons, and the scientific community has historically used 
+							various approaches to indicate missing information. In some cases, location data may be intentionally 
+							obscured or generalized to safeguard endangered species or protect sites of cultural significance 
+							to Indigenous communities.
+						</p>
+						<p className="mb-4">
+							For required fields that lack data, you must specify why the information is unavailable using the 
+							INSDC missing value controlled vocabulary format. This practice is also recommended for optional 
+							fields. Rather than leaving cells empty, select the most appropriate "dead value" from the controlled 
+							vocabulary:
+						</p>
+						<div className="mb-4">
+							<table className="table table-zebra w-full">
+								<thead>
+									<tr>
+										<th>Dead Value</th>
+										<th>When to Use</th>
+									</tr>
+								</thead>
+								<tbody>
+									{/* Boolean values */}
+									<tr>
+										<td>true or 1</td>
+										<td>Boolean field is true</td>
+									</tr>
+									<tr>
+										<td>false or 0</td>
+										<td>Boolean field is false</td>
+									</tr>
+									{/* Dead values */}
+									{Object.keys(DeadBooleanEnum)
+										.filter(key => !['true', 'false', '0', '1'].includes(key))
+										.map(deadValue => (
+											<tr key={deadValue}>
+												<td>{deadValue}</td>
+												<td>
+													{deadValue.startsWith('not applicable') 
+														? 'Field does not apply to this column'
+														: deadValue.startsWith('missing: not collected')
+														? 'Data was not collected for X reason'
+														: deadValue.startsWith('missing: not provided')
+														? 'Data exists but was not provided'
+														: deadValue.startsWith('missing: restricted access')
+														? 'Data cannot be shared due to restrictions'
+														: 'Data should exist but is unavailable'
+													}
+												</td>
+											</tr>
+										))
+									}
+								</tbody>
+							</table>
+						</div>
+
+						<h4 className="text-lg font-medium mb-2 mt-12">User Defined Terms</h4>
+						<p className="mb-4">
+							If you have data fields that aren't in the standard template, you can add them as User Defined
+							terms. As mentioned in the{" "}
+							<Link className="link link-primary" href="#faire-metadata-template">
+								FAIRe Metadata Template
+							</Link>{" "}
+							section, you can add these to the FAIRe NOAA checklist before generating your template, or add them
+							manually as new columns in your Google Sheet.
+						</p>
+
+						<h4 className="text-lg font-medium mb-2 mt-4">Pay Attention to these Important Fields</h4>
+						<p className="mb-4">
+							To ensure your data is linked and interpreted correctly, please pay close attention to the following:
+						</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>
+								Project ID: The project_id must be identical across all metadata files (project, sample, etc.) to link them together.
+							</li>
+							<li>
+								Analysis Run Names: Ensure the analysis_run_name in each analysis file are correct (they correspond to that specific analysisMetadata file) and are unique to that analysis.
+							</li>
+							<li>
+								Assay-Specific vs. Project-Level Data: In the project metadata, fields can apply to all analyses (project_level) or have different values per assay. For a value that applies to all assays, fill in the project_level column. For assay specific values, use the corresponding column (e.g., ssu16sv4v5-emp).
+							</li>
+						</ul>
+						<p className="font-bold"> Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit to ODE!</p>
+					</>
+				)
+			},
+			{
+				id: "project-submissions",
+				title: "Project Submissions",
+				content: (
+					<>
+						<p className="mb-4">
+							Any metadata file submitted to ODE must be in TSV format. To submit a project, you'll need to submit one or more analyses alongside it.
+						</p>
+						<p className="mb-2">The following fields are required in your project metadata file:</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>project_id</li>
+							<li>project_contact</li>
+							<li>assay_type</li>
+							<li>checkls_ver</li>
+							<li>pcr_0_1</li>
+							<li>assay_name</li>
+							<li>targetTaxonomicAssay</li>
+							<li>pcr_primer_forward</li>
+							<li>pcr_primer_reverse</li>
+						</ul>
+						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
+					</>
+				)
+			},
+			{
+				id: "analysis-submissions",
+				title: "Analysis Submissions",
+				content: (
+					<>
+						<p className="mb-4">
+							Any metadata file submitted to ODE must be in TSV format. Analyses can be submitted WITHOUT a project, as long as the project it is related to is already uploaded to ODE.
+						</p>
+						<p className="mb-4 font-semibold">You can submit analyses for a project that you do not own (you did not submit).</p>
+						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>project_id</li>
+							<li>assay_name</li>
+							<li>analysis_run_name</li>
+						</ul>
+						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
+					</>
+				)
+			},
+			{
+				id: "obis-gbif-submission",
+				title: "OBIS + GBIF Submission",
+				content: (
+					<>
+						<p className="mb-4">
+						{" "}<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">edna2obis</Link> converts the ODE input files to the expected format for submission to OBIS (Ocean Biodiversity Information System), and GBIF (Global Biodiversity Information Facility). its input file structure MATCHES
+							that of ODE- so if you're submitting data here, you can easily submit to OBIS and GBIF as well.
+						</p>
+					</>
+				)
+			}
+		]
+	},
+	{
+		id: "search",
+		title: "Search",
+		content: (
+			<>
+				<p className="mb-4">
+					NODE's search functionality allows you to find specific data across all categories in the platform. You can
+					search by various parameters to narrow down results.
+				</p>
+			</>
+		),
+		subsections: [
+			{
+				id: "basic-usage",
+				title: "Basic Usage",
+				content: (
+					<>
+						<p className="mb-4">To perform a basic search:</p>
+						<ol className="list-decimal ml-6 mb-4">
+							<li>Enter keywords in the search bar</li>
+							<li>Select the category you want to search (Projects, Samples, etc.)</li>
+							<li>Use filters to narrow down results</li>
+							<li>Review the matching results</li>
+						</ol>
+						<p className="mb-4">
+							The search function looks for matches in titles, descriptions, metadata, and other relevant fields.
+						</p>
+					</>
+				)
+			},
+			{
+				id: "query-recipes",
+				title: "Query Recipes (examples)",
+				content: (
+					<>
+						<p className="mb-4">Here are some example queries to help you get started:</p>
+						<div className="mb-6">
+							<h4 className="font-medium mb-2">Find all samples from a specific location:</h4>
+							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">location:"Gulf of Mexico"</div>
+						</div>
+						<div className="mb-6">
+							<h4 className="font-medium mb-2">Find projects containing a specific species:</h4>
+							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">taxonomy:"Salmonidae"</div>
+						</div>
+						<div className="mb-6">
+							<h4 className="font-medium mb-2">Find analyses from a specific date range:</h4>
+							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">date:[2020-01-01 TO 2022-12-31]</div>
+						</div>
+						<div className="mb-6">
+							<h4 className="font-medium mb-2">Combine multiple search terms:</h4>
+							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
+								location:"Atlantic Ocean" AND taxonomy:"Bacteria"
+							</div>
+						</div>
 					</>
 				)
 			}
@@ -216,166 +577,6 @@ export const helpSections: Section[] = [
 		]
 	},
 	{
-		id: "search",
-		title: "Search",
-		content: (
-			<>
-				<p className="mb-4">
-					NODE's search functionality allows you to find specific data across all categories in the platform. You can
-					search by various parameters to narrow down results.
-				</p>
-			</>
-		),
-		subsections: [
-			{
-				id: "basic-usage",
-				title: "Basic Usage",
-				content: (
-					<>
-						<p className="mb-4">To perform a basic search:</p>
-						<ol className="list-decimal ml-6 mb-4">
-							<li>Enter keywords in the search bar</li>
-							<li>Select the category you want to search (Projects, Samples, etc.)</li>
-							<li>Use filters to narrow down results</li>
-							<li>Review the matching results</li>
-						</ol>
-						<p className="mb-4">
-							The search function looks for matches in titles, descriptions, metadata, and other relevant fields.
-						</p>
-					</>
-				)
-			},
-			{
-				id: "query-recipes",
-				title: "Query Recipes (examples)",
-				content: (
-					<>
-						<p className="mb-4">Here are some example queries to help you get started:</p>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find all samples from a specific location:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">location:"Gulf of Mexico"</div>
-						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find projects containing a specific species:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">taxonomy:"Salmonidae"</div>
-						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find analyses from a specific date range:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">date:[2020-01-01 TO 2022-12-31]</div>
-						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Combine multiple search terms:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
-								location:"Atlantic Ocean" AND taxonomy:"Bacteria"
-							</div>
-						</div>
-					</>
-				)
-			}
-		]
-	},
-	{
-		id: "submit",
-		title: "Submit",
-		content: (
-			<>
-				<p className="mb-4">
-					The Submit section allows you to contribute your own data to the NODE platform. You can submit projects and
-					analyses to share with the scientific community.
-				</p>
-			</>
-		),
-		subsections: [
-			{
-				id: "data-format-rationale",
-				title: "Data Format Rationale",
-				content: (
-					<>
-						<p className="mb-4">
-							NODE follows community standards to ensure data quality, interoperability, and usability. Our data formats
-							are designed with the following principles in mind:
-						</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>Darwin Core (DwC) for biodiversity data</li>
-							<li>FAIR principles (Findable, Accessible, Interoperable, Reusable)</li>
-							<li>Other relevant community standards</li>
-						</ul>
-						<p className="mb-4">
-							Standardized formats ensure that your data can be easily discovered, understood, and reused by other
-							researchers.
-						</p>
-					</>
-				)
-			},
-			{
-				id: "submissions-manager",
-				title: "My Submissions Manager",
-				content: (
-					<>
-						<p className="mb-4">
-							The My Submissions Manager allows you to view, manage, and track your submitted data.
-						</p>
-						<p className="mb-4">
-							<strong>Note:</strong> You must be signed in to access the My Submissions Manager.
-						</p>
-						<p className="mb-4">From the My Submissions Manager, you can:</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>View your submitted projects and analyses</li>
-							<li>Check submission status</li>
-							<li>Edit or update submissions</li>
-							<li>Remove your submissions</li>
-						</ul>
-					</>
-				)
-			},
-			{
-				id: "project-submissions",
-				title: "Project Submissions",
-				content: (
-					<>
-						<p className="mb-4">
-							To submit a project, you'll need to prepare a metadata file following our template format.
-						</p>
-						<p className="mb-4">The project submission process includes:</p>
-						<ol className="list-decimal ml-6 mb-4">
-							<li>Preparing your project metadata</li>
-							<li>Filling out the submission form</li>
-							<li>Uploading your metadata file</li>
-							<li>Reviewing and confirming your submission</li>
-						</ol>
-						<p className="mb-4">
-							Required fields include project name, description, principal investigator, and collection dates.
-						</p>
-						<p className="mb-4">All files must be in TSV format and follow the template structure exactly.</p>
-					</>
-				)
-			},
-			{
-				id: "analysis-submissions",
-				title: "Analysis Submissions",
-				content: (
-					<>
-						<p className="mb-4">
-							Analysis submissions require information about the analysis methods, results, and associated project.
-						</p>
-						<p className="mb-4">The analysis submission process includes:</p>
-						<ol className="list-decimal ml-6 mb-4">
-							<li>Selecting the associated project</li>
-							<li>Preparing your analysis data files</li>
-							<li>Filling out the analysis metadata form</li>
-							<li>Uploading your files</li>
-							<li>Reviewing and confirming your submission</li>
-						</ol>
-						<p className="mb-4">
-							Required fields include analysis type, sequencing method, and bioinformatic processing details.
-						</p>
-						<p className="mb-4">All files must be in TSV format and follow the template structure exactly.</p>
-					</>
-				)
-			}
-		]
-	},
-	{
 		id: "faq",
 		title: "FAQ",
 		content: (
@@ -384,19 +585,24 @@ export const helpSections: Section[] = [
 					<p className="mb-4">Frequently asked questions about using the NODE platform.</p>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: Why are zebras striped?</h4>
+						<h4 className="font-medium mb-2">Q: How do I submit data / become a Contributor?</h4>
 						<p>
-							A: While scientists have been debating this for years, the most widely accepted theory is that zebra
-							stripes help deter biting flies like horse flies that can spread disease. The stripes may also help with
-							thermoregulation and social recognition among zebras.
+							A: Submitting data requires you to have the role of Contributor. You can request this role{" "}
+							<Link className="link link-primary" href="/contribute">here</Link>.
 						</p>
 					</div>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: Who can submit data to NODE?</h4>
+						<h4 className="font-medium mb-2">Q: How do I use the API?</h4>
 						<p>
-							A: NODE is open to submissions from researchers, government agencies, NGOs, and other organizations
-							working with marine genomic data. You need to create an account to submit data.
+							A: The API has a dedicated{" "}<Link className="link link-primary" href="/api">documentation page</Link>, or you can use the Explore page to view the data through the website.
+						</p>
+					</div>
+
+					<div>
+						<h4 className="font-medium mb-2">Q: How do I contact the ODE team?</h4>
+						<p>
+							A: Please contact us via the{" "}<Link className="link link-primary" href="https://github.com/aomlomics/node/issues">GitHub issues page</Link>.
 						</p>
 					</div>
 
@@ -411,34 +617,17 @@ export const helpSections: Section[] = [
 					<div>
 						<h4 className="font-medium mb-2">Q: How do I cite data from NODE?</h4>
 						<p>
-							A: Each project and analysis has a recommended citation format provided on its page. Please use these
-							citations to properly acknowledge the data contributors.
+							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to cite the project.
 						</p>
 					</div>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: What browsers are supported?</h4>
+						<h4 className="font-medium mb-2">Q: How do you protect our personal data?</h4>
 						<p>
-							A: NODE works best with modern browsers like Chrome, Firefox, Safari, and Edge. We recommend keeping your
-							browser updated to the latest version.
+							A: There is no personal data stored in the ODE database. User authentication is handled by the platform's reputableauthentication provider, Clerk, and all data is stored in a secure database.
 						</p>
 					</div>
 
-					<div>
-						<h4 className="font-medium mb-2">Q: How secure is my submitted data?</h4>
-						<p>
-							A: All data transfer is encrypted using HTTPS. Your account information is secured, and you control the
-							visibility of your submitted data.
-						</p>
-					</div>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: Why can't I see my submission immediately?</h4>
-						<p>
-							A: Submissions go through a brief validation process to ensure data quality and integrity. Most
-							submissions are processed within 24-48 hours.
-						</p>
-					</div>
 				</div>
 			</>
 		)
