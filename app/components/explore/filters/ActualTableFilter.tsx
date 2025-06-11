@@ -5,7 +5,7 @@ import RangeFilter from "./filterTypes/RangeFilter";
 import { FilterConfig, getActiveFilters } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
 import { ReactNode } from "react";
-import SelectGroupFilter from "./filterTypes/SelectGroupFilter";
+import SelectGroup from "./filterTypes/SelectGroup";
 import Filter from "./filterTypes/Filter";
 
 // Main filter component that shows in the sidebar
@@ -76,8 +76,10 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 				{tableConfig.reduce((acc: ReactNode[], config, i) => {
 					if (config.type === "select" || config.type === "enum") {
 						acc.push(
-							<Filter
+							<SelectFilter
 								key={i}
+								config={config}
+								activeFilters={activeFilters}
 								fieldName={typeof config.field === "string" ? config.field : config.field.f}
 								value={
 									typeof config.field === "string" && activeFilters[config.field] !== undefined
@@ -86,9 +88,7 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 										  activeFilters[config.field.rel] !== undefined &&
 										  JSON.parse(activeFilters[config.field.rel])[config.field.f]
 								}
-							>
-								<SelectFilter config={config} activeFilters={activeFilters} />
-							</Filter>
+							/>
 						);
 					} else if (config.type === "range") {
 						acc.push(
@@ -109,7 +109,7 @@ export default function ActualTableFilter({ tableConfig }: { tableConfig: Filter
 							</Filter>
 						);
 					} else if (config.type === "selectGroup") {
-						acc.push(<SelectGroupFilter key={i} config={config} activeFilters={activeFilters} />);
+						acc.push(<SelectGroup key={i} config={config} activeFilters={activeFilters} />);
 					}
 
 					return acc;

@@ -10,7 +10,7 @@ export type FilterValue =
 	  }
 	| undefined;
 
-type ConfigField = string | { rel: string; f: string };
+export type ConfigField = string | { rel: string; f: string };
 
 export type SelectFilterConfig = {
 	type: "select";
@@ -41,7 +41,7 @@ export type RangeFilterConfig = {
 export type FilterConfig = SelectFilterConfig | SelectGroupFilterConfig | EnumFilterConfig | RangeFilterConfig;
 
 export function handleFilterChange(
-	field: string | { rel: string; f: string },
+	field: ConfigField,
 	value: FilterValue,
 	searchParams: ReadonlyURLSearchParams,
 	router: AppRouterInstance

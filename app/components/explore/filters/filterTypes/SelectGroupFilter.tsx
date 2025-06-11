@@ -1,111 +1,93 @@
-//implicit client component
+"use client";
 
-import { useState } from "react";
-import { handleFilterChange, SelectGroupFilterConfig } from "../filterHelpers";
 import { useRouter, useSearchParams } from "next/navigation";
-import useSWR from "swr";
-import { fetcher } from "@/app/helpers/utils";
-import Filter from "./Filter";
+import { ConfigField, handleFilterChange } from "../filterHelpers";
 import { NetworkPacket } from "@/types/globals";
+import { Prisma } from "@/app/generated/prisma/client";
+import { useState } from "react";
 
 export default function SelectGroupFilter({
-	config,
-	activeFilters
+	field,
+	activeFilters,
+	value,
+	table,
+	group
 }: {
-	config: SelectGroupFilterConfig;
+	field: ConfigField;
 	activeFilters: {
 		[k: string]: string;
 	};
+	value: string;
+	table: Uncapitalize<Prisma.ModelName>;
+	group: ConfigField[];
 }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
+	const [options, setOptions] = useState({} as Record<string, string[]>);
 
-	const where = Object.entries(activeFilters).reduce((acc, [field, value]) => {
-		if (config.group.includes(field)) {
-			acc[field] = value;
-		}
+	async function getOptions() {
+		const fieldName = typeof field === "string" ? field : field.f;
 
-		return acc;
-	}, {} as Record<string, string>);
+		let extraSelf = true;
+		const where = Object.entries(activeFilters)
+			.reduce((acc, [field, value]) => {
+				if (group.includes(field)) {
+					acc.push(field + "=" + value);
 
-	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${config.table}/fields/distinct/?` +
-			Object.entries(where) //add filters to query
-				.map(([field, value]) => `${field}=${value}`)
-				.join("&") +
-			"&extraFields=" + //add extra fields to query
-			config.group.filter((field) =>
-				typeof field === "string" ? !Object.keys(where).includes(field) : !Object.keys(where).includes(field.f)
-			),
-		fetcher
-	);
-	if (isLoading)
-		return (
-			<>
-				{config.group.map((field) => (
-					<Filter
-						key={typeof field === "string" ? field : field.f}
-						fieldName={typeof field === "string" ? field : field.f}
-						value={
-							typeof field === "string" && activeFilters[field] !== undefined
-								? activeFilters[field]
-								: typeof field === "object" &&
-								  activeFilters[field.rel] !== undefined &&
-								  JSON.parse(activeFilters[field.rel])[field.f]
-						}
-					>
-						<select
-							className="select select-bordered w-full my-3"
-							disabled
-							value={
-								typeof field === "string"
-									? activeFilters[field] || ""
-									: searchParams.get(field.rel)
-									? JSON.parse(searchParams.get(field.rel) as string)[field.f]
-									: ""
-							}
-						></select>
-					</Filter>
-				))}
-			</>
+					if (field === fieldName) {
+						extraSelf = false;
+					}
+				}
+
+				return acc;
+			}, [] as string[])
+			.join("&");
+
+		const response = await fetch(
+			`/api/${table}/fields/distinct/?${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`
 		);
-	if (error) return <div>failed to load: {error}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+		const json = (await response.json()) as NetworkPacket;
+
+		if (json.statusMessage === "success") {
+			setOptions(json.result);
+		}
+	}
 
 	return (
-		<>
-			{config.group.map((field) => (
-				<Filter
-					key={typeof field === "string" ? field : field.f}
-					fieldName={typeof field === "string" ? field : field.f}
+		<div key={typeof field === "string" ? field : field.f} className="collapse collapse-arrow bg-base-100">
+			<input type="checkbox" className="collapse-toggle" onClick={() => setOptions({})} />
+			<div className="collapse-title">
+				<div className="flex flex-col items-start gap-1">
+					<span className="font-medium text-base-content">{typeof field === "string" ? field : field.f}</span>
+					<span className="text-sm text-base-content/70 break-all">{value}</span>
+				</div>
+			</div>
+			<div className="collapse-content bg-base-200/30 pt-0 !pb-0">
+				<select
+					className="select select-bordered w-full my-3"
 					value={
-						typeof field === "string" && activeFilters[field] !== undefined
-							? activeFilters[field]
-							: typeof field === "object" &&
-							  activeFilters[field.rel] !== undefined &&
-							  JSON.parse(activeFilters[field.rel])[field.f]
+						typeof field === "string"
+							? activeFilters[field] || ""
+							: searchParams.get(field.rel)
+							? JSON.parse(searchParams.get(field.rel) as string)[field.f]
+							: ""
 					}
+					onChange={(e) => {
+						handleFilterChange(field, e.target.value || undefined, searchParams, router);
+						setOptions({});
+					}}
+					onClick={getOptions}
 				>
-					<select
-						className="select select-bordered w-full my-3"
-						value={
-							typeof field === "string"
-								? activeFilters[field] || ""
-								: searchParams.get(field.rel)
-								? JSON.parse(searchParams.get(field.rel) as string)[field.f]
-								: ""
-						}
-						onChange={(e) => handleFilterChange(field, e.target.value || undefined, searchParams, router)}
-					>
-						<option value="">Any</option>
-						{data.result[typeof field === "string" ? field : field.f].map((option: string) => (
+					<option value="">Any</option>
+					{!!value && <option value={value}>{value}</option>}
+					{Object.keys(options).length !== 0 &&
+						options[typeof field === "string" ? field : field.f].map((option: string) => (
 							<option key={option} value={option}>
 								{option}
 							</option>
 						))}
-					</select>
-				</Filter>
-			))}
-		</>
+				</select>
+			</div>
+		</div>
 	);
 }
