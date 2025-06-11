@@ -44,7 +44,8 @@ export default function SelectGroupFilter({
 			.join("&");
 
 		const response = await fetch(
-			`/api/${table}/fields/distinct/?${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`
+			`/api/${table}/fields/distinct/?${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
+			{ cache: "force-cache" }
 		);
 		const json = (await response.json()) as NetworkPacket;
 
