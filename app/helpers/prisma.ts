@@ -80,7 +80,7 @@ const unsafePrisma =
 		]
 	});
 
-//prisma client that never can get private data
+//prisma client that can never get private data
 const publicPrisma =
 	globalForPrisma.publicPrisma ||
 	unsafePrisma.$extends({
@@ -137,7 +137,7 @@ const prisma =
 		}
 	});
 
-//prisma client that can get private data only if current user is authorized to and never includes secure fields
+//prisma client that can never get private data and never includes secure fields
 const securePrisma =
 	globalForPrisma.securePrisma ||
 	unsafePrisma.$extends({
@@ -145,25 +145,12 @@ const securePrisma =
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-						if (!role || !RolePermissions[role].includes("manageUsers")) {
+						//@ts-ignore
+						args.where = {
 							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
-								OR: [
-									{
-										isPrivate: false
-									},
-									{
-										userIds: {
-											has: userId
-										}
-									}
-								]
-							};
-						}
+							...args.where,
+							isPrivate: false
+						};
 					}
 
 					//remove secure fields from every part of the query
