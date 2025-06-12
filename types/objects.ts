@@ -1,7 +1,7 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { Permission, Role } from "./globals";
 import { z, ZodEnum } from "zod";
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 
 export const TableToEnumSchema = {
 	project: PrismaZodTypes.ProjectScalarFieldEnumSchema,
@@ -133,3 +133,19 @@ export const ZodFileSchema = z.custom<File>((data) => {
 export const ZodBooleanSchema = z
 	.union([z.boolean(), z.literal("true"), z.literal("false"), z.literal("on")])
 	.transform((value) => value === true || value === "true" || value === "on");
+
+export const TaxonomicRanks = [
+	"domain",
+	"kingdom",
+	"supergroup",
+	"division",
+	"subdivision",
+	"phylum",
+	"class",
+	"order",
+	"family",
+	"genus",
+	"species"
+] as Array<keyof Taxonomy>;
+
+export const RanksBySpecificity = TaxonomicRanks.toReversed();

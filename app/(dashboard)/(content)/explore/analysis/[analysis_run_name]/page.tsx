@@ -3,7 +3,6 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
-import OccDownloadButton from "@/app/components/OccDownloadButton";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 
@@ -72,11 +71,26 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 						</div>
 
 						<div className="bg-base-200 -ml-3.5 text-semibold">
-							<OccDownloadButton
-								text={"Download Occurrence Table"}
-								filename={`${analysis_run_name}_occurrenceTable`}
-								analysis_run_name={analysis_run_name}
-							/>
+							<a
+								href={`/api/occurrences?analysis_run_name=${analysis_run_name}`}
+								download={`${analysis_run_name}_occurrenceTable`}
+								className="btn"
+							>
+								Download Occurrence Table
+								<svg
+									className="w-8 h-8 text-primary group-hover:scale-110 transition-transform"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+									/>
+								</svg>
+							</a>
 						</div>
 					</header>
 				</div>

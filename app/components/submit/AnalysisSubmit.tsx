@@ -9,10 +9,9 @@ import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
 import analysisDeleteAction from "../../actions/analysis/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
-import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
-import { Action } from "@/types/globals";
+import { Action, NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
@@ -95,13 +94,16 @@ export default function AnalysisSubmit() {
 								return;
 							}
 						} else {
-							const response = await projectFindUniqueAction(value);
-							if (response.statusMessage == "success" && response.result) {
-								setIsPrivate(response.result.isPrivate);
-								setProject(response.result);
-							} else if (response.statusMessage === "error") {
-								setErrorObj({ global: response.error });
+							const response = await fetch(`/api/project?project_id=${value}&fields=project_id,isPrivate`);
+							const json = (await response.json()) as NetworkPacket;
+
+							if (json.statusMessage === "error") {
+								setErrorObj({ global: json.error });
 								return;
+							} else {
+								const project = json.result[0];
+								setIsPrivate(project.isPrivate);
+								setProject(project);
 							}
 						}
 					}
@@ -419,7 +421,7 @@ export default function AnalysisSubmit() {
 								className="checkbox"
 								checked={isPrivate}
 								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
-								disabled={project?.isPrivate || false}
+								disabled={!!loading || project?.isPrivate || false}
 							/>
 							<div>Private submission</div>
 							<InfoButton infoText="" />

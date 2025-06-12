@@ -1,5 +1,5 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import TableFilter from "@/app/components/explore/TableFilter";
+import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import { assay_type } from "@/app/generated/prisma/client";
@@ -34,7 +34,7 @@ export default async function Project() {
 					},
 					{
 						field: "assay_type",
-						type: "select",
+						type: "enum",
 						enum: assay_type
 					}
 				]}

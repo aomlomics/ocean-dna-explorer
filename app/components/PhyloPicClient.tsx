@@ -3,25 +3,12 @@
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
+import { RanksBySpecificity } from "@/types/objects";
 
 export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState({} as { rank: string; title: string });
-
-	const ranksBySpecificity = [
-		"species",
-		"genus",
-		"family",
-		"order",
-		"class",
-		"phylum",
-		"subdivision",
-		"division",
-		"supergroup",
-		"kingdom",
-		"domain"
-	] as Array<keyof typeof taxonomy>;
 
 	useEffect(() => {
 		async function fetchData() {
@@ -29,7 +16,7 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 			let gbifTaxonomy;
 			let mostSpecificRank;
 			try {
-				for (const rank of ranksBySpecificity) {
+				for (const rank of RanksBySpecificity) {
 					if (taxonomy[rank] && /^[a-zA-Z]+$/.test(taxonomy[rank].toString())) {
 						//retrieve suggested taxonomies from GBIF
 						//TODO: split more logically

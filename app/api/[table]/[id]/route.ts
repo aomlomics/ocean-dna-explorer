@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma, stripSecureFields } from "@/app/helpers/prisma";
+import { securePrisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -11,11 +11,7 @@ export async function GET(
 	const { table, id } = await params;
 	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (
-		Object.keys(Prisma.ModelName)
-			.map((s) => s.toLowerCase())
-			.includes(lowercaseTable)
-	) {
+	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
 		try {
 			const parsedId = parseInt(id);
 			if (Number.isNaN(parsedId)) {
@@ -28,6 +24,7 @@ export async function GET(
 				lowercaseTable,
 				searchParams,
 				{
+					skipDistinct: true,
 					skipIds: true,
 					skipLimit: true,
 					skipFilters: true
@@ -38,10 +35,9 @@ export async function GET(
 			);
 
 			//@ts-ignore
-			const result = await prisma[lowercaseTable].findUnique(query);
+			const result = await securePrisma[lowercaseTable].findUnique(query);
 
 			if (result) {
-				stripSecureFields(result);
 				return NextResponse.json({ statusMessage: "success", result });
 			} else {
 				return NextResponse.json(

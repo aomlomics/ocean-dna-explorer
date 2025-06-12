@@ -1,4 +1,4 @@
-import TableFilter from "@/app/components/explore/TableFilter";
+import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { asv_method, target_gene } from "@/app/generated/prisma/client";
@@ -26,12 +26,12 @@ export default async function Analysis() {
 				tableConfig={[
 					{
 						field: "asv_method",
-						type: "select",
+						type: "enum",
 						enum: asv_method
 					},
 					{
 						field: { rel: "Assay", f: "target_gene" },
-						type: "select",
+						type: "enum",
 						enum: target_gene
 					},
 					{

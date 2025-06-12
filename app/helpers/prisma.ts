@@ -3,15 +3,62 @@ import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { NetworkPacket } from "@/types/globals";
-// import fs from "fs";
-// import path from "path";
+import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 
-//BLACK MAGIC DO NOT TOUCH
+type PrismaExtension = DynamicClientExtensionThis<
+	Prisma.TypeMap<
+		InternalArgs & {
+			result: {};
+			model: {};
+			query: {};
+			client: {};
+		},
+		{}
+	>,
+	Prisma.TypeMapCb<Prisma.PrismaClientOptions>,
+	{
+		result: {};
+		model: {};
+		query: {};
+		client: {};
+	}
+>;
+
+const secureFields = ["userIds"];
+
+const readOperations = [
+	"findUnique",
+	"findUniqueOrThrow",
+	"findFirst",
+	"findFirstOrThrow",
+	"findMany",
+	"count",
+	"aggregate",
+	"groupBy"
+];
+const omittableOperations = [
+	"findUnique",
+	"findFirst",
+	"findMany",
+	"create",
+	"update",
+	"upsert",
+	"delete",
+	"createManyAndReturn",
+	"updateManyAndReturn"
+];
+
 //database initialization
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as {
+	unsafePrisma: PrismaClient;
+	publicPrisma: PrismaExtension;
+	prisma: PrismaExtension;
+	securePrisma: PrismaExtension;
+};
 
-const prisma =
-	globalForPrisma.prisma ||
+//prisma client with no restrictions
+const unsafePrisma =
+	globalForPrisma.unsafePrisma ||
 	new PrismaClient({
 		log: [
 			// {
@@ -31,11 +78,37 @@ const prisma =
 				level: "warn"
 			}
 		]
-	}).$extends({
+	});
+
+//prisma client that can never get private data
+const publicPrisma =
+	globalForPrisma.publicPrisma ||
+	unsafePrisma.$extends({
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					const readOperations = ["findMany", "findUnique", "findFirst", "aggregate", "count", "groupBy"];
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							isPrivate: false
+						};
+					}
+
+					return await query(args);
+				}
+			}
+		}
+	});
+
+//prisma client that can get private data only if current user is authorized to
+const prisma =
+	globalForPrisma.prisma ||
+	unsafePrisma.$extends({
+		query: {
+			$allModels: {
+				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
@@ -64,16 +137,78 @@ const prisma =
 		}
 	});
 
-// prisma.$on("query", (e) => {
-// 	const logFile = fs.createWriteStream(path.join(__dirname, "prisma.log"), { flags: "a" });
-// 	const logMessage = `Query: ${e.query}\nParams: ${e.params}\nDuration: ${e.duration}ms\n\n`;
-// 	logFile.write(logMessage);
-// 	console.log(logMessage);
-// });
+//prisma client that can never get private data and never includes secure fields
+const securePrisma =
+	globalForPrisma.securePrisma ||
+	unsafePrisma.$extends({
+		query: {
+			$allModels: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							isPrivate: false
+						};
+					}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+					//remove secure fields from every part of the query
+					for (let [key, value] of Object.entries(args)) {
+						if (Array.isArray(value)) {
+							for (let field of secureFields) {
+								const index = value.indexOf(field);
+								if (index !== -1) {
+									value.splice(index, 1);
+								}
+							}
 
-export { prisma };
+							if (value.length === 0) {
+								//@ts-ignore
+								delete args[key];
+							}
+						} else if (typeof value === "object") {
+							for (let field of secureFields) {
+								if (field in value) {
+									delete value[field];
+								}
+							}
+
+							if (Object.keys(value).length === 0) {
+								//@ts-ignore
+								delete args[key];
+							}
+						}
+					}
+
+					if (omittableOperations.includes(operation)) {
+						//@ts-ignore
+						if (!args.select && !args.include) {
+							let omit = {};
+							//@ts-ignore
+							if (args.omit) {
+								//@ts-ignore
+								omit = args.omit;
+							}
+							//@ts-ignore
+							args.omit = { ...omit, ...secureFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}) };
+						}
+					}
+
+					return await query(args);
+				}
+			}
+		}
+	});
+
+if (process.env.NODE_ENV !== "production") {
+	globalForPrisma.unsafePrisma = unsafePrisma;
+	globalForPrisma.publicPrisma = publicPrisma;
+	globalForPrisma.prisma = prisma;
+	globalForPrisma.securePrisma = securePrisma;
+}
+
+export { unsafePrisma, publicPrisma, prisma, securePrisma };
 
 //database helper functions
 export async function batchSubmit(
@@ -84,7 +219,6 @@ export async function batchSubmit(
 	userId: string,
 	isPrivate: boolean | undefined
 ) {
-	console.log(table);
 	const newRows = await prisma[table].createManyAndReturn({
 		data,
 		skipDuplicates: true,
@@ -94,7 +228,6 @@ export async function batchSubmit(
 	});
 
 	//add userId to existing (batching)
-	console.log(table, "userIds");
 	const existingRowsSet = new Set(newRows.map((e: { [field]: any }) => e[field]));
 	const existingRows = data.reduce((acc, e) => {
 		if (!existingRowsSet.has(e[field])) {
@@ -127,7 +260,6 @@ export async function batchSubmit(
 	}
 
 	//private
-	console.log(table, "private");
 	if (!isPrivate) {
 		const privateBatches = [];
 		const rows = data.map((e) => e[field]);
@@ -150,7 +282,6 @@ export async function batchSubmit(
 	}
 }
 
-const secureFields = ["userIds"];
 export function stripSecureFields(queryResult: Record<string, any> | Record<string, any>[]) {
 	if (Array.isArray(queryResult)) {
 		for (let e of queryResult) {
