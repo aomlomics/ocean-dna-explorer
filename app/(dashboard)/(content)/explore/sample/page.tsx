@@ -1,5 +1,5 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import TableFilter from "@/app/components/explore/TableFilter";
+import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
