@@ -145,12 +145,25 @@ const securePrisma =
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!role || !RolePermissions[role].includes("manageUsers")) {
 							//@ts-ignore
-							...args.where,
-							isPrivate: false
-						};
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										isPrivate: false
+									},
+									{
+										userIds: {
+											has: userId
+										}
+									}
+								]
+							};
+						}
 					}
 
 					//remove secure fields from every part of the query

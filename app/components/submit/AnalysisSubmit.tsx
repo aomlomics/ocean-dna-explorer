@@ -116,17 +116,9 @@ export default function AnalysisSubmit() {
 		}
 	}
 
-	async function dbDelete(
-		deleteAction: Action,
-		analysis_run_name: string,
-		del?: Record<string, number | number[] | string | string[]>
-	) {
-		const formData = new FormData();
-		formData.set("del", JSON.stringify({ ...del, analysis_run_name }));
-
+	async function dbDelete(deleteAction: Action, analysis_run_name: string) {
 		try {
-			const response = await deleteAction(formData);
-			//TODO: change how errors are handled (no longer returns response.error, now throws new error)
+			const response = await deleteAction(analysis_run_name);
 			if (response.statusMessage === "error") {
 				setErrorObj({
 					[analysis_run_name]: response.error
@@ -328,6 +320,7 @@ export default function AnalysisSubmit() {
 				});
 
 				if (occError) {
+					console.log("occError");
 					//TODO: fix deleting the analysis
 					await dbDelete(analysisDeleteAction, analysis_run_name);
 					//remove analyses, features, and taxonomies from database
@@ -339,11 +332,11 @@ export default function AnalysisSubmit() {
 					hasError = true;
 					setIsError(true);
 					setModalMessage(occError);
-					modalRef.current?.showModal();
 					setErrorObj({
 						global: occError,
 						status: "❌ Submission Failed"
 					});
+					modalRef.current?.showModal();
 					setSubmitted(false);
 					break;
 				}
