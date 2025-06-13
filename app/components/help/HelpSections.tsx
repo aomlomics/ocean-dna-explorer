@@ -184,9 +184,7 @@ export const helpSections: Section[] = [
 				title: "Amplicon Sequence Processing (Tourmaline)",
 				content: (
 					<>
-						<p className="mb-4">
-							{" "}<Link className="link link-primary" href="https://github.com/aomlomics/tourmaline" target="_blank">Tourmaline</Link> is AOML Omic's own Amplicon Sequence Processing workflow. It gives you the raw taxonomic and abundance data, which gives you the raw data files to submit with each analysis.
-						</p>
+						<p className="mb-4">{" "}<Link className="link link-primary" href="https://github.com/aomlomics/tourmaline/tree/develop" target="_blank">Tourmaline 2</Link> is an amplicon sequence analysis workflow developed by the {" "}<Link className="link link-primary" href="https://github.com/aomlomics" target="_blank">AOML Omics</Link> team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic assignments. Tourmaline 2 output can be uploaded to ODE as an analysis. Multiple analyses can be uploaded for the same project, allowing users to compare the output from different sets of parameters.  </p>
 					</>
 				)
 			},
