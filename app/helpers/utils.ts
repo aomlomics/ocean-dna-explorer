@@ -1,5 +1,5 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { TableToSchema } from "@/types/objects";
+import { RanksBySpecificity, TableToSchema } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
@@ -130,21 +130,7 @@ export function randomColors(num: number) {
 }
 
 export function getMostSpecificRank(taxonomy: Taxonomy) {
-	const ranksBySpecificity = [
-		"species",
-		"genus",
-		"family",
-		"order",
-		"taxonClass",
-		"phylum",
-		"subdivision",
-		"division",
-		"supergroup",
-		"kingdom",
-		"domain"
-	] as Array<keyof typeof taxonomy>;
-
-	for (const rank of ranksBySpecificity) {
+	for (const rank of RanksBySpecificity) {
 		if (taxonomy[rank]) {
 			return { rank, label: taxonomy[rank] as string };
 		}
@@ -216,7 +202,7 @@ function stringToNumber(str: string) {
 	}
 }
 
-export function convertDBEnum(dbEnum: Record<string, string>) {
+export function parseDbEnum(dbEnum: Record<string, string>) {
 	const newEnum = {} as Record<string, string>;
 
 	for (const [key, value] of Object.entries(dbEnum)) {
@@ -253,27 +239,29 @@ export function parseApiQuery(
 	table: Uncapitalize<Prisma.ModelName>,
 	searchParams: URLSearchParams,
 	skip?: {
-		skipFields?: boolean;
-		skipRelations?: boolean;
-		skipRelationsLimit?: boolean;
-		skipIds?: boolean;
-		skipLimit?: boolean;
-		skipFilters?: boolean;
+		skipFields?: true;
+		skipDistinct?: true;
+		skipRelations?: true;
+		skipRelationsLimit?: true;
+		skipIds?: true;
+		skipLimit?: true;
+		skipFilters?: true;
 	},
 	defaults?: {
-		fields?: Record<string, boolean>;
-		relations?: Record<
-			string,
-			| true
-			| { take: number }
-			| {
-					take?: number;
-					select: { id: true };
-			  }
-		>;
-		relationsLimit?: number;
-		ids?: number[];
-		limit?: number;
+		fields?: Record<string, true>;
+		distinct?: string[];
+		// relations?: Record<
+		// 	string,
+		// 	| true
+		// 	| { take: number }
+		// 	| {
+		// 			take?: number;
+		// 			select: { id: true };
+		// 	  }
+		// >;
+		// relationsLimit?: number;
+		// ids?: number[];
+		// limit?: number;
 		filters?: Record<string, string | number>;
 	}
 ) {
@@ -283,6 +271,7 @@ export function parseApiQuery(
 		include?: Record<string, any>;
 		where?: Record<string, any>;
 		take?: number;
+		distinct?: string[];
 	};
 
 	//selecting fields
@@ -292,6 +281,19 @@ export function parseApiQuery(
 			searchParams.delete("fields");
 			query.select = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
 		}
+	} else if (defaults?.fields) {
+		query.select = defaults?.fields;
+	}
+
+	//distinct
+	if (!skip?.skipDistinct) {
+		const distinct = searchParams.get("distinct");
+		if (distinct) {
+			searchParams.delete("distinct");
+			query.distinct = distinct.split(",");
+		}
+	} else if (defaults?.distinct) {
+		query.distinct = defaults.distinct;
 	}
 
 	//relations

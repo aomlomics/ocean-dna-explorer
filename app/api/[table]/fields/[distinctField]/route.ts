@@ -6,22 +6,39 @@ import { NextResponse } from "next/server";
 
 export async function GET(
 	request: Request,
-	{ params }: { params: Promise<{ table: string }> }
+	{ params }: { params: Promise<{ table: string; distinctField: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
-	const table = (await params).table;
+	const { table, distinctField } = await params;
 	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
 	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const query = parseApiQuery(lowercaseTable, searchParams);
+			const query = parseApiQuery(
+				lowercaseTable,
+				searchParams,
+				{
+					skipFields: true,
+					skipDistinct: true,
+					skipRelations: true,
+					skipIds: true,
+					skipLimit: true
+				},
+				{
+					fields: { [distinctField]: true },
+					distinct: [distinctField]
+				}
+			);
 
 			//@ts-ignore
-			const result = await securePrisma[table].findMany(query);
+			const result = await securePrisma[lowercaseTable].findMany(query);
 
 			if (result) {
-				return NextResponse.json({ statusMessage: "success", result });
+				return NextResponse.json({
+					statusMessage: "success",
+					result: result.map((e: { [distinctField]: string }) => e[distinctField])
+				});
 			} else {
 				return NextResponse.json(
 					{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },

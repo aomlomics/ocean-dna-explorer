@@ -43,7 +43,6 @@ export default function ProjectSubmit() {
 
 	const allFilesPresent = fileStates.project && fileStates.sample && fileStates.library;
 
-	//TODO: allow users to click out of the Submission Failed popup window
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 		if (submitted) return;

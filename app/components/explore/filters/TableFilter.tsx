@@ -1,15 +1,6 @@
 import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
-
-type FilterConfig = {
-	type: "select" | "range";
-	field: string | { rel: string; f: string };
-	options?: string[];
-	optionsLabels?: string[];
-	enum?: Record<string, string>;
-	gte?: number;
-	lte?: number;
-};
+import { FilterConfig } from "./filterHelpers";
 
 export default function TableFilter({ tableConfig }: { tableConfig: FilterConfig[] }) {
 	return (
