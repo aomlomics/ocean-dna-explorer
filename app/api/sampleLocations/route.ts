@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { securePrisma } from "@/app/helpers/prisma";
 import { DeadValueEnum } from "@/types/enums";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -12,13 +12,12 @@ type ProjSampleAvgLocs = {
 	id: number;
 };
 
-//TODO: convert to server action
 export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {
 	//maps enum to only its numeric values, discarding the string values
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
 	try {
-		const rawLocations = await prisma.$transaction(async (tx) => {
+		const rawLocations = await securePrisma.$transaction(async (tx) => {
 			const projectsRes = await tx.project.findMany({
 				select: {
 					project_id: true,

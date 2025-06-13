@@ -36,6 +36,7 @@ interface ErrorPacket {
 interface SuccessPacket {
 	statusMessage: "success";
 	result?: any;
+	[key: string]: any;
 }
 export type NetworkPacket = ErrorPacket | SuccessPacket;
 export type Action = (FormData) => Promise<NetworkPacket>;

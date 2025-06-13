@@ -10,6 +10,7 @@ import { fetcher, getZodType } from "../../helpers/utils";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
 import { SampleSchema } from "@/prisma/generated/zod";
+import { NetworkPacket } from "@/types/globals";
 
 export default function Table({
 	table,
@@ -104,9 +105,13 @@ export default function Table({
 			query.set("where", JSON.stringify(where));
 		}
 	}
-	const { data, error, isLoading } = useSWR(`/api/pagination/${table}?${query.toString()}`, fetcher);
+	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
+		`/api/pagination/${table}?${query.toString()}`,
+		fetcher
+	);
 	if (isLoading) return <LoadingTable />;
-	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
+	if (error) return <div>failed to load: {error}</div>;
+	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	const userDefinedHeaders = [] as string[];
 	const headers = TableToEnumSchema[table]._def.values.reduce((acc: string[], head) => {

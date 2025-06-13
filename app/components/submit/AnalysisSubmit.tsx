@@ -9,10 +9,9 @@ import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
 import analysisDeleteAction from "../../actions/analysis/analysisDelete";
 import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
-import projectFindUniqueAction from "@/app/actions/project/projectFindUnique";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
-import { Action } from "@/types/globals";
+import { Action, NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
@@ -95,13 +94,16 @@ export default function AnalysisSubmit() {
 								return;
 							}
 						} else {
-							const response = await projectFindUniqueAction(value);
-							if (response.statusMessage == "success" && response.result) {
-								setIsPrivate(response.result.isPrivate);
-								setProject(response.result);
-							} else if (response.statusMessage === "error") {
-								setErrorObj({ global: response.error });
+							const response = await fetch(`/api/project?project_id=${value}&fields=project_id,isPrivate`);
+							const json = (await response.json()) as NetworkPacket;
+
+							if (json.statusMessage === "error") {
+								setErrorObj({ global: json.error });
 								return;
+							} else {
+								const project = json.result[0];
+								setIsPrivate(project.isPrivate);
+								setProject(project);
 							}
 						}
 					}
@@ -114,17 +116,9 @@ export default function AnalysisSubmit() {
 		}
 	}
 
-	async function dbDelete(
-		deleteAction: Action,
-		analysis_run_name: string,
-		del?: Record<string, number | number[] | string | string[]>
-	) {
-		const formData = new FormData();
-		formData.set("del", JSON.stringify({ ...del, analysis_run_name }));
-
+	async function dbDelete(deleteAction: Action, analysis_run_name: string) {
 		try {
-			const response = await deleteAction(formData);
-			//TODO: change how errors are handled (no longer returns response.error, now throws new error)
+			const response = await deleteAction(analysis_run_name);
 			if (response.statusMessage === "error") {
 				setErrorObj({
 					[analysis_run_name]: response.error
@@ -326,6 +320,7 @@ export default function AnalysisSubmit() {
 				});
 
 				if (occError) {
+					console.log("occError");
 					//TODO: fix deleting the analysis
 					await dbDelete(analysisDeleteAction, analysis_run_name);
 					//remove analyses, features, and taxonomies from database
@@ -337,11 +332,11 @@ export default function AnalysisSubmit() {
 					hasError = true;
 					setIsError(true);
 					setModalMessage(occError);
-					modalRef.current?.showModal();
 					setErrorObj({
 						global: occError,
 						status: "❌ Submission Failed"
 					});
+					modalRef.current?.showModal();
 					setSubmitted(false);
 					break;
 				}
@@ -419,7 +414,7 @@ export default function AnalysisSubmit() {
 								className="checkbox"
 								checked={isPrivate}
 								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
-								disabled={project?.isPrivate || false}
+								disabled={!!loading || project?.isPrivate || false}
 							/>
 							<div>Private submission</div>
 							<InfoButton infoText="" />

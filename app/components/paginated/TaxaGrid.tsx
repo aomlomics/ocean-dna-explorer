@@ -9,6 +9,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { useSearchParams } from "next/navigation";
+import { NetworkPacket } from "@/types/globals";
 
 export default function TaxaGrid({
 	cols = 4,
@@ -40,11 +41,16 @@ export default function TaxaGrid({
 		query.set("orderBy", JSON.stringify(orderBy));
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/pagination/taxonomy?${query.toString()}`, fetcher, {
-		keepPreviousData: true
-	});
+	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
+		`/api/pagination/taxonomy?${query.toString()}`,
+		fetcher,
+		{
+			keepPreviousData: true
+		}
+	);
 	if (isLoading) return <LoadingTaxaGrid cols={cols} />;
-	if (error || data.error) return <div>failed to load: {error || data.error}</div>;
+	if (error) return <div>failed to load: {error}</div>;
+	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
