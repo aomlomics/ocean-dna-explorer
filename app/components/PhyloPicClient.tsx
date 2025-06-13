@@ -3,12 +3,13 @@
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
-import { RanksBySpecificity } from "@/types/objects";
+import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 
 export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState({} as { rank: string; title: string });
+	const [imageTaxonomy, setImageTaxonomy] = useState("");
 
 	useEffect(() => {
 		async function fetchData() {
@@ -28,6 +29,19 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 						gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank)[0];
 						if (gbifTaxonomy) {
 							mostSpecificRank = rank;
+
+							const tempTaxonomy = [];
+							for (let taxa of TaxonomicRanks) {
+								if (taxonomy[taxa]) {
+									tempTaxonomy.push(taxonomy[taxa]);
+								}
+
+								if (taxa === mostSpecificRank) {
+									break;
+								}
+							}
+							setImageTaxonomy(tempTaxonomy.join(";"));
+
 							break;
 						}
 					}
@@ -69,6 +83,7 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 						rank: mostSpecificRank as string,
 						title: phyloPic._embedded.primaryImage._links.self.title
 					});
+
 					break;
 				} catch {
 					//retry after 1 second
@@ -83,21 +98,23 @@ export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 
 	//TODO: make tooltip not appear underneath elements that come after it
 	return (
-		<div className="w-full h-full relative flex flex-col items-center justify-center">
+		<>
 			{!!imageUrl ? (
 				<div
-					className="tooltip tooltip-bottom tooltip-primary w-full h-full"
-					data-tip={`Image of ${imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}: ${
-						imageDetails.title
-					}`}
+					className="w-full h-full relative flex flex-col justify-center tooltip tooltip-primary break-words before:!w-full"
+					data-tip={imageTaxonomy}
 				>
-					<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
+					<p className="text-primary">PhyloPic of {imageDetails.rank[0].toUpperCase() + imageDetails.rank.slice(1)}:</p>
+					<p className="break-words">{imageDetails.title}</p>
+					<div className="relative h-full w-full">
+						<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
+					</div>
 				</div>
 			) : loading ? (
 				<span className="loading loading-spinner loading-lg h-full"></span>
 			) : (
 				<div className="text-center text-base-content/80">No Image</div>
 			)}
-		</div>
+		</>
 	);
 }

@@ -3,9 +3,15 @@ import { NextResponse } from "next/server";
 import { Permission, Role } from "./types/globals";
 import { notFound } from "next/navigation";
 
-const isProtectedRoute = createRouteMatcher(["/mySubmissions(.*)", "/admin(.*)", "/submit(.*)", "/contribute(.*)"]);
-const isManageUsersRoute = createRouteMatcher(["/admin(.*)"]);
-const isContributeRoute = createRouteMatcher(["/submit(.*)"]);
+//permission-specific protected routes
+const manageUsersRoutes = ["/admin(.*)"];
+const contributeRoutes = ["/submit(.*)"];
+//all protected routes
+const protectedRoutes = [...manageUsersRoutes, ...contributeRoutes, "/mySubmissions(.*)", "/contribute(.*)"];
+
+const isManageUsersRoute = createRouteMatcher(manageUsersRoutes);
+const isContributeRoute = createRouteMatcher(contributeRoutes);
+const isProtectedRoute = createRouteMatcher(protectedRoutes);
 
 const routes = {
 	manageUsers: {

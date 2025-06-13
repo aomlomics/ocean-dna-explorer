@@ -86,7 +86,7 @@ export default function TaxaGrid({
 						className="card bg-base-200 hover:translate-x-1 transition-transform duration-200 aspect-square"
 					>
 						<div className="card-body p-4">
-							<div className="tooltip tooltip-primary w-full break-words" data-tip={d.taxonomy}>
+							<div className="tooltip tooltip-primary w-full break-words before:!w-full" data-tip={d.taxonomy}>
 								<div>
 									{d.species ? (
 										<>
@@ -137,7 +137,7 @@ export default function TaxaGrid({
 									)}
 								</div>
 							</div>
-							<div className="grow">
+							<div className="grow border-t-2 pt-1">
 								<PhyloPicClient taxonomy={d} />
 							</div>
 						</div>
