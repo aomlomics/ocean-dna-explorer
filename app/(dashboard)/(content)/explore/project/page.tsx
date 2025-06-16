@@ -1,17 +1,18 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, secureFields } from "@/app/helpers/prisma";
 import { assay_type } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { getOptions } from "@/app/helpers/utils";
+import ExploreSearch from "@/app/components/explore/ExploreSearch";
+import { ProjectScalarFieldEnumSchema } from "@/prisma/generated/zod";
 
 export default async function Project() {
 	const projects = await prisma.project.findMany({
 		select: {
 			institution: true,
 			study_factor: true
-			// assay_type: true
 		}
 	});
 	if (!projects) return <>Loading...</>;
@@ -62,10 +63,12 @@ export default async function Project() {
 				</div>
 
 				<div className="space-y-6">
-					<h1 className="text-xl font-medium text-base-content">
-						Showing all
-						<span className="text-primary"> Projects</span>
-					</h1>
+					<ExploreSearch
+						title="Projects"
+						table="project"
+						fieldOptions={ProjectScalarFieldEnumSchema._def.values}
+						defaultField="project_id"
+					/>
 
 					<div className="bg-base-100 rounded-lg border border-base-300">
 						<Pagination

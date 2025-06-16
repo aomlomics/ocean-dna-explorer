@@ -1,7 +1,7 @@
 "use client";
 
 import { DeadValueEnum } from "@/types/enums";
-import { TableToEnumSchema } from "@/types/objects";
+import { GlobalOmit, TableToEnumSchema } from "@/types/objects";
 import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useState } from "react";
 import useSWR, { preload } from "swr";
@@ -37,7 +37,7 @@ export default function Table({
 
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, boolean>);
 
-	omit = [...omit, "isPrivate", "userIds"];
+	omit = [...omit, ...GlobalOmit];
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({

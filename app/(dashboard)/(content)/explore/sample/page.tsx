@@ -1,14 +1,17 @@
+import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
+import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 
 export default async function Sample() {
 	const samples = await prisma.sample.findMany({
 		select: {
+			project_id: true,
 			geo_loc_name: true,
 			env_broad_scale: true,
 			env_local_scale: true,
@@ -25,6 +28,11 @@ export default async function Sample() {
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
+					{
+						field: "project_id",
+						type: "select",
+						options: filterOptions.project_id
+					},
 					{
 						field: "geo_loc_name",
 						type: "select",
@@ -80,10 +88,12 @@ export default async function Sample() {
 				</div>
 
 				<div className="space-y-6">
-					<h1 className="text-xl font-medium text-base-content">
-						Showing all
-						<span className="text-primary"> Samples</span>
-					</h1>
+					<ExploreSearch
+						title="Samples"
+						table="sample"
+						fieldOptions={SampleScalarFieldEnumSchema._def.values}
+						defaultField="samp_name"
+					/>
 
 					<div className="bg-base-100 rounded-lg border border-base-300">
 						<Pagination
