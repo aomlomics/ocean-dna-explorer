@@ -5,6 +5,8 @@ import { asv_method, target_gene } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
+import { AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import ExploreSearch from "@/app/components/explore/ExploreSearch";
 
 export default async function Analysis() {
 	const analyses = await prisma.analysis.findMany({
@@ -82,10 +84,12 @@ export default async function Analysis() {
 				</div>
 
 				<div className="space-y-6">
-					<h1 className="text-xl font-medium text-base-content">
-						Showing all
-						<span className="text-primary"> Analyses</span>
-					</h1>
+					<ExploreSearch
+						title="Analyses"
+						table="analysis"
+						fieldOptions={AnalysisScalarFieldEnumSchema._def.values}
+						defaultField="analysis_run_name"
+					/>
 
 					<div className="bg-base-100 rounded-lg border border-base-300">
 						<Pagination

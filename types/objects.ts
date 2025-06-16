@@ -149,3 +149,5 @@ export const TaxonomicRanks = [
 ] as Array<keyof Taxonomy>;
 
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
+
+export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined"];

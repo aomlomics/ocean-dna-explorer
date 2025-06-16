@@ -45,6 +45,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 				// 			none: {}
 				// 		}
 				// 	}
+				// });
 
 				//taxonomies delete
 				// console.log("empty taxonomies delete");

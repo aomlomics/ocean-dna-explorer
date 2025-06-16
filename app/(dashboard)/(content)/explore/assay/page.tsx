@@ -1,10 +1,11 @@
+import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { PrimerPartial } from "@/prisma/generated/zod";
+import { AssayScalarFieldEnumSchema, PrimerPartial } from "@/prisma/generated/zod";
 import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 
@@ -99,10 +100,12 @@ export default async function Assay() {
 				</div>
 
 				<div className="space-y-6">
-					<h1 className="text-xl font-medium text-base-content">
-						Showing all
-						<span className="text-primary"> Assays</span>
-					</h1>
+					<ExploreSearch
+						title="Assays"
+						table="assay"
+						fieldOptions={AssayScalarFieldEnumSchema._def.values}
+						defaultField="assay_name"
+					/>
 
 					<div className="bg-base-100 rounded-lg border border-base-300">
 						<Pagination
