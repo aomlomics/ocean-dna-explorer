@@ -24,7 +24,7 @@ type PrismaExtension = DynamicClientExtensionThis<
 	}
 >;
 
-const secureFields = ["userIds"];
+export const secureFields = ["userIds"];
 
 const readOperations = [
 	"findUnique",

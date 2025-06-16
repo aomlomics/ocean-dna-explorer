@@ -1,7 +1,7 @@
 "use client";
 
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { TableToSchema } from "@/types/objects";
+import { GlobalOmit, TableToSchema } from "@/types/objects";
 import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
@@ -28,7 +28,7 @@ export default function SubmissionEditButton({
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const [isPrivate, setIsPrivate] = useState(data.isPrivate);
 
-	omit = [...omit, "id", "isPrivate", "userIds"];
+	omit = [...omit, ...GlobalOmit, "id"];
 
 	const shape = TableToSchema[table].shape;
 

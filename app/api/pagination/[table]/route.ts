@@ -1,8 +1,9 @@
 import { securePrisma } from "@/app/helpers/prisma";
-import { parseNestedJson } from "@/app/helpers/utils";
+import { getZodType, parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
+import { TableToSchema } from "@/types/objects";
 
 export async function GET(
 	request: Request,
@@ -36,6 +37,51 @@ export async function GET(
 			const whereStr = searchParams.get("where");
 			if (whereStr) {
 				query.where = parseNestedJson(whereStr);
+
+				const shape = TableToSchema[table].shape;
+				if (query.where?.search) {
+					const search = query.where?.search.split(",");
+					const field = search[0];
+					const value = search[1];
+					delete query.where?.search;
+
+					const type = getZodType(shape[field as keyof typeof shape]).type;
+					if (!type) {
+						throw new Error(
+							`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
+						);
+					}
+
+					let searchWhere = undefined as unknown as string | number | Date | { contains: string; mode: "insensitive" };
+					if (type === "string") {
+						searchWhere = { contains: value, mode: "insensitive" };
+					} else if (type === "integer") {
+						const val = parseInt(value);
+						if (isNaN(val)) {
+							searchWhere = -1;
+						} else {
+							searchWhere = val;
+						}
+					} else if (type === "float") {
+						const val = parseFloat(value);
+						if (isNaN(val)) {
+							searchWhere = -1;
+						} else {
+							searchWhere = val;
+						}
+					} else if (type === "date") {
+						const val = Date.parse(value);
+						if (isNaN(val)) {
+							searchWhere = new Date(0);
+						} else {
+							searchWhere = val;
+						}
+					}
+
+					if (!query.where[field] && searchWhere) {
+						query.where[field] = searchWhere;
+					}
+				}
 			}
 
 			const take = searchParams.get("take");
@@ -83,6 +129,7 @@ export async function GET(
 			return NextResponse.json({ statusMessage: "success", result, count });
 		} catch (err) {
 			const error = err as Error;
+			console.log(error.message);
 
 			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
 		}

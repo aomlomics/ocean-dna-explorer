@@ -9,7 +9,7 @@ generator js {
     output              = "../app/generated/prisma/client"
     runtime             = "edge-light"
     importFileExtension = ""
-    previewFeatures     = ["relationJoins"]
+    previewFeatures     = ["relationJoins", "fullTextSearchPostgres"]
 }
 
 generator json {
