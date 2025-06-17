@@ -397,6 +397,7 @@ model Primer {
     pcr_primer_reference_reverse String?
 
     @@unique([pcr_primer_forward, pcr_primer_reverse])
+    @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
 }
 
 model Library {

@@ -53,7 +53,6 @@ export default async function Feature() {
 
 				<div className="space-y-6">
 					<ExploreSearch
-						title="Features"
 						table="feature"
 						fieldOptions={FeatureScalarFieldEnumSchema._def.values}
 						defaultField="featureid"

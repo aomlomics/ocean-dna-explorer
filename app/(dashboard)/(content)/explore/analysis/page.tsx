@@ -85,7 +85,6 @@ export default async function Analysis() {
 
 				<div className="space-y-6">
 					<ExploreSearch
-						title="Analyses"
 						table="analysis"
 						fieldOptions={AnalysisScalarFieldEnumSchema._def.values}
 						defaultField="analysis_run_name"

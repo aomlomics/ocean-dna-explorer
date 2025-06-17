@@ -53,7 +53,6 @@ export default async function Taxonomy() {
 
 				<div className="space-y-6">
 					<ExploreSearch
-						title="Taxonomies"
 						table="taxonomy"
 						fieldOptions={TaxonomyScalarFieldEnumSchema._def.values}
 						defaultField="taxonomy"

@@ -71,6 +71,7 @@ export const EXPLORE_ROUTES = {
 	project: "Projects",
 	sample: "Samples",
 	assay: "Assays",
+	primer: "Primers",
 	// library: {
 	// 	name: "Libraries",
 	// 	description:
