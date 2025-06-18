@@ -125,6 +125,7 @@ export default async function Home() {
 							locations={locations}
 							id="samp_name"
 							title="project_id"
+							titleTable="project"
 							table="sample"
 							iconSize={16}
 							legend={projectColors}

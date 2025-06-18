@@ -29,13 +29,25 @@ export const TableToSchema = {
 	taxonomy: PrismaZodTypes.TaxonomySchema
 } as Record<Lowercase<Prisma.ModelName>, any>; //TODO: type ZodObject properly
 
+export const TableDepluralize = {
+	projects: "project",
+	samples: "sample",
+	primers: "primer",
+	assays: "assay",
+	libraries: "library",
+	analyses: "analysis",
+	occurrences: "occurrence",
+	features: "feature",
+	assignments: "assignment",
+	taxonomies: "taxonomy"
+} as Record<string, Uncapitalize<Prisma.ModelName>>;
+
 //TODO: type ZodObject properly
-//TODO: display whether relation is -to-one or -to-many
 function getRelations(fieldsEnumSchema: ZodEnum<[string, ...string[]]>, relationsSchema: any) {
 	const fields = new Set(Object.values(fieldsEnumSchema._def.values));
 	return Object.keys(relationsSchema._def.shape()).filter((f) => !fields.has(f));
 }
-export const TableToRelations = {
+const relations = {
 	project: getRelations(PrismaZodTypes.ProjectScalarFieldEnumSchema, PrismaZodTypes.ProjectWithRelationsSchema),
 	sample: getRelations(PrismaZodTypes.SampleScalarFieldEnumSchema, PrismaZodTypes.SampleWithRelationsSchema),
 	primer: getRelations(PrismaZodTypes.PrimerScalarFieldEnumSchema, PrismaZodTypes.PrimerWithRelationsSchema),
@@ -52,20 +64,61 @@ export const TableToRelations = {
 		PrismaZodTypes.AssignmentWithRelationsSchema
 	),
 	taxonomy: getRelations(PrismaZodTypes.TaxonomyScalarFieldEnumSchema, PrismaZodTypes.TaxonomyWithRelationsSchema)
-} as Record<Lowercase<Prisma.ModelName>, string[]>;
+} as Record<Uncapitalize<Prisma.ModelName>, string[]>;
 
-export const TableDepluralize = {
-	projects: "project",
-	samples: "sample",
-	primers: "primer",
-	assays: "assay",
-	libraries: "library",
-	analyses: "analysis",
-	occurrences: "occurrence",
-	features: "feature",
-	assignments: "assignment",
-	taxonomies: "taxonomy"
-} as Record<string, Lowercase<Prisma.ModelName>>;
+export const TableToRelations = Object.entries(relations).reduce(
+	(acc, [table, fields]) => {
+		acc[table as keyof typeof relations] = fields.map((field) => {
+			const lowercaseField = field.toLowerCase() as Uncapitalize<Prisma.ModelName>;
+
+			let type = "" as "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
+			let tableName = "" as Prisma.ModelName;
+			//self
+			if (lowercaseField in TableDepluralize) {
+				//plural
+				tableName =
+					TableDepluralize[lowercaseField].slice(0, 1).toUpperCase() + TableDepluralize[lowercaseField].slice(1);
+
+				//other
+				if (relations[TableDepluralize[lowercaseField]].some((f) => f.toLowerCase() === table)) {
+					//singular
+					type = "one-to-many";
+				} else {
+					//plural
+					type = "many-to-many";
+				}
+			} else {
+				//singular
+				tableName = field as Prisma.ModelName;
+
+				//other
+				if (relations[lowercaseField].some((f) => f.toLowerCase() === table)) {
+					//singular
+					type = "one-to-one";
+				} else {
+					//plural
+					type = "many-to-one";
+				}
+			}
+
+			return { field, table: tableName, type } as {
+				field: string;
+				table: Prisma.ModelName;
+				type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
+			};
+		});
+
+		return acc;
+	},
+	{} as Record<
+		Uncapitalize<Prisma.ModelName>,
+		{
+			field: string;
+			table: Prisma.ModelName;
+			type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
+		}[]
+	>
+);
 
 export const EXPLORE_ROUTES = {
 	project: "Projects",

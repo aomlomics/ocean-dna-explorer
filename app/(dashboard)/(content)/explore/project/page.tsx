@@ -74,7 +74,7 @@ export default async function Project() {
 							id="project_id"
 							table="project"
 							title="project_name"
-							fields={["project_id", "detection_type", "study_factor", "institution", "project_contact"]}
+							fields={["project_id", "study_factor", "institution", "project_contact"]}
 							relCounts={["Samples", "Analyses"]}
 						/>
 					</div>

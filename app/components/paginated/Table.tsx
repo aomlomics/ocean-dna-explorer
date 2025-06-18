@@ -11,6 +11,7 @@ import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
 import { SampleSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
+import Link from "next/link";
 
 export default function Table({
 	table,
@@ -348,7 +349,9 @@ export default function Table({
 							//row
 							acc.push(
 								<tr key={i} className="border-base-100 border-b-2">
-									<th>{row[title]}</th>
+									<th className="link link-primary">
+										<Link href={`/explore/${table}/${row[title]}`}>{row[title]}</Link>
+									</th>
 									{headers.reduce((acc: ReactNode[], head, j) => {
 										if (!headersFilter[head]) {
 											//cell

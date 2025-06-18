@@ -85,7 +85,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 					<div className="grid grid-cols-2 gap-4">
 						<div className="stat bg-base-200 p-6">
 							<div className="text-lg font-medium text-base-content/70">Total Occurrences</div>
-							<div className="text-base mt-1">{sample.Occurrences.length}</div>
+							<div className="text-2xl mt-1">{sample.Occurrences.length}</div>
 						</div>
 						<DropdownLinkBox
 							title="Total Analyses"

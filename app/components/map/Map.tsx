@@ -10,14 +10,20 @@ export default function Map({
 	locations,
 	id,
 	title,
+	titleTable,
 	iconSize,
 	table,
 	legend,
 	cluster = false
 }: {
-	locations: any[];
+	locations: {
+		decimalLatitude: number | null;
+		decimalLongitude: number | null;
+		[key: string]: any;
+	}[];
 	id: string;
 	title?: string;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
 	iconSize?: number;
 	table: Uncapitalize<Prisma.ModelName>;
 	legend?: Record<string, string>;
@@ -28,6 +34,7 @@ export default function Map({
 			locations={locations}
 			id={id}
 			title={title}
+			titleTable={titleTable}
 			iconSize={iconSize}
 			table={table}
 			legend={legend}

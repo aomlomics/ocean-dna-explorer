@@ -33,25 +33,34 @@ export default function SchemaDisplay() {
 					className="collapse collapse-arrow bg-base-100 border-base-300 border"
 				>
 					<input type="checkbox" />
-					<div className="collapse-title font-semibold">{tableName}</div>
+					<div className="collapse-title font-semibold text-xl">{tableName}</div>
 					<div className="collapse-content text-sm overflow-x-auto">
-						<div className="flex gap-3">
-							Relations:{" "}
-							{TableToRelations[tableName.toLowerCase() as Lowercase<Prisma.ModelName>].map((rel) => (
-								<Link
-									className="link link-primary"
-									href={
-										rel.toLowerCase() in TableDepluralize
-											? "#" + TableDepluralize[rel.toLowerCase()]
-											: "#" + rel.toLowerCase()
-									}
-									key={rel}
-								>
-									{rel}
-								</Link>
-							))}
-						</div>
+						<div className="text-lg border-t-2 border-primary pt-5">Relations:</div>
+						<table className="table table-zebra table-fixed">
+							{/* head */}
+							<thead>
+								<tr>
+									<th>Field</th>
+									<th>Table</th>
+									<th>Type</th>
+								</tr>
+							</thead>
+							<tbody>
+								{TableToRelations[tableName.toLowerCase() as Uncapitalize<Prisma.ModelName>].map((relObj) => (
+									<tr key={relObj.field}>
+										<td>{relObj.field}</td>
+										<td>
+											<Link className="link link-primary" href={`#${relObj.table.toLowerCase()}`}>
+												{relObj.table}
+											</Link>
+										</td>
+										<td>{relObj.type}</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
 
+						<div className="text-lg mt-10 pt-8 border-t-2">Fields:</div>
 						<table className="table table-zebra table-fixed">
 							{/* head */}
 							<thead>
@@ -68,6 +77,7 @@ export default function SchemaDisplay() {
 										<td>{f}</td>
 										<td>{info.type}</td>
 										<td>{info.optional?.toString()}</td>
+										{/* TODO: display all enums separately somewhere */}
 										<td>{info.values?.join(" | ")}</td>
 									</tr>
 								))}
