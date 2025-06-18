@@ -42,8 +42,8 @@ export async function getApiSections() {
 			content: (
 				<>
 					<p className="mb-4">
-						The NODE API provides programmatic access to marine genomic data. This documentation will help you
-						understand how to use the API to query and retrieve data from the NODE platform.
+						The ODE API provides programmatic access to marine eDNA data. This documentation will help you
+						understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 				</>
 			),
@@ -54,7 +54,7 @@ export async function getApiSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								NODE provides a RESTful API allows you to access all available data in the database through HTTP
+								ODE provides a RESTful API which enables you to access data in the database through HTTP
 								requests. The API has several{" "}
 								<a href="#api-endpoints" className="text-primary">
 									endpoints
@@ -63,7 +63,7 @@ export async function getApiSections() {
 								<a href="#query-parameter-syntax" className="text-primary">
 									parameters
 								</a>
-								, allowing you to parse through our data with flexible queries.
+								, allowing you to parse through our data with customizable queries.
 							</p>
 							<p className="mb-4">
 								You can use this API to query the entire database for projects, samples, analyses, features, and
@@ -71,7 +71,7 @@ export async function getApiSections() {
 								visualizations.
 							</p>
 							<p className="mb-4">
-								The API is public and requires no authentication or API keys to use. GET requests are the only type
+								The API is public and requires no authentication, login role, or API keys to use. GET requests are the only type
 								supported.
 							</p>
 						</>
@@ -84,7 +84,7 @@ export async function getApiSections() {
 						<>
 							<div className="mb-4">Here are some examples of how to get data in various environments:</div>
 
-							<div className="mb-4">Raw JSON responses in browser:</div>
+							<div className="mb-4">Copy and paste this URL into your browser to view raw JSON responses:</div>
 							<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/tables`} />
 
 							<div className="mb-4 mt-4">Python (+ Pandas) example:</div>
@@ -95,7 +95,7 @@ import json
 import pandas as pd
 
 # Make API request to desired endpoint
-url = "${process.env.NEXT_PUBLIC_URL}/api/project"
+url = "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
 response = requests.get(url)
 
 # Check if request was successful
@@ -124,7 +124,7 @@ else:
 library(jsonlite)
 
 # Make API request
-url <- "${process.env.NEXT_PUBLIC_URL}/api/project"
+url <- "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
 response <- GET(url)
 
 # Check if request was successful
@@ -151,10 +151,10 @@ if (http_status(response)$category == "Success") {
 			content: (
 				<>
 					<p className="mb-4">
-						This section shows the relationships between tables in the database, and what fields are available for each
-						table. This will help you effectively{" "}
+						This is a simplified database diagram which shows the relationships between tables in the database. The fields available for each
+						table are listed in the Table Definitions section beneath the diagram. This will help you effectively{" "}
 						<a href="#relations" className="text-primary">
-							query relations
+							query relations across tables
 						</a>{" "}
 						and
 						<a href="#query-parameter-syntax" className="text-primary">
@@ -202,7 +202,7 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table in NODE. You can use this information
+								The dropdown menus below show the fields available for each table in ODE. You can use this information
 								in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
@@ -217,7 +217,7 @@ if (http_status(response)$category == "Success") {
 			content: (
 				<>
 					<p className="mb-4">
-						This section explains how to construct API queries to retrieve data from the NODE database.
+						This section explains how to construct API queries to retrieve data from the ODE database.
 					</p>
 				</>
 			),
@@ -360,6 +360,26 @@ if (http_status(response)$category == "Success") {
 
 							<p className="mb-4">Example Response:</p>
 							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/primer/fields`} />
+						</>
+					)
+				},
+				{
+					id: "get-unique-field-values",
+					title: "Get Unique Field Values",
+					content: (
+						<>
+							<div className="mb-4">Endpoint: /api/[table]/fields/[fieldName]</div>
+
+							<p className="mb-4">
+								Returns all unique values for a specific field in a table. This is useful for discovering what values exist in a particular field that has lots of duplicate values.
+							</p>
+
+							<div className="mb-4 mt-4">
+								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
+							</div>
+
+							<p className="mb-4">Example Response:</p>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
 						</>
 					)
 				},
@@ -679,6 +699,30 @@ if (http_status(response)$category == "Success") {
 					)
 				},
 				{
+					id: "unique-field-values",
+					title: "Unique Field Values",
+					content: (
+						<>
+							<p className="mb-4">
+								Example URL:{" "}
+								<InlineCode
+									code={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`}
+								/>
+							</p>
+
+							<p className="mb-4">
+								This query returns all unique geographic location names from the sample table. This is particularly useful because locations are often repeated.
+							</p>
+
+							<p className="mb-4">Example Response:</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`}
+							/>
+						</>
+					)
+				},
+				{
 					id: "single-record",
 					title: "Single Record",
 					content: (
@@ -788,11 +832,11 @@ if (http_status(response)$category == "Success") {
 			content: (
 				<>
 					<div className="space-y-6">
-						<p className="mb-4">Frequently asked questions about using the NODE API.</p>
+						<p className="mb-4">Frequently asked questions about using the ODE API.</p>
 
 						<div>
-							<h4 className="font-medium mb-2">Q: Do I need an API key to use the NODE API?</h4>
-							<p>A: No, the NODE API is currently open and does not require authentication or API keys.</p>
+							<h4 className="font-medium mb-2">Q: Do I need an API key to use the ODE API?</h4>
+							<p>A: No, the ODE API is currently open and does not require authentication or API keys.</p>
 						</div>
 
 						<div>
@@ -806,23 +850,23 @@ if (http_status(response)$category == "Success") {
 						<div>
 							<h4 className="font-medium mb-2">Q: I'm not familiar with APIs. How do I get started?</h4>
 							<p>
-								A: An API (Application Programming Interface) allows computers to talk to each other. To use our API,
+								A: An API (Application Programming Interface) allows computers or programs to send data to one another. To use our API,
 								you'll need to make HTTP requests to our endpoints. The simplest way to start is by pasting one of our
-								example URLs into your browser's address bar to see the raw JSON response. For more advanced usage, you
-								can use programming languages like Python, R, or JavaScript.
+								{" "}<Link className="link link-primary font-semibold" href="#complete-examples">example URLs</Link> into your browser's address bar to see the raw JSON response. For more advanced usage, you
+								can use programming languages like Python or R.
 							</p>
 						</div>
 
 						<div>
 							<h4 className="font-medium mb-2">Q: How do I report issues with the API?</h4>
-							<p>A: Please submit any API issues through our GitHub repository's issue tracker.</p>
+							<p>A: Please submit any API issues through our GitHub repository's {" "}<Link className="link link-primary font-semibold" href="https://github.com/aomlomics/node/issues">issue tracker</Link>.</p>
 						</div>
 
 						<div>
 							<h4 className="font-medium mb-2">Q: How do I cite data obtained through the API?</h4>
 							<p>
-								A: Please cite the NODE platform and the specific projects from which you obtained data. Each project
-								has citation information available through the web interface.
+								A: Please cite the Ocean DNA Explorer and the specific projects from which you obtained data. Each project
+								has citation information available in fields like project_id, project_contact, institution, and institutionID.
 							</p>
 						</div>
 					</div>
