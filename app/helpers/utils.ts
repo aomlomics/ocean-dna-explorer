@@ -1,8 +1,10 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { RanksBySpecificity, TableToSchema } from "@/types/objects";
+import { RanksBySpecificity } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
+import distinctColors from "distinct-colors";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -119,14 +121,13 @@ export function parseSchemaToObject(
 	}
 }
 
-export function randomColors(num: number) {
-	let colors = [];
-	for (let i = 0; i < num; i++) {
-		colors.push(
-			`rgb(${Math.round(Math.random() * 255)},${Math.round(Math.random() * 255)},${Math.round(Math.random() * 255)})`
-		);
-	}
-	return colors;
+export function randomColors(count: number) {
+	const colors = distinctColors({ count });
+
+	return colors.map((c) => {
+		const rgb = c.rgb();
+		return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+	});
 }
 
 export function getMostSpecificRank(taxonomy: Taxonomy) {
@@ -390,7 +391,7 @@ export function parseApiQuery(
 		//filtering
 		if (!skip?.skipFilters) {
 			query.where = {} as Record<string, any>;
-			const shape = TableToSchema[table].shape;
+			const shape = TableMetadata[table].schema.shape;
 			searchParams.forEach((value, key) => {
 				const type = getZodType(shape[key as keyof typeof shape]).type;
 				if (!type) {

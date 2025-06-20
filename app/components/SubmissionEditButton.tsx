@@ -1,7 +1,8 @@
 "use client";
 
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { GlobalOmit, TableToSchema } from "@/types/objects";
+import { GlobalOmit } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
@@ -30,7 +31,7 @@ export default function SubmissionEditButton({
 
 	omit = [...omit, ...GlobalOmit, "id"];
 
-	const shape = TableToSchema[table].shape;
+	const shape = TableMetadata[table].schema.shape;
 
 	function onClose(e: React.MouseEvent<HTMLButtonElement>) {
 		e.preventDefault();

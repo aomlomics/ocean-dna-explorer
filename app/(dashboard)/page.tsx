@@ -120,11 +120,12 @@ export default async function Home() {
 					<span className="text-primary"> Projects</span>
 				</div>
 				<div className="flex gap-8">
-					<div className="h-[500px] w-1/2 rounded-lg overflow-hidden">
+					<div className="aspect-5/2 w-1/2 rounded-lg overflow-hidden">
 						<Map
 							locations={locations}
 							id="samp_name"
 							title="project_id"
+							titleTable="project"
 							table="sample"
 							iconSize={16}
 							legend={projectColors}

@@ -1,6 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
@@ -8,19 +8,29 @@ import { useState } from "react";
 import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
+import { EXPLORE_ROUTES } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
+import Control from "react-leaflet-custom-control";
 
 export default function ActualMap({
 	locations,
 	id,
 	title,
+	titleTable,
 	iconSize = 25,
 	table,
 	legend,
 	cluster = false
 }: {
-	locations: Record<string, any>[];
+	locations: {
+		decimalLatitude: number | null;
+		decimalLongitude: number | null;
+		color?: string;
+		[key: string]: any;
+	}[];
 	id: string;
 	title?: string;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
 	iconSize?: number;
 	table: Uncapitalize<Prisma.ModelName>;
 	legend?: Record<string, string>;
@@ -39,32 +49,41 @@ export default function ActualMap({
 	}
 
 	function LegendControl() {
-		if (!legend) {
+		if (!legend || !titleTable) {
 			return null;
 		}
 
 		return (
-			<div className="leaflet-bottom leaflet-right leaflet-control leaflet-bar map-legend mr-5 mb-8 !border-none card bg-base-100 card-xs shadow-sm card-body px-3 py-1 block">
-				{Object.entries(legend).map(([key, color]) => (
-					<div key={key} className="flex gap-2 items-center">
-						<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
-						<Link
-							href={`/explore/${table}/${encodeURIComponent(key)}`}
-							className="!w-auto !h-auto !bg-transparent !text-primary hover:underline"
-						>
-							{key}
-						</Link>
-					</div>
-				))}
-			</div>
+			<Control prepend position="bottomright">
+				<div className="!border-none bg-base-100 card-xs shadow-sm px-3 py-2 rounded-sm">
+					<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
+					{Object.entries(legend).map(([key, color]) => (
+						<div key={key} className="flex gap-2 items-center">
+							<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
+							<Link href={`/explore/${titleTable}/${encodeURIComponent(key)}`} className="link link-primary link-hover">
+								{key}
+							</Link>
+						</div>
+					))}
+				</div>
+			</Control>
 		);
 	}
 
-	let points = locations;
+	//remove points where a lat or long is null
+	let points = locations.filter((loc) => loc.decimalLatitude !== null && loc.decimalLongitude !== null) as {
+		decimalLatitude: number;
+		decimalLongitude: number;
+		[key: string]: any;
+	}[];
 
 	if (cluster) {
 		//cluster location data
-		const dataset = locations.map((loc) => [loc.decimalLatitude, loc.decimalLongitude]);
+		const dataset = points.reduce((acc, loc) => {
+			acc.push([loc.decimalLatitude, loc.decimalLongitude]);
+
+			return acc;
+		}, [] as [number, number][]);
 		const dbscan = new DBSCAN();
 		//adjust second argument to adjust when points cluster
 		const clusters = dbscan.run(dataset, 50 / zoomLevel ** 2.5, 2);
@@ -77,7 +96,7 @@ export default function ActualMap({
 				if (!(dataset[i][0] in DeadValueEnum || dataset[i][1] in DeadValueEnum)) {
 					sum[0] += dataset[i][0];
 					sum[1] += dataset[i][1];
-					values.push(locations[i][id]);
+					values.push(points[i][id]);
 				}
 			}
 			if (values.length) {
@@ -87,8 +106,28 @@ export default function ActualMap({
 		points = clusteredLocations;
 	}
 
-	const centerStart = { lat: 25.7617, lng: -80.8918 };
-	const ARCGIS_API_KEY = process.env.ARCGIS_KEY;
+	//calculate average of locations for starting position of map
+	let avgLat = {
+		sum: 0,
+		count: 0
+	};
+	let avgLng = {
+		sum: 0,
+		count: 0
+	};
+	for (let loc of points) {
+		if (!(loc.decimalLatitude in DeadValueEnum) && !(loc.decimalLongitude in DeadValueEnum)) {
+			avgLat.sum += loc.decimalLatitude;
+			avgLat.count++;
+
+			avgLng.sum += loc.decimalLongitude;
+			avgLng.count++;
+		}
+	}
+	const centerStart = {
+		lat: avgLat.sum / avgLat.count,
+		lng: avgLng.sum / avgLng.count
+	};
 
 	return (
 		<div className="flex flex-col items-start h-full w-full">
@@ -97,7 +136,7 @@ export default function ActualMap({
 				<LegendControl />
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
-					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${ARCGIS_API_KEY}`}
+					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
 				/>
 				{points.map((loc, i) => (
 					<Marker
@@ -119,18 +158,32 @@ export default function ActualMap({
 					>
 						<Popup className="map-popup">
 							<div className="font-sans bg-base-100 p-4 rounded-lg">
-								{title && loc[title] && <h2 className="text-primary text-xl">{loc[title]}</h2>}
+								{title &&
+									loc[title] &&
+									(titleTable ? (
+										<Link
+											href={`/explore/${titleTable}/${loc[title]}`}
+											className="link link-primary link-hover text-xl"
+										>
+											{loc[title]}
+										</Link>
+									) : (
+										<h2 className="text-primary text-xl border-b-2 pb-2 mb-2">{loc[title]}</h2>
+									))}
 								<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
 									{cluster ? (
-										loc.values.map((label: string) => (
-											<Link
-												key={label}
-												href={`/explore/${table}/${encodeURIComponent(label)}`}
-												className="text-info hover:text-info-focus hover:underline transition-colors"
-											>
-												{label}
-											</Link>
-										))
+										<>
+											<h2 className="text-primary text-lg">{EXPLORE_ROUTES[table as keyof typeof EXPLORE_ROUTES]}</h2>
+											{loc.values.map((label: string) => (
+												<Link
+													key={label}
+													href={`/explore/${table}/${encodeURIComponent(label)}`}
+													className="link link-primary link-hover"
+												>
+													{label}
+												</Link>
+											))}
+										</>
 									) : (
 										<Link
 											href={`/explore/${table}/${encodeURIComponent(loc[id])}`}

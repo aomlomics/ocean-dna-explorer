@@ -89,7 +89,6 @@ export default async function Sample() {
 
 				<div className="space-y-6">
 					<ExploreSearch
-						title="Samples"
 						table="sample"
 						fieldOptions={SampleScalarFieldEnumSchema._def.values}
 						defaultField="samp_name"

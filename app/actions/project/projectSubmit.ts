@@ -69,7 +69,6 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 	const libraryCols = {} as Record<string, Record<string, string>>;
 
 	const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
-	const libToAssay = {} as Record<string, string>; //object to relate libraries to their assay_name values
 
 	const isPrivate = parsed.data.isPrivate ? true : false;
 
@@ -278,7 +277,6 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 
 						if (libraryRow.samp_name && assayRow.assay_name) {
 							sampToAssay[libraryRow.samp_name] = assayRow.assay_name;
-							libToAssay[currentLine[libraryFileHeaders.indexOf("library_id")]] = assayRow.assay_name;
 
 							//if the assay doesn't exist yet, add it to the assays array
 							//TODO: do not create new assays, as they should ALL already exist in the database

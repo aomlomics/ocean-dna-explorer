@@ -101,7 +101,6 @@ export default async function Assay() {
 
 				<div className="space-y-6">
 					<ExploreSearch
-						title="Assays"
 						table="assay"
 						fieldOptions={AssayScalarFieldEnumSchema._def.values}
 						defaultField="assay_name"
