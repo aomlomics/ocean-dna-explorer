@@ -1,6 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
@@ -9,6 +9,8 @@ import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
 import { EXPLORE_ROUTES } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
+import Control from "react-leaflet-custom-control";
 
 export default function ActualMap({
 	locations,
@@ -47,24 +49,24 @@ export default function ActualMap({
 	}
 
 	function LegendControl() {
-		if (!legend) {
+		if (!legend || !titleTable) {
 			return null;
 		}
 
 		return (
-			<div className="leaflet-bottom leaflet-right leaflet-control leaflet-bar map-legend mr-5 mb-8 !border-none card bg-base-100 card-xs shadow-sm card-body px-3 py-1 block">
-				{Object.entries(legend).map(([key, color]) => (
-					<div key={key} className="flex gap-2 items-center">
-						<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
-						<Link
-							href={`/explore/${table}/${encodeURIComponent(key)}`}
-							className="!w-auto !h-auto !bg-transparent !text-primary hover:underline"
-						>
-							{key}
-						</Link>
-					</div>
-				))}
-			</div>
+			<Control prepend position="bottomright">
+				<div className="!border-none bg-base-100 card-xs shadow-sm px-3 py-2 rounded-sm">
+					<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
+					{Object.entries(legend).map(([key, color]) => (
+						<div key={key} className="flex gap-2 items-center">
+							<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
+							<Link href={`/explore/${titleTable}/${encodeURIComponent(key)}`} className="link link-primary link-hover">
+								{key}
+							</Link>
+						</div>
+					))}
+				</div>
+			</Control>
 		);
 	}
 
@@ -161,7 +163,7 @@ export default function ActualMap({
 									(titleTable ? (
 										<Link
 											href={`/explore/${titleTable}/${loc[title]}`}
-											className="link link-primary link-hover text-2xl"
+											className="link link-primary link-hover text-xl"
 										>
 											{loc[title]}
 										</Link>

@@ -184,13 +184,13 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Map" defaultChecked />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<div className="card-body p-0 overflow-hidden h-[600px]">
+						<div className="card-body p-0 overflow-hidden aspect-5/2">
 							<Map locations={project.Samples} id="samp_name" table="sample" cluster />
 						</div>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Table" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 !h-[600px] w-full">
+					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
 						<Table table="sample" title="samp_name" where={{ project_id }}></Table>
 					</div>
 

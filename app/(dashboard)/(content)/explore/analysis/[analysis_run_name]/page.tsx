@@ -130,7 +130,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<div className="card-body p-0 overflow-hidden h-[600px]">
+						<div className="card-body p-0 overflow-hidden aspect-5/2">
 							<Map
 								locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
 								id="samp_name"
@@ -141,7 +141,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 !h-[600px] w-full">
+					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
 						<Table table="assignment" title="featureid" where={{ analysis_run_name }} />
 					</div>
 

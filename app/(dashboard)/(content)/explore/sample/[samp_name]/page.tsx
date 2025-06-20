@@ -110,7 +110,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 				</div>
 			</div>
 
-			<div className="card-body p-0 overflow-hidden h-[600px]">
+			<div className="card-body p-0 overflow-hidden aspect-5/2">
 				<Map locations={[sample]} id="samp_name" table="sample" />
 			</div>
 		</div>
