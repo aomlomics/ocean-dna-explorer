@@ -1,7 +1,8 @@
 "use client";
 
 import { DeadValueEnum } from "@/types/enums";
-import { GlobalOmit, TableToEnumSchema } from "@/types/objects";
+import { GlobalOmit } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useState } from "react";
 import useSWR, { preload } from "swr";
@@ -115,7 +116,7 @@ export default function Table({
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	const userDefinedHeaders = [] as string[];
-	const headers = TableToEnumSchema[table]._def.values.reduce((acc: string[], head) => {
+	const headers = TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
 		//remove database field
 		//displaying title header differently, so removing it
 		if (head === "id" || head === title) {

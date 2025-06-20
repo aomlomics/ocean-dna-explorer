@@ -1,9 +1,9 @@
 import { getZodType } from "@/app/helpers/utils";
-import { TableToEnumSchema, TableToSchema } from "@/types/objects";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
 import { stripSecureFields } from "@/app/helpers/prisma";
+import TableMetadata from "@/types/tableMetadata";
 
 export async function GET(
 	request: Request,
@@ -13,9 +13,9 @@ export async function GET(
 	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
 	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
-		const fields = TableToEnumSchema[lowercaseTable as keyof typeof TableToEnumSchema]._def.values;
+		const fields = TableMetadata[lowercaseTable].enumSchema._def.values;
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
-		const shape = TableToSchema[lowercaseTable as keyof typeof TableToSchema].shape;
+		const shape = TableMetadata[lowercaseTable].schema.shape;
 		for (const f of fields) {
 			if (f !== "userDefined") {
 				const type = getZodType(shape[f as keyof typeof shape]);

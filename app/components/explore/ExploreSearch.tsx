@@ -2,7 +2,8 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/utils";
-import { EXPLORE_ROUTES, GlobalOmit, TableToSchema } from "@/types/objects";
+import { EXPLORE_ROUTES, GlobalOmit } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ChangeEvent, ReactNode, useEffect, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
@@ -55,7 +56,7 @@ export default function ExploreSearch({
 	omit = [...omit, ...GlobalOmit, "id"];
 
 	function InputElement() {
-		const shape = TableToSchema[table].shape;
+		const shape = TableMetadata[table].schema.shape;
 		const type = getZodType(shape[field as keyof typeof shape]).type;
 		if (!type) {
 			throw new Error(

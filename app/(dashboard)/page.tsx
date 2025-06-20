@@ -120,7 +120,7 @@ export default async function Home() {
 					<span className="text-primary"> Projects</span>
 				</div>
 				<div className="flex gap-8">
-					<div className="h-[500px] w-1/2 rounded-lg overflow-hidden">
+					<div className="h-[600px] w-1/2 rounded-lg overflow-hidden">
 						<Map
 							locations={locations}
 							id="samp_name"

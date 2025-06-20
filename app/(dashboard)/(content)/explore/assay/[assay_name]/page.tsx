@@ -88,7 +88,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Samples" defaultChecked />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-					<div className="card-body p-0 overflow-hidden h-[400px]">
+					<div className="card-body p-0 overflow-hidden h-[600px]">
 						<Map locations={assay.Samples} id="samp_name" table="sample" cluster />
 					</div>
 				</div>
@@ -96,7 +96,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Libraries" />
 				<div
 					role="tabpanel"
-					className="tab-content bg-base-100 border-base-300 rounded-box p-6 h-[400px] w-full overflow-hidden"
+					className="tab-content bg-base-100 border-base-300 rounded-box p-6 h-[600px] w-full overflow-hidden"
 				>
 					<Table table="library" title="lib_id" where={{ assay_name }}></Table>
 				</div>

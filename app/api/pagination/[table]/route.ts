@@ -3,7 +3,7 @@ import { getZodType, parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
-import { TableToSchema } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 
 export async function GET(
 	request: Request,
@@ -38,7 +38,7 @@ export async function GET(
 			if (whereStr) {
 				query.where = parseNestedJson(whereStr);
 
-				const shape = TableToSchema[table].shape;
+				const shape = TableMetadata[table].schema.shape;
 				if (query.where?.search) {
 					const search = query.where?.search.split(",");
 					const field = search[0];

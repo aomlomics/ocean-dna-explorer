@@ -1,5 +1,6 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { RanksBySpecificity, TableToSchema } from "@/types/objects";
+import { RanksBySpecificity } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
@@ -390,7 +391,7 @@ export function parseApiQuery(
 		//filtering
 		if (!skip?.skipFilters) {
 			query.where = {} as Record<string, any>;
-			const shape = TableToSchema[table].shape;
+			const shape = TableMetadata[table].schema.shape;
 			searchParams.forEach((value, key) => {
 				const type = getZodType(shape[key as keyof typeof shape]).type;
 				if (!type) {

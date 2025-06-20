@@ -1,14 +1,16 @@
-import { TableDepluralize, TableToEnumSchema, TableToRelations, TableToSchema } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "../helpers/utils";
 import Link from "next/link";
 import { stripSecureFields } from "../helpers/prisma";
 
 export default function SchemaDisplay() {
-	const tables = Object.keys(Prisma.ModelName).map((tableName) => {
-		const fields = TableToEnumSchema[tableName.toLowerCase() as keyof typeof TableToEnumSchema]._def.values;
+	const tables = Object.keys(Prisma.ModelName).map((t) => {
+		const tableName = t.toLowerCase() as Uncapitalize<Prisma.ModelName>;
+
+		const fields = TableMetadata[tableName].enumSchema._def.values;
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
-		const shape = TableToSchema[tableName.toLowerCase() as keyof typeof TableToSchema].shape;
+		const shape = TableMetadata[tableName].schema.shape;
 		for (const f of fields) {
 			if (f !== "userDefined") {
 				const type = getZodType(shape[f as keyof typeof shape]);
@@ -21,7 +23,7 @@ export default function SchemaDisplay() {
 		}
 
 		stripSecureFields(result);
-		return [tableName, result] as [Prisma.ModelName, typeof result];
+		return [t, result] as [Prisma.ModelName, typeof result];
 	});
 
 	return (
@@ -46,7 +48,7 @@ export default function SchemaDisplay() {
 								</tr>
 							</thead>
 							<tbody>
-								{TableToRelations[tableName.toLowerCase() as Uncapitalize<Prisma.ModelName>].map((relObj) => (
+								{TableMetadata[tableName.toLowerCase() as Uncapitalize<Prisma.ModelName>].relations.map((relObj) => (
 									<tr key={relObj.field}>
 										<td>{relObj.field}</td>
 										<td>
