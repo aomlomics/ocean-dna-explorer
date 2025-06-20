@@ -1,6 +1,6 @@
 requirement_level_code	section	term_name	project_level	ssu12sv5v6_mifish_u	ssu12sv5_riaz
-M	Project	recordedBy	Lynsey Wilcox Talbot; Katherine Silliman		
-R	Project	recordedByID	https://orcid.org/0000-0001-9824-879X; https://orcid.org/0000-0001-5964-3965		
+M	Project	recordedBy	Lynsey Wilcox Talbot | Katherine Silliman		
+R	Project	recordedByID	https://orcid.org/0000-0001-9824-879X | https://orcid.org/0000-0001-5964-3965		
 M	Project	project_contact	Lynsey Wilcox Talbot		
 R	Project	institution	NOAA/NMFS/SEFSC		
 R	Project	institutionID	https://ror.org/0396y0w87		
