@@ -159,11 +159,12 @@ export default function ActualMap({
 								{title &&
 									loc[title] &&
 									(titleTable ? (
-										<div className="text-xl border-b-2 border-primary pb-2 mb-2">
-											<Link href={`/explore/${titleTable}/${loc[title]}`} className="link link-primary link-hover">
-												{loc[title]}
-											</Link>
-										</div>
+										<Link
+											href={`/explore/${titleTable}/${loc[title]}`}
+											className="link link-primary link-hover text-2xl"
+										>
+											{loc[title]}
+										</Link>
 									) : (
 										<h2 className="text-primary text-xl border-b-2 pb-2 mb-2">{loc[title]}</h2>
 									))}
@@ -182,16 +183,12 @@ export default function ActualMap({
 											))}
 										</>
 									) : (
-										<>
-											<h2 className="text-primary text-lg">{table.slice(0, 1).toUpperCase() + table.slice(1)}</h2>
-
-											<Link
-												href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-												className="text-info hover:text-info-focus hover:underline transition-colors"
-											>
-												{loc[id]}
-											</Link>
-										</>
+										<Link
+											href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+											className="text-info hover:text-info-focus hover:underline transition-colors"
+										>
+											{loc[id]}
+										</Link>
 									)}
 								</div>
 							</div>

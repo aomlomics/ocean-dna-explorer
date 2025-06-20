@@ -190,10 +190,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Table" />
-					<div
-						role="tabpanel"
-						className="tab-content bg-base-100 border-base-300 rounded-box p-6 h-[600px] w-full overflow-hidden"
-					>
+					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 !h-[600px] w-full">
 						<Table table="sample" title="samp_name" where={{ project_id }}></Table>
 					</div>
 

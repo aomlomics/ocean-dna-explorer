@@ -4,7 +4,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 import useSWR, { preload } from "swr";
 import { useDebouncedCallback } from "use-debounce";
 import { fetcher, getZodType } from "../../helpers/utils";
@@ -37,7 +37,33 @@ export default function Table({
 		setColumnsFilter(f);
 	}, 300);
 
-	const [headersFilter, setHeadersFilter] = useState({} as Record<string, boolean>);
+	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
+
+	const [hideEmpty, setHideEmpty] = useState(false);
+	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
+	useEffect(() => {
+		if (data && data.statusMessage === "success") {
+			if (hideEmpty) {
+				const emptyFields = {} as Record<string, true>;
+				const exemptFields = {} as Record<string, true>;
+
+				for (let row of data.result) {
+					for (let [field, value] of Object.entries(row)) {
+						if (value === null && !exemptFields[field]) {
+							emptyFields[field] = true;
+						} else if (emptyFields[field]) {
+							delete emptyFields[field];
+							exemptFields[field] = true;
+						}
+					}
+				}
+
+				setEmptyFilter(emptyFields);
+			} else {
+				setEmptyFilter({});
+			}
+		}
+	}, [hideEmpty]);
 
 	omit = [...omit, ...GlobalOmit];
 
@@ -116,36 +142,48 @@ export default function Table({
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	const userDefinedHeaders = [] as string[];
-	const headers = TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
-		//remove database field
-		//displaying title header differently, so removing it
-		if (head === "id" || head === title) {
-			return acc;
-		}
-
-		//remove all headers where the value is assumed to be the same
-		if (where && Object.keys(where).includes(head)) {
-			return acc;
-		}
-
-		if (omit.includes(head)) {
-			return acc;
-		}
-
-		//split user defined fields into individual headers
-		if (head === "userDefined") {
-			if (data.result[0].userDefined) {
-				for (const h in data.result[0].userDefined) {
-					userDefinedHeaders.push(h);
-					acc.push(h);
-				}
+	const headers = [] as string[];
+	if (TableMetadata[table].fieldOrder) {
+		headers.push(...TableMetadata[table].fieldOrder);
+	}
+	headers.push(
+		...TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
+			//remove fields that have already been added
+			if (TableMetadata[table].fieldOrder?.includes(head)) {
+				return acc;
 			}
-		} else {
-			acc.push(head);
-		}
 
-		return acc;
-	}, []);
+			//remove database field
+			//displaying title header differently, so removing it
+			if (head === "id" || head === title) {
+				return acc;
+			}
+
+			//remove all headers where the value is assumed to be the same
+			if (where && Object.keys(where).includes(head)) {
+				return acc;
+			}
+
+			//remove headers that have been omitted
+			if (omit.includes(head)) {
+				return acc;
+			}
+
+			//split user defined fields into individual headers
+			if (head === "userDefined") {
+				if (data.result[0].userDefined) {
+					for (const h in data.result[0].userDefined) {
+						userDefinedHeaders.push(h);
+						acc.push(h);
+					}
+				}
+			} else {
+				acc.push(head);
+			}
+
+			return acc;
+		}, [])
+	);
 
 	return (
 		<form id={`${table}TableForm`} onSubmit={applyFilters} className="w-full h-full flex flex-col">
@@ -172,7 +210,7 @@ export default function Table({
 					handlePageHover={handlePageHover}
 				/>
 				{/* Column Selection Button */}
-				<div className="flex items-center">
+				<div className="flex items-center justify-center w-full gap-5">
 					<div className="dropdown dropdown-end">
 						<div tabIndex={0} role="button" className="btn btn-sm">
 							Columns
@@ -248,6 +286,18 @@ export default function Table({
 							</ul>
 						</div>
 					</div>
+
+					<fieldset className="fieldset bg-base-100 border-base-300">
+						<label className="label">
+							<input
+								type="checkbox"
+								className="checkbox"
+								checked={hideEmpty}
+								onChange={(e) => setHideEmpty(e.currentTarget.checked)}
+							/>
+							Hide empty columns
+						</label>
+					</fieldset>
 				</div>
 			</div>
 			<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
@@ -292,7 +342,7 @@ export default function Table({
 							</th>
 							{headers.reduce((acc: ReactNode[], head, i) => {
 								//only render the header if it is selected in the header filter
-								if (!headersFilter[head]) {
+								if (!headersFilter[head] && !emptyFilter[head]) {
 									//Header
 									acc.push(
 										<td key={head + i}>
@@ -354,7 +404,7 @@ export default function Table({
 										<Link href={`/explore/${table}/${row[title]}`}>{row[title]}</Link>
 									</th>
 									{headers.reduce((acc: ReactNode[], head, j) => {
-										if (!headersFilter[head]) {
+										if (!headersFilter[head] && !emptyFilter[head]) {
 											//cell
 											if (userDefinedHeaders.includes(head)) {
 												acc.push(
