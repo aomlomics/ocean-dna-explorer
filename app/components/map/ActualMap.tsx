@@ -124,16 +124,18 @@ export default function ActualMap({
 			avgLng.count++;
 		}
 	}
-	const centerStart = {
-		lat: avgLat.sum / avgLat.count,
-		lng: avgLng.sum / avgLng.count
-	};
+	const centerStart = points.length
+		? {
+				lat: avgLat.sum / avgLat.count,
+				lng: avgLng.sum / avgLng.count
+		  }
+		: { lat: 0, lng: 0 };
 
 	return (
 		<div className="flex flex-col items-start h-full w-full">
 			<MapContainer className="w-full h-full grow" center={centerStart} zoom={zoomLevel}>
 				<ZoomControl />
-				<LegendControl />
+				{points.length && <LegendControl />}
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
 					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}

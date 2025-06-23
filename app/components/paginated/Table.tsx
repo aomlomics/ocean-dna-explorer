@@ -104,8 +104,14 @@ export default function Table({
 			if (typeof value === "string" && value.trim()) {
 				if (type === "string") {
 					temp[key] = { contains: value, mode: "insensitive" };
-				} else if (type === "number") {
+				} else if (type === "integer") {
 					temp[key] = parseInt(value);
+				} else if (type === "float") {
+					temp[key] = parseFloat(value);
+				} else if (type === "integer[]") {
+					//TODO: add support for querying ranges
+				} else if (type === "float[]") {
+					//TODO: add support for querying ranges
 				} else {
 					temp[key] = value;
 				}

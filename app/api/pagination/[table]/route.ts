@@ -38,14 +38,13 @@ export async function GET(
 			if (whereStr) {
 				query.where = parseNestedJson(whereStr);
 
-				const shape = TableMetadata[table].schema.shape;
 				if (query.where?.search) {
 					const search = query.where?.search.split(",");
 					const field = search[0];
 					const value = search[1];
 					delete query.where?.search;
 
-					const type = getZodType(shape[field as keyof typeof shape]).type;
+					const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 					if (!type) {
 						throw new Error(
 							`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
@@ -76,6 +75,10 @@ export async function GET(
 						} else {
 							searchWhere = val;
 						}
+					} else if (type === "string[]") {
+						//TODO: add string arrays back to schema once Prisma supports contains on arrays
+					} else if (type === "integer[]" || type === "float[]") {
+						//TODO: add support to query ranges
 					}
 
 					if (!query.where[field] && searchWhere) {
