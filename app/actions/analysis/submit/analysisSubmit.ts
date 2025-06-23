@@ -1,6 +1,7 @@
 "use server";
 
-import { prisma } from "@/app/helpers/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -119,7 +120,11 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		});
 
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
 		return { statusMessage: "error", error: error.message };
 	}

@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { batchSubmit, prisma } from "@/app/helpers/prisma";
+import { batchSubmit, handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
 import {
@@ -237,7 +237,11 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 		);
 
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
 		return { statusMessage: "error", error: error.message };
 	}
