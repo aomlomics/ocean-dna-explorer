@@ -68,19 +68,38 @@ export default function AnalysisSubmit() {
 		}
 	}, [analyses]);
 
-	async function parseAnalysis(files: FileList | null, i: number) {
+	async function parseAnalysis(input: HTMLInputElement, i: number) {
 		try {
-			if (files?.length) {
-				const f = files[0];
+			if (input.files?.length) {
+				const file = input.files[0];
 
-				const lines = (await f.text()).replace(/[\r]+/gm, "").split("\n");
+				const lines = (await file.text()).replace(/[\r]+/gm, "").split("\n");
 				const headers = lines[0].split("\t");
 				for (let j = 1; j < lines.length; j++) {
 					const currentLine = lines[j].split("\t");
-					const field = currentLine[headers.indexOf("term_name")];
-					const value = currentLine[headers.indexOf("values")];
+
+					const fieldIndex = headers.indexOf("term_name");
+					if (fieldIndex === -1) {
+						setModalMessage("No column named 'term_name' in file.");
+						setIsError(true);
+						modalRef.current?.showModal();
+						input.value = "";
+						return;
+					}
+					const field = currentLine[fieldIndex];
+
+					const valuesIndex = headers.indexOf("values");
+					if (valuesIndex === -1) {
+						setModalMessage("No column named 'values' in file.");
+						setIsError(true);
+						modalRef.current?.showModal();
+						input.value = "";
+						return;
+					}
+					const value = currentLine[valuesIndex];
 
 					if (field === "analysis_run_name") {
+						console.log(value);
 						const tempAList = [...analyses];
 						tempAList[i] = value;
 						setAnalyses(tempAList);
@@ -88,9 +107,13 @@ export default function AnalysisSubmit() {
 					}
 
 					if (field === "project_id") {
+						console.log(value);
 						if (project) {
 							if (value !== project.project_id) {
-								setErrorObj({ global: "All analyses must be for the same project." });
+								setModalMessage("All analyses must be for the same project.");
+								setIsError(true);
+								modalRef.current?.showModal();
+								input.value = "";
 								return;
 							}
 						} else {
@@ -98,7 +121,10 @@ export default function AnalysisSubmit() {
 							const json = (await response.json()) as NetworkPacket;
 
 							if (json.statusMessage === "error") {
-								setErrorObj({ global: json.error });
+								setModalMessage(json.error);
+								setIsError(true);
+								modalRef.current?.showModal();
+								input.value = "";
 								return;
 							} else {
 								const project = json.result[0];
@@ -109,10 +135,16 @@ export default function AnalysisSubmit() {
 					}
 				}
 
-				setErrorObj({ global: "Analysis Metadata file in wrong format." });
+				setModalMessage("Analysis Metadata file in wrong format.");
+				setIsError(true);
+				modalRef.current?.showModal();
+				input.value = "";
 			}
 		} catch (err) {
-			setErrorObj({ global: "Analysis Metadata file in wrong format." });
+			setModalMessage("Analysis Metadata file in wrong format.");
+			setIsError(true);
+			modalRef.current?.showModal();
+			input.value = "";
 		}
 	}
 
@@ -445,7 +477,7 @@ export default function AnalysisSubmit() {
 															accept=".tsv"
 															onChange={(e) => {
 																handleFileChange(e);
-																parseAnalysis(e.currentTarget.files, i);
+																parseAnalysis(e.currentTarget, i);
 															}}
 															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
 														/>
@@ -460,59 +492,55 @@ export default function AnalysisSubmit() {
 													</div>
 												</div>
 
-												{analyses[i] !== "\u200b" && (
-													<>
-														<div className="flex items-center gap-3">
-															<label className="form-control w-full">
-																<div className="label">
-																	<span className="label-text text-base-content">ASV Taxa/Features File:</span>
-																</div>
-																<input
-																	type="file"
-																	name={`${analyses[i]}_assign`}
-																	required
-																	disabled={!!loading}
-																	accept=".tsv"
-																	onChange={handleFileChange}
-																	className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-																/>
-															</label>
-															<div className="flex items-center self-end mb-[10.5px]">
-																<ProgressCircle
-																	response={responseObj[`${analyses[i]}_assign`]}
-																	error={errorObj[`${analyses[i]}_assign`]}
-																	loading={loading === `${analyses[i]}_assign`}
-																	hasFile={!!fileStates[`${analyses[i]}_assign`]}
-																/>
-															</div>
+												<div className="flex items-center gap-3">
+													<label className="form-control w-full">
+														<div className="label">
+															<span className="label-text text-base-content">ASV Taxa/Features File:</span>
 														</div>
+														<input
+															type="file"
+															name={`${analyses[i]}_assign`}
+															required
+															disabled={!!loading}
+															accept=".tsv"
+															onChange={handleFileChange}
+															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
+														/>
+													</label>
+													<div className="flex items-center self-end mb-[10.5px]">
+														<ProgressCircle
+															response={responseObj[`${analyses[i]}_assign`]}
+															error={errorObj[`${analyses[i]}_assign`]}
+															loading={loading === `${analyses[i]}_assign`}
+															hasFile={!!fileStates[`${analyses[i]}_assign`]}
+														/>
+													</div>
+												</div>
 
-														<div className="flex items-center gap-3">
-															<label className="form-control w-full">
-																<div className="label">
-																	<span className="label-text text-base-content">Occurrence Table File:</span>
-																</div>
-																<input
-																	type="file"
-																	name={`${analyses[i]}_occ`}
-																	required
-																	disabled={!!loading}
-																	accept=".tsv"
-																	onChange={handleFileChange}
-																	className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-																/>
-															</label>
-															<div className="flex items-center self-end mb-[10.5px]">
-																<ProgressCircle
-																	response={responseObj[`${analyses[i]}_occ`]}
-																	error={errorObj[`${analyses[i]}_occ`]}
-																	loading={loading === `${analyses[i]}_occ`}
-																	hasFile={!!fileStates[`${analyses[i]}_occ`]}
-																/>
-															</div>
+												<div className="flex items-center gap-3">
+													<label className="form-control w-full">
+														<div className="label">
+															<span className="label-text text-base-content">Occurrence Table File:</span>
 														</div>
-													</>
-												)}
+														<input
+															type="file"
+															name={`${analyses[i]}_occ`}
+															required
+															disabled={!!loading}
+															accept=".tsv"
+															onChange={handleFileChange}
+															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
+														/>
+													</label>
+													<div className="flex items-center self-end mb-[10.5px]">
+														<ProgressCircle
+															response={responseObj[`${analyses[i]}_occ`]}
+															error={errorObj[`${analyses[i]}_occ`]}
+															loading={loading === `${analyses[i]}_occ`}
+															hasFile={!!fileStates[`${analyses[i]}_occ`]}
+														/>
+													</div>
+												</div>
 											</div>
 										</div>
 									)}
