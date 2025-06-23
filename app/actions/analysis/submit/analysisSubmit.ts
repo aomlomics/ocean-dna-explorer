@@ -96,11 +96,16 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 					project_id: analysisCol.project_id
 				},
 				select: {
-					isPrivate: true
+					isPrivate: true,
+					userIds: true
 				}
 			});
 			if (!project) {
 				throw new Error(`Project with project_id of ${analysisCol.project_id} does not exist.`);
+			} else if (!project.userIds.includes(userId)) {
+				throw new Error(
+					`Permission denied for adding analysis to Project with project_id of ${analysisCol.project_id}. Please contact submission owner with a request to be added to the Project.`
+				);
 			} else if (project.isPrivate && !parsed.data.isPrivate) {
 				throw new Error(
 					`Project with project_id of ${analysisCol.project_id} is private. Analyses can't be public if the associated project is private.`

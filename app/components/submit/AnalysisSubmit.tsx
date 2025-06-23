@@ -570,7 +570,7 @@ export default function AnalysisSubmit() {
 						✕
 					</button>
 					<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
-						{isError ? "Submission Failed" : "Project Submitted Successfully"}
+						{isError ? "Submission Failed" : "Analysis Submitted Successfully"}
 					</h3>
 					<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
 					{!isError && (
