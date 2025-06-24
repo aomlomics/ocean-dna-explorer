@@ -5,9 +5,9 @@ import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
-import { getZodType } from "../helpers/utils";
-import InfoButton from "./InfoButton";
-import { Action } from "@/types/globals";
+import { FormAction } from "@/types/globals";
+import { getZodType } from "@/app/helpers/utils";
+import InfoButton from "../InfoButton";
 
 export default function SubmissionEditButton({
 	table,
@@ -21,7 +21,7 @@ export default function SubmissionEditButton({
 	table: Uncapitalize<Prisma.ModelName>;
 	titleField: string;
 	data: Record<string, any>;
-	action: Action;
+	action: FormAction;
 	omit?: string[];
 	disabled?: string[];
 	privateToggleDescription?: string;

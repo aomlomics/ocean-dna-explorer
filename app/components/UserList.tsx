@@ -1,41 +1,34 @@
 "use client";
 
-import { Role } from "@/types/globals";
+import { NetworkPacket, Role } from "@/types/globals";
 import { ReactNode, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getUserListAction } from "../actions/manageUsers/getUserList";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
+import { User } from "@clerk/nextjs/dist/types/server";
 
 export default function UserList() {
-	const router = useRouter();
-	const pathname = usePathname();
-	const searchParams = useSearchParams();
-	const [users, setUsers] = useState([] as any[]);
-	const [error, setError] = useState("");
 	const { userId } = useAuth();
+	const [users, setUsers] = useState([] as User[]);
+	const [error, setError] = useState("");
 
-	const handleSearch = useDebouncedCallback((search) => {
-		if (search) {
-			router.replace(pathname + "?search=" + search);
-		} else {
-			router.replace(pathname);
-		}
-	}, 300);
-
-	useEffect(() => {
-		async function getUserList() {
-			const response = await getUserListAction(searchParams.get("search") || "");
-			if (response.statusMessage === "error") {
-				setError(response.error);
-			} else {
-				setUsers(response.result);
+	async function searchUsers(query = "") {
+		const response = await fetch(`/api/user?query=${query}`);
+		if (response.ok) {
+			const json = (await response.json()) as NetworkPacket;
+			if (json.statusMessage === "success") {
+				setUsers(json.result);
+			} else if (json.statusMessage === "error") {
+				setError(json.error);
 			}
 		}
+	}
 
-		getUserList();
-	}, [searchParams]);
+	useEffect(() => {
+		searchUsers();
+	}, []);
+
+	const handleSearch = useDebouncedCallback(searchUsers, 300);
 
 	if (error) {
 		return <>{error}</>;
@@ -50,7 +43,6 @@ export default function UserList() {
 					name="search"
 					className="input"
 					placeholder="Search"
-					defaultValue={searchParams.get("search") || ""}
 					onChange={(e) => {
 						handleSearch(e.target.value);
 					}}

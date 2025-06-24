@@ -6,4 +6,12 @@ module.exports = {
 			bodySizeLimit: "3mb",
 		},
 	},
+	images: {
+		remotePatterns: [{
+			protocol: "https",
+			hostname: "img.clerk.com",
+			port: "",
+			pathname: "**"
+		}]
+	}
 }

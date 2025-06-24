@@ -2,10 +2,10 @@
 
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
-import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
+import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
-export default function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
+export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState({} as { rank: string; title: string });
