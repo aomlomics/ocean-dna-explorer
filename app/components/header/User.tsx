@@ -1,7 +1,7 @@
 "use client";
 
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
-import { ThemedUserButton } from "../ThemedUserButton";
+import { ThemedUserButton } from "./ThemedUserButton";
 
 export default function User() {
 	return (

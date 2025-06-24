@@ -4,7 +4,7 @@ import { Action } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";
-import DeleteConfirmModal from "@/app/components/DeleteConfirmationModal";
+import DeleteConfirmModal from "@/app/components/mySubmissions/DeleteConfirmationModal";
 
 const Toast = ({ message, type }: { message: string; type: "success" | "error" }) => {
 	return (

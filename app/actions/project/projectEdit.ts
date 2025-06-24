@@ -7,7 +7,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import analysisEditAction from "../analysis/analysisEdit";
 import { ProjectPartialSchema, ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { ZodBooleanSchema } from "@/types/objects";
 import { z } from "zod";
 
 const formSchema = ProjectPartialSchema.merge(

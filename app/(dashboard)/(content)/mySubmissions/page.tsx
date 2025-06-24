@@ -1,4 +1,4 @@
-import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
+import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
 import projectDeleteAction from "@/app/actions/project/projectDelete";
 import { prisma } from "@/app/helpers/prisma";
@@ -6,9 +6,12 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import SubmissionEditButton from "@/app/components/SubmissionEditButton";
 import analysisEditAction from "@/app/actions/analysis/analysisEdit";
 import projectEditAction from "@/app/actions/project/projectEdit";
+import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditButton";
+import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
+import projectUpdateUserIdsAction from "@/app/actions/project/projectUpdateUserIds";
+import analysisUpdateUserIdsAction from "@/app/actions/analysis/analysisUpdateUserIds";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -25,7 +28,6 @@ export default async function MySubmissions() {
 			},
 			omit: {
 				editHistory: true,
-				userIds: true,
 				dateSubmitted: true
 			}
 		}),
@@ -37,7 +39,6 @@ export default async function MySubmissions() {
 			},
 			omit: {
 				editHistory: true,
-				userIds: true,
 				dateSubmitted: true
 			}
 		})
@@ -100,12 +101,18 @@ export default async function MySubmissions() {
 													{proj.project_id}
 												</Link>
 												<div className="flex gap-3">
+													<SubmissionUsersButton
+														userIds={proj.userIds}
+														action={projectUpdateUserIdsAction}
+														target={proj.project_id}
+													/>
 													<SubmissionEditButton
 														table="project"
 														titleField="project_id"
 														data={proj}
 														action={projectEditAction}
 														privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
+														omit={["userIds"]}
 													/>
 													<SubmissionDeleteButton
 														field="project_id"
@@ -161,6 +168,11 @@ export default async function MySubmissions() {
 													{a.analysis_run_name}
 												</Link>
 												<div className="flex gap-3">
+													<SubmissionUsersButton
+														userIds={a.userIds}
+														action={analysisUpdateUserIdsAction}
+														target={a.analysis_run_name}
+													/>
 													<SubmissionEditButton
 														table="analysis"
 														titleField="analysis_run_name"
@@ -168,6 +180,7 @@ export default async function MySubmissions() {
 														action={analysisEditAction}
 														disabled={["project_id", "assay_name"]}
 														privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
+														omit={["userIds"]}
 													/>
 													<SubmissionDeleteButton
 														field="analysis_run_name"

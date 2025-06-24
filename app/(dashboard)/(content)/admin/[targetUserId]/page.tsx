@@ -6,7 +6,7 @@ import {
 	setRoleAction,
 	unbanUserAction
 } from "@/app/actions/manageUsers/editUser";
-import SubmissionDeleteButton from "@/app/components/SubmissionDeleteButton";
+import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
 import { Role } from "@/types/globals";
@@ -110,7 +110,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 						<form action={setRoleAction}>
 							<input type="hidden" value={user.id} name="targetUserId" />
 							<input type="hidden" value="moderator" name="role" />
-							<button type="submit" className="btn" disabled={uneditable}>
+							<button type="submit" className="btn" disabled={uneditable || user.publicMetadata.role === "moderator"}>
 								Make Moderator
 							</button>
 						</form>
@@ -119,7 +119,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 					<form action={setRoleAction}>
 						<input type="hidden" value={user.id} name="targetUserId" />
 						<input type="hidden" value="contributor" name="role" />
-						<button type="submit" className="btn" disabled={uneditable}>
+						<button type="submit" className="btn" disabled={uneditable || user.publicMetadata.role === "contributor"}>
 							Make Contributor
 						</button>
 					</form>

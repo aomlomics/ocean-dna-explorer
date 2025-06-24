@@ -39,7 +39,9 @@ interface SuccessPacket {
 	[key: string]: any;
 }
 export type NetworkPacket = ErrorPacket | SuccessPacket;
-export type Action = (FormData) => Promise<NetworkPacket>;
+export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
+export type TargetAction = (target: string, ...args) => Promise<NetworkPacket>;
+export type Action = FormAction | TargetAction;
 
 declare global {
 	namespace PrismaJson {
