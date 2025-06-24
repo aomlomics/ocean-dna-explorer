@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { OccurrenceOptionalDefaultsSchema, OccurrenceSchema } from "@/prisma/generated/zod";
@@ -148,7 +148,11 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 
 		revalidatePath("/explore");
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
 		return { statusMessage: "error", error: error.message };
 	}

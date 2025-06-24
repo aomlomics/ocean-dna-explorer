@@ -85,7 +85,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 					<div className="grid grid-cols-2 gap-4">
 						<div className="stat bg-base-200 p-6">
 							<div className="text-lg font-medium text-base-content/70">Total Occurrences</div>
-							<div className="text-base mt-1">{sample.Occurrences.length}</div>
+							<div className="text-2xl mt-1">{sample.Occurrences.length}</div>
 						</div>
 						<DropdownLinkBox
 							title="Total Analyses"
@@ -105,12 +105,12 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Sample Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
+						<DataDisplay table="sample" data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
 					</div>
 				</div>
 			</div>
 
-			<div className="card-body p-0 overflow-hidden h-[400px]">
+			<div className="card-body p-0 overflow-hidden aspect-5/2">
 				<Map locations={[sample]} id="samp_name" table="sample" />
 			</div>
 		</div>

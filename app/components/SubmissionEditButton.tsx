@@ -1,7 +1,8 @@
 "use client";
 
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { TableToSchema } from "@/types/objects";
+import { GlobalOmit } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { getZodType } from "../helpers/utils";
@@ -28,9 +29,9 @@ export default function SubmissionEditButton({
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const [isPrivate, setIsPrivate] = useState(data.isPrivate);
 
-	omit = [...omit, "id", "isPrivate", "userIds"];
+	omit = [...omit, ...GlobalOmit, "id"];
 
-	const shape = TableToSchema[table].shape;
+	const shape = TableMetadata[table].schema.shape;
 
 	function onClose(e: React.MouseEvent<HTMLButtonElement>) {
 		e.preventDefault();
@@ -200,6 +201,8 @@ export default function SubmissionEditButton({
 											/>
 										</fieldset>
 									);
+								} else if (type === "float[]" || type === "integer[]") {
+									//TODO: add support for ranges
 								} else if (type === "date") {
 									//TODO: make date default value work
 									// acc.push(

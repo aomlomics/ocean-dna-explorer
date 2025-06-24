@@ -1,76 +1,12 @@
-import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { Permission, Role } from "./globals";
-import { z, ZodEnum } from "zod";
-import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
-
-export const TableToEnumSchema = {
-	project: PrismaZodTypes.ProjectScalarFieldEnumSchema,
-	sample: PrismaZodTypes.SampleScalarFieldEnumSchema,
-	primer: PrismaZodTypes.PrimerScalarFieldEnumSchema,
-	assay: PrismaZodTypes.AssayScalarFieldEnumSchema,
-	library: PrismaZodTypes.LibraryScalarFieldEnumSchema,
-	analysis: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
-	occurrence: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
-	feature: PrismaZodTypes.FeatureScalarFieldEnumSchema,
-	assignment: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
-	taxonomy: PrismaZodTypes.TaxonomyScalarFieldEnumSchema
-} as Record<Lowercase<Prisma.ModelName>, ZodEnum<[string, ...string[]]>>;
-
-export const TableToSchema = {
-	project: PrismaZodTypes.ProjectSchema,
-	sample: PrismaZodTypes.SampleSchema,
-	primer: PrismaZodTypes.PrimerSchema,
-	assay: PrismaZodTypes.AssaySchema,
-	library: PrismaZodTypes.LibrarySchema,
-	analysis: PrismaZodTypes.AnalysisSchema,
-	occurrence: PrismaZodTypes.OccurrenceSchema,
-	feature: PrismaZodTypes.FeatureSchema,
-	assignment: PrismaZodTypes.AssignmentSchema,
-	taxonomy: PrismaZodTypes.TaxonomySchema
-} as Record<Lowercase<Prisma.ModelName>, any>; //TODO: type ZodObject properly
-
-//TODO: type ZodObject properly
-//TODO: display whether relation is -to-one or -to-many
-function getRelations(fieldsEnumSchema: ZodEnum<[string, ...string[]]>, relationsSchema: any) {
-	const fields = new Set(Object.values(fieldsEnumSchema._def.values));
-	return Object.keys(relationsSchema._def.shape()).filter((f) => !fields.has(f));
-}
-export const TableToRelations = {
-	project: getRelations(PrismaZodTypes.ProjectScalarFieldEnumSchema, PrismaZodTypes.ProjectWithRelationsSchema),
-	sample: getRelations(PrismaZodTypes.SampleScalarFieldEnumSchema, PrismaZodTypes.SampleWithRelationsSchema),
-	primer: getRelations(PrismaZodTypes.PrimerScalarFieldEnumSchema, PrismaZodTypes.PrimerWithRelationsSchema),
-	assay: getRelations(PrismaZodTypes.AssayScalarFieldEnumSchema, PrismaZodTypes.AssayWithRelationsSchema),
-	library: getRelations(PrismaZodTypes.LibraryScalarFieldEnumSchema, PrismaZodTypes.LibraryWithRelationsSchema),
-	analysis: getRelations(PrismaZodTypes.AnalysisScalarFieldEnumSchema, PrismaZodTypes.AnalysisWithRelationsSchema),
-	occurrence: getRelations(
-		PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
-		PrismaZodTypes.OccurrenceWithRelationsSchema
-	),
-	feature: getRelations(PrismaZodTypes.FeatureScalarFieldEnumSchema, PrismaZodTypes.FeatureWithRelationsSchema),
-	assignment: getRelations(
-		PrismaZodTypes.AssignmentScalarFieldEnumSchema,
-		PrismaZodTypes.AssignmentWithRelationsSchema
-	),
-	taxonomy: getRelations(PrismaZodTypes.TaxonomyScalarFieldEnumSchema, PrismaZodTypes.TaxonomyWithRelationsSchema)
-} as Record<Lowercase<Prisma.ModelName>, string[]>;
-
-export const TableDepluralize = {
-	projects: "project",
-	samples: "sample",
-	primers: "primer",
-	assays: "assay",
-	libraries: "library",
-	analyses: "analysis",
-	occurrences: "occurrence",
-	features: "feature",
-	assignments: "assignment",
-	taxonomies: "taxonomy"
-} as Record<string, Lowercase<Prisma.ModelName>>;
+import { z } from "zod";
+import { Taxonomy } from "@/app/generated/prisma/client";
 
 export const EXPLORE_ROUTES = {
 	project: "Projects",
 	sample: "Samples",
 	assay: "Assays",
+	primer: "Primers",
 	// library: {
 	// 	name: "Libraries",
 	// 	description:
@@ -149,3 +85,5 @@ export const TaxonomicRanks = [
 ] as Array<keyof Taxonomy>;
 
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
+
+export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined"];

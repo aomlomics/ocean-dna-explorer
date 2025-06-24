@@ -1,6 +1,8 @@
+import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import TaxaGrid from "@/app/components/paginated/TaxaGrid";
+import { TaxonomyScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { TaxonomicRanks } from "@/types/objects";
 import Link from "next/link";
 
@@ -50,10 +52,11 @@ export default async function Taxonomy() {
 				</div>
 
 				<div className="space-y-6">
-					<h1 className="text-xl font-medium text-base-content">
-						Showing all
-						<span className="text-primary"> Taxonomies</span>
-					</h1>
+					<ExploreSearch
+						table="taxonomy"
+						fieldOptions={TaxonomyScalarFieldEnumSchema._def.values}
+						defaultField="taxonomy"
+					/>
 
 					<div className="bg-base-100 rounded-lg border border-base-300">
 						<TaxaGrid />

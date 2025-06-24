@@ -20,7 +20,7 @@ export default function Pagination({
 	take = 10
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	id?: string;
+	id?: string | string[];
 	where?: Record<string, string>;
 	title: string | string[];
 	fields?: string[];
@@ -89,7 +89,11 @@ export default function Pagination({
 			<div className="grid gap-4">
 				{data.result.map((d: any, i: number) => (
 					<Link
-						href={`/explore/${table}/${encodeURIComponent(d[id])}`}
+						href={`/explore/${table}/${
+							typeof id === "string"
+								? encodeURIComponent(d[id])
+								: id.map((field) => encodeURIComponent(d[field])).join("/")
+						}`}
 						key={i}
 						className="card bg-base-200 hover:bg-base-300 transition-all duration-200"
 					>

@@ -24,7 +24,7 @@ type PrismaExtension = DynamicClientExtensionThis<
 	}
 >;
 
-const secureFields = ["userIds"];
+export const secureFields = ["userIds"];
 
 const readOperations = [
 	"findUnique",
@@ -145,12 +145,25 @@ const securePrisma =
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!role || !RolePermissions[role].includes("manageUsers")) {
 							//@ts-ignore
-							...args.where,
-							isPrivate: false
-						};
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										isPrivate: false
+									},
+									{
+										userIds: {
+											has: userId
+										}
+									}
+								]
+							};
+						}
 					}
 
 					//remove secure fields from every part of the query
@@ -300,7 +313,9 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Ne
 	if (err.code === "P2002") {
 		return {
 			statusMessage: "error",
-			error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[])[0]} already exists in database.`
+			error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
+				", "
+			)} already exists in database.`
 		};
 	} else {
 		return {

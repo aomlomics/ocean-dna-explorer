@@ -112,7 +112,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<div className="p-4 border-b border-base-content/10">
 						<h2 className="text-base-content/80 font-medium">Which Samples was this Taxon found?</h2>
 					</div>
-					<div className="w-full h-[300px] sm:h-[400px]">
+					<div className="w-full aspect-5/2">
 						<Map locations={samples} id="samp_name" table="sample" cluster />
 					</div>
 				</div>

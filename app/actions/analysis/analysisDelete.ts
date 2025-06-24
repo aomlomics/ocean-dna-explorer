@@ -1,6 +1,7 @@
 "use server";
 
-import { prisma } from "@/app/helpers/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { AnalysisSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
@@ -45,6 +46,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 				// 			none: {}
 				// 		}
 				// 	}
+				// });
 
 				//taxonomies delete
 				// console.log("empty taxonomies delete");
@@ -60,9 +62,12 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 		);
 
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

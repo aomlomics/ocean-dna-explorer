@@ -2,41 +2,47 @@ import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
-import { assay_type } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { getOptions } from "@/app/helpers/utils";
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
-import { ProjectScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { PrimerScalarFieldEnumSchema } from "@/prisma/generated/zod";
 
-export default async function Project() {
-	const projects = await prisma.project.findMany({
+export default async function Primer() {
+	const primers = await prisma.primer.findMany({
 		select: {
-			institution: true,
-			study_factor: true
+			pcr_primer_forward: true,
+			pcr_primer_name_forward: true,
+			pcr_primer_reverse: true,
+			pcr_primer_name_reverse: true
 		}
 	});
-	if (!projects) return <>Loading...</>;
+	if (!primers) return <>Loading...</>;
 
-	const filterOptions = getOptions(projects);
+	const filterOptions = getOptions(primers);
 
 	return (
 		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
-						field: "institution",
+						field: "pcr_primer_forward",
 						type: "select",
-						options: filterOptions.institution
+						options: filterOptions.pcr_primer_forward
 					},
 					{
-						field: "study_factor",
+						field: "pcr_primer_name_forward",
 						type: "select",
-						options: filterOptions.study_factor
+						options: filterOptions.pcr_primer_name_forward
 					},
 					{
-						field: "assay_type",
-						type: "enum",
-						enum: assay_type
+						field: "pcr_primer_reverse",
+						type: "select",
+						options: filterOptions.pcr_primer_reverse
+					},
+					{
+						field: "pcr_primer_name_reverse",
+						type: "select",
+						options: filterOptions.pcr_primer_name_reverse
 					}
 				]}
 			/>
@@ -48,10 +54,7 @@ export default async function Project() {
 						</nav>
 					</div>
 					<div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
-						<p className="mb-2">
-							Research initiatives collecting eDNA samples, with metadata on study design, objectives, and participating
-							institutions.
-						</p>
+						<p className="mb-2">TODO: Fill in information about primers</p>
 						<p className="text-sm">
 							For more detailed information, visit our{" "}
 							<Link href="/help" className="text-primary hover:underline">
@@ -64,18 +67,17 @@ export default async function Project() {
 
 				<div className="space-y-6">
 					<ExploreSearch
-						table="project"
-						fieldOptions={ProjectScalarFieldEnumSchema._def.values}
-						defaultField="project_id"
+						table="primer"
+						fieldOptions={PrimerScalarFieldEnumSchema._def.values}
+						defaultField="pcr_primer_forward"
 					/>
 
 					<div className="bg-base-100 rounded-lg border border-base-300">
 						<Pagination
-							id="project_id"
-							table="project"
-							title="project_name"
-							fields={["project_id", "study_factor", "institution", "project_contact"]}
-							relCounts={["Samples", "Analyses"]}
+							id={["pcr_primer_name_forward", "pcr_primer_name_reverse"]}
+							table="primer"
+							title={["pcr_primer_name_forward", "pcr_primer_name_reverse"]}
+							fields={["pcr_primer_forward", "pcr_primer_reverse"]}
 						/>
 					</div>
 				</div>

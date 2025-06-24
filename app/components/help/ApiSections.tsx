@@ -42,8 +42,8 @@ export async function getApiSections() {
 			content: (
 				<>
 					<p className="mb-4">
-						The ODE API provides programmatic access to marine eDNA data. This documentation will help you
-						understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
+						The ODE API provides programmatic access to marine eDNA data. This documentation will help you understand
+						how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 				</>
 			),
@@ -54,8 +54,8 @@ export async function getApiSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								ODE provides a RESTful API which enables you to access data in the database through HTTP
-								requests. The API has several{" "}
+								ODE provides a RESTful API which enables you to access data in the database through HTTP requests. The
+								API has several{" "}
 								<a href="#api-endpoints" className="text-primary">
 									endpoints
 								</a>{" "}
@@ -71,8 +71,8 @@ export async function getApiSections() {
 								visualizations.
 							</p>
 							<p className="mb-4">
-								The API is public and requires no authentication, login role, or API keys to use. GET requests are the only type
-								supported.
+								The API is public and requires no authentication, login role, or API keys to use. GET requests are the
+								only type supported.
 							</p>
 						</>
 					)
@@ -151,8 +151,9 @@ if (http_status(response)$category == "Success") {
 			content: (
 				<>
 					<p className="mb-4">
-						This is a simplified database diagram which shows the relationships between tables in the database. The fields available for each
-						table are listed in the Table Definitions section beneath the diagram. This will help you effectively{" "}
+						This is a simplified database diagram which shows the relationships between tables in the database. The
+						fields available for each table are listed in the Table Definitions section beneath the diagram. This will
+						help you effectively{" "}
 						<a href="#relations" className="text-primary">
 							query relations across tables
 						</a>{" "}
@@ -206,6 +207,35 @@ if (http_status(response)$category == "Success") {
 								in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
+						</>
+					)
+				},
+				{
+					id: "editHistoryType",
+					title: "Edit History",
+					content: (
+						<>
+							<div className="my-4">
+								Submissions may also be edited using the{" "}
+								<Link href="/mySubmissions" className="link link-primary link-hover">
+									My submissions
+								</Link>{" "}
+								page. The history of edits will be stored on the editHistory field of the submission. The editHistory is
+								stored as JSON. The structure of an edit is shown below.
+							</div>
+							<CodeBlock
+								language="json"
+								code={`{
+	"dateEdited": Date
+	"changes": [
+		{
+			"field": string,
+			"oldValue": string,
+			"newValue": string
+		}
+	]
+}`}
+							/>
 						</>
 					)
 				}
@@ -371,7 +401,8 @@ if (http_status(response)$category == "Success") {
 							<div className="mb-4">Endpoint: /api/[table]/fields/[fieldName]</div>
 
 							<p className="mb-4">
-								Returns all unique values for a specific field in a table. This is useful for discovering what values exist in a particular field that has lots of duplicate values.
+								Returns all unique values for a specific field in a table. This is useful for discovering what values
+								exist in a particular field that has lots of duplicate values.
 							</p>
 
 							<div className="mb-4 mt-4">
@@ -704,21 +735,16 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								Example URL:{" "}
-								<InlineCode
-									code={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`}
-								/>
+								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
 							</p>
 
 							<p className="mb-4">
-								This query returns all unique geographic location names from the sample table. This is particularly useful because locations are often repeated.
+								This query returns all unique geographic location names from the sample table. This is particularly
+								useful because locations are often repeated.
 							</p>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
 						</>
 					)
 				},
@@ -850,23 +876,34 @@ if (http_status(response)$category == "Success") {
 						<div>
 							<h4 className="font-medium mb-2">Q: I'm not familiar with APIs. How do I get started?</h4>
 							<p>
-								A: An API (Application Programming Interface) allows computers or programs to send data to one another. To use our API,
-								you'll need to make HTTP requests to our endpoints. The simplest way to start is by pasting one of our
-								{" "}<Link className="link link-primary font-semibold" href="#complete-examples">example URLs</Link> into your browser's address bar to see the raw JSON response. For more advanced usage, you
-								can use programming languages like Python or R.
+								A: An API (Application Programming Interface) allows computers or programs to send data to one another.
+								To use our API, you'll need to make HTTP requests to our endpoints. The simplest way to start is by
+								pasting one of our{" "}
+								<Link className="link link-primary font-semibold" href="#complete-examples">
+									example URLs
+								</Link>{" "}
+								into your browser's address bar to see the raw JSON response. For more advanced usage, you can use
+								programming languages like Python or R.
 							</p>
 						</div>
 
 						<div>
 							<h4 className="font-medium mb-2">Q: How do I report issues with the API?</h4>
-							<p>A: Please submit any API issues through our GitHub repository's {" "}<Link className="link link-primary font-semibold" href="https://github.com/aomlomics/node/issues">issue tracker</Link>.</p>
+							<p>
+								A: Please submit any API issues through our GitHub repository's{" "}
+								<Link className="link link-primary font-semibold" href="https://github.com/aomlomics/node/issues">
+									issue tracker
+								</Link>
+								.
+							</p>
 						</div>
 
 						<div>
 							<h4 className="font-medium mb-2">Q: How do I cite data obtained through the API?</h4>
 							<p>
-								A: Please cite the Ocean DNA Explorer and the specific projects from which you obtained data. Each project
-								has citation information available in fields like project_id, project_contact, institution, and institutionID.
+								A: Please cite the Ocean DNA Explorer and the specific projects from which you obtained data. Each
+								project has citation information available in fields like project_id, project_contact, institution, and
+								institutionID.
 							</p>
 						</div>
 					</div>

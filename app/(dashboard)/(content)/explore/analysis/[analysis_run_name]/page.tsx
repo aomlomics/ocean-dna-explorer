@@ -120,7 +120,11 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justAnalysis} omit={["project_id", "analysis_run_name", "assay_name"]} />
+						<DataDisplay
+							table="analysis"
+							data={justAnalysis}
+							omit={["project_id", "analysis_run_name", "assay_name"]}
+						/>
 					</div>
 				</div>
 			</div>
@@ -130,7 +134,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<div className="card-body p-0 overflow-hidden h-[400px]">
+						<div className="card-body p-0 overflow-hidden aspect-5/2">
 							<Map
 								locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
 								id="samp_name"
@@ -141,10 +145,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
-					<div
-						role="tabpanel"
-						className="tab-content bg-base-100 border-base-300 rounded-box p-6 h-[400px] w-full overflow-hidden"
-					>
+					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
 						<Table table="assignment" title="featureid" where={{ analysis_run_name }} />
 					</div>
 

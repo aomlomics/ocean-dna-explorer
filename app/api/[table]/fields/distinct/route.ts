@@ -1,7 +1,7 @@
 import { Prisma, PrismaPromise } from "@/app/generated/prisma/client";
 import { securePrisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
-import { TableToEnumSchema } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -29,7 +29,7 @@ export async function GET(
 			//filtered
 			for (let [field, value] of params) {
 				//check if field exists on table
-				const parsed = TableToEnumSchema[lowercaseTable].safeParse(field);
+				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
 				if (!parsed.success) {
 					return NextResponse.json(
 						{ statusMessage: "error", error: `Field '${field}' does not exist on table '${table}'.` },
@@ -42,7 +42,7 @@ export async function GET(
 			//extra fields
 			for (let field of extraFields) {
 				//check if field exists on table
-				const parsed = TableToEnumSchema[lowercaseTable].safeParse(field);
+				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
 				if (!parsed.success) {
 					return NextResponse.json(
 						{ statusMessage: "error", error: `Field '${field}' does not exist on table '${table}'.` },

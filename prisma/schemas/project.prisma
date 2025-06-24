@@ -15,21 +15,21 @@ model Project {
 
     // Data
     // Project
-    recordedBy           String
-    recordedByID         String?
-    project_contact      String
-    institution          String?
-    institutionID        String?
+    recordedBy           String //[]
+    recordedByID         String? //[]     @default([])
+    project_contact      String //[]
+    institution          String? //[]     @default([])
+    institutionID        String? //[]     @default([])
     project_name         String
     parent_project_id    String?
-    study_factor         String?
+    study_factor         String? //[]     @default([])
     assay_type           String
     neg_cont_0_1         DeadBoolean?
     pos_cont_0_1         DeadBoolean?
     expedition_id        String?
     ship_crs_expocode    String?
     woce_sect            String?
-    bioproject_accession String?
+    bioproject_accession String? //[]     @default([])
 
     // Data Management
     license               String?
@@ -89,8 +89,8 @@ model Sample {
     verbatimDateEnd                String?
     verbatimTimeEnd                String?
     env_broad_scale                String? // fixed
-    env_local_scale                String? // fixed
-    env_medium                     String? // fixed
+    env_local_scale                String? //[]     @default([]) // fixed
+    env_medium                     String? //[]     @default([]) // fixed
     habitat_natural_artificial_0_1 DeadBoolean?
     samp_collect_method            String?
     samp_collect_device            String?
@@ -153,8 +153,8 @@ model Sample {
     materialSampleID        String?
     sample_derived_from     String? // fixed
     sample_composed_of      String? // fixed
-    rel_cont_id             String?
-    biological_rep_relation String? // fixed
+    rel_cont_id             String? //[] @default([])
+    biological_rep_relation String? //[] @default([]) // fixed
 
     // Nucleic Acid Extraction
     /// @zod.custom.use(z.coerce.number())
@@ -342,12 +342,12 @@ model Assay {
     /// @zod.custom.use(z.coerce.number())
     amplificationReactionVolume Float?
     assay_validation            String?
-    targetTaxonomicAssay        String?
-    targetTaxonomicScope        String?
+    targetTaxonomicAssay        String //[]
+    targetTaxonomicScope        String? //[]    @default([])
     target_gene                 String
     target_subfragment          String?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize                Float?
+    /// @zod.number.array(.max(2))
+    ampliconSize                Float[]     @default([])
     /// @zod.custom.use(z.coerce.number())
     pcr_primer_vol_forward      Float?
     /// @zod.custom.use(z.coerce.number())
@@ -397,6 +397,7 @@ model Primer {
     pcr_primer_reference_reverse String?
 
     @@unique([pcr_primer_forward, pcr_primer_reverse])
+    @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
 }
 
 model Library {
@@ -456,13 +457,13 @@ model Library {
     pcr2_method_additional           String?
     pcr2_plate_id                    String?
     pcr2_thermocycler                String?
-    associatedSequences              String?
+    associatedSequences              String? //[] @default([])
 
     // PCR
     pcr_plate_id         String?
     block_ref            String?
     block_seq            String?
-    block_taxa           String?
+    block_taxa           String? //[]     @default([])
     inhibition_check     String?
     inhibition_check_0_1 DeadBoolean?
 }

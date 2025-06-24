@@ -1,6 +1,8 @@
 "use client";
 
 import roleApplicationAction from "@/app/actions/roleApplication";
+import { Role } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import { FormEvent, useRef, useState } from "react";
 
@@ -14,6 +16,7 @@ export default function Contribute() {
 
 	const { sessionClaims } = useAuth();
 	const roleApplication = sessionClaims?.metadata.roleApplication;
+	const role = sessionClaims?.metadata?.role as Role;
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -44,7 +47,9 @@ export default function Contribute() {
 						Are you looking to contribute your data to Ocean DNA Explorer's growing collection? Sign up to be a
 						Contributor now!
 					</p>
-					{roleApplication || result ? (
+					{role && RolePermissions[role].includes("contribute") ? (
+						<div>You already have contribute permissions, thank you for being a part of Ocean DNA Explorer!</div>
+					) : roleApplication || result ? (
 						<div>
 							Thanks for applying! We will get to your application as soon as possible and notify you when you have been
 							accepted.

@@ -142,7 +142,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 					<div className="bg-base-200 p-6 h-full">
 						<h2 className="text-lg font-medium text-base-content/70 mb-4">Project Information</h2>
 						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay data={justProject} omit={["project_id", "project_name"]} />
+							<DataDisplay table="project" data={justProject} omit={["project_id", "project_name"]} />
 						</div>
 					</div>
 				</div>
@@ -184,16 +184,13 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Map" defaultChecked />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<div className="card-body p-0 overflow-hidden h-[400px]">
+						<div className="card-body p-0 overflow-hidden aspect-5/2">
 							<Map locations={project.Samples} id="samp_name" table="sample" cluster />
 						</div>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Table" />
-					<div
-						role="tabpanel"
-						className="tab-content bg-base-100 border-base-300 rounded-box p-6 h-[400px] w-full overflow-hidden"
-					>
+					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
 						<Table table="sample" title="samp_name" where={{ project_id }}></Table>
 					</div>
 

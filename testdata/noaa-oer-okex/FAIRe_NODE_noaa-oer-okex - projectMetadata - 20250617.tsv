@@ -1,0 +1,96 @@
+requirement_level_code	section	term_name	project_level	Bacteria-16S-V4-EMP	Phytoplankton-18S-V4-Stoeck-Piredda	Fish-12S-MiFish-Miya	Metazoa-COI-Leray-Geller	Anthozoa-Scleractinia-28S-McCartin	Octocoral-mutS-Everett-Paragorgia
+M	Project	recordedBy	Steven Auscavitch | Luke Thompson						
+R	Project	recordedByID	https://orcid.org/0000-0001-5777-4814 | https://orcid.org/0000-0002-3911-1280						
+M	Project	project_contact	Okeanos Explorer eDNA Team						
+R	Project	institution	to be determined						
+R	Project	institutionID	to be determined						
+R	Project	project_name	eDNA sampled by the NOAA Ship Okeanos Explorer (tentative)						
+M	Project	project_id	noaa-oer-okex						
+O	Project	parent_project_id							
+O	Project	study_factor							
+M	Project	assay_type	metabarcoding						
+HR	Project	sterilise_method	Sampling bags were new, sterile WhirPaks. Single-use syringes and filters were used for filtration. Single-use gloves were used to collect and filter each sample. All tools sterilized with 10% bleach and 70% ethanol between handling filters.						
+HR	Project	neg_cont_0_1	1						
+HR	Project	pos_cont_0_1	0						
+M	Data management	checkls_ver	FAIRe_checklist_v1.0.xlsx						
+R	Data management	mod_date							
+R	Data management	license							
+R	Data management	rightsHolder							
+R	Data management	accessRights							
+O	Data management	informationWithheld							
+O	Data management	dataGeneralizations							
+R	Data management	bibliographicCitation							
+O	Data management	associated_resource							
+R	Data management	code_repo							
+R	Sample collection	biological_rep							
+M	PCR	pcr_0_1	1						
+O	PCR	inhibition_check_0_1	0						
+O	PCR	inhibition_check							
+O	PCR	thermocycler	Bio-Rad T100 Thermocycler						
+M	PCR	assay_name	Bacteria-16S-V4-EMP | Phytoplankton-18S-V4-Stoeck-Piredda | Fish-12S-MiFish-Miya | Metazoa-COI-Leray-Geller | Anthozoa-Scleractinia-28S-McCartin | Octocoral-mutS-Everett-Paragorgia	Bacteria-16S-V4-EMP	Phytoplankton-18S-V4-Stoeck-Piredda	Fish-12S-MiFish-Miya	Metazoa-COI-Leray-Geller	Anthozoa-Scleractinia-28S-McCartin	Octocoral-mutS-Everett-Paragorgia
+R	PCR	assay_validation							
+M	PCR	targetTaxonomicAssay		Prokaryota	Eukaryota	Actinopterygii	Metazoa	Cnidaria: Anthozoa | Scleractinia	Cnidaria: Octocorallia
+R	PCR	targetTaxonomicScope		Bacteria | Archaea | chloroplasts | mitochondria	Phytoplankton	Also captures non-target: Bacteria		Includes subclasses Hexacorallia (including order Scleractina) and Octocorallia	Modified to also target Paragorgia
+HR	PCR	target_gene		16S rRNA (SSU prokaryote)	18S rRNA (SSU eukaryote)	12S rRNA (SSU mitochondria)	COI	28S rRNA (LSU eukaryote)	28S rRNA (LSU eukaryote)
+O	PCR	target_subfragment		V4	V4	V5-V6			
+HR	PCR	ampliconSize		291	270	297	313	497	315
+M	PCR	pcr_primer_forward		GTGYCAGCMGCCGCGGTAA	CCAGCASCYGCGGTAATTCC	GTCGGTAAAACTCGTGCCAGC	GGWACWGGWTGAACWGTWTAYCCYCC	CGTGAAACCGYTRRAAGGG | AKGGAAACGAATGGRCTMAG	GCTTATCCAGATTGGTAAGTTCTATGAA
+M	PCR	pcr_primer_reverse		GGACTACNVGGGTWTCTAAT	ACTTTCGTTCTTGATYRATGA	CATAGTGGGGTATCTAATCCCAGTTTG	TANACYTCNGGRTGNCCRAARAAYCA	TTGGTCCGTGTTTCAAGACG | TCCTTGGTCCGTGTTTCAAG	ACAGTCCTCTAAATTACAACTAGGAGAATA | GCAGTCTTCTAAATTGCAACCGGGAGAATA
+R	PCR	pcr_primer_name_forward		16S-V4-515F-Y	18S-V4-TAReuk454FWD1	MiFish-U-F	COI-mlCOIintF	Anth-28S-eDNA-F | Scler-28S-eDNA-F	Octo-eDNA-Mut2F
+R	PCR	pcr_primer_name_reverse		16S-V4-806RB	18S-V4-TAReuk454REV3.Piredda	MiFish-U-R	COI-jgHCO2198	Anth-28S-eDNA-R | Scler-28S-eDNA-R	Octo-eDNA-Mut2R | Octo-eDNA-MutS-Paragorgia
+HR	PCR	pcr_primer_reference_forward		https://doi.org/10.1111/1462-2920.13023	https://doi.org/10.1111/j.1365-294X.2009.04480.x	https://doi.org/10.1098/rsos.150088	https://doi.org/10.1186/1742-9994-10-34	https://doi.org/10.7717/peerj.18607	https://doi.org/10.1016/j.dsr2.2017.09.008
+HR	PCR	pcr_primer_reference_reverse		https://doi.org/10.3354/ame01753	https://doi.org/10.1093/femsec/fiw200	https://doi.org/10.1098/rsos.150088	https://doi.org/10.1111/1755-0998.12138	https://doi.org/10.7717/peerj.18607	https://doi.org/10.1016/j.dsr2.2017.09.008
+R	PCR	pcr_primer_vol_forward							
+R	PCR	pcr_primer_vol_reverse							
+R	PCR	pcr_primer_conc_forward							
+R	PCR	pcr_primer_conc_reverse							
+HR	PCR	probeReporter							
+HR	PCR	probeQuencher							
+HR	PCR	probe_seq							
+HR	PCR	probe_ref							
+HR	PCR	probe_conc							
+HR	PCR	commercial_mm							
+HR	PCR	custom_mm							
+O	PCR	block_seq							
+O	PCR	block_ref							
+O	PCR	block_taxa							
+R	PCR	amplificationReactionVolume							
+HR	PCR	pcr_dna_vol							
+HR	PCR	pcr_rep							
+R	PCR	nucl_acid_amp							
+HR	PCR	pcr_cond							
+HR	PCR	annealingTemp							
+HR	PCR	pcr_cycles							
+O	PCR	pcr_analysis_software							
+O	PCR	pcr_method_additional							
+HR	Library preparation sequencing	barcoding_pcr_appr							
+O	Library preparation sequencing	pcr2_thermocycler							
+O	Library preparation sequencing	pcr2_amplificationReactionVolume							
+R	Library preparation sequencing	pcr2_commercial_mm							
+R	Library preparation sequencing	pcr2_custom_mm							
+R	Library preparation sequencing	pcr2_dna_vol							
+R	Library preparation sequencing	pcr2_cond							
+R	Library preparation sequencing	pcr2_annealingTemp							
+R	Library preparation sequencing	pcr2_cycles							
+O	Library preparation sequencing	pcr2_analysis_software							
+R	Library preparation sequencing	pcr2_plate_id							
+O	Library preparation sequencing	pcr2_method_additional							
+O	Library preparation sequencing	sequencing_location	Laboratories of Analytical Biology, National Museum of Natural History						
+HR	Library preparation sequencing	platform	ILLUMINA						
+HR	Library preparation sequencing	instrument	Illumina NextSeq						
+HR	Library preparation sequencing	seq_kit	NextSeq P1 600						
+R	Library preparation sequencing	lib_layout	paired end						
+R	Library preparation sequencing	adapter_forward							
+R	Library preparation sequencing	adapter_reverse							
+HR	Library preparation sequencing	lib_screen	Final library concentrations were quantified using QuBit or Quant-IT fluorometric assays. Library sizes were spot checked on an Agilent Tapestation High Sensitivity D1000 screentape.						
+R	Library preparation sequencing	checksum_method							
+O	Library preparation sequencing	seq_method_additional							
+O	User defined	expedition_id							
+O	User defined	ship_crs_expocode							
+O	User defined	woce_sect							
+O	User defined	bioproject_accession							
+O	User defined	assay_reference							
+R	Project	expedition_id							
+R	Project	ship_crs_expocode							
+R	Project	woce_sect							
+R	Project	bioproject_accession							
