@@ -81,12 +81,13 @@ export default function SubmissionUsersButton({
 		if (deletedUsers.length || newUsers.length) {
 			setSubmitError("");
 
-			const tempUsers = [...users.filter((u) => !deletedUsers.some((nu) => u.id === nu.id)), ...newUsers];
-			const newUserIds = tempUsers.map((u) => u.id);
-
-			const result = await action(target, newUserIds);
+			const result = await action(
+				target,
+				newUsers.map((u) => u.id),
+				deletedUsers.map((u) => u.id)
+			);
 			if (result.statusMessage === "success") {
-				setUsers(tempUsers);
+				setUsers([...users.filter((u) => !deletedUsers.some((nu) => u.id === nu.id)), ...newUsers]);
 				close();
 			} else if (result.statusMessage === "error") {
 				setSubmitError(result.error);
