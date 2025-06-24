@@ -2,7 +2,7 @@ import { NetworkPacket } from "@/types/globals";
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-export default async function GET(
+export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ userId: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
