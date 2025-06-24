@@ -6,7 +6,11 @@ import { AnalysisSchema, ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function analysisUpdateUserIdsAction(target: string, userIds: string[]): Promise<NetworkPacket> {
+export default async function analysisUpdateUserIdsAction(
+	target: string,
+	newUserIds: string[],
+	deletedUserIds: string[]
+): Promise<NetworkPacket> {
 	const { userId } = await auth();
 
 	if (!userId) {
@@ -40,10 +44,11 @@ export default async function analysisUpdateUserIdsAction(target: string, userId
 				return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
 			} else if (!analysis.userIds.includes(userId)) {
 				return "Unauthorized action.";
-			} else if (!userIds.includes(userId)) {
+			} else if (deletedUserIds.includes(userId)) {
 				return "Can't remove self from userIds";
 			}
 
+			const userIds = [...analysis.userIds.filter((id) => !deletedUserIds.includes(id)), ...newUserIds];
 			await tx.analysis.update({
 				where: {
 					analysis_run_name

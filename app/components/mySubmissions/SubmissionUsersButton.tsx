@@ -75,6 +75,7 @@ export default function SubmissionUsersButton({
 		setSearch("");
 		setNewUsers([]);
 		setDeletedUsers([]);
+		setSubmitError("");
 	}
 
 	async function handleSubmit() {

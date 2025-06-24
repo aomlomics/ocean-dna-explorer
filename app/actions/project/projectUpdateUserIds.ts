@@ -42,7 +42,7 @@ export default async function projectUpdateUserIdsAction(
 				return `No Project with project_id of '${project_id}' found.`;
 			} else if (!project.userIds.includes(userId)) {
 				return "Unauthorized action.";
-			} else if (!deletedUserIds.includes(userId)) {
+			} else if (deletedUserIds.includes(userId)) {
 				return "Can't remove self from userIds";
 			}
 
