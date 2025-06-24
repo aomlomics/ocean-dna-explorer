@@ -20,7 +20,9 @@ export default function SubmissionUsersButton({
 	const { userId } = useAuth();
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const [users, setUsers] = useState([] as User[]);
-	const [error, setError] = useState("");
+
+	const [loadingError, setLoadingError] = useState("");
+	const [submitError, setSubmitError] = useState("");
 
 	const [search, setSearch] = useState("");
 	const [searchedUsers, setSearchedUsers] = useState([] as User[]);
@@ -35,8 +37,11 @@ export default function SubmissionUsersButton({
 				if (json.statusMessage === "success") {
 					setUsers(json.result);
 				} else if (json.statusMessage === "error") {
-					setError(json.error);
+					setLoadingError(json.error);
 				}
+			} else {
+				setLoadingError(response.statusText);
+				setSearchedUsers([]);
 			}
 		}
 
@@ -52,10 +57,10 @@ export default function SubmissionUsersButton({
 					setSearchedUsers(json.result);
 				} else if (json.statusMessage === "error") {
 					setSearchedUsers([]);
-					setError(json.error);
+					setLoadingError(json.error);
 				}
 			} else {
-				setError(response.statusText);
+				setLoadingError(response.statusText);
 				setSearchedUsers([]);
 			}
 		} else {
@@ -74,6 +79,8 @@ export default function SubmissionUsersButton({
 
 	async function handleSubmit() {
 		if (deletedUsers.length || newUsers.length) {
+			setSubmitError("");
+
 			const tempUsers = [...users.filter((u) => !deletedUsers.some((nu) => u.id === nu.id)), ...newUsers];
 			const newUserIds = tempUsers.map((u) => u.id);
 
@@ -81,12 +88,14 @@ export default function SubmissionUsersButton({
 			if (result.statusMessage === "success") {
 				setUsers(tempUsers);
 				close();
+			} else if (result.statusMessage === "error") {
+				setSubmitError(result.error);
 			}
 		}
 	}
 
-	if (error) {
-		return <>{error}</>;
+	if (loadingError) {
+		return <>{loadingError}</>;
 	}
 
 	function UserDisplay({ user, disabled }: { user: User; disabled?: boolean }) {
@@ -209,6 +218,7 @@ export default function SubmissionUsersButton({
 						<button className="btn" disabled={!deletedUsers.length && !newUsers.length} onClick={handleSubmit}>
 							Update Users
 						</button>
+						{!!submitError && <div>Error: {submitError}</div>}
 					</div>
 				</div>
 				<form method="dialog" onSubmit={close} className="modal-backdrop">
