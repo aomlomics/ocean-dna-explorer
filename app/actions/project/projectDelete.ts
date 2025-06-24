@@ -11,7 +11,7 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -26,8 +26,23 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 	const project_id = parsed.data;
 
 	try {
-		await prisma.$transaction(
+		const error = await prisma.$transaction(
 			async (tx) => {
+				const project = await tx.project.findUnique({
+					where: {
+						project_id
+					},
+					select: {
+						userIds: true
+					}
+				});
+
+				if (!project) {
+					return `No Project with project_id of '${project_id}' found.`;
+				} else if (!project.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
+					return "Unauthorized action.";
+				}
+
 				//project delete
 				console.log("project delete");
 				await tx.project.delete({
@@ -58,6 +73,10 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 			},
 			{ timeout: 1.5 * 60 * 1000 }
 		);
+
+		if (error) {
+			return { statusMessage: "error", error };
+		}
 
 		return { statusMessage: "success" };
 	} catch (err: any) {

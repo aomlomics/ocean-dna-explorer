@@ -5,7 +5,7 @@ import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 import { AnalysisPartialSchema, AnalysisSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { ZodBooleanSchema } from "@/types/objects";
 import { z } from "zod";
 // import { revalidatePath } from "next/cache";
 
@@ -19,10 +19,9 @@ const formSchema = AnalysisPartialSchema.merge(
 export default async function analysisEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("analysis edit");
 
-	const { userId, sessionClaims } = await auth();
-	const role = sessionClaims?.metadata.role;
+	const { userId } = await auth();
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -63,7 +62,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 				});
 
 				if (!analysis) {
-					return `No analysis with analysis_run_name of '${analysis_run_name}' found.`;
+					return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
 				} else if (!analysis.userIds.includes(userId)) {
 					return "Unauthorized action.";
 				}

@@ -1,7 +1,7 @@
-import Carousel from "@/app/components/Carousel";
+import Carousel from "@/app/components/images/Carousel";
 import Link from "next/link";
 import DataSummary from "../components/DataSummary";
-import ThemeAwareLogo from "../components/ThemeAwareLogo";
+import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
 import { prisma } from "../helpers/prisma";
 import Map from "../components/map/Map";

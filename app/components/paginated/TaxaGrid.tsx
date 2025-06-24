@@ -3,13 +3,13 @@
 import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
-import PhyloPicClient from "../PhyloPicClient";
 import PaginationControls from "./PaginationControls";
 import { Prisma } from "@/app/generated/prisma/client";
 import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { useSearchParams } from "next/navigation";
 import { NetworkPacket } from "@/types/globals";
+import PhyloPicClient from "../images/PhyloPicClient";
 
 export default function TaxaGrid({
 	cols = 4,

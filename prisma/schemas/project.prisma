@@ -49,6 +49,7 @@ model Project {
     biological_rep Int?
 }
 
+//TODO: remove userIds from everything other than Project and Analysis
 model Sample {
     id          Int      @id @default(autoincrement())
     samp_name   String   @unique

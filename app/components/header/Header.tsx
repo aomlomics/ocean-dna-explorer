@@ -1,7 +1,7 @@
 import ThemeToggle from "./ThemeToggle";
 import Link from "next/link";
 import TabButton from "./TabButton";
-import NodeLogo from "@/app/components/NodeLogo";
+import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
 import { EXPLORE_ROUTES, RolePermissions } from "@/types/objects";

@@ -1,9 +1,9 @@
 import { prisma } from "@/app/helpers/prisma";
-import PhyloPic from "@/app/components/PhyloPic";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { TaxonomicRanks } from "@/types/objects";
 import { Taxonomy } from "@/prisma/generated/zod";
+import PhyloPic from "@/app/components/images/PhyloPic";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
