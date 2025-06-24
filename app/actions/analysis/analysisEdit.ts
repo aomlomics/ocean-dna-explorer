@@ -22,7 +22,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -63,8 +63,8 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 				});
 
 				if (!analysis) {
-					return `No analysis with analysis_run_name of '${analysis_run_name}' found.`;
-				} else if (!analysis.userIds.includes(userId)) {
+					return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
+				} else if (!analysis.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
 					return "Unauthorized action.";
 				}
 

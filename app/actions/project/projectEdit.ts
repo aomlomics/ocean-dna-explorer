@@ -21,10 +21,9 @@ const formSchema = ProjectPartialSchema.merge(
 export default async function projectEditAction(formData: FormData): Promise<NetworkPacket> {
 	console.log("project edit");
 
-	const { userId, sessionClaims } = await auth();
-	const role = sessionClaims?.metadata.role;
+	const { userId } = await auth();
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -68,7 +67,7 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 			});
 
 			if (!project) {
-				return `No project with project_id of '${project_id}' found.`;
+				return `No Project with project_id of '${project_id}' found.`;
 			} else if (!project.userIds.includes(userId)) {
 				return "Unauthorized action.";
 			}
