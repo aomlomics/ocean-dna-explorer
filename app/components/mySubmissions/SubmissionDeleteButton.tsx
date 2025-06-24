@@ -1,6 +1,6 @@
 "use client";
 
-import { Action } from "@/types/globals";
+import { TargetAction } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";
@@ -29,7 +29,7 @@ export default function SubmissionDeleteButton({
 }: {
 	field: string;
 	value: string;
-	action: Action;
+	action: TargetAction;
 	associatedAnalyses?: { analysis_run_name: string }[];
 	disabled?: boolean;
 }) {

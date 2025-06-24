@@ -11,7 +11,7 @@ import ProgressCircle from "./ProgressCircle";
 import { useRouter } from "next/navigation";
 import InfoButton from "../InfoButton";
 import { Project } from "@/app/generated/prisma/client";
-import { Action, NetworkPacket } from "@/types/globals";
+import { FormAction, NetworkPacket, TargetAction } from "@/types/globals";
 import Link from "next/link";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
@@ -148,7 +148,7 @@ export default function AnalysisSubmit() {
 		}
 	}
 
-	async function dbDelete(deleteAction: Action, analysis_run_name: string) {
+	async function dbDelete(deleteAction: TargetAction, analysis_run_name: string) {
 		try {
 			const response = await deleteAction(analysis_run_name);
 			if (response.statusMessage === "error") {
@@ -183,7 +183,7 @@ export default function AnalysisSubmit() {
 		analysis_run_name: string;
 		file: File;
 		fileSuffix?: string;
-		submitAction: Action;
+		submitAction: FormAction;
 		fieldsToSet?: Record<string, any>;
 		skipBlob?: boolean;
 	}): Promise<{ error?: string }> {
