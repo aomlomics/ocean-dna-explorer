@@ -115,7 +115,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 
 			await tx.analysis.create({
 				//@ts-ignore issue with Json database type
-				data: parsedAnalysis.data
+				data: { ...parsedAnalysis.data, userIds: project.userIds }
 			});
 		});
 

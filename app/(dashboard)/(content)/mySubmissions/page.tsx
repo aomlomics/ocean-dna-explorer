@@ -11,7 +11,6 @@ import projectEditAction from "@/app/actions/project/projectEdit";
 import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditButton";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
 import projectUpdateUserIdsAction from "@/app/actions/project/projectUpdateUserIds";
-import analysisUpdateUserIdsAction from "@/app/actions/analysis/analysisUpdateUserIds";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -50,10 +49,10 @@ export default async function MySubmissions() {
 			if (!acc[analysis.project_id]) {
 				acc[analysis.project_id] = [];
 			}
-			acc[analysis.project_id].push({ analysis_run_name: analysis.analysis_run_name });
+			acc[analysis.project_id].push(analysis);
 		}
 		return acc;
-	}, {} as Record<string, { analysis_run_name: string }[]>);
+	}, {} as Record<string, (typeof analyses)[0][]>);
 
 	return (
 		<div>
@@ -72,28 +71,36 @@ export default async function MySubmissions() {
 			</div>
 
 			{/* Content Section */}
-			<div className="grid lg:grid-cols-2 gap-8">
-				{/* Projects Section */}
-				<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
-					<div className="card-body">
-						<div className="w-full h-full flex flex-col relative">
-							<div>
-								<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>
-								{projects.length === 0 ? (
-									<>
-										<p className="text-base text-base-content mb-6">
-											No Projects found. Submit a new project to get started.
-										</p>
-										<div className="mt-auto">
-											<Link href="/submit/project" className="btn btn-primary">
-												Submit Project
-											</Link>
-										</div>
-									</>
-								) : (
-									<div className="flex flex-col gap-3 mt-2">
-										{projects.map((proj) => (
-											<div key={proj.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
+			{/* Projects Section */}
+			<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
+				<div className="card-body">
+					<div className="w-full h-full flex flex-col relative">
+						<>
+							<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>
+							{projects.length === 0 ? (
+								<>
+									<p className="text-base text-base-content mb-6">
+										No Projects found. Submit a new project to get started.
+									</p>
+									<div className="mt-auto">
+										<Link href="/submit/project" className="btn btn-primary">
+											Submit Project
+										</Link>
+									</div>
+									<div className="absolute bottom-5 right-0 w-3/4 h-60 translate-x-1/3 translate-y-1/3">
+										<Image
+											src="/images/Catcher_Vessel4.svg"
+											alt="Project Upload Illustration"
+											fill
+											className="object-contain"
+										/>
+									</div>
+								</>
+							) : (
+								<div className="flex flex-col gap-3 mt-2">
+									{projects.map((proj) => (
+										<div key={proj.id} className="flex flex-col gap-3">
+											<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
 												<Link
 													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 													className="text-primary hover:text-info-focus hover:underline transition-colors"
@@ -122,88 +129,44 @@ export default async function MySubmissions() {
 													/>
 												</div>
 											</div>
-										))}
-									</div>
-								)}
-							</div>
-						</div>
-						{projects.length === 0 && (
-							<div className="absolute bottom-5 right-0 w-3/4 h-60 translate-x-1/3 translate-y-1/3">
-								<Image
-									src="/images/Catcher_Vessel4.svg"
-									alt="Project Upload Illustration"
-									fill
-									className="object-contain"
-								/>
-							</div>
-						)}
-					</div>
-				</div>
 
-				{/* Analyses Section */}
-				<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
-					<div className="card-body">
-						<div className="w-full h-full flex flex-col relative">
-							<div>
-								<h2 className="text-2xl text-primary font-medium mb-4">Analyses:</h2>
-								{analyses.length === 0 ? (
-									<>
-										<p className="text-base text-base-content mb-6">
-											No Analyses found. Submit a new analysis to get started.
-										</p>
-										<div className="mt-auto">
-											<Link href="/submit/analysis" className="btn btn-primary">
-												Submit Analysis
-											</Link>
-										</div>
-									</>
-								) : (
-									<div className="flex flex-col gap-3 mt-2">
-										{analyses.map((a) => (
-											<div key={a.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
-												<Link
-													href={`/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`}
-													className="text-primary hover:text-info-focus hover:underline transition-colors"
-												>
-													{a.analysis_run_name}
-												</Link>
-												<div className="flex gap-3">
-													<SubmissionUsersButton
-														userIds={a.userIds}
-														action={analysisUpdateUserIdsAction}
-														target={a.analysis_run_name}
-													/>
-													<SubmissionEditButton
-														table="analysis"
-														titleField="analysis_run_name"
-														data={a}
-														action={analysisEditAction}
-														disabled={["project_id", "assay_name"]}
-														privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
-														omit={["userIds"]}
-													/>
-													<SubmissionDeleteButton
-														field="analysis_run_name"
-														value={a.analysis_run_name}
-														action={analysisDeleteAction}
-													/>
-												</div>
+											<div className="flex flex-col gap-3 ml-20">
+												<h2 className="text-lg text-primary font-medium">Analyses:</h2>
+												{analysesMap[proj.project_id].map((analysis) => (
+													<div
+														key={analysis.id}
+														className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+													>
+														<Link
+															href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+															className="text-primary hover:text-info-focus hover:underline transition-colors"
+														>
+															{analysis.analysis_run_name}
+														</Link>
+														<div className="flex gap-3">
+															<SubmissionEditButton
+																table="analysis"
+																titleField="analysis_run_name"
+																data={analysis}
+																action={analysisEditAction}
+																disabled={["project_id", "assay_name"]}
+																privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
+																omit={["userIds"]}
+															/>
+															<SubmissionDeleteButton
+																field="analysis_run_name"
+																value={analysis.analysis_run_name}
+																action={analysisDeleteAction}
+															/>
+														</div>
+													</div>
+												))}
 											</div>
-										))}
-									</div>
-								)}
-							</div>
-						</div>
-						{analyses.length === 0 && (
-							<div className="absolute bottom-6 right-6 w-1/2 h-40 translate-x-1/4 translate-y-1/4">
-								<Image
-									src="/images/analysis_outline_image.svg"
-									alt="Analysis Upload Illustration"
-									fill
-									className="object-contain"
-								/>
-							</div>
-						)}
+										</div>
+									))}
+								</div>
+							)}
+						</>
 					</div>
 				</div>
 			</div>

@@ -47,7 +47,17 @@ export default async function projectUpdateUserIdsAction(
 			}
 
 			const userIds = [...project.userIds.filter((id) => !deletedUserIds.includes(id)), ...newUserIds];
+
 			await tx.project.update({
+				where: {
+					project_id
+				},
+				data: {
+					userIds
+				}
+			});
+
+			await tx.analysis.updateMany({
 				where: {
 					project_id
 				},
