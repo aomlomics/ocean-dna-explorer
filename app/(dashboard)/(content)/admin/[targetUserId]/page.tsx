@@ -67,16 +67,6 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 				{user.banned && <div className="text-error/90 italic text-4xl">User is Banned</div>}
 
 				<div className="flex gap-5">
-					<WarningButton
-						value={user.id}
-						buttonText="Delete User"
-						warningText="This will permanently delete the user and all of their submissions."
-						action={deleteUserAction}
-						confirmText="delete"
-						redirectUrl="/admin"
-						disabled={uneditable}
-					/>
-
 					{user.banned ? (
 						<WarningButton
 							value={user.id}
@@ -96,6 +86,16 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 							disabled={uneditable}
 						/>
 					)}
+
+					<WarningButton
+						value={user.id}
+						buttonText="Delete User"
+						warningText="This will permanently delete the user and all of their submissions."
+						action={deleteUserAction}
+						confirmText="delete"
+						redirectUrl="/admin"
+						disabled={uneditable}
+					/>
 				</div>
 			</header>
 
@@ -131,6 +131,13 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 						</button>
 					</form>
 				</div>
+
+				{!!user.publicMetadata.roleApplication && (
+					<div>
+						{/* @ts-ignore */}
+						<span className="text-primary">Role Application:</span> {user.publicMetadata.roleApplication.role}
+					</div>
+				)}
 			</div>
 
 			<div className="grid grid-cols-2 gap-5">

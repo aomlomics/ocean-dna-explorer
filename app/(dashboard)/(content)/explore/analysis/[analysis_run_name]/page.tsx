@@ -120,7 +120,11 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justAnalysis} omit={["project_id", "analysis_run_name", "assay_name"]} />
+						<DataDisplay
+							table="analysis"
+							data={justAnalysis}
+							omit={["project_id", "analysis_run_name", "assay_name"]}
+						/>
 					</div>
 				</div>
 			</div>

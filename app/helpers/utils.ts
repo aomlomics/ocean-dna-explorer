@@ -29,8 +29,11 @@ export async function fetcher(url: string) {
 //	return "https://opalserver-qnwedardvq-uc.a.run.app";
 //}
 
-export function getZodType(field: any): { optional?: boolean; type?: string; values?: string[] } {
-	let shape = {} as { optional?: boolean; type?: string; values?: string[] };
+const dbNumbers = ["integer", "integer[]", "float", "float[]"];
+const dbLists = ["integer[]", "float[]", "string[]"];
+type DbType = "boolean" | "integer" | "integer[]" | "float" | "float[]" | "string" | "string[]" | "date" | "json";
+export function getZodType(field: any): { type: DbType; optional?: boolean; values?: string[] } {
+	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
@@ -51,6 +54,12 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 	} else if (field instanceof ZodArray) {
 		if (field._def.type instanceof ZodString) {
 			shape.type = "string[]";
+		} else if (field._def.type instanceof ZodNumber) {
+			if (field._def.type._def.checks.length && field._def.type._def.checks.some((e) => e.kind === "int")) {
+				shape.type = "integer[]";
+			} else {
+				shape.type = "float[]";
+			}
 		}
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
@@ -74,49 +83,77 @@ export function getZodType(field: any): { optional?: boolean; type?: string; val
 	}
 }
 
-//this function is barebones, basic, and probably dangerous in some way
-function checkZodType(field: any, type: any) {
-	//constantly call unwrap(), as the zod types (Optional, Nullable) are nested inside each other
-	//if the call fails, then we know it reached the actual type and didn't match
-	try {
-		if (field instanceof type) {
-			return true;
-		} else {
-			return checkZodType(field.unwrap(), type);
-		}
-	} catch {
-		return false;
-	}
-}
-
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
-	field: string,
+	value: string,
 	fieldName: string,
-	obj: Record<string, string | number | boolean | JsonValue | null>,
+	obj: Record<string, string | string[] | number | number[] | boolean | JsonValue | null>,
 	schema: ZodObject<any>,
 	fieldOptionsEnum: ZodEnum<any>
 ) {
 	//check if the field name is in the Schema
-	if (field && fieldOptionsEnum.options.includes(fieldName)) {
-		if (checkZodType(schema.shape[fieldName], ZodEnum)) {
-			//DeadBooleanEnum
-			if (field in DeadBooleanEnum) {
-				//replace field with DeadBoolean value
-				obj[fieldName] = DeadBooleanEnum[field.toLowerCase() as keyof typeof DeadBooleanEnum];
-			}
-		} else if (field in DeadValueEnum) {
-			//check the type of the field
-			if (checkZodType(schema.shape[fieldName], ZodNumber)) {
-				//replace the value with the DeadValue equivalent
-				obj[fieldName] = DeadValueEnum[field as unknown as DeadValueEnum];
+	if (value && fieldOptionsEnum.options.includes(fieldName)) {
+		const type = getZodType(schema.shape[fieldName]).type;
+		if (!type) {
+			throw new Error(`Could not find type of '${fieldName}'. Make sure a field named '${fieldName}' exists.`);
+		}
+
+		//check if field is a list
+		if (dbLists.includes(type)) {
+			if (type === "string[]") {
+				//strings
+				obj[fieldName] = value.split("|").map((val) => val.trim());
+			} else if (dbNumbers.includes(type)) {
+				//numbers
+				//only ranges are supported
+				if (type === "float[]") {
+					obj[fieldName] = value.split("-").map((val) => {
+						const trimmed = val.trim();
+						if (trimmed in DeadValueEnum) {
+							return DeadValueEnum[trimmed as unknown as DeadValueEnum];
+						} else {
+							return parseFloat(trimmed);
+						}
+					});
+				} else if (type === "integer[]") {
+					obj[fieldName] = value.split("-").map((val) => {
+						const trimmed = val.trim();
+						if (trimmed in DeadValueEnum) {
+							return DeadValueEnum[trimmed as unknown as DeadValueEnum];
+						} else {
+							return parseInt(trimmed);
+						}
+					});
+				}
 			} else {
-				//continue as normal
-				obj[fieldName] = field;
+				throw new Error(`Unsupported list type for ${fieldName}.`);
 			}
 		} else {
-			//continue as normal
-			obj[fieldName] = field;
+			if (type === "boolean") {
+				//booleans
+				if (value.toLowerCase() in DeadBooleanEnum) {
+					//replace field with DeadBoolean value
+					obj[fieldName] = DeadBooleanEnum[value.toLowerCase() as keyof typeof DeadBooleanEnum];
+				} else {
+					//continue as normal
+					obj[fieldName] = value;
+				}
+			} else if (dbNumbers.includes(type)) {
+				//numbers
+				if (value in DeadValueEnum) {
+					//replace the value with the DeadValue equivalent
+					obj[fieldName] = DeadValueEnum[value as unknown as DeadValueEnum];
+				} else {
+					if (type === "float") {
+						obj[fieldName] = parseFloat(value);
+					} else if (type === "integer") {
+						obj[fieldName] = parseInt(value);
+					}
+				}
+			} else {
+				//continue as normal
+				obj[fieldName] = value;
+			}
 		}
 	}
 }
@@ -411,10 +448,14 @@ export function parseApiQuery(
 						for (const val of arr) {
 							query.where!.OR.push({ [key]: parseInt(val) });
 						}
+					} else if (type === "integer[]") {
+						//TODO: add support for ranges
 					} else if (type === "float") {
 						for (const val of arr) {
 							query.where!.OR.push({ [key]: parseFloat(val) });
 						}
+					} else if (type === "float[]") {
+						//TODO: add support for ranges
 					} else {
 						for (const val of arr) {
 							query.where!.OR.push({ [key]: val });

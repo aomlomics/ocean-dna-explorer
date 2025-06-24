@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 import { AnalysisPartialSchema, AnalysisSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -192,9 +192,12 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 
 		// revalidatePath("/explore");
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
-		console.error(error.message);
 		return { statusMessage: "error", error: error.message };
 	}
 }

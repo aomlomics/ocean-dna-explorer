@@ -80,7 +80,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				<div className="bg-base-200 p-6 h-full">
 					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
 					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay data={justAssay} omit={["assay_name"]} />
+						<DataDisplay table="assay" data={justAssay} omit={["assay_name"]} />
 					</div>
 				</div>
 			</div>

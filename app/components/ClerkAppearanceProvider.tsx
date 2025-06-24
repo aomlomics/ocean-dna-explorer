@@ -69,7 +69,6 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
 				},
 				dividerText: "or"
 			}}
-			signInFallbackRedirectUrl="/dashboard"
 		>
 			{children}
 		</ClerkProvider>

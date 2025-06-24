@@ -15,7 +15,8 @@ export async function getUserListAction(query: string): Promise<NetworkPacket> {
 			publicMetadata: u.publicMetadata,
 			firstName: u.firstName,
 			lastName: u.lastName,
-			primaryEmailAddress: u.emailAddresses.find((email: any) => email.id === u.primaryEmailAddressId)?.emailAddress
+			primaryEmailAddress: u.emailAddresses.find((email: any) => email.id === u.primaryEmailAddressId)?.emailAddress,
+			banned: u.banned
 		}))
 	};
 }

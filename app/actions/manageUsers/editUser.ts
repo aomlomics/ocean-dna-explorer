@@ -8,7 +8,7 @@ import { z } from "zod";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
 
-async function editRole(
+async function editUser(
 	targetUserId: string,
 	options: { action: "editRole"; newRole: Role | null } | { action: "delete" | "ban" | "unban" },
 	preAction?: () => Promise<void>
@@ -41,7 +41,10 @@ async function editRole(
 
 	if (options.action === "editRole") {
 		await client.users.updateUserMetadata(targetUserId, {
-			publicMetadata: { role: options.newRole }
+			publicMetadata: {
+				role: options.newRole,
+				roleApplication: null
+			}
 		});
 	} else if (options.action === "delete") {
 		await client.users.deleteUser(targetUserId);
@@ -70,7 +73,7 @@ export async function setRoleAction(formData: FormData) {
 		throw new Error("Invalid form data for setting role.");
 	}
 
-	await editRole(parsed.data.targetUserId, { action: "editRole", newRole: parsed.data.role as Role });
+	await editUser(parsed.data.targetUserId, { action: "editRole", newRole: parsed.data.role as Role });
 }
 
 //remove role
@@ -81,7 +84,7 @@ export async function removeRoleAction(formData: FormData) {
 		throw new Error("Target userId to remove role from not provided.");
 	}
 
-	await editRole(parsed.data.targetUserId, { action: "editRole", newRole: null });
+	await editUser(parsed.data.targetUserId, { action: "editRole", newRole: null });
 }
 
 //delete user
@@ -92,7 +95,7 @@ export async function deleteUserAction(formData: FormData) {
 		throw new Error("Target userId to delete not provided.");
 	}
 
-	await editRole(parsed.data.targetUserId, { action: "delete" }, async () => {
+	await editUser(parsed.data.targetUserId, { action: "delete" }, async () => {
 		//remove all data associated with user
 		await prisma.$transaction(
 			async (tx) => {
@@ -173,7 +176,7 @@ export async function banUserAction(formData: FormData) {
 		throw new Error("Target userId to ban not provided.");
 	}
 
-	await editRole(parsed.data.targetUserId, { action: "ban" });
+	await editUser(parsed.data.targetUserId, { action: "ban" });
 }
 
 //unban user
@@ -184,5 +187,5 @@ export async function unbanUserAction(formData: FormData) {
 		throw new Error("Target userId to unban not provided.");
 	}
 
-	await editRole(parsed.data.targetUserId, { action: "unban" });
+	await editUser(parsed.data.targetUserId, { action: "unban" });
 }
