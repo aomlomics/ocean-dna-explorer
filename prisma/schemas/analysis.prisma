@@ -42,8 +42,8 @@ model Analysis {
     min_reads_cutoff                     Float?
     min_reads_cutoff_unit                String?
     min_reads_tool                       String?
-    otu_db                               String?
-    otu_db_custom                        String?
+    otu_db                               String? //[]     @default([])
+    otu_db_custom                        String? //[]     @default([])
     tax_assign_cat                       String?
     otu_seq_comp_appr                    String?
     /// @zod.custom.use(z.coerce.number())
@@ -116,6 +116,12 @@ model Analysis {
     tourmaline_classify_method           String?
     /// @zod.custom.use(z.coerce.number())
     blca_confidence                      Float?
+
+    // OTU/ASV
+    /// @zod.number.array(.max(2))
+    percent_match       Float[] @default([])
+    /// @zod.number.array(.max(2))
+    percent_query_cover Float[] @default([])
 }
 
 model Occurrence {

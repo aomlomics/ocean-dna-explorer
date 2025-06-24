@@ -9,17 +9,29 @@ export default function SchemaDisplay() {
 		const tableName = t.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
 		const fields = TableMetadata[tableName].enumSchema._def.values;
-		const result = {} as Record<string, ReturnType<typeof getZodType>>;
+		const result = {} as Record<
+			string,
+			{
+				type: string;
+				optional?: boolean;
+				values?: string[];
+			}
+		>;
 		const shape = TableMetadata[tableName].schema.shape;
 		for (const f of fields) {
-			if (f !== "userDefined") {
-				const type = getZodType(shape[f as keyof typeof shape]);
-				if (!type.type) {
-					throw new Error(`Could not find type of ${f}.`);
+			const type = getZodType(shape[f as keyof typeof shape]);
+			if (!type.type) {
+				throw new Error(`Could not find type of ${f}.`);
+			}
+			if (type.type === "json") {
+				if (f === "userDefined") {
+					result[f] = type;
+				} else if (f === "editHistory") {
+					result[f] = { ...type, type: "Edit[]" };
 				}
+			} else {
 				result[f] = type;
 			}
-			//TODO: display user defined fields currently in the database
 		}
 
 		stripSecureFields(result);
@@ -52,7 +64,7 @@ export default function SchemaDisplay() {
 									<tr key={relObj.field}>
 										<td>{relObj.field}</td>
 										<td>
-											<Link className="link link-primary" href={`#${relObj.table.toLowerCase()}`}>
+											<Link className="link link-primary link-hover" href={`#${relObj.table.toLowerCase()}`}>
 												{relObj.table}
 											</Link>
 										</td>
@@ -77,7 +89,15 @@ export default function SchemaDisplay() {
 								{Object.entries(fields).map(([f, info]) => (
 									<tr key={f}>
 										<td>{f}</td>
-										<td>{info.type}</td>
+										{info.type === "Edit[]" ? (
+											<td>
+												<Link href="#editHistoryType" className="link link-primary link-hover">
+													editHistory
+												</Link>
+											</td>
+										) : (
+											<td>{info.type}</td>
+										)}
 										<td>{info.optional?.toString()}</td>
 										{/* TODO: display all enums separately somewhere */}
 										<td>{info.values?.join(" | ")}</td>

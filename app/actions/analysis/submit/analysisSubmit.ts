@@ -1,6 +1,7 @@
 "use server";
 
-import { prisma } from "@/app/helpers/prisma";
+import { Prisma } from "@/app/generated/prisma/client";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -96,11 +97,16 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 					project_id: analysisCol.project_id
 				},
 				select: {
-					isPrivate: true
+					isPrivate: true,
+					userIds: true
 				}
 			});
 			if (!project) {
 				throw new Error(`Project with project_id of ${analysisCol.project_id} does not exist.`);
+			} else if (!project.userIds.includes(userId)) {
+				throw new Error(
+					`Permission denied for adding analysis to Project with project_id of ${analysisCol.project_id}. Please contact submission owner with a request to be added to the Project.`
+				);
 			} else if (project.isPrivate && !parsed.data.isPrivate) {
 				throw new Error(
 					`Project with project_id of ${analysisCol.project_id} is private. Analyses can't be public if the associated project is private.`
@@ -114,7 +120,11 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		});
 
 		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			return handlePrismaError(err);
+		}
+
 		const error = err as Error;
 		return { statusMessage: "error", error: error.message };
 	}

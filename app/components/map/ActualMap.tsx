@@ -10,7 +10,6 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
 import { EXPLORE_ROUTES } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
-import Control from "react-leaflet-custom-control";
 
 export default function ActualMap({
 	locations,
@@ -49,24 +48,29 @@ export default function ActualMap({
 	}
 
 	function LegendControl() {
-		if (!legend || !titleTable) {
+		if (points.length === 0 || !legend || !titleTable) {
 			return null;
 		}
 
 		return (
-			<Control prepend position="bottomright">
-				<div className="!border-none bg-base-100 card-xs shadow-sm px-3 py-2 rounded-sm">
-					<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
-					{Object.entries(legend).map(([key, color]) => (
-						<div key={key} className="flex gap-2 items-center">
-							<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
-							<Link href={`/explore/${titleTable}/${encodeURIComponent(key)}`} className="link link-primary link-hover">
-								{key}
-							</Link>
-						</div>
-					))}
+			<div className="leaflet-bottom leaflet-right">
+				<div className="leaflet-control leaflet-bar !border-none !mb-6">
+					<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
+						<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
+						{Object.entries(legend).map(([key, color]) => (
+							<div key={key} className="flex gap-2 items-center">
+								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
+								<Link
+									href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
+									className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
+								>
+									{key}
+								</Link>
+							</div>
+						))}
+					</div>
 				</div>
-			</Control>
+			</div>
 		);
 	}
 
@@ -124,10 +128,12 @@ export default function ActualMap({
 			avgLng.count++;
 		}
 	}
-	const centerStart = {
-		lat: avgLat.sum / avgLat.count,
-		lng: avgLng.sum / avgLng.count
-	};
+	const centerStart = points.length
+		? {
+				lat: avgLat.sum / avgLat.count,
+				lng: avgLng.sum / avgLng.count
+		  }
+		: { lat: 0, lng: 0 };
 
 	return (
 		<div className="flex flex-col items-start h-full w-full">

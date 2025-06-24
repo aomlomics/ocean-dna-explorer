@@ -313,7 +313,9 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Ne
 	if (err.code === "P2002") {
 		return {
 			statusMessage: "error",
-			error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[])[0]} already exists in database.`
+			error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
+				", "
+			)} already exists in database.`
 		};
 	} else {
 		return {

@@ -142,7 +142,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 					<div className="bg-base-200 p-6 h-full">
 						<h2 className="text-lg font-medium text-base-content/70 mb-4">Project Information</h2>
 						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay data={justProject} omit={["project_id", "project_name"]} />
+							<DataDisplay table="project" data={justProject} omit={["project_id", "project_name"]} />
 						</div>
 					</div>
 				</div>

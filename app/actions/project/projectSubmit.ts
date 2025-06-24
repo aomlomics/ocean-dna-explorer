@@ -446,7 +446,6 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				});
 
 				//primers
-				//features
 				console.log("primers");
 				for (let p of primers) {
 					const primer = await tx.primer.upsert({
