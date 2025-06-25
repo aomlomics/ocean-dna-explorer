@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useReducer, useRef, useState } from "react";
 import ProgressCircle from "./ProgressCircle";
 import InfoButton from "../InfoButton";
+import UserAdder from "../mySubmissions/UserAdder";
+import { useAuth } from "@clerk/nextjs";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
 	if (updates.reset) {
@@ -15,6 +17,8 @@ function reducer(state: Record<string, string>, updates: Record<string, string>)
 }
 
 export default function ProjectSubmit() {
+	const { userId } = useAuth();
+	const [userIds, setUserIds] = useState([userId || ""]);
 	const router = useRouter();
 	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
 	const [errorObj, setErrorObj] = useReducer(reducer, {} as Record<string, string>);
@@ -54,6 +58,8 @@ export default function ProjectSubmit() {
 
 		const formData = new FormData(event.currentTarget);
 		const files = ["project", "sample", "library"];
+
+		formData.set("userIds", userIds.join(","));
 
 		try {
 			// Process each file sequentially just for progress display (fake loading)
@@ -117,6 +123,8 @@ export default function ProjectSubmit() {
 		<div className="p-6 bg-base-100 rounded-lg shadow-sm -mt-6">
 			<div className="min-h-[400px] mx-auto">
 				<form className="flex-1 space-y-8 flex flex-col items-center" onSubmit={handleSubmit}>
+					<UserAdder userIds={userIds} setUserIds={setUserIds} />
+
 					<fieldset className="fieldset p-4 bg-base-100 w-[400px]">
 						<label className="fieldset-label flex gap-2">
 							<input name="isPrivate" type="checkbox" className="checkbox" />

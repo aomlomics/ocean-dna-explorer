@@ -18,41 +18,20 @@ export default async function MySubmissions() {
 		return <div>Unauthorized</div>;
 	}
 
-	const [projects, analyses] = await prisma.$transaction([
-		prisma.project.findMany({
-			where: {
-				userIds: {
-					has: userId
-				}
-			},
-			omit: {
-				editHistory: true,
-				dateSubmitted: true
+	const projects = await prisma.project.findMany({
+		where: {
+			userIds: {
+				has: userId
 			}
-		}),
-		prisma.analysis.findMany({
-			where: {
-				userIds: {
-					has: userId
-				}
-			},
-			omit: {
-				editHistory: true,
-				dateSubmitted: true
-			}
-		})
-	]);
-
-	// Create a map of project_id to associated analyses, for deletion warning
-	const analysesMap = analyses.reduce((acc, analysis) => {
-		if (analysis.project_id) {
-			if (!acc[analysis.project_id]) {
-				acc[analysis.project_id] = [];
-			}
-			acc[analysis.project_id].push(analysis);
+		},
+		omit: {
+			editHistory: true,
+			dateSubmitted: true
+		},
+		include: {
+			Analyses: true
 		}
-		return acc;
-	}, {} as Record<string, (typeof analyses)[0][]>);
+	});
 
 	return (
 		<div>
@@ -60,7 +39,7 @@ export default async function MySubmissions() {
 			<div className="mb-10 mt-8">
 				<div className="flex items-center gap-4 mb-4">
 					<div className="scale-150 pointer-events-none">
-						<UserButton afterSignOutUrl="/" showName={false} />
+						<UserButton showName={false} />
 					</div>
 					<h1 className="text-3xl font-medium text-primary">Submissions Manager</h1>
 				</div>
@@ -119,48 +98,52 @@ export default async function MySubmissions() {
 														data={proj}
 														action={projectEditAction}
 														privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
-														omit={["userIds"]}
+														omit={["userIds", "Analyses"]}
 													/>
 													<SubmissionDeleteButton
 														field="project_id"
 														value={proj.project_id}
 														action={projectDeleteAction}
-														associatedAnalyses={analysesMap[proj.project_id] || []}
+														associatedAnalyses={proj.Analyses}
 													/>
 												</div>
 											</div>
 
 											<div className="flex flex-col gap-3 ml-20">
-												<h2 className="text-lg text-primary font-medium">Analyses:</h2>
-												{analysesMap[proj.project_id].map((analysis) => (
-													<div
-														key={analysis.id}
-														className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
-													>
-														<Link
-															href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
-															className="text-primary hover:text-info-focus hover:underline transition-colors"
-														>
-															{analysis.analysis_run_name}
-														</Link>
-														<div className="flex gap-3">
-															<SubmissionEditButton
-																table="analysis"
-																titleField="analysis_run_name"
-																data={analysis}
-																action={analysisEditAction}
-																disabled={["project_id", "assay_name"]}
-																privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
-																omit={["userIds"]}
-															/>
-															<SubmissionDeleteButton
-																field="analysis_run_name"
-																value={analysis.analysis_run_name}
-																action={analysisDeleteAction}
-															/>
-														</div>
-													</div>
-												))}
+												{!!proj.Analyses.length && (
+													<>
+														<h2 className="text-lg text-primary font-medium">Analyses:</h2>
+														{proj.Analyses.map((analysis) => (
+															<div
+																key={analysis.id}
+																className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+															>
+																<Link
+																	href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+																	className="text-primary hover:text-info-focus hover:underline transition-colors"
+																>
+																	{analysis.analysis_run_name}
+																</Link>
+																<div className="flex gap-3">
+																	<SubmissionEditButton
+																		table="analysis"
+																		titleField="analysis_run_name"
+																		data={analysis}
+																		action={analysisEditAction}
+																		disabled={["project_id", "assay_name"]}
+																		privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
+																		omit={["userIds", "editHistory", "dateSubmitted"]}
+																	/>
+																	<SubmissionDeleteButton
+																		field="analysis_run_name"
+																		value={analysis.analysis_run_name}
+																		action={analysisDeleteAction}
+																	/>
+																</div>
+															</div>
+														))}
+													</>
+												)}
 											</div>
 										</div>
 									))}
