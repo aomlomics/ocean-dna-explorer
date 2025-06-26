@@ -27,6 +27,7 @@ import { RolePermissions, ZodFileSchema, ZodBooleanSchema } from "@/types/object
 import { z } from "zod";
 
 const formSchema = z.object({
+	userIds: z.string().transform((val) => val.split(",")),
 	isPrivate: ZodBooleanSchema.optional(),
 	project: ZodFileSchema,
 	library: ZodFileSchema,
@@ -55,6 +56,10 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
 				: "Invalid data structure."
 		};
+	}
+
+	if (!parsed.data.userIds.includes(userId)) {
+		return { statusMessage: "error", error: "Must include self as a user." };
 	}
 
 	let project = {} as Prisma.ProjectCreateInput;
@@ -160,7 +165,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 			const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
 				{
 					...projectCol,
-					userIds: [userId],
+					userIds: parsed.data.userIds,
 					isPrivate,
 					userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
 					editHistory: "JsonNull"
@@ -193,7 +198,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 						//most specific overrides least specific
 						...projectCol,
 						...p,
-						userIds: [userId],
+						userIds: parsed.data.userIds,
 						isPrivate
 					},
 					{
@@ -289,7 +294,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 										...projectCol,
 										...assayCols[assayRow.assay_name],
 										...assayRow,
-										userIds: [userId],
+										userIds: parsed.data.userIds,
 										isPrivate
 									},
 									{
@@ -322,7 +327,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 									...projectCol,
 									...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
 									...libraryRow,
-									userIds: [userId],
+									userIds: parsed.data.userIds,
 									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
 									isPrivate
 								},
@@ -404,7 +409,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 									...sampleRow,
 									project_id: projectCol.project_id,
 									assay_name: sampToAssay[sampleRow.samp_name],
-									userIds: [userId],
+									userIds: parsed.data.userIds,
 									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
 									isPrivate
 								},
