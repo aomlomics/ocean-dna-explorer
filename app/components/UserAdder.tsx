@@ -2,9 +2,9 @@
 
 import { ClerkUserObject, NetworkPacket, TargetAction } from "@/types/globals";
 import { useAuth } from "@clerk/nextjs";
-import { Dispatch, ReactNode, SetStateAction, useEffect, useState } from "react";
-import UserDisplay from "./UserDisplay";
+import { Dispatch, MouseEventHandler, ReactNode, SetStateAction, useEffect, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import Image from "next/image";
 
 export default function UserAdder({
 	submittable,
@@ -13,7 +13,8 @@ export default function UserAdder({
 	submitAction,
 	target,
 	reset,
-	afterSubmit
+	afterSubmit,
+	cols = 2
 }:
 	| {
 			submittable?: false;
@@ -23,6 +24,7 @@ export default function UserAdder({
 			target?: undefined;
 			reset?: boolean;
 			afterSubmit?: () => void;
+			cols?: number;
 	  }
 	| {
 			submittable: true;
@@ -32,6 +34,7 @@ export default function UserAdder({
 			target: string;
 			reset?: boolean;
 			afterSubmit?: () => void;
+			cols?: number;
 	  }) {
 	const { userId } = useAuth();
 
@@ -141,7 +144,7 @@ export default function UserAdder({
 		<div className="w-full">
 			<div>
 				<div>Current Users:</div>
-				<div className="grid grid-cols-2 gap-2">
+				<div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
 					{users.map((u) => (
 						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-primary rounded-lg">
 							<UserDisplay
@@ -215,5 +218,45 @@ export default function UserAdder({
 				{!!submitError && <div>Error: {submitError}</div>}
 			</div>
 		</div>
+	);
+}
+
+function UserDisplay({
+	user,
+	disabled,
+	deletable,
+	onDelete,
+	onAdd
+}: {
+	user: ClerkUserObject;
+	disabled?: boolean;
+	deletable?: boolean;
+	onDelete?: MouseEventHandler<HTMLButtonElement>;
+	onAdd?: MouseEventHandler<HTMLButtonElement>;
+}) {
+	return (
+		<>
+			<div className={`relative h-[20px] aspect-square ${disabled ? "opacity-25" : ""}`}>
+				<Image
+					src={user.imageUrl}
+					alt={`${user.firstName} ${user.lastName} Profile Picture`}
+					fill
+					className="object-contain rounded-full"
+				/>
+			</div>
+			<span className={`grow ${disabled ? "opacity-25" : ""}`}>
+				{user.firstName} {user.lastName}
+			</span>
+			{deletable &&
+				(disabled ? (
+					<button className="btn btn-xs h-[20px] w-[20px] btn-circle btn-ghost text-success" onClick={onAdd}>
+						✓
+					</button>
+				) : (
+					<button className="btn btn-xs h-[20px] w-[20px] btn-circle btn-ghost text-red-400" onClick={onDelete}>
+						✕
+					</button>
+				))}
+		</>
 	);
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useReducer, useRef, useState } from "react";
 import ProgressCircle from "./ProgressCircle";
 import InfoButton from "../InfoButton";
-import UserAdder from "../mySubmissions/UserAdder";
+import UserAdder from "../UserAdder";
 import { useAuth } from "@clerk/nextjs";
 
 function reducer(state: Record<string, string>, updates: Record<string, string>) {
@@ -122,96 +122,101 @@ export default function ProjectSubmit() {
 	return (
 		<div className="p-6 bg-base-100 rounded-lg shadow-sm -mt-6">
 			<div className="min-h-[400px] mx-auto">
-				<form className="flex-1 space-y-8 flex flex-col items-center" onSubmit={handleSubmit}>
-					<UserAdder userIds={userIds} setUserIds={setUserIds} />
+				<form className="flex flex-col items-center" onSubmit={handleSubmit}>
+					<div className="w-[400px]">
+						<div className="text-primary text-lg">Add users to submission</div>
+						<UserAdder userIds={userIds} setUserIds={setUserIds} cols={1} />
+					</div>
 
 					<fieldset className="fieldset p-4 bg-base-100 w-[400px]">
 						<label className="fieldset-label flex gap-2">
 							<input name="isPrivate" type="checkbox" className="checkbox" />
 							<p>Private submission</p>
-							<InfoButton infoText="" />
+							<InfoButton infoText="Only users added to this Project will be able to see private submissions" />
 						</label>
 					</fieldset>
 
-					<div className="w-[400px] !mt-0">
-						<label className="form-control w-[400px]">
-							<div className="label">
-								<span className="label-text text-base-content">Project Metadata File:</span>
-							</div>
-							<div className="flex items-center gap-3">
-								<input
-									type="file"
-									name="project"
-									required
-									disabled={!!loading || submitted}
-									accept=".tsv"
-									onChange={handleFileChange}
-									className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-								/>
-								<ProgressCircle
-									hasFile={!!fileStates["project"]}
-									response={responseObj["project"]}
-									error={errorObj["project"]}
-									loading={loading === "project"}
-								/>
-							</div>
-						</label>
-					</div>
-					<div className="w-[400px]">
-						<label className="form-control w-full">
-							<div className="label">
-								<span className="label-text text-base-content">Sample Metadata File:</span>
-							</div>
-							<div className="flex items-center gap-3">
-								<input
-									type="file"
-									name="sample"
-									required
-									disabled={!!loading || submitted}
-									accept=".tsv"
-									onChange={handleFileChange}
-									className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-								/>
-								<ProgressCircle
-									hasFile={!!fileStates["sample"]}
-									response={responseObj["sample"]}
-									error={errorObj["sample"]}
-									loading={loading === "sample"}
-								/>
-							</div>
-						</label>
-					</div>
-					<div className="w-[400px]">
-						<label className="form-control w-full">
-							<div className="label">
-								<span className="label-text text-base-content">Library (Experiment Run) Metadata File:</span>
-							</div>
-							<div className="flex items-center gap-3">
-								<input
-									type="file"
-									name="library"
-									required
-									disabled={!!loading || submitted}
-									accept=".tsv"
-									onChange={handleFileChange}
-									className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-								/>
-								<ProgressCircle
-									hasFile={!!fileStates["library"]}
-									response={responseObj["library"]}
-									error={errorObj["library"]}
-									loading={loading === "library"}
-								/>
-							</div>
-						</label>
-					</div>
+					<div className="flex flex-col gap-5 items-center">
+						<div className="w-[400px] !mt-0">
+							<label className="form-control w-[400px]">
+								<div className="label">
+									<span className="label-text text-base-content">Project Metadata File:</span>
+								</div>
+								<div className="flex items-center gap-3">
+									<input
+										type="file"
+										name="project"
+										required
+										disabled={!!loading || submitted}
+										accept=".tsv"
+										onChange={handleFileChange}
+										className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
+									/>
+									<ProgressCircle
+										hasFile={!!fileStates["project"]}
+										response={responseObj["project"]}
+										error={errorObj["project"]}
+										loading={loading === "project"}
+									/>
+								</div>
+							</label>
+						</div>
+						<div className="w-[400px]">
+							<label className="form-control w-full">
+								<div className="label">
+									<span className="label-text text-base-content">Sample Metadata File:</span>
+								</div>
+								<div className="flex items-center gap-3">
+									<input
+										type="file"
+										name="sample"
+										required
+										disabled={!!loading || submitted}
+										accept=".tsv"
+										onChange={handleFileChange}
+										className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
+									/>
+									<ProgressCircle
+										hasFile={!!fileStates["sample"]}
+										response={responseObj["sample"]}
+										error={errorObj["sample"]}
+										loading={loading === "sample"}
+									/>
+								</div>
+							</label>
+						</div>
+						<div className="w-[400px]">
+							<label className="form-control w-full">
+								<div className="label">
+									<span className="label-text text-base-content">Library (Experiment Run) Metadata File:</span>
+								</div>
+								<div className="flex items-center gap-3">
+									<input
+										type="file"
+										name="library"
+										required
+										disabled={!!loading || submitted}
+										accept=".tsv"
+										onChange={handleFileChange}
+										className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
+									/>
+									<ProgressCircle
+										hasFile={!!fileStates["library"]}
+										response={responseObj["library"]}
+										error={errorObj["library"]}
+										loading={loading === "library"}
+									/>
+								</div>
+							</label>
+						</div>
 
-					<button
-						className="btn btn-primary text-white w-[200px]"
-						disabled={!!loading || submitted || !allFilesPresent}
-					>
-						{loading || submitted ? <span className="loading loading-spinner loading-sm"></span> : "Submit"}
-					</button>
+						<button
+							className="btn btn-primary text-white w-[200px]"
+							disabled={!!loading || submitted || !allFilesPresent}
+						>
+							{loading || submitted ? <span className="loading loading-spinner loading-sm"></span> : "Submit"}
+						</button>
+					</div>
 				</form>
 
 				<dialog ref={modalRef} className="modal">

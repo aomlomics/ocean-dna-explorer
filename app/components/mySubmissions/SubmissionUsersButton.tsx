@@ -2,7 +2,7 @@
 
 import { TargetAction } from "@/types/globals";
 import { useRef, useState } from "react";
-import UserAdder from "./UserAdder";
+import UserAdder from "../UserAdder";
 
 export default function SubmissionUsersButton({
 	userIds,
