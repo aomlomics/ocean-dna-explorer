@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { batchSubmit, handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
@@ -27,6 +27,7 @@ import { RolePermissions, ZodFileSchema, ZodBooleanSchema } from "@/types/object
 import { z } from "zod";
 
 const formSchema = z.object({
+	userIds: z.string().transform((val) => val.split(",")),
 	isPrivate: ZodBooleanSchema.optional(),
 	project: ZodFileSchema,
 	library: ZodFileSchema,
@@ -55,6 +56,10 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
 				: "Invalid data structure."
 		};
+	}
+
+	if (!parsed.data.userIds.includes(userId)) {
+		return { statusMessage: "error", error: "Must include self as a user." };
 	}
 
 	let project = {} as Prisma.ProjectCreateInput;
@@ -160,7 +165,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 			const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
 				{
 					...projectCol,
-					userIds: [userId],
+					userIds: parsed.data.userIds,
 					isPrivate,
 					userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
 					editHistory: "JsonNull"
@@ -192,9 +197,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 					{
 						//most specific overrides least specific
 						...projectCol,
-						...p,
-						userIds: [userId],
-						isPrivate
+						...p
 					},
 					{
 						errorMap: (error, ctx) => {
@@ -288,9 +291,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 										//most specific overrides least specific
 										...projectCol,
 										...assayCols[assayRow.assay_name],
-										...assayRow,
-										userIds: [userId],
-										isPrivate
+										...assayRow
 									},
 									{
 										errorMap: (error, ctx) => {
@@ -322,9 +323,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 									...projectCol,
 									...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
 									...libraryRow,
-									userIds: [userId],
-									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
-									isPrivate
+									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull"
 								},
 								{
 									errorMap: (error, ctx) => {
@@ -404,9 +403,7 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 									...sampleRow,
 									project_id: projectCol.project_id,
 									assay_name: sampToAssay[sampleRow.samp_name],
-									userIds: [userId],
-									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull",
-									isPrivate
+									userDefined: Object.keys(userDefined).length ? userDefined : "JsonNull"
 								},
 								{
 									errorMap: (error, ctx) => {
@@ -436,6 +433,21 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 			}
 		}
 
+		const reducedSamples = {} as Record<string, Prisma.SampleCreateOrConnectWithoutAssaysInput[]>;
+		for (let a of Object.values(assays)) {
+			reducedSamples[a.assay_name] = samples.reduce((filtered, samp) => {
+				if (sampToAssay[samp.samp_name] === a.assay_name) {
+					filtered.push({
+						where: {
+							samp_name: samp.samp_name
+						},
+						create: samp
+					});
+				}
+				return filtered;
+			}, [] as Prisma.SampleCreateOrConnectWithoutAssaysInput[]);
+		}
+
 		console.log("project transaction");
 		await prisma.$transaction(
 			async (tx) => {
@@ -448,98 +460,44 @@ export default async function projectSubmitAction(formData: FormData): Promise<N
 				//primers
 				console.log("primers");
 				for (let p of primers) {
-					const primer = await tx.primer.upsert({
+					await tx.primer.upsert({
 						where: {
 							pcr_primer_forward_pcr_primer_reverse: {
 								pcr_primer_forward: p.pcr_primer_forward,
 								pcr_primer_reverse: p.pcr_primer_reverse
 							}
 						},
-						update: {
-							...(!isPrivate ? { isPrivate: false } : {}) //only update isPrivate if it's false
-						},
-						create: p,
-						select: {
-							userIds: true
-						}
+						update: {},
+						create: p
 					});
-
-					if (!primer.userIds.includes(userId)) {
-						await tx.primer.update({
-							where: {
-								pcr_primer_forward_pcr_primer_reverse: {
-									pcr_primer_forward: p.pcr_primer_forward,
-									pcr_primer_reverse: p.pcr_primer_reverse
-								}
-							},
-							data: {
-								userIds: {
-									push: userId
-								}
-							}
-						});
-					}
 				}
 
 				//assays and samples
 				console.log("assays and samples");
 				for (let a of Object.values(assays)) {
-					const existingAssay = await tx.assay.findUnique({
-						where: {
-							assay_name: a.assay_name
-						},
-						select: {
-							isPrivate: true,
-							userIds: true
-						}
-					});
-
-					const reducedSamples = samples.reduce((filtered, samp) => {
-						if (sampToAssay[samp.samp_name] === a.assay_name) {
-							filtered.push({
-								where: {
-									samp_name: samp.samp_name
-								},
-								create: samp
-							});
-						}
-						return filtered;
-					}, [] as Prisma.SampleCreateOrConnectWithoutAssaysInput[]);
-
 					await tx.assay.upsert({
 						where: {
 							assay_name: a.assay_name
 						},
 						update: {
-							isPrivate: isPrivate && existingAssay && existingAssay.isPrivate ? true : false,
 							Samples: {
-								connectOrCreate: reducedSamples
+								connectOrCreate: reducedSamples[a.assay_name]
 							}
 						},
 						create: {
 							...a,
 							Samples: {
-								connectOrCreate: reducedSamples
+								connectOrCreate: reducedSamples[a.assay_name]
 							}
 						}
 					});
-
-					if (existingAssay && !existingAssay.userIds.includes(userId)) {
-						await tx.assay.update({
-							where: {
-								assay_name: a.assay_name
-							},
-							data: {
-								userIds: {
-									push: userId
-								}
-							}
-						});
-					}
 				}
 
 				//libraries
-				await batchSubmit(tx, libraries, "library", "lib_id", userId, isPrivate);
+				await tx.library.createMany({
+					data: libraries,
+					skipDuplicates: true
+				});
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);

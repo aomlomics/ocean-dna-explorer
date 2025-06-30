@@ -1,16 +1,12 @@
 import { Occurrence } from "@/app/generated/prisma/client";
-import { securePrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-	const { searchParams } = new URL(request.url);
-	const analysis_run_name = searchParams.get("analysis_run_name");
-	if (!analysis_run_name) {
-		return NextResponse.json({ statusMessage: "error", error: "No analysis_run_name provided" });
-	}
+export async function GET(request: Request, { params }: { params: Promise<{ analysis_run_name: string }> }) {
+	const analysis_run_name = (await params).analysis_run_name;
 
 	try {
-		const result = await securePrisma.occurrence.findMany({
+		const result = await prisma.occurrence.findMany({
 			where: {
 				analysis_run_name
 			}

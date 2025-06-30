@@ -53,7 +53,6 @@ const globalForPrisma = global as unknown as {
 	unsafePrisma: PrismaClient;
 	publicPrisma: PrismaExtension;
 	prisma: PrismaExtension;
-	securePrisma: PrismaExtension;
 };
 
 //prisma client with no restrictions
@@ -85,7 +84,7 @@ const publicPrisma =
 	globalForPrisma.publicPrisma ||
 	unsafePrisma.$extends({
 		query: {
-			$allModels: {
+			project: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
 						//@ts-ignore
@@ -93,6 +92,132 @@ const publicPrisma =
 							//@ts-ignore
 							...args.where,
 							isPrivate: false
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			sample: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Project: { isPrivate: false }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			assay: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Samples: { some: { Project: { isPrivate: false } } }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			primer: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			library: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Sample: { Project: { isPrivate: false } }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			analysis: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							isPrivate: false
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			occurrence: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Analysis: { isPrivate: false }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			assignment: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Analysis: { isPrivate: false }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			feature: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Assignments: { some: { Analysis: { isPrivate: false } } }
+						};
+					}
+
+					return await query(args);
+				}
+			},
+			taxonomy: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						//@ts-ignore
+						args.where = {
+							//@ts-ignore
+							...args.where,
+							Assignments: { some: { Analysis: { isPrivate: false } } }
 						};
 					}
 
@@ -107,12 +232,19 @@ const prisma =
 	globalForPrisma.prisma ||
 	unsafePrisma.$extends({
 		query: {
-			$allModels: {
+			project: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!role || !RolePermissions[role].includes("manageUsers")) {
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								isPrivate: false
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
 							//@ts-ignore
 							args.where = {
 								//@ts-ignore
@@ -133,21 +265,148 @@ const prisma =
 
 					return await query(args);
 				}
-			}
-		}
-	});
-
-//prisma client that can never get private data and never includes secure fields
-const securePrisma =
-	globalForPrisma.securePrisma ||
-	unsafePrisma.$extends({
-		query: {
-			$allModels: {
+			},
+			sample: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!role || !RolePermissions[role].includes("manageUsers")) {
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								Project: { isPrivate: false }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Project: { isPrivate: false }
+									},
+									{
+										Project: { userIds: { has: userId } }
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			},
+			assay: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								Samples: { some: { Project: { isPrivate: false } } }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Samples: { some: { Project: { isPrivate: false } } }
+									},
+									{
+										Samples: { some: { Project: { userIds: { has: userId } } } }
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			},
+			primer: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+									},
+									{
+										Assays: { some: { Samples: { some: { Project: { userIds: { has: userId } } } } } }
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			},
+			library: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								Sample: { Project: { isPrivate: false } }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Sample: { Project: { isPrivate: false } }
+									},
+									{
+										Sample: { Project: { userIds: { has: userId } } }
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			},
+			analysis: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								isPrivate: false
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
 							//@ts-ignore
 							args.where = {
 								//@ts-ignore
@@ -157,54 +416,138 @@ const securePrisma =
 										isPrivate: false
 									},
 									{
-										userIds: {
-											has: userId
-										}
+										Project: { userIds: { has: userId } }
 									}
 								]
 							};
 						}
 					}
 
-					//remove secure fields from every part of the query
-					for (let [key, value] of Object.entries(args)) {
-						if (Array.isArray(value)) {
-							for (let field of secureFields) {
-								const index = value.indexOf(field);
-								if (index !== -1) {
-									value.splice(index, 1);
-								}
-							}
-
-							if (value.length === 0) {
+					return await query(args);
+				}
+			},
+			occurrence: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
 								//@ts-ignore
-								delete args[key];
-							}
-						} else if (typeof value === "object") {
-							for (let field of secureFields) {
-								if (field in value) {
-									delete value[field];
-								}
-							}
-
-							if (Object.keys(value).length === 0) {
+								...args.where,
+								Analysis: { isPrivate: false }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
 								//@ts-ignore
-								delete args[key];
-							}
+								...args.where,
+								OR: [
+									{
+										Analysis: { isPrivate: false }
+									},
+									{
+										Analysis: { Project: { userIds: { has: userId } } }
+									}
+								]
+							};
 						}
 					}
 
-					if (omittableOperations.includes(operation)) {
-						//@ts-ignore
-						if (!args.select && !args.include) {
-							let omit = {};
+					return await query(args);
+				}
+			},
+			assignment: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
 							//@ts-ignore
-							if (args.omit) {
+							args.where = {
 								//@ts-ignore
-								omit = args.omit;
-							}
+								...args.where,
+								Analysis: { isPrivate: false }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
 							//@ts-ignore
-							args.omit = { ...omit, ...secureFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}) };
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Analysis: { isPrivate: false }
+									},
+									{
+										Analysis: { Project: { userIds: { has: userId } } }
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			},
+			feature: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								Assignments: { some: { Analysis: { isPrivate: false } } }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Assignments: { some: { Analysis: { isPrivate: false } } }
+									},
+									{
+										Assignments: { some: { Analysis: { Project: { userIds: { has: userId } } } } }
+									}
+								]
+							};
+						}
+					}
+
+					return await query(args);
+				}
+			},
+			taxonomy: {
+				async $allOperations({ model, operation, args, query }) {
+					if (readOperations.includes(operation)) {
+						const { userId, sessionClaims } = await auth();
+						const role = sessionClaims?.metadata?.role;
+						if (!userId) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								Assignments: { some: { Analysis: { isPrivate: false } } }
+							};
+						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+							//@ts-ignore
+							args.where = {
+								//@ts-ignore
+								...args.where,
+								OR: [
+									{
+										Assignments: { some: { Analysis: { isPrivate: false } } }
+									},
+									{
+										Assignments: { some: { Analysis: { Project: { userIds: { has: userId } } } } }
+									}
+								]
+							};
 						}
 					}
 
@@ -218,83 +561,11 @@ if (process.env.NODE_ENV !== "production") {
 	globalForPrisma.unsafePrisma = unsafePrisma;
 	globalForPrisma.publicPrisma = publicPrisma;
 	globalForPrisma.prisma = prisma;
-	globalForPrisma.securePrisma = securePrisma;
 }
 
-export { unsafePrisma, publicPrisma, prisma, securePrisma };
+export { unsafePrisma, publicPrisma, prisma };
 
 //database helper functions
-export async function batchSubmit(
-	prisma: any,
-	data: any[],
-	table: Lowercase<Prisma.ModelName>,
-	field: string,
-	userId: string,
-	isPrivate: boolean | undefined
-) {
-	const newRows = await prisma[table].createManyAndReturn({
-		data,
-		skipDuplicates: true,
-		select: {
-			[field]: true
-		}
-	});
-
-	//add userId to existing (batching)
-	const existingRowsSet = new Set(newRows.map((e: { [field]: any }) => e[field]));
-	const existingRows = data.reduce((acc, e) => {
-		if (!existingRowsSet.has(e[field])) {
-			acc.push(e[field]);
-		}
-		return acc;
-	}, [] as string[]);
-	const userIdBatches = [];
-	while (existingRows.length) {
-		userIdBatches.push(existingRows.splice(0, 30000));
-	}
-	for (let batch of userIdBatches) {
-		await prisma[table].updateMany({
-			where: {
-				[field]: {
-					in: batch
-				},
-				NOT: {
-					userIds: {
-						has: userId
-					}
-				}
-			},
-			data: {
-				userIds: {
-					push: userId
-				}
-			}
-		});
-	}
-
-	//private
-	if (!isPrivate) {
-		const privateBatches = [];
-		const rows = data.map((e) => e[field]);
-		while (rows.length) {
-			privateBatches.push(rows.splice(0, 30000));
-		}
-		for (let batch of privateBatches) {
-			await prisma[table].updateMany({
-				where: {
-					[field]: {
-						in: batch
-					},
-					isPrivate: true
-				},
-				data: {
-					isPrivate: false
-				}
-			});
-		}
-	}
-}
-
 export function stripSecureFields(queryResult: Record<string, any> | Record<string, any>[]) {
 	if (Array.isArray(queryResult)) {
 		for (let e of queryResult) {

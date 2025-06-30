@@ -66,10 +66,11 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 		}
 
 		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
-			{ ...analysisCol, userIds: [userId], isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
+			{ ...analysisCol, isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
 			{
 				errorMap: (error, ctx) => {
 					return {
+						//TODO: make DeadBoolean errors prettier
 						message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
 							analysisCol[error.path[0] as keyof typeof analysisCol]
 						}`

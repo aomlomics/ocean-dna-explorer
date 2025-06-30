@@ -3,14 +3,14 @@ import Link from "next/link";
 import DataSummary from "../components/DataSummary";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
-import { prisma } from "../helpers/prisma";
+import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
 import { randomColors } from "../helpers/utils";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
-	const samples = await prisma.sample.findMany({
+	const samples = await publicPrisma.sample.findMany({
 		select: {
 			samp_name: true,
 			project_id: true,
@@ -18,7 +18,6 @@ export default async function Home() {
 			decimalLongitude: true
 		},
 		where: {
-			isPrivate: false,
 			AND: [
 				{
 					NOT: {

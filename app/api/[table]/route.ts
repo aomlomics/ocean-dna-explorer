@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { securePrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -18,7 +18,7 @@ export async function GET(
 			const query = parseApiQuery(lowercaseTable, searchParams);
 
 			//@ts-ignore
-			const result = await securePrisma[table].findMany(query);
+			const result = await prisma[table].findMany(query);
 
 			if (result) {
 				return NextResponse.json({ statusMessage: "success", result });

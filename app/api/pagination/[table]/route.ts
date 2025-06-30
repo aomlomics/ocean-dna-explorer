@@ -1,4 +1,4 @@
-import { securePrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { getZodType, parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
@@ -122,11 +122,11 @@ export async function GET(
 				};
 			}
 
-			const [result, count] = await securePrisma.$transaction([
+			const [result, count] = await prisma.$transaction([
 				//@ts-ignore
-				securePrisma[lowercaseTable].findMany(query),
+				prisma[lowercaseTable].findMany(query),
 				//@ts-ignore
-				securePrisma[lowercaseTable].count({ where: query.where })
+				prisma[lowercaseTable].count({ where: query.where })
 			]);
 
 			return NextResponse.json({ statusMessage: "success", result, count });

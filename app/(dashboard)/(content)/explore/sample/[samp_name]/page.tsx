@@ -22,6 +22,11 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 					select: {
 						assay_name: true
 					}
+				},
+				Project: {
+					select: {
+						isPrivate: true
+					}
 				}
 			}
 		});
@@ -37,7 +42,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Occurrences: _, Assays: __, ...justSample } = sample;
+	const { Occurrences: _, Assays: __, Project: ___, ...justSample } = sample;
 
 	const featuresCount = {} as Record<string, number>;
 	for (const { featureid } of sample.Occurrences) {
@@ -77,7 +82,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 				<div className="col-span-2">
 					<header className="flex gap-2 items-center">
 						<h1 className="text-4xl font-semibold text-primary mb-2">{samp_name}</h1>
-						{sample.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+						{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 					</header>
 				</div>
 

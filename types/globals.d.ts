@@ -43,6 +43,21 @@ export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
 export type TargetAction = (target: string, ...args) => Promise<NetworkPacket>;
 export type Action = FormAction | TargetAction;
 
+export type ClerkUserObject = {
+	id: string;
+	publicMetadata: {
+		role?: Role;
+		roleApplication?: {
+			role: Role;
+		};
+	};
+	firstName: string;
+	lastName: string;
+	banned: boolean;
+	imageUrl: string;
+	primaryEmailAddress?: string;
+};
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

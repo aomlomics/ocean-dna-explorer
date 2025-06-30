@@ -36,7 +36,7 @@ R	Bioinformatics	screen_other
 R	Bioinformatics	otu_raw_description	"Removed ASVs shorter than 100 bp, All non-Delphinidae mammal ASVs were removed"
 R	Bioinformatics	otu_final_description	
 O	Bioinformatics	bioinfo_method_additional	
-R	Bioinformatics	discard_untrimmed	not recorded
+R	Bioinformatics	discard_untrimmed	missing: not provided
 R	Bioinformatics	qiime2_version	qiime2-2023.5
 R	Bioinformatics	tourmaline_asv_method	dada2pe
 R	Bioinformatics	dada2_trunc_len_f	0
