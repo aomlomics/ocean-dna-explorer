@@ -6,11 +6,10 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { OccurrenceOptionalDefaultsSchema, OccurrenceSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { RolePermissions } from "@/types/objects";
 import { z } from "zod";
 
 const formSchema = z.object({
-	isPrivate: ZodBooleanSchema.optional(),
 	analysis_run_name: OccurrenceSchema.shape.analysis_run_name,
 	url: z.string().url()
 });
@@ -73,12 +72,10 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 							//parse occurrence
 							const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
 								{
-									userIds: [userId],
 									samp_name,
 									featureid,
 									organismQuantity,
-									analysis_run_name: parsed.data.analysis_run_name,
-									isPrivate: parsed.data.isPrivate
+									analysis_run_name: parsed.data.analysis_run_name
 								},
 								{
 									errorMap: (error, ctx) => {
@@ -123,18 +120,17 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 						analysis_run_name: parsed.data.analysis_run_name
 					},
 					select: {
-						isPrivate: true,
-						userIds: true
+						Project: {
+							select: {
+								userIds: true
+							}
+						}
 					}
 				});
 				if (!analysis) {
 					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
-				} else if (!analysis.userIds.includes(userId)) {
+				} else if (!analysis.Project.userIds.includes(userId)) {
 					throw new Error("Unauthorized");
-				} else if (analysis.isPrivate && !parsed.data.isPrivate) {
-					throw new Error(
-						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Occurrences can't be public if the associated analysis is private.`
-					);
 				}
 
 				//occurrences

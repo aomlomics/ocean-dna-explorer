@@ -6,6 +6,7 @@ import {
 	setRoleAction,
 	unbanUserAction
 } from "@/app/actions/manageUsers/editUser";
+import projectDeleteAction from "@/app/actions/project/projectDelete";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
@@ -35,22 +36,16 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 
 	const uneditable = !RoleHeirarchy[role].includes(user.publicMetadata.role as Role);
 
-	const [projects, analyses] = await prisma.$transaction([
-		prisma.project.findMany({
-			where: {
-				userIds: {
-					has: targetUserId
-				}
+	const projects = await prisma.project.findMany({
+		where: {
+			userIds: {
+				has: targetUserId
 			}
-		}),
-		prisma.analysis.findMany({
-			where: {
-				userIds: {
-					has: targetUserId
-				}
-			}
-		})
-	]);
+		},
+		include: {
+			Analyses: true
+		}
+	});
 
 	return (
 		<div className="grow flex flex-col gap-5">
@@ -146,60 +141,54 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 						<div className="w-full h-full flex flex-col relative">
 							<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>
 							<div className="flex flex-col gap-3 mt-2">
-								{projects.length ? (
-									projects.map((p) => (
-										<div key={p.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
+								{projects.map((proj) => (
+									<div key={proj.id} className="flex flex-col gap-3">
+										<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
 											<Link
-												href={`/explore/project/${encodeURIComponent(p.project_id)}`}
+												href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 												className="text-primary hover:text-info-focus hover:underline transition-colors"
 											>
-												{p.project_id}
+												{proj.project_id}
 											</Link>
 											<div className="flex gap-3">
 												<SubmissionDeleteButton
-													field="analysis_run_name"
-													value={p.project_id}
-													action={analysisDeleteAction}
-													disabled={uneditable}
+													field="project_id"
+													value={proj.project_id}
+													action={projectDeleteAction}
+													associatedAnalyses={proj.Analyses}
 												/>
 											</div>
 										</div>
-									))
-								) : (
-									<>No Projects</>
-								)}
-							</div>
-						</div>
-					</div>
-				</div>
 
-				<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
-					<div className="card-body">
-						<div className="w-full h-full flex flex-col relative">
-							<h2 className="text-2xl text-primary font-medium mb-4">Analyses:</h2>
-							<div className="flex flex-col gap-3 mt-2">
-								{analyses.length ? (
-									analyses.map((a) => (
-										<div key={a.id} className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
-											<Link
-												href={`/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`}
-												className="text-primary hover:text-info-focus hover:underline transition-colors"
-											>
-												{a.analysis_run_name}
-											</Link>
-											<div className="flex gap-3">
-												<SubmissionDeleteButton
-													field="analysis_run_name"
-													value={a.analysis_run_name}
-													action={analysisDeleteAction}
-													disabled={uneditable}
-												/>
-											</div>
+										<div className="flex flex-col gap-3 ml-20">
+											{!!proj.Analyses.length && (
+												<>
+													<h2 className="text-lg text-primary font-medium">Analyses:</h2>
+													{proj.Analyses.map((analysis) => (
+														<div
+															key={analysis.id}
+															className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+														>
+															<Link
+																href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+																className="text-primary hover:text-info-focus hover:underline transition-colors"
+															>
+																{analysis.analysis_run_name}
+															</Link>
+															<div className="flex gap-3">
+																<SubmissionDeleteButton
+																	field="analysis_run_name"
+																	value={analysis.analysis_run_name}
+																	action={analysisDeleteAction}
+																/>
+															</div>
+														</div>
+													))}
+												</>
+											)}
 										</div>
-									))
-								) : (
-									<>No Analyses</>
-								)}
+									</div>
+								))}
 							</div>
 						</div>
 					</div>

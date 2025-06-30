@@ -75,39 +75,43 @@ export default function AnalysisSubmit() {
 
 				const lines = (await file.text()).replace(/[\r]+/gm, "").split("\n");
 				const headers = lines[0].split("\t");
+
+				const fieldIndex = headers.indexOf("term_name");
+				if (fieldIndex === -1) {
+					setModalMessage("No column named 'term_name' in file.");
+					setIsError(true);
+					modalRef.current?.showModal();
+					input.value = "";
+					return;
+				}
+
+				const valuesIndex = headers.indexOf("values");
+				if (valuesIndex === -1) {
+					setModalMessage("No column named 'values' in file.");
+					setIsError(true);
+					modalRef.current?.showModal();
+					input.value = "";
+					return;
+				}
+
+				let currAnalysis = "";
+				let currProject = "";
 				for (let j = 1; j < lines.length; j++) {
 					const currentLine = lines[j].split("\t");
-
-					const fieldIndex = headers.indexOf("term_name");
-					if (fieldIndex === -1) {
-						setModalMessage("No column named 'term_name' in file.");
-						setIsError(true);
-						modalRef.current?.showModal();
-						input.value = "";
-						return;
-					}
 					const field = currentLine[fieldIndex];
-
-					const valuesIndex = headers.indexOf("values");
-					if (valuesIndex === -1) {
-						setModalMessage("No column named 'values' in file.");
-						setIsError(true);
-						modalRef.current?.showModal();
-						input.value = "";
-						return;
-					}
 					const value = currentLine[valuesIndex];
 
 					if (field === "analysis_run_name") {
-						console.log(value);
+						currAnalysis = value;
+
 						const tempAList = [...analyses];
 						tempAList[i] = value;
 						setAnalyses(tempAList);
-						return;
 					}
 
 					if (field === "project_id") {
-						console.log(value);
+						currProject = value;
+
 						if (project) {
 							if (value !== project.project_id) {
 								setModalMessage("All analyses must be for the same project.");
@@ -128,19 +132,45 @@ export default function AnalysisSubmit() {
 								return;
 							} else {
 								const project = json.result[0];
+								if (!project) {
+									setModalMessage(`Could not find Project with project_id of ${currProject}.`);
+									setIsError(true);
+									modalRef.current?.showModal();
+									input.value = "";
+									return;
+								}
 								setIsPrivate(project.isPrivate);
 								setProject(project);
 							}
 						}
 					}
+
+					if (currAnalysis && currProject) {
+						return;
+					}
 				}
 
-				setModalMessage("Analysis Metadata file in wrong format.");
-				setIsError(true);
-				modalRef.current?.showModal();
-				input.value = "";
+				console.log(currAnalysis, currProject);
+
+				if (!currAnalysis) {
+					setModalMessage("Could not find analysis_run_name in term_name column.");
+					setIsError(true);
+					modalRef.current?.showModal();
+					input.value = "";
+				} else if (!currProject) {
+					setModalMessage("Could not find project_id in term_name column.");
+					setIsError(true);
+					modalRef.current?.showModal();
+					input.value = "";
+				} else {
+					setModalMessage("Unknown error occurred while parsing analysis file.");
+					setIsError(true);
+					modalRef.current?.showModal();
+					input.value = "";
+				}
 			}
 		} catch (err) {
+			console.log(err);
 			setModalMessage("Analysis Metadata file in wrong format.");
 			setIsError(true);
 			modalRef.current?.showModal();
@@ -316,8 +346,7 @@ export default function AnalysisSubmit() {
 					fileSuffix: "_assign",
 					submitAction: assignSubmitAction,
 					fieldsToSet: {
-						analysis_run_name,
-						isPrivate
+						analysis_run_name
 					}
 				});
 
@@ -346,8 +375,7 @@ export default function AnalysisSubmit() {
 					fileSuffix: "_occ",
 					submitAction: occSubmitAction,
 					fieldsToSet: {
-						analysis_run_name,
-						isPrivate
+						analysis_run_name
 					}
 				});
 

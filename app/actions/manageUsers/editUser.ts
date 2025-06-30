@@ -112,54 +112,28 @@ export async function deleteUserAction(formData: FormData) {
 				});
 
 				//assays
-				await tx.$executeRaw(
-					Prisma.sql`UPDATE "Assay" SET "userIds" = array_remove("userIds", ${parsed.data.targetUserId}) WHERE ${parsed.data.targetUserId} = ANY("userIds")`
-				);
 				await tx.assay.deleteMany({
 					where: {
-						userIds: {
-							isEmpty: true
+						Samples: {
+							none: {}
 						}
 					}
 				});
 
 				//primers
-				await tx.$executeRaw(
-					Prisma.sql`UPDATE "Primer" SET "userIds" = array_remove("userIds", ${parsed.data.targetUserId}) WHERE ${parsed.data.targetUserId} = ANY("userIds")`
-				);
 				await tx.primer.deleteMany({
 					where: {
-						userIds: {
-							isEmpty: true
+						Assays: {
+							none: {}
 						}
 					}
 				});
 
 				//features
-				await tx.$executeRaw(
-					Prisma.sql`UPDATE "Feature" SET "userIds" = array_remove("userIds", ${parsed.data.targetUserId}) WHERE ${parsed.data.targetUserId} = ANY("userIds")`
-				);
-				//TODO: hangs on this delete call
-				// await tx.feature.deleteMany({
-				// 	where: {
-				// 		userIds: {
-				// 			isEmpty: true
-				// 		}
-				// 	}
-				// });
+				//TODO: delete empty features
 
 				//taxonomies
-				await tx.$executeRaw(
-					Prisma.sql`UPDATE "Taxonomy" SET "userIds" = array_remove("userIds", ${parsed.data.targetUserId}) WHERE ${parsed.data.targetUserId} = ANY("userIds")`
-				);
-				//TODO: hangs on this delete call
-				// await tx.taxonomy.deleteMany({
-				// 	where: {
-				// 		userIds: {
-				// 			isEmpty: true
-				// 		}
-				// 	}
-				// });
+				//TODO: delete empty taxonomies
 			},
 			{
 				timeout: 1 * 60 * 1000

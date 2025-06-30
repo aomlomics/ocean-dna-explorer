@@ -2,7 +2,7 @@
 
 import projectSubmitAction from "@/app/actions/project/projectSubmit";
 import { useRouter } from "next/navigation";
-import { FormEvent, useReducer, useRef, useState } from "react";
+import { FormEvent, useEffect, useReducer, useRef, useState } from "react";
 import ProgressCircle from "./ProgressCircle";
 import InfoButton from "../InfoButton";
 import UserAdder from "../UserAdder";
@@ -18,7 +18,7 @@ function reducer(state: Record<string, string>, updates: Record<string, string>)
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
-	const [userIds, setUserIds] = useState([userId || ""]);
+	const [userIds, setUserIds] = useState([userId] as string[]);
 	const router = useRouter();
 	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
 	const [errorObj, setErrorObj] = useReducer(reducer, {} as Record<string, string>);
@@ -124,7 +124,10 @@ export default function ProjectSubmit() {
 			<div className="min-h-[400px] mx-auto">
 				<form className="flex flex-col items-center" onSubmit={handleSubmit}>
 					<div className="w-[400px]">
-						<div className="text-primary text-lg">Add users to submission</div>
+						<div className="flex gap-2 items-center">
+							<div className="text-primary text-lg">Add users to submission</div>
+							<InfoButton infoText="Users added to this Project are able to submit new Analyses for it, edit it, and delete it." />
+						</div>
 						<UserAdder userIds={userIds} setUserIds={setUserIds} cols={1} />
 					</div>
 
@@ -132,7 +135,7 @@ export default function ProjectSubmit() {
 						<label className="fieldset-label flex gap-2">
 							<input name="isPrivate" type="checkbox" className="checkbox" />
 							<p>Private submission</p>
-							<InfoButton infoText="Only users added to this Project will be able to see private submissions" />
+							<InfoButton infoText="Only users added to this Project will be able to see private submissions." />
 						</label>
 					</fieldset>
 

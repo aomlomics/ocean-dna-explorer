@@ -1,5 +1,5 @@
 import { Prisma, PrismaPromise } from "@/app/generated/prisma/client";
-import { securePrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
@@ -60,7 +60,7 @@ export async function GET(
 
 				queries.push(
 					//@ts-ignore
-					securePrisma[lowercaseTable].findMany({
+					prisma[lowercaseTable].findMany({
 						distinct: [field],
 						select: {
 							[field]: true
@@ -73,7 +73,7 @@ export async function GET(
 			for (let field of extraFields) {
 				queries.push(
 					//@ts-ignore
-					securePrisma[lowercaseTable].findMany({
+					prisma[lowercaseTable].findMany({
 						distinct: [field],
 						select: {
 							[field]: true
@@ -83,7 +83,7 @@ export async function GET(
 				);
 			}
 
-			const dbResult = (await securePrisma.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
+			const dbResult = (await prisma.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
 
 			// for (let arr of dbResult) {
 			// 	stripSecureFields(arr);

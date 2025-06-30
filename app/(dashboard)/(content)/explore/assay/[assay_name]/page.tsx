@@ -1,6 +1,5 @@
 import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
-import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
@@ -13,7 +12,15 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			assay_name
 		},
 		include: {
-			Samples: true,
+			Samples: {
+				include: {
+					Project: {
+						select: {
+							isPrivate: true
+						}
+					}
+				}
+			},
 			Libraries: true,
 			Analyses: {
 				select: {
@@ -25,6 +32,9 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 	if (!assay) return <>Sample not found</>;
 	const { Samples: _, Libraries: __, Analyses: ___, ...justAssay } = assay;
+	const isPrivate = assay.Samples.some((samp) => {
+		return samp.Project.isPrivate;
+	});
 
 	return (
 		<div className="space-y-8">
@@ -54,7 +64,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				<div className="col-span-2">
 					<header className="flex gap-2 items-center">
 						<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
-						{assay.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+						{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 					</header>
 				</div>
 

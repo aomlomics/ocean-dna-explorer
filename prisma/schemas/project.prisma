@@ -49,12 +49,9 @@ model Project {
     biological_rep Int?
 }
 
-//TODO: remove userIds from everything other than Project and Analysis
 model Sample {
-    id          Int      @id @default(autoincrement())
-    samp_name   String   @unique
-    userIds     String[]
-    isPrivate   Boolean
+    id          Int    @id @default(autoincrement())
+    samp_name   String @unique
     /// [UserDefinedType]
     userDefined Json?
 
@@ -320,10 +317,8 @@ model Sample {
 }
 
 model Assay {
-    id         Int      @id @default(autoincrement())
-    assay_name String   @unique
-    userIds    String[]
-    isPrivate  Boolean
+    id         Int    @id @default(autoincrement())
+    assay_name String @unique
 
     // Relations
     Samples            Sample[]
@@ -382,9 +377,7 @@ model Assay {
 }
 
 model Primer {
-    id        Int      @id @default(autoincrement())
-    userIds   String[]
-    isPrivate Boolean
+    id Int @id @default(autoincrement())
 
     // Relations
     Assays Assay[]
@@ -402,10 +395,8 @@ model Primer {
 }
 
 model Library {
-    id          Int      @id @default(autoincrement())
-    lib_id      String   @unique
-    userIds     String[]
-    isPrivate   Boolean
+    id          Int    @id @default(autoincrement())
+    lib_id      String @unique
     /// [UserDefinedType]
     userDefined Json?
 

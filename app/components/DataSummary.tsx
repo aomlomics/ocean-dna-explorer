@@ -1,32 +1,12 @@
-import { prisma } from "../helpers/prisma";
+import { publicPrisma } from "../helpers/prisma";
 import Link from "next/link";
 
 export default async function DataSummary() {
-	const { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays } = await prisma.$transaction(async (tx) => {
-		const projectCount = await tx.project.count({
-			where: {
-				isPrivate: false
-			}
-		});
-		const sampleCount = await tx.sample.count({
-			where: {
-				isPrivate: false
-			}
-		});
-		const taxaCount = await tx.taxonomy.count({
-			where: {
-				isPrivate: false
-			}
-		});
-		const featureCount = await tx.feature.count({
-			where: {
-				isPrivate: false
-			}
-		});
+	const { projectCount, sampleCount, taxaCount, uniqueAssays } = await publicPrisma.$transaction(async (tx) => {
+		const projectCount = await tx.project.count();
+		const sampleCount = await tx.sample.count();
+		const taxaCount = await tx.taxonomy.count();
 		const uniqueAssays = (await tx.assay.findMany({
-			where: {
-				isPrivate: false
-			},
 			distinct: ["target_gene"],
 			select: {
 				target_gene: true
@@ -38,7 +18,6 @@ export default async function DataSummary() {
 			//number of assignments = number of features (an assignment has only one feature)
 			const count = await tx.analysis.findFirst({
 				where: {
-					isPrivate: false,
 					Assay: {
 						target_gene: a.target_gene
 					}
@@ -56,7 +35,7 @@ export default async function DataSummary() {
 			}
 		}
 
-		return { projectCount, sampleCount, taxaCount, featureCount, uniqueAssays };
+		return { projectCount, sampleCount, taxaCount, uniqueAssays };
 	});
 
 	return (

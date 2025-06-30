@@ -121,67 +121,7 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 			if (parsed.data.isPrivate !== null) {
 				const isPrivate = parsed.data.isPrivate ? true : false;
 
-				await tx.sample.updateMany({
-					where: {
-						project_id
-					},
-					data: {
-						isPrivate
-					}
-				});
-
-				await tx.library.updateMany({
-					where: {
-						Sample: {
-							project_id
-						}
-					},
-					data: {
-						isPrivate
-					}
-				});
-
 				if (isPrivate) {
-					await tx.assay.updateMany({
-						where: {
-							Samples: {
-								some: {
-									project_id
-								}
-								//TODO: fix this query to get all assays where all the samples that aren't related to the project_id are private
-								// every: {
-								// 	NOT: {
-								// 		project_id
-								// 	},
-								// 	isPrivate: true
-								// }
-							}
-						},
-						data: {
-							isPrivate: true
-						}
-					});
-
-					await tx.primer.updateMany({
-						where: {
-							Assays: {
-								some: {
-									Samples: {
-										some: {
-											project_id
-										}
-									}
-								},
-								every: {
-									isPrivate: true
-								}
-							}
-						},
-						data: {
-							isPrivate: true
-						}
-					});
-
 					//update all analyses of project to be private
 					for (let analysis of project.Analyses) {
 						const analysisFormData = new FormData();
@@ -189,37 +129,6 @@ export default async function projectEditAction(formData: FormData): Promise<Net
 						analysisFormData.set("target", analysis.analysis_run_name);
 						analysisEditAction(analysisFormData);
 					}
-				} else {
-					await tx.assay.updateMany({
-						where: {
-							Samples: {
-								some: {
-									project_id
-								}
-							}
-						},
-						data: {
-							isPrivate: false
-						}
-					});
-
-					await tx.primer.updateMany({
-						where: {
-							Assays: {
-								some: {
-									Samples: {
-										some: {
-											project_id
-										}
-									},
-									isPrivate: false
-								}
-							}
-						},
-						data: {
-							isPrivate: false
-						}
-					});
 				}
 			}
 		});

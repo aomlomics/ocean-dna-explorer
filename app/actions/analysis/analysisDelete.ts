@@ -35,13 +35,20 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 						analysis_run_name
 					},
 					select: {
-						userIds: true
+						Project: {
+							select: {
+								userIds: true
+							}
+						}
 					}
 				});
 
 				if (!analysis) {
 					return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
-				} else if (!analysis.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
+				} else if (
+					!analysis.Project.userIds.includes(userId) &&
+					(!role || !RolePermissions[role].includes("manageUsers"))
+				) {
 					return "Unauthorized action.";
 				}
 
