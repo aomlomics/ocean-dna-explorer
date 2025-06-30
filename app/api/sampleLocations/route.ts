@@ -1,4 +1,4 @@
-import { securePrisma } from "@/app/helpers/prisma";
+import { publicPrisma } from "@/app/helpers/prisma";
 import { DeadValueEnum } from "@/types/enums";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -17,7 +17,7 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
 	try {
-		const rawLocations = await securePrisma.$transaction(async (tx) => {
+		const rawLocations = await publicPrisma.$transaction(async (tx) => {
 			const projectsRes = await tx.project.findMany({
 				select: {
 					project_id: true,
@@ -34,7 +34,6 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 					decimalLongitude: true
 				},
 				where: {
-					isPrivate: false,
 					AND: [
 						{
 							NOT: {

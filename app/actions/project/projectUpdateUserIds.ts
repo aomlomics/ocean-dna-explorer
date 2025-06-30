@@ -56,15 +56,6 @@ export default async function projectUpdateUserIdsAction(
 					userIds
 				}
 			});
-
-			await tx.analysis.updateMany({
-				where: {
-					project_id
-				},
-				data: {
-					userIds
-				}
-			});
 		});
 
 		if (error) {

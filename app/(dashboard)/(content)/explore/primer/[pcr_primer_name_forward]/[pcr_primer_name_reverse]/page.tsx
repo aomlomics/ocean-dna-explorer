@@ -13,9 +13,35 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 				pcr_primer_name_forward,
 				pcr_primer_name_reverse
 			}
+		},
+		include: {
+			Assays: {
+				where: {
+					Samples: {
+						some: {
+							Project: {
+								isPrivate: true
+							}
+						}
+					}
+				}
+				// select: {
+				// 	Samples: {
+				// 		select: {
+				// 			Project: {
+				// 				select: {
+				// 					isPrivate: true
+				// 				}
+				// 			}
+				// 		}
+				// 	}
+				// }
+			}
 		}
 	});
 	if (!primer) return <>Primer not found</>;
+	const isPrivate = !!primer.Assays.length;
+	// const isPrivate = primer.Assays.some((a) => a.Samples.some((samp) => samp.Project.isPrivate));
 
 	return (
 		<div>

@@ -132,7 +132,7 @@ export default async function MySubmissions() {
 																		action={analysisEditAction}
 																		disabled={["project_id", "assay_name"]}
 																		privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
-																		omit={["userIds", "editHistory", "dateSubmitted"]}
+																		omit={["editHistory", "dateSubmitted"]}
 																	/>
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"

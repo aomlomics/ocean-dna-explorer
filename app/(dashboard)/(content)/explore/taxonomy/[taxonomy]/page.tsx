@@ -40,7 +40,12 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				Assignments: {
 					distinct: ["analysis_run_name"],
 					select: {
-						analysis_run_name: true
+						analysis_run_name: true,
+						Analysis: {
+							select: {
+								isPrivate: true
+							}
+						}
 					}
 				}
 			}
@@ -83,12 +88,13 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 	// Get the lowest rank name (species or genus typically)
 	const displayName = dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ");
+	const isPrivate = dbTaxonomy.Assignments.some((a) => a.Analysis.isPrivate);
 
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full">
 			<header className="flex gap-2 items-center">
 				<h1 className="text-4xl font-semibold text-primary mb-2">{displayName}</h1>
-				{dbTaxonomy.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+				{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 			</header>
 			{/* Using sm breakpoint (640px) instead of md (768px) */}
 			<div className="grid grid-cols-1 gap-6 sm:grid-cols-12 sm:gap-8">

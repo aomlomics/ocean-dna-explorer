@@ -17,11 +17,13 @@ import Link from "next/link";
 export default function Table({
 	table,
 	title,
+	rowLinks,
 	where,
 	omit = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	title: string;
+	rowLinks?: Record<string, Uncapitalize<Prisma.ModelName>>;
 	where?: Record<string, any>;
 	omit?: string[];
 }) {
@@ -406,8 +408,13 @@ export default function Table({
 							//row
 							acc.push(
 								<tr key={i} className="border-base-100 border-b-2">
-									<th className="link link-primary">
-										<Link href={`/explore/${table}/${row[title]}`}>{row[title]}</Link>
+									<th>
+										<Link
+											href={`/explore/${rowLinks && rowLinks[title] ? rowLinks[title] : table}/${row[title]}`}
+											className="link link-primary link-hover"
+										>
+											{row[title]}
+										</Link>
 									</th>
 									{headers.reduce((acc: ReactNode[], head, j) => {
 										if (!headersFilter[head] && !emptyFilter[head]) {
@@ -431,9 +438,18 @@ export default function Table({
 														}`}
 														key={row[head] + "child" + j}
 													>
-														{row[head] in DeadValueEnum && typeof row[head] === "number"
-															? DeadValueEnum[row[head]]
-															: row[head]}
+														{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
+															DeadValueEnum[row[head]]
+														) : rowLinks && rowLinks[head] ? (
+															<Link
+																href={`/explore/${rowLinks[head]}/${row[head]}`}
+																className="link link-primary link-hover"
+															>
+																{row[head]}
+															</Link>
+														) : (
+															row[head]
+														)}
 													</td>
 												);
 											}

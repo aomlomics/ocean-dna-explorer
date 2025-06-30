@@ -54,8 +54,12 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 						analysis_run_name
 					},
 					select: {
-						userIds: true,
-						Project: true,
+						Project: {
+							select: {
+								userIds: true,
+								isPrivate: true
+							}
+						},
 						editHistory: true,
 						...analysisSelect
 					}
@@ -63,7 +67,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 
 				if (!analysis) {
 					return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
-				} else if (!analysis.userIds.includes(userId)) {
+				} else if (!analysis.Project.userIds.includes(userId)) {
 					return "Unauthorized action.";
 				}
 
@@ -91,96 +95,6 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 						editHistory: analysis.editHistory ? [newEdit].concat(analysis.editHistory) : [newEdit]
 					}
 				});
-
-				if (parsed.data.isPrivate !== null) {
-					const isPrivate = parsed.data.isPrivate ? true : false;
-
-					await tx.occurrence.updateMany({
-						where: {
-							analysis_run_name
-						},
-						data: {
-							isPrivate
-						}
-					});
-
-					await tx.assignment.updateMany({
-						where: {
-							analysis_run_name
-						},
-						data: {
-							isPrivate
-						}
-					});
-
-					if (isPrivate) {
-						await tx.feature.updateMany({
-							where: {
-								Assignments: {
-									some: {
-										analysis_run_name
-									}
-									//TODO: fix this query to get all features where all the assignments that aren't related to the analysis_run_name are private
-									// every: {
-									// 	NOT: {
-									// 		analysis_run_name
-									// 	},
-									// 	isPrivate: true
-									// }
-								}
-							},
-							data: {
-								isPrivate: true
-							}
-						});
-
-						await tx.taxonomy.updateMany({
-							where: {
-								Assignments: {
-									some: {
-										analysis_run_name
-									}
-									//TODO: fix this query to get all taxonomies where all the assignments that aren't related to the analysis_run_name are private
-									// every: {
-									// 	NOT: {
-									// 		analysis_run_name
-									// 	},
-									// 	isPrivate: true
-									// }
-								}
-							},
-							data: {
-								isPrivate: true
-							}
-						});
-					} else {
-						await tx.feature.updateMany({
-							where: {
-								Assignments: {
-									some: {
-										analysis_run_name
-									}
-								}
-							},
-							data: {
-								isPrivate: false
-							}
-						});
-
-						await tx.taxonomy.updateMany({
-							where: {
-								Assignments: {
-									some: {
-										analysis_run_name
-									}
-								}
-							},
-							data: {
-								isPrivate: false
-							}
-						});
-					}
-				}
 			},
 			{ timeout: 1.5 * 60 * 1000 }
 		);

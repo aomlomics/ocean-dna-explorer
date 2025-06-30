@@ -23,6 +23,16 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 					select: {
 						Assignments: true
 					}
+				},
+				Occurrences: {
+					where: {
+						Analysis: {
+							isPrivate: true
+						}
+					},
+					select: {
+						id: true
+					}
 				}
 			}
 		});
@@ -74,13 +84,14 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 	if (!feature) return <>Feature not found</>;
 
 	taxaCounts.sort((a, b) => b.count - a.count);
+	const isPrivate = !!feature.Occurrences.length;
 
 	return (
 		<div className="space-y-8">
 			<header>
 				<div className="flex gap-2 items-center">
 					<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
-					{feature.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-md text-base-content/70 break-all font-mono">{feature.dna_sequence}</p>
 			</header>

@@ -75,7 +75,7 @@ export default function UserAdder({
 	}, [reset]);
 
 	useEffect(() => {
-		if (!submittable) {
+		if (!submittable && users.length) {
 			const currUserIds = users.reduce((acc, u) => {
 				if (!deletedUsers.some((nu) => u.id === nu.id)) {
 					acc.push(u.id);

@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { batchSubmit, handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { parseSchemaToObject } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
 import {
@@ -17,11 +17,10 @@ import {
 	AssignmentSchema
 } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
-import { RolePermissions, ZodBooleanSchema } from "@/types/objects";
+import { RolePermissions } from "@/types/objects";
 import { z } from "zod";
 
 const formSchema = z.object({
-	isPrivate: ZodBooleanSchema.optional(),
 	analysis_run_name: AssignmentSchema.shape.analysis_run_name,
 	url: z.string().url()
 });
@@ -113,9 +112,7 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
 						{
 							...featureRow,
-							sequenceLength: featureRow.dna_sequence!.length,
-							userIds: [userId],
-							isPrivate: parsed.data.isPrivate
+							sequenceLength: featureRow.dna_sequence!.length
 						},
 						{
 							errorMap: (error, ctx) => {
@@ -143,8 +140,6 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
 						{
 							...assignmentRow,
-							userIds: [userId],
-							isPrivate: parsed.data.isPrivate,
 							analysis_run_name: parsed.data.analysis_run_name
 						},
 						{
@@ -171,18 +166,15 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					assignments.push(parsedAssignment.data);
 
 					//parse taxonomy
-					const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(
-						{ ...taxonomyRow, userIds: [userId], isPrivate: parsed.data.isPrivate },
-						{
-							errorMap: (error, ctx) => {
-								return {
-									message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
-										taxonomyRow[error.path[0] as keyof typeof taxonomyRow]
-									}`
-								};
-							}
+					const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
+						errorMap: (error, ctx) => {
+							return {
+								message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
+									taxonomyRow[error.path[0] as keyof typeof taxonomyRow]
+								}`
+							};
 						}
-					);
+					});
 
 					if (!parsedTaxonomy.success) {
 						return {
@@ -206,26 +198,31 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 						analysis_run_name: parsed.data.analysis_run_name
 					},
 					select: {
-						isPrivate: true,
-						userIds: true
+						Project: {
+							select: {
+								userIds: true
+							}
+						}
 					}
 				});
 				if (!analysis) {
 					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
-				} else if (!analysis.userIds.includes(userId)) {
+				} else if (!analysis.Project.userIds.includes(userId)) {
 					throw new Error("Unauthorized");
-				} else if (analysis.isPrivate && !parsed.data.isPrivate) {
-					throw new Error(
-						`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} is private. Assignments can't be public if the associated analysis is private.`
-					);
 				}
 
 				//upload to database
 				//features
-				await batchSubmit(tx, features, "feature", "featureid", userId, parsed.data.isPrivate);
+				await tx.feature.createMany({
+					data: features,
+					skipDuplicates: true
+				});
 
 				//taxonomies
-				await batchSubmit(tx, taxonomies, "taxonomy", "taxonomy", userId, parsed.data.isPrivate);
+				await tx.taxonomy.createMany({
+					data: taxonomies,
+					skipDuplicates: true
+				});
 
 				//assignments
 				console.log("assignments");
