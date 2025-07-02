@@ -58,6 +58,19 @@ export type ClerkUserObject = {
 	primaryEmailAddress?: string;
 };
 
+export type ProgressStream = {
+	readable: ReadableStream<any>;
+	message: (message: string, progress: number) => Promise<void>;
+	error: (message: string) => Promise<void>;
+	success: (message: string) => Promise<void>;
+	close: () => Promise<void>;
+};
+
+export type StreamData = {
+	event: "message" | "error" | "success";
+	data: { message: string; progress: number };
+};
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;
