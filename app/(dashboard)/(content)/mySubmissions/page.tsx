@@ -11,6 +11,7 @@ import projectEditAction from "@/app/actions/project/projectEdit";
 import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditButton";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
 import projectUpdateUserIdsAction from "@/app/actions/project/projectUpdateUserIds";
+import SamplesEditButton from "@/app/components/mySubmissions/SamplesEditButton";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -92,6 +93,7 @@ export default async function MySubmissions() {
 														action={projectUpdateUserIdsAction}
 														target={proj.project_id}
 													/>
+
 													<SubmissionEditButton
 														table="project"
 														titleField="project_id"
@@ -100,6 +102,7 @@ export default async function MySubmissions() {
 														privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
 														omit={["userIds", "Analyses"]}
 													/>
+													<SamplesEditButton />
 													<SubmissionDeleteButton
 														field="project_id"
 														value={proj.project_id}

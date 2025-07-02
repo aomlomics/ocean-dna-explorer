@@ -1,0 +1,9 @@
+# requirement_level_code	O	O										
+# field_type	free text	free text										
+# controlled_vocabulary_options												
+# Water												
+# section	Sample collection	Sample collection										
+# example	41 05 54.03S	"121d 10' 34"" W"										
+samp_name	verbatimLatitude	verbatimLongitude	eventDurationValue									
+GOMECC4_27N_Sta1_Deep_A	latVal1	longVal1	1									
+GOMECC4_27N_Sta1_Deep_B	latVal2	longVal2	2									
