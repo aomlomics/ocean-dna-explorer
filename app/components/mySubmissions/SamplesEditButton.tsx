@@ -4,36 +4,44 @@ import sampleEditAction from "@/app/actions/sample/sampleEdit";
 import { FormEvent, useRef, useState } from "react";
 import fromBlob from "from2-blob";
 import { parse } from "csv-parse";
+import { NetworkProgressPacket } from "@/types/globals";
+import { doProgressAction } from "@/app/helpers/utils";
+import ProgressBar from "../ProgressBar";
 
 export default function SubmissionUsersButton() {
 	const modalRef = useRef<HTMLDialogElement>(null);
-	const [reset, setReset] = useState(false);
+	const formRef = useRef<HTMLFormElement>(null);
+	const [loading, setLoading] = useState(false);
+	const [data, setData] = useState(undefined as NetworkProgressPacket);
 
 	function close() {
 		modalRef.current?.close();
-		setReset(!reset);
+		formRef.current?.reset();
+		setLoading(false);
+		setData(undefined);
 	}
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		setLoading(true);
 
 		const file = event.currentTarget.sampleMetadata.files[0] as File;
-		const result = await sampleEditAction(
-			fromBlob(file).pipe(
-				parse({
-					columns: true,
-					comment: "#",
-					comment_no_infix: true,
-					delimiter: "\t"
-				})
-			)
+		await doProgressAction(
+			() =>
+				sampleEditAction(
+					fromBlob(file).pipe(
+						parse({
+							columns: true,
+							comment: "#",
+							comment_no_infix: true,
+							delimiter: "\t"
+						})
+					)
+				),
+			setData
 		);
 
-		if (result.statusMessage === "success") {
-			modalRef.current?.close();
-		} else if (result.statusMessage === "error") {
-			console.log(result.error);
-		}
+		close();
 	}
 
 	return (
@@ -50,13 +58,15 @@ export default function SubmissionUsersButton() {
 						✕
 					</button>
 
-					<form onSubmit={handleSubmit}>
+					<form ref={formRef} onSubmit={handleSubmit}>
 						<fieldset className="fieldset">
 							<legend className="fieldset-legend">Sample Metadata File:</legend>
 							<input type="file" name="sampleMetadata" className="file-input" required accept=".tsv" />
 						</fieldset>
 						<button className="btn">Submit</button>
 					</form>
+
+					<ProgressBar loading={loading} data={data} />
 				</div>
 				<form method="dialog" onSubmit={close} className="modal-backdrop">
 					<button>close</button>

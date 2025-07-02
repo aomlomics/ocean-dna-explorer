@@ -2,7 +2,7 @@ import { RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
-import { NetworkPacket } from "@/types/globals";
+import { ErrorPacket } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 
 type PrismaExtension = DynamicClientExtensionThis<
@@ -35,17 +35,6 @@ const readOperations = [
 	"count",
 	"aggregate",
 	"groupBy"
-];
-const omittableOperations = [
-	"findUnique",
-	"findFirst",
-	"findMany",
-	"create",
-	"update",
-	"upsert",
-	"delete",
-	"createManyAndReturn",
-	"updateManyAndReturn"
 ];
 
 //database initialization
@@ -580,7 +569,7 @@ export function stripSecureFields(queryResult: Record<string, any> | Record<stri
 	}
 }
 
-export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): NetworkPacket {
+export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket {
 	if (err.code === "P2002") {
 		return {
 			statusMessage: "error",

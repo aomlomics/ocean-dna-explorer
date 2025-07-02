@@ -14,6 +14,9 @@ import { SampleSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 
+//TODO:
+// can't filter (bug, expedition_id does not exist on sample table)
+// recalculate empty columns when changing pages, and hide dead value columns
 export default function Table({
 	table,
 	title,

@@ -7,28 +7,9 @@ import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
 import assignDeleteAction from "@/app/actions/analysis/delete/assignDelete";
 import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 
-export type Pluralize<T extends string> = T extends `${infer S}sis`
-	? `${S}ses`
-	: T extends `${infer S}ay`
-	? `${S}ays`
-	: T extends `${infer S}ey`
-	? `${S}eys`
-	: T extends `${infer S}iy`
-	? `${S}iys`
-	: T extends `${infer S}oy`
-	? `${S}oys`
-	: T extends `${infer S}uy`
-	? `${S}uys`
-	: T extends `${infer S}y`
-	? `${S}ies`
-	: T extends `${infer S}s`
-	? T
-	: `${T}s`;
-
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers";
 
-export type StatusMessage = "success" | "error";
 interface ErrorPacket {
 	statusMessage: "error";
 	error: string;
@@ -36,12 +17,27 @@ interface ErrorPacket {
 interface SuccessPacket {
 	statusMessage: "success";
 	result?: any;
+	progress?: { message: string; value: number };
 	[key: string]: any;
 }
+interface ProgressPacket {
+	statusMessage: "progress";
+	progress: { message: string; value: number };
+}
 export type NetworkPacket = ErrorPacket | SuccessPacket;
+export type NetworkProgressPacket = ErrorPacket | SuccessPacket | ProgressPacket | undefined;
+
 export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
 export type TargetAction = (target: string, ...args) => Promise<NetworkPacket>;
-export type Action = FormAction | TargetAction;
+export type ProgressAction = (...args) => Promise<ReadableStream<any>>;
+
+export type ProgressStream = {
+	readable: ReadableStream<any>;
+	message: (message: string, progress: number) => Promise<void>;
+	error: (message: string) => Promise<void>;
+	success: (message: string) => Promise<void>;
+	close: () => Promise<void>;
+};
 
 export type ClerkUserObject = {
 	id: string;
@@ -56,19 +52,6 @@ export type ClerkUserObject = {
 	banned: boolean;
 	imageUrl: string;
 	primaryEmailAddress?: string;
-};
-
-export type ProgressStream = {
-	readable: ReadableStream<any>;
-	message: (message: string, progress: number) => Promise<void>;
-	error: (message: string) => Promise<void>;
-	success: (message: string) => Promise<void>;
-	close: () => Promise<void>;
-};
-
-export type StreamData = {
-	event: "message" | "error" | "success";
-	data: { message: string; progress: number };
 };
 
 declare global {
