@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/crons/cleanEmptyTables",
+      "schedule": "0 0 1 * *"
+    }
+  ]
+}
