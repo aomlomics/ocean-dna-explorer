@@ -9,7 +9,6 @@ export default function ProgressBar({ loading, data }: { loading: boolean; data:
 
 	useEffect(() => {
 		if (data) {
-			console.log(data);
 			if ((data.statusMessage === "success" || data.statusMessage === "progress") && data.progress) {
 				setValue(data.progress.value);
 				setMessage(data.progress.message);
