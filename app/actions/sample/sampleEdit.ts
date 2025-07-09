@@ -22,7 +22,7 @@ async function doEdit(stream: ProgressStream, csvParser: Parser) {
 		const sampleRow = {} as SamplePartial;
 
 		for (const [field, value] of Object.entries(record)) {
-			parseSchemaToObject(value as string, field, sampleRow, SampleOptionalDefaultsSchema, SampleScalarFieldEnumSchema);
+			parseSchemaToObject(field, value as string, sampleRow, SampleOptionalDefaultsSchema, SampleScalarFieldEnumSchema);
 		}
 
 		const parsedSample = SamplePartialSchema.safeParse(sampleRow, {

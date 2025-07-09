@@ -142,28 +142,6 @@ export default function UserAdder({
 
 	return (
 		<div className="w-full">
-			<div>
-				<div>Current Users:</div>
-				<div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-					{users.map((u) => (
-						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-primary rounded-lg">
-							<UserDisplay
-								user={u}
-								disabled={deletedUsers.some((nu) => u.id === nu.id)}
-								deletable={u.id !== userId}
-								onDelete={() => setDeletedUsers([...deletedUsers, u])}
-								onAdd={() => setDeletedUsers(deletedUsers.filter((nu) => u.id !== nu.id))}
-							/>
-						</div>
-					))}
-					{newUsers.map((u) => (
-						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-warning rounded-lg">
-							<UserDisplay user={u} deletable onDelete={() => setNewUsers(newUsers.filter((nu) => u.id !== nu.id))} />
-						</div>
-					))}
-				</div>
-			</div>
-
 			<div className="flex flex-col gap-3">
 				<div className="dropdown">
 					<fieldset className="fieldset">
@@ -216,6 +194,28 @@ export default function UserAdder({
 					</button>
 				)}
 				{!!submitError && <div>Error: {submitError}</div>}
+			</div>
+
+			<div>
+				<div>Current Users:</div>
+				<div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+					{users.map((u) => (
+						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-primary rounded-lg">
+							<UserDisplay
+								user={u}
+								disabled={deletedUsers.some((nu) => u.id === nu.id)}
+								deletable={u.id !== userId}
+								onDelete={() => setDeletedUsers([...deletedUsers, u])}
+								onAdd={() => setDeletedUsers(deletedUsers.filter((nu) => u.id !== nu.id))}
+							/>
+						</div>
+					))}
+					{newUsers.map((u) => (
+						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-warning rounded-lg">
+							<UserDisplay user={u} deletable onDelete={() => setNewUsers(newUsers.filter((nu) => u.id !== nu.id))} />
+						</div>
+					))}
+				</div>
 			</div>
 		</div>
 	);

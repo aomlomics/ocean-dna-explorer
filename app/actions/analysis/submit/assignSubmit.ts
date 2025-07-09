@@ -82,8 +82,8 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 					for (let j = 0; j < assignFileHeaders.length; j++) {
 						//feature table
 						parseSchemaToObject(
-							currentLine[j],
 							assignFileHeaders[j],
+							currentLine[j],
 							featureRow,
 							FeatureOptionalDefaultsSchema,
 							FeatureScalarFieldEnumSchema
@@ -91,8 +91,8 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 						//assignment table
 						parseSchemaToObject(
-							currentLine[j],
 							assignFileHeaders[j],
+							currentLine[j],
 							assignmentRow,
 							AssignmentOptionalDefaultsSchema,
 							AssignmentScalarFieldEnumSchema
@@ -100,8 +100,8 @@ export default async function assignSubmitAction(formData: FormData): Promise<Ne
 
 						//taxonomy table
 						parseSchemaToObject(
-							currentLine[j],
 							assignFileHeaders[j],
+							currentLine[j],
 							taxonomyRow,
 							TaxonomyOptionalDefaultsSchema,
 							TaxonomyScalarFieldEnumSchema

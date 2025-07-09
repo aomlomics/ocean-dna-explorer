@@ -5,8 +5,10 @@ import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
 import distinctColors from "distinct-colors";
-import { NetworkProgressPacket, ProgressAction } from "@/types/globals";
+import { NetworkProgressPacket, ProgressAction, ProgressActionMany } from "@/types/globals";
 import { Dispatch, SetStateAction } from "react";
+import { Info, Parser } from "csv-parse/.";
+import { PassThrough } from "stream";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -87,8 +89,8 @@ export function getZodType(field: any): { type: DbType; optional?: boolean; valu
 
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
-	value: string,
 	fieldName: string,
+	value: string,
 	obj: Record<string, string | string[] | number | number[] | boolean | JsonValue | null>,
 	schema: ZodObject<any>,
 	fieldOptionsEnum: ZodEnum<any>
@@ -561,11 +563,18 @@ export function createProgressStream() {
 	};
 }
 
+export async function fileToStream(file: File) {
+	return new PassThrough().end(Buffer.from(await file.arrayBuffer()));
+}
+
 export async function doProgressAction(
 	action: ProgressAction,
-	setData: Dispatch<SetStateAction<NetworkProgressPacket>>
+	parser: Parser,
+	info: Info,
+	setter: Dispatch<SetStateAction<NetworkProgressPacket>>,
+	args = [] as any[]
 ) {
-	const readable = await action();
+	const readable = await action(parser, info, ...args);
 	const reader = readable.getReader();
 	const decoder = new TextDecoder();
 
@@ -580,7 +589,43 @@ export async function doProgressAction(
 		// Now you can parse each JSON object
 		jsonObjects.forEach((jsonStr) => {
 			const data = JSON.parse(jsonStr) as NetworkProgressPacket;
-			setData(data);
+			setter(data);
 		});
+	}
+}
+
+async function handleReadable(readable: ReadableStream<any>, setter: Dispatch<SetStateAction<NetworkProgressPacket>>) {
+	const reader = readable.getReader();
+	const decoder = new TextDecoder();
+
+	while (true) {
+		const { value, done } = await reader.read();
+		if (done) break;
+
+		// Split the string into an array of individual JSON objects
+		const stream = decoder.decode(value);
+		const jsonObjects = stream.trim().split("\n");
+
+		// Now you can parse each JSON object
+		jsonObjects.forEach((jsonStr) => {
+			const data = JSON.parse(jsonStr) as NetworkProgressPacket;
+			setter(data);
+		});
+	}
+}
+
+export async function doProgressActionMany(
+	action: ProgressActionMany,
+	parsers: Parser[],
+	infos: Info[],
+	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
+	globalSetter: Dispatch<SetStateAction<NetworkProgressPacket>>,
+	args = [] as any[]
+) {
+	const { global, readables } = await action(...parsers, ...infos, ...args);
+
+	handleReadable(global, globalSetter);
+	for (let i = 0; i < readables.length; i++) {
+		handleReadable(readables[i], setters[i]);
 	}
 }

@@ -60,7 +60,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 				if (section === "User defined") {
 					userDefined[field] = value;
 				} else {
-					parseSchemaToObject(value, field, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
 				}
 			}
 		}

@@ -1,255 +1,256 @@
 "use client";
 
-import projectSubmitAction from "@/app/actions/project/projectSubmit";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useReducer, useRef, useState } from "react";
-import ProgressCircle from "./ProgressCircle";
-import InfoButton from "../InfoButton";
-import UserAdder from "../UserAdder";
 import { useAuth } from "@clerk/nextjs";
-
-function reducer(state: Record<string, string>, updates: Record<string, string>) {
-	if (updates.reset) {
-		return {};
-	} else {
-		return { ...state, ...updates };
-	}
-}
+import InfoButton from "../InfoButton";
+import Modal from "../Modal";
+import UserAdder from "../UserAdder";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import ProgressBar from "../ProgressBar";
+import { doProgressActionMany, fileToStream } from "@/app/helpers/utils";
+import projectSubmitAction from "@/app/actions/project/projectSubmit";
+import { parse } from "csv-parse";
+import { NetworkProgressPacket } from "@/types/globals";
+import { useRouter } from "next/navigation";
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);
-	const router = useRouter();
-	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
-	const [errorObj, setErrorObj] = useReducer(reducer, {} as Record<string, string>);
-	const [loading, setLoading] = useState("");
-	const [submitted, setSubmitted] = useState(false);
-	const [fileStates, setFileStates] = useState<Record<string, File | null>>({
-		project: null,
-		sample: null,
-		library: null
-	});
 
-	// Modal (popup) state after project submission
+	const router = useRouter();
+	const [loading, setLoading] = useState(false);
+
+	//response state variables that will have information streamed to them
+	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
+	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket);
+	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket);
+	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket);
+
+	//state variable that will have any error passed to it
+	const [errorMessage, setErrorMessage] = useState("");
+
+	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
-	const [modalMessage, setModalMessage] = useState("");
-	const [isError, setIsError] = useState(false);
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, files } = e.target;
-		setFileStates((prev) => ({
-			...prev,
-			[name]: files?.[0] || null
-		}));
-	};
+	//detect when there's an error
+	useEffect(() => {
+		if (projectResponse?.statusMessage === "error") {
+			setLoading(false);
+			modalRef.current?.showModal();
+			setErrorMessage(projectResponse.error);
+		}
+	}, [projectResponse]);
+	useEffect(() => {
+		if (sampleResponse?.statusMessage === "error") {
+			setLoading(false);
+			modalRef.current?.showModal();
+			setErrorMessage(sampleResponse.error);
+		}
+	}, [sampleResponse]);
+	useEffect(() => {
+		if (libraryResponse?.statusMessage === "error") {
+			setLoading(false);
+			modalRef.current?.showModal();
+			setErrorMessage(libraryResponse.error);
+		}
+	}, [libraryResponse]);
 
-	const allFilesPresent = fileStates.project && fileStates.sample && fileStates.library;
+	//detect when entire submission was successful
+	useEffect(() => {
+		if (globalResponse?.statusMessage === "success") {
+			setLoading(false);
+			modalRef.current?.showModal();
+			modalXRef.current!.disabled = true;
+			modalClickOffRef.current!.disabled = true;
+			setTimeout(() => {
+				router.push("/submit/analysis");
+			}, 5000);
+		} else if (globalResponse?.statusMessage === "error") {
+			setLoading(false);
+			modalRef.current?.showModal();
+			setErrorMessage(globalResponse.error);
+		}
+	}, [globalResponse]);
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (submitted) return;
+		setLoading(true);
 
-		setResponseObj({ reset: "true" });
-		setErrorObj({ reset: "true" });
-		setLoading("");
-		setSubmitted(true);
+		//reset page state
+		setGlobalResponse(undefined);
+		setProjectResponse(undefined);
+		setSampleResponse(undefined);
+		setLibraryResponse(undefined);
+		setErrorMessage("");
 
-		const formData = new FormData(event.currentTarget);
-		const files = ["project", "sample", "library"];
+		const isPrivate = event.currentTarget.isPrivate.checked;
 
-		formData.set("userIds", userIds.join(","));
+		//create csv-parse parsers from the File objects
+		const projectFile = event.currentTarget.project.files[0] as File;
+		const sampleFile = event.currentTarget.sample.files[0] as File;
+		const libraryFile = event.currentTarget.library.files[0] as File;
 
-		try {
-			// Process each file sequentially just for progress display (fake loading)
-			for (const f of files) {
-				setLoading(f);
-				await new Promise((resolve) => setTimeout(resolve, 500));
-				setResponseObj({ [f]: "File received" });
-			}
+		const projectParser = (await fileToStream(projectFile)).pipe(
+			parse({
+				columns: true,
+				comment: "#",
+				comment_no_infix: true,
+				delimiter: "\t"
+			})
+		);
+		const sampleParser = (await fileToStream(sampleFile)).pipe(
+			parse({
+				columns: true,
+				comment: "#",
+				comment_no_infix: true,
+				delimiter: "\t"
+			})
+		);
+		const libraryParser = (await fileToStream(libraryFile)).pipe(
+			parse({
+				columns: true,
+				comment: "#",
+				comment_no_infix: true,
+				delimiter: "\t"
+			})
+		);
 
-			// All files processed, proceed with submission
-			setLoading("submitting");
-			const result = await projectSubmitAction(formData);
-
-			if (result.statusMessage === "error") {
-				setIsError(true);
-				console.log(result.error);
-				setModalMessage(result.error);
-				modalRef.current?.showModal();
-				setErrorObj({
-					global: result.error,
-					status: "❌ Submission Failed",
-					submission: "Failed"
-				});
-				setSubmitted(false);
-			} else if (result.statusMessage === "success") {
-				const successMessage =
-					"Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds...";
-				setIsError(false);
-				setModalMessage(successMessage);
-				modalRef.current?.showModal();
-				modalXRef.current!.disabled = true;
-				modalClickOffRef.current!.disabled = true;
-				setResponseObj({
-					project: "Success!",
-					samples: "Success!",
-					library: "Success!",
-					submission: "Success!",
-					status: "✅ Project Submission Successful"
-				});
-
-				setTimeout(() => {
-					router.push("/submit/analysis");
-				}, 5000);
-			}
-		} catch (error) {
-			setIsError(true);
-			setModalMessage("An error occurred during submission.");
-			modalRef.current?.showModal();
-			setErrorObj({
-				global: "An error occurred during submission.",
-				status: "❌ Submission Failed",
-				submission: "Failed"
-			});
-			setSubmitted(false);
-		}
-
-		setLoading("");
+		//trigger streamed action
+		await doProgressActionMany(
+			projectSubmitAction,
+			[projectParser, sampleParser, libraryParser],
+			[projectParser.info, sampleParser.info, libraryParser.info],
+			[setProjectResponse, setSampleResponse, setLibraryResponse],
+			setGlobalResponse,
+			[userIds, isPrivate]
+		);
 	}
 
 	return (
-		<div className="p-6 bg-base-100 rounded-lg shadow-sm -mt-6">
-			<div className="min-h-[400px] mx-auto">
-				<form className="flex flex-col items-center" onSubmit={handleSubmit}>
-					<div className="w-[400px]">
-						<div className="flex gap-2 items-center">
-							<div className="text-primary text-lg">Add users to submission</div>
-							<InfoButton infoText="Users added to this Project are able to submit new Analyses for it, edit it, and delete it." />
-						</div>
-						<UserAdder userIds={userIds} setUserIds={setUserIds} cols={1} />
-					</div>
-
-					<fieldset className="fieldset p-4 bg-base-100 w-[400px]">
+		<div>
+			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
+				<FormSection
+					title="Make submission private"
+					info="Only users added to this Project will be able to see private submissions."
+				>
+					<fieldset className="fieldset bg-base-100">
 						<label className="fieldset-label flex gap-2">
 							<input name="isPrivate" type="checkbox" className="checkbox" />
 							<p>Private submission</p>
-							<InfoButton infoText="Only users added to this Project will be able to see private submissions." />
 						</label>
 					</fieldset>
+				</FormSection>
 
-					<div className="flex flex-col gap-5 items-center">
-						<div className="w-[400px] !mt-0">
-							<label className="form-control w-[400px]">
-								<div className="label">
-									<span className="label-text text-base-content">Project Metadata File:</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<input
-										type="file"
-										name="project"
-										required
-										disabled={!!loading || submitted}
-										accept=".tsv"
-										onChange={handleFileChange}
-										className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-									/>
-									<ProgressCircle
-										hasFile={!!fileStates["project"]}
-										response={responseObj["project"]}
-										error={errorObj["project"]}
-										loading={loading === "project"}
-									/>
-								</div>
-							</label>
-						</div>
-						<div className="w-[400px]">
-							<label className="form-control w-full">
-								<div className="label">
-									<span className="label-text text-base-content">Sample Metadata File:</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<input
-										type="file"
-										name="sample"
-										required
-										disabled={!!loading || submitted}
-										accept=".tsv"
-										onChange={handleFileChange}
-										className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-									/>
-									<ProgressCircle
-										hasFile={!!fileStates["sample"]}
-										response={responseObj["sample"]}
-										error={errorObj["sample"]}
-										loading={loading === "sample"}
-									/>
-								</div>
-							</label>
-						</div>
-						<div className="w-[400px]">
-							<label className="form-control w-full">
-								<div className="label">
-									<span className="label-text text-base-content">Library (Experiment Run) Metadata File:</span>
-								</div>
-								<div className="flex items-center gap-3">
-									<input
-										type="file"
-										name="library"
-										required
-										disabled={!!loading || submitted}
-										accept=".tsv"
-										onChange={handleFileChange}
-										className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-									/>
-									<ProgressCircle
-										hasFile={!!fileStates["library"]}
-										response={responseObj["library"]}
-										error={errorObj["library"]}
-										loading={loading === "library"}
-									/>
-								</div>
-							</label>
-						</div>
-
-						<button
-							className="btn btn-primary text-white w-[200px]"
-							disabled={!!loading || submitted || !allFilesPresent}
-						>
-							{loading || submitted ? <span className="loading loading-spinner loading-sm"></span> : "Submit"}
-						</button>
+				<FormSection
+					title="Add users to submission"
+					info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
+				>
+					<div className="flex flex-col items-center">
+						<UserAdder userIds={userIds} setUserIds={setUserIds} />
 					</div>
-				</form>
+				</FormSection>
 
-				<dialog ref={modalRef} className="modal">
-					<div className="modal-box">
-						<button
-							ref={modalXRef}
-							className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-							onClick={(e) => {
-								e.preventDefault();
-								modalRef.current?.close();
-							}}
-						>
-							✕
-						</button>
-						<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
-							{isError ? "Submission Failed" : "Project Submitted Successfully"}
-						</h3>
-						<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
-						{!isError && (
-							<div className="mt-4 flex items-center justify-center gap-2">
-								<span className="loading loading-spinner loading-sm"></span>
-								<span className="text-base-content/80 text-sm">Redirecting...</span>
+				<FormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
+					<fieldset className="fieldset col-2">
+						<legend className="fieldset-legend">Project Metadata File:</legend>
+						<input
+							type="file"
+							className="file-input file-input-primary"
+							name="project"
+							required
+							disabled={loading}
+							accept=".tsv"
+						/>
+					</fieldset>
+					<ProgressBar loading={loading} data={projectResponse} />
+
+					<fieldset className="fieldset col-2">
+						<legend className="fieldset-legend">Sample Metadata File:</legend>
+						<input
+							type="file"
+							className="file-input file-input-primary"
+							name="sample"
+							required
+							disabled={loading}
+							accept=".tsv"
+						/>
+					</fieldset>
+					<ProgressBar loading={loading} data={sampleResponse} />
+
+					<fieldset className="fieldset col-2">
+						<legend className="fieldset-legend">Library (Experiment Run) Metadata File:</legend>
+						<input
+							type="file"
+							className="file-input file-input-primary"
+							name="library"
+							required
+							disabled={loading}
+							accept=".tsv"
+						/>
+					</fieldset>
+					<ProgressBar loading={loading} data={libraryResponse} />
+
+					<button className="btn btn-primary col-2 justify-self-center" disabled={loading}>
+						Submit
+					</button>
+					{loading ? (
+						<div className="flex justify-center">
+							<span className="loading loading-spinner loading-xl"></span>
+						</div>
+					) : (
+						globalResponse?.statusMessage === "error" && (
+							<div className="flex justify-center">
+								<div className="tooltip tooltip-error" data-tip={globalResponse.error}>
+									<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+										✕
+									</span>
+								</div>
 							</div>
-						)}
+						)
+					)}
+				</FormSection>
+			</form>
+
+			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
+				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
+					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}
+				</h3>
+				<p className="mb-2 font-light whitespace-pre-wrap">
+					{errorMessage
+						? errorMessage
+						: "Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds..."}
+				</p>
+				{globalResponse?.statusMessage === "success" && (
+					<div className="mt-4 flex items-center justify-center gap-2">
+						<span className="loading loading-spinner loading-sm"></span>
+						<span className="text-base-content/80 text-sm">Redirecting...</span>
 					</div>
-					<form method="dialog" className="modal-backdrop">
-						<button ref={modalClickOffRef}>close</button>
-					</form>
-				</dialog>
+				)}
+			</Modal>
+		</div>
+	);
+}
+
+function FormSection({
+	children,
+	title,
+	info,
+	className
+}: {
+	children?: ReactNode;
+	title: string;
+	info?: string;
+	className?: string;
+}) {
+	return (
+		<div className="flex flex-col items-center w-full">
+			<div className="flex gap-2 justify-center w-full border-t-2 border-primary py-4">
+				<div className="text-primary text-xl">{title}</div>
+				{info && <InfoButton infoText={info} />}
 			</div>
+
+			<div className={className}>{children}</div>
 		</div>
 	);
 }
