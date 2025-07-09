@@ -402,7 +402,7 @@ model Library {
 
     // Relations
     assay_name String
-    Assay      Assay  @relation(fields: [assay_name], references: [assay_name])
+    Assay      Assay  @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
     samp_name  String
     Sample     Sample @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
 
