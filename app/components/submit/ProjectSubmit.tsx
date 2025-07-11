@@ -1,16 +1,15 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import InfoButton from "../InfoButton";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
-import { doProgressActionMany, fileToStream } from "@/app/helpers/utils";
+import { doProgressActionMany } from "@/app/helpers/utils";
 import projectSubmitAction from "@/app/actions/project/projectSubmit";
-import { parse } from "csv-parse";
 import { NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
+import SubmitFormSection from "./SubmitFormSection";
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
@@ -37,22 +36,22 @@ export default function ProjectSubmit() {
 	useEffect(() => {
 		if (projectResponse?.statusMessage === "error") {
 			setLoading(false);
-			modalRef.current?.showModal();
 			setErrorMessage(projectResponse.error);
+			modalRef.current?.showModal();
 		}
 	}, [projectResponse]);
 	useEffect(() => {
 		if (sampleResponse?.statusMessage === "error") {
 			setLoading(false);
-			modalRef.current?.showModal();
 			setErrorMessage(sampleResponse.error);
+			modalRef.current?.showModal();
 		}
 	}, [sampleResponse]);
 	useEffect(() => {
 		if (libraryResponse?.statusMessage === "error") {
 			setLoading(false);
-			modalRef.current?.showModal();
 			setErrorMessage(libraryResponse.error);
+			modalRef.current?.showModal();
 		}
 	}, [libraryResponse]);
 
@@ -60,16 +59,16 @@ export default function ProjectSubmit() {
 	useEffect(() => {
 		if (globalResponse?.statusMessage === "success") {
 			setLoading(false);
-			modalRef.current?.showModal();
 			modalXRef.current!.disabled = true;
 			modalClickOffRef.current!.disabled = true;
+			modalRef.current?.showModal();
 			setTimeout(() => {
 				router.push("/submit/analysis");
 			}, 5000);
 		} else if (globalResponse?.statusMessage === "error") {
 			setLoading(false);
-			modalRef.current?.showModal();
 			setErrorMessage(globalResponse.error);
+			modalRef.current?.showModal();
 		}
 	}, [globalResponse]);
 
@@ -91,46 +90,23 @@ export default function ProjectSubmit() {
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
-		const projectParser = (await fileToStream(projectFile)).pipe(
-			parse({
-				columns: true,
-				comment: "#",
-				comment_no_infix: true,
-				delimiter: "\t"
-			})
-		);
-		const sampleParser = (await fileToStream(sampleFile)).pipe(
-			parse({
-				columns: true,
-				comment: "#",
-				comment_no_infix: true,
-				delimiter: "\t"
-			})
-		);
-		const libraryParser = (await fileToStream(libraryFile)).pipe(
-			parse({
-				columns: true,
-				comment: "#",
-				comment_no_infix: true,
-				delimiter: "\t"
-			})
-		);
-
 		//trigger streamed action
 		await doProgressActionMany(
 			projectSubmitAction,
-			[projectParser, sampleParser, libraryParser],
-			[projectParser.info, sampleParser.info, libraryParser.info],
 			[setProjectResponse, setSampleResponse, setLibraryResponse],
 			setGlobalResponse,
-			[userIds, isPrivate]
+			projectFile,
+			sampleFile,
+			libraryFile,
+			userIds,
+			isPrivate
 		);
 	}
 
 	return (
-		<div>
+		<>
 			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
-				<FormSection
+				<SubmitFormSection
 					title="Make submission private"
 					info="Only users added to this Project will be able to see private submissions."
 				>
@@ -140,18 +116,18 @@ export default function ProjectSubmit() {
 							<p>Private submission</p>
 						</label>
 					</fieldset>
-				</FormSection>
+				</SubmitFormSection>
 
-				<FormSection
+				<SubmitFormSection
 					title="Add users to submission"
 					info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
 				>
 					<div className="flex flex-col items-center">
 						<UserAdder userIds={userIds} setUserIds={setUserIds} />
 					</div>
-				</FormSection>
+				</SubmitFormSection>
 
-				<FormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
+				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
 					<fieldset className="fieldset col-2">
 						<legend className="fieldset-legend">Project Metadata File:</legend>
 						<input
@@ -191,9 +167,10 @@ export default function ProjectSubmit() {
 					</fieldset>
 					<ProgressBar loading={loading} data={libraryResponse} />
 
-					<button className="btn btn-primary col-2 justify-self-center" disabled={loading}>
+					<button className="btn btn-success col-2 justify-self-center" disabled={loading}>
 						Submit
 					</button>
+
 					{loading ? (
 						<div className="flex justify-center">
 							<span className="loading loading-spinner loading-xl"></span>
@@ -209,7 +186,7 @@ export default function ProjectSubmit() {
 							</div>
 						)
 					)}
-				</FormSection>
+				</SubmitFormSection>
 			</form>
 
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
@@ -228,29 +205,6 @@ export default function ProjectSubmit() {
 					</div>
 				)}
 			</Modal>
-		</div>
-	);
-}
-
-function FormSection({
-	children,
-	title,
-	info,
-	className
-}: {
-	children?: ReactNode;
-	title: string;
-	info?: string;
-	className?: string;
-}) {
-	return (
-		<div className="flex flex-col items-center w-full">
-			<div className="flex gap-2 justify-center w-full border-t-2 border-primary py-4">
-				<div className="text-primary text-xl">{title}</div>
-				{info && <InfoButton infoText={info} />}
-			</div>
-
-			<div className={className}>{children}</div>
-		</div>
+		</>
 	);
 }

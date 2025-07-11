@@ -1,315 +1,181 @@
 "use client";
 
+import { ChangeEvent, FormEvent, useReducer, useRef, useState } from "react";
+import ProgressBar from "../ProgressBar";
+import SubmitFormSection from "./SubmitFormSection";
+import Modal from "../Modal";
+import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
+import { Project } from "@/prisma/generated/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { doProgressAction } from "@/app/helpers/utils";
+import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
 import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
 import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
-import { PutBlobResult } from "@vercel/blob";
+import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
-import { useState, FormEvent, useReducer, useEffect, useRef } from "react";
-import analysisSubmitAction from "../../actions/analysis/submit/analysisSubmit";
-import analysisDeleteAction from "../../actions/analysis/analysisDelete";
-import ProgressCircle from "./ProgressCircle";
-import { useRouter } from "next/navigation";
-import InfoButton from "../InfoButton";
-import { Project } from "@/app/generated/prisma/client";
-import { FormAction, NetworkPacket, TargetAction } from "@/types/globals";
-import Link from "next/link";
+import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
 
-function reducer(state: Record<string, string>, updates: Record<string, string>) {
-	if (updates.reset) {
-		return {};
-	} else {
-		return { ...state, ...updates };
-	}
-}
-
-function checkAnalysisFiles(analysis: string, fileStates: Record<string, File | null>) {
-	if (analysis === "\u200b") {
-		return !!fileStates["\u200b"];
-	}
-	return (
-		(!!fileStates[analysis] || !!fileStates["\u200b"]) &&
-		!!fileStates[`${analysis}_assign`] &&
-		!!fileStates[`${analysis}_occ`]
-	);
-}
-
-//TODO: split file
 export default function AnalysisSubmit() {
 	const router = useRouter();
-	const [responseObj, setResponseObj] = useReducer(reducer, {} as Record<string, string>);
-	const [errorObj, setErrorObj] = useReducer(reducer, {} as Record<string, string>);
-	const [loading, setLoading] = useState("");
-	const [submitted, setSubmitted] = useState(false);
-	const [analyses, setAnalyses] = useState(["\u200b"] as Array<string | null>);
-	const [project, setProject] = useState<Project | null>(null);
-	const [isPrivate, setIsPrivate] = useState(false); //TODO: (bug) adding analysis file unchecks box
-	const [fileStates, setFileStates] = useState<Record<string, File | null>>({});
+	const [loading, setLoading] = useState(false);
 
-	// Modal state for submission feedback
+	//state variable that will have any error passed to it
+	const [errorMessage, setErrorMessage] = useState("");
+
+	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
-	const [modalMessage, setModalMessage] = useState("");
-	const [isError, setIsError] = useState(false);
 
-	//scroll newest analysis box into view
-	useEffect(() => {
-		for (let i = 1; i < analyses.length; i++) {
-			if (analyses[analyses.length - i] !== null) {
-				const element = document.getElementById(`analysis_${analyses.length - i}`);
-				if (element) {
-					element.scrollIntoView({
-						block: "start",
-						behavior: "smooth"
-					});
-					break;
+	//list of analyses added to page, stored as a string of the analysis_run_name, -1 means the analysis was deleted from the list, -2 means the analysis file has not been selected yet
+	const [analysisIds, setAnalysisIds] = useState([-2] as Array<string | -1 | -2>);
+
+	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
+	//usage:
+	//	to set value of single response: setResponses([<analysisId>, <fileName>, <response>])
+	//	to clear all responses: setResponses(null)
+	const [responses, setResponses] = useReducer(
+		(
+			state: Record<
+				string,
+				{
+					analysis: NetworkProgressPacket;
+					assignments: NetworkProgressPacket;
+					occurrences: NetworkProgressPacket;
 				}
+			>,
+			update: { id: string; key: string; res: NetworkProgressPacket } | null
+		) => {
+			if (update) {
+				if (update.res?.statusMessage === "error") {
+					setLoading(false);
+					setErrorMessage(update.res.error);
+					modalRef.current?.showModal();
+				}
+				return { ...state, [update.id]: { ...state[update.id], [update.key]: update.res } };
+			} else {
+				return {};
 			}
-		}
-	}, [analyses]);
+		},
+		{}
+	);
 
-	async function parseAnalysis(input: HTMLInputElement, i: number) {
+	//detecting what project the analyses are associated with, and whether the project is private
+	const [project, setProject] = useState<Project | null>(null);
+	const [isPrivate, setIsPrivate] = useState(false);
+
+	//read analysis file to get the analysis_run_name
+	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
+	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
 		try {
-			if (input.files?.length) {
-				const file = input.files[0];
-
-				const lines = (await file.text()).replace(/[\r]+/gm, "").split("\n");
-				const headers = lines[0].split("\t");
-
-				const fieldIndex = headers.indexOf("term_name");
-				if (fieldIndex === -1) {
-					setModalMessage("No column named 'term_name' in file.");
-					setIsError(true);
-					modalRef.current?.showModal();
-					input.value = "";
-					return;
-				}
-
-				const valuesIndex = headers.indexOf("values");
-				if (valuesIndex === -1) {
-					setModalMessage("No column named 'values' in file.");
-					setIsError(true);
-					modalRef.current?.showModal();
-					input.value = "";
-					return;
-				}
+			if (event.target.files?.length) {
+				const file = event.target.files[0] as File;
 
 				let currAnalysis = "";
 				let currProject = "";
-				for (let j = 1; j < lines.length; j++) {
-					const currentLine = lines[j].split("\t");
-					const field = currentLine[fieldIndex];
-					const value = currentLine[valuesIndex];
 
-					if (field === "analysis_run_name") {
-						currAnalysis = value;
+				//parse file
+				const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+				for await (const record of parser) {
+					const field = record.term_name;
+					const value = record.values;
 
-						const tempAList = [...analyses];
-						tempAList[i] = value;
-						setAnalyses(tempAList);
-					}
+					//if missing both required fields, simply skip the line
+					if (field && value) {
+						//get value if the row is for the analysis_run_name field
+						if (field === "analysis_run_name") {
+							currAnalysis = value;
+						}
 
-					if (field === "project_id") {
-						currProject = value;
+						//get value if the row is for the project_id field
+						if (field === "project_id") {
+							currProject = value;
 
-						if (project) {
-							if (value !== project.project_id) {
-								setModalMessage("All analyses must be for the same project.");
-								setIsError(true);
-								modalRef.current?.showModal();
-								input.value = "";
-								return;
-							}
-						} else {
-							const response = await fetch(`/api/project?project_id=${value}&fields=project_id,isPrivate`);
-							const json = (await response.json()) as NetworkPacket;
-
-							if (json.statusMessage === "error") {
-								setModalMessage(json.error);
-								setIsError(true);
-								modalRef.current?.showModal();
-								input.value = "";
-								return;
-							} else {
-								const project = json.result[0];
-								if (!project) {
-									setModalMessage(`Could not find Project with project_id of ${currProject}.`);
-									setIsError(true);
+							//check if the project is different from the project already selected
+							if (project && analysisIds.filter((id) => id !== -1).length !== 1) {
+								if (value !== project.project_id) {
+									setErrorMessage("All analyses must be for the same project.");
 									modalRef.current?.showModal();
-									input.value = "";
+									event.target.value = "";
 									return;
 								}
-								setIsPrivate(project.isPrivate);
-								setProject(project);
+							} else {
+								//get project from database
+								const response = await fetch(`/api/project?project_id=${value}&fields=project_id,isPrivate`);
+								const json = (await response.json()) as NetworkPacket;
+
+								//handle errors
+								if (json.statusMessage === "error") {
+									setErrorMessage(json.error);
+									modalRef.current?.showModal();
+									event.target.value = "";
+									return;
+								} else {
+									const project = json.result[0];
+
+									//project with given project_id does not exist
+									if (!project) {
+										setErrorMessage(`Could not find Project with project_id of ${currProject}.`);
+										modalRef.current?.showModal();
+										event.target.value = "";
+										return;
+									}
+
+									//set state variables for project
+									setIsPrivate(project.isPrivate);
+									setProject(project);
+								}
 							}
 						}
-					}
 
-					if (currAnalysis && currProject) {
-						return;
+						//replace -2 (not selected yet) id with analysis_run_name from file in analysisId list
+						if (currAnalysis && currProject) {
+							setAnalysisIds(analysisIds.toSpliced(i, 1, currAnalysis));
+							return;
+						}
 					}
 				}
 
-				console.log(currAnalysis, currProject);
-
+				//missing fields
 				if (!currAnalysis) {
-					setModalMessage("Could not find analysis_run_name in term_name column.");
-					setIsError(true);
+					setErrorMessage("Could not find analysis_run_name in term_name column.");
 					modalRef.current?.showModal();
-					input.value = "";
+					event.target.value = "";
 				} else if (!currProject) {
-					setModalMessage("Could not find project_id in term_name column.");
-					setIsError(true);
+					setErrorMessage("Could not find project_id in term_name column.");
 					modalRef.current?.showModal();
-					input.value = "";
+					event.target.value = "";
 				} else {
-					setModalMessage("Unknown error occurred while parsing analysis file.");
-					setIsError(true);
+					setErrorMessage("Unknown error occurred while parsing analysis file.");
 					modalRef.current?.showModal();
-					input.value = "";
+					event.target.value = "";
 				}
 			}
 		} catch (err) {
 			console.log(err);
-			setModalMessage("Analysis Metadata file in wrong format.");
-			setIsError(true);
+			setErrorMessage("Analysis Metadata file in wrong format.");
 			modalRef.current?.showModal();
-			input.value = "";
+			event.target.value = "";
 		}
 	}
-
-	async function dbDelete(deleteAction: TargetAction, analysis_run_name: string) {
-		try {
-			const response = await deleteAction(analysis_run_name);
-			if (response.statusMessage === "error") {
-				setErrorObj({
-					[analysis_run_name]: response.error
-				});
-			} else if (response.statusMessage === "success") {
-				const tempResponseObj = { ...responseObj };
-				setResponseObj({
-					[analysis_run_name]: response.result
-				});
-			} else {
-				setErrorObj({
-					[analysis_run_name]: "Unknown error."
-				});
-			}
-		} catch (err) {
-			setErrorObj({
-				[analysis_run_name]: `Error: ${(err as Error).message}.`
-			});
-		}
-	}
-
-	async function analysisFileSubmit({
-		analysis_run_name,
-		file,
-		fileSuffix = "",
-		submitAction,
-		fieldsToSet = {},
-		skipBlob = false
-	}: {
-		analysis_run_name: string;
-		file: File;
-		fileSuffix?: string;
-		submitAction: FormAction;
-		fieldsToSet?: Record<string, any>;
-		skipBlob?: boolean;
-	}): Promise<{ error?: string }> {
-		const formData = new FormData();
-		formData.set("analysis_run_name", analysis_run_name);
-		for (const [key, val] of Object.entries(fieldsToSet)) {
-			formData.set(key, val);
-		}
-
-		let blob = {} as PutBlobResult;
-
-		let error;
-
-		try {
-			if (skipBlob) {
-				formData.set("file", file);
-			} else {
-				//upload file to blob store
-				//TODO: make it so access isn't public
-				blob = await upload(file.name, file, {
-					access: "public",
-					handleUploadUrl: "/api/analysisFile/upload",
-					multipart: true
-				});
-				formData.set("url", blob.url);
-			}
-
-			//send request
-			const response = await submitAction(formData);
-			if (response.statusMessage === "error") {
-				setErrorObj({
-					[`${analysis_run_name}${fileSuffix}`]: response.error
-				});
-				error = response.error;
-			} else if (response.statusMessage === "success") {
-				setResponseObj({
-					[`${analysis_run_name}${fileSuffix}`]: response.result
-				});
-			} else {
-				setErrorObj({
-					[`${analysis_run_name}${fileSuffix}`]: "Unknown error."
-				});
-				error = "Unknown error.";
-			}
-		} catch (err) {
-			setErrorObj({
-				[`${analysis_run_name}${fileSuffix}`]: `Error: ${(err as Error).message}.`
-			});
-			error = `Error: ${(err as Error).message}.`;
-		}
-
-		if (!skipBlob) {
-			// delete file from blob store
-			await fetch(`/api/analysisFile/delete?url=${blob.url}`, {
-				method: "DELETE"
-			});
-		}
-
-		return { error };
-	}
-
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, files } = e.target;
-		// If this is the first metadata file (when analysis name is \u200b)
-		if (analyses.includes("\u200b") && !name.includes("_assign") && !name.includes("_occ")) {
-			setFileStates((prev) => ({
-				...prev,
-				"\u200b": files?.[0] || null,
-				[name]: files?.[0] || null // Also store under the actual name
-			}));
-		} else {
-			setFileStates((prev) => ({
-				...prev,
-				[name]: files?.[0] || null
-			}));
-		}
-	};
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (submitted) return;
+		setLoading(true);
 
-		setResponseObj({ reset: "true" });
-		setErrorObj({ reset: "true" });
-		setLoading("");
-		setSubmitted(true);
+		//reset page state
+		setResponses(null);
+		setErrorMessage("");
 
-		const allFormData = new FormData(event.currentTarget);
-		let hasError = false;
+		const target = event.target as HTMLFormElement;
 
-		let analysis_i = 0;
-		for (const analysis_run_name of analyses) {
-			if (analysis_run_name && analysis_run_name !== "\u200b") {
-				//analysis file
-				setLoading(analysis_run_name);
-				const element = document.getElementById(`analysis_${analysis_i}`);
+		const activeIds = analysisIds.filter((id) => typeof id === "string");
+		try {
+			//submit for every analysis section
+			for (const id of activeIds) {
+				//scroll analysis into view
+				const element = document.getElementById(id);
 				if (element) {
 					element.scrollIntoView({
 						block: "start",
@@ -317,360 +183,321 @@ export default function AnalysisSubmit() {
 					});
 				}
 
-				const { error: analysisError } = await analysisFileSubmit({
-					analysis_run_name,
-					file: allFormData.get(analysis_run_name) as File,
-					submitAction: analysisSubmitAction,
-					fieldsToSet: { isPrivate },
-					skipBlob: true
+				//analysis submit
+				const analysisFile = target[`analysis_${id}`].files[0] as File;
+				//submit analysis file
+				const analysisError = await doProgressAction({
+					action: analysisSubmitAction,
+					reducer: { id, key: "analysis", setter: setResponses },
+					args: [analysisFile, isPrivate]
 				});
-
+				//handle errors
 				if (analysisError) {
-					hasError = true;
-					setIsError(true);
-					setModalMessage(analysisError);
+					setErrorMessage(analysisError);
 					modalRef.current?.showModal();
-					setErrorObj({
-						global: analysisError,
-						status: "❌ Submission Failed"
-					});
-					setSubmitted(false);
-					break;
+					return;
 				}
 
-				//assignments file
-				setLoading(`${analysis_run_name}_assign`);
-				const { error: assignError } = await analysisFileSubmit({
-					analysis_run_name,
-					file: allFormData.get(`${analysis_run_name}_assign`) as File,
-					fileSuffix: "_assign",
-					submitAction: assignSubmitAction,
-					fieldsToSet: {
-						analysis_run_name
-					}
-				});
-
-				if (assignError) {
-					//TODO: fix deleting the analysis
-					//remove analysis from database
-					await dbDelete(analysisDeleteAction, analysis_run_name);
-
-					hasError = true;
-					setIsError(true);
-					setModalMessage(assignError);
-					modalRef.current?.showModal();
-					setErrorObj({
-						global: assignError,
-						status: "❌ Submission Failed"
+				try {
+					//assignments submit
+					const assignmentsFile = target[`assignments_${id}`].files[0] as File;
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
-					setSubmitted(false);
-					break;
-				}
-
-				//occurrences file
-				setLoading(`${analysis_run_name}_occ`);
-				const { error: occError } = await analysisFileSubmit({
-					analysis_run_name,
-					file: allFormData.get(`${analysis_run_name}_occ`) as File,
-					fileSuffix: "_occ",
-					submitAction: occSubmitAction,
-					fieldsToSet: {
-						analysis_run_name
-					}
-				});
-
-				if (occError) {
-					console.log("occError");
-					//TODO: fix deleting the analysis
-					await dbDelete(analysisDeleteAction, analysis_run_name);
-					//remove analyses, features, and taxonomies from database
-					// await dbDelete(analysisDeleteAction, analysisResult!.analysis_run_name, {
-					// 	dbFeatures: assignResult!.dbFeatures,
-					// 	dbTaxonomies: assignResult!.dbTaxonomies
-					// });
-
-					hasError = true;
-					setIsError(true);
-					setModalMessage(occError);
-					setErrorObj({
-						global: occError,
-						status: "❌ Submission Failed"
+					const assignmentsUrl = (
+						await upload(assignmentsFile.name, assignmentsFile, {
+							access: "public",
+							handleUploadUrl: "/api/analysisFile/upload",
+							multipart: true
+						})
+					).url;
+					//submit assignments file url
+					const assignmentsError = await doProgressAction({
+						action: assignSubmitAction,
+						reducer: { id, key: "assignments", setter: setResponses },
+						args: [id, assignmentsUrl]
 					});
+					//delete file from blob storage
+					await fetch(`/api/analysisFile/delete?url=${assignmentsUrl}`, {
+						method: "DELETE"
+					});
+					//handle errors
+					if (assignmentsError) {
+						setErrorMessage(assignmentsError);
+						modalRef.current?.showModal();
+
+						//delete analysis
+						const deleteResponse = await analysisDeleteAction(id);
+						if (deleteResponse.statusMessage === "error") {
+							setErrorMessage(assignmentsError + "\n" + deleteResponse.error);
+						}
+						return;
+					}
+
+					//occurrences submit
+					const occurrencesFile = target[`occurrences_${id}`].files[0] as File;
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "occurrences",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+					});
+					const occurrencesUrl = (
+						await upload(occurrencesFile.name, occurrencesFile, {
+							access: "public",
+							handleUploadUrl: "/api/analysisFile/upload",
+							multipart: true
+						})
+					).url;
+					//submit occurrences file url
+					const occurrencesError = await doProgressAction({
+						action: occSubmitAction,
+						reducer: { id, key: "occurrences", setter: setResponses },
+						args: [id, occurrencesUrl]
+					});
+					//delete file from blob storage
+					await fetch(`/api/analysisFile/delete?url=${occurrencesUrl}`, {
+						method: "DELETE"
+					});
+					//handle errors
+					if (occurrencesError) {
+						setErrorMessage(occurrencesError);
+						modalRef.current?.showModal();
+
+						//delete analysis
+						const deleteResponse = await analysisDeleteAction(id);
+						if (deleteResponse.statusMessage === "error") {
+							setErrorMessage(occurrencesError + "\n" + deleteResponse.error);
+						}
+						return;
+					}
+				} catch (err) {
+					const error = err as Error;
+					setErrorMessage(error.message);
 					modalRef.current?.showModal();
-					setSubmitted(false);
-					break;
+
+					//delete analysis
+					const deleteResponse = await analysisDeleteAction(id);
+					if (deleteResponse.statusMessage === "error") {
+						setErrorMessage(error.message + "\n" + deleteResponse.error);
+					}
+
+					setLoading(false);
+					return;
 				}
 			}
 
-			analysis_i++;
-		}
-
-		if (!hasError) {
-			const successMessage =
-				"Analysis successfully submitted! You will be redirected to the project page in 5 seconds...";
-			setIsError(false);
-			setModalMessage(successMessage);
-			modalRef.current?.showModal();
+			//redirect user to Analysis explore page
 			modalXRef.current!.disabled = true;
 			modalClickOffRef.current!.disabled = true;
-			setResponseObj({
-				global: successMessage,
-				status: "✅ Analysis Submission Successful"
-			});
-
+			modalRef.current?.showModal();
 			setTimeout(() => {
-				router.push(`/explore/project`);
+				router.push("/explore/analysis");
 			}, 5000);
+		} catch (err) {
+			const error = err as Error;
+			setErrorMessage(error.message);
+			modalRef.current?.showModal();
 		}
 
-		setLoading("");
+		setLoading(false);
 	}
-
-	// To Carter: there is a rare case where the submit button is disabled if you delete an analysis
-	const handleDeleteAnalysis = (i: number) => {
-		const analysisToDelete = analyses[i];
-
-		// Update analyses array
-		setAnalyses((prev) => {
-			const newAnalyses = [...prev];
-			// TODO: This is what's causing the Submit button to remain disabled after you delete an analysis. It uses "\u200b" instead of null to maintain an order to the analyses array. Changing it to "\u200b" causes other bugs that need to be resolved to fix everything.
-			newAnalyses[i] = null;
-			if (newAnalyses.every((e) => e === "\u200b" || e === null)) {
-				setProject(null);
-			}
-			return newAnalyses;
-		});
-
-		// Clean up fileStates
-		setFileStates((prev) => {
-			const newState = { ...prev };
-			if (analysisToDelete) {
-				delete newState[analysisToDelete];
-				delete newState[`${analysisToDelete}_assign`];
-				delete newState[`${analysisToDelete}_occ`];
-			}
-			return newState;
-		});
-	};
 
 	return (
 		<>
-			{project && (
-				<div className="text-center w-full">
-					Analyses for project:{" "}
-					<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
-						{project.project_id}
-					</Link>
-				</div>
-			)}
-
-			<form className="card-body w-full max-w-4xl mx-auto" onSubmit={handleSubmit}>
-				<div className="space-y-6 -mt-8">
+			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
+				<SubmitFormSection title="Project">
+					<div className="text-center w-full">
+						{project ? (
+							<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+								{project.project_id}
+							</Link>
+						) : (
+							"No analysis selected yet"
+						)}
+					</div>
+				</SubmitFormSection>
+				<SubmitFormSection
+					title="Make submission private"
+					info="Only users added to the Project for these Analyses will be able to see private submissions."
+				>
 					<fieldset className="fieldset bg-base-100">
 						<label className="fieldset-label flex gap-2">
 							<input
-								name="isPrivate"
 								type="checkbox"
 								className="checkbox"
 								checked={isPrivate}
-								onChange={(e) => setIsPrivate(e.currentTarget.checked)}
-								disabled={!!loading || project?.isPrivate || false}
+								onChange={(e) => setIsPrivate(e.target.checked)}
+								disabled={project?.isPrivate || false}
 							/>
-							<div>Private submission</div>
-							<InfoButton infoText="" />
+							<p>Private submission</p>
 						</label>
 					</fieldset>
+				</SubmitFormSection>
 
-					{analyses.map(
-						(a, i) =>
-							a && (
-								<div key={i} id={`analysis_${i}`} className="card bg-base-100 shadow-sm p-6 relative">
-									{analyses[i] && (
-										<div className="space-y-4">
-											<h2 className="text-xl font-semibold text-base-content mb-4">
-												{analyses[i] === "\u200b" ? "New Analysis" : analyses[i]}
-											</h2>
+				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
+					{analysisIds.map((id, i) => (
+						<AnalysisFormSection
+							key={i}
+							i={i}
+							handleChange={(event: ChangeEvent<HTMLInputElement>) => parseAnalysis(event, i)}
+							handleDelete={() => {
+								const temp = analysisIds.toSpliced(i, 1, -1);
+								setAnalysisIds(temp);
+								if (temp.filter((id) => typeof id === "string").length === 0) {
+									setProject(null);
+									setIsPrivate(false);
+								}
+							}}
+							id={id}
+							deletable={analysisIds.filter((id) => id !== -1).length > 1}
+							loading={loading}
+							responses={responses[id]}
+						/>
+					))}
 
-											<div className="space-y-4">
-												<div className="flex items-center gap-3">
-													<label className="form-control w-full">
-														<div className="label">
-															<span className="label-text text-base-content">Analysis Metadata File:</span>
-														</div>
-														<input
-															type="file"
-															name={analyses[i]}
-															required
-															disabled={!!loading}
-															accept=".tsv"
-															onChange={(e) => {
-																handleFileChange(e);
-																parseAnalysis(e.currentTarget, i);
-															}}
-															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-														/>
-													</label>
-													<div className="flex items-center self-end mb-[10.5px]">
-														<ProgressCircle
-															response={responseObj[analyses[i]]}
-															error={errorObj[analyses[i]]}
-															loading={loading === analyses[i]}
-															hasFile={!!fileStates["\u200b"] || !!fileStates[analyses[i]]}
-														/>
-													</div>
-												</div>
-
-												<div className="flex items-center gap-3">
-													<label className="form-control w-full">
-														<div className="label">
-															<span className="label-text text-base-content">ASV Taxa/Features File:</span>
-														</div>
-														<input
-															type="file"
-															name={`${analyses[i]}_assign`}
-															required
-															disabled={!!loading}
-															accept=".tsv"
-															onChange={handleFileChange}
-															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-														/>
-													</label>
-													<div className="flex items-center self-end mb-[10.5px]">
-														<ProgressCircle
-															response={responseObj[`${analyses[i]}_assign`]}
-															error={errorObj[`${analyses[i]}_assign`]}
-															loading={loading === `${analyses[i]}_assign`}
-															hasFile={!!fileStates[`${analyses[i]}_assign`]}
-														/>
-													</div>
-												</div>
-
-												<div className="flex items-center gap-3">
-													<label className="form-control w-full">
-														<div className="label">
-															<span className="label-text text-base-content">Occurrence Table File:</span>
-														</div>
-														<input
-															type="file"
-															name={`${analyses[i]}_occ`}
-															required
-															disabled={!!loading}
-															accept=".tsv"
-															onChange={handleFileChange}
-															className="file-input file-input-bordered file-input-primary bg-base-100 w-full [&::file-selector-button]:text-white"
-														/>
-													</label>
-													<div className="flex items-center self-end mb-[10.5px]">
-														<ProgressCircle
-															response={responseObj[`${analyses[i]}_occ`]}
-															error={errorObj[`${analyses[i]}_occ`]}
-															loading={loading === `${analyses[i]}_occ`}
-															hasFile={!!fileStates[`${analyses[i]}_occ`]}
-														/>
-													</div>
-												</div>
-											</div>
-										</div>
-									)}
-
-									{analyses.filter((a) => a !== null).length > 1 && (
-										<button
-											className="btn btn-sm absolute top-4 right-4 bg-base-200 hover:bg-base-200/80"
-											type="button"
-											disabled={!!loading}
-											onClick={() => {
-												handleDeleteAnalysis(i);
-											}}
-										>
-											<span className="text-base-content">×</span>
-										</button>
-									)}
-								</div>
-							)
-					)}
-
-					{analyses[analyses.length - 1] !== "\u200b" && (
-						<div className="flex justify-center">
-							<button
-								className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm"
-								type="button"
-								disabled={!!loading}
-								onClick={() => setAnalyses([...analyses, "\u200b"])}
-							>
-								<span className="text-base-content">+</span> Add Another Analysis to Submission
-							</button>
-						</div>
-					)}
-
-					<div className="flex justify-center mt-8">
-						<button
-							className="btn btn-primary text-white w-[200px]"
-							disabled={!!loading || submitted || !analyses.every((a) => a && checkAnalysisFiles(a, fileStates))}
-						>
-							{loading || submitted ? <span className="loading loading-spinner loading-sm"></span> : "Submit"}
-						</button>
-					</div>
-				</div>
-			</form>
-
-			<dialog ref={modalRef} className="modal">
-				<div className="modal-box">
 					<button
-						ref={modalXRef}
-						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-						onClick={(e) => {
-							e.preventDefault();
-							modalRef.current?.close();
+						className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm col-2 justify-self-center"
+						type="button"
+						disabled={!!loading}
+						onClick={() => {
+							setAnalysisIds([...analysisIds, -2]);
+
+							const element = document.getElementById((analysisIds.length - 1).toString());
+							if (element) {
+								element.scrollIntoView({
+									block: "start",
+									behavior: "smooth"
+								});
+							}
 						}}
 					>
-						✕
+						<span className="text-base-content">+</span> Add Another Analysis to Submission
 					</button>
-					<h3 className={`text-lg font-bold mb-2 ${isError ? "text-error" : "text-success"}`}>
-						{isError ? "Submission Failed" : "Analysis Submitted Successfully"}
-					</h3>
-					<p className="mb-2 font-light whitespace-pre-wrap">{modalMessage}</p>
-					{!isError && (
-						<div className="mt-4 flex items-center justify-center gap-2">
-							<span className="loading loading-spinner loading-sm"></span>
-							<span className="text-base-content/80 text-sm">Redirecting...</span>
-						</div>
-					)}
-				</div>
-				<form method="dialog" className="modal-backdrop">
-					<button ref={modalClickOffRef}>close</button>
-				</form>
-			</dialog>
 
-			{/* Status Messages */}
-			<div className="flex-grow mt-8">
-				{(responseObj.status || errorObj.status) && (
-					<div
-						className={`
-						p-6 rounded-lg mx-auto max-w-lg
-						${errorObj.status ? "bg-error/10 border-2 border-error" : "bg-success/10 border-2 border-success"}
-					`}
-					>
-						<h3 className={`text-lg font-bold mb-2 ${errorObj.status ? "text-error" : "text-success"}`}>
-							{errorObj.status ? "Analysis Submission Failed" : "Analysis Submitted Successfully"}
-						</h3>
-						<p className="text-base text-base-content">
-							{errorObj.status
-								? errorObj.global
-								: "Please stay on this page. You will be redirected to the explore page in a few seconds..."}
-						</p>
-						{responseObj.status && (
-							<div className="mt-4 flex items-center justify-center gap-2">
-								<span className="loading loading-spinner loading-sm"></span>
-								<span className="text-base-content/80 text-sm">Redirecting...</span>
+					<button className="btn btn-success col-2 justify-self-center" disabled={loading}>
+						Submit
+					</button>
+
+					{loading ? (
+						<div className="flex justify-center">
+							<span className="loading loading-spinner loading-xl"></span>
+						</div>
+					) : (
+						errorMessage && (
+							<div className="flex justify-center">
+								<div className="tooltip tooltip-error" data-tip={errorMessage}>
+									<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+										✕
+									</span>
+								</div>
 							</div>
-						)}
+						)
+					)}
+				</SubmitFormSection>
+			</form>
+
+			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
+				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
+					{errorMessage ? "Submission Failed" : "Analysis Submitted Successfully"}
+				</h3>
+				<p className="mb-2 font-light whitespace-pre-wrap">{errorMessage ? errorMessage : ""}</p>
+				{!errorMessage && (
+					<div className="mt-4 flex items-center justify-center gap-2">
+						<span className="loading loading-spinner loading-sm"></span>
+						<span className="text-base-content/80 text-sm">Redirecting...</span>
 					</div>
+				)}
+			</Modal>
+		</>
+	);
+}
+
+function AnalysisFormSection({
+	handleChange,
+	handleDelete,
+	id,
+	i,
+	deletable,
+	loading,
+	responses
+}: {
+	handleChange: (input: ChangeEvent<HTMLInputElement>) => Promise<void>;
+	handleDelete: () => void;
+	id: string | -1 | -2;
+	i: number;
+	deletable: boolean;
+	loading: boolean;
+	responses:
+		| {
+				analysis: NetworkProgressPacket;
+				assignments: NetworkProgressPacket;
+				occurrences: NetworkProgressPacket;
+		  }
+		| undefined;
+}) {
+	if (id === -1) {
+		return <></>;
+	}
+
+	return (
+		<>
+			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
+				<h2 className="text-xl font-semibold text-base-content mb-4">{typeof id === "string" ? id : "New Analysis"}</h2>
+				{deletable && (
+					<button
+						className="btn btn-sm btn-error rounded-full"
+						type="button"
+						disabled={!!loading}
+						onClick={handleDelete}
+					>
+						X
+					</button>
 				)}
 			</div>
 
-			{!!loading && (
-				<div className="text-center mt-1 text-base-content/80">Loading, please do not close the website</div>
-			)}
+			<fieldset className="fieldset col-2">
+				<legend className="fieldset-legend">Analysis Metadata File:</legend>
+				<input
+					type="file"
+					className="file-input file-input-primary"
+					name={`analysis_${id}`}
+					required
+					disabled={loading}
+					accept=".tsv"
+					onChange={handleChange}
+				/>
+			</fieldset>
+			<ProgressBar loading={loading} data={responses?.analysis} />
+
+			<fieldset className="fieldset col-2">
+				<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
+				<input
+					type="file"
+					className="file-input file-input-primary"
+					name={`assignments_${id}`}
+					required
+					disabled={typeof id !== "string" || loading}
+					accept=".tsv"
+				/>
+			</fieldset>
+			<ProgressBar loading={loading} data={responses?.assignments} />
+
+			<fieldset className="fieldset col-2">
+				<legend className="fieldset-legend">Occurrence Table File:</legend>
+				<input
+					type="file"
+					className="file-input file-input-primary"
+					name={`occurrences_${id}`}
+					required
+					disabled={typeof id !== "string" || loading}
+					accept=".tsv"
+				/>
+			</fieldset>
+			<ProgressBar loading={loading} data={responses?.occurrences} />
 		</>
 	);
 }

@@ -6,9 +6,7 @@ import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy
 import { JsonValue } from "@prisma/client/runtime/library";
 import distinctColors from "distinct-colors";
 import { NetworkProgressPacket, ProgressAction, ProgressActionMany } from "@/types/globals";
-import { Dispatch, SetStateAction } from "react";
-import { Info, Parser } from "csv-parse/.";
-import { PassThrough } from "stream";
+import { ActionDispatch, Dispatch, SetStateAction } from "react";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -244,16 +242,21 @@ function stringToNumber(str: string) {
 	}
 }
 
-export function parseDbEnum(dbEnum: Record<string, string>) {
+export function deadBooleanToString(value: any) {
+	return stringToNumber(value)
+		.replaceAll("PAREN1_", "(")
+		.replaceAll("PAREN2_", ")")
+		.replaceAll("PERCENT_", "%")
+		.replaceAll("COLON__", ": ")
+		.replaceAll("__", "-")
+		.replaceAll("_", " ");
+}
+
+export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	const newEnum = {} as Record<string, string>;
 
 	for (const [key, value] of Object.entries(dbEnum)) {
-		newEnum[key] = stringToNumber(value)
-			.replaceAll("PAREN1_", "(")
-			.replaceAll("PAREN2_", ")")
-			.replaceAll("PERCENT_", "%")
-			.replaceAll("__", "-")
-			.replaceAll("_", " ");
+		newEnum[key] = deadBooleanToString(value);
 	}
 
 	return newEnum;
@@ -534,8 +537,6 @@ export function createProgressStream() {
 	async function error(message: string) {
 		const data = JSON.stringify({ statusMessage: "error", error: message });
 		await writer.write(encoder.encode(`${data}\n`));
-
-		// return
 	}
 
 	/**
@@ -563,38 +564,61 @@ export function createProgressStream() {
 	};
 }
 
-export async function fileToStream(file: File) {
-	return new PassThrough().end(Buffer.from(await file.arrayBuffer()));
-}
-
-export async function doProgressAction(
-	action: ProgressAction,
-	parser: Parser,
-	info: Info,
-	setter: Dispatch<SetStateAction<NetworkProgressPacket>>,
-	args = [] as any[]
-) {
-	const readable = await action(parser, info, ...args);
+export async function doProgressAction({
+	action,
+	setter,
+	reducer,
+	args = []
+}: {
+	action: ProgressAction;
+	setter?: Dispatch<SetStateAction<NetworkProgressPacket>>;
+	reducer?: {
+		id: string;
+		key: string;
+		setter: ActionDispatch<
+			[
+				update: {
+					id: string;
+					key: string;
+					res: NetworkProgressPacket;
+				} | null
+			]
+		>;
+	};
+	args: any[];
+}) {
+	const readable = await action(...args);
 	const reader = readable.getReader();
 	const decoder = new TextDecoder();
 
 	while (true) {
 		const { value, done } = await reader.read();
-		if (done) break;
+		if (done) {
+			return;
+		}
 
-		// Split the string into an array of individual JSON objects
+		//split the string into an array of individual JSON objects
 		const stream = decoder.decode(value);
 		const jsonObjects = stream.trim().split("\n");
 
-		// Now you can parse each JSON object
-		jsonObjects.forEach((jsonStr) => {
+		//parse each JSON object
+		for (const jsonStr of jsonObjects) {
 			const data = JSON.parse(jsonStr) as NetworkProgressPacket;
-			setter(data);
-		});
+
+			if (setter) {
+				setter(data);
+			} else if (reducer) {
+				reducer.setter({ id: reducer.id, key: reducer.key, res: data });
+			}
+
+			if (data?.statusMessage === "error") {
+				return data.error;
+			}
+		}
 	}
 }
 
-async function handleReadable(readable: ReadableStream<any>, setter: Dispatch<SetStateAction<NetworkProgressPacket>>) {
+async function handleReadable(readable: ReadableStream<any>, setter: (res: NetworkProgressPacket) => void) {
 	const reader = readable.getReader();
 	const decoder = new TextDecoder();
 
@@ -602,11 +626,11 @@ async function handleReadable(readable: ReadableStream<any>, setter: Dispatch<Se
 		const { value, done } = await reader.read();
 		if (done) break;
 
-		// Split the string into an array of individual JSON objects
+		//split the string into an array of individual JSON objects
 		const stream = decoder.decode(value);
 		const jsonObjects = stream.trim().split("\n");
 
-		// Now you can parse each JSON object
+		//parse each JSON object
 		jsonObjects.forEach((jsonStr) => {
 			const data = JSON.parse(jsonStr) as NetworkProgressPacket;
 			setter(data);
@@ -616,13 +640,11 @@ async function handleReadable(readable: ReadableStream<any>, setter: Dispatch<Se
 
 export async function doProgressActionMany(
 	action: ProgressActionMany,
-	parsers: Parser[],
-	infos: Info[],
 	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
 	globalSetter: Dispatch<SetStateAction<NetworkProgressPacket>>,
-	args = [] as any[]
+	...args: any[]
 ) {
-	const { global, readables } = await action(...parsers, ...infos, ...args);
+	const { global, readables } = await action(...args);
 
 	handleReadable(global, globalSetter);
 	for (let i = 0; i < readables.length; i++) {

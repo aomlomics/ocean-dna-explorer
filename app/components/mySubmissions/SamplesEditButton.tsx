@@ -2,9 +2,8 @@
 
 import sampleEditAction from "@/app/actions/sample/sampleEdit";
 import { FormEvent, useRef, useState } from "react";
-import { parse } from "csv-parse";
 import { NetworkProgressPacket } from "@/types/globals";
-import { doProgressAction, fileToStream } from "@/app/helpers/utils";
+import { doProgressAction } from "@/app/helpers/utils";
 import ProgressBar from "../ProgressBar";
 
 export default function SubmissionUsersButton() {
@@ -25,16 +24,7 @@ export default function SubmissionUsersButton() {
 		setLoading(true);
 
 		const file = event.currentTarget.sampleMetadata.files[0] as File;
-		const parser = (await fileToStream(file)).pipe(
-			parse({
-				columns: true,
-				comment: "#",
-				comment_no_infix: true,
-				delimiter: "\t"
-			})
-		);
-
-		await doProgressAction(sampleEditAction, parser, parser.info, setData);
+		await doProgressAction({ action: sampleEditAction, setter: setData, args: [file] });
 
 		close();
 	}

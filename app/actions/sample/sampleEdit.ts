@@ -10,15 +10,17 @@ import {
 	SampleScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
-import { Parser } from "csv-parse";
+import { parse } from "csv-parse";
 import { auth } from "@clerk/nextjs/server";
 
-async function doEdit(stream: ProgressStream, csvParser: Parser) {
+async function doEdit(stream: ProgressStream, file: File) {
 	const { userId } = await auth();
 
 	const samples = [] as any[];
 
-	for await (const record of csvParser) {
+	let i = 0;
+	const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+	for await (const record of parser) {
 		const sampleRow = {} as SamplePartial;
 
 		for (const [field, value] of Object.entries(record)) {
@@ -45,6 +47,13 @@ async function doEdit(stream: ProgressStream, csvParser: Parser) {
 		}
 
 		samples.push(parsedSample.data);
+
+		//add to progress bar
+		i++;
+		await stream.message(
+			`Processed Sample ${parsedSample.data.samp_name}, row ${i} of ${parser.info.records}.`,
+			(i / parser.info.records) * 50
+		);
 	}
 
 	await stream.message("File parsed, uploading data", 50);
@@ -102,10 +111,10 @@ async function doEdit(stream: ProgressStream, csvParser: Parser) {
 	await stream.success("Data successfully uploaded");
 }
 
-export default async function sampleEditAction(csvParser: Parser) {
+export default async function sampleEditAction(file: File) {
 	const stream = createProgressStream();
 
-	doEdit(stream, csvParser).then(() => stream.close());
+	doEdit(stream, file).then(stream.close);
 
 	return stream.readable;
 }

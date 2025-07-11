@@ -2,38 +2,20 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { parseSchemaToObject } from "@/app/helpers/utils";
+import { createProgressStream, deadBooleanToString, parseSchemaToObject } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { RolePermissions, ZodBooleanSchema, ZodFileSchema } from "@/types/objects";
+import { ProgressStream } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
-import { z } from "zod";
+import { parse } from "csv-parse";
 
-const formSchema = z.object({
-	isPrivate: ZodBooleanSchema.optional(),
-	file: ZodFileSchema
-});
-
-export default async function analysisSubmitAction(formData: FormData): Promise<NetworkPacket> {
+async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
-		return { statusMessage: "error", error: "Unauthorized" };
-	}
-
-	if (!(formData instanceof FormData)) {
-		return { statusMessage: "error", error: "Argument must be FormData" };
-	}
-	const formDataObject = Object.fromEntries(formData.entries());
-	const parsed = formSchema.safeParse(formDataObject);
-	if (!parsed.success) {
-		return {
-			statusMessage: "error",
-			error: parsed.error.issues
-				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
-				: "Invalid data structure."
-		};
+		await stream.error("Unauthorized");
+		return;
 	}
 
 	const analysisCol = {} as Record<string, string>;
@@ -41,53 +23,55 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 	try {
 		//Analysis file
 		console.log("Analysis file");
-		//code block to force garbage collection
-		{
-			//parse file
-			const analysisFileLines = (await parsed.data.file.text()).replace(/[\r]+/gm, "").split("\n");
-			const analysisFileHeaders = analysisFileLines[0].split("\t");
-			const userDefined = {} as PrismaJson.UserDefinedType;
-			//iterate over each row
-			for (let i = 1; i < analysisFileLines.length; i++) {
-				// TODO: get extension of file and split accordingly
-				const currentLine = analysisFileLines[i].split("\t");
-				const field = currentLine[analysisFileHeaders.indexOf("term_name")];
-				const value = currentLine[analysisFileHeaders.indexOf("values")];
-				const section = currentLine[analysisFileHeaders.indexOf("section")];
+		const userDefined = {} as PrismaJson.UserDefinedType;
 
-				//Analysis
+		await stream.message("Reading file into memory", 10);
+		const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+		await stream.message("File read into memory", 25);
+
+		let i = 0;
+		for await (const record of parser) {
+			const field = record.term_name;
+			if (field) {
+				i++;
+
+				const value = record.values;
+
 				//User defined
-				if (section === "User defined") {
+				if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
 					userDefined[field] = value;
 				} else {
 					parseSchemaToObject(field, value, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
 				}
 			}
+
+			//add to progress bar
+			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50);
 		}
 
 		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
-			{ ...analysisCol, isPrivate: parsed.data.isPrivate, editHistory: "JsonNull" },
+			{ ...analysisCol, isPrivate, editHistory: "JsonNull" },
 			{
 				errorMap: (error, ctx) => {
 					return {
-						//TODO: make DeadBoolean errors prettier
-						message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
-							analysisCol[error.path[0] as keyof typeof analysisCol]
-						}`
+						message: `Field: ${error.path[0]}\nIssue: ${
+							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+						}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
 					};
 				}
 			}
 		);
 
 		if (!parsedAnalysis.success) {
-			return {
-				statusMessage: "error",
-				error:
-					`Table: Analysis\n` +
+			await stream.error(
+				`Table: Analysis\n` +
 					`Key: ${analysisCol.analysis_run_name}\n\n` +
 					`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
-			};
+			);
+			return;
 		}
+
+		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
 		//analysis
 		console.log("analysis");
@@ -108,7 +92,7 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 				throw new Error(
 					`Permission denied for adding analysis to Project with project_id of ${analysisCol.project_id}. Please contact submission owner with a request to be added to the Project.`
 				);
-			} else if (project.isPrivate && !parsed.data.isPrivate) {
+			} else if (project.isPrivate && !isPrivate) {
 				throw new Error(
 					`Project with project_id of ${analysisCol.project_id} is private. Analyses can't be public if the associated project is private.`
 				);
@@ -120,13 +104,21 @@ export default async function analysisSubmitAction(formData: FormData): Promise<
 			});
 		});
 
-		return { statusMessage: "success" };
+		await stream.success("Success");
 	} catch (err: any) {
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return handlePrismaError(err);
+			await stream.error(handlePrismaError(err).error);
+		} else {
+			const error = err as Error;
+			await stream.error(error.message);
 		}
-
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
 	}
+}
+
+export default async function analysisSubmitAction(file: File, isPrivate: boolean) {
+	const stream = createProgressStream();
+
+	doSubmit(stream, file, isPrivate).then(stream.close);
+
+	return stream.readable;
 }
