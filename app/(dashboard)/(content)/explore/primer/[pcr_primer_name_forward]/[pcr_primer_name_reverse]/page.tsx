@@ -72,7 +72,7 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 							{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 						</div>
 						<p className="text-sm text-base-content/80">
-							* Primer names are given by the combination of the forward primer sequence (pcr_primer_forward) and
+							* Primer names are created by the combination of the forward primer sequence (pcr_primer_forward) and
 							the reverse primer sequence (pcr_primer_reverse). This string is unique.
 						</p>
 					</header>
@@ -92,7 +92,9 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 							<span className="text-base-content">How to read this diagram:</span> These graphical representations of
 							forward and reverse primers have 5' (5-prime) and 3' (3-prime) indicators on the ends of
 							each DNA backbone. The primer sequences are to be read from the 5' to the 3' end. The
-							shorter of the two sides of each DNA helix is the primer.
+							<span className="font-semibold text-primary"> blinking strands represent the actual primer sequences</span>, 
+							while the non-blinking strands are the complementary template DNA that the primers bind to during PCR. 
+							The shorter of the two sides of each DNA helix is the forward or reverse primer, and the longer side is the complementary strand of the primer.
 						</p>
 					</div>
 				</div>

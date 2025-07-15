@@ -31,7 +31,19 @@ const generateHelixData = (topSeq: string, bottomSeq: string): any[] => {
 	return lines;
 };
 
-const Helix = ({ data, strand1Color, strand2Color }: { data: any[], strand1Color: string, strand2Color: string }) => {
+const Helix = ({ 
+	data, 
+	strand1Color, 
+	strand2Color, 
+	blinkStrand1 = false, 
+	blinkStrand2 = false 
+}: { 
+	data: any[], 
+	strand1Color: string, 
+	strand2Color: string,
+	blinkStrand1?: boolean,
+	blinkStrand2?: boolean 
+}) => {
 	const isLeftStrandOnly = strand2Color.includes("transparent");
 	const isRightStrandOnly = strand1Color.includes("transparent");
 	const isPairedStrand = !isLeftStrandOnly && !isRightStrandOnly;
@@ -53,7 +65,9 @@ const Helix = ({ data, strand1Color, strand2Color }: { data: any[], strand1Color
 						style={{ paddingLeft: `${row.indent * 0.5}rem` }}
 					>
 						{/* Left backbone piece */}
-						<div className={`w-1.5 h-10 ${strand1Color} rounded-full -mr-1 z-10`} />
+						<div className={`w-2 h-10 ${strand1Color} rounded-full -mr-1 z-10 ${
+							blinkStrand1 ? 'animate-pulse' : ''
+						}`} />
 
 						{/* Top Base */}
 						<div
@@ -88,7 +102,9 @@ const Helix = ({ data, strand1Color, strand2Color }: { data: any[], strand1Color
 						</div>
 
 						{/* Right backbone piece */}
-						<div className={`w-1.5 h-10 ${strand2Color} rounded-full -ml-1 z-10`} />
+						<div className={`w-2 h-10 ${strand2Color} rounded-full -ml-1 z-10 ${
+							blinkStrand2 ? 'animate-pulse' : ''
+						}`} />
 					</div>
 				);
 			})}
@@ -164,84 +180,125 @@ const PrimerDiagram = ({
 	);
 
 	return (
-		<div className="p-6 bg-base-200 rounded-lg w-full flex flex-col md:flex-row gap-8 overflow-x-auto items-start">
-			{/* Part 1: Reverse Primer */}
-			<div className="flex-1 flex flex-col">
-				<div className="text-center mb-4 min-h-[8rem] flex flex-col justify-center items-center">
-					<div className="flex items-baseline gap-2">
-						<p className="text-sm text-base-content">pcr_primer_name_reverse:</p>
-						<h3 className="text-2xl font-bold text-primary">
-							{reversePrimerName || "Reverse Primer"}
-						</h3>
+		<div className="space-y-4">
+			<div className="p-6 bg-base-200 rounded-lg w-full flex flex-col md:flex-row gap-8 overflow-x-auto items-start">
+				{/* Part 1: Reverse Primer */}
+				<div className="flex-1 flex flex-col">
+					<div className="text-center mb-4 min-h-[8rem] flex flex-col justify-center items-center">
+						<div className="flex items-baseline gap-2">
+							<p className="text-sm text-base-content">pcr_primer_name_reverse:</p>
+							<h3 className="text-2xl font-bold text-primary">
+								{reversePrimerName || "Reverse Primer"}
+							</h3>
+						</div>
+						<p className="text-lg text-base-content">Sequence: {reversePrimerSequence}</p>
+						<div className="text-sm text-base-content mt-1 space-y-1 mb-4">
+							<p>Reference: {reversePrimerReference || "missing: not provided"}</p>
+							<p>Length: {reversePrimerSequence.length}</p>
+							<p>% GC: {calculateGcContent(reversePrimerSequence)}%</p>
+						</div>
 					</div>
-					<div className="text-sm text-base-content mt-2 space-y-1 mb-4">
-						<p>Sequence: {reversePrimerSequence}</p>
-                        <p>Reference: {reversePrimerReference || "missing: not provided"}</p>
-						<p>Length: {reversePrimerSequence.length}</p>
-						<p>% GC: {calculateGcContent(reversePrimerSequence)}%</p>
+					<div className="text-md leading-relaxed text-base-content flex justify-center">
+						{/* Left Strand (Template) Labels */}
+						<div className="flex flex-col justify-between">
+							<span>3'</span>
+							<span>5'</span>
+						</div>
+
+						{/* Helix */}
+						<div className="flex flex-col items-center mx-2">
+							<Helix 
+								data={reversePrimerPairedPart} 
+								strand1Color="bg-secondary" 
+								strand2Color="bg-primary"
+								blinkStrand1={false}
+								blinkStrand2={true}
+							/>
+							<Helix 
+								data={templateUnpairedPart} 
+								strand1Color="bg-secondary" 
+								strand2Color="bg-transparent"
+								blinkStrand1={false}
+								blinkStrand2={false}
+							/>
+						</div>
+
+						{/* Right Strand (Primer) Labels */}
+						<div className="flex flex-col">
+							<div className="flex flex-col justify-between" style={{ minHeight: `${reversePrimerPairedPart.length * 2}rem` }}>
+								<span>5'</span>
+								<span>3'</span>
+							</div>
+						</div>
 					</div>
 				</div>
-				<div className="text-md leading-relaxed text-base-content flex justify-center">
-					{/* Left Strand (Template) Labels */}
-					<div className="flex flex-col justify-between">
-						<span>3'</span>
-						<span>5'</span>
-					</div>
 
-					{/* Helix */}
-					<div className="flex flex-col items-center mx-2">
-						<Helix data={reversePrimerPairedPart} strand1Color="bg-secondary" strand2Color="bg-primary" />
-						<Helix data={templateUnpairedPart} strand1Color="bg-secondary" strand2Color="bg-transparent" />
-					</div>
+				{/* Divider */}
+				<div className="border-l border-base-content/20 self-stretch"></div>
 
-					{/* Right Strand (Primer) Labels */}
-					<div className="flex flex-col">
-						<div className="flex flex-col justify-between" style={{ minHeight: `${reversePrimerPairedPart.length * 2}rem` }}>
+				{/* Part 2: Forward Primer */}
+				<div className="flex-1 flex flex-col">
+					<div className="text-center mb-4 min-h-[8rem] flex flex-col justify-center items-center">
+						<div className="flex items-baseline gap-2">
+							<p className="text-sm text-base-content">pcr_primer_name_forward:</p>
+							<h3 className="text-2xl font-bold text-primary">
+								{forwardPrimerName || "Forward Primer"}
+							</h3>
+						</div>
+						<p className="text-lg text-base-content">Sequence: {forwardPrimerSequence}</p>
+						<div className="text-sm text-base-content mt-1 space-y-1 mb-4">
+							<p>Reference: {forwardPrimerReference || "missing: not provided"}</p>
+							<p>Length: {forwardPrimerSequence.length}</p>
+							<p>% GC: {calculateGcContent(forwardPrimerSequence)}%</p>
+						</div>
+					</div>
+					<div className="text-md leading-relaxed text-base-content flex justify-center">
+						{/* Left Strand (Primer) Labels */}
+						<div className="flex flex-col justify-end">
+							<div className="flex flex-col justify-between" style={{ minHeight: `${forwardPrimerPairedPart.length * 2}rem` }}>
+								<span>3'</span>
+								<span>5'</span>
+							</div>
+						</div>
+
+						{/* Helix */}
+						<div className="flex flex-col items-center mx-2">
+							<Helix 
+								data={complementaryUnpairedPart} 
+								strand1Color="bg-transparent" 
+								strand2Color="bg-secondary"
+								blinkStrand1={false}
+								blinkStrand2={false}
+							/>
+							<Helix 
+								data={forwardPrimerPairedPart} 
+								strand1Color="bg-primary" 
+								strand2Color="bg-secondary"
+								blinkStrand1={true}
+								blinkStrand2={false}
+							/>
+						</div>
+
+						{/* Right Strand (Complementary) Labels */}
+						<div className="flex flex-col justify-between">
 							<span>5'</span>
 							<span>3'</span>
 						</div>
 					</div>
 				</div>
 			</div>
-
-			{/* Divider */}
-			<div className="border-l border-base-content/20 self-stretch"></div>
-
-			{/* Part 2: Forward Primer */}
-			<div className="flex-1 flex flex-col">
-				<div className="text-center mb-4 min-h-[8rem] flex flex-col justify-center items-center">
-					<div className="flex items-baseline gap-2">
-						<p className="text-sm text-base-content">pcr_primer_name_forward:</p>
-						<h3 className="text-2xl font-bold text-primary">
-							{forwardPrimerName || "Forward Primer"}
-						</h3>
+			
+			{/* Legend */}
+			<div className="p-4 bg-base-100 rounded-lg border border-base-content/10">
+				<h4 className="font-semibold text-base-content mb-2">Legend:</h4>
+				<div className="space-y-2 text-sm">
+					<div className="flex items-center gap-2">
+						<div className="w-4 h-2 bg-primary rounded animate-pulse"></div>
+						<span>Actual primer sequence (blinking)</span>
 					</div>
-					<div className="text-sm text-base-content mt-2 space-y-1 mb-4">
-						<p>Sequence: {forwardPrimerSequence}</p>
-						<p>Reference: {forwardPrimerReference || "missing: not provided"}</p>
-                        <p>Length: {forwardPrimerSequence.length}</p>
-						<p>% GC: {calculateGcContent(forwardPrimerSequence)}%</p>
-					</div>
-				</div>
-				<div className="text-md leading-relaxed text-base-content flex justify-center">
-					{/* Left Strand (Primer) Labels */}
-					<div className="flex flex-col justify-end">
-						<div className="flex flex-col justify-between" style={{ minHeight: `${forwardPrimerPairedPart.length * 2}rem` }}>
-							<span>3'</span>
-							<span>5'</span>
-						</div>
-					</div>
-
-					{/* Helix */}
-					<div className="flex flex-col items-center mx-2">
-						<Helix data={complementaryUnpairedPart} strand1Color="bg-transparent" strand2Color="bg-secondary" />
-						<Helix data={forwardPrimerPairedPart} strand1Color="bg-primary" strand2Color="bg-secondary" />
-					</div>
-
-					{/* Right Strand (Complementary) Labels */}
-					<div className="flex flex-col justify-between">
-						<span>5'</span>
-						<span>3'</span>
+					<div className="flex items-center gap-2">
+						<div className="w-4 h-2 bg-secondary rounded"></div>
+						<span>Template/complementary strand</span>
 					</div>
 				</div>
 			</div>
