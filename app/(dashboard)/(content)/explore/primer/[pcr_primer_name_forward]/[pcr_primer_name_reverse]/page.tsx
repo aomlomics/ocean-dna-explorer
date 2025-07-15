@@ -87,15 +87,28 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 						forwardPrimerReference={primer.pcr_primer_reference_forward}
 						reversePrimerReference={primer.pcr_primer_reference_reverse}
 					/>
-					<div className="mt-4 text-sm text-base-content/80 mb-5">
-						<p>
-							<span className="text-base-content">How to read this diagram:</span> These graphical representations of
-							forward and reverse primers have 5' (5-prime) and 3' (3-prime) indicators on the ends of
-							each DNA backbone. The primer sequences are to be read from the 5' to the 3' end. The
-							<span className="font-semibold text-primary"> blinking strands represent the actual primer sequences</span>, 
-							while the non-blinking strands are the complementary template DNA that the primers bind to during PCR. 
-							The shorter of the two sides of each DNA helix is the forward or reverse primer, and the longer side is the complementary strand of the primer.
-						</p>
+					<div className="mt-4 p-4 bg-base-100 rounded-lg border border-base-content/10 space-y-4">
+						<div>
+							<h4 className="font-semibold text-base-content mb-1">Legend:</h4>
+							<div className="flex gap-6 text-sm">
+								<div className="flex items-center gap-2">
+									<div className="w-4 h-2 bg-primary rounded animate-pulse"></div>
+									<span>Actual primer sequence (blinking)</span>
+								</div>
+								<div className="flex items-center gap-2">
+									<div className="w-4 h-2 bg-secondary rounded"></div>
+									<span>Template/complementary strand</span>
+								</div>
+							</div>
+							<p className="text-sm text-base-content/80 mt-2">
+								<span className="text-base-content">How to read this diagram:</span> These graphical representations of
+								forward and reverse primers have 5' (5-prime) and 3' (3-prime) indicators on the ends of
+								each DNA backbone. The primer sequences are to be read from the 5' to the 3' end. The
+								<span className="font-semibold text-primary"> blinking strands represent the actual primer sequences</span>, 
+								while the non-blinking strands are the complementary template DNA that the primers bind to during PCR. 
+								The shorter of the two sides of each DNA helix is the forward or reverse primer, and the longer side is the complementary strand of the primer.
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>
