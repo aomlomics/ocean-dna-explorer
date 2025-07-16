@@ -41,7 +41,7 @@ export default function TabDropdown({
 			</Link>
 			<ul
 				tabIndex={0}
-				className={`dropdown-content menu rounded-box w-52 p-2 shadow rounded-t-none bg-base-300 z-[99999] ${
+				className={`dropdown-content menu rounded-box w-48 p-2 shadow rounded-t-none bg-base-300 z-[99999] ${
 					isActive ? "bg-primary text-white" : "bg-base-300"
 				}`}
 			>

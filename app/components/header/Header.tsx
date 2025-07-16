@@ -13,7 +13,7 @@ export default async function Header() {
 	const role = sessionClaims?.metadata.role as Role;
 
 	return (
-		<header className="navbar bg-base-100 border-b-4 border-primary h-24 top-0 z-header relative overflow-visible">
+		<header className="navbar bg-base-100 border-b-4 border-primary h-16 sm:h-20 lg:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
 			<div className="navbar-start">
 				{/* Mobile hamburger dropdown */}
@@ -52,8 +52,8 @@ export default async function Header() {
 				</div>
 				
 				{/* Logo */}
-				<Link className="px-4 sm:px-6 lg:px-8 normal-case text-xl pt-1 h-22 w-80 flex flex-col items-center" href="/">
-					<div className="avatar w-88 h-22 relative pl-8">
+				<Link className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center" href="/">
+					<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
 						<NodeLogo
 							alt="NODE Logo"
 							fill={true}
@@ -90,7 +90,7 @@ export default async function Header() {
 			{/* Right side - theme toggle, user, admin */}
 			<div className="navbar-end flex items-center gap-4">
 				{role && RolePermissions[role].includes("manageUsers") && (
-					<Link href="/admin" className="btn">
+					<Link href="/admin" className="btn hidden sm:inline-flex">
 						Admin
 					</Link>
 				)}
