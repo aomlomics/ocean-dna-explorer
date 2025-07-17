@@ -174,53 +174,6 @@ export default function AdvancedSearch() {
 }
 
 //helper components
-function InputElement({
-	nameSuffix,
-	table,
-	field
-}: {
-	nameSuffix: string;
-	table: Lowercase<Prisma.ModelName>;
-	field: string;
-}) {
-	const searchParams = useSearchParams();
-	const urlFilter = searchParams.get(nameSuffix)?.split(",");
-	const [value, setValue] = useState(urlFilter ? urlFilter[3] : "");
-
-	const shape = TableMetadata[table].schema.shape;
-	const type = getZodType(shape[field as keyof typeof shape]).type;
-	if (!type) {
-		throw new Error(
-			`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
-		);
-	}
-
-	let inputType = "text";
-	let step = undefined;
-	//TODO: add support for querying ranges
-	if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
-		inputType = "number";
-		step = "any;";
-	} else if (type === "date") {
-		inputType = "date";
-	}
-
-	return (
-		<div className="px-2">
-			<input
-				className="input input-primary"
-				placeholder="Filter..."
-				name={`filter_${nameSuffix}`}
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				type={inputType}
-				step={step}
-				required
-			/>
-		</div>
-	);
-}
-
 function Filter({
 	i,
 	j,
@@ -253,7 +206,11 @@ function Filter({
 				<select
 					className="select"
 					value={type}
-					onChange={(e) => setType(e.target.value)}
+					onChange={(e) => {
+						setType(e.target.value);
+						setRelation("");
+						setField("");
+					}}
 					required
 					name={`type_${nameSuffix}`}
 				>
@@ -270,7 +227,10 @@ function Filter({
 					<select
 						className="select"
 						value={relation}
-						onChange={(e) => setRelation(e.target.value)}
+						onChange={(e) => {
+							setRelation(e.target.value);
+							setField("");
+						}}
 						required
 						name={`relation_${nameSuffix}`}
 					>
@@ -332,6 +292,53 @@ function Filter({
 					X
 				</button>
 			)}
+		</div>
+	);
+}
+
+function InputElement({
+	nameSuffix,
+	table,
+	field
+}: {
+	nameSuffix: string;
+	table: Lowercase<Prisma.ModelName>;
+	field: string;
+}) {
+	const searchParams = useSearchParams();
+	const urlFilter = searchParams.get(nameSuffix)?.split(",");
+	const [value, setValue] = useState(urlFilter ? urlFilter[3] : "");
+
+	const shape = TableMetadata[table].schema.shape;
+	const type = getZodType(shape[field as keyof typeof shape]).type;
+	if (!type) {
+		throw new Error(
+			`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
+		);
+	}
+
+	let inputType = "text";
+	let step = undefined;
+	//TODO: add support for querying ranges
+	if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
+		inputType = "number";
+		step = "any;";
+	} else if (type === "date") {
+		inputType = "date";
+	}
+
+	return (
+		<div className="px-2">
+			<input
+				className="input input-primary"
+				placeholder="Filter..."
+				name={`filter_${nameSuffix}`}
+				value={value}
+				onChange={(e) => setValue(e.target.value)}
+				type={inputType}
+				step={step}
+				required
+			/>
 		</div>
 	);
 }
