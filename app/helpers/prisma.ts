@@ -4,6 +4,7 @@ import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { ErrorPacket } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
+import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -614,4 +615,88 @@ export async function updateManyRaw(
 		sql,
 		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], [])
 	);
+}
+
+function searchRelations(
+	relations: RelationMetadata[],
+	target: Lowercase<Prisma.ModelName>,
+	paths: RelationMetadata[][],
+	visited: Prisma.ModelName[],
+	currPath = [] as RelationMetadata[]
+) {
+	for (const rel of relations) {
+		const lowercaseRel = rel.table.toLowerCase() as Lowercase<Prisma.ModelName>;
+		const newPath = [...currPath, rel];
+
+		if (lowercaseRel === target) {
+			//target found
+			//check if newPath is a shorter version of an existing path
+			const longerPathIndex = paths.findIndex((p) =>
+				newPath.every((newStep) => p.some((step) => step.table === newStep.table))
+			);
+			if (longerPathIndex === -1) {
+				//check if a shorter version of newPath already exists
+				if (!paths.some((p) => p.every((step) => newPath.some((newStep) => newStep.table === step.table)))) {
+					paths.push(newPath);
+				}
+			} else {
+				paths.splice(longerPathIndex, 1, newPath);
+			}
+		} else {
+			//target not found
+			//can't pass through project
+			if (lowercaseRel !== "project") {
+				if (!visited.includes(rel.table)) {
+					//can only go to project from analysis
+					if (lowercaseRel === "analysis") {
+						const projectMetadata = TableMetadata[lowercaseRel].relations.find((step) => step.table === "Project");
+						if (projectMetadata) {
+							//recurse
+							searchRelations([projectMetadata], target, paths, [...visited, rel.table], newPath);
+						}
+					} else {
+						//recurse
+						searchRelations(TableMetadata[lowercaseRel].relations, target, paths, [...visited, rel.table], newPath);
+					}
+				}
+			}
+		}
+	}
+}
+
+export function deepWhere(
+	start: Lowercase<Prisma.ModelName>,
+	target: Lowercase<Prisma.ModelName>,
+	query: { [k: string]: any }
+) {
+	//find all paths to target from start
+	const paths = [] as RelationMetadata[][];
+	const visited = [(start.slice(0, 1).toUpperCase() + start.slice(1)) as Prisma.ModelName];
+	searchRelations(TableMetadata[start].relations, target, paths, visited);
+
+	if (paths.length) {
+		//get shortest path
+		let bestPath = paths[0];
+		if (paths.length > 1) {
+			for (let i = 1; i < paths.length; i++) {
+				if (paths[i].length < bestPath.length) {
+					bestPath = paths[i];
+				}
+			}
+		}
+
+		//assemble query
+		let where = { ...query };
+		for (const step of bestPath.toReversed()) {
+			if (step.type.endsWith("many")) {
+				//if relation is a -to-many, add a some to the query
+				where = { [step.field]: { some: where } };
+			} else {
+				where = { [step.field]: where };
+			}
+		}
+		return where;
+	} else {
+		throw new Error(`No path found from table ${start} to table ${target}.`);
+	}
 }

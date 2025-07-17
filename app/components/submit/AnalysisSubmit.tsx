@@ -306,6 +306,79 @@ export default function AnalysisSubmit() {
 		setLoading(false);
 	}
 
+	function AnalysisFormSection({ id, i }: { id: string | -1 | -2; i: number }) {
+		if (id === -1) {
+			return <></>;
+		}
+
+		return (
+			<>
+				<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
+					<h2 className="text-xl font-semibold text-base-content mb-4">
+						{typeof id === "string" ? id : "New Analysis"}
+					</h2>
+					{analysisIds.filter((id) => id !== -1).length > 1 && (
+						<button
+							className="btn btn-sm btn-error rounded-full"
+							type="button"
+							disabled={!!loading}
+							onClick={() => {
+								const temp = analysisIds.toSpliced(i, 1, -1);
+								setAnalysisIds(temp);
+								if (temp.filter((id) => typeof id === "string").length === 0) {
+									setProject(null);
+									setIsPrivate(false);
+								}
+							}}
+						>
+							X
+						</button>
+					)}
+				</div>
+
+				<fieldset className="fieldset col-2">
+					<legend className="fieldset-legend">Analysis Metadata File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`analysis_${id}`}
+						required
+						disabled={loading}
+						accept=".tsv"
+						onChange={(event: ChangeEvent<HTMLInputElement>) => parseAnalysis(event, i)}
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responses[id]?.analysis} />
+
+				<fieldset className="fieldset col-2">
+					<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`assignments_${id}`}
+						required
+						disabled={typeof id !== "string" || loading}
+						accept=".tsv"
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responses[id]?.assignments} />
+
+				<fieldset className="fieldset col-2">
+					<legend className="fieldset-legend">Occurrence Table File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`occurrences_${id}`}
+						required
+						disabled={typeof id !== "string" || loading}
+						accept=".tsv"
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responses[id]?.occurrences} />
+			</>
+		);
+	}
+
 	return (
 		<>
 			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
@@ -340,23 +413,7 @@ export default function AnalysisSubmit() {
 
 				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
 					{analysisIds.map((id, i) => (
-						<AnalysisFormSection
-							key={i}
-							i={i}
-							handleChange={(event: ChangeEvent<HTMLInputElement>) => parseAnalysis(event, i)}
-							handleDelete={() => {
-								const temp = analysisIds.toSpliced(i, 1, -1);
-								setAnalysisIds(temp);
-								if (temp.filter((id) => typeof id === "string").length === 0) {
-									setProject(null);
-									setIsPrivate(false);
-								}
-							}}
-							id={id}
-							deletable={analysisIds.filter((id) => id !== -1).length > 1}
-							loading={loading}
-							responses={responses[id]}
-						/>
+						<AnalysisFormSection key={i} i={i} id={id} />
 					))}
 
 					<button
@@ -412,92 +469,6 @@ export default function AnalysisSubmit() {
 					</div>
 				)}
 			</Modal>
-		</>
-	);
-}
-
-function AnalysisFormSection({
-	handleChange,
-	handleDelete,
-	id,
-	i,
-	deletable,
-	loading,
-	responses
-}: {
-	handleChange: (input: ChangeEvent<HTMLInputElement>) => Promise<void>;
-	handleDelete: () => void;
-	id: string | -1 | -2;
-	i: number;
-	deletable: boolean;
-	loading: boolean;
-	responses:
-		| {
-				analysis: NetworkProgressPacket;
-				assignments: NetworkProgressPacket;
-				occurrences: NetworkProgressPacket;
-		  }
-		| undefined;
-}) {
-	if (id === -1) {
-		return <></>;
-	}
-
-	return (
-		<>
-			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
-				<h2 className="text-xl font-semibold text-base-content mb-4">{typeof id === "string" ? id : "New Analysis"}</h2>
-				{deletable && (
-					<button
-						className="btn btn-sm btn-error rounded-full"
-						type="button"
-						disabled={!!loading}
-						onClick={handleDelete}
-					>
-						X
-					</button>
-				)}
-			</div>
-
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">Analysis Metadata File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`analysis_${id}`}
-					required
-					disabled={loading}
-					accept=".tsv"
-					onChange={handleChange}
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responses?.analysis} />
-
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`assignments_${id}`}
-					required
-					disabled={typeof id !== "string" || loading}
-					accept=".tsv"
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responses?.assignments} />
-
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">Occurrence Table File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`occurrences_${id}`}
-					required
-					disabled={typeof id !== "string" || loading}
-					accept=".tsv"
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responses?.occurrences} />
 		</>
 	);
 }

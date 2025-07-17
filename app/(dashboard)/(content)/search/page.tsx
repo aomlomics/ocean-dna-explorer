@@ -1,5 +1,5 @@
-import Search from "@/app/components/Search";
-import { Suspense } from "react";
+import AdvancedSearch from "@/app/components/search/AdvancedSearch";
+import Search from "@/app/components/search/Search";
 
 export default async function Dashboard() {
 	const sampleColumns = [
@@ -35,10 +35,16 @@ export default async function Dashboard() {
 				</div>
 
 				{/* Search Bar Section */}
-				<div className="mb-8">
-					<Suspense fallback={null}>
-						<Search></Search>
-					</Suspense>
+				<div className="tabs tabs-lift mb-15">
+					<input type="radio" name="my_tabs_3" className="tab" aria-label="Search" defaultChecked />
+					<div className="tab-content bg-base-100 border-base-300 p-6 pb-0">
+						<Search />
+					</div>
+
+					<input type="radio" name="my_tabs_3" className="tab" aria-label="Advanced" />
+					<div className="tab-content bg-base-100 border-base-300 p-6 pb-0">
+						<AdvancedSearch />
+					</div>
 				</div>
 
 				{/* Sample Search Terms */}

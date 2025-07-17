@@ -2,6 +2,12 @@ import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
 
+export type RelationMetadata = {
+	field: string;
+	table: Prisma.ModelName;
+	type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
+};
+
 const TableMetadata = {
 	project: {
 		schema: PrismaZodTypes.ProjectSchema,
@@ -98,11 +104,7 @@ const TableMetadata = {
 		schema: any;
 		enumSchema: ZodEnum<[string, ...string[]]>;
 		fieldOrder?: string[];
-		relations: {
-			field: string;
-			table: Prisma.ModelName;
-			type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
-		}[];
+		relations: RelationMetadata[];
 		plural: string;
 	}
 >;

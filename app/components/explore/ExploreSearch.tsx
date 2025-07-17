@@ -29,13 +29,13 @@ export default function ExploreSearch({
 		}
 	}, []);
 
-	function handleSearch(value: string) {
+	function handleSearch(search: string) {
 		const params = new URLSearchParams(searchParams);
 
-		if (value === "") {
+		if (search === "") {
 			params.delete("search");
 		} else {
-			params.set("search", `${field},${value}`);
+			params.set("search", `${field},${search}`);
 		}
 
 		router.push(`?${params.toString()}`);
@@ -66,7 +66,7 @@ export default function ExploreSearch({
 			<input
 				className="input input-primary rounded-l-none"
 				placeholder="Search..."
-				name="value"
+				name="search"
 				type={inputType}
 				step={step}
 				defaultValue={searchParams.get("search") ? searchParams.get("search")?.split(",")[1] : ""}
@@ -79,7 +79,7 @@ export default function ExploreSearch({
 			className="grid grid-cols-5 items-center gap-5"
 			onSubmit={(e) => {
 				e.preventDefault();
-				handleSearch(e.currentTarget.value.value);
+				handleSearch(e.currentTarget.search.value);
 			}}
 		>
 			<div className="grid grid-cols-[35%_65%] col-span-2">
@@ -101,6 +101,7 @@ export default function ExploreSearch({
 					}, [] as ReactNode[])}
 				</select>
 				<InputElement />
+				<button className="btn btn-primary"></button>
 			</div>
 
 			<div className="justify-self-start flex gap-2">
