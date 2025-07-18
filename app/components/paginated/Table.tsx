@@ -51,7 +51,7 @@ export default function Table({
 
 	//api call
 	let query = new URLSearchParams({
-		take: defaultTake.toString(),
+		take: take.toString(),
 		page: page.toString()
 	});
 	if (where) {
@@ -136,7 +136,13 @@ export default function Table({
 			tempHeadersFilter = temp;
 		}
 
-		if (data && data.statusMessage === "success" && data.result[0].userDefined && !userDefinedHeaders.length) {
+		if (
+			data &&
+			data.statusMessage === "success" &&
+			data.result.length &&
+			data.result[0].userDefined &&
+			!userDefinedHeaders.length
+		) {
 			const tempUserDefinedHeaders = [] as string[];
 			for (const h in data.result[0].userDefined) {
 				tempUserDefinedHeaders.push(h);
@@ -166,7 +172,7 @@ export default function Table({
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			take: defaultTake.toString(),
+			take: take.toString(),
 			page: (page + dir).toString()
 		});
 		if (where) {
@@ -237,13 +243,13 @@ export default function Table({
 					</button>
 					<label className="input input-sm input-bordered flex items-center gap-2">
 						Per Page:
-						<input name="take" defaultValue={defaultTake} type="number" className="grow max-w-12" />
+						<input name="take" defaultValue={take} type="number" className="grow max-w-12" />
 					</label>
 				</div>
 				{/* Pagination Controls */}
 				<PaginationControls
 					page={page}
-					take={defaultTake}
+					take={take}
 					count={data.count}
 					handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
 					handlePageHover={handlePageHover}
@@ -524,7 +530,7 @@ export default function Table({
 
 										return acc;
 									}, [])}
-									<th>{i + 1 + (page - 1) * defaultTake}</th>
+									<th>{i + 1 + (page - 1) * take}</th>
 								</tr>
 							);
 
