@@ -1,11 +1,11 @@
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
-import Pagination from "@/app/components/paginated/Pagination";
+import Table from "@/app/components/paginated/Table";
 import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { AssayScalarFieldEnumSchema, PrimerPartial } from "@/prisma/generated/zod";
+import { PrimerPartial } from "@/prisma/generated/zod";
 import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 
@@ -36,7 +36,7 @@ export default async function Assay() {
 	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
 
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
@@ -100,20 +100,10 @@ export default async function Assay() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch
-						table="assay"
-						fieldOptions={AssayScalarFieldEnumSchema._def.values}
-						defaultField="assay_name"
-					/>
+					<ExploreSearch table="assay" defaultField="assay_name" />
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
-						<Pagination
-							id="assay_name"
-							table="assay"
-							title="assay_name"
-							fields={["pcr_primer_forward", "pcr_primer_reverse"]}
-							relCounts={["Samples", "Libraries", "Analyses"]}
-						/>
+					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
+						<Table table="assay" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
 					</div>
 				</div>
 			</div>

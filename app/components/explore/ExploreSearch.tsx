@@ -9,12 +9,10 @@ import { ReactNode, useEffect, useState } from "react";
 
 export default function ExploreSearch({
 	table,
-	fieldOptions,
 	defaultField,
 	omit = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	fieldOptions: string[];
 	defaultField: string;
 	omit?: string[];
 }) {
@@ -88,7 +86,7 @@ export default function ExploreSearch({
 					value={field}
 					onChange={(e) => setField(e.currentTarget.value)}
 				>
-					{fieldOptions.reduce((acc, option) => {
+					{TableMetadata[table].enumSchema._def.values.reduce((acc, option) => {
 						if (!omit.includes(option)) {
 							acc.push(
 								<option key={option} value={option}>
@@ -101,12 +99,11 @@ export default function ExploreSearch({
 					}, [] as ReactNode[])}
 				</select>
 				<InputElement />
-				<button className="btn btn-primary"></button>
 			</div>
 
 			<div className="justify-self-start flex gap-2">
-				<button className="btn">Filter</button>
-				<button className="btn" type="button" onClick={() => handleSearch("")}>
+				<button className="btn btn-primary">Filter</button>
+				<button className="btn btn-error" type="button" onClick={() => handleSearch("")}>
 					Clear
 				</button>
 			</div>

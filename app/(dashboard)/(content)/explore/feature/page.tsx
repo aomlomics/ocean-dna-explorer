@@ -1,9 +1,8 @@
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
-import Pagination from "@/app/components/paginated/Pagination";
+import Table from "@/app/components/paginated/Table";
 import { prisma } from "@/app/helpers/prisma";
-import { FeatureScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import Link from "next/link";
 
 export default async function Feature() {
@@ -18,7 +17,7 @@ export default async function Feature() {
 	if (!minMaxSeqLength) return <>Loading...</>;
 
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
@@ -52,20 +51,10 @@ export default async function Feature() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch
-						table="feature"
-						fieldOptions={FeatureScalarFieldEnumSchema._def.values}
-						defaultField="featureid"
-					/>
+					<ExploreSearch table="feature" defaultField="featureid" />
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
-						<Pagination
-							id="featureid"
-							table="feature"
-							title="featureid"
-							fields={["dna_sequence"]}
-							relCounts={["Occurrences", "Assignments"]}
-						/>
+					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
+						<Table table="feature" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
 					</div>
 				</div>
 			</div>

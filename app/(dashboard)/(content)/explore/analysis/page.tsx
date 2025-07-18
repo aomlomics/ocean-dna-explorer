@@ -1,12 +1,11 @@
 import TableFilter from "@/app/components/explore/filters/TableFilter";
-import Pagination from "@/app/components/paginated/Pagination";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { asv_method, target_gene } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
+import Table from "@/app/components/paginated/Table";
 
 export default async function Analysis() {
 	const analyses = await prisma.analysis.findMany({
@@ -23,7 +22,7 @@ export default async function Analysis() {
 	const filterOptions = getOptions(analyses);
 
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
@@ -84,20 +83,10 @@ export default async function Analysis() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch
-						table="analysis"
-						fieldOptions={AnalysisScalarFieldEnumSchema._def.values}
-						defaultField="analysis_run_name"
-					/>
+					<ExploreSearch table="analysis" defaultField="analysis_run_name" />
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
-						<Pagination
-							table="analysis"
-							id="analysis_run_name"
-							title="analysis_run_name"
-							fields={["project_id", "assay_name", "asv_method"]}
-							relCounts={["Occurrences", "Assignments"]}
-						/>
+					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
+						<Table table="analysis" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
 					</div>
 				</div>
 			</div>

@@ -105,7 +105,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Libraries" />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
-					<Table table="library" title="lib_id" where={{ assay_name }}></Table>
+					<Table table="library" where={{ assay_name }}></Table>
 				</div>
 			</div>
 		</div>

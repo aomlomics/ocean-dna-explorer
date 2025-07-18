@@ -364,7 +364,7 @@ function InputElement({
 	return (
 		<div className="px-2">
 			<input
-				className="input input-primary"
+				className="input input-primary w-full"
 				placeholder="Filter..."
 				name={`filter_${nameSuffix}`}
 				value={value}

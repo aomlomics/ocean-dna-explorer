@@ -146,12 +146,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
-						<Table
-							table="assignment"
-							title="featureid"
-							where={{ analysis_run_name }}
-							rowLinks={{ featureid: "feature", taxonomy: "taxonomy" }}
-						/>
+						<Table table="assignment" where={{ analysis_run_name }} />
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Taxa" />

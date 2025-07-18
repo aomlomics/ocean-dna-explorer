@@ -22,7 +22,10 @@ const TableMetadata = {
 			"study_factor",
 			"assay_type"
 		],
+		titleField: "project_id",
+		subFields: ["project_name", "study_factor", "institution", "project_contact"],
 		relations: [],
+		relationFields: {},
 		plural: "Projects"
 	},
 	sample: {
@@ -42,60 +45,98 @@ const TableMetadata = {
 			"samp_category",
 			"neg_cont_type",
 			"pos_cont_type",
-			"expedition_id",
 			"line_id",
 			"station_id",
 			"serial_number"
 		],
+		titleField: "samp_name",
+		subFields: ["project_id", "geo_loc_name"],
 		relations: [],
+		relationFields: {},
 		plural: "Samples"
 	},
 	primer: {
 		schema: PrismaZodTypes.PrimerSchema,
 		enumSchema: PrismaZodTypes.PrimerScalarFieldEnumSchema,
+		titleField: ["pcr_primer_name_forward", "pcr_primer_name_reverse"],
+		subFields: ["pcr_primer_forward", "pcr_primer_reverse"],
 		relations: [],
+		relationFields: {},
 		plural: "Primers"
 	},
 	assay: {
 		schema: PrismaZodTypes.AssaySchema,
 		enumSchema: PrismaZodTypes.AssayScalarFieldEnumSchema,
+		titleField: "assay_name",
+		subFields: ["pcr_primer_forward", "pcr_primer_reverse"],
 		relations: [],
+		relationFields: {},
 		plural: "Assays"
 	},
 	library: {
 		schema: PrismaZodTypes.LibrarySchema,
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
+		titleField: "lib_id",
+		subFields: ["samp_name", "seq_run_id"],
 		relations: [],
+		relationFields: {},
 		plural: "Libraries"
 	},
 	analysis: {
 		schema: PrismaZodTypes.AnalysisSchema,
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
+		titleField: "analysis_run_name",
+		subFields: ["assay_name", "project_id"],
 		relations: [],
+		relationFields: {},
 		plural: "Analyses"
 	},
 	occurrence: {
 		schema: PrismaZodTypes.OccurrenceSchema,
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
+		titleField: ["analysis_run_name", "samp_name", "featureid"],
+		subFields: ["organismQuantity"],
 		relations: [],
+		relationFields: {},
 		plural: "Occurrences"
 	},
 	feature: {
 		schema: PrismaZodTypes.FeatureSchema,
 		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
+		titleField: "featureid",
+		subFields: ["dna_sequence", "sequenceLength"],
 		relations: [],
+		relationFields: {},
 		plural: "Features"
 	},
 	assignment: {
 		schema: PrismaZodTypes.AssignmentSchema,
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
+		titleField: ["analysis_run_name", "featureid"],
+		subFields: ["taxonomy", "Confidence"],
 		relations: [],
+		relationFields: {},
 		plural: "Assignments"
 	},
 	taxonomy: {
 		schema: PrismaZodTypes.TaxonomySchema,
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
+		titleField: "taxonomy",
+		subFields: [
+			"domain",
+			"kingdom",
+			"supergroup",
+			"division",
+			"subdivision",
+			"phylum",
+			"class",
+			"order",
+			"family",
+			"genus",
+			"species"
+		],
 		relations: [],
+		relationFields: {},
 		plural: "Taxonomies"
 	}
 } as Record<
@@ -104,7 +145,10 @@ const TableMetadata = {
 		schema: any;
 		enumSchema: ZodEnum<[string, ...string[]]>;
 		fieldOrder?: string[];
+		titleField: string | string[];
+		subFields?: string[];
 		relations: RelationMetadata[];
+		relationFields: Record<string, Lowercase<Prisma.ModelName>>;
 		plural: string;
 	}
 >;
@@ -173,6 +217,19 @@ for (let e in TableMetadata) {
 
 		return { field: rel, table: relationTable, type };
 	});
+
+	TableMetadata[table].relationFields = relations[table].reduce((acc, rel) => {
+		const relTable = rel.toLowerCase() as Lowercase<Prisma.ModelName>;
+		if (relTable in relations) {
+			if (typeof TableMetadata[relTable].titleField === "string") {
+				acc[TableMetadata[relTable].titleField] = relTable;
+			} else {
+				acc[TableMetadata[relTable].titleField.join("/")] = relTable;
+			}
+		}
+
+		return acc;
+	}, {} as Record<string, Lowercase<Prisma.ModelName>>);
 }
 
 export default TableMetadata;

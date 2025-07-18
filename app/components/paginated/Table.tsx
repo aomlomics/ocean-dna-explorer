@@ -14,38 +14,58 @@ import { SampleSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 
-//TODO:
-// can't filter (bug, expedition_id does not exist on sample table)
-// recalculate empty columns when changing pages, and hide dead value columns
 export default function Table({
 	table,
-	title,
-	rowLinks,
 	where,
-	omit = []
+	omit = [],
+	hideEmptyAtStart,
+	filterHeadersAtStart,
+	defaultTake = 50
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	title: string;
-	rowLinks?: Record<string, Uncapitalize<Prisma.ModelName>>;
 	where?: Record<string, any>;
 	omit?: string[];
+	hideEmptyAtStart?: boolean;
+	filterHeadersAtStart?: boolean;
+	defaultTake?: number;
 }) {
-	const [take, setTake] = useState(50);
+	const [take, setTake] = useState(defaultTake);
 	const [page, setPage] = useState(1);
+
+	const [headers, setHeaders] = useState([] as string[]);
+	const [userDefinedHeaders, setUserDefinedHeaders] = useState([] as string[]);
 
 	const [whereFilter, setWhereFilter] = useState(
 		{} as Record<string, { contains: string; mode: "insensitive" } | number | string>
 	);
+	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
+	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
+	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
 
 	const [columnsFilter, setColumnsFilter] = useState("");
 	const handleColFilter = useDebouncedCallback((f) => {
 		setColumnsFilter(f);
 	}, 300);
 
-	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
+	const title = TableMetadata[table].titleField;
 
-	const [hideEmpty, setHideEmpty] = useState(false);
-	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
+	//api call
+	let query = new URLSearchParams({
+		take: defaultTake.toString(),
+		page: page.toString()
+	});
+	if (where) {
+		if (Object.keys(whereFilter).length) {
+			query.set("where", JSON.stringify({ ...where, ...whereFilter }));
+		} else {
+			query.set("where", JSON.stringify(where));
+		}
+	}
+	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
+		`/api/pagination/${table}?${query.toString()}`,
+		fetcher
+	);
+
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			if (hideEmpty) {
@@ -68,13 +88,85 @@ export default function Table({
 				setEmptyFilter({});
 			}
 		}
-	}, [hideEmpty]);
+	}, [hideEmpty, data]);
+
+	useEffect(() => {
+		let tempHeaders = [];
+		if (TableMetadata[table].fieldOrder) {
+			tempHeaders.push(...TableMetadata[table].fieldOrder);
+		}
+		tempHeaders.push(
+			...TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
+				//remove fields that have already been added
+				if (TableMetadata[table].fieldOrder?.includes(head)) {
+					return acc;
+				}
+
+				//remove database field
+				//displaying title header differently, so removing it
+				if (head === "id" || head === title) {
+					return acc;
+				}
+
+				//remove all headers where the value is assumed to be the same
+				if (where && Object.keys(where).includes(head)) {
+					return acc;
+				}
+
+				//remove headers that have been omitted
+				if (omit.includes(head)) {
+					return acc;
+				}
+
+				acc.push(head);
+
+				return acc;
+			}, [])
+		);
+		setHeaders(tempHeaders);
+
+		let tempHeadersFilter = {} as Record<string, true>;
+		if (filterHeadersAtStart && TableMetadata[table].subFields) {
+			const temp = {} as Record<string, true>;
+			for (const head of tempHeaders) {
+				if (!TableMetadata[table].subFields.includes(head)) {
+					temp[head] = true;
+				}
+			}
+			tempHeadersFilter = temp;
+		}
+
+		if (data && data.statusMessage === "success" && data.result[0].userDefined && !userDefinedHeaders.length) {
+			const tempUserDefinedHeaders = [] as string[];
+			for (const h in data.result[0].userDefined) {
+				tempUserDefinedHeaders.push(h);
+			}
+
+			tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
+			setUserDefinedHeaders(tempUserDefinedHeaders);
+
+			if (filterHeadersAtStart) {
+				tempHeadersFilter = {
+					...tempHeadersFilter,
+					...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
+				};
+			}
+		}
+
+		if (Object.keys(tempHeadersFilter).length) {
+			setHeadersFilter(tempHeadersFilter);
+		}
+	}, [data]);
+
+	if (isLoading) return <LoadingTable />;
+	if (error) return <div>failed to load: {error}</div>;
+	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	omit = [...omit, ...GlobalOmit];
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			take: take.toString(),
+			take: defaultTake.toString(),
 			page: (page + dir).toString()
 		});
 		if (where) {
@@ -99,14 +191,14 @@ export default function Table({
 
 		const temp = {} as typeof whereFilter;
 		for (const [key, value] of formData.entries()) {
-			const type = getZodType(SampleSchema.shape[key as keyof typeof SampleSchema.shape]).type;
-			if (!type) {
-				throw new Error(
-					`Could not find type of '${key}'. Make sure a field named '${key}' exists on table named '${table}'.`
-				);
-			}
-
 			if (typeof value === "string" && value.trim()) {
+				const type = getZodType(SampleSchema.shape[key as keyof typeof SampleSchema.shape]).type;
+				if (!type) {
+					throw new Error(
+						`Could not find type of '${key}'. Make sure a field named '${key}' exists on table named '${table}'.`
+					);
+				}
+
 				if (type === "string") {
 					temp[key] = { contains: value, mode: "insensitive" };
 				} else if (type === "integer") {
@@ -132,70 +224,6 @@ export default function Table({
 		setWhereFilter({});
 	}
 
-	//api call
-	let query = new URLSearchParams({
-		take: take.toString(),
-		page: page.toString()
-	});
-	if (where) {
-		if (Object.keys(whereFilter).length) {
-			query.set("where", JSON.stringify({ ...where, ...whereFilter }));
-		} else {
-			query.set("where", JSON.stringify(where));
-		}
-	}
-	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/pagination/${table}?${query.toString()}`,
-		fetcher
-	);
-	if (isLoading) return <LoadingTable />;
-	if (error) return <div>failed to load: {error}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
-
-	const userDefinedHeaders = [] as string[];
-	const headers = [] as string[];
-	if (TableMetadata[table].fieldOrder) {
-		headers.push(...TableMetadata[table].fieldOrder);
-	}
-	headers.push(
-		...TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
-			//remove fields that have already been added
-			if (TableMetadata[table].fieldOrder?.includes(head)) {
-				return acc;
-			}
-
-			//remove database field
-			//displaying title header differently, so removing it
-			if (head === "id" || head === title) {
-				return acc;
-			}
-
-			//remove all headers where the value is assumed to be the same
-			if (where && Object.keys(where).includes(head)) {
-				return acc;
-			}
-
-			//remove headers that have been omitted
-			if (omit.includes(head)) {
-				return acc;
-			}
-
-			//split user defined fields into individual headers
-			if (head === "userDefined") {
-				if (data.result[0].userDefined) {
-					for (const h in data.result[0].userDefined) {
-						userDefinedHeaders.push(h);
-						acc.push(h);
-					}
-				}
-			} else {
-				acc.push(head);
-			}
-
-			return acc;
-		}, [])
-	);
-
 	return (
 		<form id={`${table}TableForm`} onSubmit={applyFilters} className="w-full h-full flex flex-col">
 			<div className="grid grid-cols-3 justify-items-center">
@@ -209,13 +237,13 @@ export default function Table({
 					</button>
 					<label className="input input-sm input-bordered flex items-center gap-2">
 						Per Page:
-						<input name="take" defaultValue={take} type="number" className="grow max-w-12" />
+						<input name="take" defaultValue={defaultTake} type="number" className="grow max-w-12" />
 					</label>
 				</div>
 				{/* Pagination Controls */}
 				<PaginationControls
 					page={page}
-					take={take}
+					take={defaultTake}
 					count={data.count}
 					handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
 					handlePageHover={handlePageHover}
@@ -317,47 +345,74 @@ export default function Table({
 					<thead>
 						<tr>
 							{/* Title Header Cell */}
-							<th className="p-0 pr-2 z-40">
-								<label className="form-control w-full max-w-xs">
-									<div>
-										<span>{title}</span>
-									</div>
-									{/* Value Filter */}
-									<label className="input input-bordered input-xs flex items-center gap-2">
-										<input
-											name={title}
-											defaultValue={
-												!whereFilter[title]
-													? ""
-													: typeof whereFilter[title] === "object"
-													? whereFilter[title].contains
-													: whereFilter[title]
-											}
-											type="text"
-											className="grow"
-										/>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 16 16"
-											fill="currentColor"
-											className="h-4 w-4 opacity-70"
-										>
-											<path
-												fillRule="evenodd"
-												d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-												clipRule="evenodd"
+							{typeof title === "string" ? (
+								<th className="p-0 pr-2 z-40">
+									<label className="form-control w-full max-w-xs text-lg">
+										<div>
+											<span>{title}</span>
+										</div>
+										{/* Value Filter */}
+										<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 16 16"
+												fill="currentColor"
+												className="h-4 w-4 opacity-70"
+											>
+												<path
+													fillRule="evenodd"
+													d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+													clipRule="evenodd"
+												/>
+											</svg>
+											<input
+												name={title}
+												defaultValue={
+													!whereFilter[title]
+														? ""
+														: typeof whereFilter[title] === "object"
+														? whereFilter[title].contains
+														: whereFilter[title]
+												}
+												type="text"
+												className="grow"
 											/>
-										</svg>
+										</label>
 									</label>
-								</label>
-							</th>
+								</th>
+							) : (
+								<th className="p-0 pr-2 z-40">
+									<label className="form-control w-full max-w-xs text-lg">
+										<div>
+											<span>{title.join(" / ")}</span>
+										</div>
+										{/* Value Filter */}
+										<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 16 16"
+												fill="currentColor"
+												className="h-4 w-4 opacity-70"
+											>
+												<path
+													fillRule="evenodd"
+													d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+													clipRule="evenodd"
+												/>
+											</svg>
+											<input disabled type="text" className="grow" />
+										</label>
+									</label>
+								</th>
+							)}
+
 							{headers.reduce((acc: ReactNode[], head, i) => {
 								//only render the header if it is selected in the header filter
 								if (!headersFilter[head] && !emptyFilter[head]) {
 									//Header
 									acc.push(
 										<td key={head + i}>
-											<label className="form-control w-full max-w-xs">
+											<label className="form-control w-full max-w-xs text-lg">
 												<div className="flex justify-between">
 													<div>{head}</div>
 													{userDefinedHeaders.includes(head) && (
@@ -368,7 +423,19 @@ export default function Table({
 													)}
 												</div>
 												{/* Value Filter */}
-												<label className="input input-bordered input-xs flex items-center gap-2">
+												<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														viewBox="0 0 16 16"
+														fill="currentColor"
+														className="h-4 w-4 opacity-70"
+													>
+														<path
+															fillRule="evenodd"
+															d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+															clipRule="evenodd"
+														/>
+													</svg>
 													<input
 														name={head}
 														defaultValue={
@@ -382,18 +449,6 @@ export default function Table({
 														className="grow"
 														disabled={userDefinedHeaders.includes(head)}
 													/>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														className="h-4 w-4 opacity-70"
-													>
-														<path
-															fillRule="evenodd"
-															d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-															clipRule="evenodd"
-														/>
-													</svg>
 												</label>
 											</label>
 										</td>
@@ -411,21 +466,30 @@ export default function Table({
 							//row
 							acc.push(
 								<tr key={i} className="border-base-100 border-b-2">
-									<th>
-										<Link
-											href={`/explore/${rowLinks && rowLinks[title] ? rowLinks[title] : table}/${row[title]}`}
-											className="link link-primary link-hover"
-										>
-											{row[title]}
-										</Link>
-									</th>
+									{typeof title === "string" ? (
+										<th className="whitespace-nowrap text-sm">
+											<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
+												{row[title]}
+											</Link>
+										</th>
+									) : (
+										<th className="whitespace-nowrap text-sm">
+											<Link
+												href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
+												className="link link-primary link-hover"
+											>
+												{title.map((f) => row[f]).join(" / ")}
+											</Link>
+										</th>
+									)}
+
 									{headers.reduce((acc: ReactNode[], head, j) => {
 										if (!headersFilter[head] && !emptyFilter[head]) {
 											//cell
 											if (userDefinedHeaders.includes(head)) {
 												acc.push(
 													<td
-														className={`whitespace-nowrap ${j ? "border-base-100 border-l-2" : ""} ${
+														className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
 															row.userDefined[head] !== null ? "" : "bg-base-300"
 														}`}
 														key={row.userDefined[head] + "child" + j}
@@ -436,16 +500,16 @@ export default function Table({
 											} else {
 												acc.push(
 													<td
-														className={`whitespace-nowrap ${j ? "border-base-100 border-l-2" : ""} ${
+														className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
 															row[head] !== null ? "" : "bg-base-300"
 														}`}
 														key={row[head] + "child" + j}
 													>
 														{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
 															DeadValueEnum[row[head]]
-														) : rowLinks && rowLinks[head] ? (
+														) : head in TableMetadata[table].relationFields ? (
 															<Link
-																href={`/explore/${rowLinks[head]}/${row[head]}`}
+																href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
 																className="link link-primary link-hover"
 															>
 																{row[head]}
@@ -460,7 +524,7 @@ export default function Table({
 
 										return acc;
 									}, [])}
-									<th>{i + 1 + (page - 1) * take}</th>
+									<th>{i + 1 + (page - 1) * defaultTake}</th>
 								</tr>
 							);
 
