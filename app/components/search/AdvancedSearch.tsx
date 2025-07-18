@@ -5,7 +5,7 @@ import { getZodType } from "@/app/helpers/utils";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { Dispatch, FormEvent, ReactNode, SetStateAction, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -15,7 +15,7 @@ export default function AdvancedSearch() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const [searchTable, setSearchTable] = useState("");
-	const [filterIds, setFilterIds] = useState([1] as FilterIds);
+	const [filterIds, setFilterIds] = useState([] as FilterIds);
 
 	useEffect(() => {
 		try {
@@ -25,16 +25,27 @@ export default function AdvancedSearch() {
 				setSearchTable(searchParams.get("table") || "");
 				params.delete("table");
 
-				const temp = [] as FilterIds;
-				for (const key of params.keys()) {
-					const prefixes = key.split("|");
-					if (prefixes.length === 1) {
-						temp[parseInt(prefixes[0])] = 1;
+				function parseFilterIds(ids: number[], listToFill: FilterIds) {
+					const i = ids[0];
+					if (ids.length === 1) {
+						listToFill[i] = 1;
 					} else {
-						//TODO: recursively index
+						if (!listToFill[i]) {
+							listToFill[i] = [] as FilterIds;
+						}
+						parseFilterIds(ids.slice(1), listToFill[i] as FilterIds);
 					}
 				}
-				setFilterIds(temp);
+
+				const newFilterIds = [] as FilterIds;
+				for (const id of params.keys()) {
+					parseFilterIds(
+						id.split("|").map((k2) => parseInt(k2)),
+						newFilterIds
+					);
+				}
+
+				setFilterIds(newFilterIds);
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -58,40 +69,35 @@ export default function AdvancedSearch() {
 			const params = new URLSearchParams();
 			params.set("table", searchTable);
 
-			let i = 0;
-			let paramsI = 0;
-			for (const id of filterIds) {
-				if (id !== 0) {
-					if (id === 1) {
-						const type = event.currentTarget[`type_${i}`].value;
-						const relation = type === "relation" ? event.currentTarget[`relation_${i}`].value : "";
-						const field = event.currentTarget[`field_${i}`].value;
-						const filter = event.currentTarget[`filter_${i}`].value;
+			function setParams(target: HTMLFormElement, ids: FilterIds, prevSuffix = "", prevParamsKey = "") {
+				if (ids) {
+					let i = 0;
+					let paramsI = 0;
+					for (const id of ids) {
+						if (id !== 0) {
+							const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
+							const paramsKey = `${prevParamsKey && prevParamsKey + "|"}${paramsI}`;
 
-						params.set(paramsI.toString(), `${type},${relation},${field},${filter}`);
-					} else {
-						// let j = 0;
-						// let paramsJ = 0;
-						// for (const orId of id) {
-						// 	if (orId) {
-						// 		const nameSuffix = `${i}|${j}`;
-						// 		const type = event.currentTarget[`type_${nameSuffix}`].value;
-						// 		const relation = type === "relation" ? event.currentTarget[`relation_${nameSuffix}`].value : "";
-						// 		const field = event.currentTarget[`field_${nameSuffix}`].value;
-						// 		const filter = event.currentTarget[`filter_${nameSuffix}`].value;
-						// 		params.set(`${paramsI}|${paramsJ}`, `${type},${relation},${field},${filter}`);
-						// 		paramsJ++;
-						// 	}
-						// 	j++;
-						// }
+							if (id === 1) {
+								const type = target[`type_${suffix}`].value;
+								const relation = type === "relation" ? target[`relation_${suffix}`].value : "";
+								const field = target[`field_${suffix}`].value;
+								const filter = target[`filter_${suffix}`].value;
+
+								params.set(paramsKey, `${type},${relation},${field},${filter}`);
+							} else {
+								setParams(target, id, suffix, paramsKey);
+							}
+
+							paramsI++;
+						}
+
+						i++;
 					}
-
-					paramsI++;
 				}
-
-				i++;
 			}
-			console.log(params.toString());
+
+			setParams(event.currentTarget, filterIds);
 
 			window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
 		}
@@ -131,42 +137,8 @@ export default function AdvancedSearch() {
 						<div>Field</div>
 						<div>Filter</div>
 					</div>
-					{filterIds.reduce((acc, id, i) => {
-						if (id !== 0) {
-							if (id === 1) {
-								acc.push(
-									<Filter key={i} i={i} searchTable={searchTable} filterIds={filterIds} setFilterIds={setFilterIds} />
-								);
-							} else {
-								acc.push(
-									<div key={i} className="flex flex-col gap-5 mx-5">
-										<h2>OR</h2>
-										{/* {id.map((orId, j) => {
-										if (orId === 0) {
-											return <></>;
-										} else {
-											return (
-												<Filter
-													key={orId}
-													i={i}
-													j={j}
-													searchTable={searchTable}
-													filterIds={filterIds}
-													setFilterIds={setFilterIds}
-												/>
-											);
-										}
-									})} */}
-									</div>
-								);
-							}
-						}
 
-						return acc;
-					}, [] as ReactNode[])}
-					<button type="button" className="btn" onClick={() => setFilterIds([...filterIds, 1])}>
-						+ Add Filter
-					</button>
+					<FilterSection searchTable={searchTable} filterIds={filterIds} onChange={(prev) => setFilterIds(prev)} />
 				</>
 			)}
 		</form>
@@ -174,22 +146,87 @@ export default function AdvancedSearch() {
 }
 
 //helper components
-function Filter({
-	i,
-	j,
+function FilterSection({
 	searchTable,
 	filterIds,
-	setFilterIds
+	onChange,
+	prevSuffix = "",
+	className,
+	label
 }: {
-	i: number;
-	j?: number;
 	searchTable: string;
 	filterIds: FilterIds;
-	setFilterIds: Dispatch<SetStateAction<FilterIds>>;
+	onChange: (prev: FilterIds) => FilterIds | void;
+	prevSuffix?: string;
+	className?: string;
+	label?: string;
+}) {
+	return (
+		<div className={`flex flex-col gap-5 ${className}`}>
+			{filterIds.reduce((acc, id, i) => {
+				if (id) {
+					if (acc.length && label) {
+						acc.push(label);
+					}
+
+					if (id === 1) {
+						acc.push(
+							<Filter
+								key={i}
+								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
+								searchTable={searchTable}
+								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
+							/>
+						);
+					} else {
+						acc.push(
+							<div key={i} className="flex flex-col gap-5 border-2 border-warning rounded-lg p-3">
+								<button
+									className="btn btn-xs btn-warning rounded-lg aspect-square justify-self-center self-start pl-2 col-2"
+									type="button"
+									onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
+								>
+									X
+								</button>
+
+								<FilterSection
+									searchTable={searchTable}
+									filterIds={id}
+									onChange={(prev) => onChange(filterIds.toSpliced(i, 1, prev))}
+									prevSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
+									label="OR"
+								/>
+							</div>
+						);
+					}
+				}
+
+				return acc;
+			}, [] as ReactNode[])}
+
+			<div className="flex gap-5">
+				<button type="button" className="btn grow" onClick={() => onChange([...filterIds, 1])}>
+					+ Add Filter
+				</button>
+				<button type="button" className="btn btn-warning" onClick={() => onChange([...filterIds, []])}>
+					+ Add OR
+				</button>
+			</div>
+		</div>
+	);
+}
+
+function Filter({
+	nameSuffix,
+	searchTable,
+	onDelete
+}: {
+	nameSuffix: string;
+	searchTable: string;
+	onDelete: () => FilterIds | void;
 }) {
 	const searchParams = useSearchParams();
 
-	const nameSuffix = j ? `${i}|${j}` : i.toString();
 	const urlFilter = searchParams.get(nameSuffix)?.split(",");
 	const [type, setType] = useState(urlFilter ? urlFilter[0] : "field");
 	const [relation, setRelation] = useState(urlFilter ? urlFilter[1] : "");
@@ -197,7 +234,6 @@ function Filter({
 
 	const omit = [...GlobalOmit, "id"];
 
-	const param = searchParams.get(nameSuffix)?.split(",");
 	const table = (relation ? relation.toLowerCase() : searchTable.toLowerCase()) as Lowercase<Prisma.ModelName>;
 
 	return (
@@ -283,15 +319,13 @@ function Filter({
 
 			{!!field && <InputElement nameSuffix={nameSuffix} table={table} field={field} />}
 
-			{filterIds.filter((id) => id !== 0).length > 1 && (
-				<button
-					className="btn btn-xs btn-error rounded-lg aspect-square justify-self-center self-center col-5 pl-2"
-					type="button"
-					onClick={() => setFilterIds(filterIds.toSpliced(i, 1, 0))}
-				>
-					X
-				</button>
-			)}
+			<button
+				className="btn btn-xs btn-error rounded-lg aspect-square justify-self-center self-center col-5 pl-2"
+				type="button"
+				onClick={onDelete}
+			>
+				X
+			</button>
 		</div>
 	);
 }
