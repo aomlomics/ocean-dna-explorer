@@ -87,7 +87,10 @@ export default async function Sample() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch table="sample" defaultField="samp_name" />
+					{/* <ExploreSearch table="sample" defaultField="samp_name" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Samples</span>
+					</h1>
 
 					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
 						<Table table="sample" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />

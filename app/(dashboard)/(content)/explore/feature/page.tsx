@@ -51,7 +51,10 @@ export default async function Feature() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch table="feature" defaultField="featureid" />
+					{/* <ExploreSearch table="feature" defaultField="featureid" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Features</span>
+					</h1>
 
 					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
 						<Table table="feature" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />

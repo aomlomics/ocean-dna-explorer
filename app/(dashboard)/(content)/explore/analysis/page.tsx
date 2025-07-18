@@ -83,7 +83,10 @@ export default async function Analysis() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch table="analysis" defaultField="analysis_run_name" />
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Analyses</span>
+					</h1>
+					{/* <ExploreSearch table="analysis" defaultField="analysis_run_name" /> */}
 
 					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
 						<Table table="analysis" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />

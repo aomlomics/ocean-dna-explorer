@@ -65,7 +65,10 @@ export default async function Primer() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch table="primer" defaultField="pcr_primer_forward" />
+					{/* <ExploreSearch table="primer" defaultField="pcr_primer_forward" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Primers</span>
+					</h1>
 
 					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
 						<Table table="primer" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />

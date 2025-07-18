@@ -13,6 +13,7 @@ import PaginationControls from "./PaginationControls";
 import { SampleSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function Table({
 	table,
@@ -31,6 +32,8 @@ export default function Table({
 	defaultTake?: number;
 	showUserDefined?: boolean;
 }) {
+	const searchParams = useSearchParams();
+
 	const [take, setTake] = useState(defaultTake);
 	const [page, setPage] = useState(1);
 
@@ -56,13 +59,20 @@ export default function Table({
 		take: take.toString(),
 		page: page.toString()
 	});
+
+	let whereQuery = {} as Record<string, string>;
 	if (where) {
 		if (Object.keys(whereFilter).length) {
-			query.set("where", JSON.stringify({ ...where, ...whereFilter }));
+			whereQuery = { ...where, ...whereFilter };
 		} else {
-			query.set("where", JSON.stringify(where));
+			whereQuery = { ...where };
 		}
 	}
+	if (searchParams.size) {
+		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
+	}
+	query.set("where", JSON.stringify(whereQuery));
+
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
 		`/api/pagination/${table}?${query.toString()}`,
 		fetcher
@@ -237,10 +247,10 @@ export default function Table({
 			<div className="grid grid-cols-3 justify-items-center">
 				{/* Filters Buttons */}
 				<div className="flex items-center gap-5">
-					<button onClick={resetForm} className="btn btn-sm" type="button">
+					<button onClick={resetForm} className="btn btn-sm btn-error" type="button">
 						Clear Filters
 					</button>
-					<button type="submit" className="btn btn-sm">
+					<button type="submit" className="btn btn-sm btn-primary">
 						Apply Filters
 					</button>
 					<label className="input input-sm input-bordered flex items-center gap-2">
@@ -260,7 +270,7 @@ export default function Table({
 				<div className="flex items-center justify-center w-full gap-5">
 					<div className="dropdown dropdown-end">
 						<div tabIndex={0} role="button" className="btn btn-sm">
-							Columns
+							{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
 						</div>
 						{/* Dropdown */}
 						<div
@@ -470,74 +480,75 @@ export default function Table({
 					</thead>
 					<tbody>
 						{/* Value Row */}
-						{data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
-							//row
-							acc.push(
-								<tr key={i} className="border-base-100 border-b-2">
-									{typeof title === "string" ? (
-										<th className="whitespace-nowrap text-sm">
-											<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
-												{row[title]}
-											</Link>
-										</th>
-									) : (
-										<th className="whitespace-nowrap text-sm">
-											<Link
-												href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
-												className="link link-primary link-hover"
-											>
-												{title.map((f) => row[f]).join(" / ")}
-											</Link>
-										</th>
-									)}
+						{data.result &&
+							data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
+								//row
+								acc.push(
+									<tr key={i} className="border-base-100 border-b-2">
+										{typeof title === "string" ? (
+											<th className="whitespace-nowrap text-sm">
+												<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
+													{row[title]}
+												</Link>
+											</th>
+										) : (
+											<th className="whitespace-nowrap text-sm">
+												<Link
+													href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
+													className="link link-primary link-hover"
+												>
+													{title.map((f) => row[f]).join(" / ")}
+												</Link>
+											</th>
+										)}
 
-									{headers.reduce((acc: ReactNode[], head, j) => {
-										if (!headersFilter[head] && !emptyFilter[head]) {
-											//cell
-											if (userDefinedHeaders.includes(head)) {
-												acc.push(
-													<td
-														className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
-															row.userDefined[head] !== null ? "" : "bg-base-300"
-														}`}
-														key={row.userDefined[head] + "child" + j}
-													>
-														{row.userDefined[head]}
-													</td>
-												);
-											} else {
-												acc.push(
-													<td
-														className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
-															row[head] !== null ? "" : "bg-base-300"
-														}`}
-														key={row[head] + "child" + j}
-													>
-														{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
-															DeadValueEnum[row[head]]
-														) : head in TableMetadata[table].relationFields ? (
-															<Link
-																href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
-																className="link link-primary link-hover"
-															>
-																{row[head]}
-															</Link>
-														) : (
-															row[head]
-														)}
-													</td>
-												);
+										{headers.reduce((acc: ReactNode[], head, j) => {
+											if (!headersFilter[head] && !emptyFilter[head]) {
+												//cell
+												if (userDefinedHeaders.includes(head)) {
+													acc.push(
+														<td
+															className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
+																row.userDefined[head] !== null ? "" : "bg-base-300"
+															}`}
+															key={row.userDefined[head] + "child" + j}
+														>
+															{row.userDefined[head]}
+														</td>
+													);
+												} else {
+													acc.push(
+														<td
+															className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
+																row[head] !== null ? "" : "bg-base-300"
+															}`}
+															key={row[head] + "child" + j}
+														>
+															{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
+																DeadValueEnum[row[head]]
+															) : head in TableMetadata[table].relationFields ? (
+																<Link
+																	href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
+																	className="link link-primary link-hover"
+																>
+																	{row[head]}
+																</Link>
+															) : (
+																row[head]
+															)}
+														</td>
+													);
+												}
 											}
-										}
 
-										return acc;
-									}, [])}
-									<th>{i + 1 + (page - 1) * take}</th>
-								</tr>
-							);
+											return acc;
+										}, [])}
+										<th>{i + 1 + (page - 1) * take}</th>
+									</tr>
+								);
 
-							return acc;
-						}, [])}
+								return acc;
+							}, [])}
 					</tbody>
 				</table>
 			</div>

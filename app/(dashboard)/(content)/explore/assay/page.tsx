@@ -100,7 +100,10 @@ export default async function Assay() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch table="assay" defaultField="assay_name" />
+					{/* <ExploreSearch table="assay" defaultField="assay_name" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Assays</span>
+					</h1>
 
 					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
 						<Table table="assay" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
