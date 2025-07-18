@@ -1,32 +1,32 @@
 "use client";
 import React from "react";
 
-const ROW_CONFIG = [
-	{ indent: 2, bondWidth: 2 },
-	{ indent: 1, bondWidth: 4 },
-	{ indent: 0, bondWidth: 6 },
-	{ indent: 1, bondWidth: 4 },
-	{ indent: 2, bondWidth: 2 },
+const COLUMN_CONFIG = [
+	{ offset: 2, bondHeight: 2 },
+	{ offset: 1, bondHeight: 4 },
+	{ offset: 0, bondHeight: 6 },
+	{ offset: 1, bondHeight: 4 },
+	{ offset: 2, bondHeight: 2 },
 ];
 
 const generateHelixData = (topSeq: string, bottomSeq: string): any[] => {
-	const lines = [];
+	const columns = [];
 	const seqLength = Math.max(topSeq?.length || 0, bottomSeq?.length || 0);
 
 	for (let i = 0; i < seqLength; i++) {
 		const topBase = topSeq?.[i] || " ";
 		const bottomBase = bottomSeq?.[i] || " ";
 
-		const config = ROW_CONFIG[i % ROW_CONFIG.length];
-		lines.push({
+		const config = COLUMN_CONFIG[i % COLUMN_CONFIG.length];
+		columns.push({
 			topBase,
 			bottomBase,
-			indent: config.indent,
-			bondWidth: config.bondWidth,
+			offset: config.offset,
+			bondHeight: config.bondHeight,
 			key: `${topBase}-${bottomBase}-${i}`,
 		});
 	}
-	return lines;
+	return columns;
 };
 
 const Helix = ({ 
@@ -42,28 +42,28 @@ const Helix = ({
 	blinkStrand1?: boolean,
 	blinkStrand2?: boolean 
 }) => {
-	const isLeftStrandOnly = strand2Color.includes("transparent");
-	const isRightStrandOnly = strand1Color.includes("transparent");
-	const isPairedStrand = !isLeftStrandOnly && !isRightStrandOnly;
+	const isTopStrandOnly = strand2Color.includes("transparent");
+	const isBottomStrandOnly = strand1Color.includes("transparent");
+	const isPairedStrand = !isTopStrandOnly && !isBottomStrandOnly;
 
 	return (
-		<div>
-			{data.map((row: any) => {
-				const hasTopBase = row.topBase.trim() !== "";
-				const hasBottomBase = row.bottomBase.trim() !== "";
+		<div className="flex">
+			{data.map((column: any) => {
+				const hasTopBase = column.topBase.trim() !== "";
+				const hasBottomBase = column.bottomBase.trim() !== "";
 
-				const showTopCircle = (isPairedStrand && hasTopBase) || isLeftStrandOnly;
+				const showTopCircle = (isPairedStrand && hasTopBase) || isTopStrandOnly;
 				const showBottomCircle =
-					(isPairedStrand && hasBottomBase) || isRightStrandOnly;
+					(isPairedStrand && hasBottomBase) || isBottomStrandOnly;
 
 				return (
 					<div
-						key={row.key}
-						className="flex items-center h-8"
-						style={{ paddingLeft: `${row.indent * 0.5}rem` }}
+						key={column.key}
+						className="flex flex-col items-center w-8"
+						style={{ paddingTop: `${column.offset * 0.5}rem` }}
 					>
-						{/* Left backbone piece */}
-						<div className={`w-2 h-10 ${strand1Color} rounded-full -mr-1 z-10 ${
+						{/* Top backbone piece */}
+						<div className={`h-2 w-10 ${strand1Color} rounded-full -mb-1 z-10 ${
 							blinkStrand1 ? 'animate-pulse' : ''
 						}`} />
 
@@ -75,17 +75,17 @@ const Helix = ({
 									: "bg-transparent border-transparent"
 							}`}
 						>
-							{row.topBase}
+							{column.topBase}
 						</div>
 
 						{/* Bond */}
 						<div
-							className={`h-px ${
+							className={`w-px ${
 								hasTopBase && hasBottomBase
 									? "bg-base-content/30"
 									: "bg-transparent"
 							}`}
-							style={{ width: `${row.bondWidth * 0.5}rem` }}
+							style={{ height: `${column.bondHeight * 0.5}rem` }}
 						/>
 
 						{/* Bottom Base */}
@@ -96,11 +96,11 @@ const Helix = ({
 									: "bg-transparent border-transparent"
 							}`}
 						>
-							{row.bottomBase}
+							{column.bottomBase}
 						</div>
 
-						{/* Right backbone piece */}
-						<div className={`w-2 h-10 ${strand2Color} rounded-full -ml-1 z-10 ${
+						{/* Bottom backbone piece */}
+						<div className={`h-2 w-10 ${strand2Color} rounded-full -mt-1 z-10 ${
 							blinkStrand2 ? 'animate-pulse' : ''
 						}`} />
 					</div>
@@ -198,65 +198,11 @@ const PrimerDiagram = ({
 	);
 
 	return (
-		<div className="p-6 bg-base-200 rounded-lg w-full flex flex-col md:flex-row gap-8 overflow-x-auto items-start">
-			{/* Part 1: Forward Primer */}
-			<div className="flex-1 flex flex-col">
-				<div className="text-center mb-4 min-h-[8rem] flex flex-col justify-center items-center">
-					<div className="flex items-baseline gap-2">
-						<p className="text-sm text-base-content">pcr_primer_name_forward:</p>
-						<h3 className="text-2xl font-bold text-primary">
-							{forwardPrimerName || "Forward Primer"}
-						</h3>
-					</div>
-					<p className="text-lg text-base-content">Sequence: {forwardPrimerSequence}</p>
-					<div className="text-sm text-base-content mt-1 space-y-1 mb-4">
-						<p>Reference: <ReferenceLink reference={forwardPrimerReference} /></p>
-						<p>Length: {forwardPrimerSequence.length}</p>
-						<p>% GC: {calculateGcContent(forwardPrimerSequence)}%</p>
-					</div>
-				</div>
-				<div className="text-md leading-relaxed text-base-content flex justify-center">
-					{/* Left Strand (Primer) Labels */}
-					<div className="flex flex-col justify-end">
-						<div className="flex flex-col justify-between" style={{ minHeight: `${forwardPrimerPairedPart.length * 2}rem` }}>
-							<span>3'</span>
-							<span>5'</span>
-						</div>
-					</div>
-
-					{/* Helix */}
-					<div className="flex flex-col items-center mx-2">
-						<Helix 
-							data={complementaryUnpairedPart} 
-							strand1Color="bg-transparent" 
-							strand2Color="bg-secondary"
-							blinkStrand1={false}
-							blinkStrand2={false}
-						/>
-						<Helix 
-							data={forwardPrimerPairedPart} 
-							strand1Color="bg-primary" 
-							strand2Color="bg-secondary"
-							blinkStrand1={true}
-							blinkStrand2={false}
-						/>
-					</div>
-
-					{/* Right Strand (Complementary) Labels */}
-					<div className="flex flex-col justify-between">
-						<span>5'</span>
-						<span>3'</span>
-					</div>
-				</div>
-			</div>
-
-			{/* Divider */}
-			<div className="border-l border-base-content/20 self-stretch"></div>
-
-			{/* Part 2: Reverse Primer */}
-			<div className="flex-1 flex flex-col">
-				<div className="text-center mb-4 min-h-[8rem] flex flex-col justify-center items-center">
-					<div className="flex items-baseline gap-2">
+		<div className="p-6 bg-base-200 rounded-lg w-full flex flex-col gap-8 overflow-x-auto">
+			{/* Part 1: Reverse Primer */}
+			<div className="flex flex-col">
+				<div className="text-center mb-4">
+					<div className="flex items-baseline gap-2 justify-center">
 						<p className="text-sm text-base-content">pcr_primer_name_reverse:</p>
 						<h3 className="text-2xl font-bold text-primary">
 							{reversePrimerName || "Reverse Primer"}
@@ -269,15 +215,15 @@ const PrimerDiagram = ({
 						<p>% GC: {calculateGcContent(reversePrimerSequence)}%</p>
 					</div>
 				</div>
-				<div className="text-md leading-relaxed text-base-content flex justify-center">
-					{/* Left Strand (Template) Labels */}
-					<div className="flex flex-col justify-between">
+				<div className="text-md leading-relaxed text-base-content flex flex-col items-center">
+					{/* Top Labels */}
+					<div className="flex justify-between w-full mb-2">
 						<span>3'</span>
 						<span>5'</span>
 					</div>
 
 					{/* Helix */}
-					<div className="flex flex-col items-center mx-2">
+					<div className="flex items-center">
 						<Helix 
 							data={reversePrimerPairedPart} 
 							strand1Color="bg-secondary" 
@@ -294,12 +240,62 @@ const PrimerDiagram = ({
 						/>
 					</div>
 
-					{/* Right Strand (Primer) Labels */}
-					<div className="flex flex-col">
-						<div className="flex flex-col justify-between" style={{ minHeight: `${reversePrimerPairedPart.length * 2}rem` }}>
-							<span>5'</span>
-							<span>3'</span>
-						</div>
+					{/* Bottom Labels */}
+					<div className="flex justify-between w-full mt-2">
+						<span>5'</span>
+						<span>3'</span>
+					</div>
+				</div>
+			</div>
+
+			{/* Divider */}
+			<div className="border-t border-base-content/20"></div>
+
+			{/* Part 2: Forward Primer */}
+			<div className="flex flex-col">
+				<div className="text-md leading-relaxed text-base-content flex flex-col items-center">
+					{/* Top Labels */}
+					<div className="flex justify-between w-full mb-2">
+						<span>3'</span>
+						<span>5'</span>
+					</div>
+
+					{/* Helix */}
+					<div className="flex items-center">
+						<Helix 
+							data={complementaryUnpairedPart} 
+							strand1Color="bg-transparent" 
+							strand2Color="bg-secondary"
+							blinkStrand1={false}
+							blinkStrand2={false}
+						/>
+						<Helix 
+							data={forwardPrimerPairedPart} 
+							strand1Color="bg-primary" 
+							strand2Color="bg-secondary"
+							blinkStrand1={true}
+							blinkStrand2={false}
+						/>
+					</div>
+
+					{/* Bottom Labels */}
+					<div className="flex justify-between w-full mt-2">
+						<span>5'</span>
+						<span>3'</span>
+					</div>
+				</div>
+				<div className="text-center mt-4">
+					<div className="flex items-baseline gap-2 justify-center">
+						<p className="text-sm text-base-content">pcr_primer_name_forward:</p>
+						<h3 className="text-2xl font-bold text-primary">
+							{forwardPrimerName || "Forward Primer"}
+						</h3>
+					</div>
+					<p className="text-lg text-base-content">Sequence: {forwardPrimerSequence}</p>
+					<div className="text-sm text-base-content mt-1 space-y-1 mb-4">
+						<p>Reference: <ReferenceLink reference={forwardPrimerReference} /></p>
+						<p>Length: {forwardPrimerSequence.length}</p>
+						<p>% GC: {calculateGcContent(forwardPrimerSequence)}%</p>
 					</div>
 				</div>
 			</div>

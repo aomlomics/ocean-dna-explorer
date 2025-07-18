@@ -89,11 +89,11 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 					/>
 					<div className="mt-4 p-4 bg-base-100 rounded-lg border border-base-content/10 space-y-4">
 						<div>
-							<h4 className="font-semibold text-base-content mb-1">Legend:</h4>
+							<h4 className="text-base-content mb-1">Legend:</h4>
 							<div className="flex gap-6 text-sm">
 								<div className="flex items-center gap-2">
 									<div className="w-4 h-2 bg-primary rounded animate-pulse"></div>
-									<span>Actual primer sequence (blinking)</span>
+									<span className="font-normal/80">Actual primer sequence (blinking)</span>
 								</div>
 								<div className="flex items-center gap-2">
 									<div className="w-4 h-2 bg-secondary rounded"></div>
@@ -101,12 +101,12 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 								</div>
 							</div>
 							<p className="text-sm text-base-content/80 mt-2">
-								<span className="text-base-content">How to read this diagram:</span> These graphical representations of
-								forward and reverse primers have 5' (5-prime) and 3' (3-prime) indicators on the ends of
+								<span className="text-base-content">How to read this diagram:</span> These horizontal DNA helix representations show
+								the reverse primer (top) and forward primer (bottom) with 5' (5-prime) and 3' (3-prime) indicators at the left and right ends of
 								each DNA backbone. The primer sequences are to be read from the 5' to the 3' end. The
-								<span className="font-semibold text-primary"> blinking strands represent the actual primer sequences</span>, 
+								<span className="text-primary"> blinking strands represent the actual primer sequences</span>, 
 								while the non-blinking strands are the complementary template DNA that the primers bind to during PCR. 
-								The shorter of the two sides of each DNA helix is the forward or reverse primer, and the longer side is the complementary strand of the primer.
+								Each helix shows the top and bottom backbones of the DNA double helix, with the primer binding to its complementary sequence.
 							</p>
 						</div>
 					</div>
