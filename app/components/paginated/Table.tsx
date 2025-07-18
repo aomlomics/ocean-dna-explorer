@@ -20,7 +20,8 @@ export default function Table({
 	omit = [],
 	hideEmptyAtStart,
 	filterHeadersAtStart,
-	defaultTake = 50
+	defaultTake = 50,
+	showUserDefined
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	where?: Record<string, any>;
@@ -28,6 +29,7 @@ export default function Table({
 	hideEmptyAtStart?: boolean;
 	filterHeadersAtStart?: boolean;
 	defaultTake?: number;
+	showUserDefined?: boolean;
 }) {
 	const [take, setTake] = useState(defaultTake);
 	const [page, setPage] = useState(1);
@@ -118,12 +120,13 @@ export default function Table({
 					return acc;
 				}
 
-				acc.push(head);
+				if (head !== "userDefined") {
+					acc.push(head);
+				}
 
 				return acc;
 			}, [])
 		);
-		setHeaders(tempHeaders);
 
 		let tempHeadersFilter = {} as Record<string, true>;
 		if (filterHeadersAtStart && TableMetadata[table].subFields) {
@@ -136,20 +139,17 @@ export default function Table({
 			tempHeadersFilter = temp;
 		}
 
-		if (
-			data &&
-			data.statusMessage === "success" &&
-			data.result.length &&
-			data.result[0].userDefined &&
-			!userDefinedHeaders.length
-		) {
-			const tempUserDefinedHeaders = [] as string[];
-			for (const h in data.result[0].userDefined) {
-				tempUserDefinedHeaders.push(h);
+		if (showUserDefined && data && data.statusMessage === "success" && !userDefinedHeaders.length) {
+			const tempUserDefinedHeadersSet = new Set() as Set<string>;
+			for (const r of data.result) {
+				for (const h in r.userDefined) {
+					tempUserDefinedHeadersSet.add(h);
+				}
 			}
+			const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
 
 			tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
-			setUserDefinedHeaders(tempUserDefinedHeaders);
+			setUserDefinedHeaders(Array.from(tempUserDefinedHeaders));
 
 			if (filterHeadersAtStart) {
 				tempHeadersFilter = {
@@ -158,6 +158,8 @@ export default function Table({
 				};
 			}
 		}
+
+		setHeaders(tempHeaders);
 
 		if (Object.keys(tempHeadersFilter).length) {
 			setHeadersFilter(tempHeadersFilter);
