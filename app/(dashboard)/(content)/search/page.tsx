@@ -2,17 +2,6 @@ import Search from "@/app/components/search/Search";
 import SearchResults from "@/app/components/search/SearchResults";
 
 export default async function Dashboard() {
-	const sampleColumns = [
-		"Sample Storage Temperature",
-		"Filter Material",
-		"DNA Concentration",
-		"Sample Volume",
-		"Storage Duration",
-		"Filter Size",
-		"Sample Location",
-		"Collection Date"
-	];
-
 	return (
 		<div className="drawer lg:drawer-open">
 			<input id="my-drawer" type="checkbox" className="drawer-toggle" />
