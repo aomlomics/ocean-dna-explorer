@@ -16,6 +16,12 @@ import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
 
+type ResponseSet = {
+	analysis: NetworkProgressPacket;
+	assignments: NetworkProgressPacket;
+	occurrences: NetworkProgressPacket;
+};
+
 export default function AnalysisSubmit() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
@@ -36,17 +42,7 @@ export default function AnalysisSubmit() {
 	//	to set value of single response: setResponses([<analysisId>, <fileName>, <response>])
 	//	to clear all responses: setResponses(null)
 	const [responses, setResponses] = useReducer(
-		(
-			state: Record<
-				string,
-				{
-					analysis: NetworkProgressPacket;
-					assignments: NetworkProgressPacket;
-					occurrences: NetworkProgressPacket;
-				}
-			>,
-			update: { id: string; key: string; res: NetworkProgressPacket } | null
-		) => {
+		(state: Record<string, ResponseSet>, update: { id: string; key: string; res: NetworkProgressPacket } | null) => {
 			if (update) {
 				if (update.res?.statusMessage === "error") {
 					setLoading(false);
@@ -72,8 +68,8 @@ export default function AnalysisSubmit() {
 			if (event.target.files?.length) {
 				const file = event.target.files[0] as File;
 
-				let currAnalysis = "";
-				let currProject = "";
+				let currAnalysis_run_name = "";
+				let currProject = undefined as Project | undefined;
 
 				//parse file
 				const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
@@ -85,13 +81,11 @@ export default function AnalysisSubmit() {
 					if (field && value) {
 						//get value if the row is for the analysis_run_name field
 						if (field === "analysis_run_name") {
-							currAnalysis = value;
+							currAnalysis_run_name = value;
 						}
 
 						//get value if the row is for the project_id field
 						if (field === "project_id") {
-							currProject = value;
-
 							//check if the project is different from the project already selected
 							if (project && analysisIds.filter((id) => id !== -1).length !== 1) {
 								if (value !== project.project_id) {
@@ -112,33 +106,31 @@ export default function AnalysisSubmit() {
 									event.target.value = "";
 									return;
 								} else {
-									const project = json.result[0];
+									currProject = json.result[0];
 
 									//project with given project_id does not exist
-									if (!project) {
-										setErrorMessage(`Could not find Project with project_id of ${currProject}.`);
+									if (!currProject) {
+										setErrorMessage(`Could not find Project with project_id of ${value}.`);
 										modalRef.current?.showModal();
 										event.target.value = "";
 										return;
 									}
-
-									//set state variables for project
-									setIsPrivate(project.isPrivate);
-									setProject(project);
 								}
 							}
 						}
 
 						//replace -2 (not selected yet) id with analysis_run_name from file in analysisId list
-						if (currAnalysis && currProject) {
-							setAnalysisIds(analysisIds.toSpliced(i, 1, currAnalysis));
+						if (currAnalysis_run_name && currProject) {
+							setAnalysisIds(analysisIds.toSpliced(i, 1, currAnalysis_run_name));
+							setIsPrivate(currProject.isPrivate);
+							setProject(currProject);
 							return;
 						}
 					}
 				}
 
 				//missing fields
-				if (!currAnalysis) {
+				if (!currAnalysis_run_name) {
 					setErrorMessage("Could not find analysis_run_name in term_name column.");
 					modalRef.current?.showModal();
 					event.target.value = "";
@@ -306,79 +298,6 @@ export default function AnalysisSubmit() {
 		setLoading(false);
 	}
 
-	function AnalysisFormSection({ id, i }: { id: string | -1 | -2; i: number }) {
-		if (id === -1) {
-			return <></>;
-		}
-
-		return (
-			<>
-				<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
-					<h2 className="text-xl font-semibold text-base-content mb-4">
-						{typeof id === "string" ? id : "New Analysis"}
-					</h2>
-					{analysisIds.filter((id) => id !== -1).length > 1 && (
-						<button
-							className="btn btn-sm btn-error rounded-full"
-							type="button"
-							disabled={!!loading}
-							onClick={() => {
-								const temp = analysisIds.toSpliced(i, 1, -1);
-								setAnalysisIds(temp);
-								if (temp.filter((id) => typeof id === "string").length === 0) {
-									setProject(null);
-									setIsPrivate(false);
-								}
-							}}
-						>
-							X
-						</button>
-					)}
-				</div>
-
-				<fieldset className="fieldset col-2">
-					<legend className="fieldset-legend">Analysis Metadata File:</legend>
-					<input
-						type="file"
-						className="file-input file-input-primary"
-						name={`analysis_${id}`}
-						required
-						disabled={loading}
-						accept=".tsv"
-						onChange={(event: ChangeEvent<HTMLInputElement>) => parseAnalysis(event, i)}
-					/>
-				</fieldset>
-				<ProgressBar loading={loading} data={responses[id]?.analysis} />
-
-				<fieldset className="fieldset col-2">
-					<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
-					<input
-						type="file"
-						className="file-input file-input-primary"
-						name={`assignments_${id}`}
-						required
-						disabled={typeof id !== "string" || loading}
-						accept=".tsv"
-					/>
-				</fieldset>
-				<ProgressBar loading={loading} data={responses[id]?.assignments} />
-
-				<fieldset className="fieldset col-2">
-					<legend className="fieldset-legend">Occurrence Table File:</legend>
-					<input
-						type="file"
-						className="file-input file-input-primary"
-						name={`occurrences_${id}`}
-						required
-						disabled={typeof id !== "string" || loading}
-						accept=".tsv"
-					/>
-				</fieldset>
-				<ProgressBar loading={loading} data={responses[id]?.occurrences} />
-			</>
-		);
-	}
-
 	return (
 		<>
 			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
@@ -413,7 +332,23 @@ export default function AnalysisSubmit() {
 
 				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
 					{analysisIds.map((id, i) => (
-						<AnalysisFormSection key={i} i={i} id={id} />
+						<AnalysisFormSection
+							key={i}
+							i={i}
+							id={id}
+							deletable={analysisIds.filter((id) => id !== -1).length > 1}
+							loading={loading}
+							onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
+							responseSet={responses[id]}
+							onDelete={() => {
+								const temp = analysisIds.toSpliced(i, 1, -1);
+								setAnalysisIds(temp);
+								if (temp.filter((id) => typeof id === "string").length === 0) {
+									setProject(null);
+									setIsPrivate(false);
+								}
+							}}
+						/>
 					))}
 
 					<button
@@ -469,6 +404,81 @@ export default function AnalysisSubmit() {
 					</div>
 				)}
 			</Modal>
+		</>
+	);
+}
+
+function AnalysisFormSection({
+	id,
+	i,
+	deletable,
+	loading,
+	onAnalysisChange,
+	onDelete,
+	responseSet
+}: {
+	id: string | -1 | -2;
+	i: number;
+	deletable: boolean;
+	loading: boolean;
+	onAnalysisChange: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+	onDelete: () => void;
+	responseSet: ResponseSet | undefined;
+}) {
+	if (id === -1) {
+		return <></>;
+	}
+
+	return (
+		<>
+			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
+				<h2 className="text-xl font-semibold text-base-content mb-4">{typeof id === "string" ? id : "New Analysis"}</h2>
+				{deletable && (
+					<button className="btn btn-sm btn-error rounded-full" type="button" disabled={loading} onClick={onDelete}>
+						X
+					</button>
+				)}
+			</div>
+
+			<fieldset className="fieldset col-2">
+				<legend className="fieldset-legend">Analysis Metadata File:</legend>
+				<input
+					type="file"
+					className="file-input file-input-primary"
+					name={`analysis_${id}`}
+					required
+					disabled={loading}
+					accept=".tsv"
+					onChange={onAnalysisChange}
+				/>
+			</fieldset>
+			<ProgressBar loading={loading} data={responseSet?.analysis} />
+
+			<fieldset className="fieldset col-2">
+				<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
+				<input
+					type="file"
+					className="file-input file-input-primary"
+					name={`assignments_${id}`}
+					required
+					disabled={typeof id !== "string" || loading}
+					accept=".tsv"
+				/>
+			</fieldset>
+			<ProgressBar loading={loading} data={responseSet?.assignments} />
+
+			<fieldset className="fieldset col-2">
+				<legend className="fieldset-legend">Occurrence Table File:</legend>
+				<input
+					type="file"
+					className="file-input file-input-primary"
+					name={`occurrences_${id}`}
+					required
+					disabled={typeof id !== "string" || loading}
+					accept=".tsv"
+				/>
+			</fieldset>
+			<ProgressBar loading={loading} data={responseSet?.occurrences} />
 		</>
 	);
 }
