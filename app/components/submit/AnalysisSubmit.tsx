@@ -88,6 +88,8 @@ export default function AnalysisSubmit() {
 						if (field === "project_id") {
 							//check if the project is different from the project already selected
 							if (project && analysisIds.filter((id) => id !== -1).length !== 1) {
+								currProject = project;
+
 								if (value !== project.project_id) {
 									setErrorMessage("All analyses must be for the same project.");
 									modalRef.current?.showModal();
