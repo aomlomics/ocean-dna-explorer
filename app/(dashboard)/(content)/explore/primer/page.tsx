@@ -70,7 +70,7 @@ export default async function Primer() {
 						Showing <span className="text-primary">Primers</span>
 					</h1>
 
-					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
+					<div className="rounded-lg border border-base-300">
 						<Table table="primer" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />
 					</div>
 				</div>

@@ -56,7 +56,7 @@ export default async function Feature() {
 						Showing <span className="text-primary">Features</span>
 					</h1>
 
-					<div className="bg-base-100 rounded-lg border border-base-300 p-6">
+					<div className="rounded-lg border border-base-300">
 						<Table table="feature" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
 					</div>
 				</div>

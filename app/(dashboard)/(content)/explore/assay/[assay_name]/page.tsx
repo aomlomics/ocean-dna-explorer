@@ -97,14 +97,14 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Samples" defaultChecked />
-				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
+				<div role="tabpanel" className="tab-content border-base-300 rounded-lg p-6">
 					<div className="card-body p-0 overflow-hidden aspect-5/2">
 						<Map locations={assay.Samples} id="samp_name" table="sample" cluster />
 					</div>
 				</div>
 
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Libraries" />
-				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6 aspect-5/2 w-full">
+				<div role="tabpanel" className="tab-content border-base-300 rounded-lg aspect-5/2">
 					<Table table="library" where={{ assay_name }}></Table>
 				</div>
 			</div>

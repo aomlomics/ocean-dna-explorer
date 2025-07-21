@@ -8,6 +8,7 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
+type ParamsArray = Array<[string, string, string | number] | ParamsArray>;
 
 export default function AdvancedSearch() {
 	//hooks
@@ -16,42 +17,52 @@ export default function AdvancedSearch() {
 	const router = useRouter();
 	const [searchTable, setSearchTable] = useState("");
 	const [filterIds, setFilterIds] = useState([] as FilterIds);
+	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 
 	useEffect(() => {
 		try {
 			if (searchParams.toString()) {
-				const params = new URLSearchParams(searchParams);
-
 				setSearchTable(searchParams.get("table") || "");
-				params.delete("table");
+				const advanced = searchParams.get("advanced");
+				if (advanced) {
+					const advancedParsed = JSON.parse(advanced) as ParamsArray;
+					setParamsArray(advancedParsed);
 
-				function parseFilterIds(ids: number[], listToFill: FilterIds) {
-					const i = ids[0];
-					if (ids.length === 1) {
-						listToFill[i] = 1;
-					} else {
-						if (!listToFill[i]) {
-							listToFill[i] = [] as FilterIds;
+					//replace all values with ones
+					function getFilterIds(e: ParamsArray[0]): FilterIds | 1 {
+						if (typeof e[0] === "string") {
+							return 1;
+						} else {
+							const paramsE = e as ParamsArray;
+							return paramsE.map(getFilterIds);
 						}
-						parseFilterIds(ids.slice(1), listToFill[i] as FilterIds);
 					}
-				}
 
-				const newFilterIds = [] as FilterIds;
-				for (const id of params.keys()) {
-					parseFilterIds(
-						id.split("|").map((k2) => parseInt(k2)),
-						newFilterIds
-					);
+					setFilterIds(advancedParsed.map(getFilterIds));
 				}
-
-				setFilterIds(newFilterIds);
 			}
 		} catch (err) {
 			//ignore bad urls
 			console.log(err);
 		}
 	}, []);
+
+	function scrollToResults() {
+		//scroll search results into view
+		const element = document.getElementById("searchResults");
+		if (element) {
+			element.scrollIntoView({
+				block: "start",
+				behavior: "smooth"
+			});
+		}
+	}
+
+	useEffect(() => {
+		if (searchParams.get("advanced")) {
+			scrollToResults();
+		}
+	}, [paramsArray]);
 
 	useEffect(() => {
 		setSearchTable(searchParams.get("table") || "");
@@ -61,7 +72,8 @@ export default function AdvancedSearch() {
 	function handleSearch(clear = true, event?: FormEvent<HTMLFormElement>) {
 		if (clear) {
 			setSearchTable("");
-			setFilterIds([1]);
+			setFilterIds([]);
+			setParamsArray([]);
 			router.replace(pathname);
 		} else if (event) {
 			event.preventDefault();
@@ -69,44 +81,54 @@ export default function AdvancedSearch() {
 			const params = new URLSearchParams();
 			params.set("table", searchTable);
 
-			function setParams(target: HTMLFormElement, ids: FilterIds, prevSuffix = "", prevParamsKey = "") {
+			function getAdvancedQuery(ids: FilterIds, prevSuffix = "") {
 				if (ids) {
+					const parts = [] as string[];
 					let i = 0;
-					let paramsI = 0;
 					for (const id of ids) {
 						if (id !== 0) {
 							const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
-							const paramsKey = `${prevParamsKey && prevParamsKey + "|"}${paramsI}`;
 
 							if (id === 1) {
-								const type = target[`type_${suffix}`].value;
-								const relation = type === "relation" ? target[`relation_${suffix}`].value : "";
-								const field = target[`field_${suffix}`].value;
-								const filter = target[`filter_${suffix}`].value;
+								const type = event!.currentTarget[`type_${suffix}`].value;
+								const relation = type === "relation" ? event!.currentTarget[`relation_${suffix}`].value : "";
+								const field = event!.currentTarget[`field_${suffix}`].value;
+								const filter = event!.currentTarget[`filter_${suffix}`].value;
+								const fieldType = event!.currentTarget[`filter_${suffix}`].type;
 
-								params.set(paramsKey, `${type},${relation},${field},${filter}`);
+								parts.push(
+									`[${relation && '"' + relation + '",'}"${field}",${
+										fieldType === "number" ? filter : '"' + filter + '"'
+									}]`
+								);
 							} else {
-								setParams(target, id, suffix, paramsKey);
+								parts.push(getAdvancedQuery(id, suffix));
 							}
-
-							paramsI++;
 						}
 
 						i++;
 					}
+
+					return "[" + parts.join(",") + "]";
+				} else {
+					return "";
 				}
 			}
 
-			setParams(event.currentTarget, filterIds);
+			const advanced = getAdvancedQuery(filterIds);
+			if (advanced.length) {
+				params.set("advanced", advanced);
+			}
 
 			window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
+			scrollToResults();
 		}
 	}
 
 	return (
-		<form className="flex flex-col gap-5" onSubmit={(e) => handleSearch(false, e)}>
-			<div className="grid grid-cols-[20%_60%_10%_10%]">
-				<div className="px-2">
+		<form className="flex flex-col gap-6" onSubmit={(e) => handleSearch(false, e)}>
+			<div className="grid grid-cols-[20%_60%_10%_10%] items-center">
+				<div className="pr-3">
 					<select value={searchTable} className="select" onChange={(e) => setSearchTable(e.target.value)} required>
 						<option disabled value="">
 							Select table
@@ -120,6 +142,16 @@ export default function AdvancedSearch() {
 							))}
 					</select>
 				</div>
+
+				{searchTable && (
+					<div className="text-2xl justify-self-center">
+						Filtering{" "}
+						<span className="text-primary">
+							{TableMetadata[searchTable.toLowerCase() as Lowercase<Prisma.ModelName>].plural}
+						</span>
+					</div>
+				)}
+
 				<div className="col-3 px-3">
 					<button className="btn btn-error" type="button" onClick={() => handleSearch()}>
 						Clear
@@ -129,17 +161,25 @@ export default function AdvancedSearch() {
 			</div>
 
 			{searchTable && (
-				<>
-					<h2 className="text-primary text-xl">Filters</h2>
-					<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center">
-						<div>Type</div>
-						<div>Relation</div>
-						<div>Field</div>
-						<div>Filter</div>
-					</div>
+				<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
+					<input type="checkbox" defaultChecked />
+					<div className="collapse-title font-semibold text-xl text-primary">Filters</div>
+					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
+						<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center">
+							<div>Type</div>
+							<div>Relation</div>
+							<div>Field</div>
+							<div>Filter</div>
+						</div>
 
-					<FilterSection searchTable={searchTable} filterIds={filterIds} onChange={(prev) => setFilterIds(prev)} />
-				</>
+						<FilterSection
+							searchTable={searchTable}
+							filterIds={filterIds}
+							paramsArray={paramsArray}
+							onChange={(prev) => setFilterIds(prev)}
+						/>
+					</div>
+				</div>
 			)}
 		</form>
 	);
@@ -149,6 +189,7 @@ export default function AdvancedSearch() {
 function FilterSection({
 	searchTable,
 	filterIds,
+	paramsArray,
 	onChange,
 	prevSuffix = "",
 	className,
@@ -156,6 +197,7 @@ function FilterSection({
 }: {
 	searchTable: string;
 	filterIds: FilterIds;
+	paramsArray: ParamsArray;
 	onChange: (prev: FilterIds) => FilterIds | void;
 	prevSuffix?: string;
 	className?: string;
@@ -176,6 +218,7 @@ function FilterSection({
 								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 								searchTable={searchTable}
 								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
+								paramsArray={paramsArray && (paramsArray[i] as [string, string, string])}
 							/>
 						);
 					} else {
@@ -192,6 +235,7 @@ function FilterSection({
 								<FilterSection
 									searchTable={searchTable}
 									filterIds={id}
+									paramsArray={paramsArray && (paramsArray[i] as ParamsArray)}
 									onChange={(prev) => onChange(filterIds.toSpliced(i, 1, prev))}
 									prevSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 									label="OR"
@@ -218,19 +262,18 @@ function FilterSection({
 
 function Filter({
 	nameSuffix,
+	paramsArray,
 	searchTable,
 	onDelete
 }: {
 	nameSuffix: string;
+	paramsArray?: [string, string, string];
 	searchTable: string;
 	onDelete: () => FilterIds | void;
 }) {
-	const searchParams = useSearchParams();
-
-	const urlFilter = searchParams.get(nameSuffix)?.split(",");
-	const [type, setType] = useState(urlFilter ? urlFilter[0] : "field");
-	const [relation, setRelation] = useState(urlFilter ? urlFilter[1] : "");
-	const [field, setField] = useState(urlFilter ? urlFilter[2] : "");
+	const [type, setType] = useState(paramsArray && paramsArray.length === 3 ? "relation" : "field");
+	const [relation, setRelation] = useState(paramsArray && type === "relation" ? paramsArray[0] : "");
+	const [field, setField] = useState(paramsArray ? (type === "relation" ? paramsArray[1] : paramsArray[0]) : "");
 
 	const omit = [...GlobalOmit, "id"];
 
@@ -317,7 +360,14 @@ function Filter({
 				</div>
 			)}
 
-			{!!field && <InputElement nameSuffix={nameSuffix} table={table} field={field} />}
+			{!!field && (
+				<InputElement
+					nameSuffix={nameSuffix}
+					table={table}
+					field={field}
+					defaultValue={paramsArray ? (type === "relation" ? paramsArray[2] : paramsArray[1]) : ""}
+				/>
+			)}
 
 			<button
 				className="btn btn-xs btn-error rounded-lg aspect-square justify-self-center self-center col-5 pl-2"
@@ -333,17 +383,16 @@ function Filter({
 function InputElement({
 	nameSuffix,
 	table,
-	field
+	field,
+	defaultValue
 }: {
 	nameSuffix: string;
 	table: Lowercase<Prisma.ModelName>;
 	field: string;
+	defaultValue?: string;
 }) {
-	const searchParams = useSearchParams();
-	const urlFilter = searchParams.get(nameSuffix)?.split(",");
-	const [value, setValue] = useState(urlFilter ? urlFilter[3] : "");
-
 	const shape = TableMetadata[table].schema.shape;
+	if (!shape) return <></>;
 	const type = getZodType(shape[field as keyof typeof shape]).type;
 	if (!type) {
 		throw new Error(
@@ -367,8 +416,7 @@ function InputElement({
 				className="input input-primary w-full"
 				placeholder="Filter..."
 				name={`filter_${nameSuffix}`}
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
+				defaultValue={defaultValue}
 				type={inputType}
 				step={step}
 				required

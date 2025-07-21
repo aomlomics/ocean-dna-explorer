@@ -53,7 +53,7 @@ export default async function Taxonomy() {
 				<div className="space-y-6">
 					<ExploreSearch table="taxonomy" defaultField="taxonomy" />
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
+					<div className="rounded-lg border border-base-300">
 						<TaxaGrid />
 					</div>
 				</div>
