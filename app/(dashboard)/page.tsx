@@ -136,10 +136,10 @@ export default async function Home() {
 				</div>
 
 				{/* Funding Institutes Section */}
-				<div className="mt-32 mb-24">
-					<h2 className="text-3xl text-primary mb-12 text-center">Supported By:</h2>
+				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
+					<h2 className="text-2xl lg:text-3xl text-primary mb-6 lg:mb-8 text-center">Supported By:</h2>
 
-					<div className="max-w-4xl mx-auto text-lg text-main mb-16 text-center leading-tight">
+					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
 							NODE is a product of{" "}
 							<Link
@@ -189,9 +189,9 @@ export default async function Home() {
 							projects NO_0062 and NO_0066.
 						</p>
 					</div>
-					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit">
-						<div className="flex justify-center items-center gap-20">
-							<div className="relative h-24 w-64">
+					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:mt-0">
+						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
+							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
 									<ThemeAwareLogo
 										src="/images/noaa_exploration_logo_FINAL.svg"
@@ -201,13 +201,12 @@ export default async function Home() {
 									/>
 								</Link>
 							</div>
-							<div>
+							<div className="relative h-16 w-80 lg:h-24 lg:w-[26rem]">
 								<Link href="https://www.northerngulfinstitute.org/" target="_blank" rel="noreferrer">
 									<ThemeAwareLogo
 										src="/images/ngi_msu_logo_FINAL.svg"
 										alt="Mississippi State University, Northern Gulf Institute Logo"
-										width={500}
-										height={300}
+										fill={true}
 										className="object-contain"
 									/>
 								</Link>
