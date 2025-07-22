@@ -27,3 +27,10 @@ generator zod {
     createRelationValuesTypes        = true
     createPartialTypes               = true
 }
+
+generator erd {
+    provider  = "prisma-erd-generator"
+    output    = "../public/images/ERD.svg"
+    tableOnly = true
+    theme     = "neutral"
+}
