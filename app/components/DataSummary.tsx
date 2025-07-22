@@ -2,41 +2,44 @@ import { publicPrisma } from "../helpers/prisma";
 import Link from "next/link";
 
 export default async function DataSummary() {
-	const { projectCount, sampleCount, taxaCount, uniqueAssays } = await publicPrisma.$transaction(async (tx) => {
-		const projectCount = await tx.project.count();
-		const sampleCount = await tx.sample.count();
-		const taxaCount = await tx.taxonomy.count();
-		const uniqueAssays = (await tx.assay.findMany({
-			distinct: ["target_gene"],
-			select: {
-				target_gene: true
-			}
-		})) as { target_gene: string; count?: number }[];
-
-		for (const a of uniqueAssays) {
-			//get count of features that were assigned using a particular target gene
-			//number of assignments = number of features (an assignment has only one feature)
-			const count = await tx.analysis.findFirst({
-				where: {
-					Assay: {
-						target_gene: a.target_gene
-					}
-				},
+	const { projectCount, sampleCount, taxaCount, uniqueAssays } = await publicPrisma.$transaction(
+		async (tx) => {
+			const projectCount = await tx.project.count();
+			const sampleCount = await tx.sample.count();
+			const taxaCount = await tx.taxonomy.count();
+			const uniqueAssays = (await tx.assay.findMany({
+				distinct: ["target_gene"],
 				select: {
-					_count: {
-						select: {
-							Assignments: true
+					target_gene: true
+				}
+			})) as { target_gene: string; count?: number }[];
+
+			for (const a of uniqueAssays) {
+				//get count of features that were assigned using a particular target gene
+				//number of assignments = number of features (an assignment has only one feature)
+				const count = await tx.analysis.findFirst({
+					where: {
+						Assay: {
+							target_gene: a.target_gene
+						}
+					},
+					select: {
+						_count: {
+							select: {
+								Assignments: true
+							}
 						}
 					}
+				});
+				if (count) {
+					a.count = count._count.Assignments;
 				}
-			});
-			if (count) {
-				a.count = count._count.Assignments;
 			}
-		}
 
-		return { projectCount, sampleCount, taxaCount, uniqueAssays };
-	});
+			return { projectCount, sampleCount, taxaCount, uniqueAssays };
+		},
+		{ timeout: 1 * 60 * 1000 }
+	);
 
 	return (
 		<div>

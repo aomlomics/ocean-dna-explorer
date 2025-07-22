@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { handleFilterChange, EnumFilterConfig, SelectFilterConfig } from "../filterHelpers";
-import { parseDbEnum } from "@/app/helpers/utils";
+import { parseDbDeadBoolean } from "@/app/helpers/utils";
 
 export default function SelectFilter({
 	config,
@@ -43,7 +43,7 @@ export default function SelectFilter({
 				>
 					<option value="">Any</option>
 					{config.type === "enum"
-						? Object.values(parseDbEnum(config.enum)).map((option, i) => (
+						? Object.values(parseDbDeadBoolean(config.enum)).map((option, i) => (
 								<option key={option} value={option}>
 									{option}
 								</option>

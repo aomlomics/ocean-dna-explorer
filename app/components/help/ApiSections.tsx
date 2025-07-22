@@ -6,6 +6,7 @@ import { prisma } from "@/app/helpers/prisma";
 import ApiCodeBlock from "./ApiCodeBlock";
 import Link from "next/link";
 import ThemeAwareSvg from "./ThemeAwareSvg";
+import Image from "next/image";
 
 // Define types for our content structure
 export type Subsection = {
@@ -175,14 +176,14 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">The following diagram shows the relationships between tables in the database:</p>
 
 							<div className="p-4 rounded-md mb-4 bg-base-200">
-								<div className="relative w-full aspect-[640/338]">
-									<ThemeAwareSvg
-										lightSrc="/images/NODE_Relations_Light.svg"
-										darkSrc="/images/NODE_Relations_Dark.svg"
-										alt="Database entity relationship diagram"
-										fill
-										sizes="(max-width: 768px) 100vw, 768px"
-										priority
+								<div className="relative w-full h-[800px]">
+									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
+									<Image
+										src="/images/ERD-Notation.PNG"
+										alt="ERD notation key"
+										width="279"
+										height="137"
+										className="h-1/5 w-auto absolute left-0 bottom-0 pl-6 pb-6"
 									/>
 								</div>
 							</div>

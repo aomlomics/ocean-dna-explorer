@@ -5,6 +5,8 @@ import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
 import { JsonValue } from "@prisma/client/runtime/library";
 import distinctColors from "distinct-colors";
+import { NetworkProgressPacket, ProgressAction, ProgressActionMany } from "@/types/globals";
+import { ActionDispatch, Dispatch, SetStateAction } from "react";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -85,8 +87,8 @@ export function getZodType(field: any): { type: DbType; optional?: boolean; valu
 
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
-	value: string,
 	fieldName: string,
+	value: string,
 	obj: Record<string, string | string[] | number | number[] | boolean | JsonValue | null>,
 	schema: ZodObject<any>,
 	fieldOptionsEnum: ZodEnum<any>
@@ -240,16 +242,21 @@ function stringToNumber(str: string) {
 	}
 }
 
-export function parseDbEnum(dbEnum: Record<string, string>) {
+export function deadBooleanToString(value: any) {
+	return stringToNumber(value)
+		.replaceAll("PAREN1_", "(")
+		.replaceAll("PAREN2_", ")")
+		.replaceAll("PERCENT_", "%")
+		.replaceAll("COLON__", ": ")
+		.replaceAll("__", "-")
+		.replaceAll("_", " ");
+}
+
+export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	const newEnum = {} as Record<string, string>;
 
 	for (const [key, value] of Object.entries(dbEnum)) {
-		newEnum[key] = stringToNumber(value)
-			.replaceAll("PAREN1_", "(")
-			.replaceAll("PAREN2_", ")")
-			.replaceAll("PERCENT_", "%")
-			.replaceAll("__", "-")
-			.replaceAll("_", " ");
+		newEnum[key] = deadBooleanToString(value);
 	}
 
 	return newEnum;
@@ -506,4 +513,143 @@ export function getOptions(arr: Record<string, any>[]) {
 	}
 
 	return filterOptions;
+}
+
+export function createProgressStream() {
+	const stream = new TransformStream();
+	const writer = stream.writable.getWriter();
+	const encoder = new TextEncoder();
+
+	/**
+	 * Send updates to client
+	 * @param message - string message to display in toast
+	 * @param value - number progress to display in button progress
+	 */
+	async function message(message: string, value: number) {
+		const data = JSON.stringify({ statusMessage: "progress", progress: { message, value } });
+		await writer.write(encoder.encode(`${data}\n`));
+	}
+
+	/**
+	 * Send error to client
+	 * @param message - string message to display in toast
+	 */
+	async function error(message: string) {
+		const data = JSON.stringify({ statusMessage: "error", error: message });
+		await writer.write(encoder.encode(`${data}\n`));
+	}
+
+	/**
+	 * Send success to client
+	 * @param message - string message to display in toast
+	 */
+	async function success(message: string) {
+		const data = JSON.stringify({ statusMessage: "success", progress: { message, value: 100 } });
+		await writer.write(encoder.encode(`${data}\n`));
+	}
+
+	/**
+	 * Close the stream and terminate server process
+	 */
+	async function close() {
+		await writer.close();
+	}
+
+	return {
+		readable: stream.readable,
+		message,
+		error,
+		success,
+		close
+	};
+}
+
+export async function doProgressAction({
+	action,
+	setter,
+	reducer,
+	args = []
+}: {
+	action: ProgressAction;
+	setter?: Dispatch<SetStateAction<NetworkProgressPacket>>;
+	reducer?: {
+		id: string;
+		key: string;
+		setter: ActionDispatch<
+			[
+				update:
+					| {
+							id: string;
+							key: string;
+							res: NetworkProgressPacket;
+					  }
+					| undefined
+			]
+		>;
+	};
+	args: any[];
+}) {
+	const readable = await action(...args);
+	const reader = readable.getReader();
+	const decoder = new TextDecoder();
+
+	while (true) {
+		const { value, done } = await reader.read();
+		if (done) {
+			return;
+		}
+
+		//split the string into an array of individual JSON objects
+		const stream = decoder.decode(value);
+		const jsonObjects = stream.trim().split("\n");
+
+		//parse each JSON object
+		for (const jsonStr of jsonObjects) {
+			const data = JSON.parse(jsonStr) as NetworkProgressPacket;
+
+			if (setter) {
+				setter(data);
+			} else if (reducer) {
+				reducer.setter({ id: reducer.id, key: reducer.key, res: data });
+			}
+
+			if (data?.statusMessage === "error") {
+				return data.error;
+			}
+		}
+	}
+}
+
+async function handleReadable(readable: ReadableStream<any>, setter: (res: NetworkProgressPacket) => void) {
+	const reader = readable.getReader();
+	const decoder = new TextDecoder();
+
+	while (true) {
+		const { value, done } = await reader.read();
+		if (done) break;
+
+		//split the string into an array of individual JSON objects
+		const stream = decoder.decode(value);
+		const jsonObjects = stream.trim().split("\n");
+
+		//parse each JSON object
+		jsonObjects.forEach((jsonStr) => {
+			const data = JSON.parse(jsonStr) as NetworkProgressPacket;
+			setter(data);
+		});
+	}
+}
+
+export async function doProgressActionMany(
+	action: ProgressActionMany,
+	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
+	globalSetter: Dispatch<SetStateAction<NetworkProgressPacket>>,
+	...args: any[]
+) {
+	const { global, readables } = await action(...args);
+
+	handleReadable(global, globalSetter);
+	for (let i = 0; i < readables.length; i++) {
+		handleReadable(readables[i], setters[i]);
+	}
 }

@@ -51,6 +51,26 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 					}
 				});
 
+				//assays delete
+				console.log("assays delete");
+				await tx.assay.deleteMany({
+					where: {
+						Samples: {
+							none: {}
+						}
+					}
+				});
+
+				//primers delete
+				console.log("primers delete");
+				await tx.primer.deleteMany({
+					where: {
+						Assays: {
+							none: {}
+						}
+					}
+				});
+
 				// features delete
 				// console.log("empty features delete");
 				// await tx.feature.deleteMany({
