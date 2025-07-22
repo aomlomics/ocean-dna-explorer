@@ -72,11 +72,7 @@ export default function SubmissionDeleteButton({
 	return (
 		<div className="relative">
 			<div className={`flex gap-3 items-center ${isDeleted ? "opacity-50" : ""}`}>
-				<button
-					onClick={handleDelete}
-					disabled={disabled || isDeleting || isDeleted}
-					className="btn btn-sm bg-primary text-neutral-content hover:bg-error"
-				>
+				<button onClick={handleDelete} disabled={disabled || isDeleting || isDeleted} className="btn btn-error btn-sm">
 					{isDeleting ? "Deleting..." : "Delete"}
 				</button>
 				{isDeleting && <ProgressCircle loading={isDeleting} response="" />}

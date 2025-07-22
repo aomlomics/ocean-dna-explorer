@@ -61,7 +61,7 @@ const unsafePrisma =
 	new PrismaClient({
 		log: [
 			// {
-			// 	emit: "event",
+			// 	emit: "stdout",
 			// 	level: "query"
 			// },
 			{
@@ -594,4 +594,35 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Ne
 			error: err.message
 		};
 	}
+}
+
+//TODO: make it work with arrays
+export async function updateManyRaw(
+	client: any,
+	table: Prisma.ModelName,
+	data: Record<string, any>[],
+	id = "id",
+	fields?: string[]
+) {
+	let fs = undefined as string[] | undefined;
+	if (fields) {
+		fs = fields.filter((f) => f !== id);
+	} else {
+		const keys = Object.keys(data[0]);
+		keys.splice(keys.indexOf(id), 1);
+		fs = keys;
+	}
+
+	const setSql = fs.map((field) => `"${field}" = "t"."${field}"`).join(", ");
+	const fieldsSql = fs.map((f) => `"${f}"`).join(", ");
+
+	let paramIndex = 0;
+	const valuesSql = data.map((row) => `(${Object.values(row).map(() => `\$${++paramIndex}`)})`).join(",");
+
+	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSql}) AS t("${id}", ${fieldsSql}) WHERE "${table}"."${id}" = "t"."${id}"`;
+
+	return client.$executeRawUnsafe(
+		sql,
+		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], [])
+	);
 }
