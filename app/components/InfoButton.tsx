@@ -8,12 +8,12 @@ export default function InfoButton({
 	dir?: "tooltip-bottom" | "tooltip-left" | "tooltip-right";
 }) {
 	return (
-		<div className={`tooltip tooltip-secondary ${dir ? dir : ""} flex items-center`} data-tip={infoText}>
+		<div className={`tooltip ${dir ? dir : ""} flex items-center before:!bg-base-200 before:!text-base-content before:!border-base-300 pb-0.5`} data-tip={infoText}>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 24 24"
 				fill="none"
-				className="stroke-current text-secondary shrink-0 w-4 h-4"
+				className="stroke-current text-primary shrink-0 w-4 h-4"
 			>
 				<path
 					strokeLinecap="round"

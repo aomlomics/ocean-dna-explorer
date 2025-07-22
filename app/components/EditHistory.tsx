@@ -1,16 +1,16 @@
 export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (
 		<div className="dropdown dropdown-hover">
-			<div tabIndex={0} role="button" className="stat flex justify-between items-center p-0">
+			<div tabIndex={0} role="button" className="flex justify-between items-center p-0 ml-1 pb-1.5">
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
-					className="stroke-current text-secondary shrink-0 w-8 h-8"
+					className="stroke-current text-primary shrink-0 w-8 h-8"
 				>
 					<path
 						d="M12 7V12L14.5 13.5M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-						stroke="#000000"
+						stroke="currentColor" 
 						strokeWidth="2"
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -20,7 +20,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 
 			<ul
 				tabIndex={0}
-				className="dropdown-content bg-base-300 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
+				className="dropdown-content bg-base-200 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
 			>
 				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (
