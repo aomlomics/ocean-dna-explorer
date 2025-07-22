@@ -10,7 +10,6 @@ import { useDebouncedCallback } from "use-debounce";
 import { fetcher, getZodType } from "../../helpers/utils";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
-import { SampleSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -27,7 +26,7 @@ export default function Table({
 	ignoreParams
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	where?: Record<string, any>;
+	where?: Record<string, string | number>;
 	omit?: string[];
 	hideFilters?: boolean;
 	hideEmptyAtStart?: boolean;
@@ -64,13 +63,12 @@ export default function Table({
 		page: page.toString()
 	});
 
-	let whereQuery = {} as Record<string, string>;
+	let whereQuery = {} as Record<string, string | number | { contains: string; mode: "insensitive" }>;
 	if (where) {
-		if (Object.keys(whereFilter).length) {
-			whereQuery = { ...where, ...whereFilter };
-		} else {
-			whereQuery = { ...where };
-		}
+		whereQuery = { ...where };
+	}
+	if (Object.keys(whereFilter).length) {
+		whereQuery = { ...whereQuery, ...whereFilter };
 	}
 	if (searchParams.size) {
 		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
@@ -80,7 +78,10 @@ export default function Table({
 			}
 		}
 	}
-	query.set("where", JSON.stringify(whereQuery));
+
+	if (Object.keys(whereQuery).length) {
+		query.set("where", JSON.stringify(whereQuery));
+	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
 		`/api/pagination/${table}?${query.toString()}`,
@@ -217,27 +218,27 @@ export default function Table({
 		formData.delete("take");
 
 		const temp = {} as typeof whereFilter;
-		for (const [key, value] of formData.entries()) {
+		for (const [field, value] of formData.entries()) {
 			if (typeof value === "string" && value.trim()) {
-				const type = getZodType(SampleSchema.shape[key as keyof typeof SampleSchema.shape]).type;
+				const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 				if (!type) {
 					throw new Error(
-						`Could not find type of '${key}'. Make sure a field named '${key}' exists on table named '${table}'.`
+						`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
 					);
 				}
 
 				if (type === "string") {
-					temp[key] = { contains: value, mode: "insensitive" };
+					temp[field] = { contains: value, mode: "insensitive" };
 				} else if (type === "integer") {
-					temp[key] = parseInt(value);
+					temp[field] = parseInt(value);
 				} else if (type === "float") {
-					temp[key] = parseFloat(value);
+					temp[field] = parseFloat(value);
 				} else if (type === "integer[]") {
 					//TODO: add support for querying ranges
 				} else if (type === "float[]") {
 					//TODO: add support for querying ranges
 				} else {
-					temp[key] = value;
+					temp[field] = value;
 				}
 			}
 		}

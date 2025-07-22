@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useReducer, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useReducer, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -36,20 +36,31 @@ export default function AnalysisSubmit() {
 
 	//list of analyses added to page, stored as a string of the analysis_run_name, -1 means the analysis was deleted from the list, -2 means the analysis file has not been selected yet
 	const [analysisIds, setAnalysisIds] = useState([-2] as Array<string | -1 | -2>);
+	const [prevAnalysisIdsLength, setPrevAnalysisIdsLength] = useState(1);
 
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
-	//	to set value of single response: setResponses([<analysisId>, <fileName>, <response>])
-	//	to clear all responses: setResponses(null)
+	//	to set value of single response: setResponses({ id: <analysisId>, key: <fileName>, res: <response> })
+	//	to clear one response: setResponses({ id: <analysisId>, clear: true })
+	//	to clear all responses: setResponses()
 	const [responses, setResponses] = useReducer(
-		(state: Record<string, ResponseSet>, update: { id: string; key: string; res: NetworkProgressPacket } | null) => {
+		(
+			state: Record<string, ResponseSet>,
+			update?: { id: string; clear: true } | { id: string; key: string; res: NetworkProgressPacket; clear?: undefined }
+		) => {
 			if (update) {
-				if (update.res?.statusMessage === "error") {
-					setLoading(false);
-					setErrorMessage(update.res.error);
-					modalRef.current?.showModal();
+				if (update.clear) {
+					const temp = { ...state };
+					delete temp[update.id];
+					return temp;
+				} else {
+					if (update.res?.statusMessage === "error") {
+						setLoading(false);
+						setErrorMessage(update.res.error);
+						modalRef.current?.showModal();
+					}
+					return { ...state, [update.id]: { ...state[update.id], [update.key]: update.res } };
 				}
-				return { ...state, [update.id]: { ...state[update.id], [update.key]: update.res } };
 			} else {
 				return {};
 			}
@@ -60,6 +71,22 @@ export default function AnalysisSubmit() {
 	//detecting what project the analyses are associated with, and whether the project is private
 	const [project, setProject] = useState<Project | null>(null);
 	const [isPrivate, setIsPrivate] = useState(false);
+
+	useEffect(() => {
+		if (analysisIds.length > prevAnalysisIdsLength) {
+			const element = document.getElementById((analysisIds.length - 1).toString());
+			if (element) {
+				element.scrollIntoView({
+					block: "start",
+					behavior: "smooth"
+				});
+			}
+		}
+
+		if (analysisIds.length !== prevAnalysisIdsLength) {
+			setPrevAnalysisIdsLength(analysisIds.length);
+		}
+	}, [analysisIds]);
 
 	//read analysis file to get the analysis_run_name
 	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
@@ -159,8 +186,15 @@ export default function AnalysisSubmit() {
 		setLoading(true);
 
 		//reset page state
-		setResponses(null);
 		setErrorMessage("");
+		const analysisSkips = [];
+		for (const id in responses) {
+			if (!Object.values(responses[id]).some((packet) => packet && packet.statusMessage !== "success")) {
+				analysisSkips.push(id);
+			} else {
+				setResponses({ id, clear: true });
+			}
+		}
 
 		const target = event.target as HTMLFormElement;
 
@@ -357,17 +391,7 @@ export default function AnalysisSubmit() {
 						className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm col-2 justify-self-center"
 						type="button"
 						disabled={!!loading}
-						onClick={() => {
-							setAnalysisIds([...analysisIds, -2]);
-
-							const element = document.getElementById((analysisIds.length - 1).toString());
-							if (element) {
-								element.scrollIntoView({
-									block: "start",
-									behavior: "smooth"
-								});
-							}
-						}}
+						onClick={() => setAnalysisIds([...analysisIds, -2])}
 					>
 						<span className="text-base-content">+</span> Add Another Analysis to Submission
 					</button>

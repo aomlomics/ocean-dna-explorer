@@ -577,11 +577,13 @@ export async function doProgressAction({
 		key: string;
 		setter: ActionDispatch<
 			[
-				update: {
-					id: string;
-					key: string;
-					res: NetworkProgressPacket;
-				} | null
+				update:
+					| {
+							id: string;
+							key: string;
+							res: NetworkProgressPacket;
+					  }
+					| undefined
 			]
 		>;
 	};

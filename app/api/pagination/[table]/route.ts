@@ -145,13 +145,13 @@ export async function GET(
 					delete query.where.advanced;
 
 					query.where = { ...advanced.reduce((acc, e) => ({ ...acc, ...parseAdvancedQuery(e) }), {}), ...query.where };
-				} else {
-					if (query.where?.search) {
-						const search = query.where.search.split(",");
-						delete query.where.search;
+				}
 
-						query.where = { ...parseToQuery(table, search), ...query.where };
-					}
+				if (query.where?.search) {
+					const search = query.where.search.split(",");
+					delete query.where.search;
+
+					query.where = { ...parseToQuery(table, search), ...query.where };
 				}
 			}
 
@@ -162,22 +162,10 @@ export async function GET(
 			query.take = parseInt(take);
 
 			const page = searchParams.get("page");
-			//const cursorId = searchParams.get("cursorId");
 			if (page) {
 				//offset pagination
 				query.skip = (parseInt(page) - 1) * query.take;
 			}
-			//} else if (cursorId) {
-			//	const dir = searchParams.get("dir");
-			//	//cursor pagination
-			//	findMany.skip = 1;
-			//	findMany.cursor = {
-			//		id: parseInt(cursorId)
-			//	};
-			//	if (dir) {
-			//		findMany.take *= parseInt(dir);
-			//	}
-			//}
 
 			const relCounts = searchParams.get("relCounts");
 			if (relCounts) {
