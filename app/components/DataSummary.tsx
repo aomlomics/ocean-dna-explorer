@@ -44,11 +44,11 @@ export default async function DataSummary() {
 	return (
 		<div>
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-				<div className="col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Data Summary</div>
+				<div className="col-span-2 md:col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Data Summary</div>
 				<DataSummaryItem title="Projects" value={projectCount} href="/explore/project" />
 				<DataSummaryItem title="Samples" value={sampleCount} href="/explore/sample" />
 				<DataSummaryItem title="Taxonomies" value={taxaCount} href="/explore/taxonomy" />
-				<div className="col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Assays</div>
+				<div className="col-span-2 md:col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Assays</div>
 				{uniqueAssays.map((a) => (
 					<DataSummaryItem
 						key={a.target_gene}
