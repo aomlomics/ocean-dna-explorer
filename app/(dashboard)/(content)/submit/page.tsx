@@ -1,9 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 
 export default function Submit() {
 	return (
-		<main className="max-w-7xl mx-auto p-6">
+		<>
+		<SubmitMobileGate />
+		<main className="max-w-7xl mx-auto p-6 hidden lg:block">
 			{/* Hero Section with Quick Links */}
 			<section className="py-8">
 				<div className="max-w-[1400px] mx-auto">
@@ -170,5 +173,6 @@ export default function Submit() {
 				</div>
 			</section>
 		</main>
+		</>
 	);
 }
