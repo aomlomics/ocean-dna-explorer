@@ -1,7 +1,7 @@
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import { divIcon, LatLngBoundsExpression } from "leaflet";
+import { divIcon, LatLng, LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import { useState } from "react";
@@ -77,38 +77,58 @@ export default function ActualMap({
 		);
 	}
 
-	//remove points where a lat or long is null and calculate bounds
 	const bounds = [
 		[-180, -180],
 		[180, 180]
 	]; //[[minLat, minLng], [maxLat, maxLng]]
+
+	//remove points where a lat or long is null and calculate bounds
 	let points = locations.filter((loc) => {
-		//minLat
-		if (loc.decimalLatitude && loc.decimalLatitude > bounds[0][0]) {
-			bounds[0][0] = loc.decimalLatitude;
-		}
+		if (
+			loc.decimalLatitude !== null &&
+			loc.decimalLongitude !== null &&
+			!(loc.decimalLatitude in DeadValueEnum) &&
+			!(loc.decimalLongitude in DeadValueEnum)
+		) {
+			//minLat
+			if (loc.decimalLatitude > bounds[0][0]) {
+				bounds[0][0] = loc.decimalLatitude;
+			}
 
-		//maxLat
-		if (loc.decimalLatitude && loc.decimalLatitude < bounds[1][0]) {
-			bounds[1][0] = loc.decimalLatitude;
-		}
+			//maxLat
+			if (loc.decimalLatitude < bounds[1][0]) {
+				bounds[1][0] = loc.decimalLatitude;
+			}
 
-		//minLng
-		if (loc.decimalLongitude && loc.decimalLongitude > bounds[0][1]) {
-			bounds[0][1] = loc.decimalLongitude;
-		}
+			//minLng
+			if (loc.decimalLongitude > bounds[0][1]) {
+				bounds[0][1] = loc.decimalLongitude;
+			}
 
-		//maxLng
-		if (loc.decimalLongitude && loc.decimalLongitude < bounds[1][1]) {
-			bounds[1][1] = loc.decimalLongitude;
-		}
+			//maxLng
+			if (loc.decimalLongitude < bounds[1][1]) {
+				bounds[1][1] = loc.decimalLongitude;
+			}
 
-		return loc.decimalLatitude !== null && loc.decimalLongitude !== null;
+			return true;
+		} else {
+			return false;
+		}
 	}) as {
 		decimalLatitude: number;
 		decimalLongitude: number;
 		[key: string]: any;
 	}[];
+
+	let containerProps;
+	if (points.length === 1) {
+		containerProps = {
+			center: [points[0].decimalLatitude, points[0].decimalLongitude],
+			zoom: 5
+		};
+	} else {
+		containerProps = { bounds };
+	}
 
 	//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
 	if (cluster) {
@@ -127,11 +147,9 @@ export default function ActualMap({
 			const sum = [0, 0];
 			const values = [];
 			for (const i of c) {
-				if (!(dataset[i][0] in DeadValueEnum || dataset[i][1] in DeadValueEnum)) {
-					sum[0] += dataset[i][0];
-					sum[1] += dataset[i][1];
-					values.push(points[i][id]);
-				}
+				sum[0] += dataset[i][0];
+				sum[1] += dataset[i][1];
+				values.push(points[i][id]);
 			}
 			if (values.length) {
 				clusteredLocations.push({ values, decimalLatitude: sum[0] / c.length, decimalLongitude: sum[1] / c.length });
@@ -147,8 +165,8 @@ export default function ActualMap({
 					[-180, -180],
 					[180, 180]
 				]}
-				bounds={bounds as LatLngBoundsExpression}
 				className="w-full h-full grow"
+				{...(containerProps as { bounds: LatLngBoundsExpression } | { center: LatLng; zoom: number })}
 			>
 				<LegendControl />
 				<TileLayer

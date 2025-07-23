@@ -29,7 +29,7 @@ export default function SearchResults() {
 
 			{table ? (
 				table === "taxonomy" ? (
-					<TaxaGrid />
+					<TaxaGrid ignoreParams={["table"]} />
 				) : (
 					<div>
 						<Table table={table} ignoreParams={["table"]} />
