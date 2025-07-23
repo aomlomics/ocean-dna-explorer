@@ -1,7 +1,7 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
-import { divIcon } from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { divIcon, LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
 import { useState } from "react";
@@ -41,6 +41,9 @@ export default function ActualMap({
 		const mapEvents = useMapEvents({
 			zoomend: () => {
 				setZoomLevel(mapEvents.getZoom());
+			},
+			zoomlevelschange: () => {
+				setZoomLevel(mapEvents.getZoom());
 			}
 		});
 
@@ -74,13 +77,40 @@ export default function ActualMap({
 		);
 	}
 
-	//remove points where a lat or long is null
-	let points = locations.filter((loc) => loc.decimalLatitude !== null && loc.decimalLongitude !== null) as {
+	//remove points where a lat or long is null and calculate bounds
+	const bounds = [
+		[-180, -180],
+		[180, 180]
+	]; //[[minLat, minLng], [maxLat, maxLng]]
+	let points = locations.filter((loc) => {
+		//minLat
+		if (loc.decimalLatitude && loc.decimalLatitude > bounds[0][0]) {
+			bounds[0][0] = loc.decimalLatitude;
+		}
+
+		//maxLat
+		if (loc.decimalLatitude && loc.decimalLatitude < bounds[1][0]) {
+			bounds[1][0] = loc.decimalLatitude;
+		}
+
+		//minLng
+		if (loc.decimalLongitude && loc.decimalLongitude > bounds[0][1]) {
+			bounds[0][1] = loc.decimalLongitude;
+		}
+
+		//maxLng
+		if (loc.decimalLongitude && loc.decimalLongitude < bounds[1][1]) {
+			bounds[1][1] = loc.decimalLongitude;
+		}
+
+		return loc.decimalLatitude !== null && loc.decimalLongitude !== null;
+	}) as {
 		decimalLatitude: number;
 		decimalLongitude: number;
 		[key: string]: any;
 	}[];
 
+	//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
 	if (cluster) {
 		//cluster location data
 		const dataset = points.reduce((acc, loc) => {
@@ -110,40 +140,22 @@ export default function ActualMap({
 		points = clusteredLocations;
 	}
 
-	//calculate average of locations for starting position of map
-	let avgLat = {
-		sum: 0,
-		count: 0
-	};
-	let avgLng = {
-		sum: 0,
-		count: 0
-	};
-	for (let loc of points) {
-		if (!(loc.decimalLatitude in DeadValueEnum) && !(loc.decimalLongitude in DeadValueEnum)) {
-			avgLat.sum += loc.decimalLatitude;
-			avgLat.count++;
-
-			avgLng.sum += loc.decimalLongitude;
-			avgLng.count++;
-		}
-	}
-	const centerStart = points.length
-		? {
-				lat: avgLat.sum / avgLat.count,
-				lng: avgLng.sum / avgLng.count
-		  }
-		: { lat: 0, lng: 0 };
-
 	return (
 		<div className="flex flex-col items-start h-full w-full">
-			<MapContainer className="w-full h-full grow" center={centerStart} zoom={zoomLevel}>
-				<ZoomControl />
+			<MapContainer
+				maxBounds={[
+					[-180, -180],
+					[180, 180]
+				]}
+				bounds={bounds as LatLngBoundsExpression}
+				className="w-full h-full grow"
+			>
 				<LegendControl />
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
 					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
 				/>
+				<ZoomControl />
 				{points.map((loc, i) => (
 					<Marker
 						key={loc.decimalLatitude.toString() + loc.decimalLongitude.toString() + i}

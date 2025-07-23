@@ -1,12 +1,11 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
-import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import { assay_type } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { getOptions } from "@/app/helpers/utils";
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
-import { ProjectScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import Table from "@/app/components/paginated/Table";
 
 export default async function Project() {
 	const projects = await prisma.project.findMany({
@@ -20,7 +19,7 @@ export default async function Project() {
 	const filterOptions = getOptions(projects);
 
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
@@ -40,7 +39,7 @@ export default async function Project() {
 					}
 				]}
 			/>
-			<div className="space-y-6">
+			<div className="space-y-6 w-full">
 				<div className="space-y-[-1px]">
 					<div className="border-b border-base-300">
 						<nav className="flex tabs tabs-lifted">
@@ -63,20 +62,13 @@ export default async function Project() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch
-						table="project"
-						fieldOptions={ProjectScalarFieldEnumSchema._def.values}
-						defaultField="project_id"
-					/>
+					{/* <ExploreSearch table="project" defaultField="project_id" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Projects</span>
+					</h1>
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
-						<Pagination
-							id="project_id"
-							table="project"
-							title="project_name"
-							fields={["project_id", "study_factor", "institution", "project_contact"]}
-							relCounts={["Samples", "Analyses"]}
-						/>
+					<div className="rounded-lg border border-base-300">
+						<Table table="project" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
 					</div>
 				</div>
 			</div>

@@ -1,11 +1,10 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
-import Pagination from "@/app/components/paginated/Pagination";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { getOptions } from "@/app/helpers/utils";
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
-import { PrimerScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import Table from "@/app/components/paginated/Table";
 
 export default async function Primer() {
 	const primers = await prisma.primer.findMany({
@@ -21,7 +20,7 @@ export default async function Primer() {
 	const filterOptions = getOptions(primers);
 
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
@@ -66,19 +65,13 @@ export default async function Primer() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch
-						table="primer"
-						fieldOptions={PrimerScalarFieldEnumSchema._def.values}
-						defaultField="pcr_primer_forward"
-					/>
+					{/* <ExploreSearch table="primer" defaultField="pcr_primer_forward" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Primers</span>
+					</h1>
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
-						<Pagination
-							id={["pcr_primer_name_forward", "pcr_primer_name_reverse"]}
-							table="primer"
-							title={["pcr_primer_name_forward", "pcr_primer_name_reverse"]}
-							fields={["pcr_primer_forward", "pcr_primer_reverse"]}
-						/>
+					<div className="rounded-lg border border-base-300">
+						<Table table="primer" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />
 					</div>
 				</div>
 			</div>

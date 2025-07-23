@@ -2,38 +2,20 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
-import { OccurrenceOptionalDefaultsSchema, OccurrenceSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import { Occurrence, OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
+import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
-import { z } from "zod";
+import { createProgressStream, deadBooleanToString } from "@/app/helpers/utils";
+import { parse } from "csv-parse";
 
-const formSchema = z.object({
-	analysis_run_name: OccurrenceSchema.shape.analysis_run_name,
-	url: z.string().url()
-});
-
-export default async function OccSubmitAction(formData: FormData): Promise<NetworkPacket> {
+async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["analysis_run_name"], url: string) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
-		return { statusMessage: "error", error: "Unauthorized" };
-	}
-
-	if (!(formData instanceof FormData)) {
-		return { statusMessage: "error", error: "Argument must be FormData" };
-	}
-	const formDataObject = Object.fromEntries(formData.entries());
-	const parsed = formSchema.safeParse(formDataObject);
-	if (!parsed.success) {
-		return {
-			statusMessage: "error",
-			error: parsed.error.issues
-				? parsed.error.issues.map((issue) => `${issue.path[0]}: ${issue.message}`).join(" ")
-				: "Invalid data structure."
-		};
+		await stream.error("Unauthorized");
+		return;
 	}
 
 	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
@@ -41,83 +23,106 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 	try {
 		//Occurrence file
 
-		console.log(`${parsed.data.analysis_run_name}_occ file`);
-		//code block to force garbage collection
-		{
-			//fetch from blob storage
-			const response = await fetch(parsed.data.url);
-			if (!response.ok) {
-				return {
-					statusMessage: "error",
-					error: `Occurrence file for ${parsed.data.analysis_run_name} responded ${response.status}: ${response.statusText}.`
-				};
-			}
-			const text = await response.text();
-			const occFileLines = text.replace(/[\r]+/gm, "").split("\n");
-			const occFileHeaders = occFileLines[0].split("\t");
+		console.log(`${analysis_run_name}_occ file`);
+		//fetch from blob storage
+		await stream.message("Downloading file", 10);
+		const response = await fetch(url);
+		if (!response.ok) {
+			await stream.error(
+				`Occurrence file for ${analysis_run_name} responded ${response.status}: ${response.statusText}.`
+			);
+			return;
+		}
 
-			//iterate over each row
-			for (let i = 1; i < occFileLines.length; i++) {
-				// TODO: get extension of file and split accordingly
-				const currentLine = occFileLines[i].split("\t");
+		let headers = [] as string[];
 
-				if (currentLine[0]) {
-					//iterate over each column
-					for (let j = 1; j < occFileHeaders.length; j++) {
-						const samp_name = occFileHeaders[j];
-						const featureid = currentLine[0];
-						const organismQuantity = parseInt(currentLine[j]);
+		await stream.message("Reading file into memory", 15);
+		const parser = parse(await response.text(), { delimiter: "\t" });
+		await stream.message("File read into memory", 25);
 
-						if (organismQuantity) {
-							//parse occurrence
-							const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
-								{
-									samp_name,
-									featureid,
-									organismQuantity,
-									analysis_run_name: parsed.data.analysis_run_name
-								},
-								{
-									errorMap: (error, ctx) => {
-										return {
-											message: `Field: ${error.path[0]}\nIssue: ${ctx.defaultError}\nValue: ${
-												error.path[0] === "samp_name"
-													? samp_name
-													: error.path[0] === "featureid"
-													? featureid
-													: error.path[0] === "organismQuantity"
-													? organismQuantity
-													: undefined
-											}`
-										};
-									}
+		let i = 0;
+		for await (const record of parser) {
+			//get first row as headers
+			if (!headers.length) {
+				headers = record;
+			} else {
+				i++;
+
+				//iterate over each column
+				const featureid = record[0];
+				if (!featureid) {
+					await stream.error(`No "featureid" found for row ${i}.`);
+					return;
+				}
+				for (let j = 1; j < headers.length; j++) {
+					const samp_name = headers[j];
+					if (!samp_name) {
+						await stream.error(`No "samp_name" found for column ${j}.`);
+						return;
+					}
+					const organismQuantity = parseInt(record[j]);
+					if (isNaN(organismQuantity)) {
+						await stream.error(
+							`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Sample ${samp_name} (column ${j}). Value is ${record[j]}.`
+						);
+						return;
+					}
+
+					if (organismQuantity) {
+						//parse occurrence
+						const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
+							{
+								samp_name,
+								featureid,
+								organismQuantity,
+								analysis_run_name
+							},
+							{
+								errorMap: (error, ctx) => {
+									return {
+										message: `Field: ${error.path[0]}\nIssue: ${
+											ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+										}\nValue: ${
+											error.path[0] === "samp_name"
+												? samp_name
+												: error.path[0] === "featureid"
+												? featureid
+												: error.path[0] === "organismQuantity"
+												? organismQuantity
+												: undefined
+										}`
+									};
 								}
-							);
-
-							if (!parsedOccurrence.success) {
-								return {
-									statusMessage: "error",
-									error:
-										`Table: Occurrence\n` +
-										`Key: ${parsed.data.analysis_run_name}\n` +
-										`Key: ${samp_name}\n` +
-										`Key: ${featureid}\n\n` +
-										`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
-								};
 							}
-							occurrences.push(parsedOccurrence.data);
+						);
+
+						if (!parsedOccurrence.success) {
+							await stream.error(
+								`Table: Occurrence\n` +
+									`Key: ${analysis_run_name}\n` +
+									`Key: ${samp_name}\n` +
+									`Key: ${featureid}\n\n` +
+									`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
+							);
+							return;
 						}
+						occurrences.push(parsedOccurrence.data);
 					}
 				}
 			}
+
+			//add to progress bar
+			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
 		}
+
+		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
 		await prisma.$transaction(
 			async (tx) => {
 				//check if the associated analysis is private, and throw an error if it is private but the submission is public
 				const analysis = await tx.analysis.findUnique({
 					where: {
-						analysis_run_name: parsed.data.analysis_run_name
+						analysis_run_name
 					},
 					select: {
 						Project: {
@@ -128,7 +133,7 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 					}
 				});
 				if (!analysis) {
-					throw new Error(`Analysis with analysis_run_name of ${parsed.data.analysis_run_name} does not exist.`);
+					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
 				} else if (!analysis.Project.userIds.includes(userId)) {
 					throw new Error("Unauthorized");
 				}
@@ -142,14 +147,21 @@ export default async function OccSubmitAction(formData: FormData): Promise<Netwo
 			{ timeout: 1 * 60 * 1000 }
 		);
 
-		revalidatePath("/explore");
-		return { statusMessage: "success" };
+		await stream.success("Success");
 	} catch (err: any) {
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return handlePrismaError(err);
+			await stream.error(handlePrismaError(err).error);
+		} else {
+			const error = err as Error;
+			await stream.error(error.message);
 		}
-
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
 	}
+}
+
+export default async function occSubmitAction(analysis_run_name: Occurrence["analysis_run_name"], url: string) {
+	const stream = createProgressStream();
+
+	doSubmit(stream, analysis_run_name, url).then(stream.close);
+
+	return stream.readable;
 }

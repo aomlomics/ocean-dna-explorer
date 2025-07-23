@@ -1,10 +1,9 @@
 import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
-import Pagination from "@/app/components/paginated/Pagination";
+import Table from "@/app/components/paginated/Table";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 
@@ -25,7 +24,7 @@ export default async function Sample() {
 	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
 
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{
@@ -88,20 +87,13 @@ export default async function Sample() {
 				</div>
 
 				<div className="space-y-6">
-					<ExploreSearch
-						table="sample"
-						fieldOptions={SampleScalarFieldEnumSchema._def.values}
-						defaultField="samp_name"
-					/>
+					{/* <ExploreSearch table="sample" defaultField="samp_name" /> */}
+					<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
+						Showing <span className="text-primary">Samples</span>
+					</h1>
 
-					<div className="bg-base-100 rounded-lg border border-base-300">
-						<Pagination
-							table="sample"
-							id="samp_name"
-							title="samp_name"
-							fields={["project_id", "geo_loc_name"]}
-							relCounts={["Occurrences"]}
-						/>
+					<div className="rounded-lg border border-base-300">
+						<Table table="sample" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />
 					</div>
 				</div>
 			</div>

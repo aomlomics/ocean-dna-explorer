@@ -127,22 +127,12 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Occurrences" />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-					<Pagination
-						table="occurrence"
-						where={{ featureid }}
-						title={["analysis_run_name", "samp_name"]}
-						fields={["organismQuantity"]}
-					/>
+					<Pagination table="occurrence" where={{ featureid }} />
 				</div>
 
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 				<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-					<Pagination
-						table="assignment"
-						where={{ featureid }}
-						title={["analysis_run_name", "taxonomy"]}
-						fields={["Confidence"]}
-					/>
+					<Pagination table="assignment" where={{ featureid }} />
 				</div>
 			</div>
 		</div>

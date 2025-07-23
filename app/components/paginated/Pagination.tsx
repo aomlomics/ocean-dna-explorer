@@ -9,21 +9,16 @@ import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import { NetworkPacket } from "@/types/globals";
+import TableMetadata from "@/types/tableMetadata";
 
 export default function Pagination({
 	table,
-	id = "id",
 	where,
-	title,
-	fields,
 	relCounts,
 	take = 10
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	id?: string | string[];
 	where?: Record<string, string>;
-	title: string | string[];
-	fields?: string[];
 	relCounts?: string[];
 	take?: number;
 }) {
@@ -90,9 +85,9 @@ export default function Pagination({
 				{data.result.map((d: any, i: number) => (
 					<Link
 						href={`/explore/${table}/${
-							typeof id === "string"
-								? encodeURIComponent(d[id])
-								: id.map((field) => encodeURIComponent(d[field])).join("/")
+							typeof TableMetadata[table].titleField === "string"
+								? encodeURIComponent(d[TableMetadata[table].titleField])
+								: TableMetadata[table].titleField.map((field) => encodeURIComponent(d[field])).join("/")
 						}`}
 						key={i}
 						className="card bg-base-200 hover:bg-base-300 transition-all duration-200"
@@ -100,19 +95,19 @@ export default function Pagination({
 						<div className="card-body p-5">
 							<div className="flex flex-col gap-2">
 								{/* Title with hover animation */}
-								{typeof title === "string" ? (
-									<h3 className="text-lg text-primary">{d[title]}</h3>
+								{typeof TableMetadata[table].titleField === "string" ? (
+									<h3 className="text-lg text-primary">{d[TableMetadata[table].titleField]}</h3>
 								) : (
 									<div
 										className="grid gap-x-4"
-										style={{ gridTemplateColumns: `repeat(${title.length}, minmax(0, 1fr))` }}
+										style={{ gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))` }}
 									>
-										{title.map((t) => (
+										{TableMetadata[table].titleField.map((t) => (
 											<h3 key={`${t}1`} className="text-lg font-medium text-primary">
 												{t}:
 											</h3>
 										))}
-										{title.map((t) => (
+										{TableMetadata[table].titleField.map((t) => (
 											<h3 key={`${t}2`} className="font-medium text-primary break-words">
 												{d[t]}
 											</h3>
@@ -121,9 +116,9 @@ export default function Pagination({
 								)}
 
 								{/* Info section with clean layout */}
-								{fields && (
+								{TableMetadata[table].subFields && (
 									<div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-base-content/70">
-										{fields.map((field) => (
+										{TableMetadata[table].subFields.map((field) => (
 											<div key={field} className="flex items-center gap-2">
 												<span className="font-medium">{field}:</span>
 												<span className="break-all">{d[field]}</span>
