@@ -65,8 +65,8 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 					<header>
 						<div className="flex gap-2 items-center">
 							<h1 className="text-4xl font-semibold text-primary mb-2">
-								<span className="text-base-content/80">{primer.pcr_primer_forward}</span>{" "}
-								<span className="text-base-content/70">{primer.pcr_primer_reverse}</span>
+								<span className="text-primary">{primer.pcr_primer_forward}</span>{" "}
+								<span className="text-primary/90">{primer.pcr_primer_reverse}</span>
 								<span className="text-sm text-base-content/80 ml-1">ID:</span><span className="text-sm">{primer.id} </span>
 							</h1>
 							{isPrivate && <div className="badge badge-ghost p-3">Private</div>}

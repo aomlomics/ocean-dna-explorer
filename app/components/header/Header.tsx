@@ -4,6 +4,7 @@ import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
+import MobileMenu from "./MobileMenu";
 import { EXPLORE_ROUTES, RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
@@ -17,39 +18,7 @@ export default async function Header() {
 			{/* Mobile hamburger menu + Logo */}
 			<div className="navbar-start">
 				{/* Mobile hamburger dropdown */}
-				<div className="dropdown">
-					<div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-						<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
-						</svg>
-					</div>
-					<ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-						<li><Link href="/">Home</Link></li>
-						<li>
-							<details>
-								<summary>Explore</summary>
-								<ul className="p-2">
-									{Object.entries(EXPLORE_ROUTES).map(([route, label]) => (
-										<li key={route}><Link href={`/explore/${route}`}>{label}</Link></li>
-									))}
-								</ul>
-							</details>
-						</li>
-						<li><Link href="/search">Search</Link></li>
-						<li>
-							<details>
-								<summary>Submit</summary>
-								<ul className="p-2">
-									<li><Link href="/submit/project">Project</Link></li>
-									<li><Link href="/submit/analysis">Analysis</Link></li>
-								</ul>
-							</details>
-						</li>
-						<li><Link href="/contribute">Contribute</Link></li>
-						<li><Link href="/api">API</Link></li>
-						<li><Link href="/help">Help</Link></li>
-					</ul>
-				</div>
+				<MobileMenu />
 				
 				{/* Logo */}
 				<Link className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center" href="/">
