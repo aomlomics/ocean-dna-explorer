@@ -27,7 +27,7 @@ export default function SearchResults() {
 				that match your search
 			</h2>
 
-			<div className="aspect-3/2">
+			<div className="aspect-4/2">
 				{table ? (
 					table === "taxonomy" ? (
 						<TaxaGrid ignoreParams={["table"]} />

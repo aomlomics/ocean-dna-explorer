@@ -10,7 +10,7 @@ export default function SearchTabButtons() {
 	return (
 		<nav className="flex tabs tabs-lifted">
 			<Link
-				href={`/search?${searchParams}`}
+				href={`/search${searchParams.toString() && "?" + searchParams.toString()}`}
 				className={`px-6 py-3 text-base transition-colors border-b-0 border-x border-t font-medium ${
 					pathname === "/search"
 						? "border-base-300 rounded-t-lg bg-base-100 text-primary"
@@ -20,7 +20,7 @@ export default function SearchTabButtons() {
 				Search
 			</Link>
 			<Link
-				href={`/search/advanced?${searchParams}`}
+				href={`/search/advanced${searchParams.toString() && "?" + searchParams.toString()}`}
 				className={`px-6 py-3 text-base transition-colors border-b-0 border-x border-t font-medium ${
 					pathname === "/search/advanced"
 						? "border-base-300 rounded-t-lg bg-base-100 text-primary"
