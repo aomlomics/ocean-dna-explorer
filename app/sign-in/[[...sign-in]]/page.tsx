@@ -2,7 +2,6 @@
 import { SignIn } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { dark } from "@clerk/themes";
-import Image from "next/image";
 
 export default function Page() {
 	const { resolvedTheme } = useTheme();
@@ -10,13 +9,6 @@ export default function Page() {
 
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center bg-base-100">
-			<Image
-				src="/icon.png"
-				alt="Logo"
-				width={120}
-				height={120}
-				className="mb-6"
-			/>
 			<SignIn
 				appearance={{
 					baseTheme: isDark ? dark : undefined,
@@ -54,8 +46,8 @@ export default function Page() {
 							: "bg-[#F4F3F2] text-[#233D7F] border border-[#233D7F] rounded-lg",
 						dividerLine: isDark ? "bg-[#7DBAE5]" : "bg-[#233D7F]",
 						logoImage: {
-							width: "1000px",
-							height: "40px"
+							width: "120px",
+							height: "70px"
 						}
 					}
 				}}

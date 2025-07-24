@@ -13,70 +13,125 @@ export default async function Header() {
 	const role = sessionClaims?.metadata.role as Role;
 
 	return (
-		<header className="top-0 z-header bg-base-100 border-b-4 border-primary h-24">
-			<div className="relative h-full flex justify-between items-center">
-				{/* Logo section */}
-				<div className="flex items-center">
-					<Link className="px-4 sm:px-6 lg:px-8 normal-case text-xl pt-1 h-48 w-96 flex flex-col items-center" href="/">
-						<div className="avatar w-full h-full relative">
-							<NodeLogo
-								alt="NODE Logo"
-								fill={true}
-								style={{ objectFit: "contain" }}
-								priority={true}
-								sizes="(max-width: 768px) 100vw, 33vw"
-							/>
-						</div>
-						{/* <div className="h-8 w-48 relative -mt-5">
-							<Image
-								src="/images/NOAA_TEXT_LOGO_HORIZONTAL.png"
-								alt="NOAA Text Logo"
-								fill={true}
-								style={{ objectFit: "contain" }}
-							/>
-						</div> */}
-					</Link>
+		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
+			{/* Mobile hamburger menu + Logo */}
+			<div className="navbar-start">
+				{/* Mobile hamburger dropdown */}
+				<div className="dropdown">
+					<div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							className="h-5 w-5"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
+						</svg>
+					</div>
+					<ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+						<li>
+							<Link href="/">Home</Link>
+						</li>
+						<li>
+							<details>
+								<summary>Explore</summary>
+								<ul className="p-2">
+									{Object.entries(EXPLORE_ROUTES).map(([route, label]) => (
+										<li key={route}>
+											<Link href={`/explore/${route}`}>{label}</Link>
+										</li>
+									))}
+								</ul>
+							</details>
+						</li>
+						<li>
+							<details>
+								<summary>Search</summary>
+								<ul className="p-2">
+									<li>
+										<Link href="/search">Search</Link>
+									</li>
+									<li>
+										<Link href="/search/advanced">Advanced</Link>
+									</li>
+								</ul>
+							</details>
+						</li>
+						<li>
+							<details>
+								<summary>Submit</summary>
+								<ul className="p-2">
+									<li>
+										<Link href="/submit/project">Project</Link>
+									</li>
+									<li>
+										<Link href="/submit/analysis">Analysis</Link>
+									</li>
+								</ul>
+							</details>
+						</li>
+						<li>
+							<Link href="/contribute">Contribute</Link>
+						</li>
+						<li>
+							<Link href="/api">API</Link>
+						</li>
+						<li>
+							<Link href="/help">Help</Link>
+						</li>
+					</ul>
 				</div>
 
-				{/* Right side elements */}
-				<div className="flex items-center gap-4">
-					{role && RolePermissions[role].includes("manageUsers") && (
-						<Link href="/admin" className="btn">
-							Admin
-						</Link>
-					)}
-					{/* Theme toggle and User profile should be aligned */}
-					<ThemeToggle />
-					<div className="mr-5 flex items-center">
-						<User />
+				{/* Logo */}
+				<Link
+					className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center"
+					href="/"
+				>
+					<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
+						<NodeLogo
+							alt="NODE Logo"
+							fill={true}
+							style={{ objectFit: "contain" }}
+							priority={true}
+							sizes="(max-width: 768px) 100vw, 33vw"
+						/>
 					</div>
+				</Link>
+			</div>
 
-					{/* Rest of the tabs section */}
-					<div className="absolute bottom-0 right-[240px] hidden lg:flex space-x-4">
-						<TabButton tabName="Home" route="/" />
-						<TabDropdown
-							tabName="Explore"
-							route="/explore"
-							dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
-						/>
-						<TabDropdown
-							tabName="Search"
-							route="/search"
-							dropdown={[{ label: "Advanced", href: "/search/advanced" }]}
-						/>
-						<TabDropdown
-							tabName="Submit"
-							route="/submit"
-							dropdown={[
-								{ label: "Project", href: "/submit/project" },
-								{ label: "Analysis", href: "/submit/analysis" }
-							]}
-						/>
-						<TabButton tabName="Contribute" route="/contribute" />
-						{/* <TabButton tabName="Tourmaline" route="/tourmaline" /> */}
-						<TabButton tabName="API" route="/api" />
-						<TabButton tabName="Help" route="/help" />
-					</div>
+			{/* Desktop tabs - absolute positioned to header bottom */}
+			<div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 hidden lg:flex space-x-4 z-[9999]">
+				<TabButton tabName="Home" route="/" />
+				<TabDropdown
+					tabName="Explore"
+					route="/explore"
+					dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
+				/>
+				<TabDropdown tabName="Search" route="/search" dropdown={[{ label: "Advanced", href: "/search/advanced" }]} />
+				<TabDropdown
+					tabName="Submit"
+					route="/submit"
+					dropdown={[
+						{ label: "Project", href: "/submit/project" },
+						{ label: "Analysis", href: "/submit/analysis" }
+					]}
+				/>
+				<TabButton tabName="Contribute" route="/contribute" />
+				<TabButton tabName="API" route="/api" />
+				<TabButton tabName="Help" route="/help" />
+			</div>
+
+			{/* Right side - theme toggle, user, admin */}
+			<div className="navbar-end flex items-center gap-4">
+				{role && RolePermissions[role].includes("manageUsers") && (
+					<Link href="/admin" className="btn hidden sm:inline-flex">
+						Admin
+					</Link>
+				)}
+				<ThemeToggle />
+				<div className="mr-5 flex items-center">
+					<User />
 				</div>
 			</div>
 		</header>

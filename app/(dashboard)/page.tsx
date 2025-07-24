@@ -57,23 +57,23 @@ export default async function Home() {
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
 				<Carousel />
 				{/* Gradient for left-to-right */}
-				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/30 via-[40%] to-transparent to-[100%]"></div>
+				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/50 sm:via-base-100/30 via-[50%] sm:via-[40%] to-transparent to-[100%]"></div>
 				{/* Gradient for bottom */}
-				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-base-100/40 via-[50%] to-base-100"></div>
+				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-base-100/60 sm:via-base-100/40 via-[60%] sm:via-[50%] to-base-100"></div>
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
-					<div className="w-full px-4 sm:px-6 lg:px-8 max-w-[95%] mx-auto">
-						<div className="max-w-4xl">
-							<h1 className="text-[clamp(2.5rem,7.5vw,6.25rem)] font-light leading-none mb-1">
-								<span className="block text-primary animate-slide-in">Welcome</span>
+					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
+						<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
+							<h1 className="text-6xl sm:text-7xl md:text-7xl lg:text-7xl xl:text-8xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
+								<span className="block text-primary font-light">Welcome</span>
 							</h1>
 
-							<div className="text-base-content -mt-1">
-								<span className="block text-[clamp(1.5rem,4.5vw,3.75rem)] font-light leading-tight mb-1">
-									to the <span className="text-primary font-light">Ocean DNA Explorer</span>
+							<div className="text-base-content/90 font-normal -mt-1 sm:-mt-2">
+								<span className="block text-3xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
+									to the <span className="text-primary">Ocean DNA Explorer</span>
 								</span>
 
-								<div className="text-[clamp(1rem,2.2vw,1.9rem)] leading-snug text-base-content max-w-3xl mb-8">
+								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
 									<span className="block">
 										a data sharing platform, search engine, and visualization and analysis tool for ocean environmental
 										DNA data
@@ -81,10 +81,10 @@ export default async function Home() {
 								</div>
 							</div>
 
-							<div className="flex flex-col items-start gap-4">
+							<div className="flex flex-col items-start gap-3 sm:gap-4">
 								<Link
 									href="/explore"
-									className="btn btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white hover:bg-primary transition-all duration-300"
+									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
 								>
 									Explore Data
 								</Link>
@@ -118,8 +118,8 @@ export default async function Home() {
 					Showing all
 					<span className="text-primary"> Projects</span>
 				</div>
-				<div className="flex gap-8">
-					<div className="aspect-5/2 w-1/2 rounded-lg overflow-hidden">
+				<div className="flex flex-col md:flex-row gap-4 md:gap-8">
+					<div className="aspect-square md:aspect-5/2 w-full md:w-1/2 rounded-lg overflow-hidden">
 						<Map
 							locations={locations}
 							id="samp_name"
@@ -130,16 +130,16 @@ export default async function Home() {
 							legend={projectColors}
 						/>
 					</div>
-					<div className="w-1/2">
+					<div className="w-full md:w-1/2">
 						<DataSummary />
 					</div>
 				</div>
 
 				{/* Funding Institutes Section */}
-				<div className="mt-32 mb-24">
-					<h2 className="text-3xl text-primary mb-12 text-center">Supported By:</h2>
+				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
+					<h2 className="text-2xl lg:text-3xl text-primary mb-6 lg:mb-8 text-center">Supported By:</h2>
 
-					<div className="max-w-4xl mx-auto text-lg text-main mb-16 text-center leading-tight">
+					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
 							NODE is a product of{" "}
 							<Link
@@ -189,9 +189,9 @@ export default async function Home() {
 							projects NO_0062 and NO_0066.
 						</p>
 					</div>
-					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit">
-						<div className="flex justify-center items-center gap-20">
-							<div className="relative h-24 w-64">
+					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:mt-0">
+						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
+							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
 									<ThemeAwareLogo
 										src="/images/noaa_exploration_logo_FINAL.svg"
@@ -201,13 +201,12 @@ export default async function Home() {
 									/>
 								</Link>
 							</div>
-							<div>
+							<div className="relative h-16 w-80 lg:h-24 lg:w-[26rem]">
 								<Link href="https://www.northerngulfinstitute.org/" target="_blank" rel="noreferrer">
 									<ThemeAwareLogo
 										src="/images/ngi_msu_logo_FINAL.svg"
 										alt="Mississippi State University, Northern Gulf Institute Logo"
-										width={500}
-										height={300}
+										fill={true}
 										className="object-contain"
 									/>
 								</Link>
