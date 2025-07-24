@@ -13,10 +13,10 @@ export default function Submit() {
 					<div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-8 lg:gap-12">
 						<div className="w-full md:max-w-xl lg:max-w-2xl">
 							<h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-primary mb-4 md:mb-6">
-								Submit to NODE
+								Submit to ODE
 							</h1>
 							<p className="text-base md:text-lg text-base-content/80 leading-relaxed mb-4">
-								Transform your eDNA data with NODE. Join our growing scientific community while making your research
+								Transform your eDNA data with submission to the Ocean DNA Explorer. Join our growing scientific community while making your research
 								FAIR-compliant with powerful storage, sharing, and visualization tools.
 							</p>
 							<Link href="/help" className="text-base md:text-lg text-primary hover:underline">

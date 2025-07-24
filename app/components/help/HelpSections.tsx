@@ -618,7 +618,7 @@ export const helpSections: Section[] = [
 					</div>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: How do I cite data from NODE?</h4>
+						<h4 className="font-medium mb-2">Q: How do I cite data from ODE?</h4>
 						<p>
 							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to cite the project.
 						</p>
