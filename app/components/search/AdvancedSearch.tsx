@@ -31,12 +31,6 @@ export default function AdvancedSearch() {
 	}
 
 	useEffect(() => {
-		if (searchParams.get("advanced")) {
-			scrollToResults();
-		}
-	}, [paramsArray]);
-
-	useEffect(() => {
 		try {
 			if (searchParams.toString()) {
 				setSearchTable(searchParams.get("table") || "");
@@ -44,6 +38,7 @@ export default function AdvancedSearch() {
 				if (advanced) {
 					const advancedParsed = JSON.parse(advanced) as ParamsArray;
 					setParamsArray(advancedParsed);
+					scrollToResults();
 
 					//replace all values with ones
 					function getFilterIds(e: ParamsArray[0]): FilterIds | 1 {
@@ -65,43 +60,70 @@ export default function AdvancedSearch() {
 	}, [searchParams]);
 
 	function getParamsArray(ids = filterIds, prevSuffix = "") {
-		if (formRef.current)
-			if (ids) {
-				const parts = [] as ParamsArray;
-				let i = 0;
-				for (const id of ids) {
-					if (id !== 0) {
-						const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
+		if (formRef.current && ids) {
+			const parts = [] as ParamsArray;
+			let i = 0;
+			for (const id of ids) {
+				if (id !== 0) {
+					const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
 
-						if (id === 1) {
-							const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
-							const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
-							const field = formRef.current[`field_${suffix}`].value as string;
-							const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
-							const filter = formRef.current[`filter_${suffix}`].value as string;
-							const fieldType = formRef.current[`filter_${suffix}`].type;
+					if (id === 1) {
+						const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
+						const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
 
-							let arr = [field, mode, fieldType === "number" ? parseFloat(filter) : filter] as
-								| ParamsArrayRelation
-								| ParamsArrayField;
-							if (relation) {
-								arr = [relation, ...arr] as typeof arr;
+						const table = (
+							relation ? relation.toLowerCase() : searchTable.toLowerCase()
+						) as Lowercase<Prisma.ModelName>;
+						const field = formRef.current[`field_${suffix}`].value as string;
+						const shape = TableMetadata[table].schema.shape;
+						const fieldType = getZodType(shape[field as keyof typeof shape]).type;
+						if (!fieldType) {
+							throw new Error(
+								`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
+							);
+						}
+
+						const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
+						let filter = undefined as unknown as string | number | number[];
+						if (mode === "range") {
+							const gte = formRef.current[`filter_${suffix}_gte`].value;
+							const lte = formRef.current[`filter_${suffix}_lte`].value;
+							if (fieldType === "integer" || fieldType === "integer[]") {
+								filter = [parseInt(gte), parseInt(lte)];
+							} else if (fieldType === "float" || fieldType === "float[]") {
+								filter = [parseFloat(gte), parseFloat(lte)];
 							}
-
-							parts.push(arr);
 						} else {
-							const recurs = getParamsArray(id, suffix);
-							if (recurs) {
-								parts.push(recurs);
+							const filterVal = formRef.current[`filter_${suffix}`].value;
+
+							if (fieldType === "integer" || fieldType === "integer[]") {
+								filter = parseInt(filterVal);
+							} else if (fieldType === "float" || fieldType === "float[]") {
+								filter = parseFloat(filterVal);
+							} else {
+								filter = filterVal;
 							}
 						}
-					}
 
-					i++;
+						let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
+						if (relation) {
+							arr = [relation, ...arr] as typeof arr;
+						}
+
+						parts.push(arr);
+					} else {
+						const recurs = getParamsArray(id, suffix);
+						if (recurs) {
+							parts.push(recurs);
+						}
+					}
 				}
 
-				return parts;
+				i++;
 			}
+
+			return parts;
+		}
 	}
 
 	//functions
@@ -147,7 +169,11 @@ export default function AdvancedSearch() {
 						{Object.keys(Prisma.ModelName)
 							.sort()
 							.map((table) => (
-								<option key={table} value={table}>
+								<option
+									key={table}
+									value={table}
+									onClick={(e) => e.currentTarget.value !== searchTable && e.currentTarget.form!.requestSubmit()}
+								>
 									{table}
 								</option>
 							))}
@@ -219,7 +245,13 @@ function FilterSection({
 			{filterIds.reduce((acc, id, i) => {
 				if (id) {
 					if (acc.length && label) {
-						acc.push(label);
+						acc.push(
+							<div key={`${i}_label`} className="flex items-center">
+								<hr className="grow border-warning mx-3"></hr>
+								<div>{label}</div>
+								<hr className="grow border-warning mx-3"></hr>
+							</div>
+						);
 					}
 
 					if (id === 1) {
@@ -283,12 +315,25 @@ function Filter({
 	onDelete: () => FilterIds | void;
 }) {
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
+	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(paramsArray && type === "relation" ? paramsArray[0] : "");
-	const [field, setField] = useState(paramsArray ? (type === "relation" ? paramsArray[1] : paramsArray[0]) : "");
-
-	const omit = [...GlobalOmit, "id"];
+	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 
 	const table = (relation ? relation.toLowerCase() : searchTable.toLowerCase()) as Lowercase<Prisma.ModelName>;
+	const invalidField =
+		paramsArray && !TableMetadata[table].enumSchema._def.values.includes(paramsArray[0 + paramsOffset] as string);
+
+	useEffect(() => {
+		if (invalidField) {
+			onDelete();
+		}
+	}, []);
+
+	if (invalidField) {
+		return <></>;
+	}
+
+	const omit = [...GlobalOmit, "id"];
 
 	return (
 		<div className="grid grid-cols-[20%_20%_20%_35%_5%]">
@@ -376,8 +421,8 @@ function Filter({
 					nameSuffix={nameSuffix}
 					table={table}
 					field={field}
-					defaultMode={paramsArray ? (type === "relation" ? `${paramsArray[2]}` : `${paramsArray[1]}`) : undefined}
-					defaultValue={paramsArray ? (type === "relation" ? `${paramsArray[3]}` : `${paramsArray[2]}`) : undefined}
+					defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
+					defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
 				/>
 			)}
 
@@ -402,37 +447,79 @@ function InputElement({
 	nameSuffix: string;
 	table: Lowercase<Prisma.ModelName>;
 	field: string;
-	defaultMode?: string;
-	defaultValue?: string;
+	defaultMode: string;
+	defaultValue: string;
 }) {
-	const shape = TableMetadata[table].schema.shape;
-	if (!shape) return <></>;
-	const type = getZodType(shape[field as keyof typeof shape]).type;
-	if (!type) {
-		throw new Error(
-			`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
-		);
-	}
+	const [mode, setMode] = useState("");
+	const [type, setType] = useState("");
+
+	useEffect(() => {
+		const shape = TableMetadata[table].schema.shape;
+		const type = getZodType(shape[field as keyof typeof shape]).type;
+		if (!type) {
+			throw new Error(
+				`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
+			);
+		}
+		const isNumber = type === "integer" || type === "float" || type === "integer[]" || type === "float[]";
+		setMode(!mode && defaultMode ? defaultMode : isNumber ? "equals" : "contains");
+		setType(type);
+	}, [field]);
+
+	useEffect(() => {}, [type]);
 
 	//TODO: add support for querying ranges
 	if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
-				<select className="select rounded-r-none" required name={`mode_${nameSuffix}`} defaultValue={defaultMode}>
+				<select
+					className="select rounded-r-none"
+					required
+					name={`mode_${nameSuffix}`}
+					value={mode}
+					onChange={(e) => setMode(e.target.value)}
+				>
 					<option value="equals">Equals</option>
+					<option value="range">Range</option>
 					<option value="gt">{">"}</option>
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
 				</select>
-				<input
-					className="input input-primary w-full"
-					placeholder="Filter..."
-					name={`filter_${nameSuffix}`}
-					defaultValue={defaultValue}
-					type="number"
-					required
-				/>
+				{mode === "range" ? (
+					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
+						<input
+							className="input input-primary w-full rounded-none"
+							placeholder="Greater than..."
+							name={`filter_${nameSuffix}_gte`}
+							defaultValue={
+								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : undefined
+							}
+							type="number"
+							required
+						/>
+						<span className="text-4xl text-primary">-</span>
+						<input
+							className="input input-primary w-full rounded-l-none"
+							placeholder="Less than..."
+							name={`filter_${nameSuffix}_lte`}
+							defaultValue={
+								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : undefined
+							}
+							type="number"
+							required
+						/>
+					</div>
+				) : (
+					<input
+						className="input input-primary w-full rounded-l-none"
+						placeholder="Filter..."
+						name={`filter_${nameSuffix}`}
+						defaultValue={defaultValue}
+						type="number"
+						required
+					/>
+				)}
 			</div>
 		);
 	} else if (type === "date") {
@@ -451,7 +538,13 @@ function InputElement({
 	} else {
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
-				<select className="select rounded-r-none" required name={`mode_${nameSuffix}`} defaultValue={defaultMode}>
+				<select
+					className="select rounded-r-none"
+					required
+					name={`mode_${nameSuffix}`}
+					value={mode}
+					onChange={(e) => setMode(e.target.value)}
+				>
 					<option value="contains">Contains</option>
 					<option value="equals">Equals</option>
 					<option value="startsWith">Starts With</option>

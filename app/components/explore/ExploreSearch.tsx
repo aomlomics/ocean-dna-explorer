@@ -46,7 +46,7 @@ export default function ExploreSearch({
 		const type = getZodType(shape[field as keyof typeof shape]).type;
 		if (!type) {
 			throw new Error(
-				`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
+				`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
 			);
 		}
 

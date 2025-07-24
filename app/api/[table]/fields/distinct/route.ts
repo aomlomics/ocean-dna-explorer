@@ -32,7 +32,7 @@ export async function GET(
 				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
 				if (!parsed.success) {
 					return NextResponse.json(
-						{ statusMessage: "error", error: `Field '${field}' does not exist on table '${table}'.` },
+						{ statusMessage: "error", error: `Field "${field}" does not exist on table "${table}".` },
 						{ status: 400 }
 					);
 				}
@@ -45,7 +45,7 @@ export async function GET(
 				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
 				if (!parsed.success) {
 					return NextResponse.json(
-						{ statusMessage: "error", error: `Field '${field}' does not exist on table '${table}'.` },
+						{ statusMessage: "error", error: `Field "${field}" does not exist on table "${table}".` },
 						{ status: 400 }
 					);
 				}
@@ -108,6 +108,6 @@ export async function GET(
 			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` }, { status: 400 });
 	}
 }

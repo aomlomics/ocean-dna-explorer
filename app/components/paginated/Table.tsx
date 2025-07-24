@@ -221,7 +221,7 @@ export default function Table({
 				const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 				if (!type) {
 					throw new Error(
-						`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
+						`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
 					);
 				}
 
