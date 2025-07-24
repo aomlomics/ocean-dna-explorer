@@ -158,7 +158,6 @@ export async function GET(
 					const advanced = parsed.advanced as ParamsArray;
 					delete parsed.advanced;
 					const advancedWhere = mergeQueries(advanced.map((e) => parseAdvancedQuery(e)));
-					console.log(JSON.stringify(advancedWhere, undefined, 2));
 
 					query.where = {
 						...query.where,
