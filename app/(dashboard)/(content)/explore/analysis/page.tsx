@@ -88,8 +88,10 @@ export default async function Analysis() {
 					</h1>
 					{/* <ExploreSearch table="analysis" defaultField="analysis_run_name" /> */}
 
-					<div className="rounded-lg border border-base-300">
-						<Table table="analysis" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
+					<div className="aspect-5/2">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="analysis" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
 					</div>
 				</div>
 			</div>

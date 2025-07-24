@@ -92,8 +92,10 @@ export default async function Sample() {
 						Showing <span className="text-primary">Samples</span>
 					</h1>
 
-					<div className="rounded-lg border border-base-300">
-						<Table table="sample" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />
+					<div className="aspect-5/2">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="sample" defaultTake={25} filterHeadersAtStart hideEmptyAtStart />
+						</div>
 					</div>
 				</div>
 			</div>

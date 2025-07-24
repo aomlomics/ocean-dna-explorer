@@ -59,7 +59,11 @@ export default async function Header() {
 							route="/explore"
 							dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
 						/>
-						<TabButton tabName="Search" route="/search" />
+						<TabDropdown
+							tabName="Search"
+							route="/search"
+							dropdown={[{ label: "Advanced", href: "/search/advanced" }]}
+						/>
 						<TabDropdown
 							tabName="Submit"
 							route="/submit"

@@ -67,8 +67,10 @@ export default async function Project() {
 						Showing <span className="text-primary">Projects</span>
 					</h1>
 
-					<div className="rounded-lg border border-base-300">
-						<Table table="project" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
+					<div className="aspect-5/2">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="project" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
 					</div>
 				</div>
 			</div>

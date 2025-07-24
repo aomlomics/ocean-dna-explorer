@@ -15,9 +15,8 @@ export default function SearchResults() {
 	}
 	const table = paramsTable.toLowerCase() as Lowercase<Prisma.ModelName>;
 
-	//TODO: scroll on first search
 	return (
-		<div className="bg-base-200 p-4 rounded-lg" id="searchResults">
+		<div className="bg-base-200 p-4 rounded-lg">
 			<h2 className="text-xl mb-4">
 				Showing all{" "}
 				{table && TableMetadata[table] ? (
@@ -28,17 +27,17 @@ export default function SearchResults() {
 				that match your search
 			</h2>
 
-			{table ? (
-				table === "taxonomy" ? (
-					<TaxaGrid ignoreParams={["table"]} />
+			<div className="aspect-3/2">
+				{table ? (
+					table === "taxonomy" ? (
+						<TaxaGrid ignoreParams={["table"]} />
+					) : (
+						<Table table={table} ignoreParams={["table"]} defaultTake={25} />
+					)
 				) : (
-					<div>
-						<Table table={table} ignoreParams={["table"]} />
-					</div>
-				)
-			) : (
-				<>All Tables Results</>
-			)}
+					<>All Tables Results</>
+				)}
+			</div>
 		</div>
 	);
 }

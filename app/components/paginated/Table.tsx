@@ -370,7 +370,7 @@ export default function Table({
 						</fieldset>
 					</div>
 				</div>
-				<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
+				<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
 					<table className="table table-xs table-pin-rows table-pin-cols">
 						{/* Headers */}
 						<thead>

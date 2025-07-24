@@ -6,7 +6,7 @@ import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams, usePathname } from "next/navigation";
-import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -19,26 +19,13 @@ export default function AdvancedSearch() {
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 	const formRef = useRef<HTMLFormElement>(null);
 
-	function scrollToResults() {
-		//scroll search results into view
-		const element = document.getElementById("searchResults");
-		if (element) {
-			element.scrollIntoView({
-				block: "start",
-				behavior: "smooth"
-			});
-		}
-	}
-
 	useEffect(() => {
 		try {
 			if (searchParams.toString()) {
-				setSearchTable(searchParams.get("table") || "");
 				const advanced = searchParams.get("advanced");
 				if (advanced) {
 					const advancedParsed = JSON.parse(advanced) as ParamsArray;
 					setParamsArray(advancedParsed);
-					scrollToResults();
 
 					//replace all values with ones
 					function getFilterIds(e: ParamsArray[0]): FilterIds | 1 {
@@ -52,6 +39,8 @@ export default function AdvancedSearch() {
 
 					setFilterIds(advancedParsed.map(getFilterIds));
 				}
+
+				setSearchTable(searchParams.get("table") || "");
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -59,6 +48,13 @@ export default function AdvancedSearch() {
 		}
 	}, [searchParams]);
 
+	useEffect(() => {
+		if (searchTable) {
+			search();
+		}
+	}, [searchTable]);
+
+	//functions
 	function getParamsArray(ids = filterIds, prevSuffix = "") {
 		if (formRef.current && ids) {
 			const parts = [] as ParamsArray;
@@ -126,31 +122,34 @@ export default function AdvancedSearch() {
 		}
 	}
 
-	//functions
-	function handleSearch(clear = true, event?: FormEvent<HTMLFormElement>) {
-		if (clear) {
-			setSearchTable("");
-			setFilterIds([]);
-			setParamsArray([]);
-			window.history.pushState(null, "", pathname);
-		} else if (event) {
-			event.preventDefault();
+	function reset() {
+		setSearchTable("");
+		setFilterIds([]);
+		setParamsArray([]);
+		window.history.pushState(null, "", pathname);
+	}
 
-			const params = new URLSearchParams();
-			params.set("table", searchTable);
+	function search() {
+		const params = new URLSearchParams();
+		params.set("table", searchTable);
 
-			const advanced = getParamsArray();
-			if (advanced && advanced.length) {
-				params.set("advanced", JSON.stringify(advanced));
-			}
-
-			window.history.pushState(null, "", `${pathname}?${params.toString()}`);
-			scrollToResults();
+		const advanced = getParamsArray();
+		if (advanced && advanced.length) {
+			params.set("advanced", JSON.stringify(advanced));
 		}
+
+		window.history.pushState(null, "", `${pathname}?${params.toString()}`);
 	}
 
 	return (
-		<form ref={formRef} className="flex flex-col gap-6" onSubmit={(e) => handleSearch(false, e)}>
+		<form
+			ref={formRef}
+			className="flex flex-col gap-6"
+			onSubmit={(e) => {
+				e.preventDefault();
+				search();
+			}}
+		>
 			<div className="grid grid-cols-[20%_60%_10%_10%] items-center">
 				<div className="pr-3">
 					<select
@@ -164,16 +163,12 @@ export default function AdvancedSearch() {
 						required
 					>
 						<option disabled value="">
-							Select table
+							Select Table
 						</option>
 						{Object.keys(Prisma.ModelName)
 							.sort()
 							.map((table) => (
-								<option
-									key={table}
-									value={table}
-									onClick={(e) => e.currentTarget.value !== searchTable && e.currentTarget.form!.requestSubmit()}
-								>
+								<option key={table} value={table}>
 									{table}
 								</option>
 							))}
@@ -190,7 +185,7 @@ export default function AdvancedSearch() {
 				)}
 
 				<div className="col-3 px-3">
-					<button className="btn btn-error" type="button" onClick={() => handleSearch()}>
+					<button className="btn btn-error" type="button" onClick={() => reset()}>
 						Clear
 					</button>
 				</div>

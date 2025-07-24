@@ -32,13 +32,12 @@ function parseToQuery(
 		value = queryArr[3] as string;
 	}
 
-	if (!QueryModes.includes(mode)) {
+	if (mode && !QueryModes.includes(mode)) {
 		throw new Error(`Query mode "${mode}" not supported.`);
 	}
 
 	const type = getZodType(TableMetadata[relation || table].schema.shape[field]).type;
 	if (!type) {
-		console.log("???");
 		throw new Error(
 			`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${
 				relation || table
@@ -48,12 +47,21 @@ function parseToQuery(
 
 	let searchWhere;
 	if (type === "string") {
-		searchWhere = {
-			[field]: {
-				[mode]: value.replace("_", "\\_").replace("%", "\\%"),
-				mode: "insensitive"
-			}
-		};
+		if (mode) {
+			searchWhere = {
+				[field]: {
+					[mode]: value.replace("_", "\\_").replace("%", "\\%"),
+					mode: "insensitive"
+				}
+			};
+		} else {
+			searchWhere = {
+				[field]: {
+					contains: value.replace("_", "\\_").replace("%", "\\%"),
+					mode: "insensitive"
+				}
+			};
+		}
 	} else if (type === "integer" || type === "float") {
 		if (mode === "range") {
 			let gte;
@@ -84,7 +92,7 @@ function parseToQuery(
 			if (isNaN(val)) {
 				throw new Error(`The field "${field}" is a number field, but "${value}" is not a number.`);
 			} else {
-				if (mode === "equals") {
+				if (!mode || mode === "equals") {
 					searchWhere = { [field]: val };
 				} else {
 					searchWhere = { [field]: { [mode]: val } };
@@ -220,7 +228,6 @@ export async function GET(
 					}
 				};
 			}
-			// console.log(lowercaseTable, JSON.stringify(query, undefined, 2));
 
 			const [result, count] = await prisma.$transaction([
 				//@ts-ignore

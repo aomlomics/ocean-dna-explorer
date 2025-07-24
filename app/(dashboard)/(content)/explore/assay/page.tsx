@@ -105,8 +105,10 @@ export default async function Assay() {
 						Showing <span className="text-primary">Assays</span>
 					</h1>
 
-					<div className="rounded-lg border border-base-300">
-						<Table table="assay" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
+					<div className="aspect-5/2">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="assay" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
 					</div>
 				</div>
 			</div>
