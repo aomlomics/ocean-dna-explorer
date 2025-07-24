@@ -2,22 +2,39 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/utils";
+import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
-import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
-type ParamsArray = Array<[string, string, string | number] | ParamsArray>;
 
 export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const router = useRouter();
 	const [searchTable, setSearchTable] = useState("");
 	const [filterIds, setFilterIds] = useState([] as FilterIds);
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
+	const formRef = useRef<HTMLFormElement>(null);
+
+	function scrollToResults() {
+		//scroll search results into view
+		const element = document.getElementById("searchResults");
+		if (element) {
+			element.scrollIntoView({
+				block: "start",
+				behavior: "smooth"
+			});
+		}
+	}
+
+	useEffect(() => {
+		if (searchParams.get("advanced")) {
+			scrollToResults();
+		}
+	}, [paramsArray]);
 
 	useEffect(() => {
 		try {
@@ -45,28 +62,47 @@ export default function AdvancedSearch() {
 			//ignore bad urls
 			console.log(err);
 		}
-	}, []);
-
-	function scrollToResults() {
-		//scroll search results into view
-		const element = document.getElementById("searchResults");
-		if (element) {
-			element.scrollIntoView({
-				block: "start",
-				behavior: "smooth"
-			});
-		}
-	}
-
-	useEffect(() => {
-		if (searchParams.get("advanced")) {
-			scrollToResults();
-		}
-	}, [paramsArray]);
-
-	useEffect(() => {
-		setSearchTable(searchParams.get("table") || "");
 	}, [searchParams]);
+
+	function getParamsArray(ids = filterIds, prevSuffix = "") {
+		if (formRef.current)
+			if (ids) {
+				const parts = [] as ParamsArray;
+				let i = 0;
+				for (const id of ids) {
+					if (id !== 0) {
+						const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
+
+						if (id === 1) {
+							const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
+							const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
+							const field = formRef.current[`field_${suffix}`].value as string;
+							const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
+							const filter = formRef.current[`filter_${suffix}`].value as string;
+							const fieldType = formRef.current[`filter_${suffix}`].type;
+
+							let arr = [field, mode, fieldType === "number" ? parseFloat(filter) : filter] as
+								| ParamsArrayRelation
+								| ParamsArrayField;
+							if (relation) {
+								arr = [relation, ...arr] as typeof arr;
+							}
+
+							parts.push(arr);
+						} else {
+							const recurs = getParamsArray(id, suffix);
+							if (recurs) {
+								parts.push(recurs);
+							}
+						}
+					}
+
+					i++;
+				}
+
+				return parts;
+			}
+	}
 
 	//functions
 	function handleSearch(clear = true, event?: FormEvent<HTMLFormElement>) {
@@ -74,62 +110,37 @@ export default function AdvancedSearch() {
 			setSearchTable("");
 			setFilterIds([]);
 			setParamsArray([]);
-			router.replace(pathname);
+			window.history.pushState(null, "", pathname);
 		} else if (event) {
 			event.preventDefault();
 
 			const params = new URLSearchParams();
 			params.set("table", searchTable);
 
-			function getAdvancedQuery(ids: FilterIds, prevSuffix = "") {
-				if (ids) {
-					const parts = [] as string[];
-					let i = 0;
-					for (const id of ids) {
-						if (id !== 0) {
-							const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
-
-							if (id === 1) {
-								const type = event!.currentTarget[`type_${suffix}`].value;
-								const relation = type === "relation" ? event!.currentTarget[`relation_${suffix}`].value : "";
-								const field = event!.currentTarget[`field_${suffix}`].value;
-								const filter = event!.currentTarget[`filter_${suffix}`].value;
-								const fieldType = event!.currentTarget[`filter_${suffix}`].type;
-
-								parts.push(
-									`[${relation && '"' + relation + '",'}"${field}",${
-										fieldType === "number" ? filter : '"' + filter + '"'
-									}]`
-								);
-							} else {
-								parts.push(getAdvancedQuery(id, suffix));
-							}
-						}
-
-						i++;
-					}
-
-					return "[" + parts.join(",") + "]";
-				} else {
-					return "";
-				}
+			const advanced = getParamsArray();
+			if (advanced && advanced.length) {
+				params.set("advanced", JSON.stringify(advanced));
 			}
 
-			const advanced = getAdvancedQuery(filterIds);
-			if (advanced.length) {
-				params.set("advanced", advanced);
-			}
-
-			window.history.replaceState({}, "", `${pathname}?${params.toString()}`);
+			window.history.pushState(null, "", `${pathname}?${params.toString()}`);
 			scrollToResults();
 		}
 	}
 
 	return (
-		<form className="flex flex-col gap-6" onSubmit={(e) => handleSearch(false, e)}>
+		<form ref={formRef} className="flex flex-col gap-6" onSubmit={(e) => handleSearch(false, e)}>
 			<div className="grid grid-cols-[20%_60%_10%_10%] items-center">
 				<div className="pr-3">
-					<select value={searchTable} className="select" onChange={(e) => setSearchTable(e.target.value)} required>
+					<select
+						value={searchTable}
+						className="select"
+						onChange={(e) => {
+							setSearchTable(e.target.value);
+							setFilterIds([]);
+							setParamsArray([]);
+						}}
+						required
+					>
 						<option disabled value="">
 							Select table
 						</option>
@@ -218,7 +229,7 @@ function FilterSection({
 								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 								searchTable={searchTable}
 								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
-								paramsArray={paramsArray && (paramsArray[i] as [string, string, string])}
+								paramsArray={paramsArray && (paramsArray[i] as ParamsArrayRelation | ParamsArrayField)}
 							/>
 						);
 					} else {
@@ -267,11 +278,11 @@ function Filter({
 	onDelete
 }: {
 	nameSuffix: string;
-	paramsArray?: [string, string, string];
+	paramsArray?: ParamsArrayRelation | ParamsArrayField;
 	searchTable: string;
 	onDelete: () => FilterIds | void;
 }) {
-	const [type, setType] = useState(paramsArray && paramsArray.length === 3 ? "relation" : "field");
+	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const [relation, setRelation] = useState(paramsArray && type === "relation" ? paramsArray[0] : "");
 	const [field, setField] = useState(paramsArray ? (type === "relation" ? paramsArray[1] : paramsArray[0]) : "");
 
@@ -365,7 +376,8 @@ function Filter({
 					nameSuffix={nameSuffix}
 					table={table}
 					field={field}
-					defaultValue={paramsArray ? (type === "relation" ? paramsArray[2] : paramsArray[1]) : ""}
+					defaultMode={paramsArray ? (type === "relation" ? `${paramsArray[2]}` : `${paramsArray[1]}`) : undefined}
+					defaultValue={paramsArray ? (type === "relation" ? `${paramsArray[3]}` : `${paramsArray[2]}`) : undefined}
 				/>
 			)}
 
@@ -384,11 +396,13 @@ function InputElement({
 	nameSuffix,
 	table,
 	field,
+	defaultMode,
 	defaultValue
 }: {
 	nameSuffix: string;
 	table: Lowercase<Prisma.ModelName>;
 	field: string;
+	defaultMode?: string;
 	defaultValue?: string;
 }) {
 	const shape = TableMetadata[table].schema.shape;
@@ -400,27 +414,57 @@ function InputElement({
 		);
 	}
 
-	let inputType = "text";
-	let step = undefined;
 	//TODO: add support for querying ranges
 	if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
-		inputType = "number";
-		step = "any;";
+		return (
+			<div className="px-2 grid grid-cols-[30%_70%]">
+				<select className="select rounded-r-none" required name={`mode_${nameSuffix}`} defaultValue={defaultMode}>
+					<option value="equals">Equals</option>
+					<option value="gt">{">"}</option>
+					<option value="gte">{">="}</option>
+					<option value="lt">{"<"}</option>
+					<option value="lte">{"<="}</option>
+				</select>
+				<input
+					className="input input-primary w-full"
+					placeholder="Filter..."
+					name={`filter_${nameSuffix}`}
+					defaultValue={defaultValue}
+					type="number"
+					required
+				/>
+			</div>
+		);
 	} else if (type === "date") {
-		inputType = "date";
+		return (
+			<div className="px-2">
+				<input
+					className="input input-primary w-full"
+					placeholder="Filter..."
+					name={`filter_${nameSuffix}`}
+					defaultValue={defaultValue}
+					type="date"
+					required
+				/>
+			</div>
+		);
+	} else {
+		return (
+			<div className="px-2 grid grid-cols-[30%_70%]">
+				<select className="select rounded-r-none" required name={`mode_${nameSuffix}`} defaultValue={defaultMode}>
+					<option value="contains">Contains</option>
+					<option value="equals">Equals</option>
+					<option value="startsWith">Starts With</option>
+					<option value="endsWith">Ends With</option>
+				</select>
+				<input
+					className="input input-primary w-full rounded-l-none"
+					placeholder="Filter..."
+					name={`filter_${nameSuffix}`}
+					defaultValue={defaultValue}
+					required
+				/>
+			</div>
+		);
 	}
-
-	return (
-		<div className="px-2">
-			<input
-				className="input input-primary w-full"
-				placeholder="Filter..."
-				name={`filter_${nameSuffix}`}
-				defaultValue={defaultValue}
-				type={inputType}
-				step={step}
-				required
-			/>
-		</div>
-	);
 }

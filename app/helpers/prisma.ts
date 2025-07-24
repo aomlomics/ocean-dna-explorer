@@ -1,4 +1,4 @@
-import { RolePermissions } from "@/types/objects";
+import { QueryModes, RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
@@ -699,4 +699,49 @@ export function deepWhere(
 	} else {
 		throw new Error(`No path found from table ${start} to table ${target}.`);
 	}
+}
+
+export function mergeQueries(objects: Record<string, any>[]) {
+	return objects.reduce((prev, obj) => {
+		Object.keys(obj).forEach((key) => {
+			if (Array.isArray(prev[key]) && Array.isArray(obj[key])) {
+				prev[key] = prev[key].concat(...obj[key]);
+			} else if (typeof prev[key] === "object" && typeof obj[key] === "object") {
+				if (
+					Object.keys(prev[key]).some((k) => QueryModes.includes(k)) &&
+					Object.keys(obj[key]).some((k) => QueryModes.includes(k))
+				) {
+					const temp = { ...prev };
+					delete temp[key];
+					prev = { ...temp, AND: [{ [key]: prev[key] }, { [key]: obj[key] }] };
+				} else if (
+					Object.keys(prev[key]).includes("AND") &&
+					Object.keys(obj[key]).includes(Object.keys(prev[key].AND[0])[0])
+				) {
+					const andKey = Object.keys(prev[key].AND[0])[0];
+					prev[key].AND = [...prev[key].AND, { [andKey]: obj[key][andKey] }];
+
+					const temp = { ...obj[key] };
+					delete temp[andKey];
+					if (Object.keys(temp).length) {
+						prev[key] = mergeQueries([prev[key], temp]);
+					}
+				} else {
+					prev[key] = mergeQueries([prev[key], obj[key]]);
+				}
+			} else {
+				if (prev[key]) {
+					const temp = { ...prev };
+					delete temp[key];
+					prev = { ...temp, AND: [{ [key]: prev[key] }, { [key]: obj[key] }] };
+				} else if (Object.keys(prev).includes("AND") && Object.keys(obj).includes(Object.keys(prev.AND[0])[0])) {
+					prev.AND = [...prev.AND, { [key]: obj[key] }];
+				} else {
+					prev[key] = obj[key];
+				}
+			}
+		});
+
+		return prev;
+	}, {});
 }

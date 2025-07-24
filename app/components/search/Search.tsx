@@ -40,7 +40,7 @@ export default function Search() {
 		if (search) {
 			params.set("search", search);
 		}
-		router.replace(`${pathname}?${params.toString()}`);
+		window.history.pushState(null, "", `${pathname}?${params.toString()}`);
 	}
 
 	return (
@@ -52,7 +52,7 @@ export default function Search() {
 				aria-label="Search"
 				defaultChecked={!searchParams.get("advanced")}
 			/>
-			<div className="tab-content bg-base-100 border-base-300 p-6 pb-0">
+			<div className="tab-content bg-base-100 border-base-300 p-6">
 				<form onSubmit={handleSubmit} className="grid grid-cols-[20%_70%_10%] w-full">
 					<div className="pr-3">
 						<select value={searchTable} className="select" onChange={(e) => setSearchTable(e.target.value)}>
@@ -107,7 +107,7 @@ export default function Search() {
 				aria-label="Advanced"
 				defaultChecked={!!searchParams.get("advanced")}
 			/>
-			<div className="tab-content bg-base-100 border-base-300 p-6 pb-0">
+			<div className="tab-content bg-base-100 border-base-300 p-6">
 				<AdvancedSearch />
 			</div>
 		</div>

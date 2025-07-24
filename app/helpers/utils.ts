@@ -449,7 +449,9 @@ export function parseApiQuery(
 					query.where!.OR = [];
 					if (type === "string") {
 						for (const val of arr) {
-							query.where!.OR.push({ [key]: { contains: val, mode: "insensitive" } });
+							query.where!.OR.push({
+								[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+							});
 						}
 					} else if (type === "integer") {
 						for (const val of arr) {
@@ -470,7 +472,7 @@ export function parseApiQuery(
 					}
 				} else {
 					if (type === "string") {
-						query.where![key] = { contains: value, mode: "insensitive" };
+						query.where![key] = { contains: value.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" };
 					} else if (type === "integer") {
 						query.where![key] = parseInt(value);
 					} else if (type === "float") {

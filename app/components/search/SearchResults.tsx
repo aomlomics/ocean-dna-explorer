@@ -15,6 +15,7 @@ export default function SearchResults() {
 	}
 	const table = paramsTable.toLowerCase() as Lowercase<Prisma.ModelName>;
 
+	//TODO: scroll on first search
 	return (
 		<div className="bg-base-200 p-4 rounded-lg" id="searchResults">
 			<h2 className="text-xl mb-4">

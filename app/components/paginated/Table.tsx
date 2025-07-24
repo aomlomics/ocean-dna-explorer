@@ -43,9 +43,7 @@ export default function Table({
 	const [headers, setHeaders] = useState([] as string[]);
 	const [userDefinedHeaders, setUserDefinedHeaders] = useState([] as string[]);
 
-	const [whereFilter, setWhereFilter] = useState(
-		{} as Record<string, { contains: string; mode: "insensitive" } | number | string>
-	);
+	const [whereFilter, setWhereFilter] = useState({} as Record<string, number | string>);
 	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
 	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
@@ -63,7 +61,7 @@ export default function Table({
 		page: page.toString()
 	});
 
-	let whereQuery = {} as Record<string, string | number | { contains: string; mode: "insensitive" }>;
+	let whereQuery = {} as Record<string, string | number>;
 	if (where) {
 		whereQuery = { ...where };
 	}
@@ -228,7 +226,7 @@ export default function Table({
 				}
 
 				if (type === "string") {
-					temp[field] = { contains: value, mode: "insensitive" };
+					temp[field] = value;
 				} else if (type === "integer") {
 					temp[field] = parseInt(value);
 				} else if (type === "float") {
@@ -399,18 +397,7 @@ export default function Table({
 															clipRule="evenodd"
 														/>
 													</svg>
-													<input
-														name={title}
-														defaultValue={
-															!whereFilter[title]
-																? ""
-																: typeof whereFilter[title] === "object"
-																? whereFilter[title].contains
-																: whereFilter[title]
-														}
-														type="text"
-														className="grow"
-													/>
+													<input name={title} defaultValue={whereFilter[title] || ""} type="text" className="grow" />
 												</label>
 											)}
 										</label>
@@ -476,13 +463,7 @@ export default function Table({
 															</svg>
 															<input
 																name={head}
-																defaultValue={
-																	!whereFilter[head]
-																		? ""
-																		: typeof whereFilter[head] === "object"
-																		? whereFilter[head].contains
-																		: whereFilter[head]
-																}
+																defaultValue={whereFilter[head] || ""}
 																type="text"
 																className="grow"
 																disabled={userDefinedHeaders.includes(head)}

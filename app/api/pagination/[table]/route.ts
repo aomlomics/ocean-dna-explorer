@@ -1,15 +1,14 @@
-import { deepWhere, prisma } from "@/app/helpers/prisma";
+import { deepWhere, mergeQueries, prisma } from "@/app/helpers/prisma";
 import { getZodType, parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
-import { NetworkPacket } from "@/types/globals";
+import { NetworkPacket, ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
-
-type ParamsArray = Array<[string, string, string] | ParamsArray>;
+import { QueryModes } from "@/types/objects";
 
 function parseToQuery(
 	table: Lowercase<Prisma.ModelName>,
-	queryArr: [string] | [string, string] | [string, string, string]
+	queryArr: [string] | [string, string] | ParamsArrayField | ParamsArrayRelation
 ) {
 	if (queryArr.length === 1) {
 		//search entire table for value
@@ -23,7 +22,7 @@ function parseToQuery(
 				);
 			}
 			if (type === "string") {
-				ors.push({ [field]: { contains: value, mode: "insensitive" } });
+				ors.push({ [field]: { contains: value.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" } });
 			}
 		}
 
@@ -34,16 +33,28 @@ function parseToQuery(
 
 	let relation = "" as Lowercase<Prisma.ModelName>;
 	let field = "";
-	let value = null as unknown as string;
+	let mode = "" as QueryMode;
+	let value = "";
 	if (queryArr.length === 2) {
 		//search field for value
 		field = queryArr[0];
 		value = queryArr[1];
 	} else if (queryArr.length === 3) {
+		//search field for value with mode
+		// relation = queryArr[0].toLowerCase() as Lowercase<Prisma.ModelName>;
+		field = queryArr[0];
+		mode = queryArr[1];
+		value = queryArr[2] as string;
+	} else if (queryArr.length === 4) {
 		//search related table's field for value
 		relation = queryArr[0].toLowerCase() as Lowercase<Prisma.ModelName>;
 		field = queryArr[1];
-		value = queryArr[2];
+		mode = queryArr[2];
+		value = queryArr[3] as string;
+	}
+
+	if (!QueryModes.includes(mode)) {
+		throw new Error(`Query mode ${mode} not supported.`);
 	}
 
 	const type = getZodType(TableMetadata[relation || table].schema.shape[field]).type;
@@ -55,22 +66,25 @@ function parseToQuery(
 		);
 	}
 
-	let searchWhere = undefined as unknown as string | number | Date | { contains: string; mode: "insensitive" };
+	let searchWhere;
 	if (type === "string") {
-		searchWhere = { contains: value, mode: "insensitive" };
-	} else if (type === "integer") {
-		const val = parseInt(value);
-		if (isNaN(val)) {
-			searchWhere = -1;
+		searchWhere = { [mode]: value.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" };
+	} else if (type === "integer" || type === "float") {
+		let val;
+		if (type === "integer") {
+			val = parseInt(value);
 		} else {
-			searchWhere = val;
+			val = parseFloat(value);
 		}
-	} else if (type === "float") {
-		const val = parseFloat(value);
+
 		if (isNaN(val)) {
 			searchWhere = -1;
 		} else {
-			searchWhere = val;
+			if (mode === "equals") {
+				searchWhere = val;
+			} else {
+				searchWhere = { [mode]: val };
+			}
 		}
 	} else if (type === "date") {
 		const val = Date.parse(value);
@@ -87,7 +101,7 @@ function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			return deepWhere(table, relation, { [field]: value });
+			return deepWhere(table, relation, { [field]: searchWhere });
 		} else {
 			return { [field]: searchWhere };
 		}
@@ -103,7 +117,7 @@ export async function GET(
 	const { table } = await params;
 	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
+	if (Object.keys(Prisma.ModelName).some((t) => t.toLowerCase() === lowercaseTable)) {
 		try {
 			const { searchParams } = new URL(request.url);
 
@@ -127,31 +141,40 @@ export async function GET(
 
 			const whereStr = searchParams.get("where");
 			if (whereStr) {
-				query.where = parseNestedJson(whereStr);
+				const parsed = parseNestedJson(whereStr) as { advanced?: any; search?: any; [key: string]: string };
 
-				if (query.where?.advanced) {
+				if (parsed.advanced) {
 					function parseAdvancedQuery(
 						e: ParamsArray[0]
 					): ReturnType<typeof parseToQuery> | { OR: ReturnType<typeof parseToQuery> } {
 						if (typeof e[0] === "string") {
-							return parseToQuery(table, e as [string, string, string]);
+							return parseToQuery(lowercaseTable, e as ParamsArrayField | ParamsArrayRelation);
 						} else {
 							const paramsE = e as ParamsArray;
 							return { OR: paramsE.map(parseAdvancedQuery) };
 						}
 					}
 
-					const advanced = query.where.advanced as ParamsArray;
-					delete query.where.advanced;
+					const advanced = parsed.advanced as ParamsArray;
+					delete parsed.advanced;
+					const advancedWhere = mergeQueries(advanced.map((e) => parseAdvancedQuery(e)));
+					console.log(JSON.stringify(advancedWhere, undefined, 2));
 
-					query.where = { ...advanced.reduce((acc, e) => ({ ...acc, ...parseAdvancedQuery(e) }), {}), ...query.where };
+					query.where = {
+						...query.where,
+						...advancedWhere
+					};
 				}
 
-				if (query.where?.search) {
-					const search = query.where.search.split(",");
-					delete query.where.search;
+				if (parsed.search) {
+					const search = parsed.search.split(",");
+					delete parsed.search;
 
-					query.where = { ...parseToQuery(table, search), ...query.where };
+					query.where = { ...query.where, ...parseToQuery(lowercaseTable, search) };
+				}
+
+				for (const filter of Object.entries(parsed as Record<string, string>)) {
+					query.where = { ...query.where, ...parseToQuery(lowercaseTable, filter) };
 				}
 			}
 
@@ -177,6 +200,7 @@ export async function GET(
 					}
 				};
 			}
+			// console.log(lowercaseTable, JSON.stringify(query, undefined, 2));
 
 			const [result, count] = await prisma.$transaction([
 				//@ts-ignore
