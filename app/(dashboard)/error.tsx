@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+	const [showError, setShowError] = useState(true);
 	useEffect(() => {
 		// Log the error to an error reporting service
 		console.error(error);
 	}, [error]);
 
 	return (
-		<div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center">
+		<div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] text-center pb-16">
 			<div className="max-w-md w-full">
 				<div className="relative w-full h-64">
 					<Image
@@ -48,7 +49,17 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 					>
 						Report Issue
 					</a>
+					<button className="btn btn-primary" onClick={() => setShowError(!showError)}>
+						{showError ? "Hide full error" : "View full error"}
+					</button>
 				</div>
+				{showError && (
+					<div className="mt-4 text-left p-2 bg-base-200 border border-error rounded-md">
+						<pre className="text-error whitespace-pre-wrap">
+							<code>{error.message}</code>
+						</pre>
+					</div>
+				)}
 			</div>
 		</div>
 	);
