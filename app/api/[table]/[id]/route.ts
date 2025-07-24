@@ -54,7 +54,7 @@ export async function GET(
 				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
 				return NextResponse.json(
-					{ statusMessage: "error", error: `No field named '${unknownField}' exists on table named '${table}'.` },
+					{ statusMessage: "error", error: `No field named "${unknownField}" exists on table named "${table}".` },
 					{ status: 400 }
 				);
 			}
@@ -65,7 +65,7 @@ export async function GET(
 				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
 
 				return NextResponse.json(
-					{ statusMessage: "error", error: `No field named '${unknownArg}' exists on table named '${table}'.` },
+					{ statusMessage: "error", error: `No field named "${unknownArg}" exists on table named "${table}".` },
 					{ status: 400 }
 				);
 			}
@@ -74,6 +74,6 @@ export async function GET(
 			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` }, { status: 400 });
 	}
 }

@@ -19,40 +19,75 @@ export default async function Header() {
 				{/* Mobile hamburger dropdown */}
 				<div className="dropdown">
 					<div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-						<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							className="h-5 w-5"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
 						</svg>
 					</div>
 					<ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-						<li><Link href="/">Home</Link></li>
+						<li>
+							<Link href="/">Home</Link>
+						</li>
 						<li>
 							<details>
 								<summary>Explore</summary>
 								<ul className="p-2">
 									{Object.entries(EXPLORE_ROUTES).map(([route, label]) => (
-										<li key={route}><Link href={`/explore/${route}`}>{label}</Link></li>
+										<li key={route}>
+											<Link href={`/explore/${route}`}>{label}</Link>
+										</li>
 									))}
 								</ul>
 							</details>
 						</li>
-						<li><Link href="/search">Search</Link></li>
+						<li>
+							<details>
+								<summary>Search</summary>
+								<ul className="p-2">
+									<li>
+										<Link href="/search">Search</Link>
+									</li>
+									<li>
+										<Link href="/search/advanced">Advanced</Link>
+									</li>
+								</ul>
+							</details>
+						</li>
 						<li>
 							<details>
 								<summary>Submit</summary>
 								<ul className="p-2">
-									<li><Link href="/submit/project">Project</Link></li>
-									<li><Link href="/submit/analysis">Analysis</Link></li>
+									<li>
+										<Link href="/submit/project">Project</Link>
+									</li>
+									<li>
+										<Link href="/submit/analysis">Analysis</Link>
+									</li>
 								</ul>
 							</details>
 						</li>
-						<li><Link href="/contribute">Contribute</Link></li>
-						<li><Link href="/api">API</Link></li>
-						<li><Link href="/help">Help</Link></li>
+						<li>
+							<Link href="/contribute">Contribute</Link>
+						</li>
+						<li>
+							<Link href="/api">API</Link>
+						</li>
+						<li>
+							<Link href="/help">Help</Link>
+						</li>
 					</ul>
 				</div>
-				
+
 				{/* Logo */}
-				<Link className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center" href="/">
+				<Link
+					className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center"
+					href="/"
+				>
 					<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
 						<NodeLogo
 							alt="NODE Logo"
@@ -73,7 +108,7 @@ export default async function Header() {
 					route="/explore"
 					dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
 				/>
-				<TabButton tabName="Search" route="/search" />
+				<TabDropdown tabName="Search" route="/search" dropdown={[{ label: "Advanced", href: "/search/advanced" }]} />
 				<TabDropdown
 					tabName="Submit"
 					route="/submit"

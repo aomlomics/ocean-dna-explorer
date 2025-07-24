@@ -66,7 +66,7 @@ export default async function analysisEditAction(formData: FormData): Promise<Ne
 				});
 
 				if (!analysis) {
-					return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
+					return `No Analysis with analysis_run_name of "${analysis_run_name}" found.`;
 				} else if (!analysis.Project.userIds.includes(userId)) {
 					return "Unauthorized action.";
 				}

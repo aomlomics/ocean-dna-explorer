@@ -57,6 +57,11 @@ export type ClerkUserObject = {
 	primaryEmailAddress?: string;
 };
 
+export type QueryMode = "equals" | "contains" | "startsWith" | "endsWith" | "lt" | "lte" | "gt" | "gte" | "range";
+export type ParamsArrayField = [string, QueryMode, string | number | [number, number]];
+export type ParamsArrayRelation = [string, ...ParamsArrayField];
+export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

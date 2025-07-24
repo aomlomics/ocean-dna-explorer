@@ -139,7 +139,7 @@ export default function SubmissionEditButton({
 							if (!omit.includes(field)) {
 								const type = getZodType(shape[field as keyof typeof shape]).type;
 								if (!type) {
-									throw new Error(`Could not find type of '${field}'.`);
+									throw new Error(`Could not find type of "${field}".`);
 								}
 
 								if (type === "string") {
