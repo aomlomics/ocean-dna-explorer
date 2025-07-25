@@ -97,7 +97,7 @@ export function parseSchemaToObject(
 	if (value && fieldOptionsEnum.options.includes(fieldName)) {
 		const type = getZodType(schema.shape[fieldName]).type;
 		if (!type) {
-			throw new Error(`Could not find type of '${fieldName}'. Make sure a field named '${fieldName}' exists.`);
+			throw new Error(`Could not find type of "${fieldName}". Make sure a field named "${fieldName}" exists.`);
 		}
 
 		//check if field is a list
@@ -363,9 +363,9 @@ export function parseApiQuery(
 					searchParams.delete("relationsLimit");
 					const take = parseInt(relationsLimit);
 					if (Number.isNaN(take)) {
-						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be an integer.`);
+						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be an integer.`);
 					} else if (take < 1) {
-						throw new Error(`Invalid relations limit: '${relationsLimit}'. Limit must be a positive integer.`);
+						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be a positive integer.`);
 					}
 
 					relationVal = { take };
@@ -382,7 +382,7 @@ export function parseApiQuery(
 					relationVal = { take: relationVal.take, select: { id: true } };
 				}
 			} else if (allFields.toLowerCase() !== "true") {
-				throw new Error(`Invalid value for relationsAllFields: '${allFields}'. Value must be 'true' or 'false'.`);
+				throw new Error(`Invalid value for relationsAllFields: "${allFields}". Value must be "true" or "false".`);
 			}
 
 			const relsObj = relations
@@ -406,7 +406,7 @@ export function parseApiQuery(
 			if (id) {
 				const parsed = parseInt(id);
 				if (Number.isNaN(parsed)) {
-					throw new Error(`Invalid ID: '${id}'. ID must be an integer.`);
+					throw new Error(`Invalid ID: "${id}". ID must be an integer.`);
 				}
 				parsedIds.push(parsed);
 			}
@@ -425,9 +425,9 @@ export function parseApiQuery(
 				searchParams.delete("limit");
 				query.take = parseInt(take);
 				if (Number.isNaN(query.take)) {
-					throw new Error(`Invalid limit: '${take}'. Limit must be an integer.`);
+					throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
 				} else if (query.take < 1) {
-					throw new Error(`Invalid limit: '${take}'. Limit must be a positive integer.`);
+					throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
 				}
 			}
 		}
@@ -440,7 +440,7 @@ export function parseApiQuery(
 				const type = getZodType(shape[key as keyof typeof shape]).type;
 				if (!type) {
 					throw new Error(
-						`Could not find type of '${key}'. Make sure a field named '${key}' exists on table named '${table}'.`
+						`Could not find type of "${key}". Make sure a field named "${key}" exists on table named "${table}".`
 					);
 				}
 
@@ -449,7 +449,9 @@ export function parseApiQuery(
 					query.where!.OR = [];
 					if (type === "string") {
 						for (const val of arr) {
-							query.where!.OR.push({ [key]: { contains: val, mode: "insensitive" } });
+							query.where!.OR.push({
+								[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+							});
 						}
 					} else if (type === "integer") {
 						for (const val of arr) {
@@ -470,7 +472,7 @@ export function parseApiQuery(
 					}
 				} else {
 					if (type === "string") {
-						query.where![key] = { contains: value, mode: "insensitive" };
+						query.where![key] = { contains: value.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" };
 					} else if (type === "integer") {
 						query.where![key] = parseInt(value);
 					} else if (type === "float") {

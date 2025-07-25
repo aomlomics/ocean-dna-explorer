@@ -21,7 +21,10 @@ export default async function Header() {
 				<MobileMenu />
 				
 				{/* Logo */}
-				<Link className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center" href="/">
+				<Link
+					className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center"
+					href="/"
+				>
 					<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
 						<NodeLogo
 							alt="NODE Logo"
@@ -42,7 +45,7 @@ export default async function Header() {
 					route="/explore"
 					dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
 				/>
-				<TabButton tabName="Search" route="/search" />
+				<TabDropdown tabName="Search" route="/search" dropdown={[{ label: "Advanced", href: "/search/advanced" }]} />
 				<TabDropdown
 					tabName="Submit"
 					route="/submit"

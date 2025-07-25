@@ -82,9 +82,11 @@ export default async function Primer() {
 						</label>
 					</div>
 				</div>
-				<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-					<Table table="primer" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
-				</div>
+					<div className="aspect-5/2 hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="primer" defaultTake={25} filterHeadersAtStart hideEmptyAtStart />
+						</div>
+					</div>
 				<div className="lg:hidden">
 					<Pagination table="primer" />
 				</div>

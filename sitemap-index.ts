@@ -43,15 +43,15 @@ async function main() {
 }
 
 /**
- * 🔎 Recursively finds 'sitemap.ts' files and extracts sitemap URLs.
+ * 🔎 Recursively finds "sitemap.ts" files and extracts sitemap URLs.
  *
- * Traverses directories from the specified start point, looking for 'sitemap.ts' files.
+ * Traverses directories from the specified start point, looking for "sitemap.ts" files.
  * If a file contains a `generateSitemaps` function, the function is invoked
  * to retrieve sitemap URLs. If absent, a default sitemap URL is constructed.
  *
  * Known Limitations:
  * - While this does consider Next.js conventions for folders like route groups, do not place
- *   'sitemap.ts' under folders like route groups untill the following seperate issue is resolved:
+ *   "sitemap.ts" under folders like route groups untill the following seperate issue is resolved:
  *    https://github.com/vercel/next.js/issues/68403
  *
  * @param {string} dir - The base directory to begin searching for sitemap files.

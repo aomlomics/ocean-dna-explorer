@@ -101,9 +101,11 @@ export default async function Sample() {
 						</label>
 					</div>
 				</div>
-				<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-					<Table table="sample" defaultTake={10} filterHeadersAtStart hideEmptyAtStart />
-				</div>
+					<div className="aspect-5/2 hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="sample" defaultTake={25} filterHeadersAtStart hideEmptyAtStart />
+						</div>
+					</div>
 				<div className="lg:hidden">
 					<Pagination table="sample" />
 				</div>

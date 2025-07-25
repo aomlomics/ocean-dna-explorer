@@ -97,11 +97,14 @@ options: filterOptions.otu_clust_tool
 							</svg>
 							Filter Options
 						</label>
+					</div>				
+
+				</div>
+					<div className="aspect-5/2 hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="analysis" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
 					</div>
-				</div>
-				<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-					<Table table="analysis" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
-				</div>
 				<div className="lg:hidden">
 					<Pagination table="analysis" />
 				</div>

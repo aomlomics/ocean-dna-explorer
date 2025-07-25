@@ -76,9 +76,11 @@ export default async function Project() {
 						</label>
 					</div>
 				</div>
-				<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-					<Table table="project" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
-				</div>
+					<div className="aspect-5/2 hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="project" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
+					</div>
 				<div className="lg:hidden">
 					<Pagination table="project" />
 				</div>

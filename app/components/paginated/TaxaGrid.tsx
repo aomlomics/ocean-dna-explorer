@@ -13,10 +13,12 @@ import PhyloPicClient from "../images/PhyloPicClient";
 
 export default function TaxaGrid({
 	where,
-	orderBy
+	orderBy,
+	ignoreParams
 }: {
 	where?: Prisma.TaxonomyWhereInput;
 	orderBy?: Prisma.TaxonomyOrderByWithAggregationInput;
+	ignoreParams?: string[];
 }) {
 	const searchParams = useSearchParams();
 	const [page, setPage] = useState(1);
@@ -32,6 +34,11 @@ export default function TaxaGrid({
 	}
 	if (searchParams) {
 		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
+		if (ignoreParams) {
+			for (const param of ignoreParams) {
+				delete whereQuery[param as keyof Prisma.TaxonomyWhereInput];
+			}
+		}
 	}
 	query.set("where", JSON.stringify(whereQuery));
 

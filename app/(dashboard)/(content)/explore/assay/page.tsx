@@ -114,9 +114,11 @@ export default async function Assay() {
 						</label>
 					</div>
 				</div>
-				<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-					<Table table="assay" defaultTake={10} hideEmptyAtStart filterHeadersAtStart />
-				</div>
+					<div className="aspect-5/2 hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="assay" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
+					</div>
 				<div className="lg:hidden">
 					<Pagination table="assay" />
 				</div>

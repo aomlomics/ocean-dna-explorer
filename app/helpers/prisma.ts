@@ -1,4 +1,4 @@
-import { RolePermissions } from "@/types/objects";
+import { QueryModes, RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
