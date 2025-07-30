@@ -17,4 +17,4 @@ ALTER TABLE "Sample"
 DROP COLUMN "eventDate",
 DROP COLUMN "date_ext";
 ALTER TABLE "Sample" RENAME COLUMN "eventDate__TEMP" TO "eventDate";
-ALTER TABLE "Sample" RENAME COLUMN "date_ext_TEMP" TO "date_ext";
+ALTER TABLE "Sample" RENAME COLUMN "date_ext__TEMP" TO "date_ext";
