@@ -40,18 +40,18 @@ export default async function migrationCopyStepAction() {
 				const table = t as Lowercase<Prisma.ModelName>;
 
 				// @ts-ignore
-				// const result = (await tx[table].findMany({
-				// 	select: {
-				// 		//@ts-ignore
-				// 		...oldFieldsByTable[t].reduce(
-				// 			(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
-				// 			{}
-				// 		),
-				// 		id: true
-				// 	}
-				// })) as Record<string, any>[];
+				const result = (await tx[table].findMany({
+					select: {
+						//@ts-ignore
+						...oldFieldsByTable[t].reduce(
+							(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
+							{}
+						),
+						id: true
+					}
+				})) as Record<string, any>[];
 
-				const result = [{ eventDate: "2021-09-24T07:00-04:00", date_ext: null, id: 1 }] as Record<string, any>[];
+				// const result = [{ eventDate: "2021-09-24T07:00-04:00", date_ext: null, id: 1 }] as Record<string, any>[];
 
 				if (result.length) {
 					for (let i = 0; i < result.length; i++) {
