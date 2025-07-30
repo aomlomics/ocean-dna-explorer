@@ -57,9 +57,11 @@ export default async function migrationCopyStepAction() {
 						for (const field of oldFieldsByTable[table]) {
 							if (Array.isArray(result[i][field])) {
 								if (exists(result[i][field][0])) {
+									//at least one value in array
 									parseSchemaToObject(field + "__TEMP", result[i][field][0].toString(), result[i], table);
 
 									if (exists(result[i][field][1])) {
+										//second value exists
 										parseSchemaToObject(
 											field + "_Midpoint_ODE",
 											((result[i][field][0] + result[i][field][1]) / 2).toString(),
@@ -67,11 +69,22 @@ export default async function migrationCopyStepAction() {
 											table
 										);
 										parseSchemaToObject(field + "_End_ODE", result[i][field][1].toString(), result[i], table);
+									} else {
+										//no second value
+										result[i][field + "_Midpoint_ODE"] = null;
+										result[i][field + "_End_ODE"] = null;
 									}
+								} else {
+									//value is null
+									result[i][field + "__TEMP"] = null;
+									result[i][field + "_Midpoint_ODE"] = null;
+									result[i][field + "_End_ODE"] = null;
 								}
 							} else {
 								if (exists(result[i][field])) {
 									parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+								} else {
+									result[i][field + "__TEMP"] = null;
 								}
 							}
 
