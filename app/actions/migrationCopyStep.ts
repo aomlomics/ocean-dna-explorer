@@ -34,6 +34,7 @@ export default async function migrationCopyStepAction() {
 
 			return acc;
 		}, {} as Record<Lowercase<Prisma.ModelName>, string[]>);
+		console.log(oldFieldsByTable);
 
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
