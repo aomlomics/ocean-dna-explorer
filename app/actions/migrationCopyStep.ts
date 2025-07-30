@@ -38,6 +38,7 @@ export default async function migrationCopyStepAction() {
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
 				const table = t as Lowercase<Prisma.ModelName>;
+				console.log(table, oldFieldsByTable[table]);
 
 				// @ts-ignore
 				const result = (await tx[table].findMany({
@@ -56,21 +57,17 @@ export default async function migrationCopyStepAction() {
 						for (const field of oldFieldsByTable[table]) {
 							if (Array.isArray(result[i][field])) {
 								if (exists(result[i][field][0])) {
+									//at least one value in array
 									parseSchemaToObject(field + "__TEMP", result[i][field][0].toString(), result[i], table);
-
-									if (exists(result[i][field][1])) {
-										parseSchemaToObject(
-											field + "_Midpoint_ODE",
-											((result[i][field][0] + result[i][field][1]) / 2).toString(),
-											result[i],
-											table
-										);
-										parseSchemaToObject(field + "_End_ODE", result[i][field][1].toString(), result[i], table);
-									}
+								} else {
+									//value is null
+									result[i][field + "__TEMP"] = null;
 								}
 							} else {
 								if (exists(result[i][field])) {
 									parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+								} else {
+									result[i][field + "__TEMP"] = null;
 								}
 							}
 
@@ -79,7 +76,10 @@ export default async function migrationCopyStepAction() {
 					}
 
 					//only update rows where the changed fields had a value
-					const filteredResult = result.filter((row) => Object.keys(row).length > 1);
+					const filteredResult = result.filter((row) =>
+						Object.entries(row).some(([field, value]) => field !== "id" && value)
+					);
+					console.log(filteredResult.length, JSON.stringify(filteredResult, undefined, 2));
 					if (filteredResult.length) {
 						const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
 						await updateManyRaw(tx, modelName, filteredResult);
