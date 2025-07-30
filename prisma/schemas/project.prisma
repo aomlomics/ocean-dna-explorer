@@ -344,9 +344,11 @@ model Assay {
     targetTaxonomicScope        String? //[]    @default([])
     target_gene                 String
     target_subfragment          String?
-    /// @zod.number.array(.max(2))
+    /// @zod.custom.use(z.coerce.number())
     ampliconSize                Float?
+    /// @zod.custom.use(z.coerce.number())
     ampliconSize_Midpoint_ODE   Float?
+    /// @zod.custom.use(z.coerce.number())
     ampliconSize_End_ODE        Float?
     /// @zod.custom.use(z.coerce.number())
     pcr_primer_vol_forward      Float?
