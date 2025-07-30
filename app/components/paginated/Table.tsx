@@ -231,10 +231,6 @@ export default function Table({
 					temp[field] = parseInt(value);
 				} else if (type === "float") {
 					temp[field] = parseFloat(value);
-				} else if (type === "integer[]") {
-					//TODO: add support for querying ranges
-				} else if (type === "float[]") {
-					//TODO: add support for querying ranges
 				} else {
 					temp[field] = value;
 				}

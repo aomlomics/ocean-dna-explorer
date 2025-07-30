@@ -29,27 +29,15 @@ export default function DataDisplay({
 			return <div className="bg-base-300">{"\u200b"}</div>;
 		} else if (typeof value === "number" && value in DeadValueEnum) {
 			return <div className="break-words">{DeadValueEnum[value]}</div>;
-		} else if (type === "integer[]" || type === "float[]") {
-			if (value[0] in DeadValueEnum) {
-				return <div className="break-words">{DeadValueEnum[value[0]]}</div>;
-			} else {
-				if (value[1]) {
-					return (
-						<div className="break-words">
-							{value[0].toString()}-{value[1].toString()}
-						</div>
-					);
-				} else {
-					return <div className="break-words">{value[0].toString()}</div>;
-				}
-			}
+		} else if (type === "date" && value.getTime() in DeadValueEnum) {
+			return <div className="break-words">{DeadValueEnum[value.getTime()]}</div>;
 		} else {
 			const strValue = value.toString();
 
 			//TODO: change once Prisma supports contains on arrays
 			return strValue.split("|").map((v: string, i: number) => {
 				const trimmed = v.trim();
-				if (URL.canParse(trimmed) && trimmed.split(":")[1].startsWith("//")) {
+				if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
 					return (
 						<Link key={i} href={trimmed} className="link link-primary link-hover" target="_blank" rel="noreferrer">
 							{trimmed}

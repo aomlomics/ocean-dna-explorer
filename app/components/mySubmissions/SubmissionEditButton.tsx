@@ -201,8 +201,6 @@ export default function SubmissionEditButton({
 											/>
 										</fieldset>
 									);
-								} else if (type === "float[]" || type === "integer[]") {
-									//TODO: add support for ranges
 								} else if (type === "date") {
 									//TODO: make date default value work
 									// acc.push(

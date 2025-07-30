@@ -3,12 +3,7 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { updateManyRaw, handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream, parseSchemaToObject } from "@/app/helpers/utils";
-import {
-	SampleOptionalDefaultsSchema,
-	SamplePartial,
-	SamplePartialSchema,
-	SampleScalarFieldEnumSchema
-} from "@/prisma/generated/zod";
+import { SamplePartial, SamplePartialSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { parse } from "csv-parse";
 import { auth } from "@clerk/nextjs/server";
@@ -24,7 +19,7 @@ async function doEdit(stream: ProgressStream, file: File) {
 		const sampleRow = {} as SamplePartial;
 
 		for (const [field, value] of Object.entries(record)) {
-			parseSchemaToObject(field, value as string, sampleRow, SampleOptionalDefaultsSchema, SampleScalarFieldEnumSchema);
+			parseSchemaToObject(field, value as string, sampleRow, "sample");
 		}
 
 		const parsedSample = SamplePartialSchema.safeParse(sampleRow, {

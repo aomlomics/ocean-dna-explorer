@@ -53,7 +53,7 @@ export default function ExploreSearch({
 		let inputType = undefined;
 		let step = undefined;
 		//TODO: add support for querying ranges
-		if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
+		if (type === "integer" || type === "float") {
 			inputType = "number";
 			step = "any;";
 		} else if (type === "date") {

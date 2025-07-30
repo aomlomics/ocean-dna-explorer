@@ -30,6 +30,6 @@ export async function GET(
 
 		return NextResponse.json({ statusMessage: "success", result });
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }

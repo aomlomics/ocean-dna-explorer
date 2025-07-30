@@ -36,6 +36,10 @@ function parseToQuery(
 		throw new Error(`Query mode "${mode}" not supported.`);
 	}
 
+	if (TableMetadata[relation || table].relations.some((rel) => rel.field === field) && typeof value === "object") {
+		return { [field]: value };
+	}
+
 	const type = getZodType(TableMetadata[relation || table].schema.shape[field]).type;
 	if (!type) {
 		throw new Error(
@@ -78,9 +82,9 @@ function parseToQuery(
 				throw new Error(`The field "${field}" is a number field, but "${gte}" is not a number.`);
 			} else if (isNaN(lte)) {
 				throw new Error(`The field "${field}" is a number field, but "${lte}" is not a number.`);
-			} else {
-				searchWhere = { AND: [{ [field]: { gte } }, { [field]: { lte } }] };
 			}
+
+			searchWhere = { AND: [{ [field]: { gte } }, { [field]: { lte } }] };
 		} else {
 			let val;
 			if (type === "integer") {
@@ -91,25 +95,42 @@ function parseToQuery(
 
 			if (isNaN(val)) {
 				throw new Error(`The field "${field}" is a number field, but "${value}" is not a number.`);
+			}
+
+			if (!mode || mode === "equals") {
+				searchWhere = { [field]: val };
 			} else {
-				if (!mode || mode === "equals") {
-					searchWhere = { [field]: val };
-				} else {
-					searchWhere = { [field]: { [mode]: val } };
-				}
+				searchWhere = { [field]: { [mode]: val } };
 			}
 		}
 	} else if (type === "date") {
-		const val = Date.parse(value);
-		if (isNaN(val)) {
-			throw new Error(`The field "${field}" is a date field, but "${value}" is not a date.`);
+		if (mode === "range") {
+			searchWhere = {
+				AND: [{ [field]: { gte: new Date(value[0]) } }, { [field]: { lte: new Date(value[1]) } }]
+			};
 		} else {
-			searchWhere = { [field]: val };
+			const dateVal = new Date(value);
+			if (isNaN(dateVal.valueOf())) {
+				throw new Error(`The field "${field}" is a date field, but "${value}" is not a date.`);
+			}
+
+			let lteOffset;
+			if (value.includes("T")) {
+				lteOffset = 60 * 60 * 1000;
+			} else {
+				lteOffset = 24 * 60 * 60 * 1000;
+			}
+
+			if (mode === "equals") {
+				searchWhere = {
+					AND: [{ [field]: { gte: dateVal } }, { [field]: { lte: new Date(dateVal.getTime() + lteOffset) } }]
+				};
+			} else {
+				searchWhere = { [field]: { [mode]: dateVal } };
+			}
 		}
 	} else if (type === "string[]") {
 		//TODO: add string arrays back to schema once Prisma supports contains on arrays
-	} else if (type === "integer[]" || type === "float[]") {
-		//TODO: add support to query ranges
 	}
 
 	if (searchWhere) {
@@ -240,9 +261,9 @@ export async function GET(
 		} catch (err) {
 			const error = err as Error;
 
-			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+			return NextResponse.json({ statusMessage: "error", error: error.message });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }
