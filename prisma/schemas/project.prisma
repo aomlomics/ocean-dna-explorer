@@ -78,8 +78,7 @@ model Sample {
     verbatimCoordinateSystem       String?
     verbatimSRS                    String?
     geo_loc_name                   String // fixed
-    eventDate                      String? // fixed
-    eventDate__TEMP                DateTime     @default(now())
+    eventDate                      DateTime
     eventDate_Midpoint_ODE         DateTime?
     eventDate_End_ODE              DateTime?
     /// @zod.custom.use(z.coerce.number())
@@ -177,8 +176,7 @@ model Sample {
     pool_dna_num                    Int?
     nucl_acid_ext_method_additional String?
     concentration_unit              String?
-    date_ext                        String?
-    date_ext__TEMP                  DateTime?
+    date_ext                        DateTime?
     /// @zod.custom.use(z.coerce.number())
     dna_yield                       Float?
     dna_yield_unit                  String?
@@ -347,8 +345,7 @@ model Assay {
     target_gene                 String
     target_subfragment          String?
     /// @zod.number.array(.max(2))
-    ampliconSize                Float[]     @default([])
-    ampliconSize__TEMP          Float?
+    ampliconSize                Float?
     ampliconSize_Midpoint_ODE   Float?
     ampliconSize_End_ODE        Float?
     /// @zod.custom.use(z.coerce.number())
