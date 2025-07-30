@@ -74,11 +74,6 @@ export default function AdvancedSearch() {
 							const field = formRef.current[`field_${suffix}`].value as string;
 							const shape = TableMetadata[table].schema.shape;
 							const fieldType = getZodType(shape[field as keyof typeof shape]).type;
-							if (!fieldType) {
-								throw new Error(
-									`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-								);
-							}
 
 							const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
 							let filter = undefined as unknown as string | number | [number, number] | [string, string];
@@ -476,11 +471,6 @@ function InputElement({
 
 	const shape = TableMetadata[table].schema.shape;
 	const type = getZodType(shape[field as keyof typeof shape]).type;
-	if (!type) {
-		throw new Error(
-			`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-		);
-	}
 
 	const [mode, setMode] = useState(
 		defaultMode ? defaultMode : type === "integer" || type === "float" || type === "date" ? "equals" : "contains"

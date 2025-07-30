@@ -1,5 +1,5 @@
 import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
-import { RanksBySpecificity } from "@/types/objects";
+import { RanksBySpecificity, TypeSeparators } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { ZodObject, ZodEnum, ZodNumber, ZodOptional, ZodString, ZodDate, ZodLazy, ZodBoolean, ZodArray } from "zod";
@@ -32,7 +32,7 @@ export async function fetcher(url: string) {
 //}
 
 type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json";
-export function getZodType(field: any): { type: DbType; optional?: boolean; values?: string[] } {
+function getTypeRecursive(field: any): { type: DbType; optional?: boolean; values?: string[] } {
 	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
 	if (field instanceof ZodOptional) {
@@ -77,6 +77,15 @@ export function getZodType(field: any): { type: DbType; optional?: boolean; valu
 	}
 }
 
+export function getZodType(field: any): { type: DbType; optional?: boolean; values?: string[] } {
+	const result = getTypeRecursive(field);
+	if (!result.type) {
+		throw new Error(`Could not find type of "${field}".`);
+	}
+
+	return result;
+}
+
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
 	field: string,
@@ -94,7 +103,7 @@ export function parseSchemaToObject(
 		}
 
 		if (type === "string[]") {
-			obj[field] = value.split("|").map((val) => val.trim());
+			obj[field] = value.split(TypeSeparators.string).map((val) => val.trim());
 		} else if (type === "string") {
 			obj[field] = value;
 		} else if (type === "date") {
@@ -113,13 +122,12 @@ export function parseSchemaToObject(
 					throw new Error(`Invalid format for field "${field}". Field can't be a range.`);
 				}
 
-				const sep = "/";
-				const valArray = value.split(sep).map((v) => v.trim());
+				const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
 
 				//check if there are exactly 2 dates
 				if (valArray.length !== 2) {
 					throw new Error(
-						`Invalid format for field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${sep}".`
+						`Invalid format for field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${TypeSeparators[type]}".`
 					);
 				}
 
@@ -168,8 +176,7 @@ export function parseSchemaToObject(
 			obj[field] = DeadValueEnum[value as unknown as DeadValueEnum];
 		} else if (type === "float" || type === "integer") {
 			const parser = type === "float" ? parseFloat : parseInt;
-			const sep = "/";
-			const valArray = value.split(sep).map((v) => v.trim());
+			const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
 
 			if (valArray.length === 2) {
 				//value is not a singular valid number
@@ -220,7 +227,7 @@ export function parseSchemaToObject(
 				obj[field] = parser(valArray[0]);
 			} else {
 				throw new Error(
-					`Invalid format for field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${sep}".`
+					`Invalid format for field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${TypeSeparators[type]}".`
 				);
 			}
 		} else {

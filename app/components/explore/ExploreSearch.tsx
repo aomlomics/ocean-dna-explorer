@@ -44,11 +44,6 @@ export default function ExploreSearch({
 	function InputElement() {
 		const shape = TableMetadata[table].schema.shape;
 		const type = getZodType(shape[field as keyof typeof shape]).type;
-		if (!type) {
-			throw new Error(
-				`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-			);
-		}
 
 		let inputType = undefined;
 		let step = undefined;

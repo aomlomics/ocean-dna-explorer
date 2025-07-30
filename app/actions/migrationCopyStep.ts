@@ -4,7 +4,8 @@ import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "../generated/prisma/client";
 import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { RolePermissions, TypeSeparators } from "@/types/objects";
+import { getZodType, parseSchemaToObject } from "../helpers/utils";
 
 export default async function migrationCopyStepAction() {
 	const { userId, sessionClaims } = await auth();
@@ -30,28 +31,45 @@ export default async function migrationCopyStepAction() {
 	}, {} as Record<Lowercase<Prisma.ModelName>, string[]>);
 
 	await unsafePrisma.$transaction(async (tx) => {
-		for (const table in oldFieldsByTable) {
-			//@ts-ignore
-			const result = await tx[table].findMany({
+		for (const t in oldFieldsByTable) {
+			const table = t as Lowercase<Prisma.ModelName>;
+			console.log(table, oldFieldsByTable[table]);
+			// @ts-ignore
+			const result = (await tx[table].findMany({
 				select: {
 					//@ts-ignore
-					...oldFieldsByTable[table].reduce(
-						(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
-						{}
-					),
+					...oldFieldsByTable[t].reduce((acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }), {}),
 					id: true
 				}
-			});
+			})) as Record<string, any>[];
 
-			for (let i = 0; i < result.length; i++) {
-				for (const field of oldFieldsByTable[table as Lowercase<Prisma.ModelName>]) {
-					result[i][field + "__TEMP"] = result[i][field];
-					delete result[i][field];
+			if (result.length) {
+				for (let i = 0; i < result.length; i++) {
+					for (const field of oldFieldsByTable[table]) {
+						if (Array.isArray(result[i][field])) {
+							parseSchemaToObject(field + "__TEMP", result[i][field][0].toString(), result[i], table);
+
+							if (result[i][field][1]) {
+								parseSchemaToObject(
+									field + "_Midpoint_ODE",
+									((result[i][field][0] + result[i][field][1]) / 2).toString(),
+									result[i],
+									table
+								);
+								parseSchemaToObject(field + "_End_ODE", result[i][field][1].toString(), result[i], table);
+							}
+
+							delete result[i][field];
+						} else {
+							parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+						}
+						delete result[i][field];
+					}
 				}
-			}
 
-			const modelName = (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
-			await updateManyRaw(tx, modelName, result);
+				const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
+				await updateManyRaw(tx, modelName, result);
+			}
 		}
 	});
 }

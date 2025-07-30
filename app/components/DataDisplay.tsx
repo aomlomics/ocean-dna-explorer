@@ -1,5 +1,5 @@
 import { DeadValueEnum } from "@/types/enums";
-import { GlobalOmit } from "@/types/objects";
+import { GlobalOmit, TypeSeparators } from "@/types/objects";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { Prisma } from "../generated/prisma/client";
@@ -19,11 +19,6 @@ export default function DataDisplay({
 
 	function ValueNode({ field, value }: { field: string; value: any }) {
 		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
-		if (!type) {
-			throw new Error(
-				`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-			);
-		}
 
 		if (value === null || (Array.isArray(value) && value.length === 0)) {
 			return <div className="bg-base-300">{"\u200b"}</div>;
@@ -35,7 +30,7 @@ export default function DataDisplay({
 			const strValue = value.toString();
 
 			//TODO: change once Prisma supports contains on arrays
-			return strValue.split("|").map((v: string, i: number) => {
+			return strValue.split(TypeSeparators.string).map((v: string, i: number) => {
 				const trimmed = v.trim();
 				if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
 					return (

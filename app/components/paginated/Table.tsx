@@ -219,11 +219,6 @@ export default function Table({
 		for (const [field, value] of formData.entries()) {
 			if (typeof value === "string" && value.trim()) {
 				const type = getZodType(TableMetadata[table].schema.shape[field]).type;
-				if (!type) {
-					throw new Error(
-						`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-					);
-				}
 
 				if (type === "string") {
 					temp[field] = value;

@@ -41,13 +41,6 @@ function parseToQuery(
 	}
 
 	const type = getZodType(TableMetadata[relation || table].schema.shape[field]).type;
-	if (!type) {
-		throw new Error(
-			`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${
-				relation || table
-			}".`
-		);
-	}
 
 	let searchWhere;
 	if (type === "string") {
@@ -206,11 +199,6 @@ export async function GET(
 					const ors = [] as { [field: string]: { contains: string; mode: "insensitive" } }[];
 					for (const field of TableMetadata[table].enumSchema._def.values) {
 						const type = getZodType(TableMetadata[table].schema.shape[field]).type;
-						if (!type) {
-							throw new Error(
-								`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-							);
-						}
 
 						if (type === "string") {
 							ors.push({ [field]: { contains: search.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" } });

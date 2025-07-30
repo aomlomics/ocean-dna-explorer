@@ -20,9 +20,6 @@ export default function SchemaDisplay() {
 		const shape = TableMetadata[tableName].schema.shape;
 		for (const f of fields) {
 			const type = getZodType(shape[f as keyof typeof shape]);
-			if (!type.type) {
-				throw new Error(`Could not find type of ${f}.`);
-			}
 			if (type.type === "json") {
 				if (f === "userDefined") {
 					result[f] = type;

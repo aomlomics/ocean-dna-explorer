@@ -19,9 +19,6 @@ export async function GET(
 		for (const f of fields) {
 			if (f !== "userDefined") {
 				const type = getZodType(shape[f as keyof typeof shape]);
-				if (!type.type) {
-					throw new Error(`Could not find type of ${f}.`);
-				}
 				result[f] = type;
 			}
 		}
