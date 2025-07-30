@@ -7,6 +7,10 @@ import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/utils";
 
+function exists(value: any) {
+	return value !== null && value !== undefined && value.toSring;
+}
+
 export default async function migrationCopyStepAction() {
 	try {
 		const { userId, sessionClaims } = await auth();
@@ -51,22 +55,25 @@ export default async function migrationCopyStepAction() {
 					for (let i = 0; i < result.length; i++) {
 						for (const field of oldFieldsByTable[table]) {
 							if (Array.isArray(result[i][field])) {
-								parseSchemaToObject(field + "__TEMP", result[i][field][0].toString(), result[i], table);
+								if (exists(result[i][field][0])) {
+									parseSchemaToObject(field + "__TEMP", result[i][field][0].toString(), result[i], table);
 
-								if (result[i][field][1]) {
-									parseSchemaToObject(
-										field + "_Midpoint_ODE",
-										((result[i][field][0] + result[i][field][1]) / 2).toString(),
-										result[i],
-										table
-									);
-									parseSchemaToObject(field + "_End_ODE", result[i][field][1].toString(), result[i], table);
+									if (exists(result[i][field][1])) {
+										parseSchemaToObject(
+											field + "_Midpoint_ODE",
+											((result[i][field][0] + result[i][field][1]) / 2).toString(),
+											result[i],
+											table
+										);
+										parseSchemaToObject(field + "_End_ODE", result[i][field][1].toString(), result[i], table);
+									}
 								}
-
-								delete result[i][field];
 							} else {
-								parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+								if (exists(result[i][field])) {
+									parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+								}
 							}
+
 							delete result[i][field];
 						}
 					}
