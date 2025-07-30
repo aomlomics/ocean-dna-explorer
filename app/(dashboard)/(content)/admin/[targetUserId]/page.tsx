@@ -65,6 +65,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 					{user.banned ? (
 						<WarningButton
 							value={user.id}
+							valueName="targetUserId"
 							buttonText="Unban User"
 							warningText="This will allow the banned user to log in again. All submissions previously made will remain."
 							confirmText="unban"
@@ -74,6 +75,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 					) : (
 						<WarningButton
 							value={user.id}
+							valueName="targetUserId"
 							buttonText="Ban User"
 							warningText="This will prevent the user from being able to log in. They may be unbanned in the future, and their submissions will remain."
 							confirmText="ban"
@@ -84,6 +86,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 
 					<WarningButton
 						value={user.id}
+						valueName="targetUserId"
 						buttonText="Delete User"
 						warningText="This will permanently delete the user and all of their submissions."
 						action={deleteUserAction}

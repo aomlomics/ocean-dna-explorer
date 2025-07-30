@@ -64,49 +64,63 @@ export default function AdvancedSearch() {
 					const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
 
 					if (id === 1) {
-						const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
-						const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
+						if (formRef.current[`type_${suffix}`]) {
+							const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
+							const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
 
-						const table = (
-							relation ? relation.toLowerCase() : searchTable.toLowerCase()
-						) as Lowercase<Prisma.ModelName>;
-						const field = formRef.current[`field_${suffix}`].value as string;
-						const shape = TableMetadata[table].schema.shape;
-						const fieldType = getZodType(shape[field as keyof typeof shape]).type;
-						if (!fieldType) {
-							throw new Error(
-								`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-							);
-						}
+							const table = (
+								relation ? relation.toLowerCase() : searchTable.toLowerCase()
+							) as Lowercase<Prisma.ModelName>;
+							const field = formRef.current[`field_${suffix}`].value as string;
+							const shape = TableMetadata[table].schema.shape;
+							const fieldType = getZodType(shape[field as keyof typeof shape]).type;
 
-						const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
-						let filter = undefined as unknown as string | number | number[];
-						if (mode === "range") {
-							const gte = formRef.current[`filter_${suffix}_gte`].value;
-							const lte = formRef.current[`filter_${suffix}_lte`].value;
-							if (fieldType === "integer" || fieldType === "integer[]") {
-								filter = [parseInt(gte), parseInt(lte)];
-							} else if (fieldType === "float" || fieldType === "float[]") {
-								filter = [parseFloat(gte), parseFloat(lte)];
-							}
-						} else {
-							const filterVal = formRef.current[`filter_${suffix}`].value;
+							const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
+							let filter = undefined as unknown as string | number | [number, number] | [string, string];
 
-							if (fieldType === "integer" || fieldType === "integer[]") {
-								filter = parseInt(filterVal);
-							} else if (fieldType === "float" || fieldType === "float[]") {
-								filter = parseFloat(filterVal);
+							if (fieldType === "date") {
+								if (mode === "range") {
+									const gteDate = formRef.current[`filter_${suffix}_gte_date`].value;
+									const gteTime = formRef.current[`filter_${suffix}_gte_time`].value;
+									const lteDate = formRef.current[`filter_${suffix}_lte_date`].value;
+									const lteTime = formRef.current[`filter_${suffix}_lte_time`].value;
+
+									filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
+								} else {
+									const filterDate = formRef.current[`filter_${suffix}_date`].value;
+									const filterTime = formRef.current[`filter_${suffix}_time`].value;
+
+									filter = filterDate + (filterTime ? "T" + filterTime : "");
+								}
 							} else {
-								filter = filterVal;
+								if (mode === "range") {
+									const gte = formRef.current[`filter_${suffix}_gte`].value;
+									const lte = formRef.current[`filter_${suffix}_lte`].value;
+									if (fieldType === "integer") {
+										filter = [parseInt(gte), parseInt(lte)];
+									} else if (fieldType === "float") {
+										filter = [parseFloat(gte), parseFloat(lte)];
+									}
+								} else {
+									const filterVal = formRef.current[`filter_${suffix}`].value;
+
+									if (fieldType === "integer") {
+										filter = parseInt(filterVal);
+									} else if (fieldType === "float") {
+										filter = parseFloat(filterVal);
+									} else {
+										filter = filterVal;
+									}
+								}
 							}
-						}
 
-						let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
-						if (relation) {
-							arr = [relation, ...arr] as typeof arr;
-						}
+							let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
+							if (relation) {
+								arr = [relation, ...arr] as typeof arr;
+							}
 
-						parts.push(arr);
+							parts.push(arr);
+						}
 					} else {
 						const recurs = getParamsArray(id, suffix);
 						if (recurs) {
@@ -313,6 +327,7 @@ function Filter({
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(paramsArray && type === "relation" ? paramsArray[0] : "");
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
+	const [loaded, setLoaded] = useState(false);
 
 	const table = (relation ? relation.toLowerCase() : searchTable.toLowerCase()) as Lowercase<Prisma.ModelName>;
 	const invalidField =
@@ -321,10 +336,12 @@ function Filter({
 	useEffect(() => {
 		if (invalidField) {
 			onDelete();
+		} else {
+			setLoaded(true);
 		}
 	}, []);
 
-	if (invalidField) {
+	if (invalidField && !loaded) {
 		return <></>;
 	}
 
@@ -445,26 +462,22 @@ function InputElement({
 	defaultMode: string;
 	defaultValue: string;
 }) {
-	const [mode, setMode] = useState("");
-	const [type, setType] = useState("");
+	const [gteDateSelected, setGteDateSelected] = useState(
+		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[0].split("T")[0]
+	);
+	const [lteDateSelected, setLteDateSelected] = useState(
+		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[1].split("T")[0]
+	);
 
-	useEffect(() => {
-		const shape = TableMetadata[table].schema.shape;
-		const type = getZodType(shape[field as keyof typeof shape]).type;
-		if (!type) {
-			throw new Error(
-				`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-			);
-		}
-		const isNumber = type === "integer" || type === "float" || type === "integer[]" || type === "float[]";
-		setMode(!mode && defaultMode ? defaultMode : isNumber ? "equals" : "contains");
-		setType(type);
-	}, [field]);
+	const shape = TableMetadata[table].schema.shape;
+	const type = getZodType(shape[field as keyof typeof shape]).type;
 
-	useEffect(() => {}, [type]);
+	const [mode, setMode] = useState(
+		defaultMode ? defaultMode : type === "integer" || type === "float" || type === "date" ? "equals" : "contains"
+	);
 
 	//TODO: add support for querying ranges
-	if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
+	if (type === "integer" || type === "float") {
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
@@ -485,7 +498,7 @@ function InputElement({
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
 						<input
 							className="input input-primary w-full rounded-none"
-							placeholder="Greater than..."
+							placeholder="Lower bound"
 							name={`filter_${nameSuffix}_gte`}
 							defaultValue={
 								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : undefined
@@ -496,7 +509,7 @@ function InputElement({
 						<span className="text-4xl text-primary">-</span>
 						<input
 							className="input input-primary w-full rounded-l-none"
-							placeholder="Less than..."
+							placeholder="Upper bound"
 							name={`filter_${nameSuffix}_lte`}
 							defaultValue={
 								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : undefined
@@ -510,7 +523,7 @@ function InputElement({
 						className="input input-primary w-full rounded-l-none"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
-						defaultValue={defaultValue}
+						defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue : undefined}
 						type="number"
 						required
 					/>
@@ -519,15 +532,94 @@ function InputElement({
 		);
 	} else if (type === "date") {
 		return (
-			<div className="px-2">
-				<input
-					className="input input-primary w-full"
-					placeholder="Filter..."
-					name={`filter_${nameSuffix}`}
-					defaultValue={defaultValue}
-					type="date"
+			<div className="px-2 grid grid-cols-[30%_70%]">
+				<select
+					className="select rounded-r-none"
 					required
-				/>
+					name={`mode_${nameSuffix}`}
+					value={mode}
+					onChange={(e) => setMode(e.target.value)}
+				>
+					<option value="equals">Equals</option>
+					<option value="range">Range</option>
+					<option value="gt">{">"}</option>
+					<option value="gte">{">="}</option>
+					<option value="lt">{"<"}</option>
+					<option value="lte">{"<="}</option>
+				</select>
+				{mode === "range" ? (
+					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
+						<div className="input input-primary w-full rounded-none">
+							<input
+								name={`filter_${nameSuffix}_gte_date`}
+								className={`w-[20px] ${gteDateSelected ? "text-success" : "text-error"}`}
+								defaultValue={
+									defaultValue && defaultValue.split(",").length === 2
+										? defaultValue.split(",")[0].split("T")[0]
+										: undefined
+								}
+								onChange={(e) => setGteDateSelected(!!e.target.value)}
+								type="date"
+								required
+							/>
+							<input
+								type="time"
+								className="text-center"
+								defaultValue={
+									defaultValue && defaultValue.split(",").length === 2
+										? defaultValue.split(",")[0].split("T")[1]
+										: undefined
+								}
+								name={`filter_${nameSuffix}_gte_time`}
+							/>
+						</div>
+						<span className="text-4xl text-primary">-</span>
+						<div className="input input-primary w-full rounded-l-none">
+							<input
+								name={`filter_${nameSuffix}_lte_date`}
+								className={`w-[20px] ${lteDateSelected ? "text-success" : "text-error"}`}
+								defaultValue={
+									defaultValue && defaultValue.split(",").length === 2
+										? defaultValue.split(",")[1].split("T")[0]
+										: undefined
+								}
+								onChange={(e) => setLteDateSelected(!!e.target.value)}
+								type="date"
+								required
+							/>
+							<input
+								type="time"
+								className="text-center"
+								defaultValue={
+									defaultValue && defaultValue.split(",").length === 2
+										? defaultValue.split(",")[1].split("T")[1]
+										: undefined
+								}
+								name={`filter_${nameSuffix}_lte_time`}
+							/>
+						</div>
+					</div>
+				) : (
+					<div className="input input-primary w-full">
+						<input
+							name={`filter_${nameSuffix}_date`}
+							className="w-1/2"
+							defaultValue={
+								defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : undefined
+							}
+							type="date"
+							required
+						/>
+						<input
+							type="time"
+							className="text-center w-1/2"
+							defaultValue={
+								defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : undefined
+							}
+							name={`filter_${nameSuffix}_time`}
+						/>
+					</div>
+				)}
 			</div>
 		);
 	} else {
@@ -549,7 +641,7 @@ function InputElement({
 					className="input input-primary w-full rounded-l-none"
 					placeholder="Filter..."
 					name={`filter_${nameSuffix}`}
-					defaultValue={defaultValue}
+					defaultValue={defaultValue === "undefined" ? undefined : defaultValue}
 					required
 				/>
 			</div>
