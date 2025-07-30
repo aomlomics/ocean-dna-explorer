@@ -8,7 +8,7 @@ import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/utils";
 
 function exists(value: any) {
-	return value !== null && value !== undefined && value.toSring;
+	return value !== null && value !== undefined && value.toString;
 }
 
 export default async function migrationCopyStepAction() {
@@ -34,24 +34,24 @@ export default async function migrationCopyStepAction() {
 
 			return acc;
 		}, {} as Record<Lowercase<Prisma.ModelName>, string[]>);
-		console.log(oldFieldsByTable);
 
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
 				const table = t as Lowercase<Prisma.ModelName>;
 
 				// @ts-ignore
-				const result = (await tx[table].findMany({
-					select: {
-						//@ts-ignore
-						...oldFieldsByTable[t].reduce(
-							(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
-							{}
-						),
-						id: true
-					}
-				})) as Record<string, any>[];
-				console.log(result[0], result.length);
+				// const result = (await tx[table].findMany({
+				// 	select: {
+				// 		//@ts-ignore
+				// 		...oldFieldsByTable[t].reduce(
+				// 			(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
+				// 			{}
+				// 		),
+				// 		id: true
+				// 	}
+				// })) as Record<string, any>[];
+
+				const result = [{ eventDate: "2021-09-24T07:00-04:00", date_ext: null, id: 1 }] as Record<string, any>[];
 
 				if (result.length) {
 					for (let i = 0; i < result.length; i++) {
@@ -81,7 +81,7 @@ export default async function migrationCopyStepAction() {
 					}
 
 					const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
-					console.log(result[0], result.length);
+					break;
 					await updateManyRaw(tx, modelName, result);
 				}
 			}

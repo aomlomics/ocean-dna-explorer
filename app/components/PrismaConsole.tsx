@@ -9,7 +9,7 @@ import JSON5 from "json5";
 import unsafeConsoleAction from "../actions/unsafeConsole";
 
 export default function PrismaConsole({ modelQueries }: { modelQueries: string[] }) {
-	const [confirmed, setConfirmed] = useState(true);
+	const [confirmed, setConfirmed] = useState(false);
 
 	const [formatError, setFormatError] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
