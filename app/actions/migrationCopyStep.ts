@@ -51,10 +51,6 @@ export default async function migrationCopyStepAction() {
 					}
 				})) as Record<string, any>[];
 
-				// const result = [{ eventDate: "2021-09-24T07:00-04:00", date_ext: null, id: 1 }] as Record<string, any>[];
-
-				console.log(table, oldFieldsByTable[table]);
-				console.log(result.length, result);
 				if (result.length) {
 					for (let i = 0; i < result.length; i++) {
 						for (const field of oldFieldsByTable[table]) {
@@ -81,10 +77,14 @@ export default async function migrationCopyStepAction() {
 							delete result[i][field];
 						}
 					}
-					console.log(result.length, result);
 
-					const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
-					await updateManyRaw(tx, modelName, result);
+					//only update rows where the changed fields had a value
+					const filteredResult = result.filter((row) => Object.keys(row).length > 1);
+					if (filteredResult.length) {
+						const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
+						await updateManyRaw(tx, modelName, filteredResult);
+					}
+					break;
 				}
 			}
 		});
