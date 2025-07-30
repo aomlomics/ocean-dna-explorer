@@ -611,10 +611,12 @@ export async function updateManyRaw(
 
 	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSql}) AS t("${id}", ${fieldsSql}) WHERE "${table}"."${id}" = "t"."${id}"`;
 
-	console.log(
-		sql,
-		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, row[id], ...fs.map((f) => row[f])], [])
+	const reduced = data.reduce(
+		(acc: Array<string | number | boolean>, row) => [...acc, row[id], ...fs.map((f) => row[f])],
+		[]
 	);
+	console.log(paramIndex, reduced.length);
+	console.log(sql, JSON.stringify(reduced, undefined, 2));
 	return client.$executeRawUnsafe(
 		sql,
 		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, row[id], ...fs.map((f) => row[f])], [])

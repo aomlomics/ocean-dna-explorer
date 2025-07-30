@@ -52,7 +52,6 @@ export default async function migrationCopyStepAction() {
 					}
 				})) as Record<string, any>[];
 
-				console.log(result.length, result);
 				if (result.length) {
 					for (let i = 0; i < result.length; i++) {
 						for (const field of oldFieldsByTable[table]) {
@@ -79,10 +78,10 @@ export default async function migrationCopyStepAction() {
 							delete result[i][field];
 						}
 					}
-					console.log(result.length, result);
 
 					//only update rows where the changed fields had a value
 					const filteredResult = result.filter((row) => Object.keys(row).length > 1);
+					console.log(filteredResult.length, JSON.stringify(filteredResult, undefined, 2));
 					if (filteredResult.length) {
 						const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
 						await updateManyRaw(tx, modelName, filteredResult);
