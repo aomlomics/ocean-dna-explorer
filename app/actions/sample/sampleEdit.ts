@@ -2,27 +2,24 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { updateManyRaw, handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { parseSchemaToObject } from "@/app/helpers/utils";
-import {
-	SampleOptionalDefaultsSchema,
-	SamplePartial,
-	SamplePartialSchema,
-	SampleScalarFieldEnumSchema
-} from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { Parser } from "csv-parse";
+import { createProgressStream, parseSchemaToObject } from "@/app/helpers/utils";
+import { SamplePartial, SamplePartialSchema } from "@/prisma/generated/zod";
+import { ProgressStream } from "@/types/globals";
+import { parse } from "csv-parse";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function sampleEditAction(csvParser: Parser): Promise<NetworkPacket> {
+async function doEdit(stream: ProgressStream, file: File) {
 	const { userId } = await auth();
 
-	const samples = [] as any[];
+	const samples = [] as SamplePartial[];
 
-	for await (const record of csvParser) {
+	let i = 0;
+	const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+	for await (const record of parser) {
 		const sampleRow = {} as SamplePartial;
 
 		for (const [field, value] of Object.entries(record)) {
-			parseSchemaToObject(value as string, field, sampleRow, SampleOptionalDefaultsSchema, SampleScalarFieldEnumSchema);
+			parseSchemaToObject(field, value as string, sampleRow, "sample");
 		}
 
 		const parsedSample = SamplePartialSchema.safeParse(sampleRow, {
@@ -36,19 +33,27 @@ export default async function sampleEditAction(csvParser: Parser): Promise<Netwo
 		});
 
 		if (!parsedSample.success) {
-			return {
-				statusMessage: "error",
-				error:
-					`Table: Sample\n` +
+			await stream.error(
+				`Table: Sample\n` +
 					`Key: ${sampleRow.samp_name}\n\n` +
 					`${parsedSample.error.issues.map((e) => e.message).join("\n\n")}`
-			};
+			);
+			return;
 		}
 
 		samples.push(parsedSample.data);
+
+		//add to progress bar
+		i++;
+		await stream.message(
+			`Processed Sample ${parsedSample.data.samp_name}, row ${i} of ${parser.info.records}.`,
+			(i / parser.info.records) * 50
+		);
 	}
 
-	const samp_names = samples.map((samp) => samp.samp_name);
+	await stream.message("File parsed, uploading data", 50);
+
+	const samp_names = samples.map((samp) => samp.samp_name) as string[];
 	try {
 		await prisma.$transaction(async (tx) => {
 			const samplesCount = await tx.sample.count({
@@ -64,7 +69,8 @@ export default async function sampleEditAction(csvParser: Parser): Promise<Netwo
 				}
 			});
 			if (samplesCount !== samples.length) {
-				return { statusMessage: "error", error: "Permission denied for some Samples." };
+				await stream.error("Permission denied for some Samples.");
+				return;
 			}
 
 			const projectsCount = await tx.sample.findMany({
@@ -79,7 +85,8 @@ export default async function sampleEditAction(csvParser: Parser): Promise<Netwo
 				}
 			});
 			if (projectsCount.length !== 1) {
-				return { statusMessage: "error", error: "Samples must all be for the same Project." };
+				await stream.error("Samples must all be for the same Project.");
+				return;
 			}
 
 			await updateManyRaw(tx, "Sample", samples, "samp_name");
@@ -87,12 +94,22 @@ export default async function sampleEditAction(csvParser: Parser): Promise<Netwo
 	} catch (err: any) {
 		console.log(err.message);
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return handlePrismaError(err);
+			await stream.error(handlePrismaError(err).error);
+			return;
 		}
 
 		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		await stream.error(error.message);
+		return;
 	}
 
-	return { statusMessage: "success" };
+	await stream.success("Data successfully uploaded");
+}
+
+export default async function sampleEditAction(file: File) {
+	const stream = createProgressStream();
+
+	doEdit(stream, file).then(stream.close);
+
+	return stream.readable;
 }

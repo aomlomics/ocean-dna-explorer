@@ -13,6 +13,6 @@ export async function GET(
 	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
 		return NextResponse.json({ statusMessage: "success", result: TableMetadata[lowercaseTable].relations });
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }

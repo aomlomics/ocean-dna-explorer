@@ -2,50 +2,53 @@ import { publicPrisma } from "../helpers/prisma";
 import Link from "next/link";
 
 export default async function DataSummary() {
-	const { projectCount, sampleCount, taxaCount, uniqueAssays } = await publicPrisma.$transaction(async (tx) => {
-		const projectCount = await tx.project.count();
-		const sampleCount = await tx.sample.count();
-		const taxaCount = await tx.taxonomy.count();
-		const uniqueAssays = (await tx.assay.findMany({
-			distinct: ["target_gene"],
-			select: {
-				target_gene: true
-			}
-		})) as { target_gene: string; count?: number }[];
-
-		for (const a of uniqueAssays) {
-			//get count of features that were assigned using a particular target gene
-			//number of assignments = number of features (an assignment has only one feature)
-			const count = await tx.analysis.findFirst({
-				where: {
-					Assay: {
-						target_gene: a.target_gene
-					}
-				},
+	const { projectCount, sampleCount, taxaCount, uniqueAssays } = await publicPrisma.$transaction(
+		async (tx) => {
+			const projectCount = await tx.project.count();
+			const sampleCount = await tx.sample.count();
+			const taxaCount = await tx.taxonomy.count();
+			const uniqueAssays = (await tx.assay.findMany({
+				distinct: ["target_gene"],
 				select: {
-					_count: {
-						select: {
-							Assignments: true
+					target_gene: true
+				}
+			})) as { target_gene: string; count?: number }[];
+
+			for (const a of uniqueAssays) {
+				//get count of features that were assigned using a particular target gene
+				//number of assignments = number of features (an assignment has only one feature)
+				const count = await tx.analysis.findFirst({
+					where: {
+						Assay: {
+							target_gene: a.target_gene
+						}
+					},
+					select: {
+						_count: {
+							select: {
+								Assignments: true
+							}
 						}
 					}
+				});
+				if (count) {
+					a.count = count._count.Assignments;
 				}
-			});
-			if (count) {
-				a.count = count._count.Assignments;
 			}
-		}
 
-		return { projectCount, sampleCount, taxaCount, uniqueAssays };
-	});
+			return { projectCount, sampleCount, taxaCount, uniqueAssays };
+		},
+		{ timeout: 1 * 60 * 1000 }
+	);
 
 	return (
 		<div>
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-				<div className="col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Data Summary</div>
+				<div className="col-span-2 md:col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Data Summary</div>
 				<DataSummaryItem title="Projects" value={projectCount} href="/explore/project" />
 				<DataSummaryItem title="Samples" value={sampleCount} href="/explore/sample" />
 				<DataSummaryItem title="Taxonomies" value={taxaCount} href="/explore/taxonomy" />
-				<div className="col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Assays</div>
+				<div className="col-span-2 md:col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Assays</div>
 				{uniqueAssays.map((a) => (
 					<DataSummaryItem
 						key={a.target_gene}

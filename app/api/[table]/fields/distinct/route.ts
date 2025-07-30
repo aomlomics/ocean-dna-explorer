@@ -31,10 +31,10 @@ export async function GET(
 				//check if field exists on table
 				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
 				if (!parsed.success) {
-					return NextResponse.json(
-						{ statusMessage: "error", error: `Field '${field}' does not exist on table '${table}'.` },
-						{ status: 400 }
-					);
+					return NextResponse.json({
+						statusMessage: "error",
+						error: `Field "${field}" does not exist on table "${table}".`
+					});
 				}
 
 				where[field] = value;
@@ -44,10 +44,10 @@ export async function GET(
 				//check if field exists on table
 				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
 				if (!parsed.success) {
-					return NextResponse.json(
-						{ statusMessage: "error", error: `Field '${field}' does not exist on table '${table}'.` },
-						{ status: 400 }
-					);
+					return NextResponse.json({
+						statusMessage: "error",
+						error: `Field "${field}" does not exist on table "${table}".`
+					});
 				}
 			}
 
@@ -105,9 +105,9 @@ export async function GET(
 			return NextResponse.json({ statusMessage: "success", result });
 		} catch (err) {
 			const error = err as Error;
-			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+			return NextResponse.json({ statusMessage: "error", error: error.message });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }

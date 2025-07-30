@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function ScrollToTop() {
 	const [isVisible, setIsVisible] = useState(false);
 	const [isNearFooter, setIsNearFooter] = useState(false);
+	const footerRef = useRef<HTMLElement | null>(null);
 
 	useEffect(() => {
+		// Assign footer element to ref
+		footerRef.current = document.querySelector("footer");
+
 		const toggleVisibility = () => {
 			if (window.scrollY > 300) {
 				setIsVisible(true);
@@ -15,11 +19,14 @@ export default function ScrollToTop() {
 			}
 
 			// Check if we're near the bottom
-			const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 150;
+			const footerHeight = footerRef.current?.offsetHeight || 0;
+			const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - footerHeight;
 			setIsNearFooter(nearBottom);
 		};
 
 		window.addEventListener("scroll", toggleVisibility);
+		toggleVisibility(); // Initial check in case page loads near bottom
+
 		return () => window.removeEventListener("scroll", toggleVisibility);
 	}, []);
 
@@ -35,9 +42,10 @@ export default function ScrollToTop() {
 			{isVisible && (
 				<button
 					onClick={scrollToTop}
-					className={`fixed right-8 p-4 bg-base-300 text-white rounded-full shadow-xl hover:bg-primary transition-all duration-300 z-50 ${
-						isNearFooter ? "bottom-24" : "bottom-8"
-					}`}
+					style={{
+						bottom: isNearFooter ? `${(footerRef.current?.offsetHeight || 96) + (window.innerWidth < 768 ? 40 : 22)}px` : "2rem"
+					}}
+					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 z-50"
 					aria-label="Scroll to top"
 				>
 					<svg

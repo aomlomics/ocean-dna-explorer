@@ -9,12 +9,10 @@ import { ReactNode, useEffect, useState } from "react";
 
 export default function ExploreSearch({
 	table,
-	fieldOptions,
 	defaultField,
 	omit = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	fieldOptions: string[];
 	defaultField: string;
 	omit?: string[];
 }) {
@@ -29,13 +27,13 @@ export default function ExploreSearch({
 		}
 	}, []);
 
-	function handleSearch(value: string) {
+	function handleSearch(search: string) {
 		const params = new URLSearchParams(searchParams);
 
-		if (value === "") {
+		if (search === "") {
 			params.delete("search");
 		} else {
-			params.set("search", `${field},${value}`);
+			params.set("search", `${field},${search}`);
 		}
 
 		router.push(`?${params.toString()}`);
@@ -46,16 +44,11 @@ export default function ExploreSearch({
 	function InputElement() {
 		const shape = TableMetadata[table].schema.shape;
 		const type = getZodType(shape[field as keyof typeof shape]).type;
-		if (!type) {
-			throw new Error(
-				`Could not find type of '${field}'. Make sure a field named '${field}' exists on table named '${table}'.`
-			);
-		}
 
 		let inputType = undefined;
 		let step = undefined;
 		//TODO: add support for querying ranges
-		if (type === "integer" || type === "float" || type === "integer[]" || type === "float[]") {
+		if (type === "integer" || type === "float") {
 			inputType = "number";
 			step = "any;";
 		} else if (type === "date") {
@@ -66,7 +59,7 @@ export default function ExploreSearch({
 			<input
 				className="input input-primary rounded-l-none"
 				placeholder="Search..."
-				name="value"
+				name="search"
 				type={inputType}
 				step={step}
 				defaultValue={searchParams.get("search") ? searchParams.get("search")?.split(",")[1] : ""}
@@ -79,7 +72,7 @@ export default function ExploreSearch({
 			className="grid grid-cols-5 items-center gap-5"
 			onSubmit={(e) => {
 				e.preventDefault();
-				handleSearch(e.currentTarget.value.value);
+				handleSearch(e.currentTarget.search.value);
 			}}
 		>
 			<div className="grid grid-cols-[35%_65%] col-span-2">
@@ -88,7 +81,7 @@ export default function ExploreSearch({
 					value={field}
 					onChange={(e) => setField(e.currentTarget.value)}
 				>
-					{fieldOptions.reduce((acc, option) => {
+					{TableMetadata[table].enumSchema._def.values.reduce((acc, option) => {
 						if (!omit.includes(option)) {
 							acc.push(
 								<option key={option} value={option}>
@@ -104,8 +97,8 @@ export default function ExploreSearch({
 			</div>
 
 			<div className="justify-self-start flex gap-2">
-				<button className="btn">Filter</button>
-				<button className="btn" type="button" onClick={() => handleSearch("")}>
+				<button className="btn btn-primary">Filter</button>
+				<button className="btn btn-error" type="button" onClick={() => handleSearch("")}>
 					Clear
 				</button>
 			</div>

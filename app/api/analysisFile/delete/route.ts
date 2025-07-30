@@ -8,7 +8,7 @@ export async function DELETE(request: Request) {
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		return NextResponse.json({ error: "Forbidden" });
 	}
 	//TODO: verify this blob is uploaded by this user
 

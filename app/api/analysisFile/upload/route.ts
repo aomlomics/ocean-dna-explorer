@@ -58,16 +58,9 @@ export async function POST(request: Request) {
 		return NextResponse.json(jsonResponse);
 	} catch (err) {
 		const error = err as Error;
-
-		//TODO: doesn't work, need a way to detect status codes on client
-		if (error.message === "Unauthorized") {
-			return NextResponse.json({ error: error.message }, { status: 401 });
-		} else if (error.message === "Forbidden") {
-			return NextResponse.json({ error: error.message }, { status: 403 });
-		}
 		return NextResponse.json(
-			{ error: error.message },
-			{ status: 400 } // The webhook will retry 5 times waiting for a 200
+			{ error: error.message }
+			// The webhook will retry 5 times waiting for a 200
 		);
 	}
 }

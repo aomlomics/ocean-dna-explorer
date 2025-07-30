@@ -15,7 +15,7 @@ export async function GET(
 		try {
 			const parsedId = parseInt(id);
 			if (Number.isNaN(parsedId)) {
-				return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` }, { status: 400 });
+				return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` });
 			}
 
 			const { searchParams } = new URL(request.url);
@@ -40,10 +40,10 @@ export async function GET(
 			if (result) {
 				return NextResponse.json({ statusMessage: "success", result });
 			} else {
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },
-					{ status: 400 }
-				);
+				return NextResponse.json({
+					statusMessage: "error",
+					error: `No ${table} matching the search parameters could be found.`
+				});
 			}
 		} catch (err) {
 			const error = err as Error;
@@ -53,10 +53,10 @@ export async function GET(
 			if (unknownFieldSplit.length > 1) {
 				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No field named '${unknownField}' exists on table named '${table}'.` },
-					{ status: 400 }
-				);
+				return NextResponse.json({
+					statusMessage: "error",
+					error: `No field named "${unknownField}" exists on table named "${table}".`
+				});
 			}
 
 			//bad where
@@ -64,16 +64,16 @@ export async function GET(
 			if (unknownArgSplit.length > 1) {
 				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
 
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No field named '${unknownArg}' exists on table named '${table}'.` },
-					{ status: 400 }
-				);
+				return NextResponse.json({
+					statusMessage: "error",
+					error: `No field named "${unknownArg}" exists on table named "${table}".`
+				});
 			}
 
 			//TODO: replace database error messages with generic error message
-			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+			return NextResponse.json({ statusMessage: "error", error: error.message });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: '${table}'.` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }

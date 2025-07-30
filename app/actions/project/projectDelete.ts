@@ -38,7 +38,7 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				});
 
 				if (!project) {
-					return `No Project with project_id of '${project_id}' found.`;
+					return `No Project with project_id of "${project_id}" found.`;
 				} else if (!project.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
 					return "Unauthorized action.";
 				}
@@ -48,6 +48,26 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				await tx.project.delete({
 					where: {
 						project_id
+					}
+				});
+
+				//assays delete
+				console.log("assays delete");
+				await tx.assay.deleteMany({
+					where: {
+						Samples: {
+							none: {}
+						}
+					}
+				});
+
+				//primers delete
+				console.log("primers delete");
+				await tx.primer.deleteMany({
+					where: {
+						Assays: {
+							none: {}
+						}
 					}
 				});
 

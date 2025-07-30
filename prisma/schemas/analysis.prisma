@@ -10,7 +10,7 @@ model Analysis {
     project_id  String
     Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name  String
-    Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
+    Assay       Assay        @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
     Occurrences Occurrence[]
     Assignments Assignment[]
 
@@ -118,9 +118,15 @@ model Analysis {
 
     // OTU/ASV
     /// @zod.number.array(.max(2))
-    percent_match       Float[] @default([])
+    percent_match                    Float[] @default([])
     /// @zod.number.array(.max(2))
-    percent_query_cover Float[] @default([])
+    percent_query_cover              Float[] @default([])
+    percent_match__TEMP              Float?
+    percent_match_Midpoint_ODE       Float?
+    percent_match_End_ODE            Float?
+    percent_query_cover__TEMP        Float?
+    percent_query_cover_Midpoint_ODE Float?
+    percent_query_cover_End_ODE      Float?
 }
 
 model Occurrence {
@@ -148,9 +154,9 @@ model Assignment {
     analysis_run_name String
     Analysis          Analysis @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
     featureid         String
-    Feature           Feature  @relation(fields: [featureid], references: [featureid])
+    Feature           Feature  @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     taxonomy          String
-    Taxonomy          Taxonomy @relation(fields: [taxonomy], references: [taxonomy])
+    Taxonomy          Taxonomy @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
 
     // Data
     /// @zod.custom.use(z.coerce.number())

@@ -44,7 +44,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 				});
 
 				if (!analysis) {
-					return `No Analysis with analysis_run_name of '${analysis_run_name}' found.`;
+					return `No Analysis with analysis_run_name of "${analysis_run_name}" found.`;
 				} else if (
 					!analysis.Project.userIds.includes(userId) &&
 					(!role || !RolePermissions[role].includes("manageUsers"))

@@ -138,9 +138,6 @@ export default function SubmissionEditButton({
 						{Object.entries(data).reduce((acc, [field, value]) => {
 							if (!omit.includes(field)) {
 								const type = getZodType(shape[field as keyof typeof shape]).type;
-								if (!type) {
-									throw new Error(`Could not find type of '${field}'.`);
-								}
 
 								if (type === "string") {
 									acc.push(
@@ -201,8 +198,6 @@ export default function SubmissionEditButton({
 											/>
 										</fieldset>
 									);
-								} else if (type === "float[]" || type === "integer[]") {
-									//TODO: add support for ranges
 								} else if (type === "date") {
 									//TODO: make date default value work
 									// acc.push(

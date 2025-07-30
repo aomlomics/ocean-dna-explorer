@@ -1,0 +1,43 @@
+"use client";
+
+import { Prisma } from "@/app/generated/prisma/client";
+import TableMetadata from "@/types/tableMetadata";
+import { useSearchParams } from "next/navigation";
+import TaxaGrid from "../paginated/TaxaGrid";
+import Table from "../paginated/Table";
+
+export default function SearchResults() {
+	const searchParams = useSearchParams();
+
+	const paramsTable = searchParams.get("table");
+	if (paramsTable === null) {
+		return <></>;
+	}
+	const table = paramsTable.toLowerCase() as Lowercase<Prisma.ModelName>;
+
+	return (
+		<div className="bg-base-200 p-4 rounded-lg">
+			<h2 className="text-xl mb-4">
+				Showing all{" "}
+				{table && TableMetadata[table] ? (
+					<span className="text-primary font-bold">{TableMetadata[table].plural}</span>
+				) : (
+					"results"
+				)}{" "}
+				that match your search
+			</h2>
+
+			<div className="aspect-4/2">
+				{table ? (
+					table === "taxonomy" ? (
+						<TaxaGrid ignoreParams={["table"]} />
+					) : (
+						<Table table={table} ignoreParams={["table"]} defaultTake={25} />
+					)
+				) : (
+					<>All Tables Results</>
+				)}
+			</div>
+		</div>
+	);
+}
