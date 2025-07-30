@@ -611,7 +611,9 @@ export async function updateManyRaw(
 
 	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSql}) AS t("${id}", ${fieldsSql}) WHERE "${table}"."${id}" = "t"."${id}"`;
 
-	console.log(sql, ...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], []));
+	const reduced = data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], []);
+	console.log(paramIndex, reduced.length);
+	console.log(sql, ...reduced);
 	return client.$executeRawUnsafe(
 		sql,
 		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], [])
