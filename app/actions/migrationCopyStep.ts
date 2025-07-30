@@ -59,9 +59,26 @@ export default async function migrationCopyStepAction() {
 								if (exists(result[i][field][0])) {
 									//at least one value in array
 									parseSchemaToObject(field + "__TEMP", result[i][field][0].toString(), result[i], table);
+
+									if (exists(result[i][field][1])) {
+										//second value exists
+										parseSchemaToObject(
+											field + "_Midpoint_ODE",
+											((result[i][field][0] + result[i][field][1]) / 2).toString(),
+											result[i],
+											table
+										);
+										parseSchemaToObject(field + "_End_ODE", result[i][field][1].toString(), result[i], table);
+									} else {
+										//no second value
+										result[i][field + "_Midpoint_ODE"] = null;
+										result[i][field + "_End_ODE"] = null;
+									}
 								} else {
 									//value is null
 									result[i][field + "__TEMP"] = null;
+									result[i][field + "_Midpoint_ODE"] = null;
+									result[i][field + "_End_ODE"] = null;
 								}
 							} else {
 								if (exists(result[i][field])) {
@@ -76,7 +93,9 @@ export default async function migrationCopyStepAction() {
 					}
 
 					//only update rows where the changed fields had a value
-					const filteredResult = result.filter((row) => Object.keys(row).length > 1);
+					const filteredResult = result.filter((row) =>
+						Object.entries(row).some(([field, value]) => field !== "id" && value)
+					);
 					console.log(filteredResult.length, JSON.stringify(filteredResult, undefined, 2));
 					if (filteredResult.length) {
 						const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
