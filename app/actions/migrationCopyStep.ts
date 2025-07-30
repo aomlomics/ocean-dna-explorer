@@ -79,6 +79,7 @@ export default async function migrationCopyStepAction() {
 					}
 
 					const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
+					console.log(result[0]);
 					await updateManyRaw(tx, modelName, result);
 				}
 			}
