@@ -169,6 +169,56 @@ export function randomColors(count: number) {
 	});
 }
 
+export function generateThemedColors(count: number, baseColor: string): string[] {
+	const colors: string[] = [];
+	const [baseR, baseG, baseB] = baseColor.match(/\d+/g)!.map(Number);
+
+	for (let i = 0; i < count; i++) {
+		const factor = 1 - i / (count * 1.5);
+		const r = Math.max(0, Math.min(255, Math.floor(baseR * factor)));
+		const g = Math.max(0, Math.min(255, Math.floor(baseG * factor)));
+		const b = Math.max(0, Math.min(255, Math.floor(baseB * factor)));
+		colors.push(`rgb(${r},${g},${b})`);
+	}
+
+	return colors;
+}
+
+export function generateChartColors(count: number): string[] {
+	const primary = "rgb(100, 171, 220)";
+	const secondary = "rgb(35, 61, 127)";
+	const colors: string[] = [];
+
+	if (count === 0) {
+		return colors;
+	}
+
+	if (count === 1) {
+		return [primary];
+	}
+
+	colors.push(primary, secondary);
+
+	const generateShade = (color: string, factor: number) => {
+		const [r, g, b] = color.match(/\d+/g)!.map(Number);
+		const newR = Math.max(0, Math.min(255, Math.floor(r * factor)));
+		const newG = Math.max(0, Math.min(255, Math.floor(g * factor)));
+		const newB = Math.max(0, Math.min(255, Math.floor(b * factor)));
+		return `rgb(${newR},${newG},${newB})`;
+	};
+
+	for (let i = 2; i < count; i++) {
+		const factor = 1 - (i - 1) / (count * 1.5);
+		if (i % 2 === 0) {
+			colors.push(generateShade(primary, factor));
+		} else {
+			colors.push(generateShade(secondary, factor));
+		}
+	}
+
+	return colors;
+}
+
 export function getMostSpecificRank(taxonomy: Taxonomy) {
 	for (const rank of RanksBySpecificity) {
 		if (taxonomy[rank]) {

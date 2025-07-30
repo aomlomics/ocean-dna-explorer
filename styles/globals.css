@@ -102,6 +102,39 @@
   animation: fadeInUp 0.3s ease-out;
 }
 
+@tailwind utilities;
+
+@layer base {
+	:root {
+		color-scheme: light;
+	}
+
+	[data-theme="dark"] {
+		color-scheme: dark;
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 0.1;
+	}
+}
+
+@keyframes float {
+	0% {
+		transform: translateY(0px);
+	}
+	50% {
+		transform: translateY(-10px);
+	}
+	100% {
+		transform: translateY(0px);
+	}
+}
+
 /* Clerk: Style 'Connect account' button text in profile/account */
 [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
   color: #233D7F;

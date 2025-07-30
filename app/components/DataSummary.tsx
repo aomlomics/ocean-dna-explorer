@@ -1,75 +1,117 @@
 import { publicPrisma } from "../helpers/prisma";
 import Link from "next/link";
+import AssayPieChart from "./charts/AssayPieChart";
 
-export default async function DataSummary() {
-	const { projectCount, sampleCount, taxaCount, uniqueAssays } = await publicPrisma.$transaction(
+type Assay = {
+	target_gene: string;
+	count?: number;
+};
+
+export type SummaryItemData = {
+	title: string;
+	value: number;
+	href: string;
+	icon?: "ship" | "location" | "fish" | "eye";
+};
+
+export async function getSummaryData() {
+	return publicPrisma.$transaction(
 		async (tx) => {
 			const projectCount = await tx.project.count();
 			const sampleCount = await tx.sample.count();
 			const taxaCount = await tx.taxonomy.count();
+			const occurrenceCount = await tx.occurrence.count();
 			const uniqueAssays = (await tx.assay.findMany({
 				distinct: ["target_gene"],
-				select: {
-					target_gene: true
-				}
-			})) as { target_gene: string; count?: number }[];
+				select: { target_gene: true }
+			})) as Assay[];
 
 			for (const a of uniqueAssays) {
-				//get count of features that were assigned using a particular target gene
-				//number of assignments = number of features (an assignment has only one feature)
-				const count = await tx.analysis.findFirst({
-					where: {
-						Assay: {
-							target_gene: a.target_gene
-						}
-					},
-					select: {
-						_count: {
-							select: {
-								Assignments: true
-							}
-						}
-					}
+				const countResult = await tx.analysis.findMany({
+					where: { Assay: { target_gene: a.target_gene } },
+					select: { _count: { select: { Assignments: true } } }
 				});
-				if (count) {
-					a.count = count._count.Assignments;
-				}
+				a.count = countResult.reduce((sum, current) => sum + current._count.Assignments, 0);
 			}
 
-			return { projectCount, sampleCount, taxaCount, uniqueAssays };
+			return { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays };
 		},
 		{ timeout: 1 * 60 * 1000 }
 	);
+}
 
+export function AssayStats({ assays }: { assays: Assay[] }) {
+	return <AssayPieChart assays={assays} />;
+}
+
+export function MainStats({ summaryItems }: { summaryItems: SummaryItemData[] }) {
 	return (
-		<div>
-			<div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-				<div className="col-span-2 md:col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Data Summary</div>
-				<DataSummaryItem title="Projects" value={projectCount} href="/explore/project" />
-				<DataSummaryItem title="Samples" value={sampleCount} href="/explore/sample" />
-				<DataSummaryItem title="Taxonomies" value={taxaCount} href="/explore/taxonomy" />
-				<div className="col-span-2 md:col-span-3 border-b-2 border-primary text-center text-2xl text-primary">Assays</div>
-				{uniqueAssays.map((a) => (
-					<DataSummaryItem
-						key={a.target_gene}
-						title={a.target_gene + " Features"}
-						value={a.count || 0}
-						href="/explore/assay"
-					/>
+		<div className="w-full max-w-4xl mx-auto">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8">
+				{summaryItems.map((item, index) => (
+					<div key={item.title} className={`${index >= 2 ? 'hidden lg:block' : ''}`}>
+						<DataSummaryItem {...item} />
+					</div>
 				))}
 			</div>
 		</div>
 	);
 }
 
-function DataSummaryItem({ title, value, href }: { title: string; value: number; href: string }) {
+function DataSummaryItem({ title, value, href, icon }: SummaryItemData) {
 	return (
 		<Link
 			href={href}
-			className="bg-base-200 hover:bg-base-300 active:bg-interactive-active p-6 rounded-lg text-center shadow-sm transition-colors"
+			className="group flex flex-col items-center text-center p-2 rounded-lg hover:bg-base-200 transition-all duration-300 hover:scale-105"
 		>
-			<h3 className="text-main text-lg mb-2">{title}</h3>
-			<p className="text-primary text-3xl font-bold">{value.toLocaleString()}</p>
+			{icon && (
+				<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">
+					<svg
+						className="w-12 h-12"
+						viewBox={icon === "fish" ? "0 0 1536 592" : icon === "ship" ? "0 0 424 169" : "0 0 24 24"}
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.5"
+					>
+						{icon === "ship" && (
+							<path
+								fill="currentColor"
+								stroke="none"
+								d="M177.09,96.19c.85-1.5,18.16-54.31,18.16-54.31,0,0,6.1-3.1,18.75.15,10.81,2.79,15.96,6.24,15.96,6.24l-4.8,56.13 M419.8,119.51c-9.19-16.33-18.31-33.36-26.1-48.55-3.79-7.5-9.88-13.32-14.73-12.97-4.36.3-7.5,1.5-6.88,8.88,1.39,18,4.96,36.3,7.18,54.46.79,9.21,13.18,17.35,26.31,14.76,12.88-2.56,19-9.18,14.22-16.57h0ZM404.97,133.68c-9,2.17-18.1-5.08-19.09-13.15-2.39-16-4.89-31.95-7.5-47.85-1.27-8.13.66-8.88,3.99-9.37,3.33-.49,5.49,4.77,8.65,11.34,7.21,15,15.61,31.62,22.5,45,3.61,6.54.28,11.91-8.55,14.04h0z M419.95 111.83 405.39 111.83 404.99 106.55 383.6 106.55 383.6 125.67 397.62 125.67 406.46 125.67 423.37 120.09 419.95 111.83 419.95 111.83 419.95 111.83 M173.43,2.11c-2.61,11.17-5.53,22.27-8.47,33.39l-4.5,16.62-2.29,8.29c-.84,2.76-1.14,5.62-3.51,8.02l-1.75-.42c-.79-3.13.48-5.79,1.2-8.56l2.34-8.26,4.86-16.5c3.36-11.01,6.7-22,10.38-33l1.75.42Z M330.5,119.7s-1.42-18.54-22.81-18.54c-19.69,0-33.31,2.41-37.5-2.4-6.94-7.87-19.36-6.09-19.36-6.09h-74.21v-28.29h-28.36l-11.43-7.5-37.75,7.8,5.79,8.73v19.26H1.5l27.82,27h0l50.17,48.3h325.48s5.79-6.69,11.13-20.77c3.29-8.79,5.75-17.88,7.33-27.13l-92.93-.36ZM116.02,74.02c0,2.02-1.64,3.66-3.66,3.66s-3.66-1.64-3.66-3.66v-4.66c0-2.02,1.64-3.66,3.66-3.66s3.66,1.64,3.66,3.66v4.66ZM125.68,74.02c0,2.02-1.64,3.66-3.66,3.66s-3.66-1.64-3.66-3.66v-4.66c0-2.02,1.64-3.66,3.66-3.66s3.66,1.64,3.66,3.66v4.66ZM135.34,74.02c-.13,2.03-1.88,3.56-3.9,3.43-1.84-.12-3.31-1.59-3.43-3.43v-4.66c.13-2.03,1.88-3.56,3.9-3.43,1.84.12,3.31,1.59,3.43,3.43v4.66Z M136.09,46.99l25.5,2.58s-1.23-.62-1.23-3.07,1.23-2.46,1.23-2.46l-25.5-2.58c-.79.79-1.23,1.88-1.21,3-.04.99.41,1.94,1.21,2.53h0Z M183.72,47.2l-25.24,3.24s1.21-.78,1.21-3.87-1.21-3.07-1.21-3.07l25.24-3.25c.81,1.07,1.23,2.37,1.21,3.7.1,1.21-.35,2.4-1.21,3.25h0Z M148.67,26.17l19.32,2.52s-.93-.6-.93-3,.93-2.35.93-2.35l-19.32-2.46c-.61.81-.94,1.8-.91,2.82-.08.92.26,1.83.91,2.47h0Z M185.01,26.56l-19.27,2.47s.93-.58.93-3-.93-2.37-.93-2.37l19.27-2.47c.62.81.95,1.81.93,2.83.1.94-.25,1.88-.93,2.53h0Z M162.42,7.33l9.24,1.86s-.43-.44-.43-2.13.43-1.68.43-1.68l-9.24-1.78c-.32.63-.47,1.32-.45,2.02-.04.6.12,1.2.45,1.71h0Z M178.86,7.37l-7.99,1.81s.37-.42.37-2.11-.37-1.69-.37-1.69l7.99-1.77c.28.64.41,1.33.39,2.02.04.61-.09,1.21-.39,1.74h0Z M276.54,35.11l-1.18-1.38c.56-1.48.85-3.05.85-4.63.05-7.21-5.75-13.09-12.96-13.14-7.21-.05-13.09,5.75-13.14,12.96-.01,1.65.29,3.28.88,4.81l-1.2,1.38,10.23,11.86v54h6.3v-54l10.21-11.86h0Z"
+							/>
+						)}
+						{icon === "location" && (
+							<path
+								fill="currentColor"
+								stroke="none"
+								d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+							/>
+						)}
+						{icon === "fish" && (
+							<g transform="translate(0.000000,592.000000) scale(0.100000,-0.100000)">
+								<path
+									fill="currentColor"
+									stroke="none"
+									d="M7037 5902 c-31 -19 -151 -172 -289 -365 -50 -71 -107 -147 -126 -170 -70 -84 -269 -397 -357 -561 -107 -200 -138 -239 -198 -254 -115 -29 -449 -55 -1257 -97 -1271 -66 -1607 -107 -2420 -291 -1390 -315 -2197 -634 -2335 -921 -10 -21 -21 -64 -23 -95 -4 -57 -3 -59 35 -95 22 -21 55 -47 74 -58 63 -37 40 -54 -109 -81 -43 -8 -39 -35 14 -82 101 -92 600 -404 847 -531 186 -95 360 -161 597 -226 113 -31 347 -96 520 -145 813 -229 1308 -330 2070 -425 396 -49 498 -68 514 -94 3 -5 12 -45 20 -89 8 -46 31 -118 54 -169 22 -49 48 -116 57 -149 28 -98 62 -182 134 -332 81 -165 111 -211 201 -308 36 -39 88 -102 115 -140 107 -153 169 -194 296 -194 66 0 81 4 120 28 64 42 319 312 319 339 0 5 36 67 79 137 97 156 131 238 138 331 10 133 -53 235 -212 340 -45 30 -113 68 -151 83 -73 30 -100 56 -74 72 8 5 21 8 28 5 14 -5 308 -27 617 -47 306 -19 918 -17 1160 4 264 23 496 36 860 48 366 12 474 7 531 -26 62 -35 176 -163 261 -293 42 -64 92 -141 112 -171 20 -30 76 -96 126 -146 49 -50 115 -119 146 -155 39 -44 79 -76 130 -105 56 -31 85 -55 118 -100 86 -114 363 -374 399 -374 19 0 88 67 121 117 32 49 83 201 100 298 5 33 15 112 21 175 41 404 205 650 676 1017 214 167 241 189 232 198 -4 4 -82 2 -175 -4 -227 -15 -524 5 -515 35 13 44 769 191 1150 224 183 15 265 3 465 -70 155 -56 251 -86 877 -275 351 -107 658 -212 830 -285 148 -63 579 -211 796 -274 328 -94 424 -88 424 27 0 82 -68 237 -180 406 -34 51 -81 135 -106 185 -51 104 -129 212 -270 374 -230 263 -282 336 -319 449 -16 52 -16 54 8 105 37 81 107 157 282 306 245 208 519 486 595 602 78 119 175 313 167 334 -11 27 -113 51 -217 50 -152 -1 -461 -58 -930 -169 -124 -30 -346 -83 -495 -118 -148 -36 -335 -77 -415 -92 -228 -44 -551 -110 -720 -149 -313 -71 -380 -77 -592 -50 -428 53 -1498 323 -1498 377 0 19 469 -15 595 -43 22 -5 66 -10 98 -10 80 0 76 21 -13 64 -145 72 -231 154 -299 285 -80 157 -98 244 -111 551 -18 396 -31 601 -40 626 -37 97 -326 -101 -1195 -819 l-289 -240 -221 26 c-895 107 -1296 159 -1333 173 -28 10 -47 25 -53 41 -9 24 -6 33 48 176 15 39 16 50 5 65 -29 39 -42 86 -53 179 -21 193 16 352 107 453 19 21 31 40 27 43 -4 2 -39 15 -78 27 -104 34 -198 84 -233 125 -37 41 -42 91 -17 152 34 81 9 89 -101 32 l-85 -43 -32 17 c-43 24 -76 78 -89 145 -20 107 -34 120 -91 84z"
+								/>
+							</g>
+						)}
+						{icon === "eye" && (
+							<path
+								fill="currentColor"
+								stroke="none"
+								d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 9a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"
+							/>
+						)}
+					</svg>
+				</div>
+			)}
+			<div className="text-3xl font-bold text-primary mb-1 group-hover:text-primary-focus transition-colors">
+				{value.toLocaleString()}
+			</div>
+			<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+				{title}
+			</div>
 		</Link>
 	);
 }

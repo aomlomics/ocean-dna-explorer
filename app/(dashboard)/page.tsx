@@ -1,11 +1,13 @@
-import Carousel from "@/app/components/images/Carousel";
+import { getSummaryData, MainStats, AssayStats, SummaryItemData } from "@/app/components/DataSummary";
 import Link from "next/link";
-import DataSummary from "../components/DataSummary";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
 import { randomColors } from "../helpers/utils";
+import OrganismOutlines from "../components/images/OrganismOutlines";
+import fs from "fs";
+import path from "path";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
@@ -52,14 +54,23 @@ export default async function Home() {
 
 	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
 
+	const outlinesDir = path.join(process.cwd(), "public/images/outlines");
+	const allOutlines = fs.readdirSync(outlinesDir);
+
+	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
+
+	const summaryItems: SummaryItemData[] = [
+		{ title: "Projects", value: projectCount, href: "/explore/project", icon: "ship" },
+		{ title: "Samples", value: sampleCount, href: "/explore/sample", icon: "location" },
+		{ title: "Taxonomies", value: taxaCount, href: "/explore/taxonomy", icon: "fish" },
+		{ title: "Occurrence Records", value: occurrenceCount, href: "/explore/occurrence", icon: "eye" }
+	];
+
 	return (
 		<main className="flex flex-col grow bg-base-400 text-base-content">
-			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
-				<Carousel />
-				{/* Gradient for left-to-right */}
-				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/50 sm:via-base-100/30 via-[50%] sm:via-[40%] to-transparent to-[100%]"></div>
-				{/* Gradient for bottom */}
-				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-base-100/60 sm:via-base-100/40 via-[60%] sm:via-[50%] to-base-100"></div>
+			{/* <div className="relative w-full h-[60vh] z-content-overlay bg-base-200 mb-4"></div> */}
+			<div className="relative w-full h-[65vh] z-content-overlay bg-gradient-to-b from-base-300 to-base-100 mb-4">
+				<OrganismOutlines outlines={allOutlines} />
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
@@ -81,12 +92,18 @@ export default async function Home() {
 								</div>
 							</div>
 
-							<div className="flex flex-col items-start gap-3 sm:gap-4">
+							<div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
 								<Link
-									href="/explore"
+									href="#dataSummary"
 									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
 								>
-									Explore Data
+									Start Here
+								</Link>
+								<Link
+									href="/explore/project"
+									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
+								>
+									Explore the Data
 								</Link>
 							</div>
 						</div>
@@ -94,13 +111,14 @@ export default async function Home() {
 				</div>
 			</div>
 
-			<div className="relative mb-12 text-center">
+			{/* Removing data summary arrow for now */}
+			{/* <div className="relative mb-12 text-center">
 				<Link
 					href="#dataSummary"
 					className="relative inline-block after:absolute after:content-[''] after:inset-[-40px] after:cursor-pointer"
 				>
-					<p className="text-primary text-xl font-medium mb-2">Data Summary</p>
-					<div className="animate-bounce">
+					<p className="text-primary text-xl font-medium">Start Here!</p>
+					<div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							className="h-8 w-12 text-primary mx-auto"
@@ -112,26 +130,38 @@ export default async function Home() {
 						</svg>
 					</div>
 				</Link>
-			</div>
+			</div> */}
 			<div id="dataSummary" className="z-content px-4 sm:px-6 lg:px-8 pb-12">
-				<div className="mb-4 text-2xl text-base-content">
-					Showing all
-					<span className="text-primary"> Projects</span>
+				<div className="mb-12">
+					<MainStats summaryItems={summaryItems} />
 				</div>
-				<div className="flex flex-col md:flex-row gap-4 md:gap-8">
-					<div className="aspect-square md:aspect-5/2 w-full md:w-1/2 rounded-lg overflow-hidden">
-						<Map
-							locations={locations}
-							id="samp_name"
-							title="project_id"
-							titleTable="project"
-							table="sample"
-							iconSize={16}
-							legend={projectColors}
-						/>
+
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+					{/* Map Section */}
+					<div>
+						<div className="mb-4 text-xl text-base-content">
+							Showing all
+							<span className="text-primary"> Projects</span>
+						</div>
+						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
+							<Map
+								locations={locations}
+								id="samp_name"
+								title="project_id"
+								titleTable="project"
+								table="sample"
+								iconSize={16}
+								legend={projectColors}
+							/>
+						</div>
 					</div>
-					<div className="w-full md:w-1/2">
-						<DataSummary />
+
+					{/* Assay Stats Section */}
+					<div>
+						<div className="mb-4 text-xl text-base-content">
+							<span className="text-primary">Assays used Across ODE</span>
+						</div>
+						<AssayStats assays={uniqueAssays} />
 					</div>
 				</div>
 
@@ -189,7 +219,7 @@ export default async function Home() {
 							projects NO_0062 and NO_0066.
 						</p>
 					</div>
-					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:mt-0">
+					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:-mt-4">
 						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
 							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
