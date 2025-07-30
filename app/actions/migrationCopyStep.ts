@@ -38,6 +38,7 @@ export default async function migrationCopyStepAction() {
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
 				const table = t as Lowercase<Prisma.ModelName>;
+				console.log(table, oldFieldsByTable[table]);
 
 				// @ts-ignore
 				const result = (await tx[table].findMany({
@@ -51,6 +52,7 @@ export default async function migrationCopyStepAction() {
 					}
 				})) as Record<string, any>[];
 
+				console.log(result.length, result);
 				if (result.length) {
 					for (let i = 0; i < result.length; i++) {
 						for (const field of oldFieldsByTable[table]) {
@@ -77,6 +79,7 @@ export default async function migrationCopyStepAction() {
 							delete result[i][field];
 						}
 					}
+					console.log(result.length, result);
 
 					//only update rows where the changed fields had a value
 					const filteredResult = result.filter((row) => Object.keys(row).length > 1);
