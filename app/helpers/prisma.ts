@@ -613,6 +613,12 @@ export async function updateManyRaw(
 
 	const reduced = data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], []);
 	console.log(paramIndex, reduced.length);
+	console.log(
+		sql
+			.split("$")
+			.map((e) => e.split("").toSpliced(0, 1, reduced[parseInt(e[0])]).join(""))
+			.join("")
+	);
 	console.log(sql, ...reduced);
 	return client.$executeRawUnsafe(
 		sql,
