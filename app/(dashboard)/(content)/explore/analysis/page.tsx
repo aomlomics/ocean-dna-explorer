@@ -80,7 +80,7 @@ options: filterOptions.otu_clust_tool
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Analyses</span>
 					</h1>

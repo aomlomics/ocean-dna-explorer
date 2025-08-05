@@ -46,7 +46,7 @@ export default async function Feature() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					{/* <ExploreSearch table="feature" defaultField="featureid" /> */}
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Features</span>

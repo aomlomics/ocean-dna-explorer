@@ -57,7 +57,7 @@ export default async function Project() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					{/* <ExploreSearch table="project" defaultField="project_id" /> */}
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Projects</span>

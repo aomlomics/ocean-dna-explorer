@@ -82,7 +82,7 @@ export default async function Sample() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					{/* <ExploreSearch table="sample" defaultField="samp_name" /> */}
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Samples</span>

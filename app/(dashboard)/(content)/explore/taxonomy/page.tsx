@@ -18,7 +18,7 @@ export default async function Taxonomy() {
 			<div className="px-6 lg:px-0">
 				<div className="space-y-4">
 					<ExploreTabButtons />
-					<div className="bg-base-100 border border-base-300 rounded-lg p-6 space-y-4">
+					<div className="bg-base-100 border border-base-300 rounded-lg p-4">
 						<p className="leading-relaxed">
 							Hierarchical classification of detected organisms from domain to species level.
 						</p>
@@ -39,7 +39,7 @@ export default async function Taxonomy() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Taxonomies</span>
 					</h1>

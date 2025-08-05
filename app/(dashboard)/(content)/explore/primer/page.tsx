@@ -63,7 +63,7 @@ export default async function Primer() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					{/* <ExploreSearch table="primer" defaultField="pcr_primer_name_forward" /> */}
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Primers</span>

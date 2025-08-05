@@ -68,7 +68,7 @@ export default function Table({
 	if (Object.keys(whereFilter).length) {
 		whereQuery = { ...whereQuery, ...whereFilter };
 	}
-	if (searchParams.size) {
+	if (searchParams && searchParams.size) {
 		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
 		if (ignoreParams) {
 			for (const param of ignoreParams) {
@@ -488,13 +488,13 @@ export default function Table({
 									acc.push(
 										<tr key={i} className="border-base-100 border-b-2">
 											{typeof title === "string" ? (
-												<th className="whitespace-nowrap text-sm">
+												<th className="whitespace-nowrap text-sm font-bold">
 													<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
 														{row[title]}
 													</Link>
 												</th>
 											) : (
-												<th className="whitespace-nowrap text-sm">
+												<th className="whitespace-nowrap text-sm font-bold">
 													<Link
 														href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
 														className="link link-primary link-hover"

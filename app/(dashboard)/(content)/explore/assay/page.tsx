@@ -95,7 +95,7 @@ export default async function Assay() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center my-4 -mb-1">
+				<div className="flex justify-between items-center my-4">
 					{/* <ExploreSearch table="assay" defaultField="assay_name" /> */}
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Assays</span>

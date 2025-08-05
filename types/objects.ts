@@ -6,20 +6,11 @@ export const EXPLORE_ROUTES = {
 	project: "Projects",
 	sample: "Samples",
 	assay: "Assays",
-	primer: "Primers",
-	// library: {
-	// 	name: "Libraries",
-	// 	description:
-	// 		"Sequencing preparation details for each Sample-Assay combination, including barcoding approach, sequencing platform, and adapter information."
-	// },
 	analysis: "Analyses",
-	// occurrence: {
-	// 	name: "Occurrences",
-	// 	description:
-	// 		"Individual detection records linking samples to specific DNA sequences (Features), including their quantified abundance."
-	// },
+	occurrence: "Occurrences",
+	assignment: "Assignments",
 	feature: "Features",
-	// assignment: { name: "Assignments", description: "Some description." },
+	primer: "Primers",
 	taxonomy: "Taxonomies"
 };
 
