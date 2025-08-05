@@ -1,11 +1,37 @@
 "use client";
 import React from "react";
 
+// Helper functions for SVG path generation
+const controlPoint = (current: number[], previous: number[] | undefined, next: number[] | undefined, reverse?: boolean): number[] => {
+	const p = previous || current;
+	const n = next || current;
+	const smoothing = 0.2;
+	const o = {
+		length: Math.sqrt(Math.pow(n[0] - p[0], 2) + Math.pow(n[1] - p[1], 2)),
+		angle: Math.atan2(n[1] - p[1], n[0] - p[0])
+	};
+	const angle = o.angle + (reverse ? Math.PI : 0);
+	const length = o.length * smoothing;
+	const x = current[0] + Math.cos(angle) * length;
+	const y = current[1] + Math.sin(angle) * length;
+	return [x, y];
+};
+
+const svgPath = (points: number[][]): string => {
+	if (points.length === 0) return "";
+	return points.reduce((acc, point, i, a) => {
+		if (i === 0) return `M ${point[0]},${point[1]}`;
+		const [cpsX, cpsY] = controlPoint(a[i - 1], a[i - 2], point);
+		const [cpeX, cpeY] = controlPoint(point, a[i - 1], a[i + 1], true);
+		return `${acc} C ${cpsX},${cpsY} ${cpeX},${cpeY} ${point[0]},${point[1]}`;
+	}, '');
+};
+
 const COLUMN_CONFIG = [
 	{ offset: 2, bondHeight: 2 },
-	{ offset: 1, bondHeight: 4 },
-	{ offset: 0, bondHeight: 6 },
-	{ offset: 1, bondHeight: 4 },
+	{ offset: 1, bondHeight: 3 },
+	{ offset: 0, bondHeight: 4 },
+	{ offset: 1, bondHeight: 3 },
 	{ offset: 2, bondHeight: 2 },
 ];
 
@@ -29,84 +55,143 @@ const generateHelixData = (topSeq: string, bottomSeq: string): any[] => {
 	return columns;
 };
 
-const Helix = ({ 
-	data, 
-	strand1Color, 
-	strand2Color, 
-	blinkStrand1 = false, 
-	blinkStrand2 = false 
-}: { 
-	data: any[], 
-	strand1Color: string, 
-	strand2Color: string,
-	blinkStrand1?: boolean,
-	blinkStrand2?: boolean 
-}) => {
-	const isTopStrandOnly = strand2Color.includes("transparent");
-	const isBottomStrandOnly = strand1Color.includes("transparent");
-	const isPairedStrand = !isTopStrandOnly && !isBottomStrandOnly;
+interface HelixProps {
+	data: any[];
+	primerStrand: 'top' | 'bottom';
+	primerStartIndex: number;
+	primerEndIndex: number;
+	primerBlinks: boolean;
+	primerColor: string;
+	templateColor: string;
+}
+
+const Helix = ({
+	data,
+	primerStrand,
+	primerStartIndex,
+	primerEndIndex,
+	primerBlinks,
+	primerColor,
+	templateColor,
+}: HelixProps) => {
+	if (!data || data.length === 0) return null;
+
+	const columnWidth = 36;
+	const baseRadius = 14;
+	const offsetScale = 10;
+	const bondHeightScale = 20; 
+	const backboneStrokeWidth = 8;
+	const baseStrokeWidth = 2;
+	const baseFontSize = "14px";
+	const verticalPadding = baseRadius;
+
+	const points = data.map((col, i) => {
+		const x = i * columnWidth + columnWidth / 2;
+		const topY = col.offset * offsetScale + verticalPadding;
+		const bottomY = topY + col.bondHeight * bondHeightScale + baseRadius;
+		return { x, topY, bottomY };
+	});
+
+	const topBackbonePoints = points.map(p => [p.x, p.topY]);
+	const bottomBackbonePoints = points.map(p => [p.x, p.bottomY]);
+
+	const topPath = svgPath(topBackbonePoints);
+	const bottomPath = svgPath(bottomBackbonePoints);
+
+	const width = data.length * columnWidth;
+	const height = Math.max(...points.map(p => p.bottomY)) + baseRadius + verticalPadding;
+
+	const getStrandClasses = (color: string, blink: boolean) => {
+		let colorClass;
+		switch (color) {
+			case 'primary': colorClass = 'stroke-primary'; break;
+			case 'secondary': colorClass = 'stroke-secondary'; break;
+			case 'base-content': colorClass = 'stroke-base-content/40'; break;
+			default: colorClass = 'stroke-transparent';
+		}
+		return `${colorClass} ${blink ? 'animate-pulse' : ''}`;
+	};
+
+	const isPrimerTop = primerStrand === 'top';
+	
+	const topTemplateClasses = getStrandClasses(isPrimerTop ? templateColor : primerColor, isPrimerTop ? false : primerBlinks);
+	const bottomTemplateClasses = getStrandClasses(isPrimerTop ? primerColor : templateColor, isPrimerTop ? primerBlinks : false);
+
+	const topStrandIsTemplate = primerStrand === 'bottom';
+	const bottomStrandIsTemplate = primerStrand === 'top';
+
+	const topStrandColor = topStrandIsTemplate ? templateColor : primerColor;
+	const bottomStrandColor = bottomStrandIsTemplate ? templateColor : primerColor;
+
+	const topStrandBlinks = topStrandIsTemplate ? false : primerBlinks;
+	const bottomStrandBlinks = bottomStrandIsTemplate ? false : primerBlinks;
+
+	const topWholePath = svgPath(topBackbonePoints);
+	const bottomWholePath = svgPath(bottomBackbonePoints);
+	
+	const primerPoints = (isPrimerTop ? topBackbonePoints : bottomBackbonePoints).slice(primerStartIndex, primerEndIndex);
+	const primerPath = svgPath(primerPoints);
+	const templatePath = isPrimerTop ? bottomWholePath : topWholePath;
+
 
 	return (
-		<div className="flex">
-			{data.map((column: any) => {
-				const hasTopBase = column.topBase.trim() !== "";
-				const hasBottomBase = column.bottomBase.trim() !== "";
+		<svg width={width} height={height} className="font-mono">
+			{/* Render Template Strand */}
+			<path d={templatePath} fill="none" className={getStrandClasses(templateColor, false)} strokeWidth={backboneStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+			
+			{/* Render Primer Strand */}
+			<path d={primerPath} fill="none" className={getStrandClasses(primerColor, false)} strokeWidth={backboneStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+			
+			{/* Overlay the blinking primer segment */}
+			{primerBlinks && <path d={primerPath} fill="none" className={getStrandClasses(primerColor, true)} strokeWidth={backboneStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
 
-				const showTopCircle = (isPairedStrand && hasTopBase) || isTopStrandOnly;
-				const showBottomCircle =
-					(isPairedStrand && hasBottomBase) || isBottomStrandOnly;
+			{data.map((col, i) => {
+				const p = points[i];
+
+				const hasTopBase = col.topBase.trim() !== "";
+				const hasBottomBase = col.bottomBase.trim() !== "";
+
+				const showTopCircle = hasTopBase;
+				const showBottomCircle = hasBottomBase;
+
+				const showPartialBondFromTop = showTopCircle && !showBottomCircle;
+				const showPartialBondFromBottom = !showTopCircle && showBottomCircle;
 
 				return (
-					<div
-						key={column.key}
-						className="flex flex-col items-center w-8"
-						style={{ paddingTop: `${column.offset * 0.5}rem` }}
-					>
-						{/* Top backbone piece */}
-						<div className={`h-2 w-10 ${strand1Color} rounded-full -mb-1 z-10 ${
-							blinkStrand1 ? 'animate-pulse' : ''
-						}`} />
+					<g key={col.key}>
+						{showTopCircle && showBottomCircle && (
+							<line x1={p.x} y1={p.topY} x2={p.x} y2={p.bottomY} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
+						)}
 
-						{/* Top Base */}
-						<div
-							className={`z-20 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm border-2  ${
-								showTopCircle
-									? "bg-base-100 border-base-content/30"
-									: "bg-transparent border-transparent"
-							}`}
-						>
-							{column.topBase}
-						</div>
+						{showPartialBondFromTop && (
+							<line x1={p.x} y1={p.topY} x2={p.x} y2={p.topY + (p.bottomY - p.topY) / 4} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
+						)}
 
-						{/* Bond */}
-						<div
-							className={`w-px ${
-								hasTopBase && hasBottomBase
-									? "bg-base-content/30"
-									: "bg-transparent"
-							}`}
-							style={{ height: `${column.bondHeight * 0.5}rem` }}
-						/>
+						{showPartialBondFromBottom && (
+							<line x1={p.x} y1={p.bottomY} x2={p.x} y2={p.bottomY - (p.bottomY - p.topY) / 4} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
+						)}
 
-						{/* Bottom Base */}
-						<div
-							className={`z-20 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm border-2 ${
-								showBottomCircle
-									? "bg-base-100 border-base-content/30"
-									: "bg-transparent border-transparent"
-							}`}
-						>
-							{column.bottomBase}
-						</div>
+						{showTopCircle && (
+							<g>
+								<circle cx={p.x} cy={p.topY} r={baseRadius} className="fill-base-100 stroke-base-content/40" strokeWidth={baseStrokeWidth} />
+								<text x={p.x} y={p.topY} dy=".3em" textAnchor="middle" fontSize={baseFontSize} fontWeight="bold" className="fill-base-content select-none">
+									{col.topBase}
+								</text>
+							</g>
+						)}
 
-						{/* Bottom backbone piece */}
-						<div className={`h-2 w-10 ${strand2Color} rounded-full -mt-1 z-10 ${
-							blinkStrand2 ? 'animate-pulse' : ''
-						}`} />
-					</div>
-				);
+						{showBottomCircle && (
+							<g>
+								<circle cx={p.x} cy={p.bottomY} r={baseRadius} className="fill-base-100 stroke-base-content/40" strokeWidth={baseStrokeWidth} />
+								<text x={p.x} y={p.bottomY} dy=".3em" textAnchor="middle" fontSize={baseFontSize} fontWeight="bold" className="fill-base-content select-none">
+									{col.bottomBase}
+								</text>
+							</g>
+						)}
+					</g>
+				)
 			})}
-		</div>
+		</svg>
 	);
 };
 
@@ -173,29 +258,47 @@ const PrimerDiagram = ({
 
 	const overhangLength = 5;
 
-	// Reverse Primer: Binds to the template strand (top strand, typically 5' -> 3')
+	// Reverse Primer Data
 	const reversePrimer_primer = reversePrimerSequence;
 	const reversePrimer_template_paired = dnaComplement(reversePrimerSequence);
-	const reversePrimerPairedPart = generateHelixData(
+	const reversePairedData = generateHelixData(
 		reversePrimer_template_paired,
 		reversePrimer_primer
 	);
-	const templateUnpairedPart = generateHelixData(
-		" ".repeat(overhangLength),
+	const reverseUnpairedData = generateHelixData(
+		"?".repeat(overhangLength),
 		" ".repeat(overhangLength)
 	);
+	const reversePrimerRenderProps = {
+		data: [...reversePairedData, ...reverseUnpairedData],
+		primerStrand: "bottom" as const,
+		primerStartIndex: 0,
+		primerEndIndex: reversePairedData.length,
+		primerBlinks: true,
+		primerColor: "primary",
+		templateColor: "base-content",
+	};
 
-	// Forward Primer: Binds to the complementary strand (bottom strand, typically 3' -> 5')
+	// Forward Primer Data
 	const forwardPrimer_primer = reverse(forwardPrimerSequence);
 	const forwardPrimer_template_paired = reverse(dnaComplement(forwardPrimerSequence));
-	const forwardPrimerPairedPart = generateHelixData(
+	const forwardPairedData = generateHelixData(
 		forwardPrimer_primer,
 		forwardPrimer_template_paired
 	);
-	const complementaryUnpairedPart = generateHelixData(
+	const forwardUnpairedData = generateHelixData(
 		" ".repeat(overhangLength),
-		" ".repeat(overhangLength)
+		"?".repeat(overhangLength)
 	);
+	const forwardPrimerRenderProps = {
+		data: [...forwardUnpairedData, ...forwardPairedData],
+		primerStrand: "top" as const,
+		primerStartIndex: forwardUnpairedData.length,
+		primerEndIndex: forwardUnpairedData.length + forwardPairedData.length,
+		primerBlinks: true,
+		primerColor: "primary",
+		templateColor: "base-content",
+	};
 
 	return (
 		<div className="p-6 bg-base-200 rounded-lg w-full flex flex-col gap-8 overflow-x-auto">
@@ -224,20 +327,7 @@ const PrimerDiagram = ({
 
 					{/* Helix */}
 					<div className="flex items-center">
-						<Helix 
-							data={reversePrimerPairedPart} 
-							strand1Color="bg-secondary" 
-							strand2Color="bg-primary"
-							blinkStrand1={false}
-							blinkStrand2={true}
-						/>
-						<Helix 
-							data={templateUnpairedPart} 
-							strand1Color="bg-secondary" 
-							strand2Color="bg-transparent"
-							blinkStrand1={false}
-							blinkStrand2={false}
-						/>
+						<Helix {...reversePrimerRenderProps} />
 					</div>
 
 					{/* Bottom Labels */}
@@ -262,20 +352,7 @@ const PrimerDiagram = ({
 
 					{/* Helix */}
 					<div className="flex items-center">
-						<Helix 
-							data={complementaryUnpairedPart} 
-							strand1Color="bg-transparent" 
-							strand2Color="bg-secondary"
-							blinkStrand1={false}
-							blinkStrand2={false}
-						/>
-						<Helix 
-							data={forwardPrimerPairedPart} 
-							strand1Color="bg-primary" 
-							strand2Color="bg-secondary"
-							blinkStrand1={true}
-							blinkStrand2={false}
-						/>
+						<Helix {...forwardPrimerRenderProps} />
 					</div>
 
 					{/* Bottom Labels */}
