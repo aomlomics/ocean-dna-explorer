@@ -164,11 +164,11 @@ const Helix = ({
 						)}
 
 						{showPartialBondFromTop && (
-							<line x1={p.x} y1={p.topY} x2={p.x} y2={p.topY + (p.bottomY - p.topY) / 4} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
+							<line x1={p.x} y1={p.topY} x2={p.x} y2={p.topY + (p.bottomY - p.topY) / 3} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
 						)}
 
 						{showPartialBondFromBottom && (
-							<line x1={p.x} y1={p.bottomY} x2={p.x} y2={p.bottomY - (p.bottomY - p.topY) / 4} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
+							<line x1={p.x} y1={p.bottomY} x2={p.x} y2={p.bottomY - (p.bottomY - p.topY) / 3} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
 						)}
 
 						{showTopCircle && (
