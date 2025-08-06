@@ -64,7 +64,7 @@ export const OccurrenceScalarFieldEnumSchema = z.enum(['id','samp_name','analysi
 
 export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name','featureid','taxonomy','Confidence']);
 
-export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength']);
+export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
 
@@ -734,7 +734,7 @@ export const FeatureSchema = z.object({
   id: z.number().int(),
   featureid: z.string(),
   dna_sequence: z.string(),
-  sequenceLength: z.coerce.number().int(),
+  sequenceLength_ODE: z.coerce.number().int(),
 })
 
 export type Feature = z.infer<typeof FeatureSchema>
