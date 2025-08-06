@@ -1,10 +1,9 @@
-import { QueryModes, RolePermissions } from "@/types/objects";
+import { RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { ErrorPacket } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
-import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<

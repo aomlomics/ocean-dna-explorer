@@ -17,7 +17,8 @@ import {
 	SampleScalarFieldEnumSchema,
 	Library,
 	Assay,
-	Sample
+	Sample,
+	AnalysisScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { RolePermissions } from "@/types/objects";
 import { parse } from "csv-parse";
@@ -107,8 +108,11 @@ async function doSubmit(
 				//User defined
 				if (
 					!ProjectScalarFieldEnumSchema.safeParse(field).success &&
+					!SampleScalarFieldEnumSchema.safeParse(field).success &&
 					!AssayScalarFieldEnumSchema.safeParse(field).success &&
-					!PrimerScalarFieldEnumSchema.safeParse(field).success
+					!PrimerScalarFieldEnumSchema.safeParse(field).success &&
+					!LibraryScalarFieldEnumSchema.safeParse(field).success &&
+					!AnalysisScalarFieldEnumSchema.safeParse(field).success
 				) {
 					projectUserDefined[field] = value;
 				} else {

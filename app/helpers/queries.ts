@@ -301,7 +301,7 @@ export function parseApiQuery(
 		query.select = options.defaults.fields;
 	}
 
-	if (options?.features?.fields) {
+	if (!options?.features || options.features.fields) {
 		const fields = searchParams.get("fields");
 		if (fields) {
 			searchParams.delete("fields");
@@ -315,7 +315,7 @@ export function parseApiQuery(
 		query.distinct = options.defaults.distinct;
 	}
 
-	if (options?.features?.distinct) {
+	if (!options?.features || options.features.distinct) {
 		const distinct = searchParams.get("distinct");
 		if (distinct) {
 			searchParams.delete("distinct");
@@ -325,7 +325,7 @@ export function parseApiQuery(
 	}
 
 	//relations
-	if (options?.features?.relations) {
+	if (!options?.features || options.features.relations) {
 		const relations = searchParams.get("relations");
 		if (relations) {
 			searchParams.delete("relations");
@@ -340,7 +340,7 @@ export function parseApiQuery(
 
 			//relations limit
 			//TODO: (bug) breaks when relations isn't an array
-			if (options.features.relationsLimit) {
+			if (!options?.features || options.features.relationsLimit) {
 				const relationsLimit = searchParams.get("relationsLimit");
 				if (relationsLimit) {
 					searchParams.delete("relationsLimit");
@@ -380,7 +380,7 @@ export function parseApiQuery(
 	}
 
 	const ids = searchParams.get("ids");
-	if (options?.features?.ids && ids) {
+	if ((!options?.features || options.features.ids) && ids) {
 		//list of ids
 		searchParams.delete("ids");
 
@@ -402,7 +402,7 @@ export function parseApiQuery(
 		};
 	} else {
 		//limit
-		if (options?.features?.limit) {
+		if (!options?.features || options.features.limit) {
 			const take = searchParams.get("limit");
 			if (take) {
 				searchParams.delete("limit");
@@ -417,14 +417,14 @@ export function parseApiQuery(
 
 		//filtering
 		if (options?.defaults?.filters) {
-			query.where = options?.defaults.filters;
+			query.where = options.defaults.filters;
 		}
 
-		if (options?.features?.filters) {
+		if (!options?.features || options.features.filters) {
 			query.where = query.where || ({} as Record<string, any>);
 
 			//advanced
-			if (options.features.advanced) {
+			if (!options?.features || options.features.advanced) {
 				const advanced = searchParams.get("advanced");
 				const search = searchParams.get("search");
 				if (advanced && !search) {
@@ -436,7 +436,7 @@ export function parseApiQuery(
 			}
 
 			//search
-			if (options.features.search) {
+			if (!options?.features || options.features.search) {
 				const search = searchParams.get("search");
 				const advanced = searchParams.get("advanced");
 				if (search && !advanced) {
