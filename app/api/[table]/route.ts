@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/utils";
+import { parseApiQuery } from "@/app/helpers/queries";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 

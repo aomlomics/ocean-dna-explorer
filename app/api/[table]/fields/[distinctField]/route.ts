@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/utils";
+import { parseApiQuery } from "@/app/helpers/queries";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
@@ -15,21 +15,18 @@ export async function GET(
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const query = parseApiQuery(
-				lowercaseTable,
-				searchParams,
-				{
-					skipFields: true,
-					skipDistinct: true,
-					skipRelations: true,
-					skipIds: true,
-					skipLimit: true
+			const query = parseApiQuery(lowercaseTable, searchParams, {
+				features: {
+					relationsLimit: true,
+					filters: true,
+					advanced: true,
+					search: true
 				},
-				{
+				defaults: {
 					fields: { [distinctField]: true },
 					distinct: [distinctField]
 				}
-			);
+			});
 
 			//@ts-ignore
 			const result = await prisma[lowercaseTable].findMany(query);

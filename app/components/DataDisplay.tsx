@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ReactNode } from "react";
 import { Prisma } from "../generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
-import { getZodType } from "../helpers/utils";
+import { getZodType } from "../helpers/schema";
 
 export default function DataDisplay({
 	table,

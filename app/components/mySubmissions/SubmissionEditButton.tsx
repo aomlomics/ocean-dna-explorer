@@ -6,7 +6,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import { FormAction } from "@/types/globals";
-import { getZodType } from "@/app/helpers/utils";
+import { getZodType } from "@/app/helpers/schema";
 import InfoButton from "../InfoButton";
 
 export default function SubmissionEditButton({
