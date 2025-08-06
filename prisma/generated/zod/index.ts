@@ -1075,7 +1075,7 @@ export const SampleSchema = z.object({
   eventDate: z.coerce.date(),
   eventDate_Midpoint_ODE: z.coerce.date().nullish(),
   eventDate_End_ODE: z.coerce.date().nullish(),
-  eventDurationValue: z.coerce.number().nullish(),
+  eventDurationValue: z.string().nullish(),
   eventDurationUnit: z.string().nullish(),
   verbatimEventDate: z.string().nullish(),
   verbatimEventTime: z.string().nullish(),
