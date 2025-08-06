@@ -5,7 +5,7 @@ import { Prisma } from "../generated/prisma/client";
 import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
-import { parseSchemaToObject } from "../helpers/utils";
+import { parseSchemaToObject } from "../helpers/schema";
 
 function exists(value: any) {
 	return value !== null && value !== undefined && value.toString;

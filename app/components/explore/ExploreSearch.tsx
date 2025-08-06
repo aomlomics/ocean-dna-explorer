@@ -1,7 +1,7 @@
 "use client";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { getZodType } from "@/app/helpers/utils";
+import { getZodType } from "@/app/helpers/schema";
 import { EXPLORE_ROUTES, GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
