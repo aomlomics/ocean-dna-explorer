@@ -74,7 +74,7 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 				const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
 					{
 						...featureRow,
-						sequenceLength: featureRow.dna_sequence.length
+						sequenceLength_ODE: featureRow.dna_sequence.length
 					},
 					{
 						errorMap: (error, ctx) => {

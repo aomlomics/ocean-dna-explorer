@@ -176,9 +176,9 @@ model Feature {
     Assignments Assignment[]
 
     // Data
-    dna_sequence   String
+    dna_sequence       String
     /// @zod.custom.use(z.coerce.number().int())
-    sequenceLength Int
+    sequenceLength_ODE Int
 }
 
 model Taxonomy {
