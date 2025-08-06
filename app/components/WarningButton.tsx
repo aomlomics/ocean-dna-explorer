@@ -5,20 +5,24 @@ import { useRef, useState } from "react";
 
 export default function WarningButton({
 	value,
+	valueName,
 	buttonText,
 	warningText,
 	confirmText,
 	action,
 	redirectUrl,
-	disabled
+	disabled,
+	className
 }: {
-	value: string;
+	value?: string;
+	valueName?: string;
 	buttonText: string;
 	warningText: string;
 	confirmText: string;
-	action: (arg0: FormData) => Promise<void>;
+	action: (arg0: FormData) => Promise<void> | void;
 	redirectUrl?: string;
 	disabled?: boolean;
+	className?: string;
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const router = useRouter();
@@ -28,7 +32,12 @@ export default function WarningButton({
 
 	return (
 		<>
-			<button type="submit" className="btn btn-error" disabled={disabled} onClick={() => modalRef.current?.showModal()}>
+			<button
+				type="submit"
+				className={`btn btn-error ${className}`}
+				disabled={disabled}
+				onClick={() => modalRef.current?.showModal()}
+			>
 				{buttonText}
 			</button>
 
@@ -80,7 +89,7 @@ export default function WarningButton({
 								disabled={loading}
 							/>
 						</fieldset>
-						<input type="hidden" value={value} name="targetUserId" />
+						{value && valueName && <input type="hidden" value={value} name={valueName} />}
 						<div className="modal-action">
 							<button type="submit" className="btn btn-error" disabled={confirm !== confirmText || loading}>
 								Confirm

@@ -6,11 +6,8 @@ import { deadBooleanToString } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
 import {
 	FeatureOptionalDefaultsSchema,
-	FeatureScalarFieldEnumSchema,
 	AssignmentOptionalDefaultsSchema,
-	AssignmentScalarFieldEnumSchema,
 	TaxonomyOptionalDefaultsSchema,
-	TaxonomyScalarFieldEnumSchema,
 	Assignment,
 	Feature,
 	Taxonomy
@@ -64,19 +61,13 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 				for (const [field, v] of Object.entries(record)) {
 					const value = v as string;
 					//feature table
-					parseSchemaToObject(field, value, featureRow, FeatureOptionalDefaultsSchema, FeatureScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, featureRow, "feature");
 
 					//assignment table
-					parseSchemaToObject(
-						field,
-						value,
-						assignmentRow,
-						AssignmentOptionalDefaultsSchema,
-						AssignmentScalarFieldEnumSchema
-					);
+					parseSchemaToObject(field, value, assignmentRow, "assignment");
 
 					//taxonomy table
-					parseSchemaToObject(field, value, taxonomyRow, TaxonomyOptionalDefaultsSchema, TaxonomyScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
 				}
 
 				//parse feature

@@ -13,8 +13,6 @@ import {
 	AssayScalarFieldEnumSchema,
 	LibraryOptionalDefaultsSchema,
 	LibraryScalarFieldEnumSchema,
-	AnalysisOptionalDefaultsSchema,
-	AnalysisScalarFieldEnumSchema,
 	SampleOptionalDefaultsSchema,
 	SampleScalarFieldEnumSchema,
 	Library,
@@ -116,25 +114,19 @@ async function doSubmit(
 				} else {
 					//Project Level
 					//project table
-					parseSchemaToObject(
-						record.term_name,
-						record.project_level,
-						projectCol,
-						ProjectOptionalDefaultsSchema,
-						ProjectScalarFieldEnumSchema
-					);
+					parseSchemaToObject(record.term_name, record.project_level, projectCol, "project");
 
 					//primer table
-					parseSchemaToObject(field, value, projectCol, PrimerOptionalDefaultsSchema, PrimerScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, projectCol, "primer");
 
 					//assay table
-					parseSchemaToObject(field, value, projectCol, AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, projectCol, "assay");
 
 					//library table
-					parseSchemaToObject(field, value, projectCol, LibraryOptionalDefaultsSchema, LibraryScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, projectCol, "library");
 
 					//analysis table
-					parseSchemaToObject(field, value, projectCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, projectCol, "analysis");
 
 					//Assay Levels
 					for (const assay_name of assayNames) {
@@ -146,37 +138,19 @@ async function doSubmit(
 							if (!primerCols[assay_name]) {
 								primerCols[assay_name] = {};
 							}
-							parseSchemaToObject(
-								field,
-								record[assay_name],
-								primerCols[assay_name],
-								PrimerOptionalDefaultsSchema,
-								PrimerScalarFieldEnumSchema
-							);
+							parseSchemaToObject(field, record[assay_name], primerCols[assay_name], "primer");
 
 							//Assays
 							if (!assayCols[assay_name]) {
 								assayCols[assay_name] = {};
 							}
-							parseSchemaToObject(
-								field,
-								record[assay_name],
-								assayCols[assay_name],
-								AssayOptionalDefaultsSchema,
-								AssayScalarFieldEnumSchema
-							);
+							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
 
 							//Libraries
 							if (!libraryCols[assay_name]) {
 								libraryCols[assay_name] = {};
 							}
-							parseSchemaToObject(
-								field,
-								record[assay_name],
-								libraryCols[assay_name],
-								LibraryOptionalDefaultsSchema,
-								LibraryScalarFieldEnumSchema
-							);
+							parseSchemaToObject(field, record[assay_name], libraryCols[assay_name], "library");
 						}
 					}
 				}
@@ -286,10 +260,10 @@ async function doSubmit(
 						libraryUserDefined[field] = value;
 					} else {
 						//assay table
-						parseSchemaToObject(field, value, assayRow, AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema);
+						parseSchemaToObject(field, value, assayRow, "assay");
 
 						//library table
-						parseSchemaToObject(field, value, libraryRow, LibraryOptionalDefaultsSchema, LibraryScalarFieldEnumSchema);
+						parseSchemaToObject(field, value, libraryRow, "library");
 					}
 				}
 
@@ -402,7 +376,7 @@ async function doSubmit(
 						sampleUserDefined[field] = value;
 					} else {
 						//sample table
-						parseSchemaToObject(field, value, sampleRow, SampleOptionalDefaultsSchema, SampleScalarFieldEnumSchema);
+						parseSchemaToObject(field, value, sampleRow, "sample");
 					}
 				}
 

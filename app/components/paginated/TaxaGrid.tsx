@@ -57,7 +57,9 @@ export default function TaxaGrid({
 	);
 	if (isLoading) return <LoadingTaxaGrid cols={cols} />;
 	if (error) return <div>failed to load: {error}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+	if (data.statusMessage === "error" || !data.result) {
+		return <div>failed to load: {data.error || "no result found"}</div>;
+	}
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({

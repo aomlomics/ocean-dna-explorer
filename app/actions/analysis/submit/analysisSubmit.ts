@@ -43,7 +43,7 @@ async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) 
 				if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
 					userDefined[field] = value;
 				} else {
-					parseSchemaToObject(field, value, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, analysisCol, "analysis");
 				}
 			}
 

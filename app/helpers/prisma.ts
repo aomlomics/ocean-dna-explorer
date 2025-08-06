@@ -613,6 +613,6 @@ export async function updateManyRaw(
 
 	return client.$executeRawUnsafe(
 		sql,
-		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, ...Object.values(row)], [])
+		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, row[id], ...fs.map((f) => row[f])], [])
 	);
 }

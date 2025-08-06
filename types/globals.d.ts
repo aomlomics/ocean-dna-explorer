@@ -8,7 +8,7 @@ import assignDeleteAction from "@/app/actions/analysis/delete/assignDelete";
 import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 
 export type Role = "admin" | "moderator" | "contributor";
-export type Permission = "contribute" | "manageUsers";
+export type Permission = "contribute" | "manageUsers" | "manageDatabase";
 
 interface ErrorPacket {
 	statusMessage: "error";
@@ -58,7 +58,7 @@ export type ClerkUserObject = {
 };
 
 export type QueryMode = "equals" | "contains" | "startsWith" | "endsWith" | "lt" | "lte" | "gt" | "gte" | "range";
-export type ParamsArrayField = [string, QueryMode, string | number | [number, number]];
+export type ParamsArrayField = [string, QueryMode, string | number | [number, number] | [string, string]];
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
 

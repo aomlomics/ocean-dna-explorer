@@ -3,9 +3,7 @@ import { parseNestedJson } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
-import TableMetadata from "@/types/tableMetadata";
 import { parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
-import { getZodType } from "@/app/helpers/schema";
 
 export async function GET(
 	request: Request,
@@ -96,9 +94,9 @@ export async function GET(
 		} catch (err) {
 			const error = err as Error;
 
-			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+			return NextResponse.json({ statusMessage: "error", error: error.message });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }

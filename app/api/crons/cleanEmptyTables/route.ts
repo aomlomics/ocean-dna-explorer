@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {
 	const authHeader = request.headers.get("authorization");
 	if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-		return NextResponse.json({ statusMessage: "error", error: "Unauthorized" }, { status: 401 });
+		return NextResponse.json({ statusMessage: "error", error: "Unauthorized" });
 	}
 
 	try {
@@ -49,10 +49,10 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return NextResponse.json(handlePrismaError(err), { status: 400 });
+			return NextResponse.json(handlePrismaError(err));
 		}
 
 		const error = err as Error;
-		return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: error.message });
 	}
 }
