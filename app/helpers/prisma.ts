@@ -2,8 +2,9 @@ import { RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
-import { ErrorPacket } from "@/types/globals";
+import { ErrorPacket, Role } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
+import { deepMerge } from "./utils";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -76,12 +77,13 @@ const publicPrisma =
 			project: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							isPrivate: false
-						};
+						args = args as { where?: Prisma.ProjectWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								isPrivate: false
+							}
+						});
 					}
 
 					return await query(args);
@@ -90,12 +92,13 @@ const publicPrisma =
 			sample: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Project: { isPrivate: false }
-						};
+						args = args as { where?: Prisma.SampleWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Project: { isPrivate: false }
+							}
+						});
 					}
 
 					return await query(args);
@@ -104,12 +107,13 @@ const publicPrisma =
 			assay: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Samples: { some: { Project: { isPrivate: false } } }
-						};
+						args = args as { where?: Prisma.AssayWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Samples: { some: { Project: { isPrivate: false } } }
+							}
+						});
 					}
 
 					return await query(args);
@@ -118,12 +122,13 @@ const publicPrisma =
 			primer: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
-						};
+						args = args as { where?: Prisma.PrimerWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+							}
+						});
 					}
 
 					return await query(args);
@@ -132,12 +137,13 @@ const publicPrisma =
 			library: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Sample: { Project: { isPrivate: false } }
-						};
+						args = args as { where?: Prisma.LibraryWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Sample: { Project: { isPrivate: false } }
+							}
+						});
 					}
 
 					return await query(args);
@@ -146,12 +152,13 @@ const publicPrisma =
 			analysis: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							isPrivate: false
-						};
+						args = args as { where?: Prisma.AnalysisWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								isPrivate: false
+							}
+						});
 					}
 
 					return await query(args);
@@ -160,12 +167,13 @@ const publicPrisma =
 			occurrence: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Analysis: { isPrivate: false }
-						};
+						args = args as { where?: Prisma.OccurrenceWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Analysis: { isPrivate: false }
+							}
+						});
 					}
 
 					return await query(args);
@@ -174,12 +182,13 @@ const publicPrisma =
 			assignment: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Analysis: { isPrivate: false }
-						};
+						args = args as { where?: Prisma.AssignmentWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Analysis: { isPrivate: false }
+							}
+						});
 					}
 
 					return await query(args);
@@ -188,12 +197,13 @@ const publicPrisma =
 			feature: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Assignments: { some: { Analysis: { isPrivate: false } } }
-						};
+						args = args as { where?: Prisma.FeatureWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Assignments: { some: { Analysis: { isPrivate: false } } }
+							}
+						});
 					}
 
 					return await query(args);
@@ -202,12 +212,13 @@ const publicPrisma =
 			taxonomy: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						//@ts-ignore
-						args.where = {
-							//@ts-ignore
-							...args.where,
-							Assignments: { some: { Analysis: { isPrivate: false } } }
-						};
+						args = args as { where?: Prisma.TaxonomyWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							signedOutQuery: {
+								Assignments: { some: { Analysis: { isPrivate: false } } }
+							}
+						});
 					}
 
 					return await query(args);
@@ -226,18 +237,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.ProjectWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								isPrivate: false
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										isPrivate: false
@@ -248,8 +257,8 @@ const prisma =
 										}
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -260,18 +269,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.SampleWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Project: { isPrivate: false }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Project: { isPrivate: false }
@@ -280,8 +287,8 @@ const prisma =
 										Project: { userIds: { has: userId } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -292,18 +299,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.AssayWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Samples: { some: { Project: { isPrivate: false } } }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Samples: { some: { Project: { isPrivate: false } } }
@@ -312,8 +317,8 @@ const prisma =
 										Samples: { some: { Project: { userIds: { has: userId } } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -324,18 +329,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.PrimerWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
@@ -344,8 +347,8 @@ const prisma =
 										Assays: { some: { Samples: { some: { Project: { userIds: { has: userId } } } } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -356,18 +359,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.LibraryWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Sample: { Project: { isPrivate: false } }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Sample: { Project: { isPrivate: false } }
@@ -376,8 +377,8 @@ const prisma =
 										Sample: { Project: { userIds: { has: userId } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -388,18 +389,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.AnalysisWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								isPrivate: false
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										isPrivate: false
@@ -408,8 +407,8 @@ const prisma =
 										Project: { userIds: { has: userId } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -420,18 +419,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.OccurrenceWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Analysis: { isPrivate: false }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Analysis: { isPrivate: false }
@@ -440,8 +437,8 @@ const prisma =
 										Analysis: { Project: { userIds: { has: userId } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -452,18 +449,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.AssignmentWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Analysis: { isPrivate: false }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Analysis: { isPrivate: false }
@@ -472,8 +467,8 @@ const prisma =
 										Analysis: { Project: { userIds: { has: userId } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -484,18 +479,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.FeatureWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Assignments: { some: { Analysis: { isPrivate: false } } }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Assignments: { some: { Analysis: { isPrivate: false } } }
@@ -504,8 +497,8 @@ const prisma =
 										Assignments: { some: { Analysis: { Project: { userIds: { has: userId } } } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -516,18 +509,16 @@ const prisma =
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
-						if (!userId) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+
+						args = args as { where?: Prisma.TaxonomyWhereInput; [key: string]: any };
+						args.where = await getWhere({
+							where: args.where,
+							userId,
+							role,
+							signedOutQuery: {
 								Assignments: { some: { Analysis: { isPrivate: false } } }
-							};
-						} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-							//@ts-ignore
-							args.where = {
-								//@ts-ignore
-								...args.where,
+							},
+							noPermQuery: {
 								OR: [
 									{
 										Assignments: { some: { Analysis: { isPrivate: false } } }
@@ -536,8 +527,8 @@ const prisma =
 										Assignments: { some: { Analysis: { Project: { userIds: { has: userId } } } } }
 									}
 								]
-							};
-						}
+							}
+						});
 					}
 
 					return await query(args);
@@ -614,4 +605,38 @@ export async function updateManyRaw(
 		sql,
 		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, row[id], ...fs.map((f) => row[f])], [])
 	);
+}
+
+async function getWhere({
+	where,
+	userId,
+	role,
+	signedOutQuery,
+	noPermQuery
+}: {
+	where: any;
+	userId?: string | null;
+	role?: Role | undefined;
+	signedOutQuery: Record<string, any>;
+	noPermQuery?: Record<string, any>;
+}) {
+	if (!userId) {
+		if (where) {
+			return deepMerge(where, signedOutQuery);
+		} else {
+			return signedOutQuery;
+		}
+	} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+		if (where) {
+			if (noPermQuery) {
+				return deepMerge(where, noPermQuery);
+			} else {
+				return where;
+			}
+		} else {
+			return noPermQuery;
+		}
+	} else {
+		return where;
+	}
 }
