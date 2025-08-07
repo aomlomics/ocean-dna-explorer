@@ -8,13 +8,13 @@ import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { doProgressAction } from "@/app/helpers/utils";
 import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
 import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
 import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import { doProgressAction } from "@/app/helpers/progress";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;

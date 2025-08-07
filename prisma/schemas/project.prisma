@@ -81,7 +81,6 @@ model Sample {
     eventDate                      DateTime
     eventDate_Midpoint_ODE         DateTime?
     eventDate_End_ODE              DateTime?
-    /// @zod.custom.use(z.coerce.number())
     eventDurationValue             String? //ISO duration
     eventDurationUnit              String?
     verbatimEventDate              String?

@@ -3,8 +3,8 @@
 import sampleEditAction from "@/app/actions/sample/sampleEdit";
 import { FormEvent, useRef, useState } from "react";
 import { NetworkProgressPacket } from "@/types/globals";
-import { doProgressAction } from "@/app/helpers/utils";
 import ProgressBar from "../ProgressBar";
+import { doProgressAction } from "@/app/helpers/progress";
 
 export default function SubmissionUsersButton() {
 	const modalRef = useRef<HTMLDialogElement>(null);

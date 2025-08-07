@@ -1,6 +1,6 @@
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
-import { getZodType } from "../helpers/utils";
+import { getZodType } from "../helpers/schema";
 import Link from "next/link";
 import { stripSecureFields } from "../helpers/prisma";
 

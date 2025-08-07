@@ -2,11 +2,12 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { updateManyRaw, handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { createProgressStream, parseSchemaToObject } from "@/app/helpers/utils";
+import { parseSchemaToObject } from "@/app/helpers/schema";
 import { SamplePartial, SamplePartialSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { parse } from "csv-parse";
 import { auth } from "@clerk/nextjs/server";
+import { createProgressStream } from "@/app/helpers/progress";
 
 async function doEdit(stream: ProgressStream, file: File) {
 	const { userId } = await auth();

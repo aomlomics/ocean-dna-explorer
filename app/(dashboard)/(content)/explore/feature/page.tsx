@@ -8,10 +8,10 @@ import Link from "next/link";
 export default async function Feature() {
 	const minMaxSeqLength = await prisma.feature.aggregate({
 		_min: {
-			sequenceLength: true
+			sequenceLength_ODE: true
 		},
 		_max: {
-			sequenceLength: true
+			sequenceLength_ODE: true
 		}
 	});
 	if (!minMaxSeqLength) return <>Loading...</>;
@@ -21,10 +21,10 @@ export default async function Feature() {
 			<TableFilter
 				tableConfig={[
 					{
-						field: "sequenceLength",
+						field: "sequenceLength_ODE",
 						type: "range",
-						gte: minMaxSeqLength._min.sequenceLength as number,
-						lte: minMaxSeqLength._max.sequenceLength as number
+						gte: minMaxSeqLength._min.sequenceLength_ODE as number,
+						lte: minMaxSeqLength._max.sequenceLength_ODE as number
 					}
 				]}
 			/>

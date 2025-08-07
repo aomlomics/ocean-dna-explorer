@@ -5,11 +5,11 @@ import Modal from "../Modal";
 import UserAdder from "../UserAdder";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
-import { doProgressActionMany } from "@/app/helpers/utils";
 import projectSubmitAction from "@/app/actions/project/projectSubmit";
 import { NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
+import { doProgressActionMany } from "@/app/helpers/progress";
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();

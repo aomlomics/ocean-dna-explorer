@@ -1,9 +1,9 @@
-import { getZodType } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
 import { stripSecureFields } from "@/app/helpers/prisma";
 import TableMetadata from "@/types/tableMetadata";
+import { getZodType } from "@/app/helpers/schema";
 
 export async function GET(
 	request: Request,

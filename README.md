@@ -118,7 +118,7 @@ npx prisma studio
 Push schema changes to database (all database migrations should be done in `/frontend`):
 
 ```bash
-npx prisma migrate dev --name "<insert migration name>"
+npx prisma migrate dev --name "<insert migration name>" --create-only
 ```
 
 Pull schema changes from database (must be done in `/server` after creating a migration in `/frontend`):

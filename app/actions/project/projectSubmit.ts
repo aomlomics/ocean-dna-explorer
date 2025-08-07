@@ -2,7 +2,7 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { createProgressStream, deadBooleanToString, parseSchemaToObject } from "@/app/helpers/utils";
+import { deadBooleanToString } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
 import {
 	ProjectOptionalDefaultsSchema,
@@ -17,10 +17,13 @@ import {
 	SampleScalarFieldEnumSchema,
 	Library,
 	Assay,
-	Sample
+	Sample,
+	AnalysisScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { RolePermissions } from "@/types/objects";
 import { parse } from "csv-parse";
+import { createProgressStream } from "@/app/helpers/progress";
+import { parseSchemaToObject } from "@/app/helpers/schema";
 
 type Channel = { file: File; stream: ReturnType<typeof createProgressStream> };
 
@@ -105,8 +108,11 @@ async function doSubmit(
 				//User defined
 				if (
 					!ProjectScalarFieldEnumSchema.safeParse(field).success &&
+					!SampleScalarFieldEnumSchema.safeParse(field).success &&
 					!AssayScalarFieldEnumSchema.safeParse(field).success &&
-					!PrimerScalarFieldEnumSchema.safeParse(field).success
+					!PrimerScalarFieldEnumSchema.safeParse(field).success &&
+					!LibraryScalarFieldEnumSchema.safeParse(field).success &&
+					!AnalysisScalarFieldEnumSchema.safeParse(field).success
 				) {
 					projectUserDefined[field] = value;
 				} else {
