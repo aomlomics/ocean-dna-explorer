@@ -15,7 +15,12 @@ async function doEdit(stream: ProgressStream, file: File) {
 	const samples = [] as SamplePartial[];
 
 	let i = 0;
-	const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+	const parser = parse(await file.text(), {
+		columns: true,
+		delimiter: "\t",
+		comment: "#",
+		comment_no_infix: true
+	});
 	for await (const record of parser) {
 		const sampleRow = {} as SamplePartial;
 
