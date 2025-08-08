@@ -11,14 +11,11 @@ export default function SubmissionUsersButton() {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 	const [loading, setLoading] = useState(false);
-	const [errorMessage, setErrorMessage] = useState("");
 	const [data, setData] = useState(undefined as NetworkProgressPacket);
 
 	useEffect(() => {
 		if (data?.statusMessage === "error") {
-			console.log("ERROR");
 			setLoading(false);
-			setErrorMessage(data.error);
 			modalRef.current?.showModal();
 		} else if (data?.statusMessage === "success") {
 			close();
@@ -59,10 +56,10 @@ export default function SubmissionUsersButton() {
 
 				<ProgressBar loading={loading} data={data} />
 
-				{errorMessage && (
+				{data?.statusMessage === "error" && (
 					<>
 						<h3 className="text-lg font-bold mb-2 text-error">Edit Submission Failed</h3>
-						<p className="mb-2 font-light whitespace-pre-wrap">{errorMessage}</p>
+						<p className="mb-2 font-light whitespace-pre-wrap">{data.error}</p>
 					</>
 				)}
 			</Modal>
