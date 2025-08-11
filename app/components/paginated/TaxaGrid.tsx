@@ -53,9 +53,13 @@ export default function TaxaGrid({
 			keepPreviousData: true
 		}
 	);
-	if (isLoading) return <LoadingTaxaGrid />;
+	if (isLoading || !data) return <LoadingTaxaGrid />;
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+
+	// Ensure we always have an array to map over and a sensible count fallback
+	const items = Array.isArray((data as any).result) ? (data as any).result : [];
+	const totalCount = typeof (data as any).count === "number" ? (data as any).count : items.length;
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
@@ -78,13 +82,13 @@ export default function TaxaGrid({
 			<PaginationControls
 				page={page}
 				take={16}
-				count={data.count}
+				count={totalCount}
 				handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
 				handlePageHover={handlePageHover}
 			/>
 
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-				{data.result.map((d: any) => (
+				{items.map((d: any) => (
 					<Link
 						href={`/explore/taxonomy/${encodeURIComponent(d.taxonomy)}`}
 						key={d.taxonomy}

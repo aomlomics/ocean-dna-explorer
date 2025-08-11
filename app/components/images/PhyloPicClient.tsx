@@ -113,7 +113,7 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 			) : loading ? (
 				<span className="loading loading-spinner loading-lg h-full"></span>
 			) : (
-				<div className="text-center text-base-content/80">No Image</div>
+				<div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>
 			)}
 		</>
 	);
