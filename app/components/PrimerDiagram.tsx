@@ -83,7 +83,7 @@ const Helix = ({
 	const backboneStrokeWidth = 8;
 	const baseStrokeWidth = 2;
 	const baseFontSize = "14px";
-	const verticalPadding = baseRadius;
+	const verticalPadding = baseRadius + 4; // Added padding to prevent top clipping
 
 	const points = data.map((col, i) => {
 		const x = i * columnWidth + columnWidth / 2;
@@ -252,8 +252,40 @@ const PrimerDiagram = ({
 }: PrimerDiagramProps) => {
 	const calculateGcContent = (seq: string) => {
 		if (!seq || seq.length === 0) return "0.0";
-		const gcCount = (seq.toUpperCase().match(/[GC]/g) || []).length;
-		return ((gcCount / seq.length) * 100).toFixed(1);
+
+		let gcCount = 0;
+		let totalBases = seq.length;
+
+		for (const base of seq.toUpperCase()) {
+			switch (base) {
+				case "G":
+				case "C":
+				case "S":
+					gcCount += 1;
+					break;
+				case "V":
+				case "B":
+					gcCount += 2 / 3;
+					break;
+				case "R":
+				case "Y":
+				case "M":
+				case "K":
+					gcCount += 0.5;
+					break;
+				case "D":
+				case "H":
+					gcCount += 1 / 3;
+					break;
+				case "N":
+					totalBases--;
+					break;
+			}
+		}
+
+		if (totalBases === 0) return "0.0";
+
+		return ((gcCount / totalBases) * 100).toFixed(1);
 	};
 
 	const overhangLength = 5;
