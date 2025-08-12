@@ -3,21 +3,23 @@ import { prisma } from '@/app/helpers/prisma';
 import { Metadata } from 'next';
 
 type Props = {
-  params: {
+  params: Promise<{
     assignment_id: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { assignment_id } = await params;
   return {
-    title: `Assignment ${params.assignment_id}`,
+    title: `Assignment ${assignment_id}`,
   };
 }
 
 const Page = async ({ params }: Props) => {
+  const { assignment_id } = await params;
   const assignment = await prisma.assignment.findUnique({
     where: {
-      id: parseInt(params.assignment_id),
+      id: parseInt(assignment_id),
     },
   });
 
