@@ -1,6 +1,6 @@
 "use client";
 
-import sampleEditAction from "@/app/actions/sample/sampleEdit";
+import sampleEditAction from "@/app/actions/project/sample/sampleEdit";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { NetworkProgressPacket } from "@/types/globals";
 import ProgressBar from "../ProgressBar";

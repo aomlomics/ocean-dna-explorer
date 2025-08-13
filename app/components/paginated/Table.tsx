@@ -185,7 +185,7 @@ export default function Table({
 		}
 	}, [data]);
 
-	if (isLoading) return <LoadingTable />;
+	if (isLoading) return <LoadingTable take={take} page={page} />;
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 

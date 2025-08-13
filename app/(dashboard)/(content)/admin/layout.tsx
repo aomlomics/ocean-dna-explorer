@@ -7,6 +7,7 @@ import { prisma } from "@/app/helpers/prisma";
 import migrationCopyStepAction from "@/app/actions/migrationCopyStep";
 import WarningButton from "@/app/components/WarningButton";
 
+//TODO: make each tab have it's own URL path
 export default async function AdminLayout({ children }: { children: ReactNode }) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata?.role;
