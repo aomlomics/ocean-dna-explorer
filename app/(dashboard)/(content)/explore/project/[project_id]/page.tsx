@@ -206,7 +206,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 				<h2 id="samples-section" className="text-2xl font-semibold text-base-content/90 mb-4">
 					Samples
 				</h2>
-				<Table table="sample" showUserDefined where={{ project_id }} />
+				<Table table="sample" showUserDefined where={{ project_id }} defaultTake={20} />
 			</div>
 
 			{/* Taxonomy Chart */}

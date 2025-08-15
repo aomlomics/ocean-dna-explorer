@@ -101,8 +101,8 @@ export default async function Sample() {
 						</label>
 					</div>
 				</div>
-					<div className="aspect-5/2 hidden lg:block">
-						<div className="rounded-lg border border-base-300 h-full">
+					<div className="hidden lg:block lg:h-[calc(95vh-20rem)]">
+						<div className="rounded-lg border border-base-300 h-full overflow-auto">
 							<Table table="sample" defaultTake={25} filterHeadersAtStart hideEmptyAtStart />
 						</div>
 					</div>

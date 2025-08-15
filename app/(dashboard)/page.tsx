@@ -181,7 +181,7 @@ export default async function Home() {
 				</Link>
 			</div> */}
 			<div id="dataSummary" className="z-content px-4 sm:px-6 lg:px-8 pb-12 -mt-10 sm:-mt-12 md:-mt-5">
-				<div className="mb-12">
+				<div className="mb-20">
 					<MainStats summaryItems={summaryItems} />
 				</div>
 
