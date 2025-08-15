@@ -41,9 +41,9 @@ export default function Submit() {
 			</div>
 
 			<header className="my-8">
-				<h1 className="text-4xl font-bold text-primary">Submit to Opal</h1>
+				<h1 className="text-4xl font-normal text-primary">Submit to the Ocean DNA Explorer</h1>
 				<p className="mt-2 text-lg text-base-content/80">
-					Choose a submission type below to contribute your data to the Opal database.
+					Choose a submission type below to contribute your data to the ODE database.
 				</p>
 			</header>
 
@@ -52,7 +52,7 @@ export default function Submit() {
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
 							<div>
-								<h2 className="text-2xl text-primary mb-4">Project Submission</h2>
+								<h2 className="text-2xl text-primary mb-4 font-normal">Project Submission</h2>
 								<p className="text-base text-base-content/80 mb-6">
 									Submit a complete eDNA dataset including sample metadata, environmental measurements, and
 									sequencing data.
@@ -73,9 +73,9 @@ export default function Submit() {
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
 							<div>
-								<h2 className="text-2xl text-primary mb-4">Analysis Submission</h2>
+								<h2 className="text-2xl text-primary mb-4 font-normal">Analysis Submission</h2>
 								<p className="text-base text-base-content/80 mb-6">
-									Share your analysis of existing NODE data, including methods, parameters, and interpretations.
+									Share your analysis of existing ODE data, including methods, parameters, and interpretations.
 								</p>
 							</div>
 							<div className="mt-auto">

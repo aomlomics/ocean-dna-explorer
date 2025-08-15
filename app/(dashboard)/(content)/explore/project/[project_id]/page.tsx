@@ -8,6 +8,7 @@ import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import ProjectStatCard from "@/app/components/explore/ProjectStatCard";
 import StatIcon from "@/app/components/icons/StatIcon";
+import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 
 export default async function Project_Id({ params }: { params: Promise<{ project_id: string }> }) {
 	let { project_id } = await params;
@@ -119,11 +120,12 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 						</h2>
 						<div className="space-y-4">
 							{Object.keys(uniqueAssays).map((assay) => {
-								const imagePath = `/images/${assay}_icon.svg`;
 								return (
 									<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
-										<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm">
-											<Image src={imagePath} alt={assay} width={40} height={40} />
+										<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+											<div className="relative w-12 h-12">
+												<AssayPhyloPic assayName={assay} />
+											</div>
 										</div>
 										<div>
 											<h3 className="font-bold text-lg text-base-content">
