@@ -1,4 +1,4 @@
-# node
+![Ocean DNA Explorer Banner](public/images/banner_ode.png)
 
 [![NODE CI/CD workflow](https://github.com/aomlomics/node/actions/workflows/testAndDeploy.yml/badge.svg)](https://github.com/aomlomics/node/actions/workflows/testAndDeploy.yml)
 
