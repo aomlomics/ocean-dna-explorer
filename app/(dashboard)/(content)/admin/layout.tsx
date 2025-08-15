@@ -10,7 +10,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const { userId, sessionClaims } = useAuth();
 	const role = sessionClaims?.metadata?.role;
-	console.log(pathname);
 
 	return (
 		<div>

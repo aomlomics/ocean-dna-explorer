@@ -6,6 +6,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
 import { randomColors } from "../helpers/utils";
+import { prismaImages } from "../helpers/prismaImages";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
@@ -52,10 +53,12 @@ export default async function Home() {
 
 	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
 
+	const carouselImages = await prismaImages.image.findMany();
+
 	return (
 		<main className="flex flex-col grow bg-base-400 text-base-content">
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
-				<Carousel />
+				<Carousel images={carouselImages} />
 				{/* Gradient for left-to-right */}
 				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/50 sm:via-base-100/30 via-[50%] sm:via-[40%] to-transparent to-[100%]"></div>
 				{/* Gradient for bottom */}
