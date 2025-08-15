@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionMany } from "@/app/helpers/progress";
 
+//TODO: store submission files on upload, attach files to project/analysis, allow editing submissions by uploading replacement files
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);

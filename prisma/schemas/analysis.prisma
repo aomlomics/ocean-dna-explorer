@@ -181,6 +181,7 @@ model Feature {
     sequenceLength_ODE Int
 }
 
+//TODO: change taxonomy > taxon & taxonomies > taxa
 model Taxonomy {
     id       Int    @id @default(autoincrement())
     taxonomy String @unique

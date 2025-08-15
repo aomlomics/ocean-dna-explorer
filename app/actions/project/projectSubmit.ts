@@ -271,6 +271,9 @@ async function doSubmit(
 					}
 				}
 
+				//TODO: check if any assay fields exist in libraryMetadata file
+				console.log(assayRow);
+
 				sampToAssay[libraryRow.samp_name] = assayRow.assay_name;
 
 				//if the assay doesn't exist yet, add it to the assays array

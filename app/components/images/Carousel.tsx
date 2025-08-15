@@ -29,6 +29,7 @@ const carouselImgSrc = [
 	`/images/carousel/siphonophore_800.jpg`
 ];
 
+//TODO: store home background images in database with credit info
 export default function Carousel() {
 	const [carouselActiveItem, setCarouselActiveItem] = useState(0);
 	const [isMounted, setIsMounted] = useState(false);
