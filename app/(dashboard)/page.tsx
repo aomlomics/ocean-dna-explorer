@@ -81,8 +81,8 @@ export default async function Home() {
 	const summaryItems: SummaryItemData[] = [
 		{ title: "Projects", value: projectCount, href: "/explore/project", icon: "ship" },
 		{ title: "Samples", value: sampleCount, href: "/explore/sample", icon: "location" },
-		{ title: "Taxonomies", value: taxaCount, href: "/explore/taxonomy", icon: "fish" },
-		{ title: "Occurrence Records", value: occurrenceCount, href: "/explore/occurrence", icon: "eye" }
+		{ title: "Taxa", value: taxaCount, href: "/explore/taxonomy", icon: "fish" },
+		{ title: "Occurrences", value: occurrenceCount, href: "/explore/occurrence", icon: "eye" }
 	];
 
 	return (

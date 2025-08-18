@@ -45,6 +45,17 @@ export default function Submit() {
 				<p className="mt-2 text-lg text-base-content/80">
 					Choose a submission type below to contribute your data to the ODE database.
 				</p>
+				<p className="mt-2 text-base text-base-content/80">
+					For more information on the submission requirements and data format, please see the{" "}
+					<a href="/help#submit" className="text-primary hover:text-primary-focus">
+						Submit Data
+					</a>{" "}
+					section of our Help page, or the{" "}
+					<a href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html" className="text-primary hover:text-primary-focus">
+						NOAA Omics Data Management Guide
+					</a>
+					.
+				</p>
 			</header>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
