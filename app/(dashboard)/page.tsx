@@ -58,6 +58,35 @@ export default async function Home() {
 
 	const carouselImages = await prismaImages.image.findMany();
 
+	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
+
+	const summaryItems = [
+		{
+			title: "Projects",
+			value: projectCount,
+			href: "/explore/project",
+			icon: "ship" as const
+		},
+		{
+			title: "Samples", 
+			value: sampleCount,
+			href: "/explore/sample",
+			icon: "location" as const
+		},
+		{
+			title: "Taxa",
+			value: taxaCount,
+			href: "/explore/taxonomy",
+			icon: "fish" as const
+		},
+		{
+			title: "Occurrences",
+			value: occurrenceCount,
+			href: "/explore/occurrence",
+			icon: "eye" as const
+		}
+	];
+
 	return (
 		<main className="flex flex-col grow bg-base-400 text-base-content">
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
