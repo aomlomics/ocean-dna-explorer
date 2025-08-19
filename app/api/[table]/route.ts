@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/utils";
+import { parseApiQuery } from "@/app/helpers/queries";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
@@ -23,10 +23,10 @@ export async function GET(
 			if (result) {
 				return NextResponse.json({ statusMessage: "success", result });
 			} else {
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No ${table} matching the search parameters could be found.` },
-					{ status: 400 }
-				);
+				return NextResponse.json({
+					statusMessage: "error",
+					error: `No ${table} matching the search parameters could be found.`
+				});
 			}
 		} catch (err) {
 			const error = err as Error;
@@ -36,10 +36,10 @@ export async function GET(
 			if (unknownFieldSplit.length > 1) {
 				const unknownField = unknownFieldSplit[unknownFieldSplit.length - 1].split("`")[1];
 
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No field named "${unknownField}" exists on table named "${table}".` },
-					{ status: 400 }
-				);
+				return NextResponse.json({
+					statusMessage: "error",
+					error: `No field named "${unknownField}" exists on table named "${table}".`
+				});
 			}
 
 			//bad where
@@ -47,16 +47,16 @@ export async function GET(
 			if (unknownArgSplit.length > 1) {
 				const unknownArg = unknownArgSplit[unknownArgSplit.length - 1].split("`")[1];
 
-				return NextResponse.json(
-					{ statusMessage: "error", error: `No field named "${unknownArg}" exists on table named "${table}".` },
-					{ status: 400 }
-				);
+				return NextResponse.json({
+					statusMessage: "error",
+					error: `No field named "${unknownArg}" exists on table named "${table}".`
+				});
 			}
 
 			//TODO: replace database error messages with generic error message
-			return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+			return NextResponse.json({ statusMessage: "error", error: error.message });
 		}
 	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
 }

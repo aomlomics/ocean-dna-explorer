@@ -9,29 +9,34 @@ import Pagination from "@/app/components/paginated/Pagination";
 export default async function Feature() {
 	const minMaxSeqLength = await prisma.feature.aggregate({
 		_min: {
-			sequenceLength: true
+			sequenceLength_ODE: true
 		},
 		_max: {
-			sequenceLength: true
+			sequenceLength_ODE: true
 		}
 	});
 	if (!minMaxSeqLength) return <>Loading...</>;
 
-	const tableConfig: FilterConfig[] = [
-		{
-			field: "sequenceLength",
-			type: "range",
-			gte: minMaxSeqLength._min.sequenceLength as number,
-			lte: minMaxSeqLength._max.sequenceLength as number
-		}
-	];
-
 	return (
-		<ExplorePage table="feature" tableConfig={tableConfig}>
-			<div className="px-6 lg:px-0">
-				<div className="space-y-4">
-					<ExploreTabButtons />
-					<div className="bg-base-100 border border-base-300 rounded-lg p-4">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
+			<TableFilter
+				tableConfig={[
+					{
+						field: "sequenceLength_ODE",
+						type: "range",
+						gte: minMaxSeqLength._min.sequenceLength_ODE as number,
+						lte: minMaxSeqLength._max.sequenceLength_ODE as number
+					}
+				]}
+			/>
+			<div className="space-y-6">
+				<div className="space-y-[-1px]">
+					<div className="border-b border-base-300">
+						<nav className="flex tabs tabs-lifted">
+							<ExploreTabButtons />
+						</nav>
+					</div>
+					<div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
 						<p className="mb-2">
 							Unique DNA sequences (eg, ASVs) found in samples, typically representing distinct organisms, with their
 							consensus taxonomic classification.

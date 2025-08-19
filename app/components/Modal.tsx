@@ -9,7 +9,7 @@ export default function Modal({
 	clickOffRef
 }: {
 	children?: ReactNode;
-	ref?: RefObject<HTMLDialogElement | null>;
+	ref: RefObject<HTMLDialogElement | null>;
 	xRef?: RefObject<HTMLButtonElement | null>;
 	clickOffRef?: RefObject<HTMLButtonElement | null>;
 }) {

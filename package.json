@@ -20,7 +20,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node prisma/seed.ts",
-    "postinstall": "prisma migrate deploy && prisma generate",
+    "postinstall": "npx prisma migrate deploy && npx prisma generate && npx prisma migrate deploy --schema ./prismaImages/schema.prisma && npx prisma generate --schema ./prismaImages/schema.prisma",
     "postbuild": "npx tsx ./sitemap-index.ts"
   },
   "dependencies": {
@@ -44,6 +44,7 @@
     "eslint": "^9.31.0",
     "eslint-config-next": "15.4.2",
     "formidable": "^3.5.4",
+    "json5": "^2.2.3",
     "leaflet": "^1.9.4",
     "next": "^15.4.2",
     "next-themes": "^0.4.6",

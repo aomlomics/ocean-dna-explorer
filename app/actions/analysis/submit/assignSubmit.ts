@@ -2,15 +2,12 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { createProgressStream, deadBooleanToString, parseSchemaToObject } from "@/app/helpers/utils";
+import { deadBooleanToString } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
 import {
 	FeatureOptionalDefaultsSchema,
-	FeatureScalarFieldEnumSchema,
 	AssignmentOptionalDefaultsSchema,
-	AssignmentScalarFieldEnumSchema,
 	TaxonomyOptionalDefaultsSchema,
-	TaxonomyScalarFieldEnumSchema,
 	Assignment,
 	Feature,
 	Taxonomy
@@ -18,6 +15,8 @@ import {
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { parse } from "csv-parse";
+import { createProgressStream } from "@/app/helpers/progress";
+import { parseSchemaToObject } from "@/app/helpers/schema";
 
 async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["analysis_run_name"], url: string) {
 	const { userId, sessionClaims } = await auth();
@@ -62,26 +61,20 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 				for (const [field, v] of Object.entries(record)) {
 					const value = v as string;
 					//feature table
-					parseSchemaToObject(field, value, featureRow, FeatureOptionalDefaultsSchema, FeatureScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, featureRow, "feature");
 
 					//assignment table
-					parseSchemaToObject(
-						field,
-						value,
-						assignmentRow,
-						AssignmentOptionalDefaultsSchema,
-						AssignmentScalarFieldEnumSchema
-					);
+					parseSchemaToObject(field, value, assignmentRow, "assignment");
 
 					//taxonomy table
-					parseSchemaToObject(field, value, taxonomyRow, TaxonomyOptionalDefaultsSchema, TaxonomyScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
 				}
 
 				//parse feature
 				const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
 					{
 						...featureRow,
-						sequenceLength: featureRow.dna_sequence.length
+						sequenceLength_ODE: featureRow.dna_sequence.length
 					},
 					{
 						errorMap: (error, ctx) => {

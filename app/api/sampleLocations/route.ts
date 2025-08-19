@@ -64,6 +64,6 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	} catch (err) {
 		const error = err as Error;
 
-		return NextResponse.json({ statusMessage: "error", error: error.message }, { status: 400 });
+		return NextResponse.json({ statusMessage: "error", error: error.message });
 	}
 }

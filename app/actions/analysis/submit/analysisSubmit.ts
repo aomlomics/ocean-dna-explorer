@@ -2,7 +2,9 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { createProgressStream, deadBooleanToString, parseSchemaToObject } from "@/app/helpers/utils";
+import { createProgressStream } from "@/app/helpers/progress";
+import { parseSchemaToObject } from "@/app/helpers/schema";
+import { deadBooleanToString } from "@/app/helpers/utils";
 import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
@@ -41,7 +43,7 @@ async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) 
 				if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
 					userDefined[field] = value;
 				} else {
-					parseSchemaToObject(field, value, analysisCol, AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema);
+					parseSchemaToObject(field, value, analysisCol, "analysis");
 				}
 			}
 

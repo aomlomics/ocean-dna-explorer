@@ -6,8 +6,9 @@ import { auth } from "@clerk/nextjs/server";
 import { Occurrence, OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
-import { createProgressStream, deadBooleanToString } from "@/app/helpers/utils";
+import { deadBooleanToString } from "@/app/helpers/utils";
 import { parse } from "csv-parse";
+import { createProgressStream } from "@/app/helpers/progress";
 
 async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["analysis_run_name"], url: string) {
 	const { userId, sessionClaims } = await auth();

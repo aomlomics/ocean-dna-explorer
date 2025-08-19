@@ -1,6 +1,7 @@
 import { Permission, Role } from "./globals";
 import { z } from "zod";
 import { Taxonomy } from "@/app/generated/prisma/client";
+import { unsafePrisma } from "@/app/helpers/prisma";
 
 export const EXPLORE_ROUTES = {
 	project: "Projects",
@@ -15,7 +16,7 @@ export const EXPLORE_ROUTES = {
 };
 
 export const Roles = ["admin", "moderator", "contributor"] as Role[];
-export const Permissions = ["contribute", "manageUsers"] as Permission[];
+export const Permissions = ["contribute", "manageUsers", "manageDatabase"] as Permission[];
 
 //undefined is a signed in user without a role
 export const RoleHeirarchy = {
@@ -25,7 +26,7 @@ export const RoleHeirarchy = {
 } as Record<Role, Array<Role>>;
 
 export const RolePermissions = {
-	admin: ["contribute", "manageUsers"],
+	admin: ["contribute", "manageUsers", "manageDatabase"],
 	moderator: ["contribute", "manageUsers"],
 	contributor: ["contribute"]
 } as Record<Role, Array<Permission>>;
@@ -80,3 +81,10 @@ export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined"];
 
 export const QueryModes = ["equals", "contains", "startsWith", "endsWith", "lt", "lte", "gt", "gte", "range"];
+
+export const TypeSeparators = {
+	string: "|",
+	date: "/",
+	float: "/",
+	integer: "/"
+};

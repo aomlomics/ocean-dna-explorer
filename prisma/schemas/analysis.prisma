@@ -117,10 +117,18 @@ model Analysis {
     blca_confidence                      Float?
 
     // OTU/ASV
-    /// @zod.number.array(.max(2))
-    percent_match       Float[] @default([])
-    /// @zod.number.array(.max(2))
-    percent_query_cover Float[] @default([])
+    /// @zod.custom.use(z.coerce.number())
+    percent_match                    Float?
+    /// @zod.custom.use(z.coerce.number())
+    percent_match_Midpoint_ODE       Float?
+    /// @zod.custom.use(z.coerce.number())
+    percent_match_End_ODE            Float?
+    /// @zod.custom.use(z.coerce.number())
+    percent_query_cover              Float?
+    /// @zod.custom.use(z.coerce.number())
+    percent_query_cover_Midpoint_ODE Float?
+    /// @zod.custom.use(z.coerce.number())
+    percent_query_cover_End_ODE      Float?
 }
 
 model Occurrence {
@@ -168,8 +176,9 @@ model Feature {
     Assignments Assignment[]
 
     // Data
-    dna_sequence   String
-    sequenceLength Int
+    dna_sequence       String
+    /// @zod.custom.use(z.coerce.number().int())
+    sequenceLength_ODE Int
 }
 
 model Taxonomy {

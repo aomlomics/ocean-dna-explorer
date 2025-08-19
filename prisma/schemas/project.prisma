@@ -39,7 +39,7 @@ model Project {
     dataGeneralizations   String?
     bibliographicCitation String? // DOI
     associated_resource   String?
-    mod_date              DateTime? // fixed
+    mod_date              DateTime?
     checkls_ver           String
     seq_archive           String?
     code_repo             String?
@@ -78,9 +78,10 @@ model Sample {
     verbatimCoordinateSystem       String?
     verbatimSRS                    String?
     geo_loc_name                   String // fixed
-    eventDate                      String // fixed
-    /// @zod.custom.use(z.coerce.number())
-    eventDurationValue             Float?
+    eventDate                      DateTime
+    eventDate_Midpoint_ODE         DateTime?
+    eventDate_End_ODE              DateTime?
+    eventDurationValue             String? //ISO duration
     eventDurationUnit              String?
     verbatimEventDate              String?
     verbatimEventTime              String?
@@ -107,7 +108,7 @@ model Sample {
     /// @zod.custom.use(z.coerce.number())
     samp_store_temp              Float?
     samp_store_sol               String?
-    samp_store_dur               String? // fixed
+    samp_store_dur               String? //ISO duration
     samp_store_method_additional String?
     dna_store_loc                String?
     samp_store_loc               String?
@@ -134,13 +135,13 @@ model Sample {
     precip_temp_prep          Float?
     prepped_samp_store_temp   String?
     prepped_samp_store_sol    String?
-    prepped_samp_store_dur    String?
+    prepped_samp_store_dur    String? //ISO duration
     prep_method_additional    String?
     prefilter_material        String?
     /// @zod.custom.use(z.coerce.number())
     pump_flow_rate            Float?
     pump_flow_rate_unit       String?
-    stationed_sample_dur      String?
+    stationed_sample_dur      String? //ISO duration
     extract_id                String?
     extract_plate             String?
     /// @zod.custom.use(z.coerce.number().int())
@@ -174,7 +175,7 @@ model Sample {
     pool_dna_num                    Int?
     nucl_acid_ext_method_additional String?
     concentration_unit              String?
-    date_ext                        String?
+    date_ext                        DateTime?
     /// @zod.custom.use(z.coerce.number())
     dna_yield                       Float?
     dna_yield_unit                  String?
@@ -342,8 +343,12 @@ model Assay {
     targetTaxonomicScope        String? //[]    @default([])
     target_gene                 String
     target_subfragment          String?
-    /// @zod.number.array(.max(2))
-    ampliconSize                Float[]     @default([])
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize                Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_Midpoint_ODE   Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_End_ODE        Float?
     /// @zod.custom.use(z.coerce.number())
     pcr_primer_vol_forward      Float?
     /// @zod.custom.use(z.coerce.number())

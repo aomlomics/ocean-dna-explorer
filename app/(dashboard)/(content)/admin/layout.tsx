@@ -1,27 +1,58 @@
+"use client";
+
 import { ReactNode } from "react";
-import UserList from "@/app/components/UserList";
+import { RolePermissions } from "@/types/objects";
+import { useAuth } from "@clerk/clerk-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 
-export default async function AdminLayout({ children }: { children: ReactNode }) {
+export default function AdminLayout({ children }: { children: ReactNode }) {
+	const pathname = usePathname();
+	const { userId, sessionClaims } = useAuth();
+	const role = sessionClaims?.metadata?.role;
+
 	return (
-		<div className="tabs tabs-lift tabs-xl">
-			<input type="radio" name="my_tabs_3" className="tab" aria-label="Manage Users" defaultChecked />
-			<div className="tab-content bg-base-100 border-base-300 p-6">
-				<div className="grow flex flex-col">
-					<h1 className="text-4xl font-semibold text-primary mb-2">Manage Users</h1>
-					<div className="flex gap-10 grow">
-						<UserList />
+		<div>
+			<nav className="flex">
+				<Link
+					href="/admin/users"
+					className={`btn px-6 py-3 transition-colors rounded-none ${
+						pathname === "/admin/users" ? "rounded-t-lg btn-primary" : ""
+					}`}
+				>
+					Manage Users
+				</Link>
 
-						{children}
-					</div>
-				</div>
-			</div>
-
-			<input type="radio" name="my_tabs_3" className="tab" aria-label="Manage Submissions" />
-			<div className="tab-content bg-base-100 border-base-300 p-6">
-				<div>
-					<h1 className="text-4xl font-semibold text-primary mb-2">Manage Submissions</h1>
-				</div>
-			</div>
+				{userId && role && RolePermissions[role].includes("manageDatabase") && (
+					<>
+						<Link
+							href="/admin/images"
+							className={`btn px-6 py-3 transition-colors rounded-none ${
+								pathname === "/admin/images" ? "rounded-t-lg btn-primary" : ""
+							}`}
+						>
+							Home Carousel Images
+						</Link>
+						<Link
+							href="/admin/console"
+							className={`btn px-6 py-3 transition-colors rounded-none ${
+								pathname === "/admin/console" ? "rounded-t-lg btn-primary" : ""
+							}`}
+						>
+							Prisma Console
+						</Link>
+						<Link
+							href="/admin/migration"
+							className={`btn px-6 py-3 transition-colors rounded-none ${
+								pathname === "/admin/migration" ? "rounded-t-lg btn-primary" : ""
+							}`}
+						>
+							Migration Copy Step
+						</Link>
+					</>
+				)}
+			</nav>
+			<div className="border border-primary rounded-lg rounded-tl-none p-4">{children}</div>
 		</div>
 	);
 }

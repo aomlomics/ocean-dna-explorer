@@ -1,0 +1,51 @@
+datasource db {
+    provider  = "postgresql"
+    url       = env("IMAGE_POSTGRES_PRISMA_URL")
+    directUrl = env("IMAGE_POSTGRES_URL_NON_POOLING")
+}
+
+generator js {
+    provider            = "prisma-client-js"
+    output              = "../app/generated/prismaImages/client"
+    runtime             = "edge-light"
+    importFileExtension = ""
+}
+
+generator zod {
+    provider                         = "zod-prisma-types"
+    prismaClientPath                 = "@/app/generated/prismaImages/client"
+    createInputTypes                 = false
+    addIncludeType                   = false
+    addSelectType                    = false
+    writeNullishInModelTypes         = true
+    createOptionalDefaultValuesTypes = true
+    createRelationValuesTypes        = true
+    createPartialTypes               = true
+}
+
+model Image {
+    id            Int      @id @default(autoincrement())
+    dateSubmitted DateTime @default(now())
+    name          String   @unique
+    url           String   @unique
+
+    //relations
+    attributionTitle String?
+    Attribution      Attribution? @relation(fields: [attributionTitle], references: [attributionTitle])
+
+    description String?
+    location    String?
+    dateTaken   DateTime?
+}
+
+model Attribution {
+    id               Int    @id @default(autoincrement())
+    attributionTitle String @unique
+
+    //relations
+    Image Image[]
+
+    attributionNames     String[] @default([])
+    attributionUrl       String?
+    attributionInstitute String?
+}

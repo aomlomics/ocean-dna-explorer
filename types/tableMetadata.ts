@@ -104,7 +104,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.FeatureSchema,
 		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
 		titleField: "featureid",
-		subFields: ["dna_sequence", "sequenceLength"],
+		subFields: ["dna_sequence", "sequenceLength_ODE"],
 		relations: [],
 		relationFields: {},
 		plural: "Features"

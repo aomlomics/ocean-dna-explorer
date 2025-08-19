@@ -8,13 +8,13 @@ import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { doProgressAction } from "@/app/helpers/utils";
 import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
 import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
 import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import { doProgressAction } from "@/app/helpers/progress";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;
@@ -238,8 +238,8 @@ export default function AnalysisSubmit() {
 					const assignmentsUrl = (
 						await upload(assignmentsFile.name, assignmentsFile, {
 							access: "public",
-							handleUploadUrl: "/api/analysisFile/upload",
-							multipart: true
+							handleUploadUrl: "/api/file/upload",
+							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
 					//submit assignments file url
@@ -249,7 +249,7 @@ export default function AnalysisSubmit() {
 						args: [id, assignmentsUrl]
 					});
 					//delete file from blob storage
-					await fetch(`/api/analysisFile/delete?url=${assignmentsUrl}`, {
+					await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
 						method: "DELETE"
 					});
 					//handle errors
@@ -276,8 +276,8 @@ export default function AnalysisSubmit() {
 					const occurrencesUrl = (
 						await upload(occurrencesFile.name, occurrencesFile, {
 							access: "public",
-							handleUploadUrl: "/api/analysisFile/upload",
-							multipart: true
+							handleUploadUrl: "/api/file/upload",
+							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
 					//submit occurrences file url
@@ -287,7 +287,7 @@ export default function AnalysisSubmit() {
 						args: [id, occurrencesUrl]
 					});
 					//delete file from blob storage
-					await fetch(`/api/analysisFile/delete?url=${occurrencesUrl}`, {
+					await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
 						method: "DELETE"
 					});
 					//handle errors

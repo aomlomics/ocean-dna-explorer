@@ -2,21 +2,17 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { updateManyRaw, handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { createProgressStream, parseSchemaToObject } from "@/app/helpers/utils";
-import {
-	SampleOptionalDefaultsSchema,
-	SamplePartial,
-	SamplePartialSchema,
-	SampleScalarFieldEnumSchema
-} from "@/prisma/generated/zod";
+import { parseSchemaToObject } from "@/app/helpers/schema";
+import { SamplePartial, SamplePartialSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { parse } from "csv-parse";
 import { auth } from "@clerk/nextjs/server";
+import { createProgressStream } from "@/app/helpers/progress";
 
 async function doEdit(stream: ProgressStream, file: File) {
 	const { userId } = await auth();
 
-	const samples = [] as any[];
+	const samples = [] as SamplePartial[];
 
 	let i = 0;
 	const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
@@ -24,7 +20,7 @@ async function doEdit(stream: ProgressStream, file: File) {
 		const sampleRow = {} as SamplePartial;
 
 		for (const [field, value] of Object.entries(record)) {
-			parseSchemaToObject(field, value as string, sampleRow, SampleOptionalDefaultsSchema, SampleScalarFieldEnumSchema);
+			parseSchemaToObject(field, value as string, sampleRow, "sample");
 		}
 
 		const parsedSample = SamplePartialSchema.safeParse(sampleRow, {
@@ -58,7 +54,7 @@ async function doEdit(stream: ProgressStream, file: File) {
 
 	await stream.message("File parsed, uploading data", 50);
 
-	const samp_names = samples.map((samp) => samp.samp_name);
+	const samp_names = samples.map((samp) => samp.samp_name) as string[];
 	try {
 		await prisma.$transaction(async (tx) => {
 			const samplesCount = await tx.sample.count({

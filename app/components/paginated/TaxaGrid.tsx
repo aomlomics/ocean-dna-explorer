@@ -55,7 +55,9 @@ export default function TaxaGrid({
 	);
 	if (isLoading || !data) return <LoadingTaxaGrid />;
 	if (error) return <div>failed to load: {error}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+	if (data.statusMessage === "error" || !data.result) {
+		return <div>failed to load: {data.error || "no result found"}</div>;
+	}
 
 	// Ensure we always have an array to map over and a sensible count fallback
 	const items = Array.isArray((data as any).result) ? (data as any).result : [];

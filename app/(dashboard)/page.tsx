@@ -5,6 +5,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
 import { randomColors } from "../helpers/utils";
+import { prismaImages } from "../helpers/prismaImages";
 // import OrganismOutlines from "../components/images/OrganismOutlines";
 import fs from "fs";
 import path from "path";
@@ -55,72 +56,17 @@ export default async function Home() {
 
 	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
 
-	const outlinesDir = path.join(process.cwd(), "public/images/outlines");
-	const allOutlines = fs.readdirSync(outlinesDir);
-
-	// Build carousel image list from public/images/carousel
-	const carouselDir = path.join(process.cwd(), "public/images/carousel");
-	let carouselImages: string[] = [];
-	try {
-		carouselImages = fs
-			.readdirSync(carouselDir)
-			.filter((f) => /\.(png|jpe?g|webp)$/i.test(f))
-			.sort()
-			.map((f) => `/images/carousel/${f}`);
-	} catch (_) {
-		// If folder missing in some envs, fallback to a small known-good set that exists in repo
-		carouselImages = [
-			"/images/carousel/adobe_copepod.jpeg",
-			"/images/carousel/adobe_jellyfish.jpeg",
-			"/images/carousel/apr16_1_hires.jpg"
-		];
-	}
-
-	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
-
-	const summaryItems: SummaryItemData[] = [
-		{ title: "Projects", value: projectCount, href: "/explore/project", icon: "ship" },
-		{ title: "Samples", value: sampleCount, href: "/explore/sample", icon: "location" },
-		{ title: "Taxa", value: taxaCount, href: "/explore/taxonomy", icon: "fish" },
-		{ title: "Occurrences", value: occurrenceCount, href: "/explore/occurrence", icon: "eye" }
-	];
+	const carouselImages = await prismaImages.image.findMany();
 
 	return (
 		<main className="flex flex-col grow bg-base-400 text-base-content">
-			{/* <div className="relative w-full h-[60vh] z-content-overlay bg-base-200 mb-4"></div> */}
-			<div className="relative w-full h-[65vh] z-content-overlay bg-base-100 mb-4">
-				{/* Background carousel */}
-				<div
-					className="absolute inset-0"
-					style={{
-						WebkitMaskImage: "radial-gradient(150% 120% at 50% 110%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 45%, rgba(0,0,0,0.9) 70%, rgba(0,0,0,1) 95%)",
-						maskImage: "radial-gradient(150% 120% at 50% 110%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 45%, rgba(0,0,0,0.9) 70%, rgba(0,0,0,1) 95%)",
-					}}
-				>
-					<Carousel images={carouselImages} />
-				</div>
-				{/* Single scrim for readability over the image */}
-				<div className="absolute inset-0 bg-base-100/55 dark:bg-base-100/25 backdrop-blur-[1px]" />
-				{/* Bottom mask that blends hero into the page by revealing content below */}
-				<div
-					className="absolute inset-x-0 bottom-0 h-48 sm:h-56 md:h-72"
-					style={{
-						WebkitMaskImage: "linear-gradient(to top, black 0%, black 40%, transparent 100%)",
-						maskImage: "linear-gradient(to top, black 0%, black 40%, transparent 100%)",
-						backgroundColor: "transparent",
-					}}
-				/>
-				{/* Dark mode: keep existing straight fade */}
-				{/* Dark mode: radiant blue glow overlay */}
-				<div
-					className="absolute inset-0 hidden dark:block pointer-events-none"
-					style={{
-						backgroundImage:
-							"radial-gradient(120% 90% at 50% 100%, rgba(56,116,255,0.8) 0%, rgba(56,116,255,0.45) 36%, rgba(56,116,255,0.18) 60%, rgba(56,116,255,0.06) 72%, rgba(0,0,0,0) 86%), linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.65) 38%, rgba(0,0,0,0) 78%)",
-						backgroundBlendMode: "screen, normal",
-					}}
-				/>
-				{/* Hero content */}
+			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
+				<Carousel images={carouselImages} />
+				{/* Gradient for left-to-right */}
+				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/50 sm:via-base-100/30 via-[50%] sm:via-[40%] to-transparent to-[100%]"></div>
+				{/* Gradient for bottom */}
+				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-base-100/60 sm:via-base-100/40 via-[60%] sm:via-[50%] to-base-100"></div>
+				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
 						<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">

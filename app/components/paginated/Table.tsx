@@ -7,12 +7,13 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import useSWR, { preload } from "swr";
 import { useDebouncedCallback } from "use-debounce";
-import { fetcher, getZodType } from "../../helpers/utils";
+import { getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { fetcher } from "@/app/helpers/utils";
 
 export default function Table({
 	table,
@@ -219,11 +220,6 @@ export default function Table({
 		for (const [field, value] of formData.entries()) {
 			if (typeof value === "string" && value.trim()) {
 				const type = getZodType(TableMetadata[table].schema.shape[field]).type;
-				if (!type) {
-					throw new Error(
-						`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-					);
-				}
 
 				if (type === "string") {
 					temp[field] = value;
@@ -231,10 +227,6 @@ export default function Table({
 					temp[field] = parseInt(value);
 				} else if (type === "float") {
 					temp[field] = parseFloat(value);
-				} else if (type === "integer[]") {
-					//TODO: add support for querying ranges
-				} else if (type === "float[]") {
-					//TODO: add support for querying ranges
 				} else {
 					temp[field] = value;
 				}
