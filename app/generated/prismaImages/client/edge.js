@@ -146,8 +146,8 @@ const config = {
       "fromEnvVar": null
     },
     "config": {
-      "runtime": "edge-light",
       "importFileExtension": "",
+      "runtime": "edge-light",
       "engineType": "library"
     },
     "binaryTargets": [
@@ -162,7 +162,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
+    "rootEnvPath": "../../../../.env",
     "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../../../prismaImages",

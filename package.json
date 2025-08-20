@@ -20,6 +20,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node prisma/seed.ts",
+    "generate": "npx prisma generate && npx prisma generate --schema ./prismaImages/schema.prisma",
     "postinstall": "npx prisma migrate deploy && npx prisma generate && npx prisma migrate deploy --schema ./prismaImages/schema.prisma && npx prisma generate --schema ./prismaImages/schema.prisma",
     "postbuild": "npx tsx ./sitemap-index.ts"
   },

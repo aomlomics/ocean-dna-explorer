@@ -34,4 +34,4 @@ next-env.d.ts
 __pycache__
 
 # prisma (eventually can be removed once Prisma fully migrates to TS)
-/app/generated/prisma
+/app/generated
