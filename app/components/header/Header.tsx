@@ -16,7 +16,7 @@ export default async function Header() {
 	return (
 		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
-			<div className="navbar-start">
+			<div className="navbar-start pr-4 sm:pr-6 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
 				<MobileMenu />
 				
@@ -37,26 +37,28 @@ export default async function Header() {
 				</Link>
 			</div>
 
-			{/* Desktop tabs - absolute positioned to header bottom */}
-			<div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 hidden lg:flex space-x-4 z-[9999]">
-				<TabButton tabName="Home" route="/" />
-				<TabDropdown
-					tabName="Explore"
-					route="/explore"
-					dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
-				/>
-				<TabDropdown tabName="Search" route="/search" dropdown={[{ label: "Advanced", href: "/search/advanced" }]} />
-				<TabDropdown
-					tabName="Submit"
-					route="/submit"
-					dropdown={[
-						{ label: "Project", href: "/submit/project" },
-						{ label: "Analysis", href: "/submit/analysis" }
-					]}
-				/>
-				<TabButton tabName="Contribute" route="/contribute" />
-				<TabButton tabName="API" route="/api" />
-				<TabButton tabName="Help" route="/help" />
+			{/* Desktop tabs - centered between logo and user controls and aligned to bottom */}
+			<div className="navbar-center hidden xl:flex self-end">
+				<div className="flex items-end space-x-4 z-[9999] -mb-[8px]">
+					<TabButton tabName="Home" route="/" />
+					<TabDropdown
+						tabName="Explore"
+						route="/explore"
+						dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
+					/>
+					<TabDropdown tabName="Search" route="/search" dropdown={[{ label: "Advanced", href: "/search/advanced" }]} />
+					<TabDropdown
+						tabName="Submit"
+						route="/submit"
+						dropdown={[
+							{ label: "Project", href: "/submit/project" },
+							{ label: "Analysis", href: "/submit/analysis" }
+						]}
+					/>
+					<TabButton tabName="Contribute" route="/contribute" />
+					<TabButton tabName="API" route="/api" />
+					<TabButton tabName="Help" route="/help" />
+				</div>
 			</div>
 
 			{/* Right side - theme toggle, user, admin */}
