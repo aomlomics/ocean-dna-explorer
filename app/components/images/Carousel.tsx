@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { Image as DbImage } from "@/app/generated/prismaImages/client";
 
 // Images with '_m' are images that are mirrored/flipped horizontally
 // There are no other modifications to the images from NOAA Ocean Exploration
@@ -29,7 +30,7 @@ const carouselImgSrc = [
 	`/images/carousel/siphonophore_800.jpg`
 ];
 
-export default function Carousel() {
+export default function Carousel({ images }: { images: DbImage[] }) {
 	const [carouselActiveItem, setCarouselActiveItem] = useState(0);
 	const [isMounted, setIsMounted] = useState(false);
 
