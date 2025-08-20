@@ -13,9 +13,9 @@ export default function SubmitFormSection({
 	className?: string;
 }) {
 	return (
-		<div className="flex flex-col items-center w-full">
-			<div className="flex gap-2 justify-center w-full border-t-2 border-primary py-4">
-				<div className="text-primary text-xl">{title}</div>
+		<div className="flex flex-col w-full">
+			<div className="flex gap-2 items-start w-full py-1 mb-1">
+				<div className="text-white text-sm font-semibold">{title}</div>
 				{info && <InfoButton infoText={info} />}
 			</div>
 

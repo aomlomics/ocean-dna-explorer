@@ -35,13 +35,14 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 
 		const imageFile = formData.get("imageFile") as File;
 		const url = (
-			await upload(imageFile.name, imageFile, {
+			await upload("carousel/" + imageFile.name, imageFile, {
 				access: "public",
 				handleUploadUrl: "/api/file/upload",
 				multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 			})
 		).url;
 		formData.set("url", url);
+		formData.delete("imageFile");
 
 		try {
 			const result = await addImageAction(formData, newAttribution);
