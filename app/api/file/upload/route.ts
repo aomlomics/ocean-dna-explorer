@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 				}
 
 				return {
-					allowedContentTypes: ["text/tab-separated-values"],
+					allowedContentTypes: ["text/tab-separated-values", "image/*"],
 					addRandomSuffix: true,
 					tokenPayload: JSON.stringify({
 						// optional, sent to your server on upload completion
