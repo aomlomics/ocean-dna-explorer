@@ -2,7 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 import { Attribution } from "../generated/prismaImages/client";
-import addImageAction from "../actions/addImage";
+import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 
 export default function AddImageButton({ attributions }: { attributions: Attribution[] }) {

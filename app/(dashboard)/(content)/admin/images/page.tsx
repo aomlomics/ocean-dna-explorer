@@ -1,5 +1,6 @@
 import AddImageButton from "@/app/components/AddImageButton";
 import { prismaImages } from "@/app/helpers/prismaImages";
+import ImageDeleteButton from "@/app/components/images/ImageDeleteButton";
 
 export default async function AdminImages() {
 	const attributions = await prismaImages.attribution.findMany();
@@ -50,9 +51,12 @@ export default async function AdminImages() {
 										</div>
 									)}
 								</div>
+								<div className="pt-2">
+									<ImageDeleteButton imageId={img.id} imageName={img.name} />
+								</div>
 							</div>
 						</div>
-						))}
+					))}
 					</div>
 				)}
 			</div>
