@@ -56,7 +56,7 @@ export default async function Home() {
 
 	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
 
-	const carouselImages = await prismaImages.image.findMany();
+	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
 
 	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
 
@@ -155,7 +155,7 @@ export default async function Home() {
 					</div>
 				</Link>
 			</div> */}
-			<div id="dataSummary" className="z-content px-4 sm:px-6 lg:px-8 pb-12 -mt-10 sm:-mt-12 md:-mt-5">
+			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
 				<div className="mb-20">
 					<MainStats summaryItems={summaryItems} />
 				</div>
@@ -192,7 +192,7 @@ export default async function Home() {
 				{/* Funding Institutes Section */}
 				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
 					<h2 className="text-2xl lg:text-3xl text-primary mb-6 lg:mb-8 text-center">Supported By:</h2>
-
+					
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
 							NODE is a product of{" "}

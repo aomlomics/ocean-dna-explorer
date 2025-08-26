@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Image as DbImage } from "@/app/generated/prismaImages/client";
+import AttributionBadge from "./AttributionBadge";
 
 // Images with '_m' are images that are mirrored/flipped horizontally
 // There are no other modifications to the images from NOAA Ocean Exploration
@@ -30,8 +31,7 @@ const carouselImgSrc = [
 	`/images/carousel/siphonophore_800.jpg`
 ];
 
-export default function Carousel({ images }: { images: DbImage[] }) {
-	const [carouselActiveItem, setCarouselActiveItem] = useState(0);
+export default function Carousel({ images }: { images: (DbImage & { Attribution?: any })[] }) {
 	const [isMounted, setIsMounted] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	// Convert DbImage[] to string[] for the carousel
@@ -39,6 +39,8 @@ export default function Carousel({ images }: { images: DbImage[] }) {
 	const mounted = isMounted;
 	const intervalMs = 5000;
 	const transitionMs = 500;
+
+	useEffect(() => setIsMounted(true), []);
 
 	useEffect(() => {
 		if (!mounted || safeImages.length <= 1) return;
@@ -54,6 +56,7 @@ export default function Carousel({ images }: { images: DbImage[] }) {
 	}, [mounted, safeImages, intervalMs]);
 
 	const fallback = safeImages[0] ?? "/images/carousel/adobe_copepod.jpeg";
+	const activeImage = mounted ? images[activeIndex] ?? null : null;
 
 	return (
 		<div className="absolute inset-0 overflow-hidden bg-base-100">
@@ -79,6 +82,7 @@ export default function Carousel({ images }: { images: DbImage[] }) {
 					/>
 				</div>
 			))}
+			<AttributionBadge image={activeImage as any} />
 		</div>
 	);
 } 
