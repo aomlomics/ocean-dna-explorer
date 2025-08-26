@@ -37,8 +37,8 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 	// Convert DbImage[] to string[] for the carousel
 	const safeImages = images.map(img => img.url || '');
 	const mounted = isMounted;
-	const intervalMs = 5000;
-	const transitionMs = 500;
+	const intervalMs = 10000;
+	const transitionMs = 1000;
 
 	useEffect(() => setIsMounted(true), []);
 
