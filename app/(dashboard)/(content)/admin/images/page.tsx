@@ -44,10 +44,10 @@ export default async function AdminImages() {
 											<p>Attribution: {img.Attribution.attributionTitle}</p>
 											{img.Attribution.attributionInstitute && <p>Institute: {img.Attribution.attributionInstitute}</p>}
 											{img.Attribution.attributionUrl && (
-												<p>
-													URL: <a className="link" href={img.Attribution.attributionUrl} target="_blank" rel="noreferrer">{img.Attribution.attributionUrl}</a>
-												</p>
-											)}
+											<p className="break-all">
+												URL: <a className="link" href={img.Attribution.attributionUrl} target="_blank" rel="noreferrer">{img.Attribution.attributionUrl}</a>
+											</p>
+										)}
 										</div>
 									)}
 								</div>
