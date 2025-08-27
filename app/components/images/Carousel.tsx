@@ -67,8 +67,8 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 					style={{
 						opacity: mounted ? (index === activeIndex ? 1 : 0) : 1,
 						transitionDuration: `${transitionMs}ms`,
-						WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%)",
-						maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%)"
+						WebkitMaskImage: "radial-gradient(ellipse 75% 75% at 80% 35%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 85%)",
+						maskImage: "radial-gradient(ellipse 80% 75% at 80% 40%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 85%)" // 1st% inner ellipse gradient strength. 
 					}}
 					aria-hidden={mounted ? index !== activeIndex : false}
 				>
@@ -77,7 +77,7 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 						alt=""
 						fill
 						priority={mounted ? index === activeIndex : true}
-						className="object-cover opacity-85 dark:opacity-70 filter contrast-[1.06] saturate-[1.04] dark:contrast-100 dark:saturate-100"
+						className="object-cover opacity-40 dark:opacity-10 filter dark:contrast-100 dark:saturate-100"
 						sizes="100vw"
 					/>
 				</div>

@@ -91,10 +91,6 @@ export default async function Home() {
 		<main className="flex flex-col grow bg-base-400 text-base-content">
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
 				<Carousel images={carouselImages} />
-				{/* Gradient for left-to-right */}
-				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/50 sm:via-base-100/30 via-[50%] sm:via-[40%] to-transparent to-[100%]"></div>
-				{/* Gradient for bottom */}
-				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-base-100/60 sm:via-base-100/40 via-[60%] sm:via-[50%] to-base-100"></div>
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
@@ -104,14 +100,14 @@ export default async function Home() {
 							</h1>
 
 							<div className="text-base-content/90 font-normal -mt-1 sm:-mt-2">
-								<span className="block text-3xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
+								<span className="block text-3xl text-shadow-2xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
 									to the <span className="text-primary">Ocean DNA Explorer</span>
 								</span>
 
-								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
+								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
 									<span className="block">
-										a data sharing platform, search engine, and visualization and analysis tool for ocean environmental
-										DNA data
+										a data sharing platform, search engine, and visualization<br />
+										and analysis tool for ocean environmental DNA data
 									</span>
 								</div>
 							</div>
