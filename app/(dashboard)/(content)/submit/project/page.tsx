@@ -20,7 +20,7 @@ export default function Project() {
 				</div>
 
 				{/* Header & Intro */}
-				<header className="space-y-3 mb-8">
+				<header className="my-8 space-y-3">
 					<h1 className="text-4xl font-normal text-primary">Submit a New Project</h1>
 					<p className="text-base text-base-content/80">
 						A project is the baseline record in the Ocean DNA Explorer (ODE). All other data types are linked to a project.
@@ -40,7 +40,13 @@ export default function Project() {
 						<Link href="/help#submit" className="text-primary hover:text-primary-focus">
 							Submit section of the ODE Help page
 						</Link>
-						. Submissions should follow the FAIR eDNA metadata format. You can review a filled example
+						. Submissions should follow the 
+						{" "}
+						<a href="https://fair-edna.github.io/index.html" className="text-primary hover:text-primary-focus">
+						FAIR eDNA
+						</a>
+						{" "}
+						metadata format. You can review a filled-in example
 						{" "}
 						<a
 							href="https://docs.google.com/spreadsheets/d/1mkjfUQW3gTn3ezhMQmFDQn4EBoQ2Xv4SZeSd9sqagoU/edit?gid=0#gid=0"
@@ -51,7 +57,7 @@ export default function Project() {
 							FAIRe sheet
 						</a>
 						{" "}
-						to see how to generate FAIRe metadata files (the files uploaded on this page). We provide a Python repository called
+						to see how to generate your metadata files (the files uploaded on this page). We provide a Python repository called
 						{" "}
 						<a
 							href="https://github.com/aomlomics/FAIRe2ODE"

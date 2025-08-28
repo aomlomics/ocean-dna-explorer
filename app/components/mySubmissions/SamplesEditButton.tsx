@@ -45,7 +45,7 @@ export default function SubmissionUsersButton() {
 
 					<form ref={formRef} onSubmit={handleSubmit}>
 						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Sample Metadata File:</legend>
+							<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Sample Metadata File:</legend>
 							<input type="file" name="sampleMetadata" className="file-input" required accept=".tsv" />
 						</fieldset>
 						<button className="btn">Submit</button>

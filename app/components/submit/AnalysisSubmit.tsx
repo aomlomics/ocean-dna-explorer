@@ -366,7 +366,7 @@ export default function AnalysisSubmit() {
 					</fieldset>
 				</SubmitFormSection>
 
-				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
+				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full text-base-content/80 text-base font-normal">
 					{analysisIds.map((id, i) => (
 						<AnalysisFormSection
 							key={i}

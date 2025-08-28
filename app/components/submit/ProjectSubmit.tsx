@@ -109,15 +109,6 @@ export default function ProjectSubmit() {
 				{/* Left column: give more space to users */}
 				<div className="col-span-7 space-y-6">
 					<SubmitFormSection
-						title="Add users to Project"
-						info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
-					>
-						<div className="flex flex-col">
-							<UserAdder userIds={userIds} setUserIds={setUserIds} />
-						</div>
-					</SubmitFormSection>
-
-					<SubmitFormSection
 						title="Make submission private"
 						info="Only users added to this Project will be able to see private submissions."
 					>
@@ -127,15 +118,23 @@ export default function ProjectSubmit() {
 								<p>Private submission</p>
 							</label>
 						</fieldset>
+					</SubmitFormSection>	
+					<SubmitFormSection
+						title="Add users to Project"
+						info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
+					>
+						<div className="flex flex-col w-3/4">
+							<UserAdder userIds={userIds} setUserIds={setUserIds} />
+						</div>
 					</SubmitFormSection>
 				</div>
 
 				{/* Right column: files + progress + submit */}
 				<div className="col-span-5">
-					<SubmitFormSection title="Upload files" className="space-y-6 w-full">
+					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
 						<div className="space-y-2">
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Project Metadata File:</legend>
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Project Metadata File:</legend>
 								<input
 									type="file"
 									className="file-input file-input-primary"
@@ -150,7 +149,7 @@ export default function ProjectSubmit() {
 
 						<div className="space-y-2">
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Sample Metadata File:</legend>
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Sample Metadata File:</legend>
 								<input
 									type="file"
 									className="file-input file-input-primary"
@@ -165,7 +164,7 @@ export default function ProjectSubmit() {
 
 						<div className="space-y-2">
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Library (Experiment Run) Metadata File:</legend>
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Library (Experiment Run) Metadata File:</legend>
 								<input
 									type="file"
 									className="file-input file-input-primary"

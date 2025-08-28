@@ -135,6 +135,17 @@
 	}
 }
 
+/* Global breadcrumb styling */
+.breadcrumbs {
+  font-size: 0.875rem; /* text-sm */
+  line-height: 1.25rem;
+}
+
+/* Global modal backdrop styling - make darker */
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7) !important; /* Darker than default */
+}
+
 /* Clerk: Style 'Connect account' button text in profile/account */
 [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
   color: #233D7F;
