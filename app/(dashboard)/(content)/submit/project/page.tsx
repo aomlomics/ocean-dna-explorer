@@ -6,10 +6,15 @@ export default function Project() {
 	return (
 		<>
 			<SubmitMobileGate />
-			<main className="hidden lg:block container mx-auto px-4 py-8 space-y-6">
+			<main className="hidden lg:block container mx-auto px-4 py-4">
 				{/* Breadcrumbs */}
 				<div className="text-sm breadcrumbs">
 					<ul>
+						<li>
+							<Link href="/" className="text-primary hover:text-primary-focus">
+								Home
+							</Link>
+						</li>
 						<li>
 							<Link href="/submit" className="text-primary hover:text-primary-focus">
 								Submit

@@ -105,9 +105,9 @@ export default function ProjectSubmit() {
 
 	return (
 		<>
-			<form className="grid grid-cols-12 gap-10 w-full" onSubmit={handleSubmit}>
+			<form className="grid grid-cols-12 gap-12 w-full" onSubmit={handleSubmit}>
 				{/* Left column: give more space to users */}
-				<div className="col-span-7 space-y-6">
+				<div className="col-span-6 space-y-6">
 					<SubmitFormSection
 						title="Make submission private"
 						info="Only users added to this Project will be able to see private submissions."
@@ -130,7 +130,7 @@ export default function ProjectSubmit() {
 				</div>
 
 				{/* Right column: files + progress + submit */}
-				<div className="col-span-5">
+				<div className="col-span-6 ml-8">
 					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
 						<div className="space-y-2">
 							<fieldset className="fieldset">

@@ -6,35 +6,48 @@ export default function Analysis() {
 	return (
 		<>
 			<SubmitMobileGate />
-			<main className="hidden lg:flex flex-col grow p-8 max-w-7xl mx-auto space-y-8">
-				{/* Upload Intro Section */}
-				<section className="text-center space-y-6">
-					<h1 className="text-5xl font-semibold text-primary">Submit Analysis</h1>
-					<div className="max-w-3xl mx-auto space-y-4 text-lg text-base-content">
-						<p>
-							Ready to contribute new insights? Upload your analysis files here. They must be for an existing NODE
-							project. Need help? Check out the{" "}
-							<Link href="https://noaa-omics-dmg.readthedocs.io/en/latest/" className="text-primary hover:underline">
-								NOAA 'Omics Data Management Guide.
+			<main className="hidden lg:block container mx-auto px-4 py-4 space-y-6">
+				{/* Breadcrumbs */}
+				<div className="text-sm breadcrumbs">
+					<ul>
+						<li>
+							<Link href="/" className="text-primary hover:text-primary-focus">
+								Home
 							</Link>
-						</p>
+						</li>
+						<li>
+							<Link href="/submit" className="text-primary hover:text-primary-focus">
+								Submit
+							</Link>
+						</li>
+						<li>Analysis</li>
+					</ul>
+				</div>
 
-						{/* Requirements Section */}
-						<div className="flex items-center justify-center gap-2 text-base-content text-lg">
-							<svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							<span>All files must be in TSV format and follow the template structure exactly</span>
-						</div>
-					</div>
-				</section>
+				{/* Header & Intro */}
+				<header className="my-8 space-y-3">
+					<h1 className="text-4xl font-normal text-primary">Submit a New Analysis</h1>
+					<p className="text-base text-base-content/80">
+						Want to contribute new analyses? You can upload analysis files to any existing ODE project where you're an authorized user. If you need access to a project, contact the project owner using the project's project_contact and institution information.
+					</p>
+					<p className="text-base text-base-content/80">
+						Need help? Check out the{" "}
+						<Link href="https://noaa-omics-dmg.readthedocs.io/en/latest/" className="text-primary hover:text-primary-focus">
+							NOAA 'Omics Data Management Guide
+						</Link>
+						. All files must be in TSV format and follow the template structure exactly.
+					</p>
+					<p className="text-base text-base-content/80">
+						For help formatting your data, see the
+						{" "}
+						<Link href="/help#submit" className="text-primary hover:text-primary-focus">
+							Submit section of the ODE Help page
+						</Link>
+						.
+					</p>
+				</header>
 
-				{/* Main Content */}
+				{/* Form (handles left: project selection, right: files/progress) */}
 				<AnalysisSubmit />
 			</main>
 		</>

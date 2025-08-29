@@ -44,131 +44,149 @@ export default async function MySubmissions() {
 	});
 
 	return (
-		<div>
+		<div className="container mx-auto px-4 py-8">
+			{/* Breadcrumbs */}
+			<div className="text-sm breadcrumbs">
+				<ul>
+					<li>
+						<Link href="/" className="text-primary hover:text-primary-focus">
+							Home
+						</Link>
+					</li>
+					<li>My Submissions</li>
+				</ul>
+			</div>
+
 			{/* Header Section */}
-			<div className="mb-10 mt-8">
-				<div className="flex items-center gap-4 mb-4">
+			<header className="my-8 space-y-3">
+				<div className="flex items-center gap-4">
 					<div className="scale-150 pointer-events-none">
 						<UserButton showName={false} />
 					</div>
-					<h1 className="text-3xl font-medium text-primary">Submissions Manager</h1>
+					<h1 className="text-4xl font-normal text-primary">My Submissions</h1>
 				</div>
-				<p className="text-md text-base-content">
-					View and manage your uploads. Deleting a project will also delete its associated analyses. You can delete
+				<p className="text-base text-base-content/80">
+					View and manage your project uploads. Deleting a project will also delete its associated analyses. You can delete
 					individual analyses at any time.
 				</p>
-			</div>
+			</header>
 
 			{/* Content Section */}
-			{/* Projects Section */}
-			<div
-				className={`card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden relative ${
-					projects.length === 0 ? "max-w-2xl mx-auto" : ""
-				}`}
-			>
-				<div className="card-body">
-					<div className="w-full h-full flex flex-col">
-						<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>
-						{projects.length === 0 ? (
-							<div className="card bg-base-200 shadow-sm min-h-[260px] relative overflow-hidden">
-								<div className="card-body">
-									<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
-										<div>
-											<h2 className="text-2xl text-primary mb-4">No Projects Found</h2>
-											<p className="text-base text-base-content/80 mb-6">
-												Submit a new project to get started.
-											</p>
-										</div>
-										<div className="mt-auto">
-											<Link href="/submit/project" className="btn btn-primary">
-												Start New Project
-											</Link>
-										</div>
-									</div>
-									<div className="absolute -bottom-5 right-5 w-2/5 h-4/5 text-primary pointer-events-none">
-										<BoatIcon />
-									</div>
-								</div>
+			{projects.length === 0 ? (
+				<div className="card bg-base-200 shadow-sm min-h-[260px] relative overflow-hidden max-w-2xl mx-auto">
+					<div className="card-body">
+						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
+							<div>
+								<h2 className="text-2xl text-primary mb-4 font-normal">No Projects Found</h2>
+								<p className="text-base text-base-content/80 mb-6">
+									Submit a new project to get started.
+								</p>
 							</div>
-						) : (
-							<div className="flex flex-col gap-3 mt-2">
-								{projects.map((proj) => (
-									<div key={proj.id} className="flex flex-col gap-3">
-										<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
-											<Link
-												href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
-												className="text-primary hover:text-info-focus hover:underline transition-colors"
-											>
-												{proj.project_id}
-											</Link>
-											<div className="flex gap-3">
-												<SubmissionUsersButton
-													userIds={proj.userIds}
-													action={projectUpdateUserIdsAction}
-													target={proj.project_id}
-												/>
-
-												<SubmissionEditButton
-													table="project"
-													titleField="project_id"
-													data={proj}
-													action={projectEditAction}
-													privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
-													omit={["userIds", "Analyses"]}
-												/>
-												<SamplesEditButton />
-												<SubmissionDeleteButton
-													field="project_id"
-													value={proj.project_id}
-													action={projectDeleteAction}
-													associatedAnalyses={proj.Analyses}
-												/>
-											</div>
-										</div>
-
-										<div className="flex flex-col gap-3 ml-20">
-											{!!proj.Analyses.length && (
-												<>
-													<h2 className="text-lg text-primary font-medium">Analyses:</h2>
-													{proj.Analyses.map((analysis) => (
-														<div
-															key={analysis.id}
-															className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
-														>
-															<Link
-																href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
-																className="text-primary hover:text-info-focus hover:underline transition-colors"
-															>
-																{analysis.analysis_run_name}
-															</Link>
-															<div className="flex gap-3">
-																<SubmissionEditButton
-																	table="analysis"
-																	titleField="analysis_run_name"
-																	data={analysis}
-																	action={analysisEditAction}
-																	disabled={["project_id", "assay_name"]}
-																	privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
-																	omit={["editHistory", "dateSubmitted"]}
-																/>
-																<SubmissionDeleteButton
-																	field="analysis_run_name"
-																	value={analysis.analysis_run_name}
-																	action={analysisDeleteAction}
-																/>
-															</div>
-														</div>
-													))}
-												</>
-											)}
-										</div>
-									</div>
-								))}
+							<div className="mt-auto">
+								<Link href="/submit/project" className="btn btn-primary">
+									Start New Project
+								</Link>
 							</div>
-						)}
+						</div>
+						<div className="absolute -bottom-5 right-5 w-2/5 h-4/5 text-primary pointer-events-none">
+							<BoatIcon />
+						</div>
 					</div>
 				</div>
-			</div>
+			) : (
+				<div className="space-y-6">
+					<div className="flex items-center gap-3 mb-8">
+						<span className="badge badge-primary bg-base-100 text-base-content font-medium">{projects.length}</span>
+						<h2 className="text-2xl font-normal text-primary">Projects</h2>
+					</div>
+					
+					{projects.map((proj) => (
+						<div key={proj.id} className="card bg-base-100 shadow-md hover:shadow-lg hover:bg-base-200/50 transition-all duration-200 border border-base-300 group">
+							<div className="card-body p-6">
+								{/* Project Header */}
+								<div className="flex items-center justify-between border-b border-primary/20 pb-5 mb-5">
+									<Link
+										href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
+										className="text-primary hover:text-primary-focus hover:underline transition-colors flex items-center gap-3"
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6 text-primary">
+											<path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+										</svg>
+										<span className="text-xl font-normal">{proj.project_id}</span>
+									</Link>
+									<div className="flex gap-3">
+										<SubmissionUsersButton
+											userIds={proj.userIds}
+											action={projectUpdateUserIdsAction}
+											target={proj.project_id}
+										/>
+										<SubmissionEditButton
+											table="project"
+											titleField="project_id"
+											data={proj}
+											action={projectEditAction}
+											privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
+											omit={["userIds", "Analyses"]}
+										/>
+										<SamplesEditButton />
+										<SubmissionDeleteButton
+											field="project_id"
+											value={proj.project_id}
+											action={projectDeleteAction}
+											associatedAnalyses={proj.Analyses}
+										/>
+									</div>
+								</div>
+
+								{/* Analyses Section */}
+								{!!proj.Analyses.length && (
+									<div className="space-y-3">
+										<div className="flex items-center gap-2 text-base-content/70 mb-3">
+											<span className="text-sm font-normal text-base-content/80">Analyses ({proj.Analyses.length})</span>
+										</div>
+										<div className="pl-6 space-y-2">
+											{proj.Analyses.map((analysis) => (
+												<div
+													key={analysis.id}
+													className="flex items-center justify-between p-4 bg-base-100 rounded-lg border border-base-300 hover:bg-base-300/50 group-hover:bg-base-300/30 transition-colors duration-150"
+												>
+													<div className="flex items-center gap-3">
+														<div className="flex items-center text-base-content/40">
+															<span className="text-sm"></span>
+														</div>
+														<Link
+															href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+															className="text-primary hover:text-primary-focus hover:underline transition-colors font-medium"
+														>
+															{analysis.analysis_run_name}
+														</Link>
+													</div>
+													<div className="flex gap-3">
+														<SubmissionEditButton
+															table="analysis"
+															titleField="analysis_run_name"
+															data={analysis}
+															action={analysisEditAction}
+															disabled={["project_id", "assay_name"]}
+															privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
+															omit={["editHistory", "dateSubmitted"]}
+														/>
+														<SubmissionDeleteButton
+															field="analysis_run_name"
+															value={analysis.analysis_run_name}
+															action={analysisDeleteAction}
+														/>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }
