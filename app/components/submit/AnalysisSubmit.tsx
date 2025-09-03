@@ -196,6 +196,12 @@ export default function AnalysisSubmit() {
 			}
 		}
 
+		if (!project) {
+			setErrorMessage("No project_id found.");
+			modalRef.current?.showModal();
+			return;
+		}
+
 		const target = event.target as HTMLFormElement;
 
 		const activeIds = analysisIds.filter((id) => typeof id === "string");
@@ -211,22 +217,45 @@ export default function AnalysisSubmit() {
 					});
 				}
 
-				//analysis submit
-				const analysisFile = target[`analysis_${id}`].files[0] as File;
-				//submit analysis file
-				const analysisError = await doProgressAction({
-					action: analysisSubmitAction,
-					reducer: { id, key: "analysis", setter: setResponses },
-					args: [analysisFile, isPrivate]
-				});
-				//handle errors
-				if (analysisError) {
-					setErrorMessage(analysisError);
-					modalRef.current?.showModal();
-					return;
-				}
-
 				try {
+					//analysis submit
+					const analysisFile = target[`analysis_${id}`].files[0] as File;
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+					});
+					const analysisUrl = (
+						await upload(
+							`submissions/${project.project_id}/analyses/${id}/analysisMetadata/${analysisFile.name}`,
+							analysisFile,
+							{
+								access: "public",
+								handleUploadUrl: "/api/file/upload",
+								multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+							}
+						)
+					).url;
+					//submit analysis file url
+					const analysisError = await doProgressAction({
+						action: analysisSubmitAction,
+						reducer: { id, key: "analysis", setter: setResponses },
+						args: [analysisUrl, isPrivate]
+					});
+					//handle errors
+					if (analysisError) {
+						setErrorMessage(analysisError);
+						modalRef.current?.showModal();
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+
+						return;
+					}
+
 					//assignments submit
 					const assignmentsFile = target[`assignments_${id}`].files[0] as File;
 					//upload file to blob storage
@@ -236,21 +265,21 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const assignmentsUrl = (
-						await upload(assignmentsFile.name, assignmentsFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
+						await upload(
+							`submissions/${project.project_id}/analyses/${id}/asv/${assignmentsFile.name}`,
+							assignmentsFile,
+							{
+								access: "public",
+								handleUploadUrl: "/api/file/upload",
+								multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+							}
+						)
 					).url;
 					//submit assignments file url
 					const assignmentsError = await doProgressAction({
 						action: assignSubmitAction,
 						reducer: { id, key: "assignments", setter: setResponses },
 						args: [id, assignmentsUrl]
-					});
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
-						method: "DELETE"
 					});
 					//handle errors
 					if (assignmentsError) {
@@ -262,6 +291,15 @@ export default function AnalysisSubmit() {
 						if (deleteResponse.statusMessage === "error") {
 							setErrorMessage(assignmentsError + "\n" + deleteResponse.error);
 						}
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
+							method: "DELETE"
+						});
+
 						return;
 					}
 
@@ -274,11 +312,15 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const occurrencesUrl = (
-						await upload(occurrencesFile.name, occurrencesFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
+						await upload(
+							`submissions/${project.project_id}/analyses/${id}/occurrence/${occurrencesFile.name}`,
+							occurrencesFile,
+							{
+								access: "public",
+								handleUploadUrl: "/api/file/upload",
+								multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+							}
+						)
 					).url;
 					//submit occurrences file url
 					const occurrencesError = await doProgressAction({
@@ -286,10 +328,7 @@ export default function AnalysisSubmit() {
 						reducer: { id, key: "occurrences", setter: setResponses },
 						args: [id, occurrencesUrl]
 					});
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
-						method: "DELETE"
-					});
+
 					//handle errors
 					if (occurrencesError) {
 						setErrorMessage(occurrencesError);
@@ -300,6 +339,18 @@ export default function AnalysisSubmit() {
 						if (deleteResponse.statusMessage === "error") {
 							setErrorMessage(occurrencesError + "\n" + deleteResponse.error);
 						}
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
+							method: "DELETE"
+						});
+
 						return;
 					}
 				} catch (err) {

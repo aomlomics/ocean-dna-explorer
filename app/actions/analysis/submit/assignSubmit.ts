@@ -17,6 +17,7 @@ import { RolePermissions } from "@/types/objects";
 import { parse } from "csv-parse";
 import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
+import { md5 } from "js-md5";
 
 async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["analysis_run_name"], url: string) {
 	const { userId, sessionClaims } = await auth();
@@ -45,7 +46,9 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 		}
 
 		await stream.message("Reading file into memory", 15);
-		const parser = parse(await response.text(), { columns: true, delimiter: "\t" });
+		const text = await response.text();
+		const textMd5 = md5(text);
+		const parser = parse(text, { columns: true, delimiter: "\t" });
 		await stream.message("File read into memory", 25);
 
 		let i = 0;
@@ -173,6 +176,17 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 				} else if (!analysis.Project.userIds.includes(userId)) {
 					throw new Error("Unauthorized");
 				}
+
+				//add asv file to analysis
+				await tx.analysis.update({
+					where: {
+						analysis_run_name
+					},
+					data: {
+						asvFileUrl_ODE: url,
+						asvFileChecksum_ODE: textMd5
+					}
+				});
 
 				//upload to database
 				//features

@@ -14,6 +14,14 @@ model Analysis {
     Occurrences Occurrence[]
     Assignments Assignment[]
 
+    // Submission File URLs
+    analysisMetadataFileUrl_ODE      String
+    analysisMetadataFileChecksum_ODE String
+    asvFileUrl_ODE                   String?
+    asvFileChecksum_ODE              String?
+    occurrenceFileUrl_ODE            String?
+    occurrenceFileChecksum_ODE       String?
+
     // Data
     // Bioinformatics
     sop_bioinformatics                   String?
@@ -181,7 +189,6 @@ model Feature {
     sequenceLength_ODE Int
 }
 
-//TODO: change taxonomy > taxon & taxonomies > taxa
 model Taxonomy {
     id       Int    @id @default(autoincrement())
     taxonomy String @unique

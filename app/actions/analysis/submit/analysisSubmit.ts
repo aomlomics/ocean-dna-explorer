@@ -10,8 +10,9 @@ import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { parse } from "csv-parse";
+import { md5 } from "js-md5";
 
-async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) {
+async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -27,8 +28,18 @@ async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) 
 		console.log("Analysis file");
 		const userDefined = {} as PrismaJson.UserDefinedType;
 
-		await stream.message("Reading file into memory", 10);
-		const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+		//fetch file from blob storage
+		await stream.message("Downloading file", 10);
+		const fileResponse = await fetch(url);
+		if (!fileResponse.ok) {
+			await stream.error(`Analysis file responded ${fileResponse.status}: ${fileResponse.statusText}.`);
+			return;
+		}
+
+		await stream.message("Reading file into memory", 15);
+		const text = await fileResponse.text();
+		const textMd5 = md5(text);
+		const parser = parse(text, { columns: true, delimiter: "\t" });
 		await stream.message("File read into memory", 25);
 
 		let i = 0;
@@ -48,11 +59,17 @@ async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) 
 			}
 
 			//add to progress bar
-			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50);
+			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
 		}
 
 		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
-			{ ...analysisCol, isPrivate, editHistory: "JsonNull" },
+			{
+				...analysisCol,
+				isPrivate,
+				editHistory: "JsonNull",
+				analysisMetadataFileUrl_ODE: url,
+				analysisMetadataFileChecksum_ODE: textMd5
+			},
 			{
 				errorMap: (error, ctx) => {
 					return {
@@ -117,10 +134,10 @@ async function doSubmit(stream: ProgressStream, file: File, isPrivate: boolean) 
 	}
 }
 
-export default async function analysisSubmitAction(file: File, isPrivate: boolean) {
+export default async function analysisSubmitAction(url: string, isPrivate: boolean) {
 	const stream = createProgressStream();
 
-	doSubmit(stream, file, isPrivate).then(stream.close);
+	doSubmit(stream, url, isPrivate).then(stream.close);
 
 	return stream.readable;
 }

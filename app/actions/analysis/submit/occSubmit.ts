@@ -9,6 +9,7 @@ import { RolePermissions } from "@/types/objects";
 import { deadBooleanToString } from "@/app/helpers/utils";
 import { parse } from "csv-parse";
 import { createProgressStream } from "@/app/helpers/progress";
+import { md5 } from "js-md5";
 
 async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["analysis_run_name"], url: string) {
 	const { userId, sessionClaims } = await auth();
@@ -38,7 +39,9 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 		let headers = [] as string[];
 
 		await stream.message("Reading file into memory", 15);
-		const parser = parse(await response.text(), { delimiter: "\t" });
+		const text = await response.text();
+		const textMd5 = md5(text);
+		const parser = parse(text, { delimiter: "\t" });
 		await stream.message("File read into memory", 25);
 
 		let i = 0;
@@ -138,6 +141,17 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 				} else if (!analysis.Project.userIds.includes(userId)) {
 					throw new Error("Unauthorized");
 				}
+
+				//add occurrence file to analysis
+				await tx.analysis.update({
+					where: {
+						analysis_run_name
+					},
+					data: {
+						occurrenceFileUrl_ODE: url,
+						occurrenceFileChecksum_ODE: textMd5
+					}
+				});
 
 				//occurrences
 				console.log("occurrences");

@@ -3,13 +3,15 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/projectSubmit";
-import { NetworkProgressPacket } from "@/types/globals";
+import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionMany } from "@/app/helpers/progress";
+import { upload } from "@vercel/blob/client";
+import { parse } from "csv-parse";
 
 //TODO: store submission files on upload, attach files to project/analysis, allow editing submissions by uploading replacement files
 export default function ProjectSubmit() {
@@ -18,6 +20,8 @@ export default function ProjectSubmit() {
 
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
+
+	const [project_id, setProject_id] = useState("");
 
 	//response state variables that will have information streamed to them
 	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
@@ -28,6 +32,9 @@ export default function ProjectSubmit() {
 	//state variable that will have any error passed to it
 	const [errorMessage, setErrorMessage] = useState("");
 
+	//file urls to delete if an error occurs
+	const [fileUrls, setFileUrls] = useState([] as string[]);
+
 	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
@@ -36,23 +43,17 @@ export default function ProjectSubmit() {
 	//detect when there's an error
 	useEffect(() => {
 		if (projectResponse?.statusMessage === "error") {
-			setLoading(false);
-			setErrorMessage(projectResponse.error);
-			modalRef.current?.showModal();
+			doError(projectResponse.error);
 		}
 	}, [projectResponse]);
 	useEffect(() => {
 		if (sampleResponse?.statusMessage === "error") {
-			setLoading(false);
-			setErrorMessage(sampleResponse.error);
-			modalRef.current?.showModal();
+			doError(sampleResponse.error);
 		}
 	}, [sampleResponse]);
 	useEffect(() => {
 		if (libraryResponse?.statusMessage === "error") {
-			setLoading(false);
-			setErrorMessage(libraryResponse.error);
-			modalRef.current?.showModal();
+			doError(libraryResponse.error);
 		}
 	}, [libraryResponse]);
 
@@ -67,11 +68,85 @@ export default function ProjectSubmit() {
 				router.push("/submit/analysis");
 			}, 5000);
 		} else if (globalResponse?.statusMessage === "error") {
-			setLoading(false);
-			setErrorMessage(globalResponse.error);
-			modalRef.current?.showModal();
+			doError(globalResponse.error);
 		}
 	}, [globalResponse]);
+
+	async function doError(err: string) {
+		//delete files from blob storage
+		for (const url of fileUrls) {
+			await fetch(`/api/file/delete?url=${url}`, {
+				method: "DELETE"
+			});
+		}
+
+		setLoading(false);
+		setErrorMessage(err);
+		modalRef.current?.showModal();
+	}
+
+	//get project_id from projectMetadata file for blob store
+	async function handleProjectFile(event: ChangeEvent<HTMLInputElement>) {
+		if (event.currentTarget.files && event.currentTarget.files[0]) {
+			const file = event.currentTarget.files[0] as File;
+
+			let headers;
+			const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+			for await (const record of parser) {
+				if (!headers) {
+					headers = Object.keys(record);
+
+					//check if headers have term_name
+					if (!headers.includes("term_name")) {
+						setErrorMessage('No column with title "term_name" found.');
+						modalRef.current?.showModal();
+						event.target.value = "";
+						return;
+					}
+
+					//check if headers have project_level
+					if (!headers.includes("project_level")) {
+						setErrorMessage('No column with title "project_level" found.');
+						modalRef.current?.showModal();
+						event.target.value = "";
+						return;
+					}
+				}
+
+				if (record.term_name && record.term_name === "project_id") {
+					const value = record.project_level;
+
+					if (record.project_level) {
+						//get project from database
+						const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
+						const json = (await response.json()) as NetworkPacket;
+
+						//handle errors
+						if (json.statusMessage === "error") {
+							setErrorMessage(json.error);
+							modalRef.current?.showModal();
+							event.target.value = "";
+							return;
+						} else {
+							if (json.result[0]) {
+								setErrorMessage(`Project with project_id of "${value}" already exists.`);
+								modalRef.current?.showModal();
+								event.target.value = "";
+							} else {
+								setProject_id(value);
+							}
+						}
+					} else {
+						setErrorMessage('No value found in "project_level" column for project_id.');
+						modalRef.current?.showModal();
+						event.target.value = "";
+					}
+
+					return;
+				}
+			}
+		}
+	}
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -86,22 +161,57 @@ export default function ProjectSubmit() {
 
 		const isPrivate = event.currentTarget.isPrivate.checked;
 
-		//create csv-parse parsers from the File objects
 		const projectFile = event.currentTarget.project.files[0] as File;
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
-		//trigger streamed action
-		await doProgressActionMany(
-			projectSubmitAction,
-			[setProjectResponse, setSampleResponse, setLibraryResponse],
-			setGlobalResponse,
-			projectFile,
-			sampleFile,
-			libraryFile,
-			userIds,
-			isPrivate
-		);
+		try {
+			//create csv-parse parsers from the File objects
+			setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+			const projectFileUrl = (
+				await upload(`submissions/${project_id}/projectMetadata/${projectFile.name}`, projectFile, {
+					access: "public",
+					handleUploadUrl: "/api/file/upload",
+					multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+				})
+			).url;
+			setFileUrls([projectFileUrl]);
+
+			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+			const sampleFileUrl = (
+				await upload(`submissions/${project_id}/sampleMetadata/${sampleFile.name}`, sampleFile, {
+					access: "public",
+					handleUploadUrl: "/api/file/upload",
+					multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+				})
+			).url;
+			setFileUrls([projectFileUrl, sampleFileUrl]);
+
+			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+			const libraryFileUrl = (
+				await upload(`submissions/${project_id}/libraryMetadata/${libraryFile.name}`, libraryFile, {
+					access: "public",
+					handleUploadUrl: "/api/file/upload",
+					multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+				})
+			).url;
+			setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+
+			//trigger streamed action
+			await doProgressActionMany(
+				projectSubmitAction,
+				[setProjectResponse, setSampleResponse, setLibraryResponse],
+				setGlobalResponse,
+				projectFileUrl,
+				sampleFileUrl,
+				libraryFileUrl,
+				userIds,
+				isPrivate
+			);
+		} catch (err) {
+			const error = err as Error;
+			doError(error.message);
+		}
 	}
 
 	return (
@@ -138,6 +248,7 @@ export default function ProjectSubmit() {
 							required
 							disabled={loading}
 							accept=".tsv"
+							onChange={handleProjectFile}
 						/>
 					</fieldset>
 					<ProgressBar loading={loading} data={projectResponse} />

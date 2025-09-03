@@ -69,7 +69,13 @@ export default async function Project() {
 
 					<div className="aspect-5/2">
 						<div className="rounded-lg border border-base-300 h-full">
-							<Table table="project" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+							<Table
+								table="project"
+								defaultTake={25}
+								hideEmptyAtStart
+								filterHeadersAtStart
+								omit={["projectMetadataFileUrl_ODE", "sampleMetadataFileUrl_ODE", "libraryMetadataFileUrl_ODE"]}
+							/>
 						</div>
 					</div>
 				</div>
