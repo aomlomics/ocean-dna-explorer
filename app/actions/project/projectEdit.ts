@@ -378,6 +378,8 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 						90 + (5 / assays.length) * i
 					);
 				}
+
+				//TODO: move old file to storage
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
