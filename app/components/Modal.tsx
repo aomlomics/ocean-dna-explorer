@@ -6,18 +6,20 @@ export default function Modal({
 	children,
 	ref,
 	xRef,
-	clickOffRef
+	clickOffRef,
+	className
 }: {
 	children?: ReactNode;
 	ref: RefObject<HTMLDialogElement | null>;
 	xRef?: RefObject<HTMLButtonElement | null>;
 	clickOffRef?: RefObject<HTMLButtonElement | null>;
+	className?: string;
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 
 	return (
 		<dialog ref={ref || modalRef} className="modal">
-			<div className="modal-box">
+			<div className={`modal-box ${className}`}>
 				<button
 					ref={xRef}
 					className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"

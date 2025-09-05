@@ -12,6 +12,7 @@ import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditB
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
 import projectUpdateUserIdsAction from "@/app/actions/project/projectUpdateUserIds";
 import SamplesEditButton from "@/app/components/mySubmissions/SamplesEditButton";
+import TsvDisplayButton from "@/app/components/mySubmissions/TsvDisplayButton";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -26,11 +27,14 @@ export default async function MySubmissions() {
 			}
 		},
 		omit: {
-			editHistory: true,
-			dateSubmitted: true
+			editHistory: true
 		},
 		include: {
-			Analyses: true
+			Analyses: {
+				omit: {
+					editHistory: true
+				}
+			}
 		}
 	});
 
@@ -87,6 +91,35 @@ export default async function MySubmissions() {
 												>
 													{proj.project_id}
 												</Link>
+
+												<div className="flex gap-3">
+													<TsvDisplayButton
+														label="Project Metadata"
+														url={proj.projectMetadataFileUrl_ODE}
+														parserOptions={{ columns: true, delimiter: "\t" }}
+													/>
+													<TsvDisplayButton
+														label="Sample Metadata"
+														url={proj.sampleMetadataFileUrl_ODE}
+														parserOptions={{
+															columns: true,
+															delimiter: "\t",
+															comment: "#",
+															comment_no_infix: true
+														}}
+													/>
+													<TsvDisplayButton
+														label="Library Metadata"
+														url={proj.libraryMetadataFileUrl_ODE}
+														parserOptions={{
+															columns: true,
+															delimiter: "\t",
+															comment: "#",
+															comment_no_infix: true
+														}}
+													/>
+												</div>
+
 												<div className="flex gap-3">
 													<SubmissionUsersButton
 														userIds={proj.userIds}
@@ -94,15 +127,6 @@ export default async function MySubmissions() {
 														target={proj.project_id}
 													/>
 
-													<SubmissionEditButton
-														table="project"
-														titleField="project_id"
-														data={proj}
-														action={projectEditAction}
-														privateToggleDescription="This will also update all associated Samples, Assays, and Libraries. If this setting is changing to private, all Analyses for this Project along with their associated Occurrences, Assignments, Features, and Taxonomies will be updated as well."
-														omit={["userIds", "Analyses"]}
-													/>
-													<SamplesEditButton />
 													<SubmissionDeleteButton
 														field="project_id"
 														value={proj.project_id}
@@ -127,16 +151,26 @@ export default async function MySubmissions() {
 																>
 																	{analysis.analysis_run_name}
 																</Link>
+
 																<div className="flex gap-3">
-																	<SubmissionEditButton
-																		table="analysis"
-																		titleField="analysis_run_name"
-																		data={analysis}
-																		action={analysisEditAction}
-																		disabled={["project_id", "assay_name"]}
-																		privateToggleDescription="This will also update all associated Occurrences, Assignments, Features, and Taxonomies."
-																		omit={["editHistory", "dateSubmitted"]}
+																	<TsvDisplayButton
+																		label="Analysis Metadata"
+																		url={analysis.analysisMetadataFileUrl_ODE}
+																		parserOptions={{ columns: true, delimiter: "\t" }}
 																	/>
+																	<TsvDisplayButton
+																		label="ASV Taxa/Features"
+																		url={analysis.asvFileUrl_ODE as string}
+																		parserOptions={{ columns: true, delimiter: "\t" }}
+																	/>
+																	<TsvDisplayButton
+																		label="Occurrence Table"
+																		url={analysis.occurrenceFileUrl_ODE as string}
+																		parserOptions={{ delimiter: "\t" }}
+																	/>
+																</div>
+
+																<div className="flex gap-3">
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
 																		value={analysis.analysis_run_name}

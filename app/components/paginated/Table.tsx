@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { fetcher } from "@/app/helpers/utils";
 
+//TODO: sort table by column
+//TODO: clamp table column width, add hover info to clamped columns
 export default function Table({
 	table,
 	where,
@@ -185,7 +187,7 @@ export default function Table({
 		}
 	}, [data]);
 
-	if (isLoading) return <LoadingTable />;
+	if (isLoading) return <LoadingTable take={take} page={page} />;
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 

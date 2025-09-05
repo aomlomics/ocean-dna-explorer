@@ -66,7 +66,7 @@ declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;
 		type ChangesType = { field: string; oldValue: string; newValue: string }[];
-		type EditHistoryType = { dateEdited: Date; changes: ChangesType }[];
+		type EditHistoryType = { id: string; dateEdited: Date; changes: ChangesType }[];
 	}
 
 	interface CustomJwtSessionClaims {

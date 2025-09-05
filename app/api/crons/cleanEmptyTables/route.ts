@@ -28,23 +28,23 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 			}
 		});
 
-		console.log("empty features delete");
-		await unsafePrisma.feature.deleteMany({
-			where: {
-				Occurrences: {
-					none: {}
-				}
-			}
-		});
+		// console.log("empty features delete");
+		// await unsafePrisma.feature.deleteMany({
+		// 	where: {
+		// 		Occurrences: {
+		// 			none: {}
+		// 		}
+		// 	}
+		// });
 
-		console.log("empty taxonomies delete");
-		await unsafePrisma.taxonomy.deleteMany({
-			where: {
-				Assignments: {
-					none: {}
-				}
-			}
-		});
+		// console.log("empty taxonomies delete");
+		// await unsafePrisma.taxonomy.deleteMany({
+		// 	where: {
+		// 		Assignments: {
+		// 			none: {}
+		// 		}
+		// 	}
+		// });
 
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {

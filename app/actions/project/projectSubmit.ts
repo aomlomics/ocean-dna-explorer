@@ -24,8 +24,9 @@ import { RolePermissions } from "@/types/objects";
 import { parse } from "csv-parse";
 import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
+import { md5 } from "js-md5";
 
-type Channel = { file: File; stream: ReturnType<typeof createProgressStream> };
+type Channel = { url: string; stream: ReturnType<typeof createProgressStream> };
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -70,8 +71,20 @@ async function doSubmit(
 		let assayNames = [] as string[];
 		const projectUserDefined = {} as PrismaJson.UserDefinedType;
 
-		await projectChannel.stream.message("Reading file into memory", 10);
-		const projectParser = parse(await projectChannel.file.text(), { columns: true, delimiter: "\t" });
+		//fetch file from blob storage
+		await projectChannel.stream.message("Downloading file", 10);
+		const projectFileResponse = await fetch(projectChannel.url);
+		if (!projectFileResponse.ok) {
+			await projectChannel.stream.error(
+				`Project file responded ${projectFileResponse.status}: ${projectFileResponse.statusText}.`
+			);
+			return;
+		}
+
+		await projectChannel.stream.message("Reading file into memory", 15);
+		const projectText = await projectFileResponse.text();
+		const projectMd5 = md5(projectText);
+		const projectParser = parse(projectText, { columns: true, delimiter: "\t" });
 		await projectChannel.stream.message("File read into memory", 25);
 
 		let i = 0;
@@ -118,7 +131,7 @@ async function doSubmit(
 				} else {
 					//Project Level
 					//project table
-					parseSchemaToObject(record.term_name, record.project_level, projectCol, "project");
+					parseSchemaToObject(field, value, projectCol, "project");
 
 					//primer table
 					parseSchemaToObject(field, value, projectCol, "primer");
@@ -167,38 +180,6 @@ async function doSubmit(
 			}
 		}
 
-		//@ts-ignore issue with Json database type
-		const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
-			{
-				...projectCol,
-				userIds: userIds,
-				isPrivate,
-				userDefined: Object.keys(projectUserDefined).length ? projectUserDefined : "JsonNull",
-				editHistory: "JsonNull"
-			},
-			{
-				errorMap: (error, ctx) => {
-					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${projectCol[error.path[0]]}`
-					};
-				}
-			}
-		);
-
-		if (!parsedProject.success) {
-			await projectChannel.stream.error(
-				`Table: Project\n` +
-					`Key: ${projectCol.project_id}\n\n` +
-					`${parsedProject.error.issues.map((e) => e.message).join("\n\n")}`
-			);
-			return;
-		}
-
-		//@ts-ignore issue with Json database type
-		project = parsedProject.data;
-
 		for (let p of Object.values(primerCols)) {
 			const parsedPrimer = PrimerOptionalDefaultsSchema.safeParse(
 				{
@@ -231,15 +212,27 @@ async function doSubmit(
 		}
 
 		await projectChannel.stream.message(
-			"All entries successfully parsed into database format. Awaiting parsing of other files to upload to database.",
+			"All entries (except Project) successfully parsed into database format. Awaiting parsing of other files to upload to database.",
 			75
 		);
 
 		//Library file
 		console.log("library file");
 
-		await libraryChannel.stream.message("Reading file into memory", 10);
-		const libraryParser = parse(await libraryChannel.file.text(), {
+		//fetch file from blob storage
+		await libraryChannel.stream.message("Downloading file", 10);
+		const libraryFileResponse = await fetch(libraryChannel.url);
+		if (!libraryFileResponse.ok) {
+			await libraryChannel.stream.error(
+				`Library file responded ${libraryFileResponse.status}: ${libraryFileResponse.statusText}.`
+			);
+			return;
+		}
+
+		await libraryChannel.stream.message("Reading file into memory", 15);
+		const libraryText = await libraryFileResponse.text();
+		const libraryMd5 = md5(libraryText);
+		const libraryParser = parse(libraryText, {
 			columns: true,
 			delimiter: "\t",
 			comment: "#",
@@ -270,6 +263,8 @@ async function doSubmit(
 						parseSchemaToObject(field, value, libraryRow, "library");
 					}
 				}
+
+				//TODO: assay_name for assays is being gotten from libraryMetadata file, should get it elsewhere
 
 				sampToAssay[libraryRow.samp_name] = assayRow.assay_name;
 
@@ -355,8 +350,20 @@ async function doSubmit(
 		//Sample file
 		console.log("sample file");
 
-		await sampleChannel.stream.message("Reading file into memory", 10);
-		const sampleParser = parse(await sampleChannel.file.text(), {
+		//fetch file from blob storage
+		await sampleChannel.stream.message("Downloading file", 10);
+		const sampleFileResponse = await fetch(sampleChannel.url);
+		if (!sampleFileResponse.ok) {
+			await sampleChannel.stream.error(
+				`Sample file responded ${sampleFileResponse.status}: ${sampleFileResponse.statusText}.`
+			);
+			return;
+		}
+
+		await sampleChannel.stream.message("Reading file into memory", 15);
+		const sampleText = await sampleFileResponse.text();
+		const sampleMd5 = md5(sampleText);
+		const sampleParser = parse(sampleText, {
 			columns: true,
 			delimiter: "\t",
 			comment: "#",
@@ -435,6 +442,44 @@ async function doSubmit(
 				return filtered;
 			}, [] as Prisma.SampleCreateOrConnectWithoutAssaysInput[]);
 		}
+
+		//@ts-ignore issue with Json database type
+		const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
+			{
+				...projectCol,
+				userIds: userIds,
+				isPrivate,
+				userDefined: Object.keys(projectUserDefined).length ? projectUserDefined : "JsonNull",
+				editHistory: "JsonNull",
+				projectMetadataFileUrl_ODE: projectChannel.url,
+				projectMetadataFileChecksum_ODE: projectMd5,
+				sampleMetadataFileUrl_ODE: sampleChannel.url,
+				sampleMetadataFileChecksum_ODE: sampleMd5,
+				libraryMetadataFileUrl_ODE: libraryChannel.url,
+				libraryMetadataFileChecksum_ODE: libraryMd5
+			},
+			{
+				errorMap: (error, ctx) => {
+					return {
+						message: `Field: ${error.path[0]}\nIssue: ${
+							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+						}\nValue: ${projectCol[error.path[0]]}`
+					};
+				}
+			}
+		);
+
+		if (!parsedProject.success) {
+			await projectChannel.stream.error(
+				`Table: Project\n` +
+					`Key: ${projectCol.project_id}\n\n` +
+					`${parsedProject.error.issues.map((e) => e.message).join("\n\n")}`
+			);
+			return;
+		}
+
+		//@ts-ignore issue with Json database type
+		project = parsedProject.data;
 
 		await projectChannel.stream.message(
 			"All entries successfully parsed into database format. Parsing data into database.",
@@ -523,9 +568,9 @@ async function doSubmit(
 }
 
 export default async function projectSubmitAction(
-	projectFile: File,
-	sampleFile: File,
-	libraryFile: File,
+	projectFileUrl: string,
+	sampleFileUrl: string,
+	libraryFileUrl: string,
 	userIds: string[],
 	isPrivate: boolean
 ) {
@@ -534,11 +579,25 @@ export default async function projectSubmitAction(
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
+	if (typeof projectFileUrl !== "string" || typeof sampleFileUrl !== "string" || typeof libraryFileUrl !== "string") {
+		globalStream.error("Arguments are not of correct type");
+
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
+
+		return {
+			global: globalStream.readable,
+			readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
+		};
+	}
+
 	doSubmit(
 		globalStream,
-		{ file: projectFile, stream: projectStream },
-		{ file: sampleFile, stream: sampleStream },
-		{ file: libraryFile, stream: libraryStream },
+		{ url: projectFileUrl, stream: projectStream },
+		{ url: sampleFileUrl, stream: sampleStream },
+		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
 		isPrivate
 	).then(() => {

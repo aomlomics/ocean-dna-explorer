@@ -90,7 +90,13 @@ export default async function Analysis() {
 
 					<div className="aspect-5/2">
 						<div className="rounded-lg border border-base-300 h-full">
-							<Table table="analysis" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+							<Table
+								table="analysis"
+								defaultTake={25}
+								hideEmptyAtStart
+								filterHeadersAtStart
+								omit={["analysisMetadataFileUrl_ODE", "asvFileUrl_ODE", "occurrenceFileUrl_ODE"]}
+							/>
 						</div>
 					</div>
 				</div>

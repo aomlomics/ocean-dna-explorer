@@ -13,6 +13,14 @@ model Project {
     Samples  Sample[]
     Analyses Analysis[]
 
+    // Submission File URLs
+    projectMetadataFileUrl_ODE      String @default("")
+    projectMetadataFileChecksum_ODE String @default("")
+    sampleMetadataFileUrl_ODE       String @default("")
+    sampleMetadataFileChecksum_ODE  String @default("")
+    libraryMetadataFileUrl_ODE      String @default("")
+    libraryMetadataFileChecksum_ODE String @default("")
+
     // Data
     // Project
     recordedBy           String //[]

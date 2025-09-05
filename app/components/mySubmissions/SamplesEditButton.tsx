@@ -1,16 +1,26 @@
 "use client";
 
-import sampleEditAction from "@/app/actions/sample/sampleEdit";
-import { FormEvent, useRef, useState } from "react";
+import sampleEditAction from "@/app/actions/project/sample/sampleEdit";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { NetworkProgressPacket } from "@/types/globals";
 import ProgressBar from "../ProgressBar";
 import { doProgressAction } from "@/app/helpers/progress";
+import Modal from "../Modal";
 
 export default function SubmissionUsersButton() {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 	const [loading, setLoading] = useState(false);
 	const [data, setData] = useState(undefined as NetworkProgressPacket);
+
+	useEffect(() => {
+		if (data?.statusMessage === "error") {
+			setLoading(false);
+			modalRef.current?.showModal();
+		} else if (data?.statusMessage === "success") {
+			close();
+		}
+	}, [data]);
 
 	function close() {
 		modalRef.current?.close();
@@ -25,8 +35,6 @@ export default function SubmissionUsersButton() {
 
 		const file = event.currentTarget.sampleMetadata.files[0] as File;
 		await doProgressAction({ action: sampleEditAction, setter: setData, args: [file] });
-
-		close();
 	}
 
 	return (
@@ -37,26 +45,24 @@ export default function SubmissionUsersButton() {
 			>
 				Edit Samples
 			</button>
-			<dialog ref={modalRef} className="modal">
-				<div className="modal-box overflow-y-visible">
-					<button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={close}>
-						✕
-					</button>
-
-					<form ref={formRef} onSubmit={handleSubmit}>
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Sample Metadata File:</legend>
-							<input type="file" name="sampleMetadata" className="file-input" required accept=".tsv" />
-						</fieldset>
-						<button className="btn">Submit</button>
-					</form>
-
-					<ProgressBar loading={loading} data={data} />
-				</div>
-				<form method="dialog" onSubmit={close} className="modal-backdrop">
-					<button>close</button>
+			<Modal ref={modalRef}>
+				<form ref={formRef} onSubmit={handleSubmit}>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend">Sample Metadata File:</legend>
+						<input type="file" name="sampleMetadata" className="file-input" required accept=".tsv" />
+					</fieldset>
+					<button className="btn">Submit</button>
 				</form>
-			</dialog>
+
+				<ProgressBar loading={loading} data={data} />
+
+				{data?.statusMessage === "error" && (
+					<>
+						<h3 className="text-lg font-bold mb-2 text-error">Edit Submission Failed</h3>
+						<p className="mb-2 font-light whitespace-pre-wrap">{data.error}</p>
+					</>
+				)}
+			</Modal>
 		</>
 	);
 }

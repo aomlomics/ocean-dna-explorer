@@ -6,6 +6,7 @@ import { Dispatch, MouseEventHandler, ReactNode, SetStateAction, useEffect, useS
 import { useDebouncedCallback } from "use-debounce";
 import Image from "next/image";
 
+//TODO: breaks when page is refreshed
 export default function UserAdder({
 	submittable,
 	userIds,

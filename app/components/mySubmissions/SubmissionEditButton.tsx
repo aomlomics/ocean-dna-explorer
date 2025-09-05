@@ -199,22 +199,31 @@ export default function SubmissionEditButton({
 										</fieldset>
 									);
 								} else if (type === "date") {
-									//TODO: make date default value work
-									// acc.push(
-									// 	<fieldset key={field} className="fieldset">
-									// 		<legend className="fieldset-legend flex gap-2">
-									// 			<h2>{field}</h2>
-									// 			<InfoButton infoText={type} />
-									// 		</legend>
-									// 		<input
-									// 			name={field}
-									// 			type="datetime-local"
-									// 			className="input input-primary w-full"
-									// 			disabled={disabled && disabled.includes(field)}
-									// 			defaultValue={value}
-									// 		/>
-									// 	</fieldset>
-									// );
+									acc.push(
+										<fieldset key={field} className="fieldset">
+											<legend className="fieldset-legend flex gap-2">
+												<h2>{field}</h2>
+												<InfoButton infoText={type} />
+											</legend>
+											<input
+												name={field}
+												type="datetime-local"
+												className="input input-primary w-full"
+												disabled={disabled && disabled.includes(field)}
+												defaultValue={
+													value &&
+													value.toLocaleDateString("en-CA") +
+														"T" +
+														value.toLocaleTimeString("en-CA", {
+															hour: "2-digit",
+															minute: "2-digit",
+															second: "2-digit",
+															hour12: false
+														})
+												}
+											/>
+										</fieldset>
+									);
 								} else if (type === "json") {
 									//TODO: add indicator for user defined section
 									for (const userDefinedField in value) {
