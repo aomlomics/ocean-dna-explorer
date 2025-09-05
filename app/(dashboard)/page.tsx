@@ -125,12 +125,11 @@ export default async function Home() {
 					<div className="aspect-square md:aspect-5/2 w-full md:w-1/2 rounded-lg overflow-hidden">
 						<Map
 							locations={locations}
-							id="samp_name"
 							title="project_id"
 							titleTable="project"
-							table="sample"
 							iconSize={16}
 							legend={projectColors}
+							draw
 						/>
 					</div>
 					<div className="w-full md:w-1/2">

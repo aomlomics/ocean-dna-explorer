@@ -1,6 +1,7 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export type RelationMetadata = {
 	field: string;
@@ -8,6 +9,16 @@ export type RelationMetadata = {
 	type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
 };
 
+type TableMetadataValue = {
+	schema: any;
+	enumSchema: ZodEnum<[string, ...string[]]>;
+	fieldOrder?: string[];
+	titleField: string | string[];
+	subFields?: string[];
+	relations: RelationMetadata[];
+	relationFields: Record<string, Uncapitalize<Prisma.ModelName>>;
+	plural: string;
+};
 const TableMetadata = {
 	project: {
 		schema: PrismaZodTypes.ProjectSchema,
@@ -139,19 +150,7 @@ const TableMetadata = {
 		relationFields: {},
 		plural: "Taxonomies"
 	}
-} as Record<
-	Uncapitalize<Prisma.ModelName>,
-	{
-		schema: any;
-		enumSchema: ZodEnum<[string, ...string[]]>;
-		fieldOrder?: string[];
-		titleField: string | string[];
-		subFields?: string[];
-		relations: RelationMetadata[];
-		relationFields: Record<string, Lowercase<Prisma.ModelName>>;
-		plural: string;
-	}
->;
+} as Record<Uncapitalize<Prisma.ModelName>, TableMetadataValue>;
 
 //TODO: type ZodObject properly
 function getRelations(fieldsEnumSchema: ZodEnum<[string, ...string[]]>, relationsSchema: any) {
@@ -185,13 +184,13 @@ for (let e in TableMetadata) {
 		let relationTable = "" as Prisma.ModelName;
 
 		//self
-		if (rel.toLowerCase() in relations) {
+		if (rel.slice(0, 1).toLowerCase() + rel.slice(1) in relations) {
 			//singular
-			const lowercaseRelation = rel.toLowerCase() as Uncapitalize<Prisma.ModelName>;
+			const lowercaseRelation = uncapitalizeTable(rel as Prisma.ModelName);
 			relationTable = rel as Prisma.ModelName;
 
 			//other
-			if (relations[lowercaseRelation].some((f) => f.toLowerCase() === table)) {
+			if (relations[lowercaseRelation].some((f) => f.slice(0, 1).toLowerCase() + f.slice(1) === table)) {
 				//singular
 				type = "one-to-one";
 			} else {
@@ -206,7 +205,7 @@ for (let e in TableMetadata) {
 			relationTable = (lowercaseRelation.slice(0, 1).toUpperCase() + lowercaseRelation.slice(1)) as Prisma.ModelName;
 
 			//other
-			if (relations[lowercaseRelation].some((t) => t.toLowerCase() === table)) {
+			if (relations[lowercaseRelation].some((t) => t.slice(0, 1).toLowerCase() + t.slice(1) === table)) {
 				//singular
 				type = "one-to-many";
 			} else {
@@ -219,8 +218,9 @@ for (let e in TableMetadata) {
 	});
 
 	TableMetadata[table].relationFields = relations[table].reduce((acc, rel) => {
-		const relTable = rel.toLowerCase() as Lowercase<Prisma.ModelName>;
-		if (relTable in relations) {
+		const uncapsRel = rel.slice(0, 1).toLowerCase() + rel.slice(1);
+		if (uncapsRel in relations) {
+			const relTable = uncapsRel as Uncapitalize<Prisma.ModelName>;
 			if (typeof TableMetadata[relTable].titleField === "string") {
 				acc[TableMetadata[relTable].titleField] = relTable;
 			} else {
@@ -229,7 +229,13 @@ for (let e in TableMetadata) {
 		}
 
 		return acc;
-	}, {} as Record<string, Lowercase<Prisma.ModelName>>);
+	}, {} as Record<string, Uncapitalize<Prisma.ModelName>>);
 }
 
-export default TableMetadata;
+//duplicates keys with capitalized model names, mapping them to the same value as uncapitalized keys
+//Ex: both project and Project map to the same value
+for (const model of Object.keys(Prisma.ModelName)) {
+	(TableMetadata as any)[model] = TableMetadata[uncapitalizeTable(model as Prisma.ModelName)];
+}
+
+export default TableMetadata as Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, TableMetadataValue>;

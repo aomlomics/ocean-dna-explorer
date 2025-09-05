@@ -1,25 +1,27 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
-import { divIcon, LatLng, LatLngBoundsExpression } from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, FeatureGroup } from "react-leaflet";
+import { divIcon, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
 import { EXPLORE_ROUTES } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
+import { EditControl } from "react-leaflet-draw-next";
 
 export default function ActualMap({
 	locations,
-	id,
+	id = "samp_name",
 	title,
 	titleTable,
 	iconSize = 25,
-	table,
+	table = "sample",
 	legend,
-	cluster = false
+	cluster = false,
+	draw = false
 }: {
 	locations: {
 		decimalLatitude: number | null;
@@ -27,15 +29,25 @@ export default function ActualMap({
 		color?: string;
 		[key: string]: any;
 	}[];
-	id: string;
+	id?: string;
 	title?: string;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	iconSize?: number;
-	table: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<Prisma.ModelName>;
 	legend?: Record<string, string>;
 	cluster?: boolean;
+	draw?: boolean;
 }) {
 	const [zoomLevel, setZoomLevel] = useState(5);
+	const [drawReady, setDrawReady] = useState(false);
+
+	const featureGroupRef = useRef<LFeatureGroup>(null);
+
+	useEffect(() => {
+		if (featureGroupRef.current && !drawReady) {
+			setDrawReady(true);
+		}
+	}, [featureGroupRef]);
 
 	function ZoomControl() {
 		const mapEvents = useMapEvents({
@@ -160,6 +172,7 @@ export default function ActualMap({
 
 	return (
 		<div className="flex flex-col items-start h-full w-full">
+			{drawReady.toString()}
 			<MapContainer
 				maxBounds={[
 					[-180, -180],
@@ -174,6 +187,25 @@ export default function ActualMap({
 					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
 				/>
 				<ZoomControl />
+				<FeatureGroup ref={featureGroupRef}>
+					{featureGroupRef.current && (
+						<EditControl
+							position="topright"
+							onEdited={(e) => console.log("Features edited:", e)}
+							onCreated={(e) => console.log("Feature created:", e)}
+							onDeleted={(e) => console.log("Features deleted:", e)}
+							draw={{
+								rectangle: false,
+								circle: true,
+								polyline: false,
+								polygon: true,
+								marker: false,
+								circlemarker: false
+							}}
+							featureGroup={featureGroupRef.current}
+						/>
+					)}
+				</FeatureGroup>
 				{points.map((loc, i) => (
 					<Marker
 						key={loc.decimalLatitude.toString() + loc.decimalLongitude.toString() + i}

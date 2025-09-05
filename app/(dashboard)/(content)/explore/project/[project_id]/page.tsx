@@ -185,7 +185,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Map" defaultChecked />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-lg p-6">
 						<div className="card-body p-0 overflow-hidden aspect-5/2">
-							<Map locations={project.Samples} id="samp_name" table="sample" cluster />
+							<Map locations={project.Samples} cluster />
 						</div>
 					</div>
 

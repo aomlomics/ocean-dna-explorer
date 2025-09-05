@@ -76,7 +76,7 @@ export function parseSchemaToObject(
 	field: string,
 	value: string,
 	obj: Record<string, string | string[] | number | number[] | Date | boolean | JsonValue | null>,
-	table: Lowercase<Prisma.ModelName>
+	table: Uncapitalize<Prisma.ModelName>
 ) {
 	//check if the field name is in the Schema
 	if (value && TableMetadata[table].enumSchema.options.includes(field)) {

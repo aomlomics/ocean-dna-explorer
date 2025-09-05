@@ -1,111 +1,144 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: false;
+	themes: false;
 }
 
 @plugin "daisyui/theme" {
-  name: "light";
-  default: true;
-  
-  --color-primary: #233D7F;
-  --color-primary-content: #FFFFFF;
-  --color-secondary: #233D7F;
-  --color-secondary-content: #4A5568;
-  --color-accent: #7DBAE5;
-  --color-accent-focus: #4B95C3;
-  --color-accent-content: #E2E8F1;
-  --color-neutral: #3d4451;
-  --color-neutral-content: #FFFFFF;
-  --color-base-100: #F4F3F2;
-  --color-base-200: #EAEAEE;
-  --color-base-300: #E3E3E9;
-  --color-base-400: #C6C6D2;
-  --color-base-content: #2D3748;
-  --color-info: #EAF2FF;
-  --color-info-content: #D3E4FF;
-  --color-warning: #FFD700;
-  --color-warning-content: #1E2337;
-  --color-success: #4CAF50;
-  --color-success-content: #FFFFFF;
-  --color-error: #FF0000;
-  --color-error-content: #FFFFFF;
-  --color-map-colors: #FF6B6B;
+	name: "light";
+	default: true;
+
+	--color-primary: #233d7f;
+	--color-primary-content: #ffffff;
+	--color-secondary: #233d7f;
+	--color-secondary-content: #4a5568;
+	--color-accent: #7dbae5;
+	--color-accent-focus: #4b95c3;
+	--color-accent-content: #e2e8f1;
+	--color-neutral: #3d4451;
+	--color-neutral-content: #ffffff;
+	--color-base-100: #f4f3f2;
+	--color-base-200: #eaeaee;
+	--color-base-300: #e3e3e9;
+	--color-base-400: #c6c6d2;
+	--color-base-content: #2d3748;
+	--color-info: #eaf2ff;
+	--color-info-content: #d3e4ff;
+	--color-warning: #ffd700;
+	--color-warning-content: #1e2337;
+	--color-success: #4caf50;
+	--color-success-content: #ffffff;
+	--color-error: #ff0000;
+	--color-error-content: #ffffff;
+	--color-map-colors: #ff6b6b;
 }
 
 @plugin "daisyui/theme" {
-  name: "dark";
-  
-  --color-primary: #64ABDC;
-  --color-primary-content: #FFFFFF;
-  --color-secondary: #233D7F;
-  --color-secondary-content: #A0AEC0;
-  --color-accent: #7DBAE5;
-  --color-accent-focus: #4B95C3;
-  --color-accent-content: #E2E8F1;
-  --color-neutral: #3d4451;
-  --color-neutral-content: #1A1A1A;
-  --color-base-100: #141824;
-  --color-base-200: #1E2337;
-  --color-base-300: #232942;
-  --color-base-400: #385396;
-  --color-base-content: #E2E8F0;
-  --color-info: #2A3B6A;
-  --color-info-content: #314780;
-  --color-warning: #B8860B;
-  --color-warning-content: #1E2337;
-  --color-success: #2E8B57;
-  --color-success-content: #FFFFFF;
-  --color-error: #8B0000;
-  --color-error-content: #FFFFFF;
-  --color-map-colors: #FF6B6B;
+	name: "dark";
+
+	--color-primary: #64abdc;
+	--color-primary-content: #ffffff;
+	--color-secondary: #233d7f;
+	--color-secondary-content: #a0aec0;
+	--color-accent: #7dbae5;
+	--color-accent-focus: #4b95c3;
+	--color-accent-content: #e2e8f1;
+	--color-neutral: #3d4451;
+	--color-neutral-content: #1a1a1a;
+	--color-base-100: #141824;
+	--color-base-200: #1e2337;
+	--color-base-300: #232942;
+	--color-base-400: #385396;
+	--color-base-content: #e2e8f0;
+	--color-info: #2a3b6a;
+	--color-info-content: #314780;
+	--color-warning: #b8860b;
+	--color-warning-content: #1e2337;
+	--color-success: #2e8b57;
+	--color-success-content: #ffffff;
+	--color-error: #8b0000;
+	--color-error-content: #ffffff;
+	--color-map-colors: #ff6b6b;
 }
 
 @keyframes gradient-organic {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.9;
-  }
-  25% {
-    transform: translate(-1%, 0.5%) scale(1.01);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translate(-2%, -0.5%) scale(1.02);
-    opacity: 0.8;
-  }
-  75% {
-    transform: translate(-1%, -0.25%) scale(1.01);
-    opacity: 0.85;
-  }
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.9;
-  }
+	0% {
+		transform: translate(0, 0) scale(1);
+		opacity: 0.9;
+	}
+	25% {
+		transform: translate(-1%, 0.5%) scale(1.01);
+		opacity: 0.85;
+	}
+	50% {
+		transform: translate(-2%, -0.5%) scale(1.02);
+		opacity: 0.8;
+	}
+	75% {
+		transform: translate(-1%, -0.25%) scale(1.01);
+		opacity: 0.85;
+	}
+	100% {
+		transform: translate(0, 0) scale(1);
+		opacity: 0.9;
+	}
 }
 
 .animate-gradient-organic {
-  animation: gradient-organic 20s ease-in-out infinite;
+	animation: gradient-organic 20s ease-in-out infinite;
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(1rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+	from {
+		opacity: 0;
+		transform: translateY(1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
+	animation: fadeInUp 0.3s ease-out;
 }
 
 /* Clerk: Style 'Connect account' button text in profile/account */
 [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
-  color: #233D7F;
+	color: #233d7f;
 }
 .dark [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
-  color: #7DBAE5;
+	color: #7dbae5;
+}
+
+.leaflet-draw a {
+	width: 100px !important;
+}
+
+.leaflet-draw ul {
+	background-color: white;
+	margin: 0 2px;
+	border-radius: 5px;
+}
+
+.leaflet-draw li a {
+	padding: 0 5px;
+	width: 100% !important;
+	display: block;
+	border-radius: 5px;
+	text-align: center;
+	color: black;
+}
+
+.leaflet-draw li a:hover {
+	background-color: #f4f4f4;
+}
+
+.leaflet-draw-tooltip {
+	background-color: white;
+	color: black;
+	padding: 5px;
+	margin-left: 10px;
+	margin-top: 10px;
+	font-size: 0.7rem;
+	width: 100px;
 }

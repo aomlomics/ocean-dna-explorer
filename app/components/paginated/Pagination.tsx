@@ -100,7 +100,9 @@ export default function Pagination({
 								) : (
 									<div
 										className="grid gap-x-4"
-										style={{ gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))` }}
+										style={{
+											gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))`
+										}}
 									>
 										{TableMetadata[table].titleField.map((t) => (
 											<h3 key={`${t}1`} className="text-lg font-medium text-primary">

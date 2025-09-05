@@ -1,5 +1,6 @@
 import { Prisma, PrismaPromise } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
@@ -9,9 +10,13 @@ export async function GET(
 	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
-	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === table.toLowerCase()
+	) as Prisma.ModelName;
+	if (model) {
+		const uncapsTable = uncapitalizeTable(model);
+
 		try {
 			const { searchParams } = new URL(request.url);
 
@@ -29,7 +34,7 @@ export async function GET(
 			//filtered
 			for (let [field, value] of params) {
 				//check if field exists on table
-				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
+				const parsed = TableMetadata[model].enumSchema.safeParse(field);
 				if (!parsed.success) {
 					return NextResponse.json({
 						statusMessage: "error",
@@ -42,7 +47,7 @@ export async function GET(
 			//extra fields
 			for (let field of extraFields) {
 				//check if field exists on table
-				const parsed = TableMetadata[lowercaseTable].enumSchema.safeParse(field);
+				const parsed = TableMetadata[model].enumSchema.safeParse(field);
 				if (!parsed.success) {
 					return NextResponse.json({
 						statusMessage: "error",
@@ -60,7 +65,7 @@ export async function GET(
 
 				queries.push(
 					//@ts-ignore
-					prisma[lowercaseTable].findMany({
+					prisma[uncapsTable].findMany({
 						distinct: [field],
 						select: {
 							[field]: true
@@ -73,7 +78,7 @@ export async function GET(
 			for (let field of extraFields) {
 				queries.push(
 					//@ts-ignore
-					prisma[lowercaseTable].findMany({
+					prisma[uncapsTable].findMany({
 						distinct: [field],
 						select: {
 							[field]: true

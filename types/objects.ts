@@ -1,7 +1,6 @@
 import { Permission, Role } from "./globals";
 import { z } from "zod";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import { unsafePrisma } from "@/app/helpers/prisma";
 
 export const EXPLORE_ROUTES = {
 	project: "Projects",

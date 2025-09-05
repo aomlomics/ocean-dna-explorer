@@ -8,26 +8,28 @@ const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 
 export default function Map({
 	locations,
-	id,
+	id = "samp_name",
 	title,
 	titleTable,
 	iconSize,
-	table,
+	table = "sample",
 	legend,
-	cluster = false
+	cluster = false,
+	draw = false
 }: {
 	locations: {
 		decimalLatitude: number | null;
 		decimalLongitude: number | null;
 		[key: string]: any;
 	}[];
-	id: string;
+	id?: string;
 	title?: string;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	iconSize?: number;
-	table: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<Prisma.ModelName>;
 	legend?: Record<string, string>;
 	cluster?: boolean;
+	draw?: boolean;
 }) {
 	return (
 		<ActualMap
@@ -39,6 +41,7 @@ export default function Map({
 			table={table}
 			legend={legend}
 			cluster={cluster}
+			draw={draw}
 		/>
 	);
 }
