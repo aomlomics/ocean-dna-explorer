@@ -30,7 +30,7 @@ export function randomColors(count: number) {
 
 	return colors.map((c) => {
 		const rgb = c.rgb();
-		return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+		return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
 	});
 }
 

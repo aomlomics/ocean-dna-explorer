@@ -109,36 +109,3 @@
 .dark [data-localization-key="userProfile.start.connectedAccountsSection.primaryButton"] {
 	color: #7dbae5;
 }
-
-.leaflet-draw a {
-	width: 100px !important;
-}
-
-.leaflet-draw ul {
-	background-color: white;
-	margin: 0 2px;
-	border-radius: 5px;
-}
-
-.leaflet-draw li a {
-	padding: 0 5px;
-	width: 100% !important;
-	display: block;
-	border-radius: 5px;
-	text-align: center;
-	color: black;
-}
-
-.leaflet-draw li a:hover {
-	background-color: #f4f4f4;
-}
-
-.leaflet-draw-tooltip {
-	background-color: white;
-	color: black;
-	padding: 5px;
-	margin-left: 10px;
-	margin-top: 10px;
-	font-size: 0.7rem;
-	width: 100px;
-}
