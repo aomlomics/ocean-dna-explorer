@@ -15,12 +15,12 @@ model Analysis {
     Assignments Assignment[]
 
     // Submission File URLs
-    analysisMetadataFileUrl_ODE      String
-    analysisMetadataFileChecksum_ODE String
-    asvFileUrl_ODE                   String?
-    asvFileChecksum_ODE              String?
-    occurrenceFileUrl_ODE            String?
-    occurrenceFileChecksum_ODE       String?
+    analysisMetadataFileUrl_ODE      String  @default("")
+    analysisMetadataFileChecksum_ODE String  @default("")
+    asvFileUrl_ODE                   String? @default("")
+    asvFileChecksum_ODE              String? @default("")
+    occurrenceFileUrl_ODE            String? @default("")
+    occurrenceFileChecksum_ODE       String? @default("")
 
     // Data
     // Bioinformatics
