@@ -5,7 +5,7 @@ import Modal from "../Modal";
 import UserAdder from "../UserAdder";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
-import projectSubmitAction from "@/app/actions/project/projectSubmit";
+import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
 import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";

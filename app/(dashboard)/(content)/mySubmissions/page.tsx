@@ -1,16 +1,16 @@
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
-import projectDeleteAction from "@/app/actions/project/projectDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import analysisEditAction from "@/app/actions/analysis/analysisEdit";
-import projectEditAction from "@/app/actions/project/projectEdit";
+import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
+import projectEditAction from "@/app/actions/project/update/projectEdit";
 import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditButton";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
-import projectUpdateUserIdsAction from "@/app/actions/project/projectUpdateUserIds";
+import projectUpdateUserIdsAction from "@/app/actions/project/update/projectUpdateUserIds";
 import SamplesEditButton from "@/app/components/mySubmissions/SamplesEditButton";
 import TsvDisplayButton from "@/app/components/mySubmissions/TsvDisplayButton";
 
