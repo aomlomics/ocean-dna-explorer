@@ -1,5 +1,5 @@
 import { ProgressStream } from "@/types/globals";
-import { Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../generated/prisma/client";
+import { Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import {
@@ -9,8 +9,8 @@ import {
 	TaxonomyOptionalDefaultsSchema,
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
-import { deadBooleanToString } from "./utils";
-import { parseSchemaToObject } from "./schema";
+import { deadBooleanToString } from "../utils";
+import { parseSchemaToObject } from "../schema";
 
 export async function parseAssignmentFile(
 	stream: ProgressStream,
@@ -265,40 +265,4 @@ export async function parseOccurrenceFile(
 	}
 
 	return { occurrences, md5Checksum };
-}
-
-export function getNewEditHistory(
-	editId: string,
-	editHistory: PrismaJson.EditHistoryType | null,
-	changes: PrismaJson.ChangesType
-) {
-	if (editHistory) {
-		const currEditIndex = editHistory.findIndex((edit) => edit.id === editId);
-
-		if (currEditIndex === -1) {
-			//new edit
-			return [
-				{
-					id: editId,
-					dateEdited: new Date(),
-					changes
-				},
-				...editHistory
-			];
-		} else {
-			//group changes together into previously existing edit
-			const temp = [...editHistory];
-			temp[currEditIndex].changes = [...editHistory[currEditIndex].changes, ...changes];
-			return temp;
-		}
-	} else {
-		//new edit AND new editHistory
-		return [
-			{
-				id: editId,
-				dateEdited: new Date(),
-				changes
-			}
-		];
-	}
 }

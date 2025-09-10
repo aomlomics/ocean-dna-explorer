@@ -1,7 +1,8 @@
 "use server";
 
 import { Occurrence, Prisma } from "@/app/generated/prisma/client";
-import { getNewEditHistory, parseOccurrenceFile } from "@/app/helpers/actions";
+import { getNewEditHistory } from "@/app/helpers/actions/actions";
+import { parseOccurrenceFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { ProgressStream } from "@/types/globals";

@@ -7,7 +7,7 @@ import { Occurrence } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { createProgressStream } from "@/app/helpers/progress";
-import { parseOccurrenceFile } from "@/app/helpers/actions";
+import { parseOccurrenceFile } from "@/app/helpers/actions/analysis";
 
 async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["analysis_run_name"], url: string) {
 	const { userId, sessionClaims } = await auth();

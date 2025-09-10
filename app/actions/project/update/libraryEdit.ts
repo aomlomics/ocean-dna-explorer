@@ -11,7 +11,7 @@ import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
 import { md5 } from "js-md5";
 import { ProgressStream } from "@/types/globals";
-import { getNewEditHistory } from "@/app/helpers/actions";
+import { getNewEditHistory } from "@/app/helpers/actions/actions";
 
 async function doEdit(stream: ProgressStream, url: string, editId: string, project_id: Project["project_id"]) {
 	const { userId, sessionClaims } = await auth();
@@ -25,7 +25,6 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 	const libraries = [] as Prisma.LibraryCreateManyInput[];
 
 	try {
-		//fetch file from blob storage
 		//fetch file from blob storage
 		await stream.message("Downloading file", 10);
 		const libraryFileResponse = await fetch(url);

@@ -1,7 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { getNewEditHistory } from "@/app/helpers/actions";
+import { getNewEditHistory } from "@/app/helpers/actions/actions";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";

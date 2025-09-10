@@ -18,7 +18,7 @@ import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
 import { md5 } from "js-md5";
 import { ProgressStream } from "@/types/globals";
-import { getNewEditHistory } from "@/app/helpers/actions";
+import { getNewEditHistory } from "@/app/helpers/actions/actions";
 
 async function doEdit(stream: ProgressStream, url: string, editId: string) {
 	const { userId, sessionClaims } = await auth();
