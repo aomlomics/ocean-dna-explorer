@@ -11,8 +11,9 @@ import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
 import { md5 } from "js-md5";
 import { ProgressStream } from "@/types/globals";
+import { getNewEditHistory } from "@/app/helpers/actions";
 
-async function doEdit(stream: ProgressStream, url: string, editId: string, project_id: string) {
+async function doEdit(stream: ProgressStream, url: string, editId: string, project_id: Sample["project_id"]) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -65,6 +66,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 
 				const parsedSample = SampleOptionalDefaultsSchema.safeParse(
 					{
+						//TODO: missing sampToAssay
 						...sampleRow,
 						project_id,
 						userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
@@ -150,7 +152,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 
 				await stream.message("All checks passed.", 80);
 
-				const changes = [
+				const editHistory = getNewEditHistory(editId, dbProject.editHistory, [
 					{
 						field: "sampleMetadataFileUrl_ODE",
 						oldValue: dbProject.sampleMetadataFileUrl_ODE,
@@ -161,39 +163,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 						oldValue: dbProject.sampleMetadataFileChecksum_ODE,
 						newValue: md5Checksum
 					}
-				];
-				let editHistory;
-				if (dbProject.editHistory) {
-					const currEditIndex = dbProject.editHistory.findIndex((edit) => edit.id === editId);
-
-					if (currEditIndex === -1) {
-						//new edit
-						editHistory = [
-							{
-								id: editId,
-								dateEdited: new Date(),
-								changes
-							},
-							...dbProject.editHistory
-						];
-					} else {
-						//group changes together into previously existing edit
-						dbProject.editHistory[currEditIndex].changes = [
-							...dbProject.editHistory[currEditIndex].changes,
-							...changes
-						];
-						editHistory = dbProject.editHistory;
-					}
-				} else {
-					//new edit AND new editHistory
-					editHistory = [
-						{
-							id: editId,
-							dateEdited: new Date(),
-							changes
-						}
-					];
-				}
+				]);
 
 				//project
 				await tx.project.update({
@@ -262,7 +232,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 	}
 }
 
-export default async function sampleEditAction(url: string, editId: string, project_id: string) {
+export default async function sampleEditAction(url: string, editId: string, project_id: Sample["project_id"]) {
 	const stream = createProgressStream();
 
 	if (typeof url !== "string" || typeof editId !== "string" || typeof project_id !== "string") {

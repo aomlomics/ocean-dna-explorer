@@ -1,17 +1,19 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import { Occurrence, Prisma } from "@/app/generated/prisma/client";
+import { getNewEditHistory, parseOccurrenceFile } from "@/app/helpers/actions";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { deadBooleanToString } from "@/app/helpers/utils";
-import { OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
-import { parse } from "csv-parse";
-import { md5 } from "js-md5";
 
-async function doEdit(stream: ProgressStream, url: string, editId: string, analysis_run_name: string) {
+async function doEdit(
+	stream: ProgressStream,
+	url: string,
+	editId: string,
+	analysis_run_name: Occurrence["analysis_run_name"]
+) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -20,104 +22,12 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, analy
 		return;
 	}
 
-	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
-
 	try {
-		//fetch from blob storage
-		await stream.message("Downloading file", 10);
-		const response = await fetch(url);
-		if (!response.ok) {
-			await stream.error(
-				`Occurrence file for ${analysis_run_name} responded ${response.status}: ${response.statusText}.`
-			);
+		const parseResult = await parseOccurrenceFile(stream, url, analysis_run_name);
+		if (!parseResult) {
 			return;
 		}
-
-		let headers = [] as string[];
-
-		await stream.message("Reading file into memory", 15);
-		const text = await response.text();
-		const md5Checksum = md5(text);
-		const parser = parse(text, { delimiter: "\t" });
-		await stream.message("File read into memory", 25);
-
-		let i = 0;
-		for await (const record of parser) {
-			//get first row as headers
-			if (!headers.length) {
-				headers = record;
-			} else {
-				i++;
-
-				//iterate over each column
-				const featureid = record[0];
-				if (!featureid) {
-					await stream.error(`No "featureid" found for row ${i}.`);
-					return;
-				}
-				for (let j = 1; j < headers.length; j++) {
-					const samp_name = headers[j];
-					if (!samp_name) {
-						await stream.error(`No "samp_name" found for column ${j}.`);
-						return;
-					}
-					const organismQuantity = parseInt(record[j]);
-					if (isNaN(organismQuantity)) {
-						await stream.error(
-							`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Sample ${samp_name} (column ${j}). Value is ${record[j]}.`
-						);
-						return;
-					}
-
-					if (organismQuantity) {
-						//parse occurrence
-						const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
-							{
-								samp_name,
-								featureid,
-								organismQuantity,
-								analysis_run_name
-							},
-							{
-								errorMap: (error, ctx) => {
-									return {
-										message: `Field: ${error.path[0]}\nIssue: ${
-											ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-										}\nValue: ${
-											error.path[0] === "samp_name"
-												? samp_name
-												: error.path[0] === "featureid"
-												? featureid
-												: error.path[0] === "organismQuantity"
-												? organismQuantity
-												: undefined
-										}`
-									};
-								}
-							}
-						);
-
-						if (!parsedOccurrence.success) {
-							await stream.error(
-								`Table: Occurrence\n` +
-									`Key: ${analysis_run_name}\n` +
-									`Key: ${samp_name}\n` +
-									`Key: ${featureid}\n\n` +
-									`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
-							);
-							return;
-						}
-
-						//no optional fields
-
-						occurrences.push(parsedOccurrence.data);
-					}
-				}
-			}
-
-			//add to progress bar
-			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
-		}
+		const { occurrences, md5Checksum } = parseResult;
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
@@ -150,7 +60,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, analy
 
 				await stream.message("All checks passed.", 80);
 
-				const changes = [
+				const editHistory = getNewEditHistory(editId, dbAnalysis.editHistory, [
 					{
 						field: "occurrenceFileUrl_ODE",
 						oldValue: dbAnalysis.occurrenceFileUrl_ODE,
@@ -161,39 +71,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, analy
 						oldValue: dbAnalysis.occurrenceFileChecksum_ODE,
 						newValue: md5Checksum
 					}
-				];
-				let editHistory;
-				if (dbAnalysis.editHistory) {
-					const currEditIndex = dbAnalysis.editHistory.findIndex((edit) => edit.id === editId);
-
-					if (currEditIndex === -1) {
-						//new edit
-						editHistory = [
-							{
-								id: editId,
-								dateEdited: new Date(),
-								changes
-							},
-							...dbAnalysis.editHistory
-						];
-					} else {
-						//group changes together into previously existing edit
-						dbAnalysis.editHistory[currEditIndex].changes = [
-							...dbAnalysis.editHistory[currEditIndex].changes,
-							...changes
-						];
-						editHistory = dbAnalysis.editHistory;
-					}
-				} else {
-					//new edit AND new editHistory
-					editHistory = [
-						{
-							id: editId,
-							dateEdited: new Date(),
-							changes
-						}
-					];
-				}
+				]);
 
 				//add occurrence file to analysis
 				await tx.analysis.update({
@@ -257,7 +135,11 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, analy
 	}
 }
 
-export default async function occSubmitAction(url: string, editId: string, analysis_run_name: string) {
+export default async function occSubmitAction(
+	url: string,
+	editId: string,
+	analysis_run_name: Occurrence["analysis_run_name"]
+) {
 	const stream = createProgressStream();
 
 	doEdit(stream, url, editId, analysis_run_name).then(stream.close);

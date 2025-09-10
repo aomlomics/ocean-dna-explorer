@@ -18,6 +18,7 @@ import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
 import { md5 } from "js-md5";
 import { ProgressStream } from "@/types/globals";
+import { getNewEditHistory } from "@/app/helpers/actions";
 
 async function doEdit(stream: ProgressStream, url: string, editId: string) {
 	const { userId, sessionClaims } = await auth();
@@ -348,7 +349,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 
 				await stream.message("All checks passed.", 80);
 
-				const changes = [
+				const editHistory = getNewEditHistory(editId, dbProject.editHistory, [
 					{
 						field: "projectMetadataFileUrl_ODE",
 						oldValue: dbProject.projectMetadataFileUrl_ODE,
@@ -359,39 +360,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 						oldValue: dbProject.projectMetadataFileChecksum_ODE,
 						newValue: md5Checksum
 					}
-				];
-				let editHistory;
-				if (dbProject.editHistory) {
-					const currEditIndex = dbProject.editHistory.findIndex((edit) => edit.id === editId);
-
-					if (currEditIndex === -1) {
-						//new edit
-						editHistory = [
-							{
-								id: editId,
-								dateEdited: new Date(),
-								changes
-							},
-							...dbProject.editHistory
-						];
-					} else {
-						//group changes together into previously existing edit
-						dbProject.editHistory[currEditIndex].changes = [
-							...dbProject.editHistory[currEditIndex].changes,
-							...changes
-						];
-						editHistory = dbProject.editHistory;
-					}
-				} else {
-					//new edit AND new editHistory
-					editHistory = [
-						{
-							id: editId,
-							dateEdited: new Date(),
-							changes
-						}
-					];
-				}
+				]);
 
 				//project
 				await tx.project.update({

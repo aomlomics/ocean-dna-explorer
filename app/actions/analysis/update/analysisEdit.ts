@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
+import { getNewEditHistory } from "@/app/helpers/actions";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
@@ -137,7 +138,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 
 				await stream.message("All checks passed.", 80);
 
-				const changes = [
+				const editHistory = getNewEditHistory(editId, dbAnalysis.editHistory, [
 					{
 						field: "analysisMetadataFileUrl_ODE",
 						oldValue: dbAnalysis.analysisMetadataFileUrl_ODE,
@@ -148,39 +149,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 						oldValue: dbAnalysis.analysisMetadataFileChecksum_ODE,
 						newValue: md5Checksum
 					}
-				];
-				let editHistory;
-				if (dbAnalysis.editHistory) {
-					const currEditIndex = dbAnalysis.editHistory.findIndex((edit) => edit.id === editId);
-
-					if (currEditIndex === -1) {
-						//new edit
-						editHistory = [
-							{
-								id: editId,
-								dateEdited: new Date(),
-								changes
-							},
-							...dbAnalysis.editHistory
-						];
-					} else {
-						//group changes together into previously existing edit
-						dbAnalysis.editHistory[currEditIndex].changes = [
-							...dbAnalysis.editHistory[currEditIndex].changes,
-							...changes
-						];
-						editHistory = dbAnalysis.editHistory;
-					}
-				} else {
-					//new edit AND new editHistory
-					editHistory = [
-						{
-							id: editId,
-							dateEdited: new Date(),
-							changes
-						}
-					];
-				}
+				]);
 
 				//project
 				await tx.analysis.update({

@@ -1,6 +1,6 @@
 "use server";
 
-import { Library, Prisma } from "@/app/generated/prisma/client";
+import { Library, Prisma, Project } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { deadBooleanToString } from "@/app/helpers/utils";
 import { auth } from "@clerk/nextjs/server";
@@ -11,8 +11,9 @@ import { createProgressStream } from "@/app/helpers/progress";
 import { parseSchemaToObject } from "@/app/helpers/schema";
 import { md5 } from "js-md5";
 import { ProgressStream } from "@/types/globals";
+import { getNewEditHistory } from "@/app/helpers/actions";
 
-async function doEdit(stream: ProgressStream, url: string, editId: string, project_id: string) {
+async function doEdit(stream: ProgressStream, url: string, editId: string, project_id: Project["project_id"]) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -66,6 +67,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 
 				const parsedLibrary = LibraryOptionalDefaultsSchema.safeParse(
 					{
+						//TODO: missing data from projectMetadata file
 						...libraryRow,
 						userDefined: Object.keys(libraryUserDefined).length ? libraryUserDefined : "JsonNull"
 					},
@@ -152,7 +154,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 
 				await stream.message("All checks passed.", 80);
 
-				const changes = [
+				const editHistory = getNewEditHistory(editId, dbProject.editHistory, [
 					{
 						field: "libraryMetadataFileUrl_ODE",
 						oldValue: dbProject.libraryMetadataFileUrl_ODE,
@@ -163,39 +165,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 						oldValue: dbProject.libraryMetadataFileChecksum_ODE,
 						newValue: md5Checksum
 					}
-				];
-				let editHistory;
-				if (dbProject.editHistory) {
-					const currEditIndex = dbProject.editHistory.findIndex((edit) => edit.id === editId);
-
-					if (currEditIndex === -1) {
-						//new edit
-						editHistory = [
-							{
-								id: editId,
-								dateEdited: new Date(),
-								changes
-							},
-							...dbProject.editHistory
-						];
-					} else {
-						//group changes together into previously existing edit
-						dbProject.editHistory[currEditIndex].changes = [
-							...dbProject.editHistory[currEditIndex].changes,
-							...changes
-						];
-						editHistory = dbProject.editHistory;
-					}
-				} else {
-					//new edit AND new editHistory
-					editHistory = [
-						{
-							id: editId,
-							dateEdited: new Date(),
-							changes
-						}
-					];
-				}
+				]);
 
 				//project
 				await tx.project.update({
@@ -256,7 +226,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 	}
 }
 
-export default async function libraryEditAction(url: string, editId: string, project_id: string) {
+export default async function libraryEditAction(url: string, editId: string, project_id: Project["project_id"]) {
 	const stream = createProgressStream();
 
 	if (typeof url !== "string" || typeof editId !== "string" || typeof project_id !== "string") {
