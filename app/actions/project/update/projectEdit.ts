@@ -10,7 +10,7 @@ import {
 	PrimerScalarFieldEnumSchema,
 	AssayOptionalDefaultsSchema,
 	AssayScalarFieldEnumSchema,
-	ProjectPartialSchema
+	ProjectOptionalDefaultsSchema
 } from "@/prisma/generated/zod";
 import { RolePermissions } from "@/types/objects";
 import { parse } from "csv-parse";
@@ -160,6 +160,14 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 				return;
 			}
 
+			//unset all optional fields that were not provided
+			for (const field of AssayScalarFieldEnumSchema._def.values) {
+				if (field !== "id" && !(field in parsedAssay.data)) {
+					//@ts-ignore
+					parsedAssay.data[field] = null;
+				}
+			}
+
 			assays.push(parsedAssay.data);
 		}
 
@@ -191,16 +199,32 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 				return;
 			}
 
+			//unset all optional fields that were not provided
+			for (const field of PrimerScalarFieldEnumSchema._def.values) {
+				if (field !== "id" && !(field in parsedPrimer.data)) {
+					//@ts-ignore
+					parsedPrimer.data[field] = null;
+				}
+			}
+
 			primers.push(parsedPrimer.data);
 		}
 
 		//@ts-ignore issue with Json database type
-		const parsedProject = ProjectPartialSchema.safeParse(
+		const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
 			{
 				...projectCol,
 				userDefined: Object.keys(projectUserDefined).length ? projectUserDefined : "JsonNull",
 				projectMetadataFileUrl_ODE: url,
-				projectMetadataFileChecksum_ODE: md5Checksum
+				projectMetadataFileChecksum_ODE: md5Checksum,
+				//override with values from database before submitting
+				userIds: [userId],
+				isPrivate: true,
+				editHistory: "JsonNull",
+				sampleMetadataFileUrl_ODE: "",
+				sampleMetadataFileChecksum_ODE: "",
+				libraryMetadataFileUrl_ODE: "",
+				libraryMetadataFileChecksum_ODE: ""
 			},
 			{
 				errorMap: (error, ctx) => {
@@ -222,6 +246,14 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 			return;
 		}
 
+		//unset all optional fields that were not provided
+		for (const field of ProjectScalarFieldEnumSchema._def.values) {
+			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
+				//@ts-ignore
+				parsedProject.data[field] = null;
+			}
+		}
+
 		//@ts-ignore issue with Json database type
 		project = parsedProject.data;
 
@@ -238,7 +270,13 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 						userIds: true,
 						editHistory: true,
 						projectMetadataFileUrl_ODE: true,
-						projectMetadataFileChecksum_ODE: true
+						projectMetadataFileChecksum_ODE: true,
+						//get actual values of placeholder fields
+						isPrivate: true,
+						sampleMetadataFileUrl_ODE: true,
+						sampleMetadataFileChecksum_ODE: true,
+						libraryMetadataFileUrl_ODE: true,
+						libraryMetadataFileChecksum_ODE: true
 					}
 				});
 
@@ -310,22 +348,50 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 
 				await stream.message("All checks passed.", 80);
 
-				const newEdit = {
-					id: editId,
-					dateEdited: new Date(),
-					changes: [
+				const changes = [
+					{
+						field: "projectMetadataFileUrl_ODE",
+						oldValue: dbProject.projectMetadataFileUrl_ODE,
+						newValue: url
+					},
+					{
+						field: "projectMetadataFileChecksum_ODE",
+						oldValue: dbProject.projectMetadataFileChecksum_ODE,
+						newValue: md5Checksum
+					}
+				];
+				let editHistory;
+				if (dbProject.editHistory) {
+					const currEditIndex = dbProject.editHistory.findIndex((edit) => edit.id === editId);
+
+					if (currEditIndex === -1) {
+						//new edit
+						editHistory = [
+							{
+								id: editId,
+								dateEdited: new Date(),
+								changes
+							},
+							...dbProject.editHistory
+						];
+					} else {
+						//group changes together into previously existing edit
+						dbProject.editHistory[currEditIndex].changes = [
+							...dbProject.editHistory[currEditIndex].changes,
+							...changes
+						];
+						editHistory = dbProject.editHistory;
+					}
+				} else {
+					//new edit AND new editHistory
+					editHistory = [
 						{
-							field: "projectMetadataFileUrl_ODE",
-							oldValue: dbProject.projectMetadataFileUrl_ODE,
-							newValue: url
-						},
-						{
-							field: "projectMetadataFileChecksum_ODE",
-							oldValue: dbProject.projectMetadataFileChecksum_ODE,
-							newValue: md5Checksum
+							id: editId,
+							dateEdited: new Date(),
+							changes
 						}
-					]
-				};
+					];
+				}
 
 				//project
 				await tx.project.update({
@@ -334,7 +400,16 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 					},
 					data: {
 						...project,
-						editHistory: dbProject.editHistory ? [newEdit, ...dbProject.editHistory] : [newEdit]
+						editHistory,
+						projectMetadataFileUrl_ODE: url,
+						projectMetadataFileChecksum_ODE: md5Checksum,
+						//overriding placeholder values
+						userIds: dbProject.userIds,
+						isPrivate: dbProject.isPrivate,
+						sampleMetadataFileUrl_ODE: dbProject.sampleMetadataFileUrl_ODE,
+						sampleMetadataFileChecksum_ODE: dbProject.sampleMetadataFileChecksum_ODE,
+						libraryMetadataFileUrl_ODE: dbProject.libraryMetadataFileUrl_ODE,
+						libraryMetadataFileChecksum_ODE: dbProject.libraryMetadataFileChecksum_ODE
 					}
 				});
 

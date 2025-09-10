@@ -38,7 +38,7 @@ async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean)
 
 		await stream.message("Reading file into memory", 15);
 		const text = await fileResponse.text();
-		const textMd5 = md5(text);
+		const md5Checksum = md5(text);
 		const parser = parse(text, { columns: true, delimiter: "\t" });
 		await stream.message("File read into memory", 25);
 
@@ -68,7 +68,7 @@ async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean)
 				isPrivate,
 				editHistory: "JsonNull",
 				analysisMetadataFileUrl_ODE: url,
-				analysisMetadataFileChecksum_ODE: textMd5
+				analysisMetadataFileChecksum_ODE: md5Checksum
 			},
 			{
 				errorMap: (error, ctx) => {

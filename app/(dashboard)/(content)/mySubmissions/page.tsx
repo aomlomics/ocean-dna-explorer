@@ -6,12 +6,8 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
-import projectEditAction from "@/app/actions/project/update/projectEdit";
-import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditButton";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
 import projectUpdateUserIdsAction from "@/app/actions/project/update/projectUpdateUserIds";
-import SamplesEditButton from "@/app/components/mySubmissions/SamplesEditButton";
 import TsvDisplayButton from "@/app/components/mySubmissions/TsvDisplayButton";
 
 export default async function MySubmissions() {

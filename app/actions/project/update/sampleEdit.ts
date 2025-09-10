@@ -88,6 +88,15 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 					);
 					return;
 				}
+
+				//unset all optional fields that were not provided
+				for (const field of SampleScalarFieldEnumSchema._def.values) {
+					if (field !== "id" && !(field in parsedSample.data)) {
+						//@ts-ignore
+						parsedSample.data[field] = null;
+					}
+				}
+
 				//@ts-ignore issue with Json database type
 				samples.push(parsedSample.data);
 
@@ -192,11 +201,14 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 						project_id
 					},
 					data: {
-						editHistory
+						editHistory,
+						sampleMetadataFileUrl_ODE: url,
+						sampleMetadataFileChecksum_ODE: md5Checksum
 					}
 				});
 				await stream.message("Project editHistory successfully updated in database.", 85);
 
+				//create new
 				const newSamples = await tx.sample.createManyAndReturn({
 					data: samples,
 					skipDuplicates: true,
@@ -206,6 +218,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 				});
 				await stream.message("New Samples successfully added to database.", 90);
 
+				//update old
 				await updateManyRaw(
 					tx,
 					"Sample",
@@ -214,6 +227,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 				);
 				await stream.message("Existing Samples successfully updated in database.", 93);
 
+				//delete unused
 				//TODO: delete unused samples (and all associated data) ONLY when it's safe to do so
 				// await tx.sample.deleteMany({
 				// 	where: {
@@ -224,6 +238,8 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 				// 	}
 				// });
 				await stream.message("Removed Samples successfully deleted from database.", 96);
+
+				//TODO: move old file to storage
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);

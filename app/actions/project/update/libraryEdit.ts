@@ -89,6 +89,14 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 					return;
 				}
 
+				//unset all optional fields that were not provided
+				for (const field of LibraryScalarFieldEnumSchema._def.values) {
+					if (field !== "id" && !(field in parsedLibrary.data)) {
+						//@ts-ignore
+						parsedLibrary.data[field] = null;
+					}
+				}
+
 				//@ts-ignore issue with Json database type
 				libraries.push(parsedLibrary.data);
 
@@ -101,8 +109,6 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 		}
 
 		await stream.message("All entries successfully parsed into database format. Parsing data into database.", 75);
-
-		const libIds = libraries.map((lib) => lib.lib_id);
 
 		const dbError = await prisma.$transaction(
 			async (tx) => {
@@ -128,7 +134,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 				const dbLibraries = await tx.library.findMany({
 					where: {
 						lib_id: {
-							in: libIds
+							in: libraries.map((lib) => lib.lib_id)
 						}
 					},
 					select: {
@@ -197,11 +203,14 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 						project_id
 					},
 					data: {
-						editHistory
+						editHistory,
+						libraryMetadataFileUrl_ODE: url,
+						libraryMetadataFileChecksum_ODE: md5Checksum
 					}
 				});
 				await stream.message("Project editHistory successfully updated in database.", 85);
 
+				//add new
 				const newLibraries = await tx.library.createManyAndReturn({
 					data: libraries,
 					skipDuplicates: true,
@@ -211,6 +220,7 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 				});
 				await stream.message("New Libraries successfully added to database.", 90);
 
+				//update old
 				await updateManyRaw(
 					tx,
 					"Library",
@@ -219,8 +229,11 @@ async function doEdit(stream: ProgressStream, url: string, editId: string, proje
 				);
 				await stream.message("Existing Libraries successfully updated in database.", 93);
 
+				//delete unused
 				//TODO: delete unused libraries (and all associated data) ONLY when it's safe to do so
 				await stream.message("Removed Libraries successfully deleted from database.", 96);
+
+				//TODO: move old file to storage
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);

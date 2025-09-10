@@ -1,17 +1,17 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { auth } from "@clerk/nextjs/server";
-import { Occurrence, OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
+import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { createProgressStream } from "@/app/helpers/progress";
+import { deadBooleanToString } from "@/app/helpers/utils";
+import { OccurrenceOptionalDefaultsSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
-import { deadBooleanToString } from "@/app/helpers/utils";
+import { auth } from "@clerk/nextjs/server";
 import { parse } from "csv-parse";
-import { createProgressStream } from "@/app/helpers/progress";
 import { md5 } from "js-md5";
 
-async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["analysis_run_name"], url: string) {
+async function doEdit(stream: ProgressStream, url: string, editId: string, analysis_run_name: string) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -107,6 +107,9 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 							);
 							return;
 						}
+
+						//no optional fields
+
 						occurrences.push(parsedOccurrence.data);
 					}
 				}
@@ -120,7 +123,8 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 
 		await prisma.$transaction(
 			async (tx) => {
-				const analysis = await tx.analysis.findUnique({
+				//check if allowed
+				const dbAnalysis = await tx.analysis.findUnique({
 					where: {
 						analysis_run_name
 					},
@@ -129,13 +133,66 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 							select: {
 								userIds: true
 							}
-						}
+						},
+						editHistory: true,
+						occurrenceFileUrl_ODE: true,
+						occurrenceFileChecksum_ODE: true
 					}
 				});
-				if (!analysis) {
-					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
-				} else if (!analysis.Project.userIds.includes(userId)) {
-					throw new Error("Unauthorized");
+
+				if (!dbAnalysis) {
+					return `No Analysis with analysis_run_name of "${analysis_run_name}" found.`;
+				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
+					return "Unauthorized action.";
+				} else if (!dbAnalysis.occurrenceFileUrl_ODE || !dbAnalysis.occurrenceFileChecksum_ODE) {
+					return "Invalid Analysis. Missing file for Occurrences.";
+				}
+
+				await stream.message("All checks passed.", 80);
+
+				const changes = [
+					{
+						field: "occurrenceFileUrl_ODE",
+						oldValue: dbAnalysis.occurrenceFileUrl_ODE,
+						newValue: url
+					},
+					{
+						field: "occurrenceFileChecksum_ODE",
+						oldValue: dbAnalysis.occurrenceFileChecksum_ODE,
+						newValue: md5Checksum
+					}
+				];
+				let editHistory;
+				if (dbAnalysis.editHistory) {
+					const currEditIndex = dbAnalysis.editHistory.findIndex((edit) => edit.id === editId);
+
+					if (currEditIndex === -1) {
+						//new edit
+						editHistory = [
+							{
+								id: editId,
+								dateEdited: new Date(),
+								changes
+							},
+							...dbAnalysis.editHistory
+						];
+					} else {
+						//group changes together into previously existing edit
+						dbAnalysis.editHistory[currEditIndex].changes = [
+							...dbAnalysis.editHistory[currEditIndex].changes,
+							...changes
+						];
+						editHistory = dbAnalysis.editHistory;
+					}
+				} else {
+					//new edit AND new editHistory
+					editHistory = [
+						{
+							id: editId,
+							dateEdited: new Date(),
+							changes
+						}
+					];
 				}
 
 				//add occurrence file to analysis
@@ -144,14 +201,46 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 						analysis_run_name
 					},
 					data: {
+						editHistory,
 						occurrenceFileUrl_ODE: url,
 						occurrenceFileChecksum_ODE: md5Checksum
 					}
 				});
+				await stream.message("Analysis editHistory successfully updated in database.", 85);
 
-				//occurrences
-				await tx.occurrence.createMany({
-					data: occurrences
+				//create new
+				const newOccurrences = await tx.occurrence.createManyAndReturn({
+					data: occurrences,
+					skipDuplicates: true
+				});
+
+				//update old
+				await updateManyRaw(
+					tx,
+					"Occurrence",
+					occurrences.filter(
+						(occ) =>
+							!newOccurrences.some((dbOcc) => dbOcc.samp_name === occ.samp_name && dbOcc.featureid === occ.featureid)
+					)
+				);
+
+				//delete unused
+				await tx.occurrence.deleteMany({
+					where: {
+						analysis_run_name,
+						featureid: {
+							notIn: occurrences.map((occ) => occ.featureid)
+						}
+					}
+				});
+
+				await tx.occurrence.deleteMany({
+					where: {
+						analysis_run_name,
+						samp_name: {
+							notIn: occurrences.map((occ) => occ.samp_name)
+						}
+					}
 				});
 			},
 			{ timeout: 1 * 60 * 1000 }
@@ -168,10 +257,10 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 	}
 }
 
-export default async function occSubmitAction(analysis_run_name: Occurrence["analysis_run_name"], url: string) {
+export default async function occSubmitAction(url: string, editId: string, analysis_run_name: string) {
 	const stream = createProgressStream();
 
-	doSubmit(stream, analysis_run_name, url).then(stream.close);
+	doEdit(stream, url, editId, analysis_run_name).then(stream.close);
 
 	return stream.readable;
 }

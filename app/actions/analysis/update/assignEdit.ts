@@ -1,25 +1,23 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { Assignment, Feature, Prisma, Taxonomy } from "@/app/generated/prisma/client";
+import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { createProgressStream } from "@/app/helpers/progress";
+import { parseSchemaToObject } from "@/app/helpers/schema";
 import { deadBooleanToString } from "@/app/helpers/utils";
-import { auth } from "@clerk/nextjs/server";
 import {
-	FeatureOptionalDefaultsSchema,
 	AssignmentOptionalDefaultsSchema,
+	FeatureOptionalDefaultsSchema,
 	TaxonomyOptionalDefaultsSchema,
-	Assignment,
-	Feature,
-	Taxonomy
+	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
+import { auth } from "@clerk/nextjs/server";
 import { parse } from "csv-parse";
-import { createProgressStream } from "@/app/helpers/progress";
-import { parseSchemaToObject } from "@/app/helpers/schema";
 import { md5 } from "js-md5";
 
-async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["analysis_run_name"], url: string) {
+async function doEdit(stream: ProgressStream, url: string, editId: string, analysis_run_name: string) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -96,6 +94,9 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 					);
 					return;
 				}
+
+				//no optional fields
+
 				features.push(parsedFeature.data);
 
 				//parse assignment
@@ -124,6 +125,9 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 					);
 					return;
 				}
+
+				//no optional fields
+
 				assignments.push(parsedAssignment.data);
 
 				//parse taxonomy
@@ -145,6 +149,15 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 					);
 					return;
 				}
+
+				//unset all optional fields that were not provided
+				for (const field of TaxonomyScalarFieldEnumSchema._def.values) {
+					if (field !== "id" && !(field in parsedTaxonomy.data)) {
+						//@ts-ignore
+						parsedTaxonomy.data[field] = null;
+					}
+				}
+
 				taxonomies.push(parsedTaxonomy.data);
 
 				//add to progress bar
@@ -156,7 +169,8 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 
 		await prisma.$transaction(
 			async (tx) => {
-				const analysis = await tx.analysis.findUnique({
+				//check if allowed
+				const dbAnalysis = await tx.analysis.findUnique({
 					where: {
 						analysis_run_name
 					},
@@ -165,13 +179,66 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 							select: {
 								userIds: true
 							}
-						}
+						},
+						editHistory: true,
+						asvFileUrl_ODE: true,
+						asvFileChecksum_ODE: true
 					}
 				});
-				if (!analysis) {
-					throw new Error(`Analysis with analysis_run_name of ${analysis_run_name} does not exist.`);
-				} else if (!analysis.Project.userIds.includes(userId)) {
-					throw new Error("Unauthorized");
+
+				if (!dbAnalysis) {
+					return `No Analysis with analysis_run_name of "${analysis_run_name}" found.`;
+				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
+					return "Unauthorized action.";
+				} else if (!dbAnalysis.asvFileUrl_ODE || !dbAnalysis.asvFileChecksum_ODE) {
+					return "Invalid Analysis. Missing file for ASVs.";
+				}
+
+				await stream.message("All checks passed.", 80);
+
+				const changes = [
+					{
+						field: "asvFileUrl_ODE",
+						oldValue: dbAnalysis.asvFileUrl_ODE,
+						newValue: url
+					},
+					{
+						field: "asvFileChecksum_ODE",
+						oldValue: dbAnalysis.asvFileChecksum_ODE,
+						newValue: md5Checksum
+					}
+				];
+				let editHistory;
+				if (dbAnalysis.editHistory) {
+					const currEditIndex = dbAnalysis.editHistory.findIndex((edit) => edit.id === editId);
+
+					if (currEditIndex === -1) {
+						//new edit
+						editHistory = [
+							{
+								id: editId,
+								dateEdited: new Date(),
+								changes
+							},
+							...dbAnalysis.editHistory
+						];
+					} else {
+						//group changes together into previously existing edit
+						dbAnalysis.editHistory[currEditIndex].changes = [
+							...dbAnalysis.editHistory[currEditIndex].changes,
+							...changes
+						];
+						editHistory = dbAnalysis.editHistory;
+					}
+				} else {
+					//new edit AND new editHistory
+					editHistory = [
+						{
+							id: editId,
+							dateEdited: new Date(),
+							changes
+						}
+					];
 				}
 
 				//add asv file to analysis
@@ -180,27 +247,68 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 						analysis_run_name
 					},
 					data: {
+						editHistory,
 						asvFileUrl_ODE: url,
 						asvFileChecksum_ODE: md5Checksum
 					}
 				});
+				await stream.message("Analysis editHistory successfully updated in database.", 85);
 
-				//upload to database
-				//features
-				await tx.feature.createMany({
+				//add new
+				const newFeatures = await tx.feature.createManyAndReturn({
 					data: features,
 					skipDuplicates: true
 				});
 
-				//taxonomies
-				await tx.taxonomy.createMany({
+				const newTaxonomies = await tx.taxonomy.createManyAndReturn({
 					data: taxonomies,
 					skipDuplicates: true
 				});
 
-				//assignments
-				await tx.assignment.createMany({
-					data: assignments
+				const newAssignments = await tx.assignment.createManyAndReturn({
+					data: assignments,
+					skipDuplicates: true
+				});
+
+				await stream.message("New entries successfully added to database.", 90);
+
+				//update old
+				await updateManyRaw(
+					tx,
+					"Feature",
+					features.filter((feat) => !newFeatures.some((dbFeat) => dbFeat.featureid === feat.featureid)),
+					"featureid"
+				);
+
+				await updateManyRaw(
+					tx,
+					"Taxonomy",
+					taxonomies.filter((taxa) => !newTaxonomies.some((dbTaxa) => dbTaxa.taxonomy === taxa.taxonomy)),
+					"taxonomy"
+				);
+
+				await updateManyRaw(
+					tx,
+					"Assignment",
+					assignments.filter(
+						(a) =>
+							!newAssignments.some(
+								(dbA) => dbA.analysis_run_name === a.analysis_run_name && dbA.featureid === a.featureid
+							)
+					)
+				);
+
+				await stream.message("Existing entries successfully updated in database.", 93);
+
+				//delete unused
+				//rely on cron to delete unused features and taxonomies
+				await tx.assignment.deleteMany({
+					where: {
+						analysis_run_name,
+						featureid: {
+							notIn: assignments.map((a) => a.featureid)
+						}
+					}
 				});
 			},
 			{ timeout: 1 * 60 * 1000 }
@@ -208,6 +316,7 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 
 		await stream.success("Success");
 	} catch (err: any) {
+		console.log(err.message);
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
 			await stream.error(handlePrismaError(err).error);
 		} else {
@@ -217,10 +326,10 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Assignment["a
 	}
 }
 
-export default async function assignSubmitAction(analysis_run_name: Assignment["analysis_run_name"], url: string) {
+export default async function assignSubmitAction(url: string, editId: string, analysis_run_name: string) {
 	const stream = createProgressStream();
 
-	doSubmit(stream, analysis_run_name, url).then(stream.close);
+	doEdit(stream, url, editId, analysis_run_name).then(stream.close);
 
 	return stream.readable;
 }
