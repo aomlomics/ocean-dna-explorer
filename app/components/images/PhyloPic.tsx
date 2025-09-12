@@ -18,7 +18,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 			const gbifTaxa = await gbifTaxaRes.json();
 			//get only the taxonomies that match the specific rank
 			//TODO: check GBIF API docs to do this step in the previous fetch
-			gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank)[0];
+			gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank)[0]; // If you remove the 0, you will get a list of all the taxa that match the rank
 			if (gbifTaxonomy) {
 				imageDetails.rank = rank;
 				break;

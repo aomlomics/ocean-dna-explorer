@@ -45,7 +45,7 @@ export default function ScrollToTop() {
 					style={{
 						bottom: isNearFooter ? `${(footerRef.current?.offsetHeight || 96) + (window.innerWidth < 768 ? 40 : 22)}px` : "2rem"
 					}}
-					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 z-50"
+					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 z-3000"
 					aria-label="Scroll to top"
 				>
 					<svg

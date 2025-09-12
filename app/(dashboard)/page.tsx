@@ -10,6 +10,7 @@ import { prismaImages } from "../helpers/prismaImages";
 import fs from "fs";
 import path from "path";
 import Carousel from "../components/images/Carousel";
+import EDNAVisualization from "../components/eDNA_graphic/eDNA_visualization";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
@@ -156,7 +157,28 @@ export default async function Home() {
 					<MainStats summaryItems={summaryItems} />
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+				{/* Interactive Data Journey Visualization */}
+				<div className="mb-32">
+					<div className="text-center mb-12">
+						<h2 className="text-3xl lg:text-4xl text-primary mb-4 font-light">
+							Explore the Data Journey
+						</h2>
+						<p className="text-lg text-base-content/80 max-w-3xl mx-auto leading-relaxed">
+							Discover how ocean environmental DNA data flows from research vessels to taxonomic identification. 
+							Click the magnifying glasses to zoom deeper into each step of the scientific process.
+						</p>
+					</div>
+					
+					<div className="max-w-6xl mx-auto">
+						<EDNAVisualization />
+					</div>
+					
+					<div className="text-center mt-8 text-sm text-base-content/60">
+						<p>Interactive visualization showing the relationship between database tables and real-world sampling</p>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch mb-24">
 					{/* Map Section */}
 					<div>
 						<div className="mb-4 text-xl text-base-content">
@@ -178,7 +200,7 @@ export default async function Home() {
 
 					{/* Assay Stats Section */}
 					<div>
-						<div className="mb-4 text-xl text-base-content">
+						<div className="mb-8 text-xl text-base-content">
 							<span className="text-primary">Assays used Across ODE</span>
 						</div>
 						<AssayStats assays={uniqueAssays} />
@@ -191,7 +213,7 @@ export default async function Home() {
 					
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
-							NODE is a product of{" "}
+							ODE is a product of{" "}
 							<Link
 								href="https://www.aoml.noaa.gov/"
 								className="text-primary hover:underline"

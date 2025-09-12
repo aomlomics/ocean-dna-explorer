@@ -9,6 +9,7 @@ import EditHistory from "@/app/components/EditHistory";
 import ProjectStatCard from "@/app/components/explore/ProjectStatCard";
 import StatIcon from "@/app/components/icons/StatIcon";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import WaterSurface from "@/app/components/eDNA_graphic/WaterSurface";
 
 export default async function Project_Id({ params }: { params: Promise<{ project_id: string }> }) {
 	let { project_id } = await params;
