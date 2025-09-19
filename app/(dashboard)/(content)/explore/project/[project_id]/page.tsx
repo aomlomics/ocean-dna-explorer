@@ -119,7 +119,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
 							Assays in this Project ({Object.keys(uniqueAssays).length})
 						</h2>
-						<div className="space-y-4">
+						<div className="space-y-2">
 							{Object.keys(uniqueAssays).map((assay) => {
 								return (
 									<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">

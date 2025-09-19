@@ -1,31 +1,9 @@
 "use client";
 import React from "react";
 
-// Helper functions for SVG path generation
-const controlPoint = (current: number[], previous: number[] | undefined, next: number[] | undefined, reverse?: boolean): number[] => {
-	const p = previous || current;
-	const n = next || current;
-	const smoothing = 0.2;
-	const o = {
-		length: Math.sqrt(Math.pow(n[0] - p[0], 2) + Math.pow(n[1] - p[1], 2)),
-		angle: Math.atan2(n[1] - p[1], n[0] - p[0])
-	};
-	const angle = o.angle + (reverse ? Math.PI : 0);
-	const length = o.length * smoothing;
-	const x = current[0] + Math.cos(angle) * length;
-	const y = current[1] + Math.sin(angle) * length;
-	return [x, y];
-};
-
-const svgPath = (points: number[][]): string => {
-	if (points.length === 0) return "";
-	return points.reduce((acc, point, i, a) => {
-		if (i === 0) return `M ${point[0]},${point[1]}`;
-		const [cpsX, cpsY] = controlPoint(a[i - 1], a[i - 2], point);
-		const [cpeX, cpeY] = controlPoint(point, a[i - 1], a[i + 1], true);
-		return `${acc} C ${cpsX},${cpsY} ${cpeX},${cpeY} ${point[0]},${point[1]}`;
-	}, '');
-};
+// Note: Previously this component rendered a curved helix with nucleotide circles.
+// The new design is intentionally simplified to straight parallel lines, with a
+// short, blinking segment indicating the primer region.
 
 const COLUMN_CONFIG = [
 	{ offset: 2, bondHeight: 2 },
@@ -63,136 +41,122 @@ interface HelixProps {
 	primerBlinks: boolean;
 	primerColor: string;
 	templateColor: string;
+    scale?: number;
+    // Optional: letters to draw along the primer segment (in display order)
+    primerSequence?: string;
 }
 
 const Helix = ({
-	data,
-	primerStrand,
-	primerStartIndex,
-	primerEndIndex,
-	primerBlinks,
-	primerColor,
-	templateColor,
+    data,
+    primerStrand,
+    primerStartIndex,
+    primerEndIndex,
+    primerBlinks,
+    primerColor,
+    templateColor,
+    scale,
+    primerSequence,
 }: HelixProps) => {
-	if (!data || data.length === 0) return null;
+    if (!data || data.length === 0) return null;
 
-	const columnWidth = 36;
-	const baseRadius = 14;
-	const offsetScale = 10;
-	const bondHeightScale = 20; 
-	const backboneStrokeWidth = 8;
-	const baseStrokeWidth = 2;
-	const baseFontSize = "14px";
-	const verticalPadding = baseRadius + 4; // Added padding to prevent top clipping
+    // Compact sizing to ensure the diagram is visually small
+    const s = typeof scale === 'number' ? scale : 1;
+    const unitWidth = 18 * s; // width per base (slightly larger)
+    const padding = 16 * s;
+    const topY = 22 * s;
+    const bottomY = 60 * s;
+    const strokeWidth = 7 * s;
+    const tickHeight = 10 * s; // small ticks along the primer region
 
-	const points = data.map((col, i) => {
-		const x = i * columnWidth + columnWidth / 2;
-		const topY = col.offset * offsetScale + verticalPadding;
-		const bottomY = topY + col.bondHeight * bondHeightScale + baseRadius;
-		return { x, topY, bottomY };
-	});
+    const totalColumns = data.length;
+    const width = totalColumns * unitWidth + padding * 2;
+    // Extra bottom room so bottom sequence letters never clip
+    const height = bottomY + padding + 24 * s;
 
-	const topBackbonePoints = points.map(p => [p.x, p.topY]);
-	const bottomBackbonePoints = points.map(p => [p.x, p.bottomY]);
+    const getStrandClasses = (color: string, blink: boolean) => {
+        let colorClass;
+        switch (color) {
+            case 'primary': colorClass = 'stroke-primary'; break;
+            case 'secondary': colorClass = 'stroke-secondary'; break;
+            case 'base-content': colorClass = 'stroke-base-content/40'; break;
+            default: colorClass = 'stroke-transparent';
+        }
+        return `${colorClass} ${blink ? 'animate-pulse' : ''}`;
+    };
 
-	const topPath = svgPath(topBackbonePoints);
-	const bottomPath = svgPath(bottomBackbonePoints);
+    const isPrimerTop = primerStrand === 'top';
 
-	const width = data.length * columnWidth;
-	const height = Math.max(...points.map(p => p.bottomY)) + baseRadius + verticalPadding;
+    const xFromIndex = (idx: number) => padding + idx * unitWidth;
 
-	const getStrandClasses = (color: string, blink: boolean) => {
-		let colorClass;
-		switch (color) {
-			case 'primary': colorClass = 'stroke-primary'; break;
-			case 'secondary': colorClass = 'stroke-secondary'; break;
-			case 'base-content': colorClass = 'stroke-base-content/40'; break;
-			default: colorClass = 'stroke-transparent';
-		}
-		return `${colorClass} ${blink ? 'animate-pulse' : ''}`;
-	};
+    const primerX1 = xFromIndex(primerStartIndex);
+    const primerX2 = xFromIndex(primerEndIndex);
 
-	const isPrimerTop = primerStrand === 'top';
-	
-	const topTemplateClasses = getStrandClasses(isPrimerTop ? templateColor : primerColor, isPrimerTop ? false : primerBlinks);
-	const bottomTemplateClasses = getStrandClasses(isPrimerTop ? primerColor : templateColor, isPrimerTop ? primerBlinks : false);
+    const lineY = (strand: 'top' | 'bottom') => (strand === 'top' ? topY : bottomY);
 
-	const topStrandIsTemplate = primerStrand === 'bottom';
-	const bottomStrandIsTemplate = primerStrand === 'top';
+    return (
+        <svg width={width} height={height} className="font-mono">
+            {/* Only draw the template/backbone line for the opposite strand */}
+            {isPrimerTop ? (
+                <line x1={padding} y1={bottomY} x2={width - padding} y2={bottomY} className={getStrandClasses('base-content', false)} strokeWidth={strokeWidth} strokeLinecap="round" />
+            ) : (
+                <line x1={padding} y1={topY} x2={width - padding} y2={topY} className={getStrandClasses('base-content', false)} strokeWidth={strokeWidth} strokeLinecap="round" />
+            )}
 
-	const topStrandColor = topStrandIsTemplate ? templateColor : primerColor;
-	const bottomStrandColor = bottomStrandIsTemplate ? templateColor : primerColor;
+            {/* Uniform connector ticks: full-length on template strand, only within primer range on primer strand */}
+            {Array.from({ length: totalColumns }).map((_, i) => {
+                const x = xFromIndex(i) + unitWidth / 2;
+                const connectorHeight = 12 * s;
+                const drawTopTick = !isPrimerTop; // top is template when primer is bottom
+                const drawBottomTick = isPrimerTop; // bottom is template when primer is top
 
-	const topStrandBlinks = topStrandIsTemplate ? false : primerBlinks;
-	const bottomStrandBlinks = bottomStrandIsTemplate ? false : primerBlinks;
+                const ticks: React.ReactElement[] = [];
+                if (drawTopTick) {
+                    const y1 = topY + strokeWidth / 2;
+                    const y2 = y1 + connectorHeight;
+                    ticks.push(<line key={`tt-${i}`} x1={x} y1={y1} x2={x} y2={y2} className="stroke-base-content/40" strokeWidth={2} />);
+                }
+                if (drawBottomTick) {
+                    const y2 = bottomY - strokeWidth / 2;
+                    const y1 = y2 - connectorHeight;
+                    ticks.push(<line key={`bt-${i}`} x1={x} y1={y1} x2={x} y2={y2} className="stroke-base-content/40" strokeWidth={2} />);
+                }
+                return <g key={`g-${i}`}>{ticks}</g>;
+            })}
 
-	const topWholePath = svgPath(topBackbonePoints);
-	const bottomWholePath = svgPath(bottomBackbonePoints);
-	
-	const primerPoints = (isPrimerTop ? topBackbonePoints : bottomBackbonePoints).slice(primerStartIndex, primerEndIndex);
-	const primerPath = svgPath(primerPoints);
-	const templatePath = isPrimerTop ? bottomWholePath : topWholePath;
+            {/* Primer segment line (no trailing grey on this strand) */}
+            <line x1={primerX1} y1={lineY(isPrimerTop ? 'top' : 'bottom')} x2={primerX2} y2={lineY(isPrimerTop ? 'top' : 'bottom')} className={getStrandClasses(primerColor, false)} strokeWidth={strokeWidth} strokeLinecap="round" />
+            {primerBlinks && (
+                <line x1={primerX1} y1={lineY(isPrimerTop ? 'top' : 'bottom')} x2={primerX2} y2={lineY(isPrimerTop ? 'top' : 'bottom')} className={getStrandClasses(primerColor, true)} strokeWidth={strokeWidth} strokeLinecap="round" />
+            )}
 
+            {/* Primer-range ticks on the primer strand in primary color (same length/width) */}
+            {Array.from({ length: Math.max(0, primerEndIndex - primerStartIndex) }).map((_, i) => {
+                const idx = primerStartIndex + i;
+                const x = xFromIndex(idx) + unitWidth / 2;
+                const connectorHeight = 12 * s;
+                if (isPrimerTop) {
+                    const y1 = topY + strokeWidth / 2;
+                    const y2 = y1 + connectorHeight;
+                    return <line key={`pt-${i}`} x1={x} y1={y1} x2={x} y2={y2} className="stroke-primary" strokeWidth={2} />;
+                } else {
+                    const y2 = bottomY - strokeWidth / 2;
+                    const y1 = y2 - connectorHeight;
+                    return <line key={`pb-${i}`} x1={x} y1={y1} x2={x} y2={y2} className="stroke-primary" strokeWidth={2} />;
+                }
+            })}
 
-	return (
-		<svg width={width} height={height} className="font-mono">
-			{/* Render Template Strand */}
-			<path d={templatePath} fill="none" className={getStrandClasses(templateColor, false)} strokeWidth={backboneStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-			
-			{/* Render Primer Strand */}
-			<path d={primerPath} fill="none" className={getStrandClasses(primerColor, false)} strokeWidth={backboneStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-			
-			{/* Overlay the blinking primer segment */}
-			{primerBlinks && <path d={primerPath} fill="none" className={getStrandClasses(primerColor, true)} strokeWidth={backboneStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
-
-			{data.map((col, i) => {
-				const p = points[i];
-
-				const hasTopBase = col.topBase.trim() !== "";
-				const hasBottomBase = col.bottomBase.trim() !== "";
-
-				const showTopCircle = hasTopBase;
-				const showBottomCircle = hasBottomBase;
-
-				const showPartialBondFromTop = showTopCircle && !showBottomCircle;
-				const showPartialBondFromBottom = !showTopCircle && showBottomCircle;
-
-				return (
-					<g key={col.key}>
-						{showTopCircle && showBottomCircle && (
-							<line x1={p.x} y1={p.topY} x2={p.x} y2={p.bottomY} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
-						)}
-
-						{showPartialBondFromTop && (
-							<line x1={p.x} y1={p.topY} x2={p.x} y2={p.topY + (p.bottomY - p.topY) / 3} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
-						)}
-
-						{showPartialBondFromBottom && (
-							<line x1={p.x} y1={p.bottomY} x2={p.x} y2={p.bottomY - (p.bottomY - p.topY) / 3} className="stroke-base-content/40" strokeWidth={baseStrokeWidth / 2} />
-						)}
-
-						{showTopCircle && (
-							<g>
-								<circle cx={p.x} cy={p.topY} r={baseRadius} className="fill-base-100 stroke-base-content/40" strokeWidth={baseStrokeWidth} />
-								<text x={p.x} y={p.topY} dy=".3em" textAnchor="middle" fontSize={baseFontSize} fontWeight="bold" className="fill-base-content select-none">
-									{col.topBase}
-								</text>
-							</g>
-						)}
-
-						{showBottomCircle && (
-							<g>
-								<circle cx={p.x} cy={p.bottomY} r={baseRadius} className="fill-base-100 stroke-base-content/40" strokeWidth={baseStrokeWidth} />
-								<text x={p.x} y={p.bottomY} dy=".3em" textAnchor="middle" fontSize={baseFontSize} fontWeight="bold" className="fill-base-content select-none">
-									{col.bottomBase}
-								</text>
-							</g>
-						)}
-					</g>
-				)
-			})}
-		</svg>
-	);
+            {/* Per-base letters along the primer segment */}
+            {primerSequence && Array.from(primerSequence).map((base, i) => {
+                const x = xFromIndex(primerStartIndex + i) + unitWidth / 2;
+                const y = isPrimerTop ? topY - 10 * (scale || 1) : bottomY + 22 * (scale || 1);
+                return (
+                    <text key={`b-${i}`} x={x} y={y} textAnchor="middle" className="fill-primary" fontSize={14 * (scale || 1)} fontWeight="bold">
+                        {base}
+                    </text>
+                );
+            })}
+        </svg>
+    );
 };
 
 // Helper to reverse a string, for reading 5' to 3' direction
@@ -240,6 +204,13 @@ interface PrimerDiagramProps {
 	reversePrimerName?: string;
 	forwardPrimerReference?: string | null;
 	reversePrimerReference?: string | null;
+    // Optional: scale the simplified straight-line rendering
+    scale?: number;
+    // Hide header/sequence/reference blocks; show only the visual diagrams
+    showInfo?: boolean;
+    // If true, render forward primer visuals first (on top)
+    forwardFirst?: boolean;
+    primerToDisplay: "forward" | "reverse";
 }
 
 const PrimerDiagram = ({
@@ -249,6 +220,10 @@ const PrimerDiagram = ({
 	reversePrimerName,
 	forwardPrimerReference,
 	reversePrimerReference,
+    scale,
+    showInfo = true,
+    forwardFirst = false,
+    primerToDisplay,
 }: PrimerDiagramProps) => {
 	const calculateGcContent = (seq: string) => {
 		if (!seq || seq.length === 0) return "0.0";
@@ -290,9 +265,9 @@ const PrimerDiagram = ({
 
 	const overhangLength = 5;
 
-	// Reverse Primer Data
-	const reversePrimer_primer = reversePrimerSequence;
-	const reversePrimer_template_paired = dnaComplement(reversePrimerSequence);
+    // Reverse Primer Data (now rendered with backwards sequence to mirror forward)
+    const reversePrimer_primer = reverse(reversePrimerSequence);
+    const reversePrimer_template_paired = reverse(dnaComplement(reversePrimerSequence));
 	const reversePairedData = generateHelixData(
 		reversePrimer_template_paired,
 		reversePrimer_primer
@@ -301,19 +276,21 @@ const PrimerDiagram = ({
 		"?".repeat(overhangLength),
 		" ".repeat(overhangLength)
 	);
-	const reversePrimerRenderProps = {
-		data: [...reversePairedData, ...reverseUnpairedData],
+    const reversePrimerRenderProps = {
+		data: [...reverseUnpairedData, ...reversePairedData],
 		primerStrand: "bottom" as const,
-		primerStartIndex: 0,
-		primerEndIndex: reversePairedData.length,
+		primerStartIndex: reverseUnpairedData.length,
+		primerEndIndex: reverseUnpairedData.length + reversePairedData.length,
 		primerBlinks: true,
 		primerColor: "primary",
-		templateColor: "base-content",
+        templateColor: "base-content",
+        scale,
+        primerSequence: reversePrimer_primer,
 	};
 
-	// Forward Primer Data
-	const forwardPrimer_primer = reverse(forwardPrimerSequence);
-	const forwardPrimer_template_paired = reverse(dnaComplement(forwardPrimerSequence));
+    // Forward Primer Data (read in the forward direction; no reversing)
+    const forwardPrimer_primer = forwardPrimerSequence;
+    const forwardPrimer_template_paired = dnaComplement(forwardPrimerSequence);
 	const forwardPairedData = generateHelixData(
 		forwardPrimer_primer,
 		forwardPrimer_template_paired
@@ -322,94 +299,146 @@ const PrimerDiagram = ({
 		" ".repeat(overhangLength),
 		"?".repeat(overhangLength)
 	);
-	const forwardPrimerRenderProps = {
-		data: [...forwardUnpairedData, ...forwardPairedData],
+    const forwardPrimerRenderProps = {
+		data: [...forwardPairedData, ...forwardUnpairedData],
 		primerStrand: "top" as const,
-		primerStartIndex: forwardUnpairedData.length,
-		primerEndIndex: forwardUnpairedData.length + forwardPairedData.length,
+		primerStartIndex: 0,
+		primerEndIndex: forwardPairedData.length,
 		primerBlinks: true,
 		primerColor: "primary",
-		templateColor: "base-content",
+        templateColor: "base-content",
+        scale,
+        primerSequence: forwardPrimer_primer,
 	};
 
-	return (
-		<div className="p-6 bg-base-200 rounded-lg w-full flex flex-col gap-8 overflow-x-auto">
-			{/* Part 1: Reverse Primer */}
-			<div className="flex flex-col">
-				<div className="text-center mb-4">
-					<div className="flex items-baseline gap-2 justify-center">
-						<p className="text-sm text-base-content">pcr_primer_name_reverse:</p>
-						<h3 className="text-2xl font-bold text-primary">
-							{reversePrimerName || "Reverse Primer"}
-						</h3>
-					</div>
-					<p className="text-lg text-base-content">Sequence: {reversePrimerSequence}</p>
-					<div className="text-sm text-base-content mt-1 space-y-1 mb-4">
-						<p>Reference: <ReferenceLink reference={reversePrimerReference} /></p>
-						<p>Length: {reversePrimerSequence.length}</p>
-						<p>% GC: {calculateGcContent(reversePrimerSequence)}%</p>
-					</div>
-				</div>
-				<div className="text-md leading-relaxed text-base-content flex flex-col items-center">
-					{/* Top Labels */}
-					<div className="flex justify-between w-full mb-2">
-						<span>3'</span>
-						<span>5'</span>
-					</div>
+    const ReverseSection = (
+        <div className="flex flex-col">
+            {showInfo && (
+                <div className="text-center mb-4">
+                    <div className="flex items-baseline gap-2 justify-center">
+                        <p className="text-sm text-base-content">pcr_primer_name_reverse:</p>
+                        <h3 className="text-2xl font-bold text-primary">{reversePrimerName || "Reverse Primer"}</h3>
+                    </div>
+                    <p className="text-lg text-base-content">Sequence: {reversePrimerSequence}</p>
+                    <div className="text-sm text-base-content mt-1 space-y-1 mb-4">
+                        <p>Reference: <ReferenceLink reference={reversePrimerReference} /></p>
+                        <p>Length: {reversePrimerSequence.length}</p>
+                        <p>% GC: {calculateGcContent(reversePrimerSequence)}%</p>
+                    </div>
+                </div>
+            )}
+            <div className="text-md leading-relaxed text-base-content flex flex-col items-center">
+                <div className="flex justify-between w-full">
+                    <span>5'</span>
+                    <span>3'</span>
+                </div>
+                <div className="flex items-center -my-1">
+                    <Helix {...reversePrimerRenderProps} />
+                </div>
+                <div className="flex justify-between w-full">
+                    <span>3'</span>
+                    <span>5'</span>
+                </div>
+            </div>
+        </div>
+    );
 
-					{/* Helix */}
-					<div className="flex items-center">
-						<Helix {...reversePrimerRenderProps} />
-					</div>
+    const ForwardSection = (
+        <div className="flex flex-col">
+            {showInfo && (
+                <div className="text-center mb-4">
+                    <div className="flex items-baseline gap-2 justify-center">
+                        <p className="text-sm text-base-content">pcr_primer_name_forward:</p>
+                        <h3 className="text-2xl font-bold text-primary">{forwardPrimerName || "Forward Primer"}</h3>
+                    </div>
+                    <p className="text-lg text-base-content">Sequence: {forwardPrimerSequence}</p>
+                    <div className="text-sm text-base-content mt-1 space-y-1 mb-4">
+                        <p>Reference: <ReferenceLink reference={forwardPrimerReference} /></p>
+                        <p>Length: {forwardPrimerSequence.length}</p>
+                        <p>% GC: {calculateGcContent(forwardPrimerSequence)}%</p>
+                    </div>
+                </div>
+            )}
+            <div className="text-md leading-relaxed text-base-content flex flex-col items-center">
+                <div className="flex justify-between w-full">
+                    <span>5'</span>
+                    <span>3'</span>
+                </div>
+                <div className="flex items-center -my-1">
+                    <Helix {...forwardPrimerRenderProps} />
+                </div>
+                <div className="flex justify-between w-full">
+                    <span>3'</span>
+                    <span>5'</span>
+                </div>
+            </div>
+        </div>
+    );
 
-					{/* Bottom Labels */}
-					<div className="flex justify-between w-full mt-2">
-						<span>5'</span>
-						<span>3'</span>
-					</div>
-				</div>
-			</div>
-
-			{/* Divider */}
-			<div className="border-t border-base-content/20"></div>
-
-			{/* Part 2: Forward Primer */}
-			<div className="flex flex-col">
-				<div className="text-md leading-relaxed text-base-content flex flex-col items-center">
-					{/* Top Labels */}
-					<div className="flex justify-between w-full mb-2">
-						<span>3'</span>
-						<span>5'</span>
-					</div>
-
-					{/* Helix */}
-					<div className="flex items-center">
-						<Helix {...forwardPrimerRenderProps} />
-					</div>
-
-					{/* Bottom Labels */}
-					<div className="flex justify-between w-full mt-2">
-						<span>5'</span>
-						<span>3'</span>
-					</div>
-				</div>
-				<div className="text-center mt-4">
-					<div className="flex items-baseline gap-2 justify-center">
-						<p className="text-sm text-base-content">pcr_primer_name_forward:</p>
-						<h3 className="text-2xl font-bold text-primary">
-							{forwardPrimerName || "Forward Primer"}
-						</h3>
-					</div>
-					<p className="text-lg text-base-content">Sequence: {forwardPrimerSequence}</p>
-					<div className="text-sm text-base-content mt-1 space-y-1 mb-4">
-						<p>Reference: <ReferenceLink reference={forwardPrimerReference} /></p>
-						<p>Length: {forwardPrimerSequence.length}</p>
-						<p>% GC: {calculateGcContent(forwardPrimerSequence)}%</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+    if (primerToDisplay === "forward") {
+        return ForwardSection;
+    }
+    return ReverseSection;
 };
 
 export default PrimerDiagram;
+/*
+================================================================================
+LEGACY (COMMENTED-OUT) CURVED HELIX IMPLEMENTATION
+--------------------------------------------------------------------------------
+We previously rendered a smoothed, curved double helix with nucleotide circles
+for each base and vertical bonds between paired bases. The new design uses
+straight parallel lines with a blinking primer segment. If you want to revert
+to the older look, this block preserves the key logic and markup as reference.
+
+Key pieces retained here:
+- controlPoint + svgPath for cubic Bezier smoothing
+- variable column offsets + bond heights to create the helix undulation
+- circles with base letters and vertical pairing/bond lines
+
+This code is intentionally commented out to keep the file single-sourced. Copy
+sections back into the live component if you need to restore the old diagram.
+
+// Helper functions for SVG path generation
+const controlPoint = (current: number[], previous: number[] | undefined, next: number[] | undefined, reverse?: boolean): number[] => {
+    const p = previous || current;
+    const n = next || current;
+    const smoothing = 0.2;
+    const o = {
+        length: Math.sqrt(Math.pow(n[0] - p[0], 2) + Math.pow(n[1] - p[1], 2)),
+        angle: Math.atan2(n[1] - p[1], n[0] - p[0])
+    };
+    const angle = o.angle + (reverse ? Math.PI : 0);
+    const length = o.length * smoothing;
+    const x = current[0] + Math.cos(angle) * length;
+    const y = current[1] + Math.sin(angle) * length;
+    return [x, y];
+};
+
+const svgPath = (points: number[][]): string => {
+    if (points.length === 0) return "";
+    return points.reduce((acc, point, i, a) => {
+        if (i === 0) return `M ${point[0]},${point[1]}`;
+        const [cpsX, cpsY] = controlPoint(a[i - 1], a[i - 2], point);
+        const [cpeX, cpeY] = controlPoint(point, a[i - 1], a[i + 1], true);
+        return `${acc} C ${cpsX},${cpsY} ${cpeX},${cpeY} ${point[0]},${point[1]}`;
+    }, '');
+};
+
+const COLUMN_CONFIG = [
+    { offset: 2, bondHeight: 2 },
+    { offset: 1, bondHeight: 3 },
+    { offset: 0, bondHeight: 4 },
+    { offset: 1, bondHeight: 3 },
+    { offset: 2, bondHeight: 2 },
+];
+
+// In the old rendering, we computed variable Y positions for a top and bottom
+// backbone using COLUMN_CONFIG to produce a wavy helix. We then:
+// - Drew smoothed paths for both backbones (topPath/bottomPath)
+// - Drew vertical bond lines for paired positions
+// - Rendered circles at each base with a letter label
+// - Overlaid a blinking path segment where the primer bound
+
+================================================================================
+*/

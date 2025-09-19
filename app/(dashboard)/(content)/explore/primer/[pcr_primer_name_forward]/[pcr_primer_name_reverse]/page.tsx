@@ -2,6 +2,43 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Image from "next/image";
 import PrimerDiagram from "@/app/components/PrimerDiagram";
+import GcDonut from "@/app/components/charts/GcDonut";
+import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+
+// Simple GC% calculator for summary cards
+const calculateGcContent = (seq: string) => {
+	if (!seq || seq.length === 0) return 0;
+	let gcCount = 0;
+	let totalBases = seq.length;
+	for (const base of seq.toUpperCase()) {
+		switch (base) {
+			case "G":
+			case "C":
+			case "S":
+				gcCount += 1;
+				break;
+			case "V":
+			case "B":
+				gcCount += 2 / 3;
+				break;
+			case "R":
+			case "Y":
+			case "M":
+			case "K":
+				gcCount += 0.5;
+				break;
+			case "D":
+			case "H":
+				gcCount += 1 / 3;
+				break;
+			case "N":
+				totalBases--;
+				break;
+		}
+	}
+	if (totalBases === 0) return 0;
+	return (gcCount / totalBases) * 100;
+};
 
 export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 	params
@@ -46,10 +83,13 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 		{}
 	);
 
+	const forwardGc = calculateGcContent(primer.pcr_primer_forward);
+	const reverseGc = calculateGcContent(primer.pcr_primer_reverse);
+
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6">
 			{/* Breadcrumb navigation */}
-			<div className="text-base breadcrumbs mb-6">
+			<div className="text-base breadcrumbs">
 				<ul>
 					<li>
 						<Link href="/explore/primer" className="text-primary hover:text-primary-focus">
@@ -60,85 +100,142 @@ export default async function Pcr_Primer_Name_Forward_Pcr_Primer_Name_Reverse({
 				</ul>
 			</div>
 
-			<div className="grid grid-cols-4 gap-8 mb-3">
-				<div className="col-span-4">
-					<header>
-						<div className="flex gap-2 items-center">
-							<h1 className="text-4xl font-semibold text-primary mb-2">
-								<span className="text-primary">{primer.pcr_primer_forward}</span>{" "}
-								<span className="text-primary/90">{primer.pcr_primer_reverse}</span>
-								<span className="text-sm text-base-content/80 ml-1">ID:</span><span className="text-sm">{primer.id} </span>
-							</h1>
-							{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
-						</div>
-						<p className="text-sm text-base-content/80">
-							* Primer names are created by the combination of the forward primer sequence (pcr_primer_forward) and
-							the reverse primer sequence (pcr_primer_reverse). This string is unique.
-						</p>
-					</header>
+			<header>
+				<div className="flex gap-2 items-center">
+					<h1 className="text-4xl font-semibold text-primary mb-2">
+						<span className="text-primary">{primer.pcr_primer_forward}</span>{" "}
+						<span className="text-primary/90">{primer.pcr_primer_reverse}</span>
+						<span className="text-sm text-base-content/80 ml-1">ID:</span><span className="text-sm">{primer.id} </span>
+					</h1>
+					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
+				<p className="text-sm text-base-content/80 max-w-3xl">
+					* Primer names are created by the combination of the forward primer sequence (pcr_primer_forward) and
+					the reverse primer sequence (pcr_primer_reverse). This string is unique.
+				</p>
+			</header>
 
-				<div className="col-span-4">
-					<PrimerDiagram
-						forwardPrimerName={primer.pcr_primer_name_forward}
-						forwardPrimerSequence={primer.pcr_primer_forward}
-						reversePrimerName={primer.pcr_primer_name_reverse}
-						reversePrimerSequence={primer.pcr_primer_reverse}
-						forwardPrimerReference={primer.pcr_primer_reference_forward}
-						reversePrimerReference={primer.pcr_primer_reference_reverse}
-					/>
-					<div className="mt-4 p-4 bg-base-100 rounded-lg border border-base-content/10 space-y-4">
+			{/* Forward Primer Section */}
+			<section className="p-6 bg-base-100 rounded-lg border border-base-300">
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+					<div className="space-y-4">
 						<div>
-							<h4 className="text-base-content mb-1">Legend:</h4>
-							<div className="flex gap-6 text-sm">
-								<div className="flex items-center gap-2">
-									<div className="w-4 h-2 bg-primary rounded animate-pulse"></div>
-									<span className="font-normal/80">Actual primer sequence (blinking)</span>
+							<div>
+								<p className="text-sm font-medium text-base-content/70">Forward Primer</p>
+								<h3 className="text-2xl font-bold text-primary">{primer.pcr_primer_name_forward}</h3>
+							</div>
+							<div className="mt-3">
+								<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
+								<p className="font-mono text-base break-all">{primer.pcr_primer_forward}</p>
+							</div>
+						</div>
+						<div className="space-y-3 pt-1">
+							<div className="flex items-center gap-4">
+								<div className="text-center">
+									<p className="text-xs font-semibold text-base-content/70 mb-1">GC Content</p>
+									<GcDonut percentage={forwardGc} size={80} strokeWidth={9} />
 								</div>
-								<div className="flex items-center gap-2">
-									<div className="w-4 h-2 bg-secondary rounded"></div>
-									<span>Template/complementary strand</span>
+								<div>
+									<p className="text-xs font-semibold text-base-content/70">Length</p>
+									<p className="text-3xl font-semibold">{primer.pcr_primer_forward.length}</p>
 								</div>
 							</div>
-							<p className="text-sm text-base-content/80 mt-2">
-								<span className="text-base-content">How to read this diagram:</span> These horizontal DNA helix representations show
-								the reverse primer (top) and forward primer (bottom) with 5' (5-prime) and 3' (3-prime) indicators at the left and right ends of
-								each DNA backbone. The primer sequences are to be read from the 5' to the 3' end. The
-								<span className="text-primary"> blinking strands represent the actual primer sequences</span>, 
-								while the non-blinking strands are the complementary template DNA that the primers bind to during PCR. 
-								Each helix shows the top and bottom backbones of the DNA double helix, with the primer binding to its complementary sequence.
-							</p>
+							{primer.pcr_primer_reference_forward && (
+								<p className="text-sm"><a href={primer.pcr_primer_reference_forward} target="_blank" rel="noopener noreferrer" className="link link-primary">View Reference</a></p>
+							)}
 						</div>
 					</div>
+					<div className="lg:col-span-3">
+						<PrimerDiagram
+							forwardPrimerSequence={primer.pcr_primer_forward}
+							reversePrimerSequence={primer.pcr_primer_reverse}
+							primerToDisplay="forward"
+							scale={1.1}
+							showInfo={false}
+						/>
+					</div>
 				</div>
+			</section>
+
+			{/* Reverse Primer Section */}
+			<section className="p-6 bg-base-100 rounded-lg border border-base-300">
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+					<div className="space-y-4">
+						<div>
+							<div>
+								<p className="text-sm font-medium text-base-content/70">Reverse Primer</p>
+								<h3 className="text-2xl font-bold text-primary">{primer.pcr_primer_name_reverse}</h3>
+							</div>
+							<div className="mt-3">
+								<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
+								<p className="font-mono text-base break-all">{primer.pcr_primer_reverse}</p>
+							</div>
+						</div>
+						<div className="space-y-3 pt-1">
+							<div className="flex items-center gap-4">
+								<div className="text-center">
+									<p className="text-xs font-semibold text-base-content/70 mb-1">GC Content</p>
+									<GcDonut percentage={reverseGc} size={80} strokeWidth={9} />
+								</div>
+								<div>
+									<p className="text-xs font-semibold text-base-content/70">Length</p>
+									<p className="text-3xl font-semibold">{primer.pcr_primer_reverse.length}</p>
+								</div>
+							</div>
+							{primer.pcr_primer_reference_reverse && (
+								<p className="text-sm"><a href={primer.pcr_primer_reference_reverse} target="_blank" rel="noopener noreferrer" className="link link-primary">View Reference</a></p>
+							)}
+						</div>
+					</div>
+					<div className="lg:col-span-3">
+						<PrimerDiagram
+							forwardPrimerSequence={primer.pcr_primer_forward}
+							reversePrimerSequence={primer.pcr_primer_reverse}
+							primerToDisplay="reverse"
+							scale={1.1}
+							showInfo={false}
+						/>
+					</div>
+				</div>
+			</section>
+
+			{/* Legend */}
+			<div className="p-4 bg-base-100 rounded-lg border border-base-300">
+				<h4 className="text-base-content font-semibold mb-2">Legend</h4>
+				<div className="flex flex-col sm:flex-row gap-x-6 gap-y-2 text-sm">
+					<div className="flex items-center gap-2">
+						<div className="w-4 h-2 bg-primary rounded"></div>
+						<span>Primer segment</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<div className="w-4 h-2 bg-base-content/40 rounded"></div>
+						<span>Template/complementary strand</span>
+					</div>
+				</div>
+				<p className="text-sm text-base-content/80 mt-2">
+					Straight parallel lines show the DNA strands, read from 5' to 3'. Letters above/below the highlighted segment show the actual primer sequence.
+				</p>
 			</div>
 
-			<div className="bg-base-200">
-				<div className="card-body">
-					<h2 className="card-title text-base-content/70">
-						Assays using this Primer: {Object.keys(uniqueAssays).length}
-					</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4 mb-2">
-						{Object.keys(uniqueAssays).map((assay, index) => {
-							const imagePath = `/images/${assay}_icon.svg`;
-
-							return (
-								<div key={index} className="card bg-base-300 shadow-sm">
-									<div className="card-body">
-										<div className="flex items-center gap-4">
-											<div className="w-16 h-16">
-												<Image src={imagePath} alt={assay} width={64} height={64} className="object-contain" />
-											</div>
-											<div>
-												<h3 className="font-medium">{uniqueAssays[assay].target_gene}</h3>
-												<p className="text-sm text-base-content">{assay}</p>
-											</div>
-										</div>
-									</div>
+			{/* Assays using this Primer */}
+			<div className="mb-4">
+				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
+					Assays using this Primer ({Object.keys(uniqueAssays).length})
+				</h2>
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+					{Object.keys(uniqueAssays).map((assay) => (
+						<div key={assay} className="flex items-center gap-4 p-4 bg-base-100 rounded-lg border border-base-300">
+							<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+								<div className="relative w-12 h-12">
+									<AssayPhyloPic assayName={assay} />
 								</div>
-							);
-						})}
-					</div>
+							</div>
+							<div>
+								<h3 className="font-bold text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
+								<p className="text-base-content/70">{assay}</p>
+							</div>
+						</div>
+					))}
 				</div>
 			</div>
 		</div>
