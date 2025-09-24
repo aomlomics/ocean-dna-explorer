@@ -77,7 +77,7 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 						alt=""
 						fill
 						priority={mounted ? index === activeIndex : true}
-						className="object-cover opacity-30 filter dark:contrast-100 dark:saturate-100"
+						className="object-cover opacity-30 filter [html[data-theme='dark']_&]:opacity-55 [html[data-theme='dark']_&]:brightness-110 [html[data-theme='dark']_&]:contrast-110 [html[data-theme='dark']_&]:saturate-125"
 						sizes="100vw"
 					/>
 				</div>

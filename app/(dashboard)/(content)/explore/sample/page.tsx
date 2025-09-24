@@ -7,6 +7,7 @@ import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import Table from "@/app/components/paginated/Table";
 import Pagination from "@/app/components/paginated/Pagination";
+import TableFilter from "@/app/components/explore/filters/TableFilter";
 
 export default async function Sample() {
 	const samples = await prisma.sample.findMany({
@@ -65,7 +66,7 @@ export default async function Sample() {
 
 	return (
 		<ExplorePage table="sample" tableConfig={tableConfig}>
-			<div className="px-6 lg:px-0">
+			<div>
 				<div className="space-y-4">
 					<ExploreTabButtons />
 					<div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -87,20 +88,9 @@ export default async function Sample() {
 					<h1 className="text-xl font-medium text-base-content">
 						Showing <span className="text-primary">Samples</span>
 					</h1>
-					<div className="lg:hidden">
-						<label htmlFor="my-drawer" className="btn btn-primary drawer-button">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								fill="none"
-								viewBox="0 0 24 24"
-								className="inline-block w-5 h-5 stroke-current"
-							>
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-							</svg>
-							Filter Options
-						</label>
-					</div>
 				</div>
+
+				<TableFilter tableConfig={tableConfig} />
 					<div className="hidden lg:block lg:h-[calc(95vh-20rem)]">
 						<div className="rounded-lg border border-base-300 h-full overflow-auto">
 							<Table table="sample" defaultTake={25} filterHeadersAtStart hideEmptyAtStart />

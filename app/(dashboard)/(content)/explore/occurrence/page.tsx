@@ -4,6 +4,7 @@ import Table from '@/app/components/paginated/Table';
 import ExploreTabButtons from '@/app/components/explore/ExploreTabButtons';
 import Link from 'next/link';
 import Pagination from '@/app/components/paginated/Pagination';
+import TableFilter from '@/app/components/explore/filters/TableFilter';
 
 export const metadata: Metadata = {
   title: 'Explore Occurrences',
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 const Page = async () => {
   return (
     <ExplorePage table="occurrence" tableConfig={[]}>
-      <div className="px-6 lg:px-0">
+      <div>
         <div className="space-y-4">
           <ExploreTabButtons />
           <div className="bg-base-100 border border-base-300 rounded-lg p-4">
@@ -33,6 +34,7 @@ const Page = async () => {
             Showing <span className="text-primary">Occurrences</span>
           </h1>
         </div>
+        <TableFilter tableConfig={[]} />
         <div className="aspect-5/2 hidden lg:block">
           <div className="rounded-lg border border-base-300 h-full">
             <Table table="occurrence" defaultTake={50} />

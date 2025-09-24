@@ -86,6 +86,34 @@ function generateDistinctColors(count: number): string[] {
   return [primaryBlue, ...distinctHexColors.slice(0, remainingCount)];
 }
 
+// Generate colors but place primary blue at the provided index (e.g., most abundant)
+function generateColorsWithPrimaryAtIndex(count: number, primaryIndex: number): string[] {
+  // Primary blue from your site's design system
+  const primaryBlue = "#64ABDC";
+  
+  if (count === 0) return [];
+  if (count === 1) return [primaryBlue];
+
+  const baseColors = generateDistinctColors(count); // starts with primary at index 0
+
+  // If primary is already at the desired index, return
+  if (primaryIndex === 0) return baseColors;
+
+  // Otherwise, move primaryBlue to primaryIndex while preserving order of the rest
+  const colors = [...baseColors.slice(1)]; // remove the first primary color
+
+  const result: string[] = new Array(count);
+  result[primaryIndex] = primaryBlue;
+
+  let cursor = 0;
+  for (let i = 0; i < count; i++) {
+    if (i === primaryIndex) continue;
+    result[i] = colors[cursor++];
+  }
+
+  return result;
+}
+
 function CustomLegend({ 
   labels, 
   data, 
@@ -154,7 +182,9 @@ function CustomLegend({
 export default function DoughnutChart({ labels, data }: DoughnutChartProps) {
   const { theme } = useTheme();
   const textColor = theme === "dark" ? "#E2E8F0" : "#2D3748";
-  const colors = generateDistinctColors(labels.length);
+  // Determine the index of the most abundant value
+  const maxIndex = data.reduce((bestIndex, value, i, arr) => (value > arr[bestIndex] ? i : bestIndex), 0);
+  const colors = generateColorsWithPrimaryAtIndex(labels.length, maxIndex);
   
   const chartData = {
     labels,

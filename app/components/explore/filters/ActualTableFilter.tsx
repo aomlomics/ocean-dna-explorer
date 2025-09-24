@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import RangeFilter from "./filterTypes/RangeFilter";
 import { FilterConfig, getActiveFilters } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
@@ -10,111 +11,178 @@ import Filter from "./filterTypes/Filter";
 
 // Main filter component that shows in the sidebar
 // Handles all the filters for a specific table (like projects or analyses)
-export default function ActualTableFilter({ tableConfig }: { tableConfig: FilterConfig[] }) {
+export default function ActualTableFilter({ tableConfig, sticky = false }: { tableConfig: FilterConfig[]; sticky?: boolean }) {
 	const router = useRouter();
-	const searchParams = useSearchParams();
+	const searchParams = useSearchParams()!;
+	const [isOpen, setIsOpen] = useState(false);
 
 	// Get what filters are currently active from the URL
 	const activeFilters = getActiveFilters(searchParams, tableConfig);
 	const activeFilterCount = Object.keys(activeFilters).length;
 
+	function formatLabelFromField(fieldKey: string): string {
+		const withSpaces = fieldKey.replace(/_/g, " ");
+		return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+	}
+
+	function buildActiveSummaries(): string[] {
+		const summaries: string[] = [];
+		for (const config of tableConfig) {
+			if (config.type === "select" || config.type === "enum") {
+				if (typeof config.field === "string") {
+					const raw = activeFilters[config.field];
+					if (raw !== undefined) {
+						let valueLabel = String(raw);
+						if (config.type === "select" && Array.isArray(config.options)) {
+							const idx = (config.options as any[]).indexOf(raw);
+							if (idx !== -1 && Array.isArray((config as any).optionsLabels)) {
+								valueLabel = (config as any).optionsLabels[idx] ?? valueLabel;
+							}
+						}
+						summaries.push(`${formatLabelFromField(config.field)}: ${valueLabel}`);
+					}
+				} else {
+					const rel = config.field.rel;
+					const f = (config.field as any).f;
+					const rawRel = activeFilters[rel];
+					if (rawRel !== undefined) {
+						try {
+							const parsed = JSON.parse(rawRel);
+							if (parsed && parsed[f] !== undefined) {
+								summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
+							}
+						} catch {}
+					}
+				}
+			} else if (config.type === "range") {
+				if (typeof config.field === "string") {
+					const raw = activeFilters[config.field];
+					if (raw !== undefined) {
+						try {
+							const parsed = JSON.parse(raw);
+							const g = parsed.gte ?? config.gte;
+							const l = parsed.lte ?? config.lte;
+							summaries.push(`${formatLabelFromField(config.field)}: ${g}–${l}`);
+						} catch {}
+					}
+				}
+			}
+		}
+		return summaries;
+	}
+
 	return (
-		<div className="bg-base-100 rounded-lg border border-base-300 sticky top-6">
-			{/* Shows how many filters are being used */}
-			<div className="flex justify-between items-center p-4 border-b border-base-300 bg-base-200/50">
-				<div>
-					<div className="flex items-center gap-3">
+		<div className={`bg-base-200 rounded-lg border border-base-300 relative z-20${sticky ? " sticky top-6 z-30" : ""}`}>
+			{/* Header: Filters title, icon (larger), active count, chevron; no background bar */}
+			<div
+				className="flex justify-between items-center px-2 sm:px-0 py-3 cursor-pointer select-none"
+				onClick={() => setIsOpen((v) => !v)}
+				role="button"
+				aria-expanded={isOpen}
+			>
+				<div className="flex items-center gap-3">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							width="16"
-							height="16"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
 							strokeWidth="2"
 							strokeLinecap="round"
 							strokeLinejoin="round"
-							className="text-primary"
+							className="text-primary w-6 h-6 sm:w-7 sm:h-7"
 						>
 							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
 						</svg>
-						<h3 className="font-medium text-base-content">Filters</h3>
-					</div>
-					<div>
+						<h3 className="text-xl font-medium text-base-content">Filters</h3>
 						{activeFilterCount > 0 ? (
-							<span className="text-sm text-base-content/70">{activeFilterCount} active</span>
-						) : (
-							<span className="text-sm text-base-content/70">{"\u200b"}</span>
-						)}
+							<span className="text-xl text-base-content/70 whitespace-nowrap">{activeFilterCount} active</span>
+						) : null}
 					</div>
-				</div>
-				{/* Button to clear all active filters */}
-				{activeFilterCount > 0 && (
-					<button
-						onClick={() => {
-							const params = new URLSearchParams(searchParams);
-							tableConfig.forEach((config) => {
-								if (config.type === "selectGroup") {
-									for (let field of config.group) {
-										params.delete(typeof field === "string" ? field : field.rel);
+				<div className="flex items-center gap-2 sm:gap-3">
+					{activeFilterCount > 0 && (
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								const params = new URLSearchParams(searchParams);
+								tableConfig.forEach((config) => {
+									if (config.type === "selectGroup") {
+										for (let field of config.group) {
+											params.delete(typeof field === "string" ? field : field.rel);
+										}
+									} else {
+										params.delete(typeof config.field === "string" ? config.field : config.field.rel);
 									}
-								} else {
-									params.delete(typeof config.field === "string" ? config.field : config.field.rel);
-								}
-							});
-							router.push(`?${params.toString()}`);
-						}}
-						className="btn btn-primary btn-sm"
+								});
+								router.push(`?${params.toString()}`);
+							}}
+							className="btn btn-primary btn-md"
+						>
+							Clear All Filters ({activeFilterCount})
+						</button>
+					)}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						className={`w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
 					>
-						Clear all filters
-					</button>
-				)}
+						<path d="M6 9l6 6 6-6" />
+					</svg>
+				</div>
 			</div>
 
-			{/* List of all available filters */}
-			<div className="divide-y divide-base-300">
-				{tableConfig.reduce((acc: ReactNode[], config, i) => {
-					if (config.type === "select" || config.type === "enum") {
-						acc.push(
-							<SelectFilter
-								key={i}
-								config={config}
-								activeFilters={activeFilters}
-								fieldName={typeof config.field === "string" ? config.field : config.field.f}
-								value={
-									typeof config.field === "string" && activeFilters[config.field] !== undefined
-										? activeFilters[config.field]
-										: typeof config.field === "object" &&
-										  activeFilters[config.field.rel] !== undefined &&
-										  JSON.parse(activeFilters[config.field.rel])[config.field.f]
-								}
-							/>
-						);
-					} else if (config.type === "range") {
-						acc.push(
-							<Filter
-								key={i}
-								fieldName={typeof config.field === "string" ? config.field : config.field.f}
-								value={
-									typeof config.field === "string" && activeFilters[config.field] !== undefined
-										? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
-										  " to " +
-										  (JSON.parse(activeFilters[config.field]).lte || config.lte)
-										: typeof config.field === "object" &&
-										  activeFilters[config.field.rel] !== undefined &&
-										  JSON.parse(activeFilters[config.field.rel])[config.field.f]
-								}
-							>
-								<RangeFilter config={config} />
-							</Filter>
-						);
-					} else if (config.type === "selectGroup") {
-						acc.push(<SelectGroup key={i} config={config} activeFilters={activeFilters} />);
-					}
+			{/* Filter controls */}
+			{isOpen && (
+				<div className="divide-y divide-base-300">
+					{tableConfig.reduce((acc: ReactNode[], config, i) => {
+						if (config.type === "select" || config.type === "enum") {
+							acc.push(
+								<SelectFilter
+									key={i}
+									config={config}
+									activeFilters={activeFilters}
+									fieldName={typeof config.field === "string" ? config.field : config.field.f}
+									value={
+										typeof config.field === "string" && activeFilters[config.field] !== undefined
+											? activeFilters[config.field]
+											: typeof config.field === "object" &&
+											  activeFilters[config.field.rel] !== undefined &&
+											  JSON.parse(activeFilters[config.field.rel])[config.field.f]
+									}
+								/>
+							);
+						} else if (config.type === "range") {
+							acc.push(
+								<Filter
+									key={i}
+									fieldName={typeof config.field === "string" ? config.field : config.field.f}
+									value={
+										typeof config.field === "string" && activeFilters[config.field] !== undefined
+											? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
+											  " to " +
+											  (JSON.parse(activeFilters[config.field]).lte || config.lte)
+											: typeof config.field === "object" &&
+											  activeFilters[config.field.rel] !== undefined &&
+											  JSON.parse(activeFilters[config.field.rel])[config.field.f]
+									}
+								>
+									<RangeFilter config={config} />
+								</Filter>
+							);
+						} else if (config.type === "selectGroup") {
+							acc.push(<SelectGroup key={i} config={config} activeFilters={activeFilters} />);
+						}
 
-					return acc;
-				}, [])}
-			</div>
+						return acc;
+					}, [])}
+				</div>
+			)}
+
+
 		</div>
 	);
 }

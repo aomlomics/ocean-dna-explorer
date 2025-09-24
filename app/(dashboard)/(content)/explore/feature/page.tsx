@@ -27,7 +27,35 @@ export default async function Feature() {
 				lte: minMaxSeqLength._max.sequenceLength_ODE as number
 			}
 		]}>
-			<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
+			<div className="space-y-6">
+				<div className="space-y-[-1px]">
+					<div className="border-b border-base-300">
+						<nav className="flex tabs tabs-lifted">
+							<ExploreTabButtons />
+						</nav>
+					</div>
+					<div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
+						<p className="mb-2">
+							Unique DNA sequences (eg, ASVs) found in samples, typically representing distinct organisms, with their
+							consensus taxonomic classification.
+						</p>
+						<p className="text-sm">
+							For more detailed information, visit our{" "}
+							<Link href="/help" className="text-primary hover:underline">
+								Help page
+							</Link>
+							.
+						</p>
+					</div>
+				</div>
+
+				<div className="flex justify-between items-center my-4">
+					{/* <ExploreSearch table="feature" defaultField="featureid" /> */}
+					<h1 className="text-xl font-medium text-base-content">
+						Showing <span className="text-primary">Features</span>
+					</h1>
+				</div>
+
 				<TableFilter
 					tableConfig={[
 						{
@@ -38,55 +66,13 @@ export default async function Feature() {
 						}
 					]}
 				/>
-				<div className="space-y-6">
-					<div className="space-y-[-1px]">
-						<div className="border-b border-base-300">
-							<nav className="flex tabs tabs-lifted">
-								<ExploreTabButtons />
-							</nav>
-						</div>
-						<div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-6">
-							<p className="mb-2">
-								Unique DNA sequences (eg, ASVs) found in samples, typically representing distinct organisms, with their
-								consensus taxonomic classification.
-							</p>
-							<p className="text-sm">
-								For more detailed information, visit our{" "}
-								<Link href="/help" className="text-primary hover:underline">
-									Help page
-								</Link>
-								.
-							</p>
+					<div className="aspect-5/2 hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-full">
+							<Table table="feature" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
 						</div>
 					</div>
-
-					<div className="flex justify-between items-center my-4">
-						{/* <ExploreSearch table="feature" defaultField="featureid" /> */}
-						<h1 className="text-xl font-medium text-base-content">
-							Showing <span className="text-primary">Features</span>
-						</h1>
-						<div className="lg:hidden">
-							<label htmlFor="my-drawer" className="btn btn-primary drawer-button">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									className="inline-block w-5 h-5 stroke-current"
-								>
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-								</svg>
-								Filter Options
-							</label>
-						</div>
-					</div>
-						<div className="aspect-5/2 hidden lg:block">
-							<div className="rounded-lg border border-base-300 h-full">
-								<Table table="feature" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
-							</div>
-						</div>
-					<div className="lg:hidden">
-						<Pagination table="feature" />
-					</div>
+				<div className="lg:hidden">
+					<Pagination table="feature" />
 				</div>
 			</div>
 		</ExplorePage>
