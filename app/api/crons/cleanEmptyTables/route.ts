@@ -1,4 +1,3 @@
-import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, unsafePrisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -48,8 +47,9 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return NextResponse.json(handlePrismaError(err));
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return NextResponse.json(prismaErr);
 		}
 
 		const error = err as Error;

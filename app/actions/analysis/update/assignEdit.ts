@@ -1,7 +1,7 @@
 "use server";
 
-import { Assignment, Prisma } from "@/app/generated/prisma/client";
-import { getNewEditHistory } from "@/app/helpers/actions/actions";
+import { Assignment } from "@/app/generated/prisma/client";
+import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAssignmentFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
@@ -24,7 +24,30 @@ async function doEdit(
 	}
 
 	try {
-		const parseResult = await parseAssignmentFile(stream, url, analysis_run_name, true);
+		const dbAnalysis = await prisma.analysis.findUnique({
+			where: {
+				analysis_run_name
+			},
+			select: {
+				analysisMetadataFileChecksum_ODE: true,
+				Project: { select: { userIds: true } }
+			}
+		});
+
+		if (!dbAnalysis) {
+			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+			return;
+		} else if (!dbAnalysis.Project.userIds.includes(userId)) {
+			await stream.error("Unauthorized action.");
+			return;
+		}
+
+		const parseResult = await parseAssignmentFile({
+			stream,
+			url,
+			analysis_run_name,
+			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+		});
 		if (!parseResult) {
 			return;
 		}
@@ -45,6 +68,7 @@ async function doEdit(
 								userIds: true
 							}
 						},
+						project_id: true,
 						editHistory: true,
 						asvFileUrl_ODE: true,
 						asvFileChecksum_ODE: true
@@ -52,40 +76,14 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					return `No Analysis with analysis_run_name of "${analysis_run_name}" found.`;
+					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					return "Unauthorized action.";
+					throw new Error("Unauthorized action.");
 				} else if (!dbAnalysis.asvFileUrl_ODE || !dbAnalysis.asvFileChecksum_ODE) {
-					return "Invalid Analysis. Missing file for ASVs.";
+					throw new Error("Invalid Analysis. Missing file for ASVs.");
 				}
 
 				await stream.message("All checks passed.", 80);
-
-				const editHistory = getNewEditHistory(editId, dbAnalysis.editHistory, [
-					{
-						field: "asvFileUrl_ODE",
-						oldValue: dbAnalysis.asvFileUrl_ODE,
-						newValue: url
-					},
-					{
-						field: "asvFileChecksum_ODE",
-						oldValue: dbAnalysis.asvFileChecksum_ODE,
-						newValue: md5Checksum
-					}
-				]);
-
-				//add asv file to analysis
-				await tx.analysis.update({
-					where: {
-						analysis_run_name
-					},
-					data: {
-						editHistory,
-						asvFileUrl_ODE: url,
-						asvFileChecksum_ODE: md5Checksum
-					}
-				});
-				await stream.message("Analysis editHistory successfully updated in database.", 85);
 
 				//add new
 				const newFeatures = await tx.feature.createManyAndReturn({
@@ -103,7 +101,7 @@ async function doEdit(
 					skipDuplicates: true
 				});
 
-				await stream.message("New entries successfully added to database.", 90);
+				await stream.message("New entries successfully added to database.", 85);
 
 				//update old
 				await updateManyRaw(
@@ -131,7 +129,7 @@ async function doEdit(
 					)
 				);
 
-				await stream.message("Existing entries successfully updated in database.", 93);
+				await stream.message("Existing entries successfully updated in database.", 90);
 
 				//delete unused
 				//rely on cron to delete unused features and taxonomies
@@ -143,15 +141,42 @@ async function doEdit(
 						}
 					}
 				});
+
+				await stream.message("Removed entries successfully deleted in database.", 95);
+
+				const editHistory = addToHistory("analysis", editId, dbAnalysis.editHistory, [
+					{
+						field: "asvFileUrl_ODE",
+						oldValue: dbAnalysis.asvFileUrl_ODE,
+						newValue: url
+					},
+					{
+						field: "asvFileChecksum_ODE",
+						oldValue: dbAnalysis.asvFileChecksum_ODE,
+						newValue: md5Checksum
+					}
+				]);
+
+				//add asv file to analysis
+				await tx.analysis.update({
+					where: {
+						analysis_run_name
+					},
+					data: {
+						editHistory,
+						asvFileUrl_ODE: url,
+						asvFileChecksum_ODE: md5Checksum
+					}
+				});
+
+				await stream.success("Success");
 			},
 			{ timeout: 1 * 60 * 1000 }
 		);
-
-		await stream.success("Success");
 	} catch (err: any) {
-		console.log(err.message);
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			await stream.error(handlePrismaError(err).error);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			await stream.error(prismaErr.error);
 		} else {
 			const error = err as Error;
 			await stream.error(error.message);

@@ -1,13 +1,13 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import { Project } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function projectDeleteAction(target: string): Promise<NetworkPacket> {
+export default async function projectDeleteAction(target: Project["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -17,7 +17,6 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 
 	const parsed = ProjectSchema.shape.project_id.safeParse(target);
 	if (!parsed.success) {
-		//TODO: make more specific, since the schema is only a string, and not an object
 		return {
 			statusMessage: "error",
 			error: parsed.error.issues ? parsed.error.issues.map((issue) => issue.message).join(" ") : "Invalid project_id"
@@ -26,7 +25,7 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 	const project_id = parsed.data;
 
 	try {
-		const error = await prisma.$transaction(
+		await prisma.$transaction(
 			async (tx) => {
 				const project = await tx.project.findUnique({
 					where: {
@@ -38,13 +37,12 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				});
 
 				if (!project) {
-					return `No Project with project_id of "${project_id}" found.`;
+					throw new Error(`No Project with project_id of "${project_id}" found.`);
 				} else if (!project.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
-					return "Unauthorized action.";
+					throw new Error("Unauthorized action.");
 				}
 
 				//project delete
-				console.log("project delete");
 				await tx.project.delete({
 					where: {
 						project_id
@@ -52,7 +50,6 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				});
 
 				//assays delete
-				console.log("assays delete");
 				await tx.assay.deleteMany({
 					where: {
 						Samples: {
@@ -62,7 +59,6 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				});
 
 				//primers delete
-				console.log("primers delete");
 				await tx.primer.deleteMany({
 					where: {
 						Assays: {
@@ -72,7 +68,6 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				});
 
 				// features delete
-				// console.log("empty features delete");
 				// await tx.feature.deleteMany({
 				// 	where: {
 				// 		Assignments: {
@@ -82,7 +77,6 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 				// });
 
 				//taxonomies delete
-				// console.log("empty taxonomies delete");
 				// await tx.taxonomy.deleteMany({
 				// 	where: {
 				// 		Assignments: {
@@ -94,14 +88,11 @@ export default async function projectDeleteAction(target: string): Promise<Netwo
 			{ timeout: 1.5 * 60 * 1000 }
 		);
 
-		if (error) {
-			return { statusMessage: "error", error };
-		}
-
 		return { statusMessage: "success" };
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return handlePrismaError(err);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
 		}
 
 		const error = err as Error;

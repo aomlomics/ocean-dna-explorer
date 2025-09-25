@@ -227,15 +227,11 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const analysisUrl = (
-						await upload(
-							`submissions/${project.project_id}/analyses/${id}/analysisMetadata/${analysisFile.name}`,
-							analysisFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${analysisFile.name}`, analysisFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
 					//submit analysis file url
 					const analysisError = await doProgressAction({
@@ -265,15 +261,11 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const assignmentsUrl = (
-						await upload(
-							`submissions/${project.project_id}/analyses/${id}/asv/${assignmentsFile.name}`,
-							assignmentsFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
 					//submit assignments file url
 					const assignmentsError = await doProgressAction({
@@ -312,15 +304,11 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const occurrencesUrl = (
-						await upload(
-							`submissions/${project.project_id}/analyses/${id}/occurrence/${occurrencesFile.name}`,
-							occurrencesFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
 					//submit occurrences file url
 					const occurrencesError = await doProgressAction({

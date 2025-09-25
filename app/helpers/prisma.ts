@@ -1,10 +1,13 @@
 import { RolePermissions } from "@/types/objects";
-import { Prisma } from "../generated/prisma/client";
+import { DeadBoolean, Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { ErrorPacket, Role } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 import { deepMerge } from "./utils";
+import TableMetadata from "@/types/tableMetadata";
+import { getZodType } from "./schema";
+import { DeadBooleanEnum } from "@/types/enums";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -560,23 +563,95 @@ export function stripSecureFields(queryResult: Record<string, any> | Record<stri
 	}
 }
 
-export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket {
-	if (err.code === "P2002") {
-		return {
-			statusMessage: "error",
-			error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
-				", "
-			)} already exists in database.`
-		};
-	} else {
-		return {
-			statusMessage: "error",
-			error: err.message
-		};
+export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
+	if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+		if (err.code === "P2002") {
+			return {
+				statusMessage: "error",
+				error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
+					", "
+				)} already exists in database.`
+			};
+		} else {
+			return {
+				statusMessage: "error",
+				error: err.message
+			};
+		}
 	}
 }
 
 //TODO: make it work with arrays
+async function updateManyRawChunked(
+	client: any,
+	table: Prisma.ModelName,
+	data: Record<string, any>[],
+	id = "id",
+	fields: string[]
+) {
+	const shape = TableMetadata[table.toLowerCase() as Lowercase<Prisma.ModelName>].schema.shape; //TODO: remove toLowerCase() when merging into branch that allows indexing TableMetadata with Prisma.ModelName
+	const deadBooleanFields = [] as string[];
+	const setSql = fields
+		.map((f) => {
+			const type = getZodType(shape[f]).type;
+			let typecast = "";
+
+			if (type === "DeadBoolean") {
+				typecast = '::"DeadBoolean"';
+				deadBooleanFields.push(f);
+			} else if (type === "json") {
+				typecast = "::jsonb";
+			} else if (type === "integer") {
+				typecast = "::integer";
+			} else if (type === "float") {
+				typecast = "::float";
+			} else if (type === "boolean") {
+				typecast = "::boolean";
+			} else if (type === "date") {
+				typecast = "::timestamp";
+			}
+
+			return `"${f}" = "t"."${f}"${typecast}`;
+		})
+		.join(", ");
+	const fieldsSql = fields.map((f) => `"${f}"`).join(", ");
+
+	let paramIndex = 0;
+	const valuesSql = data.map((row) => `(${Object.values(row).map(() => `\$${++paramIndex}`)})`).join(",");
+
+	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSql}) AS t("${id}", ${fieldsSql}) WHERE "${table}"."${id}" = "t"."${id}"`;
+
+	const deadBooleanKeys = Object.keys(DeadBooleanEnum);
+	return client.$executeRawUnsafe(
+		sql,
+		...data.reduce(
+			(acc: Array<string | number | boolean>, row) => [
+				...acc,
+				row[id],
+				...fields.map((f) => {
+					const deadBooleanFoundKey = deadBooleanKeys.find(
+						(db) => DeadBooleanEnum[db as keyof typeof DeadBooleanEnum] === row[f]
+					);
+					if (deadBooleanFields.includes(f) && deadBooleanFoundKey) {
+						if (deadBooleanFoundKey === "0") {
+							return DeadBoolean.false;
+						} else if (deadBooleanFoundKey === "1") {
+							return DeadBoolean.true;
+						} else {
+							return deadBooleanFoundKey;
+						}
+					} else if (row[f] === "JsonNull") {
+						return "[]";
+					} else {
+						return row[f];
+					}
+				})
+			],
+			[]
+		)
+	);
+}
+
 export async function updateManyRaw(
 	client: any,
 	table: Prisma.ModelName,
@@ -593,18 +668,13 @@ export async function updateManyRaw(
 		fs = keys;
 	}
 
-	const setSql = fs.map((field) => `"${field}" = "t"."${field}"`).join(", ");
-	const fieldsSql = fs.map((f) => `"${f}"`).join(", ");
+	let rowsAffected = 0;
+	const CHUNK_SIZE = 30000 / fs.length; //Prisma prepared statements have a limit of 32,767
+	for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+		rowsAffected += await updateManyRawChunked(client, table, data.slice(i, i + CHUNK_SIZE), id, fs);
+	}
 
-	let paramIndex = 0;
-	const valuesSql = data.map((row) => `(${Object.values(row).map(() => `\$${++paramIndex}`)})`).join(",");
-
-	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSql}) AS t("${id}", ${fieldsSql}) WHERE "${table}"."${id}" = "t"."${id}"`;
-
-	return client.$executeRawUnsafe(
-		sql,
-		...data.reduce((acc: Array<string | number | boolean>, row) => [...acc, row[id], ...fs.map((f) => row[f])], [])
-	);
+	return rowsAffected;
 }
 
 async function getWhere({

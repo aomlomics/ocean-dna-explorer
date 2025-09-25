@@ -166,10 +166,9 @@ export default function ProjectSubmit() {
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
 		try {
-			//create csv-parse parsers from the File objects
 			setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
 			const projectFileUrl = (
-				await upload(`submissions/${project_id}/projectMetadata/${projectFile.name}`, projectFile, {
+				await upload(`submissions/${projectFile.name}`, projectFile, {
 					access: "public",
 					handleUploadUrl: "/api/file/upload",
 					multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -179,7 +178,7 @@ export default function ProjectSubmit() {
 
 			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
 			const sampleFileUrl = (
-				await upload(`submissions/${project_id}/sampleMetadata/${sampleFile.name}`, sampleFile, {
+				await upload(`submissions/${sampleFile.name}`, sampleFile, {
 					access: "public",
 					handleUploadUrl: "/api/file/upload",
 					multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -189,7 +188,7 @@ export default function ProjectSubmit() {
 
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
 			const libraryFileUrl = (
-				await upload(`submissions/${project_id}/libraryMetadata/${libraryFile.name}`, libraryFile, {
+				await upload(`submissions/${libraryFile.name}`, libraryFile, {
 					access: "public",
 					handleUploadUrl: "/api/file/upload",
 					multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB

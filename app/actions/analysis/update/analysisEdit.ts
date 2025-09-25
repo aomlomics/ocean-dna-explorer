@@ -1,19 +1,21 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { getNewEditHistory } from "@/app/helpers/actions/actions";
+import { Analysis } from "@/app/generated/prisma/client";
+import { addToHistory } from "@/app/helpers/actions/actions";
+import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { parseSchemaToObject } from "@/app/helpers/schema";
-import { deadBooleanToString } from "@/app/helpers/utils";
-import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
-import { parse } from "csv-parse";
-import { md5 } from "js-md5";
 
-async function doEdit(stream: ProgressStream, url: string, editId: string) {
+async function doEdit(
+	stream: ProgressStream,
+	url: string,
+	editId: string,
+	analysis_run_name: Analysis["analysis_run_name"],
+	isPrivate?: boolean
+) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -22,123 +24,81 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 		return;
 	}
 
-	const analysisCol = {} as Record<string, string>;
-	const userDefined = {} as PrismaJson.UserDefinedType;
-
 	try {
-		//fetch file from blob storage
-		await stream.message("Downloading file", 10);
-		const fileResponse = await fetch(url);
-		if (!fileResponse.ok) {
-			await stream.error(`Analysis file responded ${fileResponse.status}: ${fileResponse.statusText}.`);
-			return;
-		}
-
-		await stream.message("Reading file into memory", 15);
-		const text = await fileResponse.text();
-		const md5Checksum = md5(text);
-		const parser = parse(text, { columns: true, delimiter: "\t" });
-		await stream.message("File read into memory", 25);
-
-		let i = 0;
-		for await (const record of parser) {
-			const field = record.term_name;
-			if (field) {
-				i++;
-
-				const value = record.values;
-
-				//User defined
-				if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
-					userDefined[field] = value;
-				} else {
-					parseSchemaToObject(field, value, analysisCol, "analysis");
-				}
-			}
-
-			//add to progress bar
-			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
-		}
-
-		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
-			{
-				...analysisCol,
-				analysisMetadataFileUrl_ODE: url,
-				analysisMetadataFileChecksum_ODE: md5Checksum,
-				//override with values from database before submitting
-				asvFileUrl_ODE: "",
-				asvFileChecksum_ODE: "",
-				occurrenceFileUrl_ODE: "",
-				occurrenceFileChecksum_ODE: "",
-				isPrivate: true,
-				editHistory: "JsonNull"
+		const dbAnalysis = await prisma.analysis.findUnique({
+			where: {
+				analysis_run_name
 			},
-			{
-				errorMap: (error, ctx) => {
-					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
-					};
-				}
+			select: {
+				analysisMetadataFileChecksum_ODE: true,
+				Project: { select: { userIds: true } }
 			}
-		);
+		});
 
-		if (!parsedAnalysis.success) {
-			await stream.error(
-				`Table: Analysis\n` +
-					`Key: ${analysisCol.analysis_run_name}\n\n` +
-					`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
-			);
+		if (!dbAnalysis) {
+			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+			return;
+		} else if (!dbAnalysis.Project.userIds.includes(userId)) {
+			await stream.error("Unauthorized action.");
 			return;
 		}
 
-		//unset all optional fields that were not provided
-		for (const field of AnalysisScalarFieldEnumSchema._def.values) {
-			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
-				//@ts-ignore
-				parsedAnalysis.data[field] = null;
-			}
+		const parseResult = await parseAnalysisFile({
+			stream,
+			url,
+			isPrivate,
+			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+		});
+		if (!parseResult) {
+			return;
 		}
-
-		const analysis = parsedAnalysis.data;
+		const { analysis, md5Checksum } = parseResult;
 
 		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
-		const dbError = await prisma.$transaction(
+		await prisma.$transaction(
 			async (tx) => {
-				//check if allowed
-				const dbAnalysis = await tx.analysis.findUnique({
+				//check if the associated project is private, and throw an error if it is private but the submission is public
+				const project = await tx.project.findUnique({
 					where: {
-						analysis_run_name: parsedAnalysis.data.analysis_run_name
+						project_id: analysis.project_id
 					},
 					select: {
-						Project: {
-							select: {
-								userIds: true
-							}
-						},
+						isPrivate: true,
+						userIds: true
+					}
+				});
+				if (!project) {
+					throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
+				} else if (!project.userIds.includes(userId)) {
+					throw new Error(
+						`Permission denied for editing analysis with Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
+					);
+				} else if (project.isPrivate && !isPrivate) {
+					throw new Error(
+						`Project with project_id of ${analysis.project_id} is private. Analyses can't be public if the associated project is private.`
+					);
+				}
+
+				const dbAnalysis = await tx.analysis.findUnique({
+					where: {
+						analysis_run_name
+					},
+					select: {
 						analysisMetadataFileUrl_ODE: true,
 						analysisMetadataFileChecksum_ODE: true,
-						//get actual values of placeholder fields
-						asvFileUrl_ODE: true,
-						asvFileChecksum_ODE: true,
-						occurrenceFileUrl_ODE: true,
-						occurrenceFileChecksum_ODE: true,
 						isPrivate: true,
 						editHistory: true
 					}
 				});
 
 				if (!dbAnalysis) {
-					return `No Analysis with analysis_run_name of "${analysis.analysis_run_name}" found.`;
-				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					return "Unauthorized action.";
+					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 				}
 
 				await stream.message("All checks passed.", 80);
 
-				const editHistory = getNewEditHistory(editId, dbAnalysis.editHistory, [
+				const editHistory = addToHistory("analysis", editId, dbAnalysis.editHistory, [
 					{
 						field: "analysisMetadataFileUrl_ODE",
 						oldValue: dbAnalysis.analysisMetadataFileUrl_ODE,
@@ -151,40 +111,26 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 					}
 				]);
 
-				//project
+				//update analysis
 				await tx.analysis.update({
 					where: {
-						analysis_run_name: analysis.analysis_run_name
+						analysis_run_name
 					},
 					data: {
 						...analysis,
 						editHistory,
-						analysisMetadataFileUrl_ODE: url,
-						analysisMetadataFileChecksum_ODE: md5Checksum,
-						//overriding placeholder values
-						isPrivate: dbAnalysis.isPrivate,
-						asvFileUrl_ODE: dbAnalysis.asvFileUrl_ODE,
-						asvFileChecksum_ODE: dbAnalysis.asvFileChecksum_ODE,
-						occurrenceFileUrl_ODE: dbAnalysis.occurrenceFileUrl_ODE,
-						occurrenceFileChecksum_ODE: dbAnalysis.occurrenceFileChecksum_ODE
+						isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate
 					}
 				});
 
-				//TODO: move old file to storage
+				await stream.success("Analysis file successfully updated in database.");
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
-
-		if (dbError) {
-			await stream.error(dbError);
-			return;
-		}
-
-		await stream.success("Analysis file successfully updated in database.");
 	} catch (err: any) {
-		console.log(err.message);
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			await stream.error(handlePrismaError(err).error);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			await stream.error(prismaErr.error);
 		} else {
 			const error = err as Error;
 			await stream.error(error.message);
@@ -192,10 +138,15 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 	}
 }
 
-export default async function analysisSubmitAction(url: string, editId: string) {
+export default async function analysisSubmitAction(
+	url: string,
+	editId: string,
+	analysis_run_name: Analysis["analysis_run_name"],
+	isPrivate?: boolean
+) {
 	const stream = createProgressStream();
 
-	doEdit(stream, url, editId).then(stream.close);
+	doEdit(stream, url, editId, analysis_run_name, isPrivate).then(stream.close);
 
 	return stream.readable;
 }

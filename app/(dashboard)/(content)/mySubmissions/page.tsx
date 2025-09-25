@@ -8,7 +8,8 @@ import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
 import projectUpdateUserIdsAction from "@/app/actions/project/update/projectUpdateUserIds";
-import TsvDisplayButton from "@/app/components/mySubmissions/TsvDisplayButton";
+import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButton";
+import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -22,13 +23,14 @@ export default async function MySubmissions() {
 				has: userId
 			}
 		},
-		omit: {
-			editHistory: true
-		},
-		include: {
+		select: {
+			project_id: true,
+			userIds: true,
+			isPrivate: true,
 			Analyses: {
-				omit: {
-					editHistory: true
+				select: {
+					analysis_run_name: true,
+					isPrivate: true
 				}
 			}
 		}
@@ -79,7 +81,7 @@ export default async function MySubmissions() {
 							) : (
 								<div className="flex flex-col gap-3 mt-2">
 									{projects.map((proj) => (
-										<div key={proj.id} className="flex flex-col gap-3">
+										<div key={proj.project_id} className="flex flex-col gap-3">
 											<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
 												<Link
 													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
@@ -89,39 +91,13 @@ export default async function MySubmissions() {
 												</Link>
 
 												<div className="flex gap-3">
-													<TsvDisplayButton
-														label="Project Metadata"
-														url={proj.projectMetadataFileUrl_ODE}
-														parserOptions={{ columns: true, delimiter: "\t" }}
-													/>
-													<TsvDisplayButton
-														label="Sample Metadata"
-														url={proj.sampleMetadataFileUrl_ODE}
-														parserOptions={{
-															columns: true,
-															delimiter: "\t",
-															comment: "#",
-															comment_no_infix: true
-														}}
-													/>
-													<TsvDisplayButton
-														label="Library Metadata"
-														url={proj.libraryMetadataFileUrl_ODE}
-														parserOptions={{
-															columns: true,
-															delimiter: "\t",
-															comment: "#",
-															comment_no_infix: true
-														}}
-													/>
-												</div>
-
-												<div className="flex gap-3">
 													<SubmissionUsersButton
 														userIds={proj.userIds}
 														action={projectUpdateUserIdsAction}
 														target={proj.project_id}
 													/>
+
+													<ProjectEditButton project_id={proj.project_id} isPrivate={proj.isPrivate} />
 
 													<SubmissionDeleteButton
 														field="project_id"
@@ -138,7 +114,7 @@ export default async function MySubmissions() {
 														<h2 className="text-lg text-primary font-medium">Analyses:</h2>
 														{proj.Analyses.map((analysis) => (
 															<div
-																key={analysis.id}
+																key={analysis.analysis_run_name}
 																className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
 															>
 																<Link
@@ -149,24 +125,11 @@ export default async function MySubmissions() {
 																</Link>
 
 																<div className="flex gap-3">
-																	<TsvDisplayButton
-																		label="Analysis Metadata"
-																		url={analysis.analysisMetadataFileUrl_ODE}
-																		parserOptions={{ columns: true, delimiter: "\t" }}
+																	<AnalysisEditButton
+																		analysis_run_name={analysis.analysis_run_name}
+																		isPrivate={analysis.isPrivate}
+																		isPrivateDisabled={proj.isPrivate}
 																	/>
-																	<TsvDisplayButton
-																		label="ASV Taxa/Features"
-																		url={analysis.asvFileUrl_ODE as string}
-																		parserOptions={{ columns: true, delimiter: "\t" }}
-																	/>
-																	<TsvDisplayButton
-																		label="Occurrence Table"
-																		url={analysis.occurrenceFileUrl_ODE as string}
-																		parserOptions={{ delimiter: "\t" }}
-																	/>
-																</div>
-
-																<div className="flex gap-3">
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
 																		value={analysis.analysis_run_name}

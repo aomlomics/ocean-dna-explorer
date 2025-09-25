@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { Occurrence } from "@/prisma/generated/zod";
@@ -19,7 +18,7 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 	}
 
 	try {
-		const parseResult = await parseOccurrenceFile(stream, url, analysis_run_name);
+		const parseResult = await parseOccurrenceFile({ stream, url, analysis_run_name });
 		if (!parseResult) {
 			return;
 		}
@@ -68,8 +67,9 @@ async function doSubmit(stream: ProgressStream, analysis_run_name: Occurrence["a
 
 		await stream.success("Success");
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			await stream.error(handlePrismaError(err).error);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			await stream.error(prismaErr.error);
 		} else {
 			const error = err as Error;
 			await stream.error(error.message);

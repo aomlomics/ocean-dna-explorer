@@ -3,6 +3,8 @@ import { Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generat
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import {
+	AnalysisOptionalDefaultsSchema,
+	AnalysisScalarFieldEnumSchema,
 	AssignmentOptionalDefaultsSchema,
 	FeatureOptionalDefaultsSchema,
 	OccurrenceOptionalDefaultsSchema,
@@ -12,12 +14,112 @@ import {
 import { deadBooleanToString } from "../utils";
 import { parseSchemaToObject } from "../schema";
 
-export async function parseAssignmentFile(
-	stream: ProgressStream,
-	url: string,
-	analysis_run_name: Assignment["analysis_run_name"],
-	unsetOptionals = false
-) {
+export async function parseAnalysisFile({
+	stream,
+	url,
+	isPrivate,
+	oldChecksum
+}: {
+	stream: ProgressStream;
+	url: string;
+	isPrivate?: boolean;
+	oldChecksum?: string;
+}) {
+	const analysisCol = {} as Record<string, string>;
+	const userDefined = {} as PrismaJson.UserDefinedType;
+
+	//fetch file from blob storage
+	await stream.message("Downloading file", 10);
+	const fileResponse = await fetch(url);
+	if (!fileResponse.ok) {
+		await stream.error(`Analysis file responded ${fileResponse.status}: ${fileResponse.statusText}.`);
+		return;
+	}
+
+	await stream.message("Reading file into memory", 15);
+	const text = await fileResponse.text();
+	const md5Checksum = md5(text);
+
+	if (oldChecksum === md5Checksum) {
+		await stream.error(
+			"Checksum for submitted analysisMetadata file matches the checksum of the previous file. Please submit a new file."
+		);
+		return;
+	}
+
+	const parser = parse(text, { columns: true, delimiter: "\t" });
+	await stream.message("File read into memory", 25);
+
+	let i = 0;
+	for await (const record of parser) {
+		const field = record.term_name;
+		if (field) {
+			i++;
+
+			const value = record.values;
+
+			//User defined
+			if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
+				userDefined[field] = value;
+			} else {
+				parseSchemaToObject(field, value, analysisCol, "analysis");
+			}
+		}
+
+		//add to progress bar
+		await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
+	}
+
+	const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
+		{
+			...analysisCol,
+			isPrivate: isPrivate === undefined ? false : isPrivate,
+			editHistory: "JsonNull",
+			analysisMetadataFileUrl_ODE: url,
+			analysisMetadataFileChecksum_ODE: md5Checksum
+		},
+		{
+			errorMap: (error, ctx) => {
+				return {
+					message: `Field: ${error.path[0]}\nIssue: ${
+						ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+					}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
+				};
+			}
+		}
+	);
+
+	if (!parsedAnalysis.success) {
+		await stream.error(
+			`Table: Analysis\n` +
+				`Key: ${analysisCol.analysis_run_name}\n\n` +
+				`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
+		);
+		return;
+	}
+
+	//unset all optional fields that were not provided
+	for (const field of AnalysisScalarFieldEnumSchema._def.values) {
+		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
+			//@ts-ignore
+			parsedAnalysis.data[field] = null;
+		}
+	}
+
+	return { analysis: parsedAnalysis.data, md5Checksum };
+}
+
+export async function parseAssignmentFile({
+	stream,
+	url,
+	analysis_run_name,
+	oldChecksum
+}: {
+	stream: ProgressStream;
+	url: string;
+	analysis_run_name: Assignment["analysis_run_name"];
+	oldChecksum?: string;
+}) {
 	const features = [] as Prisma.FeatureCreateManyInput[];
 	const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
 	const assignments = [] as Prisma.AssignmentCreateManyInput[];
@@ -35,6 +137,14 @@ export async function parseAssignmentFile(
 	await stream.message("Reading file into memory", 15);
 	const text = await response.text();
 	const md5Checksum = md5(text);
+
+	if (oldChecksum === md5Checksum) {
+		await stream.error(
+			"Checksum for submitted ASV file matches the checksum of the previous file. Please submit a new file."
+		);
+		return;
+	}
+
 	const parser = parse(text, { columns: true, delimiter: "\t" });
 	await stream.message("File read into memory", 25);
 
@@ -142,12 +252,10 @@ export async function parseAssignmentFile(
 			}
 
 			//unset all optional fields that were not provided
-			if (unsetOptionals) {
-				for (const field of TaxonomyScalarFieldEnumSchema._def.values) {
-					if (field !== "id" && !(field in parsedTaxonomy.data)) {
-						//@ts-ignore
-						parsedTaxonomy.data[field] = null;
-					}
+			for (const field of TaxonomyScalarFieldEnumSchema._def.values) {
+				if (field !== "id" && !(field in parsedTaxonomy.data)) {
+					//@ts-ignore
+					parsedTaxonomy.data[field] = null;
 				}
 			}
 
@@ -161,11 +269,17 @@ export async function parseAssignmentFile(
 	return { features, taxonomies, assignments, md5Checksum };
 }
 
-export async function parseOccurrenceFile(
-	stream: ProgressStream,
-	url: string,
-	analysis_run_name: Occurrence["analysis_run_name"]
-) {
+export async function parseOccurrenceFile({
+	stream,
+	url,
+	analysis_run_name,
+	oldChecksum
+}: {
+	stream: ProgressStream;
+	url: string;
+	analysis_run_name: Occurrence["analysis_run_name"];
+	oldChecksum?: string;
+}) {
 	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
 	//fetch from blob storage
@@ -183,6 +297,14 @@ export async function parseOccurrenceFile(
 	await stream.message("Reading file into memory", 15);
 	const text = await response.text();
 	const md5Checksum = md5(text);
+
+	if (oldChecksum === md5Checksum) {
+		await stream.error(
+			"Checksum for submitted Occurrence file matches the checksum of the previous file. Please submit a new file."
+		);
+		return;
+	}
+
 	const parser = parse(text, { delimiter: "\t" });
 	await stream.message("File read into memory", 25);
 

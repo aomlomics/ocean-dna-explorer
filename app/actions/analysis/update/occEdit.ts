@@ -1,7 +1,7 @@
 "use server";
 
-import { Occurrence, Prisma } from "@/app/generated/prisma/client";
-import { getNewEditHistory } from "@/app/helpers/actions/actions";
+import { Occurrence } from "@/app/generated/prisma/client";
+import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrenceFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
@@ -24,7 +24,30 @@ async function doEdit(
 	}
 
 	try {
-		const parseResult = await parseOccurrenceFile(stream, url, analysis_run_name);
+		const dbAnalysis = await prisma.analysis.findUnique({
+			where: {
+				analysis_run_name
+			},
+			select: {
+				occurrenceFileChecksum_ODE: true,
+				Project: { select: { userIds: true } }
+			}
+		});
+
+		if (!dbAnalysis) {
+			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+			return;
+		} else if (!dbAnalysis.Project.userIds.includes(userId)) {
+			await stream.error("Unauthorized action.");
+			return;
+		}
+
+		const parseResult = await parseOccurrenceFile({
+			stream,
+			url,
+			analysis_run_name,
+			oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
+		});
 		if (!parseResult) {
 			return;
 		}
@@ -45,6 +68,7 @@ async function doEdit(
 								userIds: true
 							}
 						},
+						project_id: true,
 						editHistory: true,
 						occurrenceFileUrl_ODE: true,
 						occurrenceFileChecksum_ODE: true
@@ -52,16 +76,55 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					return `No Analysis with analysis_run_name of "${analysis_run_name}" found.`;
+					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					return "Unauthorized action.";
+					throw new Error("Unauthorized action.");
 				} else if (!dbAnalysis.occurrenceFileUrl_ODE || !dbAnalysis.occurrenceFileChecksum_ODE) {
-					return "Invalid Analysis. Missing file for Occurrences.";
+					throw new Error("Invalid Analysis. Missing file for Occurrences.");
 				}
 
 				await stream.message("All checks passed.", 80);
 
-				const editHistory = getNewEditHistory(editId, dbAnalysis.editHistory, [
+				//create new
+				const newOccurrences = await tx.occurrence.createManyAndReturn({
+					data: occurrences,
+					skipDuplicates: true
+				});
+
+				//update old
+				await updateManyRaw(
+					tx,
+					"Occurrence",
+					occurrences.filter(
+						(occ) =>
+							!newOccurrences.some((dbOcc) => dbOcc.samp_name === occ.samp_name && dbOcc.featureid === occ.featureid)
+					)
+				);
+
+				await stream.message("Existing entries successfully updated in database.", 90);
+
+				//delete unused
+				await tx.occurrence.deleteMany({
+					where: {
+						analysis_run_name,
+						OR: [
+							{
+								samp_name: {
+									notIn: occurrences.map((occ) => occ.samp_name)
+								}
+							},
+							{
+								featureid: {
+									notIn: occurrences.map((occ) => occ.featureid)
+								}
+							}
+						]
+					}
+				});
+
+				await stream.message("Removed entries successfully deleted in database.", 95);
+
+				const editHistory = addToHistory("analysis", editId, dbAnalysis.editHistory, [
 					{
 						field: "occurrenceFileUrl_ODE",
 						oldValue: dbAnalysis.occurrenceFileUrl_ODE,
@@ -85,50 +148,13 @@ async function doEdit(
 						occurrenceFileChecksum_ODE: md5Checksum
 					}
 				});
-				await stream.message("Analysis editHistory successfully updated in database.", 85);
-
-				//create new
-				const newOccurrences = await tx.occurrence.createManyAndReturn({
-					data: occurrences,
-					skipDuplicates: true
-				});
-
-				//update old
-				await updateManyRaw(
-					tx,
-					"Occurrence",
-					occurrences.filter(
-						(occ) =>
-							!newOccurrences.some((dbOcc) => dbOcc.samp_name === occ.samp_name && dbOcc.featureid === occ.featureid)
-					)
-				);
-
-				//delete unused
-				await tx.occurrence.deleteMany({
-					where: {
-						analysis_run_name,
-						featureid: {
-							notIn: occurrences.map((occ) => occ.featureid)
-						}
-					}
-				});
-
-				await tx.occurrence.deleteMany({
-					where: {
-						analysis_run_name,
-						samp_name: {
-							notIn: occurrences.map((occ) => occ.samp_name)
-						}
-					}
-				});
 			},
 			{ timeout: 1 * 60 * 1000 }
 		);
-
-		await stream.success("Success");
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			await stream.error(handlePrismaError(err).error);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			await stream.error(prismaErr.error);
 		} else {
 			const error = err as Error;
 			await stream.error(error.message);

@@ -1,16 +1,11 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { parseSchemaToObject } from "@/app/helpers/schema";
-import { deadBooleanToString } from "@/app/helpers/utils";
-import { AnalysisOptionalDefaultsSchema, AnalysisScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
-import { parse } from "csv-parse";
-import { md5 } from "js-md5";
 
 async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean) {
 	const { userId, sessionClaims } = await auth();
@@ -21,84 +16,21 @@ async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean)
 		return;
 	}
 
-	const analysisCol = {} as Record<string, string>;
-
 	try {
-		//Analysis file
-		console.log("Analysis file");
-		const userDefined = {} as PrismaJson.UserDefinedType;
-
-		//fetch file from blob storage
-		await stream.message("Downloading file", 10);
-		const fileResponse = await fetch(url);
-		if (!fileResponse.ok) {
-			await stream.error(`Analysis file responded ${fileResponse.status}: ${fileResponse.statusText}.`);
+		//TODO: use checksum to see if new file submitted match old file
+		const parseResult = await parseAnalysisFile({ stream, url, isPrivate });
+		if (!parseResult) {
 			return;
 		}
-
-		await stream.message("Reading file into memory", 15);
-		const text = await fileResponse.text();
-		const md5Checksum = md5(text);
-		const parser = parse(text, { columns: true, delimiter: "\t" });
-		await stream.message("File read into memory", 25);
-
-		let i = 0;
-		for await (const record of parser) {
-			const field = record.term_name;
-			if (field) {
-				i++;
-
-				const value = record.values;
-
-				//User defined
-				if (!AnalysisScalarFieldEnumSchema.safeParse(field).success) {
-					userDefined[field] = value;
-				} else {
-					parseSchemaToObject(field, value, analysisCol, "analysis");
-				}
-			}
-
-			//add to progress bar
-			await stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
-		}
-
-		const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
-			{
-				...analysisCol,
-				isPrivate,
-				editHistory: "JsonNull",
-				analysisMetadataFileUrl_ODE: url,
-				analysisMetadataFileChecksum_ODE: md5Checksum
-			},
-			{
-				errorMap: (error, ctx) => {
-					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
-					};
-				}
-			}
-		);
-
-		if (!parsedAnalysis.success) {
-			await stream.error(
-				`Table: Analysis\n` +
-					`Key: ${analysisCol.analysis_run_name}\n\n` +
-					`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
-			);
-			return;
-		}
+		const { analysis } = parseResult;
 
 		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
-		//analysis
-		console.log("analysis");
 		await prisma.$transaction(async (tx) => {
 			//check if the associated project is private, and throw an error if it is private but the submission is public
 			const project = await tx.project.findUnique({
 				where: {
-					project_id: analysisCol.project_id
+					project_id: analysis.project_id
 				},
 				select: {
 					isPrivate: true,
@@ -106,27 +38,28 @@ async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean)
 				}
 			});
 			if (!project) {
-				throw new Error(`Project with project_id of ${analysisCol.project_id} does not exist.`);
+				throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
 			} else if (!project.userIds.includes(userId)) {
 				throw new Error(
-					`Permission denied for adding analysis to Project with project_id of ${analysisCol.project_id}. Please contact submission owner with a request to be added to the Project.`
+					`Permission denied for adding analysis to Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
 				);
 			} else if (project.isPrivate && !isPrivate) {
 				throw new Error(
-					`Project with project_id of ${analysisCol.project_id} is private. Analyses can't be public if the associated project is private.`
+					`Project with project_id of ${analysis.project_id} is private. Analyses can't be public if the associated project is private.`
 				);
 			}
 
 			await tx.analysis.create({
 				//@ts-ignore issue with Json database type
-				data: parsedAnalysis.data
+				data: analysis
 			});
 		});
 
 		await stream.success("Success");
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			await stream.error(handlePrismaError(err).error);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			await stream.error(prismaErr.error);
 		} else {
 			const error = err as Error;
 			await stream.error(error.message);

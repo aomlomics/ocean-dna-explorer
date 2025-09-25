@@ -380,9 +380,15 @@ export function parseApiQuery(
 	}
 
 	const ids = searchParams.get("ids");
+	const advanced = searchParams.get("advanced");
+	const search = searchParams.get("search");
 	if ((!options?.features || options.features.ids) && ids) {
 		//list of ids
 		searchParams.delete("ids");
+
+		if (Array.from(searchParams).length) {
+			throw new Error("Filtering with a list of ids may not include other filter parameters.");
+		}
 
 		const parsedIds = [] as number[];
 		for (const id of ids.split(",")) {
@@ -400,6 +406,25 @@ export function parseApiQuery(
 				in: parsedIds
 			}
 		};
+	} else if ((!options?.features || options.features.advanced) && advanced) {
+		//advanced search
+		searchParams.delete("advanced");
+
+		if (Array.from(searchParams).length) {
+			throw new Error("Advanced search may not include other filter parameters.");
+		}
+
+		const parsed = JSON.parse(advanced) as ParamsArray;
+		query.where = { ...query.where, ...parseAdvancedQuery(table, parsed) };
+	} else if ((!options?.features || options.features.search) && search) {
+		//string search
+		searchParams.delete("search");
+
+		if (Array.from(searchParams).length) {
+			throw new Error("Search may not include other filter parameters.");
+		}
+
+		query.where = { ...query.where, ...parseSearchQuery(table, search) };
 	} else {
 		//limit
 		if (!options?.features || options.features.limit) {
@@ -423,31 +448,11 @@ export function parseApiQuery(
 		if (!options?.features || options.features.filters) {
 			query.where = query.where || ({} as Record<string, any>);
 
-			//advanced
-			if (!options?.features || options.features.advanced) {
-				const advanced = searchParams.get("advanced");
-				const search = searchParams.get("search");
-				if (advanced && !search) {
-					searchParams.delete("advanced");
-
-					const parsed = JSON.parse(advanced) as ParamsArray;
-					query.where = { ...query.where, ...parseAdvancedQuery(table, parsed) };
-				}
-			}
-
-			//search
-			if (!options?.features || options.features.search) {
-				const search = searchParams.get("search");
-				const advanced = searchParams.get("advanced");
-				if (search && !advanced) {
-					searchParams.delete("search");
-
-					query.where = { ...query.where, ...parseSearchQuery(table, search) };
-				}
-			}
-
 			const shape = TableMetadata[table].schema.shape;
 			searchParams.forEach((value, key) => {
+				if (!shape[key as keyof typeof shape]) {
+					throw new Error(`Invalid field "${key}". Field does not exist on table named "${table}".`);
+				}
 				const type = getZodType(shape[key as keyof typeof shape]).type;
 				if (!type) {
 					throw new Error(

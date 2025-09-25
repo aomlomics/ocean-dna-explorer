@@ -16,7 +16,7 @@ export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	return newEnum;
 }
 
-type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json";
+type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
 function getTypeRecursive(field: any): { type: DbType; optional?: boolean; values?: string[] } {
 	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
@@ -47,15 +47,14 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
 		//DeadBoolean
-		//TODO: verify it's actually a DeadBoolean, and not some other enum
 		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
-			shape.type = "boolean";
+			shape.type = "DeadBoolean";
 			shape.values = Object.keys(DeadBooleanEnum);
 		}
 	}
 
 	try {
-		const res = getZodType(field.unwrap());
+		const res = getTypeRecursive(field.unwrap());
 		return { ...res, ...shape };
 	} catch {
 		return shape;
@@ -149,7 +148,7 @@ export function parseSchemaToObject(
 				//use date value
 				obj[field] = dateVal;
 			}
-		} else if (type === "boolean") {
+		} else if (type === "DeadBoolean") {
 			if (value.toLowerCase() in DeadBooleanEnum) {
 				//replace field with DeadBoolean value
 				obj[field] = DeadBooleanEnum[value.toLowerCase() as keyof typeof DeadBooleanEnum];

@@ -1,6 +1,5 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -28,7 +27,7 @@ export default async function projectUpdateUserIdsAction(
 	const project_id = parsed.data;
 
 	try {
-		const error = await prisma.$transaction(async (tx) => {
+		await prisma.$transaction(async (tx) => {
 			const project = await tx.project.findUnique({
 				where: {
 					project_id
@@ -39,11 +38,11 @@ export default async function projectUpdateUserIdsAction(
 			});
 
 			if (!project) {
-				return `No Project with project_id of "${project_id}" found.`;
+				throw new Error(`No Project with project_id of "${project_id}" found.`);
 			} else if (!project.userIds.includes(userId)) {
-				return "Unauthorized action.";
+				throw new Error("Unauthorized action.");
 			} else if (deletedUserIds.includes(userId)) {
-				return "Can't remove self from userIds";
+				throw new Error("Can't remove self from userIds");
 			}
 
 			const userIds = [...project.userIds.filter((id) => !deletedUserIds.includes(id)), ...newUserIds];
@@ -58,14 +57,11 @@ export default async function projectUpdateUserIdsAction(
 			});
 		});
 
-		if (error) {
-			return { statusMessage: "error", error };
-		}
-
 		return { statusMessage: "success" };
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return handlePrismaError(err);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return prismaErr;
 		}
 
 		const error = err as Error;

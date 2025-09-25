@@ -1,290 +1,141 @@
 "use server";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { deadBooleanToString } from "@/app/helpers/utils";
+import { Project } from "@/app/generated/prisma/client";
+import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
-import {
-	ProjectScalarFieldEnumSchema,
-	PrimerOptionalDefaultsSchema,
-	PrimerScalarFieldEnumSchema,
-	AssayOptionalDefaultsSchema,
-	AssayScalarFieldEnumSchema,
-	ProjectOptionalDefaultsSchema
-} from "@/prisma/generated/zod";
 import { RolePermissions } from "@/types/objects";
-import { parse } from "csv-parse";
 import { createProgressStream } from "@/app/helpers/progress";
-import { parseSchemaToObject } from "@/app/helpers/schema";
-import { md5 } from "js-md5";
-import { ProgressStream } from "@/types/globals";
-import { getNewEditHistory } from "@/app/helpers/actions/actions";
+import { Channel, parseProjectFiles } from "@/app/helpers/actions/project";
+import { addToHistory } from "@/app/helpers/actions/actions";
+import { v4 as uuidv4 } from "uuid";
 
-async function doEdit(stream: ProgressStream, url: string, editId: string) {
+async function doEdit(
+	globalStream: ReturnType<typeof createProgressStream>,
+	projectChannel: Channel,
+	sampleChannel: Channel,
+	libraryChannel: Channel,
+	project_id: Project["project_id"],
+	isPrivate?: boolean
+) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
-		await stream.error("Unauthorized");
+		await globalStream.error("Unauthorized");
 		return;
 	}
 
-	let project = {} as Prisma.ProjectCreateInput;
-	const primers = [] as Prisma.PrimerCreateManyInput[];
-	const assays = [] as Prisma.AssayCreateManyInput[];
-
-	const projectCol = {} as Record<string, string>;
-	const primerCols = {} as Record<string, Record<string, string>>;
-	const assayCols = {} as Record<string, Record<string, string>>;
-
 	try {
-		let assayNames = [] as string[];
-		const projectUserDefined = {} as PrismaJson.UserDefinedType;
+		const missingProjectFile = !projectChannel.url;
+		const missingSampleFile = !sampleChannel.url;
+		const missingLibraryFile = !libraryChannel.url;
 
-		//fetch file from blob storage
-		await stream.message("Downloading file", 10);
-		const projectFileResponse = await fetch(url);
-		if (!projectFileResponse.ok) {
-			await stream.error(`Project file responded ${projectFileResponse.status}: ${projectFileResponse.statusText}.`);
+		const dbProject = await prisma.project.findUnique({
+			where: {
+				project_id
+			},
+			select: {
+				projectMetadataFileUrl_ODE: missingProjectFile,
+				sampleMetadataFileUrl_ODE: missingSampleFile,
+				libraryMetadataFileUrl_ODE: missingLibraryFile,
+				projectMetadataFileChecksum_ODE: true,
+				sampleMetadataFileChecksum_ODE: true,
+				libraryMetadataFileChecksum_ODE: true,
+				userIds: true,
+				isPrivate: true
+			}
+		});
+
+		if (!dbProject) {
+			await projectChannel.stream.error(`No Project with project_id of "${project_id}" found.`);
+			return;
+		} else if (!dbProject.userIds.includes(userId)) {
+			await projectChannel.stream.error("Unauthorized action.");
 			return;
 		}
 
-		await stream.message("Reading file into memory", 15);
-		const projectText = await projectFileResponse.text();
-		const md5Checksum = md5(projectText);
-		const projectParser = parse(projectText, { columns: true, delimiter: "\t" });
-		await stream.message("File read into memory", 25);
-
-		let i = 0;
-		for await (const record of projectParser) {
-			if (!assayNames.length) {
-				const fileHeaders = Object.keys(record);
-
-				//check if headers have term_name
-				if (!fileHeaders.includes("term_name")) {
-					await stream.error('No column with title "term_name" found.');
-					return;
-				}
-
-				//check if headers have project_level
-				if (!fileHeaders.includes("project_level")) {
-					await stream.error('No column with title "project_level" found.');
-					return;
-				}
-
-				assayNames = fileHeaders.slice(fileHeaders.indexOf("project_level") + 1);
-				if (!assayNames.length) {
-					await stream.error("No Assays found.");
-					return;
-				}
-			}
-
-			//TODO: make the parsing specific for each table, instead of stamping every table on every row
-			const field = record.term_name;
-			if (field) {
-				i++;
-
-				const value = record.project_level;
-
-				//User defined
-				if (
-					!ProjectScalarFieldEnumSchema.safeParse(field).success &&
-					!AssayScalarFieldEnumSchema.safeParse(field).success &&
-					!PrimerScalarFieldEnumSchema.safeParse(field).success
-				) {
-					projectUserDefined[field] = value;
-				} else {
-					//Project Level
-					//project table
-					parseSchemaToObject(field, value, projectCol, "project");
-
-					//primer table
-					parseSchemaToObject(field, value, projectCol, "primer");
-
-					//assay table
-					parseSchemaToObject(field, value, projectCol, "assay");
-
-					//Assay Levels
-					for (const assay_name of assayNames) {
-						//flip table from long to wide
-						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
-						//and whose values are an object representing a single "row"
-						if (record[assay_name]) {
-							//Primers
-							if (!primerCols[assay_name]) {
-								primerCols[assay_name] = {};
-							}
-							parseSchemaToObject(field, record[assay_name], primerCols[assay_name], "primer");
-
-							//Assays
-							if (!assayCols[assay_name]) {
-								assayCols[assay_name] = {};
-							}
-							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
-						}
-					}
-				}
-
-				//add to progress bar
-				await stream.message(
-					`Processed line ${i} of ${projectParser.info.records}.`,
-					(i / projectParser.info.records) * 50 + 25
-				);
-			}
+		//retrieve files that were not provided
+		const oldChecksums = {
+			projectMd5: dbProject.projectMetadataFileChecksum_ODE,
+			sampleMd5: dbProject.sampleMetadataFileChecksum_ODE,
+			libraryMd5: dbProject.libraryMetadataFileChecksum_ODE
+		} as {
+			projectMd5?: string;
+			sampleMd5?: string;
+			libraryMd5?: string;
+		};
+		if (missingProjectFile) {
+			projectChannel.url = dbProject.projectMetadataFileUrl_ODE;
+			delete oldChecksums.projectMd5;
+		}
+		if (missingSampleFile) {
+			sampleChannel.url = dbProject.sampleMetadataFileUrl_ODE;
+			delete oldChecksums.sampleMd5;
+		}
+		if (missingLibraryFile) {
+			libraryChannel.url = dbProject.libraryMetadataFileUrl_ODE;
+			delete oldChecksums.libraryMd5;
 		}
 
-		for (let a of Object.values(assayCols)) {
-			const parsedAssay = AssayOptionalDefaultsSchema.safeParse(
-				{
-					//most specific overrides least specific
-					...projectCol,
-					...a
-				},
-				{
-					errorMap: (error, ctx) => {
-						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${a[error.path[0]] || projectCol[error.path[0]]}`
-						};
-					}
-				}
-			);
-
-			if (!parsedAssay.success) {
-				await stream.error(
-					`Table: Primer\n` +
-						`Key: ${a.pcr_primer_forward || projectCol.pcr_primer_forward}\n` +
-						`Key: ${a.pcr_primer_reverse || projectCol.pcr_primer_reverse}\n\n` +
-						`${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
-				);
-				return;
-			}
-
-			//unset all optional fields that were not provided
-			for (const field of AssayScalarFieldEnumSchema._def.values) {
-				if (field !== "id" && !(field in parsedAssay.data)) {
-					//@ts-ignore
-					parsedAssay.data[field] = null;
-				}
-			}
-
-			assays.push(parsedAssay.data);
+		const parseResult = await parseProjectFiles({
+			projectChannel,
+			sampleChannel,
+			libraryChannel,
+			userIds: dbProject.userIds,
+			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate,
+			oldChecksums
+		});
+		if (!parseResult) {
+			return;
 		}
+		const { project, primers, assays, samples, libraries, checksums } = parseResult;
 
-		for (let p of Object.values(primerCols)) {
-			const parsedPrimer = PrimerOptionalDefaultsSchema.safeParse(
-				{
-					//most specific overrides least specific
-					...projectCol,
-					...p
-				},
-				{
-					errorMap: (error, ctx) => {
-						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${p[error.path[0]] || projectCol[error.path[0]]}`
-						};
-					}
-				}
-			);
-
-			if (!parsedPrimer.success) {
-				await stream.error(
-					`Table: Primer\n` +
-						`Key: ${p.pcr_primer_forward || projectCol.pcr_primer_forward}\n` +
-						`Key: ${p.pcr_primer_reverse || projectCol.pcr_primer_reverse}\n\n` +
-						`${parsedPrimer.error.issues.map((e) => e.message).join("\n\n")}`
-				);
-				return;
-			}
-
-			//unset all optional fields that were not provided
-			for (const field of PrimerScalarFieldEnumSchema._def.values) {
-				if (field !== "id" && !(field in parsedPrimer.data)) {
-					//@ts-ignore
-					parsedPrimer.data[field] = null;
-				}
-			}
-
-			primers.push(parsedPrimer.data);
-		}
-
-		//@ts-ignore issue with Json database type
-		const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
-			{
-				...projectCol,
-				userDefined: Object.keys(projectUserDefined).length ? projectUserDefined : "JsonNull",
-				projectMetadataFileUrl_ODE: url,
-				projectMetadataFileChecksum_ODE: md5Checksum,
-				//override with values from database before submitting
-				userIds: [userId],
-				isPrivate: true,
-				editHistory: "JsonNull",
-				sampleMetadataFileUrl_ODE: "",
-				sampleMetadataFileChecksum_ODE: "",
-				libraryMetadataFileUrl_ODE: "",
-				libraryMetadataFileChecksum_ODE: ""
-			},
-			{
-				errorMap: (error, ctx) => {
-					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${projectCol[error.path[0]]}`
-					};
-				}
-			}
+		await projectChannel.stream.message(
+			"All files successfully parsed into database format. Parsing data into database.",
+			75
+		);
+		await sampleChannel.stream.message(
+			"All files successfully parsed into database format. Parsing data into database.",
+			75
+		);
+		await libraryChannel.stream.message(
+			"All files successfully parsed into database format. Parsing data into database.",
+			75
 		);
 
-		if (!parsedProject.success) {
-			await stream.error(
-				`Table: Project\n` +
-					`Key: ${projectCol.project_id}\n\n` +
-					`${parsedProject.error.issues.map((e) => e.message).join("\n\n")}`
-			);
-			return;
-		}
+		const sampNames = samples.map((samp) => samp.samp_name);
 
-		//unset all optional fields that were not provided
-		for (const field of ProjectScalarFieldEnumSchema._def.values) {
-			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
-				//@ts-ignore
-				parsedProject.data[field] = null;
-			}
-		}
-
-		//@ts-ignore issue with Json database type
-		project = parsedProject.data;
-
-		await stream.message("All entries successfully parsed into database format. Parsing data into database.", 75);
-
-		const dbError = await prisma.$transaction(
+		await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
 				const dbProject = await tx.project.findUnique({
 					where: {
-						project_id: project.project_id
+						project_id
 					},
 					select: {
 						userIds: true,
 						editHistory: true,
+						isPrivate: true,
 						projectMetadataFileUrl_ODE: true,
 						projectMetadataFileChecksum_ODE: true,
-						//get actual values of placeholder fields
-						isPrivate: true,
 						sampleMetadataFileUrl_ODE: true,
 						sampleMetadataFileChecksum_ODE: true,
 						libraryMetadataFileUrl_ODE: true,
-						libraryMetadataFileChecksum_ODE: true
+						libraryMetadataFileChecksum_ODE: true,
+						_count: {
+							select: {
+								Analyses: true
+							}
+						}
 					}
 				});
 
 				if (!dbProject) {
-					return `No Project with project_id of "${project.project_id}" found.`;
+					await projectChannel.stream.error(`No Project with project_id of "${project_id}" found.`);
+					throw new Error("Error");
 				} else if (!dbProject.userIds.includes(userId)) {
-					return "Unauthorized action.";
+					await projectChannel.stream.error("Unauthorized action.");
+					throw new Error("Error");
 				}
 
 				for (let p of primers) {
@@ -314,9 +165,13 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 
 					if (
 						dbPrimer &&
-						!dbPrimer.Assays.some((a) => a.Samples.some((samp) => samp.Project.userIds.includes(userId)))
+						dbPrimer.Assays.length &&
+						!dbPrimer.Assays.some((a) =>
+							a.Samples.length ? a.Samples.some((samp) => samp.Project.userIds.includes(userId)) : true
+						)
 					) {
-						return "Unauthorized action.";
+						await projectChannel.stream.error("Unauthorized action.");
+						throw new Error("Error");
 					}
 				}
 
@@ -339,53 +194,141 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 					});
 
 					if (dbAssay && !dbAssay.Samples.some((samp) => samp.Project.userIds.includes(userId))) {
-						return "Unauthorized action.";
+						await projectChannel.stream.error("Unauthorized action.");
+						throw new Error("Error");
 					}
 				}
 
-				if (dbProject.editHistory?.some((edit) => edit.id === editId)) {
-					return "Bad editId.";
-				}
+				await projectChannel.stream.message("All checks passed.", 80);
 
-				await stream.message("All checks passed.", 80);
-
-				const editHistory = getNewEditHistory(editId, dbProject.editHistory, [
-					{
-						field: "projectMetadataFileUrl_ODE",
-						oldValue: dbProject.projectMetadataFileUrl_ODE,
-						newValue: url
-					},
-					{
-						field: "projectMetadataFileChecksum_ODE",
-						oldValue: dbProject.projectMetadataFileChecksum_ODE,
-						newValue: md5Checksum
-					}
-				]);
-
-				//project
-				await tx.project.update({
+				const dbSamples = await tx.sample.findMany({
 					where: {
-						project_id: project.project_id
+						samp_name: {
+							in: sampNames
+						}
 					},
-					data: {
-						...project,
-						editHistory,
-						projectMetadataFileUrl_ODE: url,
-						projectMetadataFileChecksum_ODE: md5Checksum,
-						//overriding placeholder values
-						userIds: dbProject.userIds,
-						isPrivate: dbProject.isPrivate,
-						sampleMetadataFileUrl_ODE: dbProject.sampleMetadataFileUrl_ODE,
-						sampleMetadataFileChecksum_ODE: dbProject.sampleMetadataFileChecksum_ODE,
-						libraryMetadataFileUrl_ODE: dbProject.libraryMetadataFileUrl_ODE,
-						libraryMetadataFileChecksum_ODE: dbProject.libraryMetadataFileChecksum_ODE
+					select: {
+						project_id: true
 					}
 				});
 
-				await stream.message("Project successfully updated in database.", 85);
+				if (dbSamples.some((samp) => samp.project_id !== project_id)) {
+					await sampleChannel.stream.error(
+						`Some Sample in file does not belong to Project with project_id of "${project_id}".`
+					);
+					throw new Error("Error");
+				}
+
+				await sampleChannel.stream.message("All checks passed.", 80);
+
+				const dbLibraries = await tx.library.findMany({
+					where: {
+						lib_id: {
+							in: libraries.map((lib) => lib.lib_id)
+						}
+					},
+					select: {
+						Sample: {
+							select: {
+								project_id: true
+							}
+						}
+					}
+				});
+
+				if (dbLibraries.some((lib) => lib.Sample.project_id !== project_id)) {
+					await libraryChannel.stream.error(
+						`Some Library in file does not belong to Project with project_id of "${project_id}".`
+					);
+					throw new Error("Error");
+				}
+
+				await libraryChannel.stream.message("All checks passed.", 80);
+
+				//update file urls
+				const fileStatus = {} as {
+					projectMetadata?: { movedUrl: string; del?: true };
+					sampleMetadata?: { movedUrl: string; del?: true };
+					libraryMetadata?: { movedUrl: string; del?: true };
+				};
+
+				const change = [] as PrismaJson.ChangesType;
+
+				if (!missingProjectFile) {
+					change.push(
+						{
+							field: "projectMetadataFileUrl_ODE",
+							oldValue: dbProject.projectMetadataFileUrl_ODE,
+							newValue: projectChannel.url
+						},
+						{
+							field: "projectMetadataFileChecksum_ODE",
+							oldValue: dbProject.projectMetadataFileChecksum_ODE,
+							newValue: checksums.projectMd5
+						}
+					);
+				}
+
+				if (!missingSampleFile) {
+					change.push(
+						{
+							field: "sampleMetadataFileUrl_ODE",
+							oldValue: dbProject.sampleMetadataFileUrl_ODE,
+							newValue: sampleChannel.url
+						},
+						{
+							field: "sampleMetadataFileChecksum_ODE",
+							oldValue: dbProject.sampleMetadataFileChecksum_ODE,
+							newValue: checksums.sampleMd5
+						}
+					);
+				}
+
+				if (!missingLibraryFile) {
+					change.push(
+						{
+							field: "libraryMetadataFileUrl_ODE",
+							oldValue: dbProject.libraryMetadataFileUrl_ODE,
+							newValue: libraryChannel.url
+						},
+						{
+							field: "libraryMetadataFileChecksum_ODE",
+							oldValue: dbProject.libraryMetadataFileChecksum_ODE,
+							newValue: checksums.libraryMd5
+						}
+					);
+				}
+
+				const editHistory = addToHistory("project", uuidv4(), dbProject.editHistory, change);
+
+				//update project
+				await tx.project.update({
+					where: {
+						project_id
+					},
+					data: { ...project, editHistory }
+				});
+
+				//assays
+				let i = 0;
+				for (let a of assays) {
+					await tx.assay.upsert({
+						where: {
+							assay_name: a.assay_name
+						},
+						update: a,
+						create: a
+					});
+
+					i++;
+					await projectChannel.stream.message(
+						`Assay with assay_name of "${a.assay_name}" successfully updated in database.`,
+						85 + (5 / assays.length) * i
+					);
+				}
 
 				//primers
-				let i = 0;
+				i = 0;
 				for (let p of primers) {
 					await tx.primer.upsert({
 						where: {
@@ -399,65 +342,256 @@ async function doEdit(stream: ProgressStream, url: string, editId: string) {
 					});
 
 					i++;
-					await stream.message(
+					await projectChannel.stream.message(
 						`Primer with pcr_primer_forward of "${p.pcr_primer_forward}" and pcr_primer_reverse of "${p.pcr_primer_reverse}" successfully updated in database.`,
-						85 + (5 / primers.length) * i
+						80 + (5 / primers.length) * i
 					);
 				}
 
-				//assays
-				i = 0;
-				for (let a of assays) {
-					await tx.assay.upsert({
-						where: {
-							assay_name: a.assay_name
+				await projectChannel.stream.success("Project file successfully updated in database.");
+
+				//add new
+				//samples
+				const newSamples = await tx.sample.createManyAndReturn({
+					data: samples,
+					skipDuplicates: true,
+					select: {
+						samp_name: true
+					}
+				});
+				await sampleChannel.stream.message("New Samples successfully added to database.", 90);
+
+				//libraries
+				const newLibraries = await tx.library.createManyAndReturn({
+					data: libraries,
+					skipDuplicates: true,
+					select: {
+						lib_id: true
+					}
+				});
+				await libraryChannel.stream.message("New Libraries successfully added to database.", 90);
+
+				//update old
+				//samples
+				await updateManyRaw(
+					tx,
+					"Sample",
+					samples.filter((samp) => !newSamples.some((dbSamp) => dbSamp.samp_name === samp.samp_name)),
+					"samp_name"
+				);
+				await sampleChannel.stream.message("Existing Samples successfully updated in database.", 93);
+
+				//libraries
+				await updateManyRaw(
+					tx,
+					"Library",
+					libraries.filter((lib) => !newLibraries.some((dbLib) => dbLib.lib_id === lib.lib_id)),
+					"lib_id"
+				);
+				await libraryChannel.stream.message("Existing Libraries successfully updated in database.", 93);
+
+				//delete unused
+				//samples
+				await tx.sample.deleteMany({
+					where: {
+						project_id,
+						samp_name: {
+							notIn: sampNames
 						},
-						update: a,
-						create: a
+						Occurrences: {
+							none: {}
+						}
+					}
+				});
+
+				//check if any samples need to be flagged as deleted
+				const samplesToDelete = await tx.sample.findMany({
+					where: {
+						project_id,
+						samp_name: {
+							notIn: sampNames
+						},
+						Occurrences: {
+							some: {}
+						}
+					},
+					select: {
+						id: true,
+						samp_name: true,
+						Occurrences: {
+							distinct: ["analysis_run_name"],
+							select: {
+								analysis_run_name: true
+							}
+						}
+					}
+				});
+
+				let sampleSuccessMsg = "Sample file successfully updated in database.";
+				if (samplesToDelete.length) {
+					//update samples to be marked as deleted
+					await tx.sample.updateMany({
+						where: {
+							id: {
+								in: samplesToDelete.map((samp) => samp.id)
+							}
+						},
+						data: {
+							deleted_ODE: true
+						}
 					});
 
-					i++;
-					await stream.message(
-						`Assay with assay_name of "${a.assay_name}" successfully updated in database.`,
-						90 + (5 / assays.length) * i
-					);
+					//retrieve all unique analyses
+					const analysesToUpdate = Array.from(
+						samplesToDelete.reduce((acc, samp) => {
+							for (const occ of samp.Occurrences) {
+								acc.add(occ.analysis_run_name);
+							}
+							return acc;
+						}, new Set())
+					) as string[];
+
+					//notify user of analyses that need to be fixed
+					if (analysesToUpdate.length) {
+						const sampNames = samplesToDelete.map((samp) => samp.samp_name);
+						const lastSample = sampNames.pop();
+						const lastAnalysis = analysesToUpdate.pop();
+
+						sampleSuccessMsg += ` ${
+							//plural Sample
+							sampNames.length ? "Samples" : "Sample"
+						} to delete with the ${
+							//plural samp_name
+							sampNames.length ? "samp_names" : "samp_name"
+						} of${
+							//list of samp_names
+							sampNames.length > 1
+								? //at least 3
+								  ' "' + sampNames.join('", "') + '", and'
+								: sampNames.length === 1
+								? //exactly 2
+								  ' "' + sampNames[0] + '" and'
+								: //exactly 1
+								  ""
+						} "${lastSample}" ${
+							//plural
+							sampNames.length ? "have" : "has"
+						} Occurrences and can't be deleted. Please remove ${
+							//plural Sample
+							sampNames.length ? "these Samples" : "this Sample"
+						} from the ${
+							//plural Analysis
+							analysesToUpdate.length ? "Analyses" : "Analysis"
+						} with the ${
+							//plural analysis_run_name
+							analysesToUpdate.length ? "analysis_run_names" : "analysis_run_name"
+						} of${
+							//list of analysis_run_names
+							analysesToUpdate.length > 1
+								? // at least 3
+								  ' "' + analysesToUpdate.join('", "') + '", and'
+								: analysesToUpdate.length === 1
+								? //exactly 2
+								  ' "' + analysesToUpdate[0] + '" and'
+								: //exactly 1
+								  ""
+						} "${lastAnalysis}". Then, click the "Fix" button on the Project with project_id of "${project_id}".`; //TODO: change name of button to match the UI
+					}
 				}
 
-				//TODO: move old file to storage
+				await sampleChannel.stream.success(sampleSuccessMsg);
+
+				//libraries
+				await tx.library.deleteMany({
+					where: {
+						Sample: {
+							project_id
+						},
+						lib_id: {
+							notIn: libraries.map((lib) => lib.lib_id)
+						}
+					}
+				});
+
+				await libraryChannel.stream.success("Library file successfully updated in database.");
+
+				await globalStream.success("All files successfully updated.");
 			},
-			{ timeout: 0.5 * 60 * 1000 } //30 seconds
+			{ timeout: 1.5 * 60 * 1000 } //90 seconds
 		);
-
-		if (dbError) {
-			await stream.error(dbError);
-			return;
-		}
-
-		await stream.success("Project file successfully updated in database.");
 	} catch (err: any) {
-		console.log(err.message);
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			const error = handlePrismaError(err);
-			await stream.error(error.error);
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			await globalStream.error(prismaErr.error);
 		} else {
 			const error = err as Error;
-			await stream.error(error.message);
+			await globalStream.error(error.message);
 		}
 	}
 }
 
-export default async function projectEditAction(url: string, editId: string) {
-	const stream = createProgressStream();
+export default async function projectEditAction(
+	{
+		projectFileUrl,
+		sampleFileUrl,
+		libraryFileUrl
+	}: { projectFileUrl?: string; sampleFileUrl?: string; libraryFileUrl?: string },
+	project_id: Project["project_id"],
+	isPrivate?: boolean
+) {
+	const globalStream = createProgressStream();
+	const projectStream = createProgressStream();
+	const sampleStream = createProgressStream();
+	const libraryStream = createProgressStream();
 
-	if (typeof url !== "string" || typeof editId !== "string") {
-		stream.error("Arguments are not of correct type");
+	if (!projectFileUrl && !sampleFileUrl && !libraryFileUrl) {
+		await globalStream.error("Must provide at least one new file.");
 
-		stream.close();
+		await globalStream.close();
+		await projectStream.close();
+		await sampleStream.close();
+		await libraryStream.close();
 
-		return stream.readable;
+		return {
+			global: globalStream.readable,
+			readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
+		};
 	}
 
-	doEdit(stream, url, editId).then(stream.close);
+	if (
+		(projectFileUrl && typeof projectFileUrl !== "string") ||
+		(sampleFileUrl && typeof sampleFileUrl !== "string") ||
+		(libraryFileUrl && typeof libraryFileUrl !== "string")
+	) {
+		await globalStream.error("Arguments are not of correct type.");
 
-	return stream.readable;
+		await globalStream.close();
+		await projectStream.close();
+		await sampleStream.close();
+		await libraryStream.close();
+
+		return {
+			global: globalStream.readable,
+			readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
+		};
+	}
+
+	doEdit(
+		globalStream,
+		{ url: projectFileUrl || "", stream: projectStream },
+		{ url: sampleFileUrl || "", stream: sampleStream },
+		{ url: libraryFileUrl || "", stream: libraryStream },
+		project_id,
+		isPrivate
+	).then(() => {
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
+	});
+
+	return {
+		global: globalStream.readable,
+		readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
+	};
 }
