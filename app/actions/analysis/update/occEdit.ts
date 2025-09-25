@@ -162,7 +162,7 @@ async function doEdit(
 	}
 }
 
-export default async function occSubmitAction(
+export default async function occEditAction(
 	url: string,
 	editId: string,
 	analysis_run_name: Occurrence["analysis_run_name"]

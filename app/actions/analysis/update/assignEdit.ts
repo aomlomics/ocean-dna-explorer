@@ -184,7 +184,7 @@ async function doEdit(
 	}
 }
 
-export default async function assignSubmitAction(
+export default async function assignEditAction(
 	url: string,
 	editId: string,
 	analysis_run_name: Assignment["analysis_run_name"]

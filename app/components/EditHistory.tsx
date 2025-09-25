@@ -81,11 +81,6 @@ function ChangeValue({ value }: { value: string }) {
 			const name = splitPath[splitPath.length - 1];
 			const dashSplit = name.split("-"); //file name
 			const dotSplit = name.split("."); //file type
-			console.log(
-				dashSplit.slice(0, dashSplit.length - 1).join("-"),
-				">>>>>>>",
-				decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-"))
-			);
 			display =
 				decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-")) + "." + dotSplit[dotSplit.length - 1];
 		}

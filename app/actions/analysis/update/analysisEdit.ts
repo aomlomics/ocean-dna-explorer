@@ -138,7 +138,7 @@ async function doEdit(
 	}
 }
 
-export default async function analysisSubmitAction(
+export default async function analysisEditAction(
 	url: string,
 	editId: string,
 	analysis_run_name: Analysis["analysis_run_name"],

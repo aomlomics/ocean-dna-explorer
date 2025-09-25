@@ -18,6 +18,11 @@ export default function ProjectEditButton({
 }) {
 	const [loading, setLoading] = useState(false);
 
+	//file input refs to clear inputs after submission
+	const projectRef = useRef<HTMLInputElement>(null);
+	const sampleRef = useRef<HTMLInputElement>(null);
+	const libraryRef = useRef<HTMLInputElement>(null);
+
 	//state variables to hold contents of form for disabling submit button
 	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
 	const [projectFile, setProjectFile] = useState(undefined as File | undefined);
@@ -58,9 +63,13 @@ export default function ProjectEditButton({
 	//detect when entire submission was successful
 	useEffect(() => {
 		if (globalResponse?.statusMessage === "success") {
-			setLoading(false);
+			projectRef.current!.value = "";
+			sampleRef.current!.value = "";
+			libraryRef.current!.value = "";
+
 			modalXRef.current!.disabled = false;
 			modalClickOffRef.current!.disabled = false;
+			setLoading(false);
 		} else if (globalResponse?.statusMessage === "error") {
 			doError(globalResponse.error);
 		}
@@ -92,8 +101,10 @@ export default function ProjectEditButton({
 		setSampleResponse(undefined);
 		setLibraryResponse(undefined);
 
+		//TODO: allow user to only change isPrivate
 		if (!projectFile && !sampleFile && !libraryFile) {
 			setGlobalResponse({ statusMessage: "error", error: "Must provide at least one file." });
+			setLoading(false);
 			return;
 		}
 
@@ -143,7 +154,7 @@ export default function ProjectEditButton({
 				setGlobalResponse,
 				urls,
 				project_id,
-				isPrivate
+				isPrivateToggle
 			);
 		} catch (err) {
 			const error = err as Error;
