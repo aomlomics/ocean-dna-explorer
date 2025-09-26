@@ -6,8 +6,8 @@ export default function TableFilter({ tableConfig, sticky = false }: { tableConf
 	return (
 		<Suspense
 			fallback={
-				<div className={`bg-base-100 rounded-lg border border-base-300${sticky ? " sticky top-6 z-30" : ""}`}>
-					<div className="p-4 border-b border-base-300 bg-base-200/50">
+				<div className={`bg-base-100 rounded-lg border border-base-300 max-w-lg${sticky ? " sticky top-6 z-30" : ""}`}>
+					<div className="px-5 py-3 border-b border-base-300 bg-base-200/50">
 						<div className="flex items-center gap-3">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -29,7 +29,7 @@ export default function TableFilter({ tableConfig, sticky = false }: { tableConf
 						</div>
 					</div>
 
-					<div className="divide-y divide-base-300"></div>
+					<div className="divide-y divide-base-300 p-5 pt-3 pb-6 min-h-[220px]"></div>
 				</div>
 			}
 		>

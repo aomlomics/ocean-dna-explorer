@@ -245,15 +245,15 @@ export default function Table({
 	return (
 		<div className="bg-base-100 border-base-300 rounded-box p-6 h-full w-full">
 			<form id={`${table}TableForm`} onSubmit={applyFilters} className="w-full h-full flex flex-col">
-				<div className="grid grid-cols-3 justify-items-center">
+				<div className="grid grid-cols-3 items-center">
 					{/* Filters Buttons */}
-					<div className="flex items-center gap-5">
+					<div className="flex items-center gap-5 justify-start w-full">
 						{!hideFilters && (
 							<>
-								<button onClick={resetForm} className="btn btn-sm btn-error" type="button">
+								<button onClick={resetForm} className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80" type="button">
 									Clear Filters
 								</button>
-								<button type="submit" className="btn btn-sm btn-primary">
+								<button type="submit" className="btn btn-sm bg-base-300 text-base-content border-base-200 hover:bg-base-200/80">
 									Apply Filters
 								</button>
 							</>
@@ -264,15 +264,17 @@ export default function Table({
 						</label>
 					</div>
 					{/* Pagination Controls */}
-					<PaginationControls
-						page={page}
-						take={take}
-						count={data.count}
-						handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
-						handlePageHover={handlePageHover}
-					/>
+					<div className="flex items-center justify-center w-full">
+						<PaginationControls
+							page={page}
+							take={take}
+							count={data.count}
+							handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+							handlePageHover={handlePageHover}
+						/>
+					</div>
 					{/* Column Selection Button */}
-					<div className="flex items-center justify-center w-full gap-5">
+					<div className="flex items-center justify-end w-full gap-5">
 						<div className="dropdown dropdown-end">
 							<div tabIndex={0} role="button" className="btn btn-sm">
 								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
@@ -280,72 +282,76 @@ export default function Table({
 							{/* Dropdown */}
 							<div
 								tabIndex={0}
-								className="dropdown-content menu bg-base-300 rounded-box z-50 w-52 shadow p-0 text-xs min-w-min"
+								className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden"
 							>
-								{/* Header Name Filter Section */}
-								<div className="form-control flex-row items-center w-full border-b-2 p-2 pb-0">
-									<label className="label cursor-pointer justify-start">
-										<input
-											type="checkbox"
-											onChange={(e) => {
-												if (e.target.checked) {
-													setHeadersFilter({});
-												} else {
-													setHeadersFilter(
-														headers.reduce((acc: Record<string, true>, head) => {
-															if (!headersFilter[head]) {
-																return { ...acc, [head]: true };
-															} else {
-																return { ...acc };
-															}
-														}, {})
-													);
-												}
-											}}
-											checked={!Object.values(headersFilter).some((bool) => bool)}
-											className="checkbox checkbox-xs"
-										/>
-										<span className="label-text pl-2">All</span>
-									</label>
-									<input
-										type="text"
-										onChange={(e) => handleColFilter(e.target.value)}
-										placeholder="Filter"
-										className="input input-bordered input-xs w-full max-w-xs ml-2 mb-1"
-									/>
-								</div>
-								{/* Header Names Section */}
-								<ul className="p-2 pt-0 w-full max-h-[200px] overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-300">
-									{headers.reduce((acc: ReactNode[], head, i) => {
-										//only render the header name if it is selected in the header name filter
-										if (head.toLowerCase().includes(columnsFilter.toLowerCase())) {
-											//Header Name
-											acc.push(
-												<li key={head + "_dropdown" + i} className="form-control">
-													<label className="label cursor-pointer justify-start p-1">
-														<input
-															type="checkbox"
-															checked={!headersFilter[head]}
-															onChange={() => {
-																const temp = { ...headersFilter };
-																if (headersFilter[head]) {
-																	delete temp[head];
-																} else {
-																	temp[head] = true;
-																}
-																setHeadersFilter(temp);
-															}}
-															className="checkbox checkbox-xs"
-														/>
-														<span className="label-text pl-2">{head}</span>
-													</label>
-												</li>
-											);
-										}
+								<div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">
+									{/* Header: All toggle + search */}
+									<div className="sticky top-0 bg-base-200 border-b border-base-300 p-2">
+										<div className="form-control flex-row items-center w-full gap-2 min-w-0">
+											<label className="label cursor-pointer justify-start gap-2 m-0 p-0">
+												<input
+													type="checkbox"
+													onChange={(e) => {
+														if (e.target.checked) {
+															setHeadersFilter({});
+														} else {
+															setHeadersFilter(
+																headers.reduce((acc: Record<string, true>, head) => {
+																	if (!headersFilter[head]) {
+																		return { ...acc, [head]: true };
+																	} else {
+																		return { ...acc };
+																	}
+																}, {})
+															);
+														}
+												}}
+												checked={!Object.values(headersFilter).some((bool) => bool)}
+												className="checkbox checkbox-xs"
+											/>
+											<span className="label-text text-sm">All</span>
+											</label>
+											<input
+												type="text"
+												onChange={(e) => handleColFilter(e.target.value)}
+												placeholder="Filter columns"
+												className="input input-bordered input-xs w-full flex-1 min-w-0"
+											/>
+										</div>
+									</div>
 
-										return acc;
-									}, [])}
-								</ul>
+									{/* Body: column list */}
+									<ul className="bg-base-100 max-h-64 overflow-y-auto overflow-x-hidden p-2 pt-1 w-full flex flex-col gap-1">
+										{headers.reduce((acc: ReactNode[], head, i) => {
+											//only render the header name if it is selected in the header name filter
+											if (head.toLowerCase().includes(columnsFilter.toLowerCase())) {
+												acc.push(
+													<li key={head + "_dropdown" + i}>
+														<label className="flex items-center cursor-pointer p-2 hover:bg-base-200 rounded w-full gap-2 min-w-0">
+															<input
+																type="checkbox"
+																checked={!headersFilter[head]}
+																onChange={() => {
+																	const temp = { ...headersFilter };
+																	if (headersFilter[head]) {
+ 																		delete temp[head];
+																	} else {
+																		temp[head] = true;
+																	}
+																	setHeadersFilter(temp);
+																}}
+																className="checkbox checkbox-xs"
+															/>
+															<span className="text-sm pl-2 truncate max-w-full">{head}</span>
+														</label>
+													</li>
+												);
+											}
+
+											return acc;
+										}, [])}
+									</ul>
+								</div>
 							</div>
 						</div>
 
@@ -363,7 +369,7 @@ export default function Table({
 					</div>
 				</div>
 				<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
-					<table className="table table-xs table-pin-rows table-pin-cols">
+					<table className="table table-xs table-zebra table-pin-rows table-pin-cols">
 						{/* Headers */}
 						<thead>
 							<tr>

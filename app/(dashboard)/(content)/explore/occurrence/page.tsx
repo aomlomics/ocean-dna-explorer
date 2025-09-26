@@ -1,10 +1,7 @@
 import ExplorePage from '@/app/components/explore/ExplorePage';
 import { Metadata } from 'next';
-import Table from '@/app/components/paginated/Table';
 import ExploreTabButtons from '@/app/components/explore/ExploreTabButtons';
 import Link from 'next/link';
-import Pagination from '@/app/components/paginated/Pagination';
-import TableFilter from '@/app/components/explore/filters/TableFilter';
 
 export const metadata: Metadata = {
   title: 'Explore Occurrences',
@@ -12,37 +9,22 @@ export const metadata: Metadata = {
 
 const Page = async () => {
   return (
-    <ExplorePage table="occurrence" tableConfig={[]}>
-      <div>
-        <div className="space-y-4">
-          <ExploreTabButtons />
-          <div className="bg-base-100 border border-base-300 rounded-lg p-4">
-            <p className="mb-2">
-              Individual detection records linking samples to specific DNA sequences (Features), including their quantified abundance.
-            </p>
-            <p className="text-sm">
-              For more detailed information, visit our{" "}
-              <Link href="/help" className="text-primary hover:underline">
-                Help page
-              </Link>
-              .
-            </p>
-          </div>
+    <ExplorePage table="occurrence" tableConfig={[]} title="Occurrences">
+      <div className="w-full space-y-4">
+        <div className="text-base-content/80 pb-4 space-y-2">
+          <p>
+            Individual detection records linking samples to specific DNA sequences (Features), including their quantified
+            abundance.
+          </p>
+          <p className="text-sm">
+            For more detailed information, visit our{" "}
+            <Link href="/help" className="text-primary hover:underline">
+              Help page
+            </Link>
+            .
+          </p>
         </div>
-        <div className="flex justify-between items-center my-4">
-          <h1 className="text-xl font-medium text-base-content">
-            Showing <span className="text-primary">Occurrences</span>
-          </h1>
-        </div>
-        <TableFilter tableConfig={[]} />
-        <div className="aspect-5/2 hidden lg:block">
-          <div className="rounded-lg border border-base-300 h-full">
-            <Table table="occurrence" defaultTake={50} />
-          </div>
-        </div>
-        <div className="lg:hidden">
-          <Pagination table="occurrence" />
-        </div>
+        <ExploreTabButtons />
       </div>
     </ExplorePage>
   );

@@ -65,40 +65,21 @@ export default async function Sample() {
 	];
 
 	return (
-		<ExplorePage table="sample" tableConfig={tableConfig}>
-			<div>
-				<div className="space-y-4">
-					<ExploreTabButtons />
-					<div className="bg-base-100 border border-base-300 rounded-lg p-4">
-						<p className="mb-2">
-							eDNA samples with metadata on collection, environmental conditions, storage, and processing methods.
-						</p>
-						<p className="text-sm">
-							For more detailed information, visit our{" "}
-							<Link href="/help" className="text-primary hover:underline">
-								Help page
-							</Link>
-							.
-						</p>
-					</div>
+		<ExplorePage table="sample" tableConfig={tableConfig} title="Samples">
+			<div className="w-full space-y-4">
+				<div className="text-base-content/80 pb-4 space-y-2">
+					<p>
+						eDNA samples with metadata on collection, environmental conditions, storage, and processing methods.
+					</p>
+					<p className="text-sm">
+						For more detailed information, visit our{" "}
+						<Link href="/help" className="text-primary hover:underline">
+							Help page
+						</Link>
+						.
+					</p>
 				</div>
-
-				<div className="flex justify-between items-center my-4">
-					{/* <ExploreSearch table="sample" defaultField="samp_name" /> */}
-					<h1 className="text-xl font-medium text-base-content">
-						Showing <span className="text-primary">Samples</span>
-					</h1>
-				</div>
-
-				<TableFilter tableConfig={tableConfig} />
-					<div className="hidden lg:block lg:h-[calc(95vh-20rem)]">
-						<div className="rounded-lg border border-base-300 h-full overflow-auto">
-							<Table table="sample" defaultTake={25} filterHeadersAtStart hideEmptyAtStart />
-						</div>
-					</div>
-				<div className="lg:hidden">
-					<Pagination table="sample" />
-				</div>
+				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

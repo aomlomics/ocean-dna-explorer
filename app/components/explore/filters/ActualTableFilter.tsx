@@ -72,10 +72,10 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 	}
 
 	return (
-		<div className={`bg-base-200 rounded-lg border border-base-300 relative z-20${sticky ? " sticky top-6 z-30" : ""}`}>
+		<div className={`bg-base-200 rounded-xl relative z-20${sticky ? " sticky top-6 z-30" : ""}`}>
 			{/* Header: Filters title, icon (larger), active count, chevron; no background bar */}
 			<div
-				className="flex justify-between items-center px-2 sm:px-0 py-3 cursor-pointer select-none"
+				className="flex justify-between items-center px-5 py-3 cursor-pointer select-none hover:bg-base-300 transition-colors rounded-xl"
 				onClick={() => setIsOpen((v) => !v)}
 				role="button"
 				aria-expanded={isOpen}
@@ -89,16 +89,14 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 							strokeWidth="2"
 							strokeLinecap="round"
 							strokeLinejoin="round"
-							className="text-primary w-6 h-6 sm:w-7 sm:h-7"
+							className="text-primary w-6 h-6"
 						>
 							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
 						</svg>
-						<h3 className="text-xl font-medium text-base-content">Filters</h3>
-						{activeFilterCount > 0 ? (
-							<span className="text-xl text-base-content/70 whitespace-nowrap">{activeFilterCount} active</span>
-						) : null}
+					<h3 className="text-lg font-semibold text-base-content">Filters</h3>
+						<span className="text-base-content/70 whitespace-nowrap">({activeFilterCount} active)</span>
 					</div>
-				<div className="flex items-center gap-2 sm:gap-3">
+				<div className="flex items-center gap-4">
 					{activeFilterCount > 0 && (
 						<button
 							onClick={(e) => {
@@ -115,9 +113,9 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 								});
 								router.push(`?${params.toString()}`);
 							}}
-							className="btn btn-primary btn-md"
+							className="btn btn-primary btn-sm normal-case"
 						>
-							Clear All Filters ({activeFilterCount})
+							Clear Filters
 						</button>
 					)}
 					<svg
@@ -128,7 +126,7 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 						strokeWidth="2"
 						strokeLinecap="round"
 						strokeLinejoin="round"
-						className={`w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2 transition-transform ${isOpen ? "rotate-180" : ""}`}
+						className={`w-6 h-6 transition-transform text-base-content ${isOpen ? "rotate-180" : ""}`}
 					>
 						<path d="M6 9l6 6 6-6" />
 					</svg>
@@ -137,7 +135,7 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 
 			{/* Filter controls */}
 			{isOpen && (
-				<div className="divide-y divide-base-300">
+				<div className="p-5 pt-3 pb-6 flex flex-col gap-5 min-h-[220px]">
 					{tableConfig.reduce((acc: ReactNode[], config, i) => {
 						if (config.type === "select" || config.type === "enum") {
 							acc.push(
@@ -181,8 +179,6 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 					}, [])}
 				</div>
 			)}
-
-
 		</div>
 	);
 }

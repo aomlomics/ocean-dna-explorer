@@ -77,41 +77,22 @@ export default async function Assay() {
 	];
 
 	return (
-		<ExplorePage table="assay" tableConfig={tableConfig}>
-			<div>
-				<div className="space-y-4">
-					<ExploreTabButtons />
-					<div className="bg-base-100 border border-base-300 rounded-lg p-4">
-						<p className="mb-2">
-							Laboratory protocols used to analyze samples, specifying primers, controls, PCR protocols, and target
-							genes for DNA amplification.
-						</p>
-						<p className="text-sm">
-							For more detailed information, visit our{" "}
-							<Link href="/help" className="text-primary hover:underline">
-								Help page
-							</Link>
-							.
-						</p>
-					</div>
+		<ExplorePage table="assay" tableConfig={tableConfig} title="Assays">
+			<div className="w-full space-y-4">
+				<div className="text-base-content/80 pb-4 space-y-2">
+					<p>
+						Laboratory protocols used to analyze samples, specifying primers, controls, PCR protocols, and target
+						genes for DNA amplification.
+					</p>
+					<p className="text-sm">
+						For more detailed information, visit our{" "}
+						<Link href="/help" className="text-primary hover:underline">
+							Help page
+						</Link>
+						.
+					</p>
 				</div>
-
-				<div className="flex justify-between items-center my-4">
-					{/* <ExploreSearch table="assay" defaultField="assay_name" /> */}
-					<h1 className="text-xl font-medium text-base-content">
-						Showing <span className="text-primary">Assays</span>
-					</h1>
-				</div>
-
-				<TableFilter tableConfig={tableConfig} />
-					<div className="aspect-5/2 hidden lg:block">
-						<div className="rounded-lg border border-base-300 h-full">
-							<Table table="assay" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
-						</div>
-					</div>
-				<div className="lg:hidden">
-					<Pagination table="assay" />
-				</div>
+				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

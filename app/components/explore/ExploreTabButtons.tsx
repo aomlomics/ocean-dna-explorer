@@ -13,8 +13,10 @@ export default function ExploreTabButtons() {
 				<Link
 					key={route}
 					href={`/explore/${route}`}
-					className={`btn btn-sm text-base font-normal ${
-						pathname?.startsWith(`/explore/${route}`) ? "btn-primary" : "btn-ghost"
+					className={`btn btn-sm text-base font-normal normal-case ${
+						pathname?.startsWith(`/explore/${route}`)
+							? "btn-primary"
+							: "bg-base-200 hover:bg-base-300 border-transparent hover:border-transparent"
 					}`}
 				>
 					{name}

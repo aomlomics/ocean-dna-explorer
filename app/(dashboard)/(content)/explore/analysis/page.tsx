@@ -62,42 +62,23 @@ options: filterOptions.otu_clust_tool
 	];
 
 	return (
-		<ExplorePage table="analysis" tableConfig={tableConfig}>
-			<div>
-				<div className="space-y-4">
-					<ExploreTabButtons />
-					<div className="bg-base-100 border border-base-300 rounded-lg p-4">
-						<p className="mb-2">
-							Bioinformatic processing runs that convert raw sequence data into species detections, documenting all
-							parameters and methods used.
-						</p>
-						<p className="text-sm">
-							For more detailed information, visit our{" "}
-							<Link href="/help" className="text-primary hover:underline">
-								Help page
-							</Link>
-							.
-						</p>
-					</div>
+		<ExplorePage table="analysis" tableConfig={tableConfig} title="Analyses">
+			<div className="w-full space-y-4">
+				<div className="text-base-content/80 pb-4 space-y-2">
+					<p>
+						Bioinformatic processing runs that convert raw sequence data into species detections, documenting all
+						parameters and methods used.
+					</p>
+					<p className="text-sm">
+						For more detailed information, visit our{" "}
+						<Link href="/help" className="text-primary hover:underline">
+							Help page
+						</Link>
+						.
+					</p>
 				</div>
-
-				<div className="flex justify-between items-center my-4">
-					<h1 className="text-xl font-medium text-base-content">
-						Showing <span className="text-primary">Analyses</span>
-					</h1>
-				</div>
-
-				<TableFilter tableConfig={tableConfig} />
-					<div className="aspect-5/2 hidden lg:block">
-						<div className="rounded-lg border border-base-300 h-full">
-							<Table table="analysis" defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
-						</div>
-					</div>
-				<div className="lg:hidden">
-					<Pagination table="analysis" />
-				</div>
-		</div>
-		<div className="-mt-24"></div>
+				<ExploreTabButtons />
+			</div>
 		</ExplorePage>
 	);
 }
