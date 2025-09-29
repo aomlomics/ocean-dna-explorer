@@ -13,7 +13,7 @@ export default async function Taxonomy() {
 		}
 	];
 	return (
-		<ExplorePage table="taxonomy" tableConfig={tableConfig} title="Taxonomies">
+		<ExplorePage table="taxonomy" tableConfig={tableConfig} title="Taxonomies" displayMode="grid">
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
 					<p>

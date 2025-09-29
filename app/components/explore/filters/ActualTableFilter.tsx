@@ -71,15 +71,24 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 		return summaries;
 	}
 
-	return (
-		<div className={`bg-base-200 rounded-xl relative z-20${sticky ? " sticky top-6 z-30" : ""}`}>
+return (
+    <div className={`bg-base-200 rounded-xl shadow-inner relative z-20${sticky ? " sticky top-6 z-30" : ""}`}>
+		{/* Animated perimeter runner (subtle) */}
+
 			{/* Header: Filters title, icon (larger), active count, chevron; no background bar */}
-			<div
-				className="flex justify-between items-center px-5 py-3 cursor-pointer select-none hover:bg-base-300 transition-colors rounded-xl"
-				onClick={() => setIsOpen((v) => !v)}
-				role="button"
-				aria-expanded={isOpen}
-			>
+        <div
+            className={`relative group flex justify-between items-center px-5 py-3 cursor-pointer select-none transition-colors rounded-xl hover:bg-primary/10`}
+            onClick={() => setIsOpen((v) => !v)}
+            role="button"
+            aria-expanded={isOpen}
+        >
+                {!isOpen && (
+                    <div className="pointer-events-none absolute left-4/5 -translate-x-1/2 bottom-full mb-2 hidden md:block opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <div className="bg-primary text-primary-content shadow-xl rounded-md shadow-lg px-3 py-1.5 text-sm text-center max-w-sm whitespace-normal">
+                            Apply filters to the data below by using the dropdown menus in this Filter Menu
+                        </div>
+                    </div>
+                )}
 				<div className="flex items-center gap-3">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -93,8 +102,10 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 						>
 							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
 						</svg>
-					<h3 className="text-lg font-semibold text-base-content">Filters</h3>
-						<span className="text-base-content/70 whitespace-nowrap">({activeFilterCount} active)</span>
+                    <h3 className="text-lg font-semibold text-base-content">Filters</h3>
+				<span className={`badge badge-md rounded-full px-3 border bg-base-100 ${activeFilterCount > 0 ? "text-primary border-primary/30" : "text-base-content/70 border-base-300"}`}>
+						{activeFilterCount} active
+					</span>
 					</div>
 				<div className="flex items-center gap-4">
 					{activeFilterCount > 0 && (

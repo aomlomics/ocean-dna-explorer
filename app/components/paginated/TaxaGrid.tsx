@@ -24,7 +24,7 @@ export default function TaxaGrid({
 	const [page, setPage] = useState(1);
 
 	let query = new URLSearchParams({
-		take: (16).toString(),
+		take: (25).toString(),
 		page: page.toString()
 	});
 
@@ -65,7 +65,7 @@ export default function TaxaGrid({
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
-			take: (16).toString(),
+			take: (25).toString(),
 			page: (page + dir).toString()
 		});
 		if (where) {
@@ -83,18 +83,18 @@ export default function TaxaGrid({
 			{/* Pagination Controls */}
 			<PaginationControls
 				page={page}
-				take={16}
+				take={25}
 				count={totalCount}
 				handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
 				handlePageHover={handlePageHover}
 			/>
 
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+			<div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
 				{items.map((d: any) => (
 					<Link
 						href={`/explore/taxonomy/${encodeURIComponent(d.taxonomy)}`}
 						key={d.taxonomy}
-						className="card bg-base-200 hover:translate-x-1 transition-transform duration-200 aspect-square"
+						className="card bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square"
 					>
 						<div className="card-body p-1 lg:p-2 gap-0">
 							<div className="tooltip tooltip-primary w-full break-words before:!w-full" data-tip={d.taxonomy}>

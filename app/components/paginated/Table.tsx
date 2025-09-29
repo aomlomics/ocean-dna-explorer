@@ -369,7 +369,7 @@ export default function Table({
 					</div>
 				</div>
 				<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
-					<table className="table table-xs table-zebra table-pin-rows table-pin-cols">
+					<table className="table table-sm table-zebra table-pin-rows table-pin-cols [&>tbody>tr:nth-child(even)>td]:bg-base-200/25 [&>tbody>tr:nth-child(even)>th]:bg-base-200/25">
 						{/* Headers */}
 						<thead>
 							<tr>
@@ -484,7 +484,7 @@ export default function Table({
 								data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
 									//row
 									acc.push(
-										<tr key={i} className="border-base-100 border-b-2">
+										<tr key={i} className="border-base-100 border-b-2 min-h-12 h-12 align-middle">
 											{typeof title === "string" ? (
 												<th className="whitespace-nowrap text-sm font-bold">
 													<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">

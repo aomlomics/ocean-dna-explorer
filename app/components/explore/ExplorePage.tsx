@@ -11,12 +11,14 @@ export default function ExplorePage({
 	table,
 	tableConfig,
 	children,
-	title
+	title,
+	displayMode = "table"
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	tableConfig: FilterConfig[];
 	children: ReactNode;
 	title: string;
+	displayMode?: "table" | "grid";
 }) {
 	return (
 		<div className="grid grid-cols-1 gap-y-4 pt-4">
@@ -31,15 +33,29 @@ export default function ExplorePage({
 			
 			<TableFilter tableConfig={tableConfig} />
 
-			<div className="aspect-5/2 hidden lg:block">
-				<div className="rounded-lg border border-base-300 h-full">
-					<Table table={table} defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
-				</div>
-			</div>
-			<div className="lg:hidden">
-				<Pagination table={table} />
-			</div>
+			{displayMode === "table" && (
+				<>
+					<div className="hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-[90vh]">
+							<Table table={table} defaultTake={25} hideEmptyAtStart filterHeadersAtStart />
+						</div>
+					</div>
+					<div className="lg:hidden">
+						<Pagination table={table} />
+					</div>
+				</>
+			)}
 
+			{displayMode === "grid" && (
+				<>
+					<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
+						<TaxaGrid />
+					</div>
+					<div className="lg:hidden">
+						<TaxaGrid />
+					</div>
+				</>
+			)}
 		</div>
 	);
 } 
