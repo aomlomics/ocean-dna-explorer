@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSubmissionFileName } from "../helpers/utils";
 
 export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (
@@ -73,20 +74,9 @@ function ChangeValue({ value }: { value: string }) {
 	if (value === "") {
 		return "<empty>";
 	} else if (URL.canParse(value) && value.startsWith("https://")) {
-		const url = new URL(value);
-		let display = value;
-		if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
-			//reassemble file name without the random suffix
-			const splitPath = url.pathname.split("/");
-			const name = splitPath[splitPath.length - 1];
-			const dashSplit = name.split("-"); //file name
-			const dotSplit = name.split("."); //file type
-			display =
-				decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-")) + "." + dotSplit[dotSplit.length - 1];
-		}
 		return (
 			<Link href={value} className="link link-primary link-hover" target="_blank" rel="noreferrer">
-				{display}
+				{getSubmissionFileName(value)}
 			</Link>
 		);
 	} else {

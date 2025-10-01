@@ -1,3 +1,5 @@
+"use server";
+
 import { Sample } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
@@ -5,7 +7,7 @@ import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function fixDeletedSamples(project_id: Sample["project_id"]): Promise<NetworkPacket> {
+export default async function fixDeletedSamplesAction(project_id: Sample["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 

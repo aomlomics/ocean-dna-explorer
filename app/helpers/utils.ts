@@ -183,3 +183,18 @@ export function deepMerge(target: Record<string, any>, ...sources: Record<string
 
 	return deepMerge(target, ...sources);
 }
+
+export function getSubmissionFileName(value: string) {
+	const url = new URL(value);
+	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
+		//reassemble file name without the random suffix
+		const splitPath = url.pathname.split("/");
+		const name = splitPath[splitPath.length - 1];
+		const dashSplit = name.split("-"); //file name
+		const dotSplit = name.split("."); //file type
+		return decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-")) + "." + dotSplit[dotSplit.length - 1];
+	} else {
+		//do nothing
+		return value;
+	}
+}

@@ -224,7 +224,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
 					});
 					const analysisUrl = (
 						await upload(`submissions/${analysisFile.name}`, analysisFile, {
@@ -233,6 +233,11 @@ export default function AnalysisSubmit() {
 							multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit analysis file url
 					const analysisError = await doProgressAction({
 						action: analysisSubmitAction,
@@ -258,7 +263,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
 					});
 					const assignmentsUrl = (
 						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
@@ -267,6 +272,11 @@ export default function AnalysisSubmit() {
 							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit assignments file url
 					const assignmentsError = await doProgressAction({
 						action: assignSubmitAction,

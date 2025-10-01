@@ -166,7 +166,7 @@ export default function ProjectSubmit() {
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
 		try {
-			setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+			setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const projectFileUrl = (
 				await upload(`submissions/${projectFile.name}`, projectFile, {
 					access: "public",
@@ -174,9 +174,10 @@ export default function ProjectSubmit() {
 					multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
+			setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			setFileUrls([projectFileUrl]);
 
-			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const sampleFileUrl = (
 				await upload(`submissions/${sampleFile.name}`, sampleFile, {
 					access: "public",
@@ -184,9 +185,10 @@ export default function ProjectSubmit() {
 					multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
+			setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			setFileUrls([projectFileUrl, sampleFileUrl]);
 
-			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const libraryFileUrl = (
 				await upload(`submissions/${libraryFile.name}`, libraryFile, {
 					access: "public",
@@ -194,6 +196,7 @@ export default function ProjectSubmit() {
 					multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
+			setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl]);
 
 			//trigger streamed action

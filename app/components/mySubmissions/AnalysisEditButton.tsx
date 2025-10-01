@@ -11,16 +11,27 @@ import { v4 as uuidv4 } from "uuid";
 import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
 import assignEditAction from "@/app/actions/analysis/update/assignEdit";
 import ProgressBar from "../ProgressBar";
+import analysisUpdateIsPrivateAction from "@/app/actions/analysis/update/analysisUpdateIsPrivate";
+import { getSubmissionFileName } from "@/app/helpers/utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function AnalysisEditButton({
 	analysis_run_name,
 	isPrivate,
-	isPrivateDisabled
+	isPrivateDisabled,
+	analysisMetadataFileUrl_ODE,
+	asvFileUrl_ODE,
+	occurrenceFileUrl_ODE
 }: {
 	analysis_run_name: Analysis["analysis_run_name"];
 	isPrivate: Analysis["isPrivate"];
 	isPrivateDisabled: boolean;
+	analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
+	asvFileUrl_ODE: NonNullable<Analysis["asvFileUrl_ODE"]>;
+	occurrenceFileUrl_ODE: NonNullable<Analysis["occurrenceFileUrl_ODE"]>;
 }) {
+	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 
 	//state variable that will have any error passed to it
@@ -60,9 +71,16 @@ export default function AnalysisEditButton({
 		setAssignResponse(undefined);
 		setOccResponse(undefined);
 
-		//TODO: allow user to only change isPrivate
 		if (!analysisFile && !assignmentsFile && !occurrencesFile) {
-			setErrorMessage("Must provide at least one file.");
+			if (isPrivateToggle !== isPrivate) {
+				const result = await analysisUpdateIsPrivateAction(analysis_run_name, isPrivateToggle);
+				if (result.statusMessage === "error") {
+					setErrorMessage(result.error);
+				}
+			} else {
+				setErrorMessage("Must provide at least one file.");
+			}
+
 			setLoading(false);
 			return;
 		}
@@ -74,7 +92,7 @@ export default function AnalysisEditButton({
 			//analysis submit
 			if (analysisFile) {
 				//upload file to blob storage
-				setAnalysisResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+				setAnalysisResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				const analysisUrl = (
 					await upload(`submissions/${analysisFile.name}`, analysisFile, {
@@ -83,6 +101,8 @@ export default function AnalysisEditButton({
 						multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 					})
 				).url;
+
+				setAnalysisResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
 				//submit analysis file url
 				const analysisError = await doProgressAction({
@@ -105,17 +125,17 @@ export default function AnalysisEditButton({
 				}
 
 				//remove file from input after done
-				if (analysisResponse?.statusMessage === "success") {
-					analysisRef.current!.value = "";
+				if (analysisResponse?.statusMessage === "success" && analysisRef.current) {
+					analysisRef.current.value = "";
+					setAnalysisFile(undefined);
 				}
-
-				//TODO: notify user that this edit has been completed successfully and does not need to run again
 			}
 
 			//assignments submit
 			if (assignmentsFile) {
 				//upload file to blob storage
-				setAssignResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 5 } });
+				setAssignResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
+
 				const assignmentsUrl = (
 					await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
 						access: "public",
@@ -123,6 +143,8 @@ export default function AnalysisEditButton({
 						multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 					})
 				).url;
+
+				setAssignResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
 				//submit assignments file url
 				const assignmentsError = await doProgressAction({
@@ -145,11 +167,10 @@ export default function AnalysisEditButton({
 				}
 
 				//remove file from input after done
-				if (assignResponse?.statusMessage === "success") {
-					assignmentsRef.current!.value = "";
+				if (assignResponse?.statusMessage === "success" && assignmentsRef.current) {
+					assignmentsRef.current.value = "";
+					setAssignmentsFile(undefined);
 				}
-
-				//TODO: notify user that this edit has been completed successfully and does not need to run again
 			}
 
 			//occurrences submit
@@ -157,7 +178,7 @@ export default function AnalysisEditButton({
 				//upload file to blob storage
 				setOccResponse({
 					statusMessage: "progress",
-					progress: { message: "Uploading file", value: 5 }
+					progress: { message: "Uploading file", value: 0 }
 				});
 
 				const occurrencesUrl = (
@@ -167,6 +188,11 @@ export default function AnalysisEditButton({
 						multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 					})
 				).url;
+
+				setOccResponse({
+					statusMessage: "progress",
+					progress: { message: "File uploaded", value: 5 }
+				});
 
 				//submit occurrences file url
 				const occurrencesError = await doProgressAction({
@@ -189,11 +215,16 @@ export default function AnalysisEditButton({
 				}
 
 				//remove file from input after done
-				if (occResponse?.statusMessage === "success") {
-					occurrencesRef.current!.value = "";
+				if (occResponse?.statusMessage === "success" && occurrencesRef.current) {
+					occurrencesRef.current.value = "";
+					setOccurrencesFile(undefined);
 				}
 
-				//TODO: notify user that this edit has been completed successfully and does not need to run again
+				//reset page
+				modalXRef.current!.disabled = false;
+				modalClickOffRef.current!.disabled = false;
+				setLoading(false);
+				router.refresh();
 			}
 		} catch (err) {
 			const error = err as Error;
@@ -213,7 +244,7 @@ export default function AnalysisEditButton({
 			>
 				Edit
 			</button>
-			<Modal ref={modalRef}>
+			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
 				<form onSubmit={onSubmit} className="flex flex-col gap-3">
 					<h2>Edit Analysis: {analysis_run_name}</h2>
 					<fieldset className="fieldset">
@@ -230,46 +261,66 @@ export default function AnalysisEditButton({
 					</fieldset>
 
 					<div className="grid grid-cols-2 gap-4 w-full">
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Project Metadata File:</legend>
+						<fieldset className="fieldset z-10">
+							<legend className="fieldset-legend flex-col items-start gap-0">
+								Analysis Metadata File:
+								<Link href={analysisMetadataFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
+									{getSubmissionFileName(analysisMetadataFileUrl_ODE)}
+								</Link>
+							</legend>
 							<input
 								type="file"
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
 								onChange={(e) => setAnalysisFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								ref={analysisRef}
 							/>
 						</fieldset>
-						<ProgressBar loading={loading} data={analysisResponse} />
+						<ProgressBar loading={loading && !!analysisFile} data={analysisResponse} />
 
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Sample Metadata File:</legend>
+						<fieldset className="fieldset z-10">
+							<legend className="fieldset-legend flex-col items-start gap-0">
+								ASV Taxa/Features File:
+								<Link href={asvFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
+									{getSubmissionFileName(asvFileUrl_ODE)}
+								</Link>
+							</legend>
 							<input
 								type="file"
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
 								onChange={(e) => setAssignmentsFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								ref={assignmentsRef}
 							/>
 						</fieldset>
-						<ProgressBar loading={loading} data={assignResponse} />
+						<ProgressBar loading={loading && !!assignmentsFile} data={assignResponse} />
 
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Library (Experiment Run) Metadata File:</legend>
+						<fieldset className="fieldset z-10">
+							<legend className="fieldset-legend flex-col items-start gap-0">
+								Occurrence Table File:
+								<Link href={occurrenceFileUrl_ODE} className="link link-primary link-hover whitespace-nowrap w-0">
+									{getSubmissionFileName(occurrenceFileUrl_ODE)}
+								</Link>
+							</legend>
 							<input
 								type="file"
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
 								onChange={(e) => setOccurrencesFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								ref={occurrencesRef}
 							/>
 						</fieldset>
-						<ProgressBar loading={loading} data={occResponse} />
+						<ProgressBar loading={loading && !!occurrencesFile} data={occResponse} />
 
 						<button
 							type="submit"
 							className="btn"
-							disabled={loading || (!analysisFile && !assignmentsFile && !occurrencesFile)}
+							disabled={
+								loading || (!analysisFile && !assignmentsFile && !occurrencesFile && isPrivateToggle === isPrivate)
+							}
 						>
 							Submit
 						</button>

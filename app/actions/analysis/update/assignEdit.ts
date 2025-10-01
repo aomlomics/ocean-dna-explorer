@@ -55,6 +55,8 @@ async function doEdit(
 
 		await stream.message("Assignments successfully parsed into database format. Parsing data into database.", 75);
 
+		const assignFeatureids = assignments.map((a) => a.featureid);
+
 		await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
@@ -126,18 +128,36 @@ async function doEdit(
 							!newAssignments.some(
 								(dbA) => dbA.analysis_run_name === a.analysis_run_name && dbA.featureid === a.featureid
 							)
-					)
+					),
+					["analysis_run_name", "featureid"]
 				);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
 
 				//delete unused
 				//rely on cron to delete unused features and taxonomies
+				const currAssigns = await tx.assignment.findMany({
+					where: {
+						analysis_run_name
+					},
+					select: {
+						id: true,
+						featureid: true
+					}
+				});
+
+				const assignsToDelete = currAssigns.reduce((acc, assign) => {
+					if (!assignFeatureids.includes(assign.featureid)) {
+						acc.push(assign.id);
+					}
+					return acc;
+				}, [] as number[]);
+
 				await tx.assignment.deleteMany({
 					where: {
 						analysis_run_name,
-						featureid: {
-							notIn: assignments.map((a) => a.featureid)
+						id: {
+							in: assignsToDelete
 						}
 					}
 				});

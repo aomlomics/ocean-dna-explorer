@@ -10,6 +10,7 @@ import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUser
 import projectUpdateUserIdsAction from "@/app/actions/project/update/projectUpdateUserIds";
 import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButton";
 import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
+import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -17,24 +18,53 @@ export default async function MySubmissions() {
 		return <div>Unauthorized</div>;
 	}
 
-	const projects = await prisma.project.findMany({
-		where: {
-			userIds: {
-				has: userId
-			}
-		},
-		select: {
-			project_id: true,
-			userIds: true,
-			isPrivate: true,
-			Analyses: {
-				select: {
-					analysis_run_name: true,
-					isPrivate: true
+	const [projects, dbBadAnalyses] = await prisma.$transaction([
+		prisma.project.findMany({
+			where: {
+				userIds: {
+					has: userId
+				}
+			},
+			select: {
+				project_id: true,
+				userIds: true,
+				isPrivate: true,
+				projectMetadataFileUrl_ODE: true,
+				sampleMetadataFileUrl_ODE: true,
+				libraryMetadataFileUrl_ODE: true,
+				Analyses: {
+					select: {
+						analysis_run_name: true,
+						isPrivate: true,
+						analysisMetadataFileUrl_ODE: true,
+						asvFileUrl_ODE: true,
+						occurrenceFileUrl_ODE: true
+					}
+				},
+				_count: {
+					select: {
+						Samples: {
+							where: {
+								deleted_ODE: true
+							}
+						}
+					}
 				}
 			}
-		}
-	});
+		}),
+		prisma.occurrence.findMany({
+			where: {
+				Sample: {
+					deleted_ODE: true
+				}
+			},
+			distinct: ["analysis_run_name"],
+			select: {
+				analysis_run_name: true
+			}
+		})
+	]);
+	const badAnalyses = dbBadAnalyses.map((ba) => ba.analysis_run_name);
 
 	return (
 		<div>
@@ -82,13 +112,19 @@ export default async function MySubmissions() {
 								<div className="flex flex-col gap-3 mt-2">
 									{projects.map((proj) => (
 										<div key={proj.project_id} className="flex flex-col gap-3">
-											<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
+											<div
+												className={`flex items-center justify-between p-3 bg-base-100 rounded-lg ${
+													proj._count.Samples ? "border-2 border-error" : ""
+												}`}
+											>
 												<Link
 													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 													className="text-primary hover:text-info-focus hover:underline transition-colors"
 												>
 													{proj.project_id}
 												</Link>
+
+												{proj._count.Samples ? <FixDeletedSamplesButton project_id={proj.project_id} /> : <></>}
 
 												<div className="flex gap-3">
 													<SubmissionUsersButton
@@ -97,7 +133,13 @@ export default async function MySubmissions() {
 														target={proj.project_id}
 													/>
 
-													<ProjectEditButton project_id={proj.project_id} isPrivate={proj.isPrivate} />
+													<ProjectEditButton
+														project_id={proj.project_id}
+														isPrivate={proj.isPrivate}
+														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
+														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
+														libraryMetadataFileUrl_ODE={proj.libraryMetadataFileUrl_ODE}
+													/>
 
 													<SubmissionDeleteButton
 														field="project_id"
@@ -115,7 +157,9 @@ export default async function MySubmissions() {
 														{proj.Analyses.map((analysis) => (
 															<div
 																key={analysis.analysis_run_name}
-																className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+																className={`flex items-center justify-between p-3 bg-base-100 rounded-lg ${
+																	badAnalyses.includes(analysis.analysis_run_name) ? "border-2 border-error" : ""
+																}`}
 															>
 																<Link
 																	href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
@@ -129,6 +173,11 @@ export default async function MySubmissions() {
 																		analysis_run_name={analysis.analysis_run_name}
 																		isPrivate={analysis.isPrivate}
 																		isPrivateDisabled={proj.isPrivate}
+																		analysisMetadataFileUrl_ODE={analysis.analysisMetadataFileUrl_ODE}
+																		asvFileUrl_ODE={analysis.asvFileUrl_ODE || "ERROR: missing ASV file"}
+																		occurrenceFileUrl_ODE={
+																			analysis.occurrenceFileUrl_ODE || "ERROR: missing Occurrence file"
+																		}
 																	/>
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"

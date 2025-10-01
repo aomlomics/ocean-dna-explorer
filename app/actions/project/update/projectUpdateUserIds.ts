@@ -1,14 +1,15 @@
 "use server";
 
+import { Project } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function projectUpdateUserIdsAction(
-	target: string,
-	newUserIds: string[],
-	deletedUserIds: string[]
+	target: Project["project_id"],
+	newUserIds: Project["userIds"],
+	deletedUserIds: Project["userIds"]
 ): Promise<NetworkPacket> {
 	const { userId } = await auth();
 

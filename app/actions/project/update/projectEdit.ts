@@ -47,10 +47,10 @@ async function doEdit(
 		});
 
 		if (!dbProject) {
-			await projectChannel.stream.error(`No Project with project_id of "${project_id}" found.`);
+			await globalStream.error(`No Project with project_id of "${project_id}" found.`);
 			return;
 		} else if (!dbProject.userIds.includes(userId)) {
-			await projectChannel.stream.error("Unauthorized action.");
+			await globalStream.error("Unauthorized action.");
 			return;
 		}
 
@@ -105,6 +105,7 @@ async function doEdit(
 
 		const sampNames = samples.map((samp) => samp.samp_name);
 
+		//TODO: only do updates if relevant file was provided
 		await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
@@ -131,11 +132,9 @@ async function doEdit(
 				});
 
 				if (!dbProject) {
-					await projectChannel.stream.error(`No Project with project_id of "${project_id}" found.`);
-					throw new Error("Error");
+					throw new Error(`No Project with project_id of "${project_id}" found.`);
 				} else if (!dbProject.userIds.includes(userId)) {
-					await projectChannel.stream.error("Unauthorized action.");
-					throw new Error("Error");
+					throw new Error("Unauthorized action.");
 				}
 
 				for (let p of primers) {
@@ -171,7 +170,7 @@ async function doEdit(
 						)
 					) {
 						await projectChannel.stream.error("Unauthorized action.");
-						throw new Error("Error");
+						throw new Error("Unauthorized action.");
 					}
 				}
 
@@ -195,7 +194,7 @@ async function doEdit(
 
 					if (dbAssay && !dbAssay.Samples.some((samp) => samp.Project.userIds.includes(userId))) {
 						await projectChannel.stream.error("Unauthorized action.");
-						throw new Error("Error");
+						throw new Error("Unauthorized action.");
 					}
 				}
 
@@ -216,7 +215,7 @@ async function doEdit(
 					await sampleChannel.stream.error(
 						`Some Sample in file does not belong to Project with project_id of "${project_id}".`
 					);
-					throw new Error("Error");
+					throw new Error(`Some Sample in file does not belong to Project with project_id of "${project_id}".`);
 				}
 
 				await sampleChannel.stream.message("All checks passed.", 80);
@@ -240,7 +239,7 @@ async function doEdit(
 					await libraryChannel.stream.error(
 						`Some Library in file does not belong to Project with project_id of "${project_id}".`
 					);
-					throw new Error("Error");
+					throw new Error(`Some Library in file does not belong to Project with project_id of "${project_id}".`);
 				}
 
 				await libraryChannel.stream.message("All checks passed.", 80);

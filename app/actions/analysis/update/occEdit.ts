@@ -55,6 +55,9 @@ async function doEdit(
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
+		const occSampNames = occurrences.map((occ) => occ.samp_name);
+		const occFeatureids = occurrences.map((occ) => occ.featureid);
+
 		await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
@@ -91,6 +94,8 @@ async function doEdit(
 					skipDuplicates: true
 				});
 
+				await stream.message("New entries successfully added to database.", 85);
+
 				//update old
 				await updateManyRaw(
 					tx,
@@ -98,27 +103,37 @@ async function doEdit(
 					occurrences.filter(
 						(occ) =>
 							!newOccurrences.some((dbOcc) => dbOcc.samp_name === occ.samp_name && dbOcc.featureid === occ.featureid)
-					)
+					),
+					["analysis_run_name", "samp_name", "featureid"]
 				);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
 
 				//delete unused
+				const currOccs = await tx.occurrence.findMany({
+					where: {
+						analysis_run_name
+					},
+					select: {
+						id: true,
+						samp_name: true,
+						featureid: true
+					}
+				});
+
+				const occToDelete = currOccs.reduce((acc, occ) => {
+					if (!occSampNames.includes(occ.samp_name) || !occFeatureids.includes(occ.featureid)) {
+						acc.push(occ.id);
+					}
+					return acc;
+				}, [] as number[]);
+
 				await tx.occurrence.deleteMany({
 					where: {
 						analysis_run_name,
-						OR: [
-							{
-								samp_name: {
-									notIn: occurrences.map((occ) => occ.samp_name)
-								}
-							},
-							{
-								featureid: {
-									notIn: occurrences.map((occ) => occ.featureid)
-								}
-							}
-						]
+						id: {
+							in: occToDelete
+						}
 					}
 				});
 
@@ -148,6 +163,8 @@ async function doEdit(
 						occurrenceFileChecksum_ODE: md5Checksum
 					}
 				});
+
+				await stream.success("Success");
 			},
 			{ timeout: 1 * 60 * 1000 }
 		);
