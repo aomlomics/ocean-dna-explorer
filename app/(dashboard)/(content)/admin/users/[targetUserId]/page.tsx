@@ -1,4 +1,4 @@
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
 import {
 	banUserAction,
 	deleteUserAction,
@@ -6,7 +6,7 @@ import {
 	setRoleAction,
 	unbanUserAction
 } from "@/app/actions/manageUsers/editUser";
-import projectDeleteAction from "@/app/actions/project/projectDelete";
+import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";

@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { getSubmissionFileName } from "../helpers/utils";
+
 export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (
 		<div className="dropdown dropdown-hover">
@@ -10,7 +13,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 				>
 					<path
 						d="M12 7V12L14.5 13.5M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-						stroke="currentColor" 
+						stroke="currentColor"
 						strokeWidth="2"
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -20,31 +23,38 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 
 			<ul
 				tabIndex={0}
-				className="dropdown-content bg-base-200 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll"
+				className="dropdown-content bg-base-200 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll overflow-x-hidden"
 			>
 				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (
-						<li className="min-w-[450px]" key={i}>
-							<div className="text-base text-base-content pb-2">{edit.dateEdited.toString()}</div>
+						<li className={`min-w-[600px] ${i ? "border-t-2 border-primary pt-2" : ""}`} key={i}>
+							<div className="text-base text-base-content pb-2 font-bold">
+								Changed: <span className="text-primary">{new Date(edit.dateEdited).toLocaleString()}</span>
+							</div>
 							<div className="flex flex-col gap-2">
-								{edit.changes.map((change, i) => (
-									<div key={change.field + i} className="pl-8 flex flex-col items-start gap-1">
+								{edit.changes.map((change, j) => (
+									<div
+										key={change.field + j}
+										className={`pl-8 flex flex-col items-start gap-1 mx-10 ${
+											j ? "border-t-2 border-base-content/70 pt-2" : ""
+										}`}
+									>
 										<div className="text-sm font-medium text-base-content/70">{change.field}</div>
-										<div className="flex">
+										<div className="grid grid-cols-[40%_10%_40%] break-all">
 											<p
 												className={`bg-base-200 px-2 py-1 rounded-md ${
 													change.oldValue === "" ? "italic text-base-content/30" : ""
 												}`}
 											>
-												{change.oldValue === "" ? "<empty>" : change.oldValue}
+												<ChangeValue value={change.oldValue} />
 											</p>{" "}
-											<p className="px-2 py-1">🠢</p>{" "}
+											<p className="px-2 py-1 justify-self-center self-center">🠢</p>{" "}
 											<p
 												className={`bg-base-200 px-2 py-1 rounded-md ${
 													change.newValue === "" ? "italic text-base-content/30" : ""
 												}`}
 											>
-												{change.newValue === "" ? "<empty>" : change.newValue}
+												<ChangeValue value={change.newValue} />
 											</p>
 										</div>
 									</div>
@@ -58,4 +68,18 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 			</ul>
 		</div>
 	);
+}
+
+function ChangeValue({ value }: { value: string }) {
+	if (value === "") {
+		return "<empty>";
+	} else if (URL.canParse(value) && value.startsWith("https://")) {
+		return (
+			<Link href={value} className="link link-primary link-hover" target="_blank" rel="noreferrer">
+				{getSubmissionFileName(value)}
+			</Link>
+		);
+	} else {
+		return value;
+	}
 }

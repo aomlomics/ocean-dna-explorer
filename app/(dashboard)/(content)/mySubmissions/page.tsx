@@ -1,18 +1,16 @@
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
-import projectDeleteAction from "@/app/actions/project/projectDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import analysisEditAction from "@/app/actions/analysis/analysisEdit";
-import projectEditAction from "@/app/actions/project/projectEdit";
-import SubmissionEditButton from "@/app/components/mySubmissions/SubmissionEditButton";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
-import projectUpdateUserIdsAction from "@/app/actions/project/projectUpdateUserIds";
-import SamplesEditButton from "@/app/components/mySubmissions/SamplesEditButton";
-import TsvDisplayButton from "@/app/components/mySubmissions/TsvDisplayButton";
+import projectUpdateUserIdsAction from "@/app/actions/project/update/projectUpdateUserIds";
+import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButton";
+import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
+import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -20,23 +18,53 @@ export default async function MySubmissions() {
 		return <div>Unauthorized</div>;
 	}
 
-	const projects = await prisma.project.findMany({
-		where: {
-			userIds: {
-				has: userId
-			}
-		},
-		omit: {
-			editHistory: true
-		},
-		include: {
-			Analyses: {
-				omit: {
-					editHistory: true
+	const [projects, dbBadAnalyses] = await prisma.$transaction([
+		prisma.project.findMany({
+			where: {
+				userIds: {
+					has: userId
+				}
+			},
+			select: {
+				project_id: true,
+				userIds: true,
+				isPrivate: true,
+				projectMetadataFileUrl_ODE: true,
+				sampleMetadataFileUrl_ODE: true,
+				libraryMetadataFileUrl_ODE: true,
+				Analyses: {
+					select: {
+						analysis_run_name: true,
+						isPrivate: true,
+						analysisMetadataFileUrl_ODE: true,
+						asvFileUrl_ODE: true,
+						occurrenceFileUrl_ODE: true
+					}
+				},
+				_count: {
+					select: {
+						Samples: {
+							where: {
+								deleted_ODE: true
+							}
+						}
+					}
 				}
 			}
-		}
-	});
+		}),
+		prisma.occurrence.findMany({
+			where: {
+				Sample: {
+					deleted_ODE: true
+				}
+			},
+			distinct: ["analysis_run_name"],
+			select: {
+				analysis_run_name: true
+			}
+		})
+	]);
+	const badAnalyses = dbBadAnalyses.map((ba) => ba.analysis_run_name);
 
 	return (
 		<div>
@@ -83,8 +111,12 @@ export default async function MySubmissions() {
 							) : (
 								<div className="flex flex-col gap-3 mt-2">
 									{projects.map((proj) => (
-										<div key={proj.id} className="flex flex-col gap-3">
-											<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
+										<div key={proj.project_id} className="flex flex-col gap-3">
+											<div
+												className={`flex items-center justify-between p-3 bg-base-100 rounded-lg ${
+													proj._count.Samples ? "border-2 border-error" : ""
+												}`}
+											>
 												<Link
 													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 													className="text-primary hover:text-info-focus hover:underline transition-colors"
@@ -92,39 +124,21 @@ export default async function MySubmissions() {
 													{proj.project_id}
 												</Link>
 
-												<div className="flex gap-3">
-													<TsvDisplayButton
-														label="Project Metadata"
-														url={proj.projectMetadataFileUrl_ODE}
-														parserOptions={{ columns: true, delimiter: "\t" }}
-													/>
-													<TsvDisplayButton
-														label="Sample Metadata"
-														url={proj.sampleMetadataFileUrl_ODE}
-														parserOptions={{
-															columns: true,
-															delimiter: "\t",
-															comment: "#",
-															comment_no_infix: true
-														}}
-													/>
-													<TsvDisplayButton
-														label="Library Metadata"
-														url={proj.libraryMetadataFileUrl_ODE}
-														parserOptions={{
-															columns: true,
-															delimiter: "\t",
-															comment: "#",
-															comment_no_infix: true
-														}}
-													/>
-												</div>
+												{proj._count.Samples ? <FixDeletedSamplesButton project_id={proj.project_id} /> : <></>}
 
 												<div className="flex gap-3">
 													<SubmissionUsersButton
 														userIds={proj.userIds}
 														action={projectUpdateUserIdsAction}
 														target={proj.project_id}
+													/>
+
+													<ProjectEditButton
+														project_id={proj.project_id}
+														isPrivate={proj.isPrivate}
+														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
+														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
+														libraryMetadataFileUrl_ODE={proj.libraryMetadataFileUrl_ODE}
 													/>
 
 													<SubmissionDeleteButton
@@ -142,8 +156,10 @@ export default async function MySubmissions() {
 														<h2 className="text-lg text-primary font-medium">Analyses:</h2>
 														{proj.Analyses.map((analysis) => (
 															<div
-																key={analysis.id}
-																className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
+																key={analysis.analysis_run_name}
+																className={`flex items-center justify-between p-3 bg-base-100 rounded-lg ${
+																	badAnalyses.includes(analysis.analysis_run_name) ? "border-2 border-error" : ""
+																}`}
 															>
 																<Link
 																	href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
@@ -153,24 +169,16 @@ export default async function MySubmissions() {
 																</Link>
 
 																<div className="flex gap-3">
-																	<TsvDisplayButton
-																		label="Analysis Metadata"
-																		url={analysis.analysisMetadataFileUrl_ODE}
-																		parserOptions={{ columns: true, delimiter: "\t" }}
+																	<AnalysisEditButton
+																		analysis_run_name={analysis.analysis_run_name}
+																		isPrivate={analysis.isPrivate}
+																		isPrivateDisabled={proj.isPrivate}
+																		analysisMetadataFileUrl_ODE={analysis.analysisMetadataFileUrl_ODE}
+																		asvFileUrl_ODE={analysis.asvFileUrl_ODE || "ERROR: missing ASV file"}
+																		occurrenceFileUrl_ODE={
+																			analysis.occurrenceFileUrl_ODE || "ERROR: missing Occurrence file"
+																		}
 																	/>
-																	<TsvDisplayButton
-																		label="ASV Taxa/Features"
-																		url={analysis.asvFileUrl_ODE as string}
-																		parserOptions={{ columns: true, delimiter: "\t" }}
-																	/>
-																	<TsvDisplayButton
-																		label="Occurrence Table"
-																		url={analysis.occurrenceFileUrl_ODE as string}
-																		parserOptions={{ delimiter: "\t" }}
-																	/>
-																</div>
-
-																<div className="flex gap-3">
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
 																		value={analysis.analysis_run_name}

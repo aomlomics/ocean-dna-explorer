@@ -103,6 +103,7 @@ const TableMetadata = {
 	feature: {
 		schema: PrismaZodTypes.FeatureSchema,
 		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
+		fieldOrder: ["sequenceLength_ODE", "dna_sequence"],
 		titleField: "featureid",
 		subFields: ["dna_sequence", "sequenceLength_ODE"],
 		relations: [],

@@ -1,11 +1,11 @@
-import projectSubmitAction from "@/app/actions/project/projectSubmit";
-import projectEditAction from "@/app/actions/project/projectEdit";
-import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
-import analysisEditAction from "@/app/actions/analysis/analysisEdit";
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
-import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
+import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
+import projectEditAction from "@/app/actions/project/update/projectEdit";
+import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
+import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
+import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
 import assignDeleteAction from "@/app/actions/analysis/delete/assignDelete";
-import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
+import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -66,7 +66,7 @@ declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;
 		type ChangesType = { field: string; oldValue: string; newValue: string }[];
-		type EditHistoryType = { id: string; dateEdited: Date; changes: ChangesType }[];
+		type EditHistoryType = { id: string; dateEdited: string; changes: ChangesType }[];
 	}
 
 	interface CustomJwtSessionClaims {

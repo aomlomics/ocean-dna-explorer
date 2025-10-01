@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export default async function Taxonomy() {
 	return (
-		<div className="grid grid-cols-[300px_1fr] gap-6 pt-6">
+		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
 			<TableFilter
 				tableConfig={[
 					{

@@ -70,6 +70,8 @@ model Sample {
     Libraries   Library[]
     Occurrences Occurrence[]
 
+    deleted_ODE Boolean?
+
     // Data
     // Sample Information
     samp_category String

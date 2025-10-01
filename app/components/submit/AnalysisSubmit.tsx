@@ -8,12 +8,12 @@ import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
-import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
+import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
+import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
+import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
 import { doProgressAction } from "@/app/helpers/progress";
 
 type ResponseSet = {
@@ -224,19 +224,20 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
 					});
 					const analysisUrl = (
-						await upload(
-							`submissions/${project.project_id}/analyses/${id}/analysisMetadata/${analysisFile.name}`,
-							analysisFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${analysisFile.name}`, analysisFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit analysis file url
 					const analysisError = await doProgressAction({
 						action: analysisSubmitAction,
@@ -262,19 +263,20 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
 					});
 					const assignmentsUrl = (
-						await upload(
-							`submissions/${project.project_id}/analyses/${id}/asv/${assignmentsFile.name}`,
-							assignmentsFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit assignments file url
 					const assignmentsError = await doProgressAction({
 						action: assignSubmitAction,
@@ -312,15 +314,11 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const occurrencesUrl = (
-						await upload(
-							`submissions/${project.project_id}/analyses/${id}/occurrence/${occurrencesFile.name}`,
-							occurrencesFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
 					//submit occurrences file url
 					const occurrencesError = await doProgressAction({
