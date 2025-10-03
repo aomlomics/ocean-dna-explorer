@@ -1,4 +1,3 @@
-import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
 import Table from "@/app/components/paginated/Table";

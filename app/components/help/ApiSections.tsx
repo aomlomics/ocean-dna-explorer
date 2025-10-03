@@ -5,7 +5,6 @@ import SchemaDisplay from "../SchemaDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import ApiCodeBlock from "./ApiCodeBlock";
 import Link from "next/link";
-import ThemeAwareSvg from "./ThemeAwareSvg";
 import Image from "next/image";
 
 // Define types for our content structure

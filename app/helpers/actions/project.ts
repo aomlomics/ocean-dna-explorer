@@ -4,8 +4,6 @@ import {
 	AssayScalarFieldEnumSchema,
 	LibraryOptionalDefaultsSchema,
 	LibraryScalarFieldEnumSchema,
-	PrimerOptionalDefaultsSchema,
-	PrimerScalarFieldEnumSchema,
 	ProjectOptionalDefaultsSchema,
 	ProjectScalarFieldEnumSchema,
 	SampleOptionalDefaultsSchema,
@@ -13,7 +11,6 @@ import {
 } from "@/prisma/generated/zod";
 import { createProgressStream } from "../progress";
 import { parseSchemaToObject } from "../schema";
-import { deadBooleanToString } from "../utils";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import { Assay, Library, Prisma, Sample } from "@/app/generated/prisma/client";
@@ -168,16 +165,16 @@ async function parseProjectFile({
 				//most specific overrides least specific
 				...projectCol,
 				...p
-			},
-			{
-				errorMap: (error, ctx) => {
-					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${p[error.path[0]] || projectCol[error.path[0]]}`
-					};
-				}
 			}
+			// {
+			// 	errorMap: (error, ctx) => {
+			// 		return {
+			// 			message: `Field: ${error.path[0]}\nIssue: ${
+			// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+			// 			}\nValue: ${p[error.path[0]] || projectCol[error.path[0]]}`
+			// 		};
+			// 	}
+			// }
 		);
 
 		if (!parsedPrimer.success) {
@@ -191,7 +188,7 @@ async function parseProjectFile({
 		}
 
 		//unset all optional fields that were not provided
-		for (const field of PrimerScalarFieldEnumSchema._def.values) {
+		for (const field of PrimerScalarFieldEnumSchema.options) {
 			if (field !== "id" && !(field in parsedPrimer.data)) {
 				//@ts-ignore
 				parsedPrimer.data[field] = null;
@@ -215,16 +212,16 @@ async function parseProjectFile({
 			//placeholders, must override later
 			sampleMetadataFileChecksum_ODE: "",
 			libraryMetadataFileChecksum_ODE: ""
-		},
-		{
-			errorMap: (error, ctx) => {
-				return {
-					message: `Field: ${error.path[0]}\nIssue: ${
-						ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-					}\nValue: ${projectCol[error.path[0]]}`
-				};
-			}
 		}
+		// {
+		// 	errorMap: (error, ctx) => {
+		// 		return {
+		// 			message: `Field: ${error.path[0]}\nIssue: ${
+		// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+		// 			}\nValue: ${projectCol[error.path[0]]}`
+		// 		};
+		// 	}
+		// }
 	);
 
 	if (!parsedProject.success) {
@@ -237,7 +234,7 @@ async function parseProjectFile({
 	}
 
 	//unset all optional fields that were not provided
-	for (const field of ProjectScalarFieldEnumSchema._def.values) {
+	for (const field of ProjectScalarFieldEnumSchema.options) {
 		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
 			//@ts-ignore
 			parsedProject.data[field] = null;
@@ -341,19 +338,19 @@ async function parseLibraryFile({
 						...projectCol,
 						...assayCols[assayRow.assay_name],
 						...assayRow
-					},
-					{
-						errorMap: (error, ctx) => {
-							return {
-								message: `Field: ${error.path[0]}\nIssue: ${
-									ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-								}\nValue: ${
-									assayRow[error.path[0] as keyof typeof assayRow] ||
-									projectCol[error.path[0] as keyof typeof projectCol]
-								}`
-							};
-						}
 					}
+					// {
+					// 	errorMap: (error, ctx) => {
+					// 		return {
+					// 			message: `Field: ${error.path[0]}\nIssue: ${
+					// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+					// 			}\nValue: ${
+					// 				assayRow[error.path[0] as keyof typeof assayRow] ||
+					// 				projectCol[error.path[0] as keyof typeof projectCol]
+					// 			}`
+					// 		};
+					// 	}
+					// }
 				);
 
 				if (!parsedAssay.success) {
@@ -365,7 +362,7 @@ async function parseLibraryFile({
 					return;
 				}
 
-				for (const field of AssayScalarFieldEnumSchema._def.values) {
+				for (const field of AssayScalarFieldEnumSchema.options) {
 					if (field !== "id" && !(field in parsedAssay.data)) {
 						//@ts-ignore
 						parsedAssay.data[field] = null;
@@ -382,19 +379,19 @@ async function parseLibraryFile({
 					...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
 					...libraryRow,
 					userDefined: Object.keys(libraryUserDefined).length ? libraryUserDefined : "JsonNull"
-				},
-				{
-					errorMap: (error, ctx) => {
-						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${
-								libraryRow[error.path[0] as keyof typeof libraryRow] ||
-								projectCol[error.path[0] as keyof typeof projectCol]
-							}`
-						};
-					}
 				}
+				// {
+				// 	errorMap: (error, ctx) => {
+				// 		return {
+				// 			message: `Field: ${error.path[0]}\nIssue: ${
+				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+				// 			}\nValue: ${
+				// 				libraryRow[error.path[0] as keyof typeof libraryRow] ||
+				// 				projectCol[error.path[0] as keyof typeof projectCol]
+				// 			}`
+				// 		};
+				// 	}
+				// }
 			);
 
 			if (!parsedLibrary.success) {
@@ -407,7 +404,7 @@ async function parseLibraryFile({
 			}
 
 			//unset all optional fields that were not provided
-			for (const field of LibraryScalarFieldEnumSchema._def.values) {
+			for (const field of LibraryScalarFieldEnumSchema.options) {
 				if (field !== "id" && !(field in parsedLibrary.data)) {
 					//@ts-ignore
 					parsedLibrary.data[field] = null;
@@ -497,16 +494,16 @@ async function parseSampleFile({
 					project_id,
 					assay_name: sampToAssay[sampleRow.samp_name],
 					userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
-				},
-				{
-					errorMap: (error, ctx) => {
-						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${sampleRow[error.path[0] as keyof typeof sampleRow]}`
-						};
-					}
 				}
+				// {
+				// 	errorMap: (error, ctx) => {
+				// 		return {
+				// 			message: `Field: ${error.path[0]}\nIssue: ${
+				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+				// 			}\nValue: ${sampleRow[error.path[0] as keyof typeof sampleRow]}`
+				// 		};
+				// 	}
+				// }
 			);
 
 			if (!parsedSample.success) {
@@ -519,7 +516,7 @@ async function parseSampleFile({
 			}
 
 			//unset all optional fields that were not provided
-			for (const field of SampleScalarFieldEnumSchema._def.values) {
+			for (const field of SampleScalarFieldEnumSchema.options) {
 				if (field !== "id" && !(field in parsedSample.data)) {
 					//@ts-ignore
 					parsedSample.data[field] = null;

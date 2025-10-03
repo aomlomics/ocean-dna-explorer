@@ -81,7 +81,7 @@ export default function ExploreSearch({
 					value={field}
 					onChange={(e) => setField(e.currentTarget.value)}
 				>
-					{TableMetadata[table].enumSchema._def.values.reduce((acc, option) => {
+					{TableMetadata[table].enumSchema.options.reduce((acc, option) => {
 						if (!omit.includes(option)) {
 							acc.push(
 								<option key={option} value={option}>

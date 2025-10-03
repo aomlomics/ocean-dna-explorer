@@ -4,7 +4,6 @@ import { prisma } from "@/app/helpers/prisma";
 import { assay_type } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { getOptions } from "@/app/helpers/utils";
-import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import Table from "@/app/components/paginated/Table";
 
 export default async function Project() {

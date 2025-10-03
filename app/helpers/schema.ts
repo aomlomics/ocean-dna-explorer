@@ -29,6 +29,7 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 		// 	//TODO: verify it's actually a boolean, and not some other field that uses zod transform
 		// 	shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
+		console.log(field);
 		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
 			shape.type = "integer";
 		} else {
@@ -37,6 +38,7 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
 	} else if (field instanceof ZodArray) {
+		console.log(field);
 		if (field._def.type instanceof ZodString) {
 			shape.type = "string[]";
 		}
@@ -47,6 +49,7 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
 		//DeadBoolean
+		console.log(field);
 		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
 			shape.type = "DeadBoolean";
 			shape.values = Object.keys(DeadBooleanEnum);
@@ -75,7 +78,7 @@ export function parseSchemaToObject(
 	field: string,
 	value: string,
 	obj: Record<string, string | string[] | number | number[] | Date | boolean | JsonValue | null>,
-	table: Lowercase<Prisma.ModelName>
+	table: Uncapitalize<Prisma.ModelName>
 ) {
 	//check if the field name is in the Schema
 	if (value && TableMetadata[table].enumSchema.options.includes(field)) {

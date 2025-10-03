@@ -11,7 +11,6 @@ import {
 	TaxonomyOptionalDefaultsSchema,
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
-import { deadBooleanToString } from "../utils";
 import { parseSchemaToObject } from "../schema";
 
 export async function parseAnalysisFile({
@@ -77,16 +76,16 @@ export async function parseAnalysisFile({
 			editHistory: "JsonNull",
 			analysisMetadataFileUrl_ODE: url,
 			analysisMetadataFileChecksum_ODE: md5Checksum
-		},
-		{
-			errorMap: (error, ctx) => {
-				return {
-					message: `Field: ${error.path[0]}\nIssue: ${
-						ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-					}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
-				};
-			}
 		}
+		// {
+		// 	errorMap: (error, ctx) => {
+		// 		return {
+		// 			message: `Field: ${error.path[0]}\nIssue: ${
+		// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+		// 			}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
+		// 		};
+		// 	}
+		// }
 	);
 
 	if (!parsedAnalysis.success) {
@@ -99,7 +98,7 @@ export async function parseAnalysisFile({
 	}
 
 	//unset all optional fields that were not provided
-	for (const field of AnalysisScalarFieldEnumSchema._def.values) {
+	for (const field of AnalysisScalarFieldEnumSchema.options) {
 		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
 			//@ts-ignore
 			parsedAnalysis.data[field] = null;
@@ -175,16 +174,16 @@ export async function parseAssignmentFile({
 				{
 					...featureRow,
 					sequenceLength_ODE: featureRow.dna_sequence.length
-				},
-				{
-					errorMap: (error, ctx) => {
-						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${featureRow[error.path[0] as keyof typeof featureRow]}`
-						};
-					}
 				}
+				// {
+				// 	errorMap: (error, ctx) => {
+				// 		return {
+				// 			message: `Field: ${error.path[0]}\nIssue: ${
+				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+				// 			}\nValue: ${featureRow[error.path[0] as keyof typeof featureRow]}`
+				// 		};
+				// 	}
+				// }
 			);
 
 			if (!parsedFeature.success) {
@@ -205,16 +204,16 @@ export async function parseAssignmentFile({
 				{
 					...assignmentRow,
 					analysis_run_name
-				},
-				{
-					errorMap: (error, ctx) => {
-						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${assignmentRow[error.path[0] as keyof typeof assignmentRow]}`
-						};
-					}
 				}
+				// {
+				// 	errorMap: (error, ctx) => {
+				// 		return {
+				// 			message: `Field: ${error.path[0]}\nIssue: ${
+				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+				// 			}\nValue: ${assignmentRow[error.path[0] as keyof typeof assignmentRow]}`
+				// 		};
+				// 	}
+				// }
 			);
 
 			if (!parsedAssignment.success) {
@@ -232,15 +231,18 @@ export async function parseAssignmentFile({
 			assignments.push(parsedAssignment.data);
 
 			//parse taxonomy
-			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-				errorMap: (error, ctx) => {
-					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${taxonomyRow[error.path[0] as keyof typeof taxonomyRow]}`
-					};
-				}
-			});
+			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(
+				taxonomyRow
+				// {
+				// 	errorMap: (error, ctx) => {
+				// 		return {
+				// 			message: `Field: ${error.path[0]}\nIssue: ${
+				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+				// 			}\nValue: ${taxonomyRow[error.path[0] as keyof typeof taxonomyRow]}`
+				// 		};
+				// 	}
+				// }
+			);
 
 			if (!parsedTaxonomy.success) {
 				await stream.error(
@@ -252,7 +254,7 @@ export async function parseAssignmentFile({
 			}
 
 			//unset all optional fields that were not provided
-			for (const field of TaxonomyScalarFieldEnumSchema._def.values) {
+			for (const field of TaxonomyScalarFieldEnumSchema.options) {
 				if (field !== "id" && !(field in parsedTaxonomy.data)) {
 					//@ts-ignore
 					parsedTaxonomy.data[field] = null;
@@ -344,24 +346,24 @@ export async function parseOccurrenceFile({
 							featureid,
 							organismQuantity,
 							analysis_run_name
-						},
-						{
-							errorMap: (error, ctx) => {
-								return {
-									message: `Field: ${error.path[0]}\nIssue: ${
-										ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-									}\nValue: ${
-										error.path[0] === "samp_name"
-											? samp_name
-											: error.path[0] === "featureid"
-											? featureid
-											: error.path[0] === "organismQuantity"
-											? organismQuantity
-											: undefined
-									}`
-								};
-							}
 						}
+						// {
+						// 	errorMap: (error, ctx) => {
+						// 		return {
+						// 			message: `Field: ${error.path[0]}\nIssue: ${
+						// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
+						// 			}\nValue: ${
+						// 				error.path[0] === "samp_name"
+						// 					? samp_name
+						// 					: error.path[0] === "featureid"
+						// 					? featureid
+						// 					: error.path[0] === "organismQuantity"
+						// 					? organismQuantity
+						// 					: undefined
+						// 			}`
+						// 		};
+						// 	}
+						// }
 					);
 
 					if (!parsedOccurrence.success) {

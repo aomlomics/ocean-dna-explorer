@@ -122,14 +122,14 @@ const publicPrisma =
 					return await query(args);
 				}
 			},
-			primer: {
+			assayMetadata: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.PrimerWhereInput; [key: string]: any };
+						args = args as { where?: Prisma.AssayMetadataWhereInput; [key: string]: any };
 						args.where = await getWhere({
 							where: args.where,
 							signedOutQuery: {
-								Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+								Project: { isPrivate: false }
 							}
 						});
 					}
@@ -327,27 +327,27 @@ const prisma =
 					return await query(args);
 				}
 			},
-			primer: {
+			assayMetadata: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 
-						args = args as { where?: Prisma.PrimerWhereInput; [key: string]: any };
+						args = args as { where?: Prisma.AssayMetadataWhereInput; [key: string]: any };
 						args.where = await getWhere({
 							where: args.where,
 							userId,
 							role,
 							signedOutQuery: {
-								Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+								Project: { isPrivate: false }
 							},
 							noPermQuery: {
 								OR: [
 									{
-										Assays: { some: { Samples: { some: { Project: { isPrivate: false } } } } }
+										Project: { isPrivate: false }
 									},
 									{
-										Assays: { some: { Samples: { some: { Project: { userIds: { has: userId } } } } } }
+										Project: { userIds: { has: userId } }
 									}
 								]
 							}
@@ -591,7 +591,7 @@ async function updateManyRawChunked(
 ) {
 	//get shape of table to allow typecasting
 	//also verifies against SQL injection attacks
-	const shape = TableMetadata[table.toLowerCase() as Lowercase<Prisma.ModelName>].schema.shape; //TODO: remove toLowerCase() when merging into branch that allows indexing TableMetadata with Prisma.ModelName
+	const shape = TableMetadata[table].schema.shape;
 	const deadBooleanFields = [] as string[];
 
 	//add set for provided fields

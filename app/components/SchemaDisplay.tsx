@@ -3,12 +3,12 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "../helpers/schema";
 import Link from "next/link";
 import { stripSecureFields } from "../helpers/prisma";
+import { uncapitalizeTable } from "../helpers/utils";
 
 export default function SchemaDisplay() {
 	const tables = Object.keys(Prisma.ModelName).map((t) => {
-		const tableName = t.toLowerCase() as Uncapitalize<Prisma.ModelName>;
+		const tableName = uncapitalizeTable(t as Prisma.ModelName);
 
-		const fields = TableMetadata[tableName].enumSchema._def.values;
 		const result = {} as Record<
 			string,
 			{
@@ -18,7 +18,7 @@ export default function SchemaDisplay() {
 			}
 		>;
 		const shape = TableMetadata[tableName].schema.shape;
-		for (const f of fields) {
+		for (const f of TableMetadata[tableName].enumSchema.options) {
 			const type = getZodType(shape[f as keyof typeof shape]);
 			if (type.type === "json") {
 				if (f === "userDefined") {
@@ -38,11 +38,7 @@ export default function SchemaDisplay() {
 	return (
 		<div>
 			{tables.map(([tableName, fields]) => (
-				<div
-					key={tableName}
-					id={tableName.toLowerCase()}
-					className="collapse collapse-arrow bg-base-100 border-base-300 border"
-				>
+				<div key={tableName} id={tableName} className="collapse collapse-arrow bg-base-100 border-base-300 border">
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold text-xl">{tableName}</div>
 					<div className="collapse-content text-sm overflow-x-auto">
@@ -57,11 +53,11 @@ export default function SchemaDisplay() {
 								</tr>
 							</thead>
 							<tbody>
-								{TableMetadata[tableName.toLowerCase() as Uncapitalize<Prisma.ModelName>].relations.map((relObj) => (
+								{TableMetadata[tableName].relations.map((relObj) => (
 									<tr key={relObj.field}>
 										<td>{relObj.field}</td>
 										<td>
-											<Link className="link link-primary link-hover" href={`#${relObj.table.toLowerCase()}`}>
+											<Link className="link link-primary link-hover" href={`#${relObj.table}`}>
 												{relObj.table}
 											</Link>
 										</td>

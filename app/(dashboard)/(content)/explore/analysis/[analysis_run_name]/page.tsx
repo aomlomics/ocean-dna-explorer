@@ -76,12 +76,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 							className="btn btn-lg text-base-content/80 font-normal mt-2"
 						>
 							Download Occurrence Table
-							<svg
-								className="size-6 text-primary"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
+							<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -133,12 +128,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
 						<div className="card-body p-0 overflow-hidden aspect-5/2">
-							<Map
-								locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
-								id="samp_name"
-								table="sample"
-								cluster
-							/>
+							<Map locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))} cluster />
 						</div>
 					</div>
 

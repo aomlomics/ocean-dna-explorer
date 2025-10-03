@@ -10,13 +10,14 @@ export async function GET(
 	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
-	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
-		const fields = TableMetadata[lowercaseTable].enumSchema._def.values;
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === table.toLowerCase()
+	) as Prisma.ModelName;
+	if (model) {
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
-		const shape = TableMetadata[lowercaseTable].schema.shape;
-		for (const f of fields) {
+		const shape = TableMetadata[model].schema.shape;
+		for (const f of TableMetadata[model].enumSchema.options) {
 			if (f !== "userDefined") {
 				const type = getZodType(shape[f as keyof typeof shape]);
 				result[f] = type;

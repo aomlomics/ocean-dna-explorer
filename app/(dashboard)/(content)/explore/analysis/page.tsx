@@ -4,7 +4,6 @@ import { asv_method, target_gene } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import Table from "@/app/components/paginated/Table";
 
 export default async function Analysis() {

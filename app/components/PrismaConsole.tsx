@@ -7,6 +7,7 @@ import { RolePermissions } from "@/types/objects";
 import { Prisma } from "../generated/prisma/client";
 import JSON5 from "json5";
 import unsafeConsoleAction from "../actions/unsafeConsole";
+import { uncapitalizeTable } from "../helpers/utils";
 
 export default function PrismaConsole({ modelQueries }: { modelQueries: string[] }) {
 	const [confirmed, setConfirmed] = useState(false);
@@ -123,8 +124,8 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 							{Object.keys(Prisma.ModelName)
 								.sort()
 								.map((table) => (
-									<option key={table} value={table.toLowerCase()}>
-										{table.toLowerCase()}
+									<option key={table} value={uncapitalizeTable(table as Prisma.ModelName)}>
+										{uncapitalizeTable(table as Prisma.ModelName)}
 									</option>
 								))}
 						</select>

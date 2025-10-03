@@ -8,10 +8,15 @@ export async function GET(
 	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
-	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
-		return NextResponse.json({ statusMessage: "success", result: TableMetadata[lowercaseTable].relations });
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === table.toLowerCase()
+	) as Prisma.ModelName;
+	if (model) {
+		return NextResponse.json({
+			statusMessage: "success",
+			result: TableMetadata[model].relations
+		});
 	} else {
 		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}

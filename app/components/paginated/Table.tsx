@@ -119,7 +119,7 @@ export default function Table({
 			tempHeaders.push(...TableMetadata[table].fieldOrder);
 		}
 		tempHeaders.push(
-			...TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
+			...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
 				//remove fields that have already been added
 				if (TableMetadata[table].fieldOrder?.includes(head)) {
 					return acc;

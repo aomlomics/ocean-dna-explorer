@@ -25,19 +25,19 @@ export default async function migrationCopyStepAction() {
 		}
 
 		const oldFieldsByTable = Object.keys(TableMetadata).reduce((acc, table) => {
-			const tempFields = TableMetadata[table as Lowercase<Prisma.ModelName>].enumSchema._def.values.filter((f) =>
+			const tempFields = TableMetadata[table as Uncapitalize<Prisma.ModelName>].enumSchema.options.filter((f) =>
 				f.endsWith("__TEMP")
 			);
 			if (tempFields.length) {
-				acc[table as Lowercase<Prisma.ModelName>] = tempFields.map((f) => f.slice(0, f.length - 6));
+				acc[table as Uncapitalize<Prisma.ModelName>] = tempFields.map((f) => f.slice(0, f.length - 6));
 			}
 
 			return acc;
-		}, {} as Record<Lowercase<Prisma.ModelName>, string[]>);
+		}, {} as Record<Uncapitalize<Prisma.ModelName>, string[]>);
 
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
-				const table = t as Lowercase<Prisma.ModelName>;
+				const table = t as Uncapitalize<Prisma.ModelName>;
 
 				// @ts-ignore
 				const result = (await tx[table].findMany({

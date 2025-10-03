@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import { parseNestedJson } from "@/app/helpers/utils";
+import { parseNestedJson, uncapitalizeTable } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
@@ -10,9 +10,13 @@ export async function GET(
 	{ params }: { params: Promise<{ table: Uncapitalize<Prisma.ModelName> }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
-	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (Object.keys(Prisma.ModelName).some((t) => t.toLowerCase() === lowercaseTable)) {
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === table.toLowerCase()
+	) as Prisma.ModelName;
+	if (model) {
+		const uncapsTable = uncapitalizeTable(model);
+
 		try {
 			const { searchParams } = new URL(request.url);
 
@@ -43,7 +47,7 @@ export async function GET(
 					delete parsed.advanced;
 
 					try {
-						query.where = parseAdvancedQuery(lowercaseTable, advanced);
+						query.where = parseAdvancedQuery(uncapsTable, advanced);
 					} catch (err) {
 						const error = err as Error;
 						return NextResponse.json({ statusMessage: "error", error: error.message });
@@ -52,11 +56,11 @@ export async function GET(
 					const search = parsed.search;
 					delete parsed.search;
 
-					query.where = parseSearchQuery(lowercaseTable, search);
+					query.where = parseSearchQuery(uncapsTable, search);
 				}
 
 				for (const filter of Object.entries(parsed as Record<string, string>)) {
-					query.where = { ...query.where, ...parseToQuery(lowercaseTable, filter) };
+					query.where = { ...query.where, ...parseToQuery(uncapsTable, filter) };
 				}
 			}
 
@@ -85,9 +89,9 @@ export async function GET(
 
 			const [result, count] = await prisma.$transaction([
 				//@ts-ignore
-				prisma[lowercaseTable].findMany(query),
+				prisma[uncapsTable].findMany(query),
 				//@ts-ignore
-				prisma[lowercaseTable].count({ where: query.where })
+				prisma[uncapsTable].count({ where: query.where })
 			]);
 
 			return NextResponse.json({ statusMessage: "success", result, count });
