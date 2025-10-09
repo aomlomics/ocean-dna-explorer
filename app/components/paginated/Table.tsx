@@ -15,7 +15,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { fetcher } from "@/app/helpers/utils";
 
-//TODO: sort table by column
 //TODO: clamp table column width, add hover info to clamped columns
 export default function Table({
 	table,
@@ -114,76 +113,79 @@ export default function Table({
 	}, [hideEmpty, data]);
 
 	useEffect(() => {
-		let tempHeaders = [];
-		if (TableMetadata[table].fieldOrder) {
-			tempHeaders.push(...TableMetadata[table].fieldOrder);
-		}
-		tempHeaders.push(
-			...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
-				//remove fields that have already been added
-				if (TableMetadata[table].fieldOrder?.includes(head)) {
+		if (!Object.keys(headersFilter).length) {
+			let tempHeaders = [];
+			if (TableMetadata[table].fieldOrder) {
+				tempHeaders.push(...TableMetadata[table].fieldOrder);
+			}
+			tempHeaders.push(
+				...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
+					//remove fields that have already been added
+					if (TableMetadata[table].fieldOrder?.includes(head)) {
+						return acc;
+					}
+
+					//remove database field
+					//displaying title header differently, so removing it
+					if (head === "id" || head === title) {
+						return acc;
+					}
+
+					//remove all headers where the value is assumed to be the same
+					if (where && Object.keys(where).includes(head)) {
+						return acc;
+					}
+
+					//remove headers that have been omitted
+					if (omit.includes(head)) {
+						return acc;
+					}
+
+					if (head !== "userDefined") {
+						acc.push(head);
+					}
+
 					return acc;
+				}, [])
+			);
+
+			let tempHeadersFilter = {} as Record<string, true>;
+			if (filterHeadersAtStart && TableMetadata[table].subFields) {
+				const temp = {} as Record<string, true>;
+				for (const head of tempHeaders) {
+					if (!TableMetadata[table].subFields.includes(head)) {
+						temp[head] = true;
+					}
 				}
+				tempHeadersFilter = temp;
+			}
 
-				//remove database field
-				//displaying title header differently, so removing it
-				if (head === "id" || head === title) {
-					return acc;
+			if (showUserDefined && data && data.statusMessage === "success" && !userDefinedHeaders.length) {
+				const tempUserDefinedHeadersSet = new Set() as Set<string>;
+				for (const r of data.result) {
+					for (const h in r.userDefined) {
+						tempUserDefinedHeadersSet.add(h);
+					}
 				}
+				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
 
-				//remove all headers where the value is assumed to be the same
-				if (where && Object.keys(where).includes(head)) {
-					return acc;
-				}
+				tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
+				setUserDefinedHeaders(Array.from(tempUserDefinedHeaders));
 
-				//remove headers that have been omitted
-				if (omit.includes(head)) {
-					return acc;
-				}
-
-				if (head !== "userDefined") {
-					acc.push(head);
-				}
-
-				return acc;
-			}, [])
-		);
-
-		let tempHeadersFilter = {} as Record<string, true>;
-		if (filterHeadersAtStart && TableMetadata[table].subFields) {
-			const temp = {} as Record<string, true>;
-			for (const head of tempHeaders) {
-				if (!TableMetadata[table].subFields.includes(head)) {
-					temp[head] = true;
+				if (filterHeadersAtStart) {
+					tempHeadersFilter = {
+						...tempHeadersFilter,
+						...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
+					};
 				}
 			}
-			tempHeadersFilter = temp;
-		}
 
-		if (showUserDefined && data && data.statusMessage === "success" && !userDefinedHeaders.length) {
-			const tempUserDefinedHeadersSet = new Set() as Set<string>;
-			for (const r of data.result) {
-				for (const h in r.userDefined) {
-					tempUserDefinedHeadersSet.add(h);
-				}
+			setHeaders(tempHeaders);
+
+			console.log(headersFilter);
+			if (Object.keys(tempHeadersFilter).length) {
+				setHeadersFilter(tempHeadersFilter);
 			}
-			const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
-
-			tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
-			setUserDefinedHeaders(Array.from(tempUserDefinedHeaders));
-
-			if (filterHeadersAtStart) {
-				tempHeadersFilter = {
-					...tempHeadersFilter,
-					...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
-				};
-			}
-		}
-
-		setHeaders(tempHeaders);
-
-		if (Object.keys(tempHeadersFilter).length) {
-			setHeadersFilter(tempHeadersFilter);
 		}
 	}, [data]);
 
@@ -274,8 +276,8 @@ export default function Table({
 						handlePageHover={handlePageHover}
 					/>
 					{/* Column Selection Button */}
-					<div className="flex items-center justify-center w-full gap-5">
-						<div className="dropdown dropdown-end">
+					<div className="grid grid-cols-2 w-full gap-5">
+						<div className="dropdown dropdown-end justify-self-end">
 							<div tabIndex={0} role="button" className="btn btn-sm">
 								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
 							</div>
@@ -352,14 +354,14 @@ export default function Table({
 						</div>
 
 						<fieldset className="fieldset bg-base-100 border-base-300">
-							<label className="label">
+							<label className="label select-none">
 								<input
 									type="checkbox"
 									className="checkbox"
 									checked={hideEmpty}
 									onChange={(e) => setHideEmpty(e.currentTarget.checked)}
 								/>
-								Hide empty columns
+								Hide empty columns {Object.keys(emptyFilter).length ? "(" + Object.keys(emptyFilter).length + ")" : ""}
 							</label>
 						</fieldset>
 					</div>

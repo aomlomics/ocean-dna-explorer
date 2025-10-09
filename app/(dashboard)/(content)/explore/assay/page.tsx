@@ -4,34 +4,21 @@ import Table from "@/app/components/paginated/Table";
 import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { PrimerPartial } from "@/prisma/generated/zod";
 import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 
 export default async function Assay() {
-	const assaysWithRelations = await prisma.assay.findMany({
+	const assays = await prisma.assay.findMany({
 		select: {
 			target_subfragment: true,
 			pcr_primer_forward: true,
 			pcr_primer_reverse: true,
-			Primer: {
-				select: {
-					pcr_primer_name_forward: true,
-					pcr_primer_name_reverse: true
-				}
-			}
+			pcr_primer_name_forward: true,
+			pcr_primer_name_reverse: true
 		}
 	});
 
-	const primers = [] as PrimerPartial[];
-	const assays = assaysWithRelations.map((a) => {
-		const { Primer: primer, ...justAssay } = a;
-		primers.push(primer);
-		return justAssay;
-	});
-
 	const filterOptions = getOptions(assays);
-	const primerFilterOptions = getOptions(primers);
 	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
 
 	return (
@@ -65,14 +52,14 @@ export default async function Assay() {
 						options: filterOptions.pcr_primer_reverse
 					},
 					{
-						field: { rel: "Primer", f: "pcr_primer_name_forward" },
+						field: "pcr_primer_name_forward",
 						type: "select",
-						options: primerFilterOptions.pcr_primer_name_forward
+						options: filterOptions.pcr_primer_name_forward
 					},
 					{
-						field: { rel: "Primer", f: "pcr_primer_name_reverse" },
+						field: "pcr_primer_name_reverse",
 						type: "select",
-						options: primerFilterOptions.pcr_primer_name_reverse
+						options: filterOptions.pcr_primer_name_reverse
 					}
 				]}
 			/>

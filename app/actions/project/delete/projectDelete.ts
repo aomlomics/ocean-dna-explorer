@@ -49,24 +49,6 @@ export default async function projectDeleteAction(target: Project["project_id"])
 					}
 				});
 
-				//assays delete
-				await tx.assay.deleteMany({
-					where: {
-						Samples: {
-							none: {}
-						}
-					}
-				});
-
-				//primers delete
-				await tx.primer.deleteMany({
-					where: {
-						Assays: {
-							none: {}
-						}
-					}
-				});
-
 				// features delete
 				// await tx.feature.deleteMany({
 				// 	where: {

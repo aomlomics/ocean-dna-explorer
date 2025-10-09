@@ -76,16 +76,14 @@ export async function parseAnalysisFile({
 			editHistory: "JsonNull",
 			analysisMetadataFileUrl_ODE: url,
 			analysisMetadataFileChecksum_ODE: md5Checksum
+		},
+		{
+			error: (iss) => {
+				return {
+					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+				};
+			}
 		}
-		// {
-		// 	errorMap: (error, ctx) => {
-		// 		return {
-		// 			message: `Field: ${error.path[0]}\nIssue: ${
-		// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-		// 			}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
-		// 		};
-		// 	}
-		// }
 	);
 
 	if (!parsedAnalysis.success) {
@@ -174,16 +172,14 @@ export async function parseAssignmentFile({
 				{
 					...featureRow,
 					sequenceLength_ODE: featureRow.dna_sequence.length
+				},
+				{
+					error: (iss) => {
+						return {
+							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						};
+					}
 				}
-				// {
-				// 	errorMap: (error, ctx) => {
-				// 		return {
-				// 			message: `Field: ${error.path[0]}\nIssue: ${
-				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-				// 			}\nValue: ${featureRow[error.path[0] as keyof typeof featureRow]}`
-				// 		};
-				// 	}
-				// }
 			);
 
 			if (!parsedFeature.success) {
@@ -204,16 +200,14 @@ export async function parseAssignmentFile({
 				{
 					...assignmentRow,
 					analysis_run_name
+				},
+				{
+					error: (iss) => {
+						return {
+							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						};
+					}
 				}
-				// {
-				// 	errorMap: (error, ctx) => {
-				// 		return {
-				// 			message: `Field: ${error.path[0]}\nIssue: ${
-				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-				// 			}\nValue: ${assignmentRow[error.path[0] as keyof typeof assignmentRow]}`
-				// 		};
-				// 	}
-				// }
 			);
 
 			if (!parsedAssignment.success) {
@@ -231,18 +225,13 @@ export async function parseAssignmentFile({
 			assignments.push(parsedAssignment.data);
 
 			//parse taxonomy
-			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(
-				taxonomyRow
-				// {
-				// 	errorMap: (error, ctx) => {
-				// 		return {
-				// 			message: `Field: ${error.path[0]}\nIssue: ${
-				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-				// 			}\nValue: ${taxonomyRow[error.path[0] as keyof typeof taxonomyRow]}`
-				// 		};
-				// 	}
-				// }
-			);
+			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
+				error: (iss) => {
+					return {
+						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+					};
+				}
+			});
 
 			if (!parsedTaxonomy.success) {
 				await stream.error(
@@ -346,24 +335,14 @@ export async function parseOccurrenceFile({
 							featureid,
 							organismQuantity,
 							analysis_run_name
+						},
+						{
+							error: (iss) => {
+								return {
+									message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+								};
+							}
 						}
-						// {
-						// 	errorMap: (error, ctx) => {
-						// 		return {
-						// 			message: `Field: ${error.path[0]}\nIssue: ${
-						// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						// 			}\nValue: ${
-						// 				error.path[0] === "samp_name"
-						// 					? samp_name
-						// 					: error.path[0] === "featureid"
-						// 					? featureid
-						// 					: error.path[0] === "organismQuantity"
-						// 					? organismQuantity
-						// 					: undefined
-						// 			}`
-						// 		};
-						// 	}
-						// }
 					);
 
 					if (!parsedOccurrence.success) {

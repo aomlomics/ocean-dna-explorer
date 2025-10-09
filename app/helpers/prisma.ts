@@ -144,7 +144,7 @@ const publicPrisma =
 						args.where = await getWhere({
 							where: args.where,
 							signedOutQuery: {
-								Sample: { Project: { isPrivate: false } }
+								Project: { isPrivate: false }
 							}
 						});
 					}
@@ -369,15 +369,15 @@ const prisma =
 							userId,
 							role,
 							signedOutQuery: {
-								Sample: { Project: { isPrivate: false } }
+								Project: { isPrivate: false }
 							},
 							noPermQuery: {
 								OR: [
 									{
-										Sample: { Project: { isPrivate: false } }
+										Project: { isPrivate: false }
 									},
 									{
-										Sample: { Project: { userIds: { has: userId } } }
+										Project: { userIds: { has: userId } }
 									}
 								]
 							}
@@ -564,20 +564,37 @@ export function stripSecureFields(queryResult: Record<string, any> | Record<stri
 }
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
-	if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-		if (err.code === "P2002") {
-			return {
-				statusMessage: "error",
-				error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
-					", "
-				)} already exists in database.`
-			};
-		} else {
-			return {
-				statusMessage: "error",
-				error: err.message
-			};
+	try {
+		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+			if (err.code === "P2002") {
+				return {
+					statusMessage: "error",
+					error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
+						", "
+					)} already exists in database.`
+				};
+			} else if (err.code === "P2003") {
+				return {
+					statusMessage: "error",
+					error: `A ${err.meta?.modelName} has an invalid ${(err.meta?.constraint as string)
+						.split("_")
+						.slice(1, -1)
+						.join("_")}.`
+				};
+			} else {
+				return {
+					statusMessage: "error",
+					error: err.message
+				};
+			}
 		}
+	} catch (newErr) {
+		const error = newErr as Error;
+
+		return {
+			statusMessage: "error",
+			error: err.message + "\n" + error.message
+		};
 	}
 }
 

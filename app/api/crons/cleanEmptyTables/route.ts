@@ -9,24 +9,6 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	}
 
 	try {
-		console.log("empty assays delete");
-		await unsafePrisma.assay.deleteMany({
-			where: {
-				Samples: {
-					none: {}
-				}
-			}
-		});
-
-		console.log("empty primers delete");
-		await unsafePrisma.primer.deleteMany({
-			where: {
-				Assays: {
-					none: {}
-				}
-			}
-		});
-
 		// console.log("empty features delete");
 		// await unsafePrisma.feature.deleteMany({
 		// 	where: {

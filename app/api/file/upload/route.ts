@@ -10,10 +10,7 @@ export async function POST(request: Request) {
 		const jsonResponse = await handleUpload({
 			body,
 			request,
-			onBeforeGenerateToken: async (
-				pathname
-				/* clientPayload */
-			) => {
+			onBeforeGenerateToken: async (pathname, clientPayload) => {
 				// Generate a client token for the browser to upload the file
 				// ⚠️ Authenticate and authorize users before generating the token.
 				// Otherwise, you're allowing anonymous uploads.
@@ -31,11 +28,7 @@ export async function POST(request: Request) {
 
 				return {
 					allowedContentTypes: ["text/tab-separated-values", "image/*"],
-					addRandomSuffix: true,
-					tokenPayload: JSON.stringify({
-						// optional, sent to your server on upload completion
-						// you could pass a user id from auth, or a value from clientPayload
-					})
+					addRandomSuffix: true
 				};
 			},
 			onUploadCompleted: async ({ blob, tokenPayload }) => {

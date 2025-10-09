@@ -224,7 +224,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const analysisUrl = (
 						await upload(`submissions/${analysisFile.name}`, analysisFile, {
@@ -263,7 +263,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const assignmentsUrl = (
 						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
@@ -311,7 +311,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const occurrencesUrl = (
 						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
@@ -320,6 +320,11 @@ export default function AnalysisSubmit() {
 							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "occurrences",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit occurrences file url
 					const occurrencesError = await doProgressAction({
 						action: occSubmitAction,

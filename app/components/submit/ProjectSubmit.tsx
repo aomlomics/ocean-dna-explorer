@@ -13,7 +13,6 @@ import { doProgressActionMany } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import { parse } from "csv-parse";
 
-//TODO: store submission files on upload, attach files to project/analysis, allow editing submissions by uploading replacement files
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);
@@ -158,6 +157,8 @@ export default function ProjectSubmit() {
 		setSampleResponse(undefined);
 		setLibraryResponse(undefined);
 		setErrorMessage("");
+
+		console.log(userIds);
 
 		const isPrivate = event.currentTarget.isPrivate.checked;
 

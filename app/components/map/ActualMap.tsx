@@ -205,6 +205,7 @@ export default function ActualMap({
 
 	//zoomLevel
 	useEffect(() => {
+		//TODO: doesn't cluster on first page load
 		let tempLocations = [...filteredLocations];
 		//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
 		if (cluster) {

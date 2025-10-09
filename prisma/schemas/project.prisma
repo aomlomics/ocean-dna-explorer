@@ -12,6 +12,7 @@ model Project {
     // Relations
     Samples        Sample[]
     AssayMetadatas AssayMetadata[]
+    Libraries      Library[]
     Analyses       Analysis[]
 
     // Submission File URLs
@@ -324,8 +325,7 @@ model Sample {
     biosample_accession String?
     organism            String?
 
-    // User defined
-    // phaeopigments     String?
+    sterilise_method String?
 }
 
 model Assay {
@@ -337,9 +337,10 @@ model Assay {
     pcr_primer_name_reverse String
 
     // Relations
-    Samples   Sample[]
-    Libraries Library[]
-    Analyses  Analysis[]
+    Samples        Sample[]
+    AssayMetadatas AssayMetadata[]
+    Libraries      Library[]
+    Analyses       Analysis[]
 
     deleted_ODE Boolean?
 
@@ -349,6 +350,10 @@ model Assay {
     target_subfragment           String?
     /// @zod.custom.use(z.coerce.number())
     ampliconSize                 Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_Midpoint_ODE    Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_End_ODE         Float?
     pcr_primer_reference_forward String?
     pcr_primer_reference_reverse String?
 
@@ -361,25 +366,22 @@ model AssayMetadata {
 
     // Relations
     project_id String
-    Project    Project   @relation(fields: [project_id], references: [project_id])
+    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    assay_name String
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
     Libraries  Library[]
 
-    nucl_acid_amp String?
     thermocycler  String?
     commercial_mm String?
     custom_mm     String?
     pcr_cond      String?
 
     //assay
-    sterilise_method            String?
+    nucl_acid_amp               String?
     pcr_0_1                     DeadBoolean
     /// @zod.custom.use(z.coerce.number())
     amplificationReactionVolume Float?
     assay_validation            String?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize_Midpoint_ODE   Float?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize_End_ODE        Float?
     /// @zod.custom.use(z.coerce.number())
     pcr_primer_vol_forward      Float?
     /// @zod.custom.use(z.coerce.number())
@@ -404,6 +406,8 @@ model AssayMetadata {
     pcr_analysis_software       String?
     pcr_method_additional       String?
     assay_type                  String
+
+    @@unique([project_id, assay_name])
 }
 
 model Library {
@@ -413,12 +417,13 @@ model Library {
     userDefined Json?
 
     // Relations
-    assay_name      String
-    Assay           Assay         @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
-    samp_name       String
-    Sample          Sample        @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
-    assayMetadataId Int
-    AssayMetadata   AssayMetadata @relation(fields: [assayMetadataId], references: [id])
+    project_id    String
+    Project       Project       @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    samp_name     String
+    Sample        Sample        @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    assay_name    String
+    Assay         Assay         @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
+    AssayMetadata AssayMetadata @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
 
     // Data
     // Library Preparation Sequencing

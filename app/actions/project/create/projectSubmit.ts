@@ -32,7 +32,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, primers, assays, samplesByAssay, libraries } = parseResult;
+		const { project, assays, assayMetadatas, samplesByAssay, libraries } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -49,37 +49,50 @@ async function doSubmit(
 
 		await prisma.$transaction(
 			async (tx) => {
+				//check if assay data is correct
+				for (const a of assays) {
+					const dbAssay = await tx.assay.findUnique({
+						where: {
+							assay_name: a.assay_name
+						}
+					});
+
+					if (!dbAssay) {
+						await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+						throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+					}
+
+					for (const [f, value] of Object.entries(a)) {
+						const field = f as keyof typeof dbAssay;
+						if (value !== dbAssay[field]) {
+							await projectChannel.stream.error(
+								`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							);
+							throw new Error(
+								`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							);
+						}
+					}
+				}
+
+				await projectChannel.stream.message("All checks successful.", 85);
+
 				await tx.project.create({
 					data: project
 				});
 
-				for (let p of primers) {
-					await tx.primer.upsert({
-						where: {
-							pcr_primer_forward_pcr_primer_reverse: {
-								pcr_primer_forward: p.pcr_primer_forward,
-								pcr_primer_reverse: p.pcr_primer_reverse
-							}
-						},
-						update: {},
-						create: p
-					});
-				}
+				await tx.assayMetadata.createMany({
+					data: assayMetadatas
+				});
 
-				await projectChannel.stream.success("Project successfully uploaded to database.");
+				await projectChannel.stream.success("Project and AssayMetadatas successfully uploaded to database.");
 
-				for (let a of assays) {
-					await tx.assay.upsert({
+				for (const a of assays) {
+					await tx.assay.update({
 						where: {
 							assay_name: a.assay_name
 						},
-						update: {
-							Samples: {
-								connectOrCreate: samplesByAssay[a.assay_name]
-							}
-						},
-						create: {
-							...a,
+						data: {
 							Samples: {
 								connectOrCreate: samplesByAssay[a.assay_name]
 							}

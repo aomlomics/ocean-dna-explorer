@@ -6,7 +6,7 @@ export const EXPLORE_ROUTES = {
 	project: "Projects",
 	sample: "Samples",
 	assay: "Assays",
-	primer: "Primers",
+	assayMetadatas: "AssayMetadatas",
 	// library: {
 	// 	name: "Libraries",
 	// 	description:

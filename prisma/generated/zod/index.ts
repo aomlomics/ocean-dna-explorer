@@ -70,13 +70,13 @@ export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimId
 
 export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds','dateSubmitted','isPrivate','userDefined','editHistory','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','neg_cont_0_1','pos_cont_0_1','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep']);
 
-export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','userDefined','project_id','deleted_ODE','samp_category','neg_cont_type','pos_cont_type','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDate_Midpoint_ODE','eventDate_End_ODE','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','serial_number','line_id','station_id','ctd_cast_number','ctd_bottle_number','replicate_number','samp_collect_notes','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate','pump_flow_rate_unit','stationed_sample_dur','extract_id','extract_plate','extract_well_number','extract_well_position','materialSampleID','sample_derived_from','sample_composed_of','rel_cont_id','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','concentration_unit','date_ext','dna_yield','dna_yield_unit','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','ammonium','ammonium_unit','carbonate','carbonate_unit','hydrogen_ion','nitrate_plus_nitrite','nitrate_plus_nitrite_unit','omega_arag','pco2','pco2_unit','phosphate','phosphate_unit','pressure','pressure_unit','silicate','silicate_unit','tot_alkalinity','tot_alkalinity_unit','transmittance','transmittance_unit','biosample_accession','organism']);
+export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','userDefined','project_id','deleted_ODE','samp_category','neg_cont_type','pos_cont_type','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDate_Midpoint_ODE','eventDate_End_ODE','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','serial_number','line_id','station_id','ctd_cast_number','ctd_bottle_number','replicate_number','samp_collect_notes','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate','pump_flow_rate_unit','stationed_sample_dur','extract_id','extract_plate','extract_well_number','extract_well_position','materialSampleID','sample_derived_from','sample_composed_of','rel_cont_id','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','concentration_unit','date_ext','dna_yield','dna_yield_unit','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','ammonium','ammonium_unit','carbonate','carbonate_unit','hydrogen_ion','nitrate_plus_nitrite','nitrate_plus_nitrite_unit','omega_arag','pco2','pco2_unit','phosphate','phosphate_unit','pressure','pressure_unit','silicate','silicate_unit','tot_alkalinity','tot_alkalinity_unit','transmittance','transmittance_unit','biosample_accession','organism','sterilise_method']);
 
-export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','deleted_ODE','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','ampliconSize','pcr_primer_reference_forward','pcr_primer_reference_reverse']);
+export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','deleted_ODE','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','ampliconSize','ampliconSize_Midpoint_ODE','ampliconSize_End_ODE','pcr_primer_reference_forward','pcr_primer_reference_reverse']);
 
-export const AssayMetadataScalarFieldEnumSchema = z.enum(['id','project_id','nucl_acid_amp','thermocycler','commercial_mm','custom_mm','pcr_cond','sterilise_method','pcr_0_1','amplificationReactionVolume','assay_validation','ampliconSize_Midpoint_ODE','ampliconSize_End_ODE','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','pcr_dna_vol','pcr_rep','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','assay_type']);
+export const AssayMetadataScalarFieldEnumSchema = z.enum(['id','project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','pcr_0_1','amplificationReactionVolume','assay_validation','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','pcr_dna_vol','pcr_rep','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','assay_type']);
 
-export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','userDefined','assay_name','samp_name','assayMetadataId','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','input_read_count','checksum_filename','checksum_filename2','lib_conc','lib_conc_meth','lib_conc_unit','phix_perc','checksum_method','pcr2_amplificationReactionVolume','pcr2_analysis_software','pcr2_annealingTemp','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_cycles','pcr2_dna_vol','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check','inhibition_check_0_1']);
+export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','userDefined','project_id','samp_name','assay_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','input_read_count','checksum_filename','checksum_filename2','lib_conc','lib_conc_meth','lib_conc_unit','phix_perc','checksum_method','pcr2_amplificationReactionVolume','pcr2_analysis_software','pcr2_annealingTemp','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_cycles','pcr2_dna_vol','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check','inhibition_check_0_1']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -100,13 +100,13 @@ export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verba
 
 export const ProjectOrderByRelevanceFieldEnumSchema = z.enum(['project_id','userIds','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','checkls_ver','seq_archive','code_repo']);
 
-export const SampleOrderByRelevanceFieldEnumSchema = z.enum(['samp_name','project_id','samp_category','neg_cont_type','pos_cont_type','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','samp_collect_method','samp_collect_device','samp_size_unit','serial_number','line_id','station_id','ctd_cast_number','ctd_bottle_number','replicate_number','samp_collect_notes','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_onsite_dur','size_frac_low','filter_material','filter_name','precip_chem_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate_unit','stationed_sample_dur','extract_id','extract_plate','extract_well_position','materialSampleID','sample_derived_from','sample_composed_of','rel_cont_id','biological_rep_relation','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_method','concentration_method','nucl_acid_ext_method_additional','concentration_unit','dna_yield_unit','samp_weather','ph_meth','tidal_stage','solar_irradiance','wind_direction','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','ammonium','ammonium_unit','carbonate_unit','nitrate_plus_nitrite_unit','pco2_unit','phosphate_unit','pressure_unit','silicate_unit','tot_alkalinity_unit','transmittance_unit','biosample_accession','organism']);
+export const SampleOrderByRelevanceFieldEnumSchema = z.enum(['samp_name','project_id','samp_category','neg_cont_type','pos_cont_type','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','samp_collect_method','samp_collect_device','samp_size_unit','serial_number','line_id','station_id','ctd_cast_number','ctd_bottle_number','replicate_number','samp_collect_notes','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_onsite_dur','size_frac_low','filter_material','filter_name','precip_chem_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate_unit','stationed_sample_dur','extract_id','extract_plate','extract_well_position','materialSampleID','sample_derived_from','sample_composed_of','rel_cont_id','biological_rep_relation','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_method','concentration_method','nucl_acid_ext_method_additional','concentration_unit','dna_yield_unit','samp_weather','ph_meth','tidal_stage','solar_irradiance','wind_direction','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','ammonium','ammonium_unit','carbonate_unit','nitrate_plus_nitrite_unit','pco2_unit','phosphate_unit','pressure_unit','silicate_unit','tot_alkalinity_unit','transmittance_unit','biosample_accession','organism','sterilise_method']);
 
 export const AssayOrderByRelevanceFieldEnumSchema = z.enum(['assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','pcr_primer_reference_forward','pcr_primer_reference_reverse']);
 
-export const AssayMetadataOrderByRelevanceFieldEnumSchema = z.enum(['project_id','nucl_acid_amp','thermocycler','commercial_mm','custom_mm','pcr_cond','sterilise_method','assay_validation','probeReporter','probeQuencher','probe_seq','probe_ref','annealingTemp','pcr_analysis_software','pcr_method_additional','assay_type']);
+export const AssayMetadataOrderByRelevanceFieldEnumSchema = z.enum(['project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','assay_validation','probeReporter','probeQuencher','probe_seq','probe_ref','annealingTemp','pcr_analysis_software','pcr_method_additional','assay_type']);
 
-export const LibraryOrderByRelevanceFieldEnumSchema = z.enum(['lib_id','assay_name','samp_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','checksum_filename','checksum_filename2','lib_conc_meth','lib_conc_unit','checksum_method','pcr2_analysis_software','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check']);
+export const LibraryOrderByRelevanceFieldEnumSchema = z.enum(['lib_id','project_id','samp_name','assay_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','checksum_filename','checksum_filename2','lib_conc_meth','lib_conc_unit','checksum_method','pcr2_analysis_software','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check']);
 
 export const DeadBooleanSchema = z.enum(['false','true','not_applicableCOLON__control_sample','not_applicableCOLON__sample_group','not_applicable','missingCOLON__not_collectedCOLON__synthetic_construct','missingCOLON__not_collectedCOLON__lab_stock','missingCOLON__not_collectedCOLON__third_party_data','missingCOLON__not_collected','missingCOLON__not_providedCOLON__data_agreement_established_pre__2023','missingCOLON__not_provided','missingCOLON__restricted_accessCOLON__endangered_species','missingCOLON__restricted_accessCOLON__human__identifiable','missingCOLON__restricted_access']);
 
@@ -1003,6 +1003,7 @@ export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSche
 export type ProjectRelations = {
   Samples: SampleWithRelations[];
   AssayMetadatas: AssayMetadataWithRelations[];
+  Libraries: LibraryWithRelations[];
   Analyses: AnalysisWithRelations[];
 };
 
@@ -1014,6 +1015,7 @@ export type ProjectWithRelations = Omit<z.infer<typeof ProjectSchema>, "userDefi
 export const ProjectWithRelationsSchema: z.ZodType<ProjectWithRelations> = ProjectSchema.merge(z.object({
   Samples: z.lazy(() => SampleWithRelationsSchema).array(),
   AssayMetadatas: z.lazy(() => AssayMetadataWithRelationsSchema).array(),
+  Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
 }))
 
@@ -1023,6 +1025,7 @@ export const ProjectWithRelationsSchema: z.ZodType<ProjectWithRelations> = Proje
 export type ProjectOptionalDefaultsRelations = {
   Samples: SampleOptionalDefaultsWithRelations[];
   AssayMetadatas: AssayMetadataOptionalDefaultsWithRelations[];
+  Libraries: LibraryOptionalDefaultsWithRelations[];
   Analyses: AnalysisOptionalDefaultsWithRelations[];
 };
 
@@ -1034,6 +1037,7 @@ export type ProjectOptionalDefaultsWithRelations = Omit<z.infer<typeof ProjectOp
 export const ProjectOptionalDefaultsWithRelationsSchema: z.ZodType<ProjectOptionalDefaultsWithRelations> = ProjectOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
   AssayMetadatas: z.lazy(() => AssayMetadataOptionalDefaultsWithRelationsSchema).array(),
+  Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
 }))
 
@@ -1043,6 +1047,7 @@ export const ProjectOptionalDefaultsWithRelationsSchema: z.ZodType<ProjectOption
 export type ProjectPartialRelations = {
   Samples?: SamplePartialWithRelations[];
   AssayMetadatas?: AssayMetadataPartialWithRelations[];
+  Libraries?: LibraryPartialWithRelations[];
   Analyses?: AnalysisPartialWithRelations[];
 };
 
@@ -1054,6 +1059,7 @@ export type ProjectPartialWithRelations = Omit<z.infer<typeof ProjectPartialSche
 export const ProjectPartialWithRelationsSchema: z.ZodType<ProjectPartialWithRelations> = ProjectPartialSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 })).partial()
 
@@ -1065,6 +1071,7 @@ export type ProjectOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof Pr
 export const ProjectOptionalDefaultsWithPartialRelationsSchema: z.ZodType<ProjectOptionalDefaultsWithPartialRelations> = ProjectOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
 
@@ -1076,6 +1083,7 @@ export type ProjectWithPartialRelations = Omit<z.infer<typeof ProjectSchema>, "u
 export const ProjectWithPartialRelationsSchema: z.ZodType<ProjectWithPartialRelations> = ProjectSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
 
@@ -1263,6 +1271,7 @@ export const SampleSchema = z.object({
   transmittance_unit: z.string().nullish(),
   biosample_accession: z.string().nullish(),
   organism: z.string().nullish(),
+  sterilise_method: z.string().nullish(),
 })
 
 export type Sample = z.infer<typeof SampleSchema>
@@ -1386,6 +1395,8 @@ export const AssaySchema = z.object({
   target_gene: z.string(),
   target_subfragment: z.string().nullish(),
   ampliconSize: z.coerce.number().nullish(),
+  ampliconSize_Midpoint_ODE: z.coerce.number().nullish(),
+  ampliconSize_End_ODE: z.coerce.number().nullish(),
   pcr_primer_reference_forward: z.string().nullish(),
   pcr_primer_reference_reverse: z.string().nullish(),
 })
@@ -1414,6 +1425,7 @@ export type AssayOptionalDefaults = z.infer<typeof AssayOptionalDefaultsSchema>
 
 export type AssayRelations = {
   Samples: SampleWithRelations[];
+  AssayMetadatas: AssayMetadataWithRelations[];
   Libraries: LibraryWithRelations[];
   Analyses: AnalysisWithRelations[];
 };
@@ -1422,6 +1434,7 @@ export type AssayWithRelations = z.infer<typeof AssaySchema> & AssayRelations
 
 export const AssayWithRelationsSchema: z.ZodType<AssayWithRelations> = AssaySchema.merge(z.object({
   Samples: z.lazy(() => SampleWithRelationsSchema).array(),
+  AssayMetadatas: z.lazy(() => AssayMetadataWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
 }))
@@ -1431,6 +1444,7 @@ export const AssayWithRelationsSchema: z.ZodType<AssayWithRelations> = AssaySche
 
 export type AssayOptionalDefaultsRelations = {
   Samples: SampleOptionalDefaultsWithRelations[];
+  AssayMetadatas: AssayMetadataOptionalDefaultsWithRelations[];
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Analyses: AnalysisOptionalDefaultsWithRelations[];
 };
@@ -1439,6 +1453,7 @@ export type AssayOptionalDefaultsWithRelations = z.infer<typeof AssayOptionalDef
 
 export const AssayOptionalDefaultsWithRelationsSchema: z.ZodType<AssayOptionalDefaultsWithRelations> = AssayOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
+  AssayMetadatas: z.lazy(() => AssayMetadataOptionalDefaultsWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
 }))
@@ -1448,6 +1463,7 @@ export const AssayOptionalDefaultsWithRelationsSchema: z.ZodType<AssayOptionalDe
 
 export type AssayPartialRelations = {
   Samples?: SamplePartialWithRelations[];
+  AssayMetadatas?: AssayMetadataPartialWithRelations[];
   Libraries?: LibraryPartialWithRelations[];
   Analyses?: AnalysisPartialWithRelations[];
 };
@@ -1456,6 +1472,7 @@ export type AssayPartialWithRelations = z.infer<typeof AssayPartialSchema> & Ass
 
 export const AssayPartialWithRelationsSchema: z.ZodType<AssayPartialWithRelations> = AssayPartialSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
+  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 })).partial()
@@ -1464,6 +1481,7 @@ export type AssayOptionalDefaultsWithPartialRelations = z.infer<typeof AssayOpti
 
 export const AssayOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AssayOptionalDefaultsWithPartialRelations> = AssayOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
+  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
@@ -1472,6 +1490,7 @@ export type AssayWithPartialRelations = z.infer<typeof AssaySchema> & AssayParti
 
 export const AssayWithPartialRelationsSchema: z.ZodType<AssayWithPartialRelations> = AssaySchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
+  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
@@ -1484,16 +1503,14 @@ export const AssayMetadataSchema = z.object({
   pcr_0_1: DeadBooleanSchema,
   id: z.number().int(),
   project_id: z.string(),
-  nucl_acid_amp: z.string().nullish(),
+  assay_name: z.string(),
   thermocycler: z.string().nullish(),
   commercial_mm: z.string().nullish(),
   custom_mm: z.string().nullish(),
   pcr_cond: z.string().nullish(),
-  sterilise_method: z.string().nullish(),
+  nucl_acid_amp: z.string().nullish(),
   amplificationReactionVolume: z.coerce.number().nullish(),
   assay_validation: z.string().nullish(),
-  ampliconSize_Midpoint_ODE: z.coerce.number().nullish(),
-  ampliconSize_End_ODE: z.coerce.number().nullish(),
   pcr_primer_vol_forward: z.coerce.number().nullish(),
   pcr_primer_vol_reverse: z.coerce.number().nullish(),
   pcr_primer_conc_forward: z.coerce.number().nullish(),
@@ -1536,6 +1553,7 @@ export type AssayMetadataOptionalDefaults = z.infer<typeof AssayMetadataOptional
 
 export type AssayMetadataRelations = {
   Project: ProjectWithRelations;
+  Assay: AssayWithRelations;
   Libraries: LibraryWithRelations[];
 };
 
@@ -1543,6 +1561,7 @@ export type AssayMetadataWithRelations = z.infer<typeof AssayMetadataSchema> & A
 
 export const AssayMetadataWithRelationsSchema: z.ZodType<AssayMetadataWithRelations> = AssayMetadataSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
+  Assay: z.lazy(() => AssayWithRelationsSchema),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
 }))
 
@@ -1551,6 +1570,7 @@ export const AssayMetadataWithRelationsSchema: z.ZodType<AssayMetadataWithRelati
 
 export type AssayMetadataOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
+  Assay: AssayOptionalDefaultsWithRelations;
   Libraries: LibraryOptionalDefaultsWithRelations[];
 };
 
@@ -1558,6 +1578,7 @@ export type AssayMetadataOptionalDefaultsWithRelations = z.infer<typeof AssayMet
 
 export const AssayMetadataOptionalDefaultsWithRelationsSchema: z.ZodType<AssayMetadataOptionalDefaultsWithRelations> = AssayMetadataOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
+  Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
 }))
 
@@ -1566,6 +1587,7 @@ export const AssayMetadataOptionalDefaultsWithRelationsSchema: z.ZodType<AssayMe
 
 export type AssayMetadataPartialRelations = {
   Project?: ProjectPartialWithRelations;
+  Assay?: AssayPartialWithRelations;
   Libraries?: LibraryPartialWithRelations[];
 };
 
@@ -1573,6 +1595,7 @@ export type AssayMetadataPartialWithRelations = z.infer<typeof AssayMetadataPart
 
 export const AssayMetadataPartialWithRelationsSchema: z.ZodType<AssayMetadataPartialWithRelations> = AssayMetadataPartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
 })).partial()
 
@@ -1580,6 +1603,7 @@ export type AssayMetadataOptionalDefaultsWithPartialRelations = z.infer<typeof A
 
 export const AssayMetadataOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AssayMetadataOptionalDefaultsWithPartialRelations> = AssayMetadataOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
 }).partial())
 
@@ -1587,6 +1611,7 @@ export type AssayMetadataWithPartialRelations = z.infer<typeof AssayMetadataSche
 
 export const AssayMetadataWithPartialRelationsSchema: z.ZodType<AssayMetadataWithPartialRelations> = AssayMetadataSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
 }).partial())
 
@@ -1602,9 +1627,9 @@ export const LibrarySchema = z.object({
    * [UserDefinedType]
    */
   userDefined: JsonValueSchema.nullable(),
-  assay_name: z.string(),
+  project_id: z.string(),
   samp_name: z.string(),
-  assayMetadataId: z.number().int(),
+  assay_name: z.string(),
   barcoding_pcr_appr: z.string().nullish(),
   platform: z.string().nullish(),
   instrument: z.string().nullish(),
@@ -1670,8 +1695,9 @@ export type LibraryOptionalDefaults = z.infer<typeof LibraryOptionalDefaultsSche
 //------------------------------------------------------
 
 export type LibraryRelations = {
-  Assay: AssayWithRelations;
+  Project: ProjectWithRelations;
   Sample: SampleWithRelations;
+  Assay: AssayWithRelations;
   AssayMetadata: AssayMetadataWithRelations;
 };
 
@@ -1680,8 +1706,9 @@ export type LibraryWithRelations = Omit<z.infer<typeof LibrarySchema>, "userDefi
 } & LibraryRelations
 
 export const LibraryWithRelationsSchema: z.ZodType<LibraryWithRelations> = LibrarySchema.merge(z.object({
-  Assay: z.lazy(() => AssayWithRelationsSchema),
+  Project: z.lazy(() => ProjectWithRelationsSchema),
   Sample: z.lazy(() => SampleWithRelationsSchema),
+  Assay: z.lazy(() => AssayWithRelationsSchema),
   AssayMetadata: z.lazy(() => AssayMetadataWithRelationsSchema),
 }))
 
@@ -1689,8 +1716,9 @@ export const LibraryWithRelationsSchema: z.ZodType<LibraryWithRelations> = Libra
 //------------------------------------------------------
 
 export type LibraryOptionalDefaultsRelations = {
-  Assay: AssayOptionalDefaultsWithRelations;
+  Project: ProjectOptionalDefaultsWithRelations;
   Sample: SampleOptionalDefaultsWithRelations;
+  Assay: AssayOptionalDefaultsWithRelations;
   AssayMetadata: AssayMetadataOptionalDefaultsWithRelations;
 };
 
@@ -1699,8 +1727,9 @@ export type LibraryOptionalDefaultsWithRelations = Omit<z.infer<typeof LibraryOp
 } & LibraryOptionalDefaultsRelations
 
 export const LibraryOptionalDefaultsWithRelationsSchema: z.ZodType<LibraryOptionalDefaultsWithRelations> = LibraryOptionalDefaultsSchema.merge(z.object({
-  Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
+  Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Sample: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema),
+  Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   AssayMetadata: z.lazy(() => AssayMetadataOptionalDefaultsWithRelationsSchema),
 }))
 
@@ -1708,8 +1737,9 @@ export const LibraryOptionalDefaultsWithRelationsSchema: z.ZodType<LibraryOption
 //------------------------------------------------------
 
 export type LibraryPartialRelations = {
-  Assay?: AssayPartialWithRelations;
+  Project?: ProjectPartialWithRelations;
   Sample?: SamplePartialWithRelations;
+  Assay?: AssayPartialWithRelations;
   AssayMetadata?: AssayMetadataPartialWithRelations;
 };
 
@@ -1718,8 +1748,9 @@ export type LibraryPartialWithRelations = Omit<z.infer<typeof LibraryPartialSche
 } & LibraryPartialRelations
 
 export const LibraryPartialWithRelationsSchema: z.ZodType<LibraryPartialWithRelations> = LibraryPartialSchema.merge(z.object({
-  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayMetadata: z.lazy(() => AssayMetadataPartialWithRelationsSchema),
 })).partial()
 
@@ -1728,8 +1759,9 @@ export type LibraryOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof Li
 } & LibraryPartialRelations
 
 export const LibraryOptionalDefaultsWithPartialRelationsSchema: z.ZodType<LibraryOptionalDefaultsWithPartialRelations> = LibraryOptionalDefaultsSchema.merge(z.object({
-  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayMetadata: z.lazy(() => AssayMetadataPartialWithRelationsSchema),
 }).partial())
 
@@ -1738,7 +1770,8 @@ export type LibraryWithPartialRelations = Omit<z.infer<typeof LibrarySchema>, "u
 } & LibraryPartialRelations
 
 export const LibraryWithPartialRelationsSchema: z.ZodType<LibraryWithPartialRelations> = LibrarySchema.merge(z.object({
-  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayMetadata: z.lazy(() => AssayMetadataPartialWithRelationsSchema),
 }).partial())

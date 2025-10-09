@@ -1,5 +1,7 @@
 import {
 	AnalysisScalarFieldEnumSchema,
+	AssayMetadataOptionalDefaultsSchema,
+	AssayMetadataScalarFieldEnumSchema,
 	AssayOptionalDefaultsSchema,
 	AssayScalarFieldEnumSchema,
 	LibraryOptionalDefaultsSchema,
@@ -13,7 +15,7 @@ import { createProgressStream } from "../progress";
 import { parseSchemaToObject } from "../schema";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
-import { Assay, Library, Prisma, Sample } from "@/app/generated/prisma/client";
+import { Library, Prisma, Sample } from "@/app/generated/prisma/client";
 
 export type Channel = { url: string; stream: ReturnType<typeof createProgressStream> };
 
@@ -33,14 +35,13 @@ async function parseProjectFile({
 	oldChecksum?: string;
 }) {
 	const projectCol = {} as Record<string, string>;
-	const primerCols = {} as Record<string, Record<string, string>>;
 	const assayCols = {} as Record<string, Record<string, string>>;
-	const libraryCols = {} as Record<string, Record<string, string>>;
+	// const assayMetadataCols = {} as Record<string, Record<string, string>>;
+	// const libraryCols = {} as Record<string, Record<string, string>>;
 
 	const projectUserDefined = {} as PrismaJson.UserDefinedType;
 
 	let assayNames = [] as string[];
-	const primers = [] as Prisma.PrimerCreateManyInput[];
 
 	//fetch file from blob storage
 	await channel.stream.message("Downloading file", 10);
@@ -102,26 +103,17 @@ async function parseProjectFile({
 				!ProjectScalarFieldEnumSchema.safeParse(field).success &&
 				!SampleScalarFieldEnumSchema.safeParse(field).success &&
 				!AssayScalarFieldEnumSchema.safeParse(field).success &&
-				!PrimerScalarFieldEnumSchema.safeParse(field).success &&
+				!AssayMetadataScalarFieldEnumSchema.safeParse(field).success &&
 				!LibraryScalarFieldEnumSchema.safeParse(field).success &&
 				!AnalysisScalarFieldEnumSchema.safeParse(field).success
 			) {
 				projectUserDefined[field] = value;
 			} else {
 				//Project Level
-				//project table
 				parseSchemaToObject(field, value, projectCol, "project");
-
-				//primer table
-				parseSchemaToObject(field, value, projectCol, "primer");
-
-				//assay table
 				parseSchemaToObject(field, value, projectCol, "assay");
-
-				//library table
+				parseSchemaToObject(field, value, projectCol, "assayMetadata");
 				parseSchemaToObject(field, value, projectCol, "library");
-
-				//analysis table
 				parseSchemaToObject(field, value, projectCol, "analysis");
 
 				//Assay Levels
@@ -130,23 +122,14 @@ async function parseProjectFile({
 					//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
 					//and whose values are an object representing a single "row"
 					if (record[assay_name]) {
-						//Primers
-						if (!primerCols[assay_name]) {
-							primerCols[assay_name] = {};
-						}
-						parseSchemaToObject(field, record[assay_name], primerCols[assay_name], "primer");
-
 						//Assays
 						if (!assayCols[assay_name]) {
 							assayCols[assay_name] = {};
 						}
-						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
 
-						//Libraries
-						if (!libraryCols[assay_name]) {
-							libraryCols[assay_name] = {};
-						}
-						parseSchemaToObject(field, record[assay_name], libraryCols[assay_name], "library");
+						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
+						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assayMetadata");
+						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "library");
 					}
 				}
 			}
@@ -157,45 +140,6 @@ async function parseProjectFile({
 				(i / projectParser.info.records) * 50 + 25
 			);
 		}
-	}
-
-	for (let p of Object.values(primerCols)) {
-		const parsedPrimer = PrimerOptionalDefaultsSchema.safeParse(
-			{
-				//most specific overrides least specific
-				...projectCol,
-				...p
-			}
-			// {
-			// 	errorMap: (error, ctx) => {
-			// 		return {
-			// 			message: `Field: ${error.path[0]}\nIssue: ${
-			// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-			// 			}\nValue: ${p[error.path[0]] || projectCol[error.path[0]]}`
-			// 		};
-			// 	}
-			// }
-		);
-
-		if (!parsedPrimer.success) {
-			await channel.stream.error(
-				`Table: Primer\n` +
-					`Key: ${p.pcr_primer_forward || projectCol.pcr_primer_forward}\n` +
-					`Key: ${p.pcr_primer_reverse || projectCol.pcr_primer_reverse}\n\n` +
-					`${parsedPrimer.error.issues.map((e) => e.message).join("\n\n")}`
-			);
-			return;
-		}
-
-		//unset all optional fields that were not provided
-		for (const field of PrimerScalarFieldEnumSchema.options) {
-			if (field !== "id" && !(field in parsedPrimer.data)) {
-				//@ts-ignore
-				parsedPrimer.data[field] = null;
-			}
-		}
-
-		primers.push(parsedPrimer.data);
 	}
 
 	const parsedProject = ProjectOptionalDefaultsSchema.safeParse(
@@ -212,16 +156,14 @@ async function parseProjectFile({
 			//placeholders, must override later
 			sampleMetadataFileChecksum_ODE: "",
 			libraryMetadataFileChecksum_ODE: ""
+		},
+		{
+			error: (iss) => {
+				return {
+					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+				};
+			}
 		}
-		// {
-		// 	errorMap: (error, ctx) => {
-		// 		return {
-		// 			message: `Field: ${error.path[0]}\nIssue: ${
-		// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-		// 			}\nValue: ${projectCol[error.path[0]]}`
-		// 		};
-		// 	}
-		// }
 	);
 
 	if (!parsedProject.success) {
@@ -241,15 +183,49 @@ async function parseProjectFile({
 		}
 	}
 
+	const assays = [] as Prisma.AssayCreateManyInput[];
+	const assayMetadatas = [] as Prisma.AssayMetadataCreateManyInput[];
+	for (const assay_name of assayNames) {
+		//assay
+		const parsedAssay = AssayOptionalDefaultsSchema.safeParse({
+			...projectCol,
+			...assayCols[assay_name],
+			assay_name
+		});
+		if (!parsedAssay.success) {
+			await channel.stream.error(
+				`Table: Assay\n` + `Key: ${assay_name}\n\n` + `${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
+			);
+			return;
+		}
+		assays.push(parsedAssay.data);
+
+		//assayMetadata
+		const parsedAssayMetadata = AssayMetadataOptionalDefaultsSchema.safeParse({
+			...projectCol,
+			...assayCols[assay_name],
+			assay_name
+		});
+		if (!parsedAssayMetadata.success) {
+			await channel.stream.error(
+				`Table: AssayMetadata\n` +
+					`Key: ${assay_name}\n\n` +
+					`${parsedAssayMetadata.error.issues.map((e) => e.message).join("\n\n")}`
+			);
+			return;
+		}
+		assayMetadatas.push(parsedAssayMetadata.data);
+	}
+
 	await channel.stream.message("All entries successfully parsed into database format.", 75);
 
 	return {
 		project: parsedProject.data as unknown as Prisma.ProjectCreateInput,
-		projectMd5,
-		primers,
+		assays,
+		assayMetadatas,
 		projectCol,
 		assayCols,
-		libraryCols
+		projectMd5
 	};
 }
 
@@ -257,17 +233,14 @@ async function parseLibraryFile({
 	channel,
 	projectCol,
 	assayCols,
-	libraryCols,
 	oldChecksum
 }: {
 	channel: Channel;
 	projectCol: Record<string, string>;
 	assayCols: Record<string, Record<string, string>>;
-	libraryCols: Record<string, Record<string, string>>;
 	oldChecksum?: string;
 }) {
 	const libraries = [] as Prisma.LibraryCreateManyInput[];
-	const assaysByName = {} as Record<string, Prisma.AssayCreateManyInput>;
 	const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
 
 	//fetch file from blob storage
@@ -304,7 +277,6 @@ async function parseLibraryFile({
 		if (record.lib_id) {
 			i++;
 
-			const assayRow = {} as Assay;
 			const libraryRow = {} as Library;
 			const libraryUserDefined = {} as PrismaJson.UserDefinedType;
 
@@ -315,83 +287,27 @@ async function parseLibraryFile({
 				if (!LibraryScalarFieldEnumSchema.safeParse(field).success) {
 					libraryUserDefined[field] = value;
 				} else {
-					//assay table
-					parseSchemaToObject(field, value, assayRow, "assay");
-
-					//library table
 					parseSchemaToObject(field, value, libraryRow, "library");
 				}
 			}
 
-			//TODO: assay_name for assays is being gotten from libraryMetadata file, should get it elsewhere
-
-			sampToAssay[libraryRow.samp_name] = assayRow.assay_name;
-
-			//if the assay doesn't exist yet, add it to the assays array
-			//TODO: do not create new assays, as they should ALL already exist in the database
-			if (!assaysByName[assayRow.assay_name]) {
-				//TODO: build assay object from projectMetadata
-				const parsedAssay = AssayOptionalDefaultsSchema.safeParse(
-					//TODO: use assay_name field, not column header
-					{
-						//most specific overrides least specific
-						...projectCol,
-						...assayCols[assayRow.assay_name],
-						...assayRow
-					}
-					// {
-					// 	errorMap: (error, ctx) => {
-					// 		return {
-					// 			message: `Field: ${error.path[0]}\nIssue: ${
-					// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-					// 			}\nValue: ${
-					// 				assayRow[error.path[0] as keyof typeof assayRow] ||
-					// 				projectCol[error.path[0] as keyof typeof projectCol]
-					// 			}`
-					// 		};
-					// 	}
-					// }
-				);
-
-				if (!parsedAssay.success) {
-					await channel.stream.error(
-						`Table: Assay\n` +
-							`Key: ${assayRow.assay_name}\n\n` +
-							`${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
-					);
-					return;
-				}
-
-				for (const field of AssayScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedAssay.data)) {
-						//@ts-ignore
-						parsedAssay.data[field] = null;
-					}
-				}
-
-				assaysByName[assayRow.assay_name] = parsedAssay.data;
-			}
+			sampToAssay[libraryRow.samp_name] = libraryRow.assay_name;
 
 			const parsedLibrary = LibraryOptionalDefaultsSchema.safeParse(
 				{
 					//most specific overrides lease specific
 					...projectCol,
-					...libraryCols[assayRow.assay_name], //TODO: 10 fields are replicated for every library, inefficient database usage
+					...assayCols[libraryRow.assay_name],
 					...libraryRow,
 					userDefined: Object.keys(libraryUserDefined).length ? libraryUserDefined : "JsonNull"
+				},
+				{
+					error: (iss) => {
+						return {
+							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						};
+					}
 				}
-				// {
-				// 	errorMap: (error, ctx) => {
-				// 		return {
-				// 			message: `Field: ${error.path[0]}\nIssue: ${
-				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-				// 			}\nValue: ${
-				// 				libraryRow[error.path[0] as keyof typeof libraryRow] ||
-				// 				projectCol[error.path[0] as keyof typeof projectCol]
-				// 			}`
-				// 		};
-				// 	}
-				// }
 			);
 
 			if (!parsedLibrary.success) {
@@ -410,7 +326,6 @@ async function parseLibraryFile({
 					parsedLibrary.data[field] = null;
 				}
 			}
-
 			libraries.push(parsedLibrary.data as Prisma.LibraryCreateManyInput);
 
 			//add to progress bar
@@ -423,19 +338,19 @@ async function parseLibraryFile({
 
 	await channel.stream.message("All entries successfully parsed into database format.", 75);
 
-	return { libraries, libraryMd5, assaysByName, sampToAssay };
+	return { libraries, libraryMd5, sampToAssay };
 }
 
 async function parseSampleFile({
 	channel,
-	project_id,
-	assaysByName,
+	projectCol,
+	assayNames,
 	sampToAssay,
 	oldChecksum
 }: {
 	channel: Channel;
-	project_id: Sample["project_id"];
-	assaysByName: Record<string, Prisma.AssayCreateManyInput>;
+	projectCol: Record<string, string>;
+	assayNames: string[];
 	sampToAssay: Record<string, string>;
 	oldChecksum?: string;
 }) {
@@ -491,19 +406,17 @@ async function parseSampleFile({
 			const parsedSample = SampleOptionalDefaultsSchema.safeParse(
 				{
 					...sampleRow,
-					project_id,
+					...projectCol,
 					assay_name: sampToAssay[sampleRow.samp_name],
 					userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
+				},
+				{
+					error: (iss) => {
+						return {
+							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						};
+					}
 				}
-				// {
-				// 	errorMap: (error, ctx) => {
-				// 		return {
-				// 			message: `Field: ${error.path[0]}\nIssue: ${
-				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-				// 			}\nValue: ${sampleRow[error.path[0] as keyof typeof sampleRow]}`
-				// 		};
-				// 	}
-				// }
 			);
 
 			if (!parsedSample.success) {
@@ -534,24 +447,25 @@ async function parseSampleFile({
 		}
 	}
 
-	const reducedSamples = {} as Record<string, Prisma.SampleCreateOrConnectWithoutAssaysInput[]>;
-	for (let a of Object.values(assaysByName)) {
-		reducedSamples[a.assay_name] = samples.reduce((filtered, samp) => {
-			if (sampToAssay[samp.samp_name] === a.assay_name) {
-				filtered.push({
+	const samplesByAssay = {} as Record<string, Prisma.SampleCreateOrConnectWithoutAssaysInput[]>;
+	for (let name of assayNames) {
+		samplesByAssay[name] = samples.reduce((acc, samp) => {
+			if (sampToAssay[samp.samp_name] === name) {
+				acc.push({
 					where: {
 						samp_name: samp.samp_name
 					},
 					create: samp
 				});
 			}
-			return filtered;
+
+			return acc;
 		}, [] as Prisma.SampleCreateOrConnectWithoutAssaysInput[]);
 	}
 
 	await channel.stream.message("All entries successfully parsed into database format.", 75);
 
-	return { samples, samplesByAssay: reducedSamples, sampleMd5 };
+	return { samples, samplesByAssay, sampleMd5 };
 }
 
 export async function parseProjectFiles({
@@ -580,24 +494,23 @@ export async function parseProjectFiles({
 	if (!projectParseResult) {
 		return;
 	}
-	const { project, projectMd5, primers, projectCol, assayCols, libraryCols } = projectParseResult;
+	const { project, projectMd5, projectCol, assayCols, assays, assayMetadatas } = projectParseResult;
 
 	const libraryParseResult = await parseLibraryFile({
 		channel: libraryChannel,
 		projectCol,
 		assayCols,
-		libraryCols,
 		oldChecksum: oldChecksums?.libraryMd5
 	});
 	if (!libraryParseResult) {
 		return;
 	}
-	const { libraries, libraryMd5, assaysByName, sampToAssay } = libraryParseResult;
+	const { libraries, libraryMd5, sampToAssay } = libraryParseResult;
 
 	const sampleParseResult = await parseSampleFile({
 		channel: sampleChannel,
-		project_id: project.project_id,
-		assaysByName,
+		projectCol,
+		assayNames: assays.map((a) => a.assay_name),
 		sampToAssay,
 		oldChecksum: oldChecksums?.sampleMd5
 	});
@@ -612,8 +525,8 @@ export async function parseProjectFiles({
 			sampleMetadataFileChecksum_ODE: sampleMd5,
 			libraryMetadataFileChecksum_ODE: libraryMd5
 		},
-		primers,
-		assays: Object.values(assaysByName),
+		assays,
+		assayMetadatas,
 		samples,
 		samplesByAssay,
 		libraries,

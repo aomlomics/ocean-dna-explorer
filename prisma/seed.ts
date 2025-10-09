@@ -5,7 +5,8 @@ import { parseSchemaToObject } from "@/app/helpers/schema";
 import { updateManyRaw } from "@/app/helpers/prisma";
 
 const prisma = new PrismaClient();
-const ASSAY_SEED_URL = "https://raw.githubusercontent.com/lukenoaa/noaa-omics-primers/refs/heads/main/assays.tsv";
+const ASSAY_SEED_URL =
+	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
 
 async function load() {
 	try {
@@ -29,18 +30,13 @@ async function load() {
 				parseSchemaToObject(field, v as string, assayRow, "assay");
 			}
 
-			const parsed = AssayOptionalDefaultsSchema.parse(
-				assayRow
-				// {
-				// 	errorMap: (error, ctx) => {
-				// 		return {
-				// 			message: `Field: ${error.path[0]}\nIssue: ${
-				// 				ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-				// 			}\nValue: ${assayRow[error.path[0] as keyof typeof assayRow]}`
-				// 		};
-				// 	}
-				// }
-			);
+			const parsed = AssayOptionalDefaultsSchema.parse(assayRow, {
+				error: (iss) => {
+					return {
+						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+					};
+				}
+			});
 			assays.push(parsed);
 		}
 
@@ -55,7 +51,6 @@ async function load() {
 				}
 			});
 
-			console.log(assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name)).length);
 			await updateManyRaw(
 				tx,
 				"Assay",

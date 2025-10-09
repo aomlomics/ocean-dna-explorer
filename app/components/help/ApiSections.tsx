@@ -182,7 +182,7 @@ if (http_status(response)$category == "Success") {
 										alt="ERD notation key"
 										width="279"
 										height="137"
-										className="h-1/5 w-auto absolute left-0 bottom-0 pl-6 pb-6"
+										className="h-1/5 w-auto absolute right-0 bottom-0 pr-6 pb-6"
 									/>
 								</div>
 							</div>
@@ -385,11 +385,11 @@ if (http_status(response)$category == "Success") {
 							<div className="mb-4">Endpoint: /api/[table]/fields</div>
 
 							<div className="mb-4 mt-4">
-								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/primer/fields`} />
+								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/assay/fields`} />
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/primer/fields`} />
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/assay/fields`} />
 						</>
 					)
 				},

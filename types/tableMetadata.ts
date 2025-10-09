@@ -63,7 +63,7 @@ const TableMetadata = {
 		plural: "AssayMetadatas",
 		schema: PrismaZodTypes.AssayMetadataSchema,
 		enumSchema: PrismaZodTypes.AssayMetadataScalarFieldEnumSchema,
-		titleField: "id"
+		titleField: ["project_id", "assay_name"]
 	},
 	library: {
 		plural: "Libraries",
@@ -136,7 +136,7 @@ const TableMetadata = {
 //TODO: type ZodObject properly
 function getRelations(fields: string[], relationsSchema: any) {
 	const fieldsSet = new Set(fields);
-	return Object.keys(relationsSchema._def.shape()).filter((f) => !fieldsSet.has(f));
+	return Object.keys(relationsSchema.def.shape).filter((f) => !fieldsSet.has(f));
 }
 const relations = {
 	project: getRelations(PrismaZodTypes.ProjectScalarFieldEnumSchema.options, PrismaZodTypes.ProjectWithRelationsSchema),

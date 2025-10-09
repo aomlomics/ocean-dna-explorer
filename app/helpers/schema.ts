@@ -24,13 +24,9 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 		shape.optional = true;
 	} else if (field instanceof ZodBoolean) {
 		shape.type = "boolean";
-		// } else if (field instanceof ZodEffects) {
-		// 	//zod transform (coerced booleans)
-		// 	//TODO: verify it's actually a boolean, and not some other field that uses zod transform
-		// 	shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
-		console.log(field);
-		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
+		//TODO: isInt exists here, Zod types aren't updated properly
+		if (field.def.checks?.length && field.def.checks.some((e) => (e as unknown as { isInt: boolean }).isInt)) {
 			shape.type = "integer";
 		} else {
 			shape.type = "float";
@@ -38,19 +34,15 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
 	} else if (field instanceof ZodArray) {
-		console.log(field);
-		if (field._def.type instanceof ZodString) {
+		if (field.def.element instanceof ZodString) {
 			shape.type = "string[]";
 		}
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
 	} else if (field instanceof ZodLazy) {
-		//JSON
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
-		//DeadBoolean
-		console.log(field);
-		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
+		if (Object.keys(field.def.entries).every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
 			shape.type = "DeadBoolean";
 			shape.values = Object.keys(DeadBooleanEnum);
 		}

@@ -59,8 +59,10 @@ export default function UserAdder({
 				if (response.ok) {
 					const json = (await response.json()) as NetworkPacket;
 					if (json.statusMessage === "success") {
-						console.log(userId, json.result);
 						setUsers(json.result);
+						if (!submittable) {
+							setUserIds(json.result.map((u: ClerkUserObject) => u.id));
+						}
 					} else if (json.statusMessage === "error") {
 						setLoadingError(json.error);
 					}

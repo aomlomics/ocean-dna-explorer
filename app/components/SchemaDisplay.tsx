@@ -6,34 +6,36 @@ import { stripSecureFields } from "../helpers/prisma";
 import { uncapitalizeTable } from "../helpers/utils";
 
 export default function SchemaDisplay() {
-	const tables = Object.keys(Prisma.ModelName).map((t) => {
-		const tableName = uncapitalizeTable(t as Prisma.ModelName);
+	const tables = Object.keys(Prisma.ModelName)
+		.sort()
+		.map((t) => {
+			const tableName = uncapitalizeTable(t as Prisma.ModelName);
 
-		const result = {} as Record<
-			string,
-			{
-				type: string;
-				optional?: boolean;
-				values?: string[];
-			}
-		>;
-		const shape = TableMetadata[tableName].schema.shape;
-		for (const f of TableMetadata[tableName].enumSchema.options) {
-			const type = getZodType(shape[f as keyof typeof shape]);
-			if (type.type === "json") {
-				if (f === "userDefined") {
-					result[f] = type;
-				} else if (f === "editHistory") {
-					result[f] = { ...type, type: "Edit[]" };
+			const result = {} as Record<
+				string,
+				{
+					type: string;
+					optional?: boolean;
+					values?: string[];
 				}
-			} else {
-				result[f] = type;
+			>;
+			const shape = TableMetadata[tableName].schema.shape;
+			for (const f of TableMetadata[tableName].enumSchema.options) {
+				const type = getZodType(shape[f as keyof typeof shape]);
+				if (type.type === "json") {
+					if (f === "userDefined") {
+						result[f] = type;
+					} else if (f === "editHistory") {
+						result[f] = { ...type, type: "Edit[]" };
+					}
+				} else {
+					result[f] = type;
+				}
 			}
-		}
 
-		stripSecureFields(result);
-		return [t, result] as [Prisma.ModelName, typeof result];
-	});
+			stripSecureFields(result);
+			return [t, result] as [Prisma.ModelName, typeof result];
+		});
 
 	return (
 		<div>
