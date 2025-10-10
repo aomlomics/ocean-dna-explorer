@@ -56,6 +56,7 @@ export default function Table({
 		setColumnsFilter(f);
 	}, 300);
 
+	omit = [...omit, ...GlobalOmit];
 	const title = TableMetadata[table].titleField;
 
 	//api call
@@ -97,11 +98,13 @@ export default function Table({
 
 				for (let row of data.result) {
 					for (let [field, value] of Object.entries(row)) {
-						if (value === null && !exemptFields[field]) {
-							emptyFields[field] = true;
-						} else if (emptyFields[field]) {
-							delete emptyFields[field];
-							exemptFields[field] = true;
+						if (!omit.includes(field)) {
+							if (value === null && !exemptFields[field]) {
+								emptyFields[field] = true;
+							} else {
+								delete emptyFields[field];
+								exemptFields[field] = true;
+							}
 						}
 					}
 				}
@@ -183,8 +186,6 @@ export default function Table({
 	if (isLoading) return <LoadingTable take={take} page={page} />;
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
-
-	omit = [...omit, ...GlobalOmit];
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
@@ -296,16 +297,13 @@ export default function Table({
 					</div>
 
 					{/* Right side: Column selection and visibility */}
-					<div className="flex items-center justify-end gap-5 flex-1">
-						<div className="dropdown dropdown-end">
+					<div className="grid grid-cols-2 gap-5 flex-1">
+						<div className="dropdown dropdown-end justify-self-end">
 							<div tabIndex={0} role="button" className="btn btn-sm">
 								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
 							</div>
 							{/* Dropdown */}
-							<div
-								tabIndex={0}
-								className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden"
-							>
+							<div tabIndex={0} className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden">
 								<div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">
 									{/* Header: All toggle + search */}
 									<div className="sticky top-0 bg-base-200 border-b border-base-300 p-2">
@@ -386,19 +384,19 @@ export default function Table({
 									onChange={(e) => setHideEmpty(e.currentTarget.checked)}
 								/>
 								Hide empty columns
-								{hideEmpty && Object.keys(emptyFilter).length > 0 && ` (${Object.keys(emptyFilter).length})`}
+								{Object.keys(emptyFilter).length ? ` (${Object.keys(emptyFilter).length})` : ""}
 							</label>
 						</fieldset>
 					</div>
 				</div>
 				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
-					<table className="table table-sm table-zebra table-pin-rows table-pin-cols [&>tbody>tr:nth-child(even)>td]:bg-base-200/25 [&>tbody>tr:nth-child(even)>th]:bg-base-200/25">
+					<table className="table table-sm table-pin-rows table-pin-cols">
 						{/* Headers */}
 						<thead>
-							<tr className="z-30">
+							<tr>
 								{/* Title Header Cell */}
 								{typeof title === "string" ? (
-									<th className="p-0 pr-2 sticky left-0 bg-base-100 z-40">
+									<th className="p-0 pr-2 z-40">
 										<label className="form-control w-full max-w-xs text-lg">
 											<div>
 												<span>{title}</span>
@@ -430,7 +428,7 @@ export default function Table({
 										</label>
 									</th>
 								) : (
-									<th className="p-0 pr-2 sticky left-0 bg-base-100 z-40">
+									<th className="p-0 pr-2 z-40">
 										<label className="form-control w-full max-w-xs text-lg">
 											<div>
 												<span>{title.join(" / ")}</span>
@@ -505,7 +503,7 @@ export default function Table({
 
 									return acc;
 								}, [])}
-								<th className="sticky right-0 bg-base-100 z-30"></th>
+								<th></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -514,15 +512,23 @@ export default function Table({
 								data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
 									//row
 									acc.push(
-										<tr key={i} className="group border-base-100 border-b-2 min-h-12 h-12 align-middle">
+										<tr key={i} className="min-h-12 h-12 align-middle">
 											{typeof title === "string" ? (
-												<th className="whitespace-nowrap text-sm font-bold sticky left-0 bg-base-100 group-even:bg-base-200/25 z-20">
+												<th
+													className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2 ${
+														i ? "border-t-2" : ""
+													}`}
+												>
 													<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
 														{row[title]}
 													</Link>
 												</th>
 											) : (
-												<th className="whitespace-nowrap text-sm font-bold sticky left-0 bg-base-100 group-even:bg-base-200/25 z-20">
+												<th
+													className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2 ${
+														i ? "border-t-2" : ""
+													}`}
+												>
 													<Link
 														href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
 														className="link link-primary link-hover"
@@ -538,9 +544,9 @@ export default function Table({
 													if (userDefinedHeaders.includes(head)) {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
-																	row.userDefined[head] !== null ? "" : "bg-base-300"
-																}`}
+																className={`whitespace-nowrap text-sm border-base-300 ${i ? "border-t-2" : ""} ${
+																	j ? "border-l-2" : ""
+																} ${row[head] === null ? "bg-base-200" : ""}`}
 																key={row.userDefined[head] + "child" + j}
 															>
 																{row.userDefined[head]}
@@ -549,9 +555,9 @@ export default function Table({
 													} else {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm ${j ? "border-base-100 border-l-2" : ""} ${
-																	row[head] !== null ? "" : "bg-base-300"
-																}`}
+																className={`whitespace-nowrap text-sm border-base-300 ${i ? "border-t-2" : ""} ${
+																	j ? "border-l-2" : ""
+																} ${row[head] === null ? "bg-base-200" : ""}`}
 																key={row[head] + "child" + j}
 															>
 																{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
@@ -573,7 +579,9 @@ export default function Table({
 
 												return acc;
 											}, [])}
-											<th className="sticky right-0 bg-base-100 group-even:bg-base-200/25 z-20">{i + 1 + (page - 1) * take}</th>
+											<th className={`border-base-300 border-l-2 ${i ? "border-t-2" : ""}`}>
+												{i + 1 + (page - 1) * take}
+											</th>
 										</tr>
 									);
 
@@ -582,7 +590,7 @@ export default function Table({
 						</tbody>
 					</table>
 				</div>
-				
+
 				{/* Bottom Pagination Controls */}
 				<div className="flex justify-center mt-4">
 					<PaginationControls
