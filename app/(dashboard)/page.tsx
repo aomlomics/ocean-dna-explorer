@@ -89,7 +89,21 @@ export default async function Home() {
 	];
 
 	return (
-		<main className="flex flex-col grow bg-base-400 text-base-content">
+		<main className="relative flex flex-col grow bg-base-400 text-base-content">
+			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
+				<p className="text-sm sm:text-base">
+					<span className="font-bold">BETA:</span> ODE is under active development. Please report bugs and feature requests{" "}
+					<a
+						href="https://github.com/aomlomics/ocean-dna-explorer/issues"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="underline hover:text-gray-200"
+					>
+						here
+					</a>
+					.
+				</p>
+			</div>
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
 				<Carousel images={carouselImages} />
 				{/* Updated hero content container */}
@@ -158,7 +172,7 @@ export default async function Home() {
 				</div>
 
 				{/* Interactive Data Journey Visualization */}
-				<div className="mb-32">
+				{/* <div className="mb-32">
 					<div className="text-center mb-12">
 						<h2 className="text-3xl lg:text-4xl text-primary mb-4 font-light">
 							Explore the Data Journey
@@ -176,7 +190,7 @@ export default async function Home() {
 					<div className="text-center mt-8 text-sm text-base-content/60">
 						<p>Interactive visualization showing the relationship between database tables and real-world sampling</p>
 					</div>
-				</div>
+				</div> */}
 
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch mb-24">
 					{/* Map Section */}

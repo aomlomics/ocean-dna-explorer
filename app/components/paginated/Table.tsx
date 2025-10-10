@@ -4,7 +4,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState, useRef } from "react";
 import useSWR, { preload } from "swr";
 import { useDebouncedCallback } from "use-debounce";
 import { getZodType } from "../../helpers/schema";
@@ -48,6 +48,12 @@ export default function Table({
 	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
 	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
+	const isInitialLoad = useRef(true);
+	const [pendingFilters, setPendingFilters] = useState(0);
+
+	useEffect(() => {
+		isInitialLoad.current = true;
+	}, [table]);
 
 	const [columnsFilter, setColumnsFilter] = useState("");
 	const handleColFilter = useDebouncedCallback((f) => {
@@ -158,32 +164,32 @@ export default function Table({
 			tempHeadersFilter = temp;
 		}
 
-		if (showUserDefined && data && data.statusMessage === "success" && !userDefinedHeaders.length) {
-			const tempUserDefinedHeadersSet = new Set() as Set<string>;
+		if (showUserDefined && data && data.statusMessage === "success") {
+			const tempUserDefinedHeadersSet = new Set(userDefinedHeaders);
 			for (const r of data.result) {
-				for (const h in r.userDefined) {
-					tempUserDefinedHeadersSet.add(h);
+				if (r.userDefined) {
+					for (const h in r.userDefined) {
+						tempUserDefinedHeadersSet.add(h);
+					}
 				}
 			}
 			const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
+			setUserDefinedHeaders(tempUserDefinedHeaders);
+		}
 
-			tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
-			setUserDefinedHeaders(Array.from(tempUserDefinedHeaders));
+		setHeaders([...tempHeaders, ...userDefinedHeaders]);
 
+		if (isInitialLoad.current) {
+			isInitialLoad.current = false;
 			if (filterHeadersAtStart) {
 				tempHeadersFilter = {
 					...tempHeadersFilter,
-					...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
+					...userDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
 				};
 			}
-		}
-
-		setHeaders(tempHeaders);
-
-		if (Object.keys(tempHeadersFilter).length) {
 			setHeadersFilter(tempHeadersFilter);
 		}
-	}, [data]);
+	}, [data, userDefinedHeaders]);
 
 	if (isLoading) return <LoadingTable />;
 	if (error) return <div>failed to load: {error}</div>;
@@ -240,31 +246,57 @@ export default function Table({
 		//@ts-ignore
 		document.forms[`${table}TableForm`].reset();
 		setWhereFilter({});
+		setPendingFilters(0);
+	}
+
+	function handleFormChange(form: HTMLFormElement) {
+		const formData = new FormData(form);
+		let count = 0;
+		formData.delete("take");
+		for (const [key, value] of formData.entries()) {
+			if (typeof value === "string" && value.trim()) {
+				count++;
+			}
+		}
+		setPendingFilters(count);
 	}
 
 	return (
 		<div className="bg-base-100 border-base-300 rounded-box p-6 h-full w-full">
-			<form id={`${table}TableForm`} onSubmit={applyFilters} className="w-full h-full flex flex-col">
-				<div className="grid grid-cols-3 items-center">
-					{/* Filters Buttons */}
-					<div className="flex items-center gap-5 justify-start w-full">
+			<form
+				id={`${table}TableForm`}
+				onSubmit={applyFilters}
+				onChange={(e) => handleFormChange(e.currentTarget)}
+				className="w-full h-full flex flex-col"
+			>
+				<div className="flex justify-between items-center mb-4">
+					{/* Left side: Filters */}
+					<div className="flex items-center gap-2 flex-1">
 						{!hideFilters && (
 							<>
-								<button onClick={resetForm} className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80" type="button">
+								<button
+									onClick={resetForm}
+									className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
+									type="button"
+								>
 									Clear Filters
 								</button>
-								<button type="submit" className="btn btn-sm bg-base-300 text-base-content border-base-200 hover:bg-base-200/80">
-									Apply Filters
+								<button
+									type="submit"
+									className={`btn btn-sm ${pendingFilters > 0 ? "btn-primary" : "bg-base-100 border border-base-300"}`}
+								>
+									Apply Filters {pendingFilters > 0 && `(${pendingFilters})`}
 								</button>
 							</>
 						)}
 						<label className="input input-sm input-bordered flex items-center gap-2">
 							Per Page:
-							<input name="take" defaultValue={take} type="number" className="grow max-w-12" />
+							<input name="take" defaultValue={take} type="number" className="grow w-12" />
 						</label>
 					</div>
-					{/* Pagination Controls */}
-					<div className="flex items-center justify-center w-full">
+
+					{/* Middle: Pagination */}
+					<div className="flex-1 flex justify-center">
 						<PaginationControls
 							page={page}
 							take={take}
@@ -273,8 +305,9 @@ export default function Table({
 							handlePageHover={handlePageHover}
 						/>
 					</div>
-					{/* Column Selection Button */}
-					<div className="flex items-center justify-end w-full gap-5">
+
+					{/* Right side: Column selection and visibility */}
+					<div className="flex items-center justify-end gap-5 flex-1">
 						<div className="dropdown dropdown-end">
 							<div tabIndex={0} role="button" className="btn btn-sm">
 								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
@@ -305,11 +338,11 @@ export default function Table({
 																}, {})
 															);
 														}
-												}}
-												checked={!Object.values(headersFilter).some((bool) => bool)}
-												className="checkbox checkbox-xs"
-											/>
-											<span className="label-text text-sm">All</span>
+													}}
+													checked={!Object.values(headersFilter).some((bool) => bool)}
+													className="checkbox checkbox-xs"
+												/>
+												<span className="label-text text-sm">All</span>
 											</label>
 											<input
 												type="text"
@@ -334,7 +367,7 @@ export default function Table({
 																onChange={() => {
 																	const temp = { ...headersFilter };
 																	if (headersFilter[head]) {
- 																		delete temp[head];
+																		delete temp[head];
 																	} else {
 																		temp[head] = true;
 																	}
@@ -364,25 +397,26 @@ export default function Table({
 									onChange={(e) => setHideEmpty(e.currentTarget.checked)}
 								/>
 								Hide empty columns
+								{hideEmpty && Object.keys(emptyFilter).length > 0 && ` (${Object.keys(emptyFilter).length})`}
 							</label>
 						</fieldset>
 					</div>
 				</div>
-				<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
+				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
 					<table className="table table-sm table-zebra table-pin-rows table-pin-cols [&>tbody>tr:nth-child(even)>td]:bg-base-200/25 [&>tbody>tr:nth-child(even)>th]:bg-base-200/25">
 						{/* Headers */}
 						<thead>
-							<tr>
+							<tr className="z-30">
 								{/* Title Header Cell */}
 								{typeof title === "string" ? (
-									<th className="p-0 pr-2 z-40">
+									<th className="p-0 pr-2 sticky left-0 bg-base-100 z-40">
 										<label className="form-control w-full max-w-xs text-lg">
 											<div>
 												<span>{title}</span>
 											</div>
 											{/* Value Filter */}
 											{!hideFilters && (
-												<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														viewBox="0 0 16 16"
@@ -395,20 +429,26 @@ export default function Table({
 															clipRule="evenodd"
 														/>
 													</svg>
-													<input name={title} defaultValue={whereFilter[title] || ""} type="text" className="grow" />
+													<input
+														name={title}
+														defaultValue={whereFilter[title] || ""}
+														type="text"
+														className="grow"
+														placeholder="Press Enter to search"
+													/>
 												</label>
 											)}
 										</label>
 									</th>
 								) : (
-									<th className="p-0 pr-2 z-40">
+									<th className="p-0 pr-2 sticky left-0 bg-base-100 z-40">
 										<label className="form-control w-full max-w-xs text-lg">
 											<div>
 												<span>{title.join(" / ")}</span>
 											</div>
 											{/* Value Filter */}
 											{!hideFilters && (
-												<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+												<label className="input input-bordered input-sm flex items-center gap-2 w-full">
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														viewBox="0 0 16 16"
@@ -433,7 +473,7 @@ export default function Table({
 									if (!headersFilter[head] && !emptyFilter[head]) {
 										//Header
 										acc.push(
-											<td key={head + i}>
+											<td key={head + i} className="bg-base-100">
 												<label className="form-control w-full max-w-xs text-lg">
 													<div className="flex justify-between">
 														<div>{head}</div>
@@ -446,7 +486,7 @@ export default function Table({
 													</div>
 													{/* Value Filter */}
 													{!hideFilters && (
-														<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
 															<svg
 																xmlns="http://www.w3.org/2000/svg"
 																viewBox="0 0 16 16"
@@ -465,6 +505,7 @@ export default function Table({
 																type="text"
 																className="grow"
 																disabled={userDefinedHeaders.includes(head)}
+																placeholder="Press Enter to search"
 															/>
 														</label>
 													)}
@@ -475,7 +516,7 @@ export default function Table({
 
 									return acc;
 								}, [])}
-								<th></th>
+								<th className="sticky right-0 bg-base-100 z-30"></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -484,15 +525,15 @@ export default function Table({
 								data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
 									//row
 									acc.push(
-										<tr key={i} className="border-base-100 border-b-2 min-h-12 h-12 align-middle">
+										<tr key={i} className="group border-base-100 border-b-2 min-h-12 h-12 align-middle">
 											{typeof title === "string" ? (
-												<th className="whitespace-nowrap text-sm font-bold">
+												<th className="whitespace-nowrap text-sm font-bold sticky left-0 bg-base-100 group-even:bg-base-200/25 z-20">
 													<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
 														{row[title]}
 													</Link>
 												</th>
 											) : (
-												<th className="whitespace-nowrap text-sm font-bold">
+												<th className="whitespace-nowrap text-sm font-bold sticky left-0 bg-base-100 group-even:bg-base-200/25 z-20">
 													<Link
 														href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
 														className="link link-primary link-hover"
@@ -543,7 +584,7 @@ export default function Table({
 
 												return acc;
 											}, [])}
-											<th>{i + 1 + (page - 1) * take}</th>
+											<th className="sticky right-0 bg-base-100 group-even:bg-base-200/25 z-20">{i + 1 + (page - 1) * take}</th>
 										</tr>
 									);
 
@@ -551,6 +592,17 @@ export default function Table({
 								}, [])}
 						</tbody>
 					</table>
+				</div>
+				
+				{/* Bottom Pagination Controls */}
+				<div className="flex justify-center mt-4">
+					<PaginationControls
+						page={page}
+						take={take}
+						count={data.count}
+						handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+						handlePageHover={handlePageHover}
+					/>
 				</div>
 			</form>
 		</div>

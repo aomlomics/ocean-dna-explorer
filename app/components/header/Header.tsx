@@ -19,22 +19,27 @@ export default async function Header() {
 			<div className="navbar-start pr-4 sm:pr-6 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
 				<MobileMenu />
-				
+
 				{/* Logo */}
-				<Link
-					className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center"
-					href="/"
-				>
-					<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
-						<NodeLogo
-							alt="NODE Logo"
-							fill={true}
-							style={{ objectFit: "contain" }}
-							priority={true}
-							sizes="(max-width: 768px) 100vw, 33vw"
-						/>
+				<div className="flex items-center">
+					<Link
+						className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-56 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center"
+						href="/"
+					>
+						<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
+							<NodeLogo
+								alt="NODE Logo"
+								fill={true}
+								style={{ objectFit: "contain" }}
+								priority={true}
+								sizes="(max-width: 768px) 100vw, 33vw"
+							/>
+						</div>
+					</Link>
+					<div className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded-md ml-2 sm:ml-4 lg:ml-6">
+						BETA
 					</div>
-				</Link>
+				</div>
 			</div>
 
 			{/* Desktop tabs - centered between logo and user controls and aligned to bottom */}
