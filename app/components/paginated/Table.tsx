@@ -48,13 +48,7 @@ export default function Table({
 	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
 	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
-	const isInitialLoad = useRef(true);
 	const [pendingFilters, setPendingFilters] = useState(0);
-
-	useEffect(() => {
-		isInitialLoad.current = true;
-	}, [table]);
-
 	const [columnsFilter, setColumnsFilter] = useState("");
 	const handleColFilter = useDebouncedCallback((f) => {
 		setColumnsFilter(f);
@@ -179,17 +173,10 @@ export default function Table({
 
 		setHeaders([...tempHeaders, ...userDefinedHeaders]);
 
-		if (isInitialLoad.current) {
-			isInitialLoad.current = false;
-			if (filterHeadersAtStart) {
-				tempHeadersFilter = {
-					...tempHeadersFilter,
-					...userDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
-				};
-			}
+		if (Object.keys(tempHeadersFilter).length) {
 			setHeadersFilter(tempHeadersFilter);
 		}
-	}, [data, userDefinedHeaders]);
+	}, [data]);
 
 	if (isLoading) return <LoadingTable />;
 	if (error) return <div>failed to load: {error}</div>;

@@ -65,12 +65,12 @@ export default function Project() {
 						to see how to generate your metadata files (the files uploaded on this page). We provide a Python repository called
 						{" "}
 						<a
-							href="https://github.com/aomlomics/FAIRe2ODE"
+							href="https://github.com/aomlomics/FAIReSheets"
 							className="text-primary hover:text-primary-focus"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							FAIRe2ODE
+							FAIReSheets
 						</a>
 						{" "}
 						to help generate those files on Google Sheets.
