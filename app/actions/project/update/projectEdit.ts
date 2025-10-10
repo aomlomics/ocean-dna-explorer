@@ -105,6 +105,8 @@ async function doEdit(
 
 		const sampNames = samples.map((samp) => samp.samp_name);
 
+		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
+
 		//TODO: only do updates if relevant file was provided
 		await prisma.$transaction(
 			async (tx) => {
@@ -152,9 +154,13 @@ async function doEdit(
 					for (const [f, value] of Object.entries(a)) {
 						const field = f as keyof typeof dbAssay;
 						if (value !== dbAssay[field]) {
-							throw new Error(
-								`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
-							);
+							if (!(a.assay_name in badAssayFields)) {
+								badAssayFields[a.assay_name] = [];
+							}
+							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
+							// throw new Error(
+							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							// );
 						}
 					}
 				}

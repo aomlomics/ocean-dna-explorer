@@ -368,7 +368,7 @@ model AssayMetadata {
     project_id String
     Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name String
-    Assay      Assay     @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
     Libraries  Library[]
 
     thermocycler  String?
@@ -422,7 +422,7 @@ model Library {
     samp_name     String
     Sample        Sample        @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
     assay_name    String
-    Assay         Assay         @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
+    Assay         Assay         @relation(fields: [assay_name], references: [assay_name])
     AssayMetadata AssayMetadata @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
 
     // Data

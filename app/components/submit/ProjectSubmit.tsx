@@ -63,9 +63,6 @@ export default function ProjectSubmit() {
 			modalXRef.current!.disabled = true;
 			modalClickOffRef.current!.disabled = true;
 			modalRef.current?.showModal();
-			setTimeout(() => {
-				router.push("/submit/analysis");
-			}, 5000);
 		} else if (globalResponse?.statusMessage === "error") {
 			doError(globalResponse.error);
 		}
@@ -157,8 +154,6 @@ export default function ProjectSubmit() {
 		setSampleResponse(undefined);
 		setLibraryResponse(undefined);
 		setErrorMessage("");
-
-		console.log(userIds);
 
 		const isPrivate = event.currentTarget.isPrivate.checked;
 
@@ -309,14 +304,13 @@ export default function ProjectSubmit() {
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}
 				</h3>
 				<p className="mb-2 font-light whitespace-pre-wrap">
-					{errorMessage
-						? errorMessage
-						: "Project successfully submitted! You will be redirected to submit your analysis files in 5 seconds..."}
+					{globalResponse?.statusMessage === "success" ? globalResponse!.progress!.message : errorMessage}
 				</p>
 				{globalResponse?.statusMessage === "success" && (
-					<div className="mt-4 flex items-center justify-center gap-2">
-						<span className="loading loading-spinner loading-sm"></span>
-						<span className="text-base-content/80 text-sm">Redirecting...</span>
+					<div className="modal-action">
+						<button type="submit" className="btn" onClick={() => router.push("/submit/analysis")}>
+							Next
+						</button>
 					</div>
 				)}
 			</Modal>

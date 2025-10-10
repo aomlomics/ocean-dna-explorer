@@ -77,12 +77,18 @@ async function load() {
 					assay_name: {
 						notIn: assayNames
 					},
-					Libraries: {
-						some: {}
-					},
-					Analyses: {
-						some: {}
-					}
+					OR: [
+						{
+							Libraries: {
+								some: {}
+							}
+						},
+						{
+							Analyses: {
+								some: {}
+							}
+						}
+					]
 				},
 				data: {
 					deleted_ODE: true

@@ -182,7 +182,6 @@ export default function Table({
 
 			setHeaders(tempHeaders);
 
-			console.log(headersFilter);
 			if (Object.keys(tempHeadersFilter).length) {
 				setHeadersFilter(tempHeadersFilter);
 			}

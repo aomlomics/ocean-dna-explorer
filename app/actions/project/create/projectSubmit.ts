@@ -47,6 +47,8 @@ async function doSubmit(
 			75
 		);
 
+		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
+
 		await prisma.$transaction(
 			async (tx) => {
 				//check if assay data is correct
@@ -65,12 +67,16 @@ async function doSubmit(
 					for (const [f, value] of Object.entries(a)) {
 						const field = f as keyof typeof dbAssay;
 						if (value !== dbAssay[field]) {
-							await projectChannel.stream.error(
-								`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
-							);
-							throw new Error(
-								`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
-							);
+							if (!(a.assay_name in badAssayFields)) {
+								badAssayFields[a.assay_name] = [];
+							}
+							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
+							// await projectChannel.stream.error(
+							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							// );
+							// throw new Error(
+							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							// );
 						}
 					}
 				}
@@ -112,7 +118,21 @@ async function doSubmit(
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
-		await globalStream.success("Success");
+		await globalStream.success(
+			"Project successfully submitted!" + Object.keys(badAssayFields).length
+				? "\n\nWARNING: Some Assays had provided fields that did not match the master list located at __ASSAY_MASTER_LIST_URL__. The following fields will have the values from the submission replaced with the values from the master list.\n\n" +
+						Object.entries(badAssayFields)
+							.map(
+								([assay_name, fieldInfos]) =>
+									assay_name +
+									"\n" +
+									fieldInfos
+										.map((info) => "Field: " + info.field + "\tProvided: " + info.provided + "\tActual: " + info.actual)
+										.join("\n")
+							)
+							.join("\n\n")
+				: ""
+		);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
