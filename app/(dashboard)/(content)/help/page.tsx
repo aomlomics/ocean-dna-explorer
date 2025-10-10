@@ -1,5 +1,6 @@
 import { helpSections } from "@/app/components/help/HelpSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
+import MobileTOC from "@/app/components/help/MobileTOC";
 
 export default function Help() {
 	return (
@@ -7,8 +8,8 @@ export default function Help() {
 			{/* Invisible component that handles scroll tracking */}
 			<ActiveSectionTracker />
 
-			{/* Sidebar navigation */}
-			<aside className="w-64 border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
+			{/* Sidebar navigation - Hidden on mobile */}
+			<aside className="hidden lg:block w-64 border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
 				<nav>
 					<h2 className="text-xl mb-6 px-2">Contents</h2>
 					<ul className="space-y-5">
@@ -44,8 +45,11 @@ export default function Help() {
 				</nav>
 			</aside>
 
-			{/* Main content area with sections */}
-			<main className="flex-1 p-6 md:p-8">
+			{/* Main content area - Full width on mobile */}
+			<main className="flex-1 p-4 md:p-6 lg:p-8">
+				{/* Mobile Table of Contents */}
+				<MobileTOC sections={helpSections} />
+
 				{/* Map through sections to generate content */}
 				{helpSections.map((section, index) => (
 					<section key={section.id} id={section.id} data-section-index={index} className="mb-24">

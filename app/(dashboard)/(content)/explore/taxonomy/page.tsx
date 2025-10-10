@@ -1,63 +1,39 @@
-import ExploreSearch from "@/app/components/explore/ExploreSearch";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import TableFilter from "@/app/components/explore/filters/TableFilter";
-import TaxaGrid from "@/app/components/paginated/TaxaGrid";
-import { TaxonomicRanks } from "@/types/objects";
 import Link from "next/link";
+import ExplorePage from "@/app/components/explore/ExplorePage";
+import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import { TaxonomicRanks } from "@/types/objects";
 
 export default async function Taxonomy() {
+	const tableConfig: FilterConfig[] = [
+		{
+			type: "selectGroup",
+			group: TaxonomicRanks,
+			table: "taxonomy"
+		}
+	];
 	return (
-		<div className="grid grid-cols-[20%_80%] gap-6 pt-6">
-			<TableFilter
-				tableConfig={[
-					{
-						type: "selectGroup",
-						group: TaxonomicRanks,
-						table: "taxonomy"
-					}
-				]}
-			/>
-			<div className="space-y-6">
-				<div className="space-y-[-1px]">
-					<div className="border-b border-base-300">
-						<nav className="flex tabs tabs-lifted">
-							<ExploreTabButtons />
-						</nav>
-					</div>
-					<div className="bg-base-100 border border-base-300 rounded-lg p-6 mb-6 space-y-4">
-						<p className="leading-relaxed">
-							Hierarchical classification of detected organisms from domain to species level.
-						</p>
-						<p className="text-base-content/80 leading-relaxed">
-							The taxonomic outline image is sourced through{" "}
-							<Link href="https://www.phylopic.org/" className="text-primary hover:underline" target="_blank">
-								PhyloPic
-							</Link>
-							, using{" "}
-							<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
-								GBIF
-							</Link>{" "}
-							Suggest API to match our taxonomy with PhyloPic's database. Images on PhyloPic are contributed by
-							scientists and artists worldwide under various Creative Commons licenses.
-						</p>
-						<p className="leading-relaxed">
-							For more detailed information, visit our{" "}
-							<Link href="/help" className="text-primary hover:underline">
-								Help page
-							</Link>
-							.
-						</p>
-					</div>
+		<ExplorePage table="taxonomy" tableConfig={tableConfig} title="Taxonomies" displayMode="grid">
+			<div className="w-full space-y-4">
+				<div className="text-base-content/80 pb-4 space-y-2">
+					<p>
+						Hierarchical classification of detected organisms from domain to species level. For more detailed
+						information, visit our{" "}
+						<Link href="/help" className="text-primary hover-underline">
+							Help page
+						</Link>
+						.
+					</p>
+					<p className="text-sm">
+						The taxonomic outline images are sourced through{" "}
+						<Link href="https://www.phylopic.org/" className="text-primary hover-underline" target="_blank">
+							PhyloPic
+						</Link>
+						. The images are contributed by scientists and artists worldwide under various Creative Commons licenses.
+					</p>
 				</div>
-
-				<div className="space-y-6">
-					<ExploreSearch table="taxonomy" defaultField="taxonomy" />
-
-					<div className="rounded-lg border border-base-300">
-						<TaxaGrid />
-					</div>
-				</div>
+				<ExploreTabButtons />
 			</div>
-		</div>
+		</ExplorePage>
 	);
 }

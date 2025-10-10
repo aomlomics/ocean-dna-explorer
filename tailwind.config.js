@@ -61,6 +61,7 @@ module.exports = {
 				'slide-in': 'slide-in 1s ease-out forwards',
 				'subtle-pan': 'subtle-pan 30s ease-in-out infinite',
 				'gradient-shine': 'gradient-shine 8s ease-in-out infinite',
+				float: "float 6s ease-in-out infinite"
 			},
 			keyframes: {
 				'slide-in': {

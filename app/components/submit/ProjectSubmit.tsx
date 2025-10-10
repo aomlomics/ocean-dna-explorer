@@ -218,89 +218,101 @@ export default function ProjectSubmit() {
 
 	return (
 		<>
-			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
-				<SubmitFormSection
-					title="Make submission private"
-					info="Only users added to this Project will be able to see private submissions."
-				>
-					<fieldset className="fieldset bg-base-100">
-						<label className="fieldset-label flex gap-2">
-							<input name="isPrivate" type="checkbox" className="checkbox" />
-							<p>Private submission</p>
-						</label>
-					</fieldset>
-				</SubmitFormSection>
-
-				<SubmitFormSection
-					title="Add users to submission"
-					info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
-				>
-					<div className="flex flex-col items-center">
-						<UserAdder userIds={userIds} setUserIds={setUserIds} />
-					</div>
-				</SubmitFormSection>
-
-				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
-					<fieldset className="fieldset col-2">
-						<legend className="fieldset-legend">Project Metadata File:</legend>
-						<input
-							type="file"
-							className="file-input file-input-primary"
-							name="project"
-							required
-							disabled={loading}
-							accept=".tsv"
-							onChange={handleProjectFile}
-						/>
-					</fieldset>
-					<ProgressBar loading={loading} data={projectResponse} />
-
-					<fieldset className="fieldset col-2">
-						<legend className="fieldset-legend">Sample Metadata File:</legend>
-						<input
-							type="file"
-							className="file-input file-input-primary"
-							name="sample"
-							required
-							disabled={loading}
-							accept=".tsv"
-						/>
-					</fieldset>
-					<ProgressBar loading={loading} data={sampleResponse} />
-
-					<fieldset className="fieldset col-2">
-						<legend className="fieldset-legend">Library (Experiment Run) Metadata File:</legend>
-						<input
-							type="file"
-							className="file-input file-input-primary"
-							name="library"
-							required
-							disabled={loading}
-							accept=".tsv"
-						/>
-					</fieldset>
-					<ProgressBar loading={loading} data={libraryResponse} />
-
-					<button className="btn btn-success col-2 justify-self-center" disabled={loading}>
-						Submit
-					</button>
-
-					{loading ? (
-						<div className="flex justify-center">
-							<span className="loading loading-spinner loading-xl"></span>
+			<form className="grid grid-cols-12 gap-12 w-full" onSubmit={handleSubmit}>
+				{/* Left column: give more space to users */}
+				<div className="col-span-6 space-y-6">
+					<SubmitFormSection
+						title="Make submission private"
+						info="Only users added to this Project will be able to see private submissions."
+					>
+						<fieldset className="fieldset">
+							<label className="fieldset-label flex gap-2">
+								<input name="isPrivate" type="checkbox" className="checkbox" />
+								<p>Private submission</p>
+							</label>
+						</fieldset>
+					</SubmitFormSection>	
+					<SubmitFormSection
+						title="Add users to Project"
+						info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
+					>
+						<div className="flex flex-col w-3/4">
+							<UserAdder userIds={userIds} setUserIds={setUserIds} />
 						</div>
-					) : (
-						globalResponse?.statusMessage === "error" && (
-							<div className="flex justify-center">
-								<div className="tooltip tooltip-error" data-tip={globalResponse.error}>
-									<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
-										✕
-									</span>
+					</SubmitFormSection>
+				</div>
+
+				{/* Right column: files + progress + submit */}
+				<div className="col-span-6 ml-8">
+					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
+						<div className="space-y-2">
+							<fieldset className="fieldset">
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Project Metadata File:</legend>
+								<input
+									type="file"
+									className="file-input file-input-primary"
+									name="project"
+									required
+									disabled={loading}
+									accept=".tsv"
+								/>
+							</fieldset>
+							<ProgressBar loading={loading} data={projectResponse} />
+						</div>
+
+						<div className="space-y-2">
+							<fieldset className="fieldset">
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Sample Metadata File:</legend>
+								<input
+									type="file"
+									className="file-input file-input-primary"
+									name="sample"
+									required
+									disabled={loading}
+									accept=".tsv"
+								/>
+							</fieldset>
+							<ProgressBar loading={loading} data={sampleResponse} />
+						</div>
+
+						<div className="space-y-2">
+							<fieldset className="fieldset">
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Library (Experiment Run) Metadata File:</legend>
+								<input
+									type="file"
+									className="file-input file-input-primary"
+									name="library"
+									required
+									disabled={loading}
+									accept=".tsv"
+								/>
+							</fieldset>
+							<ProgressBar loading={loading} data={libraryResponse} />
+						</div>
+
+						<div className="pt-2 space-y-4">
+							<button className="btn btn-success" disabled={loading}>
+								Submit
+							</button>
+
+							{loading ? (
+								<div>
+									<span className="loading loading-spinner loading-xl"></span>
 								</div>
-							</div>
-						)
-					)}
-				</SubmitFormSection>
+							) : (
+								globalResponse?.statusMessage === "error" && (
+									<div>
+										<div className="tooltip tooltip-error" data-tip={globalResponse.error}>
+											<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+												✕
+											</span>
+										</div>
+									</div>
+								)
+							)}
+						</div>
+					</SubmitFormSection>
+				</div>
 			</form>
 
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>

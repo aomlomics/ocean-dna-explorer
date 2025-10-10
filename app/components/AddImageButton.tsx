@@ -2,7 +2,7 @@
 
 import { FormEvent, useRef, useState } from "react";
 import { Attribution } from "../generated/prismaImages/client";
-import addImageAction from "../actions/addImage";
+import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 
 export default function AddImageButton({ attributions }: { attributions: Attribution[] }) {
@@ -42,6 +42,7 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 			})
 		).url;
 		formData.set("url", url);
+		formData.delete("imageFile");
 
 		try {
 			const result = await addImageAction(formData, newAttribution);
@@ -69,7 +70,7 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 			</button>
 
 			<dialog ref={modalRef} className="modal">
-				<div className="modal-box">
+				<div className="modal-box w-[85vw] max-w-3xl max-h-[75vh] overflow-y-auto my-8">
 					<button
 						className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 						onClick={(e) => {

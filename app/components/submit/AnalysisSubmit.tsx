@@ -385,37 +385,42 @@ export default function AnalysisSubmit() {
 
 	return (
 		<>
-			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
-				<SubmitFormSection title="Project">
-					<div className="text-center w-full">
-						{project ? (
-							<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
-								{project.project_id}
-							</Link>
-						) : (
-							"No analysis selected yet"
-						)}
-					</div>
-				</SubmitFormSection>
-				<SubmitFormSection
-					title="Make submission private"
-					info="Only users added to the Project for these Analyses will be able to see private submissions."
-				>
-					<fieldset className="fieldset bg-base-100">
-						<label className="fieldset-label flex gap-2">
-							<input
-								type="checkbox"
-								className="checkbox"
-								checked={isPrivate}
-								onChange={(e) => setIsPrivate(e.target.checked)}
-								disabled={project?.isPrivate || false}
-							/>
-							<p>Private submission</p>
-						</label>
-					</fieldset>
-				</SubmitFormSection>
+			<form className="grid grid-cols-12 gap-10 w-full" onSubmit={handleSubmit}>
+				{/* Left column: project info and privacy */}
+				<div className="col-span-5 space-y-6">
+					<SubmitFormSection title="Project">
+						<div className="w-full">
+							{project ? (
+								<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+									{project.project_id}
+								</Link>
+							) : (
+								"No analysis selected yet"
+							)}
+						</div>
+					</SubmitFormSection>
+					<SubmitFormSection
+						title="Make submission private"
+						info="Only users added to the Project for these Analyses will be able to see private submissions."
+					>
+						<fieldset className="fieldset">
+							<label className="fieldset-label flex gap-2">
+								<input
+									type="checkbox"
+									className="checkbox"
+									checked={isPrivate}
+									onChange={(e) => setIsPrivate(e.target.checked)}
+									disabled={project?.isPrivate || false}
+								/>
+								<p>Private submission</p>
+							</label>
+						</fieldset>
+					</SubmitFormSection>
+				</div>
 
-				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
+				{/* Right column: files + progress + submit */}
+				<div className="col-span-7">
+					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
 					{analysisIds.map((id, i) => (
 						<AnalysisFormSection
 							key={i}
@@ -436,35 +441,39 @@ export default function AnalysisSubmit() {
 						/>
 					))}
 
-					<button
-						className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm col-2 justify-self-center"
-						type="button"
-						disabled={!!loading}
-						onClick={() => setAnalysisIds([...analysisIds, -2])}
-					>
-						<span className="text-base-content">+</span> Add Another Analysis to Submission
-					</button>
-
-					<button className="btn btn-success col-2 justify-self-center" disabled={loading}>
-						Submit
-					</button>
-
-					{loading ? (
-						<div className="flex justify-center">
-							<span className="loading loading-spinner loading-xl"></span>
-						</div>
-					) : (
-						errorMessage && (
-							<div className="flex justify-center">
-								<div className="tooltip tooltip-error" data-tip={errorMessage}>
-									<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
-										✕
-									</span>
-								</div>
+						<div className="pt-6 space-y-4">
+							<div className="flex gap-4">
+								<button
+									className="btn btn-base-100 text-base-content/80 hover:text-base-content"
+									type="button"
+									disabled={!!loading}
+									onClick={() => setAnalysisIds([...analysisIds, -2])}
+								>
+									+ Add Another Analysis
+								</button>
+								<button className="btn btn-success" disabled={loading}>
+									Submit
+								</button>
 							</div>
-						)
-					)}
-				</SubmitFormSection>
+
+							{loading ? (
+								<div>
+									<span className="loading loading-spinner loading-xl"></span>
+								</div>
+							) : (
+								errorMessage && (
+									<div>
+										<div className="tooltip tooltip-error" data-tip={errorMessage}>
+											<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+												✕
+											</span>
+										</div>
+									</div>
+								)
+							)}
+						</div>
+					</SubmitFormSection>
+				</div>
 			</form>
 
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
@@ -505,55 +514,61 @@ function AnalysisFormSection({
 	}
 
 	return (
-		<>
-			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
-				<h2 className="text-xl font-semibold text-base-content mb-4">{typeof id === "string" ? id : "New Analysis"}</h2>
+		<div className="border border-base-300 rounded-lg p-4 space-y-4 mb-4">
+			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between items-center">
+				<h3 className="text-lg font-normal text-primary">{typeof id === "string" ? id : "New Analysis"}</h3>
 				{deletable && (
 					<button className="btn btn-sm btn-error rounded-full" type="button" disabled={loading} onClick={onDelete}>
-						X
+						×
 					</button>
 				)}
 			</div>
 
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">Analysis Metadata File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`analysis_${id}`}
-					required
-					disabled={loading}
-					accept=".tsv"
-					onChange={onAnalysisChange}
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responseSet?.analysis} />
+			<div className="space-y-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Analysis Metadata File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`analysis_${id}`}
+						required
+						disabled={loading}
+						accept=".tsv"
+						onChange={onAnalysisChange}
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responseSet?.analysis} />
+			</div>
 
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`assignments_${id}`}
-					required
-					disabled={typeof id !== "string" || loading}
-					accept=".tsv"
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responseSet?.assignments} />
+			<div className="space-y-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend text-sm text-base-content/80 font-normal">ASV Taxa/Features File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`assignments_${id}`}
+						required
+						disabled={typeof id !== "string" || loading}
+						accept=".tsv"
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responseSet?.assignments} />
+			</div>
 
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">Occurrence Table File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`occurrences_${id}`}
-					required
-					disabled={typeof id !== "string" || loading}
-					accept=".tsv"
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responseSet?.occurrences} />
-		</>
+			<div className="space-y-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Occurrence Table File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`occurrences_${id}`}
+						required
+						disabled={typeof id !== "string" || loading}
+						accept=".tsv"
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responseSet?.occurrences} />
+			</div>
+		</div>
 	);
 }

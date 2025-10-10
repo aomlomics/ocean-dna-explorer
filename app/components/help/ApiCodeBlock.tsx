@@ -4,10 +4,19 @@ import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
+export default function ApiCodeBlock({
+	language,
+	url,
+	defaultClosed = false
+}: {
+	language: string;
+	url: string;
+	defaultClosed?: boolean;
+}) {
 	const [theme, setTheme] = useState("dark");
 	const [copied, setCopied] = useState(false);
 	const [code, setCode] = useState("Loading...");
+	const [isOpen, setIsOpen] = useState(!defaultClosed);
 
 	useEffect(() => {
 		async function doFetch() {
@@ -85,57 +94,98 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 		return "w-full max-w-3xl";
 	};
 
+	const toggleOpen = () => {
+		setIsOpen(!isOpen);
+	};
+
+	const previewCode = code.split("\n").slice(0, 3).join("\n") + (code.split("\n").length > 3 ? "\n..." : "");
+
 	return (
 		<div className={`bg-base-200 rounded-md overflow-hidden relative ${getWidthClass()}`}>
-			<button
-				onClick={handleCopy}
-				className="absolute right-2 top-2 p-2 rounded hover:bg-base-300 transition-colors"
-				aria-label="Copy code"
-			>
-				{copied ? (
-					// Checkmark icon when copied
+			<div className="flex justify-between items-center p-2 cursor-pointer" onClick={toggleOpen}>
+				<span className="font-mono text-sm">{isOpen ? "Hide Response" : "Show Response"}</span>
+				<div className="flex items-center">
+					<button
+						onClick={(e) => {
+							e.stopPropagation();
+							handleCopy();
+						}}
+						className="p-2 rounded hover:bg-base-300 transition-colors"
+						aria-label="Copy code"
+					>
+						{copied ? (
+							// Checkmark icon when copied
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<polyline points="20 6 9 17 4 12"></polyline>
+							</svg>
+						) : (
+							// Copy icon
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+							</svg>
+						)}
+					</button>
 					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
+						className={`w-5 h-5 transition-transform transform ${isOpen ? "rotate-180" : ""}`}
 						fill="none"
 						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<polyline points="20 6 9 17 4 12"></polyline>
-					</svg>
-				) : (
-					// Copy icon
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
 						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
+						xmlns="http://www.w3.org/2000/svg"
 					>
-						<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-						<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
 					</svg>
-				)}
-			</button>
-			<SyntaxHighlighter
-				language={language}
-				style={theme === "dark" ? darkTheme : lightTheme}
-				customStyle={{
-					margin: 0,
-					padding: "1rem"
-				}}
-				wrapLongLines={true}
-			>
-				{code}
-			</SyntaxHighlighter>
+				</div>
+			</div>
+			{isOpen ? (
+				<SyntaxHighlighter
+					language={language}
+					style={theme === "dark" ? darkTheme : lightTheme}
+					customStyle={{
+						margin: 0,
+						padding: "1rem",
+						paddingTop: 0
+					}}
+					wrapLongLines={true}
+				>
+					{code}
+				</SyntaxHighlighter>
+			) : (
+				<SyntaxHighlighter
+					language={language}
+					style={theme === "dark" ? darkTheme : lightTheme}
+					customStyle={{
+						margin: 0,
+						padding: "1rem",
+						paddingTop: 0,
+						maxHeight: "100px", // Limit height of the preview
+						overflow: "hidden"
+					}}
+					wrapLongLines={false}
+				>
+					{previewCode}
+				</SyntaxHighlighter>
+			)}
 		</div>
 	);
 }

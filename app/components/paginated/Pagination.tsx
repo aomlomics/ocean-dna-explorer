@@ -34,7 +34,7 @@ export default function Pagination({
 	if (where) {
 		whereQuery = { ...where };
 	}
-	if (searchParams.size) {
+	if (searchParams) {
 		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
 	}
 	query.set("where", JSON.stringify(whereQuery));
@@ -81,7 +81,7 @@ export default function Pagination({
 			/>
 
 			{/* Project Cards */}
-			<div className="grid gap-4">
+			<div className={`flex flex-col gap-4 ${table === "sample" ? "items-start" : "items-center"}`}>
 				{data.result.map((d: any, i: number) => (
 					<Link
 						href={`/explore/${table}/${
@@ -90,46 +90,74 @@ export default function Pagination({
 								: TableMetadata[table].titleField.map((field) => encodeURIComponent(d[field])).join("/")
 						}`}
 						key={i}
-						className="card bg-base-200 hover:bg-base-300 transition-all duration-200"
+						className="card bg-base-200 hover:bg-base-300 transition-all duration-200 w-full max-w-lg"
 					>
 						<div className="card-body p-5">
 							<div className="flex flex-col gap-2">
 								{/* Title with hover animation */}
-								{typeof TableMetadata[table].titleField === "string" ? (
-									<h3 className="text-lg text-primary">{d[TableMetadata[table].titleField]}</h3>
-								) : (
-									<div
-										className="grid gap-x-4"
-										style={{ gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))` }}
-									>
-										{TableMetadata[table].titleField.map((t) => (
-											<h3 key={`${t}1`} className="text-lg font-medium text-primary">
-												{t}:
-											</h3>
-										))}
-										{TableMetadata[table].titleField.map((t) => (
-											<h3 key={`${t}2`} className="font-medium text-primary break-words">
-												{d[t]}
-											</h3>
-										))}
-									</div>
+								{table !== "primer" && (
+									<>
+										{typeof TableMetadata[table].titleField === "string" ? (
+											<h3 className="text-lg text-primary break-all">{d[TableMetadata[table].titleField]}</h3>
+										) : (
+											<div
+												className="grid gap-x-4"
+												style={{
+													gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))`
+												}}
+											>
+												{TableMetadata[table].titleField.map((t) => (
+													<h3 key={`${t}1`} className="text-lg font-medium text-primary">
+														{t}:
+													</h3>
+												))}
+												{TableMetadata[table].titleField.map((t) => (
+													<h3 key={`${t}2`} className="font-medium text-primary break-words">
+														{d[t]}
+													</h3>
+												))}
+											</div>
+										)}
+									</>
 								)}
 
 								{/* Info section with clean layout */}
-								{TableMetadata[table].subFields && (
-									<div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-base-content/70">
-										{TableMetadata[table].subFields.map((field) => (
-											<div key={field} className="flex items-center gap-2">
-												<span className="font-medium">{field}:</span>
-												<span className="break-all">{d[field]}</span>
+								{TableMetadata[table].subFields &&
+									(table === "primer" ? (
+										<div className="flex flex-col gap-2 text-sm">
+											<div>
+												<p className="text-lg text-primary">
+													pcr_primer_name_forward: {d["pcr_primer_name_forward"]}
+												</p>
+												<div>
+													<span className="font-medium text-base-content/70">Sequence: </span>
+													<span className="break-all text-base-content">{d["pcr_primer_forward"]}</span>
+												</div>
 											</div>
-										))}
-									</div>
-								)}
+											<div className="pt-2">
+												<p className="text-lg text-primary">
+													pcr_primer_name_reverse: {d["pcr_primer_name_reverse"]}
+												</p>
+												<div>
+													<span className="font-medium text-base-content/70">Sequence: </span>
+													<span className="break-all text-base-content">{d["pcr_primer_reverse"]}</span>
+												</div>
+											</div>
+										</div>
+									) : (
+										<div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-base-content/70">
+											{TableMetadata[table].subFields.map((field) => (
+												<div key={field} className="flex items-center gap-2">
+													<span className="font-medium">{field}:</span>
+													<span className="break-all text-base-content">{d[field]}</span>
+												</div>
+											))}
+										</div>
+									))}
 
 								{/* Stats with subtle separator */}
 								{relCounts && (
-									<div className="flex gap-6 pt-1">
+									<div className="flex flex-wrap gap-6 pt-1">
 										{relCounts.map((rel) => (
 											<div key={rel} className="flex items-center gap-2">
 												<span className="text-lg font-medium">{d._count[rel]}</span>
