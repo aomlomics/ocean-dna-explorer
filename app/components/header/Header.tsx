@@ -16,7 +16,7 @@ export default async function Header() {
 	return (
 		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
-			<div className="navbar-start pr-4 sm:pr-6 xl:pr-8">
+			<div className="navbar-start pr-2 sm:pr-6 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
 				<MobileMenu />
 
@@ -36,7 +36,7 @@ export default async function Header() {
 							/>
 						</div>
 					</Link>
-					<div className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded-md ml-2 sm:ml-4 lg:ml-6">
+					<div className="bg-orange-500 text-white text-xs font-semibold px-2 py-1 rounded-md sm:ml-2 sm:px-3 lg:ml-8 lg:px-4">
 						BETA
 					</div>
 				</div>
