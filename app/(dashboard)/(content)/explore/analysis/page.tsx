@@ -62,23 +62,23 @@ options: filterOptions.otu_clust_tool
 	];
 
 	return (
-		<ExplorePage table="analysis" tableConfig={tableConfig} title="Analyses">
-			<div className="w-full space-y-4">
-				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						Bioinformatic processing runs that convert raw sequence data into species detections, documenting all
-						parameters and methods used.
-					</p>
-					<p className="text-sm">
-						For more detailed information, visit our{" "}
-						<Link href="/help" className="text-primary hover:underline">
-							Help page
-						</Link>
-						.
-					</p>
-				</div>
-				<ExploreTabButtons />
-			</div>
-		</ExplorePage>
-	);
+        <ExplorePage table="analysis" tableConfig={tableConfig} title="Analyses">
+            <div className="w-full space-y-4">
+                <div className="text-base-content/80 pb-4 space-y-2">
+                    <p>
+                        Bioinformatic processing runs that convert raw sequence data into species detections, documenting all
+                        parameters and methods used.
+                    </p>
+                    <p className="text-sm">
+                        For more detailed information, visit our{" "}
+                        <Link href="/help" className="text-primary hover:underline">
+                            Help page
+                        </Link>
+                        .
+                    </p>
+                </div>
+                <ExploreTabButtons />
+            </div>
+        </ExplorePage>
+    );
 }

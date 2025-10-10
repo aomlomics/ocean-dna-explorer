@@ -8,12 +8,12 @@ import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
-import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
+import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
+import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
+import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
 import { doProgressAction } from "@/app/helpers/progress";
 
 type ResponseSet = {
@@ -196,6 +196,12 @@ export default function AnalysisSubmit() {
 			}
 		}
 
+		if (!project) {
+			setErrorMessage("No project_id found.");
+			modalRef.current?.showModal();
+			return;
+		}
+
 		const target = event.target as HTMLFormElement;
 
 		const activeIds = analysisIds.filter((id) => typeof id === "string");
@@ -211,46 +217,71 @@ export default function AnalysisSubmit() {
 					});
 				}
 
-				//analysis submit
-				const analysisFile = target[`analysis_${id}`].files[0] as File;
-				//submit analysis file
-				const analysisError = await doProgressAction({
-					action: analysisSubmitAction,
-					reducer: { id, key: "analysis", setter: setResponses },
-					args: [analysisFile, isPrivate]
-				});
-				//handle errors
-				if (analysisError) {
-					setErrorMessage(analysisError);
-					modalRef.current?.showModal();
-					return;
-				}
-
 				try {
+					//analysis submit
+					const analysisFile = target[`analysis_${id}`].files[0] as File;
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
+					});
+					const analysisUrl = (
+						await upload(`submissions/${analysisFile.name}`, analysisFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
+					).url;
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
+					//submit analysis file url
+					const analysisError = await doProgressAction({
+						action: analysisSubmitAction,
+						reducer: { id, key: "analysis", setter: setResponses },
+						args: [analysisUrl, isPrivate]
+					});
+					//handle errors
+					if (analysisError) {
+						setErrorMessage(analysisError);
+						modalRef.current?.showModal();
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+
+						return;
+					}
+
 					//assignments submit
 					const assignmentsFile = target[`assignments_${id}`].files[0] as File;
 					//upload file to blob storage
 					setResponses({
 						id,
 						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
 					});
 					const assignmentsUrl = (
-						await upload(assignmentsFile.name, assignmentsFile, {
+						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
 							access: "public",
 							handleUploadUrl: "/api/file/upload",
 							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit assignments file url
 					const assignmentsError = await doProgressAction({
 						action: assignSubmitAction,
 						reducer: { id, key: "assignments", setter: setResponses },
 						args: [id, assignmentsUrl]
-					});
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
-						method: "DELETE"
 					});
 					//handle errors
 					if (assignmentsError) {
@@ -262,6 +293,15 @@ export default function AnalysisSubmit() {
 						if (deleteResponse.statusMessage === "error") {
 							setErrorMessage(assignmentsError + "\n" + deleteResponse.error);
 						}
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
+							method: "DELETE"
+						});
+
 						return;
 					}
 
@@ -274,7 +314,7 @@ export default function AnalysisSubmit() {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
 					});
 					const occurrencesUrl = (
-						await upload(occurrencesFile.name, occurrencesFile, {
+						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
 							access: "public",
 							handleUploadUrl: "/api/file/upload",
 							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -286,10 +326,7 @@ export default function AnalysisSubmit() {
 						reducer: { id, key: "occurrences", setter: setResponses },
 						args: [id, occurrencesUrl]
 					});
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
-						method: "DELETE"
-					});
+
 					//handle errors
 					if (occurrencesError) {
 						setErrorMessage(occurrencesError);
@@ -300,6 +337,18 @@ export default function AnalysisSubmit() {
 						if (deleteResponse.statusMessage === "error") {
 							setErrorMessage(occurrencesError + "\n" + deleteResponse.error);
 						}
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
+							method: "DELETE"
+						});
+
 						return;
 					}
 				} catch (err) {

@@ -50,22 +50,29 @@ export default function UserAdder({
 
 	useEffect(() => {
 		async function getCurrentUsers() {
-			const response = await fetch(`/api/user?userIds=${userIds.join(",")}`);
-			if (response.ok) {
-				const json = (await response.json()) as NetworkPacket;
-				if (json.statusMessage === "success") {
-					setUsers(json.result);
-				} else if (json.statusMessage === "error") {
-					setLoadingError(json.error);
+			if (userId) {
+				let fetchIds = userIds;
+				if (userIds.length === 1 && !userIds[0]) {
+					fetchIds = [userId];
 				}
-			} else {
-				setLoadingError(response.statusText);
-				setSearchedUsers([]);
+				const response = await fetch(`/api/user?userIds=${fetchIds.join(",")}`);
+				if (response.ok) {
+					const json = (await response.json()) as NetworkPacket;
+					if (json.statusMessage === "success") {
+						console.log(userId, json.result);
+						setUsers(json.result);
+					} else if (json.statusMessage === "error") {
+						setLoadingError(json.error);
+					}
+				} else {
+					setLoadingError(response.statusText);
+					setSearchedUsers([]);
+				}
 			}
 		}
 
 		getCurrentUsers();
-	}, []);
+	}, [userId]);
 
 	useEffect(() => {
 		setSearch("");

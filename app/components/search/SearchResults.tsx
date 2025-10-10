@@ -32,7 +32,19 @@ export default function SearchResults() {
 					table === "taxonomy" ? (
 						<TaxaGrid ignoreParams={["table"]} />
 					) : (
-						<Table table={table} ignoreParams={["table"]} defaultTake={25} />
+						<Table
+							table={table}
+							ignoreParams={["table"]}
+							defaultTake={25}
+							omit={[
+								"projectMetadataFileUrl_ODE",
+								"sampleMetadataFileUrl_ODE",
+								"libraryMetadataFileUrl_ODE",
+								"analysisMetadataFileUrl_ODE",
+								"asvFileUrl_ODE",
+								"occurrenceFileUrl_ODE"
+							]}
+						/>
 					)
 				) : (
 					<>All Tables Results</>

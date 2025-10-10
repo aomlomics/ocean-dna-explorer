@@ -1,7 +1,6 @@
 import { Permission, Role } from "./globals";
 import { z } from "zod";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import { unsafePrisma } from "@/app/helpers/prisma";
 
 export const EXPLORE_ROUTES = {
 	project: "Projects",
@@ -78,7 +77,7 @@ export const TaxonomicRanks = [
 
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 
-export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined"];
+export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined", "deleted_ODE"];
 
 export const QueryModes = ["equals", "contains", "startsWith", "endsWith", "lt", "lte", "gt", "gte", "range"];
 

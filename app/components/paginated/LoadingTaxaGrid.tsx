@@ -1,3 +1,4 @@
+import LoadingText from "../LoadingText";
 import LoadingPaginationControls from "./LoadingPaginationControls";
 
 export default function LoadingTaxaGrid({ cols = 5 }: { cols?: number }) {

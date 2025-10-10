@@ -1,4 +1,3 @@
-import { Prisma } from "@/app/generated/prisma/client";
 import { handlePrismaError, unsafePrisma } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -28,28 +27,29 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 			}
 		});
 
-		console.log("empty features delete");
-		await unsafePrisma.feature.deleteMany({
-			where: {
-				Occurrences: {
-					none: {}
-				}
-			}
-		});
+		// console.log("empty features delete");
+		// await unsafePrisma.feature.deleteMany({
+		// 	where: {
+		// 		Occurrences: {
+		// 			none: {}
+		// 		}
+		// 	}
+		// });
 
-		console.log("empty taxonomies delete");
-		await unsafePrisma.taxonomy.deleteMany({
-			where: {
-				Assignments: {
-					none: {}
-				}
-			}
-		});
+		// console.log("empty taxonomies delete");
+		// await unsafePrisma.taxonomy.deleteMany({
+		// 	where: {
+		// 		Assignments: {
+		// 			none: {}
+		// 		}
+		// 	}
+		// });
 
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
-			return NextResponse.json(handlePrismaError(err));
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return NextResponse.json(prismaErr);
 		}
 
 		const error = err as Error;

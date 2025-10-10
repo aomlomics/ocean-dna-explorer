@@ -1,16 +1,14 @@
 import { Taxonomy } from "@/app/generated/prisma/client";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
+import { RanksBySpecificity } from "@/types/objects";
 
 export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const errorImg = <>No Image</>;
-
-	let ranksBySpecificity = ["species", "genus", "family", "order", "class", "phylum", "kingdom"] as Array<
-		keyof typeof taxonomy
-	>;
+	console.log(taxonomy);
 
 	let gbifTaxonomy;
 	let imageDetails = { rank: "", title: "" };
-	for (const rank of ranksBySpecificity) {
+	for (const rank of RanksBySpecificity) {
 		if (taxonomy[rank] && /^[a-zA-Z]+$/.test(taxonomy[rank].toString())) {
 			//retrieve suggested taxonomies from GBIF
 			//TODO: split more logically
@@ -18,10 +16,15 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 			const gbifTaxa = await gbifTaxaRes.json();
 			//get only the taxonomies that match the specific rank
 			//TODO: check GBIF API docs to do this step in the previous fetch
-			gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank)[0]; // If you remove the 0, you will get a list of all the taxa that match the rank
-			if (gbifTaxonomy) {
-				imageDetails.rank = rank;
-				break;
+			const gbifTaxonomyArr = gbifTaxa.filter(
+				(taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank && taxa.status === "ACCEPTED"
+			);
+			if (gbifTaxonomyArr.length) {
+				if (gbifTaxonomyArr.length === 1) {
+					gbifTaxonomy = gbifTaxonomyArr[0];
+					imageDetails.rank = rank;
+					break;
+				}
 			}
 		}
 	}
