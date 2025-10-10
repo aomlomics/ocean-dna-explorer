@@ -54,6 +54,7 @@ export default function Table({
 		setColumnsFilter(f);
 	}, 300);
 
+	omit = [...omit, ...GlobalOmit];
 	const title = TableMetadata[table].titleField;
 
 	//api call
@@ -95,11 +96,13 @@ export default function Table({
 
 				for (let row of data.result) {
 					for (let [field, value] of Object.entries(row)) {
-						if (value === null && !exemptFields[field]) {
-							emptyFields[field] = true;
-						} else if (emptyFields[field]) {
-							delete emptyFields[field];
-							exemptFields[field] = true;
+						if (!omit.includes(field)) {
+							if (value === null && !exemptFields[field]) {
+								emptyFields[field] = true;
+							} else {
+								delete emptyFields[field];
+								exemptFields[field] = true;
+							}
 						}
 					}
 				}
@@ -181,8 +184,6 @@ export default function Table({
 	if (isLoading) return <LoadingTable />;
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
-
-	omit = [...omit, ...GlobalOmit];
 
 	function handlePageHover(dir = 1) {
 		let query = new URLSearchParams({
