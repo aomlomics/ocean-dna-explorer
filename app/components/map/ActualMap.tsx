@@ -203,9 +203,13 @@ export default function ActualMap({
 		setPoints(tempPoints);
 	}
 
+	//shapes
+	useEffect(() => {
+		checkShapes();
+	}, [shapes]);
+
 	//zoomLevel
 	useEffect(() => {
-		//TODO: doesn't cluster on first page load
 		let tempLocations = [...filteredLocations];
 		//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
 		if (cluster) {
@@ -237,11 +241,6 @@ export default function ActualMap({
 
 		checkShapes(tempLocations);
 	}, [zoomLevel]);
-
-	//shapes
-	useEffect(() => {
-		checkShapes();
-	}, [shapes]);
 
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
 	useEffect(() => {
