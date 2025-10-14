@@ -47,7 +47,7 @@ export default function TaxaGrid({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/pagination/taxonomy?${query.toString()}`,
+		`/api/taxonomy/pagination?${query.toString()}`,
 		fetcher,
 		{
 			keepPreviousData: true
@@ -75,7 +75,7 @@ export default function TaxaGrid({
 			query.set("orderBy", JSON.stringify(orderBy));
 		}
 
-		preload(`/api/pagination/taxonomy?${query.toString()}`, fetcher);
+		preload(`/api/taxonomy/pagination?${query.toString()}`, fetcher);
 	}
 
 	return (

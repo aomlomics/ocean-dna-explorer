@@ -44,7 +44,7 @@ export default function Pagination({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/pagination/${table}?${query.toString()}`,
+		`/api/${table}/pagination?${query.toString()}`,
 		fetcher,
 		{
 			keepPreviousData: true
@@ -66,7 +66,7 @@ export default function Pagination({
 			query.set("relCounts", relCounts.toString());
 		}
 
-		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
+		preload(`/api/${table}/pagination?${query.toString()}`, fetcher);
 	}
 
 	return (

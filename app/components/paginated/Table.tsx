@@ -85,7 +85,7 @@ export default function Table({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/pagination/${table}?${query.toString()}`,
+		`/api/${table}/pagination?${query.toString()}`,
 		fetcher
 	);
 
@@ -208,7 +208,7 @@ export default function Table({
 			}
 		}
 
-		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
+		preload(`/api/${table}/pagination?${query.toString()}`, fetcher);
 	}
 
 	//filters in the column header
@@ -269,39 +269,45 @@ export default function Table({
 			>
 				<div className="flex justify-between items-center mb-4">
 					{/* Left side: Filters */}
-					<div className="flex items-center gap-2 flex-1">
-						{!hideFilters && (
-							<>
-								<button
-									onClick={resetForm}
-									className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
-									type="button"
-								>
-									Clear Filters
-								</button>
-								<button
-									type="submit"
-									className={`btn btn-sm ${pendingFilters > 0 ? "btn-primary" : "bg-base-100 border border-base-300"}`}
-								>
-									Apply Filters {pendingFilters > 0 && `(${pendingFilters})`}
-								</button>
-							</>
-						)}
-						<label className="input input-sm input-bordered flex items-center gap-2">
-							Per Page:
-							<input name="take" defaultValue={take} type="number" className="grow w-12" />
-						</label>
+					<div className="flex-1 flex">
+						<div className="flex items-center gap-2">
+							{!hideFilters && (
+								<>
+									<button
+										onClick={resetForm}
+										className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
+										type="button"
+									>
+										Clear Filters
+									</button>
+									<button
+										type="submit"
+										className={`btn btn-sm ${
+											pendingFilters > 0 ? "btn-primary" : "bg-base-100 border border-base-300"
+										}`}
+									>
+										Apply Filters {pendingFilters > 0 && `(${pendingFilters})`}
+									</button>
+								</>
+							)}
+							<label className="input input-sm input-bordered">
+								Per Page:
+								<input name="take" defaultValue={take} type="number" />
+							</label>
+						</div>
 					</div>
 					{/* Pagination Controls */}
-					<PaginationControls
-						page={page}
-						take={take}
-						count={data.count}
-						handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
-						handlePageHover={handlePageHover}
-					/>
+					<div className="flex-1">
+						<PaginationControls
+							page={page}
+							take={take}
+							count={data.count}
+							handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+							handlePageHover={handlePageHover}
+						/>
+					</div>
 					{/* Column Selection Button */}
-					<div className="grid grid-cols-2 w-full gap-5">
+					<div className="grid grid-cols-2 w-full gap-5 flex-1">
 						<div className="dropdown dropdown-end justify-self-end">
 							<div tabIndex={0} role="button" className="btn btn-sm">
 								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns

@@ -226,10 +226,11 @@ export const TableNames = Object.keys(TableMetadata) as Uncapitalize<Prisma.Mode
 
 //duplicates keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
-for (const model of TableNames) {
+for (const model of Object.keys(Prisma.ModelName)) {
 	(TableMetadata as any)[model] = TableMetadata[uncapitalizeTable(model as Prisma.ModelName)];
 }
 
+console.log(Object.keys(TableMetadata));
 export default TableMetadata as Record<
 	Uncapitalize<Prisma.ModelName> | Prisma.ModelName,
 	{
