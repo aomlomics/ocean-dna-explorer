@@ -34,16 +34,16 @@ function getShape(shape: any) {
 		return {
 			type: shape.layerType,
 			bounds: {
-				ne: shape.layer._bounds._northEast,
-				sw: shape.layer._bounds._southWest
+				ne: shape.layer.getBounds().getNorthEast(),
+				sw: shape.layer.getBounds().getSouthWest()
 			},
-			points: shape.layer._latlngs[0]
+			points: shape.layer.getLatLngs()[0]
 		};
 	} else if (shape.layerType === "circle") {
 		return {
 			type: shape.layerType,
-			center: shape.layer._latlng,
-			radius: shape.layer._mRadius
+			center: shape.layer.getLatLng(),
+			radius: shape.layer.getRadius()
 		};
 	}
 }
@@ -323,18 +323,25 @@ export default function ActualMap({
 						<EditControl
 							position="topright"
 							onEdited={(e) => {
-								const temp = { ...shapes };
+								const temp = {} as typeof shapes;
 								for (const edit of Object.keys(e.layers._layers)) {
-									temp[edit] = getShape(e.layers._layers[edit]) as (typeof shapes)[keyof typeof shapes];
+									if (shapes[edit]) {
+										temp[edit] = getShape({
+											layerType: shapes[edit].type,
+											layer: e.layers._layers[edit]
+										}) as (typeof shapes)[keyof typeof shapes];
+									}
 								}
-								setShapes(temp);
+								if (Object.keys(temp).length) {
+									setShapes({ ...shapes, ...temp });
+								}
 							}}
-							onCreated={(e) =>
+							onCreated={(e) => {
 								setShapes({
 									...shapes,
 									[e.layer._leaflet_id]: getShape(e)
-								})
-							}
+								});
+							}}
 							onDeleted={(e) => {
 								const temp = { ...shapes };
 								for (const del of Object.keys(e.layers._layers)) {
