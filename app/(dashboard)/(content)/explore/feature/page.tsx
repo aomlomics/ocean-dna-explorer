@@ -25,7 +25,7 @@ export default async function Feature() {
 	];
 
 	return (
-		<ExplorePage table="feature" tableConfig={tableConfig} title="Features">
+		<ExplorePage table="feature" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
 					<p>
@@ -34,7 +34,7 @@ export default async function Feature() {
 					</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
-						<Link href="/help" className="text-primary hover:underline">
+						<Link href="/help" className="link link-primary link-hover">
 							Help page
 						</Link>
 						.

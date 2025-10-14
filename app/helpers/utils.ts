@@ -238,6 +238,10 @@ export function uncapitalizeTable(table: Prisma.ModelName) {
 	return (table.slice(0, 1).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
 }
 
+export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
+	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+}
+
 export function getSubmissionFileName(value: string) {
 	const url = new URL(value);
 	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {

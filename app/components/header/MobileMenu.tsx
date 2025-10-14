@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default function MobileMenu() {
@@ -75,7 +75,7 @@ export default function MobileMenu() {
 						<details>
 							<summary className="text-base">Explore</summary>
 							<ul className="p-2">
-								{Object.keys(Prisma.ModelName).map((table) => (
+								{TableNames.map((table) => (
 									<li key={table} className="py-1">
 										<Link href={`/explore/${uncapitalizeTable(table as Prisma.ModelName)}`} onClick={handleClose}>
 											{TableMetadata[table as Prisma.ModelName].plural}

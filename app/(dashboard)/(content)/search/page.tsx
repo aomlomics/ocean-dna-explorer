@@ -3,7 +3,7 @@
 import { useSearchParams, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 
 export default function Search() {
 	const searchParams = useSearchParams();
@@ -65,13 +65,11 @@ export default function Search() {
 					<option value="" disabled>
 						Select Table
 					</option>
-					{Object.keys(Prisma.ModelName)
-						.sort()
-						.map((table) => (
-							<option key={table} value={table} onClick={(e) => searchRef.current?.focus()}>
-								{table}
-							</option>
-						))}
+					{TableNames.map((table) => (
+						<option key={table} value={table} onClick={(e) => searchRef.current?.focus()}>
+							{table}
+						</option>
+					))}
 				</select>
 			</div>
 

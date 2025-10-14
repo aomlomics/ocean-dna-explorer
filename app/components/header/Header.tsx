@@ -9,7 +9,7 @@ import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default async function Header() {
@@ -52,7 +52,7 @@ export default async function Header() {
 					<TabDropdown
 						tabName="Explore"
 						route="/explore"
-						dropdown={Object.keys(Prisma.ModelName).map((table) => ({
+						dropdown={TableNames.map((table) => ({
 							label: TableMetadata[table as Prisma.ModelName].plural,
 							href: `/explore/${uncapitalizeTable(table as Prisma.ModelName)}`
 						}))}

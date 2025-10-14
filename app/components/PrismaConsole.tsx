@@ -8,6 +8,7 @@ import { Prisma } from "../generated/prisma/client";
 import JSON5 from "json5";
 import unsafeConsoleAction from "../actions/unsafeConsole";
 import { uncapitalizeTable } from "../helpers/utils";
+import { TableNames } from "@/types/tableMetadata";
 
 export default function PrismaConsole({ modelQueries }: { modelQueries: string[] }) {
 	const [confirmed, setConfirmed] = useState(false);
@@ -121,13 +122,11 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 							<option value="" disabled>
 								Select Table
 							</option>
-							{Object.keys(Prisma.ModelName)
-								.sort()
-								.map((table) => (
-									<option key={table} value={uncapitalizeTable(table as Prisma.ModelName)}>
-										{uncapitalizeTable(table as Prisma.ModelName)}
-									</option>
-								))}
+							{TableNames.map((table) => (
+								<option key={table} value={uncapitalizeTable(table as Prisma.ModelName)}>
+									{uncapitalizeTable(table as Prisma.ModelName)}
+								</option>
+							))}
 						</select>
 
 						<select className="select select-primary" defaultValue="" required name="modelQuery">

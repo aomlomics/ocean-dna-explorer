@@ -9,7 +9,7 @@ export default function UnderConstruction({ message }: UnderConstructionProps) {
 
 	return (
 		<div className="flex flex-col text-main">
-			<section className="max-w-2xl mx-auto -mt-8 py-16">
+			<section className="max-w-2xl mx-auto py-16 pt-0">
 				<div className="relative w-48 h-48 mx-auto">
 					<Image
 						src="/images/construction_octo.png"

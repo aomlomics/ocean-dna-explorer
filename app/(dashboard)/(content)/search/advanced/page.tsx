@@ -4,7 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Map from "@/app/components/map/Map";
@@ -179,13 +179,11 @@ export default function AdvancedSearch() {
 						<option disabled value="">
 							Select Table
 						</option>
-						{Object.keys(Prisma.ModelName)
-							.sort()
-							.map((table) => (
-								<option key={table} value={table}>
-									{table}
-								</option>
-							))}
+						{TableNames.map((table) => (
+							<option key={table} value={table}>
+								{table}
+							</option>
+						))}
 					</select>
 				</div>
 
@@ -400,19 +398,17 @@ function Filter({
 						<option value="" disabled>
 							Select Relation
 						</option>
-						{Object.keys(Prisma.ModelName)
-							.sort()
-							.reduce((acc, table) => {
-								if (table !== searchTable) {
-									acc.push(
-										<option key={table} value={table}>
-											{table}
-										</option>
-									);
-								}
+						{TableNames.reduce((acc, table) => {
+							if (table !== searchTable) {
+								acc.push(
+									<option key={table} value={table}>
+										{table}
+									</option>
+								);
+							}
 
-								return acc;
-							}, [] as ReactNode[])}
+							return acc;
+						}, [] as ReactNode[])}
 					</select>
 				</div>
 			)}

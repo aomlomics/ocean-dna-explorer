@@ -20,8 +20,6 @@ export default function ProjectSubmit() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 
-	const [project_id, setProject_id] = useState("");
-
 	//response state variables that will have information streamed to them
 	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
 	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket);
@@ -79,69 +77,6 @@ export default function ProjectSubmit() {
 		setLoading(false);
 		setErrorMessage(err);
 		modalRef.current?.showModal();
-	}
-
-	//get project_id from projectMetadata file for blob store
-	async function handleProjectFile(event: ChangeEvent<HTMLInputElement>) {
-		if (event.currentTarget.files && event.currentTarget.files[0]) {
-			const file = event.currentTarget.files[0] as File;
-
-			let headers;
-			const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
-			for await (const record of parser) {
-				if (!headers) {
-					headers = Object.keys(record);
-
-					//check if headers have term_name
-					if (!headers.includes("term_name")) {
-						setErrorMessage('No column with title "term_name" found.');
-						modalRef.current?.showModal();
-						event.target.value = "";
-						return;
-					}
-
-					//check if headers have project_level
-					if (!headers.includes("project_level")) {
-						setErrorMessage('No column with title "project_level" found.');
-						modalRef.current?.showModal();
-						event.target.value = "";
-						return;
-					}
-				}
-
-				if (record.term_name && record.term_name === "project_id") {
-					const value = record.project_level;
-
-					if (record.project_level) {
-						//get project from database
-						const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
-						const json = (await response.json()) as NetworkPacket;
-
-						//handle errors
-						if (json.statusMessage === "error") {
-							setErrorMessage(json.error);
-							modalRef.current?.showModal();
-							event.target.value = "";
-							return;
-						} else {
-							if (json.result[0]) {
-								setErrorMessage(`Project with project_id of "${value}" already exists.`);
-								modalRef.current?.showModal();
-								event.target.value = "";
-							} else {
-								setProject_id(value);
-							}
-						}
-					} else {
-						setErrorMessage('No value found in "project_level" column for project_id.');
-						modalRef.current?.showModal();
-						event.target.value = "";
-					}
-
-					return;
-				}
-			}
-		}
 	}
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -227,7 +162,7 @@ export default function ProjectSubmit() {
 								<p>Private submission</p>
 							</label>
 						</fieldset>
-					</SubmitFormSection>	
+					</SubmitFormSection>
 					<SubmitFormSection
 						title="Add users to Project"
 						info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
@@ -240,10 +175,15 @@ export default function ProjectSubmit() {
 
 				{/* Right column: files + progress + submit */}
 				<div className="col-span-6 ml-8">
-					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
+					<SubmitFormSection
+						title="Upload files"
+						className="space-y-6 w-full text-base-content/80 text-base font-normal"
+					>
 						<div className="space-y-2">
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Project Metadata File:</legend>
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">
+									Project Metadata File:
+								</legend>
 								<input
 									type="file"
 									className="file-input file-input-primary"
@@ -258,7 +198,9 @@ export default function ProjectSubmit() {
 
 						<div className="space-y-2">
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Sample Metadata File:</legend>
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">
+									Sample Metadata File:
+								</legend>
 								<input
 									type="file"
 									className="file-input file-input-primary"
@@ -273,7 +215,9 @@ export default function ProjectSubmit() {
 
 						<div className="space-y-2">
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Library (Experiment Run) Metadata File:</legend>
+								<legend className="fieldset-legend text-sm text-base-content/80 font-normal">
+									Library (Experiment Run) Metadata File:
+								</legend>
 								<input
 									type="file"
 									className="file-input file-input-primary"

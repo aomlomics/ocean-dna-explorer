@@ -1,21 +1,13 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import { Metadata } from "next";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-	title: "Explore Occurrences"
-};
-
-const Page = async () => {
+export default function Library() {
 	return (
-		<ExplorePage table="occurrence" tableConfig={[]}>
+		<ExplorePage table="assayMetadata" tableConfig={[]} underConstruction>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						Individual detection records linking samples to specific DNA sequences (Features), including their
-						quantified abundance.
-					</p>
+					<p>TODO: Replace this with text describing a Library.</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">
@@ -28,6 +20,4 @@ const Page = async () => {
 			</div>
 		</ExplorePage>
 	);
-};
-
-export default Page;
+}

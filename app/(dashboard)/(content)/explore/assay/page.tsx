@@ -6,9 +6,6 @@ import { DeadBooleanEnum } from "@/types/enums";
 import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import Table from "@/app/components/paginated/Table";
-import Pagination from "@/app/components/paginated/Pagination";
-import TableFilter from "@/app/components/explore/filters/TableFilter";
 
 export default async function Assay() {
 	const assays = await prisma.assay.findMany({
@@ -52,19 +49,19 @@ export default async function Assay() {
 			options: filterOptions.pcr_primer_reverse
 		},
 		{
-			field: { rel: "Primer", f: "pcr_primer_name_forward" },
+			field: "pcr_primer_name_forward",
 			type: "select",
-			options: primerFilterOptions.pcr_primer_name_forward
+			options: filterOptions.pcr_primer_name_forward
 		},
 		{
-			field: { rel: "Primer", f: "pcr_primer_name_reverse" },
+			field: "pcr_primer_name_reverse",
 			type: "select",
-			options: primerFilterOptions.pcr_primer_name_reverse
+			options: filterOptions.pcr_primer_name_reverse
 		}
 	];
 
 	return (
-		<ExplorePage table="assay" tableConfig={tableConfig} title="Assays">
+		<ExplorePage table="assay" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
 					<p>
@@ -73,7 +70,7 @@ export default async function Assay() {
 					</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
-						<Link href="/help" className="text-primary hover:underline">
+						<Link href="/help" className="link link-primary link-hover">
 							Help page
 						</Link>
 						.

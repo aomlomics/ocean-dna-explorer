@@ -88,6 +88,7 @@ export default function AnalysisSubmit() {
 		}
 	}, [analysisIds]);
 
+	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
 	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
 	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
@@ -425,26 +426,29 @@ export default function AnalysisSubmit() {
 
 				{/* Right column: files + progress + submit */}
 				<div className="col-span-7">
-					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
-					{analysisIds.map((id, i) => (
-						<AnalysisFormSection
-							key={i}
-							i={i}
-							id={id}
-							deletable={analysisIds.filter((id) => id !== -1).length > 1}
-							loading={loading}
-							onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
-							responseSet={responses[id]}
-							onDelete={() => {
-								const temp = analysisIds.toSpliced(i, 1, -1);
-								setAnalysisIds(temp);
-								if (temp.filter((id) => typeof id === "string").length === 0) {
-									setProject(null);
-									setIsPrivate(false);
-								}
-							}}
-						/>
-					))}
+					<SubmitFormSection
+						title="Upload files"
+						className="space-y-6 w-full text-base-content/80 text-base font-normal"
+					>
+						{analysisIds.map((id, i) => (
+							<AnalysisFormSection
+								key={i}
+								i={i}
+								id={id}
+								deletable={analysisIds.filter((id) => id !== -1).length > 1}
+								loading={loading}
+								onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
+								responseSet={responses[id]}
+								onDelete={() => {
+									const temp = analysisIds.toSpliced(i, 1, -1);
+									setAnalysisIds(temp);
+									if (temp.filter((id) => typeof id === "string").length === 0) {
+										setProject(null);
+										setIsPrivate(false);
+									}
+								}}
+							/>
+						))}
 
 						<div className="pt-6 space-y-4">
 							<div className="flex gap-4">

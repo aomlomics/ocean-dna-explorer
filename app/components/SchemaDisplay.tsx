@@ -1,48 +1,44 @@
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "../helpers/schema";
 import Link from "next/link";
 import { stripSecureFields } from "../helpers/prisma";
-import { uncapitalizeTable } from "../helpers/utils";
+import { capitalizeTable } from "../helpers/utils";
 
 export default function SchemaDisplay() {
-	const tables = Object.keys(Prisma.ModelName)
-		.sort()
-		.map((t) => {
-			const tableName = uncapitalizeTable(t as Prisma.ModelName);
-
-			const result = {} as Record<
-				string,
-				{
-					type: string;
-					optional?: boolean;
-					values?: string[];
-				}
-			>;
-			const shape = TableMetadata[tableName].schema.shape;
-			for (const f of TableMetadata[tableName].enumSchema.options) {
-				const type = getZodType(shape[f as keyof typeof shape]);
-				if (type.type === "json") {
-					if (f === "userDefined") {
-						result[f] = type;
-					} else if (f === "editHistory") {
-						result[f] = { ...type, type: "Edit[]" };
-					}
-				} else {
-					result[f] = type;
-				}
+	const tables = TableNames.map((tableName) => {
+		const result = {} as Record<
+			string,
+			{
+				type: string;
+				optional?: boolean;
+				values?: string[];
 			}
+		>;
+		const shape = TableMetadata[tableName].schema.shape;
+		for (const f of TableMetadata[tableName].enumSchema.options) {
+			const type = getZodType(shape[f as keyof typeof shape]);
+			if (type.type === "json") {
+				if (f === "userDefined") {
+					result[f] = type;
+				} else if (f === "editHistory") {
+					result[f] = { ...type, type: "Edit[]" };
+				}
+			} else {
+				result[f] = type;
+			}
+		}
 
-			stripSecureFields(result);
-			return [t, result] as [Prisma.ModelName, typeof result];
-		});
+		stripSecureFields(result);
+		return [tableName, result] as [Uncapitalize<Prisma.ModelName>, typeof result];
+	});
 
 	return (
 		<div>
 			{tables.map(([tableName, fields]) => (
 				<div key={tableName} id={tableName} className="collapse collapse-arrow bg-base-100 border-base-300 border">
 					<input type="checkbox" />
-					<div className="collapse-title font-semibold text-xl">{tableName}</div>
+					<div className="collapse-title font-semibold text-xl">{capitalizeTable(tableName)}</div>
 					<div className="collapse-content text-sm overflow-x-auto">
 						<div className="text-lg border-t-2 border-primary pt-5">Relations:</div>
 						<table className="table table-zebra table-fixed">
