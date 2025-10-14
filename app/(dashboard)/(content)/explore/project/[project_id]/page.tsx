@@ -5,9 +5,11 @@ import Image from "next/image";
 import Table from "@/app/components/paginated/Table";
 import BarChart from "@/app/components/charts/BarChart";
 import { randomColors } from "@/app/helpers/utils";
-import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
-import DropdownLinkBox from "@/app/components/DropdownLinkBox";
+import ProjectStatCard from "@/app/components/explore/ProjectStatCard";
+import StatIcon from "@/app/components/icons/StatIcon";
+import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import WaterSurface from "@/app/components/eDNA_graphic/WaterSurface";
 
 export default async function Project_Id({ params }: { params: Promise<{ project_id: string }> }) {
 	let { project_id } = await params;
@@ -86,7 +88,7 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 	return (
 		<div className="space-y-8">
 			{/* Breadcrumb navigation */}
-			<div className="text-base breadcrumbs mb-6">
+			<div className="text-base breadcrumbs">
 				<ul>
 					<li>
 						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
@@ -97,115 +99,122 @@ export default async function Project_Id({ params }: { params: Promise<{ project
 				</ul>
 			</div>
 
-			<div className="grid grid-cols-4 gap-8 mb-3">
-				<div className="col-span-4">
-					<header>
-						<div className="flex gap-2 items-center">
-							<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
-							<EditHistory editHistory={project.editHistory} />
-							{project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
-						</div>
-						<p className="text-lg text-base-content/70">{project.project_name}</p>
-					</header>
+			<header>
+				<div className="flex gap-2 items-center">
+					<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
+					<EditHistory editHistory={project.editHistory} />
+					{project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
+				<p className="text-lg text-base-content/70 max-w-4xl">{project.project_name}</p>
+			</header>
 
-				<div className="col-span-2 flex flex-col gap-8">
-					<div className="grid grid-cols-2 gap-8">
-						<Link href="#samples-section" className="stat bg-base-200 p-6 hover:bg-base-300 transition-colors">
-							<div className="text-lg font-medium text-base-content/70">Total Samples</div>
-							<div className="text-base mt-1">{project._count.Samples}</div>
-						</Link>
-
-						<DropdownLinkBox
-							title="Total Analyses"
-							count={project._count.Analyses}
-							content={project.Analyses.map((a) => a.analysis_run_name)}
-							linkPrefix="/explore/analysis"
-						/>
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+				{/* Left side content */}
+				<div className="lg:col-span-2 space-y-8">
+					<div className="h-[600px]">
+						<Map locations={project.Samples} cluster draw />
 					</div>
-
-					<div className="bg-base-200 p-6 grow">
-						<div className="text-lg font-medium text-base-content/70 mb-2">Top Taxonomy</div>
-						{sortedTaxa.slice(0, 5).map((taxa) => {
-							const taxonomyParts = taxa[0].split(";").filter(Boolean);
-							const lastTaxonomy = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
-							return (
-								<div key={taxa[0]} className="text-base mb-1">
-									{lastTaxonomy}: {taxa[1]}
-								</div>
-							);
-						})}
-					</div>
-				</div>
-
-				<div className="col-span-2">
-					<div className="bg-base-200 p-6 h-full">
-						<h2 className="text-lg font-medium text-base-content/70 mb-4">Project Information</h2>
-						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay table="project" data={justProject} omit={["project_id", "project_name"]} />
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div className="bg-base-200">
-				<div className="card-body">
-					<h2 className="card-title text-base-content/70">
-						Assays in this Project: {Object.keys(uniqueAssays).length}
-					</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-						{Object.keys(uniqueAssays).map((assay, index) => {
-							const imagePath = `/images/${assay}_icon.svg`;
-
-							return (
-								<div key={index} className="card bg-base-300 shadow-sm">
-									<div className="card-body">
-										<div className="flex items-center gap-4">
-											<div className="w-16 h-16">
-												<Image src={imagePath} alt={assay} width={64} height={64} className="object-contain" />
-											</div>
-											<div>
-												<h3 className="font-medium">{uniqueAssays[assay].target_gene}</h3>
-												<p className="text-sm text-base-content">{assay}</p>
+					{/* Assays Section */}
+					<div>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
+							Assays in this Project ({Object.keys(uniqueAssays).length})
+						</h2>
+						<div className="space-y-2">
+							{Object.keys(uniqueAssays).map((assay) => {
+								return (
+									<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
+										<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+											<div className="relative w-12 h-12">
+												<AssayPhyloPic assayName={assay} />
 											</div>
 										</div>
+										<div>
+											<h3 className="font-bold text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
+											<p className="text-base-content/70">{assay}</p>
+										</div>
 									</div>
-								</div>
-							);
-						})}
+								);
+							})}
+						</div>
+					</div>
+				</div>
+
+				{/* Right side content */}
+				<div className="space-y-8">
+					{/* Project at a Glance */}
+					<div>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project at a Glance</h2>
+						<div className="grid grid-cols-2 gap-4">
+							<ProjectStatCard title="Samples" value={project._count.Samples} icon="location" href="#samples-section" />
+							<ProjectStatCard title="Analyses" value={project._count.Analyses} icon="analysis" />
+							<ProjectStatCard title="Taxonomies" value={sortedTaxa.length} icon="fish" />
+							<ProjectStatCard
+								title="Occurrences"
+								value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
+								icon="eye"
+							/>
+						</div>
+					</div>
+
+					{/* Project Information */}
+					<div>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Information</h2>
+						<div className="space-y-3 text-lg">
+							<p>
+								<span className="font-semibold text-base-content/80">Contact:</span> {project.project_contact || "N/A"}
+							</p>
+							<p>
+								<span className="font-semibold text-base-content/80">Institution:</span> {project.institution || "N/A"}
+							</p>
+							<p>
+								<span className="font-semibold text-base-content/80">Assay Type:</span> {project.assay_type || "N/A"}
+							</p>
+						</div>
+					</div>
+
+					{/* Top Taxonomy */}
+					<div>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Top 10 Taxonomy</h2>
+						<ul className="space-y-2">
+							{topTaxa.slice(0, 10).map((taxa, index) => {
+								const taxonomyParts = taxa[0].split(";").filter(Boolean);
+								const lastTaxonomy = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
+								return (
+									<li key={taxa[0]} className="flex items-center justify-between text-base">
+										<span>
+											<span className="font-bold text-primary mr-2">{index + 1}.</span>
+											{lastTaxonomy}
+										</span>
+										<span className="badge badge-ghost">{taxa[1]}</span>
+									</li>
+								);
+							})}
+						</ul>
 					</div>
 				</div>
 			</div>
 
-			<div className="mt-4">
-				<h2 id="samples-section" className="card-title text-base-content/70 mb-4">
-					Samples:
+			{/* Samples Table */}
+			<div className="mt-8">
+				<h2 id="samples-section" className="text-2xl font-semibold text-base-content/90 mb-4">
+					Samples
 				</h2>
-				<div role="tablist" className="tabs tabs-lifted">
-					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Map" defaultChecked />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-lg p-6">
-						<div className="card-body p-0 overflow-hidden aspect-5/2">
-							<Map locations={project.Samples} cluster draw />
-						</div>
-					</div>
+				<Table table="sample" showUserDefined where={{ project_id }} defaultTake={20} />
+			</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Table" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-lg aspect-5/2 ">
-						<Table table="sample" showUserDefined where={{ project_id }} />
-					</div>
-
-					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Charts" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-lg p-6">
-						<BarChart
-							title="Top 10 Taxonomies"
-							labels={sortedTaxa.slice(0, 10).map((taxaArr) => taxaArr[0].split(";")[taxaArr[0].split(";").length - 1])}
-							datasets={Object.keys(taxaCountByAnalysis).map((taxa, i) => ({
-								label: taxa.split(";")[taxa.split(";").length - 1],
-								data: sortedTaxa.slice(0, 10).map((taxaArr) => taxaCountByAnalysis[taxa][taxaArr[0]]),
-								backgroundColor: colorsArr[i]
-							}))}
-						/>
-					</div>
+			{/* Taxonomy Chart */}
+			<div className="mt-8">
+				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Taxonomy Distribution</h2>
+				<div className="bg-base-200 p-4 rounded-lg">
+					<BarChart
+						title="Top 10 Taxonomies"
+						labels={sortedTaxa.slice(0, 10).map((taxaArr) => taxaArr[0].split(";").pop() || "Unknown")}
+						datasets={Object.keys(taxaCountByAnalysis).map((taxa, i) => ({
+							label: taxa.split(";").pop() || "Unknown",
+							data: sortedTaxa.slice(0, 10).map((taxaArr) => taxaCountByAnalysis[taxa][taxaArr[0]] || 0),
+							backgroundColor: colorsArr[i]
+						}))}
+					/>
 				</div>
 			</div>
 		</div>

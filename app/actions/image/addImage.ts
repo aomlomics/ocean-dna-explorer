@@ -8,7 +8,7 @@ import {
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
-import { prismaImages } from "../helpers/prismaImages";
+import { prismaImages } from "@/app/helpers/prismaImages";
 
 export default async function addImageAction(formData: FormData, newAttribution: boolean): Promise<NetworkPacket> {
 	try {

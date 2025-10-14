@@ -6,6 +6,7 @@ import { prisma } from "@/app/helpers/prisma";
 import ApiCodeBlock from "./ApiCodeBlock";
 import Link from "next/link";
 import Image from "next/image";
+import ApiQueryDiagram from "./ApiQueryDiagram";
 
 // Define types for our content structure
 export type Subsection = {
@@ -40,53 +41,167 @@ export async function getApiSections() {
 			id: "introduction",
 			title: "Introduction",
 			content: (
-				<>
-					<p className="mb-4">
+				<div className="space-y-4">
+					<p>
 						The ODE API provides programmatic access to marine eDNA data. This documentation will help you understand
 						how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
-				</>
+					<p>
+						Our API is designed to be straightforward. All you need is a web browser or a simple script to start
+						fetching data—no authentication is required.
+					</p>
+				</div>
 			),
 			subsections: [
 				{
-					id: "overview",
-					title: "Overview",
+					id: "how-to-use-api",
+					title: "Making Your First API Query",
 					content: (
-						<>
-							<p className="mb-4">
-								ODE provides a RESTful API which enables you to access data in the database through HTTP requests. The
-								API has several{" "}
-								<a href="#api-endpoints" className="text-primary">
-									endpoints
-								</a>{" "}
-								and{" "}
-								<a href="#query-parameter-syntax" className="text-primary">
-									parameters
-								</a>
-								, allowing you to parse through our data with customizable queries.
-							</p>
-							<p className="mb-4">
-								You can use this API to query the entire database for projects, samples, analyses, features, and
-								taxonomic information for integration into your own applications, data analysis workflows, or
-								visualizations.
-							</p>
-							<p className="mb-4">
-								The API is public and requires no authentication, login role, or API keys to use. GET requests are the
-								only type supported.
-							</p>
-						</>
+						<div className="space-y-8 mt-10">
+							{/* Step 1 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">1</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
+									<p>
+										Before you can ask for data, you need to know what's available. The best place to start is
+										our{" "}
+										<Link href="#database-schema" className="link link-primary">
+											Database Schema
+										</Link>
+										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows
+										you what tables are available and how they are linked together.
+									</p>
+									<p className="mt-2">
+										Once you know which table you're interested in (e.g., `Project`), look at the{" "}
+										<Link href="#table-definitions" className="link link-primary">
+											Table Definitions
+										</Link>{" "}
+										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in
+										your queries.
+									</p>
+								</div>
+							</div>
+
+							{/* Step 2 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">2</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Build a Basic Query</h4>
+									<p>
+										The simplest query just retrieves data from a single table. Start with the table name (the{" "}
+										<strong>endpoint</strong>) and add <strong>parameters</strong> after the `?` to refine your
+										search. For example, you can limit the number of results or specify which fields to return.
+									</p>
+									<ApiQueryDiagram
+										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+										endpoint={{
+											value: "/api/project",
+											label: "Get data from the Project table",
+											colorClass: "text-white"
+										}}
+										parameters={[
+											{
+												value: "fields=id,project_name",
+												label: "Only include the id and project_name fields",
+												colorClass: "text-primary"
+											},
+											{ value: "limit=3", label: "Return a maximum of 3 records", colorClass: "text-primary" }
+										]}
+										description={
+											<>
+												This query asks the <strong>project</strong> table for the <strong>id</strong> and{" "}
+												<strong>project_name</strong> of the first <strong>3</strong> records.
+											</>
+										}
+									/>
+								</div>
+							</div>
+
+							{/* Step 3 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">3</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Combine Data with Relations</h4>
+									<p>
+										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
+										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you're telling
+										the API: "also give me the data from the related table."
+									</p>
+									<p className="mt-2">
+										In the example below, we get a specific project and also retrieve all the data from the{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
+									</p>
+									<ApiQueryDiagram
+										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+										endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-white" }}
+										parameters={[
+											{
+												value: `ids=${project?.id || 1}`,
+												label: "Filter for a specific Project ID",
+												colorClass: "text-primary"
+											},
+											{
+												value: "relations=Samples",
+												label: "Include the related Samples table",
+												colorClass: "text-primary"
+											}
+										]}
+										description={
+											<>
+												This query retrieves one specific project and includes all of its related{" "}
+												<strong>Samples</strong>. See the{" "}
+												<Link href="#relations" className="link link-primary">
+													Relations
+												</Link>{" "}
+												section for more.
+											</>
+										}
+									/>
+								</div>
+							</div>
+
+							{/* Step 4 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">4</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Make the Request</h4>
+									<p>
+										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in
+										JSON format, a standard way for computers to exchange data. The{" "}
+										<Link href="#quick-start-code" className="link link-primary">
+											Quick Start Code Examples
+										</Link>{" "}
+										below show you how to fetch and work with this JSON data in your own scripts.
+									</p>
+								</div>
+							</div>
+						</div>
 					)
 				},
 				{
-					id: "quick-start",
-					title: "Quick Start",
+					id: "quick-start-code",
+					title: "Quick Start Code Examples",
 					content: (
 						<>
-							<div className="mb-4">Here are some examples of how to get data in various environments:</div>
-
-							<div className="mb-4">Copy and paste this URL into your browser to view raw JSON responses:</div>
-							<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/tables`} />
-
+							<p className="mb-4">Here are some examples of how to get data in various programming environments:</p>
 							<div className="mb-4 mt-4">Python (+ Pandas) example:</div>
 							<CodeBlock
 								language="python"
@@ -102,19 +217,26 @@ response = requests.get(url)
 if response.status_code == 200:
     # Parse JSON response and print it
     data = response.json()
-    results = data['result']
+    results = data.get("result", []) # Use .get() for safety
     print("JSON Response:")
     print(json.dumps(results, indent=2))
 
     # Convert to DataFrame and print it
-    df = pd.DataFrame(results)
-    print("--------------------")
-    print("DataFrame:")
-    print(df)
+    if results:
+        df = pd.DataFrame(results)
+        print("--------------------")
+        print("DataFrame:")
+        print(df)
+    else:
+        print("No results found.")
 else:
-    print(f"Error: {response.status_code}")
-    if response.content:
-        print(f"Error message: {response.json()['error']}")`}
+    print(f"Error: {response.status_code} - {response.reason}")
+    try:
+        # Try to parse and print the error message from the API
+        error_data = response.json()
+        print(f"Error message: {error_data.get('error', 'No error message provided.')}")
+    except json.JSONDecodeError:
+        print("Could not parse error response as JSON.")`}
 							/>
 
 							<div className="mb-4 mt-4">R example:</div>
@@ -130,13 +252,24 @@ response <- GET(url)
 # Check if request was successful
 if (http_status(response)$category == "Success") {
   # Parse JSON response
-  data <- content(response, "text") %>% fromJSON()
+  data <- content(response, "text", encoding = "UTF-8") %>% fromJSON()
   results <- data$result
-  print(results)
+  
+  if (length(results) > 0) {
+    print(results)
+  } else {
+    print("No results found.")
+  }
+  
 } else {
   print(paste("Error:", http_status(response)$reason))
-  if (length(content(response)) > 0) {
-    print(paste("Error message:", content(response)$error))
+  
+  # Try to parse and print error message
+  error_content <- content(response, "parsed")
+  if (!is.null(error_content$error)) {
+    print(paste("Error message:", error_content$error))
+  } else {
+    print("No detailed error message provided in response.")
   }
 }`}
 							/>
@@ -216,114 +349,39 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<div className="my-4">
-								Submissions may also be edited using the{" "}
-								<Link href="/mySubmissions" className="link link-primary link-hover">
-									My submissions
-								</Link>{" "}
-								page. The history of edits will be stored on the editHistory field of the submission. The editHistory is
-								stored as JSON. The structure of an edit is shown below.
+								<p className="mb-2">
+									When a submission is edited via the{" "}
+									<Link href="/mySubmissions" className="link link-primary link-hover">
+										My Submissions
+									</Link>{" "}
+									page, a record of the changes is stored in the `editHistory` field. This field contains a JSON
+									array of objects, where each object represents a set of edits made at a specific time.
+								</p>
+								<p className="mb-4">
+									Note: While the example shows an `id` for each edit, this is for illustrative purposes. The
+									current implementation does not yet include a unique ID for each edit record.
+								</p>
 							</div>
+							<h4 className="font-medium mb-2">Structure of an Edit Record:</h4>
 							<CodeBlock
 								language="json"
 								code={`{
-	"dateEdited": Date
+	"id": "a1b2c3d4-e5f6-7890-1234-567890abcdef", // Unique identifier for the edit
+	"dateEdited": "2025-10-26T14:30:00Z",
 	"changes": [
 		{
-			"field": string,
-			"oldValue": string,
-			"newValue": string
+			"field": "project_name",
+			"oldValue": "Initial Project Name",
+			"newValue": "Updated Project Name"
+		},
+		{
+			"field": "institution",
+			"oldValue": "University of Science",
+			"newValue": "Institute of Technology"
 		}
 	]
 }`}
 							/>
-						</>
-					)
-				}
-			]
-		},
-		{
-			id: "query-construction",
-			title: "Query Construction Guide",
-			content: (
-				<>
-					<p className="mb-4">
-						This section explains how to construct API queries to retrieve data from the ODE database.
-					</p>
-				</>
-			),
-			subsections: [
-				{
-					id: "url-structure",
-					title: "URL Structure",
-					content: (
-						<>
-							<p className="mb-4">API requests follow this general pattern:</p>
-							<div className="p-4 my-6 bg-base-200 border-l-4 border-primary rounded-md shadow-sm">
-								<div className="text-xl break-all">
-									{process.env.NEXT_PUBLIC_URL}/api/[endpoint]?[parameter]&[parameter]&...
-								</div>
-							</div>
-
-							<p className="mb-4">Where:</p>
-							<ul className="list-disc ml-6 mb-4">
-								<li>[endpoint] is the name of the API endpoint</li>
-								<li>[parameters] are optional query parameters</li>
-							</ul>
-						</>
-					)
-				},
-				{
-					id: "query-parameter-syntax",
-					title: "Query Parameter Syntax",
-					content: (
-						<>
-							<p className="mb-4">Query parameters follow this format: parameter=value</p>
-
-							<p className="mb-4">For example, to select specific fields:</p>
-							<div className="mb-4">
-								<InlineCode code="/api/project?fields=id,project_name" />
-							</div>
-						</>
-					)
-				},
-				{
-					id: "multiple-parameters",
-					title: "Multiple Parameters",
-					content: (
-						<>
-							<p className="mb-4">Combine multiple parameters using an ampersand:</p>
-							<div className="mb-4">
-								<InlineCode code="/api/project?fields=id,project_name&limit=10" />
-							</div>
-						</>
-					)
-				},
-				{
-					id: "example-urls",
-					title: "Example URLs",
-					content: (
-						<>
-							<p className="mb-4">Here are some example URLs to help you understand query construction:</p>
-
-							<h4 className="font-medium mb-2">Basic query:</h4>
-							<div className="mb-4">
-								<InlineCode code="/api/project?fields=id,project_name" />
-							</div>
-
-							<h4 className="font-medium mb-2">With relations:</h4>
-							<div className="mb-4">
-								<InlineCode code="/api/project?fields=id,project_name&relations=samples" />
-							</div>
-
-							<h4 className="font-medium mb-2">With filtering:</h4>
-							<div className="mb-4">
-								<InlineCode code="/api/project?project_name=Gomecc4&limit=5" />
-							</div>
-
-							<p className="mb-4">
-								These examples demonstrate different ways to query the API. You can adjust them to suit your specific
-								needs.
-							</p>
 						</>
 					)
 				}
@@ -410,7 +468,11 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`}
+								defaultClosed={true}
+							/>
 						</>
 					)
 				},
@@ -431,7 +493,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`} />
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`} defaultClosed={true} />
 						</>
 					)
 				},
@@ -452,7 +514,257 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`} />
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`}
+								defaultClosed={true}
+							/>
+						</>
+					)
+				}
+			]
+		},
+		{
+			id: "searching-and-filtering",
+			title: "Searching and Filtering",
+			content: (
+				<>
+					<p className="mb-4">
+						The API offers several powerful methods for searching and filtering data. You can perform broad text-based
+						searches, construct complex queries with multiple conditions, or filter records based on specific field
+						values.
+					</p>
+					<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
+						<h4 className="font-bold mb-2">Important Rule of Exclusivity</h4>
+						<p>
+							The primary search methods—<strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
+							(`advanced`), and <strong>ID Filtering</strong> (`ids`)—are mutually exclusive. You can only use{" "}
+							<strong>one</strong> of these parameters in a single API request. Additionally, when using any of these
+							three methods, you cannot add separate field filters (e.g., `project_name=Test`) to the same query.
+						</p>
+					</div>
+				</>
+			),
+			subsections: [
+				{
+					id: "standard-search",
+					title: "Standard Search",
+					content: (
+						<>
+							<div className="mb-4">Parameter: `search=[query]`</div>
+							<p className="mb-4">
+								This is the simplest way to search. It performs a case-insensitive search across all text-based
+								fields in a specified table for your query string.
+							</p>
+							<div className="mb-4">
+								<strong>Use Case:</strong> Ideal for quick, general searches when you're not sure which specific
+								field contains the information.
+							</div>
+							<div className="mb-4">
+								Example URL:{" "}
+								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
+							</div>
+							<p className="mb-2">
+								This will return all projects where the string "gomecc" appears in any text field.
+							</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`}
+								defaultClosed={true}
+							/>
+						</>
+					)
+				},
+				{
+					id: "advanced-search",
+					title: "Advanced Search",
+					content: (
+						<div className="space-y-4">
+							<p>Parameter: `advanced=[JSON_object]`</p>
+							<p>
+								For complex queries, the `advanced` parameter allows you to build a nested query using a JSON
+								object. This enables multi-conditional filtering with `AND` and `OR` logic, as well as querying on
+								related tables.
+							</p>
+							<div className="p-4 my-4 bg-base-200 border-l-4 border-info rounded-md">
+								<h4 className="font-bold mb-2">Build Queries with the UI</h4>
+								<p>
+									The easiest way to generate an `advanced` query is to use the{" "}
+									<Link href="/search/advanced" className="link link-primary font-semibold">
+										Advanced Search page
+									</Link>
+									. Build your search using the visual interface, and then copy the `advanced` parameter from the
+									URL it generates.
+								</p>
+							</div>
+
+							<div>
+								<strong>Use Case:</strong> Perfect for detailed data exploration, such as finding all samples from
+								a specific location collected after a certain date.
+							</div>
+
+							<h4 className="font-medium mt-6 mb-2">JSON Structure:</h4>
+							<p>
+								The JSON object is an array of conditions. Nesting arrays creates an `OR` condition.
+							</p>
+							<CodeBlock
+								language="json"
+								code={`[
+	["field_name", "query_mode", "value"],
+	["related_table", "field_name", "query_mode", "value"],
+	[
+		// Nested array for OR conditions
+		["field_name_A", "query_mode", "value_A"],
+		["field_name_B", "query_mode", "value_B"]
+	]
+]`}
+							/>
+
+							<h4 className="font-medium mt-10 mb-2">Query Modes:</h4>
+							<div>
+								<p className="mb-2">The `query_mode` determines how the value is compared:</p>
+								<div className="overflow-x-auto">
+									<table className="table table-md table-zebra">
+										<thead>
+											<tr>
+												<th>Query Mode</th>
+												<th>Description</th>
+												<th>Applies To</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<td className="text-lg text-primary">contains</td>
+												<td>Case-insensitive match anywhere in the text.</td>
+												<td>Text</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">equals</td>
+												<td>Exact match.</td>
+												<td>Text, Numeric, Date</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">startsWith</td>
+												<td>Case-insensitive match at the beginning of the text.</td>
+												<td>Text</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">endsWith</td>
+												<td>Case-insensitive match at the end of the text.</td>
+												<td>Text</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">gt</td>
+												<td>Greater than.</td>
+												<td>Numeric, Date</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">gte</td>
+												<td>Greater than or equal to.</td>
+												<td>Numeric, Date</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">lt</td>
+												<td>Less than.</td>
+												<td>Numeric, Date</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">lte</td>
+												<td>Less than or equal to.</td>
+												<td>Numeric, Date</td>
+											</tr>
+											<tr>
+												<td className="text-lg text-primary">range</td>
+												<td>Value is within the specified range (inclusive).</td>
+												<td>Numeric, Date</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+
+							<ApiQueryDiagram
+								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-white" }}
+								parameters={[
+									{
+										value: `advanced=[["geo_loc_name","contains","Atlantic"],["collection_timestamp","gte","2019-01-01"]]`,
+										label: "Advanced Query",
+										colorClass: "text-primary"
+									}
+								]}
+								description={
+									<>
+										This query returns samples where the <strong>geo_loc_name</strong> contains "Atlantic" AND
+										the <strong>collection_timestamp</strong> is on or after January 1st, 2019.
+									</>
+								}
+							/>
+						</div>
+					)
+				},
+				{
+					id: "id-filtering",
+					title: "ID Filtering",
+					content: (
+						<>
+							<div className="mb-4">Parameter: `ids=[id1],[id2],...`</div>
+							<p className="mb-4">
+								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of
+								IDs.
+							</p>
+							<div className="mb-4">
+								<strong>Use Case:</strong> Useful when you have a specific list of records you want to fetch.
+							</div>
+							<ApiQueryDiagram
+								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-white" }}
+								parameters={[
+									{
+										value: `ids=${project?.id || 1}`,
+										label: "ID Filter",
+										colorClass: "text-primary"
+									}
+								]}
+								description={<>This query retrieves a specific project by its unique ID.</>}
+							/>
+							<p className="mb-2 mt-8">Example Response:</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?ids=${project?.id || 1}`}
+								defaultClosed={true}
+							/>
+						</>
+					)
+				},
+				{
+					id: "direct-field-filtering",
+					title: "Direct Field Filtering",
+					content: (
+						<>
+							<div className="mb-4">Parameter: `[fieldName]=[value]`</div>
+							<p className="mb-4">
+								This method allows you to filter results based on the value of one or more specific fields. This
+								cannot be combined with `advanced`, `search`, or `ids` parameters.
+							</p>
+							<div className="mb-4">
+								<strong>Use Case:</strong> Good for simple, direct filtering on one or more known fields.
+							</div>
+							<div className="mb-4">
+								Example URL:{" "}
+								<InlineCode
+									code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`}
+								/>
+							</div>
+							<p className="mb-2">
+								This query returns projects where `project_name` contains "gomecc" AND `institution` contains
+								"noaa".
+							</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`}
+								defaultClosed={true}
+							/>
 						</>
 					)
 				}
@@ -462,12 +774,12 @@ if (http_status(response)$category == "Success") {
 			id: "query-parameters",
 			title: "Query Parameters",
 			content: (
-				<>
-					<p className="mb-4">
+				<div className="space-y-4">
+					<p>
 						Query parameters allow you to customize your API requests. This section details all available parameters and
 						how to use them.
 					</p>
-				</>
+				</div>
 			),
 			subsections: [
 				{
@@ -495,13 +807,18 @@ if (http_status(response)$category == "Success") {
 				},
 				{
 					id: "field-filtering",
-					title: "Field Filtering",
+					title: "Field Filtering (Legacy)",
 					content: (
 						<>
 							<div className="mb-4">Parameter: fieldName=value</div>
 
 							<p className="mb-4">
-								Filters results to return only records where the specified field contains the provided value.
+								Filters results to return only records where the specified field contains the provided value. For
+								more details, see the{" "}
+								<Link className="link link-primary" href="#direct-field-filtering">
+									Direct Field Filtering
+								</Link>{" "}
+								section.
 							</p>
 
 							<div className="mb-4">
@@ -519,64 +836,70 @@ if (http_status(response)$category == "Success") {
 					id: "relations",
 					title: "Relations",
 					content: (
-						<>
-							<div className="mb-4">Parameter: relations=relation1,relation2</div>
-
-							<p className="mb-4">
-								Includes related data from other tables in the response. The relation names can be lowercase or
-								capitalized and must be plural, separated by commas.
+						<div className="space-y-4">
+							<p>Parameter: relations=relation1,relation2</p>
+							<p>
+								Includes related data from other tables in the response. The relation names must be plural and can
+								be lowercase or capitalized.
 							</p>
-
-							<div className="mb-4">
-								Example URL: <InlineCode code="/api/project?relations=samples,analyses" />
+							<div className="my-8 p-4 bg-base-200/50 border-l-4 border-accent shadow-sm">
+								<h5 className="font-semibold mb-2 text-accent">Why Use Relations?</h5>
+								<p className="text-sm">
+									Relations are powerful because they let you fetch data from multiple connected tables in a single
+									API call. For instance, without relations, to get a project and all its samples, you would have
+									to:
+								</p>
+								<ol className="list-decimal list-inside text-sm mt-2 space-y-1">
+									<li>Make a first request to get the project data.</li>
+									<li>
+										Make a second request to the sample table, filtering by the project's ID to get the related
+										samples.
+									</li>
+								</ol>
+								<p className="text-sm mt-2">
+									Relations streamline this into one efficient request, saving time and complexity.
+								</p>
 							</div>
-
-							<p className="mb-4">
-								This example returns all projects along with their related samples and analyses. By default, only the ID
-								field is included for related records.
-							</p>
-						</>
+						</div>
 					)
 				},
 				{
 					id: "relation-field-options",
 					title: "Relation Field Options",
 					content: (
-						<>
-							<div className="mb-4">Parameter: relationsAllFields=true or relationsAllFields=false</div>
+						<div className="space-y-4">
+							<p>Parameter: relationsAllFields=true or relationsAllFields=false</p>
 
-							<p className="mb-4">
-								Controls whether to include only the ID field on relations (default), or to include all fields.
+							<p>
+								Controls whether to include all fields on related records (true) or just their ID (false,
+								default).
 							</p>
 
-							<div className="mb-4">
+							<div>
 								Example URL: <InlineCode code="/api/project?relations=samples&relationsAllFields=true" />
 							</div>
 
-							<p className="mb-4">
+							<p>
 								This example returns all projects along with all fields from their related samples, not just the sample
 								IDs.
 							</p>
-						</>
+						</div>
 					)
 				},
 				{
-					id: "id-filtering",
+					id: "id-filtering-parameter",
 					title: "ID Filtering",
 					content: (
 						<>
 							<div className="mb-4">Parameter: ids=1,2,4,7</div>
 
 							<p className="mb-4">
-								Filters results to return only records with the specified IDs. IDs must be numbers greater than 0,
-								separated by commas.
+								Filters results to return only records with the specified IDs. See the{" "}
+								<Link className="link link-primary" href="#id-filtering">
+									ID Filtering
+								</Link>{" "}
+								section for more information.
 							</p>
-
-							<div className="mb-4">
-								Example URL: <InlineCode code="/api/project?ids=1,2,3" />
-							</div>
-
-							<p className="mb-4">This example returns only projects with IDs 1, 2, and 3.</p>
 						</>
 					)
 				},
@@ -584,196 +907,34 @@ if (http_status(response)$category == "Success") {
 					id: "result-limiting",
 					title: "Result Limiting",
 					content: (
-						<>
-							<div className="mb-4">Parameter: limit=number</div>
-
-							<p className="mb-4">Limits the number of results returned. Must be a positive number.</p>
-
-							<div className="mb-4">
-								Example URL:{" "}
-								<span className="inline-block" style={{ minWidth: "auto" }}>
-									<InlineCode code="/api/project?limit=20" />
-								</span>
+						<div className="space-y-4">
+							<p>Parameter: limit=number</p>
+							<p>Limits the number of results returned. Must be a positive number.</p>
+							<div>
+								Example URL: <InlineCode code="/api/project?limit=20" />
 							</div>
-
-							<p className="mb-4">This example limits the results to 20 projects.</p>
-						</>
+							<p>This example limits the results to 20 projects.</p>
+						</div>
 					)
 				},
 				{
 					id: "relations-result-limiting",
 					title: "Relations Result Limiting",
 					content: (
-						<>
-							<div className="mb-4">Parameter: relationsLimit=number</div>
-
-							<p className="mb-4">
+						<div className="space-y-4">
+							<p>Parameter: relationsLimit=number</p>
+							<p>
 								Limits the number of results returned when the{" "}
 								<Link className="link link-primary" href="#relations">
 									Relations
 								</Link>{" "}
 								parameter is used. This will cause an error if the relation is not a list. Must be a positive number.
 							</p>
-
-							<div className="mb-4">
-								Example URL:{" "}
-								<span className="inline-block" style={{ minWidth: "auto" }}>
-									<InlineCode code="/api/project?relations=Analyses&relationsLimit=3" />
-								</span>
+							<div>
+								Example URL: <InlineCode code="/api/project?relations=Analyses&relationsLimit=3" />
 							</div>
-
-							<p className="mb-4">This example limits the list of related analyses to 3.</p>
-						</>
-					)
-				}
-			]
-		},
-		{
-			id: "complete-examples",
-			title: "Complete Examples",
-			content: (
-				<>
-					<p className="mb-4">
-						This section provides complete example queries to help you understand how to combine various parameters.
-					</p>
-				</>
-			),
-			subsections: [
-				{
-					id: "basic-query",
-					title: "Basic Query",
-					content: (
-						<>
-							<div className="mb-4">
-								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name`} />
-							</div>
-
-							<p className="mb-4">This simple query returns just the ID and name of all projects.</p>
-
-							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&limit=3`}
-							/>
-						</>
-					)
-				},
-				{
-					id: "with-relations",
-					title: "With Relations",
-					content: (
-						<>
-							<p className="mb-4">
-								Example URL:{" "}
-								<InlineCode
-									code={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=analyses&relationsAllFields=true`}
-								/>
-							</p>
-
-							<p className="mb-4">
-								This query returns all projects along with complete information about their related samples.
-							</p>
-
-							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=analyses&relationsAllFields=true&relationsLimit=1&limit=3`}
-							/>
-						</>
-					)
-				},
-				{
-					id: "with-filtering",
-					title: "With Filtering",
-					content: (
-						<>
-							<p className="mb-4">
-								Example URL:{" "}
-								<InlineCode
-									code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc-4&institution=noaa`}
-								/>
-							</p>
-
-							<p className="mb-4">
-								This query returns projects where the project_name contains "gomecc4" AND the institution contains
-								"noaa".
-							</p>
-
-							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc-4&institution=noaa`}
-							/>
-						</>
-					)
-				},
-				{
-					id: "combined-parameters",
-					title: "Combined Parameters",
-					content: (
-						<>
-							<p className="mb-4">
-								Example URL:{" "}
-								<InlineCode
-									code={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&relations=samples&limit=3&relationsLimit=3`}
-								/>
-							</p>
-
-							<p className="mb-4">This query combines field selection, relations, and a result limit.</p>
-
-							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_name&relations=samples&limit=3&relationsLimit=3`}
-							/>
-						</>
-					)
-				},
-				{
-					id: "unique-field-values",
-					title: "Unique Field Values",
-					content: (
-						<>
-							<p className="mb-4">
-								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
-							</p>
-
-							<p className="mb-4">
-								This query returns all unique geographic location names from the sample table. This is particularly
-								useful because locations are often repeated.
-							</p>
-
-							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
-						</>
-					)
-				},
-				{
-					id: "single-record",
-					title: "Single Record",
-					content: (
-						<>
-							<p className="mb-4">
-								Example URL:{" "}
-								<InlineCode
-									code={`${process.env.NEXT_PUBLIC_URL}/api/project/${
-										project?.id || 1
-									}?fields=id,project_name&relations=samples`}
-								/>
-							</p>
-
-							<p className="mb-4">
-								This query retrieves a single project by ID, with selected fields and related samples.
-							</p>
-
-							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project/${
-									project?.id || 1
-								}?fields=id,project_name&relations=samples&relationsLimit=3`}
-							/>
-						</>
+							<p>This example limits the list of related analyses to 3.</p>
+						</div>
 					)
 				}
 			]
@@ -782,11 +943,9 @@ if (http_status(response)$category == "Success") {
 			id: "response-format",
 			title: "Response Format",
 			content: (
-				<>
-					<p className="mb-4">
-						This section explains the structure of API responses so you can properly parse and use the returned data.
-					</p>
-				</>
+				<div className="space-y-4">
+					<p>This section explains the structure of API responses so you can properly parse and use the returned data.</p>
+				</div>
 			),
 			subsections: [
 				{
@@ -796,14 +955,15 @@ if (http_status(response)$category == "Success") {
 						<>
 							<p className="mb-4">Successful API responses have a consistent structure:</p>
 
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-								{`{
+							<CodeBlock
+								language="json"
+								code={`{
   "message": "Success",
   "result": [
     // Array of results or single object
   ]
 }`}
-							</div>
+							/>
 
 							<p className="mb-4">
 								The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Success"
@@ -817,8 +977,6 @@ if (http_status(response)$category == "Success") {
 								<li>An array of objects (for multiple results)</li>
 								<li>A single object (for single record requests)</li>
 							</ul>
-
-							<p className="mb-4">[Additional response format details coming soon]</p>
 						</>
 					)
 				},
@@ -827,26 +985,64 @@ if (http_status(response)$category == "Success") {
 					title: "Error Structure",
 					content: (
 						<>
-							<p className="mb-4">Error responses follow this structure:</p>
+							<p className="mb-4">
+								If a request fails, the API will return an error response with a corresponding HTTP status code.
+							</p>
 
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4 inline-block min-w-[200px] max-w-full">
-								{`{
+							<h4 className="font-medium mt-6 mb-2">Error Response Body:</h4>
+							<CodeBlock
+								language="json"
+								code={`{
   "message": "Error",
-  "error": "Description of what went wrong"
+  "error": "A description of what went wrong."
 }`}
-							</div>
-
-							<p className="mb-4">
-								The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Error"
-								when something goes wrong.
-							</p>
-
-							<p className="mb-4">
+							/>
+							<p className="mb-4 mt-4">
 								The <code className="px-1 py-0.5 bg-base-200 rounded">error</code> field contains a human-readable
-								description of the error.
+								description of the issue.
 							</p>
 
-							<p className="mb-4">[Additional error response details coming soon]</p>
+							<h4 className="font-medium mt-8 mb-2">Common Error Examples:</h4>
+							<div className="space-y-6">
+								<div>
+									<p className="mb-2">
+										<strong>Invalid Table:</strong> Requesting a table that does not exist.
+									</p>
+									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
+									<ApiCodeBlock
+										language="json"
+										url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`}
+										defaultClosed={true}
+									/>
+								</div>
+
+								<div>
+									<p className="mb-2">
+										<strong>Invalid Field:</strong> Using a field name that does not exist in a filter or field
+										selection.
+									</p>
+									<InlineCode
+										code={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`}
+									/>
+									<ApiCodeBlock
+										language="json"
+										url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`}
+										defaultClosed={true}
+									/>
+								</div>
+
+								<div>
+									<p className="mb-2">
+										<strong>Invalid Parameter Value:</strong> Providing an incorrect value for a parameter like `limit`.
+									</p>
+									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`} />
+									<ApiCodeBlock
+										language="json"
+										url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`}
+										defaultClosed={true}
+									/>
+								</div>
+							</div>
 						</>
 					)
 				}
@@ -878,12 +1074,11 @@ if (http_status(response)$category == "Success") {
 							<p>
 								A: An API (Application Programming Interface) allows computers or programs to send data to one another.
 								To use our API, you'll need to make HTTP requests to our endpoints. The simplest way to start is by
-								pasting one of our{" "}
-								<Link className="link link-primary font-semibold" href="#complete-examples">
-									example URLs
-								</Link>{" "}
-								into your browser's address bar to see the raw JSON response. For more advanced usage, you can use
-								programming languages like Python or R.
+								following our{" "}
+								<Link className="link link-primary font-semibold" href="#how-to-use-api">
+									3-Step Guide
+								</Link>
+								.
 							</p>
 						</div>
 

@@ -134,7 +134,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
-						<Table table="assignment" where={{ analysis_run_name }} />
+						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Taxa" />

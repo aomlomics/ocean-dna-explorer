@@ -1,37 +1,85 @@
 import ProjectSubmit from "@/app/components/submit/ProjectSubmit";
+import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 import Link from "next/link";
 
 export default function Project() {
 	return (
-		<main className="flex flex-col grow p-8 max-w-7xl mx-auto space-y-8">
-			{/* Upload Intro Section */}
-			<section className="text-center space-y-6">
-				<h1 className="text-5xl font-semibold text-primary">Submit a New Project</h1>
-				<div className="max-w-3xl mx-auto space-y-4 text-lg text-base-content">
-					<p>
-						Contributing a new environmental DNA project? You're in the right place. Need help? Check out the{" "}
-						<Link href="https://noaa-omics-dmg.readthedocs.io/en/latest/" className="text-primary hover:underline">
-							NOAA 'Omics Data Management Guide.
-						</Link>
+		<>
+			<SubmitMobileGate />
+			<main className="hidden lg:block container mx-auto px-4 py-4">
+				{/* Breadcrumbs */}
+				<div className="text-sm breadcrumbs">
+					<ul>
+						<li>
+							<Link href="/" className="text-primary hover:text-primary-focus">
+								Home
+							</Link>
+						</li>
+						<li>
+							<Link href="/submit" className="text-primary hover:text-primary-focus">
+								Submit
+							</Link>
+						</li>
+						<li>Project</li>
+					</ul>
+				</div>
+
+				{/* Header & Intro */}
+				<header className="my-8 space-y-3">
+					<h1 className="text-4xl font-normal text-primary">Submit a New Project</h1>
+					<p className="text-base text-base-content/80">
+						A project is the baseline record in the Ocean DNA Explorer (ODE). All other data types are linked to a project.
 					</p>
-				</div>
+					<p className="text-base text-base-content/80">
+						If you want to contribute to an existing project, you can submit an
+							{" "}
+						<Link href="/submit/analysis" className="text-primary hover:text-primary-focus">
+							analysis
+						</Link>
+						{" "}
+						for it, provided you have been added to that project by its owner.
+					</p>
+					<p className="text-base text-base-content/80">
+						For help formatting your data, see the
+							{" "}
+						<Link href="/help#submit" className="text-primary hover:text-primary-focus">
+							Submit section of the ODE Help page
+						</Link>
+						. Submissions should follow the 
+						{" "}
+						<a href="https://fair-edna.github.io/index.html" className="text-primary hover:text-primary-focus">
+						FAIR eDNA
+						</a>
+						{" "}
+						metadata format. You can review a filled-in example
+						{" "}
+						<a
+							href="https://docs.google.com/spreadsheets/d/1mkjfUQW3gTn3ezhMQmFDQn4EBoQ2Xv4SZeSd9sqagoU/edit?gid=0#gid=0"
+							className="text-primary hover:text-primary-focus"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							FAIRe sheet
+						</a>
+						{" "}
+						to see how to generate your metadata files (the files uploaded on this page). We provide a Python repository called
+						{" "}
+						<a
+							href="https://github.com/aomlomics/FAIReSheets"
+							className="text-primary hover:text-primary-focus"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							FAIReSheets
+						</a>
+						{" "}
+						to help generate those files on Google Sheets.
+					</p>
+				</header>
 
-				{/* Requirements Section */}
-				<div className="flex items-center justify-center gap-2 text-base-content text-lg">
-					<svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<span>All files must be in TSV format and follow the template structure exactly</span>
-				</div>
-			</section>
-
-			{/* Main Content */}
-			<ProjectSubmit />
-		</main>
+				{/* Form (handles left: people/privacy, right: files/progress) */}
+				<ProjectSubmit />
+			</main>
+		</>
 	);
 }

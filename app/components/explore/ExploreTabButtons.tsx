@@ -2,24 +2,26 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { EXPLORE_ROUTES } from "@/types/objects";
+import { Prisma } from "@/app/generated/prisma/client";
+import { uncapitalizeTable } from "@/app/helpers/utils";
+import TableMetadata from "@/types/tableMetadata";
 
 export default function ExploreTabButtons() {
 	const pathname = usePathname();
 
 	return (
-		<nav className="flex tabs tabs-lifted">
-			{Object.entries(EXPLORE_ROUTES).map(([route, name]) => (
+		<nav className="flex flex-wrap gap-2">
+			{Object.keys(Prisma.ModelName).map((table) => (
 				<Link
-					key={route}
-					href={`/explore/${route}`}
-					className={`px-6 py-3 text-base transition-colors border-b-0 border-x border-t font-medium ${
-						pathname.startsWith(`/explore/${route}`)
-							? "border-base-300 rounded-t-lg bg-base-100 text-primary"
-							: "border-base-200 text-base-content hover:text-primary/80"
+					key={table}
+					href={`/explore/${uncapitalizeTable(table as Prisma.ModelName)}`}
+					className={`btn btn-sm text-base font-normal normal-case ${
+						pathname?.startsWith(`/explore/${uncapitalizeTable(table as Prisma.ModelName)}`)
+							? "btn-primary"
+							: "bg-base-200 hover:bg-base-300 border-transparent hover:border-transparent"
 					}`}
 				>
-					{name}
+					{TableMetadata[table as Prisma.ModelName].plural}
 				</Link>
 			))}
 		</nav>

@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from "react";
 import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
-import { EXPLORE_ROUTES } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 
@@ -398,7 +397,7 @@ export default function ActualMap({
 								<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
 									{cluster && loc.values ? (
 										<>
-											<h2 className="text-primary text-lg">{EXPLORE_ROUTES[table as keyof typeof EXPLORE_ROUTES]}</h2>
+											<h2 className="text-primary text-lg">{TableMetadata[table].plural}</h2>
 											{loc.values.map((label: string) => (
 												<Link
 													key={label}

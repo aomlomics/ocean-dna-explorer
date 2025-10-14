@@ -2,7 +2,7 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
-import { EXPLORE_ROUTES, GlobalOmit } from "@/types/objects";
+import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
@@ -105,7 +105,7 @@ export default function ExploreSearch({
 
 			<h1 className="text-xl font-medium text-base-content col-start-4 col-span-2">
 				Showing {searchParams.toString().length ? "filtered" : "all"}
-				<span className="text-primary"> {EXPLORE_ROUTES[table as keyof typeof EXPLORE_ROUTES]}</span>
+				<span className="text-primary"> {TableMetadata[table].plural}</span>
 			</h1>
 		</form>
 	);

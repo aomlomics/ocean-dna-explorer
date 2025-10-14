@@ -1,12 +1,12 @@
-import Carousel from "@/app/components/images/Carousel";
+import { getSummaryData, MainStats, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
-import DataSummary from "../components/DataSummary";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
 import { randomColors } from "../helpers/utils";
 import { prismaImages } from "../helpers/prismaImages";
+import Carousel from "../components/images/Carousel";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
@@ -53,16 +53,56 @@ export default async function Home() {
 
 	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
 
-	const carouselImages = await prismaImages.image.findMany();
+	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+
+	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
+
+	const summaryItems = [
+		{
+			title: "Projects",
+			value: projectCount,
+			href: "/explore/project",
+			icon: "ship" as const
+		},
+		{
+			title: "Samples",
+			value: sampleCount,
+			href: "/explore/sample",
+			icon: "location" as const
+		},
+		{
+			title: "Taxa",
+			value: taxaCount,
+			href: "/explore/taxonomy",
+			icon: "fish" as const
+		},
+		{
+			title: "Occurrences",
+			value: occurrenceCount,
+			href: "/explore/occurrence",
+			icon: "eye" as const
+		}
+	];
 
 	return (
-		<main className="flex flex-col grow bg-base-400 text-base-content">
+		<main className="relative flex flex-col grow bg-base-400 text-base-content">
+			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
+				<p className="text-sm sm:text-base">
+					<span className="font-bold">BETA:</span> ODE is under active development. Please report bugs and feature
+					requests{" "}
+					<a
+						href="https://github.com/aomlomics/ocean-dna-explorer/issues"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="underline hover:text-gray-200"
+					>
+						here
+					</a>
+					.
+				</p>
+			</div>
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
 				<Carousel images={carouselImages} />
-				{/* Gradient for left-to-right */}
-				<div className="absolute inset-0 -right-[60%] bg-gradient-to-r from-base-100 via-base-100/50 sm:via-base-100/30 via-[50%] sm:via-[40%] to-transparent to-[100%]"></div>
-				{/* Gradient for bottom */}
-				<div className="absolute inset-0 bg-gradient-to-b from-transparent via-base-100/60 sm:via-base-100/40 via-[60%] sm:via-[50%] to-base-100"></div>
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
@@ -72,24 +112,31 @@ export default async function Home() {
 							</h1>
 
 							<div className="text-base-content/90 font-normal -mt-1 sm:-mt-2">
-								<span className="block text-3xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
+								<span className="block text-3xl text-shadow-2xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
 									to the <span className="text-primary">Ocean DNA Explorer</span>
 								</span>
 
-								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
+								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
 									<span className="block">
-										a data sharing platform, search engine, and visualization and analysis tool for ocean environmental
-										DNA data
+										a data sharing platform, search engine, and visualization
+										<br />
+										and analysis tool for ocean environmental DNA data
 									</span>
 								</div>
 							</div>
 
-							<div className="flex flex-col items-start gap-3 sm:gap-4">
+							<div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
 								<Link
-									href="/explore"
+									href="#dataSummary"
 									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
 								>
-									Explore Data
+									Start Here
+								</Link>
+								<Link
+									href="/explore/project"
+									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
+								>
+									Explore the Data
 								</Link>
 							</div>
 						</div>
@@ -97,13 +144,14 @@ export default async function Home() {
 				</div>
 			</div>
 
-			<div className="relative mb-12 text-center">
+			{/* Removing data summary arrow for now */}
+			{/* <div className="relative mb-12 text-center">
 				<Link
 					href="#dataSummary"
 					className="relative inline-block after:absolute after:content-[''] after:inset-[-40px] after:cursor-pointer"
 				>
-					<p className="text-primary text-xl font-medium mb-2">Data Summary</p>
-					<div className="animate-bounce">
+					<p className="text-primary text-xl font-medium">Start Here!</p>
+					<div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							className="h-8 w-12 text-primary mx-auto"
@@ -115,25 +163,59 @@ export default async function Home() {
 						</svg>
 					</div>
 				</Link>
-			</div>
-			<div id="dataSummary" className="z-content px-4 sm:px-6 lg:px-8 pb-12">
-				<div className="mb-4 text-2xl text-base-content">
-					Showing all
-					<span className="text-primary"> Projects</span>
+			</div> */}
+			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
+				<div className="mb-20">
+					<MainStats summaryItems={summaryItems} />
 				</div>
-				<div className="flex flex-col md:flex-row gap-4 md:gap-8">
-					<div className="aspect-square md:aspect-5/2 w-full md:w-1/2 rounded-lg overflow-hidden">
-						<Map
-							locations={locations}
-							title="project_id"
-							titleTable="project"
-							iconSize={16}
-							legend={projectColors}
-							draw
-						/>
+
+				{/* Interactive Data Journey Visualization */}
+				{/* <div className="mb-32">
+					<div className="text-center mb-12">
+						<h2 className="text-3xl lg:text-4xl text-primary mb-4 font-light">
+							Explore the Data Journey
+						</h2>
+						<p className="text-lg text-base-content/80 max-w-3xl mx-auto leading-relaxed">
+							Discover how ocean environmental DNA data flows from research vessels to taxonomic identification. 
+							Click the magnifying glasses to zoom deeper into each step of the scientific process.
+						</p>
 					</div>
-					<div className="w-full md:w-1/2">
-						<DataSummary />
+					
+					<div className="max-w-6xl mx-auto">
+						<EDNAVisualization />
+					</div>
+					
+					<div className="text-center mt-8 text-sm text-base-content/60">
+						<p>Interactive visualization showing the relationship between database tables and real-world sampling</p>
+					</div>
+				</div> */}
+
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch mb-24">
+					{/* Map Section */}
+					<div>
+						<div className="mb-4 text-xl text-base-content">
+							Showing all
+							<span className="text-primary"> Projects</span>
+						</div>
+						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
+							<Map
+								locations={locations}
+								id="samp_name"
+								title="project_id"
+								titleTable="project"
+								table="sample"
+								iconSize={16}
+								legend={projectColors}
+							/>
+						</div>
+					</div>
+
+					{/* Assay Stats Section */}
+					<div>
+						<div className="mb-8 text-xl text-base-content">
+							<span className="text-primary">Assays used Across ODE</span>
+						</div>
+						<AssayStats assays={uniqueAssays} />
 					</div>
 				</div>
 
@@ -143,7 +225,7 @@ export default async function Home() {
 
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
-							NODE is a product of{" "}
+							ODE is a product of{" "}
 							<Link
 								href="https://www.aoml.noaa.gov/"
 								className="text-primary hover:underline"
@@ -191,7 +273,7 @@ export default async function Home() {
 							projects NO_0062 and NO_0066.
 						</p>
 					</div>
-					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:mt-0">
+					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:-mt-4">
 						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
 							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">

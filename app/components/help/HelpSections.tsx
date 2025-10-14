@@ -233,7 +233,11 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">
 							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your
-							data is standardized and interoperable.
+							data is standardized and interoperable. Please see the {" "}
+							<a href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html" className="link link-primary">
+								NOAA Omics Data Management Guide
+							</a>{" "}
+							for more information on the data format and metadata requirements.
 						</p>
 
 						<h4 className="text-lg font-medium mb-2 mt-4">Handling Missing Data (Dead Values)</h4>
@@ -618,7 +622,7 @@ export const helpSections: Section[] = [
 					</div>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: How do I cite data from NODE?</h4>
+						<h4 className="font-medium mb-2">Q: How do I cite data from ODE?</h4>
 						<p>
 							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to cite the project.
 						</p>

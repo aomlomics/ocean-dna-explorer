@@ -13,7 +13,7 @@ export default function InfoButton({
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 24 24"
 				fill="none"
-				className="stroke-current text-primary shrink-0 w-4 h-4"
+				className="stroke-current text-primary shrink-0 w-5 h-5"
 			>
 				<path
 					strokeLinecap="round"

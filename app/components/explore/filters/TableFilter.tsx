@@ -2,12 +2,12 @@ import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
 import { FilterConfig } from "./filterHelpers";
 
-export default function TableFilter({ tableConfig }: { tableConfig: FilterConfig[] }) {
+export default function TableFilter({ tableConfig, sticky = false }: { tableConfig: FilterConfig[]; sticky?: boolean }) {
 	return (
 		<Suspense
 			fallback={
-				<div className="bg-base-100 rounded-lg border border-base-300 sticky top-6">
-					<div className="p-4 border-b border-base-300 bg-base-200/50">
+				<div className={`bg-base-100 rounded-lg border border-base-300 shadow-inner max-w-lg${sticky ? " sticky top-6 z-30" : ""}`}>
+					<div className="px-5 py-3 border-b border-base-300 bg-base-200/50">
 						<div className="flex items-center gap-3">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -29,11 +29,11 @@ export default function TableFilter({ tableConfig }: { tableConfig: FilterConfig
 						</div>
 					</div>
 
-					<div className="divide-y divide-base-300"></div>
+					<div className="divide-y divide-base-300 p-5 pt-3 pb-6 min-h-[220px]"></div>
 				</div>
 			}
 		>
-			<ActualTableFilter tableConfig={tableConfig} />
+			<ActualTableFilter tableConfig={tableConfig} sticky={sticky} />
 		</Suspense>
 	);
 }

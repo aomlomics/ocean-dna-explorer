@@ -1,5 +1,6 @@
 import { getApiSections } from "@/app/components/help/ApiSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
+import MobileTOC from "@/app/components/help/MobileTOC";
 
 export default async function API() {
 	const apiSections = await getApiSections();
@@ -9,8 +10,8 @@ export default async function API() {
 			{/* Invisible component that handles scroll tracking */}
 			<ActiveSectionTracker />
 
-			{/* Sidebar navigation - Add min-width to prevent squishing */}
-			<aside className="w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
+			{/* Sidebar navigation - Hidden on mobile */}
+			<aside className="hidden lg:block w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
 				<nav>
 					<h2 className="text-xl mb-6 px-2">Contents</h2>
 					<ul className="space-y-5">
@@ -46,8 +47,11 @@ export default async function API() {
 				</nav>
 			</aside>
 
-			{/* Main content area - Add overflow handling */}
-			<main className="flex-1 p-6 md:p-8 overflow-x-auto">
+			{/* Main content area - Full width on mobile */}
+			<main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-auto">
+				{/* Mobile Table of Contents */}
+				<MobileTOC sections={apiSections} />
+
 				{/* Map through sections to generate content */}
 				{apiSections.map((section, index) => (
 					<section key={section.id} id={section.id} data-section-index={index} className="mb-24">
