@@ -4,7 +4,7 @@ import { parse } from "csv-parse";
 import { Assay, Prisma } from "../generated/prisma/client";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../helpers/schema";
-import { prisma } from "../helpers/prisma";
+import { unsafePrisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 
@@ -55,8 +55,8 @@ export default async function seedDatabaseAction() {
 
 		const assayNames = assays.map((a) => a.assay_name);
 
-		await prisma.$transaction(async (tx) => {
-			const newAssays = await prisma.assay.createManyAndReturn({
+		await unsafePrisma.$transaction(async (tx) => {
+			const newAssays = await tx.assay.createManyAndReturn({
 				data: assays,
 				skipDuplicates: true,
 				select: {
