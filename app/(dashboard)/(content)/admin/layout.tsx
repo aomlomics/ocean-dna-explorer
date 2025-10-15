@@ -34,6 +34,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 							Home Carousel Images
 						</Link>
 						<Link
+							href="/admin/seed"
+							className={`btn px-6 py-3 transition-colors rounded-none ${
+								pathname === "/admin/seed" ? "rounded-t-lg btn-primary" : ""
+							}`}
+						>
+							Seed Database
+						</Link>
+						<Link
 							href="/admin/console"
 							className={`btn px-6 py-3 transition-colors rounded-none ${
 								pathname === "/admin/console" ? "rounded-t-lg btn-primary" : ""
