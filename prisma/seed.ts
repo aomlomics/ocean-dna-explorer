@@ -9,6 +9,7 @@ const ASSAY_SEED_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
 
 async function load() {
+	console.log("Seeding database with assays from " + ASSAY_SEED_URL);
 	try {
 		const assaySeedFile = await fetch(ASSAY_SEED_URL);
 		if (!assaySeedFile.ok) {
@@ -94,6 +95,8 @@ async function load() {
 				}
 			});
 		});
+
+		console.log("Seed successful");
 	} catch (err) {
 		console.error(err);
 		await prisma.$disconnect();
