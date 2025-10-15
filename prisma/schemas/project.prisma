@@ -10,10 +10,10 @@ model Project {
     editHistory   Json?
 
     // Relations
-    Samples        Sample[]
-    AssayMetadatas AssayMetadata[]
-    Libraries      Library[]
-    Analyses       Analysis[]
+    Samples    Sample[]
+    AssayPreps AssayPrep[]
+    Libraries  Library[]
+    Analyses   Analysis[]
 
     // Submission File URLs
     projectMetadataFileUrl_ODE      String @default("")
@@ -337,10 +337,10 @@ model Assay {
     pcr_primer_name_reverse String
 
     // Relations
-    Samples        Sample[]
-    AssayMetadatas AssayMetadata[]
-    Libraries      Library[]
-    Analyses       Analysis[]
+    Samples    Sample[]
+    AssayPreps AssayPrep[]
+    Libraries  Library[]
+    Analyses   Analysis[]
 
     deleted_ODE Boolean?
 
@@ -361,7 +361,7 @@ model Assay {
     @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
 }
 
-model AssayMetadata {
+model AssayPrep {
     id Int @id @default(autoincrement())
 
     // Relations
@@ -417,13 +417,13 @@ model Library {
     userDefined Json?
 
     // Relations
-    project_id    String
-    Project       Project       @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    samp_name     String
-    Sample        Sample        @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
-    assay_name    String
-    Assay         Assay         @relation(fields: [assay_name], references: [assay_name])
-    AssayMetadata AssayMetadata @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
+    project_id String
+    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    samp_name  String
+    Sample     Sample    @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    assay_name String
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
+    AssayPrep  AssayPrep @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
 
     // Data
     // Library Preparation Sequencing

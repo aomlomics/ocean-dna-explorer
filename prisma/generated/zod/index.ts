@@ -74,7 +74,7 @@ export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','userDefined
 
 export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','deleted_ODE','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','ampliconSize','ampliconSize_Midpoint_ODE','ampliconSize_End_ODE','pcr_primer_reference_forward','pcr_primer_reference_reverse']);
 
-export const AssayMetadataScalarFieldEnumSchema = z.enum(['id','project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','pcr_0_1','amplificationReactionVolume','assay_validation','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','pcr_dna_vol','pcr_rep','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','assay_type']);
+export const AssayPrepScalarFieldEnumSchema = z.enum(['id','project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','pcr_0_1','amplificationReactionVolume','assay_validation','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','pcr_dna_vol','pcr_rep','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','assay_type']);
 
 export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','userDefined','project_id','samp_name','assay_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','input_read_count','checksum_filename','checksum_filename2','lib_conc','lib_conc_meth','lib_conc_unit','phix_perc','checksum_method','pcr2_amplificationReactionVolume','pcr2_analysis_software','pcr2_annealingTemp','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_cycles','pcr2_dna_vol','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check','inhibition_check_0_1']);
 
@@ -104,7 +104,7 @@ export const SampleOrderByRelevanceFieldEnumSchema = z.enum(['samp_name','projec
 
 export const AssayOrderByRelevanceFieldEnumSchema = z.enum(['assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','targetTaxonomicAssay','targetTaxonomicScope','target_gene','target_subfragment','pcr_primer_reference_forward','pcr_primer_reference_reverse']);
 
-export const AssayMetadataOrderByRelevanceFieldEnumSchema = z.enum(['project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','assay_validation','probeReporter','probeQuencher','probe_seq','probe_ref','annealingTemp','pcr_analysis_software','pcr_method_additional','assay_type']);
+export const AssayPrepOrderByRelevanceFieldEnumSchema = z.enum(['project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','assay_validation','probeReporter','probeQuencher','probe_seq','probe_ref','annealingTemp','pcr_analysis_software','pcr_method_additional','assay_type']);
 
 export const LibraryOrderByRelevanceFieldEnumSchema = z.enum(['lib_id','project_id','samp_name','assay_name','barcoding_pcr_appr','platform','instrument','seq_kit','lib_layout','sequencing_location','adapter_forward','adapter_reverse','lib_screen','seq_method_additional','mid_forward','mid_reverse','filename','filename2','seq_run_id','checksum_filename','checksum_filename2','lib_conc_meth','lib_conc_unit','checksum_method','pcr2_analysis_software','pcr2_commercial_mm','pcr2_cond','pcr2_custom_mm','pcr2_method_additional','pcr2_plate_id','pcr2_thermocycler','associatedSequences','pcr_plate_id','block_ref','block_seq','block_taxa','inhibition_check']);
 
@@ -1002,7 +1002,7 @@ export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSche
 
 export type ProjectRelations = {
   Samples: SampleWithRelations[];
-  AssayMetadatas: AssayMetadataWithRelations[];
+  AssayPreps: AssayPrepWithRelations[];
   Libraries: LibraryWithRelations[];
   Analyses: AnalysisWithRelations[];
 };
@@ -1014,7 +1014,7 @@ export type ProjectWithRelations = Omit<z.infer<typeof ProjectSchema>, "userDefi
 
 export const ProjectWithRelationsSchema: z.ZodType<ProjectWithRelations> = ProjectSchema.merge(z.object({
   Samples: z.lazy(() => SampleWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
 }))
@@ -1024,7 +1024,7 @@ export const ProjectWithRelationsSchema: z.ZodType<ProjectWithRelations> = Proje
 
 export type ProjectOptionalDefaultsRelations = {
   Samples: SampleOptionalDefaultsWithRelations[];
-  AssayMetadatas: AssayMetadataOptionalDefaultsWithRelations[];
+  AssayPreps: AssayPrepOptionalDefaultsWithRelations[];
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Analyses: AnalysisOptionalDefaultsWithRelations[];
 };
@@ -1036,7 +1036,7 @@ export type ProjectOptionalDefaultsWithRelations = Omit<z.infer<typeof ProjectOp
 
 export const ProjectOptionalDefaultsWithRelationsSchema: z.ZodType<ProjectOptionalDefaultsWithRelations> = ProjectOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataOptionalDefaultsWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
 }))
@@ -1046,7 +1046,7 @@ export const ProjectOptionalDefaultsWithRelationsSchema: z.ZodType<ProjectOption
 
 export type ProjectPartialRelations = {
   Samples?: SamplePartialWithRelations[];
-  AssayMetadatas?: AssayMetadataPartialWithRelations[];
+  AssayPreps?: AssayPrepPartialWithRelations[];
   Libraries?: LibraryPartialWithRelations[];
   Analyses?: AnalysisPartialWithRelations[];
 };
@@ -1058,7 +1058,7 @@ export type ProjectPartialWithRelations = Omit<z.infer<typeof ProjectPartialSche
 
 export const ProjectPartialWithRelationsSchema: z.ZodType<ProjectPartialWithRelations> = ProjectPartialSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 })).partial()
@@ -1070,7 +1070,7 @@ export type ProjectOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof Pr
 
 export const ProjectOptionalDefaultsWithPartialRelationsSchema: z.ZodType<ProjectOptionalDefaultsWithPartialRelations> = ProjectOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
@@ -1082,7 +1082,7 @@ export type ProjectWithPartialRelations = Omit<z.infer<typeof ProjectSchema>, "u
 
 export const ProjectWithPartialRelationsSchema: z.ZodType<ProjectWithPartialRelations> = ProjectSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
@@ -1425,7 +1425,7 @@ export type AssayOptionalDefaults = z.infer<typeof AssayOptionalDefaultsSchema>
 
 export type AssayRelations = {
   Samples: SampleWithRelations[];
-  AssayMetadatas: AssayMetadataWithRelations[];
+  AssayPreps: AssayPrepWithRelations[];
   Libraries: LibraryWithRelations[];
   Analyses: AnalysisWithRelations[];
 };
@@ -1434,7 +1434,7 @@ export type AssayWithRelations = z.infer<typeof AssaySchema> & AssayRelations
 
 export const AssayWithRelationsSchema: z.ZodType<AssayWithRelations> = AssaySchema.merge(z.object({
   Samples: z.lazy(() => SampleWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
 }))
@@ -1444,7 +1444,7 @@ export const AssayWithRelationsSchema: z.ZodType<AssayWithRelations> = AssaySche
 
 export type AssayOptionalDefaultsRelations = {
   Samples: SampleOptionalDefaultsWithRelations[];
-  AssayMetadatas: AssayMetadataOptionalDefaultsWithRelations[];
+  AssayPreps: AssayPrepOptionalDefaultsWithRelations[];
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Analyses: AnalysisOptionalDefaultsWithRelations[];
 };
@@ -1453,7 +1453,7 @@ export type AssayOptionalDefaultsWithRelations = z.infer<typeof AssayOptionalDef
 
 export const AssayOptionalDefaultsWithRelationsSchema: z.ZodType<AssayOptionalDefaultsWithRelations> = AssayOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataOptionalDefaultsWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
 }))
@@ -1463,7 +1463,7 @@ export const AssayOptionalDefaultsWithRelationsSchema: z.ZodType<AssayOptionalDe
 
 export type AssayPartialRelations = {
   Samples?: SamplePartialWithRelations[];
-  AssayMetadatas?: AssayMetadataPartialWithRelations[];
+  AssayPreps?: AssayPrepPartialWithRelations[];
   Libraries?: LibraryPartialWithRelations[];
   Analyses?: AnalysisPartialWithRelations[];
 };
@@ -1472,7 +1472,7 @@ export type AssayPartialWithRelations = z.infer<typeof AssayPartialSchema> & Ass
 
 export const AssayPartialWithRelationsSchema: z.ZodType<AssayPartialWithRelations> = AssayPartialSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 })).partial()
@@ -1481,7 +1481,7 @@ export type AssayOptionalDefaultsWithPartialRelations = z.infer<typeof AssayOpti
 
 export const AssayOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AssayOptionalDefaultsWithPartialRelations> = AssayOptionalDefaultsSchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
@@ -1490,16 +1490,16 @@ export type AssayWithPartialRelations = z.infer<typeof AssaySchema> & AssayParti
 
 export const AssayWithPartialRelationsSchema: z.ZodType<AssayWithPartialRelations> = AssaySchema.merge(z.object({
   Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
-  AssayMetadatas: z.lazy(() => AssayMetadataPartialWithRelationsSchema).array(),
+  AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
-// ASSAY METADATA SCHEMA
+// ASSAY PREP SCHEMA
 /////////////////////////////////////////
 
-export const AssayMetadataSchema = z.object({
+export const AssayPrepSchema = z.object({
   pcr_0_1: DeadBooleanSchema,
   id: z.number().int(),
   project_id: z.string(),
@@ -1529,87 +1529,87 @@ export const AssayMetadataSchema = z.object({
   assay_type: z.string(),
 })
 
-export type AssayMetadata = z.infer<typeof AssayMetadataSchema>
+export type AssayPrep = z.infer<typeof AssayPrepSchema>
 
 /////////////////////////////////////////
-// ASSAY METADATA PARTIAL SCHEMA
+// ASSAY PREP PARTIAL SCHEMA
 /////////////////////////////////////////
 
-export const AssayMetadataPartialSchema = AssayMetadataSchema.partial()
+export const AssayPrepPartialSchema = AssayPrepSchema.partial()
 
-export type AssayMetadataPartial = z.infer<typeof AssayMetadataPartialSchema>
+export type AssayPrepPartial = z.infer<typeof AssayPrepPartialSchema>
 
-// ASSAY METADATA OPTIONAL DEFAULTS SCHEMA
+// ASSAY PREP OPTIONAL DEFAULTS SCHEMA
 //------------------------------------------------------
 
-export const AssayMetadataOptionalDefaultsSchema = AssayMetadataSchema.merge(z.object({
+export const AssayPrepOptionalDefaultsSchema = AssayPrepSchema.merge(z.object({
   id: z.number().int().optional(),
 }))
 
-export type AssayMetadataOptionalDefaults = z.infer<typeof AssayMetadataOptionalDefaultsSchema>
+export type AssayPrepOptionalDefaults = z.infer<typeof AssayPrepOptionalDefaultsSchema>
 
-// ASSAY METADATA RELATION SCHEMA
+// ASSAY PREP RELATION SCHEMA
 //------------------------------------------------------
 
-export type AssayMetadataRelations = {
+export type AssayPrepRelations = {
   Project: ProjectWithRelations;
   Assay: AssayWithRelations;
   Libraries: LibraryWithRelations[];
 };
 
-export type AssayMetadataWithRelations = z.infer<typeof AssayMetadataSchema> & AssayMetadataRelations
+export type AssayPrepWithRelations = z.infer<typeof AssayPrepSchema> & AssayPrepRelations
 
-export const AssayMetadataWithRelationsSchema: z.ZodType<AssayMetadataWithRelations> = AssayMetadataSchema.merge(z.object({
+export const AssayPrepWithRelationsSchema: z.ZodType<AssayPrepWithRelations> = AssayPrepSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
   Assay: z.lazy(() => AssayWithRelationsSchema),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
 }))
 
-// ASSAY METADATA OPTIONAL DEFAULTS RELATION SCHEMA
+// ASSAY PREP OPTIONAL DEFAULTS RELATION SCHEMA
 //------------------------------------------------------
 
-export type AssayMetadataOptionalDefaultsRelations = {
+export type AssayPrepOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
   Assay: AssayOptionalDefaultsWithRelations;
   Libraries: LibraryOptionalDefaultsWithRelations[];
 };
 
-export type AssayMetadataOptionalDefaultsWithRelations = z.infer<typeof AssayMetadataOptionalDefaultsSchema> & AssayMetadataOptionalDefaultsRelations
+export type AssayPrepOptionalDefaultsWithRelations = z.infer<typeof AssayPrepOptionalDefaultsSchema> & AssayPrepOptionalDefaultsRelations
 
-export const AssayMetadataOptionalDefaultsWithRelationsSchema: z.ZodType<AssayMetadataOptionalDefaultsWithRelations> = AssayMetadataOptionalDefaultsSchema.merge(z.object({
+export const AssayPrepOptionalDefaultsWithRelationsSchema: z.ZodType<AssayPrepOptionalDefaultsWithRelations> = AssayPrepOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
 }))
 
-// ASSAY METADATA PARTIAL RELATION SCHEMA
+// ASSAY PREP PARTIAL RELATION SCHEMA
 //------------------------------------------------------
 
-export type AssayMetadataPartialRelations = {
+export type AssayPrepPartialRelations = {
   Project?: ProjectPartialWithRelations;
   Assay?: AssayPartialWithRelations;
   Libraries?: LibraryPartialWithRelations[];
 };
 
-export type AssayMetadataPartialWithRelations = z.infer<typeof AssayMetadataPartialSchema> & AssayMetadataPartialRelations
+export type AssayPrepPartialWithRelations = z.infer<typeof AssayPrepPartialSchema> & AssayPrepPartialRelations
 
-export const AssayMetadataPartialWithRelationsSchema: z.ZodType<AssayMetadataPartialWithRelations> = AssayMetadataPartialSchema.merge(z.object({
+export const AssayPrepPartialWithRelationsSchema: z.ZodType<AssayPrepPartialWithRelations> = AssayPrepPartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
 })).partial()
 
-export type AssayMetadataOptionalDefaultsWithPartialRelations = z.infer<typeof AssayMetadataOptionalDefaultsSchema> & AssayMetadataPartialRelations
+export type AssayPrepOptionalDefaultsWithPartialRelations = z.infer<typeof AssayPrepOptionalDefaultsSchema> & AssayPrepPartialRelations
 
-export const AssayMetadataOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AssayMetadataOptionalDefaultsWithPartialRelations> = AssayMetadataOptionalDefaultsSchema.merge(z.object({
+export const AssayPrepOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AssayPrepOptionalDefaultsWithPartialRelations> = AssayPrepOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
 }).partial())
 
-export type AssayMetadataWithPartialRelations = z.infer<typeof AssayMetadataSchema> & AssayMetadataPartialRelations
+export type AssayPrepWithPartialRelations = z.infer<typeof AssayPrepSchema> & AssayPrepPartialRelations
 
-export const AssayMetadataWithPartialRelationsSchema: z.ZodType<AssayMetadataWithPartialRelations> = AssayMetadataSchema.merge(z.object({
+export const AssayPrepWithPartialRelationsSchema: z.ZodType<AssayPrepWithPartialRelations> = AssayPrepSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
@@ -1698,7 +1698,7 @@ export type LibraryRelations = {
   Project: ProjectWithRelations;
   Sample: SampleWithRelations;
   Assay: AssayWithRelations;
-  AssayMetadata: AssayMetadataWithRelations;
+  AssayPrep: AssayPrepWithRelations;
 };
 
 export type LibraryWithRelations = Omit<z.infer<typeof LibrarySchema>, "userDefined"> & {
@@ -1709,7 +1709,7 @@ export const LibraryWithRelationsSchema: z.ZodType<LibraryWithRelations> = Libra
   Project: z.lazy(() => ProjectWithRelationsSchema),
   Sample: z.lazy(() => SampleWithRelationsSchema),
   Assay: z.lazy(() => AssayWithRelationsSchema),
-  AssayMetadata: z.lazy(() => AssayMetadataWithRelationsSchema),
+  AssayPrep: z.lazy(() => AssayPrepWithRelationsSchema),
 }))
 
 // LIBRARY OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1719,7 +1719,7 @@ export type LibraryOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
   Sample: SampleOptionalDefaultsWithRelations;
   Assay: AssayOptionalDefaultsWithRelations;
-  AssayMetadata: AssayMetadataOptionalDefaultsWithRelations;
+  AssayPrep: AssayPrepOptionalDefaultsWithRelations;
 };
 
 export type LibraryOptionalDefaultsWithRelations = Omit<z.infer<typeof LibraryOptionalDefaultsSchema>, "userDefined"> & {
@@ -1730,7 +1730,7 @@ export const LibraryOptionalDefaultsWithRelationsSchema: z.ZodType<LibraryOption
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Sample: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema),
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
-  AssayMetadata: z.lazy(() => AssayMetadataOptionalDefaultsWithRelationsSchema),
+  AssayPrep: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema),
 }))
 
 // LIBRARY PARTIAL RELATION SCHEMA
@@ -1740,7 +1740,7 @@ export type LibraryPartialRelations = {
   Project?: ProjectPartialWithRelations;
   Sample?: SamplePartialWithRelations;
   Assay?: AssayPartialWithRelations;
-  AssayMetadata?: AssayMetadataPartialWithRelations;
+  AssayPrep?: AssayPrepPartialWithRelations;
 };
 
 export type LibraryPartialWithRelations = Omit<z.infer<typeof LibraryPartialSchema>, "userDefined"> & {
@@ -1751,7 +1751,7 @@ export const LibraryPartialWithRelationsSchema: z.ZodType<LibraryPartialWithRela
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
-  AssayMetadata: z.lazy(() => AssayMetadataPartialWithRelationsSchema),
+  AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
 })).partial()
 
 export type LibraryOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof LibraryOptionalDefaultsSchema>, "userDefined"> & {
@@ -1762,7 +1762,7 @@ export const LibraryOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Librar
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
-  AssayMetadata: z.lazy(() => AssayMetadataPartialWithRelationsSchema),
+  AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
 }).partial())
 
 export type LibraryWithPartialRelations = Omit<z.infer<typeof LibrarySchema>, "userDefined"> & {
@@ -1773,5 +1773,5 @@ export const LibraryWithPartialRelationsSchema: z.ZodType<LibraryWithPartialRela
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
-  AssayMetadata: z.lazy(() => AssayMetadataPartialWithRelationsSchema),
+  AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
 }).partial())

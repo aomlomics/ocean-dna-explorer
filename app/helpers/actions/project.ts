@@ -1,7 +1,7 @@
 import {
 	AnalysisScalarFieldEnumSchema,
-	AssayMetadataOptionalDefaultsSchema,
-	AssayMetadataScalarFieldEnumSchema,
+	AssayPrepOptionalDefaultsSchema,
+	AssayPrepScalarFieldEnumSchema,
 	AssayOptionalDefaultsSchema,
 	AssayScalarFieldEnumSchema,
 	LibraryOptionalDefaultsSchema,
@@ -36,8 +36,6 @@ async function parseProjectFile({
 }) {
 	const projectCol = {} as Record<string, string>;
 	const assayCols = {} as Record<string, Record<string, string>>;
-	// const assayMetadataCols = {} as Record<string, Record<string, string>>;
-	// const libraryCols = {} as Record<string, Record<string, string>>;
 
 	const projectUserDefined = {} as PrismaJson.UserDefinedType;
 
@@ -103,7 +101,7 @@ async function parseProjectFile({
 				!ProjectScalarFieldEnumSchema.safeParse(field).success &&
 				!SampleScalarFieldEnumSchema.safeParse(field).success &&
 				!AssayScalarFieldEnumSchema.safeParse(field).success &&
-				!AssayMetadataScalarFieldEnumSchema.safeParse(field).success &&
+				!AssayPrepScalarFieldEnumSchema.safeParse(field).success &&
 				!LibraryScalarFieldEnumSchema.safeParse(field).success &&
 				!AnalysisScalarFieldEnumSchema.safeParse(field).success
 			) {
@@ -112,7 +110,7 @@ async function parseProjectFile({
 				//Project Level
 				parseSchemaToObject(field, value, projectCol, "project");
 				parseSchemaToObject(field, value, projectCol, "assay");
-				parseSchemaToObject(field, value, projectCol, "assayMetadata");
+				parseSchemaToObject(field, value, projectCol, "assayPrep");
 				parseSchemaToObject(field, value, projectCol, "library");
 				parseSchemaToObject(field, value, projectCol, "analysis");
 
@@ -128,7 +126,7 @@ async function parseProjectFile({
 						}
 
 						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
-						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assayMetadata");
+						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assayPrep");
 						parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "library");
 					}
 				}
@@ -184,7 +182,7 @@ async function parseProjectFile({
 	}
 
 	const assays = [] as Prisma.AssayCreateManyInput[];
-	const assayMetadatas = [] as Prisma.AssayMetadataCreateManyInput[];
+	const assayPreps = [] as Prisma.AssayPrepCreateManyInput[];
 	for (const assay_name of assayNames) {
 		//assay
 		const parsedAssay = AssayOptionalDefaultsSchema.safeParse({
@@ -200,21 +198,21 @@ async function parseProjectFile({
 		}
 		assays.push(parsedAssay.data);
 
-		//assayMetadata
-		const parsedAssayMetadata = AssayMetadataOptionalDefaultsSchema.safeParse({
+		//assayPrep
+		const parsedAssayPrep = AssayPrepOptionalDefaultsSchema.safeParse({
 			...projectCol,
 			...assayCols[assay_name],
 			assay_name
 		});
-		if (!parsedAssayMetadata.success) {
+		if (!parsedAssayPrep.success) {
 			await channel.stream.error(
-				`Table: AssayMetadata\n` +
+				`Table: AssayPrep\n` +
 					`Key: ${assay_name}\n\n` +
-					`${parsedAssayMetadata.error.issues.map((e) => e.message).join("\n\n")}`
+					`${parsedAssayPrep.error.issues.map((e) => e.message).join("\n\n")}`
 			);
 			return;
 		}
-		assayMetadatas.push(parsedAssayMetadata.data);
+		assayPreps.push(parsedAssayPrep.data);
 	}
 
 	await channel.stream.message("All entries successfully parsed into database format.", 75);
@@ -222,7 +220,7 @@ async function parseProjectFile({
 	return {
 		project: parsedProject.data as unknown as Prisma.ProjectCreateInput,
 		assays,
-		assayMetadatas,
+		assayPreps,
 		projectCol,
 		assayCols,
 		projectMd5
@@ -494,7 +492,7 @@ export async function parseProjectFiles({
 	if (!projectParseResult) {
 		return;
 	}
-	const { project, projectMd5, projectCol, assayCols, assays, assayMetadatas } = projectParseResult;
+	const { project, projectMd5, projectCol, assayCols, assays, assayPreps } = projectParseResult;
 
 	const libraryParseResult = await parseLibraryFile({
 		channel: libraryChannel,
@@ -526,7 +524,7 @@ export async function parseProjectFiles({
 			libraryMetadataFileChecksum_ODE: libraryMd5
 		},
 		assays,
-		assayMetadatas,
+		assayPreps,
 		samples,
 		samplesByAssay,
 		libraries,

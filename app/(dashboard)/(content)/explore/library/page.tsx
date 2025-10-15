@@ -7,7 +7,10 @@ export default function Library() {
 		<ExplorePage table="library" tableConfig={[]}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>TODO: Replace this with text describing a Library.</p>
+					<p>
+						Encompasses sequencing library molecular preparation details (PCR amplification and indexing), the
+						sequencing instrumentation and run parameters, and metadata for the generated DNA sequence files.
+					</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">

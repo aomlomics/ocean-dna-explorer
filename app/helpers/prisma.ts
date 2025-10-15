@@ -122,10 +122,10 @@ const publicPrisma =
 					return await query(args);
 				}
 			},
-			assayMetadata: {
+			assayPrep: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.AssayMetadataWhereInput; [key: string]: any };
+						args = args as { where?: Prisma.AssayPrepWhereInput; [key: string]: any };
 						args.where = await getWhere({
 							where: args.where,
 							signedOutQuery: {
@@ -327,13 +327,13 @@ const prisma =
 					return await query(args);
 				}
 			},
-			assayMetadata: {
+			assayPrep: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 
-						args = args as { where?: Prisma.AssayMetadataWhereInput; [key: string]: any };
+						args = args as { where?: Prisma.AssayPrepWhereInput; [key: string]: any };
 						args.where = await getWhere({
 							where: args.where,
 							userId,
@@ -691,49 +691,44 @@ export async function updateManyRaw(
 	client: any,
 	table: Prisma.ModelName,
 	data: Record<string, any>[],
-	id = "id" as string | string[],
-	fields?: string[]
+	id = "id" as string | string[]
 ) {
-	let fs = undefined as string[] | undefined;
-	let numFields = NaN;
-	if (fields) {
-		numFields = fields.length;
-		fs = fields.filter((f) => f !== id);
+	const fields = [...TableMetadata[table].enumSchema.options];
+	//remove id field(s) to be handled separately
+	if (typeof id === "string") {
+		const keyIndex = fields.indexOf(id);
+		if (keyIndex === -1) {
+			throw new Error(
+				`No field named "${id}" found for raw update on table named "${table}" for ${data.length} entries.`
+			);
+		} else {
+			fields.splice(keyIndex, 1);
+		}
 	} else {
-		//TODO: verify that all data has these fields
-		const keys = Object.keys(data[0]);
-		numFields = keys.length;
-
-		//remove id field(s) to be handled separately
-		if (typeof id === "string") {
-			const keyIndex = keys.indexOf(id);
+		for (const i of id) {
+			const keyIndex = fields.indexOf(i);
 			if (keyIndex === -1) {
 				throw new Error(
-					`No field named "${id}" found for raw update on table named "${table}" for ${data.length} entries.`
+					`No field named "${i}" found in data for raw update on table named "${table}" for ${data.length} entries.`
 				);
 			} else {
-				keys.splice(keyIndex, 1);
-			}
-		} else {
-			for (const i of id) {
-				const keyIndex = keys.indexOf(i);
-				if (keyIndex === -1) {
-					throw new Error(
-						`No field named "${i}" found in data for raw update on table named "${table}" for ${data.length} entries.`
-					);
-				} else {
-					keys.splice(keyIndex, 1);
-				}
+				fields.splice(keyIndex, 1);
 			}
 		}
+	}
 
-		fs = keys;
+	for (const d of data) {
+		for (const field of TableMetadata[table].enumSchema.options) {
+			if (d[field] === undefined) {
+				d[field] = null;
+			}
+		}
 	}
 
 	let rowsAffected = 0;
-	const CHUNK_SIZE = 30000 / numFields; //Prisma prepared statements have a limit of 32,767
+	const CHUNK_SIZE = 30000 / TableMetadata[table].enumSchema.options.length; //Prisma prepared statements have a limit of 32,767
 	for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-		rowsAffected += await updateManyRawChunked(client, table, data.slice(i, i + CHUNK_SIZE), id, fs);
+		rowsAffected += await updateManyRawChunked(client, table, data.slice(i, i + CHUNK_SIZE), id, fields);
 	}
 
 	return rowsAffected;

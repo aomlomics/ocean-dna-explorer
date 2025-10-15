@@ -51,12 +51,10 @@ async function load() {
 				}
 			});
 
-			await updateManyRaw(
-				tx,
-				"Assay",
-				assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name)),
-				"assay_name"
-			);
+			const oldAssays = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
+			if (oldAssays.length) {
+				await updateManyRaw(tx, "Assay", oldAssays, "assay_name");
+			}
 
 			await tx.assay.deleteMany({
 				where: {

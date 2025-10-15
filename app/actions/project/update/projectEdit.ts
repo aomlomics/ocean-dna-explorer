@@ -88,7 +88,7 @@ async function doEdit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, assays, assayMetadatas, samples, libraries, checksums } = parseResult;
+		const { project, assays, assayPreps, samples, libraries, checksums } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -165,12 +165,12 @@ async function doEdit(
 					}
 				}
 
-				for (const meta of assayMetadatas) {
-					const dbMeta = await tx.assayMetadata.findUnique({
+				for (const prep of assayPreps) {
+					const dbMeta = await tx.assayPrep.findUnique({
 						where: {
 							project_id_assay_name: {
-								project_id: meta.project_id,
-								assay_name: meta.assay_name
+								project_id: prep.project_id,
+								assay_name: prep.assay_name
 							}
 						},
 						select: {
@@ -290,24 +290,24 @@ async function doEdit(
 					data: { ...project, editHistory }
 				});
 
-				//assayMetadatas
+				//assayPreps
 				let i = 0;
-				for (let meta of assayMetadatas) {
-					await tx.assayMetadata.upsert({
+				for (let prep of assayPreps) {
+					await tx.assayPrep.upsert({
 						where: {
 							project_id_assay_name: {
-								project_id: meta.project_id,
-								assay_name: meta.assay_name
+								project_id: prep.project_id,
+								assay_name: prep.assay_name
 							}
 						},
-						update: meta,
-						create: meta
+						update: prep,
+						create: prep
 					});
 
 					i++;
 					await projectChannel.stream.message(
-						`AssayMetadata with nucl_acid_amp of "${meta.nucl_acid_amp}" successfully updated in database.`,
-						85 + (5 / assayMetadatas.length) * i
+						`AssayPrep with nucl_acid_amp of "${prep.nucl_acid_amp}" successfully updated in database.`,
+						85 + (5 / assayPreps.length) * i
 					);
 				}
 

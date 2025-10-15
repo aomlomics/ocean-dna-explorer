@@ -59,10 +59,10 @@ const TableMetadata = {
 		titleField: "assay_name",
 		subFields: ["pcr_primer_name_forward", "pcr_primer_forward", "pcr_primer_name_reverse", "pcr_primer_reverse"]
 	},
-	assayMetadata: {
-		plural: "AssayMetadatas",
-		schema: PrismaZodTypes.AssayMetadataSchema,
-		enumSchema: PrismaZodTypes.AssayMetadataScalarFieldEnumSchema,
+	assayPrep: {
+		plural: "AssayPreps",
+		schema: PrismaZodTypes.AssayPrepSchema,
+		enumSchema: PrismaZodTypes.AssayPrepScalarFieldEnumSchema,
 		titleField: ["project_id", "assay_name"]
 	},
 	library: {
@@ -142,9 +142,9 @@ const relations = {
 	project: getRelations(PrismaZodTypes.ProjectScalarFieldEnumSchema.options, PrismaZodTypes.ProjectWithRelationsSchema),
 	sample: getRelations(PrismaZodTypes.SampleScalarFieldEnumSchema.options, PrismaZodTypes.SampleWithRelationsSchema),
 	assay: getRelations(PrismaZodTypes.AssayScalarFieldEnumSchema.options, PrismaZodTypes.AssayWithRelationsSchema),
-	assayMetadata: getRelations(
-		PrismaZodTypes.AssayMetadataScalarFieldEnumSchema.options,
-		PrismaZodTypes.AssayMetadataWithRelationsSchema
+	assayPrep: getRelations(
+		PrismaZodTypes.AssayPrepScalarFieldEnumSchema.options,
+		PrismaZodTypes.AssayPrepWithRelationsSchema
 	),
 	library: getRelations(PrismaZodTypes.LibraryScalarFieldEnumSchema.options, PrismaZodTypes.LibraryWithRelationsSchema),
 	analysis: getRelations(

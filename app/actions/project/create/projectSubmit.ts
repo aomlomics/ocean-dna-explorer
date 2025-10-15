@@ -32,7 +32,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, assays, assayMetadatas, samplesByAssay, libraries } = parseResult;
+		const { project, assays, assayPreps, samplesByAssay, libraries } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -87,11 +87,11 @@ async function doSubmit(
 					data: project
 				});
 
-				await tx.assayMetadata.createMany({
-					data: assayMetadatas
+				await tx.assayPrep.createMany({
+					data: assayPreps
 				});
 
-				await projectChannel.stream.success("Project and AssayMetadatas successfully uploaded to database.");
+				await projectChannel.stream.success("Project and AssayPreps successfully uploaded to database.");
 
 				for (const a of assays) {
 					await tx.assay.update({
