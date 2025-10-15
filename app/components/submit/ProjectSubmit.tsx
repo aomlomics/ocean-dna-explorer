@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
 import { NetworkProgressPacket } from "@/types/globals";
@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionMany } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
+import Link from "next/link";
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
@@ -258,14 +259,25 @@ export default function ProjectSubmit() {
 				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}
 				</h3>
-				<p className="mb-2 font-light whitespace-pre-wrap">
-					{globalResponse?.statusMessage === "success"
-						? globalResponse!.progress!.message.replace(
-								"__ASSAY_MASTER_LIST_URL__",
-								process.env.ASSAY_MASTER_LIST_URL as string
-						  )
-						: errorMessage}
-				</p>
+
+				{globalResponse?.statusMessage === "success"
+					? globalResponse!.progress!.message.split("__ASSAY_MASTER_LIST_URL__").map((str, i) => (
+							<Fragment key={i}>
+								{i !== 0 ? (
+									//this is a naive solution
+									<Link
+										href={process.env.NEXT_PUBLIC_ASSAY_MASTER_LIST_URL as string}
+										className="link link-primary link-hover"
+									>
+										Assay Master List
+									</Link>
+								) : (
+									""
+								)}
+								<span className="mb-2 font-light whitespace-pre-wrap">{str}</span>
+							</Fragment>
+					  ))
+					: errorMessage}
 				{globalResponse?.statusMessage === "success" && (
 					<div className="modal-action">
 						<button type="submit" className="btn" onClick={() => router.push("/submit/analysis")}>

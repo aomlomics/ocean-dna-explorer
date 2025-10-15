@@ -717,6 +717,7 @@ export async function updateManyRaw(
 		}
 	}
 
+	//fill missing optional fields with null
 	for (const d of data) {
 		for (const field of TableMetadata[table].enumSchema.options) {
 			if (d[field] === undefined) {

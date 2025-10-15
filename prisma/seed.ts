@@ -51,10 +51,11 @@ async function load() {
 				}
 			});
 
-			const oldAssays = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
-			if (oldAssays.length) {
-				await updateManyRaw(tx, "Assay", oldAssays, "assay_name");
-			}
+			//TODO: fix updateManyRaw
+			// const assaysToUpdate = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
+			// if (assaysToUpdate.length) {
+			// 	await updateManyRaw(tx, "Assay", assaysToUpdate, "assay_name");
+			// }
 
 			await tx.assay.deleteMany({
 				where: {

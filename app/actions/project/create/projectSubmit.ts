@@ -117,21 +117,22 @@ async function doSubmit(
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
-		await globalStream.success(
-			"Project successfully submitted!" + Object.keys(badAssayFields).length
-				? "\n\nWARNING: Some Assays had provided fields that did not match the master list located at __ASSAY_MASTER_LIST_URL__. The following fields will have the values from the submission replaced with the values from the master list.\n\n" +
-						Object.entries(badAssayFields)
-							.map(
-								([assay_name, fieldInfos]) =>
-									assay_name +
-									"\n" +
-									fieldInfos
-										.map((info) => "Field: " + info.field + "\tProvided: " + info.provided + "\tActual: " + info.actual)
-										.join("\n")
-							)
-							.join("\n\n")
-				: ""
-		);
+		let successMsg = "Project successfully submitted!";
+		if (Object.keys(badAssayFields).length) {
+			successMsg +=
+				"\n\nWARNING: Some Assays had provided fields that did not match the __ASSAY_MASTER_LIST_URL__. The following fields will have the values from the submission replaced with the values from the master list.\n\n" +
+				Object.entries(badAssayFields)
+					.map(
+						([assay_name, fieldInfos]) =>
+							assay_name +
+							"\n" +
+							fieldInfos
+								.map((info) => "Field: " + info.field + "\tProvided: " + info.provided + "\tActual: " + info.actual)
+								.join("\n")
+					)
+					.join("\n\n");
+		}
+		await globalStream.success(successMsg);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
