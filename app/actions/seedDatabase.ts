@@ -5,10 +5,24 @@ import { Assay, Prisma } from "../generated/prisma/client";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../helpers/schema";
 import { prisma } from "../helpers/prisma";
+import { auth } from "@clerk/nextjs/server";
+import { RolePermissions } from "@/types/objects";
 
 export default async function seedDatabaseAction() {
-	console.log("Seeding database with assays from " + process.env.ASSAY_MASTER_LIST);
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
+
 	try {
+		if (!userId) {
+			throw new Error("Must be logged in.");
+		}
+
+		if (!role || !RolePermissions[role].includes("manageDatabase")) {
+			throw new Error("Invalid role.");
+		}
+
+		console.log("Seeding database with assays from " + process.env.ASSAY_MASTER_LIST);
+
 		const assaySeedFile = await fetch(process.env.ASSAY_MASTER_LIST as string);
 		if (!assaySeedFile.ok) {
 			throw new Error(
