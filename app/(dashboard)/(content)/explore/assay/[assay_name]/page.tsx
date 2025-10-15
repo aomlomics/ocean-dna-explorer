@@ -3,9 +3,11 @@ import { prisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
+import { Assay } from "@/app/generated/prisma/client";
 
-export default async function Assay_name({ params }: { params: Promise<{ assay_name: string }> }) {
-	const { assay_name } = await params;
+export default async function Assay_name({ params }: { params: Promise<{ assay_name: Assay["assay_name"] }> }) {
+	let { assay_name } = await params;
+	assay_name = decodeURIComponent(assay_name);
 
 	const assay = await prisma.assay.findUnique({
 		where: {
@@ -30,7 +32,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 		}
 	});
 
-	if (!assay) return <>Sample not found</>;
+	if (!assay) return <>Assay not found</>;
 	const { Samples: _, Libraries: __, Analyses: ___, ...justAssay } = assay;
 	const isPrivate = assay.Samples.some((samp) => {
 		return samp.Project.isPrivate;

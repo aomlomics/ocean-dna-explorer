@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Library() {
 	return (
-		<ExplorePage table="assayMetadata" tableConfig={[]} underConstruction>
+		<ExplorePage table="assayMetadata" tableConfig={[]}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
 					<p>TODO: Replace this with text describing a Library.</p>

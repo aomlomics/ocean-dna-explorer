@@ -12,14 +12,12 @@ export default function ExplorePage({
 	table,
 	tableConfig,
 	children,
-	displayMode = "table",
-	underConstruction
+	displayMode = "table"
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	tableConfig: FilterConfig[];
 	children: ReactNode;
 	displayMode?: "table" | "grid";
-	underConstruction?: true;
 }) {
 	const titleField = TableMetadata[table].titleField;
 	return (
@@ -57,36 +55,30 @@ export default function ExplorePage({
 				</p> */}
 			</div>
 
-			{!underConstruction ? (
+			<TableFilter tableConfig={tableConfig} />
+
+			{displayMode === "table" && (
 				<>
-					<TableFilter tableConfig={tableConfig} />
-
-					{displayMode === "table" && (
-						<>
-							<div className="hidden lg:block">
-								<div className="rounded-lg border border-base-300 h-[90vh]">
-									<Table table={table} defaultTake={25} filterHeadersAtStart />
-								</div>
-							</div>
-							<div className="lg:hidden">
-								<Pagination table={table} />
-							</div>
-						</>
-					)}
-
-					{displayMode === "grid" && (
-						<>
-							<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-								<TaxaGrid />
-							</div>
-							<div className="lg:hidden">
-								<TaxaGrid />
-							</div>
-						</>
-					)}
+					<div className="hidden lg:block">
+						<div className="rounded-lg border border-base-300 h-[90vh]">
+							<Table table={table} defaultTake={25} filterHeadersAtStart />
+						</div>
+					</div>
+					<div className="lg:hidden">
+						<Pagination table={table} />
+					</div>
 				</>
-			) : (
-				<UnderConstruction />
+			)}
+
+			{displayMode === "grid" && (
+				<>
+					<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
+						<TaxaGrid />
+					</div>
+					<div className="lg:hidden">
+						<TaxaGrid />
+					</div>
+				</>
 			)}
 		</div>
 	);

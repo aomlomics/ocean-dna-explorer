@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { fetcher } from "@/app/helpers/utils";
 
+//TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
 export default function Table({
 	table,
@@ -575,8 +576,12 @@ export default function Table({
 																) : head in TableMetadata[table].relationFields ? (
 																	<Link
 																		href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
-																		className="link link-primary link-hover"
+																		className="link link-primary link-hover font-bold"
 																	>
+																		{row[head]}
+																	</Link>
+																) : URL.canParse(row[head]) && row[head].startsWith("https://") ? (
+																	<Link href={row[head]} className="link link-primary link-hover">
 																		{row[head]}
 																	</Link>
 																) : (

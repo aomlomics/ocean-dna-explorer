@@ -301,7 +301,7 @@ export default function ActualMap({
 	}
 
 	return (
-		<div className="flex flex-col items-start h-full w-full">
+		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
 				maxBounds={[
 					[-180, -180],

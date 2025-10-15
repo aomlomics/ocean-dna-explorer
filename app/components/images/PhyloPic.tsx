@@ -4,7 +4,6 @@ import { RanksBySpecificity } from "@/types/objects";
 
 export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const errorImg = <>No Image</>;
-	console.log(taxonomy);
 
 	let gbifTaxonomy;
 	let imageDetails = { rank: "", title: "" };

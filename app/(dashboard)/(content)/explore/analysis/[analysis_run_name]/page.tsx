@@ -5,9 +5,15 @@ import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
+import { Analysis } from "@/app/generated/prisma/client";
 
-export default async function Analysis_Run_name({ params }: { params: Promise<{ analysis_run_name: string }> }) {
-	const { analysis_run_name } = await params;
+export default async function Analysis_run_name({
+	params
+}: {
+	params: Promise<{ analysis_run_name: Analysis["analysis_run_name"] }>;
+}) {
+	let { analysis_run_name } = await params;
+	analysis_run_name = decodeURIComponent(analysis_run_name);
 
 	const analysis = await prisma.analysis.findUnique({
 		where: {

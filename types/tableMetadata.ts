@@ -230,7 +230,6 @@ for (const model of Object.keys(Prisma.ModelName)) {
 	(TableMetadata as any)[model] = TableMetadata[uncapitalizeTable(model as Prisma.ModelName)];
 }
 
-console.log(Object.keys(TableMetadata));
 export default TableMetadata as Record<
 	Uncapitalize<Prisma.ModelName> | Prisma.ModelName,
 	{
