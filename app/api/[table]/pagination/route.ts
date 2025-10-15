@@ -7,7 +7,7 @@ import { parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helper
 
 export async function GET(
 	request: Request,
-	{ params }: { params: Promise<{ table: Uncapitalize<Prisma.ModelName> }> }
+	{ params }: { params: Promise<{ table: String }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
