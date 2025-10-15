@@ -6,7 +6,6 @@ import TableFilter from "./filters/TableFilter";
 import { Prisma } from "@/app/generated/prisma/client";
 import TaxaGrid from "../paginated/TaxaGrid";
 import TableMetadata from "@/types/tableMetadata";
-import UnderConstruction from "../UnderConstruction";
 
 export default function ExplorePage({
 	table,

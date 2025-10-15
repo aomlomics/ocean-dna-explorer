@@ -67,11 +67,13 @@ export function getZodType(field: any): { type: DbType; optional?: boolean; valu
 
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
-	field: string,
-	value: string,
+	f: string,
+	v: string,
 	obj: Record<string, string | string[] | number | number[] | Date | boolean | JsonValue | null>,
 	table: Uncapitalize<Prisma.ModelName>
 ) {
+	const field = f.trim();
+	const value = v.trim();
 	//check if the field name is in the Schema
 	if (value && TableMetadata[table].enumSchema.options.includes(field)) {
 		const type = getZodType(TableMetadata[table].schema.shape[field]).type;

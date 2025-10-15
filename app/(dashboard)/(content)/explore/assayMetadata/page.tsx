@@ -7,7 +7,10 @@ export default function AssayMetadata() {
 		<ExplorePage table="assayMetadata" tableConfig={[]}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>TODO: Replace this with text describing an AssayMetadata.</p>
+					<p>
+						The protocol-specific details describing the laboratory procedures used to perform an assay, such as the
+						chemicals, instruments, and conditions employed for sample processing and sequencing.
+					</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">

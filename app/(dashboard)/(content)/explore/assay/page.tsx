@@ -65,8 +65,8 @@ export default async function Assay() {
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
 					<p>
-						Laboratory protocols used to analyze samples, specifying primers, controls, PCR protocols, and target genes
-						for DNA amplification.
+						The molecular targets, primer sequences, primer references, and expected amplicon size for a specific
+						molecular analysis.
 					</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}

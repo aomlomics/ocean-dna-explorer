@@ -3,15 +3,14 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
-import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
+import { NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionMany } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
-import { parse } from "csv-parse";
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
@@ -260,7 +259,12 @@ export default function ProjectSubmit() {
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}
 				</h3>
 				<p className="mb-2 font-light whitespace-pre-wrap">
-					{globalResponse?.statusMessage === "success" ? globalResponse!.progress!.message : errorMessage}
+					{globalResponse?.statusMessage === "success"
+						? globalResponse!.progress!.message.replace(
+								"__ASSAY_MASTER_LIST_URL__",
+								process.env.ASSAY_MASTER_LIST_URL as string
+						  )
+						: errorMessage}
 				</p>
 				{globalResponse?.statusMessage === "success" && (
 					<div className="modal-action">

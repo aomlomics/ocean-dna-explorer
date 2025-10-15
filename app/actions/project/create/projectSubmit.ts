@@ -109,8 +109,7 @@ async function doSubmit(
 				await sampleChannel.stream.success("Samples successfully uploaded to database.");
 
 				await tx.library.createMany({
-					data: libraries,
-					skipDuplicates: true
+					data: libraries
 				});
 
 				await libraryChannel.stream.success("Libraries successfully uploaded to database.");
