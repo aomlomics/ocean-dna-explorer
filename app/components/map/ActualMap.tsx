@@ -107,11 +107,11 @@ export default function ActualMap({
 			!(locations[i].decimalLongitude! in DeadValueEnum)
 		) {
 			let loc = locations[i] as Location;
-			//round latlng to nearest 0.2
+			//round latlng to nearest 0.1
 			loc = {
 				...loc,
-				decimalLatitude: Math.round(loc.decimalLatitude * 5) / 5,
-				decimalLongitude: Math.round(loc.decimalLongitude * 5) / 5
+				decimalLatitude: Math.round(loc.decimalLatitude * 10) / 10,
+				decimalLongitude: Math.round(loc.decimalLongitude * 10) / 10
 			};
 
 			//check if point already exists
@@ -460,13 +460,17 @@ function PopupWithSearch({
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
 					</Link>
 				)}
-				<input
-					type="text"
-					onChange={(e) => setFilter(e.target.value)}
-					value={filter}
-					placeholder={`Filter ${TableMetadata[table].plural}...`}
-					className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
-				/>
+				{loc.values ? (
+					<input
+						type="text"
+						onChange={(e) => setFilter(e.target.value)}
+						value={filter}
+						placeholder={`Filter ${TableMetadata[table].plural}...`}
+						className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
+					/>
+				) : (
+					<></>
+				)}
 				<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
 					{loc.values ? (
 						<>
