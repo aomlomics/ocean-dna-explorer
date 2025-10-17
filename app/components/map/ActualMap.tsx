@@ -5,12 +5,19 @@ import { divIcon, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup 
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
+
+type Location = {
+	decimalLatitude: number;
+	decimalLongitude: number;
+	color?: string;
+	[key: string]: any;
+};
 
 const bounds = [
 	[-180, -180],
@@ -63,7 +70,6 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 export default function ActualMap({
 	locations,
 	id = "samp_name",
-	title,
 	titleTable,
 	iconSize = 25,
 	table = "sample",
@@ -75,10 +81,10 @@ export default function ActualMap({
 		decimalLatitude: number | null;
 		decimalLongitude: number | null;
 		color?: string;
+		values?: string[];
 		[key: string]: any;
 	}[];
 	id?: string;
-	title?: string;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	iconSize?: number;
 	table?: Uncapitalize<Prisma.ModelName>;
@@ -92,44 +98,66 @@ export default function ActualMap({
 
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
-	const filteredLocations = locations.filter((loc) => {
-		//remove points where a lat or long is null and calculate bounds
+	const filteredLocations = [] as Location[];
+	for (let i = 0; i < locations.length; i++) {
 		if (
-			loc.decimalLatitude !== null &&
-			loc.decimalLongitude !== null &&
-			!(loc.decimalLatitude in DeadValueEnum) &&
-			!(loc.decimalLongitude in DeadValueEnum)
+			locations[i].decimalLatitude !== null &&
+			locations[i].decimalLongitude !== null &&
+			!(locations[i].decimalLatitude! in DeadValueEnum) &&
+			!(locations[i].decimalLongitude! in DeadValueEnum)
 		) {
-			//minLat
-			if (loc.decimalLatitude > bounds[0][0]) {
-				bounds[0][0] = loc.decimalLatitude;
-			}
+			let loc = locations[i] as Location;
+			//round latlng to nearest 0.2
+			loc = {
+				...loc,
+				decimalLatitude: Math.round(loc.decimalLatitude * 5) / 5,
+				decimalLongitude: Math.round(loc.decimalLongitude * 5) / 5
+			};
 
-			//maxLat
-			if (loc.decimalLatitude < bounds[1][0]) {
-				bounds[1][0] = loc.decimalLatitude;
-			}
+			//check if point already exists
+			const titleFields = titleTable
+				? typeof TableMetadata[titleTable].titleField === "string"
+					? [TableMetadata[titleTable].titleField]
+					: TableMetadata[titleTable].titleField
+				: [];
+			const foundIndex = filteredLocations.findIndex(
+				(l) =>
+					l.decimalLatitude === loc.decimalLatitude &&
+					l.decimalLongitude === loc.decimalLongitude &&
+					titleFields.every((f) => l[f] === loc[f])
+			);
+			if (foundIndex !== -1) {
+				if (filteredLocations[foundIndex].values) {
+					filteredLocations[foundIndex].values.push(loc[id]);
+				} else {
+					filteredLocations[foundIndex].values = [filteredLocations[foundIndex][id], loc[id]];
+				}
+			} else {
+				//minLat
+				if (loc.decimalLatitude > bounds[0][0]) {
+					bounds[0][0] = loc.decimalLatitude;
+				}
 
-			//minLng
-			if (loc.decimalLongitude > bounds[0][1]) {
-				bounds[0][1] = loc.decimalLongitude;
-			}
+				//maxLat
+				if (loc.decimalLatitude < bounds[1][0]) {
+					bounds[1][0] = loc.decimalLatitude;
+				}
 
-			//maxLng
-			if (loc.decimalLongitude < bounds[1][1]) {
-				bounds[1][1] = loc.decimalLongitude;
-			}
+				//minLng
+				if (loc.decimalLongitude > bounds[0][1]) {
+					bounds[0][1] = loc.decimalLongitude;
+				}
 
-			return true;
-		} else {
-			return false;
+				//maxLng
+				if (loc.decimalLongitude < bounds[1][1]) {
+					bounds[1][1] = loc.decimalLongitude;
+				}
+
+				filteredLocations.push(loc);
+			}
 		}
-	}) as {
-		decimalLatitude: number;
-		decimalLongitude: number;
-		color?: string;
-		[key: string]: any;
-	}[];
+	}
+
 	const [points, setPoints] = useState(filteredLocations);
 	const [pointsInside, setPointsInside] = useState([] as typeof points);
 
@@ -213,11 +241,7 @@ export default function ActualMap({
 		//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
 		if (cluster) {
 			//cluster location data
-			const dataset = tempLocations.reduce((acc, loc) => {
-				acc.push([loc.decimalLatitude, loc.decimalLongitude]);
-
-				return acc;
-			}, [] as [number, number][]);
+			const dataset = tempLocations.map((loc) => [loc.decimalLatitude, loc.decimalLongitude]);
 			const dbscan = new DBSCAN();
 			//adjust second argument to adjust when points cluster
 			const clusters = dbscan.run(dataset, 50 / zoomLevel ** 2.5, 2);
@@ -225,11 +249,15 @@ export default function ActualMap({
 			const clusteredLocations = [];
 			for (const c of clusters) {
 				const sum = [0, 0];
-				const values = [];
+				const values = [] as string[];
 				for (const i of c) {
 					sum[0] += dataset[i][0];
 					sum[1] += dataset[i][1];
-					values.push(tempLocations[i][id]);
+					if (tempLocations[i].values) {
+						values.push(...tempLocations[i].values);
+					} else {
+						values.push(tempLocations[i][id]);
+					}
 				}
 				if (values.length) {
 					clusteredLocations.push({ values, decimalLatitude: sum[0] / c.length, decimalLongitude: sum[1] / c.length });
@@ -380,45 +408,7 @@ export default function ActualMap({
 							lng: loc.decimalLongitude
 						}}
 					>
-						<Popup className="map-popup">
-							<div className="font-sans bg-base-100 points[i]-4 rounded-lg">
-								{title &&
-									loc[title] &&
-									(titleTable ? (
-										<Link
-											href={`/explore/${titleTable}/${loc[title]}`}
-											className="link link-primary link-hover text-xl"
-										>
-											{loc[title]}
-										</Link>
-									) : (
-										<h2 className="text-primary text-xl border-b-2 pb-2 mb-2">{loc[title]}</h2>
-									))}
-								<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
-									{cluster && loc.values ? (
-										<>
-											<h2 className="text-primary text-lg">{TableMetadata[table].plural}</h2>
-											{loc.values.map((label: string) => (
-												<Link
-													key={label}
-													href={`/explore/${table}/${encodeURIComponent(label)}`}
-													className="link link-primary link-hover"
-												>
-													{label}
-												</Link>
-											))}
-										</>
-									) : (
-										<Link
-											href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-											className="text-info hover:text-info-focus hover:underline transition-colors"
-										>
-											{loc[id]}
-										</Link>
-									)}
-								</div>
-							</div>
-						</Popup>
+						<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} />
 					</Marker>
 				))}
 
@@ -437,5 +427,76 @@ export default function ActualMap({
 				`}</style>
 			</MapContainer>
 		</div>
+	);
+}
+
+function PopupWithSearch({
+	table,
+	titleTable,
+	loc,
+	id
+}: {
+	table: Uncapitalize<Prisma.ModelName>;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
+	loc: Location;
+	id: string;
+}) {
+	const [filter, setFilter] = useState("");
+
+	return (
+		<Popup className="map-popup">
+			<div className="font-sans bg-base-100 points[i]-4 rounded-lg p-3 pt-5 overscroll-contain">
+				{titleTable && (
+					<Link
+						href={`/explore/${titleTable}/${
+							typeof TableMetadata[titleTable].titleField === "string"
+								? loc[TableMetadata[titleTable].titleField]
+								: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
+						}`}
+						className="link link-primary link-hover text-xl"
+					>
+						{typeof TableMetadata[titleTable].titleField === "string"
+							? loc[TableMetadata[titleTable].titleField]
+							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
+					</Link>
+				)}
+				<input
+					type="text"
+					onChange={(e) => setFilter(e.target.value)}
+					value={filter}
+					placeholder={`Filter ${TableMetadata[table].plural}...`}
+					className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
+				/>
+				<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
+					{loc.values ? (
+						<>
+							<h2 className="text-primary text-lg">{TableMetadata[table].plural}</h2>
+							{loc.values.reduce((acc: ReactNode[], label: string) => {
+								if (label.toLowerCase().includes(filter.toLowerCase())) {
+									acc.push(
+										<Link
+											key={label}
+											href={`/explore/${table}/${encodeURIComponent(label)}`}
+											className="link link-primary link-hover"
+										>
+											{label}
+										</Link>
+									);
+								}
+
+								return acc;
+							}, [])}
+						</>
+					) : (
+						<Link
+							href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+							className="text-info hover:text-info-focus hover:underline transition-colors"
+						>
+							{loc[id]}
+						</Link>
+					)}
+				</div>
+			</div>
+		</Popup>
 	);
 }
