@@ -260,24 +260,26 @@ export default function ProjectSubmit() {
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}
 				</h3>
 
-				{globalResponse?.statusMessage === "success"
-					? globalResponse!.progress!.message.split("__ASSAY_MASTER_LIST_URL__").map((str, i) => (
-							<Fragment key={i}>
-								{i !== 0 ? (
-									//this is a naive solution
-									<Link
-										href={process.env.NEXT_PUBLIC_ASSAY_MASTER_LIST_URL as string}
-										className="link link-primary link-hover"
-									>
-										Assay Master List
-									</Link>
-								) : (
-									""
-								)}
-								<span className="mb-2 font-light whitespace-pre-wrap">{str}</span>
-							</Fragment>
-					  ))
-					: errorMessage}
+				{globalResponse?.statusMessage === "success" ? (
+					globalResponse!.progress!.message.split("__ASSAY_MASTER_LIST_URL__").map((str, i) => (
+						<Fragment key={i}>
+							{i !== 0 ? (
+								//this is a naive solution
+								<Link
+									href={process.env.NEXT_PUBLIC_ASSAY_MASTER_LIST_URL as string}
+									className="link link-primary link-hover"
+								>
+									Assay Master List
+								</Link>
+							) : (
+								""
+							)}
+							<span className="mb-2 font-light whitespace-pre-wrap">{str}</span>
+						</Fragment>
+					))
+				) : (
+					<span className="mb-2 font-light whitespace-pre-wrap">{errorMessage}</span>
+				)}
 				{globalResponse?.statusMessage === "success" && (
 					<div className="modal-action">
 						<button type="submit" className="btn" onClick={() => router.push("/submit/analysis")}>

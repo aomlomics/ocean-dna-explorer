@@ -46,7 +46,7 @@ export async function parseAnalysisFile({
 		return;
 	}
 
-	const parser = parse(text, { columns: true, delimiter: "\t" });
+	const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
 	await stream.message("File read into memory", 25);
 
 	let i = 0;
@@ -142,7 +142,7 @@ export async function parseAssignmentFile({
 		return;
 	}
 
-	const parser = parse(text, { columns: true, delimiter: "\t" });
+	const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
 	await stream.message("File read into memory", 25);
 
 	let i = 0;
@@ -296,7 +296,7 @@ export async function parseOccurrenceFile({
 		return;
 	}
 
-	const parser = parse(text, { delimiter: "\t" });
+	const parser = parse(text, { delimiter: "\t", relax_quotes: true });
 	await stream.message("File read into memory", 25);
 
 	let i = 0;

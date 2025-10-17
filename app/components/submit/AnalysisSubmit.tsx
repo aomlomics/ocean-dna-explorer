@@ -100,7 +100,7 @@ export default function AnalysisSubmit() {
 				let currProject = undefined as Project | undefined;
 
 				//parse file
-				const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+				const parser = parse(await file.text(), { columns: true, delimiter: "\t", relax_quotes: true });
 				for await (const record of parser) {
 					const field = record.term_name;
 					const value = record.values;
