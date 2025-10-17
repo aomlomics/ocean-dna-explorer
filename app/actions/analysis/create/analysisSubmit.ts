@@ -7,6 +7,7 @@ import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
+//TODO: combine all 3 steps into 1 transaction
 async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
