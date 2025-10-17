@@ -114,7 +114,7 @@ async function doSubmit(
 
 				await libraryChannel.stream.success("Libraries successfully uploaded to database.");
 			},
-			{ timeout: 0.5 * 60 * 1000 } //30 seconds
+			{ timeout: 3 * 60 * 1000 } //3 minutes
 		);
 
 		let successMsg = "Project successfully submitted!";

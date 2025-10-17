@@ -22,6 +22,8 @@ type ResponseSet = {
 	occurrences: NetworkProgressPacket;
 };
 
+//TODO: move all 3 steps into 1 transaction
+//TODO: remove previous analyses that successfully submitted when an error occurs with a later analysis submission
 export default function AnalysisSubmit() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);

@@ -636,13 +636,53 @@ async function updateManyRawChunked(
 		})
 		.join(", ");
 
+	const deadBooleanOptions = Object.keys(DeadBooleanEnum);
+	//parameterized counts
+	const valuesSqlArr = [] as string[];
+	//parameterized values
+	const flatData = [] as (typeof data)[0][keyof (typeof data)[0]][];
+	let paramIndex = 0;
+	for (const d of data) {
+		//add parameterized count(s) for id field(s)
+		const valuesStrArr = [
+			...(typeof id === "string" ? [`\$${++paramIndex}`] : id.map((i) => `\$${++paramIndex}`))
+		] as string[];
+
+		//add flat data for id field(s)
+		flatData.push(...(typeof id === "string" ? [d[id]] : id.map((i) => d[i])));
+
+		for (const f of fields) {
+			//add parameterized counts
+			valuesStrArr.push(`\$${++paramIndex}`);
+
+			//flatten data
+			if (d[f] === undefined) {
+				flatData.push(null);
+			} else {
+				const foundOption = deadBooleanOptions.find(
+					(db) => DeadBooleanEnum[db as keyof typeof DeadBooleanEnum] === d[f]
+				);
+				if (deadBooleanFields.includes(f) && foundOption) {
+					if (foundOption === "0") {
+						flatData.push(DeadBoolean.false);
+					} else if (foundOption === "1") {
+						flatData.push(DeadBoolean.true);
+					} else {
+						flatData.push(foundOption);
+					}
+				} else if (d[f] === "JsonNull") {
+					flatData.push("[]");
+				} else {
+					flatData.push(d[f]);
+				}
+			}
+		}
+		valuesSqlArr.push("(" + valuesStrArr.join(",") + ")");
+	}
+
 	//list field names
 	const idFieldsSql = typeof id === "string" ? `"${id}"` : id.map((i) => `"${i}"`).join(", ");
 	const fieldsSql = fields.map((f) => `"${f}"`).join(", ");
-
-	//add parameterized counts
-	let paramIndex = 0;
-	const valuesSql = data.map((row) => `(${Object.values(row).map(() => `\$${++paramIndex}`)})`).join(",");
 
 	//create where statement
 	const whereSql =
@@ -651,38 +691,11 @@ async function updateManyRawChunked(
 			: id.map((i) => `"${table}"."${i}" = "t"."${i}"`).join(" AND ");
 
 	//combine into prepared statement
-	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSql}) AS t(${idFieldsSql}, ${fieldsSql}) WHERE ${whereSql}`;
+	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSqlArr.join(
+		","
+	)}) AS t(${idFieldsSql}, ${fieldsSql}) WHERE ${whereSql}`;
 
-	const deadBooleanKeys = Object.keys(DeadBooleanEnum);
-	return client.$executeRawUnsafe(
-		sql,
-		//flatten rows and columns
-		...data.reduce(
-			(acc: Array<string | number | boolean>, row) => [
-				...acc,
-				//add values for id field(s)
-				...(typeof id === "string" ? [row[id]] : id.map((i) => row[i])),
-				//add values for each rows's columns
-				...fields.map((f) => {
-					const foundKey = deadBooleanKeys.find((db) => DeadBooleanEnum[db as keyof typeof DeadBooleanEnum] === row[f]);
-					if (deadBooleanFields.includes(f) && foundKey) {
-						if (foundKey === "0") {
-							return DeadBoolean.false;
-						} else if (foundKey === "1") {
-							return DeadBoolean.true;
-						} else {
-							return foundKey;
-						}
-					} else if (row[f] === "JsonNull") {
-						return "[]";
-					} else {
-						return row[f];
-					}
-				})
-			],
-			[]
-		)
-	);
+	return client.$executeRawUnsafe(sql, ...flatData);
 }
 
 export async function updateManyRaw(
@@ -692,13 +705,13 @@ export async function updateManyRaw(
 	id = "id" as string | string[]
 ) {
 	//get fields from data
-	const fs = new Set() as Set<string>;
+	const fieldsWithId = new Set() as Set<string>;
 	for (const d of data) {
 		for (const field of Object.keys(d)) {
-			fs.add(field);
+			fieldsWithId.add(field);
 		}
 	}
-	const fields = Array.from(fs) as string[];
+	const fields = Array.from(fieldsWithId) as string[];
 
 	//remove id field(s) to be handled separately
 	if (typeof id === "string") {
@@ -723,17 +736,8 @@ export async function updateManyRaw(
 		}
 	}
 
-	//fill missing optional fields with null
-	for (const d of data) {
-		for (const f of fields) {
-			if (d[f] === undefined) {
-				d[f] = null;
-			}
-		}
-	}
-
 	let rowsAffected = 0;
-	const CHUNK_SIZE = 30000 / TableMetadata[table].enumSchema.options.length; //Prisma prepared statements have a limit of 32,767
+	const CHUNK_SIZE = 30000 / fieldsWithId.size; //Prisma prepared statements have a limit of 32,767
 	for (let i = 0; i < data.length; i += CHUNK_SIZE) {
 		rowsAffected += await updateManyRawChunked(client, table, data.slice(i, i + CHUNK_SIZE), id, fields);
 	}
