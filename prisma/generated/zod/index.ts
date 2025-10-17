@@ -354,10 +354,10 @@ export const AnalysisSchema = z.object({
   assay_name: z.string(),
   analysisMetadataFileUrl_ODE: z.string(),
   analysisMetadataFileChecksum_ODE: z.string(),
-  asvFileUrl_ODE: z.string(),
-  asvFileChecksum_ODE: z.string(),
-  occurrenceFileUrl_ODE: z.string(),
-  occurrenceFileChecksum_ODE: z.string(),
+  asvFileUrl_ODE: z.string().nullish(),
+  asvFileChecksum_ODE: z.string().nullish(),
+  occurrenceFileUrl_ODE: z.string().nullish(),
+  occurrenceFileChecksum_ODE: z.string().nullish(),
   sop_bioinformatics: z.string().nullish(),
   trim_method: z.string().nullish(),
   trim_param: z.string().nullish(),
@@ -447,12 +447,6 @@ export type AnalysisPartial = z.infer<typeof AnalysisPartialSchema>
 export const AnalysisOptionalDefaultsSchema = AnalysisSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
-  analysisMetadataFileUrl_ODE: z.string().optional(),
-  analysisMetadataFileChecksum_ODE: z.string().optional(),
-  asvFileUrl_ODE: z.string().optional(),
-  asvFileChecksum_ODE: z.string().optional(),
-  occurrenceFileUrl_ODE: z.string().optional(),
-  occurrenceFileChecksum_ODE: z.string().optional(),
 }))
 
 export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSchema>
@@ -987,12 +981,6 @@ export type ProjectPartial = z.infer<typeof ProjectPartialSchema>
 export const ProjectOptionalDefaultsSchema = ProjectSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
-  projectMetadataFileUrl_ODE: z.string().optional(),
-  projectMetadataFileChecksum_ODE: z.string().optional(),
-  sampleMetadataFileUrl_ODE: z.string().optional(),
-  sampleMetadataFileChecksum_ODE: z.string().optional(),
-  libraryMetadataFileUrl_ODE: z.string().optional(),
-  libraryMetadataFileChecksum_ODE: z.string().optional(),
 }))
 
 export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSchema>

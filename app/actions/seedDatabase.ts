@@ -4,7 +4,7 @@ import { parse } from "csv-parse";
 import { Assay, Prisma } from "../generated/prisma/client";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../helpers/schema";
-import { unsafePrisma } from "../helpers/prisma";
+import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 
@@ -64,11 +64,10 @@ export default async function seedDatabaseAction() {
 				}
 			});
 
-			//TODO: fix updateManyRaw
-			// const assaysToUpdate = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
-			// if (assaysToUpdate.length) {
-			// 	await updateManyRaw(tx, "Assay", assaysToUpdate, "assay_name");
-			// }
+			const assaysToUpdate = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
+			if (assaysToUpdate.length) {
+				await updateManyRaw(tx, "Assay", assaysToUpdate, "assay_name");
+			}
 
 			await tx.assay.deleteMany({
 				where: {

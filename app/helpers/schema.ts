@@ -5,6 +5,7 @@ import { JsonValue } from "@prisma/client/runtime/library";
 import TableMetadata from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
 import { deadBooleanToString } from "./utils";
+import { DbType } from "@/types/globals";
 
 export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	const newEnum = {} as Record<string, string>;
@@ -16,7 +17,6 @@ export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	return newEnum;
 }
 
-type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
 function getTypeRecursive(field: any): { type: DbType; optional?: boolean; values?: string[] } {
 	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
@@ -219,7 +219,14 @@ export function parseSchemaToObject(
 				obj[field + "_Midpoint_ODE"] = type === "float" ? midpoint : Math.round(midpoint);
 				obj[field + "_End_ODE"] = parsedArray[1];
 			} else if (valArray.length === 1) {
-				obj[field] = parser(valArray[0]);
+				const parsed = parser(valArray[0]);
+				if (isNaN(parsed)) {
+					throw new Error(
+						`Invalid format for the field "${field}". Field must be a number. The provided value was "${value}".`
+					);
+				}
+
+				obj[field] = parsed;
 			} else {
 				throw new Error(
 					`Invalid format for the field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
