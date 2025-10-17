@@ -226,15 +226,7 @@ export default function AdvancedSearch() {
 						<input type="checkbox" />
 						<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
 						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-							<Map
-								locations={[] as any[]}
-								titleTable={uncapitalizeTable(searchTable)}
-								title={
-									typeof TableMetadata[searchTable].titleField === "string"
-										? (TableMetadata[searchTable].titleField as string)
-										: (TableMetadata[searchTable].titleField as string[]).join(" | ")
-								}
-							/>
+							<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
 						</div>
 					</div>
 				</>

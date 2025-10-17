@@ -9,7 +9,6 @@ const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 export default function Map({
 	locations,
 	id = "samp_name",
-	title,
 	titleTable,
 	iconSize,
 	table = "sample",
@@ -23,7 +22,6 @@ export default function Map({
 		[key: string]: any;
 	}[];
 	id?: string;
-	title?: string;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	iconSize?: number;
 	table?: Uncapitalize<Prisma.ModelName>;
@@ -35,7 +33,6 @@ export default function Map({
 		<ActualMap
 			locations={locations}
 			id={id}
-			title={title}
 			titleTable={titleTable}
 			iconSize={iconSize}
 			table={table}
