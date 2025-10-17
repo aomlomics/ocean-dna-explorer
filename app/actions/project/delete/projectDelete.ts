@@ -7,6 +7,7 @@ import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
+//TODO: delete files from blob store
 export default async function projectDeleteAction(target: Project["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -46,24 +47,6 @@ export default async function projectDeleteAction(target: Project["project_id"])
 				await tx.project.delete({
 					where: {
 						project_id
-					}
-				});
-
-				//assays delete
-				await tx.assay.deleteMany({
-					where: {
-						Samples: {
-							none: {}
-						}
-					}
-				});
-
-				//primers delete
-				await tx.primer.deleteMany({
-					where: {
-						Assays: {
-							none: {}
-						}
 					}
 				});
 

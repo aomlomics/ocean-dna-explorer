@@ -65,15 +65,13 @@ export default async function Sample() {
 	];
 
 	return (
-		<ExplorePage table="sample" tableConfig={tableConfig} title="Samples">
+		<ExplorePage table="sample" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						eDNA samples with metadata on collection, environmental conditions, storage, and processing methods.
-					</p>
+					<p>eDNA samples with metadata on collection, environmental conditions, storage, and processing methods.</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
-						<Link href="/help" className="text-primary hover:underline">
+						<Link href="/help" className="link link-primary link-hover">
 							Help page
 						</Link>
 						.

@@ -36,23 +36,23 @@ export default async function Project() {
 	];
 
 	return (
-        <ExplorePage table="project" tableConfig={tableConfig} title="Projects">
-            <div className="w-full space-y-4">
-                <div className="text-base-content/80 pb-4 space-y-2">
-                    <p>
-                        Research initiatives collecting eDNA samples, with metadata on study design, objectives, and participating
-                        institutions.
-                    </p>
-                    <p className="text-sm">
-                        For more detailed information, visit our{" "}
-                        <Link href="/help" className="text-primary hover:underline">
-                            Help page
-                        </Link>
-                        .
-                    </p>
-                </div>
-                <ExploreTabButtons />
-            </div>
-        </ExplorePage>
-    );
+		<ExplorePage table="project" tableConfig={tableConfig}>
+			<div className="w-full space-y-4">
+				<div className="text-base-content/80 pb-4 space-y-2">
+					<p>
+						Research initiatives collecting eDNA samples, with metadata on study design, objectives, and participating
+						institutions.
+					</p>
+					<p className="text-sm">
+						For more detailed information, visit our{" "}
+						<Link href="/help" className="link link-primary link-hover">
+							Help page
+						</Link>
+						.
+					</p>
+				</div>
+				<ExploreTabButtons />
+			</div>
+		</ExplorePage>
+	);
 }

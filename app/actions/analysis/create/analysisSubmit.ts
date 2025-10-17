@@ -17,7 +17,6 @@ async function doSubmit(stream: ProgressStream, url: string, isPrivate: boolean)
 	}
 
 	try {
-		//TODO: use checksum to see if new file submitted match old file
 		const parseResult = await parseAnalysisFile({ stream, url, isPrivate });
 		if (!parseResult) {
 			return;

@@ -1,6 +1,6 @@
 requirement_level_code	section	term_name	values
 M	Project	project_id	noaa-sefsc-gu1901
-M	PCR	assay_name	ssu12sv5_riaz
+M	PCR	assay_name	Fish-12S-Riaz
 M	Bioinformatics	analysis_run_name	rosel-ctd-riaz-addMFtrawlJfish-241001
 -	Bioinformatics	sop_bioinformatics	https://github.com/aomlomics/tourmaline/releases/tag/v1.1.1
 R	Bioinformatics	trim_method	qiime2-2023.5; Cutadapt 

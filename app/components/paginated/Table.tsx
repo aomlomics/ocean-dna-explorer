@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { fetcher } from "@/app/helpers/utils";
 
-//TODO: sort table by column
+//TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
 export default function Table({
 	table,
@@ -86,7 +86,7 @@ export default function Table({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/pagination/${table}?${query.toString()}`,
+		`/api/${table}/pagination?${query.toString()}`,
 		fetcher
 	);
 
@@ -117,69 +117,78 @@ export default function Table({
 	}, [hideEmpty, data]);
 
 	useEffect(() => {
-		let tempHeaders = [];
-		if (TableMetadata[table].fieldOrder) {
-			tempHeaders.push(...TableMetadata[table].fieldOrder);
-		}
-		tempHeaders.push(
-			...TableMetadata[table].enumSchema._def.values.reduce((acc: string[], head) => {
-				//remove fields that have already been added
-				if (TableMetadata[table].fieldOrder?.includes(head)) {
-					return acc;
-				}
-
-				//remove database field
-				//displaying title header differently, so removing it
-				if (head === "id" || head === title) {
-					return acc;
-				}
-
-				//remove all headers where the value is assumed to be the same
-				if (where && Object.keys(where).includes(head)) {
-					return acc;
-				}
-
-				//remove headers that have been omitted
-				if (omit.includes(head)) {
-					return acc;
-				}
-
-				if (head !== "userDefined") {
-					acc.push(head);
-				}
-
-				return acc;
-			}, [])
-		);
-
-		let tempHeadersFilter = {} as Record<string, true>;
-		if (filterHeadersAtStart && TableMetadata[table].subFields) {
-			const temp = {} as Record<string, true>;
-			for (const head of tempHeaders) {
-				if (!TableMetadata[table].subFields.includes(head)) {
-					temp[head] = true;
-				}
+		if (!Object.keys(headersFilter).length) {
+			let tempHeaders = [];
+			if (TableMetadata[table].fieldOrder) {
+				tempHeaders.push(...TableMetadata[table].fieldOrder);
 			}
-			tempHeadersFilter = temp;
-		}
+			tempHeaders.push(
+				...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
+					//remove fields that have already been added
+					if (TableMetadata[table].fieldOrder?.includes(head)) {
+						return acc;
+					}
 
-		if (showUserDefined && data && data.statusMessage === "success") {
-			const tempUserDefinedHeadersSet = new Set(userDefinedHeaders);
-			for (const r of data.result) {
-				if (r.userDefined) {
+					//remove database field
+					//displaying title header differently, so removing it
+					if (head === "id" || head === title) {
+						return acc;
+					}
+
+					//remove all headers where the value is assumed to be the same
+					if (where && Object.keys(where).includes(head)) {
+						return acc;
+					}
+
+					//remove headers that have been omitted
+					if (omit.includes(head)) {
+						return acc;
+					}
+
+					if (head !== "userDefined") {
+						acc.push(head);
+					}
+
+					return acc;
+				}, [])
+			);
+
+			let tempHeadersFilter = {} as Record<string, true>;
+			if (filterHeadersAtStart && TableMetadata[table].subFields) {
+				const temp = {} as Record<string, true>;
+				for (const head of tempHeaders) {
+					if (!TableMetadata[table].subFields.includes(head)) {
+						temp[head] = true;
+					}
+				}
+				tempHeadersFilter = temp;
+			}
+
+			if (showUserDefined && data && data.statusMessage === "success" && !userDefinedHeaders.length) {
+				const tempUserDefinedHeadersSet = new Set() as Set<string>;
+				for (const r of data.result) {
 					for (const h in r.userDefined) {
 						tempUserDefinedHeadersSet.add(h);
 					}
 				}
+				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
+
+				tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
+				setUserDefinedHeaders(Array.from(tempUserDefinedHeaders));
+
+				if (filterHeadersAtStart) {
+					tempHeadersFilter = {
+						...tempHeadersFilter,
+						...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
+					};
+				}
 			}
-			const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
-			setUserDefinedHeaders(tempUserDefinedHeaders);
-		}
 
-		setHeaders([...tempHeaders, ...userDefinedHeaders]);
+			setHeaders(tempHeaders);
 
-		if (Object.keys(tempHeadersFilter).length) {
-			setHeadersFilter(tempHeadersFilter);
+			if (Object.keys(tempHeadersFilter).length) {
+				setHeadersFilter(tempHeadersFilter);
+			}
 		}
 	}, [data]);
 
@@ -200,7 +209,7 @@ export default function Table({
 			}
 		}
 
-		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
+		preload(`/api/${table}/pagination?${query.toString()}`, fetcher);
 	}
 
 	//filters in the column header
@@ -261,32 +270,35 @@ export default function Table({
 			>
 				<div className="flex justify-between items-center mb-4">
 					{/* Left side: Filters */}
-					<div className="flex items-center gap-2 flex-1">
-						{!hideFilters && (
-							<>
-								<button
-									onClick={resetForm}
-									className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
-									type="button"
-								>
-									Clear Filters
-								</button>
-								<button
-									type="submit"
-									className={`btn btn-sm ${pendingFilters > 0 ? "btn-primary" : "bg-base-100 border border-base-300"}`}
-								>
-									Apply Filters {pendingFilters > 0 && `(${pendingFilters})`}
-								</button>
-							</>
-						)}
-						<label className="input input-sm input-bordered flex items-center gap-2">
-							Per Page:
-							<input name="take" defaultValue={take} type="number" className="grow w-12" />
-						</label>
+					<div className="flex-1 flex">
+						<div className="flex items-center gap-2">
+							{!hideFilters && (
+								<>
+									<button
+										onClick={resetForm}
+										className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
+										type="button"
+									>
+										Clear Filters
+									</button>
+									<button
+										type="submit"
+										className={`btn btn-sm ${
+											pendingFilters > 0 ? "btn-primary" : "bg-base-100 border border-base-300"
+										}`}
+									>
+										Apply Filters {pendingFilters > 0 && `(${pendingFilters})`}
+									</button>
+								</>
+							)}
+							<label className="input input-sm input-bordered">
+								Per Page:
+								<input name="take" defaultValue={take} type="number" />
+							</label>
+						</div>
 					</div>
-
-					{/* Middle: Pagination */}
-					<div className="flex-1 flex justify-center">
+					{/* Pagination Controls */}
+					<div className="flex-1">
 						<PaginationControls
 							page={page}
 							take={take}
@@ -295,9 +307,8 @@ export default function Table({
 							handlePageHover={handlePageHover}
 						/>
 					</div>
-
-					{/* Right side: Column selection and visibility */}
-					<div className="grid grid-cols-2 gap-5 flex-1">
+					{/* Column Selection Button */}
+					<div className="grid grid-cols-2 w-full gap-5 flex-1">
 						<div className="dropdown dropdown-end justify-self-end">
 							<div tabIndex={0} role="button" className="btn btn-sm">
 								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
@@ -376,7 +387,7 @@ export default function Table({
 						</div>
 
 						<fieldset className="fieldset bg-base-100 border-base-300">
-							<label className="label">
+							<label className="label select-none">
 								<input
 									type="checkbox"
 									className="checkbox"
@@ -565,8 +576,12 @@ export default function Table({
 																) : head in TableMetadata[table].relationFields ? (
 																	<Link
 																		href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
-																		className="link link-primary link-hover"
+																		className="link link-primary link-hover font-bold"
 																	>
+																		{row[head]}
+																	</Link>
+																) : URL.canParse(row[head]) && row[head].startsWith("https://") ? (
+																	<Link href={row[head]} className="link link-primary link-hover">
 																		{row[head]}
 																	</Link>
 																) : (

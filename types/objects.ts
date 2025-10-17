@@ -2,18 +2,6 @@ import { Permission, Role } from "./globals";
 import { z } from "zod";
 import { Taxonomy } from "@/app/generated/prisma/client";
 
-export const EXPLORE_ROUTES = {
-	project: "Projects",
-	sample: "Samples",
-	assay: "Assays",
-	analysis: "Analyses",
-	occurrence: "Occurrences",
-	assignment: "Assignments",
-	feature: "Features",
-	primer: "Primers",
-	taxonomy: "Taxonomies"
-};
-
 export const Roles = ["admin", "moderator", "contributor"] as Role[];
 export const Permissions = ["contribute", "manageUsers", "manageDatabase"] as Permission[];
 

@@ -20,10 +20,6 @@ export async function GET(request: Request) {
 		<lastmod>${new Date()}</lastmod>
 	</url>
 	<url>
-		<loc>${SITE_URL}/explore/primer</loc>
-		<lastmod>${new Date()}</lastmod>
-	</url>
-	<url>
 		<loc>${SITE_URL}/explore/analysis</loc>
 		<lastmod>${new Date()}</lastmod>
 	</url>

@@ -2,8 +2,8 @@ import { prisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { TaxonomicRanks } from "@/types/objects";
-import { Taxonomy } from "@/prisma/generated/zod";
 import PhyloPic from "@/app/components/images/PhyloPic";
+import { Taxonomy } from "@/app/generated/prisma/client";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -27,7 +27,7 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	);
 }
 
-export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
+export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: Taxonomy["taxonomy"] }> }) {
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 
@@ -119,7 +119,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						<h2 className="text-base-content/80 font-medium">Which Samples was this Taxon found?</h2>
 					</div>
 					<div className="w-full aspect-5/2">
-						<Map locations={samples} id="samp_name" table="sample" cluster />
+						<Map locations={samples} cluster />
 					</div>
 				</div>
 			</div>

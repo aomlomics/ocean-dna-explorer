@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { EXPLORE_ROUTES } from "@/types/objects";
+import { Prisma } from "@/app/generated/prisma/client";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default function MobileMenu() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -50,7 +52,13 @@ export default function MobileMenu() {
 		<div className="relative" ref={menuRef}>
 			{/* The trigger button */}
 			<div role="button" className="btn btn-ghost xl:hidden p-1 sm:p-2" onClick={handleToggle}>
-				<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					className="h-5 w-5"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
 				</svg>
 			</div>
@@ -67,10 +75,10 @@ export default function MobileMenu() {
 						<details>
 							<summary className="text-base">Explore</summary>
 							<ul className="p-2">
-								{Object.entries(EXPLORE_ROUTES).map(([route, label]) => (
-									<li key={route} className="py-1">
-										<Link href={`/explore/${route}`} onClick={handleClose}>
-											{label}
+								{TableNames.map((table) => (
+									<li key={table} className="py-1">
+										<Link href={`/explore/${uncapitalizeTable(table as Prisma.ModelName)}`} onClick={handleClose}>
+											{TableMetadata[table as Prisma.ModelName].plural}
 										</Link>
 									</li>
 								))}
@@ -141,4 +149,4 @@ export default function MobileMenu() {
 				)}
 		</div>
 	);
-} 
+}

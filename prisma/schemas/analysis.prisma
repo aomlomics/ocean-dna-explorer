@@ -10,7 +10,7 @@ model Analysis {
     project_id  String
     Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name  String
-    Assay       Assay        @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
+    Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
     Occurrences Occurrence[]
     Assignments Assignment[]
 

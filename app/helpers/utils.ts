@@ -1,5 +1,5 @@
 import { RanksBySpecificity } from "@/types/objects";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
 
 export async function fetcher(url: string) {
@@ -30,7 +30,7 @@ export function randomColors(count: number) {
 
 	return colors.map((c) => {
 		const rgb = c.rgb();
-		return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+		return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
 	});
 }
 
@@ -232,6 +232,14 @@ export function deepMerge(target: Record<string, any>, ...sources: Record<string
 	}
 
 	return deepMerge(target, ...sources);
+}
+
+export function uncapitalizeTable(table: Prisma.ModelName) {
+	return (table.slice(0, 1).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+}
+
+export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
+	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
 }
 
 export function getSubmissionFileName(value: string) {

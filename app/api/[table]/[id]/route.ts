@@ -1,6 +1,7 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
@@ -9,9 +10,13 @@ export async function GET(
 	{ params }: { params: Promise<{ table: string; id: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table, id } = await params;
-	const lowercaseTable = table.toLowerCase() as Uncapitalize<Prisma.ModelName>;
 
-	if (Object.keys(Prisma.ModelName).some((table) => table.toLowerCase() === lowercaseTable)) {
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === table.toLowerCase()
+	) as Prisma.ModelName;
+	if (model) {
+		const uncapsTable = uncapitalizeTable(model);
+
 		try {
 			const parsedId = parseInt(id);
 			if (Number.isNaN(parsedId)) {
@@ -20,7 +25,7 @@ export async function GET(
 
 			const { searchParams } = new URL(request.url);
 
-			const query = parseApiQuery(lowercaseTable, searchParams, {
+			const query = parseApiQuery(uncapsTable, searchParams, {
 				features: {
 					fields: true,
 					relations: true,
@@ -34,7 +39,7 @@ export async function GET(
 			});
 
 			//@ts-ignore
-			const result = await prisma[lowercaseTable].findUnique(query);
+			const result = await prisma[uncapsTable].findUnique(query);
 
 			if (result) {
 				return NextResponse.json({ statusMessage: "success", result });

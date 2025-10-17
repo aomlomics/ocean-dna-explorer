@@ -88,7 +88,7 @@ async function doEdit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, primers, assays, samples, libraries, checksums } = parseResult;
+		const { project, assays, assayPreps, samples, libraries, checksums } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -104,6 +104,8 @@ async function doEdit(
 		);
 
 		const sampNames = samples.map((samp) => samp.samp_name);
+
+		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
 
 		//TODO: only do updates if relevant file was provided
 		await prisma.$transaction(
@@ -137,62 +139,50 @@ async function doEdit(
 					throw new Error("Unauthorized action.");
 				}
 
-				for (let p of primers) {
-					const dbPrimer = await tx.primer.findUnique({
-						where: {
-							pcr_primer_forward_pcr_primer_reverse: {
-								pcr_primer_forward: p.pcr_primer_forward,
-								pcr_primer_reverse: p.pcr_primer_reverse
-							}
-						},
-						select: {
-							Assays: {
-								select: {
-									Samples: {
-										select: {
-											Project: {
-												select: {
-													userIds: true
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					});
-
-					if (
-						dbPrimer &&
-						dbPrimer.Assays.length &&
-						!dbPrimer.Assays.some((a) =>
-							a.Samples.length ? a.Samples.some((samp) => samp.Project.userIds.includes(userId)) : true
-						)
-					) {
-						await projectChannel.stream.error("Unauthorized action.");
-						throw new Error("Unauthorized action.");
-					}
-				}
-
-				for (let a of assays) {
+				for (const a of assays) {
 					const dbAssay = await tx.assay.findUnique({
 						where: {
 							assay_name: a.assay_name
+						}
+					});
+
+					if (!dbAssay) {
+						await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+						throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+					}
+
+					for (const [f, value] of Object.entries(a)) {
+						const field = f as keyof typeof dbAssay;
+						if (value !== dbAssay[field]) {
+							if (!(a.assay_name in badAssayFields)) {
+								badAssayFields[a.assay_name] = [];
+							}
+							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
+							// throw new Error(
+							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							// );
+						}
+					}
+				}
+
+				for (const prep of assayPreps) {
+					const dbMeta = await tx.assayPrep.findUnique({
+						where: {
+							project_id_assay_name: {
+								project_id: prep.project_id,
+								assay_name: prep.assay_name
+							}
 						},
 						select: {
-							Samples: {
+							Project: {
 								select: {
-									Project: {
-										select: {
-											userIds: true
-										}
-									}
+									userIds: true
 								}
 							}
 						}
 					});
 
-					if (dbAssay && !dbAssay.Samples.some((samp) => samp.Project.userIds.includes(userId))) {
+					if (dbMeta && !dbMeta.Project.userIds.includes(userId)) {
 						await projectChannel.stream.error("Unauthorized action.");
 						throw new Error("Unauthorized action.");
 					}
@@ -244,15 +234,7 @@ async function doEdit(
 
 				await libraryChannel.stream.message("All checks passed.", 80);
 
-				//update file urls
-				const fileStatus = {} as {
-					projectMetadata?: { movedUrl: string; del?: true };
-					sampleMetadata?: { movedUrl: string; del?: true };
-					libraryMetadata?: { movedUrl: string; del?: true };
-				};
-
 				const change = [] as PrismaJson.ChangesType;
-
 				if (!missingProjectFile) {
 					change.push(
 						{
@@ -308,42 +290,24 @@ async function doEdit(
 					data: { ...project, editHistory }
 				});
 
-				//assays
+				//assayPreps
 				let i = 0;
-				for (let a of assays) {
-					await tx.assay.upsert({
+				for (let prep of assayPreps) {
+					await tx.assayPrep.upsert({
 						where: {
-							assay_name: a.assay_name
-						},
-						update: a,
-						create: a
-					});
-
-					i++;
-					await projectChannel.stream.message(
-						`Assay with assay_name of "${a.assay_name}" successfully updated in database.`,
-						85 + (5 / assays.length) * i
-					);
-				}
-
-				//primers
-				i = 0;
-				for (let p of primers) {
-					await tx.primer.upsert({
-						where: {
-							pcr_primer_forward_pcr_primer_reverse: {
-								pcr_primer_forward: p.pcr_primer_forward,
-								pcr_primer_reverse: p.pcr_primer_reverse
+							project_id_assay_name: {
+								project_id: prep.project_id,
+								assay_name: prep.assay_name
 							}
 						},
-						update: p,
-						create: p
+						update: prep,
+						create: prep
 					});
 
 					i++;
 					await projectChannel.stream.message(
-						`Primer with pcr_primer_forward of "${p.pcr_primer_forward}" and pcr_primer_reverse of "${p.pcr_primer_reverse}" successfully updated in database.`,
-						80 + (5 / primers.length) * i
+						`AssayPrep with nucl_acid_amp of "${prep.nucl_acid_amp}" successfully updated in database.`,
+						85 + (5 / assayPreps.length) * i
 					);
 				}
 

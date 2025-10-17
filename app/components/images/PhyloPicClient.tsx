@@ -27,9 +27,6 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 						const gbifTaxonomyArr = gbifTaxa.filter(
 							(taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank && taxa.status === "ACCEPTED"
 						);
-						if (taxonomy[rank].toString() === "Cheilopogon") {
-							console.log("test", gbifTaxonomyArr);
-						}
 						if (gbifTaxonomyArr.length) {
 							if (gbifTaxonomyArr.length === 1) {
 								gbifTaxonomy = gbifTaxonomyArr[0];

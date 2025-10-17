@@ -88,6 +88,7 @@ export default function AnalysisSubmit() {
 		}
 	}, [analysisIds]);
 
+	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
 	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
 	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
@@ -99,7 +100,7 @@ export default function AnalysisSubmit() {
 				let currProject = undefined as Project | undefined;
 
 				//parse file
-				const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+				const parser = parse(await file.text(), { columns: true, delimiter: "\t", relax_quotes: true });
 				for await (const record of parser) {
 					const field = record.term_name;
 					const value = record.values;
@@ -224,7 +225,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const analysisUrl = (
 						await upload(`submissions/${analysisFile.name}`, analysisFile, {
@@ -263,7 +264,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 0 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const assignmentsUrl = (
 						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
@@ -311,7 +312,7 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const occurrencesUrl = (
 						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
@@ -320,6 +321,11 @@ export default function AnalysisSubmit() {
 							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "occurrences",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit occurrences file url
 					const occurrencesError = await doProgressAction({
 						action: occSubmitAction,
@@ -420,26 +426,29 @@ export default function AnalysisSubmit() {
 
 				{/* Right column: files + progress + submit */}
 				<div className="col-span-7">
-					<SubmitFormSection title="Upload files" className="space-y-6 w-full text-base-content/80 text-base font-normal">
-					{analysisIds.map((id, i) => (
-						<AnalysisFormSection
-							key={i}
-							i={i}
-							id={id}
-							deletable={analysisIds.filter((id) => id !== -1).length > 1}
-							loading={loading}
-							onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
-							responseSet={responses[id]}
-							onDelete={() => {
-								const temp = analysisIds.toSpliced(i, 1, -1);
-								setAnalysisIds(temp);
-								if (temp.filter((id) => typeof id === "string").length === 0) {
-									setProject(null);
-									setIsPrivate(false);
-								}
-							}}
-						/>
-					))}
+					<SubmitFormSection
+						title="Upload files"
+						className="space-y-6 w-full text-base-content/80 text-base font-normal"
+					>
+						{analysisIds.map((id, i) => (
+							<AnalysisFormSection
+								key={i}
+								i={i}
+								id={id}
+								deletable={analysisIds.filter((id) => id !== -1).length > 1}
+								loading={loading}
+								onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
+								responseSet={responses[id]}
+								onDelete={() => {
+									const temp = analysisIds.toSpliced(i, 1, -1);
+									setAnalysisIds(temp);
+									if (temp.filter((id) => typeof id === "string").length === 0) {
+										setProject(null);
+										setIsPrivate(false);
+									}
+								}}
+							/>
+						))}
 
 						<div className="pt-6 space-y-4">
 							<div className="flex gap-4">

@@ -32,7 +32,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, primers, assays, samplesByAssay, libraries } = parseResult;
+		const { project, assays, assayPreps, samplesByAssay, libraries } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -47,39 +47,58 @@ async function doSubmit(
 			75
 		);
 
+		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
+
 		await prisma.$transaction(
 			async (tx) => {
+				//check if assay data is correct
+				for (const a of assays) {
+					const dbAssay = await tx.assay.findUnique({
+						where: {
+							assay_name: a.assay_name
+						}
+					});
+
+					if (!dbAssay) {
+						await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+						throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+					}
+
+					for (const [f, value] of Object.entries(a)) {
+						const field = f as keyof typeof dbAssay;
+						if (value !== dbAssay[field]) {
+							if (!(a.assay_name in badAssayFields)) {
+								badAssayFields[a.assay_name] = [];
+							}
+							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
+							// await projectChannel.stream.error(
+							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							// );
+							// throw new Error(
+							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
+							// );
+						}
+					}
+				}
+
+				await projectChannel.stream.message("All checks successful.", 85);
+
 				await tx.project.create({
 					data: project
 				});
 
-				for (let p of primers) {
-					await tx.primer.upsert({
-						where: {
-							pcr_primer_forward_pcr_primer_reverse: {
-								pcr_primer_forward: p.pcr_primer_forward,
-								pcr_primer_reverse: p.pcr_primer_reverse
-							}
-						},
-						update: {},
-						create: p
-					});
-				}
+				await tx.assayPrep.createMany({
+					data: assayPreps
+				});
 
-				await projectChannel.stream.success("Project successfully uploaded to database.");
+				await projectChannel.stream.success("Project and AssayPreps successfully uploaded to database.");
 
-				for (let a of assays) {
-					await tx.assay.upsert({
+				for (const a of assays) {
+					await tx.assay.update({
 						where: {
 							assay_name: a.assay_name
 						},
-						update: {
-							Samples: {
-								connectOrCreate: samplesByAssay[a.assay_name]
-							}
-						},
-						create: {
-							...a,
+						data: {
 							Samples: {
 								connectOrCreate: samplesByAssay[a.assay_name]
 							}
@@ -90,8 +109,7 @@ async function doSubmit(
 				await sampleChannel.stream.success("Samples successfully uploaded to database.");
 
 				await tx.library.createMany({
-					data: libraries,
-					skipDuplicates: true
+					data: libraries
 				});
 
 				await libraryChannel.stream.success("Libraries successfully uploaded to database.");
@@ -99,7 +117,22 @@ async function doSubmit(
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
-		await globalStream.success("Success");
+		let successMsg = "Project successfully submitted!";
+		if (Object.keys(badAssayFields).length) {
+			successMsg +=
+				"\n\nWARNING: Some Assays had provided fields that did not match the __ASSAY_MASTER_LIST_URL__. The following fields will have the values from the submission replaced with the values from the master list.\n\n" +
+				Object.entries(badAssayFields)
+					.map(
+						([assay_name, fieldInfos]) =>
+							assay_name +
+							"\n" +
+							fieldInfos
+								.map((info) => "Field: " + info.field + "\tProvided: " + info.provided + "\tActual: " + info.actual)
+								.join("\n")
+					)
+					.join("\n\n");
+		}
+		await globalStream.success(successMsg);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

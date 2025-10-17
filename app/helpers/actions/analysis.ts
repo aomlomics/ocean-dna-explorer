@@ -11,7 +11,6 @@ import {
 	TaxonomyOptionalDefaultsSchema,
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
-import { deadBooleanToString } from "../utils";
 import { parseSchemaToObject } from "../schema";
 
 export async function parseAnalysisFile({
@@ -47,7 +46,7 @@ export async function parseAnalysisFile({
 		return;
 	}
 
-	const parser = parse(text, { columns: true, delimiter: "\t" });
+	const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
 	await stream.message("File read into memory", 25);
 
 	let i = 0;
@@ -79,11 +78,9 @@ export async function parseAnalysisFile({
 			analysisMetadataFileChecksum_ODE: md5Checksum
 		},
 		{
-			errorMap: (error, ctx) => {
+			error: (iss) => {
 				return {
-					message: `Field: ${error.path[0]}\nIssue: ${
-						ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-					}\nValue: ${analysisCol[error.path[0] as keyof typeof analysisCol]}`
+					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
 				};
 			}
 		}
@@ -99,7 +96,7 @@ export async function parseAnalysisFile({
 	}
 
 	//unset all optional fields that were not provided
-	for (const field of AnalysisScalarFieldEnumSchema._def.values) {
+	for (const field of AnalysisScalarFieldEnumSchema.options) {
 		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
 			//@ts-ignore
 			parsedAnalysis.data[field] = null;
@@ -145,7 +142,7 @@ export async function parseAssignmentFile({
 		return;
 	}
 
-	const parser = parse(text, { columns: true, delimiter: "\t" });
+	const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
 	await stream.message("File read into memory", 25);
 
 	let i = 0;
@@ -177,11 +174,9 @@ export async function parseAssignmentFile({
 					sequenceLength_ODE: featureRow.dna_sequence.length
 				},
 				{
-					errorMap: (error, ctx) => {
+					error: (iss) => {
 						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${featureRow[error.path[0] as keyof typeof featureRow]}`
+							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
 						};
 					}
 				}
@@ -207,11 +202,9 @@ export async function parseAssignmentFile({
 					analysis_run_name
 				},
 				{
-					errorMap: (error, ctx) => {
+					error: (iss) => {
 						return {
-							message: `Field: ${error.path[0]}\nIssue: ${
-								ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-							}\nValue: ${assignmentRow[error.path[0] as keyof typeof assignmentRow]}`
+							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
 						};
 					}
 				}
@@ -233,11 +226,9 @@ export async function parseAssignmentFile({
 
 			//parse taxonomy
 			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-				errorMap: (error, ctx) => {
+				error: (iss) => {
 					return {
-						message: `Field: ${error.path[0]}\nIssue: ${
-							ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-						}\nValue: ${taxonomyRow[error.path[0] as keyof typeof taxonomyRow]}`
+						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
 					};
 				}
 			});
@@ -252,7 +243,7 @@ export async function parseAssignmentFile({
 			}
 
 			//unset all optional fields that were not provided
-			for (const field of TaxonomyScalarFieldEnumSchema._def.values) {
+			for (const field of TaxonomyScalarFieldEnumSchema.options) {
 				if (field !== "id" && !(field in parsedTaxonomy.data)) {
 					//@ts-ignore
 					parsedTaxonomy.data[field] = null;
@@ -305,7 +296,7 @@ export async function parseOccurrenceFile({
 		return;
 	}
 
-	const parser = parse(text, { delimiter: "\t" });
+	const parser = parse(text, { delimiter: "\t", relax_quotes: true });
 	await stream.message("File read into memory", 25);
 
 	let i = 0;
@@ -346,19 +337,9 @@ export async function parseOccurrenceFile({
 							analysis_run_name
 						},
 						{
-							errorMap: (error, ctx) => {
+							error: (iss) => {
 								return {
-									message: `Field: ${error.path[0]}\nIssue: ${
-										ctx.defaultError.includes("enum") ? deadBooleanToString(ctx.defaultError) : ctx.defaultError
-									}\nValue: ${
-										error.path[0] === "samp_name"
-											? samp_name
-											: error.path[0] === "featureid"
-											? featureid
-											: error.path[0] === "organismQuantity"
-											? organismQuantity
-											: undefined
-									}`
+									message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
 								};
 							}
 						}

@@ -1,4 +1,4 @@
-import { getSummaryData, MainStats, AssayStats, SummaryItemData } from "@/app/components/DataSummary";
+import { getSummaryData, MainStats, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
@@ -6,11 +6,7 @@ import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
 import { randomColors } from "../helpers/utils";
 import { prismaImages } from "../helpers/prismaImages";
-// import OrganismOutlines from "../components/images/OrganismOutlines";
-import fs from "fs";
-import path from "path";
 import Carousel from "../components/images/Carousel";
-import EDNAVisualization from "../components/eDNA_graphic/eDNA_visualization";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
@@ -69,7 +65,7 @@ export default async function Home() {
 			icon: "ship" as const
 		},
 		{
-			title: "Samples", 
+			title: "Samples",
 			value: sampleCount,
 			href: "/explore/sample",
 			icon: "location" as const
@@ -92,7 +88,8 @@ export default async function Home() {
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
-					<span className="font-bold">BETA:</span> ODE is under active development. Please report bugs and feature requests{" "}
+					<span className="font-bold">BETA:</span> ODE is under active development. Please report bugs and feature
+					requests{" "}
 					<a
 						href="https://github.com/aomlomics/ocean-dna-explorer/issues"
 						target="_blank"
@@ -121,7 +118,8 @@ export default async function Home() {
 
 								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
 									<span className="block">
-										a data sharing platform, search engine, and visualization<br />
+										a data sharing platform, search engine, and visualization
+										<br />
 										and analysis tool for ocean environmental DNA data
 									</span>
 								</div>
@@ -224,7 +222,7 @@ export default async function Home() {
 				{/* Funding Institutes Section */}
 				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
 					<h2 className="text-2xl lg:text-3xl text-primary mb-6 lg:mb-8 text-center">Supported By:</h2>
-					
+
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
 							ODE is a product of{" "}

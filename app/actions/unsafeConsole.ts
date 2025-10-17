@@ -6,14 +6,20 @@ import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { unsafePrisma } from "../helpers/prisma";
 import JSON5 from "json5";
+import { uncapitalizeTable } from "../helpers/utils";
 
 export default async function unsafeConsoleAction(
-	table: Lowercase<Prisma.ModelName>,
+	table: Uncapitalize<Prisma.ModelName>,
 	modelQuery: string,
 	query: string
 ): Promise<NetworkPacket> {
 	try {
-		if (Object.keys(Prisma.ModelName).some((model) => model.toLowerCase() === table)) {
+		const model = Object.keys(Prisma.ModelName).find(
+			(model) => model.toLowerCase() === table.toLowerCase()
+		) as Prisma.ModelName;
+		if (model) {
+			const uncapsTable = uncapitalizeTable(model);
+
 			const { userId, sessionClaims } = await auth();
 			const role = sessionClaims?.metadata?.role;
 
@@ -29,7 +35,7 @@ export default async function unsafeConsoleAction(
 				return { statusMessage: "error", error: "Model query must be string." };
 			}
 
-			if (!Object.keys(unsafePrisma[table]).includes(modelQuery)) {
+			if (!Object.keys(unsafePrisma[uncapsTable]).includes(modelQuery)) {
 				return { statusMessage: "error", error: "Invalid model query." };
 			}
 
@@ -39,7 +45,7 @@ export default async function unsafeConsoleAction(
 
 			//@ts-ignore
 			JSON5.parse(query);
-			// await unsafePrisma[table][modelQuery](JSON.parse(query));
+			// await unsafePrisma[uncapsTable][modelQuery](JSON.parse(query));
 
 			return { statusMessage: "success" };
 		} else {

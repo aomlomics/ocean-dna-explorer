@@ -5,9 +5,12 @@ import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
 import TabDropdown from "./TabDropdown";
 import MobileMenu from "./MobileMenu";
-import { EXPLORE_ROUTES, RolePermissions } from "@/types/objects";
+import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
+import { Prisma } from "@/app/generated/prisma/client";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default async function Header() {
 	const { sessionClaims } = await auth();
@@ -49,7 +52,10 @@ export default async function Header() {
 					<TabDropdown
 						tabName="Explore"
 						route="/explore"
-						dropdown={Object.entries(EXPLORE_ROUTES).map(([route, label]) => ({ label, href: `/explore/${route}` }))}
+						dropdown={TableNames.map((table) => ({
+							label: TableMetadata[table as Prisma.ModelName].plural,
+							href: `/explore/${uncapitalizeTable(table as Prisma.ModelName)}`
+						}))}
 					/>
 					<TabDropdown tabName="Search" route="/search" dropdown={[{ label: "Advanced", href: "/search/advanced" }]} />
 					<TabDropdown

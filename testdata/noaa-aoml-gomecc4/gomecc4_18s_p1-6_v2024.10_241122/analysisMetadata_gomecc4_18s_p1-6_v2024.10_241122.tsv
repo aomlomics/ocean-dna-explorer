@@ -1,6 +1,6 @@
 term_name	values
 project_id	noaa-aoml-gomecc4
-assay_name	ssu18sv9
+assay_name	Eukarya-18S-V9-Lane-Medlin
 analysis_run_name	gomecc4_18s_p1-6_v2024.10_241122
 sop_bioinformatics	https://github.com/aomlomics/tourmaline/tree/develop
 trim_method	qiime2-amplicon-2024.10; Cutadapt 4.9
