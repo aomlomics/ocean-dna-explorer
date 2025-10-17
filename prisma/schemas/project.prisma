@@ -16,12 +16,12 @@ model Project {
     Analyses   Analysis[]
 
     // Submission File URLs
-    projectMetadataFileUrl_ODE      String @default("")
-    projectMetadataFileChecksum_ODE String @default("")
-    sampleMetadataFileUrl_ODE       String @default("")
-    sampleMetadataFileChecksum_ODE  String @default("")
-    libraryMetadataFileUrl_ODE      String @default("")
-    libraryMetadataFileChecksum_ODE String @default("")
+    projectMetadataFileUrl_ODE      String
+    projectMetadataFileChecksum_ODE String
+    sampleMetadataFileUrl_ODE       String
+    sampleMetadataFileChecksum_ODE  String
+    libraryMetadataFileUrl_ODE      String
+    libraryMetadataFileChecksum_ODE String
 
     // Data
     // Project

@@ -62,6 +62,8 @@ export type ParamsArrayField = [string, QueryMode, string | number | [number, nu
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
 
+export type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

@@ -2,7 +2,7 @@ import { RolePermissions } from "@/types/objects";
 import { DeadBoolean, Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
-import { ErrorPacket, Role } from "@/types/globals";
+import { DbType, ErrorPacket, Role } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 import { deepMerge } from "./utils";
 import TableMetadata from "@/types/tableMetadata";
@@ -664,16 +664,14 @@ async function updateManyRawChunked(
 				...(typeof id === "string" ? [row[id]] : id.map((i) => row[i])),
 				//add values for each rows's columns
 				...fields.map((f) => {
-					const deadBooleanFoundKey = deadBooleanKeys.find(
-						(db) => DeadBooleanEnum[db as keyof typeof DeadBooleanEnum] === row[f]
-					);
-					if (deadBooleanFields.includes(f) && deadBooleanFoundKey) {
-						if (deadBooleanFoundKey === "0") {
+					const foundKey = deadBooleanKeys.find((db) => DeadBooleanEnum[db as keyof typeof DeadBooleanEnum] === row[f]);
+					if (deadBooleanFields.includes(f) && foundKey) {
+						if (foundKey === "0") {
 							return DeadBoolean.false;
-						} else if (deadBooleanFoundKey === "1") {
+						} else if (foundKey === "1") {
 							return DeadBoolean.true;
 						} else {
-							return deadBooleanFoundKey;
+							return foundKey;
 						}
 					} else if (row[f] === "JsonNull") {
 						return "[]";
@@ -693,7 +691,15 @@ export async function updateManyRaw(
 	data: Record<string, any>[],
 	id = "id" as string | string[]
 ) {
-	const fields = [...TableMetadata[table].enumSchema.options];
+	//get fields from data
+	const fs = new Set() as Set<string>;
+	for (const d of data) {
+		for (const field of Object.keys(d)) {
+			fs.add(field);
+		}
+	}
+	const fields = Array.from(fs) as string[];
+
 	//remove id field(s) to be handled separately
 	if (typeof id === "string") {
 		const keyIndex = fields.indexOf(id);
@@ -719,9 +725,9 @@ export async function updateManyRaw(
 
 	//fill missing optional fields with null
 	for (const d of data) {
-		for (const field of TableMetadata[table].enumSchema.options) {
-			if (d[field] === undefined) {
-				d[field] = null;
+		for (const f of fields) {
+			if (d[f] === undefined) {
+				d[f] = null;
 			}
 		}
 	}
