@@ -4,9 +4,11 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
+import Map from "@/app/components/map/Map";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -14,7 +16,7 @@ export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const [searchTable, setSearchTable] = useState("");
+	const [searchTable, setSearchTable] = useState("" as Prisma.ModelName | "");
 	const [filterIds, setFilterIds] = useState([] as FilterIds);
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 	const formRef = useRef<HTMLFormElement>(null);
@@ -40,7 +42,7 @@ export default function AdvancedSearch() {
 					setFilterIds(advancedParsed.map(getFilterIds));
 				}
 
-				setSearchTable(searchParams.get("table") || "");
+				setSearchTable((searchParams.get("table") as Prisma.ModelName) || "");
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -56,7 +58,7 @@ export default function AdvancedSearch() {
 
 	//functions
 	function getParamsArray(ids = filterIds, prevSuffix = "") {
-		if (formRef.current && ids) {
+		if (formRef.current && ids && searchTable) {
 			const parts = [] as ParamsArray;
 			let i = 0;
 			for (const id of ids) {
@@ -68,9 +70,7 @@ export default function AdvancedSearch() {
 							const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
 							const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
 
-							const table = (
-								relation ? relation.toLowerCase() : searchTable.toLowerCase()
-							) as Lowercase<Prisma.ModelName>;
+							const table = (relation ? relation : searchTable) as Prisma.ModelName;
 							const field = formRef.current[`field_${suffix}`].value as string;
 							const shape = TableMetadata[table].schema.shape;
 							const fieldType = getZodType(shape[field as keyof typeof shape]).type;
@@ -170,7 +170,7 @@ export default function AdvancedSearch() {
 						value={searchTable}
 						className="select"
 						onChange={(e) => {
-							setSearchTable(e.target.value);
+							setSearchTable(e.target.value as Prisma.ModelName);
 							setFilterIds([]);
 							setParamsArray([]);
 						}}
@@ -179,22 +179,17 @@ export default function AdvancedSearch() {
 						<option disabled value="">
 							Select Table
 						</option>
-						{Object.keys(Prisma.ModelName)
-							.sort()
-							.map((table) => (
-								<option key={table} value={table}>
-									{table}
-								</option>
-							))}
+						{TableNames.map((table) => (
+							<option key={table} value={table}>
+								{table}
+							</option>
+						))}
 					</select>
 				</div>
 
 				{searchTable && (
 					<div className="text-2xl justify-self-center">
-						Filtering{" "}
-						<span className="text-primary">
-							{TableMetadata[searchTable.toLowerCase() as Lowercase<Prisma.ModelName>].plural}
-						</span>
+						Filtering <span className="text-primary">{TableMetadata[searchTable].plural}</span>
 					</div>
 				)}
 
@@ -207,25 +202,42 @@ export default function AdvancedSearch() {
 			</div>
 
 			{searchTable && (
-				<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
-					<input type="checkbox" defaultChecked />
-					<div className="collapse-title font-semibold text-xl text-primary">Filters</div>
-					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-						<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center">
-							<div>Type</div>
-							<div>Relation</div>
-							<div>Field</div>
-							<div>Filter</div>
-						</div>
+				<>
+					<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
+						<input type="checkbox" defaultChecked />
+						<div className="collapse-title font-semibold text-xl text-primary">Filters</div>
+						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
+							<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center">
+								<div>Type</div>
+								<div>Relation</div>
+								<div>Field</div>
+								<div>Filter</div>
+							</div>
 
-						<FilterSection
-							searchTable={searchTable}
-							filterIds={filterIds}
-							paramsArray={paramsArray}
-							onChange={(prev) => setFilterIds(prev)}
-						/>
+							<FilterSection
+								searchTable={searchTable}
+								filterIds={filterIds}
+								paramsArray={paramsArray}
+								onChange={(prev) => setFilterIds(prev)}
+							/>
+						</div>
 					</div>
-				</div>
+					<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
+						<input type="checkbox" />
+						<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
+						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
+							<Map
+								locations={[] as any[]}
+								titleTable={uncapitalizeTable(searchTable)}
+								title={
+									typeof TableMetadata[searchTable].titleField === "string"
+										? (TableMetadata[searchTable].titleField as string)
+										: (TableMetadata[searchTable].titleField as string[]).join(" | ")
+								}
+							/>
+						</div>
+					</div>
+				</>
 			)}
 		</form>
 	);
@@ -325,13 +337,15 @@ function Filter({
 }) {
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
-	const [relation, setRelation] = useState(paramsArray && type === "relation" ? paramsArray[0] : "");
+	const [relation, setRelation] = useState(
+		(paramsArray && type === "relation" ? paramsArray[0] : "") as Prisma.ModelName | ""
+	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 	const [loaded, setLoaded] = useState(false);
 
-	const table = (relation ? relation.toLowerCase() : searchTable.toLowerCase()) as Lowercase<Prisma.ModelName>;
+	const table = relation ? relation : (searchTable as Prisma.ModelName);
 	const invalidField =
-		paramsArray && !TableMetadata[table].enumSchema._def.values.includes(paramsArray[0 + paramsOffset] as string);
+		paramsArray && !TableMetadata[table].enumSchema.options.includes(paramsArray[0 + paramsOffset] as string);
 
 	useEffect(() => {
 		if (invalidField) {
@@ -375,7 +389,7 @@ function Filter({
 						className="select"
 						value={relation}
 						onChange={(e) => {
-							setRelation(e.target.value);
+							setRelation(e.target.value as Prisma.ModelName);
 							setField("");
 						}}
 						required
@@ -384,19 +398,17 @@ function Filter({
 						<option value="" disabled>
 							Select Relation
 						</option>
-						{Object.keys(Prisma.ModelName)
-							.sort()
-							.reduce((acc, table) => {
-								if (table !== searchTable) {
-									acc.push(
-										<option key={table} value={table}>
-											{table}
-										</option>
-									);
-								}
+						{TableNames.reduce((acc, table) => {
+							if (table !== searchTable) {
+								acc.push(
+									<option key={table} value={table}>
+										{table}
+									</option>
+								);
+							}
 
-								return acc;
-							}, [] as ReactNode[])}
+							return acc;
+						}, [] as ReactNode[])}
 					</select>
 				</div>
 			)}
@@ -413,7 +425,7 @@ function Filter({
 						<option value="" disabled>
 							Select Field
 						</option>
-						{TableMetadata[table].enumSchema._def.values.reduce((acc, val) => {
+						{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
 							if (!omit.includes(val)) {
 								acc.push(
 									<option key={val} value={val}>
@@ -457,7 +469,7 @@ function InputElement({
 	defaultValue
 }: {
 	nameSuffix: string;
-	table: Lowercase<Prisma.ModelName>;
+	table: Prisma.ModelName;
 	field: string;
 	defaultMode: string;
 	defaultValue: string;

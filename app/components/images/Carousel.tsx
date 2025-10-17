@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useState, useEffect } from "react";
+import { Image as DbImage } from "@/app/generated/prismaImages/client";
+import AttributionBadge from "./AttributionBadge";
 
 // Images with '_m' are images that are mirrored/flipped horizontally
 // There are no other modifications to the images from NOAA Ocean Exploration
@@ -29,51 +31,58 @@ const carouselImgSrc = [
 	`/images/carousel/siphonophore_800.jpg`
 ];
 
-export default function Carousel() {
-	const [carouselActiveItem, setCarouselActiveItem] = useState(0);
+export default function Carousel({ images }: { images: (DbImage & { Attribution?: any })[] }) {
 	const [isMounted, setIsMounted] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(0);
+	// Convert DbImage[] to string[] for the carousel
+	const safeImages = images.map(img => img.url || '');
+	const mounted = isMounted;
+	const intervalMs = 10000;
+	const transitionMs = 1000;
+
+	useEffect(() => setIsMounted(true), []);
 
 	useEffect(() => {
-		setIsMounted(true);
-		const play = setInterval(() => {
-			let nextItem;
-			do {
-				nextItem = Math.floor(Math.random() * carouselImgSrc.length);
-			} while (nextItem === carouselActiveItem); // Ensure we don't show the same image twice
-			setCarouselActiveItem(nextItem);
-		}, 11000); // how much time between image changes (11 seconds)
-		return () => clearInterval(play);
-	}, [carouselActiveItem]);
+		if (!mounted || safeImages.length <= 1) return;
+		const id = setInterval(() => {
+			setActiveIndex((prev) => {
+				if (safeImages.length <= 1) return prev;
+				let next = Math.floor(Math.random() * safeImages.length);
+				if (next === prev) next = (prev + 1) % safeImages.length;
+				return next;
+			});
+		}, intervalMs);
+		return () => clearInterval(id);
+	}, [mounted, safeImages, intervalMs]);
 
-	if (!isMounted) {
-		return (
-			<div className="relative w-full h-full">
-				<div className="absolute inset-0">
-					<Image src={carouselImgSrc[0]} alt="Carousel image 1" fill className="object-cover" priority />
-				</div>
-			</div>
-		);
-	}
+	const fallback = safeImages[0] ?? "/images/carousel/adobe_copepod.jpeg";
+	const activeImage = mounted ? images[activeIndex] ?? null : null;
 
 	return (
-		<div className="relative w-full h-full">
-			{carouselImgSrc.map((imgSrc, index) => (
+		<div className="absolute inset-0 overflow-hidden bg-base-100">
+			{(mounted ? safeImages : [fallback]).map((src, index) => (
 				<div
-					key={imgSrc}
-					className={`absolute inset-0 transition-opacity duration-[2000ms] ${
-						// transition animation duration
-						index === carouselActiveItem ? "opacity-100" : "opacity-0"
-					}`}
+					key={`${src}-${index}`}
+					className="absolute inset-0 transition-opacity"
+					style={{
+						opacity: mounted ? (index === activeIndex ? 1 : 0) : 1,
+						transitionDuration: `${transitionMs}ms`,
+						WebkitMaskImage: "radial-gradient(ellipse 75% 75% at 80% 35%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 85%)",
+						maskImage: "radial-gradient(ellipse 80% 75% at 80% 40%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 85%)" // 1st% inner ellipse gradient strength. 
+					}}
+					aria-hidden={mounted ? index !== activeIndex : false}
 				>
 					<Image
-						src={imgSrc}
-						alt={`Carousel image ${index + 1}`}
+						src={src}
+						alt=""
 						fill
-						className="object-cover"
-						priority={index === carouselActiveItem}
+						priority={mounted ? index === activeIndex : true}
+						className="object-cover opacity-30 filter [html[data-theme='dark']_&]:opacity-55 [html[data-theme='dark']_&]:brightness-110 [html[data-theme='dark']_&]:contrast-110 [html[data-theme='dark']_&]:saturate-125"
+						sizes="100vw"
 					/>
 				</div>
 			))}
+			<AttributionBadge image={activeImage as any} />
 		</div>
 	);
-}
+} 

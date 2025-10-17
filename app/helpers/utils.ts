@@ -1,5 +1,5 @@
 import { RanksBySpecificity } from "@/types/objects";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
 
 export async function fetcher(url: string) {
@@ -30,8 +30,58 @@ export function randomColors(count: number) {
 
 	return colors.map((c) => {
 		const rgb = c.rgb();
-		return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+		return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
 	});
+}
+
+export function generateThemedColors(count: number, baseColor: string): string[] {
+	const colors: string[] = [];
+	const [baseR, baseG, baseB] = baseColor.match(/\d+/g)!.map(Number);
+
+	for (let i = 0; i < count; i++) {
+		const factor = 1 - i / (count * 1.5);
+		const r = Math.max(0, Math.min(255, Math.floor(baseR * factor)));
+		const g = Math.max(0, Math.min(255, Math.floor(baseG * factor)));
+		const b = Math.max(0, Math.min(255, Math.floor(baseB * factor)));
+		colors.push(`rgb(${r},${g},${b})`);
+	}
+
+	return colors;
+}
+
+export function generateChartColors(count: number): string[] {
+	const primary = "rgb(100, 171, 220)";
+	const secondary = "rgb(35, 61, 127)";
+	const colors: string[] = [];
+
+	if (count === 0) {
+		return colors;
+	}
+
+	if (count === 1) {
+		return [primary];
+	}
+
+	colors.push(primary, secondary);
+
+	const generateShade = (color: string, factor: number) => {
+		const [r, g, b] = color.match(/\d+/g)!.map(Number);
+		const newR = Math.max(0, Math.min(255, Math.floor(r * factor)));
+		const newG = Math.max(0, Math.min(255, Math.floor(g * factor)));
+		const newB = Math.max(0, Math.min(255, Math.floor(b * factor)));
+		return `rgb(${newR},${newG},${newB})`;
+	};
+
+	for (let i = 2; i < count; i++) {
+		const factor = 1 - (i - 1) / (count * 1.5);
+		if (i % 2 === 0) {
+			colors.push(generateShade(primary, factor));
+		} else {
+			colors.push(generateShade(secondary, factor));
+		}
+	}
+
+	return colors;
 }
 
 export function getMostSpecificRank(taxonomy: Taxonomy) {
@@ -182,4 +232,27 @@ export function deepMerge(target: Record<string, any>, ...sources: Record<string
 	}
 
 	return deepMerge(target, ...sources);
+}
+
+export function uncapitalizeTable(table: Prisma.ModelName) {
+	return (table.slice(0, 1).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+}
+
+export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
+	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+}
+
+export function getSubmissionFileName(value: string) {
+	const url = new URL(value);
+	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
+		//reassemble file name without the random suffix
+		const splitPath = url.pathname.split("/");
+		const name = splitPath[splitPath.length - 1];
+		const dashSplit = name.split("-"); //file name
+		const dotSplit = name.split("."); //file type
+		return decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-")) + "." + dotSplit[dotSplit.length - 1];
+	} else {
+		//do nothing
+		return value;
+	}
 }

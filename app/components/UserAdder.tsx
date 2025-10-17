@@ -50,22 +50,31 @@ export default function UserAdder({
 
 	useEffect(() => {
 		async function getCurrentUsers() {
-			const response = await fetch(`/api/user?userIds=${userIds.join(",")}`);
-			if (response.ok) {
-				const json = (await response.json()) as NetworkPacket;
-				if (json.statusMessage === "success") {
-					setUsers(json.result);
-				} else if (json.statusMessage === "error") {
-					setLoadingError(json.error);
+			if (userId) {
+				let fetchIds = userIds;
+				if (userIds.length === 1 && !userIds[0]) {
+					fetchIds = [userId];
 				}
-			} else {
-				setLoadingError(response.statusText);
-				setSearchedUsers([]);
+				const response = await fetch(`/api/user?userIds=${fetchIds.join(",")}`);
+				if (response.ok) {
+					const json = (await response.json()) as NetworkPacket;
+					if (json.statusMessage === "success") {
+						setUsers(json.result);
+						if (!submittable) {
+							setUserIds(json.result.map((u: ClerkUserObject) => u.id));
+						}
+					} else if (json.statusMessage === "error") {
+						setLoadingError(json.error);
+					}
+				} else {
+					setLoadingError(response.statusText);
+					setSearchedUsers([]);
+				}
 			}
 		}
 
 		getCurrentUsers();
-	}, []);
+	}, [userId]);
 
 	useEffect(() => {
 		setSearch("");
@@ -145,7 +154,7 @@ export default function UserAdder({
 			<div className="flex flex-col gap-3">
 				<div className="dropdown">
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Search for users</legend>
+						<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Search for users</legend>
 						<input
 							type="text"
 							name="search"
@@ -197,7 +206,7 @@ export default function UserAdder({
 			</div>
 
 			<div>
-				<div>Current Users:</div>
+				<div className="mt-4 text-sm text-base-content/80 font-normal py-1 mb-1">Current Users:</div>
 				<div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
 					{users.map((u) => (
 						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-primary rounded-lg">
@@ -211,7 +220,7 @@ export default function UserAdder({
 						</div>
 					))}
 					{newUsers.map((u) => (
-						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-warning rounded-lg">
+						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-secondary rounded-lg">
 							<UserDisplay user={u} deletable onDelete={() => setNewUsers(newUsers.filter((nu) => u.id !== nu.id))} />
 						</div>
 					))}

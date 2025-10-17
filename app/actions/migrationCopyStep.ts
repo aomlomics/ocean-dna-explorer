@@ -6,6 +6,7 @@ import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
+import { uncapitalizeTable } from "../helpers/utils";
 
 function exists(value: any) {
 	return value !== null && value !== undefined && value.toString;
@@ -24,20 +25,19 @@ export default async function migrationCopyStepAction() {
 			throw new Error("Invalid role.");
 		}
 
-		const oldFieldsByTable = Object.keys(TableMetadata).reduce((acc, table) => {
-			const tempFields = TableMetadata[table as Lowercase<Prisma.ModelName>].enumSchema._def.values.filter((f) =>
-				f.endsWith("__TEMP")
-			);
+		const oldFieldsByTable = Object.keys(Prisma.ModelName).reduce((acc, t) => {
+			const table = uncapitalizeTable(t as Prisma.ModelName);
+			const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
 			if (tempFields.length) {
-				acc[table as Lowercase<Prisma.ModelName>] = tempFields.map((f) => f.slice(0, f.length - 6));
+				acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));
 			}
 
 			return acc;
-		}, {} as Record<Lowercase<Prisma.ModelName>, string[]>);
+		}, {} as Record<Uncapitalize<Prisma.ModelName>, string[]>);
 
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
-				const table = t as Lowercase<Prisma.ModelName>;
+				const table = t as Uncapitalize<Prisma.ModelName>;
 
 				// @ts-ignore
 				const result = (await tx[table].findMany({

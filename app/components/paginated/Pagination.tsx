@@ -34,7 +34,7 @@ export default function Pagination({
 	if (where) {
 		whereQuery = { ...where };
 	}
-	if (searchParams.size) {
+	if (searchParams) {
 		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
 	}
 	query.set("where", JSON.stringify(whereQuery));
@@ -44,7 +44,7 @@ export default function Pagination({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/pagination/${table}?${query.toString()}`,
+		`/api/${table}/pagination?${query.toString()}`,
 		fetcher,
 		{
 			keepPreviousData: true
@@ -66,7 +66,7 @@ export default function Pagination({
 			query.set("relCounts", relCounts.toString());
 		}
 
-		preload(`/api/pagination/${table}?${query.toString()}`, fetcher);
+		preload(`/api/${table}/pagination?${query.toString()}`, fetcher);
 	}
 
 	return (
@@ -81,7 +81,7 @@ export default function Pagination({
 			/>
 
 			{/* Project Cards */}
-			<div className="grid gap-4">
+			<div className={`flex flex-col gap-4 ${table === "sample" ? "items-start" : "items-center"}`}>
 				{data.result.map((d: any, i: number) => (
 					<Link
 						href={`/explore/${table}/${
@@ -90,17 +90,19 @@ export default function Pagination({
 								: TableMetadata[table].titleField.map((field) => encodeURIComponent(d[field])).join("/")
 						}`}
 						key={i}
-						className="card bg-base-200 hover:bg-base-300 transition-all duration-200"
+						className="card bg-base-200 hover:bg-base-300 transition-all duration-200 w-full max-w-lg"
 					>
 						<div className="card-body p-5">
 							<div className="flex flex-col gap-2">
 								{/* Title with hover animation */}
 								{typeof TableMetadata[table].titleField === "string" ? (
-									<h3 className="text-lg text-primary">{d[TableMetadata[table].titleField]}</h3>
+									<h3 className="text-lg text-primary break-all">{d[TableMetadata[table].titleField]}</h3>
 								) : (
 									<div
 										className="grid gap-x-4"
-										style={{ gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))` }}
+										style={{
+											gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))`
+										}}
 									>
 										{TableMetadata[table].titleField.map((t) => (
 											<h3 key={`${t}1`} className="text-lg font-medium text-primary">
@@ -121,7 +123,7 @@ export default function Pagination({
 										{TableMetadata[table].subFields.map((field) => (
 											<div key={field} className="flex items-center gap-2">
 												<span className="font-medium">{field}:</span>
-												<span className="break-all">{d[field]}</span>
+												<span className="break-all text-base-content">{d[field]}</span>
 											</div>
 										))}
 									</div>
@@ -129,7 +131,7 @@ export default function Pagination({
 
 								{/* Stats with subtle separator */}
 								{relCounts && (
-									<div className="flex gap-6 pt-1">
+									<div className="flex flex-wrap gap-6 pt-1">
 										{relCounts.map((rel) => (
 											<div key={rel} className="flex items-center gap-2">
 												<span className="text-lg font-medium">{d._count[rel]}</span>

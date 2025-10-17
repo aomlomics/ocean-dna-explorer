@@ -2,8 +2,8 @@
 
 import { useSearchParams, usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import tableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 
 export default function Search() {
 	const searchParams = useSearchParams();
@@ -65,13 +65,11 @@ export default function Search() {
 					<option value="" disabled>
 						Select Table
 					</option>
-					{Object.keys(Prisma.ModelName)
-						.sort()
-						.map((table) => (
-							<option key={table} value={table} onClick={(e) => searchRef.current?.focus()}>
-								{table}
-							</option>
-						))}
+					{TableNames.map((table) => (
+						<option key={table} value={table} onClick={(e) => searchRef.current?.focus()}>
+							{table}
+						</option>
+					))}
 				</select>
 			</div>
 
@@ -84,9 +82,7 @@ export default function Search() {
 							id="searchInput"
 							name="searchInput"
 							ref={searchRef}
-							placeholder={`Search ${
-								tableMetadata[searchTable.toLowerCase() as Lowercase<Prisma.ModelName>].plural
-							}...`}
+							placeholder={`Search ${TableMetadata[searchTable as Prisma.ModelName].plural}...`}
 							defaultValue={searchParams.get("q")?.toString()}
 						/>
 						<svg

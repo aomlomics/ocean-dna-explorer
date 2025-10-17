@@ -34,7 +34,13 @@ export default function DataDisplay({
 				const trimmed = v.trim();
 				if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
 					return (
-						<Link key={i} href={trimmed} className="link link-primary link-hover" target="_blank" rel="noreferrer">
+						<Link
+							key={i}
+							href={trimmed}
+							className="link link-primary link-hover self-start"
+							target="_blank"
+							rel="noreferrer"
+						>
 							{trimmed}
 						</Link>
 					);

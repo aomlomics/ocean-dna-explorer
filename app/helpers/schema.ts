@@ -16,7 +16,7 @@ export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	return newEnum;
 }
 
-type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json";
+type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
 function getTypeRecursive(field: any): { type: DbType; optional?: boolean; values?: string[] } {
 	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
@@ -24,12 +24,9 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 		shape.optional = true;
 	} else if (field instanceof ZodBoolean) {
 		shape.type = "boolean";
-		// } else if (field instanceof ZodEffects) {
-		// 	//zod transform (coerced booleans)
-		// 	//TODO: verify it's actually a boolean, and not some other field that uses zod transform
-		// 	shape.type = "boolean";
 	} else if (field instanceof ZodNumber) {
-		if (field._def.checks.length && field._def.checks.some((e) => e.kind === "int")) {
+		//TODO: isInt exists here, Zod types aren't updated properly
+		if (field.def.checks?.length && field.def.checks.some((e) => (e as unknown as { isInt: boolean }).isInt)) {
 			shape.type = "integer";
 		} else {
 			shape.type = "float";
@@ -37,25 +34,22 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 	} else if (field instanceof ZodString) {
 		shape.type = "string";
 	} else if (field instanceof ZodArray) {
-		if (field._def.type instanceof ZodString) {
+		if (field.def.element instanceof ZodString) {
 			shape.type = "string[]";
 		}
 	} else if (field instanceof ZodDate) {
 		shape.type = "date";
 	} else if (field instanceof ZodLazy) {
-		//JSON
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
-		//DeadBoolean
-		//TODO: verify it's actually a DeadBoolean, and not some other enum
-		if (field._def.values.every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
-			shape.type = "boolean";
+		if (Object.keys(field.def.entries).every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
+			shape.type = "DeadBoolean";
 			shape.values = Object.keys(DeadBooleanEnum);
 		}
 	}
 
 	try {
-		const res = getZodType(field.unwrap());
+		const res = getTypeRecursive(field.unwrap());
 		return { ...res, ...shape };
 	} catch {
 		return shape;
@@ -73,17 +67,19 @@ export function getZodType(field: any): { type: DbType; optional?: boolean; valu
 
 //parse a field value into a given object only if it exists in the schema
 export function parseSchemaToObject(
-	field: string,
-	value: string,
+	f: string,
+	v: string,
 	obj: Record<string, string | string[] | number | number[] | Date | boolean | JsonValue | null>,
-	table: Lowercase<Prisma.ModelName>
+	table: Uncapitalize<Prisma.ModelName>
 ) {
+	const field = f.trim();
+	const value = v.trim();
 	//check if the field name is in the Schema
 	if (value && TableMetadata[table].enumSchema.options.includes(field)) {
 		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 		if (!type) {
 			throw new Error(
-				`Could not find type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
+				`Could not find the type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
 			);
 		}
 
@@ -99,43 +95,53 @@ export function parseSchemaToObject(
 				obj[field] = new Date(DeadValueEnum[value.toLowerCase() as keyof typeof DeadValueEnum]);
 			} else if (isNaN(dateVal.valueOf())) {
 				//value is not a singular valid date
-				//check if field has corresponding range fields in database
-				if (
-					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
-					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
-				) {
-					throw new Error(`Invalid format for field "${field}". Field can't be a range.`);
-				}
-
 				const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
 
 				//check if there are exactly 2 dates
 				if (valArray.length !== 2) {
 					throw new Error(
-						`Invalid format for field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${TypeSeparators[type]}".`
+						`Invalid format for the field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
+					);
+				}
+
+				//check if field has corresponding range fields in database
+				if (
+					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
+					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
+				) {
+					throw new Error(
+						`Invalid format for the field "${field}". The value can't be a range. The provided value was "${value}".`
 					);
 				}
 
 				//check if either date is dead value
 				if (valArray[0].toLowerCase() in DeadValueEnum || valArray[1].toLowerCase() in DeadValueEnum) {
-					throw new Error(`Invalid format for field "${field}". If providing two dates, neither can be a dead value.`);
+					throw new Error(
+						`Invalid format for the field "${field}". If providing two dates, neither can be a dead value. The provided value was "${value}".`
+					);
 				}
 
 				const dateArray = valArray.map((v) => new Date(v));
 
 				//check if first date is invalid
 				if (isNaN(dateArray[0].valueOf())) {
-					throw new Error(`Invalid format for field "${field}". First value must be a valid ISO 8601 date.`);
+					throw new Error(
+						`Invalid format for the field "${field}". The first value must be a valid ISO 8601 date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+					);
 				}
 
 				//check if second date is invalid
 				if (isNaN(dateArray[1].valueOf())) {
-					throw new Error(`Invalid format for field "${field}". Second value must be a valid ISO 8601 date.`);
+					throw new Error(
+						`Invalid format for the field "${field}". The second value must be a valid ISO 8601 date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+					);
 				}
 
 				//check if dates are in correct order
 				if (dateArray[0].getTime() >= dateArray[1].getTime()) {
-					throw new Error(`Invalid format for field "${field}". First date must be before second date.`);
+					throw new Error(
+						`Invalid format for the field "${field}". The first date must be before second date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+					);
 				}
 
 				//add to normal field
@@ -149,7 +155,7 @@ export function parseSchemaToObject(
 				//use date value
 				obj[field] = dateVal;
 			}
-		} else if (type === "boolean") {
+		} else if (type === "DeadBoolean") {
 			if (value.toLowerCase() in DeadBooleanEnum) {
 				//replace field with DeadBoolean value
 				obj[field] = DeadBooleanEnum[value.toLowerCase() as keyof typeof DeadBooleanEnum];
@@ -170,17 +176,15 @@ export function parseSchemaToObject(
 					!TableMetadata[table].enumSchema.options.includes(field + "_Midpoint_ODE") ||
 					!TableMetadata[table].enumSchema.options.includes(field + "_End_ODE")
 				) {
-					throw new Error(`Invalid format for field "${field}". Field can't be a range.`);
-				}
-
-				//check if there are exactly 2 numbers
-				if (valArray.length !== 2) {
+					throw new Error(
+						`Invalid format for the field "${field}". The value can't be a range. The provided value was "${value}".`
+					);
 				}
 
 				//check if either number is dead value
 				if (valArray[0].toLowerCase() in DeadValueEnum || valArray[1].toLowerCase() in DeadValueEnum) {
 					throw new Error(
-						`Invalid format for field "${field}". If providing two ${type}s, neither can be a dead value.`
+						`Invalid format for the field "${field}". If providing two ${type}s, neither can be a dead value. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
 					);
 				}
 
@@ -188,17 +192,23 @@ export function parseSchemaToObject(
 
 				//check if first number is invalid
 				if (isNaN(parsedArray[0])) {
-					throw new Error(`Invalid format for field "${field}". First value must be a valid ${type}.`);
+					throw new Error(
+						`Invalid format for the field "${field}". First value must be a valid ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+					);
 				}
 
 				//check if second number is invalid
 				if (isNaN(parsedArray[1])) {
-					throw new Error(`Invalid format for field "${field}". Second value must be a valid ${type}.`);
+					throw new Error(
+						`Invalid format for the field "${field}". Second value must be a valid ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+					);
 				}
 
 				//check if numbers are in correct order
 				if (parsedArray[0] >= parsedArray[1]) {
-					throw new Error(`Invalid format for field "${field}". First ${type} must be before second ${type}.`);
+					throw new Error(
+						`Invalid format for the field "${field}". First ${type} must be before second ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+					);
 				}
 
 				//add to normal field
@@ -212,7 +222,7 @@ export function parseSchemaToObject(
 				obj[field] = parser(valArray[0]);
 			} else {
 				throw new Error(
-					`Invalid format for field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${TypeSeparators[type]}".`
+					`Invalid format for the field "${field}". Field must be either one ${type}, or two ${type}s separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
 				);
 			}
 		} else {

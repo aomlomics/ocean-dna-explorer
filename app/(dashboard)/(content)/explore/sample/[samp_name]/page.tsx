@@ -3,9 +3,11 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
+import { Sample } from "@/app/generated/prisma/client";
 
-export default async function Samp_Name({ params }: { params: Promise<{ samp_name: string }> }) {
-	const { samp_name } = await params;
+export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
+	let { samp_name } = await params;
+	samp_name = decodeURIComponent(samp_name);
 
 	const { sample, analyses } = await prisma.$transaction(async (tx) => {
 		const sample = await tx.sample.findUnique({
@@ -116,7 +118,7 @@ export default async function Samp_Name({ params }: { params: Promise<{ samp_nam
 			</div>
 
 			<div className="card-body p-0 overflow-hidden aspect-5/2">
-				<Map locations={[sample]} id="samp_name" table="sample" />
+				<Map locations={[sample]} />
 			</div>
 		</div>
 	);

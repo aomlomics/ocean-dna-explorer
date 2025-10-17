@@ -18,7 +18,9 @@ export default function LoadingPaginationControls() {
 					</svg>
 				</button>
 
-				<div className="text-base-content text-center grow">0-0 of 0</div>
+				<div className="text-base-content text-center grow">
+					<span className="loading loading-spinner"></span>
+				</div>
 
 				<button className="btn btn-ghost gap-2 justify-self-start" disabled={true} type="button">
 					<svg

@@ -3,19 +3,20 @@ import { getZodType } from "./schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
 import { QueryModes } from "@/types/objects";
+import { uncapitalizeTable } from "./utils";
 
 function searchRelations(
 	relations: RelationMetadata[],
-	target: Lowercase<Prisma.ModelName>,
+	target: Uncapitalize<Prisma.ModelName>,
 	paths: RelationMetadata[][],
 	visited: Prisma.ModelName[],
 	currPath = [] as RelationMetadata[]
 ) {
 	for (const rel of relations) {
-		const lowercaseRel = rel.table.toLowerCase() as Lowercase<Prisma.ModelName>;
+		const uncapsRel = uncapitalizeTable(rel.table);
 		const newPath = [...currPath, rel];
 
-		if (lowercaseRel === target) {
+		if (uncapsRel === target) {
 			//target found
 			//check if newPath is a shorter version of an existing path
 			const longerPathIndex = paths.findIndex((p) =>
@@ -32,18 +33,18 @@ function searchRelations(
 		} else {
 			//target not found
 			//can't pass through project
-			if (lowercaseRel !== "project") {
+			if (uncapsRel !== "project") {
 				if (!visited.includes(rel.table)) {
 					//can only go to project from analysis
-					if (lowercaseRel === "analysis") {
-						const projectMetadata = TableMetadata[lowercaseRel].relations.find((step) => step.table === "Project");
+					if (uncapsRel === "analysis") {
+						const projectMetadata = TableMetadata[uncapsRel].relations.find((step) => step.table === "Project");
 						if (projectMetadata) {
 							//recurse
 							searchRelations([projectMetadata], target, paths, [...visited, rel.table], newPath);
 						}
 					} else {
 						//recurse
-						searchRelations(TableMetadata[lowercaseRel].relations, target, paths, [...visited, rel.table], newPath);
+						searchRelations(TableMetadata[uncapsRel].relations, target, paths, [...visited, rel.table], newPath);
 					}
 				}
 			}
@@ -52,8 +53,8 @@ function searchRelations(
 }
 
 function deepWhere(
-	start: Lowercase<Prisma.ModelName>,
-	target: Lowercase<Prisma.ModelName>,
+	start: Uncapitalize<Prisma.ModelName>,
+	target: Uncapitalize<Prisma.ModelName>,
 	query: { [k: string]: any }
 ) {
 	//find all paths to target from start
@@ -89,10 +90,10 @@ function deepWhere(
 }
 
 export function parseToQuery(
-	table: Lowercase<Prisma.ModelName>,
+	table: Uncapitalize<Prisma.ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation
 ) {
-	let relation = "" as Lowercase<Prisma.ModelName>;
+	let relation = "";
 	let field = "";
 	let mode = "" as QueryMode;
 	let value = "";
@@ -102,13 +103,12 @@ export function parseToQuery(
 		value = queryArr[1];
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
-		// relation = queryArr[0].toLowerCase() as Lowercase<Prisma.ModelName>;
 		field = queryArr[0];
 		mode = queryArr[1];
 		value = queryArr[2] as string;
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
-		relation = queryArr[0].toLowerCase() as Lowercase<Prisma.ModelName>;
+		relation = queryArr[0];
 		field = queryArr[1];
 		mode = queryArr[2];
 		value = queryArr[3] as string;
@@ -118,11 +118,18 @@ export function parseToQuery(
 		throw new Error(`Query mode "${mode}" not supported.`);
 	}
 
-	if (TableMetadata[relation || table].relations.some((rel) => rel.field === field) && typeof value === "object") {
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === (relation || table).toLowerCase()
+	) as Prisma.ModelName;
+	if (!model) {
+		throw new Error(`Provided table "${relation || table}" is not a valid model name.`);
+	}
+
+	if (TableMetadata[model].relations.some((rel) => rel.field === field) && typeof value === "object") {
 		return { [field]: value };
 	}
 
-	const type = getZodType(TableMetadata[relation || table].schema.shape[field]).type;
+	const type = getZodType(TableMetadata[model].schema.shape[field]).type;
 
 	let searchWhere;
 	if (type === "string") {
@@ -210,7 +217,13 @@ export function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			return deepWhere(table, relation, searchWhere);
+			const relModel = Object.keys(Prisma.ModelName).find(
+				(model) => model.toLowerCase() === relation.toLowerCase()
+			) as Prisma.ModelName;
+			if (!relModel) {
+				throw new Error(`Provided table "${relation}" is not a valid model name.`);
+			}
+			return deepWhere(table, uncapitalizeTable(relModel), searchWhere);
 		} else {
 			return searchWhere;
 		}
@@ -238,7 +251,7 @@ export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, params
 export function parseSearchQuery(table: Uncapitalize<Prisma.ModelName>, search: string) {
 	//search entire table for value
 	const ors = [] as { [field: string]: { contains: string; mode: "insensitive" } }[];
-	for (const field of TableMetadata[table].enumSchema._def.values) {
+	for (const field of TableMetadata[table].enumSchema.options) {
 		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 
 		if (type === "string") {
@@ -380,9 +393,15 @@ export function parseApiQuery(
 	}
 
 	const ids = searchParams.get("ids");
+	const advanced = searchParams.get("advanced");
+	const search = searchParams.get("search");
 	if ((!options?.features || options.features.ids) && ids) {
 		//list of ids
 		searchParams.delete("ids");
+
+		if (Array.from(searchParams).length) {
+			throw new Error("Filtering with a list of ids may not include other filter parameters.");
+		}
 
 		const parsedIds = [] as number[];
 		for (const id of ids.split(",")) {
@@ -400,6 +419,25 @@ export function parseApiQuery(
 				in: parsedIds
 			}
 		};
+	} else if ((!options?.features || options.features.advanced) && advanced) {
+		//advanced search
+		searchParams.delete("advanced");
+
+		if (Array.from(searchParams).length) {
+			throw new Error("Advanced search may not include other filter parameters.");
+		}
+
+		const parsed = JSON.parse(advanced) as ParamsArray;
+		query.where = { ...query.where, ...parseAdvancedQuery(table, parsed) };
+	} else if ((!options?.features || options.features.search) && search) {
+		//string search
+		searchParams.delete("search");
+
+		if (Array.from(searchParams).length) {
+			throw new Error("Search may not include other filter parameters.");
+		}
+
+		query.where = { ...query.where, ...parseSearchQuery(table, search) };
 	} else {
 		//limit
 		if (!options?.features || options.features.limit) {
@@ -423,31 +461,11 @@ export function parseApiQuery(
 		if (!options?.features || options.features.filters) {
 			query.where = query.where || ({} as Record<string, any>);
 
-			//advanced
-			if (!options?.features || options.features.advanced) {
-				const advanced = searchParams.get("advanced");
-				const search = searchParams.get("search");
-				if (advanced && !search) {
-					searchParams.delete("advanced");
-
-					const parsed = JSON.parse(advanced) as ParamsArray;
-					query.where = { ...query.where, ...parseAdvancedQuery(table, parsed) };
-				}
-			}
-
-			//search
-			if (!options?.features || options.features.search) {
-				const search = searchParams.get("search");
-				const advanced = searchParams.get("advanced");
-				if (search && !advanced) {
-					searchParams.delete("search");
-
-					query.where = { ...query.where, ...parseSearchQuery(table, search) };
-				}
-			}
-
 			const shape = TableMetadata[table].schema.shape;
 			searchParams.forEach((value, key) => {
+				if (!shape[key as keyof typeof shape]) {
+					throw new Error(`Invalid field "${key}". Field does not exist on table named "${table}".`);
+				}
 				const type = getZodType(shape[key as keyof typeof shape]).type;
 				if (!type) {
 					throw new Error(

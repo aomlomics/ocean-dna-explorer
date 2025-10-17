@@ -10,8 +10,18 @@ model Project {
     editHistory   Json?
 
     // Relations
-    Samples  Sample[]
-    Analyses Analysis[]
+    Samples    Sample[]
+    AssayPreps AssayPrep[]
+    Libraries  Library[]
+    Analyses   Analysis[]
+
+    // Submission File URLs
+    projectMetadataFileUrl_ODE      String @default("")
+    projectMetadataFileChecksum_ODE String @default("")
+    sampleMetadataFileUrl_ODE       String @default("")
+    sampleMetadataFileChecksum_ODE  String @default("")
+    libraryMetadataFileUrl_ODE      String @default("")
+    libraryMetadataFileChecksum_ODE String @default("")
 
     // Data
     // Project
@@ -61,6 +71,8 @@ model Sample {
     Assays      Assay[]
     Libraries   Library[]
     Occurrences Occurrence[]
+
+    deleted_ODE Boolean?
 
     // Data
     // Sample Information
@@ -313,42 +325,63 @@ model Sample {
     biosample_accession String?
     organism            String?
 
-    // User defined
-    // phaeopigments     String?
+    sterilise_method String?
 }
 
 model Assay {
-    id         Int    @id @default(autoincrement())
-    assay_name String @unique
+    id                      Int    @id @default(autoincrement())
+    assay_name              String @unique
+    pcr_primer_forward      String
+    pcr_primer_reverse      String
+    pcr_primer_name_forward String
+    pcr_primer_name_reverse String
 
     // Relations
-    Samples            Sample[]
-    pcr_primer_forward String
-    pcr_primer_reverse String
-    Primer             Primer     @relation(fields: [pcr_primer_forward, pcr_primer_reverse], references: [pcr_primer_forward, pcr_primer_reverse], onDelete: Cascade)
-    Libraries          Library[]
-    Analyses           Analysis[]
+    Samples    Sample[]
+    AssayPreps AssayPrep[]
+    Libraries  Library[]
+    Analyses   Analysis[]
 
-    // Data
-    // Quality Assurance
-    sterilise_method String?
+    deleted_ODE Boolean?
 
-    // PCR
+    targetTaxonomicAssay         String //[]
+    targetTaxonomicScope         String? //[]    @default([])
+    target_gene                  String
+    target_subfragment           String?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize                 Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_Midpoint_ODE    Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_End_ODE         Float?
+    pcr_primer_reference_forward String?
+    pcr_primer_reference_reverse String?
+
+    @@unique([pcr_primer_forward, pcr_primer_reverse])
+    @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
+}
+
+model AssayPrep {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    project_id String
+    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    assay_name String
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
+    Libraries  Library[]
+
+    thermocycler  String?
+    commercial_mm String?
+    custom_mm     String?
+    pcr_cond      String?
+
+    //assay
+    nucl_acid_amp               String?
     pcr_0_1                     DeadBoolean
-    thermocycler                String?
     /// @zod.custom.use(z.coerce.number())
     amplificationReactionVolume Float?
     assay_validation            String?
-    targetTaxonomicAssay        String //[]
-    targetTaxonomicScope        String? //[]    @default([])
-    target_gene                 String
-    target_subfragment          String?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize                Float?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize_Midpoint_ODE   Float?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize_End_ODE        Float?
     /// @zod.custom.use(z.coerce.number())
     pcr_primer_vol_forward      Float?
     /// @zod.custom.use(z.coerce.number())
@@ -363,40 +396,18 @@ model Assay {
     probe_ref                   String?
     /// @zod.custom.use(z.coerce.number())
     probe_conc                  Float?
-    commercial_mm               String?
-    custom_mm                   String?
     /// @zod.custom.use(z.coerce.number())
     pcr_dna_vol                 Float?
     /// @zod.custom.use(z.coerce.number().int())
     pcr_rep                     Int?
-    nucl_acid_amp               String?
-    pcr_cond                    String?
     annealingTemp               String?
     /// @zod.custom.use(z.coerce.number())
     pcr_cycles                  Float?
     pcr_analysis_software       String?
     pcr_method_additional       String?
+    assay_type                  String
 
-    // Project
-    assay_type String
-}
-
-model Primer {
-    id Int @id @default(autoincrement())
-
-    // Relations
-    Assays Assay[]
-
-    // Data
-    pcr_primer_forward           String
-    pcr_primer_reverse           String
-    pcr_primer_name_forward      String
-    pcr_primer_name_reverse      String
-    pcr_primer_reference_forward String?
-    pcr_primer_reference_reverse String?
-
-    @@unique([pcr_primer_forward, pcr_primer_reverse])
-    @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
+    @@unique([project_id, assay_name])
 }
 
 model Library {
@@ -406,10 +417,13 @@ model Library {
     userDefined Json?
 
     // Relations
-    assay_name String
-    Assay      Assay  @relation(fields: [assay_name], references: [assay_name], onDelete: Cascade)
+    project_id String
+    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     samp_name  String
-    Sample     Sample @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    Sample     Sample    @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    assay_name String
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
+    AssayPrep  AssayPrep @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
 
     // Data
     // Library Preparation Sequencing

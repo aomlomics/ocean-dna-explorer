@@ -1,9 +1,10 @@
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import Pagination from "@/app/components/paginated/Pagination";
+import { Feature } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { ReactNode } from "react";
 
-export default async function Featureid({ params }: { params: Promise<{ featureid: string }> }) {
+export default async function Featureid({ params }: { params: Promise<{ featureid: Feature["featureid"] }> }) {
 	let { featureid } = await params;
 	featureid = decodeURIComponent(featureid);
 

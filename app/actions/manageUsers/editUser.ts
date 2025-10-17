@@ -111,24 +111,6 @@ export async function deleteUserAction(formData: FormData) {
 					}
 				});
 
-				//assays
-				await tx.assay.deleteMany({
-					where: {
-						Samples: {
-							none: {}
-						}
-					}
-				});
-
-				//primers
-				await tx.primer.deleteMany({
-					where: {
-						Assays: {
-							none: {}
-						}
-					}
-				});
-
 				//features
 				//TODO: delete empty features
 

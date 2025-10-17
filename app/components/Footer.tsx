@@ -5,7 +5,12 @@ export default function Footer() {
 	return (
 		<footer className="footer p-4 text-neutral-content mt-auto z-30 bg-base-100 border-t-4 border-primary flex flex-row items-center justify-between">
 			<div className="text-left text-base-content text-ui flex flex-col gap-1">
-				<p className="text-sm sm:text-base sm:leading-tight">Copyright © 2024 - All Rights Reserved.</p>
+				<p className="text-sm sm:text-base sm:leading-tight">© 2024-2025 {" "}
+					<a href="https://www.msstate.edu/" className="text-primary hover:underline" target="_blank" rel="noreferrer">
+						Mississippi State University
+					</a>
+					. All Rights Reserved.
+				</p>
 				<p className="text-sm sm:text-base leading-tight">
 					<Link
 						href="https://www.aoml.noaa.gov/"

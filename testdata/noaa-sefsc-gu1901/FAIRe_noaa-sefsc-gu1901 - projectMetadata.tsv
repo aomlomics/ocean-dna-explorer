@@ -1,4 +1,4 @@
-requirement_level_code	section	term_name	project_level	ssu12sv5v6_mifish_u	ssu12sv5_riaz
+requirement_level_code	section	term_name	project_level	Fish-12S-MiFish-Miya-Stoeckle	Fish-12S-Riaz
 M	Project	recordedBy	Lynsey Wilcox Talbot | Katherine Silliman		
 R	Project	recordedByID	https://orcid.org/0000-0001-9824-879X | https://orcid.org/0000-0001-5964-3965		
 M	Project	project_contact	Lynsey Wilcox Talbot		
@@ -27,7 +27,7 @@ M	PCR	pcr_0_1	1
 O	PCR	inhibition_check_0_1	0	0	0
 O	PCR	inhibition_check	not applicable		
 O	PCR	thermocycler	"Thermo Fisher Scientific, Veriti"		
-M	PCR	assay_name	ssu12sv5v6_mifish_u | ssu12sv5_riaz	ssu12sv5v6_mifish_u	ssu12sv5_riaz
+M	PCR	assay_name	Fish-12S-MiFish-Miya-Stoeckle |  Fish-12S-Riaz	Fish-12S-MiFish-Miya-Stoeckle	 Fish-12S-Riaz
 R	PCR	assay_validation		not provided	not provided
 M	PCR	targetTaxonomicAssay		12S rRNA gene sequencing targeting the V5-V6 region using primers MIFish-U primers with modified reverse primer	12S rRNA gene sequencing targeting the V5 region using Riaz primers
 R	PCR	targetTaxonomicScope		"Vertebrates, especially bony fishes"	"Vertebrates, especially bony fishes"

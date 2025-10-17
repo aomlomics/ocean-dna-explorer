@@ -5,9 +5,15 @@ import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
+import { Analysis } from "@/app/generated/prisma/client";
 
-export default async function Analysis_Run_name({ params }: { params: Promise<{ analysis_run_name: string }> }) {
-	const { analysis_run_name } = await params;
+export default async function Analysis_run_name({
+	params
+}: {
+	params: Promise<{ analysis_run_name: Analysis["analysis_run_name"] }>;
+}) {
+	let { analysis_run_name } = await params;
+	analysis_run_name = decodeURIComponent(analysis_run_name);
 
 	const analysis = await prisma.analysis.findUnique({
 		where: {
@@ -76,12 +82,7 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 							className="btn btn-lg text-base-content/80 font-normal mt-2"
 						>
 							Download Occurrence Table
-							<svg
-								className="size-6 text-primary"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
+							<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -133,18 +134,13 @@ export default async function Analysis_Run_name({ params }: { params: Promise<{ 
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
 						<div className="card-body p-0 overflow-hidden aspect-5/2">
-							<Map
-								locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
-								id="samp_name"
-								table="sample"
-								cluster
-							/>
+							<Map locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))} cluster />
 						</div>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
-						<Table table="assignment" where={{ analysis_run_name }} />
+						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Taxa" />

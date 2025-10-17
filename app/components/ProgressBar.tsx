@@ -19,7 +19,7 @@ export default function ProgressBar({ loading, data }: { loading: boolean; data:
 	}, [data]);
 
 	return (
-		<div className="flex items-center h-full">
+		<div className="flex items-center h-2 w-full">
 			{data ? (
 				<div
 					className={`tooltip w-full ${
@@ -44,7 +44,11 @@ export default function ProgressBar({ loading, data }: { loading: boolean; data:
 					></progress>
 				</div>
 			) : (
-				loading && <progress className="progress progress-primary" value={0} max="100"></progress>
+				loading ? (
+					<progress className="progress progress-primary" value={0} max="100"></progress>
+				) : (
+					<div className="w-full h-4"></div>
+				)
 			)}
 		</div>
 	);

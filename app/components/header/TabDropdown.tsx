@@ -34,20 +34,27 @@ export default function TabDropdown({
 	return (
 		<div
 			onClick={unfocus}
-			className={`dropdown dropdown-hover rounded-t-lg ${isActive ? "bg-primary text-white" : "hover:bg-base-300"}`}
+			className={`dropdown dropdown-hover rounded-t-lg ${
+				isActive ? "bg-primary text-primary-content" : "hover:bg-base-300"
+			}`}
 		>
 			<Link href={route} className="px-4 py-2 inline-block">
 				{tabName}
 			</Link>
 			<ul
 				tabIndex={0}
-				className={`dropdown-content menu rounded-box w-48 p-2 shadow rounded-t-none bg-base-300 z-[99999] ${
-					isActive ? "bg-primary text-white" : "bg-base-300"
+				className={`dropdown-content menu rounded-box w-48 p-2 shadow rounded-t-none z-[99999] ${
+					isActive ? "bg-primary text-primary-content" : "bg-base-300"
 				}`}
 			>
 				{dropdown.map(({ label, href }) => (
-					<li key={label} className={isActive ? "hover:bg-accent rounded-lg" : ""}>
-						<Link href={href}>{label}</Link>
+					<li key={label}>
+						<Link
+							href={href}
+							className={`rounded-lg ${isActive ? "hover:bg-white/10" : "hover:bg-base-100/50"}`}
+						>
+							{label}
+						</Link>
 					</li>
 				))}
 			</ul>

@@ -5,6 +5,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams } from "next/navigation";
 import TaxaGrid from "../paginated/TaxaGrid";
 import Table from "../paginated/Table";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default function SearchResults() {
 	const searchParams = useSearchParams();
@@ -13,7 +14,13 @@ export default function SearchResults() {
 	if (paramsTable === null) {
 		return <></>;
 	}
-	const table = paramsTable.toLowerCase() as Lowercase<Prisma.ModelName>;
+	const model = Object.keys(Prisma.ModelName).find(
+		(model) => model.toLowerCase() === paramsTable.toLowerCase()
+	) as Prisma.ModelName;
+	if (!model) {
+		return <>Invalid table</>;
+	}
+	const table = uncapitalizeTable(model as Prisma.ModelName);
 
 	return (
 		<div className="bg-base-200 p-4 rounded-lg">
@@ -32,7 +39,19 @@ export default function SearchResults() {
 					table === "taxonomy" ? (
 						<TaxaGrid ignoreParams={["table"]} />
 					) : (
-						<Table table={table} ignoreParams={["table"]} defaultTake={25} />
+						<Table
+							table={table}
+							ignoreParams={["table"]}
+							defaultTake={25}
+							omit={[
+								"projectMetadataFileUrl_ODE",
+								"sampleMetadataFileUrl_ODE",
+								"libraryMetadataFileUrl_ODE",
+								"analysisMetadataFileUrl_ODE",
+								"asvFileUrl_ODE",
+								"occurrenceFileUrl_ODE"
+							]}
+						/>
 					)
 				) : (
 					<>All Tables Results</>

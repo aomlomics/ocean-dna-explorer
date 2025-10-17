@@ -8,12 +8,12 @@ import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
 import { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import analysisSubmitAction from "@/app/actions/analysis/submit/analysisSubmit";
-import assignSubmitAction from "@/app/actions/analysis/submit/assignSubmit";
-import occSubmitAction from "@/app/actions/analysis/submit/occSubmit";
+import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
+import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
+import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
-import analysisDeleteAction from "@/app/actions/analysis/analysisDelete";
+import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
 import { doProgressAction } from "@/app/helpers/progress";
 
 type ResponseSet = {
@@ -88,6 +88,7 @@ export default function AnalysisSubmit() {
 		}
 	}, [analysisIds]);
 
+	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
 	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
 	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
@@ -99,7 +100,7 @@ export default function AnalysisSubmit() {
 				let currProject = undefined as Project | undefined;
 
 				//parse file
-				const parser = parse(await file.text(), { columns: true, delimiter: "\t" });
+				const parser = parse(await file.text(), { columns: true, delimiter: "\t", relax_quotes: true });
 				for await (const record of parser) {
 					const field = record.term_name;
 					const value = record.values;
@@ -196,6 +197,12 @@ export default function AnalysisSubmit() {
 			}
 		}
 
+		if (!project) {
+			setErrorMessage("No project_id found.");
+			modalRef.current?.showModal();
+			return;
+		}
+
 		const target = event.target as HTMLFormElement;
 
 		const activeIds = analysisIds.filter((id) => typeof id === "string");
@@ -211,46 +218,71 @@ export default function AnalysisSubmit() {
 					});
 				}
 
-				//analysis submit
-				const analysisFile = target[`analysis_${id}`].files[0] as File;
-				//submit analysis file
-				const analysisError = await doProgressAction({
-					action: analysisSubmitAction,
-					reducer: { id, key: "analysis", setter: setResponses },
-					args: [analysisFile, isPrivate]
-				});
-				//handle errors
-				if (analysisError) {
-					setErrorMessage(analysisError);
-					modalRef.current?.showModal();
-					return;
-				}
-
 				try {
+					//analysis submit
+					const analysisFile = target[`analysis_${id}`].files[0] as File;
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					});
+					const analysisUrl = (
+						await upload(`submissions/${analysisFile.name}`, analysisFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
+					).url;
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
+					//submit analysis file url
+					const analysisError = await doProgressAction({
+						action: analysisSubmitAction,
+						reducer: { id, key: "analysis", setter: setResponses },
+						args: [analysisUrl, isPrivate]
+					});
+					//handle errors
+					if (analysisError) {
+						setErrorMessage(analysisError);
+						modalRef.current?.showModal();
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+
+						return;
+					}
+
 					//assignments submit
 					const assignmentsFile = target[`assignments_${id}`].files[0] as File;
 					//upload file to blob storage
 					setResponses({
 						id,
 						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const assignmentsUrl = (
-						await upload(assignmentsFile.name, assignmentsFile, {
+						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
 							access: "public",
-							handleUploadUrl: "/api/analysisFile/upload",
-							multipart: true
+							handleUploadUrl: "/api/file/upload",
+							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit assignments file url
 					const assignmentsError = await doProgressAction({
 						action: assignSubmitAction,
 						reducer: { id, key: "assignments", setter: setResponses },
 						args: [id, assignmentsUrl]
-					});
-					//delete file from blob storage
-					await fetch(`/api/analysisFile/delete?url=${assignmentsUrl}`, {
-						method: "DELETE"
 					});
 					//handle errors
 					if (assignmentsError) {
@@ -262,6 +294,15 @@ export default function AnalysisSubmit() {
 						if (deleteResponse.statusMessage === "error") {
 							setErrorMessage(assignmentsError + "\n" + deleteResponse.error);
 						}
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
+							method: "DELETE"
+						});
+
 						return;
 					}
 
@@ -271,25 +312,27 @@ export default function AnalysisSubmit() {
 					setResponses({
 						id,
 						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 5 } }
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const occurrencesUrl = (
-						await upload(occurrencesFile.name, occurrencesFile, {
+						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
 							access: "public",
-							handleUploadUrl: "/api/analysisFile/upload",
-							multipart: true
+							handleUploadUrl: "/api/file/upload",
+							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
+					setResponses({
+						id,
+						key: "occurrences",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
 					//submit occurrences file url
 					const occurrencesError = await doProgressAction({
 						action: occSubmitAction,
 						reducer: { id, key: "occurrences", setter: setResponses },
 						args: [id, occurrencesUrl]
 					});
-					//delete file from blob storage
-					await fetch(`/api/analysisFile/delete?url=${occurrencesUrl}`, {
-						method: "DELETE"
-					});
+
 					//handle errors
 					if (occurrencesError) {
 						setErrorMessage(occurrencesError);
@@ -300,6 +343,18 @@ export default function AnalysisSubmit() {
 						if (deleteResponse.statusMessage === "error") {
 							setErrorMessage(occurrencesError + "\n" + deleteResponse.error);
 						}
+
+						//delete file from blob storage
+						await fetch(`/api/file/delete?url=${analysisUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
+							method: "DELETE"
+						});
+						await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
+							method: "DELETE"
+						});
+
 						return;
 					}
 				} catch (err) {
@@ -336,86 +391,98 @@ export default function AnalysisSubmit() {
 
 	return (
 		<>
-			<form className="flex flex-col items-center gap-5" onSubmit={handleSubmit}>
-				<SubmitFormSection title="Project">
-					<div className="text-center w-full">
-						{project ? (
-							<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
-								{project.project_id}
-							</Link>
-						) : (
-							"No analysis selected yet"
-						)}
-					</div>
-				</SubmitFormSection>
-				<SubmitFormSection
-					title="Make submission private"
-					info="Only users added to the Project for these Analyses will be able to see private submissions."
-				>
-					<fieldset className="fieldset bg-base-100">
-						<label className="fieldset-label flex gap-2">
-							<input
-								type="checkbox"
-								className="checkbox"
-								checked={isPrivate}
-								onChange={(e) => setIsPrivate(e.target.checked)}
-								disabled={project?.isPrivate || false}
-							/>
-							<p>Private submission</p>
-						</label>
-					</fieldset>
-				</SubmitFormSection>
-
-				<SubmitFormSection title="Upload files" className="grid grid-cols-3 items-end gap-4 w-full">
-					{analysisIds.map((id, i) => (
-						<AnalysisFormSection
-							key={i}
-							i={i}
-							id={id}
-							deletable={analysisIds.filter((id) => id !== -1).length > 1}
-							loading={loading}
-							onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
-							responseSet={responses[id]}
-							onDelete={() => {
-								const temp = analysisIds.toSpliced(i, 1, -1);
-								setAnalysisIds(temp);
-								if (temp.filter((id) => typeof id === "string").length === 0) {
-									setProject(null);
-									setIsPrivate(false);
-								}
-							}}
-						/>
-					))}
-
-					<button
-						className="btn btn-sm bg-base-300 hover:bg-base-200 text-base-content shadow-sm col-2 justify-self-center"
-						type="button"
-						disabled={!!loading}
-						onClick={() => setAnalysisIds([...analysisIds, -2])}
-					>
-						<span className="text-base-content">+</span> Add Another Analysis to Submission
-					</button>
-
-					<button className="btn btn-success col-2 justify-self-center" disabled={loading}>
-						Submit
-					</button>
-
-					{loading ? (
-						<div className="flex justify-center">
-							<span className="loading loading-spinner loading-xl"></span>
+			<form className="grid grid-cols-12 gap-10 w-full" onSubmit={handleSubmit}>
+				{/* Left column: project info and privacy */}
+				<div className="col-span-5 space-y-6">
+					<SubmitFormSection title="Project">
+						<div className="w-full">
+							{project ? (
+								<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+									{project.project_id}
+								</Link>
+							) : (
+								"No analysis selected yet"
+							)}
 						</div>
-					) : (
-						errorMessage && (
-							<div className="flex justify-center">
-								<div className="tooltip tooltip-error" data-tip={errorMessage}>
-									<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
-										✕
-									</span>
-								</div>
+					</SubmitFormSection>
+					<SubmitFormSection
+						title="Make submission private"
+						info="Only users added to the Project for these Analyses will be able to see private submissions."
+					>
+						<fieldset className="fieldset">
+							<label className="fieldset-label flex gap-2">
+								<input
+									type="checkbox"
+									className="checkbox"
+									checked={isPrivate}
+									onChange={(e) => setIsPrivate(e.target.checked)}
+									disabled={project?.isPrivate || false}
+								/>
+								<p>Private submission</p>
+							</label>
+						</fieldset>
+					</SubmitFormSection>
+				</div>
+
+				{/* Right column: files + progress + submit */}
+				<div className="col-span-7">
+					<SubmitFormSection
+						title="Upload files"
+						className="space-y-6 w-full text-base-content/80 text-base font-normal"
+					>
+						{analysisIds.map((id, i) => (
+							<AnalysisFormSection
+								key={i}
+								i={i}
+								id={id}
+								deletable={analysisIds.filter((id) => id !== -1).length > 1}
+								loading={loading}
+								onAnalysisChange={async (event: ChangeEvent<HTMLInputElement>) => await parseAnalysis(event, i)}
+								responseSet={responses[id]}
+								onDelete={() => {
+									const temp = analysisIds.toSpliced(i, 1, -1);
+									setAnalysisIds(temp);
+									if (temp.filter((id) => typeof id === "string").length === 0) {
+										setProject(null);
+										setIsPrivate(false);
+									}
+								}}
+							/>
+						))}
+
+						<div className="pt-6 space-y-4">
+							<div className="flex gap-4">
+								<button
+									className="btn btn-base-100 text-base-content/80 hover:text-base-content"
+									type="button"
+									disabled={!!loading}
+									onClick={() => setAnalysisIds([...analysisIds, -2])}
+								>
+									+ Add Another Analysis
+								</button>
+								<button className="btn btn-success" disabled={loading}>
+									Submit
+								</button>
 							</div>
-						)
-					)}
-				</SubmitFormSection>
+
+							{loading ? (
+								<div>
+									<span className="loading loading-spinner loading-xl"></span>
+								</div>
+							) : (
+								errorMessage && (
+									<div>
+										<div className="tooltip tooltip-error" data-tip={errorMessage}>
+											<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+												✕
+											</span>
+										</div>
+									</div>
+								)
+							)}
+						</div>
+					</SubmitFormSection>
+				</div>
 			</form>
 
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
@@ -456,55 +523,61 @@ function AnalysisFormSection({
 	}
 
 	return (
-		<>
-			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between gap-3 col-2">
-				<h2 className="text-xl font-semibold text-base-content mb-4">{typeof id === "string" ? id : "New Analysis"}</h2>
+		<div className="border border-base-300 rounded-lg p-4 space-y-4 mb-4">
+			<div id={typeof id === "string" ? id : i.toString()} className="flex justify-between items-center">
+				<h3 className="text-lg font-normal text-primary">{typeof id === "string" ? id : "New Analysis"}</h3>
 				{deletable && (
 					<button className="btn btn-sm btn-error rounded-full" type="button" disabled={loading} onClick={onDelete}>
-						X
+						×
 					</button>
 				)}
 			</div>
 
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">Analysis Metadata File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`analysis_${id}`}
-					required
-					disabled={loading}
-					accept=".tsv"
-					onChange={onAnalysisChange}
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responseSet?.analysis} />
+			<div className="space-y-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Analysis Metadata File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`analysis_${id}`}
+						required
+						disabled={loading}
+						accept=".tsv"
+						onChange={onAnalysisChange}
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responseSet?.analysis} />
+			</div>
 
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">ASV Taxa/Features File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`assignments_${id}`}
-					required
-					disabled={typeof id !== "string" || loading}
-					accept=".tsv"
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responseSet?.assignments} />
+			<div className="space-y-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend text-sm text-base-content/80 font-normal">ASV Taxa/Features File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`assignments_${id}`}
+						required
+						disabled={typeof id !== "string" || loading}
+						accept=".tsv"
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responseSet?.assignments} />
+			</div>
 
-			<fieldset className="fieldset col-2">
-				<legend className="fieldset-legend">Occurrence Table File:</legend>
-				<input
-					type="file"
-					className="file-input file-input-primary"
-					name={`occurrences_${id}`}
-					required
-					disabled={typeof id !== "string" || loading}
-					accept=".tsv"
-				/>
-			</fieldset>
-			<ProgressBar loading={loading} data={responseSet?.occurrences} />
-		</>
+			<div className="space-y-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Occurrence Table File:</legend>
+					<input
+						type="file"
+						className="file-input file-input-primary"
+						name={`occurrences_${id}`}
+						required
+						disabled={typeof id !== "string" || loading}
+						accept=".tsv"
+					/>
+				</fieldset>
+				<ProgressBar loading={loading} data={responseSet?.occurrences} />
+			</div>
+		</div>
 	);
 }
