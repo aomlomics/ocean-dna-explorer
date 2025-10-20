@@ -12,17 +12,26 @@ import { DeadValueEnum } from "@/types/enums";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 
+const maxBounds = [
+	[-180, -180],
+	[180, 180]
+];
+
+export type NullLocation = {
+	decimalLatitude: number | null;
+	decimalLongitude: number | null;
+	color?: string;
+	values?: string[];
+	[key: string]: any;
+};
+
 type Location = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	color?: string;
+	values?: string[];
 	[key: string]: any;
 };
-
-const bounds = [
-	[-180, -180],
-	[180, 180]
-]; //[[minLat, minLng], [maxLat, maxLng]]
 
 function changeAlpha(color: string | undefined, alpha: string) {
 	if (color) {
@@ -32,6 +41,17 @@ function changeAlpha(color: string | undefined, alpha: string) {
 		return (color = split.join(",") + "," + alpha + ")");
 	} else {
 		return "rgb(200,0,0," + alpha + ")";
+	}
+}
+
+function locExists(loc: NullLocation): Location | undefined {
+	if (
+		loc.decimalLatitude !== null &&
+		loc.decimalLongitude !== null &&
+		!(loc.decimalLatitude! in DeadValueEnum) &&
+		!(loc.decimalLongitude! in DeadValueEnum)
+	) {
+		return loc as Location;
 	}
 }
 
@@ -67,72 +87,17 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	return d * 1000; // meters
 }
 
-export default function ActualMap({
-	locations,
-	id = "samp_name",
-	titleTable,
-	iconSize = 25,
-	table = "sample",
-	legend,
-	cluster = false,
-	draw = false
-}: {
-	locations: {
-		decimalLatitude: number | null;
-		decimalLongitude: number | null;
-		color?: string;
-		values?: string[];
-		[key: string]: any;
-	}[];
-	id?: string;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
-	iconSize?: number;
-	table?: Uncapitalize<Prisma.ModelName>;
-	legend?: Record<string, string>;
-	cluster?: boolean;
-	draw?: boolean;
-}) {
-	const [zoomLevel, setZoomLevel] = useState(5);
-	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
-	const [drawReady, setDrawReady] = useState(false);
-
-	const featureGroupRef = useRef<LFeatureGroup>(null);
-
-	const filteredLocations = [] as Location[];
-	for (let i = 0; i < locations.length; i++) {
-		if (
-			locations[i].decimalLatitude !== null &&
-			locations[i].decimalLongitude !== null &&
-			!(locations[i].decimalLatitude! in DeadValueEnum) &&
-			!(locations[i].decimalLongitude! in DeadValueEnum)
-		) {
-			let loc = locations[i] as Location;
-			//round latlng to nearest 0.1
-			loc = {
-				...loc,
-				decimalLatitude: Math.round(loc.decimalLatitude * 10) / 10,
-				decimalLongitude: Math.round(loc.decimalLongitude * 10) / 10
-			};
-
-			//check if point already exists
-			const titleFields = titleTable
-				? typeof TableMetadata[titleTable].titleField === "string"
-					? [TableMetadata[titleTable].titleField]
-					: TableMetadata[titleTable].titleField
-				: [];
-			const foundIndex = filteredLocations.findIndex(
-				(l) =>
-					l.decimalLatitude === loc.decimalLatitude &&
-					l.decimalLongitude === loc.decimalLongitude &&
-					titleFields.every((f) => l[f] === loc[f])
-			);
-			if (foundIndex !== -1) {
-				if (filteredLocations[foundIndex].values) {
-					filteredLocations[foundIndex].values.push(loc[id]);
-				} else {
-					filteredLocations[foundIndex].values = [filteredLocations[foundIndex][id], loc[id]];
-				}
-			} else {
+export function getMapProps(locations: NullLocation[]) {
+	if (locations.length === 1 && locExists(locations[0])) {
+		return {
+			center: [locations[0].decimalLatitude!, locations[0].decimalLongitude!] as unknown as LatLng,
+			zoom: 5
+		};
+	} else {
+		const bounds = [...maxBounds];
+		for (const l of locations) {
+			const loc = locExists(l);
+			if (loc) {
 				//minLat
 				if (loc.decimalLatitude > bounds[0][0]) {
 					bounds[0][0] = loc.decimalLatitude;
@@ -152,14 +117,51 @@ export default function ActualMap({
 				if (loc.decimalLongitude < bounds[1][1]) {
 					bounds[1][1] = loc.decimalLongitude;
 				}
-
-				filteredLocations.push(loc);
 			}
 		}
+		return { bounds: bounds as LatLngBoundsExpression };
 	}
+}
 
-	const [points, setPoints] = useState(filteredLocations);
-	const [pointsInside, setPointsInside] = useState([] as typeof points);
+export default function ActualMap({
+	locations,
+	mapProps,
+	id = "samp_name",
+	titleTable,
+	iconSize = 25,
+	table = "sample",
+	legend,
+	cluster = false,
+	draw = false
+}: {
+	locations: NullLocation[];
+	mapProps:
+		| {
+				center: LatLng;
+				zoom: number;
+				bounds?: undefined;
+		  }
+		| {
+				bounds: LatLngBoundsExpression;
+				center?: undefined;
+				zoom?: undefined;
+		  };
+	id?: string;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
+	iconSize?: number;
+	table?: Uncapitalize<Prisma.ModelName>;
+	legend?: Record<string, string>;
+	cluster?: boolean;
+	draw?: boolean;
+}) {
+	const [zoomLevel, setZoomLevel] = useState(5);
+	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
+	const [drawReady, setDrawReady] = useState(false);
+
+	const featureGroupRef = useRef<LFeatureGroup>(null);
+
+	const [points, setPoints] = useState([] as Location[]);
+	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
 	const [shapes, setShapes] = useState(
 		{} as Record<
@@ -237,7 +239,7 @@ export default function ActualMap({
 
 	//zoomLevel
 	useEffect(() => {
-		let tempLocations = [...filteredLocations];
+		let tempLocations = [...points];
 		//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
 		if (cluster) {
 			//cluster location data
@@ -272,6 +274,44 @@ export default function ActualMap({
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
 	useEffect(() => {
 		if (!drawAlmostReady) {
+			const filteredLocations = [] as Location[];
+
+			for (const nullLoc of locations) {
+				if (
+					nullLoc.decimalLatitude !== null &&
+					nullLoc.decimalLongitude !== null &&
+					!(nullLoc.decimalLatitude! in DeadValueEnum) &&
+					!(nullLoc.decimalLongitude! in DeadValueEnum)
+				) {
+					const loc = nullLoc as Location;
+
+					//check if point already exists
+					//don't combine points if they belong to different groups
+					const titleFields = titleTable
+						? typeof TableMetadata[titleTable].titleField === "string"
+							? [TableMetadata[titleTable].titleField]
+							: TableMetadata[titleTable].titleField
+						: [];
+					const foundIndex = filteredLocations.findIndex(
+						(l) =>
+							l.decimalLatitude === loc.decimalLatitude &&
+							l.decimalLongitude === loc.decimalLongitude &&
+							titleFields.every((f) => l[f] === loc[f])
+					);
+
+					if (foundIndex !== -1) {
+						if (filteredLocations[foundIndex].values) {
+							filteredLocations[foundIndex].values.push(loc[id]);
+						} else {
+							filteredLocations[foundIndex].values = [filteredLocations[foundIndex][id], loc[id]];
+						}
+					} else {
+						filteredLocations.push({ ...loc });
+					}
+				}
+			}
+
+			setPoints(filteredLocations);
 			setDrawAlmostReady(true);
 		} else if (!drawReady) {
 			setDrawReady(true);
@@ -318,26 +358,9 @@ export default function ActualMap({
 		);
 	}
 
-	let containerProps;
-	if (points.length === 1) {
-		containerProps = {
-			center: [points[0].decimalLatitude, points[0].decimalLongitude],
-			zoom: 5
-		};
-	} else {
-		containerProps = { bounds };
-	}
-
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
-			<MapContainer
-				maxBounds={[
-					[-180, -180],
-					[180, 180]
-				]}
-				className="w-full h-full grow"
-				{...(containerProps as { bounds: LatLngBoundsExpression } | { center: LatLng; zoom: number })}
-			>
+			<MapContainer maxBounds={maxBounds as LatLngBoundsExpression} className="w-full h-full grow" {...mapProps}>
 				<LegendControl />
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
@@ -474,7 +497,9 @@ function PopupWithSearch({
 				<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
 					{loc.values ? (
 						<>
-							<h2 className="text-primary text-lg">{TableMetadata[table].plural}</h2>
+							<h2 className="text-primary text-lg">
+								{TableMetadata[table].plural} ({loc.values.length})
+							</h2>
 							{loc.values.reduce((acc: ReactNode[], label: string) => {
 								if (label.toLowerCase().includes(filter.toLowerCase())) {
 									acc.push(
