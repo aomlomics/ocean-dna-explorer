@@ -2,11 +2,20 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
+import TableMetadata from "@/types/tableMetadata";
 import { LatLng, LatLngBoundsExpression } from "leaflet";
 import dynamic from "next/dynamic";
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 	ssr: false
 });
+
+type Location = {
+	decimalLatitude: number;
+	decimalLongitude: number;
+	color?: string;
+	values?: string[];
+	[key: string]: any;
+};
 
 export default function Map({
 	locations,
@@ -33,16 +42,49 @@ export default function Map({
 	cluster?: boolean;
 	draw?: boolean;
 }) {
+	//clump locations if they have identical latlng
+	const filteredLocations = [] as Location[];
+
+	for (const nullLoc of locations) {
+		if (
+			nullLoc.decimalLatitude !== null &&
+			nullLoc.decimalLongitude !== null &&
+			!(nullLoc.decimalLatitude! in DeadValueEnum) &&
+			!(nullLoc.decimalLongitude! in DeadValueEnum)
+		) {
+			const loc = nullLoc as Location;
+
+			//check if point already exists
+			//don't combine points if they belong to different groups
+			const titleFields = titleTable
+				? typeof TableMetadata[titleTable].titleField === "string"
+					? [TableMetadata[titleTable].titleField]
+					: TableMetadata[titleTable].titleField
+				: [];
+			const foundIndex = filteredLocations.findIndex(
+				(l) =>
+					l.decimalLatitude === loc.decimalLatitude &&
+					l.decimalLongitude === loc.decimalLongitude &&
+					titleFields.every((f) => l[f] === loc[f])
+			);
+
+			if (foundIndex !== -1) {
+				if (filteredLocations[foundIndex].values) {
+					filteredLocations[foundIndex].values.push(loc[id]);
+				} else {
+					filteredLocations[foundIndex].values = [filteredLocations[foundIndex][id], loc[id]];
+				}
+			} else {
+				filteredLocations.push({ ...loc });
+			}
+		}
+	}
+
+	//calculate starting map view
 	let mapProps;
-	if (
-		locations.length === 1 &&
-		locations[0].decimalLatitude !== null &&
-		locations[0].decimalLongitude !== null &&
-		!(locations[0].decimalLatitude! in DeadValueEnum) &&
-		!(locations[0].decimalLongitude! in DeadValueEnum)
-	) {
+	if (filteredLocations.length === 1) {
 		mapProps = {
-			center: [locations[0].decimalLatitude!, locations[0].decimalLongitude!] as unknown as LatLng,
+			center: [filteredLocations[0].decimalLatitude, filteredLocations[0].decimalLongitude] as unknown as LatLng,
 			zoom: 5
 		};
 	} else {
@@ -50,7 +92,7 @@ export default function Map({
 			[-180, -180],
 			[180, 180]
 		];
-		for (const loc of locations) {
+		for (const loc of filteredLocations) {
 			if (
 				loc.decimalLatitude !== null &&
 				loc.decimalLongitude !== null &&
@@ -83,7 +125,7 @@ export default function Map({
 
 	return (
 		<ActualMap
-			locations={locations}
+			locations={filteredLocations}
 			mapProps={mapProps}
 			id={id}
 			titleTable={titleTable}

@@ -8,22 +8,9 @@ import Link from "next/link";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
-import { DeadValueEnum } from "@/types/enums";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
-
-const maxBounds = [
-	[-180, -180],
-	[180, 180]
-];
-
-export type NullLocation = {
-	decimalLatitude: number | null;
-	decimalLongitude: number | null;
-	color?: string;
-	values?: string[];
-	[key: string]: any;
-};
+import { capitalizeTable } from "@/app/helpers/utils";
 
 type Location = {
 	decimalLatitude: number;
@@ -41,17 +28,6 @@ function changeAlpha(color: string | undefined, alpha: string) {
 		return (color = split.join(",") + "," + alpha + ")");
 	} else {
 		return "rgb(200,0,0," + alpha + ")";
-	}
-}
-
-function locExists(loc: NullLocation): Location | undefined {
-	if (
-		loc.decimalLatitude !== null &&
-		loc.decimalLongitude !== null &&
-		!(loc.decimalLatitude! in DeadValueEnum) &&
-		!(loc.decimalLongitude! in DeadValueEnum)
-	) {
-		return loc as Location;
 	}
 }
 
@@ -87,42 +63,6 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	return d * 1000; // meters
 }
 
-export function getMapProps(locations: NullLocation[]) {
-	if (locations.length === 1 && locExists(locations[0])) {
-		return {
-			center: [locations[0].decimalLatitude!, locations[0].decimalLongitude!] as unknown as LatLng,
-			zoom: 5
-		};
-	} else {
-		const bounds = [...maxBounds];
-		for (const l of locations) {
-			const loc = locExists(l);
-			if (loc) {
-				//minLat
-				if (loc.decimalLatitude > bounds[0][0]) {
-					bounds[0][0] = loc.decimalLatitude;
-				}
-
-				//maxLat
-				if (loc.decimalLatitude < bounds[1][0]) {
-					bounds[1][0] = loc.decimalLatitude;
-				}
-
-				//minLng
-				if (loc.decimalLongitude > bounds[0][1]) {
-					bounds[0][1] = loc.decimalLongitude;
-				}
-
-				//maxLng
-				if (loc.decimalLongitude < bounds[1][1]) {
-					bounds[1][1] = loc.decimalLongitude;
-				}
-			}
-		}
-		return { bounds: bounds as LatLngBoundsExpression };
-	}
-}
-
 export default function ActualMap({
 	locations,
 	mapProps,
@@ -134,7 +74,7 @@ export default function ActualMap({
 	cluster = false,
 	draw = false
 }: {
-	locations: NullLocation[];
+	locations: Location[];
 	mapProps:
 		| {
 				center: LatLng;
@@ -160,7 +100,7 @@ export default function ActualMap({
 
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
-	const [points, setPoints] = useState([] as Location[]);
+	const [points, setPoints] = useState(locations);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
 	const [shapes, setShapes] = useState(
@@ -185,133 +125,106 @@ export default function ActualMap({
 	function checkShapes(pts = points) {
 		let tempPoints = [...pts];
 
-		//dim color of points outside of drawn shapes
-		const tempPointsInside = [] as typeof pts;
+		if (Object.keys(shapes).length) {
+			//dim color of points outside of drawn shapes
+			const tempPointsInside = [] as typeof pts;
 
-		for (let i = 0; i < tempPoints.length; i++) {
-			let inside = false;
-			for (const [k, s] of Object.entries(shapes)) {
-				if (s.type === "polygon") {
-					//check if point is inside bounding box
-					if (
-						tempPoints[i].decimalLatitude < s.bounds.ne.lat &&
-						tempPoints[i].decimalLatitude > s.bounds.sw.lat &&
-						tempPoints[i].decimalLongitude < s.bounds.ne.lng &&
-						tempPoints[i].decimalLongitude > s.bounds.sw.lng
-					) {
-						tempPointsInside.push(tempPoints[i]);
-						inside = true;
-						break;
-					} else {
-						//TODO: raycast to check if inside polygon (https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon)
+			for (let i = 0; i < tempPoints.length; i++) {
+				let inside = false;
+				for (const [k, s] of Object.entries(shapes)) {
+					if (s.type === "polygon") {
+						//check if point is inside bounding box
+						if (
+							tempPoints[i].decimalLatitude < s.bounds.ne.lat &&
+							tempPoints[i].decimalLatitude > s.bounds.sw.lat &&
+							tempPoints[i].decimalLongitude < s.bounds.ne.lng &&
+							tempPoints[i].decimalLongitude > s.bounds.sw.lng
+						) {
+							tempPointsInside.push(tempPoints[i]);
+							inside = true;
+							break;
+						} else {
+							//TODO: raycast to check if inside polygon (https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon)
+						}
+					} else if (s.type === "circle") {
+						//check if point inside of circle
+						const distance = measure(
+							s.center.lat,
+							s.center.lng,
+							tempPoints[i].decimalLatitude,
+							tempPoints[i].decimalLongitude
+						);
+						if (distance <= s.radius) {
+							tempPointsInside.push(tempPoints[i]);
+							inside = true;
+							break;
+						}
 					}
-				} else if (s.type === "circle") {
-					//check if point inside of circle
-					const distance = measure(
-						s.center.lat,
-						s.center.lng,
-						tempPoints[i].decimalLatitude,
-						tempPoints[i].decimalLongitude
-					);
-					if (distance <= s.radius) {
-						tempPointsInside.push(tempPoints[i]);
-						inside = true;
-						break;
-					}
+				}
+
+				if (inside || !Object.keys(shapes).length) {
+					tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
+				} else {
+					tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
 				}
 			}
 
-			if (inside || !Object.keys(shapes).length) {
-				tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
-			} else {
-				tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
-			}
+			setPointsInside(tempPointsInside);
 		}
 
-		setPointsInside(tempPointsInside);
 		setPoints(tempPoints);
 	}
 
 	//shapes
 	useEffect(() => {
-		checkShapes();
+		if (drawReady) {
+			checkShapes();
+		}
 	}, [shapes]);
 
 	//zoomLevel
 	useEffect(() => {
-		let tempLocations = [...points];
-		//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
-		if (cluster) {
-			//cluster location data
-			const dataset = tempLocations.map((loc) => [loc.decimalLatitude, loc.decimalLongitude]);
-			const dbscan = new DBSCAN();
-			//adjust second argument to adjust when points cluster
-			const clusters = dbscan.run(dataset, 50 / zoomLevel ** 2.5, 2);
-			//take index of cluster and average latlongs
-			const clusteredLocations = [];
-			for (const c of clusters) {
-				const sum = [0, 0];
-				const values = [] as string[];
-				for (const i of c) {
-					sum[0] += dataset[i][0];
-					sum[1] += dataset[i][1];
-					if (tempLocations[i].values) {
-						values.push(...tempLocations[i].values);
-					} else {
-						values.push(tempLocations[i][id]);
-					}
-				}
-				if (values.length) {
-					clusteredLocations.push({ values, decimalLatitude: sum[0] / c.length, decimalLongitude: sum[1] / c.length });
-				}
-			}
-			tempLocations = clusteredLocations;
-		}
+		if (drawReady) {
+			let tempLocations = [...locations];
+			//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
+			// if (cluster) {
+			// 	//cluster location data
+			// 	const dataset = tempLocations.map((loc) => [loc.decimalLatitude, loc.decimalLongitude]);
+			// 	const dbscan = new DBSCAN();
+			// 	//adjust second argument to adjust when points cluster
+			// 	const clusters = dbscan.run(dataset, 50 / zoomLevel ** 2.5, 2);
+			// 	//take index of cluster and average latlongs
+			// 	const clusteredLocations = [];
+			// 	for (const c of clusters) {
+			// 		const sum = [0, 0];
+			// 		const values = [] as string[];
+			// 		for (const i of c) {
+			// 			sum[0] += dataset[i][0];
+			// 			sum[1] += dataset[i][1];
+			// 			if (tempLocations[i].values) {
+			// 				values.push(...tempLocations[i].values);
+			// 			} else {
+			// 				values.push(tempLocations[i][id]);
+			// 			}
+			// 		}
+			// 		if (values.length) {
+			// 			clusteredLocations.push({
+			// 				values,
+			// 				decimalLatitude: sum[0] / c.length,
+			// 				decimalLongitude: sum[1] / c.length
+			// 			});
+			// 		}
+			// 	}
+			// 	tempLocations = clusteredLocations;
+			// }
 
-		checkShapes(tempLocations);
+			checkShapes(tempLocations);
+		}
 	}, [zoomLevel]);
 
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
 	useEffect(() => {
 		if (!drawAlmostReady) {
-			const filteredLocations = [] as Location[];
-
-			for (const nullLoc of locations) {
-				if (
-					nullLoc.decimalLatitude !== null &&
-					nullLoc.decimalLongitude !== null &&
-					!(nullLoc.decimalLatitude! in DeadValueEnum) &&
-					!(nullLoc.decimalLongitude! in DeadValueEnum)
-				) {
-					const loc = nullLoc as Location;
-
-					//check if point already exists
-					//don't combine points if they belong to different groups
-					const titleFields = titleTable
-						? typeof TableMetadata[titleTable].titleField === "string"
-							? [TableMetadata[titleTable].titleField]
-							: TableMetadata[titleTable].titleField
-						: [];
-					const foundIndex = filteredLocations.findIndex(
-						(l) =>
-							l.decimalLatitude === loc.decimalLatitude &&
-							l.decimalLongitude === loc.decimalLongitude &&
-							titleFields.every((f) => l[f] === loc[f])
-					);
-
-					if (foundIndex !== -1) {
-						if (filteredLocations[foundIndex].values) {
-							filteredLocations[foundIndex].values.push(loc[id]);
-						} else {
-							filteredLocations[foundIndex].values = [filteredLocations[foundIndex][id], loc[id]];
-						}
-					} else {
-						filteredLocations.push({ ...loc });
-					}
-				}
-			}
-
-			setPoints(filteredLocations);
 			setDrawAlmostReady(true);
 		} else if (!drawReady) {
 			setDrawReady(true);
@@ -360,7 +273,16 @@ export default function ActualMap({
 
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
-			<MapContainer maxBounds={maxBounds as LatLngBoundsExpression} className="w-full h-full grow" {...mapProps}>
+			<MapContainer
+				maxBounds={
+					[
+						[-180, -180],
+						[180, 180]
+					] as LatLngBoundsExpression
+				}
+				className="w-full h-full grow"
+				{...mapProps}
+			>
 				<LegendControl />
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
@@ -517,12 +439,15 @@ function PopupWithSearch({
 							}, [])}
 						</>
 					) : (
-						<Link
-							href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-							className="text-info hover:text-info-focus hover:underline transition-colors"
-						>
-							{loc[id]}
-						</Link>
+						<>
+							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
+							<Link
+								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+								className="text-info hover:text-info-focus hover:underline transition-colors"
+							>
+								{loc[id]}
+							</Link>
+						</>
 					)}
 				</div>
 			</div>
