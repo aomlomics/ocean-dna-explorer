@@ -23,8 +23,8 @@ export const helpSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					ODE (Ocean DNA Explorer) is a data portal for uploading and finding ocean eDNA data. This help documentation will guide
-					you through the various features of the platform.
+					ODE (Ocean DNA Explorer) is a data portal for uploading and finding ocean eDNA data. This help documentation
+					will guide you through the various features of the platform.
 				</p>
 				<p className="mb-4">
 					Our goal is to make marine eDNA data more findable, accessible, interoperable, and reusable for researchers,
@@ -38,14 +38,38 @@ export const helpSections: Section[] = [
 				title: "Login and Roles",
 				content: (
 					<>
-						<p className="mb-4">ODE requires you to login to access certain features of the platform, like submitting data.</p>
-						<p className="mb-4">You can login with several types of accounts using the Sign-In button in the top right corner of the website. Rest assured, your personal data is not stored in our database. Authentication is handled by Clerk, a user management platform. You can delete your account at any time by clicking your profile picture in the top right corner of the website, then clicking "Manage Account" in the dropdown, and then clicking "Security" and finally "Delete Account".</p>
-						<p className="mb-4">The roles available on ODE are listed below. Please note, Contributor is what you need to submit data, and the other roles are mostly for internal use by the ODE team:</p>
+						<p className="mb-4">
+							ODE requires you to login to access certain features of the platform, like submitting data.
+						</p>
+						<p className="mb-4">
+							You can login with several types of accounts using the Sign-In button in the top right corner of the
+							website. Rest assured, your personal data is not stored in our database. Authentication is handled by
+							Clerk, a user management platform. You can delete your account at any time by clicking your profile
+							picture in the top right corner of the website, then clicking "Manage Account" in the dropdown, and then
+							clicking "Security" and finally "Delete Account".
+						</p>
+						<p className="mb-4">
+							The roles available on ODE are listed below. Please note, Contributor is what you need to submit data, and
+							the other roles are mostly for internal use by the ODE team:
+						</p>
 						<ul className="list-disc ml-6 mb-4">
-							<li>Admin: Full access to the platform, including managing other user's roles, and can view both public and private data</li>
+							<li>
+								Admin: Full access to the platform, including managing other user's roles, and can view both public and
+								private data
+							</li>
 							<li>Moderator: Similar to admin, except they cannot manage Admin's roles</li>
-							<li>Contributor: Allows you to submit data to the platform, privately or publically, and to access the Submissions Manager to view, delete, or edit your own submissions. Click <Link className="link link-primary font-bold" href="/contribute">HERE</Link> to request to be a Contributor.</li>
-							<li>Non-signed in User: View public datasets, query the API, browse the Explore pages, and use the Search page </li>
+							<li>
+								Contributor: Allows you to submit data to the platform, privately or publically, and to access the
+								Submissions Manager to view, delete, or edit your own submissions. Click{" "}
+								<Link className="link link-primary font-bold" href="/contribute">
+									HERE
+								</Link>{" "}
+								to request to be a Contributor.
+							</li>
+							<li>
+								Non-signed in User: View public datasets, query the API, browse the Explore pages, and use the Search
+								page{" "}
+							</li>
 						</ul>
 					</>
 				)
@@ -55,8 +79,13 @@ export const helpSections: Section[] = [
 				title: "Submissions Manager",
 				content: (
 					<>
-						<p className="mb-4">If you have any role (Contributor or higher), you can access the Submissions Manager.</p>
-						<p className="mb-4">To find it, click your profile picture in the top right corner of the website, and then click "My Submissions" in the dropdown.</p>
+						<p className="mb-4">
+							If you have any role (Contributor or higher), you can access the Submissions Manager.
+						</p>
+						<p className="mb-4">
+							To find it, click your profile picture in the top right corner of the website, and then click "My
+							Submissions" in the dropdown.
+						</p>
 						<p className="mb-4">The Submissions Manager lets you:</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>View all of your project and analyses submitted to the platform</li>
@@ -74,10 +103,35 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">ODE provides several key features to help you work with marine eDNA data:</p>
 						<ul className="list-disc ml-6 mb-4">
-							<li>{" "}<Link className="link link-primary font-semibold" href="/explore">Explore</Link> projects, samples, analyses, features, and taxonomies with filters and a graphical user interface via the Explore page</li>
-							<li>Leverage the <Link className="link link-primary font-semibold" href="/api">API</Link> to access data programmatically</li>
-							<li>{" "}<Link className="link link-primary font-semibold" href="/search">Search</Link> across datasets using powerful query capabilities via the Search page</li>
-							<li>{" "}<Link className="link link-primary font-semibold" href="/submit">Submit</Link> your own data in standardized formats via the Submit page</li>
+							<li>
+								{" "}
+								<Link className="link link-primary font-semibold" href="/explore">
+									Explore
+								</Link>{" "}
+								projects, samples, analyses, features, and taxonomies with filters and a graphical user interface via
+								the Explore page
+							</li>
+							<li>
+								Leverage the{" "}
+								<Link className="link link-primary font-semibold" href="/api">
+									API
+								</Link>{" "}
+								to access data programmatically
+							</li>
+							<li>
+								{" "}
+								<Link className="link link-primary font-semibold" href="/search">
+									Search
+								</Link>{" "}
+								across datasets using powerful query capabilities via the Search page
+							</li>
+							<li>
+								{" "}
+								<Link className="link link-primary font-semibold" href="/submit">
+									Submit
+								</Link>{" "}
+								your own data in standardized formats via the Submit page
+							</li>
 							<li>Download existing datasets via the API or individual Explore pages</li>
 						</ul>
 					</>
@@ -89,8 +143,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							We welcome your feedback to improve ODE. If you encounter any issues or have suggestions for new
-							features, please let us know.
+							We welcome your feedback to improve ODE. If you encounter any issues or have suggestions for new features,
+							please let us know.
 						</p>
 						<p className="mb-4">
 							You can submit bug reports, feature requests, or general feedback through our GitHub issues page:
@@ -122,13 +176,25 @@ export const helpSections: Section[] = [
 		title: "Submit Data",
 		content: (
 			<>
-				<p className="mb-4 font-semibold">NOTE: You must have a role of at least{" "}<Link className="link link-primary font-semibold" href="#login-and-roles">Contributor</Link> to submit data. </p>
+				<p className="mb-4 font-semibold">
+					NOTE: You must have a role of at least{" "}
+					<Link className="link link-primary font-semibold" href="#login-and-roles">
+						Contributor
+					</Link>{" "}
+					to submit data.{" "}
+				</p>
 				<p className="mb-4">
-					This section will help guide you through the process of contributing your own data to the ODE platform. Once you have{" "}
+					This section will help guide you through the process of contributing your own data to the ODE platform. Once
+					you have{" "}
 					<Link className="link link-primary font-semibold" href="#data-format-rationale">
 						formatted
-					</Link>{" "} your data, you can {" "}<Link className="link link-primary font-semibold" href="/submit">submit</Link> eDNA projects and
-					analyses to share with the scientific community on the Ocean DNA Explorer, OBIS (Ocean Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
+					</Link>{" "}
+					your data, you can{" "}
+					<Link className="link link-primary font-semibold" href="/submit">
+						submit
+					</Link>{" "}
+					eDNA projects and analyses to share with the scientific community on the Ocean DNA Explorer, OBIS (Ocean
+					Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
 				</p>
 			</>
 		),
@@ -140,10 +206,14 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">
 							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
-							moderators and admins of ODE. You can make a private submission public at any time, but you cannot
-							make a public submission private.
+							moderators and admins of ODE. You can make a private submission public at any time, but you cannot make a
+							public submission private.
 						</p>
-						<p className="mb-4"> We encourage users to eventually make their data public. The purpose of private submissions is in case you are unsure of your data quality or if you are new to the submission process. </p>
+						<p className="mb-4">
+							{" "}
+							We encourage users to eventually make their data public. The purpose of private submissions is in case you
+							are unsure of your data quality or if you are new to the submission process.{" "}
+						</p>
 					</>
 				)
 			},
@@ -157,13 +227,15 @@ export const helpSections: Section[] = [
 							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
 								FAIRe eDNA standard
 							</Link>
-							, with a few modifications to enable the enhanced features which ODE provides. The FAIRe (Findable, Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization, 
-							international collaboration that has developed a comprehensive metadata checklist specifically for eDNA data.
+							, with a few modifications to enable the enhanced features which ODE provides. The FAIRe (Findable,
+							Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization, international collaboration
+							that has developed a comprehensive metadata checklist specifically for eDNA data.
 						</p>
 						<p className="mb-4">
-							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128 
-							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, 
-							and bioinformatics. ODE's data format uses the same checklist, with a few additions and subtractions. The FAIRe data fields are sourced from existing data standards including:
+							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128
+							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, and
+							bioinformatics. ODE's data format uses the same checklist, with a few additions and subtractions. The
+							FAIRe data fields are sourced from existing data standards including:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>MIxS (Minimum Information about any Sequence) and its extensions</li>
@@ -173,8 +245,9 @@ export const helpSections: Section[] = [
 							<li>158 new terms specifically developed for eDNA procedures and datasets</li>
 						</ul>
 						<p className="mb-4">
-							This comprehensive approach ensures that eDNA datasets can be properly documented, discovered, and 
-							reused across the scientific community, supporting data-driven biodiversity management at broad scales, aiming to connect eDNA data to other environmental data for cross discipline reuse.
+							This comprehensive approach ensures that eDNA datasets can be properly documented, discovered, and reused
+							across the scientific community, supporting data-driven biodiversity management at broad scales, aiming to
+							connect eDNA data to other environmental data for cross discipline reuse.
 						</p>
 					</>
 				)
@@ -184,7 +257,24 @@ export const helpSections: Section[] = [
 				title: "Amplicon Sequence Processing (Tourmaline)",
 				content: (
 					<>
-						<p className="mb-4">{" "}<Link className="link link-primary" href="https://github.com/aomlomics/tourmaline/tree/develop" target="_blank">Tourmaline 2</Link> is an amplicon sequence analysis workflow developed by the {" "}<Link className="link link-primary" href="https://github.com/aomlomics" target="_blank">AOML Omics</Link> team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic assignments. Tourmaline 2 output can be uploaded to ODE as an analysis. Multiple analyses can be uploaded for the same project, allowing users to compare the output from different sets of parameters.  </p>
+						<p className="mb-4">
+							{" "}
+							<Link
+								className="link link-primary"
+								href="https://github.com/aomlomics/tourmaline/tree/develop"
+								target="_blank"
+							>
+								Tourmaline 2
+							</Link>{" "}
+							is an amplicon sequence analysis workflow developed by the{" "}
+							<Link className="link link-primary" href="https://github.com/aomlomics" target="_blank">
+								AOML Omics
+							</Link>{" "}
+							team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other
+							commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic
+							assignments. Tourmaline 2 output can be uploaded to ODE as an analysis. Multiple analyses can be uploaded
+							for the same project, allowing users to compare the output from different sets of parameters.{" "}
+						</p>
 					</>
 				)
 			},
@@ -195,29 +285,35 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">
 							Metadata templates can be generated using{" "}
-							<Link
-								className="link link-primary"
-								href="https://github.com/baydenwillms/FAIReSheets/tree/FAIRe2NODE"
-								target="_blank"
-							>
-								FAIRe2NODE
+							<Link className="link link-primary" href="https://github.com/aomlomics/FAIReSheets" target="_blank">
+								FAIReSheets
 							</Link>
 							, a tool that creates standardized eDNA data templates directly in Google Sheets. It is NOAA's
-							implementation of the {" "}<Link className="link link-primary" href="#data-format-rationale" target="_blank">FAIRe eDNA</Link> templates.
+							implementation of the{" "}
+							<Link className="link link-primary" href="#data-format-rationale" target="_blank">
+								FAIRe eDNA
+							</Link>{" "}
+							templates.
 						</p>
 						<p className="mb-4">
-							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A
-							key feature is the ability to add your own User Defined terms to this checklist. When you run
-							FAIRe2NODE, any custom terms you've added to the checklist Excel file will be included in your generated Google Sheets template,
-							ensuring all your relevant data fields are captured.
+							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A key
+							feature is the ability to add your own User Defined terms to this checklist. When you run FAIRe2NODE, any
+							custom terms you've added to the checklist Excel file will be included in your generated Google Sheets
+							template, ensuring all your relevant data fields are captured.
 						</p>
 						<p className="mb-4">
-							The checklist also provides controlled vocabularies for many fields, ensuring consistent data entry and units of measure 
-							across the eDNA community. This standardization is crucial for data interoperability and reuse.
+							The checklist also provides controlled vocabularies for many fields, ensuring consistent data entry and
+							units of measure across the eDNA community. This standardization is crucial for data interoperability and
+							reuse.
 						</p>
 						<p className="mb-4">
-							The generated templates for project, sample, experiment run, and analysis metadata are designed for instant submission to ODE. Once filled, data formatted with these templates can also be easily
-							prepared for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using the {" "}<Link className="link link-primary" href="#obis-gbif-submission">edna2obis</Link> tool.
+							The generated templates for project, sample, experiment run, and analysis metadata are designed for
+							instant submission to ODE. Once filled, data formatted with these templates can also be easily prepared
+							for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using the{" "}
+							<Link className="link link-primary" href="#obis-gbif-submission">
+								edna2obis
+							</Link>{" "}
+							tool.
 						</p>
 						<p className="mb-4">
 							To use FAIRe2NODE, you will need to run a Python script on your local computer. Access to the tool is
@@ -232,9 +328,12 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your
-							data is standardized and interoperable. Please see the {" "}
-							<a href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html" className="link link-primary">
+							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your data
+							is standardized and interoperable. Please see the{" "}
+							<a
+								href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html"
+								className="link link-primary"
+							>
 								NOAA Omics Data Management Guide
 							</a>{" "}
 							for more information on the data format and metadata requirements.
@@ -242,16 +341,15 @@ export const helpSections: Section[] = [
 
 						<h4 className="text-lg font-medium mb-2 mt-4">Handling Missing Data (Dead Values)</h4>
 						<p className="mb-4">
-							Data can be absent for many different reasons, and the scientific community has historically used 
-							various approaches to indicate missing information. For example, location data may be intentionally 
-							obscured or generalized to safeguard endangered species or protect sites of cultural significance 
-							to Indigenous communities.
+							Data can be absent for many different reasons, and the scientific community has historically used various
+							approaches to indicate missing information. For example, location data may be intentionally obscured or
+							generalized to safeguard endangered species or protect sites of cultural significance to Indigenous
+							communities.
 						</p>
 						<p className="mb-4">
-							For required fields that lack data, you must specify why the information is unavailable using the 
-							INSDC missing value controlled vocabulary format. This practice is also recommended for optional 
-							fields. Rather than leaving cells empty, select the most appropriate "dead value" from the controlled 
-							vocabulary:
+							For required fields that lack data, you must specify why the information is unavailable using the INSDC
+							missing value controlled vocabulary format. This practice is also recommended for optional fields. Rather
+							than leaving cells empty, select the most appropriate "dead value" from the controlled vocabulary:
 						</p>
 						<div className="mb-4">
 							<table className="table table-zebra w-full">
@@ -281,33 +379,31 @@ export const helpSections: Section[] = [
 									</tr>
 									{/* Dead values */}
 									{Object.keys(DeadBooleanEnum)
-										.filter(key => !['true', 'false', '0', '1'].includes(key))
-										.map(deadValue => (
+										.filter((key) => !["true", "false", "0", "1"].includes(key))
+										.map((deadValue) => (
 											<tr key={deadValue}>
 												<td>{deadValue}</td>
 												<td>
-													{deadValue.startsWith('not applicable') 
-														? 'Field does not apply to this column'
-														: deadValue.startsWith('missing: not collected')
-														? 'Data was not collected for X reason'
-														: deadValue.startsWith('missing: not provided')
-														? 'Data exists but was not provided'
-														: deadValue.startsWith('missing: restricted access')
-														? 'Data cannot be shared due to restrictions'
-														: 'Data should exist but is unavailable'
-													}
+													{deadValue.startsWith("not applicable")
+														? "Field does not apply to this column"
+														: deadValue.startsWith("missing: not collected")
+														? "Data was not collected for X reason"
+														: deadValue.startsWith("missing: not provided")
+														? "Data exists but was not provided"
+														: deadValue.startsWith("missing: restricted access")
+														? "Data cannot be shared due to restrictions"
+														: "Data should exist but is unavailable"}
 												</td>
 											</tr>
-										))
-									}
+										))}
 								</tbody>
 							</table>
 						</div>
 
 						<h4 className="text-lg font-medium mb-2 mt-12">User Defined Terms</h4>
 						<p className="mb-4">
-							If you have data fields which you want in your templates that are NOT in the FAIRe NOAA checklist (data dictionary), you can add them as User Defined
-							terms. As mentioned in the{" "}
+							If you have data fields which you want in your templates that are NOT in the FAIRe NOAA checklist (data
+							dictionary), you can add them as User Defined terms. As mentioned in the{" "}
 							<Link className="link link-primary" href="#faire-metadata-template">
 								FAIRe Metadata Template
 							</Link>{" "}
@@ -321,16 +417,24 @@ export const helpSections: Section[] = [
 						</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>
-								Project ID: The project_id must be identical across all metadata files (project, sample, etc.) to link them together.
+								Project ID: The project_id must be identical across all metadata files (project, sample, etc.) to link
+								them together.
 							</li>
 							<li>
-								Analysis Run Names: Verify that each analysis file's analysis_run_name is correct in each analysisMetadata file, and is unique for each analysis.
+								Analysis Run Names: Verify that each analysis file's analysis_run_name is correct in each
+								analysisMetadata file, and is unique for each analysis.
 							</li>
 							<li>
-								Assay-Specific vs. Project-Level Data: In the project metadata, fields can apply to all analyses (denoted by a value in the project_level column) or they may have a different value per assay. For assay specific values, use the corresponding assay-specific column (e.g., "ssu16sv4v5-emp" or "ssu18sv9-emp").
+								Assay-Specific vs. Project-Level Data: In the project metadata, fields can apply to all analyses
+								(denoted by a value in the project_level column) or they may have a different value per assay. For assay
+								specific values, use the corresponding assay-specific column (e.g., "ssu16sv4v5-emp" or "ssu18sv9-emp").
 							</li>
 						</ul>
-						<p className="font-bold"> Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit to ODE!</p>
+						<p className="font-bold">
+							{" "}
+							Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit
+							to ODE!
+						</p>
 					</>
 				)
 			},
@@ -340,7 +444,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Any metadata file submitted to ODE must be in TSV format. To submit a project, you'll need to submit one or more analyses alongside it.
+							Any metadata file submitted to ODE must be in TSV format. To submit a project, you'll need to submit one
+							or more analyses alongside it.
 						</p>
 						<p className="mb-2">The following fields are required in your project metadata file:</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -364,7 +469,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Any metadata file submitted to ODE must be in TSV format. Analyses can be submitted WITHOUT a project, as long as the project it is related to is already uploaded to ODE.
+							Any metadata file submitted to ODE must be in TSV format. Analyses can be submitted WITHOUT a project, as
+							long as the project it is related to is already uploaded to ODE.
 						</p>
 						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -382,8 +488,13 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-						{" "}<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">edna2obis</Link> converts the ODE input files to the expected format for submission to OBIS (Ocean Biodiversity Information System), and GBIF (Global Biodiversity Information Facility). its input file structure MATCHES
-							that of ODE- so if you're submitting data here, you can easily submit to OBIS and GBIF as well.
+							{" "}
+							<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
+								edna2obis
+							</Link>{" "}
+							converts the ODE input files to the expected format for submission to OBIS (Ocean Biodiversity Information
+							System), and GBIF (Global Biodiversity Information Facility). its input file structure MATCHES that of
+							ODE- so if you're submitting data here, you can easily submit to OBIS and GBIF as well.
 						</p>
 					</>
 				)
@@ -395,7 +506,9 @@ export const helpSections: Section[] = [
 		title: "Search",
 		content: (
 			<>
-				<p className="mb-4 font-semibold text-red-500">NOTE: The search functionality is currently under development and is not yet fully functional. Coming soon!</p>
+				<p className="mb-4 font-semibold text-red-500">
+					NOTE: The search functionality is currently under development and is not yet fully functional. Coming soon!
+				</p>
 				<p className="mb-4">
 					ODE's search functionality allows you to find specific data across all categories in the platform. You can
 					search by various parameters to narrow down results.
@@ -456,8 +569,8 @@ export const helpSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					The Explore section lets you browse through different categories of data across ODE. Each
-					category represents a table in the database, and they can filtered using the filter menu on the left side of the page.
+					The Explore section lets you browse through different categories of data across ODE. Each category represents
+					a table in the database, and they can filtered using the filter menu on the left side of the page.
 				</p>
 			</>
 		),
@@ -595,21 +708,32 @@ export const helpSections: Section[] = [
 						<h4 className="font-medium mb-2">Q: How do I submit data / become a Contributor?</h4>
 						<p>
 							A: Submitting data requires you to have the role of Contributor. You can request this role{" "}
-							<Link className="link link-primary" href="/contribute">here</Link>.
+							<Link className="link link-primary" href="/contribute">
+								here
+							</Link>
+							.
 						</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: How do I use the API?</h4>
 						<p>
-							A: The API has a dedicated{" "}<Link className="link link-primary" href="/api">documentation page</Link>, or you can use the Explore page to view the data through the website.
+							A: The API has a dedicated{" "}
+							<Link className="link link-primary" href="/api">
+								documentation page
+							</Link>
+							, or you can use the Explore page to view the data through the website.
 						</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: How do I contact the ODE team?</h4>
 						<p>
-							A: Please contact us via the{" "}<Link className="link link-primary" href="https://github.com/aomlomics/node/issues">GitHub issues page</Link>.
+							A: Please contact us via the{" "}
+							<Link className="link link-primary" href="https://github.com/aomlomics/node/issues">
+								GitHub issues page
+							</Link>
+							.
 						</p>
 					</div>
 
@@ -624,17 +748,18 @@ export const helpSections: Section[] = [
 					<div>
 						<h4 className="font-medium mb-2">Q: How do I cite data from ODE?</h4>
 						<p>
-							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to cite the project.
+							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to
+							cite the project.
 						</p>
 					</div>
 
 					<div>
 						<h4 className="font-medium mb-2">Q: How do you protect our personal data?</h4>
 						<p>
-							A: There is no personal data stored in the ODE database. User authentication is handled by the platform's reputableauthentication provider, Clerk, and all data is stored in a secure database.
+							A: There is no personal data stored in the ODE database. User authentication is handled by the platform's
+							reputableauthentication provider, Clerk, and all data is stored in a secure database.
 						</p>
 					</div>
-
 				</div>
 			</>
 		)
