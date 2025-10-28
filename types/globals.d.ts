@@ -30,7 +30,8 @@ export type NetworkProgressPacket = ErrorPacket | SuccessPacket | ProgressPacket
 export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
 export type TargetAction = (target: string, ...args) => Promise<NetworkPacket>;
 export type ProgressAction = (...args) => Promise<ReadableStream<any>>;
-export type ProgressActionMany = (
+export type ProgressActionMany = (...args) => Promise<ReadableStream<any>[]>;
+export type ProgressActionManyGlobal = (
 	...args
 ) => Promise<{ global: ReadableStream<any>; readables: ReadableStream<any>[] }>;
 

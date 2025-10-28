@@ -1,5 +1,7 @@
-import { NetworkProgressPacket, ProgressAction, ProgressActionMany } from "@/types/globals";
+import { NetworkProgressPacket, ProgressAction, ProgressActionMany, ProgressActionManyGlobal } from "@/types/globals";
 import { Dispatch, SetStateAction, ActionDispatch } from "react";
+
+export type Channel = { url: string; stream: ReturnType<typeof createProgressStream> };
 
 export function createProgressStream() {
 	const stream = new TransformStream();
@@ -128,6 +130,18 @@ async function handleReadable(readable: ReadableStream<any>, setter: (res: Netwo
 
 export async function doProgressActionMany(
 	action: ProgressActionMany,
+	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
+	...args: any[]
+) {
+	const readables = await action(...args);
+
+	for (let i = 0; i < readables.length; i++) {
+		handleReadable(readables[i], setters[i]);
+	}
+}
+
+export async function doProgressActionManyGlobal(
+	action: ProgressActionManyGlobal,
 	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
 	globalSetter: Dispatch<SetStateAction<NetworkProgressPacket>>,
 	...args: any[]

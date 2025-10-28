@@ -9,7 +9,7 @@ import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
 import { NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
-import { doProgressActionMany } from "@/app/helpers/progress";
+import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
 
@@ -92,11 +92,14 @@ export default function ProjectSubmit() {
 
 		const isPrivate = event.currentTarget.isPrivate.checked;
 
+		//get all files from event beforehand
 		const projectFile = event.currentTarget.project.files[0] as File;
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
 		try {
+			//upload files
+			//project
 			setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const projectFileUrl = (
 				await upload(`submissions/${projectFile.name}`, projectFile, {
@@ -108,6 +111,7 @@ export default function ProjectSubmit() {
 			setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			setFileUrls([projectFileUrl]);
 
+			//samples
 			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const sampleFileUrl = (
 				await upload(`submissions/${sampleFile.name}`, sampleFile, {
@@ -119,6 +123,7 @@ export default function ProjectSubmit() {
 			setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			setFileUrls([projectFileUrl, sampleFileUrl]);
 
+			//libraries
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const libraryFileUrl = (
 				await upload(`submissions/${libraryFile.name}`, libraryFile, {
@@ -131,7 +136,7 @@ export default function ProjectSubmit() {
 			setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl]);
 
 			//trigger streamed action
-			await doProgressActionMany(
+			doProgressActionManyGlobal(
 				projectSubmitAction,
 				[setProjectResponse, setSampleResponse, setLibraryResponse],
 				setGlobalResponse,

@@ -107,21 +107,6 @@ const publicPrisma =
 					return await query(args);
 				}
 			},
-			assay: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.AssayWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Samples: { some: { Project: { isPrivate: false } } }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
 			assayPrep: {
 				async $allOperations({ model, operation, args, query }) {
 					if (readOperations.includes(operation)) {
@@ -288,36 +273,6 @@ const prisma =
 									},
 									{
 										Project: { userIds: { has: userId } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			assay: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.AssayWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Samples: { some: { Project: { isPrivate: false } } }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Samples: { some: { Project: { isPrivate: false } } }
-									},
-									{
-										Samples: { some: { Project: { userIds: { has: userId } } } }
 									}
 								]
 							}

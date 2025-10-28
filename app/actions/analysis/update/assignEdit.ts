@@ -2,7 +2,7 @@
 
 import { Assignment } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
-import { parseAssignmentFile } from "@/app/helpers/actions/analysis";
+import { parseAssignmentsFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { ProgressStream } from "@/types/globals";
@@ -42,16 +42,15 @@ async function doEdit(
 			return;
 		}
 
-		const parseResult = await parseAssignmentFile({
-			stream,
-			url,
+		const parseResult = await parseAssignmentsFile({
+			channel: { stream, url },
 			analysis_run_name,
 			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 		});
 		if (!parseResult) {
 			return;
 		}
-		const { features, taxonomies, assignments, md5Checksum } = parseResult;
+		const { features, taxonomies, assignments, assignmentsMd5 } = parseResult;
 
 		await stream.message("Assignments successfully parsed into database format. Parsing data into database.", 75);
 
@@ -173,7 +172,7 @@ async function doEdit(
 					{
 						field: "asvFileChecksum_ODE",
 						oldValue: dbAnalysis.asvFileChecksum_ODE,
-						newValue: md5Checksum
+						newValue: assignmentsMd5
 					}
 				]);
 
@@ -185,7 +184,7 @@ async function doEdit(
 					data: {
 						editHistory,
 						asvFileUrl_ODE: url,
-						asvFileChecksum_ODE: md5Checksum
+						asvFileChecksum_ODE: assignmentsMd5
 					}
 				});
 
