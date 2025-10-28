@@ -11,13 +11,11 @@ import {
 	SampleOptionalDefaultsSchema,
 	SampleScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
-import { createProgressStream } from "../progress";
 import { parseSchemaToObject } from "../schema";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import { Library, Prisma, Sample } from "@/app/generated/prisma/client";
-
-export type Channel = { url: string; stream: ReturnType<typeof createProgressStream> };
+import { Channel } from "../progress";
 
 async function parseProjectFile({
 	channel,

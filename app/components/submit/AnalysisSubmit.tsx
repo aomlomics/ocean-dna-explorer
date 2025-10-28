@@ -9,12 +9,9 @@ import { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
-import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
-import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
-import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
-import { doProgressAction } from "@/app/helpers/progress";
+import { doProgressActionMany } from "@/app/helpers/progress";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;
@@ -22,8 +19,6 @@ type ResponseSet = {
 	occurrences: NetworkProgressPacket;
 };
 
-//TODO: move all 3 steps into 1 transaction
-//TODO: remove previous analyses that successfully submitted when an error occurs with a later analysis submission
 export default function AnalysisSubmit() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
@@ -57,10 +52,39 @@ export default function AnalysisSubmit() {
 					return temp;
 				} else {
 					if (update.res?.statusMessage === "error") {
-						setLoading(false);
-						setErrorMessage(update.res.error);
-						modalRef.current?.showModal();
+						doError(update.res.error);
+					} else if (update.res?.statusMessage === "success") {
+						//check if current analysis was completed successfully
+						if (
+							Object.entries(state[update.id]).every(
+								//make sure to include current key, since we already checked that
+								([key, res]) => key === update.key || res?.statusMessage === "success"
+							)
+						) {
+							//clear successful files so they don't get deleted
+							const temp = { ...fileUrls };
+							delete temp[update.id];
+							setFileUrls(temp);
+
+							//check if all analyses were completed successfully
+							if (
+								Object.entries(state).every(
+									([id, resSet]) =>
+										//make sure to include current analysis, since we already checked that
+										id === update.id || Object.values(resSet).every((res) => res?.statusMessage === "success")
+								)
+							) {
+								//redirect user to Analysis explore page
+								modalXRef.current!.disabled = true;
+								modalClickOffRef.current!.disabled = true;
+								modalRef.current?.showModal();
+								setTimeout(() => {
+									router.push("/explore/analysis");
+								}, 5000);
+							}
+						}
 					}
+
 					return { ...state, [update.id]: { ...state[update.id], [update.key]: update.res } };
 				}
 			} else {
@@ -69,6 +93,9 @@ export default function AnalysisSubmit() {
 		},
 		{}
 	);
+
+	//file urls to delete if an error occurs
+	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
 
 	//detecting what project the analyses are associated with, and whether the project is private
 	const [project, setProject] = useState<Project | null>(null);
@@ -89,6 +116,19 @@ export default function AnalysisSubmit() {
 			setPrevAnalysisIdsLength(analysisIds.length);
 		}
 	}, [analysisIds]);
+
+	async function doError(err: string) {
+		//delete files from blob storage
+		for (const url of Object.values(fileUrls).reduce((acc, urls) => [...acc, ...urls])) {
+			await fetch(`/api/file/delete?url=${url}`, {
+				method: "DELETE"
+			});
+		}
+
+		setLoading(false);
+		setErrorMessage(err);
+		modalRef.current?.showModal();
+	}
 
 	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
@@ -170,10 +210,6 @@ export default function AnalysisSubmit() {
 					setErrorMessage("Could not find project_id in term_name column.");
 					modalRef.current?.showModal();
 					event.target.value = "";
-				} else {
-					setErrorMessage("Unknown error occurred while parsing analysis file.");
-					modalRef.current?.showModal();
-					event.target.value = "";
 				}
 			}
 		} catch (err) {
@@ -188,207 +224,146 @@ export default function AnalysisSubmit() {
 		event.preventDefault();
 		setLoading(true);
 
-		//reset page state
-		setErrorMessage("");
-		const analysisSkips = [];
-		for (const id in responses) {
-			if (!Object.values(responses[id]).some((packet) => packet && packet.statusMessage !== "success")) {
-				analysisSkips.push(id);
-			} else {
-				setResponses({ id, clear: true });
-			}
-		}
-
 		if (!project) {
 			setErrorMessage("No project_id found.");
 			modalRef.current?.showModal();
 			return;
 		}
 
-		const target = event.target as HTMLFormElement;
-
 		const activeIds = analysisIds.filter((id) => typeof id === "string");
-		try {
-			//submit for every analysis section
-			for (const id of activeIds) {
-				//scroll analysis into view
-				const element = document.getElementById(id);
-				if (element) {
-					element.scrollIntoView({
-						block: "start",
-						behavior: "smooth"
-					});
-				}
+		const target = event.target as HTMLFormElement;
+		const files = {} as Record<string, { analysisFile: File; assignmentsFile: File; occurrencesFile: File }>;
 
-				try {
-					//analysis submit
-					const analysisFile = target[`analysis_${id}`].files[0] as File;
-					//upload file to blob storage
-					setResponses({
-						id,
-						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
-					});
-					const analysisUrl = (
-						await upload(`submissions/${analysisFile.name}`, analysisFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
-					).url;
-					setResponses({
-						id,
-						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
-					});
-					//submit analysis file url
-					const analysisError = await doProgressAction({
-						action: analysisSubmitAction,
-						reducer: { id, key: "analysis", setter: setResponses },
-						args: [analysisUrl, isPrivate]
-					});
-					//handle errors
-					if (analysisError) {
-						setErrorMessage(analysisError);
-						modalRef.current?.showModal();
+		//reset page state
+		setErrorMessage("");
+		for (let i = 0; i < activeIds.length; i++) {
+			if (Object.values(responses[activeIds[i]]).every((packet) => packet && packet.statusMessage === "success")) {
+				activeIds.splice(i, 1);
+			} else {
+				//gather all files
+				files[activeIds[i]] = {
+					analysisFile: target[`analysis_${activeIds[i]}`].files[0],
+					assignmentsFile: target[`assignments_${activeIds[i]}`].files[0],
+					occurrencesFile: target[`occurrences_${activeIds[i]}`].files[0]
+				};
+				setFileUrls({ ...fileUrls, [activeIds[i]]: [] });
 
-						//delete file from blob storage
-						await fetch(`/api/file/delete?url=${analysisUrl}`, {
-							method: "DELETE"
-						});
-
-						return;
-					}
-
-					//assignments submit
-					const assignmentsFile = target[`assignments_${id}`].files[0] as File;
-					//upload file to blob storage
-					setResponses({
-						id,
-						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
-					});
-					const assignmentsUrl = (
-						await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
-					).url;
-					setResponses({
-						id,
-						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
-					});
-					//submit assignments file url
-					const assignmentsError = await doProgressAction({
-						action: assignSubmitAction,
-						reducer: { id, key: "assignments", setter: setResponses },
-						args: [id, assignmentsUrl]
-					});
-					//handle errors
-					if (assignmentsError) {
-						setErrorMessage(assignmentsError);
-						modalRef.current?.showModal();
-
-						//delete analysis
-						const deleteResponse = await analysisDeleteAction(id);
-						if (deleteResponse.statusMessage === "error") {
-							setErrorMessage(assignmentsError + "\n" + deleteResponse.error);
-						}
-
-						//delete file from blob storage
-						await fetch(`/api/file/delete?url=${analysisUrl}`, {
-							method: "DELETE"
-						});
-						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
-							method: "DELETE"
-						});
-
-						return;
-					}
-
-					//occurrences submit
-					const occurrencesFile = target[`occurrences_${id}`].files[0] as File;
-					//upload file to blob storage
-					setResponses({
-						id,
-						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
-					});
-					const occurrencesUrl = (
-						await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
-					).url;
-					setResponses({
-						id,
-						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
-					});
-					//submit occurrences file url
-					const occurrencesError = await doProgressAction({
-						action: occSubmitAction,
-						reducer: { id, key: "occurrences", setter: setResponses },
-						args: [id, occurrencesUrl]
-					});
-
-					//handle errors
-					if (occurrencesError) {
-						setErrorMessage(occurrencesError);
-						modalRef.current?.showModal();
-
-						//delete analysis
-						const deleteResponse = await analysisDeleteAction(id);
-						if (deleteResponse.statusMessage === "error") {
-							setErrorMessage(occurrencesError + "\n" + deleteResponse.error);
-						}
-
-						//delete file from blob storage
-						await fetch(`/api/file/delete?url=${analysisUrl}`, {
-							method: "DELETE"
-						});
-						await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
-							method: "DELETE"
-						});
-						await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
-							method: "DELETE"
-						});
-
-						return;
-					}
-				} catch (err) {
-					const error = err as Error;
-					setErrorMessage(error.message);
-					modalRef.current?.showModal();
-
-					//delete analysis
-					const deleteResponse = await analysisDeleteAction(id);
-					if (deleteResponse.statusMessage === "error") {
-						setErrorMessage(error.message + "\n" + deleteResponse.error);
-					}
-
-					setLoading(false);
-					return;
-				}
+				//set status of uploads to pending
+				setResponses({
+					id: activeIds[i],
+					key: "analysis",
+					res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+				});
+				setResponses({
+					id: activeIds[i],
+					key: "assignments",
+					res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+				});
+				setResponses({
+					id: activeIds[i],
+					key: "occurrences",
+					res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+				});
 			}
-
-			//redirect user to Analysis explore page
-			modalXRef.current!.disabled = true;
-			modalClickOffRef.current!.disabled = true;
-			modalRef.current?.showModal();
-			setTimeout(() => {
-				router.push("/explore/analysis");
-			}, 5000);
-		} catch (err) {
-			const error = err as Error;
-			setErrorMessage(error.message);
-			modalRef.current?.showModal();
 		}
 
-		setLoading(false);
+		try {
+			let scrolled = false;
+			//submit for every analysis section
+			for (const id of activeIds) {
+				//scroll first analysis into view
+				if (!scrolled) {
+					scrolled = true;
+					const element = document.getElementById(id);
+					if (element) {
+						element.scrollIntoView({
+							block: "start",
+							behavior: "smooth"
+						});
+					}
+				}
+
+				//analysis submit
+				//upload file to blob storage
+				setResponses({
+					id,
+					key: "analysis",
+					res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+				});
+				const analysisUrl = (
+					await upload(`submissions/${files[id].analysisFile.name}`, files[id].analysisFile, {
+						access: "public",
+						handleUploadUrl: "/api/file/upload",
+						multipart: files[id].analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+					})
+				).url;
+				setResponses({
+					id,
+					key: "analysis",
+					res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+				});
+
+				//assignments submit
+				//upload file to blob storage
+				setResponses({
+					id,
+					key: "assignments",
+					res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+				});
+				const assignmentsUrl = (
+					await upload(`submissions/${files[id].assignmentsFile.name}`, files[id].assignmentsFile, {
+						access: "public",
+						handleUploadUrl: "/api/file/upload",
+						multipart: files[id].assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+					})
+				).url;
+				setResponses({
+					id,
+					key: "assignments",
+					res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+				});
+
+				//occurrences submit
+				//upload file to blob storage
+				setResponses({
+					id,
+					key: "occurrences",
+					res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+				});
+				const occurrencesUrl = (
+					await upload(`submissions/${files[id].occurrencesFile.name}`, files[id].occurrencesFile, {
+						access: "public",
+						handleUploadUrl: "/api/file/upload",
+						multipart: files[id].occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+					})
+				).url;
+				setResponses({
+					id,
+					key: "occurrences",
+					res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+				});
+
+				//add file urls in case of error
+				setFileUrls({ ...fileUrls, [id]: [analysisUrl, assignmentsUrl, occurrencesUrl] });
+
+				//trigger streamed action
+				doProgressActionMany(
+					analysisSubmitAction,
+					[
+						(res) => setResponses({ id, key: "analysis", res }),
+						(res) => setResponses({ id, key: "assignments", res }),
+						(res) => setResponses({ id, key: "occurrences", res })
+					],
+					analysisUrl,
+					assignmentsUrl,
+					occurrencesUrl,
+					isPrivate
+				);
+			}
+		} catch (err) {
+			const error = err as Error;
+			doError(error.message);
+		}
 	}
 
 	return (
