@@ -35,6 +35,13 @@ export default function AnalysisSubmit() {
 	const [analysisIds, setAnalysisIds] = useState([-2] as Array<string | -1 | -2>);
 	const [prevAnalysisIdsLength, setPrevAnalysisIdsLength] = useState(1);
 
+	//detecting what project the analyses are associated with, and whether the project is private
+	const [project, setProject] = useState<Project | null>(null);
+	const [isPrivate, setIsPrivate] = useState(false);
+
+	//file urls to delete if an error occurs
+	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
+
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
 	//	to set value of single response: setResponses({ id: <analysisId>, key: <fileName>, res: <response> })
@@ -75,6 +82,7 @@ export default function AnalysisSubmit() {
 								)
 							) {
 								//redirect user to Analysis explore page
+								setLoading(false);
 								modalXRef.current!.disabled = true;
 								modalClickOffRef.current!.disabled = true;
 								modalRef.current?.showModal();
@@ -93,13 +101,6 @@ export default function AnalysisSubmit() {
 		},
 		{}
 	);
-
-	//file urls to delete if an error occurs
-	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
-
-	//detecting what project the analyses are associated with, and whether the project is private
-	const [project, setProject] = useState<Project | null>(null);
-	const [isPrivate, setIsPrivate] = useState(false);
 
 	useEffect(() => {
 		if (analysisIds.length > prevAnalysisIdsLength) {
@@ -222,7 +223,6 @@ export default function AnalysisSubmit() {
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		setLoading(true);
 
 		if (!project) {
 			setErrorMessage("No project_id found.");
@@ -230,44 +230,52 @@ export default function AnalysisSubmit() {
 			return;
 		}
 
-		const activeIds = analysisIds.filter((id) => typeof id === "string");
-		const target = event.target as HTMLFormElement;
-		const files = {} as Record<string, { analysisFile: File; assignmentsFile: File; occurrencesFile: File }>;
-
-		//reset page state
-		setErrorMessage("");
-		for (let i = 0; i < activeIds.length; i++) {
-			if (Object.values(responses[activeIds[i]]).every((packet) => packet && packet.statusMessage === "success")) {
-				activeIds.splice(i, 1);
-			} else {
-				//gather all files
-				files[activeIds[i]] = {
-					analysisFile: target[`analysis_${activeIds[i]}`].files[0],
-					assignmentsFile: target[`assignments_${activeIds[i]}`].files[0],
-					occurrencesFile: target[`occurrences_${activeIds[i]}`].files[0]
-				};
-				setFileUrls({ ...fileUrls, [activeIds[i]]: [] });
-
-				//set status of uploads to pending
-				setResponses({
-					id: activeIds[i],
-					key: "analysis",
-					res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
-				});
-				setResponses({
-					id: activeIds[i],
-					key: "assignments",
-					res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
-				});
-				setResponses({
-					id: activeIds[i],
-					key: "occurrences",
-					res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
-				});
-			}
-		}
-
 		try {
+			setLoading(true);
+			setErrorMessage("");
+
+			const target = event.target as HTMLFormElement;
+			const files = {} as Record<string, { analysisFile: File; assignmentsFile: File; occurrencesFile: File }>;
+
+			const activeIds = analysisIds.filter((id) => {
+				if (typeof id === "string") {
+					//skip files that have already been successfully submitted
+					if (
+						!(
+							responses[id] &&
+							Object.values(responses[id]).every((packet) => packet && packet.statusMessage === "success")
+						)
+					) {
+						//gather files
+						files[id] = {
+							analysisFile: target[`analysis_${id}`].files[0],
+							assignmentsFile: target[`assignments_${id}`].files[0],
+							occurrencesFile: target[`occurrences_${id}`].files[0]
+						};
+						setFileUrls({ ...fileUrls, [id]: [] });
+
+						//set status of uploads to pending
+						setResponses({
+							id: id,
+							key: "analysis",
+							res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+						});
+						setResponses({
+							id: id,
+							key: "assignments",
+							res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+						});
+						setResponses({
+							id: id,
+							key: "occurrences",
+							res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+						});
+
+						return true;
+					}
+				}
+			}) as string[];
+
 			let scrolled = false;
 			//submit for every analysis section
 			for (const id of activeIds) {
@@ -283,7 +291,6 @@ export default function AnalysisSubmit() {
 					}
 				}
 
-				//analysis submit
 				//upload file to blob storage
 				setResponses({
 					id,
