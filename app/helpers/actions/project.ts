@@ -246,7 +246,7 @@ async function parseLibraryFile({
 }) {
 	try {
 		const libraries = [] as Prisma.LibraryCreateManyInput[];
-		const sampToAssay = {} as Record<string, string>; //object to relate samples to their assay_name values
+		const sampNamesByAssay = {} as Record<string, string[]>; //object to relate samples to their assay_name values
 
 		//fetch file from blob storage
 		await channel.stream.message("Downloading file", 10);
@@ -297,7 +297,11 @@ async function parseLibraryFile({
 					}
 				}
 
-				sampToAssay[libraryRow.samp_name] = libraryRow.assay_name;
+				if (sampNamesByAssay[libraryRow.assay_name]) {
+					sampNamesByAssay[libraryRow.assay_name].push(libraryRow.samp_name);
+				} else {
+					sampNamesByAssay[libraryRow.assay_name] = [libraryRow.samp_name];
+				}
 
 				const parsedLibrary = LibraryOptionalDefaultsSchema.safeParse(
 					{
@@ -344,7 +348,7 @@ async function parseLibraryFile({
 
 		await channel.stream.message("All entries successfully parsed into database format.", 75);
 
-		return { libraries, libraryMd5, sampToAssay };
+		return { libraries, libraryMd5, sampNamesByAssay };
 	} catch (err) {
 		const error = err as Error;
 		await channel.stream.error(error.message);
@@ -355,18 +359,16 @@ async function parseLibraryFile({
 async function parseSampleFile({
 	channel,
 	projectCol,
-	assayNames,
-	sampToAssay,
+	sampNamesByAssay,
 	oldChecksum
 }: {
 	channel: Channel;
 	projectCol: Record<string, string>;
-	assayNames: string[];
-	sampToAssay: Record<string, string>;
+	sampNamesByAssay: Record<string, string[]>;
 	oldChecksum?: string;
 }) {
 	try {
-		const samples = [] as Prisma.SampleCreateManyInput[];
+		const samplesByName = {} as Record<string, Prisma.SampleCreateManyInput>;
 
 		//fetch file from blob storage
 		await channel.stream.message("Downloading file", 10);
@@ -422,7 +424,6 @@ async function parseSampleFile({
 					{
 						...sampleRow,
 						...projectCol,
-						assay_name: sampToAssay[sampleRow.samp_name],
 						userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
 					},
 					{
@@ -452,7 +453,7 @@ async function parseSampleFile({
 				}
 
 				//@ts-ignore issue with Json database type
-				samples.push(parsedSample.data);
+				samplesByName[parsedSample.data.samp_name] = parsedSample.data;
 
 				//add to progress bar
 				await channel.stream.message(
@@ -463,24 +464,18 @@ async function parseSampleFile({
 		}
 
 		const samplesByAssay = {} as Record<string, Prisma.SampleCreateOrConnectWithoutAssaysInput[]>;
-		for (let name of assayNames) {
-			samplesByAssay[name] = samples.reduce((acc, samp) => {
-				if (sampToAssay[samp.samp_name] === name) {
-					acc.push({
-						where: {
-							samp_name: samp.samp_name
-						},
-						create: samp
-					});
-				}
-
-				return acc;
-			}, [] as Prisma.SampleCreateOrConnectWithoutAssaysInput[]);
+		for (const [assay, sampNames] of Object.entries(sampNamesByAssay)) {
+			samplesByAssay[assay] = sampNames.map((samp_name) => ({
+				where: {
+					samp_name
+				},
+				create: samplesByName[samp_name]
+			}));
 		}
 
 		await channel.stream.message("All entries successfully parsed into database format.", 75);
 
-		return { samples, samplesByAssay, sampleMd5 };
+		return { samples: Object.values(samplesByName), samplesByAssay, sampleMd5 };
 	} catch (err) {
 		const error = err as Error;
 		await channel.stream.error(error.message);
@@ -525,13 +520,12 @@ export async function parseProjectFiles({
 	if (!libraryParseResult) {
 		return;
 	}
-	const { libraries, libraryMd5, sampToAssay } = libraryParseResult;
+	const { libraries, libraryMd5, sampNamesByAssay } = libraryParseResult;
 
 	const sampleParseResult = await parseSampleFile({
 		channel: sampleChannel,
 		projectCol,
-		assayNames: assays.map((a) => a.assay_name),
-		sampToAssay,
+		sampNamesByAssay,
 		oldChecksum: oldChecksums?.sampleMd5
 	});
 	if (!sampleParseResult) {
