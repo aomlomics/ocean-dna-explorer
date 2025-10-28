@@ -6,7 +6,7 @@ import Modal from "../Modal";
 import ProgressBar from "../ProgressBar";
 import { NetworkProgressPacket } from "@/types/globals";
 import projectEditAction from "@/app/actions/project/update/projectEdit";
-import { doProgressActionMany } from "@/app/helpers/progress";
+import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import projectUpdateIsPrivateAction from "@/app/actions/project/update/projectUpdateIsPrivate";
 import Link from "next/link";
@@ -193,7 +193,14 @@ export default function ProjectEditButton({
 			}
 
 			//trigger streamed action
-			await doProgressActionMany(projectEditAction, setters, setGlobalResponse, urls, project_id, isPrivateToggle);
+			await doProgressActionManyGlobal(
+				projectEditAction,
+				setters,
+				setGlobalResponse,
+				urls,
+				project_id,
+				isPrivateToggle
+			);
 		} catch (err) {
 			const error = err as Error;
 			doError(error.message);

@@ -17,10 +17,10 @@ model Analysis {
     // Submission File URLs
     analysisMetadataFileUrl_ODE      String
     analysisMetadataFileChecksum_ODE String
-    asvFileUrl_ODE                   String?
-    asvFileChecksum_ODE              String?
-    occurrenceFileUrl_ODE            String?
-    occurrenceFileChecksum_ODE       String?
+    asvFileUrl_ODE                   String
+    asvFileChecksum_ODE              String
+    occurrenceFileUrl_ODE            String
+    occurrenceFileChecksum_ODE       String
 
     // Data
     // Bioinformatics

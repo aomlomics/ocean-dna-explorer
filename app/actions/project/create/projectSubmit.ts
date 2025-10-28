@@ -3,8 +3,8 @@
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
-import { createProgressStream } from "@/app/helpers/progress";
-import { Channel, parseProjectFiles } from "@/app/helpers/actions/project";
+import { parseProjectFiles } from "@/app/helpers/actions/project";
+import { Channel, createProgressStream } from "@/app/helpers/progress";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,

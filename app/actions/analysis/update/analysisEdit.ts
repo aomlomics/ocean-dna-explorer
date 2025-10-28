@@ -31,6 +31,8 @@ async function doEdit(
 			},
 			select: {
 				analysisMetadataFileChecksum_ODE: true,
+				asvFileUrl_ODE: true,
+				occurrenceFileUrl_ODE: true,
 				Project: { select: { userIds: true } }
 			}
 		});
@@ -44,15 +46,16 @@ async function doEdit(
 		}
 
 		const parseResult = await parseAnalysisFile({
-			stream,
-			url,
+			channel: { stream, url },
+			assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
+			occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
 			isPrivate,
 			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 		});
 		if (!parseResult) {
 			return;
 		}
-		const { analysis, md5Checksum } = parseResult;
+		const { analysis, analysisMd5 } = parseResult;
 
 		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
@@ -107,7 +110,7 @@ async function doEdit(
 					{
 						field: "analysisMetadataFileChecksum_ODE",
 						oldValue: dbAnalysis.analysisMetadataFileChecksum_ODE,
-						newValue: md5Checksum
+						newValue: analysisMd5
 					}
 				]);
 

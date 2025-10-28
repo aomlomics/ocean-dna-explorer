@@ -2,7 +2,7 @@
 
 import { Occurrence } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
-import { parseOccurrenceFile } from "@/app/helpers/actions/analysis";
+import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { ProgressStream } from "@/types/globals";
@@ -42,16 +42,15 @@ async function doEdit(
 			return;
 		}
 
-		const parseResult = await parseOccurrenceFile({
-			stream,
-			url,
+		const parseResult = await parseOccurrencesFile({
+			channel: { stream, url },
 			analysis_run_name,
 			oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
 		});
 		if (!parseResult) {
 			return;
 		}
-		const { occurrences, md5Checksum } = parseResult;
+		const { occurrences, occurrencesMd5 } = parseResult;
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
@@ -148,7 +147,7 @@ async function doEdit(
 					{
 						field: "occurrenceFileChecksum_ODE",
 						oldValue: dbAnalysis.occurrenceFileChecksum_ODE,
-						newValue: md5Checksum
+						newValue: occurrencesMd5
 					}
 				]);
 
@@ -160,7 +159,7 @@ async function doEdit(
 					data: {
 						editHistory,
 						occurrenceFileUrl_ODE: url,
-						occurrenceFileChecksum_ODE: md5Checksum
+						occurrenceFileChecksum_ODE: occurrencesMd5
 					}
 				});
 
