@@ -5,10 +5,11 @@ import { getZodType } from "@/app/helpers/schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Map from "@/app/components/map/Map";
 import { uncapitalizeTable } from "@/app/helpers/utils";
+import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -16,7 +17,14 @@ export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const [searchTable, setSearchTable] = useState("" as Prisma.ModelName | "");
+    const router = useRouter();
+    const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
+		const table = searchParams.get("table") as Prisma.ModelName;
+		if (table && TableNames.includes(uncapitalizeTable(table))) {
+			return table;
+		}
+		return "Project";
+	});
 	const [filterIds, setFilterIds] = useState([] as FilterIds);
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 	const formRef = useRef<HTMLFormElement>(null);
@@ -42,7 +50,12 @@ export default function AdvancedSearch() {
 					setFilterIds(advancedParsed.map(getFilterIds));
 				}
 
-				setSearchTable((searchParams.get("table") as Prisma.ModelName) || "");
+                const paramTable = searchParams.get("table") as Prisma.ModelName | null;
+                if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
+                    setSearchTable(paramTable);
+                } else {
+                    setSearchTable("Project");
+                }
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -136,11 +149,11 @@ export default function AdvancedSearch() {
 		}
 	}
 
-	function reset() {
-		setSearchTable("");
+    function reset() {
+        setSearchTable("Project");
 		setFilterIds([]);
 		setParamsArray([]);
-		window.history.pushState(null, "", pathname);
+		router.push(pathname);
 	}
 
 	function search() {
@@ -152,86 +165,113 @@ export default function AdvancedSearch() {
 			params.set("advanced", JSON.stringify(advanced));
 		}
 
-		window.history.pushState(null, "", `${pathname}?${params.toString()}`);
+		router.push(`${pathname}?${params.toString()}`);
 	}
 
-	return (
-		<form
-			ref={formRef}
-			className="flex flex-col gap-6"
-			onSubmit={(e) => {
-				e.preventDefault();
-				search();
-			}}
-		>
-			<div className="grid grid-cols-[20%_60%_10%_10%] items-center">
-				<div className="pr-3">
-					<select
-						value={searchTable}
-						className="select"
-						onChange={(e) => {
-							setSearchTable(e.target.value as Prisma.ModelName);
-							setFilterIds([]);
-							setParamsArray([]);
-						}}
-						required
-					>
-						<option disabled value="">
-							Select Table
-						</option>
-						{TableNames.map((table) => (
-							<option key={table} value={table}>
-								{table}
-							</option>
-						))}
-					</select>
-				</div>
+    return (
+        <div className="grid grid-cols-1 gap-y-4 pt-4">
+            {searchTable && (
+                <header>
+                    <h1 className="text-4xl font-normal text-base-content">
+                        <span className="">Advanced Search</span>{" "}
+                        <span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+                        <span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
+                    </h1>
+                </header>
+            )}
+            <div className="prose max-w-full text-base-content/80">
+                <div className="w-full space-y-4">
+                    {searchTable && <p>{TableMetadata[searchTable].description}</p>}
+                    <ExploreTabButtons activeTable={searchTable} />
+                </div>
+            </div>
 
-				{searchTable && (
-					<div className="text-2xl justify-self-center">
-						Filtering <span className="text-primary">{TableMetadata[searchTable].plural}</span>
+			<form
+				ref={formRef}
+				className="flex flex-col gap-6"
+				onSubmit={(e) => {
+					e.preventDefault();
+					search();
+				}}
+			>
+                <div className="card bg-base-100 border border-base-300">
+					<div className="card-body">
+                        <h2 className="text-2xl font-normal flex items-center gap-4">
+                            <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+								1
+							</span>
+                            <span>Select a table to search</span>
+						</h2>
+						<p>Select the table that you want to filter on and see at the bottom of the page.</p>
+						<div className="w-1/4">
+							<select
+								value={searchTable}
+								className="select select-bordered w-full"
+								onChange={(e) => {
+									setSearchTable(e.target.value as Prisma.ModelName);
+									setFilterIds([]);
+									setParamsArray([]);
+								}}
+								required
+							>
+								{TableNames.map((table) => (
+									<option key={table} value={table}>
+										{TableMetadata[table as Prisma.ModelName].plural}
+									</option>
+								))}
+							</select>
+						</div>
 					</div>
-				)}
-
-				<div className="col-3 px-3">
-					<button className="btn btn-error" type="button" onClick={() => reset()}>
-						Clear
-					</button>
 				</div>
-				<button className="btn btn-primary">Search</button>
-			</div>
 
-			{searchTable && (
-				<>
-					<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
-						<input type="checkbox" defaultChecked />
-						<div className="collapse-title font-semibold text-xl text-primary">Filters</div>
-						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-							<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center">
-								<div>Type</div>
-								<div>Relation</div>
-								<div>Field</div>
-								<div>Filter</div>
+                {searchTable && (
+					<>
+                        <div className="card bg-base-100 border border-base-300">
+							<div className="card-body">
+                                <h2 className="text-2xl font-normal flex items-center gap-4">
+                                    <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+										2
+									</span>
+                                    <span>Add Filters and/or Relations</span>
+								</h2>
+                                <p>
+                                    Add field-based filters for the selected table. To include criteria from related tables,
+                                    switch the Type to Relation, choose the related table, then pick the field and condition.
+                                </p>
+                                <div className="rounded-lg border border-base-300 bg-base-100 p-4 md:p-6 text-sm overflow-x-auto overflow-hidden">
+                                    <div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
+                                        <div>Type</div>
+                                        <div>Relation</div>
+                                        <div>Field</div>
+                                        <div>Filter</div>
+                                    </div>
+
+                                    <FilterSection
+                                        searchTable={searchTable}
+                                        filterIds={filterIds}
+                                        paramsArray={paramsArray}
+                                        onChange={(prev) => setFilterIds(prev)}
+                                    />
+                                </div>
 							</div>
-
-							<FilterSection
-								searchTable={searchTable}
-								filterIds={filterIds}
-								paramsArray={paramsArray}
-								onChange={(prev) => setFilterIds(prev)}
-							/>
 						</div>
-					</div>
-					<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
-						<input type="checkbox" />
-						<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
-						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-							<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
+						<div className="collapse collapse-arrow bg-base-100 rounded-none">
+							<input type="checkbox" />
+							<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
+							<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
+								<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
+							</div>
 						</div>
-					</div>
-				</>
-			)}
-		</form>
+						<div className="flex justify-start gap-4">
+							<button className="btn btn-error" type="button" onClick={() => reset()}>
+								Clear
+							</button>
+							<button className="btn btn-primary">Search</button>
+						</div>
+					</>
+				)}
+			</form>
+		</div>
 	);
 }
 
@@ -243,7 +283,8 @@ function FilterSection({
 	onChange,
 	prevSuffix = "",
 	className,
-	label
+	label,
+	hideInnerDeletes
 }: {
 	searchTable: string;
 	filterIds: FilterIds;
@@ -252,40 +293,43 @@ function FilterSection({
 	prevSuffix?: string;
 	className?: string;
 	label?: string;
+	hideInnerDeletes?: boolean;
 }) {
 	return (
 		<div className={`flex flex-col gap-5 ${className}`}>
 			{filterIds.reduce((acc, id, i) => {
-				if (id) {
-					if (acc.length && label) {
-						acc.push(
-							<div key={`${i}_label`} className="flex items-center">
-								<hr className="grow border-warning mx-3"></hr>
-								<div>{label}</div>
-								<hr className="grow border-warning mx-3"></hr>
-							</div>
-						);
-					}
+                if (id) {
+                    if (acc.length && label) {
+                        acc.push(
+                            <div key={`${i}_label`} className="pl-1">
+                                <span className="badge badge-primary badge-outline">OR</span>
+                            </div>
+                        );
+                    }
 
 					if (id === 1) {
 						acc.push(
-							<Filter
+						<Filter
 								key={i}
 								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 								searchTable={searchTable}
-								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
+							onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
+							hideDelete={!!hideInnerDeletes}
 								paramsArray={paramsArray && (paramsArray[i] as ParamsArrayRelation | ParamsArrayField)}
 							/>
 						);
 					} else {
 						acc.push(
-							<div key={i} className="flex flex-col gap-5 border-2 border-warning rounded-lg p-3">
+                            <div
+                                key={i}
+                                className="relative ml-4 flex flex-col gap-5 border border-base-300 rounded-lg p-4 pt-8 bg-base-200/30 border-l border-primary/60"
+                            >
 								<button
-									className="btn btn-xs btn-warning rounded-lg aspect-square justify-self-center self-start pl-2 col-2"
+									className="btn btn-xs btn-square btn-outline absolute top-2 right-2 border-primary"
 									type="button"
 									onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
 								>
-									X
+                            <span className="text-base-content text-lg leading-none">×</span>
 								</button>
 
 								<FilterSection
@@ -295,6 +339,7 @@ function FilterSection({
 									onChange={(prev) => onChange(filterIds.toSpliced(i, 1, prev))}
 									prevSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 									label="OR"
+									hideInnerDeletes
 								/>
 							</div>
 						);
@@ -304,11 +349,19 @@ function FilterSection({
 				return acc;
 			}, [] as ReactNode[])}
 
-			<div className="flex gap-5">
-				<button type="button" className="btn grow" onClick={() => onChange([...filterIds, 1])}>
+            <div className="flex gap-5">
+                <button
+                    type="button"
+                    className="btn btn-md bg-base-200 hover:bg-base-300 text-base-content border-none grow"
+                    onClick={() => onChange([...filterIds, 1])}
+                >
 					+ Add Filter
 				</button>
-				<button type="button" className="btn btn-warning" onClick={() => onChange([...filterIds, []])}>
+                <button
+                    type="button"
+                    className="btn btn-sm btn-primary"
+                    onClick={() => onChange([...filterIds, [1]])}
+                >
 					+ Add OR
 				</button>
 			</div>
@@ -320,12 +373,14 @@ function Filter({
 	nameSuffix,
 	paramsArray,
 	searchTable,
-	onDelete
+	onDelete,
+	hideDelete
 }: {
 	nameSuffix: string;
 	paramsArray?: ParamsArrayRelation | ParamsArrayField;
 	searchTable: string;
 	onDelete: () => FilterIds | void;
+	hideDelete?: boolean;
 }) {
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
@@ -442,13 +497,15 @@ function Filter({
 				/>
 			)}
 
-			<button
-				className="btn btn-xs btn-error rounded-lg aspect-square justify-self-center self-center col-5 pl-2"
-				type="button"
-				onClick={onDelete}
-			>
-				X
-			</button>
+            {!hideDelete && (
+            	<button
+            		className="btn btn-xs btn-square btn-outline justify-self-center self-center col-5 border-primary"
+            		type="button"
+            		onClick={onDelete}
+            	>
+            		<span className="text-base-content text-lg leading-none">×</span>
+            	</button>
+            )}
 		</div>
 	);
 }
