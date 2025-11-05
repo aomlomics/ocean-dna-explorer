@@ -14,34 +14,67 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
 	const pathname = usePathname();
 
 	useEffect(() => {
-		// This effect handles hiding the spinner when navigation is complete.
+		// This effect is a fallback to hide the spinner when the path actually changes.
 		setIsNavigating(false);
 	}, [pathname]);
 
 	useEffect(() => {
-		// This effect handles the delay before showing the spinner.
-		let timer: NodeJS.Timeout;
+		let showTimer: NodeJS.Timeout | undefined;
+		let failSafeTimer: NodeJS.Timeout | undefined;
+		let observer: MutationObserver | undefined;
+
+		const endNavigation = () => {
+			setIsNavigating(false);
+			if (observer) {
+				observer.disconnect();
+				observer = undefined;
+			}
+		};
+
 		if (isNavigating) {
-			timer = setTimeout(() => {
+			// 1. Delay showing the spinner.
+			showTimer = setTimeout(() => {
 				setShowSpinner(true);
-			}, 300);
+			}, 400); // Increased to 400ms as requested.
+
+			// 2. The robust solution: Watch for DOM changes.
+			const targetNode = document.getElementById("main-content");
+			if (targetNode) {
+				observer = new MutationObserver((mutationsList, obs) => {
+					// Any change to the children of the main content area means navigation is complete.
+					endNavigation();
+				});
+				observer.observe(targetNode, { childList: true, subtree: true });
+			}
+
+			// 3. A long safety-net timer just in case the observer fails.
+			failSafeTimer = setTimeout(() => {
+				console.warn("Navigation took too long, hiding spinner via failsafe.");
+				endNavigation();
+			}, 30000); // 30-second timeout.
 		} else {
 			setShowSpinner(false);
 		}
-		return () => clearTimeout(timer);
+
+		// Cleanup timers and the observer.
+		return () => {
+			clearTimeout(showTimer);
+			clearTimeout(failSafeTimer);
+			if (observer) {
+				observer.disconnect();
+			}
+		};
 	}, [isNavigating]);
 
 	useEffect(() => {
-		// This is the "hacky" part. We listen for all clicks on the page.
 		const handleMouseDown = (e: MouseEvent) => {
+			if (isNavigating) return; // Prevent starting a new navigation while one is in progress
+
 			const target = e.target as HTMLElement;
-			// Find the closest link tag
 			const link = target.closest("a");
 
-			// Check if a link was clicked and if it's an internal link
 			if (link && link.href && link.href.startsWith(window.location.origin)) {
 				const linkPathname = new URL(link.href).pathname;
-				// If the link is for a different page, start navigation.
 				if (linkPathname !== pathname) {
 					startTransition(() => {
 						setIsNavigating(true);
@@ -52,7 +85,7 @@ export const NavigationProvider = ({ children }: { children: ReactNode }) => {
 
 		document.addEventListener("mousedown", handleMouseDown);
 		return () => document.removeEventListener("mousedown", handleMouseDown);
-	}, [pathname]); // Rerun this effect if the pathname changes
+	}, [pathname, isNavigating]); // Add isNavigating to dependencies
 
 	return (
 		<NavigationContext.Provider value={{}}>
