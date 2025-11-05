@@ -1,12 +1,17 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, FeatureGroup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-markercluster";
 import { divIcon, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
+import "leaflet-defaulticon-compatibility";
+import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
+import "react-leaflet-fullscreen/styles.css";
+import "react-leaflet-markercluster/styles";
 import Link from "next/link";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { DBSCAN } from "density-clustering";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
@@ -15,15 +20,15 @@ import { capitalizeTable } from "@/app/helpers/utils";
 type Location = {
 	decimalLatitude: number;
 	decimalLongitude: number;
-	color?: string;
-	values?: string[];
 	[key: string]: any;
 };
 
 function changeAlpha(color: string | undefined, alpha: string) {
 	if (color) {
 		const split = color.split(",");
-		split.pop();
+		if (split.length === 4) {
+			split.pop();
+		}
 
 		return (color = split.join(",") + "," + alpha + ")");
 	} else {
@@ -68,13 +73,12 @@ export default function ActualMap({
 	mapProps,
 	id = "samp_name",
 	titleTable,
-	iconSize = 25,
 	table = "sample",
 	legend,
 	cluster = false,
 	draw = false
 }: {
-	locations: Location[];
+	locations: Location[] | Record<string, { color: string; locs: Location[] }>;
 	mapProps:
 		| {
 				center: LatLng;
@@ -88,19 +92,20 @@ export default function ActualMap({
 		  };
 	id?: string;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
-	iconSize?: number;
 	table?: Uncapitalize<Prisma.ModelName>;
 	legend?: Record<string, string>;
 	cluster?: boolean;
 	draw?: boolean;
 }) {
-	const [zoomLevel, setZoomLevel] = useState(5);
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
 
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
-	const [points, setPoints] = useState(locations);
+	const locationPoints = Array.isArray(locations)
+		? locations
+		: Object.values(locations).reduce((acc, ldata) => [...acc, ...ldata.locs], [] as Location[]);
+	const [points, setPoints] = useState(locationPoints);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
 	const [shapes, setShapes] = useState(
@@ -163,9 +168,9 @@ export default function ActualMap({
 				}
 
 				if (inside || !Object.keys(shapes).length) {
-					tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
+					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
 				} else {
-					tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
+					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
 				}
 			}
 
@@ -182,46 +187,6 @@ export default function ActualMap({
 		}
 	}, [shapes]);
 
-	//zoomLevel
-	useEffect(() => {
-		if (drawReady) {
-			let tempLocations = [...locations];
-			//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
-			// if (cluster) {
-			// 	//cluster location data
-			// 	const dataset = tempLocations.map((loc) => [loc.decimalLatitude, loc.decimalLongitude]);
-			// 	const dbscan = new DBSCAN();
-			// 	//adjust second argument to adjust when points cluster
-			// 	const clusters = dbscan.run(dataset, 50 / zoomLevel ** 2.5, 2);
-			// 	//take index of cluster and average latlongs
-			// 	const clusteredLocations = [];
-			// 	for (const c of clusters) {
-			// 		const sum = [0, 0];
-			// 		const values = [] as string[];
-			// 		for (const i of c) {
-			// 			sum[0] += dataset[i][0];
-			// 			sum[1] += dataset[i][1];
-			// 			if (tempLocations[i].values) {
-			// 				values.push(...tempLocations[i].values);
-			// 			} else {
-			// 				values.push(tempLocations[i][id]);
-			// 			}
-			// 		}
-			// 		if (values.length) {
-			// 			clusteredLocations.push({
-			// 				values,
-			// 				decimalLatitude: sum[0] / c.length,
-			// 				decimalLongitude: sum[1] / c.length
-			// 			});
-			// 		}
-			// 	}
-			// 	tempLocations = clusteredLocations;
-			// }
-
-			checkShapes(tempLocations);
-		}
-	}, [zoomLevel]);
-
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
 	useEffect(() => {
 		if (!drawAlmostReady) {
@@ -230,19 +195,6 @@ export default function ActualMap({
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);
-
-	function ZoomControl() {
-		const mapEvents = useMapEvents({
-			zoomend: () => {
-				setZoomLevel(mapEvents.getZoom());
-			},
-			zoomlevelschange: () => {
-				setZoomLevel(mapEvents.getZoom());
-			}
-		});
-
-		return null;
-	}
 
 	function LegendControl() {
 		if (points.length === 0 || !legend || !titleTable) {
@@ -274,6 +226,7 @@ export default function ActualMap({
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
+				preferCanvas={false}
 				maxBounds={
 					[
 						[-180, -180],
@@ -283,6 +236,7 @@ export default function ActualMap({
 				className="w-full h-full grow"
 				{...mapProps}
 			>
+				<FullscreenControl />
 				<LegendControl />
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
@@ -333,29 +287,30 @@ export default function ActualMap({
 					)}
 				</FeatureGroup>
 
-				<ZoomControl />
-
-				{points.map((loc, i) => (
-					<Marker
-						key={loc.decimalLatitude.toString() + loc.decimalLongitude.toString() + i}
-						icon={divIcon({
-							className: "bg-none",
-							html:
-								`<div class='h-full text-center font-mono content-center rounded-full border border-black text-white' style=background-color:${
-									loc.color ? loc.color : "rgb(200,0,0)"
-								}>` +
-								(cluster && loc.values ? loc.values.length.toString() : "") +
-								"</div>",
-							iconSize: [iconSize, iconSize]
-						})}
-						position={{
-							lat: loc.decimalLatitude,
-							lng: loc.decimalLongitude
-						}}
-					>
-						<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} />
-					</Marker>
-				))}
+				{Array.isArray(locations) ? (
+					<ClusterGroup radius={cluster ? 50 : 0}>
+						{points.map((loc, i) => (
+							<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
+								<MarkerPopup table={table} titleTable={titleTable} loc={loc} id={id} />
+							</Marker>
+						))}
+					</ClusterGroup>
+				) : (
+					<>
+						{Object.values(locations).map((ldata, i) => (
+							<ClusterGroup key={i} radius={cluster ? 50 : 0} color={ldata.color}>
+								{ldata.locs.map((loc, j) => (
+									<Marker
+										key={i.toString() + j.toString()}
+										position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}
+									>
+										<MarkerPopup table={table} titleTable={titleTable} loc={loc} id={id} />
+									</Marker>
+								))}
+							</ClusterGroup>
+						))}
+					</>
+				)}
 
 				<style jsx global>{`
 					.leaflet-popup-content-wrapper {
@@ -375,7 +330,55 @@ export default function ActualMap({
 	);
 }
 
-function PopupWithSearch({
+function ClusterGroup({
+	color = "rgb(200,0,0)",
+	radius,
+	children
+}: {
+	color?: string;
+	radius: number;
+	children: ReactNode;
+}) {
+	return (
+		<MarkerClusterGroup
+			maxClusterRadius={radius}
+			singleMarkerMode={true}
+			chunkedLoading={true}
+			spiderLegPolylineOptions={{
+				weight: 1.5,
+				color,
+				opacity: 0.5
+			}}
+			iconCreateFunction={(cluster: any) => {
+				const count = cluster.getChildCount();
+				let size = 15;
+				if (count >= 100) {
+					size = 25;
+				} else if (count >= 10) {
+					size = 20;
+				}
+
+				let html;
+				if (count === 1) {
+					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};></div>`;
+				} else {
+					size += 10;
+					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${count}</div>`;
+				}
+
+				return divIcon({
+					className: "bg-none",
+					html,
+					iconSize: [size, size]
+				});
+			}}
+		>
+			{children}
+		</MarkerClusterGroup>
+	);
+}
+
+function MarkerPopup({
 	table,
 	titleTable,
 	loc,
@@ -386,8 +389,6 @@ function PopupWithSearch({
 	loc: Location;
 	id: string;
 }) {
-	const [filter, setFilter] = useState("");
-
 	return (
 		<Popup className="map-popup">
 			<div className="font-sans bg-base-100 points[i]-4 rounded-lg p-3 pt-5 overscroll-contain">
@@ -405,50 +406,14 @@ function PopupWithSearch({
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
 					</Link>
 				)}
-				{loc.values ? (
-					<input
-						type="text"
-						onChange={(e) => setFilter(e.target.value)}
-						value={filter}
-						placeholder={`Filter ${TableMetadata[table].plural}...`}
-						className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
-					/>
-				) : (
-					<></>
-				)}
 				<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
-					{loc.values ? (
-						<>
-							<h2 className="text-primary text-lg">
-								{TableMetadata[table].plural} ({loc.values.length})
-							</h2>
-							{loc.values.reduce((acc: ReactNode[], label: string) => {
-								if (label.toLowerCase().includes(filter.toLowerCase())) {
-									acc.push(
-										<Link
-											key={label}
-											href={`/explore/${table}/${encodeURIComponent(label)}`}
-											className="link link-primary link-hover"
-										>
-											{label}
-										</Link>
-									);
-								}
-
-								return acc;
-							}, [])}
-						</>
-					) : (
-						<>
-							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
-							<Link
-								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-								className="text-info hover:text-info-focus hover:underline transition-colors"
-							>
-								{loc[id]}
-							</Link>
-						</>
-					)}
+					<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
+					<Link
+						href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+						className="text-info hover:text-info-focus hover:underline transition-colors"
+					>
+						{loc[id]}
+					</Link>
 				</div>
 			</div>
 		</Popup>

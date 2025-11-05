@@ -11,47 +11,78 @@ import Carousel from "../components/images/Carousel";
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
-	const samples = await publicPrisma.sample.findMany({
+	const projects = await publicPrisma.project.findMany({
 		select: {
-			samp_name: true,
 			project_id: true,
-			decimalLatitude: true,
-			decimalLongitude: true
-		},
-		where: {
-			AND: [
-				{
-					NOT: {
-						decimalLatitude: {
-							in: deadValues
+			Samples: {
+				where: {
+					AND: [
+						{
+							NOT: {
+								decimalLatitude: {
+									in: deadValues
+								}
+							}
+						},
+						{
+							NOT: {
+								decimalLongitude: {
+									in: deadValues
+								}
+							}
 						}
-					}
+					]
 				},
-				{
-					NOT: {
-						decimalLongitude: {
-							in: deadValues
-						}
-					}
+				select: {
+					samp_name: true,
+					decimalLatitude: true,
+					decimalLongitude: true
 				}
-			]
+			}
 		}
 	});
 
-	const uniqueProjects = samples.reduce((acc: string[], a) => {
-		if (!acc.includes(a.project_id)) {
-			acc.push(a.project_id);
-		}
+	// const samples = await publicPrisma.sample.findMany({
+	// 	select: {
+	// 		samp_name: true,
+	// 		project_id: true,
+	// 		decimalLatitude: true,
+	// 		decimalLongitude: true
+	// 	},
+	// 	where: {
+	// 		AND: [
+	// 			{
+	// 				NOT: {
+	// 					decimalLatitude: {
+	// 						in: deadValues
+	// 					}
+	// 				}
+	// 			},
+	// 			{
+	// 				NOT: {
+	// 					decimalLongitude: {
+	// 						in: deadValues
+	// 					}
+	// 				}
+	// 			}
+	// 		]
+	// 	}
+	// });
 
-		return acc;
-	}, []);
-	const colors = randomColors(uniqueProjects.length);
+	// const uniqueProjects = samples.reduce((acc: string[], a) => {
+	// 	if (!acc.includes(a.project_id)) {
+	// 		acc.push(a.project_id);
+	// 	}
+
+	// 	return acc;
+	// }, []);
+	const colors = randomColors(projects.length);
+	const locations = {} as Record<string, { color: string; locs: (typeof projects)[0]["Samples"] }>;
 	const projectColors = {} as Record<string, string>;
 	for (let i = 0; i < colors.length; i++) {
-		projectColors[uniqueProjects[i]] = colors[i];
+		locations[projects[i].project_id] = { color: colors[i], locs: projects[i].Samples };
+		projectColors[projects[i].project_id] = colors[i];
 	}
-
-	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
 
 	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
 
@@ -198,14 +229,7 @@ export default async function Home() {
 							<span className="text-primary"> Projects</span>
 						</div>
 						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
-							<Map
-								locations={locations}
-								id="samp_name"
-								titleTable="project"
-								table="sample"
-								iconSize={16}
-								legend={projectColors}
-							/>
+							<Map locations={locations} id="samp_name" titleTable="project" table="sample" legend={projectColors} />
 						</div>
 					</div>
 

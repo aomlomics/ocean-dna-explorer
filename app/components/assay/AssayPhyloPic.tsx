@@ -1,28 +1,17 @@
 import { prisma } from "@/app/helpers/prisma";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 
-export default async function AssayPhyloPic({ assayName }: { assayName: string }) {
-	// Get all analyses for this assay
-	const analyses = await prisma.analysis.findMany({
-		where: { assay_name: assayName },
-		select: { analysis_run_name: true }
-	});
-	if (!analyses.length) {
-		return <div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>;
-	}
-
-	const analysisRunNames = analyses.map((a) => a.analysis_run_name);
-
+export default async function AssayPhyloPic({ assay_name }: { assay_name: string }) {
 	// Sum organismQuantity per (analysis_run_name, featureid)
 	const occurrenceSums = await prisma.occurrence.groupBy({
 		by: ["analysis_run_name", "featureid"],
-		where: { analysis_run_name: { in: analysisRunNames } },
+		where: { Analysis: { assay_name } },
 		_sum: { organismQuantity: true }
 	});
 
 	// Fetch taxonomy rank data for the same (analysis_run_name, featureid)
 	const assignments = await prisma.assignment.findMany({
-		where: { analysis_run_name: { in: analysisRunNames } },
+		where: { Analysis: { assay_name } },
 		select: {
 			analysis_run_name: true,
 			featureid: true,
@@ -30,7 +19,9 @@ export default async function AssayPhyloPic({ assayName }: { assayName: string }
 		}
 	});
 	if (!assignments.length) {
-		return <div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>;
+		return (
+			<div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>
+		);
 	}
 
 	const assignByKey = new Map<string, { family: string | null; order: string | null; class: string | null }>();
@@ -130,5 +121,7 @@ export default async function AssayPhyloPic({ assayName }: { assayName: string }
 		);
 	}
 
-	return <div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>;
-} 
+	return (
+		<div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>
+	);
+}

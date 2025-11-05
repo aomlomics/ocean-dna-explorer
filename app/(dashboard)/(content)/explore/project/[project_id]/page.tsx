@@ -7,6 +7,7 @@ import EditHistory from "@/app/components/EditHistory";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import Table from "@/app/components/paginated/Table";
 import { Project } from "@/app/generated/prisma/client";
+import { Suspense } from "react";
 
 export default async function Project_id({ params }: { params: Promise<{ project_id: Project["project_id"] }> }) {
 	let { project_id } = await params;
@@ -122,7 +123,9 @@ export default async function Project_id({ params }: { params: Promise<{ project
 									<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
 										<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 											<div className="relative w-12 h-12">
-												<AssayPhyloPic assayName={assay} />
+												<Suspense>
+													<AssayPhyloPic assay_name={assay} />
+												</Suspense>
 											</div>
 										</div>
 										<div>
@@ -189,22 +192,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						</ul>
 					</div>
 				</div>
-			</div>
-
-			{/* Samples Table */}
-			<div className="mt-8">
-				<h2 id="Samples" className="text-2xl font-semibold text-base-content/90 mb-4">
-					Samples
-				</h2>
-				<Table table="sample" showUserDefined where={{ project_id }} defaultTake={20} />
-			</div>
-
-			{/* Analyses Table */}
-			<div className="mt-8">
-				<h2 id="Analyses" className="text-2xl font-semibold text-base-content/90 mb-4">
-					Analyses
-				</h2>
-				<Table table="analysis" showUserDefined where={{ project_id }} defaultTake={20} />
 			</div>
 
 			{/* Taxonomy Chart */}
