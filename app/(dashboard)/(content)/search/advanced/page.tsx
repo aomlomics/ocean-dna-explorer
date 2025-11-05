@@ -85,6 +85,11 @@ export default function AdvancedSearch() {
 
 							const table = (relation ? relation : searchTable) as Prisma.ModelName;
 							const field = formRef.current[`field_${suffix}`].value as string;
+
+							if (!field) {
+								continue;
+							}
+
 							const shape = TableMetadata[table].schema.shape;
 							const fieldType = getZodType(shape[field as keyof typeof shape]).type;
 
@@ -194,7 +199,7 @@ export default function AdvancedSearch() {
 					search();
 				}}
 			>
-                <div className="card bg-base-100 border border-base-300">
+                <div className="card bg-base-100 border border-base-200">
 					<div className="card-body">
                         <h2 className="text-2xl font-normal flex items-center gap-4">
                             <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
@@ -226,7 +231,7 @@ export default function AdvancedSearch() {
 
                 {searchTable && (
 					<>
-                        <div className="card bg-base-100 border border-base-300">
+                        <div className="card bg-base-100 border border-base-200">
 							<div className="card-body">
                                 <h2 className="text-2xl font-normal flex items-center gap-4">
                                     <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
@@ -238,7 +243,7 @@ export default function AdvancedSearch() {
                                     Add field-based filters for the selected table. To include criteria from related tables,
                                     switch the Type to Relation, choose the related table, then pick the field and condition.
                                 </p>
-                                <div className="rounded-lg border border-base-300 bg-base-100 p-4 md:p-6 text-sm overflow-x-auto overflow-hidden">
+                                <div className="text-sm overflow-x-auto overflow-hidden">
                                     <div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
                                         <div>Type</div>
                                         <div>Relation</div>
@@ -262,7 +267,7 @@ export default function AdvancedSearch() {
 								<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
 							</div>
 						</div>
-						<div className="flex justify-start gap-4">
+						<div className="flex justify-start gap-4 mt-4">
 							<button className="btn btn-error" type="button" onClick={() => reset()}>
 								Clear
 							</button>
@@ -284,7 +289,8 @@ function FilterSection({
 	prevSuffix = "",
 	className,
 	label,
-	hideInnerDeletes
+	hideInnerDeletes,
+	isSubSection = false,
 }: {
 	searchTable: string;
 	filterIds: FilterIds;
@@ -294,74 +300,76 @@ function FilterSection({
 	className?: string;
 	label?: string;
 	hideInnerDeletes?: boolean;
+	isSubSection?: boolean;
 }) {
+	let visibleItemCount = 0;
 	return (
-		<div className={`flex flex-col gap-5 ${className}`}>
-			{filterIds.reduce((acc, id, i) => {
-                if (id) {
-                    if (acc.length && label) {
-                        acc.push(
-                            <div key={`${i}_label`} className="pl-1">
-                                <span className="badge badge-primary badge-outline">OR</span>
-                            </div>
-                        );
-                    }
+		<div className={`flex flex-col gap-2 ${className}`}>
+			{filterIds.reduce((acc: ReactNode[], id: FilterIds[0], i: number) => {
+				if (id) {
+					if (visibleItemCount > 0 && label) {
+						acc.push(
+							<div key={`${i}_label`} className="flex items-center justify-center">
+								<span className="badge badge-primary badge-outline">OR</span>
+							</div>
+						);
+					}
+					visibleItemCount++;
+
+					const zebraClass = !isSubSection ? (visibleItemCount % 2 === 0 ? "bg-base-200" : "") : "";
 
 					if (id === 1) {
 						acc.push(
-						<Filter
+							<Filter
 								key={i}
 								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 								searchTable={searchTable}
-							onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
-							hideDelete={!!hideInnerDeletes}
+								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
+								hideDelete={!!hideInnerDeletes}
 								paramsArray={paramsArray && (paramsArray[i] as ParamsArrayRelation | ParamsArrayField)}
+								className={zebraClass}
 							/>
 						);
 					} else {
+						const orFilters = id as FilterIds;
 						acc.push(
-                            <div
-                                key={i}
-                                className="relative ml-4 flex flex-col gap-5 border border-base-300 rounded-lg p-4 pt-8 bg-base-200/30 border-l border-primary/60"
-                            >
-								<button
-									className="btn btn-xs btn-square btn-outline absolute top-2 right-2 border-primary"
-									type="button"
-									onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
-								>
-                            <span className="text-base-content text-lg leading-none">×</span>
-								</button>
-
+							<div key={i} className={`rounded-lg p-3 ${zebraClass} relative`}>
+								{orFilters.filter((f) => f === 1).length <= 1 && (
+									<button
+										className="btn btn-xs btn-square btn-primary absolute top-6 right-4 z-10"
+										type="button"
+										onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
+									>
+										<span className="text-primary-content text-lg leading-none">×</span>
+									</button>
+								)}
 								<FilterSection
 									searchTable={searchTable}
-									filterIds={id}
+									filterIds={orFilters}
 									paramsArray={paramsArray && (paramsArray[i] as ParamsArray)}
-									onChange={(prev) => onChange(filterIds.toSpliced(i, 1, prev))}
-									prevSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
+									onChange={(prev: FilterIds) => onChange(filterIds.toSpliced(i, 1, prev))}
+									prevSuffix={`${(prevSuffix && prevSuffix + "|") + i}`}
 									label="OR"
-									hideInnerDeletes
+									hideInnerDeletes={orFilters.filter((f) => f === 1).length < 2}
+									isSubSection={true}
+									className=""
 								/>
 							</div>
 						);
 					}
 				}
-
 				return acc;
-			}, [] as ReactNode[])}
+			}, [])}
 
-            <div className="flex gap-5">
-                <button
-                    type="button"
-                    className="btn btn-md bg-base-200 hover:bg-base-300 text-base-content border-none grow"
-                    onClick={() => onChange([...filterIds, 1])}
-                >
+			<div className="flex justify-center items-center gap-5 mt-4">
+				<button
+					type="button"
+					className="btn btn-md bg-base-200 hover:bg-base-300 text-base-content border-none"
+					onClick={() => onChange([...filterIds, 1])}
+				>
 					+ Add Filter
 				</button>
-                <button
-                    type="button"
-                    className="btn btn-sm btn-primary"
-                    onClick={() => onChange([...filterIds, [1]])}
-                >
+				<button type="button" className="btn btn-md btn-primary" onClick={() => onChange([...filterIds, [1]])}>
 					+ Add OR
 				</button>
 			</div>
@@ -374,13 +382,15 @@ function Filter({
 	paramsArray,
 	searchTable,
 	onDelete,
-	hideDelete
+	hideDelete,
+	className,
 }: {
 	nameSuffix: string;
 	paramsArray?: ParamsArrayRelation | ParamsArrayField;
 	searchTable: string;
 	onDelete: () => FilterIds | void;
 	hideDelete?: boolean;
+	className?: string;
 }) {
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
@@ -409,7 +419,9 @@ function Filter({
 	const omit = [...GlobalOmit, "id"];
 
 	return (
-		<div className="grid grid-cols-[20%_20%_20%_35%_5%]">
+		<div
+			className={`grid grid-cols-[15%_22%_22%_1fr_auto] gap-x-2 items-center p-3 rounded-md ${className}`}
+		>
 			<div className="pr-2">
 				<select
 					className="select"
@@ -430,8 +442,8 @@ function Filter({
 				</select>
 			</div>
 
-			{type === "relation" && (
-				<div className="px-2">
+			<div className="px-2">
+				{type === "relation" ? (
 					<select
 						className="select"
 						value={relation}
@@ -448,7 +460,7 @@ function Filter({
 						{TableNames.reduce((acc, table) => {
 							if (table !== searchTable) {
 								acc.push(
-									<option key={table} value={table}>
+									<option key={table} value={table} title={table}>
 										{table}
 									</option>
 								);
@@ -457,11 +469,13 @@ function Filter({
 							return acc;
 						}, [] as ReactNode[])}
 					</select>
-				</div>
-			)}
+				) : (
+					<div />
+				)}
+			</div>
 
-			{(type === "field" || relation) && (
-				<div className="px-2 col-3">
+			<div className={`px-2`}>
+				{type === "field" || relation ? (
 					<select
 						className="select"
 						value={field}
@@ -475,7 +489,7 @@ function Filter({
 						{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
 							if (!omit.includes(val)) {
 								acc.push(
-									<option key={val} value={val}>
+									<option key={val} value={val} title={val}>
 										{val}
 									</option>
 								);
@@ -484,28 +498,31 @@ function Filter({
 							return acc;
 						}, [] as ReactNode[])}
 					</select>
-				</div>
-			)}
+				) : (
+					<div />
+				)}
+			</div>
 
-			{!!field && (
-				<InputElement
-					nameSuffix={nameSuffix}
-					table={table}
-					field={field}
-					defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
-					defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
-				/>
-			)}
-
-            {!hideDelete && (
-            	<button
-            		className="btn btn-xs btn-square btn-outline justify-self-center self-center col-5 border-primary"
-            		type="button"
-            		onClick={onDelete}
-            	>
-            		<span className="text-base-content text-lg leading-none">×</span>
-            	</button>
-            )}
+			<div className="px-2">
+				{!!field ? (
+					<InputElement
+						nameSuffix={nameSuffix}
+						table={table}
+						field={field}
+						defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
+						defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
+					/>
+				) : (
+					<div />
+				)}
+			</div>
+			<div className="flex justify-center items-center">
+				{!hideDelete && (
+					<button className="btn btn-xs btn-square btn-primary" type="button" onClick={onDelete}>
+						<span className="text-primary-content text-lg leading-none">×</span>
+					</button>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -515,7 +532,7 @@ function InputElement({
 	table,
 	field,
 	defaultMode,
-	defaultValue
+	defaultValue,
 }: {
 	nameSuffix: string;
 	table: Prisma.ModelName;
