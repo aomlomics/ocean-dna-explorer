@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { divIcon, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -15,13 +15,8 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
-import { capitalizeTable } from "@/app/helpers/utils";
-
-type Location = {
-	decimalLatitude: number;
-	decimalLongitude: number;
-	[key: string]: any;
-};
+import { capitalizeTable, randomColors } from "@/app/helpers/utils";
+import { MapProps, Location, LocationWithoutValues } from "@/types/globals";
 
 function changeAlpha(color: string | undefined, alpha: string) {
 	if (color) {
@@ -68,32 +63,35 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	return d * 1000; // meters
 }
 
+function getTitleIdValue(titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"], loc: Location) {
+	if (typeof titleId === "string") {
+		return loc[titleId];
+	} else {
+		let joined = "";
+		for (let i = 0; i < titleId.length; i++) {
+			if (i) {
+				joined += "/";
+			}
+			joined += loc[titleId[i]];
+		}
+		return joined;
+	}
+}
+
 export default function ActualMap({
 	locations,
 	mapProps,
 	id = "samp_name",
-	titleTable,
 	table = "sample",
-	legend,
+	titleTable,
 	cluster = false,
 	draw = false
 }: {
-	locations: Location[] | Record<string, { color: string; locs: Location[] }>;
-	mapProps:
-		| {
-				center: LatLng;
-				zoom: number;
-				bounds?: undefined;
-		  }
-		| {
-				bounds: LatLngBoundsExpression;
-				center?: undefined;
-				zoom?: undefined;
-		  };
+	locations: Location[];
+	mapProps: MapProps;
 	id?: string;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
 	table?: Uncapitalize<Prisma.ModelName>;
-	legend?: Record<string, string>;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	draw?: boolean;
 }) {
@@ -102,9 +100,36 @@ export default function ActualMap({
 
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
-	const locationPoints = Array.isArray(locations)
-		? locations
-		: Object.values(locations).reduce((acc, ldata) => [...acc, ...ldata.locs], [] as Location[]);
+	let locationPoints;
+	if (titleTable) {
+		const titleId = TableMetadata[titleTable].titleField;
+		//get all options for coloring
+		const options = new Set() as Set<string>;
+		for (const loc of locations) {
+			options.add(getTitleIdValue(titleId, loc));
+		}
+
+		//assign color to each option
+		const optionsArray = Array.from(options);
+		const colors = randomColors(optionsArray.length);
+		const optionsToColors = {} as Record<string, string>;
+		for (let i = 0; i < optionsArray.length; i++) {
+			optionsToColors[optionsArray[i]] = colors[i];
+		}
+
+		//assemble locations object with assigned color and list of locations
+		locationPoints = {} as Record<string, { color: string; locs: Location[] }>;
+		for (const loc of locations) {
+			const opt = getTitleIdValue(titleId, loc);
+			if (locationPoints[opt]) {
+				locationPoints[opt].locs.push(loc);
+			} else {
+				locationPoints[opt] = { color: optionsToColors[opt], locs: [loc] };
+			}
+		}
+	} else {
+		locationPoints = locations;
+	}
 	const [points, setPoints] = useState(locationPoints);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
@@ -127,7 +152,7 @@ export default function ActualMap({
 		>
 	);
 
-	function checkShapes(pts = points) {
+	function checkShapes(pts = locations) {
 		let tempPoints = [...pts];
 
 		if (Object.keys(shapes).length) {
@@ -197,7 +222,7 @@ export default function ActualMap({
 	}, [drawAlmostReady]);
 
 	function LegendControl() {
-		if (points.length === 0 || !legend || !titleTable) {
+		if (points.length === 0 || !titleTable) {
 			return null;
 		}
 
@@ -206,9 +231,9 @@ export default function ActualMap({
 				<div className="leaflet-control leaflet-bar !border-none !mb-6">
 					<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
 						<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
-						{Object.entries(legend).map(([key, color]) => (
+						{Object.entries(points).map(([key, ldata]) => (
 							<div key={key} className="flex gap-2 items-center">
-								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
+								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: ldata.color }}></div>
 								<Link
 									href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
 									className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
@@ -287,24 +312,27 @@ export default function ActualMap({
 					)}
 				</FeatureGroup>
 
-				{Array.isArray(locations) ? (
+				{Array.isArray(points) ? (
 					<ClusterGroup radius={cluster ? 50 : 0}>
 						{points.map((loc, i) => (
 							<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-								<MarkerPopup table={table} titleTable={titleTable} loc={loc} id={id} />
+								<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} />
 							</Marker>
 						))}
 					</ClusterGroup>
 				) : (
 					<>
-						{Object.values(locations).map((ldata, i) => (
+						{Object.values(points).map((ldata, i) => (
 							<ClusterGroup key={i} radius={cluster ? 50 : 0} color={ldata.color}>
 								{ldata.locs.map((loc, j) => (
 									<Marker
 										key={i.toString() + j.toString()}
-										position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}
+										position={{
+											lat: loc.decimalLatitude,
+											lng: loc.decimalLongitude
+										}}
 									>
-										<MarkerPopup table={table} titleTable={titleTable} loc={loc} id={id} />
+										<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} />
 									</Marker>
 								))}
 							</ClusterGroup>
@@ -344,26 +372,34 @@ function ClusterGroup({
 			maxClusterRadius={radius}
 			singleMarkerMode={true}
 			chunkedLoading={true}
-			spiderLegPolylineOptions={{
-				weight: 1.5,
-				color,
-				opacity: 0.5
-			}}
 			iconCreateFunction={(cluster: any) => {
-				const count = cluster.getChildCount();
-				let size = 15;
-				if (count >= 100) {
-					size = 25;
-				} else if (count >= 10) {
-					size = 20;
+				let count = 0;
+				let childrenWithValues = 0;
+				let valuesCount = 0;
+				for (const marker of cluster.getAllChildMarkers()) {
+					count++;
+
+					if (marker.options.children.props.loc.values) {
+						childrenWithValues++;
+						valuesCount += marker.options.children.props.loc.values.length;
+					}
 				}
+
+				const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
+
+				let size = 10 + 5 * Math.floor(combined).toString().length;
 
 				let html;
 				if (count === 1) {
-					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};></div>`;
+					if (valuesCount) {
+						size += 5;
+					}
+					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};>${
+						valuesCount || ""
+					}</div>`;
 				} else {
 					size += 10;
-					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${count}</div>`;
+					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${combined}</div>`;
 				}
 
 				return divIcon({
@@ -378,7 +414,7 @@ function ClusterGroup({
 	);
 }
 
-function MarkerPopup({
+function PopupWithSearch({
 	table,
 	titleTable,
 	loc,
@@ -389,6 +425,8 @@ function MarkerPopup({
 	loc: Location;
 	id: string;
 }) {
+	const [filter, setFilter] = useState("");
+
 	return (
 		<Popup className="map-popup">
 			<div className="font-sans bg-base-100 points[i]-4 rounded-lg p-3 pt-5 overscroll-contain">
@@ -406,15 +444,53 @@ function MarkerPopup({
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
 					</Link>
 				)}
-				<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
-					<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
-					<Link
-						href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-						className="text-info hover:text-info-focus hover:underline transition-colors"
-					>
-						{loc[id]}
-					</Link>
-				</div>
+				{loc.values ? (
+					<input
+						type="text"
+						onChange={(e) => setFilter(e.target.value)}
+						value={filter}
+						placeholder={`Filter ${TableMetadata[table].plural}...`}
+						className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
+					/>
+				) : (
+					<></>
+				)}
+				<>
+					{loc.values ? (
+						<>
+							<h2 className="text-primary text-lg">
+								{TableMetadata[table].plural} ({loc.values.length})
+							</h2>
+							<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
+								{loc.values.reduce((acc: ReactNode[], l: LocationWithoutValues) => {
+									if (l[id].toLowerCase().includes(filter.toLowerCase())) {
+										acc.push(
+											<Link
+												key={l[id]}
+												href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+												className="link link-primary link-hover"
+											>
+												{l[id]}
+											</Link>
+										);
+									}
+
+									return acc;
+								}, [])}
+							</div>
+						</>
+					) : (
+						<>
+							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
+							<Link
+								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+								className="text-info hover:text-info-focus hover:underline transition-colors"
+							>
+								{loc[id]}
+							</Link>
+						</>
+					)}
+				</>
 			</div>
 		</Popup>
 	);
