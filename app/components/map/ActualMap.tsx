@@ -548,25 +548,30 @@ function ClusterControl({
 		return (
 			<div className="leaflet-bottom leaflet-left" ref={ref}>
 				<div className="leaflet-control leaflet-bar !border-none">
-					<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 flex-row items-center">
-						<div className="pr-1 flex flex-col text-xs">
-							<span>Cluster</span>
-							<span>Radius</span>
+					<div className="card bg-base-100 card-xs shadow-sm card-body pl-3 pr-1 pt-1 pb-2 w-25 gap-0">
+						<div className="flex justify-between">
+							<span className="text-sm mt-1">Cluster</span>
+							<InfoButton
+								infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
+								dir="tooltip-right"
+								className="self-start"
+							/>
 						</div>
-						<input
-							type="number"
-							className="input input-primary max-w-20"
-							value={value === undefined ? "" : value}
-							onChange={(e) => {
-								const parsed = parseInt(e.currentTarget.value);
-								if (isNaN(parsed)) {
-									onChange(undefined);
-								} else {
-									onChange(parsed);
-								}
-							}}
-						/>
-						<InfoButton infoText="The radius that points will cluster" dir="tooltip-right" className="self-start" />
+						<div className="pr-2">
+							<input
+								type="number"
+								className="input input-primary"
+								value={value === undefined ? "" : value}
+								onChange={(e) => {
+									const parsed = parseInt(e.currentTarget.value);
+									if (isNaN(parsed)) {
+										onChange(undefined);
+									} else {
+										onChange(parsed);
+									}
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
