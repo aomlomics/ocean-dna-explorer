@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { divIcon, DomEvent, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -11,12 +11,13 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import "react-leaflet-markercluster/styles";
 import Link from "next/link";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { Dispatch, ReactNode, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { capitalizeTable, randomColors } from "@/app/helpers/utils";
 import { MapProps, Location, LocationWithoutValues } from "@/types/globals";
+import InfoButton from "../InfoButton";
 
 function changeAlpha(color: string | undefined, alpha: string) {
 	if (color) {
@@ -85,6 +86,7 @@ export default function ActualMap({
 	table = "sample",
 	titleTable,
 	cluster = false,
+	clusterRadius = 50,
 	draw = false
 }: {
 	locations: Location[];
@@ -93,6 +95,7 @@ export default function ActualMap({
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
+	clusterRadius?: number;
 	draw?: boolean;
 }) {
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
@@ -132,6 +135,8 @@ export default function ActualMap({
 	}
 	const [points, setPoints] = useState(locationPoints);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
+
+	const [clusterRadiusValue, setClusterRadiusValue] = useState(clusterRadius as number | undefined);
 
 	const [shapes, setShapes] = useState(
 		{} as Record<
@@ -221,30 +226,59 @@ export default function ActualMap({
 		}
 	}, [drawAlmostReady]);
 
-	function LegendControl() {
-		if (points.length === 0 || !titleTable) {
-			return null;
-		}
-
+	function ClusterGroup({
+		color = "rgb(200,0,0)",
+		radius,
+		children
+	}: {
+		color?: string;
+		radius: number | undefined;
+		children: ReactNode;
+	}) {
 		return (
-			<div className="leaflet-bottom leaflet-right">
-				<div className="leaflet-control leaflet-bar !border-none !mb-6">
-					<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
-						<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
-						{Object.entries(points).map(([key, ldata]) => (
-							<div key={key} className="flex gap-2 items-center">
-								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: ldata.color }}></div>
-								<Link
-									href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
-									className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
-								>
-									{key}
-								</Link>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
+			<MarkerClusterGroup
+				maxClusterRadius={radius || 0}
+				singleMarkerMode={true}
+				chunkedLoading={true}
+				iconCreateFunction={(cluster: any) => {
+					let count = 0;
+					let childrenWithValues = 0;
+					let valuesCount = 0;
+					for (const marker of cluster.getAllChildMarkers()) {
+						count++;
+
+						if (marker.options.children.props.loc.values) {
+							childrenWithValues++;
+							valuesCount += marker.options.children.props.loc.values.length;
+						}
+					}
+
+					const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
+
+					let size = 10 + 5 * Math.floor(combined).toString().length;
+
+					let html;
+					if (count === 1) {
+						if (valuesCount) {
+							size += 5;
+						}
+						html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};>${
+							valuesCount || ""
+						}</div>`;
+					} else {
+						size += 10;
+						html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${combined}</div>`;
+					}
+
+					return divIcon({
+						className: "bg-none",
+						html,
+						iconSize: [size, size]
+					});
+				}}
+			>
+				{children}
+			</MarkerClusterGroup>
 		);
 	}
 
@@ -262,7 +296,9 @@ export default function ActualMap({
 				{...mapProps}
 			>
 				<FullscreenControl />
-				<LegendControl />
+				<LegendControl points={points} titleTable={titleTable} />
+				<ClusterControl cluster={cluster} value={clusterRadiusValue} onChange={setClusterRadiusValue} />
+
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
 					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
@@ -313,7 +349,7 @@ export default function ActualMap({
 				</FeatureGroup>
 
 				{Array.isArray(points) ? (
-					<ClusterGroup radius={cluster ? 50 : 0}>
+					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
 						{points.map((loc, i) => (
 							<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 								<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} />
@@ -323,7 +359,7 @@ export default function ActualMap({
 				) : (
 					<>
 						{Object.values(points).map((ldata, i) => (
-							<ClusterGroup key={i} radius={cluster ? 50 : 0} color={ldata.color}>
+							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0} color={ldata.color}>
 								{ldata.locs.map((loc, j) => (
 									<Marker
 										key={i.toString() + j.toString()}
@@ -355,62 +391,6 @@ export default function ActualMap({
 				`}</style>
 			</MapContainer>
 		</div>
-	);
-}
-
-function ClusterGroup({
-	color = "rgb(200,0,0)",
-	radius,
-	children
-}: {
-	color?: string;
-	radius: number;
-	children: ReactNode;
-}) {
-	return (
-		<MarkerClusterGroup
-			maxClusterRadius={radius}
-			singleMarkerMode={true}
-			chunkedLoading={true}
-			iconCreateFunction={(cluster: any) => {
-				let count = 0;
-				let childrenWithValues = 0;
-				let valuesCount = 0;
-				for (const marker of cluster.getAllChildMarkers()) {
-					count++;
-
-					if (marker.options.children.props.loc.values) {
-						childrenWithValues++;
-						valuesCount += marker.options.children.props.loc.values.length;
-					}
-				}
-
-				const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
-
-				let size = 10 + 5 * Math.floor(combined).toString().length;
-
-				let html;
-				if (count === 1) {
-					if (valuesCount) {
-						size += 5;
-					}
-					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};>${
-						valuesCount || ""
-					}</div>`;
-				} else {
-					size += 10;
-					html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${combined}</div>`;
-				}
-
-				return divIcon({
-					className: "bg-none",
-					html,
-					iconSize: [size, size]
-				});
-			}}
-		>
-			{children}
-		</MarkerClusterGroup>
 	);
 }
 
@@ -494,4 +474,102 @@ function PopupWithSearch({
 			</div>
 		</Popup>
 	);
+}
+
+function LegendControl({
+	points,
+	titleTable
+}: {
+	points:
+		| Location[]
+		| Record<
+				string,
+				{
+					color: string;
+					locs: Location[];
+				}
+		  >;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+		}
+	}, []);
+
+	if (points.length === 0 || !titleTable) {
+		return null;
+	}
+
+	return (
+		<div className="leaflet-bottom leaflet-right" ref={ref}>
+			<div className="leaflet-control leaflet-bar !border-none !mb-6">
+				<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
+					<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
+					{Object.entries(points).map(([key, ldata]) => (
+						<div key={key} className="flex gap-2 items-center">
+							<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: ldata.color }}></div>
+							<Link
+								href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
+								className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
+							>
+								{key}
+							</Link>
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ClusterControl({
+	cluster,
+	value,
+	onChange
+}: {
+	cluster: boolean;
+	value: number | undefined;
+	onChange: Dispatch<SetStateAction<number | undefined>>;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+		}
+	}, []);
+
+	if (!cluster) {
+		return null;
+	} else {
+		return (
+			<div className="leaflet-bottom leaflet-left" ref={ref}>
+				<div className="leaflet-control leaflet-bar !border-none">
+					<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 flex-row items-center">
+						<div className="pr-1 flex flex-col text-xs">
+							<span>Cluster</span>
+							<span>Radius</span>
+						</div>
+						<input
+							type="number"
+							className="input input-primary max-w-20"
+							value={value === undefined ? "" : value}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									onChange(undefined);
+								} else {
+									onChange(parsed);
+								}
+							}}
+						/>
+						<InfoButton infoText="The radius that points will cluster" dir="tooltip-right" className="self-start" />
+					</div>
+				</div>
+			</div>
+		);
+	}
 }

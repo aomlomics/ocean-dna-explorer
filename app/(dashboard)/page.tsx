@@ -176,7 +176,7 @@ export default async function Home() {
 							<span className="text-primary"> Projects</span>
 						</div>
 						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
-							<Map locations={samples} titleTable="project" />
+							<Map locations={samples} titleTable="project" cluster clusterRadius={20} />
 						</div>
 					</div>
 

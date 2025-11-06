@@ -27,18 +27,18 @@ export default function Map({
 	id = "samp_name",
 	table = "sample",
 	titleTable,
-	cluster = false,
-	draw = false
+	cluster,
+	clusterRadius,
+	draw
 }: {
 	locations: NullLocation[];
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
+	cluster?: boolean;
+	clusterRadius?: number;
 	draw?: boolean;
-} & (
-	| { titleTable?: undefined; cluster?: false }
-	| { titleTable?: Uncapitalize<Prisma.ModelName>; cluster?: false }
-	| { titleTable?: undefined; cluster?: true }
-)) {
+}) {
 	//clump locations if they have identical latlng
 	let filteredLocations = [] as Location[];
 	//calculate starting map view
@@ -114,6 +114,7 @@ export default function Map({
 			table={table}
 			titleTable={titleTable}
 			cluster={cluster}
+			clusterRadius={clusterRadius}
 			draw={draw}
 		/>
 	);
