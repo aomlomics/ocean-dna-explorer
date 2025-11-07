@@ -62,12 +62,12 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	const { Occurrences: _, Assays: __, Project: ___, ...justSample } = sample;
 
 	// Build search URL - encode brackets/commas but leave quotes as-is for JSON.parse
-	const advancedFilter = JSON.stringify([["Sample", "samp_name", "equals", samp_name]]);
+	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
 	const encodedFilter = advancedFilter
 		.replace(/\[/g, "%5B")
 		.replace(/\]/g, "%5D")
 		.replace(/,/g, "%2C");
-	const taxonomySearchUrl = `/search/advanced?table=Taxonomy&advanced=${encodedFilter}`;
+	const taxonomySearchUrl = `/search/advanced?table=taxonomy&advanced=${encodedFilter}`;
 
 	return (
 		<div className="space-y-8">
