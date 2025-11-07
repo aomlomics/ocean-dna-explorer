@@ -67,7 +67,9 @@ export default function AdvancedSearch() {
 	}, [searchParams]);
 
 	useEffect(() => {
-		if (searchTable) {
+		// Don't call search() if we already have advanced params from URL
+		// This prevents overwriting the URL on initial load
+		if (searchTable && !searchParams.has("advanced")) {
 			search();
 		}
 	}, [searchTable]);
