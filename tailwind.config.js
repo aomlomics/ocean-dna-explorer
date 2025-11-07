@@ -115,7 +115,7 @@ module.exports = {
 					"accent-focus": "#4B95C3",
 					"accent-content": "#E2E8F1",
 					"neutral": "#3d4451",
-					"base-100": "#F4F3F2",
+					"base-100": "#D1D5DB",
 					"base-200": "#EAEAEE",
 					"base-300": "#E3E3E9",
 					"base-400": "#C6C6D2",

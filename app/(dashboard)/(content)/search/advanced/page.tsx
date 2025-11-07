@@ -10,6 +10,8 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import Map from "@/app/components/map/Map";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
+import Image from "next/image";
+import Modal from "@/app/components/Modal";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -25,9 +27,10 @@ export default function AdvancedSearch() {
 		}
 		return "Project";
 	});
-	const [filterIds, setFilterIds] = useState([] as FilterIds);
+	const [filterIds, setFilterIds] = useState([1] as FilterIds);
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 	const formRef = useRef<HTMLFormElement>(null);
+	const helpModalRef = useRef<HTMLDialogElement>(null);
 
 	useEffect(() => {
 		try {
@@ -70,6 +73,67 @@ export default function AdvancedSearch() {
 	}, [searchTable]);
 
 	//functions
+	function getQueryDescription() {
+		if (!formRef.current || filterIds.length === 0) return "";
+
+		function describeFilter(suffix: string): string {
+			if (!formRef.current) return "";
+			
+			const type = formRef.current[`type_${suffix}`]?.value as "relation" | "field";
+			const relation = type === "relation" ? formRef.current[`relation_${suffix}`]?.value : "";
+			const field = formRef.current[`field_${suffix}`]?.value as string;
+			const mode = formRef.current[`mode_${suffix}`]?.value as QueryMode;
+			
+			if (!field) return "";
+			
+			const tableName = relation || searchTable;
+			const prefix = relation ? `${relation}.` : "";
+			
+			const modeText = {
+				contains: "contains",
+				equals: "equals",
+				startsWith: "starts with",
+				endsWith: "ends with",
+				gt: ">",
+				gte: ">=",
+				lt: "<",
+				lte: "<=",
+				range: "is between"
+			}[mode] || mode;
+			
+			let filterValue = formRef.current[`filter_${suffix}`]?.value || "";
+			if (mode === "range") {
+				const gte = formRef.current[`filter_${suffix}_gte`]?.value || "";
+				const lte = formRef.current[`filter_${suffix}_lte`]?.value || "";
+				filterValue = `${gte} and ${lte}`;
+			}
+			
+			return `${prefix}${field} ${modeText} "${filterValue}"`;
+		}
+
+		function recurse(ids: FilterIds, prevSuffix = ""): string {
+			const parts: string[] = [];
+			
+			ids.forEach((id, i) => {
+				if (id === 0) return;
+				const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
+				
+				if (id === 1) {
+					const desc = describeFilter(suffix);
+					if (desc) parts.push(desc);
+				} else {
+					const orDesc = recurse(id as FilterIds, suffix);
+					if (orDesc) parts.push(`(${orDesc})`);
+				}
+			});
+			
+			return parts.join(" OR ");
+		}
+
+		const desc = recurse(filterIds);
+		return desc ? `Searching for ${TableMetadata[searchTable].plural} where: ${desc}` : "";
+	}
+
 	function getParamsArray(ids = filterIds, prevSuffix = "") {
 		if (formRef.current && ids && searchTable) {
 			const parts = [] as ParamsArray;
@@ -184,30 +248,27 @@ export default function AdvancedSearch() {
                     </h1>
                 </header>
             )}
-            <div className="prose max-w-full text-base-content/80">
-                <div className="w-full space-y-4">
-                    {searchTable && <p>{TableMetadata[searchTable].description}</p>}
-                    <ExploreTabButtons activeTable={searchTable} />
-                </div>
+            <div className="w-full space-y-4 text-base-content/80">
+                {searchTable && <p>{TableMetadata[searchTable].description}</p>}
+                <ExploreTabButtons activeTable={searchTable} />
             </div>
 
 			<form
 				ref={formRef}
-				className="flex flex-col gap-6"
+				className="flex flex-col gap-4"
 				onSubmit={(e) => {
 					e.preventDefault();
 					search();
 				}}
 			>
-                <div className="card bg-base-100 border border-base-200">
-					<div className="card-body">
-                        <h2 className="text-2xl font-normal flex items-center gap-4">
+                <div className="bg-base-100 py-6 rounded-lg">
+                        <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
                             <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
 								1
 							</span>
                             <span>Select a table to search</span>
 						</h2>
-						<p>Select the table that you want to filter on and see at the bottom of the page.</p>
+						<p className="mb-8">Select the table that you want to filter on and see at the bottom of the page.</p>
 						<div className="w-1/4">
 							<select
 								value={searchTable}
@@ -226,24 +287,27 @@ export default function AdvancedSearch() {
 								))}
 							</select>
 						</div>
-					</div>
 				</div>
 
                 {searchTable && (
 					<>
-                        <div className="card bg-base-100 border border-base-200">
-							<div className="card-body">
-                                <h2 className="text-2xl font-normal flex items-center gap-4">
-                                    <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+                        <div className="bg-base-100 py-6 rounded-lg">
+                                <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+									<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
 										2
 									</span>
-                                    <span>Add Filters and/or Relations</span>
+									<span>Add Filters and/or Relations</span>
+									<div className="flex items-center gap-2 bg-base-100 rounded-lg px-3 py-2 cursor-pointer hover:bg-base-300 transition-colors" onClick={() => helpModalRef.current?.showModal()}>
+										<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
+											?
+										</span>
+										<span className="text-sm">Help me use this</span>
+									</div>
 								</h2>
-                                <p>
-                                    Add field-based filters for the selected table. To include criteria from related tables,
-                                    switch the Type to Relation, choose the related table, then pick the field and condition.
+                                <p className="mb-8">
+                                    Add filters for the selected table, using filters based on the data fields. To include criteria from related tables, switch the type to relation, choose the related table, then pick the field and condition. Each filter and/or relation (or each row of the menu below) is combined with AND logic. You can also add OR groups to your filters.
                                 </p>
-                                <div className="text-sm overflow-x-auto overflow-hidden">
+                                <div className="text-sm overflow-x-auto overflow-hidden border border-base-300 rounded-lg p-4">
                                     <div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
                                         <div>Type</div>
                                         <div>Relation</div>
@@ -257,25 +321,122 @@ export default function AdvancedSearch() {
                                         paramsArray={paramsArray}
                                         onChange={(prev) => setFilterIds(prev)}
                                     />
-                                </div>
-							</div>
 						</div>
-						<div className="collapse collapse-arrow bg-base-100 rounded-none">
-							<input type="checkbox" />
-							<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
-							<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-								<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
-							</div>
-						</div>
-						<div className="flex justify-start gap-4 mt-4">
-							<button className="btn btn-error" type="button" onClick={() => reset()}>
-								Clear
-							</button>
-							<button className="btn btn-primary">Search</button>
-						</div>
-					</>
+				</div>
+				{getQueryDescription() && (
+					<div className="bg-base-200 border border-base-300 rounded-lg p-4 mt-4">
+						<p className="text-sm text-base-content/90 font-mono">{getQueryDescription()}</p>
+					</div>
 				)}
-			</form>
+				<div className="flex items-center justify-start gap-4 mt-2">
+					<button type="submit" className="btn btn-primary btn-lg gap-2">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth={2}
+							stroke="currentColor"
+							className="w-5 h-5"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+							/>
+						</svg>
+						Search
+					</button>
+					<button type="button" className="btn btn-error btn-lg gap-2" onClick={() => reset()}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth={1.5}
+							stroke="currentColor"
+							className="w-5 h-5"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M6 18L18 6M6 6l12 12"
+							/>
+						</svg>
+						Clear
+					</button>
+				</div>
+				<div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
+					<input type="checkbox" />
+					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
+					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
+						<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
+					</div>
+				</div>
+			</>
+		)}
+	</form>
+
+			<Modal ref={helpModalRef} className="max-h-[85vh] overflow-y-auto my-8">
+				<div className="p-6">
+					<h3 className="text-2xl font-normal mb-4 text-primary">Advanced Search Filtering Help</h3>
+					<div className="space-y-4">
+						<div>
+							<h4 className="font-semibold text-lg mb-2">Using the Filters and Relations</h4>
+							<p className="text-base-content/80">
+								Each filter row you add is combined with <span className="font-semibold">AND</span> logic.
+								For example, if you add two filters, the search will find records that match{" "}
+								<span className="italic">both</span> conditions.
+							</p>
+						</div>
+
+						<div>
+							<h4 className="font-semibold text-lg mb-2">Using OR</h4>
+							<p className="text-base-content/80 mb-2">
+								The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a
+								combined statement that is true if <span className="italic">any one</span> of its conditions
+								is met. The OR group itself is treated like a normal filter and is combined with other
+								filters using <span className="font-semibold">AND</span> logic.
+							</p>
+							<div className="bg-base-200 p-3 rounded-md">
+								<p className="font-mono text-sm mb-2">Example with OR:</p>
+								<p className="font-mono text-sm">Filter A AND (Filter B OR Filter C)</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									(finds records matching A, and either B or C)
+								</p>
+							</div>
+							<div className="bg-base-200 p-3 rounded-md mt-2">
+								<p className="font-mono text-sm mb-2">Example with multiple ORs:</p>
+								<p className="font-mono text-sm">(Filter A OR Filter B) AND (Filter C OR Filter D)</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									(finds records matching either A or B, and also matching either C or D)
+								</p>
+							</div>
+						</div>
+
+						<div>
+							<h4 className="font-semibold text-lg mb-2">Using Nested OR</h4>
+							<p className="text-base-content/80 mb-2">
+								Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to
+								create an OR within an OR. This is an advanced feature for complex queries.
+							</p>
+							<div className="bg-base-200 p-3 rounded-md">
+								<p className="font-mono text-sm mb-2">Example with Nested OR:</p>
+								<p className="font-mono text-sm">Filter A AND ((Filter B OR Filter C) OR (Filter D OR Filter E))</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									(finds records matching A, and either (B or C) or (D or E))
+								</p>
+							</div>
+						</div>
+
+						<div className="bg-base-200 p-3 rounded-md border border-base-300">
+							<p className="text-base-content/80">
+								<strong>Tip:</strong> Nested ORs are rarely needed for most searches. In most cases, you'll want to use{" "}
+								<span className="font-semibold">"+ Add Filter"</span> to add more conditions to an OR group
+								rather than creating a Nested OR.
+							</p>
+						</div>
+					</div>
+				</div>
+			</Modal>
 		</div>
 	);
 }
@@ -332,8 +493,9 @@ function FilterSection({
 						);
 					} else {
 						const orFilters = id as FilterIds;
+						const isNested = isSubSection;
 						acc.push(
-							<div key={i} className={`rounded-lg p-3 ${zebraClass} relative`}>
+							<div key={i} className={`rounded-lg p-3 ${zebraClass} relative ${isNested ? 'border-2 border-primary/30' : ''}`}>
 								{orFilters.filter((f) => f === 1).length <= 1 && (
 									<button
 										className="btn btn-xs btn-square btn-primary absolute top-6 right-4 z-10"
@@ -342,6 +504,11 @@ function FilterSection({
 									>
 										<span className="text-primary-content text-lg leading-none">×</span>
 									</button>
+								)}
+								{isNested && (
+									<div className="absolute -top-3 left-4 bg-base-100 px-2">
+										<span className="badge badge-primary badge-sm">Nested OR Group</span>
+									</div>
 								)}
 								<FilterSection
 									searchTable={searchTable}
@@ -364,13 +531,18 @@ function FilterSection({
 			<div className="flex justify-center items-center gap-5 mt-4">
 				<button
 					type="button"
-					className="btn btn-md bg-base-200 hover:bg-base-300 text-base-content border-none"
+					className="btn btn-md btn-primary"
 					onClick={() => onChange([...filterIds, 1])}
 				>
 					+ Add Filter
 				</button>
-				<button type="button" className="btn btn-md btn-primary" onClick={() => onChange([...filterIds, [1]])}>
-					+ Add OR
+				<button
+					type="button"
+					className="btn btn-md btn-primary"
+					onClick={() => onChange([...filterIds, [1]])}
+					title={isSubSection ? "Add a nested OR group - creates an OR within this OR group" : "Add an OR group - combines conditions with OR logic"}
+				>
+					{isSubSection ? "+ Add Nested OR" : "+ Add OR"}
 				</button>
 			</div>
 		</div>
