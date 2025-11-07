@@ -318,6 +318,7 @@ export default function AdvancedSearch() {
                                     </div>
 
                                     <FilterSection
+                                        key={JSON.stringify(paramsArray)}
                                         searchTable={searchTable}
                                         filterIds={filterIds}
                                         paramsArray={paramsArray}
