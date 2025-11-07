@@ -61,7 +61,13 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	if (!sample) return <>Sample not found</>;
 	const { Occurrences: _, Assays: __, Project: ___, ...justSample } = sample;
 
-	const taxonomySearchUrl = `/search/advanced?table=taxonomy&advanced=${encodeURIComponent(JSON.stringify([["sample", "samp_name", "equals", samp_name]]))}`;
+	// Build search URL with specific encoding pattern to match search page expectations
+	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
+	const taxonomySearchUrl = `/search/advanced?table=taxonomy&advanced=${advancedFilter
+		.replace(/\[/g, "%5B")
+		.replace(/\]/g, "%5D")
+		.replace(/,/g, "%2C")
+		.replace(/ /g, "%20")}`;
 
 	return (
 		<div className="space-y-8">
