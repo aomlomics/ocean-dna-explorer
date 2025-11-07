@@ -57,36 +57,45 @@ module.exports = {
 					"0 2px 4px rgba(255,255,255,0.05)"
 				]
 			},
-			animation: {
-				'slide-in': 'slide-in 1s ease-out forwards',
-				'subtle-pan': 'subtle-pan 30s ease-in-out infinite',
-				'gradient-shine': 'gradient-shine 8s ease-in-out infinite',
-				float: "float 6s ease-in-out infinite"
+		animation: {
+			'slide-in': 'slide-in 1s ease-out forwards',
+			'subtle-pan': 'subtle-pan 30s ease-in-out infinite',
+			'gradient-shine': 'gradient-shine 8s ease-in-out infinite',
+			float: "float 6s ease-in-out infinite",
+			flash: "flash 1s ease-in-out"
+		},
+		keyframes: {
+			'slide-in': {
+				'0%': { transform: 'translateY(-20px)', opacity: '0' },
+				'100%': { transform: 'translateY(0)', opacity: '1' },
 			},
-			keyframes: {
-				'slide-in': {
-					'0%': { transform: 'translateY(-20px)', opacity: '0' },
-					'100%': { transform: 'translateY(0)', opacity: '1' },
+			'subtle-pan': {
+				'0%, 100%': {
+					transform: 'scale(1.1) translate(0, 0)',
+					filter: 'brightness(1)'
 				},
-				'subtle-pan': {
-					'0%, 100%': {
-						transform: 'scale(1.1) translate(0, 0)',
-						filter: 'brightness(1)'
-					},
-					'50%': {
-						transform: 'scale(1.1) translate(-2%, -2%)',
-						filter: 'brightness(1.2)'
-					}
-				},
-				'gradient-shine': {
-					'0%, 100%': {
-						opacity: 1
-					},
-					'50%': {
-						opacity: 0.8
-					}
+				'50%': {
+					transform: 'scale(1.1) translate(-2%, -2%)',
+					filter: 'brightness(1.2)'
 				}
 			},
+			'gradient-shine': {
+				'0%, 100%': {
+					opacity: 1
+				},
+				'50%': {
+					opacity: 0.8
+				}
+			},
+			flash: {
+				'0%, 100%': {
+					backgroundColor: 'transparent'
+				},
+				'50%': {
+					backgroundColor: 'rgb(var(--fallback-bc,oklch(var(--bc)/0.2)))'
+				}
+			}
+		},
 			zIndex: {
 				'base': '1',
 				'content': '10',
