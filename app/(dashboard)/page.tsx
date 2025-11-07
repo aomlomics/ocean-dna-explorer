@@ -31,7 +31,10 @@ export default async function Home() {
 		}
 	});
 
-	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+	const carouselImages = (await prismaImages.image.findMany({ include: { Attribution: true } }))
+		.map((value) => ({ value, sort: Math.random() }))
+		.sort((a, b) => a.sort - b.sort)
+		.map(({ value }) => value);
 
 	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
 
