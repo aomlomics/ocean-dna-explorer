@@ -73,14 +73,18 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	return d * 1000; // meters
 }
 
-function getTitleIdValue(titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"], loc: Location) {
+function getTitleIdValue(
+	titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"],
+	loc: Location,
+	sep = "/"
+) {
 	if (typeof titleId === "string") {
 		return loc[titleId];
 	} else {
 		let joined = "";
 		for (let i = 0; i < titleId.length; i++) {
 			if (i) {
-				joined += "/";
+				joined += sep;
 			}
 			joined += loc[titleId[i]];
 		}
@@ -378,6 +382,7 @@ export default function ActualMap({
 									loc={loc}
 									id={id}
 									color={getLegendColor(legend, loc)}
+									legend={legend}
 								/>
 							</Marker>
 						))}
@@ -400,6 +405,7 @@ export default function ActualMap({
 											loc={loc}
 											id={id}
 											color={getLegendColor(legend, loc)}
+											legend={legend}
 										/>
 									</Marker>
 								))}
@@ -431,13 +437,15 @@ function PopupWithSearch({
 	titleTable,
 	loc,
 	id,
-	color
+	color,
+	legend
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: Location;
 	id: string;
 	color: Color;
+	legend: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
 
@@ -478,15 +486,29 @@ function PopupWithSearch({
 							<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
 								{loc.values.reduce((acc: ReactNode[], l: LocationWithoutValues) => {
 									if (l[id].toLowerCase().includes(filter.toLowerCase())) {
-										acc.push(
-											<Link
-												key={l[id]}
-												href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-												className="link link-primary link-hover"
-											>
-												{l[id]}
-											</Link>
-										);
+										if (legend) {
+											acc.push(
+												<div key={l[id]} className="flex gap-2 items-center">
+													<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+													<Link
+														href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+														className="link link-primary link-hover"
+													>
+														{l[id]}
+													</Link>
+												</div>
+											);
+										} else {
+											acc.push(
+												<Link
+													key={l[id]}
+													href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+													className="link link-primary link-hover"
+												>
+													{l[id]}
+												</Link>
+											);
+										}
 									}
 
 									return acc;
@@ -496,12 +518,24 @@ function PopupWithSearch({
 					) : (
 						<>
 							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
-							<Link
-								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-								className="text-info hover:text-info-focus hover:underline transition-colors"
-							>
-								{loc[id]}
-							</Link>
+							{legend ? (
+								<div className="flex gap-2 items-center">
+									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+									<Link
+										href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+										className="link link-primary link-hover"
+									>
+										{loc[id]}
+									</Link>
+								</div>
+							) : (
+								<Link
+									href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+									className="link link-primary link-hover"
+								>
+									{loc[id]}
+								</Link>
+							)}
 						</>
 					)}
 				</>
