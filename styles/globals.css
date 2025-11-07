@@ -137,12 +137,12 @@
 
 /* Global breadcrumb styling */
 .breadcrumbs {
-  font-size: 0.875rem; /* text-sm */
+	font-size: 0.875rem; /* text-sm */
 }
 
 /* Global modal backdrop styling - make darker */
 .modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.7) !important; /* Darker than default */
+	background-color: rgba(0, 0, 0, 0.7) !important; /* Darker than default */
 }
 
 /* Clerk: Style 'Connect account' button text in profile/account */
@@ -154,13 +154,14 @@
 }
 
 @keyframes ping-once {
-  75%, 100% {
-    transform: scale(1.2);
-    opacity: 0;
-  }
+	75%,
+	100% {
+		transform: scale(1.2);
+		opacity: 0;
+	}
 }
 .animate-ping-once {
-  animation: ping-once 0.4s cubic-bezier(0, 0, 0.2, 1);
+	animation: ping-once 0.4s cubic-bezier(0, 0, 0.2, 1);
 }
 
 @keyframes flash {
@@ -174,4 +175,15 @@
 }
 .animate-flash {
 	animation: flash 0.4s ease-in-out;
+}
+
+@keyframes fade-in-out {
+	0%,
+	100% {
+		opacity: 0;
+	}
+	10%,
+	90% {
+		opacity: 1;
+	}
 }

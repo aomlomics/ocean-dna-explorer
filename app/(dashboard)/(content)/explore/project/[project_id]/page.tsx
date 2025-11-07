@@ -5,7 +5,6 @@ import BarChart from "@/app/components/charts/BarChart";
 import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
-import Table from "@/app/components/paginated/Table";
 import { Project } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
 
@@ -110,7 +109,9 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-8">
 					<div className="h-[600px]">
-						<Map locations={project.Samples} cluster draw />
+						<Suspense>
+							<Map locations={project.Samples} cluster draw />
+						</Suspense>
 					</div>
 					{/* Assays Section */}
 					<div>
