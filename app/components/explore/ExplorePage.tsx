@@ -6,6 +6,7 @@ import TableFilter from "./filters/TableFilter";
 import { Prisma } from "@/app/generated/prisma/client";
 import TaxaGrid from "../paginated/TaxaGrid";
 import TableMetadata from "@/types/tableMetadata";
+import SearchBar from "../search/SearchBar";
 
 export default function ExplorePage({
 	table,
@@ -54,6 +55,7 @@ export default function ExplorePage({
 				</p> */}
 			</div>
 
+			<SearchBar table={table} />
 			<TableFilter tableConfig={tableConfig} />
 
 			{displayMode === "table" && (

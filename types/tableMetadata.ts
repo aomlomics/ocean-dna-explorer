@@ -12,6 +12,7 @@ export type RelationMetadata = {
 const TableMetadata = {
 	project: {
 		plural: "Projects",
+		description: "A collection of samples, assays, and analyses that are part of a single study.",
 		schema: PrismaZodTypes.ProjectSchema,
 		enumSchema: PrismaZodTypes.ProjectScalarFieldEnumSchema,
 		titleField: "project_id",
@@ -29,6 +30,7 @@ const TableMetadata = {
 	},
 	sample: {
 		plural: "Samples",
+		description: "A sample of environmental material, such as water or soil, that has been collected for analysis.",
 		schema: PrismaZodTypes.SampleSchema,
 		enumSchema: PrismaZodTypes.SampleScalarFieldEnumSchema,
 		titleField: "samp_name",
@@ -54,6 +56,8 @@ const TableMetadata = {
 	},
 	assay: {
 		plural: "Assays",
+		description:
+			"The molecular targets, primer sequences, primer references, and expected amplicon size for a specific molecular analysis.",
 		schema: PrismaZodTypes.AssaySchema,
 		enumSchema: PrismaZodTypes.AssayScalarFieldEnumSchema,
 		titleField: "assay_name",
@@ -61,12 +65,14 @@ const TableMetadata = {
 	},
 	assayPrep: {
 		plural: "AssayPreps",
+		description: "The preparation of a sample for a specific assay, including the extraction and amplification of DNA.",
 		schema: PrismaZodTypes.AssayPrepSchema,
 		enumSchema: PrismaZodTypes.AssayPrepScalarFieldEnumSchema,
 		titleField: ["project_id", "assay_name"]
 	},
 	library: {
 		plural: "Libraries",
+		description: "A collection of DNA fragments that have been prepared for sequencing.",
 		schema: PrismaZodTypes.LibrarySchema,
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		titleField: "lib_id",
@@ -74,6 +80,7 @@ const TableMetadata = {
 	},
 	analysis: {
 		plural: "Analyses",
+		description: "The processing of sequencing data to identify and quantify the organisms present in a sample.",
 		schema: PrismaZodTypes.AnalysisSchema,
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
 		titleField: "analysis_run_name",
@@ -81,6 +88,7 @@ const TableMetadata = {
 	},
 	occurrence: {
 		plural: "Occurrences",
+		description: "The presence of a specific organism in a sample, as determined by the analysis of sequencing data.",
 		schema: PrismaZodTypes.OccurrenceSchema,
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		titleField: ["analysis_run_name", "samp_name", "featureid"],
@@ -88,6 +96,7 @@ const TableMetadata = {
 	},
 	feature: {
 		plural: "Features",
+		description: "A unique DNA sequence that has been identified in a sample.",
 		schema: PrismaZodTypes.FeatureSchema,
 		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
 		titleField: "featureid",
@@ -95,6 +104,7 @@ const TableMetadata = {
 	},
 	assignment: {
 		plural: "Assignments",
+		description: "The taxonomic assignment of a feature to a specific organism.",
 		schema: PrismaZodTypes.AssignmentSchema,
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
 		titleField: ["analysis_run_name", "featureid"],
@@ -102,6 +112,7 @@ const TableMetadata = {
 	},
 	taxonomy: {
 		plural: "Taxonomies",
+		description: "The scientific classification of organisms into a hierarchical system.",
 		schema: PrismaZodTypes.TaxonomySchema,
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
 		titleField: "taxonomy",
@@ -123,6 +134,7 @@ const TableMetadata = {
 	Uncapitalize<Prisma.ModelName>,
 	{
 		plural: string;
+		description: string;
 		schema: ZodObject<Record<string, any>>;
 		enumSchema: ZodEnum<Record<string, string>>;
 		relations?: RelationMetadata[];
@@ -234,6 +246,7 @@ export default TableMetadata as Record<
 	Uncapitalize<Prisma.ModelName> | Prisma.ModelName,
 	{
 		plural: string;
+		description: string;
 		schema: ZodObject<Record<string, any>>;
 		enumSchema: ZodEnum<Record<string, string>>;
 		relations: RelationMetadata[];

@@ -3,6 +3,7 @@ import { Source_Sans_3 } from "next/font/google";
 import ScrollToTop from "@/app/components/ScrollToTop";
 import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
 import { ThemeProvider } from "next-themes";
+import { NavigationProvider } from "./context/NavigationContext";
 
 const sourceSans = Source_Sans_3({
 	weight: ["300", "400", "500", "600", "700", "800"],
@@ -49,9 +50,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				/>
 			</head>
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
+				{/* <NavigationProvider> */}
 				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
 					<ClerkAppearanceProvider>{children}</ClerkAppearanceProvider>
 				</ThemeProvider>
+				{/* </NavigationProvider> */}
 				<ScrollToTop />
 			</body>
 		</html>

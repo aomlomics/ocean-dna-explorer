@@ -76,7 +76,8 @@ module.exports = {
 				"slide-in": "slide-in 1s ease-out forwards",
 				"subtle-pan": "subtle-pan 30s ease-in-out infinite",
 				"gradient-shine": "gradient-shine 8s ease-in-out infinite",
-				float: "float 6s ease-in-out infinite"
+				float: "float 6s ease-in-out infinite",
+				flash: "flash 1s ease-in-out"
 			},
 			keyframes: {
 				"slide-in": {
@@ -99,6 +100,14 @@ module.exports = {
 					},
 					"50%": {
 						opacity: 0.8
+					}
+				},
+				flash: {
+					"0%, 100%": {
+						backgroundColor: "transparent"
+					},
+					"50%": {
+						backgroundColor: "rgb(var(--fallback-bc,oklch(var(--bc)/0.2)))"
 					}
 				}
 			},
@@ -127,7 +136,7 @@ module.exports = {
 					"accent-focus": "#4B95C3",
 					"accent-content": "#E2E8F1",
 					neutral: "#3d4451",
-					"base-100": "#F4F3F2",
+					"base-100": "#D1D5DB",
 					"base-200": "#EAEAEE",
 					"base-300": "#E3E3E9",
 					"base-400": "#C6C6D2",

@@ -54,6 +54,149 @@ export async function getApiSections() {
 			),
 			subsections: [
 				{
+					id: "essential-information",
+					title: "Essential API Information",
+					content: (
+						<div className="space-y-6">
+							<p className="mb-4">
+								Before diving into the API, here is some essential information that will help you use it effectively:
+							</p>
+
+							<div className="space-y-6">
+								<div>
+									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data from the Ocean DNA Explorer</h4>
+									<p className="mb-2">There are multiple ways to access and explore data in ODE:</p>
+									<ul className="list-disc ml-6 space-y-2">
+										<li>
+											<p>Through a Graphical Interface (No Code Required):</p>
+											<ul className="list-circle ml-6 mt-1 space-y-1">
+												<li>
+													Explore Pages: View all data from each table with filters. You can only filter on fields within the table you are looking at. There is also a page for each row of the database table you are viewing, by clicking on the blue data fields. For example, if you are on the Explore: Samples page, click a samp_name in the data table to view the page for a specific sample. 
+												</li>
+												<li>
+													Search Page: Build complex queries using data from multiple tables, allowing you to filter on both
+													fields <em>and</em> relations (relations are fields from related tables). For every filter and/or relation you add to your query, it is assumed they are combined as AND logic (both must be true in the results returned). You can add an OR condition by clicking the + Add OR button. 
+												</li>
+											</ul>
+										</li>
+										<li>
+											<p>Programmatic Access:</p>
+											<ul className="list-circle ml-6 mt-1 space-y-1">
+												<li>
+													Direct Browser Queries: Paste API URLs directly in your browser to get JSON
+													responses. This is a great way to test your queries before you start coding.
+												</li>
+												<li>
+													Code Examples: Use our{" "}
+													<Link href="#quick-start-code" className="link link-primary">
+														starter code examples
+													</Link>{" "}
+													to fetch data programmatically in Python or R. This is a great way to pull data directly for making plots / graphs. 
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</div>
+
+								<div>
+									<div className="p-4 bg-warning/20 border-l-4 border-warning rounded-md">
+										<h4 className="mb-2 text-lg font-medium">2. Table Names vs. Relation Names: Understanding Plurality</h4>
+										<p>
+											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference those same tables as relations in queries, the relation names are PLURAL.
+										</p>
+									</div>
+
+									<div className="mt-4 space-y-6">
+										<p>Here are some examples:</p>
+
+										<div>
+											<p className="mb-2">1. Getting all DNA sequences found in a specific sample</p>
+											<p className="mb-2 ml-4">
+												You want to query the feature table, but also get all related occurrences:
+											</p>
+											<div className="ml-4 space-y-2">
+												<div>
+													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
+												</div>
+												<div>
+													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code> (plural)
+												</div>
+											</div>
+										</div>
+
+										<div>
+											<p className="mb-2">2. Finding all samples collected during a specific project</p>
+											<p className="mb-2 ml-4">
+												You want to query the project table and get all its samples:
+											</p>
+											<div className="ml-4 space-y-2">
+												<div>
+													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+												</div>
+												<div>
+													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
+												</div>
+											</div>
+										</div>
+
+										<div>
+											<p className="mb-2">3. Getting all sequencing analyses for a project</p>
+											<p className="mb-2 ml-4">
+												You want to query the project table and include analyses (note the spelling!):
+											</p>
+											<div className="ml-4 space-y-2">
+												<div>
+													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+												</div>
+												<div>
+													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code> (plural, spelled differently!)
+												</div>
+											</div>
+										</div>
+
+										<p className="mt-6">
+											Pro tip: Use the <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint to see the exact relation names available for any table. Or check the{" "}
+											<Link href="#table-definitions" className="link link-primary">
+												Table Definitions
+											</Link>{" "}
+											section of this API documentation page.
+										</p>
+									</div>
+								</div>
+
+								<div>
+									<h4 className="font-medium mb-3 text-lg">3. Do I Need to Sign In?</h4>
+									<p className="mb-2">
+										<strong>No authentication required</strong> for most features:
+									</p>
+									<ul className="list-disc ml-6 space-y-1 mb-3">
+										<li>Using the API</li>
+										<li>Using the Search page</li>
+										<li>Using the Explore pages</li>
+										<li>Viewing any data on the website</li>
+									</ul>
+									<p className="mb-3">
+										<strong>You DO need to sign in</strong> and request Contributor access to submit data.
+									</p>
+									<p>
+										While there are no strict rate limits, please be respectful with your API usage. For large-scale
+										automated data pulls, please{" "}
+										<Link
+											href="https://github.com/aomlomics/node/issues"
+											className="link link-primary"
+											target="_blank"
+											rel="noreferrer"
+										>
+											contact our development team
+										</Link>
+										.
+									</p>
+								</div>
+							</div>
+						</div>
+					)
+				},
+				{
 					id: "how-to-use-api",
 					title: "Making Your First API Query",
 					content: (
@@ -144,6 +287,15 @@ export async function getApiSections() {
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
 										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
+									</p>
+									<p className="mt-2 text-sm bg-info/10 p-2 rounded border-l-2 border-info">
+										<strong>Note:</strong> Notice that the endpoint uses <code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), 
+										but the relation parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural). 
+										See{" "}
+										<Link href="#essential-information" className="link link-primary font-semibold">
+											Essential API Information
+										</Link>{" "}
+										for more about this important distinction.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -839,9 +991,29 @@ if (http_status(response)$category == "Success") {
 						<div className="space-y-4">
 							<p>Parameter: relations=relation1,relation2</p>
 							<p>
-								Includes related data from other tables in the response. The relation names must be plural and can
-								be lowercase or capitalized.
+								Includes related data from other tables in the response. Relation names can be lowercase or capitalized.
 							</p>
+
+							<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
+								<h4 className="font-bold mb-2">Critical: Relation Names Are Plural</h4>
+								<p className="mb-2">
+									While table names in API endpoints are <strong>singular</strong> (e.g., <InlineCode code="/api/sample" />), 
+									relation names must be <strong>plural</strong> (e.g., <InlineCode code="relations=Samples" />).
+								</p>
+								<p className="mb-2">
+									<strong>Example:</strong> To get a project with all its related samples:
+								</p>
+								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=Samples`} />
+								<p className="mt-2 text-sm">
+									Not sure what the relation name is? Use <InlineCode code="/api/[table]/relations" /> to see all 
+									available relation names for any table. See the{" "}
+									<Link href="#essential-information" className="link link-primary font-semibold">
+										Essential API Information
+									</Link>{" "}
+									section for more examples.
+								</p>
+							</div>
+
 							<div className="my-8 p-4 bg-base-200/50 border-l-4 border-accent shadow-sm">
 								<h5 className="font-semibold mb-2 text-accent">Why Use Relations?</h5>
 								<p className="text-sm">
