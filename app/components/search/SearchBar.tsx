@@ -1,7 +1,7 @@
 "use client";
 
-import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useSearchParams, usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 
@@ -12,23 +12,15 @@ type SearchBarProps = {
 export default function SearchBar({ table }: SearchBarProps) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const router = useRouter();
 	const searchRef = useRef<HTMLInputElement>(null);
 	const formRef = useRef<HTMLFormElement>(null);
-	const [searchTable, setSearchTable] = useState(table);
 
 	useEffect(() => {
 		const search = searchParams.get("search");
-		if (searchRef.current && search) {
+		if (searchRef && searchRef.current && search) {
 			searchRef.current.value = search;
-		} else if (searchRef.current) {
-			searchRef.current.value = "";
 		}
-	}, [searchParams]);
-
-	useEffect(() => {
-		setSearchTable(table);
-	}, [table]);
+	}, [searchRef, searchParams]);
 
 	function search() {
 		if (formRef.current) {
@@ -41,11 +33,8 @@ export default function SearchBar({ table }: SearchBarProps) {
 			} else {
 				params.delete("search");
 			}
-			
-			// Reset page to 1 when performing a new search
-			params.set("page", "1");
 
-			router.push(`${pathname}?${params.toString()}`);
+			window.history.pushState(null, "", `${pathname}?${params.toString()}`);
 		}
 	}
 
@@ -59,7 +48,7 @@ export default function SearchBar({ table }: SearchBarProps) {
 			className="grid grid-cols-[80%_20%] w-full mb-4"
 		>
 			<div className="pr-3">
-				{searchTable && (
+				{table && (
 					<label className="input w-full">
 						<input
 							type="search"
@@ -67,7 +56,7 @@ export default function SearchBar({ table }: SearchBarProps) {
 							id="searchInput"
 							name="searchInput"
 							ref={searchRef}
-							placeholder={`Search ${TableMetadata[searchTable as Prisma.ModelName]?.plural || table}...`}
+							placeholder={`Search ${TableMetadata[table as Prisma.ModelName]?.plural || table}...`}
 							defaultValue={searchParams.get("search")?.toString() || ""}
 						/>
 						<svg

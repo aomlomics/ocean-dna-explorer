@@ -75,7 +75,7 @@ export async function getApiSections() {
 												</li>
 												<li>
 													Search Page: Build complex queries using data from multiple tables, allowing you to filter on both
-													fields <em>and</em> relations (relations are fields from related tables).
+													fields <em>and</em> relations (relations are fields from related tables). For every filter and/or relation you add to your query, it is assumed they are combined as AND logic (both must be true in the results returned). You can add an OR condition by clicking the + Add OR button. 
 												</li>
 											</ul>
 										</li>
