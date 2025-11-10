@@ -5,10 +5,13 @@ import { getZodType } from "@/app/helpers/schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Map from "@/app/components/map/Map";
 import { uncapitalizeTable } from "@/app/helpers/utils";
+import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
+import Image from "next/image";
+import Modal from "@/app/components/Modal";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -16,10 +19,19 @@ export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const [searchTable, setSearchTable] = useState("" as Prisma.ModelName | "");
-	const [filterIds, setFilterIds] = useState([] as FilterIds);
+    const router = useRouter();
+    const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
+		const table = searchParams.get("table") as Prisma.ModelName;
+		if (table && TableNames.includes(uncapitalizeTable(table))) {
+			return table;
+		}
+		return "Project";
+	});
+	const [filterIds, setFilterIds] = useState([1] as FilterIds);
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 	const formRef = useRef<HTMLFormElement>(null);
+	const helpModalRef = useRef<HTMLDialogElement>(null);
+	const [formUpdateTrigger, setFormUpdateTrigger] = useState(0);
 
 	useEffect(() => {
 		try {
@@ -42,7 +54,12 @@ export default function AdvancedSearch() {
 					setFilterIds(advancedParsed.map(getFilterIds));
 				}
 
-				setSearchTable((searchParams.get("table") as Prisma.ModelName) || "");
+                const paramTable = searchParams.get("table") as Prisma.ModelName | null;
+                if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
+                    setSearchTable(paramTable);
+                } else {
+                    setSearchTable("Project");
+                }
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -51,12 +68,78 @@ export default function AdvancedSearch() {
 	}, [searchParams]);
 
 	useEffect(() => {
-		if (searchTable) {
+		// Don't call search() if we already have advanced params from URL
+		// This prevents overwriting the URL on initial load
+		if (searchTable && !searchParams.has("advanced")) {
 			search();
 		}
 	}, [searchTable]);
 
 	//functions
+	function getQueryDescription() {
+		// Use formUpdateTrigger to force re-evaluation
+		const _ = formUpdateTrigger;
+		
+		if (!formRef.current || filterIds.length === 0) return "";
+
+		function describeFilter(suffix: string): string {
+			if (!formRef.current) return "";
+			
+			const type = formRef.current[`type_${suffix}`]?.value as "relation" | "field";
+			const relation = type === "relation" ? formRef.current[`relation_${suffix}`]?.value : "";
+			const field = formRef.current[`field_${suffix}`]?.value as string;
+			const mode = formRef.current[`mode_${suffix}`]?.value as QueryMode;
+			
+			if (!field) return "";
+			
+			const tableName = relation || searchTable;
+			const prefix = relation ? `${relation}.` : "";
+			
+			const modeText = {
+				contains: "contains",
+				equals: "equals",
+				startsWith: "starts with",
+				endsWith: "ends with",
+				gt: ">",
+				gte: ">=",
+				lt: "<",
+				lte: "<=",
+				range: "is between"
+			}[mode] || mode;
+			
+			let filterValue = formRef.current[`filter_${suffix}`]?.value || "";
+			if (mode === "range") {
+				const gte = formRef.current[`filter_${suffix}_gte`]?.value || "";
+				const lte = formRef.current[`filter_${suffix}_lte`]?.value || "";
+				filterValue = `${gte} and ${lte}`;
+			}
+			
+			return `${prefix}${field} ${modeText} "${filterValue}"`;
+		}
+
+		function recurse(ids: FilterIds, prevSuffix = "", isTopLevel = true): string {
+			const parts: string[] = [];
+			
+			ids.forEach((id, i) => {
+				if (id === 0) return;
+				const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
+				
+				if (id === 1) {
+					const desc = describeFilter(suffix);
+					if (desc) parts.push(desc);
+				} else {
+					const orDesc = recurse(id as FilterIds, suffix, false);
+					if (orDesc) parts.push(`(${orDesc})`);
+				}
+			});
+			
+			return parts.join(isTopLevel ? " AND " : " OR ");
+		}
+
+		const desc = recurse(filterIds);
+		return desc ? `Searching for ${TableMetadata[searchTable].plural} where: ${desc}` : "";
+	}
+
 	function getParamsArray(ids = filterIds, prevSuffix = "") {
 		if (formRef.current && ids && searchTable) {
 			const parts = [] as ParamsArray;
@@ -72,6 +155,11 @@ export default function AdvancedSearch() {
 
 							const table = (relation ? relation : searchTable) as Prisma.ModelName;
 							const field = formRef.current[`field_${suffix}`].value as string;
+
+							if (!field) {
+								continue;
+							}
+
 							const shape = TableMetadata[table].schema.shape;
 							const fieldType = getZodType(shape[field as keyof typeof shape]).type;
 
@@ -136,11 +224,11 @@ export default function AdvancedSearch() {
 		}
 	}
 
-	function reset() {
-		setSearchTable("");
+    function reset() {
+        setSearchTable("Project");
 		setFilterIds([]);
 		setParamsArray([]);
-		window.history.pushState(null, "", pathname);
+		router.push(pathname);
 	}
 
 	function search() {
@@ -152,86 +240,223 @@ export default function AdvancedSearch() {
 			params.set("advanced", JSON.stringify(advanced));
 		}
 
-		window.history.pushState(null, "", `${pathname}?${params.toString()}`);
+		router.push(`${pathname}?${params.toString()}`);
 	}
 
-	return (
-		<form
-			ref={formRef}
-			className="flex flex-col gap-6"
-			onSubmit={(e) => {
-				e.preventDefault();
-				search();
-			}}
-		>
-			<div className="grid grid-cols-[20%_60%_10%_10%] items-center">
-				<div className="pr-3">
-					<select
-						value={searchTable}
-						className="select"
-						onChange={(e) => {
-							setSearchTable(e.target.value as Prisma.ModelName);
-							setFilterIds([]);
-							setParamsArray([]);
-						}}
-						required
-					>
-						<option disabled value="">
-							Select Table
-						</option>
-						{TableNames.map((table) => (
-							<option key={table} value={table}>
-								{table}
-							</option>
-						))}
-					</select>
+    return (
+        <div className="grid grid-cols-1 gap-y-4 pt-4">
+            {searchTable && (
+                <header>
+                    <h1 className="text-4xl font-normal text-base-content">
+                        <span className="">Advanced Search</span>{" "}
+                        <span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+                        <span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
+                    </h1>
+                </header>
+            )}
+            <div className="w-full space-y-4 text-base-content/80">
+                {searchTable && <p>{TableMetadata[searchTable].description}</p>}
+                <ExploreTabButtons activeTable={searchTable} />
+            </div>
+
+			<form
+				ref={formRef}
+				className="flex flex-col gap-4"
+				onSubmit={(e) => {
+					e.preventDefault();
+					search();
+				}}
+				onChange={() => setFormUpdateTrigger(prev => prev + 1)}
+			>
+                <div className="bg-base-100 py-6 rounded-lg">
+                        <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+                            <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+								1
+							</span>
+                            <span>Select a table to search</span>
+						</h2>
+						<p className="mb-8">Select the table that you want to filter on and see at the bottom of the page.</p>
+						<div className="w-1/4">
+							<select
+								value={searchTable}
+								className="select select-bordered w-full"
+								onChange={(e) => {
+									setSearchTable(e.target.value as Prisma.ModelName);
+									setFilterIds([]);
+									setParamsArray([]);
+								}}
+								required
+							>
+								{TableNames.map((table) => (
+									<option key={table} value={table}>
+										{TableMetadata[table as Prisma.ModelName].plural}
+									</option>
+								))}
+							</select>
+						</div>
 				</div>
 
-				{searchTable && (
-					<div className="text-2xl justify-self-center">
-						Filtering <span className="text-primary">{TableMetadata[searchTable].plural}</span>
-					</div>
-				)}
+                {searchTable && (
+					<>
+                        <div className="bg-base-100 py-6 rounded-lg">
+                                <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+									<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+										2
+									</span>
+									<span>Add Filters and/or Relations</span>
+									<div className="flex items-center gap-2 bg-base-100 rounded-lg px-3 py-2 cursor-pointer hover:bg-base-300 transition-colors" onClick={() => helpModalRef.current?.showModal()}>
+										<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
+											?
+										</span>
+										<span className="text-sm">Help me use this</span>
+									</div>
+								</h2>
+                                <p className="mb-8">
+                                    Add filters for the selected table, using filters based on the data fields. To include criteria from related tables, switch the type to relation, choose the related table, then pick the field and condition. Each filter and/or relation (or each row of the menu below) is combined with AND logic. You can also add OR groups to your filters.
+                                </p>
+                                <div className="text-sm overflow-x-auto overflow-hidden border border-base-300 rounded-lg p-4">
+                                    <div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
+                                        <div>Type</div>
+                                        <div>Relation</div>
+                                        <div>Field</div>
+                                        <div>Filter</div>
+                                    </div>
 
-				<div className="col-3 px-3">
-					<button className="btn btn-error" type="button" onClick={() => reset()}>
+                                    <FilterSection
+                                        key={JSON.stringify(paramsArray)}
+                                        searchTable={searchTable}
+                                        filterIds={filterIds}
+                                        paramsArray={paramsArray}
+                                        onChange={(prev) => setFilterIds(prev)}
+                                    />
+						</div>
+				</div>
+				
+				<div className="bg-base-100 py-6 rounded-lg">
+					<h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+							3
+						</span>
+						<span>Review Your Query</span>
+					</h2>
+					<p className="mb-8">A plain-text representation of the query that will be performed when you click Search.</p>
+					{getQueryDescription() ? (
+						<p className="text-primary">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
+					) : (
+						<p className="text-base-content/50 italic">Build your query, and you can view a plain-text representation here...</p>
+					)}
+				</div>
+				
+				<div className="flex items-center justify-start gap-4 mt-2">
+					<button type="submit" className="btn btn-primary btn-lg gap-2">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth={2}
+							stroke="currentColor"
+							className="w-5 h-5"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+							/>
+						</svg>
+						Search
+					</button>
+					<button type="button" className="btn btn-error btn-lg gap-2" onClick={() => reset()}>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth={1.5}
+							stroke="currentColor"
+							className="w-5 h-5"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M6 18L18 6M6 6l12 12"
+							/>
+						</svg>
 						Clear
 					</button>
 				</div>
-				<button className="btn btn-primary">Search</button>
-			</div>
+				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
+					<input type="checkbox" />
+					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
+					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
+						<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
+					</div>
+				</div> */}
+			</>
+		)}
+	</form>
 
-			{searchTable && (
-				<>
-					<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
-						<input type="checkbox" defaultChecked />
-						<div className="collapse-title font-semibold text-xl text-primary">Filters</div>
-						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-							<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center">
-								<div>Type</div>
-								<div>Relation</div>
-								<div>Field</div>
-								<div>Filter</div>
+			<Modal ref={helpModalRef} className="max-h-[85vh] overflow-y-auto my-8">
+				<div className="p-6">
+					<h3 className="text-2xl font-normal mb-4 text-primary">Advanced Search Filtering Help</h3>
+					<div className="space-y-4">
+						<div>
+							<h4 className="font-semibold text-lg mb-2">Using the Filters and Relations</h4>
+							<p className="text-base-content/80">
+								Each filter row you add is combined with <span className="font-semibold">AND</span> logic.
+								For example, if you add two filters, the search will find records that match{" "}
+								<span className="italic">both</span> conditions.
+							</p>
+						</div>
+
+						<div>
+							<h4 className="font-semibold text-lg mb-2">Using OR</h4>
+							<p className="text-base-content/80 mb-2">
+								The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a
+								combined statement that is true if <span className="italic">any one</span> of its conditions
+								is met. The OR group itself is treated like a normal filter and is combined with other
+								filters using <span className="font-semibold">AND</span> logic.
+							</p>
+							<div className="bg-base-200 p-3 rounded-md">
+								<p className="font-mono text-sm mb-2">Example with OR:</p>
+								<p className="font-mono text-sm">Filter A AND (Filter B OR Filter C)</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									(finds records matching A, and either B or C)
+								</p>
 							</div>
+							<div className="bg-base-200 p-3 rounded-md mt-2">
+								<p className="font-mono text-sm mb-2">Example with multiple ORs:</p>
+								<p className="font-mono text-sm">(Filter A OR Filter B) AND (Filter C OR Filter D)</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									(finds records matching either A or B, and also matching either C or D)
+								</p>
+							</div>
+						</div>
 
-							<FilterSection
-								searchTable={searchTable}
-								filterIds={filterIds}
-								paramsArray={paramsArray}
-								onChange={(prev) => setFilterIds(prev)}
-							/>
+						<div>
+							<h4 className="font-semibold text-lg mb-2">Using Nested OR</h4>
+							<p className="text-base-content/80 mb-2">
+								Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to
+								create an OR within an OR. This is an advanced feature for complex queries.
+							</p>
+							<div className="bg-base-200 p-3 rounded-md">
+								<p className="font-mono text-sm mb-2">Example with Nested OR:</p>
+								<p className="font-mono text-sm">Filter A AND ((Filter B OR Filter C) OR (Filter D OR Filter E))</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									(finds records matching A, and either (B or C) or (D or E))
+								</p>
+							</div>
+						</div>
+
+						<div className="bg-base-200 p-3 rounded-md border border-base-300">
+							<p className="text-base-content/80">
+								<strong>Tip:</strong> Nested ORs are rarely needed for most searches. In most cases, you'll want to use{" "}
+								<span className="font-semibold">"+ Add Filter"</span> to add more conditions to an OR group
+								rather than creating a Nested OR.
+							</p>
 						</div>
 					</div>
-					<div className="collapse collapse-arrow bg-base-100 border-t-2 rounded-none">
-						<input type="checkbox" />
-						<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
-						<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-							<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
-						</div>
-					</div>
-				</>
-			)}
-		</form>
+				</div>
+			</Modal>
+		</div>
 	);
 }
 
@@ -243,7 +468,9 @@ function FilterSection({
 	onChange,
 	prevSuffix = "",
 	className,
-	label
+	label,
+	hideInnerDeletes,
+	isSubSection = false,
 }: {
 	searchTable: string;
 	filterIds: FilterIds;
@@ -252,20 +479,24 @@ function FilterSection({
 	prevSuffix?: string;
 	className?: string;
 	label?: string;
+	hideInnerDeletes?: boolean;
+	isSubSection?: boolean;
 }) {
+	let visibleItemCount = 0;
 	return (
-		<div className={`flex flex-col gap-5 ${className}`}>
-			{filterIds.reduce((acc, id, i) => {
+		<div className={`flex flex-col gap-2 ${className}`}>
+			{filterIds.reduce((acc: ReactNode[], id: FilterIds[0], i: number) => {
 				if (id) {
-					if (acc.length && label) {
+					if (visibleItemCount > 0 && label) {
 						acc.push(
-							<div key={`${i}_label`} className="flex items-center">
-								<hr className="grow border-warning mx-3"></hr>
-								<div>{label}</div>
-								<hr className="grow border-warning mx-3"></hr>
+							<div key={`${i}_label`} className="flex items-center justify-center">
+								<span className="badge badge-primary badge-outline">OR</span>
 							</div>
 						);
 					}
+					visibleItemCount++;
+
+					const zebraClass = !isSubSection ? (visibleItemCount % 2 === 0 ? "bg-base-200" : "") : "";
 
 					if (id === 1) {
 						acc.push(
@@ -274,42 +505,63 @@ function FilterSection({
 								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
 								searchTable={searchTable}
 								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
+								hideDelete={!!hideInnerDeletes}
 								paramsArray={paramsArray && (paramsArray[i] as ParamsArrayRelation | ParamsArrayField)}
+								className={zebraClass}
 							/>
 						);
 					} else {
+						const orFilters = id as FilterIds;
+						const isNested = isSubSection;
 						acc.push(
-							<div key={i} className="flex flex-col gap-5 border-2 border-warning rounded-lg p-3">
-								<button
-									className="btn btn-xs btn-warning rounded-lg aspect-square justify-self-center self-start pl-2 col-2"
-									type="button"
-									onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
-								>
-									X
-								</button>
-
+							<div key={i} className={`rounded-lg p-3 ${zebraClass} relative ${isNested ? 'border-2 border-primary/30' : ''}`}>
+								{orFilters.filter((f) => f === 1).length <= 1 && (
+									<button
+										className="btn btn-xs btn-square btn-primary absolute top-6 right-4 z-10"
+										type="button"
+										onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
+									>
+										<span className="text-primary-content text-lg leading-none">×</span>
+									</button>
+								)}
+								{isNested && (
+									<div className="absolute -top-3 left-4 bg-base-100 px-2">
+										<span className="badge badge-primary badge-sm">Nested OR Group</span>
+									</div>
+								)}
 								<FilterSection
 									searchTable={searchTable}
-									filterIds={id}
+									filterIds={orFilters}
 									paramsArray={paramsArray && (paramsArray[i] as ParamsArray)}
-									onChange={(prev) => onChange(filterIds.toSpliced(i, 1, prev))}
-									prevSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
+									onChange={(prev: FilterIds) => onChange(filterIds.toSpliced(i, 1, prev))}
+									prevSuffix={`${(prevSuffix && prevSuffix + "|") + i}`}
 									label="OR"
+									hideInnerDeletes={orFilters.filter((f) => f === 1).length < 2}
+									isSubSection={true}
+									className=""
 								/>
 							</div>
 						);
 					}
 				}
-
 				return acc;
-			}, [] as ReactNode[])}
+			}, [])}
 
-			<div className="flex gap-5">
-				<button type="button" className="btn grow" onClick={() => onChange([...filterIds, 1])}>
+			<div className="flex justify-center items-center gap-5 mt-4">
+				<button
+					type="button"
+					className="btn btn-md btn-primary"
+					onClick={() => onChange([...filterIds, 1])}
+				>
 					+ Add Filter
 				</button>
-				<button type="button" className="btn btn-warning" onClick={() => onChange([...filterIds, []])}>
-					+ Add OR
+				<button
+					type="button"
+					className="btn btn-md btn-primary"
+					onClick={() => onChange([...filterIds, [1]])}
+					title={isSubSection ? "Add a nested OR group - creates an OR within this OR group" : "Add an OR group - combines conditions with OR logic"}
+				>
+					{isSubSection ? "+ Add Nested OR" : "+ Add OR"}
 				</button>
 			</div>
 		</div>
@@ -320,12 +572,16 @@ function Filter({
 	nameSuffix,
 	paramsArray,
 	searchTable,
-	onDelete
+	onDelete,
+	hideDelete,
+	className,
 }: {
 	nameSuffix: string;
 	paramsArray?: ParamsArrayRelation | ParamsArrayField;
 	searchTable: string;
 	onDelete: () => FilterIds | void;
+	hideDelete?: boolean;
+	className?: string;
 }) {
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
@@ -354,7 +610,9 @@ function Filter({
 	const omit = [...GlobalOmit, "id"];
 
 	return (
-		<div className="grid grid-cols-[20%_20%_20%_35%_5%]">
+		<div
+			className={`grid grid-cols-[15%_22%_22%_1fr_auto] gap-x-2 items-center p-3 rounded-md ${className}`}
+		>
 			<div className="pr-2">
 				<select
 					className="select"
@@ -375,8 +633,8 @@ function Filter({
 				</select>
 			</div>
 
-			{type === "relation" && (
-				<div className="px-2">
+			<div className="px-2">
+				{type === "relation" ? (
 					<select
 						className="select"
 						value={relation}
@@ -393,7 +651,7 @@ function Filter({
 						{TableNames.reduce((acc, table) => {
 							if (table !== searchTable) {
 								acc.push(
-									<option key={table} value={table}>
+									<option key={table} value={table} title={table}>
 										{table}
 									</option>
 								);
@@ -402,11 +660,13 @@ function Filter({
 							return acc;
 						}, [] as ReactNode[])}
 					</select>
-				</div>
-			)}
+				) : (
+					<div />
+				)}
+			</div>
 
-			{(type === "field" || relation) && (
-				<div className="px-2 col-3">
+			<div className={`px-2`}>
+				{type === "field" || relation ? (
 					<select
 						className="select"
 						value={field}
@@ -420,7 +680,7 @@ function Filter({
 						{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
 							if (!omit.includes(val)) {
 								acc.push(
-									<option key={val} value={val}>
+									<option key={val} value={val} title={val}>
 										{val}
 									</option>
 								);
@@ -429,26 +689,31 @@ function Filter({
 							return acc;
 						}, [] as ReactNode[])}
 					</select>
-				</div>
-			)}
+				) : (
+					<div />
+				)}
+			</div>
 
-			{!!field && (
-				<InputElement
-					nameSuffix={nameSuffix}
-					table={table}
-					field={field}
-					defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
-					defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
-				/>
-			)}
-
-			<button
-				className="btn btn-xs btn-error rounded-lg aspect-square justify-self-center self-center col-5 pl-2"
-				type="button"
-				onClick={onDelete}
-			>
-				X
-			</button>
+			<div className="px-2">
+				{!!field ? (
+					<InputElement
+						nameSuffix={nameSuffix}
+						table={table}
+						field={field}
+						defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
+						defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
+					/>
+				) : (
+					<div />
+				)}
+			</div>
+			<div className="flex justify-center items-center">
+				{!hideDelete && (
+					<button className="btn btn-xs btn-square btn-primary" type="button" onClick={onDelete}>
+						<span className="text-primary-content text-lg leading-none">×</span>
+					</button>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -458,7 +723,7 @@ function InputElement({
 	table,
 	field,
 	defaultMode,
-	defaultValue
+	defaultValue,
 }: {
 	nameSuffix: string;
 	table: Prisma.ModelName;

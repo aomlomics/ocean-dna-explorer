@@ -224,7 +224,7 @@ export default async function Home() {
 
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
-							ODE is a product of{" "}
+							The Ocean DNA Explorer is a product of{" "}
 							<Link
 								href="https://www.aoml.noaa.gov/"
 								className="text-primary hover:underline"
