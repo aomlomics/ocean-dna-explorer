@@ -4,7 +4,6 @@ import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import Map from "../components/map/Map";
-import { randomColors } from "../helpers/utils";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 
@@ -12,12 +11,6 @@ export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
 	const samples = await publicPrisma.sample.findMany({
-		select: {
-			samp_name: true,
-			project_id: true,
-			decimalLatitude: true,
-			decimalLongitude: true
-		},
 		where: {
 			AND: [
 				{
@@ -38,22 +31,10 @@ export default async function Home() {
 		}
 	});
 
-	const uniqueProjects = samples.reduce((acc: string[], a) => {
-		if (!acc.includes(a.project_id)) {
-			acc.push(a.project_id);
-		}
-
-		return acc;
-	}, []);
-	const colors = randomColors(uniqueProjects.length);
-	const projectColors = {} as Record<string, string>;
-	for (let i = 0; i < colors.length; i++) {
-		projectColors[uniqueProjects[i]] = colors[i];
-	}
-
-	const locations = samples.map((samp) => ({ ...samp, color: projectColors[samp.project_id] }));
-
-	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+	const carouselImages = (await prismaImages.image.findMany({ include: { Attribution: true } }))
+		.map((value) => ({ value, sort: Math.random() }))
+		.sort((a, b) => a.sort - b.sort)
+		.map(({ value }) => value);
 
 	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
 
@@ -198,14 +179,7 @@ export default async function Home() {
 							<span className="text-primary"> Projects</span>
 						</div>
 						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
-							<Map
-								locations={locations}
-								id="samp_name"
-								titleTable="project"
-								table="sample"
-								iconSize={16}
-								legend={projectColors}
-							/>
+							<Map locations={samples} titleTable="project" cluster clusterRadius={20} />
 						</div>
 					</div>
 

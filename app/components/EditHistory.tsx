@@ -3,7 +3,7 @@ import { getSubmissionFileName } from "../helpers/utils";
 
 export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (
-		<div className="dropdown dropdown-hover ml-1 z-110">
+		<div className="dropdown dropdown-hover ml-1">
 			<div tabIndex={0} role="button" className="flex items-center gap-2 p-0 ml-1 pb-1.5">
 				<svg
 					viewBox="0 0 24 24"
@@ -21,14 +21,13 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 				</svg>
 				<span className="text-base font-medium text-primary -ml-1">Edit History</span>
 			</div>
-
 			<ul
-				tabIndex={0}
-				className="dropdown-content bg-base-200 rounded-box z-[1] shadow p-6 flex flex-col gap-2 max-h-[400px] overflow-y-scroll overflow-x-hidden"
+				tabIndex={-1}
+				className="dropdown-content bg-base-200 rounded-box p-6 shadow-sm max-h-[400px] overflow-y-scroll overflow-x-hidden overscroll-contain"
 			>
 				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (
-						<li className={`min-w-[600px] ${i ? "border-t-2 border-primary pt-2" : ""}`} key={i}>
+						<li className={`min-w-[600px] pb-4 ${i ? "border-t-2 border-primary pt-4" : ""}`} key={i}>
 							<div className="text-base text-base-content pb-2 font-bold">
 								Changed: <span className="text-primary">{new Date(edit.dateEdited).toLocaleString()}</span>
 							</div>

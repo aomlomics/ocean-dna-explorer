@@ -63,10 +63,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 	// Build search URL - encode brackets/commas but leave quotes as-is for JSON.parse
 	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
-	const encodedFilter = advancedFilter
-		.replace(/\[/g, "%5B")
-		.replace(/\]/g, "%5D")
-		.replace(/,/g, "%2C");
+	const encodedFilter = advancedFilter.replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/,/g, "%2C");
 	const taxonomySearchUrl = `/search/advanced?table=taxonomy&advanced=${encodedFilter}`;
 
 	return (
@@ -125,7 +122,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
 									<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 										<div className="relative w-12 h-12">
-											<AssayPhyloPic assayName={assay.assay_name} />
+											<AssayPhyloPic assay_name={assay.assay_name} />
 										</div>
 									</div>
 									<div>
@@ -150,60 +147,57 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							linkPrefix="/explore/analysis"
 							icon="analysis"
 						/>
-						<AssayDropdownCard
-							count={sample.Assays.length}
-							assayNames={sample.Assays.map((a) => a.assay_name)}
-						/>
+						<AssayDropdownCard count={sample.Assays.length} assayNames={sample.Assays.map((a) => a.assay_name)} />
 						<SampleStatCard
 							title="Location"
 							latitude={sample.decimalLatitude}
 							longitude={sample.decimalLongitude}
 							icon="location"
 						/>
-					<Link href={taxonomySearchUrl} className="group">
-						<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
-							<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-								<StatIcon icon="fish" />
+						<Link href={taxonomySearchUrl} className="group">
+							<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
+								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+									<StatIcon icon="fish" />
+								</div>
+								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider group-hover:text-primary transition-colors">
+									What taxonomies were found in this sample?
+								</div>
 							</div>
-							<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider group-hover:text-primary transition-colors">
-								What taxonomies were found in this sample?
-							</div>
-						</div>
-					</Link>
-					<div className="bg-base-200 p-4 rounded-lg"></div>
-				</div>
-
-				{/* Sample Information */}
-				<div className="bg-base-200 p-6">
-					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Sample Information</h2>
-					<div className="h-[300px] overflow-y-auto">
-						<DataDisplay 
-							table="sample" 
-							data={justSample} 
-							omit={["project_id", "analysis_run_name", "assay_name"]} 
-							priorityFields={[
-								"samp_name",
-								"eventDate",
-								"decimalLatitude",
-								"decimalLongitude",
-								"minimumDepthInMeters",
-								"maximumDepthInMeters",
-								"tot_depth_water_col",
-								"geo_loc_name",
-								"env_broad_scale",
-								"env_local_scale",
-								"env_medium",
-								"samp_category",
-								"neg_cont_type",
-								"pos_cont_type",
-								"expedition_id",
-								"line_id",
-								"station_id",
-								"serial_number"
-							]}
-						/>
+						</Link>
+						<div className="bg-base-200 p-4 rounded-lg"></div>
 					</div>
-				</div>
+
+					{/* Sample Information */}
+					<div className="bg-base-200 p-6">
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Sample Information</h2>
+						<div className="h-[300px] overflow-y-auto">
+							<DataDisplay
+								table="sample"
+								data={justSample}
+								omit={["project_id", "analysis_run_name", "assay_name"]}
+								priorityFields={[
+									"samp_name",
+									"eventDate",
+									"decimalLatitude",
+									"decimalLongitude",
+									"minimumDepthInMeters",
+									"maximumDepthInMeters",
+									"tot_depth_water_col",
+									"geo_loc_name",
+									"env_broad_scale",
+									"env_local_scale",
+									"env_medium",
+									"samp_category",
+									"neg_cont_type",
+									"pos_cont_type",
+									"expedition_id",
+									"line_id",
+									"station_id",
+									"serial_number"
+								]}
+							/>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -248,9 +242,7 @@ function SampleStatCard({
 					<StatIcon icon={icon} />
 				</div>
 			)}
-			{value !== undefined && (
-				<div className="text-3xl font-bold text-primary mb-1">{value.toLocaleString()}</div>
-			)}
+			{value !== undefined && <div className="text-3xl font-bold text-primary mb-1">{value.toLocaleString()}</div>}
 			{latitude !== undefined && longitude !== undefined && (
 				<div className="text-base text-primary font-bold">
 					{latitude !== null && longitude !== null ? (
@@ -411,7 +403,9 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 				className="focus:bg-base-300 rounded-lg w-full p-4 flex justify-between items-center"
 			>
 				<div>
-					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">Total Assays</div>
+					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+						Total Assays
+					</div>
 					<div className="text-2xl font-bold text-primary">{count}</div>
 				</div>
 				<svg

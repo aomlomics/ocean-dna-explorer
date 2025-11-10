@@ -6,6 +6,7 @@ import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
 import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
 import assignDeleteAction from "@/app/actions/analysis/delete/assignDelete";
 import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
+import { LatLng, LatLngBoundsExpression } from "leaflet";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -64,6 +65,21 @@ export type ParamsArrayRelation = [string, ...ParamsArrayField];
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
 
 export type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
+
+type LocationWithoutValues = {
+	decimalLatitude: number;
+	decimalLongitude: number;
+	[key: string]: any;
+};
+export type Location = LocationWithoutValues & { values: LocationWithoutValues[] };
+export type MapProps =
+	| {
+			center: LatLng;
+			zoom: number;
+	  }
+	| {
+			bounds: LatLngBoundsExpression;
+	  };
 
 declare global {
 	namespace PrismaJson {
