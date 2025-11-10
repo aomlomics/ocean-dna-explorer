@@ -107,7 +107,7 @@ export async function getApiSections() {
 									</div>
 
 									<div className="mt-4 space-y-6">
-										<p>Here are real-world examples:</p>
+										<p>Here are some examples:</p>
 
 										<div>
 											<p className="mb-2">1. Getting all DNA sequences found in a specific sample</p>
