@@ -160,26 +160,50 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							longitude={sample.decimalLongitude}
 							icon="location"
 						/>
-						<Link href={taxonomySearchUrl} className="group">
-							<div className="bg-base-200 p-6 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
-								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-									<StatIcon icon="fish" />
-								</div>
-								<div className="text-sm font-medium text-base-content group-hover:text-primary transition-colors">
-									What taxonomies were found in this sample?
-								</div>
+					<Link href={taxonomySearchUrl} className="group">
+						<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
+							<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+								<StatIcon icon="fish" />
 							</div>
-						</Link>
-						<div className="bg-base-200 p-6 rounded-lg"></div>
-					</div>
-
-					{/* Sample Information */}
-					<div className="bg-base-200 p-6">
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Sample Information</h2>
-						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay table="sample" data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
+							<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider group-hover:text-primary transition-colors">
+								What taxonomies were found in this sample?
+							</div>
 						</div>
+					</Link>
+					<div className="bg-base-200 p-4 rounded-lg"></div>
+				</div>
+
+				{/* Sample Information */}
+				<div className="bg-base-200 p-6">
+					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Sample Information</h2>
+					<div className="h-[300px] overflow-y-auto">
+						<DataDisplay 
+							table="sample" 
+							data={justSample} 
+							omit={["project_id", "analysis_run_name", "assay_name"]} 
+							priorityFields={[
+								"samp_name",
+								"eventDate",
+								"decimalLatitude",
+								"decimalLongitude",
+								"minimumDepthInMeters",
+								"maximumDepthInMeters",
+								"tot_depth_water_col",
+								"geo_loc_name",
+								"env_broad_scale",
+								"env_local_scale",
+								"env_medium",
+								"samp_category",
+								"neg_cont_type",
+								"pos_cont_type",
+								"expedition_id",
+								"line_id",
+								"station_id",
+								"serial_number"
+							]}
+						/>
 					</div>
+				</div>
 				</div>
 			</div>
 		</div>
@@ -204,7 +228,7 @@ function SampleStatCard({
 	// Use horizontal layout for eye icon
 	if (icon === "eye" && value !== undefined) {
 		return (
-			<div className="bg-base-200 p-6 rounded-lg flex items-center gap-4">
+			<div className="bg-base-200 p-4 rounded-lg flex items-center gap-4">
 				<div className="w-16 h-16 flex-shrink-0 flex items-center justify-center text-primary">
 					<StatIcon icon={icon} />
 				</div>
@@ -218,9 +242,9 @@ function SampleStatCard({
 
 	// Vertical centered layout for other cards
 	const content = (
-		<div className="bg-base-200 p-6 rounded-lg flex flex-col items-center text-center">
+		<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center">
 			{icon && icon !== "eye" && (
-				<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">
+				<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 					<StatIcon icon={icon} />
 				</div>
 			)}
@@ -228,11 +252,11 @@ function SampleStatCard({
 				<div className="text-3xl font-bold text-primary mb-1">{value.toLocaleString()}</div>
 			)}
 			{latitude !== undefined && longitude !== undefined && (
-				<div className="text-lg text-base-content">
+				<div className="text-base text-primary font-bold">
 					{latitude !== null && longitude !== null ? (
 						<>
-							<div className="font-semibold text-base-content/80">Lat: {latitude.toFixed(4)}</div>
-							<div className="font-semibold text-base-content/80">Lon: {longitude.toFixed(4)}</div>
+							<div>Lat: {latitude.toFixed(4)}</div>
+							<div>Lon: {longitude.toFixed(4)}</div>
 						</>
 					) : (
 						<div className="text-base-content/60">N/A</div>
@@ -331,19 +355,19 @@ function DropdownLinkBoxWithIcon({
 	icon: StatIconType;
 }) {
 	return (
-		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300">
+		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
 			<div
 				tabIndex={0}
 				role="button"
-				className="focus:bg-base-300 w-full p-6 flex items-center gap-4 justify-between"
+				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
 			>
 				<div className="flex items-center gap-4">
 					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
 						<StatIcon icon={icon} />
 					</div>
 					<div>
-						<div className="text-lg font-medium text-base-content/70">{title}</div>
-						<div className="text-2xl font-medium">{count}</div>
+						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
+						<div className="text-2xl font-bold text-primary">{count}</div>
 					</div>
 				</div>
 				<svg
@@ -379,16 +403,16 @@ function DropdownLinkBoxWithIcon({
 
 function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: string[] }) {
 	return (
-		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300">
+		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
 			<a
 				href="#assays-section"
 				tabIndex={0}
 				role="button"
-				className="focus:bg-base-300 w-full p-6 flex justify-between items-center"
+				className="focus:bg-base-300 rounded-lg w-full p-4 flex justify-between items-center"
 			>
 				<div>
-					<div className="text-lg font-medium text-base-content/70">Total Assays</div>
-					<div className="text-2xl font-medium">{count}</div>
+					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">Total Assays</div>
+					<div className="text-2xl font-bold text-primary">{count}</div>
 				</div>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

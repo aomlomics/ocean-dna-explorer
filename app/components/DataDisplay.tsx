@@ -9,11 +9,13 @@ import { getZodType } from "../helpers/schema";
 export default function DataDisplay({
 	table,
 	data,
-	omit = []
+	omit = [],
+	priorityFields = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	data: Record<string, any>;
 	omit?: (keyof typeof data)[];
+	priorityFields?: string[];
 }) {
 	omit = [...omit, ...GlobalOmit, "id"];
 
@@ -55,35 +57,65 @@ export default function DataDisplay({
 		}
 	}
 
+	// function to check if a value is empty (we want them at the bottom of the table)
+	const isEmpty = (value: any): boolean => {
+		return value === null || value === undefined || (Array.isArray(value) && value.length === 0);
+	};
+
+	// Sorting the field order: priority fields list first, then non-empty fields, then empty fields
+	const sortedEntries = Object.entries(data).sort(([fieldA, valueA], [fieldB, valueB]) => {
+		// Skip sorting for omitted fields
+		if (omit.includes(fieldA) || omit.includes(fieldB)) return 0;
+
+		const priorityIndexA = priorityFields.indexOf(fieldA);
+		const priorityIndexB = priorityFields.indexOf(fieldB);
+		const isEmptyA = isEmpty(valueA);
+		const isEmptyB = isEmpty(valueB);
+
+		// if booth are priority fields - sort by priority order
+		if (priorityIndexA !== -1 && priorityIndexB !== -1) {
+			return priorityIndexA - priorityIndexB;
+		}
+
+		if (priorityIndexA !== -1) return -1;
+
+		if (priorityIndexB !== -1) return 1;
+
+		if (isEmptyA && !isEmptyB) return 1;
+		if (!isEmptyA && isEmptyB) return -1;
+
+		return 0;
+	});
+
 	return (
 		<div className="overflow-x-hidden overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
 			<table className="table table-zebra bg-base-100 rounded-none">
 				<tbody>
-					{Object.entries(data).reduce((acc: ReactNode[], [field, value]) => {
+					{sortedEntries.reduce((acc: ReactNode[], [field, value]) => {
 						if (!omit.includes(field)) {
 							if (field !== "userDefined") {
 								acc.push(
-									<tr key={field}>
-										<td className="flex flex-col gap-1">
-											<div className="text-sm font-medium text-base-content/70 break-all">{field}</div>
+									<tr key={field} className="hover:bg-base-300/50 transition-colors">
+										<td className="flex flex-col gap-1.5">
+											<div className="text-sm font-semibold text-base-content/80 break-all tracking-wide">{field}</div>
 											<ValueNode field={field} value={value} />
 										</td>
 									</tr>
 								);
 							} else if (value) {
 								acc.push(
-									<tr key={field}>
-										<td className="flex flex-col gap-1">
-											<div>User Defined:</div>
+									<tr key={field} className="hover:bg-base-300/50 transition-colors">
+										<td className="flex flex-col gap-1.5">
+											<div className="font-semibold">User Defined:</div>
 											<table className="table table-zebra bg-base-100 rounded-none">
 												<tbody>
 													{Object.entries(value).reduce(
 														(acc: ReactNode[], [userDefinedField, userDefinedValue]: [string, any]) => {
 															if (!omit.includes(userDefinedField)) {
 																acc.push(
-																	<tr key={userDefinedField + "_userDefined"}>
-																		<td className="flex flex-col gap-1">
-																			<div className="text-sm font-medium text-base-content/70 break-all">
+																	<tr key={userDefinedField + "_userDefined"} className="hover:bg-base-300/50 transition-colors">
+																		<td className="flex flex-col gap-1.5">
+																			<div className="text-sm font-semibold text-base-content/80 break-all tracking-wide">
 																				{userDefinedField}
 																			</div>
 																			<ValueNode field={userDefinedField} value={userDefinedValue} />

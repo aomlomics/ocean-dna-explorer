@@ -31,6 +31,7 @@ export default function AdvancedSearch() {
 	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
+	const [formUpdateTrigger, setFormUpdateTrigger] = useState(0);
 
 	useEffect(() => {
 		try {
@@ -76,6 +77,9 @@ export default function AdvancedSearch() {
 
 	//functions
 	function getQueryDescription() {
+		// Use formUpdateTrigger to force re-evaluation
+		const _ = formUpdateTrigger;
+		
 		if (!formRef.current || filterIds.length === 0) return "";
 
 		function describeFilter(suffix: string): string {
@@ -113,7 +117,7 @@ export default function AdvancedSearch() {
 			return `${prefix}${field} ${modeText} "${filterValue}"`;
 		}
 
-		function recurse(ids: FilterIds, prevSuffix = ""): string {
+		function recurse(ids: FilterIds, prevSuffix = "", isTopLevel = true): string {
 			const parts: string[] = [];
 			
 			ids.forEach((id, i) => {
@@ -124,12 +128,12 @@ export default function AdvancedSearch() {
 					const desc = describeFilter(suffix);
 					if (desc) parts.push(desc);
 				} else {
-					const orDesc = recurse(id as FilterIds, suffix);
+					const orDesc = recurse(id as FilterIds, suffix, false);
 					if (orDesc) parts.push(`(${orDesc})`);
 				}
 			});
 			
-			return parts.join(" OR ");
+			return parts.join(isTopLevel ? " AND " : " OR ");
 		}
 
 		const desc = recurse(filterIds);
@@ -262,6 +266,7 @@ export default function AdvancedSearch() {
 					e.preventDefault();
 					search();
 				}}
+				onChange={() => setFormUpdateTrigger(prev => prev + 1)}
 			>
                 <div className="bg-base-100 py-6 rounded-lg">
                         <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
@@ -326,11 +331,22 @@ export default function AdvancedSearch() {
                                     />
 						</div>
 				</div>
-				{getQueryDescription() && (
-					<div className="bg-base-200 border border-base-300 rounded-lg p-4 mt-4">
-						<p className="text-sm text-base-content/90 font-mono">{getQueryDescription()}</p>
-					</div>
-				)}
+				
+				<div className="bg-base-100 py-6 rounded-lg">
+					<h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+							3
+						</span>
+						<span>Review Your Query</span>
+					</h2>
+					<p className="mb-8">A plain-text representation of the query that will be performed when you click Search.</p>
+					{getQueryDescription() ? (
+						<p className="text-primary">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
+					) : (
+						<p className="text-base-content/50 italic">Build your query, and you can view a plain-text representation here...</p>
+					)}
+				</div>
+				
 				<div className="flex items-center justify-start gap-4 mt-2">
 					<button type="submit" className="btn btn-primary btn-lg gap-2">
 						<svg
@@ -367,13 +383,13 @@ export default function AdvancedSearch() {
 						Clear
 					</button>
 				</div>
-				<div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
+				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
 					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
 						<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
 					</div>
-				</div>
+				</div> */}
 			</>
 		)}
 	</form>
