@@ -2,7 +2,7 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 	ssr: false
 });
@@ -28,11 +28,11 @@ export default function Map({
 	clusterRadius?: number;
 	draw?: boolean;
 }) {
-	const router = useRouter();
+	const pathname = usePathname();
 
 	return (
 		<ActualMap
-			key={router.asPath}
+			key={pathname}
 			locations={locations}
 			id={id}
 			table={table}
