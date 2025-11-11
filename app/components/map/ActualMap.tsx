@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, DomEvent, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -16,10 +16,28 @@ import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { capitalizeTable } from "@/app/helpers/utils";
-import { MapProps, Location, LocationWithoutValues } from "@/types/globals";
+import { Location, LocationWithoutValues } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
+import { DeadValueEnum } from "@/types/enums";
+
+type MapProps =
+	| {
+			center: LatLng;
+			zoom: number;
+	  }
+	| {
+			bounds: LatLngBoundsExpression;
+	  };
+
+type Bounds = [[number, number], [number, number]];
+
+type NullLocation = {
+	decimalLatitude: number | null;
+	decimalLongitude: number | null;
+	[key: string]: any;
+};
 
 type LegendInfo =
 	| ({ field: string | string[] } & (
@@ -27,6 +45,11 @@ type LegendInfo =
 			| { mode: "gradient"; range: [number, number]; palette: string }
 	  ))
 	| undefined;
+
+const DEFAULT_BOUNDS = [
+	[-180, -180],
+	[180, 180]
+] as Bounds;
 
 function changeAlpha(color: string | undefined, alpha: string) {
 	if (color) {
@@ -107,7 +130,6 @@ function getLegendColor(legend: LegendInfo, loc: Location) {
 
 export default function ActualMap({
 	locations,
-	mapProps,
 	id = "samp_name",
 	table = "sample",
 	titleTable,
@@ -115,8 +137,7 @@ export default function ActualMap({
 	clusterRadius = 50,
 	draw = false
 }: {
-	locations: Location[];
-	mapProps: MapProps;
+	locations: NullLocation[];
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -129,13 +150,80 @@ export default function ActualMap({
 
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
+	//clump locations if they have identical latlng
+	let filteredLocations = [] as Location[];
+	//calculate starting map view
+	let mapProps = {} as MapProps;
+
+	if (locations.length === 1) {
+		if (
+			locations[0].decimalLatitude !== null &&
+			locations[0].decimalLongitude !== null &&
+			!(locations[0].decimalLatitude! in DeadValueEnum) &&
+			!(locations[0].decimalLongitude! in DeadValueEnum)
+		) {
+			mapProps = {
+				center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as [number, number] as unknown as LatLng,
+				zoom: 5
+			};
+
+			filteredLocations.push(locations[0] as Location);
+		} else {
+			mapProps = { bounds: DEFAULT_BOUNDS };
+		}
+	} else {
+		let bounds = DEFAULT_BOUNDS;
+
+		for (const nullLoc of locations) {
+			if (
+				nullLoc.decimalLatitude !== null &&
+				nullLoc.decimalLongitude !== null &&
+				!(nullLoc.decimalLatitude! in DeadValueEnum) &&
+				!(nullLoc.decimalLongitude! in DeadValueEnum)
+			) {
+				const loc = nullLoc as Location;
+
+				//check if point already exists
+				//don't combine points if they belong to different groups
+				const titleFields = titleTable
+					? typeof TableMetadata[titleTable].titleField === "string"
+						? [TableMetadata[titleTable].titleField]
+						: TableMetadata[titleTable].titleField
+					: [];
+				const foundIndex = filteredLocations.findIndex(
+					(l) =>
+						l.decimalLatitude === loc.decimalLatitude &&
+						l.decimalLongitude === loc.decimalLongitude &&
+						titleFields.every((f) => l[f] === loc[f])
+				);
+
+				if (foundIndex !== -1) {
+					if (filteredLocations[foundIndex].values) {
+						filteredLocations[foundIndex].values.push(loc);
+					} else {
+						filteredLocations[foundIndex].values = [filteredLocations[foundIndex], loc];
+					}
+				} else {
+					bounds[0][0] = Math.max(loc.decimalLatitude, bounds[0][0]);
+					bounds[0][1] = Math.max(loc.decimalLongitude, bounds[0][1]);
+					bounds[1][0] = Math.min(loc.decimalLatitude, bounds[1][0]);
+					bounds[1][1] = Math.min(loc.decimalLongitude, bounds[1][1]);
+
+					filteredLocations.push({ ...loc });
+				}
+			}
+		}
+
+		mapProps = { bounds };
+	}
+
 	let defaultLegend = undefined as LegendInfo;
 	let defaultPoints;
 	if (titleTable) {
 		const titleId = TableMetadata[titleTable].titleField;
 		//get all options for coloring
 		const options = new Set() as Set<string>;
-		for (const loc of locations) {
+		for (const loc of filteredLocations) {
 			options.add(getTitleIdValue(titleId, loc));
 		}
 
@@ -150,7 +238,7 @@ export default function ActualMap({
 
 		//assemble locations object with assigned color and list of locations
 		defaultPoints = {} as Record<string, Location[]>;
-		for (const loc of locations) {
+		for (const loc of filteredLocations) {
 			const opt = getTitleIdValue(titleId, loc);
 			if (defaultPoints[opt]) {
 				defaultPoints[opt].push(loc);
@@ -159,7 +247,7 @@ export default function ActualMap({
 			}
 		}
 	} else {
-		defaultPoints = locations;
+		defaultPoints = filteredLocations;
 	}
 	const [legend, setLegend] = useState(defaultLegend);
 	const [points, setPoints] = useState(defaultPoints);
@@ -186,7 +274,7 @@ export default function ActualMap({
 		>
 	);
 
-	function checkShapes(pts = locations) {
+	function checkShapes(pts = filteredLocations) {
 		let tempPoints = [...pts];
 
 		if (Object.keys(shapes).length) {
