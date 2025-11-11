@@ -46,11 +46,6 @@ type LegendInfo =
 	  ))
 	| undefined;
 
-const DEFAULT_BOUNDS = [
-	[-180, -180],
-	[180, 180]
-] as Bounds;
-
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
 		return {
@@ -142,6 +137,11 @@ export default function ActualMap({
 	//calculate starting map view
 	let mapProps = {} as MapProps;
 
+	const DEFAULT_BOUNDS = [
+		[-180, -180],
+		[180, 180]
+	] as Bounds;
+
 	if (locations.length === 1) {
 		if (
 			locations[0].decimalLatitude !== null &&
@@ -203,6 +203,7 @@ export default function ActualMap({
 
 		mapProps = { bounds };
 	}
+	console.log(filteredLocations.length, locations.length, mapProps);
 
 	let defaultLegend = undefined as LegendInfo;
 	let defaultPoints;

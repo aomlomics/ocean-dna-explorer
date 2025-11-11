@@ -3,9 +3,9 @@ import Link from "next/link";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { DeadValueEnum } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
-import Map from "../components/map/Map";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
+import Map from "@/app/components/map/Map";
 
 export default async function Home() {
 	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
