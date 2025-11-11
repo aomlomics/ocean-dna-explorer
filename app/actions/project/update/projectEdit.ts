@@ -82,8 +82,8 @@ async function doEdit(
 			sampleChannel,
 			libraryChannel,
 			userIds: dbProject.userIds,
-			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate,
-			oldChecksums
+			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate
+			// oldChecksums
 		});
 		if (!parseResult) {
 			return;

@@ -44,12 +44,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 					}}
 				/>
 			</head>
-		<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
-			<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
-				<ClerkAppearanceProvider>{children}</ClerkAppearanceProvider>
-			</ThemeProvider>
-			<ScrollToTop />
-		</body>
+			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
+				{/* <NavigationProvider> */}
+				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
+					<ClerkAppearanceProvider>{children}</ClerkAppearanceProvider>
+				</ThemeProvider>
+				{/* </NavigationProvider> */}
+				<ScrollToTop />
+			</body>
 		</html>
 	);
 }
