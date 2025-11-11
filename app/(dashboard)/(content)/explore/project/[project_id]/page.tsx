@@ -109,9 +109,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-8">
 					<div className="h-[600px]">
-						<Suspense>
-							<Map locations={project.Samples} cluster draw />
-						</Suspense>
+						<Map locations={project.Samples} cluster draw />
 					</div>
 					{/* Assays Section */}
 					<div>
@@ -146,13 +144,29 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<div>
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project at a Glance</h2>
 						<div className="grid grid-cols-2 gap-4">
-							<ProjectStatCard title="Samples" value={project._count.Samples} icon="location" link />
-							<ProjectStatCard title="Analyses" value={project._count.Analyses} icon="analysis" link />
-							<ProjectStatCard title="Taxonomies" value={sortedTaxa.length} icon="fish" />
+							<ProjectStatCard
+								title="Samples"
+								value={project._count.Samples}
+								icon="location"
+								link={`/search/advanced?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
+							/>
+							<ProjectStatCard
+								title="Analyses"
+								value={project._count.Analyses}
+								icon="analysis"
+								link={`/search/advanced?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
+							/>
+							<ProjectStatCard
+								title="Taxonomies"
+								value={sortedTaxa.length}
+								icon="fish"
+								link={`/search/advanced?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
+							/>
 							<ProjectStatCard
 								title="Occurrences"
 								value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
 								icon="eye"
+								link={`/search/advanced?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
 							/>
 						</div>
 					</div>
@@ -225,7 +239,7 @@ function ProjectStatCard({
 	title: string;
 	value: number;
 	icon: StatIconType;
-	link?: true;
+	link?: string;
 }) {
 	const content = (
 		<div
@@ -244,7 +258,7 @@ function ProjectStatCard({
 	);
 
 	if (link) {
-		return <Link href={"#" + title}>{content}</Link>;
+		return <Link href={link}>{content}</Link>;
 	} else {
 		return content;
 	}
