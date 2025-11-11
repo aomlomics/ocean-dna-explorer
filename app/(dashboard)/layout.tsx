@@ -6,9 +6,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 		<div className="flex flex-col min-h-screen">
 			<button id="unfocusButton" className="w-0 h-0"></button>
 			<Header />
-			<main id="main-content" className="flex-grow">
-				{children}
-			</main>
+			{children}
 			<Footer />
 		</div>
 	);
