@@ -29,7 +29,6 @@ export default function Map({
 }) {
 	return (
 		<ActualMap
-			key={locations[0].toString() + locations.length}
 			locations={locations}
 			id={id}
 			table={table}
