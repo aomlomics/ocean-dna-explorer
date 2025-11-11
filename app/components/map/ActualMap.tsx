@@ -395,7 +395,7 @@ export default function ActualMap({
 	}
 
 	return (
-		<div className="flex flex-col items-start h-full w-full z-100 relative">
+		<div className="flex flex-col items-start h-full w-full z-100 relative" key={Math.random()}>
 			<MapContainer
 				preferCanvas={false}
 				maxBounds={
