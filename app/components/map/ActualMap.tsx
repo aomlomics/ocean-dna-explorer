@@ -51,19 +51,6 @@ const DEFAULT_BOUNDS = [
 	[180, 180]
 ] as Bounds;
 
-function changeAlpha(color: string | undefined, alpha: string) {
-	if (color) {
-		const split = color.split(",");
-		if (split.length === 4) {
-			split.pop();
-		}
-
-		return (color = split.join(",") + "," + alpha + ")");
-	} else {
-		return "rgb(200,0,0," + alpha + ")";
-	}
-}
-
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
 		return {
@@ -395,7 +382,7 @@ export default function ActualMap({
 	}
 
 	return (
-		<div className="flex flex-col items-start h-full w-full z-100 relative" key={Math.random()}>
+		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
 				preferCanvas={false}
 				maxBounds={
