@@ -203,7 +203,6 @@ export default function ActualMap({
 
 		mapProps = { bounds };
 	}
-	console.log(filteredLocations.length, locations.length, mapProps);
 
 	let defaultLegend = undefined as LegendInfo;
 	let defaultPoints;
