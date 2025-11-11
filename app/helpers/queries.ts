@@ -463,47 +463,49 @@ export function parseApiQuery(
 
 			const shape = TableMetadata[table].schema.shape;
 			searchParams.forEach((value, key) => {
-				if (!shape[key as keyof typeof shape]) {
-					throw new Error(`Invalid field "${key}". Field does not exist on table named "${table}".`);
-				}
-				const type = getZodType(shape[key as keyof typeof shape]).type;
-				if (!type) {
-					throw new Error(
-						`Could not find type of "${key}". Make sure a field named "${key}" exists on table named "${table}".`
-					);
-				}
-
-				const arr = value.split(",");
-				if (arr.length > 1) {
-					query.where!.OR = [];
-					if (type === "string") {
-						for (const val of arr) {
-							query.where!.OR.push({
-								[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
-							});
-						}
-					} else if (type === "integer") {
-						for (const val of arr) {
-							query.where!.OR.push({ [key]: parseInt(val) });
-						}
-					} else if (type === "float") {
-						for (const val of arr) {
-							query.where!.OR.push({ [key]: parseFloat(val) });
-						}
-					} else {
-						for (const val of arr) {
-							query.where!.OR.push({ [key]: val });
-						}
+				if (shape[key as keyof typeof shape]) {
+					const type = getZodType(shape[key as keyof typeof shape]).type;
+					if (!type) {
+						throw new Error(
+							`Could not find type of "${key}". Make sure a field named "${key}" exists on table named "${table}".`
+						);
 					}
-				} else {
-					if (type === "string") {
-						query.where![key] = { contains: value.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" };
-					} else if (type === "integer") {
-						query.where![key] = parseInt(value);
-					} else if (type === "float") {
-						query.where![key] = parseFloat(value);
+
+					const arr = value.split(",");
+					if (arr.length > 1) {
+						query.where!.OR = [];
+						if (type === "string") {
+							for (const val of arr) {
+								query.where!.OR.push({
+									[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+								});
+							}
+						} else if (type === "integer") {
+							for (const val of arr) {
+								query.where!.OR.push({ [key]: parseInt(val) });
+							}
+						} else if (type === "float") {
+							for (const val of arr) {
+								query.where!.OR.push({ [key]: parseFloat(val) });
+							}
+						} else {
+							for (const val of arr) {
+								query.where!.OR.push({ [key]: val });
+							}
+						}
 					} else {
-						query.where![key] = value;
+						if (type === "string") {
+							query.where![key] = {
+								contains: value.replace("_", "\\_").replace("%", "\\%"),
+								mode: "insensitive",
+							};
+						} else if (type === "integer") {
+							query.where![key] = parseInt(value);
+						} else if (type === "float") {
+							query.where![key] = parseFloat(value);
+						} else {
+							query.where![key] = value;
+						}
 					}
 				}
 			});

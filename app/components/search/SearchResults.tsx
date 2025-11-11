@@ -23,7 +23,7 @@ export default function SearchResults() {
 	const table = uncapitalizeTable(model as Prisma.ModelName);
 
 	return (
-		<div className="bg-base-200 p-4 rounded-lg">
+		<div>
 			<h2 className="text-xl mb-4">
 				Showing all{" "}
 				{table && TableMetadata[table] ? (
@@ -34,7 +34,7 @@ export default function SearchResults() {
 				that match your search
 			</h2>
 
-			<div className="aspect-4/2">
+			<div className="aspect-4/2 w-full">
 				{table ? (
 					table === "taxonomy" ? (
 						<TaxaGrid ignoreParams={["table"]} />

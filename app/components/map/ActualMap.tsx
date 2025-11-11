@@ -1,29 +1,39 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, FeatureGroup } from "react-leaflet";
-import { divIcon, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-markercluster";
+import { divIcon, DomEvent, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
+import "leaflet-defaulticon-compatibility";
+import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
+import "react-leaflet-fullscreen/styles.css";
+import "react-leaflet-markercluster/styles";
 import Link from "next/link";
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { DBSCAN } from "density-clustering";
+import { Dispatch, ReactNode, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { capitalizeTable } from "@/app/helpers/utils";
+import { MapProps, Location, LocationWithoutValues } from "@/types/globals";
+import InfoButton from "../InfoButton";
+import chroma, { Color } from "chroma-js";
+import distinctColors from "distinct-colors";
 
-type Location = {
-	decimalLatitude: number;
-	decimalLongitude: number;
-	color?: string;
-	values?: string[];
-	[key: string]: any;
-};
+type LegendInfo =
+	| ({ field: string | string[] } & (
+			| { mode: "discreet"; colorMap: Record<string, Color> }
+			| { mode: "gradient"; range: [number, number]; palette: string }
+	  ))
+	| undefined;
 
 function changeAlpha(color: string | undefined, alpha: string) {
 	if (color) {
 		const split = color.split(",");
-		split.pop();
+		if (split.length === 4) {
+			split.pop();
+		}
 
 		return (color = split.join(",") + "," + alpha + ")");
 	} else {
@@ -63,45 +73,99 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	return d * 1000; // meters
 }
 
+function getTitleIdValue(
+	titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"],
+	loc: Location,
+	sep = "/"
+) {
+	if (typeof titleId === "string") {
+		return loc[titleId];
+	} else {
+		let joined = "";
+		for (let i = 0; i < titleId.length; i++) {
+			if (i) {
+				joined += sep;
+			}
+			joined += loc[titleId[i]];
+		}
+		return joined;
+	}
+}
+
+function getLegendColor(legend: LegendInfo, loc: Location) {
+	if (legend) {
+		if (legend.mode === "discreet") {
+			return legend.colorMap[getTitleIdValue(legend.field, loc)];
+		} else if (legend.mode === "gradient") {
+			//TODO: do gradient with chroma-js (legend.palette)
+		}
+	} else {
+		//TODO: handle if no legend
+	}
+	return chroma("red");
+}
+
 export default function ActualMap({
 	locations,
 	mapProps,
 	id = "samp_name",
-	titleTable,
-	iconSize = 25,
 	table = "sample",
-	legend,
+	titleTable,
 	cluster = false,
+	clusterRadius = 50,
 	draw = false
 }: {
 	locations: Location[];
-	mapProps:
-		| {
-				center: LatLng;
-				zoom: number;
-				bounds?: undefined;
-		  }
-		| {
-				bounds: LatLngBoundsExpression;
-				center?: undefined;
-				zoom?: undefined;
-		  };
+	mapProps: MapProps;
 	id?: string;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
-	iconSize?: number;
 	table?: Uncapitalize<Prisma.ModelName>;
-	legend?: Record<string, string>;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
+	clusterRadius?: number;
 	draw?: boolean;
 }) {
-	const [zoomLevel, setZoomLevel] = useState(5);
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
 
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
-	const [points, setPoints] = useState(locations);
+	let defaultLegend = undefined as LegendInfo;
+	let defaultPoints;
+	if (titleTable) {
+		const titleId = TableMetadata[titleTable].titleField;
+		//get all options for coloring
+		const options = new Set() as Set<string>;
+		for (const loc of locations) {
+			options.add(getTitleIdValue(titleId, loc));
+		}
+
+		//assign color to each option
+		const optionsArray = Array.from(options);
+		const colors = distinctColors({ count: optionsArray.length });
+		const colorMap = {} as Record<string, Color>;
+		for (let i = 0; i < optionsArray.length; i++) {
+			colorMap[optionsArray[i]] = colors[i];
+		}
+		defaultLegend = { field: titleId, mode: "discreet", colorMap };
+
+		//assemble locations object with assigned color and list of locations
+		defaultPoints = {} as Record<string, Location[]>;
+		for (const loc of locations) {
+			const opt = getTitleIdValue(titleId, loc);
+			if (defaultPoints[opt]) {
+				defaultPoints[opt].push(loc);
+			} else {
+				defaultPoints[opt] = [loc];
+			}
+		}
+	} else {
+		defaultPoints = locations;
+	}
+	const [legend, setLegend] = useState(defaultLegend);
+	const [points, setPoints] = useState(defaultPoints);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
+
+	const [clusterRadiusValue, setClusterRadiusValue] = useState(clusterRadius as number | undefined);
 
 	const [shapes, setShapes] = useState(
 		{} as Record<
@@ -122,7 +186,7 @@ export default function ActualMap({
 		>
 	);
 
-	function checkShapes(pts = points) {
+	function checkShapes(pts = locations) {
 		let tempPoints = [...pts];
 
 		if (Object.keys(shapes).length) {
@@ -163,9 +227,9 @@ export default function ActualMap({
 				}
 
 				if (inside || !Object.keys(shapes).length) {
-					tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
+					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
 				} else {
-					tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
+					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
 				}
 			}
 
@@ -182,46 +246,6 @@ export default function ActualMap({
 		}
 	}, [shapes]);
 
-	//zoomLevel
-	useEffect(() => {
-		if (drawReady) {
-			let tempLocations = [...locations];
-			//TODO: https://www.npmjs.com/package/react-leaflet-markercluster
-			// if (cluster) {
-			// 	//cluster location data
-			// 	const dataset = tempLocations.map((loc) => [loc.decimalLatitude, loc.decimalLongitude]);
-			// 	const dbscan = new DBSCAN();
-			// 	//adjust second argument to adjust when points cluster
-			// 	const clusters = dbscan.run(dataset, 50 / zoomLevel ** 2.5, 2);
-			// 	//take index of cluster and average latlongs
-			// 	const clusteredLocations = [];
-			// 	for (const c of clusters) {
-			// 		const sum = [0, 0];
-			// 		const values = [] as string[];
-			// 		for (const i of c) {
-			// 			sum[0] += dataset[i][0];
-			// 			sum[1] += dataset[i][1];
-			// 			if (tempLocations[i].values) {
-			// 				values.push(...tempLocations[i].values);
-			// 			} else {
-			// 				values.push(tempLocations[i][id]);
-			// 			}
-			// 		}
-			// 		if (values.length) {
-			// 			clusteredLocations.push({
-			// 				values,
-			// 				decimalLatitude: sum[0] / c.length,
-			// 				decimalLongitude: sum[1] / c.length
-			// 			});
-			// 		}
-			// 	}
-			// 	tempLocations = clusteredLocations;
-			// }
-
-			checkShapes(tempLocations);
-		}
-	}, [zoomLevel]);
-
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
 	useEffect(() => {
 		if (!drawAlmostReady) {
@@ -231,49 +255,61 @@ export default function ActualMap({
 		}
 	}, [drawAlmostReady]);
 
-	function ZoomControl() {
-		const mapEvents = useMapEvents({
-			zoomend: () => {
-				setZoomLevel(mapEvents.getZoom());
-			},
-			zoomlevelschange: () => {
-				setZoomLevel(mapEvents.getZoom());
-			}
-		});
-
-		return null;
-	}
-
-	function LegendControl() {
-		if (points.length === 0 || !legend || !titleTable) {
-			return null;
-		}
-
+	function ClusterGroup({ radius, children }: { radius: number | undefined; children: ReactNode }) {
 		return (
-			<div className="leaflet-bottom leaflet-right">
-				<div className="leaflet-control leaflet-bar !border-none !mb-6">
-					<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
-						<div className="text-lg border-b-2 border-primary mb-2">{TableMetadata[titleTable].plural}</div>
-						{Object.entries(legend).map(([key, color]) => (
-							<div key={key} className="flex gap-2 items-center">
-								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color }}></div>
-								<Link
-									href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
-									className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
-								>
-									{key}
-								</Link>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
+			<MarkerClusterGroup
+				maxClusterRadius={radius || 0}
+				singleMarkerMode={true}
+				chunkedLoading={true}
+				iconCreateFunction={(cluster: any) => {
+					let count = 0;
+					let childrenWithValues = 0;
+					let valuesCount = 0;
+					const uniqueColors = new Set() as Set<string>;
+					for (const marker of cluster.getAllChildMarkers()) {
+						count++;
+						uniqueColors.add(marker.options.children.props.color.hex());
+
+						if (marker.options.children.props.loc.values) {
+							childrenWithValues++;
+							valuesCount += marker.options.children.props.loc.values.length;
+						}
+					}
+					const color = chroma.average(Array.from(uniqueColors));
+
+					const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
+
+					let size = 10 + 5 * Math.floor(combined).toString().length;
+
+					let html;
+					if (count === 1) {
+						if (valuesCount) {
+							size += 5;
+						}
+						html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};>${
+							valuesCount || ""
+						}</div>`;
+					} else {
+						size += 10;
+						html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${combined}</div>`;
+					}
+
+					return divIcon({
+						className: "bg-none",
+						html,
+						iconSize: [size, size]
+					});
+				}}
+			>
+				{children}
+			</MarkerClusterGroup>
 		);
 	}
 
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
+				preferCanvas={false}
 				maxBounds={
 					[
 						[-180, -180],
@@ -283,7 +319,10 @@ export default function ActualMap({
 				className="w-full h-full grow"
 				{...mapProps}
 			>
-				<LegendControl />
+				<FullscreenControl />
+				<LegendControl legend={legend} titleTable={titleTable} />
+				<ClusterControl cluster={cluster} value={clusterRadiusValue} onChange={setClusterRadiusValue} />
+
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
 					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
@@ -333,29 +372,47 @@ export default function ActualMap({
 					)}
 				</FeatureGroup>
 
-				<ZoomControl />
-
-				{points.map((loc, i) => (
-					<Marker
-						key={loc.decimalLatitude.toString() + loc.decimalLongitude.toString() + i}
-						icon={divIcon({
-							className: "bg-none",
-							html:
-								`<div class='h-full text-center font-mono content-center rounded-full border border-black text-white' style=background-color:${
-									loc.color ? loc.color : "rgb(200,0,0)"
-								}>` +
-								(cluster && loc.values ? loc.values.length.toString() : "") +
-								"</div>",
-							iconSize: [iconSize, iconSize]
-						})}
-						position={{
-							lat: loc.decimalLatitude,
-							lng: loc.decimalLongitude
-						}}
-					>
-						<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} />
-					</Marker>
-				))}
+				{Array.isArray(points) ? (
+					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
+						{points.map((loc, i) => (
+							<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
+								<PopupWithSearch
+									table={table}
+									titleTable={titleTable}
+									loc={loc}
+									id={id}
+									color={getLegendColor(legend, loc)}
+									legend={legend}
+								/>
+							</Marker>
+						))}
+					</ClusterGroup>
+				) : (
+					<>
+						{Object.values(points).map((locArray, i) => (
+							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
+								{locArray.map((loc, j) => (
+									<Marker
+										key={i.toString() + j.toString()}
+										position={{
+											lat: loc.decimalLatitude,
+											lng: loc.decimalLongitude
+										}}
+									>
+										<PopupWithSearch
+											table={table}
+											titleTable={titleTable}
+											loc={loc}
+											id={id}
+											color={getLegendColor(legend, loc)}
+											legend={legend}
+										/>
+									</Marker>
+								))}
+							</ClusterGroup>
+						))}
+					</>
+				)}
 
 				<style jsx global>{`
 					.leaflet-popup-content-wrapper {
@@ -379,12 +436,16 @@ function PopupWithSearch({
 	table,
 	titleTable,
 	loc,
-	id
+	id,
+	color,
+	legend
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: Location;
 	id: string;
+	color: Color;
+	legend: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
 
@@ -416,41 +477,164 @@ function PopupWithSearch({
 				) : (
 					<></>
 				)}
-				<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
+				<>
 					{loc.values ? (
 						<>
 							<h2 className="text-primary text-lg">
 								{TableMetadata[table].plural} ({loc.values.length})
 							</h2>
-							{loc.values.reduce((acc: ReactNode[], label: string) => {
-								if (label.toLowerCase().includes(filter.toLowerCase())) {
-									acc.push(
-										<Link
-											key={label}
-											href={`/explore/${table}/${encodeURIComponent(label)}`}
-											className="link link-primary link-hover"
-										>
-											{label}
-										</Link>
-									);
-								}
+							<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
+								{loc.values.reduce((acc: ReactNode[], l: LocationWithoutValues) => {
+									if (l[id].toLowerCase().includes(filter.toLowerCase())) {
+										if (legend) {
+											acc.push(
+												<div key={l[id]} className="flex gap-2 items-center">
+													<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+													<Link
+														href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+														className="link link-primary link-hover"
+													>
+														{l[id]}
+													</Link>
+												</div>
+											);
+										} else {
+											acc.push(
+												<Link
+													key={l[id]}
+													href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+													className="link link-primary link-hover"
+												>
+													{l[id]}
+												</Link>
+											);
+										}
+									}
 
-								return acc;
-							}, [])}
+									return acc;
+								}, [])}
+							</div>
 						</>
 					) : (
 						<>
 							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
-							<Link
-								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-								className="text-info hover:text-info-focus hover:underline transition-colors"
-							>
-								{loc[id]}
-							</Link>
+							{legend ? (
+								<div className="flex gap-2 items-center">
+									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+									<Link
+										href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+										className="link link-primary link-hover"
+									>
+										{loc[id]}
+									</Link>
+								</div>
+							) : (
+								<Link
+									href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+									className="link link-primary link-hover"
+								>
+									{loc[id]}
+								</Link>
+							)}
 						</>
 					)}
-				</div>
+				</>
 			</div>
 		</Popup>
 	);
+}
+
+function LegendControl({ legend, titleTable }: { legend: LegendInfo; titleTable?: Uncapitalize<Prisma.ModelName> }) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+		}
+	}, []);
+
+	if (!titleTable || !legend) {
+		return null;
+	}
+
+	return (
+		<div className="leaflet-bottom leaflet-right" ref={ref}>
+			<div className="leaflet-control leaflet-bar !border-none !mb-6">
+				<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
+					<div className="text-lg border-b-2 border-primary mb-2">
+						{titleTable ? TableMetadata[titleTable].plural : legend.field}
+					</div>
+					{legend.mode === "discreet" ? (
+						Object.entries(legend.colorMap).map(([key, color]) => (
+							<div key={key} className="flex gap-2 items-center">
+								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+								<Link
+									href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
+									className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
+								>
+									{key}
+								</Link>
+							</div>
+						))
+					) : (
+						<></>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ClusterControl({
+	cluster,
+	value,
+	onChange
+}: {
+	cluster: boolean;
+	value: number | undefined;
+	onChange: Dispatch<SetStateAction<number | undefined>>;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+		}
+	}, []);
+
+	if (!cluster) {
+		return null;
+	} else {
+		return (
+			<div className="leaflet-bottom leaflet-left" ref={ref}>
+				<div className="leaflet-control leaflet-bar !border-none">
+					<div className="card bg-base-100 card-xs shadow-sm card-body pl-3 pr-1 pt-1 pb-2 w-25 gap-0">
+						<div className="flex justify-between">
+							<span className="text-sm mt-1">Cluster</span>
+							<InfoButton
+								infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
+								dir="tooltip-right"
+								className="self-start"
+							/>
+						</div>
+						<div className="pr-2">
+							<input
+								type="number"
+								className="input input-primary"
+								value={value === undefined ? "" : value}
+								onChange={(e) => {
+									const parsed = parseInt(e.currentTarget.value);
+									if (isNaN(parsed)) {
+										onChange(undefined);
+									} else {
+										onChange(parsed);
+									}
+								}}
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 }

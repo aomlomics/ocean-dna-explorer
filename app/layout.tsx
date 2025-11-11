@@ -24,34 +24,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<script
 					dangerouslySetInnerHTML={{
 						__html: `
-							(function() {
-								function getInitialTheme() {
-									// Check if theme is stored in localStorage
-									const storedTheme = localStorage.getItem('theme');
-									if (storedTheme) {
-										return storedTheme;
-									}
-									
-									// Check if user prefers dark mode
-									if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-										return 'dark';
-									}
-									
-									// Default to light theme
-									return 'light';
-								}
+			(function() {
+				function getInitialTheme() {
+					const storedTheme = localStorage.getItem('theme');
+					if (storedTheme) {
+						return storedTheme;
+					}
+					
+					if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+						return 'dark';
+					}
+					
+					return 'light';
+				}
 
-								// Set the theme class on the document element
-								document.documentElement.setAttribute('data-theme', getInitialTheme());
-							})();
+				document.documentElement.setAttribute('data-theme', getInitialTheme());
+			})();
 						`
 					}}
 				/>
 			</head>
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
+				{/* <NavigationProvider> */}
 				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
 					<ClerkAppearanceProvider>{children}</ClerkAppearanceProvider>
 				</ThemeProvider>
+				{/* </NavigationProvider> */}
 				<ScrollToTop />
 			</body>
 		</html>

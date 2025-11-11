@@ -12,7 +12,7 @@ import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { fetcher } from "@/app/helpers/utils";
 
 //TODO: make where arg support relational queries
@@ -39,6 +39,8 @@ export default function Table({
 	ignoreParams?: string[];
 }) {
 	const searchParams = useSearchParams();
+	const router = useRouter();
+	const pathname = usePathname();
 
 	const [take, setTake] = useState(defaultTake);
 	const [page, setPage] = useState(1);
@@ -246,6 +248,10 @@ export default function Table({
 		document.forms[`${table}TableForm`].reset();
 		setWhereFilter({});
 		setPendingFilters(0);
+
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete("search");
+		router.push(`${pathname}?${params.toString()}`);
 	}
 
 	function handleFormChange(form: HTMLFormElement) {
