@@ -29,6 +29,7 @@ export default function Map({
 }) {
 	return (
 		<ActualMap
+			key={Math.random()}
 			locations={locations}
 			id={id}
 			table={table}
