@@ -3,6 +3,7 @@ import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { TaxonomicRanks } from "@/types/objects";
 import PhyloPic from "@/app/components/images/PhyloPic";
+import TableMetadata from "@/types/tableMetadata";
 import { Taxonomy } from "@/app/generated/prisma/client";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
@@ -93,7 +94,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full">
 			<header className="flex gap-2 items-center">
-				<h1 className="text-4xl font-semibold text-primary mb-2">{displayName}</h1>
+				<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.taxonomy.description}>
+					{displayName}
+				</h1>
 				{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 			</header>
 			{/* Using sm breakpoint (640px) instead of md (768px) */}
@@ -104,7 +107,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						<PhyloPic taxonomy={dbTaxonomy} />
 					</div>
 					<div className="py-3 px-4 text-center">
-						<div className="text-base-content/80 text-sm mt-1">{samples.length} occurrences found in NODE</div>
+						<div className="text-base-content/80 text-sm mt-1">{samples.length} occurrences found in the Ocean DNA Explorer</div>
 					</div>
 				</div>
 

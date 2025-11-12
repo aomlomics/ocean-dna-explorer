@@ -43,7 +43,7 @@ export async function getApiSections() {
 			content: (
 				<div className="space-y-4">
 					<p>
-						The ODE API provides programmatic access to marine eDNA data. This documentation will help you understand
+						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help you understand
 						how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
@@ -65,7 +65,7 @@ export async function getApiSections() {
 							<div className="space-y-6">
 								<div>
 									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data from the Ocean DNA Explorer</h4>
-									<p className="mb-2">There are multiple ways to access and explore data in ODE:</p>
+									<p className="mb-2">There are multiple ways to access and explore data in the Ocean DNA Explorer:</p>
 									<ul className="list-disc ml-6 space-y-2">
 										<li>
 											<p>Through a Graphical Interface (No Code Required):</p>
@@ -488,7 +488,7 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table in ODE. You can use this information
+								The dropdown menus below show the fields available for each table in the Ocean DNA Explorer. You can use this information
 								in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
@@ -1226,11 +1226,11 @@ if (http_status(response)$category == "Success") {
 			content: (
 				<>
 					<div className="space-y-6">
-						<p className="mb-4">Frequently asked questions about using the ODE API.</p>
+						<p className="mb-4">Frequently asked questions about using the Ocean DNA Explorer API.</p>
 
 						<div>
-							<h4 className="font-medium mb-2">Q: Do I need an API key to use the ODE API?</h4>
-							<p>A: No, the ODE API is currently open and does not require authentication or API keys.</p>
+							<h4 className="font-medium mb-2">Q: Do I need an API key to use the Ocean DNA Explorer API?</h4>
+							<p>A: No, the Ocean DNA Explorer API is currently open and does not require authentication or API keys.</p>
 						</div>
 
 						<div>

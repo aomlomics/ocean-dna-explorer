@@ -3,6 +3,7 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
+import TableMetadata from "@/types/tableMetadata";
 import { Sample } from "@/app/generated/prisma/client";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 
@@ -92,7 +93,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2">{samp_name}</h1>
+					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.sample.description}>
+						{samp_name}
+					</h1>
 					{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
@@ -168,8 +171,8 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					</div>
 
 					{/* Sample Information */}
-					<div className="bg-base-200 p-6">
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Sample Information</h2>
+					<div className="bg-base-200 rounded-xl p-6">
+						<h2 className="text-xl font-medium text-base-content/90 mb-4">Sample Information</h2>
 						<div className="h-[300px] overflow-y-auto">
 							<DataDisplay
 								table="sample"

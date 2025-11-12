@@ -69,7 +69,7 @@ export default async function Home() {
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
-					<span className="font-bold">BETA:</span> ODE is under active development. Please report bugs and feature
+					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report bugs and feature
 					requests{" "}
 					<a
 						href="https://github.com/aomlomics/ocean-dna-explorer/issues"
@@ -186,7 +186,7 @@ export default async function Home() {
 					{/* Assay Stats Section */}
 					<div>
 						<div className="mb-8 text-xl text-base-content">
-							<span className="text-primary">Assays used Across ODE</span>
+							<span className="text-primary">Assays used Across the Ocean DNA Explorer</span>
 						</div>
 						<AssayStats assays={uniqueAssays} />
 					</div>

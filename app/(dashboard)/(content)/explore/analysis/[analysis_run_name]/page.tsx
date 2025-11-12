@@ -5,6 +5,7 @@ import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
+import TableMetadata from "@/types/tableMetadata";
 import { Analysis } from "@/app/generated/prisma/client";
 
 export default async function Analysis_run_name({
@@ -71,7 +72,9 @@ export default async function Analysis_run_name({
 				<div className="col-span-2">
 					<header>
 						<div className="flex gap-2 items-center">
-							<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+							<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.analysis.description}>
+								{analysis_run_name}
+							</h1>
 							<EditHistory editHistory={analysis.editHistory} />
 							{analysis.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 						</div>
@@ -116,9 +119,9 @@ export default async function Analysis_run_name({
 					</div>
 				</div>
 
-				<div className="bg-base-200 p-6 h-full">
-					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
-					<div className="h-[300px] overflow-y-auto mt-4">
+				<div className="bg-base-200 rounded-xl p-6 h-full">
+					<h2 className="text-xl font-medium text-base-content/90 mb-4">Analysis Information</h2>
+					<div className="h-[300px] overflow-y-auto">
 						<DataDisplay
 							table="analysis"
 							data={justAnalysis}

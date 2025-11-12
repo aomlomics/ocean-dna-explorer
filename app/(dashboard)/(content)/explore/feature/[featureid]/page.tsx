@@ -1,5 +1,6 @@
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import Pagination from "@/app/components/paginated/Pagination";
+import TableMetadata from "@/types/tableMetadata";
 import { Feature } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { ReactNode } from "react";
@@ -91,7 +92,9 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 		<div className="space-y-8">
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
+					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.feature.description}>
+						{feature.featureid}
+					</h1>
 					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-md text-base-content/70 break-all font-mono">{feature.dna_sequence}</p>
