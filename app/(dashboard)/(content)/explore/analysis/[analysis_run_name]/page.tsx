@@ -92,6 +92,21 @@ export default async function Analysis_run_name({
 					</Link>{" "}
 					project
 				</p>
+				<a
+					href={`/api/occurrenceTable/${analysis_run_name}`}
+					download={`${analysis_run_name}_occurrenceTable`}
+					className="btn btn-lg text-base-content/80 font-normal mt-2"
+				>
+					Download Occurrence Table
+					<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth="2"
+							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+						/>
+					</svg>
+				</a>
 			</header>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
@@ -103,9 +118,9 @@ export default async function Analysis_run_name({
 
 					{/* Assay Card */}
 					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assay</h2>
-						<div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-br from-base-200 to-base-300 shadow-sm">
-							<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center overflow-hidden">
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
+						<div className="flex items-center gap-4 p-4 rounded-lg">
+							<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 								<div className="relative w-12 h-12">
 									<Suspense>
 										<AssayPhyloPic assay_name={analysis.assay_name} />
@@ -147,72 +162,19 @@ export default async function Analysis_run_name({
 								<div className="text-3xl font-bold text-primary mb-1">{analysis._count.Assignments.toLocaleString()}</div>
 								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Assignments</div>
 							</div>
-						</div>
-					</div>
 
-					{/* Download Button */}
-					<div>
-						<a
-							href={`/api/occurrenceTable/${analysis_run_name}`}
-							download={`${analysis_run_name}_occurrenceTable`}
-							className="btn btn-primary btn-block"
-						>
-							Download Occurrence Table
-							<svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-								/>
-							</svg>
-						</a>
-					</div>
-
-					{/* Samples Dropdown */}
-					<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-xl">
-						<div tabIndex={0} role="button" className="w-full p-6 flex justify-between items-center">
-							<div className="flex items-center gap-4">
-								<div className="w-12 h-12 flex items-center justify-center text-primary">
-									<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
-										<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-									</svg>
+							<Link href={`/search/advanced?table=sample&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}>
+								<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center hover:bg-base-300 transition-all duration-300 hover:scale-105">
+									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+										<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
+											<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+										</svg>
+									</div>
+									<div className="text-3xl font-bold text-primary mb-1">{samples.length.toLocaleString()}</div>
+									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Samples</div>
 								</div>
-								<div>
-									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">Total Samples</div>
-									<div className="text-2xl font-bold text-primary mt-1">{samples.length}</div>
-								</div>
-							</div>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								className="text-base-content/70"
-							>
-								<path d="m6 9 6 6 6-6" />
-							</svg>
+							</Link>
 						</div>
-						<ul
-							tabIndex={0}
-							className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-						>
-							{samples.map((sample) => (
-								<li key={sample.samp_name}>
-									<Link
-										href={`/explore/sample/${sample.samp_name}`}
-										className="text-base-content hover:text-primary break-all"
-									>
-										{sample.samp_name}
-									</Link>
-								</li>
-							))}
-						</ul>
 					</div>
 
 					{/* Analysis Information */}
