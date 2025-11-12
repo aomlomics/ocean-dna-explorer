@@ -144,11 +144,11 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					</div>
 
 					{/* Project Metadata and Top Taxonomy/Assays Section */}
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+					<div className="grid grid-cols-1 md:grid-cols-5 gap-6">
 						{/* Project Metadata Table */}
-						<div className="md:col-span-1">
+						<div className="md:col-span-2">
 							<div className="bg-base-200 rounded-xl p-6">
-								<h2 className="text-xl font-medium text-base-content/90 mb-4">Project Metadata</h2>
+								<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
 								<div className="h-[500px] overflow-y-auto">
 									<DataDisplay
 										table="project"
@@ -170,15 +170,15 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						</div>
 
 						{/* Top 2 Taxonomies per Assay and Assays */}
-						<div className="md:col-span-2 space-y-8">
+						<div className="md:col-span-3 space-y-6">
 							{/* Top 2 Taxonomies per Assay */}
 							<div>
-								<h2 className="text-xl font-medium text-base-content/90 mb-4">Top 2 Taxonomies per Assay</h2>
-								<div className="space-y-3">
+								<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Top 2 Taxonomies per Assay</h2>
+								<div className="space-y-2">
 									{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
-										<div key={assay} className="bg-base-200 p-4 rounded-xl">
-											<h3 className="font-medium text-base-content mb-2">{uniqueAssays[assay].target_gene}</h3>
-											<div className="space-y-2">
+										<div key={assay} className="bg-base-200 p-3 rounded-lg">
+											<h3 className="font-medium text-base-content mb-1 text-sm">{uniqueAssays[assay].target_gene}</h3>
+											<div className="space-y-1">
 												{taxa.map((taxon, idx) => (
 													<div key={idx} className="flex justify-between items-center text-sm">
 														<span className="text-base-content/80">{taxon.displayName}</span>
@@ -196,21 +196,23 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 							{/* Assays Section */}
 							<div id="assays-section">
-								<h2 className="text-xl font-medium text-base-content/90 mb-4">
+								<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
 									Assays in this Project ({Object.keys(uniqueAssays).length})
 								</h2>
-								<div className="space-y-3">
+								<div className="space-y-2">
 									{Object.keys(uniqueAssays).map((assay) => {
 										return (
-											<div key={assay} className="bg-base-200 rounded-xl px-6 py-4 flex items-center gap-6">
-												<div className="text-primary text-4xl flex-shrink-0">
-													<Suspense>
-														<AssayPhyloPic assay_name={assay} />
-													</Suspense>
+											<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
+												<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+													<div className="relative w-12 h-12">
+														<Suspense>
+															<AssayPhyloPic assay_name={assay} />
+														</Suspense>
+													</div>
 												</div>
 												<div>
-													<h3 className="font-medium text-base-content text-lg">{uniqueAssays[assay].target_gene}</h3>
-													<p className="text-base-content/70 text-sm">{assay}</p>
+													<h3 className="font-medium text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
+													<p className="text-base-content/70">{assay}</p>
 												</div>
 											</div>
 										);
@@ -225,7 +227,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<div className="space-y-8">
 					{/* Project at a Glance */}
 					<div>
-						<h2 className="text-xl font-medium text-base-content/90 mb-4">Project at a Glance</h2>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project at a Glance</h2>
 						<div className="grid grid-cols-2 gap-4">
 							<ProjectStatCard
 								title="Samples"
@@ -255,8 +257,8 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					</div>
 
 					{/* Project Contact Information */}
-					<div className="bg-base-200 rounded-xl p-6">
-						<h2 className="text-xl font-medium text-base-content/90 mb-4">Project Information</h2>
+					<div>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Information</h2>
 						<div className="space-y-3 text-base">
 							<div>
 								<span className="font-medium text-base-content/70">Contact:</span>

@@ -129,16 +129,16 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				</div>
 
 				{/* Map section */}
-				<div className="col-span-1 sm:col-span-6">
+				<div className="col-span-1 sm:col-span-6 flex flex-col">
 					<h2 className="text-xl font-medium text-base-content/90 mb-4">Which Samples was this Taxon found?</h2>
-					<div className="w-full aspect-5/2">
+					<div className="w-full flex-1">
 						<Map locations={samples} cluster />
 					</div>
 				</div>
 			</div>
 
-			<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-xl">
-				<div tabIndex={0} role="button" className="stat focus:bg-base-300 w-full p-6 flex justify-between items-center">
+			<div className="dropdown dropdown-hover bg-base-300 hover:bg-base-300/80 rounded-xl">
+				<div tabIndex={0} role="button" className="w-full p-6 flex justify-between items-center">
 					<div className="flex items-center gap-4">
 						<div className="w-12 h-12 flex items-center justify-center text-primary">
 							<svg viewBox="0 0 1024 1024" fill="currentColor" className="w-10 h-10">
