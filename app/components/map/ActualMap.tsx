@@ -20,7 +20,7 @@ import { Location, LocationWithoutValues } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
-import { DeadValueEnum } from "@/types/enums";
+import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
 
@@ -49,6 +49,7 @@ type LegendInfo =
 	| undefined;
 
 const DEFAULT_COLOR = chroma("red");
+const DEFAULT_PALETTE = "YlGnBu";
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -660,36 +661,90 @@ function PopupWithSearch({
 	);
 }
 
-function Collapsible({ children }: { children: ReactNode }) {
+function Collapsible({
+	children,
+	dir = "right",
+	className
+}: {
+	children: ReactNode;
+	dir?: "right" | "left" | "up" | "down";
+	className?: string;
+}) {
 	const [collapse, setCollapse] = useState(false);
 
-	return (
+	const panel = (
 		<div
-			className={`card bg-base-100 card-xs shadow-sm card-body px-2 py-2 flex-row gap-0 ${collapse ? "self-end" : ""}`}
+			className={`card bg-base-100 card-xs shadow-sm card-body justify-center p-2 min-h-[45px] ${className} ${
+				collapse ? "hidden" : ""
+			}`}
 		>
-			<div className="self-stretch flex items-center" onClick={() => setCollapse(!collapse)}>
+			<div>{children}</div>
+		</div>
+	);
+
+	let rotationOpen;
+	let rotationClosed;
+	let flexDir;
+	let collapsePos;
+	let openRounded;
+
+	if (dir === "right") {
+		rotationOpen = "";
+		rotationClosed = "rotate-180";
+		flexDir = "flex-row";
+		collapsePos = "self-end";
+		openRounded = "rounded-r-none pr-1";
+	} else if (dir === "left") {
+		rotationOpen = "rotate-180";
+		rotationClosed = "";
+		flexDir = "flex-row";
+		collapsePos = "self-start";
+		openRounded = "rounded-l-none pl-1";
+	} else if (dir === "up") {
+		rotationOpen = "-rotate-90";
+		rotationClosed = "rotate-90";
+		flexDir = "flex-col";
+		collapsePos = "self-start";
+		openRounded = "rounded-t-none pt-1";
+	} else if (dir === "down") {
+		rotationOpen = "rotate-90";
+		rotationClosed = "-rotate-90";
+		flexDir = "flex-col";
+		collapsePos = "self-end";
+		openRounded = "rounded-b-none pb-1";
+	}
+
+	return (
+		<div className={`flex ${flexDir} ${collapse ? collapsePos : ""}`}>
+			{dir === "left" || dir === "up" ? panel : <></>}
+			<div
+				className={`card bg-base-100 card-xs shadow-sm card-body p-2 self-center justify-center cursor-pointer ${
+					collapse ? "" : openRounded
+				}`}
+				onClick={() => setCollapse(!collapse)}
+			>
 				{collapse ? (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
+						width="14"
+						height="14"
 						viewBox="0 0 24 24"
-						className="text-primary"
+						className={`text-primary ${rotationClosed}`}
 						stroke="currentColor"
 						fill="currentColor"
 					>
 						<g>
-							<polygon points="13.707 4.707 12.293 3.293 3.586 12 12.293 20.707 13.707 19.293 6.414 12 13.707 4.707" />
-							<polygon points="19.707 4.707 18.293 3.293 9.586 12 18.293 20.707 19.707 19.293 12.414 12 19.707 4.707" />
+							<polygon points="11.707 3.293 10.293 4.707 17.586 12 10.293 19.293 11.707 20.707 20.414 12 11.707 3.293" />
+							<polygon points="5.707 3.293 4.293 4.707 11.586 12 4.293 19.293 5.707 20.707 14.414 12 5.707 3.293" />
 						</g>
 					</svg>
 				) : (
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						width="20"
-						height="20"
+						width="14"
+						height="14"
 						viewBox="0 0 24 24"
-						className="text-primary"
+						className={`text-primary ${rotationOpen}`}
 						stroke="currentColor"
 						fill="currentColor"
 					>
@@ -700,9 +755,7 @@ function Collapsible({ children }: { children: ReactNode }) {
 					</svg>
 				)}
 			</div>
-			<div className={`w-full ${collapse ? "hidden" : ""}`}>
-				<div className=" ml-1 mr-2">{children}</div>
-			</div>
+			{dir === "right" || dir === "down" ? panel : <></>}
 		</div>
 	);
 }
@@ -725,7 +778,6 @@ function LegendControl({
 )) {
 	const ref = useRef<HTMLDivElement>(null);
 
-	const [palette, setPalette] = useState("YlGnBu");
 	const [filter, setFilter] = useState("");
 
 	useEffect(() => {
@@ -740,13 +792,34 @@ function LegendControl({
 			<div className="leaflet-control leaflet-bar !border-none !mb-6 flex flex-col gap-2">
 				<Collapsible>
 					<div className="text-lg flex justify-between items-center gap-2">
-						<span>
-							{titleTable ? (
-								TableMetadata[titleTable].plural
-							) : (
+						{titleTable ? (
+							<span>{TableMetadata[titleTable].plural}</span>
+						) : (
+							<>
+								<div
+									className="tooltip tooltip-secondary before:text-primary-content"
+									data-tip={legend?.field ? "Reset Legend" : ""}
+								>
+									<svg
+										width="20px"
+										height="20px"
+										viewBox="0 0 24 24"
+										xmlns="http://www.w3.org/2000/svg"
+										className={legend?.field ? "text-primary cursor-pointer" : "text-primary/25"}
+										stroke="currentColor"
+										fill="currentColor"
+										onClick={() => setLegend(undefined)}
+									>
+										<path d="M12 16c1.671 0 3-1.331 3-3s-1.329-3-3-3-3 1.331-3 3 1.329 3 3 3z" />
+										<path d="M20.817 11.186a8.94 8.94 0 0 0-1.355-3.219 9.053 9.053 0 0 0-2.43-2.43 8.95 8.95 0 0 0-3.219-1.355 9.028 9.028 0 0 0-1.838-.18V2L8 5l3.975 3V6.002c.484-.002.968.044 1.435.14a6.961 6.961 0 0 1 2.502 1.053 7.005 7.005 0 0 1 1.892 1.892A6.967 6.967 0 0 1 19 13a7.032 7.032 0 0 1-.55 2.725 7.11 7.11 0 0 1-.644 1.188 7.2 7.2 0 0 1-.858 1.039 7.028 7.028 0 0 1-3.536 1.907 7.13 7.13 0 0 1-2.822 0 6.961 6.961 0 0 1-2.503-1.054 7.002 7.002 0 0 1-1.89-1.89A6.996 6.996 0 0 1 5 13H3a9.02 9.02 0 0 0 1.539 5.034 9.096 9.096 0 0 0 2.428 2.428A8.95 8.95 0 0 0 12 22a9.09 9.09 0 0 0 1.814-.183 9.014 9.014 0 0 0 3.218-1.355 8.886 8.886 0 0 0 1.331-1.099 9.228 9.228 0 0 0 1.1-1.332A8.952 8.952 0 0 0 21 13a9.09 9.09 0 0 0-.183-1.814z" />
+									</svg>
+								</div>
+
 								<select
 									value={legend ? legend.field : ""}
 									onChange={(e) => {
+										//TODO: convert this select into a dropdown :(
+										//TODO: add search bar
 										const field = e.target.value;
 										const options = new Set() as Set<any>;
 										for (const loc of points) {
@@ -783,12 +856,13 @@ function LegendControl({
 												parser = parseFloat;
 											}
 
-											//parse all values as int and ignore NaN
+											//parse all values as number and ignore NaN/DeadValues
 											const parsedOptions = optionsArray.reduce((acc, opt) => {
 												const parsed = parser(opt);
-												if (!isNaN(parsed)) {
+												if (!isNaN(parsed) && !DeadValueNumbers.includes(parsed)) {
 													acc.push(parsed);
 												}
+
 												return acc;
 											}, [] as number[]);
 
@@ -803,7 +877,7 @@ function LegendControl({
 													field,
 													mode: "gradient",
 													range: [parsedOptions[0], parsedOptions[parsedOptions.length - 1]],
-													palette
+													palette: legend?.mode === "gradient" ? legend.palette : DEFAULT_PALETTE
 												});
 											}
 										} else {
@@ -819,8 +893,8 @@ function LegendControl({
 										<option key={opt}>{opt}</option>
 									))}
 								</select>
-							)}
-						</span>
+							</>
+						)}
 						{legend && legend.mode === "gradient" ? (
 							<div className="dropdown dropdown-top dropdown-end">
 								<div tabIndex={0} role="button">
@@ -845,39 +919,68 @@ function LegendControl({
 								</div>
 								<ul
 									tabIndex={-1}
-									className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm max-h-100 !overflow-y-scroll overflow-x-hidden p-2 flex-nowrap overscroll-contain gap-2"
+									className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm p-2 flex-nowrap"
 								>
-									<input
-										type="text"
-										onChange={(e) => setFilter(e.target.value)}
-										value={filter}
-										placeholder={`Filter colors`}
-										className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
-									/>
-									{Object.keys(chroma.brewer)
-										.sort()
-										.reduce((acc, scaleName) => {
-											if (scaleName.toLowerCase().includes(filter.toLowerCase()) && scaleName !== palette) {
-												const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
-												acc.push(
-													<li key={scaleName} className="w-full">
-														<a
-															className="!w-full !bg-base-200 !flex items-center justify-center !rounded-md !p-1"
-															style={{ backgroundImage: `linear-gradient(to right, ${scale.join(",")})` }}
-															onClick={() => {
-																setPalette(scaleName);
-																setLegend({ ...legend, palette: scaleName });
-																(document.activeElement as HTMLDivElement).blur();
-															}}
-														>
-															{scaleName}
-														</a>
-													</li>
-												);
-											}
+									<div className="flex gap-2 items-center pb-2">
+										<div
+											className="tooltip tooltip-secondary before:text-primary-content"
+											data-tip={legend.palette === DEFAULT_PALETTE ? "" : "Reset to " + DEFAULT_PALETTE}
+										>
+											<svg
+												width="20px"
+												height="20px"
+												viewBox="0 0 24 24"
+												xmlns="http://www.w3.org/2000/svg"
+												className={
+													legend.palette === DEFAULT_PALETTE ? "text-primary/25" : "text-primary cursor-pointer"
+												}
+												stroke="currentColor"
+												fill="currentColor"
+												onClick={() => {
+													setLegend({ ...legend, palette: DEFAULT_PALETTE });
+													(document.activeElement as HTMLDivElement).blur();
+												}}
+											>
+												<path d="M12 16c1.671 0 3-1.331 3-3s-1.329-3-3-3-3 1.331-3 3 1.329 3 3 3z" />
+												<path d="M20.817 11.186a8.94 8.94 0 0 0-1.355-3.219 9.053 9.053 0 0 0-2.43-2.43 8.95 8.95 0 0 0-3.219-1.355 9.028 9.028 0 0 0-1.838-.18V2L8 5l3.975 3V6.002c.484-.002.968.044 1.435.14a6.961 6.961 0 0 1 2.502 1.053 7.005 7.005 0 0 1 1.892 1.892A6.967 6.967 0 0 1 19 13a7.032 7.032 0 0 1-.55 2.725 7.11 7.11 0 0 1-.644 1.188 7.2 7.2 0 0 1-.858 1.039 7.028 7.028 0 0 1-3.536 1.907 7.13 7.13 0 0 1-2.822 0 6.961 6.961 0 0 1-2.503-1.054 7.002 7.002 0 0 1-1.89-1.89A6.996 6.996 0 0 1 5 13H3a9.02 9.02 0 0 0 1.539 5.034 9.096 9.096 0 0 0 2.428 2.428A8.95 8.95 0 0 0 12 22a9.09 9.09 0 0 0 1.814-.183 9.014 9.014 0 0 0 3.218-1.355 8.886 8.886 0 0 0 1.331-1.099 9.228 9.228 0 0 0 1.1-1.332A8.952 8.952 0 0 0 21 13a9.09 9.09 0 0 0-.183-1.814z" />
+											</svg>
+										</div>
+										<input
+											type="text"
+											onChange={(e) => setFilter(e.target.value)}
+											value={filter}
+											placeholder={`Filter colors`}
+											className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
+										/>
+									</div>
 
-											return acc;
-										}, [] as ReactNode[])}
+									<div className="max-h-100 !overflow-y-scroll overscroll-contain flex flex-col gap-2">
+										{Object.keys(chroma.brewer)
+											.sort()
+											.reduce((acc, scaleName) => {
+												if (scaleName.toLowerCase().includes(filter.toLowerCase()) && scaleName !== legend.palette) {
+													const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
+													acc.push(
+														<li key={scaleName} className="w-full">
+															<a
+																className="!w-full !bg-base-200 !flex items-center justify-center !rounded-md !p-1 font-semibold"
+																style={{
+																	backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
+																}}
+																onClick={() => {
+																	setLegend({ ...legend, palette: scaleName });
+																	(document.activeElement as HTMLDivElement).blur();
+																}}
+															>
+																{scaleName}
+															</a>
+														</li>
+													);
+												}
+
+												return acc;
+											}, [] as ReactNode[])}
+									</div>
 								</ul>
 							</div>
 						) : (
@@ -924,14 +1027,14 @@ function LegendControl({
 										className="w-full flex items-center justify-center rounded-md p-2"
 										style={{
 											backgroundImage: `linear-gradient(to right, ${chroma.brewer[
-												palette as keyof typeof chroma.brewer
+												legend.palette as keyof typeof chroma.brewer
 											].join(",")})`
 										}}
 									/>
 									<div className="flex justify-between">
-										<span>{legend.range[0]}</span>
-										<span>{(legend.range[0] + legend.range[1]) / 2}</span>
-										<span>{legend.range[1]}</span>
+										<span>{Math.round(legend.range[0] * 1000) / 1000}</span>
+										<span>{Math.round(((legend.range[0] + legend.range[1]) / 2) * 1000) / 1000}</span>
+										<span>{Math.round(legend.range[1] * 1000) / 1000}</span>
 									</div>
 								</div>
 							) : (
@@ -970,7 +1073,7 @@ function ClusterControl({
 		return (
 			<div className="leaflet-bottom leaflet-left" ref={ref}>
 				<div className="leaflet-control leaflet-bar !border-none">
-					<div className="card bg-base-100 card-xs shadow-sm card-body pl-3 pr-1 pt-1 pb-2 w-25 gap-0">
+					<Collapsible dir="left" className="w-25 pl-2 pr-1 pt-1 pb-2">
 						<div className="flex justify-between">
 							<span className="text-sm mt-1">Cluster</span>
 							<InfoButton
@@ -994,7 +1097,7 @@ function ClusterControl({
 								}}
 							/>
 						</div>
-					</div>
+					</Collapsible>
 				</div>
 			</div>
 		);

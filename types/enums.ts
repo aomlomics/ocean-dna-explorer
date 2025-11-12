@@ -12,6 +12,7 @@ export enum DeadValueEnum {
 	"missing: restricted access: human-identifiable",
 	"missing: restricted access"
 }
+export const DeadValueNumbers = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
 export const DeadBooleanEnum = {
 	false: "false",

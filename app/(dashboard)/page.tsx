@@ -1,29 +1,27 @@
 import { getSummaryData, MainStats, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
-import { DeadValueEnum } from "@/types/enums";
+import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
 
 export default async function Home() {
-	const deadValues = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
-
 	const samples = await publicPrisma.sample.findMany({
 		where: {
 			AND: [
 				{
 					NOT: {
 						decimalLatitude: {
-							in: deadValues
+							in: DeadValueNumbers
 						}
 					}
 				},
 				{
 					NOT: {
 						decimalLongitude: {
-							in: deadValues
+							in: DeadValueNumbers
 						}
 					}
 				}
