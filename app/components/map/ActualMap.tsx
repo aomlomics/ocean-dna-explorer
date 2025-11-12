@@ -85,7 +85,7 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 
 function getTitleIdValue(
 	titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"],
-	loc: Location,
+	loc: Location | LocationWithoutValues,
 	sep = "/"
 ) {
 	if (typeof titleId === "string") {
@@ -102,7 +102,7 @@ function getTitleIdValue(
 	}
 }
 
-function getLegendColor(legend: LegendInfo, loc: Location) {
+function getLegendColor(legend: LegendInfo, loc: Location | LocationWithoutValues) {
 	if (legend) {
 		if (legend.mode === "discreet") {
 			return legend.colorMap[getTitleIdValue(legend.field, loc)];
@@ -364,13 +364,16 @@ export default function ActualMap({
 					const uniqueColors = new Set() as Set<string>;
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
-						uniqueColors.add(
-							marker.options.children.props.color ? marker.options.children.props.color.hex() : DEFAULT_COLOR.hex()
-						);
 
 						if (marker.options.children.props.loc.values) {
 							childrenWithValues++;
 							valuesCount += marker.options.children.props.loc.values.length;
+
+							for (const val of marker.options.children.props.loc.values) {
+								uniqueColors.add(getLegendColor(legend, val).hex());
+							}
+						} else {
+							uniqueColors.add(getLegendColor(legend, marker.options.children.props.loc).hex());
 						}
 					}
 					const color = chroma.average(Array.from(uniqueColors));
@@ -487,14 +490,7 @@ export default function ActualMap({
 					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
 						{points.map((loc, i) => (
 							<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-								<PopupWithSearch
-									table={table}
-									titleTable={titleTable}
-									loc={loc}
-									id={id}
-									color={getLegendColor(legend, loc)}
-									legend={legend}
-								/>
+								<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legend={legend} />
 							</Marker>
 						))}
 					</ClusterGroup>
@@ -510,14 +506,7 @@ export default function ActualMap({
 											lng: loc.decimalLongitude
 										}}
 									>
-										<PopupWithSearch
-											table={table}
-											titleTable={titleTable}
-											loc={loc}
-											id={id}
-											color={getLegendColor(legend, loc)}
-											legend={legend}
-										/>
+										<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legend={legend} />
 									</Marker>
 								))}
 							</ClusterGroup>
@@ -548,14 +537,12 @@ function PopupWithSearch({
 	titleTable,
 	loc,
 	id,
-	color,
 	legend
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: Location;
 	id: string;
-	color?: Color;
 	legend: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
@@ -598,6 +585,7 @@ function PopupWithSearch({
 								{loc.values.reduce((acc: ReactNode[], l: LocationWithoutValues) => {
 									if (l[id].toLowerCase().includes(filter.toLowerCase())) {
 										if (legend) {
+											const color = getLegendColor(legend, l);
 											acc.push(
 												<div key={l[id]} className="flex gap-2 items-center">
 													<div
@@ -636,7 +624,7 @@ function PopupWithSearch({
 								<div className="flex gap-2 items-center">
 									<div
 										className="aspect-square w-[1em] h-[1em]"
-										style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
+										style={{ backgroundColor: legend ? getLegendColor(legend, loc).hex() : DEFAULT_COLOR.hex() }}
 									></div>
 									<Link
 										href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
@@ -823,7 +811,13 @@ function LegendControl({
 										const field = e.target.value;
 										const options = new Set() as Set<any>;
 										for (const loc of points) {
-											options.add(loc[field]);
+											if (loc.values) {
+												for (const val of loc.values) {
+													options.add(val[field]);
+												}
+											} else {
+												options.add(loc[field]);
+											}
 										}
 										const optionsArray = Array.from(options).sort();
 
