@@ -2,7 +2,6 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import BarChart from "@/app/components/charts/BarChart";
-import PieChart from "@/app/components/charts/PieChart";
 import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
@@ -65,8 +64,14 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
 	const taxaCount = {} as Record<string, number>;
 	const taxaCountByAnalysis = {} as Record<string, Record<string, number>>;
+	const taxaCountByAssay = {} as Record<string, Record<string, number>>;
+	
 	for (const a of project.Analyses) {
 		taxaCountByAnalysis[a.analysis_run_name] = {};
+		if (!taxaCountByAssay[a.assay_name]) {
+			taxaCountByAssay[a.assay_name] = {};
+		}
+		
 		for (const assign of a.Assignments) {
 			if (assign.taxonomy in taxaCount) {
 				taxaCount[assign.taxonomy] += 1;
@@ -79,11 +84,32 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			} else {
 				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] = 1;
 			}
+			
+			if (assign.taxonomy in taxaCountByAssay[a.assay_name]) {
+				taxaCountByAssay[a.assay_name][assign.taxonomy] += 1;
+			} else {
+				taxaCountByAssay[a.assay_name][assign.taxonomy] = 1;
+			}
 		}
 	}
 	const colorsArr = randomColors(Object.keys(taxaCountByAnalysis).length);
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
-	const topTaxa = [...sortedTaxa]; // Create a copy for the top taxonomy section
+	
+	// Get top 2 taxonomies per assay
+	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce((acc, [assay, taxa]) => {
+		const sortedAssayTaxa = Object.entries(taxa)
+			.sort(([, a], [, b]) => b - a)
+			.slice(0, 2)
+			.map(([taxonomy, count]) => {
+				const taxonomyParts = taxonomy.split(";").filter(Boolean);
+				const displayName = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
+				const totalAssayCount = Object.values(taxa).reduce((sum, c) => sum + c, 0);
+				const percentage = ((count / totalAssayCount) * 100).toFixed(1);
+				return { displayName, count, percentage };
+			});
+		acc[assay] = sortedAssayTaxa;
+		return acc;
+	}, {} as Record<string, Array<{ displayName: string; count: number; percentage: string }>>);
 
 	return (
 		<div className="space-y-8">
@@ -117,26 +143,28 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<Map locations={project.Samples} cluster draw />
 					</div>
 
-					{/* Top Taxonomy and Assays Section */}
+					{/* Top Taxonomy per Assay and Assays Section */}
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-						{/* Top 10 Taxonomy Pie Chart */}
+						{/* Top 2 Taxonomies per Assay */}
 						<div>
-							<h2 className="text-xl font-medium text-base-content/90 mb-4">Top 10 Taxonomy</h2>
-							<div className="bg-base-200 p-4 rounded-xl" style={{ height: "400px" }}>
-								<PieChart
-									labels={topTaxa.slice(0, 10).map((taxa) => {
-										const taxonomyParts = taxa[0].split(";").filter(Boolean);
-										return taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
-									})}
-									datasets={[
-										{
-											label: "Count",
-											data: topTaxa.slice(0, 10).map((taxa) => taxa[1]),
-											backgroundColor: randomColors(10)
-										}
-									]}
-									textColor="currentColor"
-								/>
+							<h2 className="text-xl font-medium text-base-content/90 mb-4">Top 2 Taxonomies per Assay</h2>
+							<div className="space-y-4">
+								{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
+									<div key={assay} className="bg-base-200 p-4 rounded-xl">
+										<h3 className="font-medium text-base-content mb-2">{uniqueAssays[assay].target_gene}</h3>
+										<div className="space-y-2">
+											{taxa.map((taxon, idx) => (
+												<div key={idx} className="flex justify-between items-center text-sm">
+													<span className="text-base-content/80">{taxon.displayName}</span>
+													<div className="flex gap-2">
+														<span className="badge badge-ghost badge-sm">{taxon.percentage}%</span>
+														<span className="text-base-content/60">({taxon.count})</span>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
+								))}
 							</div>
 						</div>
 
@@ -145,7 +173,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">
 								Assays in this Project ({Object.keys(uniqueAssays).length})
 							</h2>
-							<div className="space-y-2">
+							<div className="space-y-4">
 								{Object.keys(uniqueAssays).map((assay) => {
 									return (
 										<div key={assay} className="flex items-center gap-4 p-4 rounded-lg bg-base-200">
@@ -157,7 +185,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 												</div>
 											</div>
 											<div>
-												<h3 className="font-bold text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
+												<h3 className="font-semibold text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
 												<p className="text-base-content/70">{assay}</p>
 											</div>
 										</div>
@@ -201,9 +229,28 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						</div>
 					</div>
 
-					{/* Project Information */}
-					<div className="bg-base-200 rounded-xl p-6">
+					{/* Project Contact Information */}
+					<div>
 						<h2 className="text-xl font-medium text-base-content/90 mb-4">Project Information</h2>
+						<div className="space-y-3 text-base">
+							<div>
+								<span className="font-medium text-base-content/70">Contact:</span>
+								<div className="mt-1">{project.project_contact || "N/A"}</div>
+							</div>
+							<div>
+								<span className="font-medium text-base-content/70">Institution:</span>
+								<div className="mt-1">{project.institution || "N/A"}</div>
+							</div>
+							<div>
+								<span className="font-medium text-base-content/70">Assay Type:</span>
+								<div className="mt-1">{project.assay_type || "N/A"}</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Full Project Metadata */}
+					<div className="bg-base-200 rounded-xl p-6">
+						<h2 className="text-xl font-medium text-base-content/90 mb-4">Full Project Metadata</h2>
 						<div className="h-[400px] overflow-y-auto">
 							<DataDisplay
 								table="project"

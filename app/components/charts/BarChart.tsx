@@ -23,6 +23,11 @@ export default function BarChart({
 	labels: string[];
 	datasets: ChartDataset<"bar", (number | [number, number] | null)[]>[];
 }) {
+	// Get current text color from CSS custom property or default
+	const textColor = typeof window !== 'undefined' 
+		? getComputedStyle(document.documentElement).getPropertyValue('--bc') || '#000000'
+		: '#000000';
+	
 	return (
 		<Bar
 			data={{
@@ -33,7 +38,13 @@ export default function BarChart({
 				plugins: {
 					title: {
 						display: true,
-						text: title
+						text: title,
+						color: `oklch(${textColor})`
+					},
+					legend: {
+						labels: {
+							color: `oklch(${textColor})`
+						}
 					}
 				},
 				responsive: true,
@@ -42,10 +53,22 @@ export default function BarChart({
 				},
 				scales: {
 					x: {
-						stacked: true
+						stacked: true,
+						ticks: {
+							color: `oklch(${textColor})`
+						},
+						grid: {
+							color: `oklch(${textColor} / 0.1)`
+						}
 					},
 					y: {
-						stacked: true
+						stacked: true,
+						ticks: {
+							color: `oklch(${textColor})`
+						},
+						grid: {
+							color: `oklch(${textColor} / 0.1)`
+						}
 					}
 				}
 			}}
