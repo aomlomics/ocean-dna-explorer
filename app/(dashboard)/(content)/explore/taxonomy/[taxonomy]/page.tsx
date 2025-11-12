@@ -77,6 +77,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			},
 			select: {
 				samp_name: true,
+				project_id: true,
 				decimalLatitude: true,
 				decimalLongitude: true
 			}
@@ -91,14 +92,25 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const displayName = dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ");
 	const isPrivate = dbTaxonomy.Assignments.some((a) => a.Analysis.isPrivate);
 
+	// Get unique project IDs for display
+	const uniqueProjects = [...new Set(samples.map(s => s.project_id))];
+	const samplesText = samples.length === 1 ? '1 sample' : `${samples.length} samples`;
+	const projectsText = uniqueProjects.length === 1 ? '1 project' : `${uniqueProjects.length} projects`;
+
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full">
-			<header className="flex gap-2 items-center">
-				<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.taxonomy.description}>
-					{displayName}
-				</h1>
-				{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+			<header>
+				<div className="flex gap-2 items-center">
+					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.taxonomy.description}>
+						{displayName}
+					</h1>
+					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+				</div>
+				<p className="text-lg text-base-content/70">
+					Found in {samplesText} across {projectsText}
+				</p>
 			</header>
+			
 			{/* Using sm breakpoint (640px) instead of md (768px) */}
 			<div className="grid grid-cols-1 gap-6 sm:grid-cols-12 sm:gap-8">
 				{/* Image section with centered content */}
@@ -117,21 +129,30 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				</div>
 
 				{/* Map section */}
-				<div className="col-span-1 sm:col-span-6 bg-base-300 rounded-xl overflow-hidden">
-					<div className="p-4 border-b border-base-content/10">
-						<h2 className="text-base-content/80 font-medium">Which Samples was this Taxon found?</h2>
-					</div>
+				<div className="col-span-1 sm:col-span-6">
+					<h2 className="text-xl font-medium text-base-content/90 mb-4">Which Samples was this Taxon found?</h2>
 					<div className="w-full aspect-5/2">
 						<Map locations={samples} cluster />
 					</div>
 				</div>
 			</div>
 
-			<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300">
+			<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-xl">
 				<div tabIndex={0} role="button" className="stat focus:bg-base-300 w-full p-6 flex justify-between items-center">
-					<div>
-						<div className="text-lg font-medium text-base-content/70">Total Analyses</div>
-						<div className="text-2xl font-medium mt-1">{dbTaxonomy.Assignments.length}</div>
+					<div className="flex items-center gap-4">
+						<div className="w-12 h-12 flex items-center justify-center text-primary">
+							<svg viewBox="0 0 1024 1024" fill="currentColor" className="w-10 h-10">
+								<path d="M878.3 152.9H145.7c-38.6 0-70 31.4-70 70V706c0 38.6 31.4 70 70 70h732.6c38.6 0 70-31.4 70-70V222.9c0-38.6-31.4-70-70-70z m30 531V706c0 16.5-13.5 30-30 30H145.7c-16.5 0-30-13.5-30-30V222.9c0-16.5 13.5-30 30-30h732.6c16.5 0 30 13.5 30 30v461zM678 871.1H346c-11 0-20-9-20-20s9-20 20-20h332c11 0 20 9 20 20s-9 20-20 20z" />
+								<path d="M127.1 662.7c-2.7 0-5.4-1.1-7.3-3.2-3.7-4.1-3.5-10.4 0.6-14.1l236.5-219.6L463 541.9l258.9-290.7 183.7 196.3c3.8 4 3.6 10.4-0.4 14.1-4 3.8-10.3 3.6-14.1-0.4L722.3 280.8l-259 290.9L355.7 454 133.9 660c-2 1.8-4.4 2.7-6.8 2.7z" />
+								<path d="M208.9 541.9a30.2 30.3 0 1 0 60.4 0 30.2 30.3 0 1 0-60.4 0Z" />
+								<path d="M633.4 329.9a30.2 30.3 0 1 0 60.4 0 30.2 30.3 0 1 0-60.4 0Z" />
+								<path d="M748.7 539.6a16.9 17 0 1 0 33.8 0 16.9 17 0 1 0-33.8 0Z" />
+							</svg>
+						</div>
+						<div>
+							<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">Total Analyses</div>
+							<div className="text-2xl font-bold text-primary mt-1">{dbTaxonomy.Assignments.length}</div>
+						</div>
 					</div>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

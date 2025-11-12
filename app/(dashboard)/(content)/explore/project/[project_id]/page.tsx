@@ -143,54 +143,79 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<Map locations={project.Samples} cluster draw />
 					</div>
 
-					{/* Top Taxonomy per Assay and Assays Section */}
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-						{/* Top 2 Taxonomies per Assay */}
-						<div>
-							<h2 className="text-xl font-medium text-base-content/90 mb-4">Top 2 Taxonomies per Assay</h2>
-							<div className="space-y-4">
-								{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
-									<div key={assay} className="bg-base-200 p-4 rounded-xl">
-										<h3 className="font-medium text-base-content mb-2">{uniqueAssays[assay].target_gene}</h3>
-										<div className="space-y-2">
-											{taxa.map((taxon, idx) => (
-												<div key={idx} className="flex justify-between items-center text-sm">
-													<span className="text-base-content/80">{taxon.displayName}</span>
-													<div className="flex gap-2">
-														<span className="badge badge-ghost badge-sm">{taxon.percentage}%</span>
-														<span className="text-base-content/60">({taxon.count})</span>
-													</div>
-												</div>
-											))}
-										</div>
-									</div>
-								))}
+					{/* Project Metadata and Top Taxonomy/Assays Section */}
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+						{/* Project Metadata Table */}
+						<div className="md:col-span-1">
+							<div className="bg-base-200 rounded-xl p-6">
+								<h2 className="text-xl font-medium text-base-content/90 mb-4">Project Metadata</h2>
+								<div className="h-[500px] overflow-y-auto">
+									<DataDisplay
+										table="project"
+										data={justProject}
+										omit={["project_id"]}
+										priorityFields={[
+											"project_name",
+											"project_contact",
+											"institution",
+											"institutionID",
+											"recordedBy",
+											"recordedByID",
+											"study_factor",
+											"assay_type"
+										]}
+									/>
+								</div>
 							</div>
 						</div>
 
-						{/* Assays Section */}
-						<div>
-							<h2 className="text-xl font-medium text-base-content/90 mb-4">
-								Assays in this Project ({Object.keys(uniqueAssays).length})
-							</h2>
-							<div className="space-y-4">
-								{Object.keys(uniqueAssays).map((assay) => {
-									return (
-										<div key={assay} className="flex items-center gap-4 p-4 rounded-lg bg-base-200">
-											<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-100 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-												<div className="relative w-12 h-12">
+						{/* Top 2 Taxonomies per Assay and Assays */}
+						<div className="md:col-span-2 space-y-8">
+							{/* Top 2 Taxonomies per Assay */}
+							<div>
+								<h2 className="text-xl font-medium text-base-content/90 mb-4">Top 2 Taxonomies per Assay</h2>
+								<div className="space-y-3">
+									{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
+										<div key={assay} className="bg-base-200 p-4 rounded-xl">
+											<h3 className="font-medium text-base-content mb-2">{uniqueAssays[assay].target_gene}</h3>
+											<div className="space-y-2">
+												{taxa.map((taxon, idx) => (
+													<div key={idx} className="flex justify-between items-center text-sm">
+														<span className="text-base-content/80">{taxon.displayName}</span>
+														<div className="flex gap-2">
+															<span className="badge badge-ghost badge-sm">{taxon.percentage}%</span>
+															<span className="text-base-content/60">({taxon.count})</span>
+														</div>
+													</div>
+												))}
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* Assays Section */}
+							<div id="assays-section">
+								<h2 className="text-xl font-medium text-base-content/90 mb-4">
+									Assays in this Project ({Object.keys(uniqueAssays).length})
+								</h2>
+								<div className="space-y-3">
+									{Object.keys(uniqueAssays).map((assay) => {
+										return (
+											<div key={assay} className="bg-base-200 rounded-xl px-6 py-4 flex items-center gap-6">
+												<div className="text-primary text-4xl flex-shrink-0">
 													<Suspense>
 														<AssayPhyloPic assay_name={assay} />
 													</Suspense>
 												</div>
+												<div>
+													<h3 className="font-medium text-base-content text-lg">{uniqueAssays[assay].target_gene}</h3>
+													<p className="text-base-content/70 text-sm">{assay}</p>
+												</div>
 											</div>
-											<div>
-												<h3 className="font-semibold text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
-												<p className="text-base-content/70">{assay}</p>
-											</div>
-										</div>
-									);
-								})}
+										);
+									})}
+								</div>
 							</div>
 						</div>
 					</div>
@@ -230,7 +255,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					</div>
 
 					{/* Project Contact Information */}
-					<div>
+					<div className="bg-base-200 rounded-xl p-6">
 						<h2 className="text-xl font-medium text-base-content/90 mb-4">Project Information</h2>
 						<div className="space-y-3 text-base">
 							<div>
@@ -245,24 +270,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 								<span className="font-medium text-base-content/70">Assay Type:</span>
 								<div className="mt-1">{project.assay_type || "N/A"}</div>
 							</div>
-						</div>
-					</div>
-
-					{/* Full Project Metadata */}
-					<div className="bg-base-200 rounded-xl p-6">
-						<h2 className="text-xl font-medium text-base-content/90 mb-4">Full Project Metadata</h2>
-						<div className="h-[400px] overflow-y-auto">
-							<DataDisplay
-								table="project"
-								data={justProject}
-								omit={["project_id"]}
-								priorityFields={[
-									"project_name",
-									"project_contact",
-									"institution",
-									"assay_type"
-								]}
-							/>
 						</div>
 					</div>
 				</div>

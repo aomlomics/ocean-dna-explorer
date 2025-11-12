@@ -13,6 +13,7 @@ import {
 } from "chart.js";
 ChartJS.register(BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend, Title);
 import { Bar } from "react-chartjs-2";
+import { useEffect, useState } from "react";
 
 export default function BarChart({
 	title,
@@ -23,10 +24,27 @@ export default function BarChart({
 	labels: string[];
 	datasets: ChartDataset<"bar", (number | [number, number] | null)[]>[];
 }) {
-	// Get current text color from CSS custom property or default
-	const textColor = typeof window !== 'undefined' 
-		? getComputedStyle(document.documentElement).getPropertyValue('--bc') || '#000000'
-		: '#000000';
+	const [textColor, setTextColor] = useState("currentColor");
+	
+	useEffect(() => {
+		// Get the actual computed color value
+		const updateColor = () => {
+			const color = getComputedStyle(document.documentElement).getPropertyValue('color') || 
+				           getComputedStyle(document.body).color;
+			setTextColor(color);
+		};
+		
+		updateColor();
+		
+		// Listen for theme changes
+		const observer = new MutationObserver(updateColor);
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme']
+		});
+		
+		return () => observer.disconnect();
+	}, []);
 	
 	return (
 		<Bar
@@ -39,11 +57,11 @@ export default function BarChart({
 					title: {
 						display: true,
 						text: title,
-						color: `oklch(${textColor})`
+						color: textColor
 					},
 					legend: {
 						labels: {
-							color: `oklch(${textColor})`
+							color: textColor
 						}
 					}
 				},
@@ -55,19 +73,19 @@ export default function BarChart({
 					x: {
 						stacked: true,
 						ticks: {
-							color: `oklch(${textColor})`
+							color: textColor
 						},
 						grid: {
-							color: `oklch(${textColor} / 0.1)`
+							color: textColor + '1a' // Add low opacity
 						}
 					},
 					y: {
 						stacked: true,
 						ticks: {
-							color: `oklch(${textColor})`
+							color: textColor
 						},
 						grid: {
-							color: `oklch(${textColor} / 0.1)`
+							color: textColor + '1a' // Add low opacity
 						}
 					}
 				}

@@ -187,3 +187,9 @@
 		opacity: 1;
 	}
 }
+
+/* Tooltip dark mode fix */
+.tooltip:before {
+	background-color: oklch(var(--b2));
+	color: oklch(var(--bc));
+}
