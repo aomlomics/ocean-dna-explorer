@@ -297,7 +297,7 @@ export const helpSections: Section[] = [
 						</p>
 						<p className="mb-4">
 							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A key
-							feature is the ability to add your own User Defined terms to this checklist. When you run FAIRe2NODE, any
+							feature is the ability to add your own User Defined terms to this checklist. When you run FAIReSheets, any
 							custom terms you've added to the checklist Excel file will be included in your generated Google Sheets
 							template, ensuring all your relevant data fields are captured.
 						</p>
@@ -316,7 +316,7 @@ export const helpSections: Section[] = [
 							tool.
 						</p>
 						<p className="mb-4">
-							To use FAIRe2NODE, you will need to run a Python script on your local computer. Access to the tool is
+							To use FAIReSheets, you will need to run a Python script on your local computer. Access to the tool is
 							granted upon request by emailing bayden.willms@noaa.gov
 						</p>
 					</>
@@ -506,57 +506,124 @@ export const helpSections: Section[] = [
 		title: "Search",
 		content: (
 			<>
-				<p className="mb-4 font-semibold text-red-500">
-					NOTE: The search functionality is currently under development and is not yet fully functional. Coming soon!
+				<p className="mb-4">
+					The{" "}
+					<Link className="link link-primary font-semibold" href="/search">
+						Search page
+					</Link>{" "}
+					allows you to query data across multiple tables in ODE. This is different from the{" "}
+					<Link className="link link-primary font-semibold" href="#explore">
+						Explore pages
+					</Link>
+					, which let you filter and browse data within a single table at a time.
 				</p>
 				<p className="mb-4">
-					ODE's search functionality allows you to find specific data across all categories in the platform. You can
-					search by various parameters to narrow down results.
+					Use Search when you need to find data based on relationships between tables (e.g., "find all taxonomies in a
+					specific project" or "find all samples from a particular analysis").
 				</p>
 			</>
 		),
 		subsections: [
 			{
-				id: "basic-usage",
-				title: "Basic Usage",
+				id: "how-to-use-search",
+				title: "How to Use the Search Page",
 				content: (
 					<>
-						<p className="mb-4">To perform a basic search:</p>
+						<p className="mb-4">
+							The Search page provides an advanced query builder that lets you construct complex filters across
+							different data tables.
+						</p>
+						<p className="mb-4">To use the Search page:</p>
 						<ol className="list-decimal ml-6 mb-4">
-							<li>Enter keywords in the search bar</li>
-							<li>Select the category you want to search (Projects, Samples, etc.)</li>
-							<li>Use filters to narrow down results</li>
-							<li>Review the matching results</li>
+							<li>Select which table you want to search (Projects, Samples, Analyses, Features, or Taxonomies)</li>
+							<li>Add filters using the query builder to specify your search criteria</li>
+							<li>
+								Filters can include conditions based on fields from related tables (e.g., search for Samples where the
+								Project's institution is "NOAA")
+							</li>
+							<li>Combine multiple filters using AND/OR logic: Each filter and/or relation is combined with AND logic. You can add an OR condition (the filters and/or relations within the OR group are combined with OR logic), and the OR block itself is combined with the other filters and/or relations with AND logic (the same as any other filter or relation).</li>
+							<li>View the results that match your query</li>
 						</ol>
 						<p className="mb-4">
-							The search function looks for matches in titles, descriptions, metadata, and other relevant fields.
+							The key advantage of the Search page is that it allows you to query across table relationships, which is
+							not possible on individual Explore pages.
 						</p>
 					</>
 				)
 			},
 			{
-				id: "query-recipes",
-				title: "Query Recipes (examples)",
+				id: "search-vs-explore",
+				title: "Search vs Explore",
 				content: (
 					<>
-						<p className="mb-4">Here are some example queries to help you get started:</p>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find all samples from a specific location:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">location:"Gulf of Mexico"</div>
+						<p className="mb-4">Understanding when to use Search versus Explore:</p>
+						<div className="mb-4">
+							<h4 className="font-semibold mb-2">
+								Use the{" "}
+								<Link className="link link-primary" href="/search">
+									Search Page
+								</Link>{" "}
+								when:
+							</h4>
+							<ul className="list-disc ml-6 mb-4">
+								<li>You need to query across multiple tables (e.g., find taxonomies from a specific project)</li>
+								<li>You want to filter based on relationships between different data types</li>
+								<li>You need complex query logic with multiple conditions</li>
+							</ul>
 						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find projects containing a specific species:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">taxonomy:"Salmonidae"</div>
+						<div className="mb-4">
+							<h4 className="font-semibold mb-2">
+								Use the{" "}
+								<Link className="link link-primary" href="/explore">
+									Explore Pages
+								</Link>{" "}
+								when:
+							</h4>
+							<ul className="list-disc ml-6 mb-4">
+								<li>You want to browse all data in a single table</li>
+								<li>You only need to filter within one table's own fields</li>
+								<li>You want a quick overview of available data in a category</li>
+							</ul>
 						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find analyses from a specific date range:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">date:[2020-01-01 TO 2022-12-31]</div>
-						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Combine multiple search terms:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
-								location:"Atlantic Ocean" AND taxonomy:"Bacteria"
-							</div>
+					</>
+				)
+			},
+			{
+				id: "query-recipes",
+				title: "Query Examples",
+				content: (
+					<>
+						<p className="mb-4">
+							Here are some common query patterns. Click the cards below to open the Search page with these filters
+							pre-filled:
+						</p>
+
+						<div className="grid grid-cols-2 gap-4">
+							<Link href='/search/advanced?table=sample&advanced=[["project_id","equals","noaa-aoml-gomecc4"]]'>
+								<div className="group flex flex-col items-center text-center p-2 rounded-lg hover:bg-base-200 transition-all duration-300 hover:scale-105">
+									<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">
+										<svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+											<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+										</svg>
+									</div>
+									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+										View All Samples in a Project
+									</div>
+								</div>
+							</Link>
+
+							<Link href='/search/advanced?table=taxonomy&advanced=[["sample","samp_name","equals","GOMECC4_27N_Sta1_Deep_A"]]'>
+								<div className="group flex flex-col items-center text-center p-2 rounded-lg hover:bg-base-200 transition-all duration-300 hover:scale-105">
+									<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">
+										<svg viewBox="0 0 100 100" fill="currentColor" className="w-12 h-12">
+											<path d="M85,45c0-2.2-1.8-4-4-4h-8v-8c0-2.2-1.8-4-4-4s-4,1.8-4,4v8h-8c-2.2,0-4,1.8-4,4s1.8,4,4,4h8v8c0,2.2,1.8,4,4,4s4-1.8,4-4v-8h8C83.2,49,85,47.2,85,45z M50,20c-16.5,0-30,13.5-30,30s13.5,30,30,30s30-13.5,30-30S66.5,20,50,20z M50,72c-12.1,0-22-9.9-22-22s9.9-22,22-22s22,9.9,22,22S62.1,72,50,72z" />
+										</svg>
+									</div>
+									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+										View Taxonomies Found in a Sample
+									</div>
+								</div>
+							</Link>
 						</div>
 					</>
 				)
@@ -569,8 +636,30 @@ export const helpSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					The Explore section lets you browse through different categories of data across ODE. Each category represents
-					a table in the database, and they can filtered using the filter menu on the left side of the page.
+					The{" "}
+					<Link className="link link-primary font-semibold" href="/explore">
+						Explore pages
+					</Link>{" "}
+					let you browse and filter data within individual tables in ODE. Each table (Projects, Samples, Analyses,
+					Features, Taxonomies) has its own dedicated Explore page with specialized filters and visualization options.
+				</p>
+				<p className="mb-4">
+					<strong>Key features of Explore pages:</strong>
+				</p>
+				<ul className="list-disc ml-6 mb-4">
+					<li>Switch between different tables using the tab buttons at the top</li>
+					<li>Apply filters from the sidebar on the left to narrow down results</li>
+					<li>Use the search bar at the top to search across all columns</li>
+					<li>Search within specific columns using the column header search inputs</li>
+					<li>View detailed information by clicking on individual records</li>
+				</ul>
+				<p className="mb-4">
+					<strong>Note:</strong> Explore pages only filter data within the selected table. To query across multiple
+					tables (e.g., find all taxonomies in a specific project), use the{" "}
+					<Link className="link link-primary font-semibold" href="#search">
+						Search page
+					</Link>{" "}
+					instead.
 				</p>
 			</>
 		),
@@ -691,6 +780,43 @@ export const helpSections: Section[] = [
 							<li>PhyloPic does not have an image for that taxonomy</li>
 							<li>GBIF Suggest API did not return a matching taxonomy</li>
 						</ul>
+					</>
+				)
+			},
+			{
+				id: "searching-on-explore",
+				title: "Searching on Explore Pages",
+				content: (
+					<>
+						<p className="mb-4">
+							Each Explore page has its own built-in search capabilities for quick filtering within that specific table.
+						</p>
+						<div className="mb-4">
+							<h4 className="font-semibold mb-2">Features on Explore Pages:</h4>
+							<ul className="list-disc ml-6 mb-4">
+								<li>
+									<strong>Global search bar:</strong> Located at the top of the table, this searches across all
+									columns simultaneously
+								</li>
+								<li>
+									<strong>Column-specific search:</strong> Each column has its own search input in the header, allowing
+									you to filter by that specific field
+								</li>
+								<li>
+									<strong>Filter sidebar:</strong> Use the filters on the left side to narrow results by specific
+									criteria
+								</li>
+							</ul>
+						</div>
+						<p className="mb-4">
+							<strong>Important limitation:</strong> Explore page searches only work within that table's own data. You
+							cannot filter Samples based on Project properties using the Sample Explore page. For cross-table queries,
+							use the{" "}
+							<Link className="link link-primary" href="#search">
+								Search page
+							</Link>{" "}
+							instead.
+						</p>
 					</>
 				)
 			}
