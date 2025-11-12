@@ -92,21 +92,6 @@ export default async function Analysis_run_name({
 					</Link>{" "}
 					project
 				</p>
-				<a
-					href={`/api/occurrenceTable/${analysis_run_name}`}
-					download={`${analysis_run_name}_occurrenceTable`}
-					className="btn btn-lg text-base-content/80 font-normal mt-2"
-				>
-					Download Occurrence Table
-					<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-						/>
-					</svg>
-				</a>
 			</header>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
@@ -134,6 +119,24 @@ export default async function Analysis_run_name({
 					{/* Stats */}
 					<div>
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis at a Glance</h2>
+						
+						{/* Download Button */}
+						<a
+							href={`/api/occurrenceTable/${analysis_run_name}`}
+							download={`${analysis_run_name}_occurrenceTable`}
+							className="btn btn-lg text-base-content/80 font-normal w-full mb-4"
+						>
+							Download Occurrence Table
+							<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+								/>
+							</svg>
+						</a>
+						
 						<div className="grid grid-cols-2 gap-4">
 							<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center">
 								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
@@ -169,25 +172,6 @@ export default async function Analysis_run_name({
 								</div>
 							</Link>
 						</div>
-					</div>
-
-					{/* Download Button */}
-					<div>
-						<a
-							href={`/api/occurrenceTable/${analysis_run_name}`}
-							download={`${analysis_run_name}_occurrenceTable`}
-							className="btn btn-lg text-base-content/80 font-normal w-full"
-						>
-							Download Occurrence Table
-							<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-								/>
-							</svg>
-						</a>
 					</div>
 
 					{/* Assay Card */}
