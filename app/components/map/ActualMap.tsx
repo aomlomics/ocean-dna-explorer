@@ -21,6 +21,8 @@ import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
 import { DeadValueEnum } from "@/types/enums";
+import { GlobalOmit } from "@/types/objects";
+import { getZodType } from "@/app/helpers/schema";
 
 type MapProps =
 	| {
@@ -45,6 +47,8 @@ type LegendInfo =
 			| { mode: "gradient"; range: [number, number]; palette: string }
 	  ))
 	| undefined;
+
+const DEFAULT_COLOR = chroma("red");
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -102,12 +106,30 @@ function getLegendColor(legend: LegendInfo, loc: Location) {
 		if (legend.mode === "discreet") {
 			return legend.colorMap[getTitleIdValue(legend.field, loc)];
 		} else if (legend.mode === "gradient") {
-			//TODO: do gradient with chroma-js (legend.palette)
+			const percent = ((loc[legend.field as string] as number) - legend.range[0]) / (legend.range[1] - legend.range[0]);
+			return chroma.scale(legend.palette)(percent);
 		}
-	} else {
-		//TODO: handle if no legend
 	}
-	return chroma("red");
+
+	return DEFAULT_COLOR;
+}
+
+function getTextColor(hex: string) {
+	if (hex.indexOf("#") === 0) {
+		hex = hex.slice(1);
+	}
+	// convert 3-digit hex to 6-digits.
+	if (hex.length === 3) {
+		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+	}
+	if (hex.length !== 6) {
+		throw new Error("Invalid HEX color.");
+	}
+	var r = parseInt(hex.slice(0, 2), 16),
+		g = parseInt(hex.slice(2, 4), 16),
+		b = parseInt(hex.slice(4, 6), 16);
+
+	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "#000000" : "#FFFFFF";
 }
 
 export default function ActualMap({
@@ -136,6 +158,8 @@ export default function ActualMap({
 	let filteredLocations = [] as Location[];
 	//calculate starting map view
 	let mapProps = {} as MapProps;
+	//legend options
+	const defaultOptions = new Set() as Set<string>;
 
 	const DEFAULT_BOUNDS = [
 		[-180, -180],
@@ -196,6 +220,10 @@ export default function ActualMap({
 					bounds[1][0] = Math.min(loc.decimalLatitude, bounds[1][0]);
 					bounds[1][1] = Math.min(loc.decimalLongitude, bounds[1][1]);
 
+					if (titleTable) {
+						defaultOptions.add(getTitleIdValue(TableMetadata[titleTable].titleField, loc));
+					}
+
 					filteredLocations.push({ ...loc });
 				}
 			}
@@ -205,17 +233,12 @@ export default function ActualMap({
 	}
 
 	let defaultLegend = undefined as LegendInfo;
-	let defaultPoints;
+	let points;
 	if (titleTable) {
 		const titleId = TableMetadata[titleTable].titleField;
-		//get all options for coloring
-		const options = new Set() as Set<string>;
-		for (const loc of filteredLocations) {
-			options.add(getTitleIdValue(titleId, loc));
-		}
 
 		//assign color to each option
-		const optionsArray = Array.from(options);
+		const optionsArray = Array.from(defaultOptions);
 		const colors = distinctColors({ count: optionsArray.length });
 		const colorMap = {} as Record<string, Color>;
 		for (let i = 0; i < optionsArray.length; i++) {
@@ -224,20 +247,19 @@ export default function ActualMap({
 		defaultLegend = { field: titleId, mode: "discreet", colorMap };
 
 		//assemble locations object with assigned color and list of locations
-		defaultPoints = {} as Record<string, Location[]>;
+		points = {} as Record<string, Location[]>;
 		for (const loc of filteredLocations) {
 			const opt = getTitleIdValue(titleId, loc);
-			if (defaultPoints[opt]) {
-				defaultPoints[opt].push(loc);
+			if (points[opt]) {
+				points[opt].push(loc);
 			} else {
-				defaultPoints[opt] = [loc];
+				points[opt] = [loc];
 			}
 		}
 	} else {
-		defaultPoints = filteredLocations;
+		points = filteredLocations;
 	}
 	const [legend, setLegend] = useState(defaultLegend);
-	const [points, setPoints] = useState(defaultPoints);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
 	const [clusterRadiusValue, setClusterRadiusValue] = useState(clusterRadius as number | undefined);
@@ -310,8 +332,6 @@ export default function ActualMap({
 
 			setPointsInside(tempPointsInside);
 		}
-
-		setPoints(tempPoints);
 	}
 
 	//shapes
@@ -343,7 +363,9 @@ export default function ActualMap({
 					const uniqueColors = new Set() as Set<string>;
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
-						uniqueColors.add(marker.options.children.props.color.hex());
+						uniqueColors.add(
+							marker.options.children.props.color ? marker.options.children.props.color.hex() : DEFAULT_COLOR.hex()
+						);
 
 						if (marker.options.children.props.loc.values) {
 							childrenWithValues++;
@@ -351,6 +373,7 @@ export default function ActualMap({
 						}
 					}
 					const color = chroma.average(Array.from(uniqueColors));
+					const textColorHex = getTextColor(color.hex());
 
 					const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
 
@@ -361,12 +384,12 @@ export default function ActualMap({
 						if (valuesCount) {
 							size += 5;
 						}
-						html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border border-black' style=background-color:${color};>${
+						html = `<div class='h-full w-full text-center font-mono content-center rounded-full border border-black' style=background-color:${color.hex()};color:${textColorHex};>${
 							valuesCount || ""
 						}</div>`;
 					} else {
 						size += 10;
-						html = `<div class='h-full w-full text-center font-mono content-center rounded-full text-white border-4 border-white/40' style=background-color:${color};>${combined}</div>`;
+						html = `<div class='h-full w-full text-center font-mono content-center rounded-full border-4 border-white/40' style=background-color:${color.hex()};color:${textColorHex};>${combined}</div>`;
 					}
 
 					return divIcon({
@@ -380,6 +403,10 @@ export default function ActualMap({
 			</MarkerClusterGroup>
 		);
 	}
+
+	const legendProps = titleTable
+		? { titleTable, points: points as Record<string, Location[]> }
+		: { titleTable: undefined, points: points as Location[] };
 
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
@@ -395,7 +422,15 @@ export default function ActualMap({
 				{...mapProps}
 			>
 				<FullscreenControl />
-				<LegendControl legend={legend} titleTable={titleTable} />
+				<LegendControl
+					legend={legend}
+					setLegend={setLegend}
+					legendOptions={TableMetadata[table].enumSchema.options.filter(
+						(opt) => !GlobalOmit.includes(opt) && opt !== "id" && opt !== "project_id"
+					)}
+					table={table}
+					{...legendProps}
+				/>
 				<ClusterControl cluster={cluster} value={clusterRadiusValue} onChange={setClusterRadiusValue} />
 
 				<TileLayer
@@ -519,7 +554,7 @@ function PopupWithSearch({
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: Location;
 	id: string;
-	color: Color;
+	color?: Color;
 	legend: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
@@ -564,7 +599,10 @@ function PopupWithSearch({
 										if (legend) {
 											acc.push(
 												<div key={l[id]} className="flex gap-2 items-center">
-													<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+													<div
+														className="aspect-square w-[1em] h-[1em]"
+														style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
+													></div>
 													<Link
 														href={`/explore/${table}/${encodeURIComponent(l[id])}`}
 														className="link link-primary link-hover"
@@ -595,7 +633,10 @@ function PopupWithSearch({
 							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
 							{legend ? (
 								<div className="flex gap-2 items-center">
-									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+									<div
+										className="aspect-square w-[1em] h-[1em]"
+										style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
+									></div>
 									<Link
 										href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
 										className="link link-primary link-hover"
@@ -619,42 +660,288 @@ function PopupWithSearch({
 	);
 }
 
-function LegendControl({ legend, titleTable }: { legend: LegendInfo; titleTable?: Uncapitalize<Prisma.ModelName> }) {
+function Collapsible({ children }: { children: ReactNode }) {
+	const [collapse, setCollapse] = useState(false);
+
+	return (
+		<div
+			className={`card bg-base-100 card-xs shadow-sm card-body px-2 py-2 flex-row gap-0 ${collapse ? "self-end" : ""}`}
+		>
+			<div className="self-stretch flex items-center" onClick={() => setCollapse(!collapse)}>
+				{collapse ? (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						className="text-primary"
+						stroke="currentColor"
+						fill="currentColor"
+					>
+						<g>
+							<polygon points="13.707 4.707 12.293 3.293 3.586 12 12.293 20.707 13.707 19.293 6.414 12 13.707 4.707" />
+							<polygon points="19.707 4.707 18.293 3.293 9.586 12 18.293 20.707 19.707 19.293 12.414 12 19.707 4.707" />
+						</g>
+					</svg>
+				) : (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						className="text-primary"
+						stroke="currentColor"
+						fill="currentColor"
+					>
+						<g>
+							<polygon points="11.707 3.293 10.293 4.707 17.586 12 10.293 19.293 11.707 20.707 20.414 12 11.707 3.293" />
+							<polygon points="5.707 3.293 4.293 4.707 11.586 12 4.293 19.293 5.707 20.707 14.414 12 5.707 3.293" />
+						</g>
+					</svg>
+				)}
+			</div>
+			<div className={`w-full ${collapse ? "hidden" : ""}`}>
+				<div className=" ml-1 mr-2">{children}</div>
+			</div>
+		</div>
+	);
+}
+
+function LegendControl({
+	legend,
+	setLegend,
+	legendOptions,
+	points,
+	table,
+	titleTable
+}: {
+	legend: LegendInfo;
+	setLegend: Dispatch<SetStateAction<LegendInfo>>;
+	legendOptions: string[];
+	table: Uncapitalize<Prisma.ModelName>;
+} & (
+	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, Location[]> }
+	| { titleTable?: undefined; points: Location[] }
+)) {
 	const ref = useRef<HTMLDivElement>(null);
+
+	const [palette, setPalette] = useState("YlGnBu");
+	const [filter, setFilter] = useState("");
 
 	useEffect(() => {
 		if (ref.current) {
 			DomEvent.disableClickPropagation(ref.current);
+			DomEvent.disableScrollPropagation(ref.current);
 		}
 	}, []);
 
-	if (!titleTable || !legend) {
-		return null;
-	}
-
 	return (
 		<div className="leaflet-bottom leaflet-right" ref={ref}>
-			<div className="leaflet-control leaflet-bar !border-none !mb-6">
-				<div className="card bg-base-100 card-xs shadow-sm card-body px-3 py-2 block">
-					<div className="text-lg border-b-2 border-primary mb-2">
-						{titleTable ? TableMetadata[titleTable].plural : legend.field}
-					</div>
-					{legend.mode === "discreet" ? (
-						Object.entries(legend.colorMap).map(([key, color]) => (
-							<div key={key} className="flex gap-2 items-center">
-								<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
-								<Link
-									href={`/explore/${titleTable}/${encodeURIComponent(key)}`}
-									className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-sm"
+			<div className="leaflet-control leaflet-bar !border-none !mb-6 flex flex-col gap-2">
+				<Collapsible>
+					<div className="text-lg flex justify-between items-center gap-2">
+						<span>
+							{titleTable ? (
+								TableMetadata[titleTable].plural
+							) : (
+								<select
+									value={legend ? legend.field : ""}
+									onChange={(e) => {
+										const field = e.target.value;
+										const options = new Set() as Set<any>;
+										for (const loc of points) {
+											options.add(loc[field]);
+										}
+										const optionsArray = Array.from(options).sort();
+
+										const shape = TableMetadata[table].schema.shape;
+										const type = getZodType(shape[field as keyof typeof shape]).type;
+
+										if (type === "string") {
+											//check if invalid number of options
+											if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+												setLegend({ field, mode: "discreet", colorMap: {} });
+												return;
+											} else if (optionsArray.length === 1) {
+												setLegend({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+												return;
+											} else {
+												//valid
+												const colors = distinctColors({ count: optionsArray.length });
+												const colorMap = {} as Record<string, Color>;
+												for (let i = 0; i < optionsArray.length; i++) {
+													colorMap[optionsArray[i]] = colors[i];
+												}
+
+												setLegend({ field, mode: "discreet", colorMap });
+											}
+										} else if (type === "integer" || type === "float") {
+											let parser;
+											if (type === "integer") {
+												parser = parseInt;
+											} else {
+												parser = parseFloat;
+											}
+
+											//parse all values as int and ignore NaN
+											const parsedOptions = optionsArray.reduce((acc, opt) => {
+												const parsed = parser(opt);
+												if (!isNaN(parsed)) {
+													acc.push(parsed);
+												}
+												return acc;
+											}, [] as number[]);
+
+											//check if invalid number of options
+											if (parsedOptions.length === 0 || (parsedOptions.length === 1 && parsedOptions[0] == null)) {
+												setLegend({ field, mode: "discreet", colorMap: {} });
+											} else if (parsedOptions.length === 1) {
+												setLegend({ field, mode: "discreet", colorMap: { [parsedOptions[0]]: DEFAULT_COLOR } });
+											} else {
+												//valid
+												setLegend({
+													field,
+													mode: "gradient",
+													range: [parsedOptions[0], parsedOptions[parsedOptions.length - 1]],
+													palette
+												});
+											}
+										} else {
+											//TODO: add support for more field types
+										}
+									}}
+									className="select select-xs select-primary select-ghost text-sm"
 								>
-									{key}
-								</Link>
+									<option disabled={true} value="">
+										Select field
+									</option>
+									{legendOptions.map((opt) => (
+										<option key={opt}>{opt}</option>
+									))}
+								</select>
+							)}
+						</span>
+						{legend && legend.mode === "gradient" ? (
+							<div className="dropdown dropdown-top dropdown-end">
+								<div tabIndex={0} role="button">
+									<svg
+										height="20px"
+										width="20px"
+										version="1.1"
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 32 32"
+										className="text-primary"
+										stroke="currentColor"
+										fill="currentColor"
+									>
+										<path
+											d="M27.7,3.3c-1.5-1.5-3.9-1.5-5.4,0L17,8.6l-1.3-1.3c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4l1.3,1.3L5,20.6
+	c-0.6,0.6-1,1.4-1.1,2.3C3.3,23.4,3,24.2,3,25c0,1.7,1.3,3,3,3c0.8,0,1.6-0.3,2.2-0.9C9,27,9.8,26.6,10.4,26L21,15.4l1.3,1.3
+	c0.2,0.2,0.5,0.3,0.7,0.3s0.5-0.1,0.7-0.3c0.4-0.4,0.4-1,0-1.4L22.4,14l5.3-5.3C29.2,7.2,29.2,4.8,27.7,3.3z M9,24.6
+	c-0.4,0.4-0.8,0.6-1.3,0.5c-0.4,0-0.7,0.2-0.9,0.5C6.7,25.8,6.3,26,6,26c-0.6,0-1-0.4-1-1c0-0.3,0.2-0.7,0.5-0.8
+	c0.3-0.2,0.5-0.5,0.5-0.9c0-0.5,0.2-1,0.5-1.3L17,11.4l2.6,2.6L9,24.6z"
+										/>
+									</svg>
+								</div>
+								<ul
+									tabIndex={-1}
+									className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm max-h-100 !overflow-y-scroll overflow-x-hidden p-2 flex-nowrap overscroll-contain gap-2"
+								>
+									<input
+										type="text"
+										onChange={(e) => setFilter(e.target.value)}
+										value={filter}
+										placeholder={`Filter colors`}
+										className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
+									/>
+									{Object.keys(chroma.brewer)
+										.sort()
+										.reduce((acc, scaleName) => {
+											if (scaleName.toLowerCase().includes(filter.toLowerCase()) && scaleName !== palette) {
+												const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
+												acc.push(
+													<li key={scaleName} className="w-full">
+														<a
+															className="!w-full !bg-base-200 !flex items-center justify-center !rounded-md !p-1"
+															style={{ backgroundImage: `linear-gradient(to right, ${scale.join(",")})` }}
+															onClick={() => {
+																setPalette(scaleName);
+																setLegend({ ...legend, palette: scaleName });
+																(document.activeElement as HTMLDivElement).blur();
+															}}
+														>
+															{scaleName}
+														</a>
+													</li>
+												);
+											}
+
+											return acc;
+										}, [] as ReactNode[])}
+								</ul>
 							</div>
-						))
+						) : (
+							<></>
+						)}
+					</div>
+
+					{legend ? (
+						<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-50 overflow-y-scroll">
+							{legend.mode === "discreet" ? (
+								Object.keys(legend.colorMap).length === 0 ? (
+									<div className="flex gap-2 items-center">
+										<div
+											className="aspect-square w-[1em] h-[1em]"
+											style={{ backgroundColor: DEFAULT_COLOR.hex() }}
+										></div>
+										<div className="text-xs">No values</div>
+									</div>
+								) : (
+									Object.entries(legend.colorMap).map(([key, color]) => (
+										<div key={key} className="flex gap-2 items-center">
+											<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+											{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legend.field) ? (
+												<Link
+													href={`/explore/${
+														titleTable ||
+														Object.keys(TableMetadata).find(
+															(table) => TableMetadata[table as Prisma.ModelName].titleField === legend.field
+														)
+													}/${encodeURIComponent(key)}`}
+													className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-xs"
+												>
+													{key}
+												</Link>
+											) : (
+												<div className="text-xs">{key}</div>
+											)}
+										</div>
+									))
+								)
+							) : legend.mode === "gradient" ? (
+								<div>
+									<div
+										className="w-full flex items-center justify-center rounded-md p-2"
+										style={{
+											backgroundImage: `linear-gradient(to right, ${chroma.brewer[
+												palette as keyof typeof chroma.brewer
+											].join(",")})`
+										}}
+									/>
+									<div className="flex justify-between">
+										<span>{legend.range[0]}</span>
+										<span>{(legend.range[0] + legend.range[1]) / 2}</span>
+										<span>{legend.range[1]}</span>
+									</div>
+								</div>
+							) : (
+								<></>
+							)}
+						</div>
 					) : (
 						<></>
 					)}
-				</div>
+				</Collapsible>
 			</div>
 		</div>
 	);

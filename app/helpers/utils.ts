@@ -256,3 +256,16 @@ export function getSubmissionFileName(value: string) {
 		return value;
 	}
 }
+
+//black magic do not touch
+function __unfocus() {
+	const el = document.getElementById("unfocusButton");
+	if (el) {
+		el.focus();
+		el.blur();
+	}
+}
+
+export function unfocus() {
+	__unfocus();
+}

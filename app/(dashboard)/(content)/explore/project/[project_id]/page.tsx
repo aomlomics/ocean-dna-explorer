@@ -23,13 +23,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					Analyses: true
 				}
 			},
-			Samples: {
-				select: {
-					samp_name: true,
-					decimalLatitude: true,
-					decimalLongitude: true
-				}
-			},
+			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
