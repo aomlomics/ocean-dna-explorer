@@ -116,21 +116,15 @@ export default async function Analysis_run_name({
 						<Map locations={samples} cluster draw />
 					</div>
 
-					{/* Assay Card */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
-						<div className="flex items-center gap-4 p-4 rounded-lg">
-							<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-								<div className="relative w-12 h-12">
-									<Suspense>
-										<AssayPhyloPic assay_name={analysis.assay_name} />
-									</Suspense>
-								</div>
-							</div>
-							<div>
-								<h3 className="font-medium text-lg text-base-content">{analysis.Assay.target_gene}</h3>
-								<p className="text-base-content/70">{analysis.assay_name}</p>
-							</div>
+					{/* Analysis Information */}
+					<div className="bg-base-200 rounded-xl p-6">
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis Information</h2>
+						<div className="h-[300px] overflow-y-auto">
+							<DataDisplay
+								table="analysis"
+								data={justAnalysis}
+								omit={["project_id", "analysis_run_name", "assay_name"]}
+							/>
 						</div>
 					</div>
 				</div>
@@ -177,15 +171,40 @@ export default async function Analysis_run_name({
 						</div>
 					</div>
 
-					{/* Analysis Information */}
-					<div className="bg-base-200 rounded-xl p-6">
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis Information</h2>
-						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay
-								table="analysis"
-								data={justAnalysis}
-								omit={["project_id", "analysis_run_name", "assay_name"]}
-							/>
+					{/* Download Button */}
+					<div>
+						<a
+							href={`/api/occurrenceTable/${analysis_run_name}`}
+							download={`${analysis_run_name}_occurrenceTable`}
+							className="btn btn-lg text-base-content/80 font-normal w-full"
+						>
+							Download Occurrence Table
+							<svg className="size-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+								/>
+							</svg>
+						</a>
+					</div>
+
+					{/* Assay Card */}
+					<div>
+						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
+						<div className="flex items-center gap-4 p-4 rounded-lg">
+							<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+								<div className="relative w-12 h-12">
+									<Suspense>
+										<AssayPhyloPic assay_name={analysis.assay_name} />
+									</Suspense>
+								</div>
+							</div>
+							<div>
+								<h3 className="font-medium text-lg text-base-content">{analysis.Assay.target_gene}</h3>
+								<p className="text-base-content/70">{analysis.assay_name}</p>
+							</div>
 						</div>
 					</div>
 				</div>
