@@ -17,11 +17,11 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 		}));
 
 	return (
-		<div className="space-y-2">
+		<div className="space-y-1">
 			{taxonomicData.map((item, index) => (
-				<div key={item.rank} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-base-200/30 transition-colors">
-					<span className="text-primary font-semibold text-sm min-w-[90px]">{item.rank}</span>
-					<span className="text-base-content font-medium">{item.name}</span>
+				<div key={item.rank} className="flex items-center gap-3 p-2 rounded hover:bg-base-200/50 transition-colors">
+					<span className="text-primary font-semibold text-sm min-w-[85px]">{item.rank}:</span>
+					<span className="text-base-content text-sm">{item.name}</span>
 				</div>
 			))}
 		</div>
@@ -111,6 +111,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					</h1>
 					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
+				<p className="text-lg text-base-content/70">
+					Found in {samplesText} across {projectsText}
+				</p>
 			</header>
 			
 			{/* Main Grid Layout */}
@@ -125,7 +128,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 				{/* Middle: Occurrences (takes 3 columns) */}
 				<div className="lg:col-span-3 flex flex-col gap-4">
-					<div className="bg-base-100 border border-primary/20 rounded-xl overflow-hidden flex flex-col justify-center p-6">
+					<div className="bg-base-200 rounded-xl overflow-hidden flex flex-col justify-center p-6">
 						<div className="aspect-square flex items-center justify-center">
 							<PhyloPic taxonomy={dbTaxonomy} />
 						</div>
@@ -136,40 +139,39 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					</div>
 
 					{/* Image Attribution Box */}
-					<div className="bg-base-100 border border-base-content/10 rounded-lg p-4">
+					<div className="bg-base-200 rounded-lg p-4">
 						<h4 className="text-sm font-semibold text-base-content mb-2">Image Attribution</h4>
 						<p className="text-base-content/70 text-xs leading-relaxed">
-							Taxonomic outline image from{" "}
+							The taxonomic outline image is sourced through{" "}
 							<Link href="https://www.phylopic.org/" className="text-primary hover:underline" target="_blank">
 								PhyloPic
 							</Link>
-							, matched via{" "}
+							, using{" "}
 							<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
 								GBIF
 							</Link>
-							.
+							{" "}Suggest API to match our taxonomy with PhyloPic's database. Images on PhyloPic are contributed by scientists and artists worldwide under various Creative Commons licenses.
 						</p>
 					</div>
 				</div>
 
 				{/* Right: Taxonomic Ranking (takes 4 columns) */}
-				<div className="lg:col-span-4 bg-base-100 border border-base-content/10 rounded-xl p-6">
+				<div className="lg:col-span-4 bg-base-200 rounded-xl p-6">
 					<h3 className="text-lg font-semibold text-base-content mb-4">Taxonomic Ranking</h3>
-					{formatTaxonomyDisplay(dbTaxonomy)}
-					<p className="text-sm text-base-content/60 mt-4">
-						Found in {samplesText} across {projectsText}
-					</p>
+					<div className="bg-base-100/50 rounded-lg p-3">
+						{formatTaxonomyDisplay(dbTaxonomy)}
+					</div>
 				</div>
 			</div>
 
 			{/* Bottom Row: Analysis Dropdown, Projects, Samples */}
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 				{/* Analysis Dropdown */}
-				<div className="dropdown dropdown-hover bg-base-100 hover:bg-base-200/50 border border-base-content/10 rounded-xl transition-colors">
+				<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg transition-colors">
 					<div tabIndex={0} role="button" className="w-full p-4 flex justify-between items-center">
-						<div className="flex items-center gap-3">
-							<div className="w-10 h-10 flex items-center justify-center text-primary">
-								<svg viewBox="0 0 1024 1024" fill="currentColor" className="w-8 h-8">
+						<div className="flex items-center gap-4">
+							<div className="w-12 h-12 flex items-center justify-center text-primary">
+								<svg viewBox="0 0 1024 1024" fill="currentColor" className="w-10 h-10">
 									<path d="M878.3 152.9H145.7c-38.6 0-70 31.4-70 70V706c0 38.6 31.4 70 70 70h732.6c38.6 0 70-31.4 70-70V222.9c0-38.6-31.4-70-70-70z m30 531V706c0 16.5-13.5 30-30 30H145.7c-16.5 0-30-13.5-30-30V222.9c0-16.5 13.5-30 30-30h732.6c16.5 0 30 13.5 30 30v461zM678 871.1H346c-11 0-20-9-20-20s9-20 20-20h332c11 0 20 9 20 20s-9 20-20 20z" />
 									<path d="M127.1 662.7c-2.7 0-5.4-1.1-7.3-3.2-3.7-4.1-3.5-10.4 0.6-14.1l236.5-219.6L463 541.9l258.9-290.7 183.7 196.3c3.8 4 3.6 10.4-0.4 14.1-4 3.8-10.3 3.6-14.1-0.4L722.3 280.8l-259 290.9L355.7 454 133.9 660c-2 1.8-4.4 2.7-6.8 2.7z" />
 									<path d="M208.9 541.9a30.2 30.3 0 1 0 60.4 0 30.2 30.3 0 1 0-60.4 0Z" />
@@ -178,34 +180,34 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								</svg>
 							</div>
 							<div>
-								<div className="text-xs font-medium text-base-content/60 uppercase tracking-wide">Analyses</div>
-								<div className="text-xl font-bold text-primary">{dbTaxonomy.Assignments.length}</div>
+								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">Total Analyses</div>
+								<div className="text-2xl font-bold text-primary mt-1">{dbTaxonomy.Assignments.length}</div>
 							</div>
 						</div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							width="18"
-							height="18"
+							width="20"
+							height="20"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
 							strokeWidth="2"
 							strokeLinecap="round"
 							strokeLinejoin="round"
-							className="text-base-content/50"
+							className="text-base-content/70"
 						>
 							<path d="m6 9 6 6 6-6" />
 						</svg>
 					</div>
 					<ul
 						tabIndex={0}
-						className="dropdown-content menu bg-base-100 border border-base-content/10 rounded-b-lg rounded-t-none w-full z-[1] p-2 shadow-lg"
+						className="dropdown-content menu bg-base-200 rounded-b-lg rounded-t-none w-full z-[1] p-2 shadow-lg"
 					>
 						{dbTaxonomy.Assignments.map((assign) => (
 							<li key={assign.analysis_run_name}>
 								<Link
 									href={`/explore/analysis/${assign.analysis_run_name}`}
-									className="text-base-content hover:text-primary break-all text-sm"
+									className="text-base-content hover:text-primary break-all"
 								>
 									{assign.analysis_run_name}
 								</Link>
@@ -217,33 +219,33 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				{/* Projects Box */}
 				<Link
 					href={projectSearchUrl}
-					className="bg-base-100 hover:bg-base-200/50 border border-base-content/10 rounded-xl p-4 flex items-center gap-3 transition-colors group"
+					className="bg-base-200 hover:bg-base-300 p-4 rounded-lg flex items-center text-center transition-colors"
 				>
-					<div className="w-10 h-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-						<svg viewBox="0 0 48 48" fill="currentColor" className="w-8 h-8">
+					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+						<svg viewBox="0 0 48 48" fill="currentColor" className="w-10 h-10">
 							<path d="M38.914 11.086c-1.55-1.55-4.064-1.55-5.614 0L25 19.386V10h-2v12.586l-8.3-8.3c-1.55-1.55-4.064-1.55-5.614 0-1.55 1.55-1.55 4.064 0 5.614l13.2 13.2c.75.75 1.768 1.172 2.828 1.172s2.078-.422 2.828-1.172l13.2-13.2c1.55-1.55 1.55-4.064 0-5.614z" />
 							<path d="M44 32v10H4V32H2v10c0 1.1.9 2 2 2h40c1.1 0 2-.9 2-2V32h-2z" />
 						</svg>
 					</div>
-					<div>
-						<div className="text-xs font-medium text-base-content/60 uppercase tracking-wide">Projects</div>
-						<div className="text-xl font-bold text-primary group-hover:underline">{uniqueProjects.length}</div>
+					<div className="flex-1 flex flex-col ml-4">
+						<div className="text-3xl font-bold text-primary">{uniqueProjects.length}</div>
+						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Projects</div>
 					</div>
 				</Link>
 
 				{/* Samples Box */}
 				<Link
 					href={sampleSearchUrl}
-					className="bg-base-100 hover:bg-base-200/50 border border-base-content/10 rounded-xl p-4 flex items-center gap-3 transition-colors group"
+					className="bg-base-200 hover:bg-base-300 p-4 rounded-lg flex items-center text-center transition-colors"
 				>
-					<div className="w-10 h-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-						<svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
+					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+						<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
 							<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
 						</svg>
 					</div>
-					<div>
-						<div className="text-xs font-medium text-base-content/60 uppercase tracking-wide">Samples</div>
-						<div className="text-xl font-bold text-primary group-hover:underline">{samples.length}</div>
+					<div className="flex-1 flex flex-col ml-4">
+						<div className="text-3xl font-bold text-primary">{samples.length}</div>
+						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Samples</div>
 					</div>
 				</Link>
 			</div>

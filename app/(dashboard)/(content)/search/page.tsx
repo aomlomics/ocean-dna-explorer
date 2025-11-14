@@ -245,6 +245,17 @@ export default function AdvancedSearch() {
 		}
 
 		router.push(`${pathname}?${params.toString()}`);
+		
+		// Scroll to results after a brief delay to allow data to load
+		setTimeout(() => {
+			const resultsElement = document.getElementById('search-results');
+			if (resultsElement) {
+				resultsElement.scrollIntoView({
+					block: "start",
+					behavior: "smooth"
+				});
+			}
+		}, 300);
 	}
 
 	function getApiQuery() {
@@ -303,43 +314,12 @@ export default function AdvancedSearch() {
 					</div>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-					<div className="bg-base-100 py-4 px-6 rounded-lg">
-						<h3 className="text-lg font-medium mb-3">Plain Text Query</h3>
-						{getQueryDescription() ? (
-							<p className="text-primary text-sm">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
-						) : (
-							<p className="text-base-content/50 italic text-sm">Build your query below...</p>
-						)}
+				{getQueryDescription() && (
+					<div className="mb-3">
+						<p className="text-sm text-base-content/60 mb-1">Plain text query:</p>
+						<p className="text-primary text-sm">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
 					</div>
-
-					<div className="bg-base-100 py-4 px-6 rounded-lg">
-						<h3 className="text-lg font-medium mb-3">API Query</h3>
-						<div className="flex items-start gap-2">
-							<div className="flex-1 bg-base-200/50 p-2 rounded text-xs font-mono break-all overflow-x-auto">
-								{getApiQuery()}
-							</div>
-							<button
-								type="button"
-								onClick={copyApiQuery}
-								className="btn btn-sm btn-square"
-								title="Copy API query"
-							>
-								{apiCopied ? (
-									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-										<polyline points="20 6 9 17 4 12"></polyline>
-									</svg>
-								) : (
-									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-									</svg>
-								)}
-							</button>
-						</div>
-						<p className="text-xs text-base-content/60 mt-2">Copy this URL to use directly in your browser or code</p>
-					</div>
-				</div>
+				)}
 
                         <div className="bg-base-100 py-6 rounded-lg">
                                 <h2 className="text-2xl font-normal mb-6">Filters and Relations</h2>
@@ -360,6 +340,33 @@ export default function AdvancedSearch() {
                                         onChange={(prev) => setFilterIds(prev)}
                                     />
 						</div>
+				</div>
+
+				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4">
+					<h3 className="text-lg font-medium mb-3">API Query</h3>
+					<div className="flex items-start gap-2">
+						<div className="flex-1 bg-base-200/50 p-2 rounded text-xs font-mono break-all overflow-x-auto">
+							{getApiQuery()}
+						</div>
+						<button
+							type="button"
+							onClick={copyApiQuery}
+							className="btn btn-sm btn-square"
+							title="Copy API query"
+						>
+							{apiCopied ? (
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<polyline points="20 6 9 17 4 12"></polyline>
+								</svg>
+							) : (
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+								</svg>
+							)}
+						</button>
+					</div>
+					<p className="text-xs text-base-content/60 mt-2">Copy this URL to use directly in your browser or code</p>
 				</div>
 				
 				<div className="flex items-center justify-start gap-4 mt-2">
