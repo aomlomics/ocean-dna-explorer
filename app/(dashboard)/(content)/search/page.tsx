@@ -292,12 +292,20 @@ export default function AdvancedSearch() {
     return (
         <div className="grid grid-cols-1 gap-y-4 pt-4">
             {searchTable && (
-                <header>
-                    <h1 className="text-4xl font-normal text-base-content">
-                        <span className="">Search</span>{" "}
-                        <span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
-                        <span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
-                    </h1>
+                <header className="flex items-start justify-between">
+					<div>
+						<h1 className="text-4xl font-normal text-base-content">
+							<span className="">Search</span>{" "}
+							<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+							<span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
+						</h1>
+					</div>
+					<div className="flex items-center gap-2 bg-base-200/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-base-200/50 transition-colors" onClick={() => helpModalRef.current?.showModal()}>
+						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
+							?
+						</span>
+						<span className="text-sm font-medium">Help me use this page</span>
+					</div>
                 </header>
             )}
             <div className="w-full space-y-4 text-base-content/80">
@@ -317,24 +325,15 @@ export default function AdvancedSearch() {
 
                 {searchTable && (
 					<>
-				<div className="rounded-lg mb-4">
-					<div className="flex items-center gap-2 bg-base-200/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-base-200/50 transition-colors w-fit" onClick={() => helpModalRef.current?.showModal()}>
-						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
-							?
-						</span>
-						<span className="text-sm font-medium">Help me use this page</span>
-					</div>
+				<div className="mb-4 text-center">
+					{getQueryDescription() ? (
+						<p className="text-primary text-base">{getQueryDescription()}</p>
+					) : (
+						<p className="text-base-content/50 italic text-sm">Begin selecting filters and relations, and your query will be displayed here...</p>
+					)}
 				</div>
 
-				{getQueryDescription() && (
-					<div className="mb-3">
-						<p className="text-sm text-base-content/60 mb-1">Plain text query:</p>
-						<p className="text-primary text-sm">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
-					</div>
-				)}
-
                         <div className="bg-base-100 py-6 rounded-lg">
-                                <h2 className="text-2xl font-normal mb-6">Filters and Relations</h2>
                                 <div className="text-sm overflow-x-auto overflow-hidden rounded-lg">
                                     <div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 text-center mb-4 font-medium text-base-content/70">
                                         <div>Type</div>
@@ -354,16 +353,16 @@ export default function AdvancedSearch() {
 						</div>
 				</div>
 
-				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4">
+				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4 max-w-4xl">
 					<h3 className="text-lg font-medium mb-3">API Query</h3>
 					<div className="flex items-start gap-2">
-						<div className="flex-1 bg-base-200/50 p-2 rounded text-xs font-mono break-all overflow-x-auto">
+						<div className="flex-1 bg-base-200/50 p-2 rounded text-xs font-mono break-words overflow-wrap-anywhere max-h-32 overflow-y-auto">
 							{getApiQuery()}
 						</div>
 						<button
 							type="button"
 							onClick={copyApiQuery}
-							className="btn btn-sm btn-square"
+							className="btn btn-sm btn-square flex-shrink-0"
 							title="Copy API query"
 						>
 							{apiCopied ? (
