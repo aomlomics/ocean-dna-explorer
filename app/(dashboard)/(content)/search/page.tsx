@@ -325,7 +325,7 @@ export default function AdvancedSearch() {
 
                 {searchTable && (
 					<>
-				<div className="mb-4 text-center">
+				<div className="mb-4 mt-6 text-center">
 					{getQueryDescription() ? (
 						<p className="text-primary text-base">{getQueryDescription()}</p>
 					) : (
@@ -333,7 +333,7 @@ export default function AdvancedSearch() {
 					)}
 				</div>
 
-                        <div className="bg-base-100 py-6 rounded-lg">
+                        <div className="bg-base-100 py-6 rounded-lg mb-4">
                                 <div className="text-sm overflow-x-auto overflow-hidden rounded-lg">
                                     <div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 text-center mb-4 font-medium text-base-content/70">
                                         <div>Type</div>
@@ -353,10 +353,10 @@ export default function AdvancedSearch() {
 						</div>
 				</div>
 
-				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4 max-w-4xl">
+				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4">
 					<h3 className="text-lg font-medium mb-3">API Query</h3>
-					<div className="flex items-start gap-2">
-						<div className="flex-1 bg-base-200/50 p-2 rounded text-xs font-mono break-words overflow-wrap-anywhere max-h-32 overflow-y-auto">
+					<div className="flex items-start gap-2 max-w-4xl">
+						<div className="flex-1 bg-base-200/50 p-3 rounded text-xs font-mono break-words overflow-wrap-anywhere min-h-20 max-h-40 overflow-y-auto">
 							{getApiQuery()}
 						</div>
 						<button

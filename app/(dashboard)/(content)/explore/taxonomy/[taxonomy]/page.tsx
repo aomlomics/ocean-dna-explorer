@@ -19,7 +19,7 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	return (
 		<div className="space-y-1.5">
 			{taxonomicData.map((item, index) => (
-				<div key={item.rank} className="text-center py-1.5">
+				<div key={item.rank} className="py-1">
 					<span className="text-primary font-semibold text-sm">{item.rank}: </span>
 					<span className="text-base-content font-medium text-sm">{item.name}</span>
 				</div>
@@ -105,7 +105,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.taxonomy.description}>
+					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip={TableMetadata.taxonomy.description}>
 						{displayName}
 					</h1>
 					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
@@ -212,23 +212,25 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 				{/* Right Column: Taxonomy Image + Ranking */}
 				<div className="bg-base-200 rounded-xl p-6 flex flex-col">
-					{/* Taxonomy Image - Large and Prominent */}
-					<div className="flex items-center justify-center mb-6">
-						<div className="w-64 h-64 relative">
-							<PhyloPic taxonomy={dbTaxonomy} />
+					<div className="flex gap-6 mb-6">
+						{/* Taxonomy Image - Left Side */}
+						<div className="flex items-center justify-center flex-shrink-0">
+							<div className="w-48 h-48 relative">
+								<PhyloPic taxonomy={dbTaxonomy} />
+							</div>
+						</div>
+
+						{/* Taxonomic Ranking - Right Side */}
+						<div className="flex-1 flex flex-col justify-center">
+							<h3 className="text-lg font-semibold text-base-content mb-3">Taxonomic Ranking</h3>
+							{formatTaxonomyDisplay(dbTaxonomy)}
 						</div>
 					</div>
 
 					{/* Occurrences Count */}
-					<div className="text-center pb-4 mb-4 border-b border-base-content/10">
+					<div className="text-center pb-4 mb-4 border-t border-base-content/10 pt-4">
 						<div className="text-3xl font-bold text-primary">{samples.length}</div>
 						<div className="text-base-content/70 text-sm mt-1">occurrences found</div>
-					</div>
-
-					{/* Taxonomic Ranking */}
-					<div className="mb-6">
-						<h3 className="text-lg font-semibold text-base-content mb-3 text-center">Taxonomic Ranking</h3>
-						{formatTaxonomyDisplay(dbTaxonomy)}
 					</div>
 
 					{/* Image Attribution */}
