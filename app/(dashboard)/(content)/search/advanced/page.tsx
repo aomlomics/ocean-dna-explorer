@@ -68,12 +68,13 @@ export default function AdvancedSearch() {
 	}, [searchParams]);
 
 	useEffect(() => {
-		// Don't call search() if we already have advanced params from URL
-		// This prevents overwriting the URL on initial load
-		if (searchTable && !searchParams.has("advanced")) {
-			search();
+		// Set default table parameter without creating a new history entry
+		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
+			const params = new URLSearchParams(searchParams.toString());
+			params.set("table", searchTable);
+			router.replace(`${pathname}?${params.toString()}`);
 		}
-	}, [searchTable]);
+	}, [searchTable, searchParams, pathname, router]);
 
 	//functions
 	function getQueryDescription() {
