@@ -134,7 +134,7 @@ export default async function Home() {
 					</div>
 
 					{/* Assay Stats Section */}
-					<div>
+					<div className="flex flex-col justify-center">
 						<div className="mb-8 text-xl text-base-content">
 							<span className="text-primary">Assays used Across ODE</span>
 						</div>
