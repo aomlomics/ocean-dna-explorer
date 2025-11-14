@@ -19,9 +19,9 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	return (
 		<div className="space-y-2">
 			{taxonomicData.map((item, index) => (
-				<div key={item.rank} className="flex items-start gap-3 py-2 border-b border-base-content/5 last:border-0">
-					<span className="text-primary font-semibold min-w-[95px] text-sm">{item.rank}:</span>
-					<span className="text-base-content font-medium flex-1">{item.name}</span>
+				<div key={item.rank} className="flex flex-col items-center gap-1 py-2 border-b border-base-content/5 last:border-0">
+					<span className="text-primary font-semibold text-sm">{item.rank}</span>
+					<span className="text-base-content font-medium text-center">{item.name}</span>
 				</div>
 			))}
 		</div>
@@ -97,10 +97,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const samplesText = samples.length === 1 ? '1 sample' : `${samples.length} samples`;
 	const projectsText = uniqueProjects.length === 1 ? '1 project' : `${uniqueProjects.length} projects`;
 
-	// Build search URLs for project and sample boxes
-	const taxonomyEncoded = encodeURIComponent(JSON.stringify([["taxonomy", "equals", taxonomy]]));
-	const projectSearchUrl = `/search?table=project&advanced=${taxonomyEncoded}`;
-	const sampleSearchUrl = `/search?table=sample&advanced=${taxonomyEncoded}`;
+	// Build search URLs for project and sample boxes (unencoded like project page does it)
+	const projectSearchUrl = `/search?table=project&advanced=[["taxonomy","equals","${taxonomy}"]]`;
+	const sampleSearchUrl = `/search?table=sample&advanced=[["taxonomy","equals","${taxonomy}"]]`;
 
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
@@ -119,34 +118,36 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			{/* Main Grid Layout */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Left: Map */}
-				<div className="w-full min-h-[400px]">
+				<div className="w-full h-[300px]">
 					<Map locations={samples} cluster />
 				</div>
 
 				{/* Right: Combined Taxonomy Image + Ranking */}
-				<div className="bg-base-200 rounded-xl p-6 space-y-6">
+				<div className="bg-base-200 rounded-xl p-6 flex flex-col">
 					{/* Taxonomy Image - Large and Prominent */}
-					<div className="flex items-center justify-center p-8">
-						<div className="w-full max-w-xs">
+					<div className="flex items-center justify-center mb-6">
+						<div className="w-64 h-64 relative">
 							<PhyloPic taxonomy={dbTaxonomy} />
 						</div>
 					</div>
 
 					{/* Occurrences Count */}
-					<div className="text-center pb-4 border-b border-base-content/10">
+					<div className="text-center pb-4 mb-4 border-b border-base-content/10">
 						<div className="text-3xl font-bold text-primary">{samples.length}</div>
 						<div className="text-base-content/70 text-sm mt-1">occurrences found</div>
 					</div>
 
 					{/* Taxonomic Ranking */}
-					<div>
-						<h3 className="text-lg font-semibold text-base-content mb-3">Taxonomic Ranking</h3>
-						{formatTaxonomyDisplay(dbTaxonomy)}
+					<div className="flex-1">
+						<h3 className="text-lg font-semibold text-base-content mb-3 text-center">Taxonomic Ranking</h3>
+						<div className="max-w-md mx-auto">
+							{formatTaxonomyDisplay(dbTaxonomy)}
+						</div>
 					</div>
 
 					{/* Image Attribution */}
-					<div className="pt-4 border-t border-base-content/10">
-						<h4 className="text-sm font-semibold text-base-content mb-2">Image Attribution</h4>
+					<div className="pt-4 mt-4 border-t border-base-content/10">
+						<h4 className="text-sm font-semibold text-base-content mb-2">Taxonomic Image Attribution</h4>
 						<p className="text-base-content/70 text-xs leading-relaxed">
 							The taxonomic outline image is sourced through{" "}
 							<Link href="https://www.phylopic.org/" className="text-primary hover:underline" target="_blank">
@@ -163,9 +164,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			</div>
 
 			{/* Bottom Row: Analysis Dropdown, Projects, Samples */}
-			<div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto lg:mx-0">
-				{/* Analysis Dropdown */}
-				<div className="col-span-2 dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg transition-colors">
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+				{/* Analysis Dropdown - Full width */}
+				<div className="md:col-span-2 dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg transition-colors">
 					<div tabIndex={0} role="button" className="w-full p-4 flex justify-between items-center">
 						<div className="flex items-center gap-4">
 							<div className="w-12 h-12 flex items-center justify-center text-primary">
