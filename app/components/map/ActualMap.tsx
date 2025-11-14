@@ -680,7 +680,7 @@ function Collapsible({
 
 	const panel = (
 		<div
-			className={`card bg-base-100 card-xs shadow-sm card-body justify-center p-2 min-h-[45px] min-w-[45px] ${className} ${
+			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] [:where(&)]:bg-base-100 [:where(&)]:shadow-sm [:where(&)]:p-2 ${className} ${
 				collapse ? "hidden" : ""
 			}`}
 		>

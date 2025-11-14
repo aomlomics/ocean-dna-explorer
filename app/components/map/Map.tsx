@@ -12,7 +12,8 @@ export default function Map({
 	cluster,
 	clusterRadius,
 	draw,
-	omit
+	omit,
+	className
 }: {
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
@@ -21,32 +22,37 @@ export default function Map({
 	clusterRadius?: number;
 	draw?: boolean;
 	omit?: string[];
+	className?: string;
 } & (
 	| { query: () => Promise<NullLocation[]>; locations?: undefined }
 	| { query?: undefined; locations: NullLocation[] }
 )) {
 	return (
-		<Suspense
-			fallback={
-				<div className="w-full h-full flex justify-center items-center">
-					<div className="h-full aspect-square p-30">
-						<span className="loading loading-spinner loading-xl h-full w-full" />
-					</div>
-				</div>
-			}
+		<div
+			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className}`}
 		>
-			<SuspenseMap
-				query={query}
-				locations={locations}
-				id={id}
-				table={table}
-				titleTable={titleTable}
-				cluster={cluster}
-				clusterRadius={clusterRadius}
-				draw={draw}
-				omit={omit}
-			/>
-		</Suspense>
+			<Suspense
+				fallback={
+					<div className="w-full h-full flex justify-center items-center">
+						<div className="h-full aspect-square p-30">
+							<span className="loading loading-spinner loading-xl h-full w-full" />
+						</div>
+					</div>
+				}
+			>
+				<SuspenseMap
+					query={query}
+					locations={locations}
+					id={id}
+					table={table}
+					titleTable={titleTable}
+					cluster={cluster}
+					clusterRadius={clusterRadius}
+					draw={draw}
+					omit={omit}
+				/>
+			</Suspense>
+		</div>
 	);
 }
 

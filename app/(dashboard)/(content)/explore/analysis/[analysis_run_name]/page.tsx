@@ -133,9 +133,7 @@ export default async function Analysis_run_name({
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<div className="card-body p-0 overflow-hidden aspect-5/2">
-							<Map locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))} cluster />
-						</div>
+						<Map locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))} cluster />
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />

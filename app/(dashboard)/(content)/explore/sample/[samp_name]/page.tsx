@@ -108,9 +108,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				{/* Left column - Map and Assays */}
 				<div className="space-y-8">
 					{/* Square Map */}
-					<div className="aspect-square w-full">
-						<Map locations={[sample]} />
-					</div>
+					<Map locations={[sample]} className="aspect-square" />
 
 					{/* Assays Section */}
 					<div id="assays-section" className="target:animate-flash">

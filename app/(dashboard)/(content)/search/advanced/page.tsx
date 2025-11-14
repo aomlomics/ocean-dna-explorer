@@ -491,7 +491,7 @@ function FilterSection({
 }) {
 	let visibleItemCount = 0;
 	return (
-		<div className={`flex flex-col gap-2 ${className}`}>
+		<div className={`flex flex-col [:where(&)]:gap-2 ${className}`}>
 			{filterIds.reduce((acc: ReactNode[], id: FilterIds[0], i: number) => {
 				if (id) {
 					if (visibleItemCount > 0 && label) {
@@ -620,7 +620,9 @@ function Filter({
 	const omit = [...GlobalOmit, "id"];
 
 	return (
-		<div className={`grid grid-cols-[15%_22%_22%_1fr_auto] gap-x-2 items-center p-3 rounded-md ${className}`}>
+		<div
+			className={`grid grid-cols-[15%_22%_22%_1fr_auto] items-center [:where(&)]:gap-x-2 [:where(&)]:p-3 [:where(&)]:rounded-md ${className}`}
+		>
 			<div className="pr-2">
 				<select
 					className="select"
