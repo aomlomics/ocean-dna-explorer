@@ -41,7 +41,7 @@ export default function ExploreTabButtons({
 				const href =
 					pathname.split("/").includes("explore")
 						? `/explore/${uncapitalizedTableName}`
-						: `/search/advanced?table=${modelName}`;
+						: `/search?table=${modelName}`;
 
 				return (
 					<Link

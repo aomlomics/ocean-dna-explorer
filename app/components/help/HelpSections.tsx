@@ -599,7 +599,7 @@ export const helpSections: Section[] = [
 						</p>
 
 						<div className="flex gap-8">
-							<Link href='/search/advanced?table=sample&advanced=[["project_id","equals","noaa-aoml-gomecc4"]]'>
+							<Link href='/search?table=sample&advanced=[["project_id","equals","noaa-aoml-gomecc4"]]'>
 								<div className="group flex flex-col items-center text-center p-6 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-300 hover:scale-105 w-64">
 									<div className="w-16 h-16 mb-3 flex items-center justify-center text-primary">
 										<svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
@@ -612,7 +612,7 @@ export const helpSections: Section[] = [
 								</div>
 							</Link>
 
-							<Link href='/search/advanced?table=taxonomy&advanced=[["sample","samp_name","equals","GOMECC4_27N_Sta1_Deep_A"]]'>
+							<Link href='/search?table=taxonomy&advanced=[["sample","samp_name","equals","GOMECC4_27N_Sta1_Deep_A"]]'>
 								<div className="group flex flex-col items-center text-center p-6 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-300 hover:scale-105 w-64">
 									<div className="w-16 h-16 mb-3 flex items-center justify-center text-primary">
 										<svg viewBox="0 0 1536 592" fill="currentColor" className="w-12 h-12">

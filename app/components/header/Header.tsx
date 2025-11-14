@@ -57,7 +57,7 @@ export default async function Header() {
 							href: `/explore/${uncapitalizeTable(table as Prisma.ModelName)}`
 						}))}
 					/>
-					<TabButton tabName="Search" route="/search/advanced" />
+					<TabButton tabName="Search" route="/search" />
 					<TabDropdown
 						tabName="Submit"
 						route="/submit"

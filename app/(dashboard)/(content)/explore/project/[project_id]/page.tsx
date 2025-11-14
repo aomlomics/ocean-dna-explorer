@@ -233,25 +233,25 @@ export default async function Project_id({ params }: { params: Promise<{ project
 								title="Samples"
 								value={project._count.Samples}
 								icon="location"
-								link={`/search/advanced?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
+								link={`/search?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
 							/>
 							<ProjectStatCard
 								title="Analyses"
 								value={project._count.Analyses}
 								icon="analysis"
-								link={`/search/advanced?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
+								link={`/search?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
 							/>
 							<ProjectStatCard
 								title="Taxonomies"
 								value={sortedTaxa.length}
 								icon="fish"
-								link={`/search/advanced?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
+								link={`/search?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
 							/>
 							<ProjectStatCard
 								title="Occurrences"
 								value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
 								icon="eye"
-								link={`/search/advanced?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
+								link={`/search?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
 							/>
 						</div>
 					</div>

@@ -54,149 +54,6 @@ export async function getApiSections() {
 			),
 			subsections: [
 				{
-					id: "essential-information",
-					title: "Essential API Information",
-					content: (
-						<div className="space-y-6">
-							<p className="mb-4">
-								Before diving into the API, here is some essential information that will help you use it effectively:
-							</p>
-
-							<div className="space-y-6">
-								<div>
-									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data from the Ocean DNA Explorer</h4>
-									<p className="mb-2">There are multiple ways to access and explore data in the Ocean DNA Explorer:</p>
-									<ul className="list-disc ml-6 space-y-2">
-										<li>
-											<p>Through a Graphical Interface (No Code Required):</p>
-											<ul className="list-circle ml-6 mt-1 space-y-1">
-												<li>
-													Explore Pages: View all data from each table with filters. You can only filter on fields within the table you are looking at. There is also a page for each row of the database table you are viewing, by clicking on the blue data fields. For example, if you are on the Explore: Samples page, click a samp_name in the data table to view the page for a specific sample. 
-												</li>
-												<li>
-													Search Page: Build complex queries using data from multiple tables, allowing you to filter on both
-													fields <em>and</em> relations (relations are fields from related tables). For every filter and/or relation you add to your query, it is assumed they are combined as AND logic (both must be true in the results returned). You can add an OR condition by clicking the + Add OR button. 
-												</li>
-											</ul>
-										</li>
-										<li>
-											<p>Programmatic Access:</p>
-											<ul className="list-circle ml-6 mt-1 space-y-1">
-												<li>
-													Direct Browser Queries: Paste API URLs directly in your browser to get JSON
-													responses. This is a great way to test your queries before you start coding.
-												</li>
-												<li>
-													Code Examples: Use our{" "}
-													<Link href="#quick-start-code" className="link link-primary">
-														starter code examples
-													</Link>{" "}
-													to fetch data programmatically in Python or R. This is a great way to pull data directly for making plots / graphs. 
-												</li>
-											</ul>
-										</li>
-									</ul>
-								</div>
-
-								<div>
-									<div className="p-4 bg-warning/20 border-l-4 border-warning rounded-md">
-										<h4 className="mb-2 text-lg font-medium">2. Table Names vs. Relation Names: Understanding Plurality</h4>
-										<p>
-											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference those same tables as relations in queries, the relation names are PLURAL.
-										</p>
-									</div>
-
-									<div className="mt-4 space-y-6">
-										<p>Here are some examples:</p>
-
-										<div>
-											<p className="mb-2">1. Getting all DNA sequences found in a specific sample</p>
-											<p className="mb-2 ml-4">
-												You want to query the feature table, but also get all related occurrences:
-											</p>
-											<div className="ml-4 space-y-2">
-												<div>
-													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
-												</div>
-												<div>
-													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code> (plural)
-												</div>
-											</div>
-										</div>
-
-										<div>
-											<p className="mb-2">2. Finding all samples collected during a specific project</p>
-											<p className="mb-2 ml-4">
-												You want to query the project table and get all its samples:
-											</p>
-											<div className="ml-4 space-y-2">
-												<div>
-													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
-												</div>
-												<div>
-													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
-												</div>
-											</div>
-										</div>
-
-										<div>
-											<p className="mb-2">3. Getting all sequencing analyses for a project</p>
-											<p className="mb-2 ml-4">
-												You want to query the project table and include analyses (note the spelling!):
-											</p>
-											<div className="ml-4 space-y-2">
-												<div>
-													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
-												</div>
-												<div>
-													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code> (plural, spelled differently!)
-												</div>
-											</div>
-										</div>
-
-										<p className="mt-6">
-											Pro tip: Use the <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint to see the exact relation names available for any table. Or check the{" "}
-											<Link href="#table-definitions" className="link link-primary">
-												Table Definitions
-											</Link>{" "}
-											section of this API documentation page.
-										</p>
-									</div>
-								</div>
-
-								<div>
-									<h4 className="font-medium mb-3 text-lg">3. Do I Need to Sign In?</h4>
-									<p className="mb-2">
-										<strong>No authentication required</strong> for most features:
-									</p>
-									<ul className="list-disc ml-6 space-y-1 mb-3">
-										<li>Using the API</li>
-										<li>Using the Search page</li>
-										<li>Using the Explore pages</li>
-										<li>Viewing any data on the website</li>
-									</ul>
-									<p className="mb-3">
-										<strong>You DO need to sign in</strong> and request Contributor access to submit data.
-									</p>
-									<p>
-										While there are no strict rate limits, please be respectful with your API usage. For large-scale
-										automated data pulls, please{" "}
-										<Link
-											href="https://github.com/aomlomics/node/issues"
-											className="link link-primary"
-											target="_blank"
-											rel="noreferrer"
-										>
-											contact our development team
-										</Link>
-										.
-									</p>
-								</div>
-							</div>
-						</div>
-					)
-				},
-				{
 					id: "how-to-use-api",
 					title: "Making Your First API Query",
 					content: (
@@ -354,7 +211,7 @@ export async function getApiSections() {
 					content: (
 						<>
 							<p className="mb-4">Here are some examples of how to get data in various programming environments:</p>
-							<div className="mb-4 mt-4">Python (+ Pandas) example:</div>
+							<div className="mb-4 mt-4 text-lg font-medium">Python example:</div>
 							<CodeBlock
 								language="python"
 								code={`import requests
@@ -367,31 +224,24 @@ response = requests.get(url)
 
 # Check if request was successful
 if response.status_code == 200:
-    # Parse JSON response and print it
+    # Parse JSON response
     data = response.json()
-    results = data.get("result", []) # Use .get() for safety
-    print("JSON Response:")
+    results = data.get("result", [])
+    
+    # --> Your code here
+    
+    # Example: Print as JSON
     print(json.dumps(results, indent=2))
-
-    # Convert to DataFrame and print it
+    
+    # Example: Convert to DataFrame
     if results:
         df = pd.DataFrame(results)
-        print("--------------------")
-        print("DataFrame:")
         print(df)
-    else:
-        print("No results found.")
 else:
-    print(f"Error: {response.status_code} - {response.reason}")
-    try:
-        # Try to parse and print the error message from the API
-        error_data = response.json()
-        print(f"Error message: {error_data.get('error', 'No error message provided.')}")
-    except json.JSONDecodeError:
-        print("Could not parse error response as JSON.")`}
+    print(f"Error: {response.status_code} - {response.reason}")`}
 							/>
 
-							<div className="mb-4 mt-4">R example:</div>
+							<div className="mb-4 mt-8 text-lg font-medium">R example:</div>
 							<CodeBlock
 								language="r"
 								code={`library(httr)
@@ -407,25 +257,155 @@ if (http_status(response)$category == "Success") {
   data <- content(response, "text", encoding = "UTF-8") %>% fromJSON()
   results <- data$result
   
+  # --> Your code here
+  
+  # Example: Print results
   if (length(results) > 0) {
     print(results)
-  } else {
-    print("No results found.")
   }
   
 } else {
   print(paste("Error:", http_status(response)$reason))
-  
-  # Try to parse and print error message
-  error_content <- content(response, "parsed")
-  if (!is.null(error_content$error)) {
-    print(paste("Error message:", error_content$error))
-  } else {
-    print("No detailed error message provided in response.")
-  }
 }`}
 							/>
 						</>
+					)
+				},
+				{
+					id: "essential-information",
+					title: "Essential API Information",
+					content: (
+						<div className="space-y-6">
+							<p className="mb-4">
+								Before diving into the API, here is some essential information that will help you use it effectively:
+							</p>
+
+							<div className="space-y-6">
+								<div>
+									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data</h4>
+									<p className="mb-3">There are multiple ways to access and explore data in the Ocean DNA Explorer:</p>
+									<ul className="list-disc ml-6 space-y-3">
+										<li>
+											<Link href="/explore/project" className="link link-primary font-semibold">
+												Explore Pages
+											</Link>
+											: View all data from each table with filters. You can only filter on fields within the table you are looking at. Click on any blue data field to view the detail page for that specific record.
+										</li>
+										<li>
+											<Link href="/search" className="link link-primary font-semibold">
+												Search Page
+											</Link>
+											: Build complex queries using data from multiple tables, allowing you to filter on both fields <em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button to add OR conditions.
+										</li>
+										<li>
+											<strong>Direct API Access</strong>: Paste API URLs directly in your browser (e.g., <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>) to get JSON responses. Great for testing queries before coding.
+										</li>
+										<li>
+											<strong>Code Examples</strong>: Use the{" "}
+											<Link href="#quick-start-code" className="link link-primary">
+												Quick Start Code Examples
+											</Link>{" "}
+											above to fetch data programmatically in Python or R for analysis and visualization.
+										</li>
+									</ul>
+								</div>
+
+								<div>
+									<div className="p-4 bg-warning/20 border-l-4 border-warning rounded-md">
+										<h4 className="mb-2 text-lg font-medium">2. Table Names vs. Relation Names: Understanding Plurality</h4>
+										<p>
+											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference those same tables as relations in queries, the relation names are PLURAL.
+										</p>
+									</div>
+
+									<div className="mt-4 space-y-6">
+										<p>Here are some examples:</p>
+
+										<div>
+											<p className="mb-2">1. Getting all DNA sequences found in a specific sample</p>
+											<p className="mb-2 ml-4">
+												You want to query the feature table, but also get all related occurrences:
+											</p>
+											<div className="ml-4 space-y-2">
+												<div>
+													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
+												</div>
+												<div>
+													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code> (plural)
+												</div>
+											</div>
+										</div>
+
+										<div>
+											<p className="mb-2">2. Finding all samples collected during a specific project</p>
+											<p className="mb-2 ml-4">
+												You want to query the project table and get all its samples:
+											</p>
+											<div className="ml-4 space-y-2">
+												<div>
+													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+												</div>
+												<div>
+													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
+												</div>
+											</div>
+										</div>
+
+										<div>
+											<p className="mb-2">3. Getting all sequencing analyses for a project</p>
+											<p className="mb-2 ml-4">
+												You want to query the project table and include analyses (note the spelling!):
+											</p>
+											<div className="ml-4 space-y-2">
+												<div>
+													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+												</div>
+												<div>
+													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code> (plural, spelled differently!)
+												</div>
+											</div>
+										</div>
+
+										<p className="mt-6">
+											Pro tip: Use the <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint to see the exact relation names available for any table. Or check the{" "}
+											<Link href="#table-definitions" className="link link-primary">
+												Table Definitions
+											</Link>{" "}
+											section of this API documentation page.
+										</p>
+									</div>
+								</div>
+
+								<div>
+									<h4 className="font-medium mb-3 text-lg">3. Do I Need to Sign In?</h4>
+									<p className="mb-2">
+										<strong>No authentication required</strong> for most features:
+									</p>
+									<ul className="list-disc ml-6 space-y-1 mb-3">
+										<li>Using the API</li>
+										<li>Using the Search page</li>
+										<li>Using the Explore pages</li>
+										<li>Viewing any data on the website</li>
+									</ul>
+									<p className="mb-3">
+										<strong>You DO need to sign in</strong> and request Contributor access to submit data.
+									</p>
+									<p>
+										While there are no strict rate limits, please be respectful with your API usage. For large-scale
+										automated data pulls, please{" "}
+										<Link
+											href="https://github.com/aomlomics/node/issues"
+											className="link link-primary"
+											target="_blank"
+											rel="noreferrer"
+										>
+											contact our development team
+										</Link>
+										.
+									</p>
+								</div>
+							</div>
+						</div>
 					)
 				}
 			]
@@ -700,7 +680,7 @@ if (http_status(response)$category == "Success") {
 			subsections: [
 				{
 					id: "standard-search",
-					title: "Standard Search",
+					title: "Standard Search Parameter",
 					content: (
 						<>
 							<div className="mb-4">Parameter: `search=[query]`</div>
@@ -729,24 +709,21 @@ if (http_status(response)$category == "Success") {
 				},
 				{
 					id: "advanced-search",
-					title: "Advanced Search",
+					title: "Advanced Search Parameter",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: `advanced=[JSON_object]`</p>
+							<p>Query Parameter: `advanced=[JSON_object]`</p>
 							<p>
-								For complex queries, the `advanced` parameter allows you to build a nested query using a JSON
-								object. This enables multi-conditional filtering with `AND` and `OR` logic, as well as querying on
-								related tables.
+								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
 							</p>
 							<div className="p-4 my-4 bg-base-200 border-l-4 border-info rounded-md">
 								<h4 className="font-bold mb-2">Build Queries with the UI</h4>
 								<p>
-									The easiest way to generate an `advanced` query is to use the{" "}
-									<Link href="/search/advanced" className="link link-primary font-semibold">
-										Advanced Search page
+									Use the{" "}
+									<Link href="/search" className="link link-primary font-semibold">
+										Search page
 									</Link>
-									. Build your search using the visual interface, and then copy the `advanced` parameter from the
-									URL it generates.
+									{" "}to build filters through a user interface (no code necessary!), then copy the API query from the URL.
 								</p>
 							</div>
 
