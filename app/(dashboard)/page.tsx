@@ -1,67 +1,17 @@
-import { getSummaryData, MainStats, AssayStats } from "@/app/components/DataSummary";
+import { MainStats, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
-import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
+import { Suspense } from "react";
 
 export default async function Home() {
-	const samples = await publicPrisma.sample.findMany({
-		where: {
-			AND: [
-				{
-					NOT: {
-						decimalLatitude: {
-							in: DeadValueNumbers
-						}
-					}
-				},
-				{
-					NOT: {
-						decimalLongitude: {
-							in: DeadValueNumbers
-						}
-					}
-				}
-			]
-		}
-	});
-
 	const carouselImages = (await prismaImages.image.findMany({ include: { Attribution: true } }))
 		.map((value) => ({ value, sort: Math.random() }))
 		.sort((a, b) => a.sort - b.sort)
 		.map(({ value }) => value);
-
-	const { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays } = await getSummaryData();
-
-	const summaryItems = [
-		{
-			title: "Projects",
-			value: projectCount,
-			href: "/explore/project",
-			icon: "ship" as const
-		},
-		{
-			title: "Samples",
-			value: sampleCount,
-			href: "/explore/sample",
-			icon: "location" as const
-		},
-		{
-			title: "Taxa",
-			value: taxaCount,
-			href: "/explore/taxonomy",
-			icon: "fish" as const
-		},
-		{
-			title: "Occurrences",
-			value: occurrenceCount,
-			href: "/explore/occurrence",
-			icon: "eye" as const
-		}
-	];
 
 	return (
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
@@ -145,7 +95,9 @@ export default async function Home() {
 			</div> */}
 			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
 				<div className="mb-20">
-					<MainStats summaryItems={summaryItems} />
+					<Suspense>
+						<MainStats />
+					</Suspense>
 				</div>
 
 				{/* Interactive Data Journey Visualization */}
@@ -177,7 +129,7 @@ export default async function Home() {
 							<span className="text-primary"> Projects</span>
 						</div>
 						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
-							<Map locations={samples} titleTable="project" cluster clusterRadius={20} />
+							<Map query={() => publicPrisma.sample.findMany()} titleTable="project" cluster clusterRadius={20} />
 						</div>
 					</div>
 
@@ -186,7 +138,9 @@ export default async function Home() {
 						<div className="mb-8 text-xl text-base-content">
 							<span className="text-primary">Assays used Across ODE</span>
 						</div>
-						<AssayStats assays={uniqueAssays} />
+						<Suspense>
+							<AssayStats />
+						</Suspense>
 					</div>
 				</div>
 

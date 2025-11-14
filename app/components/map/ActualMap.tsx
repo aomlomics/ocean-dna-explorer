@@ -140,7 +140,8 @@ export default function ActualMap({
 	titleTable,
 	cluster = false,
 	clusterRadius = 50,
-	draw = false
+	draw = false,
+	omit
 }: {
 	locations: NullLocation[];
 	id?: string;
@@ -149,6 +150,7 @@ export default function ActualMap({
 	cluster?: boolean;
 	clusterRadius?: number;
 	draw?: boolean;
+	omit: string[];
 }) {
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
@@ -324,6 +326,7 @@ export default function ActualMap({
 					}
 				}
 
+				//TODO: visually show that shapes are inside/outside the shapes
 				if (inside || !Object.keys(shapes).length) {
 					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
 				} else {
@@ -370,10 +373,12 @@ export default function ActualMap({
 							valuesCount += marker.options.children.props.loc.values.length;
 
 							for (const val of marker.options.children.props.loc.values) {
-								uniqueColors.add(getLegendColor(legend, val).hex());
+								const color = getLegendColor(legend, val);
+								uniqueColors.add(color ? color.hex() : DEFAULT_COLOR.hex());
 							}
 						} else {
-							uniqueColors.add(getLegendColor(legend, marker.options.children.props.loc).hex());
+							const color = getLegendColor(legend, marker.options.children.props.loc);
+							uniqueColors.add(color ? color.hex() : DEFAULT_COLOR.hex());
 						}
 					}
 					const color = chroma.average(Array.from(uniqueColors));
@@ -412,6 +417,21 @@ export default function ActualMap({
 		? { titleTable, points: points as Record<string, Location[]> }
 		: { titleTable: undefined, points: points as Location[] };
 
+	const legendOptions = [];
+	if (TableMetadata[table].fieldOrder) {
+		legendOptions.push(...TableMetadata[table].fieldOrder);
+	}
+	for (const opt of TableMetadata[table].enumSchema.options) {
+		if (
+			!(TableMetadata[table].fieldOrder && TableMetadata[table].fieldOrder.includes(opt)) &&
+			!GlobalOmit.includes(opt) &&
+			!omit.includes(opt) &&
+			opt !== "id"
+		) {
+			legendOptions.push(opt);
+		}
+	}
+
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
@@ -429,9 +449,7 @@ export default function ActualMap({
 				<LegendControl
 					legend={legend}
 					setLegend={setLegend}
-					legendOptions={TableMetadata[table].enumSchema.options.filter(
-						(opt) => !GlobalOmit.includes(opt) && opt !== "id" && opt !== "project_id"
-					)}
+					legendOptions={legendOptions}
 					table={table}
 					{...legendProps}
 				/>
@@ -781,7 +799,8 @@ function LegendControl({
 				<Collapsible>
 					<div className="text-lg flex justify-between items-center gap-2">
 						{titleTable ? (
-							<span>{TableMetadata[titleTable].plural}</span>
+							// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
+							<span className="pl-2">{TableMetadata[titleTable].plural}</span>
 						) : (
 							<>
 								<div
@@ -806,8 +825,6 @@ function LegendControl({
 								<select
 									value={legend ? legend.field : ""}
 									onChange={(e) => {
-										//TODO: convert this select into a dropdown :(
-										//TODO: add search bar
 										const field = e.target.value;
 										const options = new Set() as Set<any>;
 										for (const loc of points) {
@@ -898,7 +915,7 @@ function LegendControl({
 										version="1.1"
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 32 32"
-										className="text-primary"
+										className="text-primary cursor-pointer"
 										stroke="currentColor"
 										fill="currentColor"
 									>
@@ -996,6 +1013,7 @@ function LegendControl({
 								) : (
 									Object.entries(legend.colorMap).map(([key, color]) => (
 										<div key={key} className="flex gap-2 items-center">
+											{/* TODO: allow clicking on box to enable/disable visibility */}
 											<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
 											{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legend.field) ? (
 												<Link

@@ -65,6 +65,11 @@ export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsA
 
 export type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
 
+export type NullLocation = {
+	decimalLatitude: number | null;
+	decimalLongitude: number | null;
+	[key: string]: any;
+};
 type LocationWithoutValues = {
 	decimalLatitude: number;
 	decimalLongitude: number;

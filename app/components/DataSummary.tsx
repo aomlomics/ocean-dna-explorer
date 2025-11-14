@@ -14,42 +14,93 @@ export type SummaryItemData = {
 	icon?: "ship" | "location" | "fish" | "eye";
 };
 
-export async function getSummaryData() {
-	return publicPrisma.$transaction(
-		async (tx) => {
-			const projectCount = await tx.project.count();
-			const sampleCount = await tx.sample.count();
-			const taxaCount = await tx.taxonomy.count();
-			const occurrenceCount = await tx.occurrence.count();
-			const uniqueAssays = (await tx.assay.findMany({
-				distinct: ["target_gene"],
-				select: { target_gene: true }
-			})) as Assay[];
-
-			for (const a of uniqueAssays) {
-				const countResult = await tx.analysis.findMany({
-					where: { Assay: { target_gene: a.target_gene } },
-					select: { _count: { select: { Assignments: true } } }
-				});
-				a.count = countResult.reduce((sum, current) => sum + current._count.Assignments, 0);
+export async function AssayStats() {
+	const [uniqueAssays, analyses] = await publicPrisma.$transaction([
+		publicPrisma.assay.findMany({
+			distinct: ["target_gene"],
+			where: {
+				Analyses: {
+					some: {}
+				}
+			},
+			select: {
+				target_gene: true
 			}
+		}),
+		publicPrisma.analysis.findMany({
+			select: {
+				_count: {
+					select: {
+						Assignments: true
+					}
+				},
+				Assay: {
+					select: {
+						target_gene: true
+					}
+				}
+			}
+		})
+	]);
+	const analysesByTargetGene = {} as Record<string, typeof analyses>;
+	for (const a of analyses) {
+		if (analysesByTargetGene[a.Assay.target_gene]) {
+			analysesByTargetGene[a.Assay.target_gene].push(a);
+		} else {
+			analysesByTargetGene[a.Assay.target_gene] = [a];
+		}
+	}
 
-			return { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays };
+	const uniqueAssaysWithCount = [] as ((typeof uniqueAssays)[0] & { count: number })[];
+	for (const a of uniqueAssays) {
+		uniqueAssaysWithCount.push({
+			...a,
+			count: analysesByTargetGene[a.target_gene].reduce((sum, current) => sum + current._count.Assignments, 0)
+		});
+	}
+
+	return <AssayPieChart assays={uniqueAssaysWithCount} />;
+}
+
+export async function MainStats() {
+	const [projectCount, sampleCount, taxaCount, occurrenceCount] = await publicPrisma.$transaction([
+		publicPrisma.project.count(),
+		publicPrisma.sample.count(),
+		publicPrisma.taxonomy.count(),
+		publicPrisma.occurrence.count()
+	]);
+
+	const summaryItems = [
+		{
+			title: "Projects",
+			value: projectCount,
+			href: "/explore/project",
+			icon: "ship" as const
 		},
-		{ timeout: 1 * 60 * 1000 }
-	);
-}
-
-export function AssayStats({ assays }: { assays: Assay[] }) {
-	return <AssayPieChart assays={assays} />;
-}
-
-export function MainStats({ summaryItems }: { summaryItems: SummaryItemData[] }) {
+		{
+			title: "Samples",
+			value: sampleCount,
+			href: "/explore/sample",
+			icon: "location" as const
+		},
+		{
+			title: "Taxa",
+			value: taxaCount,
+			href: "/explore/taxonomy",
+			icon: "fish" as const
+		},
+		{
+			title: "Occurrences",
+			value: occurrenceCount,
+			href: "/explore/occurrence",
+			icon: "eye" as const
+		}
+	];
 	return (
 		<div className="w-full max-w-4xl mx-auto">
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8">
 				{summaryItems.map((item, index) => (
-					<div key={item.title} className={`${index >= 2 ? 'hidden lg:block' : ''}`}>
+					<div key={item.title} className={`${index >= 2 ? "hidden lg:block" : ""}`}>
 						<DataSummaryItem {...item} />
 					</div>
 				))}
@@ -109,9 +160,7 @@ function DataSummaryItem({ title, value, href, icon }: SummaryItemData) {
 			<div className="text-3xl font-bold text-primary mb-1 group-hover:text-primary-focus transition-colors">
 				{value.toLocaleString()}
 			</div>
-			<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-				{title}
-			</div>
+			<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
 		</Link>
 	);
 }
