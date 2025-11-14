@@ -68,7 +68,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	const taxonomySearchUrl = `/search?table=taxonomy&advanced=${encodedFilter}`;
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-8 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -206,6 +206,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 		</div>
 	);
 }
+
 
 type StatIconType = "location" | "eye" | "analysis" | "fish";
 
