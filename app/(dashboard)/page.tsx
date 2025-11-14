@@ -121,9 +121,9 @@ export default async function Home() {
 					</div>
 				</div> */}
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch mb-24">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-stretch mb-24">
 					{/* Map Section */}
-					<div>
+					<div className="col-span-2">
 						<div className="mb-4 text-xl text-base-content">
 							Showing all
 							<span className="text-primary"> Projects</span>

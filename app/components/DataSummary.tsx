@@ -1,11 +1,6 @@
 import { publicPrisma } from "../helpers/prisma";
 import Link from "next/link";
-import AssayPieChart from "./charts/AssayPieChart";
-
-type Assay = {
-	target_gene: string;
-	count?: number;
-};
+import DoughnutChart from "./charts/DoughnutChart";
 
 export type SummaryItemData = {
 	title: string;
@@ -51,15 +46,24 @@ export async function AssayStats() {
 		}
 	}
 
-	const uniqueAssaysWithCount = [] as ((typeof uniqueAssays)[0] & { count: number })[];
+	const targetGeneCounts = [] as { target_gene: (typeof uniqueAssays)[0]["target_gene"]; count: number }[];
 	for (const a of uniqueAssays) {
-		uniqueAssaysWithCount.push({
+		targetGeneCounts.push({
 			...a,
 			count: analysesByTargetGene[a.target_gene].reduce((sum, current) => sum + current._count.Assignments, 0)
 		});
 	}
 
-	return <AssayPieChart assays={uniqueAssaysWithCount} />;
+	return (
+		<div className="w-full flex justify-center mt-4">
+			<div className="w-full max-w-4xl">
+				<DoughnutChart
+					labels={targetGeneCounts.map((a) => a.target_gene)}
+					data={targetGeneCounts.map((a) => a.count || 0)}
+				/>
+			</div>
+		</div>
+	);
 }
 
 export async function MainStats() {
@@ -96,6 +100,7 @@ export async function MainStats() {
 			icon: "eye" as const
 		}
 	];
+
 	return (
 		<div className="w-full max-w-4xl mx-auto">
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8">
