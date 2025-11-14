@@ -51,6 +51,11 @@ export default function AdvancedSearch() {
 					}
 
 					setFilterIds(advancedParsed.map(getFilterIds));
+				} else {
+					// Clear filters when switching tables without advanced parameter
+					// Set to empty first to unmount old components
+					setFilterIds([]);
+					setParamsArray([]);
 				}
 
                 const paramTable = searchParams.get("table") as Prisma.ModelName | null;
@@ -65,6 +70,13 @@ export default function AdvancedSearch() {
 			console.log(err);
 		}
 	}, [searchParams]);
+
+	useEffect(() => {
+		// After clearing filters, add one empty filter in next render cycle
+		if (filterIds.length === 0 && !searchParams.has("advanced")) {
+			setFilterIds([1]);
+		}
+	}, [filterIds, searchParams]);
 
 	useEffect(() => {
 		// Set default table parameter without creating a new history entry
