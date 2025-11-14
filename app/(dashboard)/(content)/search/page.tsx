@@ -30,6 +30,7 @@ export default function AdvancedSearch() {
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const [formUpdateTrigger, setFormUpdateTrigger] = useState(0);
+	const [apiCopied, setApiCopied] = useState(false);
 
 	useEffect(() => {
 		try {
@@ -148,9 +149,9 @@ export default function AdvancedSearch() {
 					const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
 
 					if (id === 1) {
-						if (formRef.current[`type_${suffix}`]) {
+						if (formRef.current[`type_${suffix}`] && formRef.current[`field_${suffix}`] && formRef.current[`mode_${suffix}`]) {
 							const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
-							const relation = type === "relation" ? formRef.current[`relation_${suffix}`].value : ("" as string);
+							const relation = type === "relation" && formRef.current[`relation_${suffix}`] ? formRef.current[`relation_${suffix}`].value : ("" as string);
 
 							const table = (relation ? relation : searchTable) as Prisma.ModelName;
 							const field = formRef.current[`field_${suffix}`].value as string;
@@ -167,20 +168,23 @@ export default function AdvancedSearch() {
 
 							if (fieldType === "date") {
 								if (mode === "range") {
+									if (!formRef.current[`filter_${suffix}_gte_date`] || !formRef.current[`filter_${suffix}_lte_date`]) continue;
 									const gteDate = formRef.current[`filter_${suffix}_gte_date`].value;
-									const gteTime = formRef.current[`filter_${suffix}_gte_time`].value;
+									const gteTime = formRef.current[`filter_${suffix}_gte_time`]?.value || "";
 									const lteDate = formRef.current[`filter_${suffix}_lte_date`].value;
-									const lteTime = formRef.current[`filter_${suffix}_lte_time`].value;
+									const lteTime = formRef.current[`filter_${suffix}_lte_time`]?.value || "";
 
 									filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
 								} else {
+									if (!formRef.current[`filter_${suffix}_date`]) continue;
 									const filterDate = formRef.current[`filter_${suffix}_date`].value;
-									const filterTime = formRef.current[`filter_${suffix}_time`].value;
+									const filterTime = formRef.current[`filter_${suffix}_time`]?.value || "";
 
 									filter = filterDate + (filterTime ? "T" + filterTime : "");
 								}
 							} else {
 								if (mode === "range") {
+									if (!formRef.current[`filter_${suffix}_gte`] || !formRef.current[`filter_${suffix}_lte`]) continue;
 									const gte = formRef.current[`filter_${suffix}_gte`].value;
 									const lte = formRef.current[`filter_${suffix}_lte`].value;
 									if (fieldType === "integer") {
@@ -189,6 +193,7 @@ export default function AdvancedSearch() {
 										filter = [parseFloat(gte), parseFloat(lte)];
 									}
 								} else {
+									if (!formRef.current[`filter_${suffix}`]) continue;
 									const filterVal = formRef.current[`filter_${suffix}`].value;
 
 									if (fieldType === "integer") {
@@ -242,12 +247,31 @@ export default function AdvancedSearch() {
 		router.push(`${pathname}?${params.toString()}`);
 	}
 
+	function getApiQuery() {
+		const advanced = getParamsArray();
+		const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_URL;
+		const tableName = uncapitalizeTable(searchTable);
+		
+		if (advanced && advanced.length) {
+			// Return unencoded version - more readable and what people actually type
+			return `${baseUrl}/api/${tableName}?advanced=${JSON.stringify(advanced)}`;
+		}
+		return `${baseUrl}/api/${tableName}`;
+	}
+
+	async function copyApiQuery() {
+		const query = getApiQuery();
+		await navigator.clipboard.writeText(query);
+		setApiCopied(true);
+		setTimeout(() => setApiCopied(false), 2000);
+	}
+
     return (
         <div className="grid grid-cols-1 gap-y-4 pt-4">
             {searchTable && (
                 <header>
                     <h1 className="text-4xl font-normal text-base-content">
-                        <span className="">Advanced Search</span>{" "}
+                        <span className="">Search</span>{" "}
                         <span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
                         <span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
                     </h1>
@@ -267,58 +291,65 @@ export default function AdvancedSearch() {
 				}}
 				onChange={() => setFormUpdateTrigger(prev => prev + 1)}
 			>
-                <div className="bg-base-100 py-6 rounded-lg">
-                        <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
-                            <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
-								1
-							</span>
-                            <span>Select a table to search</span>
-						</h2>
-						<p className="mb-8">Select the table that you want to filter on and see at the bottom of the page.</p>
-						<div className="w-1/4">
-							<select
-								value={searchTable}
-								className="select select-bordered w-full"
-								onChange={(e) => {
-									setSearchTable(e.target.value as Prisma.ModelName);
-									setFilterIds([]);
-									setParamsArray([]);
-								}}
-								required
-							>
-								{TableNames.map((table) => (
-									<option key={table} value={table}>
-										{TableMetadata[table as Prisma.ModelName].plural}
-									</option>
-								))}
-							</select>
-						</div>
-				</div>
 
                 {searchTable && (
 					<>
+				<div className="rounded-lg mb-4">
+					<div className="flex items-center gap-2 bg-base-200/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-base-200/50 transition-colors w-fit" onClick={() => helpModalRef.current?.showModal()}>
+						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
+							?
+						</span>
+						<span className="text-sm font-medium">Help me use this page</span>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+					<div className="bg-base-100 py-4 px-6 rounded-lg">
+						<h3 className="text-lg font-medium mb-3">Plain Text Query</h3>
+						{getQueryDescription() ? (
+							<p className="text-primary text-sm">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
+						) : (
+							<p className="text-base-content/50 italic text-sm">Build your query below...</p>
+						)}
+					</div>
+
+					<div className="bg-base-100 py-4 px-6 rounded-lg">
+						<h3 className="text-lg font-medium mb-3">API Query</h3>
+						<div className="flex items-start gap-2">
+							<div className="flex-1 bg-base-200/50 p-2 rounded text-xs font-mono break-all overflow-x-auto">
+								{getApiQuery()}
+							</div>
+							<button
+								type="button"
+								onClick={copyApiQuery}
+								className="btn btn-sm btn-square"
+								title="Copy API query"
+							>
+								{apiCopied ? (
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+										<polyline points="20 6 9 17 4 12"></polyline>
+									</svg>
+								) : (
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+									</svg>
+								)}
+							</button>
+						</div>
+						<p className="text-xs text-base-content/60 mt-2">Copy this URL to use directly in your browser or code</p>
+					</div>
+				</div>
+
                         <div className="bg-base-100 py-6 rounded-lg">
-                                <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
-									<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
-										2
-									</span>
-									<span>Add Filters and/or Relations</span>
-									<div className="flex items-center gap-2 bg-base-100 rounded-lg px-3 py-2 cursor-pointer hover:bg-base-300 transition-colors" onClick={() => helpModalRef.current?.showModal()}>
-										<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
-											?
-										</span>
-										<span className="text-sm">Help me use this</span>
-									</div>
-								</h2>
-                                <p className="mb-8">
-                                    Add filters for the selected table, using filters based on the data fields. To include criteria from related tables, switch the type to relation, choose the related table, then pick the field and condition. Each filter and/or relation (or each row of the menu below) is combined with AND logic. You can also add OR groups to your filters.
-                                </p>
-                                <div className="text-sm overflow-x-auto overflow-hidden border border-base-300 rounded-lg p-4">
-                                    <div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
+                                <h2 className="text-2xl font-normal mb-6">Filters and Relations</h2>
+                                <div className="text-sm overflow-x-auto overflow-hidden rounded-lg">
+                                    <div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 text-center mb-4 font-medium text-base-content/70">
                                         <div>Type</div>
                                         <div>Relation</div>
                                         <div>Field</div>
                                         <div>Filter</div>
+										<div></div>
                                     </div>
 
                                     <FilterSection
@@ -329,21 +360,6 @@ export default function AdvancedSearch() {
                                         onChange={(prev) => setFilterIds(prev)}
                                     />
 						</div>
-				</div>
-				
-				<div className="bg-base-100 py-6 rounded-lg">
-					<h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
-						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
-							3
-						</span>
-						<span>Review Your Query</span>
-					</h2>
-					<p className="mb-8">A plain-text representation of the query that will be performed when you click Search.</p>
-					{getQueryDescription() ? (
-						<p className="text-primary">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
-					) : (
-						<p className="text-base-content/50 italic">Build your query, and you can view a plain-text representation here...</p>
-					)}
 				</div>
 				
 				<div className="flex items-center justify-start gap-4 mt-2">
@@ -393,64 +409,82 @@ export default function AdvancedSearch() {
 		)}
 	</form>
 
-			<Modal ref={helpModalRef} className="max-h-[85vh] overflow-y-auto my-8">
+			<Modal ref={helpModalRef} className="max-h-[85vh] overflow-y-auto my-8 max-w-4xl">
 				<div className="p-6">
-					<h3 className="text-2xl font-normal mb-4 text-primary">Advanced Search Filtering Help</h3>
-					<div className="space-y-4">
-						<div>
-							<h4 className="font-semibold text-lg mb-2">Using the Filters and Relations</h4>
-							<p className="text-base-content/80">
-								Each filter row you add is combined with <span className="font-semibold">AND</span> logic.
-								For example, if you add two filters, the search will find records that match{" "}
-								<span className="italic">both</span> conditions.
-							</p>
-						</div>
+					<h3 className="text-2xl font-normal mb-6 text-primary">How to Use This Page</h3>
+					<div className="space-y-6">
+						{/* Part 1: How to Use the Page */}
+						<div className="border-l-4 border-primary pl-4">
+							<h4 className="font-semibold text-xl mb-3">Part 1: Building Your Search</h4>
+							
+							<div className="space-y-3">
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">1. Select Your Table</p>
+									<p className="text-base-content/70 text-sm ml-4">
+										Click one of the table name tabs at the top (e.g., Projects, Samples, Taxonomy) to choose what data you want to search and see in the results table at the bottom of the page.
+									</p>
+								</div>
 
-						<div>
-							<h4 className="font-semibold text-lg mb-2">Using OR</h4>
-							<p className="text-base-content/80 mb-2">
-								The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a
-								combined statement that is true if <span className="italic">any one</span> of its conditions
-								is met. The OR group itself is treated like a normal filter and is combined with other
-								filters using <span className="font-semibold">AND</span> logic.
-							</p>
-							<div className="bg-base-200 p-3 rounded-md">
-								<p className="font-mono text-sm mb-2">Example with OR:</p>
-								<p className="font-mono text-sm">Filter A AND (Filter B OR Filter C)</p>
-								<p className="text-xs text-base-content/70 mt-1">
-									(finds records matching A, and either B or C)
-								</p>
-							</div>
-							<div className="bg-base-200 p-3 rounded-md mt-2">
-								<p className="font-mono text-sm mb-2">Example with multiple ORs:</p>
-								<p className="font-mono text-sm">(Filter A OR Filter B) AND (Filter C OR Filter D)</p>
-								<p className="text-xs text-base-content/70 mt-1">
-									(finds records matching either A or B, and also matching either C or D)
-								</p>
-							</div>
-						</div>
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">2. Add Filters and Relations</p>
+									<p className="text-base-content/70 text-sm ml-4">
+										Use the Filters and Relations section to build your query. Add filters based on data fields, and include criteria from related tables by switching the type to "relation", choosing the related table, then selecting the field and condition.
+									</p>
+								</div>
 
-						<div>
-							<h4 className="font-semibold text-lg mb-2">Using Nested OR</h4>
-							<p className="text-base-content/80 mb-2">
-								Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to
-								create an OR within an OR. This is an advanced feature for complex queries.
-							</p>
-							<div className="bg-base-200 p-3 rounded-md">
-								<p className="font-mono text-sm mb-2">Example with Nested OR:</p>
-								<p className="font-mono text-sm">Filter A AND ((Filter B OR Filter C) OR (Filter D OR Filter E))</p>
-								<p className="text-xs text-base-content/70 mt-1">
-									(finds records matching A, and either (B or C) or (D or E))
-								</p>
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">3. Review Your Query</p>
+									<p className="text-base-content/70 text-sm ml-4">
+										The <span className="font-semibold">Plain Text Query</span> box shows a readable version of your search. The <span className="font-semibold">API Query</span> box shows the actual URL you can copy and paste into your browser or code to get JSON results.
+									</p>
+								</div>
+
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">4. Search</p>
+									<p className="text-base-content/70 text-sm ml-4">
+										Click the Search button to see your results in the table below.
+									</p>
+								</div>
 							</div>
 						</div>
 
-						<div className="bg-base-200 p-3 rounded-md border border-base-300">
-							<p className="text-base-content/80">
-								<strong>Tip:</strong> Nested ORs are rarely needed for most searches. In most cases, you'll want to use{" "}
-								<span className="font-semibold">"+ Add Filter"</span> to add more conditions to an OR group
-								rather than creating a Nested OR.
-							</p>
+						{/* Part 2: Understanding AND/OR Logic */}
+						<div className="border-l-4 border-secondary pl-4">
+							<h4 className="font-semibold text-xl mb-3">Part 2: Understanding AND/OR Logic</h4>
+
+							<div className="space-y-3">
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">AND Logic (Default)</p>
+									<p className="text-base-content/70 text-sm ml-4">
+										Each filter row you add is combined with <span className="font-semibold">AND</span> logic. For example, if you add two filters, the search will find records that match <span className="italic">both</span> conditions.
+									</p>
+								</div>
+
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">Using OR</p>
+									<p className="text-base-content/70 text-sm ml-4 mb-2">
+										The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a combined statement that is true if <span className="italic">any one</span> of its conditions is met. The OR group itself is treated like a normal filter and is combined with other filters using <span className="font-semibold">AND</span> logic.
+									</p>
+									<div className="bg-base-200 p-3 rounded-md ml-4 mt-2">
+										<p className="font-mono text-sm mb-1">Example:</p>
+										<p className="font-mono text-sm">Filter A AND (Filter B OR Filter C)</p>
+										<p className="text-xs text-base-content/70 mt-1">
+											→ finds records matching A, and either B or C
+										</p>
+									</div>
+								</div>
+
+								<div>
+									<p className="text-base-content/80 font-medium mb-1">Using Nested OR (Advanced)</p>
+									<p className="text-base-content/70 text-sm ml-4 mb-2">
+										Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to create an OR within an OR. This is rarely needed for most searches.
+									</p>
+									<div className="bg-base-200 p-3 rounded-md ml-4 mt-2">
+										<p className="font-mono text-sm mb-1">Example:</p>
+										<p className="font-mono text-xs">((Filter A OR Filter B) OR (Filter C OR Filter D))</p>
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -610,9 +644,9 @@ function Filter({
 
 	return (
 		<div
-			className={`grid grid-cols-[15%_22%_22%_1fr_auto] gap-x-2 items-center p-3 rounded-md ${className}`}
+			className={`grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 items-center p-3 rounded-md ${className}`}
 		>
-			<div className="pr-2">
+			<div className="">
 				<select
 					className="select"
 					value={type}
@@ -632,7 +666,7 @@ function Filter({
 				</select>
 			</div>
 
-			<div className="px-2">
+			<div className="">
 				{type === "relation" ? (
 					<select
 						className="select"
@@ -664,7 +698,7 @@ function Filter({
 				)}
 			</div>
 
-			<div className={`px-2`}>
+			<div className={``}>
 				{type === "field" || relation ? (
 					<select
 						className="select"
@@ -693,7 +727,7 @@ function Filter({
 				)}
 			</div>
 
-			<div className="px-2">
+			<div className="">
 				{!!field ? (
 					<InputElement
 						nameSuffix={nameSuffix}
