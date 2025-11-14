@@ -97,9 +97,11 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const samplesText = samples.length === 1 ? '1 sample' : `${samples.length} samples`;
 	const projectsText = uniqueProjects.length === 1 ? '1 project' : `${uniqueProjects.length} projects`;
 
-	// Build search URLs for project and sample boxes (unencoded like project page does it)
-	const projectSearchUrl = `/search?table=project&advanced=[["taxonomy","equals","${taxonomy}"]]`;
-	const sampleSearchUrl = `/search?table=sample&advanced=[["taxonomy","equals","${taxonomy}"]]`;
+	// Build search URLs using proper relations
+	// Projects don't have direct taxonomy field - need to go through relation
+	const projectSearchUrl = `/search?table=project&advanced=[["Samples","Occurrences","Feature","Assignments","taxonomy","equals","${taxonomy}"]]`;
+	// Samples need to go through Occurrences → Feature → Assignments → taxonomy
+	const sampleSearchUrl = `/search?table=sample&advanced=[["Occurrences","Feature","Assignments","taxonomy","equals","${taxonomy}"]]`;
 
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">

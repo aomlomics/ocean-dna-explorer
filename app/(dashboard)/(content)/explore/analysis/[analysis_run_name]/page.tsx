@@ -160,7 +160,7 @@ export default async function Analysis_run_name({
 								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Assignments</div>
 							</div>
 
-							<Link href={`/search?table=sample&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}>
+							<Link href={`/search?table=sample&advanced=[["Occurrences","analysis_run_name","equals","${analysis_run_name}"]]`}>
 								<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center hover:bg-base-300 transition-all duration-300 hover:scale-105">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 										<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
