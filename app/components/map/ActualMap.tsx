@@ -280,7 +280,7 @@ export default function ActualMap({
 	const [pointSize, setPointSize] = useState(DEFAULT_POINT_SIZE as number | undefined);
 	const [pointSizeStep, setPointSizeStep] = useState(DEFAULT_POINT_SIZE_STEP as number | undefined);
 	const [clusterRadiusValue, setClusterRadiusValue] = useState(
-		clusterRadius || (DEFAULT_CLUSTER_RADIUS as number | undefined)
+		(clusterRadius || DEFAULT_CLUSTER_RADIUS) as number | undefined
 	);
 
 	const [shapes, setShapes] = useState(
