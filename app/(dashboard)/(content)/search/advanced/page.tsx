@@ -474,7 +474,7 @@ function FilterSection({
 	paramsArray,
 	onChange,
 	prevSuffix = "",
-	className,
+	className = "",
 	label,
 	hideInnerDeletes,
 	isSubSection = false
@@ -584,7 +584,7 @@ function Filter({
 	searchTable,
 	onDelete,
 	hideDelete,
-	className
+	className = ""
 }: {
 	nameSuffix: string;
 	paramsArray?: ParamsArrayRelation | ParamsArrayField;

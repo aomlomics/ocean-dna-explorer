@@ -7,7 +7,7 @@ export default function Modal({
 	ref,
 	xRef,
 	clickOffRef,
-	className
+	className = ""
 }: {
 	children?: ReactNode;
 	ref: RefObject<HTMLDialogElement | null>;

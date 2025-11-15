@@ -37,6 +37,7 @@ export async function AssayStats() {
 			}
 		})
 	]);
+
 	const analysesByTargetGene = {} as Record<string, typeof analyses>;
 	for (const a of analyses) {
 		if (analysesByTargetGene[a.Assay.target_gene]) {

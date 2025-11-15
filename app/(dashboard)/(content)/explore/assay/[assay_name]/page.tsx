@@ -252,7 +252,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			<div role="tablist" className="tabs tabs-lifted">
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Samples" defaultChecked />
 				<div role="tabpanel" className="tab-content border-base-300 rounded-lg p-6">
-					<Map locations={assay.Samples} cluster />
+					<Map locations={assay.Samples} cluster legend />
 				</div>
 
 				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Libraries" />

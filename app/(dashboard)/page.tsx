@@ -128,7 +128,7 @@ export default async function Home() {
 							Showing all
 							<span className="text-primary"> Projects</span>
 						</div>
-						<Map query={() => publicPrisma.sample.findMany()} titleTable="project" cluster clusterRadius={20} />
+						<Map query={() => publicPrisma.sample.findMany()} titleTable="project" cluster legend clusterRadius={20} />
 					</div>
 
 					{/* Assay Stats Section */}

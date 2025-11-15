@@ -102,7 +102,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-8">
-					<Map locations={project.Samples} cluster draw />
+					<Map locations={project.Samples} cluster legend draw legendOmit={["project_id"]} />
 					{/* Assays Section */}
 					<div>
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">

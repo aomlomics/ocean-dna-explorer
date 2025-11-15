@@ -9,13 +9,14 @@ const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 
 export default function DynamicMap({
 	locations,
-	id = "samp_name",
-	table = "sample",
+	id,
+	table,
 	titleTable,
 	cluster,
 	clusterRadius,
+	legend,
 	draw,
-	omit
+	legendOmit
 }: {
 	locations: NullLocation[];
 	id?: string;
@@ -23,8 +24,9 @@ export default function DynamicMap({
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
+	legend?: boolean;
 	draw?: boolean;
-	omit?: string[];
+	legendOmit?: string[];
 }) {
 	return (
 		<ActualMap
@@ -34,8 +36,9 @@ export default function DynamicMap({
 			titleTable={titleTable}
 			cluster={cluster}
 			clusterRadius={clusterRadius}
+			legend={legend}
 			draw={draw}
-			omit={omit || []}
+			legendOmit={legendOmit}
 		/>
 	);
 }

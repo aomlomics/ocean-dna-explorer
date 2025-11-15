@@ -107,7 +107,6 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left column - Map and Assays */}
 				<div className="space-y-8">
-					{/* Square Map */}
 					<Map locations={[sample]} className="aspect-square" />
 
 					{/* Assays Section */}

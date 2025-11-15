@@ -3,7 +3,7 @@ import React from "react";
 export default function InfoButton({
 	infoText,
 	dir = "tooltip-top",
-	className
+	className = ""
 }: {
 	infoText: string;
 	dir?: "tooltip-top" | "tooltip-bottom" | "tooltip-left" | "tooltip-right";

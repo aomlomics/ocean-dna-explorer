@@ -12,7 +12,7 @@ export default function WarningButton({
 	action,
 	redirectUrl,
 	disabled,
-	className
+	className = ""
 }: {
 	value?: string;
 	valueName?: string;

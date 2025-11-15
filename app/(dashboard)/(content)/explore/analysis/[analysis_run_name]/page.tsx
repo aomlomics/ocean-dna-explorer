@@ -29,13 +29,7 @@ export default async function Analysis_run_name({
 			Occurrences: {
 				distinct: ["samp_name"],
 				select: {
-					Sample: {
-						select: {
-							samp_name: true,
-							decimalLatitude: true,
-							decimalLongitude: true
-						}
-					}
+					Sample: true
 				}
 			}
 		}
@@ -133,7 +127,12 @@ export default async function Analysis_run_name({
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<Map locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))} cluster />
+						<Map
+							locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
+							cluster
+							legend
+							legendOmit={["project_id"]}
+						/>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />

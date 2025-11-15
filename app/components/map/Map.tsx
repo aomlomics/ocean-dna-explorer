@@ -6,22 +6,24 @@ import { NullLocation } from "@/types/globals";
 export default function Map({
 	query,
 	locations,
-	id = "samp_name",
-	table = "sample",
+	id,
+	table,
 	titleTable,
 	cluster,
 	clusterRadius,
+	legend,
 	draw,
-	omit,
-	className
+	legendOmit,
+	className = ""
 }: {
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
+	legend?: boolean;
 	draw?: boolean;
-	omit?: string[];
+	legendOmit?: string[];
 	className?: string;
 } & (
 	| { query: () => Promise<NullLocation[]>; locations?: undefined }
@@ -34,7 +36,7 @@ export default function Map({
 			<Suspense
 				fallback={
 					<div className="w-full h-full flex justify-center items-center">
-						<div className="h-full aspect-square p-30">
+						<div className="h-full aspect-square p-50">
 							<span className="loading loading-spinner loading-xl h-full w-full" />
 						</div>
 					</div>
@@ -48,8 +50,9 @@ export default function Map({
 					titleTable={titleTable}
 					cluster={cluster}
 					clusterRadius={clusterRadius}
+					legend={legend}
 					draw={draw}
-					omit={omit}
+					legendOmit={legendOmit}
 				/>
 			</Suspense>
 		</div>
@@ -59,13 +62,14 @@ export default function Map({
 async function SuspenseMap({
 	query,
 	locations,
-	id = "samp_name",
-	table = "sample",
+	id,
+	table,
 	titleTable,
 	cluster,
 	clusterRadius,
+	legend,
 	draw,
-	omit
+	legendOmit
 }: {
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
@@ -74,8 +78,9 @@ async function SuspenseMap({
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
+	legend?: boolean;
 	draw?: boolean;
-	omit?: string[];
+	legendOmit?: string[];
 }) {
 	if (locations) {
 		return (
@@ -86,8 +91,9 @@ async function SuspenseMap({
 				titleTable={titleTable}
 				cluster={cluster}
 				clusterRadius={clusterRadius}
+				legend={legend}
 				draw={draw}
-				omit={omit}
+				legendOmit={legendOmit}
 			/>
 		);
 	} else if (query) {
@@ -99,8 +105,9 @@ async function SuspenseMap({
 				titleTable={titleTable}
 				cluster={cluster}
 				clusterRadius={clusterRadius}
+				legend={legend}
 				draw={draw}
-				omit={omit}
+				legendOmit={legendOmit}
 			/>
 		);
 	}
