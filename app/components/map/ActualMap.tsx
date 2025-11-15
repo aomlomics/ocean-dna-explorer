@@ -407,8 +407,6 @@ export default function ActualMap({
 						}
 					}
 
-					const color = chroma.average(colorsArray);
-
 					const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
 
 					let size =
@@ -421,7 +419,7 @@ export default function ActualMap({
 
 					let html;
 					if (count === 1 && !valuesCount) {
-						count;
+						const color = chroma.average(colorsArray);
 						html = `<div class='${sharedStyles} ${borderStyles}' style=background-color:${color.hex()};></div>`;
 					} else {
 						if (legendInfo?.mode === "discreet" && uniqueColors.size > 1) {
@@ -442,6 +440,8 @@ export default function ActualMap({
 									`</div>`;
 							}
 						} else {
+							const color = chroma.average(colorsArray);
+
 							if (count === 1) {
 								html = `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style=background-color:${color.hex()};></div>`;
 							} else {
