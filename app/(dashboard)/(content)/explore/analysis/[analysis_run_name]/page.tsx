@@ -18,6 +18,11 @@ export default async function Analysis_run_name({
 	let { analysis_run_name } = await params;
 	analysis_run_name = decodeURIComponent(analysis_run_name);
 
+	// Build search URL - using Occurrence table directly since Sample doesn't have analysis_run_name
+	const advancedFilter = JSON.stringify([["analysis_run_name", "equals", analysis_run_name]]);
+	const encodedFilter = advancedFilter.replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/,/g, "%2C");
+	const sampleSearchUrl = `/search?table=occurrence&advanced=${encodedFilter}`;
+
 	const analysis = await prisma.analysis.findUnique({
 		where: {
 			analysis_run_name: analysis_run_name
@@ -160,7 +165,7 @@ export default async function Analysis_run_name({
 								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Assignments</div>
 							</div>
 
-							<Link href={`/search?table=sample&advanced=[["Occurrences","analysis_run_name","equals","${analysis_run_name}"]]`}>
+							<Link href={sampleSearchUrl}>
 								<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center hover:bg-base-300 transition-all duration-300 hover:scale-105">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 										<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
