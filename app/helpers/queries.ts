@@ -235,13 +235,24 @@ export function parseToQuery(
 function advancedRecurse(
 	table: Uncapitalize<Prisma.ModelName>,
 	e: ParamsArray[0]
-): ReturnType<typeof parseToQuery> | { OR: ReturnType<typeof parseToQuery> } {
+): ReturnType<typeof parseToQuery> | { AND: any[] } | { OR: any[] } {
+	// New logical group support: ["AND", ...children] or ["OR", ...children]
 	if (typeof e[0] === "string") {
+		const first = e[0] as string;
+
+		if (first === "AND" || first === "OR") {
+			const operator = first;
+			const children = (e.slice(1) as ParamsArray).map((child) => advancedRecurse(table, child));
+			return { [operator]: children } as { AND: any[] } | { OR: any[] };
+		}
+
+		// Backwards-compatible behaviour: a tuple starting with a string is a field or relation filter
 		return parseToQuery(table, e as ParamsArrayField | ParamsArrayRelation);
-	} else {
-		const paramsE = e as ParamsArray;
-		return { OR: paramsE.map((e) => advancedRecurse(table, e)) };
 	}
+
+	// Legacy nested array syntax: an inner ParamsArray represents an implicit OR group
+	const paramsE = e as ParamsArray;
+	return { OR: paramsE.map((child) => advancedRecurse(table, child)) };
 }
 
 export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, paramsArray: ParamsArray) {

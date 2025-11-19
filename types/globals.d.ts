@@ -60,9 +60,17 @@ export type ClerkUserObject = {
 };
 
 export type QueryMode = "equals" | "contains" | "startsWith" | "endsWith" | "lt" | "lte" | "gt" | "gte" | "range";
+
 export type ParamsArrayField = [string, QueryMode, string | number | [number, number] | [string, string]];
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
-export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
+
+// Logical group support for advanced queries.
+// This extends the existing advanced query format to support arbitrary nested AND/OR groups
+// while remaining backward compatible with the original array-of-arrays structure.
+export type ParamsLogicalOperator = "AND" | "OR";
+export type ParamsArrayGroup = [ParamsLogicalOperator, ...ParamsArrayElement[]];
+export type ParamsArrayElement = ParamsArrayRelation | ParamsArrayField | ParamsArray | ParamsArrayGroup;
+export type ParamsArray = Array<ParamsArrayElement>;
 
 export type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
 

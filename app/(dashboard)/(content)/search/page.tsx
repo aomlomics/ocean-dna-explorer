@@ -2,7 +2,7 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
-import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
+import { ParamsArray, ParamsArrayElement, ParamsArrayField, ParamsArrayRelation, ParamsLogicalOperator, QueryMode } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
@@ -12,6 +12,95 @@ import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Modal from "@/app/components/Modal";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
+
+type Operator = "AND" | "OR";
+
+interface SearchGroupNode {
+	id: string;
+	type: "group";
+	operator: Operator;
+	children: SearchNode[];
+	depth: number;
+}
+
+interface SearchRuleNode {
+	id: string;
+	type: "rule";
+	// Optional initial params, used to hydrate the uncontrolled inputs from URL state
+	initialParams?: ParamsArrayField | ParamsArrayRelation;
+}
+
+type SearchNode = SearchGroupNode | SearchRuleNode;
+
+function isGroupElement(e: ParamsArrayElement): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
+	return Array.isArray(e) && typeof e[0] === "string" && (e[0] === "AND" || e[0] === "OR");
+}
+
+function isLegacyOrGroup(e: ParamsArrayElement): e is ParamsArray {
+	return Array.isArray(e) && Array.isArray(e[0]);
+}
+
+function createEmptyGroup(depth = 0): SearchGroupNode {
+	return {
+		id: crypto.randomUUID(),
+		type: "group",
+		operator: "AND",
+		children: [],
+		depth
+	};
+}
+
+function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): SearchGroupNode {
+	// Root group is always present
+	const root = createEmptyGroup(0);
+	if (!advancedParsed || !advancedParsed.length) {
+		return root;
+	}
+
+	function buildFromParams(params: ParamsArrayElement[], depth: number): SearchNode[] {
+		const result: SearchNode[] = [];
+
+		for (const element of params) {
+			// Explicit logical groups: ["AND", ...] or ["OR", ...]
+			if (isGroupElement(element)) {
+				const [, ...childrenElements] = element;
+				result.push({
+					id: crypto.randomUUID(),
+					type: "group",
+					operator: element[0],
+					children: buildFromParams(childrenElements, depth + 1),
+					depth
+				});
+				continue;
+			}
+
+			// Legacy OR-group: nested ParamsArray
+			if (isLegacyOrGroup(element)) {
+				result.push({
+					id: crypto.randomUUID(),
+					type: "group",
+					operator: "OR",
+					children: buildFromParams(element as ParamsArrayElement[], depth + 1),
+					depth
+				});
+				continue;
+			}
+
+			// Otherwise this is a single rule (field or relation filter)
+			const tuple = element as ParamsArrayField | ParamsArrayRelation;
+			result.push({
+				id: crypto.randomUUID(),
+				type: "rule",
+				initialParams: tuple
+			});
+		}
+
+		return result;
+	}
+
+	root.children = buildFromParams(advancedParsed as ParamsArrayElement[], 1);
+	return root;
+}
 
 export default function AdvancedSearch() {
 	//hooks
@@ -26,7 +115,7 @@ export default function AdvancedSearch() {
 		return "Project";
 	});
 	const [filterIds, setFilterIds] = useState([1] as FilterIds);
-	const [paramsArray, setParamsArray] = useState([] as ParamsArray);
+	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const [formUpdateTrigger, setFormUpdateTrigger] = useState(0);
@@ -37,25 +126,27 @@ export default function AdvancedSearch() {
 			if (searchParams.toString()) {
 				const advanced = searchParams.get("advanced");
 				if (advanced) {
-					const advancedParsed = JSON.parse(advanced) as ParamsArray;
-					setParamsArray(advancedParsed);
-
-					//replace all values with ones
-					function getFilterIds(e: ParamsArray[0]): FilterIds | 1 {
-						if (typeof e[0] === "string") {
-							return 1;
-						} else {
-							const paramsE = e as ParamsArray;
-							return paramsE.map(getFilterIds);
+					let advancedParsed: ParamsArray | undefined;
+					try {
+						advancedParsed = JSON.parse(advanced) as ParamsArray;
+					} catch {
+						// Fallback for URLs where "advanced" may be percent-encoded JSON
+						try {
+							advancedParsed = JSON.parse(decodeURIComponent(advanced)) as ParamsArray;
+						} catch {
+							console.error("Failed to parse advanced query parameter", advanced);
 						}
 					}
 
-					setFilterIds(advancedParsed.map(getFilterIds));
+					if (advancedParsed) {
+						setSearchTree(paramsArrayToSearchTree(advancedParsed));
+					} else {
+						setSearchTree(createEmptyGroup(0));
+					}
 				} else {
-					// Clear filters when switching tables without advanced parameter
-					// Set to empty first to unmount old components
-					setFilterIds([]);
-					setParamsArray([]);
+					// Clear filters when switching tables without advanced parameter.
+					// Initialize with an empty root group.
+					setSearchTree(createEmptyGroup(0));
 				}
 
                 const paramTable = searchParams.get("table") as Prisma.ModelName | null;
@@ -71,12 +162,12 @@ export default function AdvancedSearch() {
 		}
 	}, [searchParams]);
 
+	// Ensure we always have a root group
 	useEffect(() => {
-		// After clearing filters, add one empty filter in next render cycle
-		if (filterIds.length === 0 && !searchParams.has("advanced")) {
-			setFilterIds([1]);
+		if (!searchTree) {
+			setSearchTree(createEmptyGroup(0));
 		}
-	}, [filterIds, searchParams]);
+	}, [searchTree]);
 
 	useEffect(() => {
 		// Set default table parameter without creating a new history entry
@@ -92,15 +183,15 @@ export default function AdvancedSearch() {
 		// Use formUpdateTrigger to force re-evaluation
 		const _ = formUpdateTrigger;
 		
-		if (!formRef.current || filterIds.length === 0) return "";
+		if (!formRef.current || !searchTree || searchTree.children.length === 0) return "";
 
-		function describeFilter(suffix: string): string {
+		function describeFilter(id: string): string {
 			if (!formRef.current) return "";
 			
-			const type = formRef.current[`type_${suffix}`]?.value as "relation" | "field";
-			const relation = type === "relation" ? formRef.current[`relation_${suffix}`]?.value : "";
-			const field = formRef.current[`field_${suffix}`]?.value as string;
-			const mode = formRef.current[`mode_${suffix}`]?.value as QueryMode;
+			const type = formRef.current[`type_${id}`]?.value as "relation" | "field";
+			const relation = type === "relation" ? formRef.current[`relation_${id}`]?.value : "";
+			const field = formRef.current[`field_${id}`]?.value as string;
+			const mode = formRef.current[`mode_${id}`]?.value as QueryMode;
 			
 			if (!field) return "";
 			
@@ -119,131 +210,160 @@ export default function AdvancedSearch() {
 				range: "is between"
 			}[mode] || mode;
 			
-			let filterValue = formRef.current[`filter_${suffix}`]?.value || "";
+			let filterValue = formRef.current[`filter_${id}`]?.value || "";
 			if (mode === "range") {
-				const gte = formRef.current[`filter_${suffix}_gte`]?.value || "";
-				const lte = formRef.current[`filter_${suffix}_lte`]?.value || "";
+				const gte = formRef.current[`filter_${id}_gte`]?.value || "";
+				const lte = formRef.current[`filter_${id}_lte`]?.value || "";
 				filterValue = `${gte} and ${lte}`;
 			}
 			
 			return `${prefix}${field} ${modeText} "${filterValue}"`;
 		}
 
-		function recurse(ids: FilterIds, prevSuffix = "", isTopLevel = true): string {
+		function recurseGroup(group: SearchGroupNode, isRoot = false): string {
 			const parts: string[] = [];
-			
-			ids.forEach((id, i) => {
-				if (id === 0) return;
-				const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
-				
-				if (id === 1) {
-					const desc = describeFilter(suffix);
+
+			for (const child of group.children) {
+				if (child.type === "rule") {
+					const desc = describeFilter(child.id);
 					if (desc) parts.push(desc);
 				} else {
-					const orDesc = recurse(id as FilterIds, suffix, false);
-					if (orDesc) parts.push(`(${orDesc})`);
+					const childDesc = recurseGroup(child, false);
+					if (childDesc) parts.push(`(${childDesc})`);
 				}
-			});
-			
-			return parts.join(isTopLevel ? " AND " : " OR ");
+			}
+
+			if (!parts.length) return "";
+
+			const joiner = group.operator === "AND" ? " AND " : " OR ";
+			const joined = parts.join(joiner);
+
+			// Root group is not wrapped in extra parentheses
+			return isRoot ? joined : joined;
 		}
 
-		const desc = recurse(filterIds);
+		const desc = recurseGroup(searchTree, true);
 		return desc ? `Searching for ${TableMetadata[searchTable].plural} where: ${desc}` : "";
 	}
 
-	function getParamsArray(ids = filterIds, prevSuffix = "") {
-		if (formRef.current && ids && searchTable) {
-			const parts = [] as ParamsArray;
-			let i = 0;
-			for (const id of ids) {
-				if (id !== 0) {
-					const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
+	function getParamsArrayFromTree(root: SearchGroupNode) {
+		if (!formRef.current || !searchTable) return [] as ParamsArray;
 
-					if (id === 1) {
-						if (formRef.current[`type_${suffix}`] && formRef.current[`field_${suffix}`] && formRef.current[`mode_${suffix}`]) {
-							const type = formRef.current[`type_${suffix}`].value as "relation" | "field";
-							const relation = type === "relation" && formRef.current[`relation_${suffix}`] ? formRef.current[`relation_${suffix}`].value : ("" as string);
+		function buildRuleTuple(id: string): ParamsArrayField | ParamsArrayRelation | null {
+			if (!formRef.current) return null;
 
-							const table = (relation ? relation : searchTable) as Prisma.ModelName;
-							const field = formRef.current[`field_${suffix}`].value as string;
+			if (
+				!formRef.current[`type_${id}`] ||
+				!formRef.current[`field_${id}`] ||
+				!formRef.current[`mode_${id}`]
+			) {
+				return null;
+			}
 
-							if (!field) {
-								continue;
-							}
+			const type = formRef.current[`type_${id}`].value as "relation" | "field";
+			const relation =
+				type === "relation" && formRef.current[`relation_${id}`]
+					? (formRef.current[`relation_${id}`].value as string)
+					: "";
 
-							const shape = TableMetadata[table].schema.shape;
-							const fieldType = getZodType(shape[field as keyof typeof shape]).type;
+			const table = (relation ? relation : searchTable) as Prisma.ModelName;
+			const field = formRef.current[`field_${id}`].value as string;
 
-							const mode = formRef.current[`mode_${suffix}`].value as QueryMode;
-							let filter = undefined as unknown as string | number | [number, number] | [string, string];
+			if (!field) {
+				return null;
+			}
 
-							if (fieldType === "date") {
-								if (mode === "range") {
-									if (!formRef.current[`filter_${suffix}_gte_date`] || !formRef.current[`filter_${suffix}_lte_date`]) continue;
-									const gteDate = formRef.current[`filter_${suffix}_gte_date`].value;
-									const gteTime = formRef.current[`filter_${suffix}_gte_time`]?.value || "";
-									const lteDate = formRef.current[`filter_${suffix}_lte_date`].value;
-									const lteTime = formRef.current[`filter_${suffix}_lte_time`]?.value || "";
+			const shape = TableMetadata[table].schema.shape;
+			const fieldType = getZodType(shape[field as keyof typeof shape]).type;
 
-									filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
-								} else {
-									if (!formRef.current[`filter_${suffix}_date`]) continue;
-									const filterDate = formRef.current[`filter_${suffix}_date`].value;
-									const filterTime = formRef.current[`filter_${suffix}_time`]?.value || "";
+			const mode = formRef.current[`mode_${id}`].value as QueryMode;
+			let filter = undefined as unknown as string | number | [number, number] | [string, string];
 
-									filter = filterDate + (filterTime ? "T" + filterTime : "");
-								}
-							} else {
-								if (mode === "range") {
-									if (!formRef.current[`filter_${suffix}_gte`] || !formRef.current[`filter_${suffix}_lte`]) continue;
-									const gte = formRef.current[`filter_${suffix}_gte`].value;
-									const lte = formRef.current[`filter_${suffix}_lte`].value;
-									if (fieldType === "integer") {
-										filter = [parseInt(gte), parseInt(lte)];
-									} else if (fieldType === "float") {
-										filter = [parseFloat(gte), parseFloat(lte)];
-									}
-								} else {
-									if (!formRef.current[`filter_${suffix}`]) continue;
-									const filterVal = formRef.current[`filter_${suffix}`].value;
+			if (fieldType === "date") {
+				if (mode === "range") {
+					if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`])
+						return null;
+					const gteDate = formRef.current[`filter_${id}_gte_date`].value;
+					const gteTime = formRef.current[`filter_${id}_gte_time`]?.value || "";
+					const lteDate = formRef.current[`filter_${id}_lte_date`].value;
+					const lteTime = formRef.current[`filter_${id}_lte_time`]?.value || "";
 
-									if (fieldType === "integer") {
-										filter = parseInt(filterVal);
-									} else if (fieldType === "float") {
-										filter = parseFloat(filterVal);
-									} else {
-										filter = filterVal;
-									}
-								}
-							}
+					filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
+				} else {
+					if (!formRef.current[`filter_${id}_date`]) return null;
+					const filterDate = formRef.current[`filter_${id}_date`].value;
+					const filterTime = formRef.current[`filter_${id}_time`]?.value || "";
 
-							let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
-							if (relation) {
-								arr = [relation, ...arr] as typeof arr;
-							}
+					filter = filterDate + (filterTime ? "T" + filterTime : "");
+				}
+			} else {
+				if (mode === "range") {
+					if (!formRef.current[`filter_${id}_gte`] || !formRef.current[`filter_${id}_lte`]) return null;
+					const gte = formRef.current[`filter_${id}_gte`].value;
+					const lte = formRef.current[`filter_${id}_lte`].value;
+					if (fieldType === "integer") {
+						filter = [parseInt(gte), parseInt(lte)];
+					} else if (fieldType === "float") {
+						filter = [parseFloat(gte), parseFloat(lte)];
+					}
+				} else {
+					if (!formRef.current[`filter_${id}`]) return null;
+					const filterVal = formRef.current[`filter_${id}`].value;
 
-							parts.push(arr);
-						}
+					if (fieldType === "integer") {
+						filter = parseInt(filterVal);
+					} else if (fieldType === "float") {
+						filter = parseFloat(filterVal);
 					} else {
-						const recurs = getParamsArray(id, suffix);
-						if (recurs) {
-							parts.push(recurs);
-						}
+						filter = filterVal;
 					}
 				}
+			}
 
-				i++;
+			let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
+			if (relation) {
+				arr = [relation, ...arr] as typeof arr;
+			}
+
+			return arr;
+		}
+
+		function buildGroup(node: SearchGroupNode): ParamsArray {
+			const parts: ParamsArray = [];
+
+			for (const child of node.children) {
+				if (child.type === "rule") {
+					const tuple = buildRuleTuple(child.id);
+					if (tuple) {
+						parts.push(tuple);
+					}
+				} else {
+					const childParts = buildGroup(child);
+					if (!childParts.length) continue;
+					const groupElement: ParamsArrayElement = [child.operator as ParamsLogicalOperator, ...childParts];
+					parts.push(groupElement);
+				}
 			}
 
 			return parts;
+		}
+
+		// Root semantics:
+		// - If root is AND, we can just return all children parts and let the backend wrap them in AND.
+		// - If root is OR, wrap children in a single explicit OR group so the backend sees (A OR B OR ...).
+		const inner = buildGroup(root);
+		if (!inner.length) return [] as ParamsArray;
+
+		if (root.operator === "AND") {
+			return inner;
+		} else {
+			return [[root.operator as ParamsLogicalOperator, ...inner] as ParamsArrayElement];
 		}
 	}
 
     function reset() {
         setSearchTable("Project");
-		setFilterIds([]);
-		setParamsArray([]);
+		setSearchTree(createEmptyGroup(0));
 		router.push(pathname);
 	}
 
@@ -251,7 +371,7 @@ export default function AdvancedSearch() {
 		const params = new URLSearchParams();
 		params.set("table", searchTable);
 
-		const advanced = getParamsArray();
+		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
 			params.set("advanced", JSON.stringify(advanced));
 		}
@@ -271,7 +391,7 @@ export default function AdvancedSearch() {
 	}
 
 	function getApiQuery() {
-		const advanced = getParamsArray();
+		const advanced = getParamsArrayFromTree(searchTree);
 		const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_URL;
 		const tableName = uncapitalizeTable(searchTable);
 		
@@ -325,33 +445,74 @@ export default function AdvancedSearch() {
 
                 {searchTable && (
 					<>
-				<div className="mb-4 mt-6 text-center">
-					{getQueryDescription() ? (
-						<p className="text-primary text-base">{getQueryDescription()}</p>
-					) : (
-						<p className="text-base-content/50 italic text-sm">Begin selecting filters and relations, and your query will be displayed here...</p>
-					)}
-				</div>
+						<div className="bg-base-100 py-6 px-6 rounded-lg mb-4">
+							<div className="space-y-4">
+								<div className="flex items-center justify-between">
+									<p className="text-sm font-medium text-base-content/80">
+										Find all <span className="font-semibold">{TableMetadata[searchTable].plural}</span> where:
+									</p>
+								</div>
 
-                        <div className="bg-base-100 py-6 rounded-lg mb-4">
-                                <div className="text-sm overflow-x-auto overflow-hidden rounded-lg">
-                                    <div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 text-center mb-4 font-medium text-base-content/70">
-                                        <div>Type</div>
-                                        <div>Relation</div>
-                                        <div>Field</div>
-                                        <div>Filter</div>
-										<div></div>
-                                    </div>
+								<SearchGroupComponent
+									group={searchTree}
+									searchTable={searchTable}
+									onChange={setSearchTree}
+								/>
 
-                                    <FilterSection
-                                        key={JSON.stringify(paramsArray)}
-                                        searchTable={searchTable}
-                                        filterIds={filterIds}
-                                        paramsArray={paramsArray}
-                                        onChange={(prev) => setFilterIds(prev)}
-                                    />
+								<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
+									<div className="flex-1 text-sm md:text-base text-primary">
+										{getQueryDescription() ? (
+											<p className="text-left">{getQueryDescription()}</p>
+										) : (
+											<p className="text-base-content/60 italic text-sm text-left">
+												Begin selecting filters and relations, and your query will be displayed here...
+											</p>
+										)}
+									</div>
+
+									<div className="flex items-center justify-end gap-3">
+										<button
+											type="button"
+											className="btn btn-error btn-md gap-2"
+											onClick={() => reset()}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												strokeWidth={1.5}
+												stroke="currentColor"
+												className="w-5 h-5"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+											Clear
+										</button>
+										<button type="submit" className="btn btn-primary btn-md gap-2">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												strokeWidth={2}
+												stroke="currentColor"
+												className="w-5 h-5"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+												/>
+											</svg>
+											Search
+										</button>
+									</div>
+								</div>
+							</div>
 						</div>
-				</div>
 
 				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4">
 					<h3 className="text-lg font-medium mb-3">API Query</h3>
@@ -378,43 +539,6 @@ export default function AdvancedSearch() {
 						</button>
 					</div>
 					<p className="text-xs text-base-content/60 mt-2">Copy this URL to use directly in your browser or code</p>
-				</div>
-				
-				<div className="flex items-center justify-start gap-4 mt-2">
-					<button type="submit" className="btn btn-primary btn-lg gap-2">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							strokeWidth={2}
-							stroke="currentColor"
-							className="w-5 h-5"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-							/>
-						</svg>
-						Search
-					</button>
-					<button type="button" className="btn btn-error btn-lg gap-2" onClick={() => reset()}>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							strokeWidth={1.5}
-							stroke="currentColor"
-							className="w-5 h-5"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M6 18L18 6M6 6l12 12"
-							/>
-						</svg>
-						Clear
-					</button>
 				</div>
 				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
 					<input type="checkbox" />
@@ -512,128 +636,160 @@ export default function AdvancedSearch() {
 }
 
 //helper components
-function FilterSection({
+
+function SearchGroupComponent({
+	group,
 	searchTable,
-	filterIds,
-	paramsArray,
 	onChange,
-	prevSuffix = "",
-	className,
-	label,
-	hideInnerDeletes,
-	isSubSection = false,
+	onDelete
 }: {
-	searchTable: string;
-	filterIds: FilterIds;
-	paramsArray: ParamsArray;
-	onChange: (prev: FilterIds) => FilterIds | void;
-	prevSuffix?: string;
-	className?: string;
-	label?: string;
-	hideInnerDeletes?: boolean;
-	isSubSection?: boolean;
+	group: SearchGroupNode;
+	searchTable: Prisma.ModelName;
+	onChange: (group: SearchGroupNode) => void;
+	onDelete?: () => void;
 }) {
-	let visibleItemCount = 0;
-	return (
-		<div className={`flex flex-col gap-2 ${className}`}>
-			{filterIds.reduce((acc: ReactNode[], id: FilterIds[0], i: number) => {
-				if (id) {
-					if (visibleItemCount > 0 && label) {
-						acc.push(
-							<div key={`${i}_label`} className="flex items-center justify-center">
-								<span className="badge badge-primary badge-outline">OR</span>
-							</div>
-						);
-					}
-					visibleItemCount++;
+	function updateGroup(updater: (group: SearchGroupNode) => void) {
+		const clone = { ...group, children: [...group.children] } as SearchGroupNode;
+		updater(clone);
+		onChange(clone);
+	}
 
-					const zebraClass = !isSubSection ? (visibleItemCount % 2 === 0 ? "bg-base-200" : "") : "";
-
-					if (id === 1) {
-						acc.push(
-							<Filter
-								key={i}
-								nameSuffix={`${prevSuffix && prevSuffix + "|"}${i}`}
-								searchTable={searchTable}
-								onDelete={() => onChange(filterIds.toSpliced(i, 1, 0))}
-								hideDelete={!!hideInnerDeletes}
-								paramsArray={paramsArray && (paramsArray[i] as ParamsArrayRelation | ParamsArrayField)}
-								className={zebraClass}
-							/>
-						);
-					} else {
-						const orFilters = id as FilterIds;
-						const isNested = isSubSection;
-						acc.push(
-							<div key={i} className={`rounded-lg p-3 ${zebraClass} relative ${isNested ? 'border-2 border-primary/30' : ''}`}>
-								{orFilters.filter((f) => f === 1).length <= 1 && (
-									<button
-										className="btn btn-xs btn-square btn-primary absolute top-6 right-4 z-10"
-										type="button"
-										onClick={() => onChange(filterIds.toSpliced(i, 1, 0))}
-									>
-										<span className="text-primary-content text-lg leading-none">×</span>
-									</button>
-								)}
-								{isNested && (
-									<div className="absolute -top-3 left-4 bg-base-100 px-2">
-										<span className="badge badge-primary badge-sm">Nested OR Group</span>
-									</div>
-								)}
-								<FilterSection
-									searchTable={searchTable}
-									filterIds={orFilters}
-									paramsArray={paramsArray && (paramsArray[i] as ParamsArray)}
-									onChange={(prev: FilterIds) => onChange(filterIds.toSpliced(i, 1, prev))}
-									prevSuffix={`${(prevSuffix && prevSuffix + "|") + i}`}
-									label="OR"
-									hideInnerDeletes={orFilters.filter((f) => f === 1).length < 2}
-									isSubSection={true}
-									className=""
-								/>
-							</div>
-						);
-					}
+	function handleAddRule() {
+		updateGroup((g) => {
+			g.children = [
+				...g.children,
+				{
+					id: crypto.randomUUID(),
+					type: "rule"
 				}
-				return acc;
-			}, [])}
+			];
+		});
+	}
 
-			<div className="flex justify-center items-center gap-5 mt-4">
-				<button
-					type="button"
-					className="btn btn-md btn-primary"
-					onClick={() => onChange([...filterIds, 1])}
-				>
-					+ Add Filter
-				</button>
-				<button
-					type="button"
-					className="btn btn-md btn-primary"
-					onClick={() => onChange([...filterIds, [1]])}
-					title={isSubSection ? "Add a nested OR group - creates an OR within this OR group" : "Add an OR group - combines conditions with OR logic"}
-				>
-					{isSubSection ? "+ Add Nested OR" : "+ Add OR"}
-				</button>
+	function handleAddGroup() {
+		updateGroup((g) => {
+			g.children = [
+				...g.children,
+				createEmptyGroup((g.depth || 0) + 1)
+			];
+		});
+	}
+
+	function handleChildChange(index: number, node: SearchNode | null) {
+		updateGroup((g) => {
+			const children = [...g.children];
+			if (node === null) {
+				children.splice(index, 1);
+			} else {
+				children[index] = node;
+			}
+			g.children = children;
+		});
+	}
+
+	const isRoot = group.depth === 0;
+
+	return (
+		<div
+			className={`card bg-base-100 shadow-sm border border-base-300 ${
+				!isRoot ? "ml-6 bg-base-200/60" : ""
+			}`}
+		>
+			<div className="card-body p-4 space-y-4 relative">
+				<div className="flex items-center justify-between gap-2">
+					<div className="flex items-center gap-2">
+						<span className="text-sm text-base-content/70">
+							Match
+						</span>
+						<select
+							className="select select-xs md:select-sm w-auto"
+							value={group.operator}
+							onChange={(e) =>
+								updateGroup((g) => {
+									g.operator = e.target.value as Operator;
+								})
+							}
+						>
+							<option value="AND">ALL (AND)</option>
+							<option value="OR">ANY (OR)</option>
+						</select>
+						<span className="text-sm text-base-content/70">
+							of the following:
+						</span>
+					</div>
+
+					{!isRoot && onDelete && (
+						<button
+							type="button"
+							className="btn btn-xs btn-square btn-primary"
+							onClick={onDelete}
+							aria-label="Remove group"
+						>
+							<span className="text-primary-content text-lg leading-none">×</span>
+						</button>
+					)}
+				</div>
+
+				<div className="space-y-2">
+					{group.children.length === 0 && (
+						<p className="text-xs text-base-content/60 italic">
+							No criteria yet. Add a filter or nested group.
+						</p>
+					)}
+
+					{group.children.map((child, index) => (
+						<div key={child.id}>
+							{child.type === "rule" ? (
+								<SearchRuleComponent
+									node={child}
+									searchTable={searchTable}
+									onChange={(updated) => handleChildChange(index, updated)}
+								/>
+							) : (
+								<div className="mt-2">
+									<SearchGroupComponent
+										group={child}
+										searchTable={searchTable}
+										onChange={(updatedGroup) => handleChildChange(index, updatedGroup)}
+										onDelete={() => handleChildChange(index, null)}
+									/>
+								</div>
+							)}
+						</div>
+					))}
+				</div>
+
+				<div className="flex flex-wrap items-center gap-3 pt-2 mt-2">
+					<button
+						type="button"
+						className="btn btn-sm btn-primary"
+						onClick={handleAddRule}
+					>
+						+ Add Filter
+					</button>
+					<button
+						type="button"
+						className="btn btn-sm btn-primary"
+						onClick={handleAddGroup}
+					>
+						+ Add Nested Group
+					</button>
+				</div>
 			</div>
 		</div>
 	);
 }
 
-function Filter({
-	nameSuffix,
-	paramsArray,
+function SearchRuleComponent({
+	node,
 	searchTable,
-	onDelete,
-	hideDelete,
-	className,
+	onChange
 }: {
-	nameSuffix: string;
-	paramsArray?: ParamsArrayRelation | ParamsArrayField;
-	searchTable: string;
-	onDelete: () => FilterIds | void;
-	hideDelete?: boolean;
-	className?: string;
+	node: SearchRuleNode;
+	searchTable: Prisma.ModelName;
+	onChange: (node: SearchRuleNode | null) => void;
 }) {
+	const paramsArray = node.initialParams;
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
@@ -648,7 +804,7 @@ function Filter({
 
 	useEffect(() => {
 		if (invalidField) {
-			onDelete();
+			onChange(null);
 		} else {
 			setLoaded(true);
 		}
@@ -659,12 +815,11 @@ function Filter({
 	}
 
 	const omit = [...GlobalOmit, "id"];
+	const nameSuffix = node.id;
 
 	return (
-		<div
-			className={`grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 items-center p-3 rounded-md ${className}`}
-		>
-			<div className="">
+		<div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 items-center p-3 rounded-md hover:bg-base-200/60 transition-colors">
+			<div>
 				<select
 					className="select"
 					value={type}
@@ -684,7 +839,7 @@ function Filter({
 				</select>
 			</div>
 
-			<div className="">
+			<div>
 				{type === "relation" ? (
 					<select
 						className="select"
@@ -700,7 +855,7 @@ function Filter({
 							Select Relation
 						</option>
 						{TableNames.reduce((acc, table) => {
-							if (table !== searchTable) {
+							if (table !== (searchTable.toLowerCase() as Uncapitalize<Prisma.ModelName>)) {
 								acc.push(
 									<option key={table} value={table} title={table}>
 										{table}
@@ -716,7 +871,7 @@ function Filter({
 				)}
 			</div>
 
-			<div className={``}>
+			<div>
 				{type === "field" || relation ? (
 					<select
 						className="select"
@@ -745,7 +900,7 @@ function Filter({
 				)}
 			</div>
 
-			<div className="">
+			<div>
 				{!!field ? (
 					<InputElement
 						nameSuffix={nameSuffix}
@@ -758,12 +913,15 @@ function Filter({
 					<div />
 				)}
 			</div>
+
 			<div className="flex justify-center items-center">
-				{!hideDelete && (
-					<button className="btn btn-xs btn-square btn-primary" type="button" onClick={onDelete}>
-						<span className="text-primary-content text-lg leading-none">×</span>
-					</button>
-				)}
+				<button
+					className="btn btn-xs btn-square btn-primary"
+					type="button"
+					onClick={() => onChange(null)}
+				>
+					<span className="text-primary-content text-lg leading-none">×</span>
+				</button>
 			</div>
 		</div>
 	);
