@@ -162,6 +162,11 @@ export default function AdvancedSearch() {
 		}
 	}, [searchParams]);
 
+	// Recalc the plain text query description whenever the search tree changes,
+	// so saved / URL-driven filters still show a query description after navigation
+	useEffect(() => {
+		setFormUpdateTrigger((prev) => prev + 1);
+	}, [searchTree]);
 	// Ensure we always have a root group
 	useEffect(() => {
 		if (!searchTree) {
@@ -391,14 +396,25 @@ export default function AdvancedSearch() {
 	}
 
 	function getApiQuery() {
-		const advanced = getParamsArrayFromTree(searchTree);
 		const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_URL;
 		const tableName = uncapitalizeTable(searchTable);
-		
-		if (advanced && advanced.length) {
-			// Return unencoded version - more readable and what people actually type
-			return `${baseUrl}/api/${tableName}?advanced=${JSON.stringify(advanced)}`;
+
+		// Prefer the current URL params so the API box always matches what the backend sees after a search
+		const paramsFromUrl = new URLSearchParams(searchParams.toString());
+		let advancedStr = paramsFromUrl.get("advanced");
+
+		// If there's no advanced parameter in the URL yet, build it from the current tree state
+		if (!advancedStr) {
+			const advanced = getParamsArrayFromTree(searchTree);
+			if (advanced && advanced.length) {
+				advancedStr = JSON.stringify(advanced);
+			}
 		}
+
+		if (advancedStr) {
+			return `${baseUrl}/api/${tableName}?advanced=${advancedStr}`;
+		}
+
 		return `${baseUrl}/api/${tableName}`;
 	}
 
@@ -420,12 +436,6 @@ export default function AdvancedSearch() {
 							<span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
 						</h1>
 					</div>
-					<div className="flex items-center gap-2 bg-base-200/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-base-200/50 transition-colors" onClick={() => helpModalRef.current?.showModal()}>
-						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
-							?
-						</span>
-						<span className="text-sm font-medium">Help me use this page</span>
-					</div>
                 </header>
             )}
             <div className="w-full space-y-4 text-base-content/80">
@@ -445,100 +455,100 @@ export default function AdvancedSearch() {
 
                 {searchTable && (
 					<>
-						<div className="bg-base-100 py-6 px-6 rounded-lg mb-4">
+						<div className="bg-base-100 py-6 rounded-lg mb-4">
 							<div className="space-y-4">
-								<div className="flex items-center justify-between">
-									<p className="text-sm font-medium text-base-content/80">
-										Find all <span className="font-semibold">{TableMetadata[searchTable].plural}</span> where:
-									</p>
-								</div>
-
 								<SearchGroupComponent
 									group={searchTree}
 									searchTable={searchTable}
 									onChange={setSearchTree}
+									onHelpClick={() => helpModalRef.current?.showModal()}
+									footer={
+										<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
+											<div className="flex-1 text-sm md:text-base text-base-content whitespace-pre-wrap">
+												{getQueryDescription() ? (
+													<p className="text-left">{getQueryDescription()}</p>
+												) : (
+													<p className="text-base-content/60 italic text-sm text-left">
+														Begin selecting filters and relations, and your query will be displayed here...
+													</p>
+												)}
+											</div>
+
+											<div className="flex items-center justify-end gap-3">
+												<button
+													type="button"
+													className="btn btn-error btn-md gap-2"
+													onClick={() => reset()}
+												>
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														fill="none"
+														viewBox="0 0 24 24"
+														strokeWidth={1.5}
+														stroke="currentColor"
+														className="w-5 h-5"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															d="M6 18L18 6M6 6l12 12"
+														/>
+													</svg>
+													Clear
+												</button>
+												<button type="submit" className="btn btn-primary btn-md gap-2">
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														fill="none"
+														viewBox="0 0 24 24"
+														strokeWidth={2}
+														stroke="currentColor"
+														className="w-5 h-5"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+														/>
+													</svg>
+													Search
+												</button>
+											</div>
+										</div>
+									}
 								/>
-
-								<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
-									<div className="flex-1 text-sm md:text-base text-primary">
-										{getQueryDescription() ? (
-											<p className="text-left">{getQueryDescription()}</p>
-										) : (
-											<p className="text-base-content/60 italic text-sm text-left">
-												Begin selecting filters and relations, and your query will be displayed here...
-											</p>
-										)}
-									</div>
-
-									<div className="flex items-center justify-end gap-3">
-										<button
-											type="button"
-											className="btn btn-error btn-md gap-2"
-											onClick={() => reset()}
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												fill="none"
-												viewBox="0 0 24 24"
-												strokeWidth={1.5}
-												stroke="currentColor"
-												className="w-5 h-5"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													d="M6 18L18 6M6 6l12 12"
-												/>
-											</svg>
-											Clear
-										</button>
-										<button type="submit" className="btn btn-primary btn-md gap-2">
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												fill="none"
-												viewBox="0 0 24 24"
-												strokeWidth={2}
-												stroke="currentColor"
-												className="w-5 h-5"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-												/>
-											</svg>
-											Search
-										</button>
-									</div>
-								</div>
 							</div>
 						</div>
 
-				<div className="bg-base-100 py-4 px-6 rounded-lg mb-4">
-					<h3 className="text-lg font-medium mb-3">API Query</h3>
-					<div className="flex items-start gap-2 max-w-4xl">
-						<div className="flex-1 bg-base-200/50 p-3 rounded text-xs font-mono break-words overflow-wrap-anywhere min-h-20 max-h-40 overflow-y-auto">
-							{getApiQuery()}
-						</div>
+				<div className="bg-base-100 py-3 rounded-lg mb-4">
+					<h3 className="text-sm font-medium mb-2">Copy Search as API Query</h3>
+					<div className="flex items-center gap-2 max-w-full pb-2">
 						<button
 							type="button"
 							onClick={copyApiQuery}
-							className="btn btn-sm btn-square flex-shrink-0"
+							className="btn btn-sm flex-shrink-0"
 							title="Copy API query"
 						>
 							{apiCopied ? (
-								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-									<polyline points="20 6 9 17 4 12"></polyline>
-								</svg>
+								<>
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+										<polyline points="20 6 9 17 4 12"></polyline>
+									</svg>
+								</>
 							) : (
-								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-								</svg>
+								<>
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+									</svg>
+								</>
 							)}
 						</button>
+						<div className="bg-base-200/50 py-1 rounded text-xs font-mono whitespace-nowrap overflow-x-auto max-w-full">
+							{getApiQuery()}
+						</div>
 					</div>
-					<p className="text-xs text-base-content/60 mt-2">Copy this URL to use directly in your browser or code</p>
+					<p className="text-xs text-base-content/60 mt-1 pb-2">Copy this URL to use directly in your browser or code</p>
 				</div>
 				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
 					<input type="checkbox" />
@@ -555,77 +565,96 @@ export default function AdvancedSearch() {
 				<div className="p-6">
 					<h3 className="text-2xl font-normal mb-6 text-primary">How to Use This Page</h3>
 					<div className="space-y-6">
-						{/* Part 1: How to Use the Page */}
-						<div className="border-l-4 border-primary pl-4">
-							<h4 className="font-semibold text-xl mb-3">Part 1: Building Your Search</h4>
-							
-							<div className="space-y-3">
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">1. Select Your Table</p>
-									<p className="text-base-content/70 text-sm ml-4">
-										Click one of the table name tabs at the top (e.g., Projects, Samples, Taxonomy) to choose what data you want to search and see in the results table at the bottom of the page.
-									</p>
-								</div>
-
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">2. Add Filters and Relations</p>
-									<p className="text-base-content/70 text-sm ml-4">
-										Use the Filters and Relations section to build your query. Add filters based on data fields, and include criteria from related tables by switching the type to "relation", choosing the related table, then selecting the field and condition.
-									</p>
-								</div>
-
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">3. Review Your Query</p>
-									<p className="text-base-content/70 text-sm ml-4">
-										The <span className="font-semibold">Plain Text Query</span> box shows a readable version of your search. The <span className="font-semibold">API Query</span> box shows the actual URL you can copy and paste into your browser or code to get JSON results.
-									</p>
-								</div>
-
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">4. Search</p>
-									<p className="text-base-content/70 text-sm ml-4">
-										Click the Search button to see your results in the table below.
-									</p>
-								</div>
+						<div className="space-y-3">
+							<p className="text-base-content/80 font-medium">
+								Building a search
+							</p>
+							<p className="text-base-content/70 text-sm">
+								1. Select a table using the tabs at the top (Projects, Samples, Taxonomy, etc.). This controls what type of records you will see in the results table.
+							</p>
+							<p className="text-base-content/70 text-sm">
+								2. In the filter box, use the dropdowns to add filters on fields or related tables. Each row lets you pick a type (Field or Relation), a field name, a condition, and a value.
+							</p>
+							<p className="text-base-content/70 text-sm">
+								3. The plain text line at the bottom of the filter box shows a readable description of your search. The API Query box below shows the exact URL you can copy into your browser or code.
+							</p>
+							<p className="text-base-content/70 text-sm">
+								4. Click Search to run the query and see results in the table at the bottom of the page. Use Clear to reset all filters back to an empty search.
+							</p>
+							<div className="bg-base-200 p-3 rounded-md mt-2 space-y-1">
+								<p className="font-mono text-sm mb-1">Examples:</p>
+								<p className="font-mono text-xs">
+									Project tab: Field = <span className="font-normal">institution</span>, Condition = <span className="font-normal">contains</span>, Value = <span className="font-normal">"NOAA"</span>
+								</p>
+								<p className="font-mono text-xs">
+									Sample tab: Field = <span className="font-normal">minimumDepthInMeters</span>, Condition = <span className="font-normal">{">"}</span>, Value = <span className="font-normal">100</span>
+								</p>
 							</div>
 						</div>
 
-						{/* Part 2: Understanding AND/OR Logic */}
-						<div className="border-l-4 border-secondary pl-4">
-							<h4 className="font-semibold text-xl mb-3">Part 2: Understanding AND/OR Logic</h4>
+						<div className="space-y-3">
+							<p className="text-base-content/80 font-medium">
+								Filters vs relations
+							</p>
+							<p className="text-base-content/70 text-sm">
+								A <span className="font-semibold">Field</span> filter searches a column on the table you selected in the tabs. For example, on the Projects tab you might filter by a Project field like{" "}
+								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">institution</span> or{" "}
+								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">study_factor</span>.
+							</p>
+							<p className="text-base-content/70 text-sm">
+								A <span className="font-semibold">Relation</span> filter lets you filter by data on a related table while still returning rows from the main table. For example, on the Projects tab you can choose Relation = a sample table and Field ={" "}
+								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">geo_loc_name</span> to find projects that have at least one sample in a specific location.
+							</p>
+							<p className="text-base-content/70 text-sm">
+								Field and Relation filters can be mixed freely inside the same group; they all follow the same AND/OR rules described below.
+							</p>
+						</div>
 
-							<div className="space-y-3">
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">AND Logic (Default)</p>
-									<p className="text-base-content/70 text-sm ml-4">
-										Each filter row you add is combined with <span className="font-semibold">AND</span> logic. For example, if you add two filters, the search will find records that match <span className="italic">both</span> conditions.
-									</p>
-								</div>
-
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">Using OR</p>
-									<p className="text-base-content/70 text-sm ml-4 mb-2">
-										The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a combined statement that is true if <span className="italic">any one</span> of its conditions is met. The OR group itself is treated like a normal filter and is combined with other filters using <span className="font-semibold">AND</span> logic.
-									</p>
-									<div className="bg-base-200 p-3 rounded-md ml-4 mt-2">
-										<p className="font-mono text-sm mb-1">Example:</p>
-										<p className="font-mono text-sm">Filter A AND (Filter B OR Filter C)</p>
-										<p className="text-xs text-base-content/70 mt-1">
-											→ finds records matching A, and either B or C
-										</p>
-									</div>
-								</div>
-
-								<div>
-									<p className="text-base-content/80 font-medium mb-1">Using Nested OR (Advanced)</p>
-									<p className="text-base-content/70 text-sm ml-4 mb-2">
-										Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to create an OR within an OR. This is rarely needed for most searches.
-									</p>
-									<div className="bg-base-200 p-3 rounded-md ml-4 mt-2">
-										<p className="font-mono text-sm mb-1">Example:</p>
-										<p className="font-mono text-xs">((Filter A OR Filter B) OR (Filter C OR Filter D))</p>
-									</div>
-								</div>
+						<div className="space-y-3">
+							<p className="text-base-content/80 font-medium">
+								AND / OR groups and parentheses
+							</p>
+							<p className="text-base-content/70 text-sm">
+								Every filter lives inside a group. At the top of each group you can choose whether the group matches{" "}
+								<span className="font-semibold">ALL (AND)</span> of its filters or{" "}
+								<span className="font-semibold">ANY (OR)</span> of its filters.
+							</p>
+							<p className="text-base-content/70 text-sm">
+								Use <span className="font-semibold">+ Add Nested Group</span> to create parentheses in your logic. A nested group is evaluated as a single block. For example, if you create a group containing filters B and C with{" "}
+								<span className="font-semibold">ANY (OR)</span>, and keep filter A outside that group with{" "}
+								<span className="font-semibold">ALL (AND)</span>, the query behaves like:
+							</p>
+							<div className="bg-base-200 p-3 rounded-md mt-1">
+								<p className="font-mono text-sm mb-1">Example:</p>
+								<p className="font-mono text-sm">A AND (B OR C)</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									The group around B and C is like parentheses around that part of the expression.
+								</p>
+							</div>
+							<p className="text-base-content/70 text-sm">
+								You can nest groups inside other groups to build more complex logic such as{" "}
+								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">
+									(A OR B) AND (C OR D)
+								</span>
+								. Each nested group controls how its own filters are combined, and the parent group controls how those blocks are combined with the rest of the query.
+							</p>
+							<div className="bg-base-200 p-3 rounded-md mt-2">
+								<p className="font-mono text-sm mb-1">Example (nested AND inside OR):</p>
+								<p className="font-mono text-sm">A OR [B AND (C OR D)]</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									To build this, set the top group to ANY (OR), add filter A as a single row, then create a nested group set to ALL (AND) that contains filter B and another nested group set to ANY (OR) with filters C and D.
+								</p>
+							</div>
+							<div className="bg-base-200 p-3 rounded-md mt-2">
+								<p className="font-mono text-sm mb-1">Example (field + relation):</p>
+								<p className="font-mono text-xs">
+									(Project.institution = "NOAA" OR Project.institution = "EPA")
+									{" AND "}
+									(Sample.geo_loc_name contains "Gulf of Mexico" OR Sample.geo_loc_name contains "Caribbean Sea")
+								</p>
+								<p className="text-xs text-base-content/70 mt-1">
+									To build this, create one nested group for the two Project field filters (institution) with ANY (OR), and another nested group for the two Sample relation filters (geo_loc_name) with ANY (OR). Leave the top group on ALL (AND) so both blocks must be true.
+								</p>
 							</div>
 						</div>
 					</div>
@@ -641,12 +670,16 @@ function SearchGroupComponent({
 	group,
 	searchTable,
 	onChange,
-	onDelete
+	onDelete,
+	footer,
+	onHelpClick
 }: {
 	group: SearchGroupNode;
 	searchTable: Prisma.ModelName;
 	onChange: (group: SearchGroupNode) => void;
 	onDelete?: () => void;
+	footer?: ReactNode;
+	onHelpClick?: () => void;
 }) {
 	function updateGroup(updater: (group: SearchGroupNode) => void) {
 		const clone = { ...group, children: [...group.children] } as SearchGroupNode;
@@ -710,53 +743,85 @@ function SearchGroupComponent({
 								})
 							}
 						>
-							<option value="AND">ALL (AND)</option>
-							<option value="OR">ANY (OR)</option>
+							<option value="AND">ALL</option>
+							<option value="OR">ANY</option>
 						</select>
 						<span className="text-sm text-base-content/70">
 							of the following:
 						</span>
 					</div>
 
-					{!isRoot && onDelete && (
-						<button
-							type="button"
-							className="btn btn-xs btn-square btn-primary"
-							onClick={onDelete}
-							aria-label="Remove group"
-						>
-							<span className="text-primary-content text-lg leading-none">×</span>
-						</button>
-					)}
+					<div className="flex items-center gap-2">
+						{isRoot && onHelpClick && (
+							<button
+								type="button"
+								className="btn btn-ghost btn-sm text-base-content/60 border-0 hover:bg-base-200 gap-2 font-normal"
+								onClick={onHelpClick}
+							>
+								<span className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-sm font-semibold">
+									?
+								</span>
+								<span className="text-xs md:text-sm normal-case">Help me use the query builder</span>
+							</button>
+						)}
+
+						{!isRoot && onDelete && (
+							<button
+								type="button"
+								className="btn btn-xs btn-square btn-primary"
+								onClick={onDelete}
+								aria-label="Remove group"
+							>
+								<span className="text-primary-content text-lg leading-none">×</span>
+							</button>
+						)}
+					</div>
 				</div>
 
-				<div className="space-y-2">
+				<div className="space-y-0.5">
 					{group.children.length === 0 && (
-						<p className="text-xs text-base-content/60 italic">
+						<p className="text-sm text-base-content/60 italic">
 							No criteria yet. Add a filter or nested group.
 						</p>
 					)}
 
-					{group.children.map((child, index) => (
-						<div key={child.id}>
-							{child.type === "rule" ? (
-								<SearchRuleComponent
-									node={child}
-									searchTable={searchTable}
-									onChange={(updated) => handleChildChange(index, updated)}
-								/>
-							) : (
-								<div className="mt-2">
-									<SearchGroupComponent
-										group={child}
-										searchTable={searchTable}
-										onChange={(updatedGroup) => handleChildChange(index, updatedGroup)}
-										onDelete={() => handleChildChange(index, null)}
-									/>
+					{group.children.reduce((acc: ReactNode[], child, index) => {
+						if (index > 0) {
+							acc.push(
+								<div
+									key={child.id + "_op"}
+									className="mt-0.5 mb-0.5 text-xs text-base-content/60 pl-3"
+								>
+									<span className="font-semibold tracking-wide">
+										{group.operator}
+									</span>
 								</div>
-							)}
-						</div>
-					))}
+							);
+						}
+
+						acc.push(
+							<div key={child.id}>
+								{child.type === "rule" ? (
+									<SearchRuleComponent
+										node={child}
+										searchTable={searchTable}
+										onChange={(updated) => handleChildChange(index, updated)}
+									/>
+								) : (
+									<div className="mt-0.5">
+										<SearchGroupComponent
+											group={child}
+											searchTable={searchTable}
+											onChange={(updatedGroup) => handleChildChange(index, updatedGroup)}
+											onDelete={() => handleChildChange(index, null)}
+										/>
+									</div>
+								)}
+							</div>
+						);
+
+						return acc;
+					}, [])}
 				</div>
 
 				<div className="flex flex-wrap items-center gap-3 pt-2 mt-2">
@@ -775,6 +840,12 @@ function SearchGroupComponent({
 						+ Add Nested Group
 					</button>
 				</div>
+
+				{footer && isRoot && (
+					<div className="mt-3">
+						{footer}
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -818,7 +889,7 @@ function SearchRuleComponent({
 	const nameSuffix = node.id;
 
 	return (
-		<div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 items-center p-3 rounded-md hover:bg-base-200/60 transition-colors">
+		<div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 items-center py-2 px-3 rounded-md hover:bg-base-200/60 transition-colors">
 			<div>
 				<select
 					className="select"

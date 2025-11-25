@@ -92,6 +92,11 @@ export default function Table({
 		fetcher
 	);
 
+	// Reset to first page whenever the table or URL search params change
+	useEffect(() => {
+		setPage(1);
+	}, [table, searchParams]);
+
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			if (hideEmpty) {
