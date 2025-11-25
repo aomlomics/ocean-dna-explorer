@@ -724,16 +724,22 @@ function SearchGroupComponent({
 
 	return (
 		<div
-			className={`card bg-base-100 shadow-sm border border-base-300 ${
-				!isRoot ? "ml-6 bg-base-200/60" : ""
+			className={`card bg-base-100 shadow-sm border border-base-300 w-full ${
+				!isRoot ? "bg-base-200/60 ml-4" : ""
 			}`}
 		>
-			<div className="card-body p-4 space-y-4 relative">
+			<div className="card-body p-4 space-y-2 relative">
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">
-						<span className="text-sm text-base-content/70">
-							Match
-						</span>
+						{isRoot && (
+							<>
+								<span className="text-sm text-base-content/70">Show</span>
+								<span className="text-sm font-semibold text-base-content">
+									{TableMetadata[uncapitalizeTable(searchTable)].plural}
+								</span>
+								<span className="text-sm text-base-content/70">where</span>
+							</>
+						)}
 						<select
 							className="select select-xs md:select-sm w-auto"
 							value={group.operator}
@@ -747,7 +753,7 @@ function SearchGroupComponent({
 							<option value="OR">ANY</option>
 						</select>
 						<span className="text-sm text-base-content/70">
-							of the following:
+							of the following are true:
 						</span>
 					</div>
 
@@ -790,11 +796,17 @@ function SearchGroupComponent({
 							acc.push(
 								<div
 									key={child.id + "_op"}
-									className="mt-0.5 mb-0.5 text-xs text-base-content/60 pl-3"
+									className="grid grid-cols-[30px_15%_18%_18%_1fr] px-3"
 								>
-									<span className="font-semibold tracking-wide">
-										{group.operator}
-									</span>
+									<div className="flex justify-center items-center">
+										<span className="text-xs text-base-content/60 font-semibold tracking-wide">
+											{group.operator}
+										</span>
+									</div>
+									<div />
+									<div />
+									<div />
+									<div />
 								</div>
 							);
 						}
@@ -808,7 +820,7 @@ function SearchGroupComponent({
 										onChange={(updated) => handleChildChange(index, updated)}
 									/>
 								) : (
-									<div className="mt-0.5">
+									<div className="mt-3 mb-3">
 										<SearchGroupComponent
 											group={child}
 											searchTable={searchTable}
@@ -824,7 +836,7 @@ function SearchGroupComponent({
 					}, [])}
 				</div>
 
-				<div className="flex flex-wrap items-center gap-3 pt-2 mt-2">
+				<div className="flex flex-wrap items-center gap-3 pt-1 mt-1">
 					<button
 						type="button"
 						className="btn btn-sm btn-primary"
@@ -889,7 +901,17 @@ function SearchRuleComponent({
 	const nameSuffix = node.id;
 
 	return (
-		<div className="grid grid-cols-[15%_18%_18%_1fr_40px] gap-2 items-center py-2 px-3 rounded-md hover:bg-base-200/60 transition-colors">
+		<div className="grid grid-cols-[30px_14%_14%_20%_1fr] gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors">
+			<div className="flex justify-center">
+				<button
+					className="btn btn-xs btn-square btn-primary"
+					type="button"
+					onClick={() => onChange(null)}
+					aria-label="Remove filter"
+				>
+					<span className="text-primary-content text-sm leading-none">×</span>
+				</button>
+			</div>
 			<div>
 				<select
 					className="select"
@@ -910,7 +932,7 @@ function SearchRuleComponent({
 				</select>
 			</div>
 
-			<div>
+			<div className={type === "relation" ? "" : "hidden"}>
 				{type === "relation" ? (
 					<select
 						className="select"
@@ -937,12 +959,10 @@ function SearchRuleComponent({
 							return acc;
 						}, [] as ReactNode[])}
 					</select>
-				) : (
-					<div />
-				)}
+				) : null}
 			</div>
 
-			<div>
+			<div className={type === "relation" ? "" : "col-span-2"}>
 				{type === "field" || relation ? (
 					<select
 						className="select"
@@ -985,15 +1005,6 @@ function SearchRuleComponent({
 				)}
 			</div>
 
-			<div className="flex justify-center items-center">
-				<button
-					className="btn btn-xs btn-square btn-primary"
-					type="button"
-					onClick={() => onChange(null)}
-				>
-					<span className="text-primary-content text-lg leading-none">×</span>
-				</button>
-			</div>
 		</div>
 	);
 }
