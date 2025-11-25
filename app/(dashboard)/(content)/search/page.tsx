@@ -725,16 +725,20 @@ function SearchGroupComponent({
 	return (
 		<div
 			className={`card bg-base-100 shadow-sm border border-base-300 w-full ${
-				!isRoot ? "bg-base-200/60 ml-4" : ""
+				!isRoot ? "bg-base-200/60" : ""
 			}`}
 		>
-			<div className="card-body p-4 space-y-2 relative">
+			<div
+				className={`card-body p-4 space-y-2 relative ${
+					!isRoot ? "pl-8" : ""
+				}`}
+			>
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">
 						{isRoot && (
 							<>
 								<span className="text-sm text-base-content/70">Show</span>
-								<span className="text-sm font-semibold text-base-content">
+								<span className="text-sm font-normal text-primary">
 									{TableMetadata[uncapitalizeTable(searchTable)].plural}
 								</span>
 								<span className="text-sm text-base-content/70">where</span>
@@ -899,9 +903,16 @@ function SearchRuleComponent({
 
 	const omit = [...GlobalOmit, "id"];
 	const nameSuffix = node.id;
+	const isRelation = type === "relation";
 
 	return (
-		<div className="grid grid-cols-[30px_14%_14%_20%_1fr] gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors">
+		<div
+			className={`grid ${
+				isRelation
+					? "grid-cols-[30px_14%_14%_20%_1fr]"
+					: "grid-cols-[30px_14%_26%_1fr]"
+			} gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
+		>
 			<div className="flex justify-center">
 				<button
 					className="btn btn-xs btn-square btn-primary"
@@ -932,8 +943,8 @@ function SearchRuleComponent({
 				</select>
 			</div>
 
-			<div className={type === "relation" ? "" : "hidden"}>
-				{type === "relation" ? (
+			{isRelation && (
+				<div>
 					<select
 						className="select"
 						value={relation}
@@ -959,10 +970,10 @@ function SearchRuleComponent({
 							return acc;
 						}, [] as ReactNode[])}
 					</select>
-				) : null}
-			</div>
+				</div>
+			)}
 
-			<div className={type === "relation" ? "" : "col-span-2"}>
+			<div>
 				{type === "field" || relation ? (
 					<select
 						className="select"
@@ -1160,24 +1171,26 @@ function InputElement({
 						</div>
 					</div>
 				) : (
-					<div className="input input-primary w-full">
-						<input
-							name={`filter_${nameSuffix}_date`}
-							className="w-1/2"
-							defaultValue={
-								defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : undefined
-							}
-							type="date"
-							required
-						/>
-						<input
-							type="time"
-							className="text-center w-1/2"
-							defaultValue={
-								defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : undefined
-							}
-							name={`filter_${nameSuffix}_time`}
-						/>
+					<div className="flex justify-start">
+						<div className="input input-primary w-full max-w-xs">
+							<input
+								name={`filter_${nameSuffix}_date`}
+								className="w-1/2"
+								defaultValue={
+									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : undefined
+								}
+								type="date"
+								required
+							/>
+							<input
+								type="time"
+								className="text-center w-1/2"
+								defaultValue={
+									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : undefined
+								}
+								name={`filter_${nameSuffix}_time`}
+							/>
+						</div>
 					</div>
 				)}
 			</div>
