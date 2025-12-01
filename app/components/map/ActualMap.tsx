@@ -43,14 +43,14 @@ type NullLocation = {
 
 type LegendInfo =
 	| ({ field: string | string[] } & (
-			| { mode: "discreet"; colorMap: Record<string, Color> }
-			| { mode: "gradient"; range: [number, number]; palette: string }
+			| { mode: "discreet"; colorMap: Record<string, Color>; hidden?: string[] }
+			| { mode: "gradient"; range: [number, number] | [Date, Date]; palette: string }
 	  ))
 	| undefined;
 
 const DEFAULT_COLOR = chroma("red");
 const DEFAULT_PALETTE = "YlGnBu";
-const DEFAULT_POINT_SIZE = 20;
+const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 10;
 const DEFAULT_CLUSTER_RADIUS = 50;
 
@@ -108,9 +108,20 @@ function getTitleIdValue(
 function getLegendColor(legend: LegendInfo, loc: Location | LocationWithoutValues) {
 	if (legend) {
 		if (legend.mode === "discreet") {
-			return legend.colorMap[getTitleIdValue(legend.field, loc)];
+			const titleIdVal = getTitleIdValue(legend.field, loc);
+			if (titleIdVal) {
+				return legend.colorMap[titleIdVal];
+			}
 		} else if (legend.mode === "gradient") {
-			const percent = ((loc[legend.field as string] as number) - legend.range[0]) / (legend.range[1] - legend.range[0]);
+			const val = loc[legend.field as string] as number | Date;
+			let percent;
+			if (typeof val === "number") {
+				const range = legend.range as [number, number];
+				percent = (val - range[0]) / (range[1] - range[0]);
+			} else {
+				const range = legend.range as [Date, Date];
+				percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
+			}
 			return chroma.scale(legend.palette)(percent);
 		}
 	}
@@ -136,6 +147,7 @@ function getTextColorHex(hex: string) {
 	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
 }
 
+//TODO: make gradient scale with number of options
 function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors
 		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
@@ -432,6 +444,8 @@ export default function ActualMap({
 									orderedColors
 								)}'></div>`;
 							} else {
+								//TODO: make border size a percentage of current size
+								size += 5;
 								html =
 									`<div class='p-1 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style='background:${getConicGradient(
 										orderedColors.map((color) => color.mix("white", 0.4, "oklab"))
@@ -445,6 +459,8 @@ export default function ActualMap({
 							if (count === 1) {
 								html = `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style=background-color:${color.hex()};></div>`;
 							} else {
+								//TODO: make border size a percentage of current size
+								size += 5;
 								html = `<div class='border-4 border-white/40 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style=background-color:${color.hex()};></div>`;
 							}
 						}
@@ -517,7 +533,7 @@ export default function ActualMap({
 					<LegendControl
 						legend={legend}
 						legendInfo={legendInfo}
-						setLegend={setLegendInfo}
+						setLegendInfo={setLegendInfo}
 						setLoading={setLoading}
 						legendOptions={legendOptions}
 						table={table}
@@ -578,27 +594,51 @@ export default function ActualMap({
 
 				{Array.isArray(points) ? (
 					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
-						{points.map((loc, i) => (
-							<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-								<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
-							</Marker>
-						))}
+						{points.reduce((acc, loc, i) => {
+							if (
+								!(
+									legendInfo &&
+									legendInfo.mode === "discreet" &&
+									legendInfo.hidden?.includes(loc[legendInfo.field as string])
+								)
+							) {
+								acc.push(
+									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
+										<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
+									</Marker>
+								);
+							}
+
+							return acc;
+						}, [] as ReactNode[])}
 					</ClusterGroup>
 				) : (
 					<>
 						{Object.values(points).map((locArray, i) => (
 							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
-								{locArray.map((loc, j) => (
-									<Marker
-										key={i.toString() + j.toString()}
-										position={{
-											lat: loc.decimalLatitude,
-											lng: loc.decimalLongitude
-										}}
-									>
-										<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
-									</Marker>
-								))}
+								{locArray.reduce((acc, loc, j) => {
+									if (
+										!(
+											legendInfo &&
+											legendInfo.mode === "discreet" &&
+											legendInfo.hidden?.includes(loc[legendInfo.field as string])
+										)
+									) {
+										acc.push(
+											<Marker key={j} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
+												<PopupWithSearch
+													table={table}
+													titleTable={titleTable}
+													loc={loc}
+													id={id}
+													legendInfo={legendInfo}
+												/>
+											</Marker>
+										);
+									}
+
+									return acc;
+								}, [] as ReactNode[])}
 							</ClusterGroup>
 						))}
 					</>
@@ -844,29 +884,15 @@ function ResetButton({
 	disabled,
 	dataTip,
 	resetFunction,
-	dir = "top"
+	dir = "tooltip-top"
 }: {
 	disabled: boolean;
 	dataTip: string;
 	resetFunction: () => void;
-	dir?: "top" | "bottom" | "left" | "right";
+	dir?: "tooltip-top" | "tooltip-bottom" | "tooltip-left" | "tooltip-right";
 }) {
-	let tooltipDir;
-	if (dir === "top") {
-		tooltipDir = "tooltip-top";
-	} else if (dir === "bottom") {
-		tooltipDir = "tooltip-bottom";
-	} else if (dir === "left") {
-		tooltipDir = "tooltip-left";
-	} else if (dir === "right") {
-		tooltipDir = "tooltip-right";
-	}
-
 	return (
-		<div
-			className={`tooltip tooltip-secondary before:text-primary-content ${tooltipDir}`}
-			data-tip={disabled ? "" : dataTip}
-		>
+		<div className={`tooltip tooltip-secondary before:text-primary-content ${dir}`} data-tip={disabled ? "" : dataTip}>
 			<svg
 				width="20px"
 				height="20px"
@@ -887,7 +913,7 @@ function ResetButton({
 function LegendControl({
 	legend,
 	legendInfo,
-	setLegend,
+	setLegendInfo,
 	setLoading,
 	legendOptions,
 	points,
@@ -896,7 +922,7 @@ function LegendControl({
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
-	setLegend: Dispatch<SetStateAction<LegendInfo>>;
+	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
 	setLoading: Dispatch<SetStateAction<boolean>>;
 	legendOptions: string[];
 	table: Uncapitalize<Prisma.ModelName>;
@@ -929,9 +955,9 @@ function LegendControl({
 					) : (
 						<>
 							<ResetButton
-								disabled={!!legendInfo?.field}
+								disabled={!legendInfo?.field}
 								dataTip="Reset Legend"
-								resetFunction={() => setLegend(undefined)}
+								resetFunction={() => setLegendInfo(undefined)}
 							/>
 
 							<select
@@ -958,13 +984,13 @@ function LegendControl({
 									const shape = TableMetadata[table].schema.shape;
 									const type = getZodType(shape[field as keyof typeof shape]).type;
 
-									if (type === "string") {
+									if (type === "string" || type === "DeadBoolean") {
 										//check if invalid number of options
 										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-											setLegend({ field, mode: "discreet", colorMap: {} });
+											setLegendInfo({ field, mode: "discreet", colorMap: {} });
 											return;
 										} else if (optionsArray.length === 1) {
-											setLegend({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
 											return;
 										} else {
 											//valid
@@ -974,21 +1000,13 @@ function LegendControl({
 												colorMap[optionsArray[i]] = colors[i];
 											}
 
-											setLegend({ field, mode: "discreet", colorMap });
+											setLegendInfo({ field, mode: "discreet", colorMap });
 										}
-									} else if (type === "integer" || type === "float") {
-										let parser;
-										if (type === "integer") {
-											parser = parseInt;
-										} else {
-											parser = parseFloat;
-										}
-
-										//parse all values as number and ignore NaN/DeadValues
+									} else if (type === "integer" || type === "float" || type === "date") {
+										//ignore DeadValues
 										const parsedOptions = optionsArray.reduce((acc, opt) => {
-											const parsed = parser(opt);
-											if (!isNaN(parsed) && !DeadValueNumbers.includes(parsed)) {
-												acc.push(parsed);
+											if (!DeadValueNumbers.includes(opt)) {
+												acc.push(opt);
 											}
 
 											return acc;
@@ -996,12 +1014,12 @@ function LegendControl({
 
 										//check if invalid number of options
 										if (parsedOptions.length === 0 || (parsedOptions.length === 1 && parsedOptions[0] == null)) {
-											setLegend({ field, mode: "discreet", colorMap: {} });
+											setLegendInfo({ field, mode: "discreet", colorMap: {} });
 										} else if (parsedOptions.length === 1) {
-											setLegend({ field, mode: "discreet", colorMap: { [parsedOptions[0]]: DEFAULT_COLOR } });
+											setLegendInfo({ field, mode: "discreet", colorMap: { [parsedOptions[0]]: DEFAULT_COLOR } });
 										} else {
 											//valid
-											setLegend({
+											setLegendInfo({
 												field,
 												mode: "gradient",
 												range: [parsedOptions[0], parsedOptions[parsedOptions.length - 1]],
@@ -1009,7 +1027,11 @@ function LegendControl({
 											});
 										}
 									} else {
-										//TODO: add support for more field types
+										setLegendInfo({
+											field,
+											mode: "discreet",
+											colorMap: { "Unsupported field": DEFAULT_COLOR }
+										});
 									}
 								}}
 								className="select select-xs select-primary select-ghost text-sm"
@@ -1054,7 +1076,7 @@ function LegendControl({
 										disabled={legendInfo.palette === DEFAULT_PALETTE}
 										dataTip={"Reset to " + DEFAULT_PALETTE}
 										resetFunction={() => {
-											setLegend({ ...legendInfo, palette: DEFAULT_PALETTE });
+											setLegendInfo({ ...legendInfo, palette: DEFAULT_PALETTE });
 											(document.activeElement as HTMLDivElement).blur();
 										}}
 									/>
@@ -1081,7 +1103,7 @@ function LegendControl({
 																backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
 															}}
 															onClick={() => {
-																setLegend({ ...legendInfo, palette: scaleName });
+																setLegendInfo({ ...legendInfo, palette: scaleName });
 																(document.activeElement as HTMLDivElement).blur();
 															}}
 														>
@@ -1112,8 +1134,21 @@ function LegendControl({
 							) : (
 								Object.entries(legendInfo.colorMap).map(([key, color]) => (
 									<div key={key} className="flex gap-2 items-center">
-										{/* TODO: allow clicking on box to enable/disable visibility */}
-										<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+										<div
+											className="aspect-square w-[1em] h-[1em] select-none cursor-pointer"
+											style={{ backgroundColor: color.hex() }}
+											onClick={(e) => {
+												if (legendInfo.hidden?.includes(key)) {
+													setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
+													e.currentTarget.style.background = "";
+													e.currentTarget.style.backgroundColor = color.hex();
+												} else {
+													setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
+													e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
+													e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+												}
+											}}
+										></div>
 										{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
 											<Link
 												href={`/explore/${
@@ -1143,9 +1178,28 @@ function LegendControl({
 									}}
 								/>
 								<div className="flex justify-between">
-									<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
-									<span>{Math.round(((legendInfo.range[0] + legendInfo.range[1]) / 2) * 1000) / 1000}</span>
-									<span>{Math.round(legendInfo.range[1] * 1000) / 1000}</span>
+									{typeof legendInfo.range[0] === "number" ? (
+										<>
+											<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
+											<span>
+												{Math.round(((legendInfo.range[0] + (legendInfo.range[1] as number)) / 2) * 1000) / 1000}
+											</span>
+											<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
+										</>
+									) : (
+										//TODO: display dates differently depending on distance between dates
+										//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
+										//when dates are all on the same day, time must be displayed as well
+										<>
+											<span>{legendInfo.range[0].toLocaleDateString()}</span>
+											<span>
+												{new Date(
+													(legendInfo.range[0].getTime() + (legendInfo.range[1] as Date).getTime()) / 2
+												).toLocaleDateString()}
+											</span>
+											<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
+										</>
+									)}
 								</div>
 							</div>
 						) : (
@@ -1188,7 +1242,7 @@ function PointSizeControl({
 							disabled={pointSize === DEFAULT_POINT_SIZE}
 							dataTip={"Reset to " + DEFAULT_POINT_SIZE}
 							resetFunction={() => setPointSize(DEFAULT_POINT_SIZE)}
-							dir="right"
+							dir="tooltip-right"
 						/>
 						<span className="text-sm">Point Size</span>
 					</div>
@@ -1219,7 +1273,7 @@ function PointSizeControl({
 						disabled={pointSizeStep === DEFAULT_POINT_SIZE_STEP}
 						dataTip={"Reset to " + DEFAULT_POINT_SIZE_STEP}
 						resetFunction={() => setPointSizeStep(DEFAULT_POINT_SIZE_STEP)}
-						dir="right"
+						dir="tooltip-right"
 					/>
 					<span className="text-sm">Step</span>
 				</div>
@@ -1274,7 +1328,7 @@ function ClusterControl({
 							disabled={clusterRadius ? value === clusterRadius : value === DEFAULT_CLUSTER_RADIUS}
 							dataTip={`Reset to ${clusterRadius || DEFAULT_CLUSTER_RADIUS}`}
 							resetFunction={() => onChange(clusterRadius || DEFAULT_CLUSTER_RADIUS)}
-							dir="right"
+							dir="tooltip-right"
 						/>
 						<span className="text-sm">Cluster</span>
 					</div>
