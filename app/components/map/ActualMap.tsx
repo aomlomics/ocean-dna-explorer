@@ -1124,31 +1124,44 @@ function LegendControl({
 				</div>
 
 				{legendInfo ? (
-					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-50 overflow-y-scroll">
+					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-50 overflow-y-auto overflow-x-hidden">
 						{legendInfo.mode === "discreet" ? (
 							Object.keys(legendInfo.colorMap).length === 0 ? (
 								<div className="flex gap-2 items-center">
 									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
 									<div className="text-xs">No values</div>
 								</div>
+							) : Object.keys(legendInfo.colorMap).length === 1 ? (
+								<div className="flex gap-2 items-center">
+									<div
+										className="aspect-square w-[1em] h-[1em]"
+										style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
+									></div>
+									<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+								</div>
 							) : (
 								Object.entries(legendInfo.colorMap).map(([key, color]) => (
 									<div key={key} className="flex gap-2 items-center">
 										<div
-											className="aspect-square w-[1em] h-[1em] select-none cursor-pointer"
-											style={{ backgroundColor: color.hex() }}
-											onClick={(e) => {
-												if (legendInfo.hidden?.includes(key)) {
-													setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-													e.currentTarget.style.background = "";
-													e.currentTarget.style.backgroundColor = color.hex();
-												} else {
-													setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-													e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-													e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
-												}
-											}}
-										></div>
+											className="tooltip tooltip-left tooltip-secondary before:text-primary-content"
+											data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
+										>
+											<div
+												className="aspect-square w-[1em] h-[1em] select-none cursor-pointer"
+												style={{ backgroundColor: color.hex() }}
+												onClick={(e) => {
+													if (legendInfo.hidden?.includes(key)) {
+														setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
+														e.currentTarget.style.background = "";
+														e.currentTarget.style.backgroundColor = color.hex();
+													} else {
+														setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
+														e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
+														e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+													}
+												}}
+											></div>
+										</div>
 										{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
 											<Link
 												href={`/explore/${
@@ -1157,12 +1170,20 @@ function LegendControl({
 														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
 													)
 												}/${encodeURIComponent(key)}`}
-												className="!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-xs"
+												className={`!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-xs ${
+													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+												}`}
 											>
 												{key}
 											</Link>
 										) : (
-											<div className="text-xs">{key}</div>
+											<div
+												className={`text-xs ${
+													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+												}`}
+											>
+												{key}
+											</div>
 										)}
 									</div>
 								))
