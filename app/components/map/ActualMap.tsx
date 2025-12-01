@@ -49,10 +49,12 @@ type LegendInfo =
 	| undefined;
 
 const DEFAULT_COLOR = chroma("red");
+const DEFAULT_OUTSIDE_COLOR = chroma("black");
 const DEFAULT_PALETTE = "YlGnBu";
 const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 10;
 const DEFAULT_CLUSTER_RADIUS = 50;
+const chromaMin = 25;
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -105,24 +107,24 @@ function getTitleIdValue(
 	}
 }
 
-function getLegendColor(legend: LegendInfo, loc: Location | LocationWithoutValues) {
-	if (legend) {
-		if (legend.mode === "discreet") {
-			const titleIdVal = getTitleIdValue(legend.field, loc);
+function getLegendColor(legendInfo: LegendInfo, loc: Location | LocationWithoutValues) {
+	if (legendInfo) {
+		if (legendInfo.mode === "discreet") {
+			const titleIdVal = getTitleIdValue(legendInfo.field, loc);
 			if (titleIdVal) {
-				return legend.colorMap[titleIdVal];
+				return legendInfo.colorMap[titleIdVal];
 			}
-		} else if (legend.mode === "gradient") {
-			const val = loc[legend.field as string] as number | Date;
+		} else if (legendInfo.mode === "gradient") {
+			const val = loc[legendInfo.field as string] as number | Date;
 			let percent;
 			if (typeof val === "number") {
-				const range = legend.range as [number, number];
+				const range = legendInfo.range as [number, number];
 				percent = (val - range[0]) / (range[1] - range[0]);
 			} else {
-				const range = legend.range as [Date, Date];
+				const range = legendInfo.range as [Date, Date];
 				percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
 			}
-			return chroma.scale(legend.palette)(percent);
+			return chroma.scale(legendInfo.palette)(percent);
 		}
 	}
 
@@ -259,13 +261,13 @@ export default function ActualMap({
 	}
 
 	let defaultLegend = undefined as LegendInfo;
-	let points;
+	let pointsOrGroups;
 	if (titleTable) {
 		const titleId = TableMetadata[titleTable].titleField;
 
 		//assign color to each option
 		const optionsArray = Array.from(defaultOptions);
-		const colors = distinctColors({ count: optionsArray.length });
+		const colors = distinctColors({ count: optionsArray.length, chromaMin });
 		const colorMap = {} as Record<string, Color>;
 		for (let i = 0; i < optionsArray.length; i++) {
 			colorMap[optionsArray[i]] = colors[i];
@@ -273,21 +275,21 @@ export default function ActualMap({
 		defaultLegend = { field: titleId, mode: "discreet", colorMap };
 
 		//assemble locations object with assigned color and list of locations
-		points = {} as Record<string, Location[]>;
+		pointsOrGroups = {} as Record<string, Location[]>;
 		for (const loc of filteredLocations) {
 			const opt = getTitleIdValue(titleId, loc);
-			if (points[opt]) {
-				points[opt].push(loc);
+			if (pointsOrGroups[opt]) {
+				pointsOrGroups[opt].push(loc);
 			} else {
-				points[opt] = [loc];
+				pointsOrGroups[opt] = [loc];
 			}
 		}
 	} else {
-		points = filteredLocations;
+		pointsOrGroups = filteredLocations;
 	}
 	const [legendInfo, setLegendInfo] = useState(defaultLegend);
 	const [loading, setLoading] = useState(false);
-	const [pointsInside, setPointsInside] = useState([] as Location[]);
+	const [pointsInside, setPointsInside] = useState([] as Array<Location | LocationWithoutValues>);
 
 	const [pointSize, setPointSize] = useState(DEFAULT_POINT_SIZE as number | undefined);
 	const [pointSizeStep, setPointSizeStep] = useState(DEFAULT_POINT_SIZE_STEP as number | undefined);
@@ -314,56 +316,55 @@ export default function ActualMap({
 		>
 	);
 
-	function checkShapes(pts = filteredLocations) {
-		let tempPoints = [...pts];
+	function getLegendColorWithShapes(loc: Location | LocationWithoutValues) {
+		//check if location is outside any drawn shapes
+		if (Object.keys(shapes).length && pointsInside && pointsInside.find((p) => p[id] === loc[id]) === undefined) {
+			return DEFAULT_OUTSIDE_COLOR;
+		}
+
+		return getLegendColor(legendInfo, loc);
+	}
+
+	function checkShapes(locs = filteredLocations) {
+		const tempPointsInside = [] as Array<Location | LocationWithoutValues>;
 
 		if (Object.keys(shapes).length) {
-			//dim color of points outside of drawn shapes
-			const tempPointsInside = [] as typeof pts;
-
-			for (let i = 0; i < tempPoints.length; i++) {
-				let inside = false;
-				for (const [k, s] of Object.entries(shapes)) {
+			for (const l of locs) {
+				for (const s of Object.values(shapes)) {
 					if (s.type === "polygon") {
 						//check if point is inside bounding box
 						if (
-							tempPoints[i].decimalLatitude < s.bounds.ne.lat &&
-							tempPoints[i].decimalLatitude > s.bounds.sw.lat &&
-							tempPoints[i].decimalLongitude < s.bounds.ne.lng &&
-							tempPoints[i].decimalLongitude > s.bounds.sw.lng
+							l.decimalLatitude < s.bounds.ne.lat &&
+							l.decimalLatitude > s.bounds.sw.lat &&
+							l.decimalLongitude < s.bounds.ne.lng &&
+							l.decimalLongitude > s.bounds.sw.lng
 						) {
-							tempPointsInside.push(tempPoints[i]);
-							inside = true;
+							if (l.values) {
+								tempPointsInside.push(...l.values);
+							} else {
+								tempPointsInside.push(l);
+							}
 							break;
 						} else {
 							//TODO: raycast to check if inside polygon (https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon)
 						}
 					} else if (s.type === "circle") {
 						//check if point inside of circle
-						const distance = measure(
-							s.center.lat,
-							s.center.lng,
-							tempPoints[i].decimalLatitude,
-							tempPoints[i].decimalLongitude
-						);
+						const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
 						if (distance <= s.radius) {
-							tempPointsInside.push(tempPoints[i]);
-							inside = true;
+							if (l.values) {
+								tempPointsInside.push(...l.values);
+							} else {
+								tempPointsInside.push(l);
+							}
 							break;
 						}
 					}
 				}
-
-				//TODO: visually show that shapes are inside/outside the shapes
-				if (inside || !Object.keys(shapes).length) {
-					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "1");
-				} else {
-					// tempPoints[i].color = changeAlpha(tempPoints[i].color!, "0");
-				}
 			}
-
-			setPointsInside(tempPointsInside);
 		}
+
+		setPointsInside(tempPointsInside);
 	}
 
 	//shapes
@@ -406,13 +407,13 @@ export default function ActualMap({
 							valuesCount += marker.options.children.props.loc.values.length;
 
 							for (const val of marker.options.children.props.loc.values) {
-								const color = getLegendColor(legendInfo, val);
+								const color = getLegendColorWithShapes(val);
 								const c = color ? color.hex() : DEFAULT_COLOR.hex();
 								uniqueColors.add(c);
 								colorsArray.push(c);
 							}
 						} else {
-							const color = getLegendColor(legendInfo, marker.options.children.props.loc);
+							const color = getLegendColorWithShapes(marker.options.children.props.loc);
 							const c = color ? color.hex() : DEFAULT_COLOR.hex();
 							uniqueColors.add(c);
 							colorsArray.push(c);
@@ -439,6 +440,11 @@ export default function ActualMap({
 							//move first color to end because conic gradient doesn't start at 12 o'clock
 							orderedColors.push(orderedColors.shift() as chroma.Color);
 
+							//account for points outside of drawn shapes
+							if (orderedColors.length !== uniqueColors.size) {
+								orderedColors.push(DEFAULT_OUTSIDE_COLOR);
+							}
+
 							if (count === 1) {
 								html = `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style='background:${getConicGradient(
 									orderedColors
@@ -454,6 +460,7 @@ export default function ActualMap({
 									`</div>`;
 							}
 						} else {
+							//TODO: make it clear when averaging colors that there is a point outside of the drawn shapes
 							const color = chroma.average(colorsArray);
 
 							if (count === 1) {
@@ -479,8 +486,8 @@ export default function ActualMap({
 	}
 
 	const legendProps = titleTable
-		? { titleTable, points: points as Record<string, Location[]> }
-		: { titleTable: undefined, points: points as Location[] };
+		? { titleTable, points: pointsOrGroups as Record<string, Location[]> }
+		: { titleTable: undefined, points: pointsOrGroups as Location[] };
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
@@ -592,9 +599,9 @@ export default function ActualMap({
 					)}
 				</FeatureGroup>
 
-				{Array.isArray(points) ? (
+				{Array.isArray(pointsOrGroups) ? (
 					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
-						{points.reduce((acc, loc, i) => {
+						{pointsOrGroups.reduce((acc, loc, i) => {
 							if (
 								!(
 									legendInfo &&
@@ -614,7 +621,7 @@ export default function ActualMap({
 					</ClusterGroup>
 				) : (
 					<>
-						{Object.values(points).map((locArray, i) => (
+						{Object.values(pointsOrGroups).map((locArray, i) => (
 							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
 								{locArray.reduce((acc, loc, j) => {
 									if (
@@ -1006,7 +1013,7 @@ function LegendControl({
 											return;
 										} else {
 											//valid
-											const colors = distinctColors({ count: optionsArray.length });
+											const colors = distinctColors({ count: optionsArray.length, chromaMin });
 											const colorMap = {} as Record<string, Color>;
 											for (let i = 0; i < optionsArray.length; i++) {
 												colorMap[optionsArray[i]] = colors[i];
@@ -1348,6 +1355,7 @@ function ClusterControl({
 	if (!cluster) {
 		return null;
 	}
+
 	return (
 		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
 			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show Cluster Control">
