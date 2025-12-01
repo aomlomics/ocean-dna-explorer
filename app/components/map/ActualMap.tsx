@@ -783,14 +783,20 @@ function PopupWithSearch({
 
 function Collapsible({
 	children,
+	hiddenText = "Show",
 	dir = "right",
 	className = ""
 }: {
 	children: ReactNode;
+	hiddenText?: string;
 	dir?: "right" | "left" | "up" | "down";
 	className?: string;
 }) {
 	const [collapse, setCollapse] = useState(false);
+	const [delayedCollapse, setDelayedCollapse] = useState(false);
+
+	//delay 2nd state variable by a render cycle to fix tooltip appearing immediately after collapsing
+	useEffect(() => setDelayedCollapse(collapse), [collapse]);
 
 	const panel = (
 		<div
@@ -805,6 +811,7 @@ function Collapsible({
 	let rotationOpen;
 	let rotationClosed;
 	let flexDir;
+	let tooltipDir;
 	let collapsePos;
 	let openRounded;
 
@@ -812,24 +819,28 @@ function Collapsible({
 		rotationOpen = "";
 		rotationClosed = "rotate-180";
 		flexDir = "flex-row";
+		tooltipDir = "tooltip-left";
 		collapsePos = "self-end";
 		openRounded = "rounded-r-none pr-1";
 	} else if (dir === "left") {
 		rotationOpen = "rotate-180";
 		rotationClosed = "";
 		flexDir = "flex-row";
+		tooltipDir = "tooltip-right";
 		collapsePos = "self-start";
 		openRounded = "rounded-l-none pl-1";
 	} else if (dir === "up") {
 		rotationOpen = "-rotate-90";
 		rotationClosed = "rotate-90";
 		flexDir = "flex-col";
+		tooltipDir = "tooltip-bottom";
 		collapsePos = "self-start";
 		openRounded = "rounded-t-none pt-1";
 	} else if (dir === "down") {
 		rotationOpen = "rotate-90";
 		rotationClosed = "-rotate-90";
 		flexDir = "flex-col";
+		tooltipDir = "tooltip-top";
 		collapsePos = "self-end";
 		openRounded = "rounded-b-none pb-1";
 	}
@@ -840,7 +851,8 @@ function Collapsible({
 			<div
 				className={`card bg-base-100 card-xs shadow-sm card-body p-2 self-center justify-center cursor-pointer ${
 					collapse ? "" : openRounded
-				}`}
+				} ${delayedCollapse ? `tooltip ${tooltipDir} tooltip-secondary before:text-primary-content` : ""}`}
+				data-tip={hiddenText}
 				onClick={() => setCollapse(!collapse)}
 			>
 				{collapse ? (
@@ -947,7 +959,7 @@ function LegendControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none !mb-6 flex flex-col gap-2" ref={ref}>
-			<Collapsible>
+			<Collapsible hiddenText="Show Legend">
 				<div className="text-lg flex justify-between items-center gap-2">
 					{titleTable ? (
 						// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
@@ -1141,27 +1153,23 @@ function LegendControl({
 								</div>
 							) : (
 								Object.entries(legendInfo.colorMap).map(([key, color]) => (
-									<div key={key} className="flex gap-2 items-center">
+									<div key={key} className="flex gap-2 items-center ">
 										<div
-											className="tooltip tooltip-left tooltip-secondary before:text-primary-content"
+											className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
 											data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
-										>
-											<div
-												className="aspect-square w-[1em] h-[1em] select-none cursor-pointer"
-												style={{ backgroundColor: color.hex() }}
-												onClick={(e) => {
-													if (legendInfo.hidden?.includes(key)) {
-														setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-														e.currentTarget.style.background = "";
-														e.currentTarget.style.backgroundColor = color.hex();
-													} else {
-														setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-														e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-														e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
-													}
-												}}
-											></div>
-										</div>
+											style={{ backgroundColor: color.hex() }}
+											onClick={(e) => {
+												if (legendInfo.hidden?.includes(key)) {
+													setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
+													e.currentTarget.style.background = "";
+													e.currentTarget.style.backgroundColor = color.hex();
+												} else {
+													setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
+													e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
+													e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+												}
+											}}
+										></div>
 										{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
 											<Link
 												href={`/explore/${
@@ -1256,7 +1264,7 @@ function PointSizeControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
-			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1">
+			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1" hiddenText="Show Point Size Control">
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
 						<ResetButton
@@ -1342,7 +1350,7 @@ function ClusterControl({
 	}
 	return (
 		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
-			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2">
+			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show Cluster Control">
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
 						<ResetButton
