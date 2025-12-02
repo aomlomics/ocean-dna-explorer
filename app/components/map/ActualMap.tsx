@@ -33,6 +33,8 @@ type MapProps =
 			bounds: LatLngBoundsExpression;
 	  };
 
+type Point = { lat: number; lng: number };
+
 type Bounds = [[number, number], [number, number]];
 
 type NullLocation = {
@@ -154,6 +156,39 @@ function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors
 		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
 		.join(",")});`;
+}
+
+function Turn(p1: Point, p2: Point, p3: Point) {
+	const a = (p3.lat - p1.lat) * (p2.lng - p1.lng);
+	const b = (p2.lat - p1.lat) * (p3.lng - p1.lng);
+	return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
+}
+
+function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
+	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
+}
+
+function getMarkerHtml(count: number, valuesCount: number, combined: number, style: string, borderStyle?: string) {
+	const sharedStyles = "h-full w-full rounded-full";
+	const borderStyles = "border border-black";
+	const tooltipStyles = "tooltip tooltip-secondary before:text-primary-content";
+
+	if (count === 1 && !valuesCount) {
+		return `<div class='${sharedStyles} ${borderStyles}' style='${style}'></div>`;
+	} else {
+		if (count === 1) {
+			return `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style='${style}'></div>`;
+		} else {
+			if (borderStyle) {
+				return (
+					`<div class='p-1 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style='${borderStyle}'>` +
+					`<div class='${sharedStyles}' style='${style}'></div>` +
+					`</div>`
+				);
+			}
+			return `<div class='border-4 border-white/40 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style='${style}'></div>`;
+		}
+	}
 }
 
 export default function ActualMap({
@@ -303,27 +338,18 @@ export default function ActualMap({
 			| {
 					type: "polygon";
 					bounds: {
-						ne: { lat: number; lng: number };
-						sw: { lat: number; lng: number };
+						ne: Point;
+						sw: Point;
 					};
-					points: { lat: number; lng: number }[];
+					points: Point[];
 			  }
 			| {
 					type: "circle";
-					center: { lat: number; lng: number };
+					center: Point;
 					radius: number;
 			  }
 		>
 	);
-
-	function getLegendColorWithShapes(loc: Location | LocationWithoutValues) {
-		//check if location is outside any drawn shapes
-		if (Object.keys(shapes).length && pointsInside && pointsInside.find((p) => p[id] === loc[id]) === undefined) {
-			return DEFAULT_OUTSIDE_COLOR;
-		}
-
-		return getLegendColor(legendInfo, loc);
-	}
 
 	function checkShapes(locs = filteredLocations) {
 		const tempPointsInside = [] as Array<Location | LocationWithoutValues>;
@@ -339,14 +365,40 @@ export default function ActualMap({
 							l.decimalLongitude < s.bounds.ne.lng &&
 							l.decimalLongitude > s.bounds.sw.lng
 						) {
-							if (l.values) {
-								tempPointsInside.push(...l.values);
-							} else {
-								tempPointsInside.push(l);
+							//create ray to cast through polygon
+							const raycastLine = [
+								{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
+								{ lat: l.decimalLatitude, lng: l.decimalLongitude }
+							] as [Point, Point];
+
+							//get sides of polygon
+							const sides = [] as [Point, Point][];
+							for (let i = 0; i < s.points.length; i++) {
+								//last point connects to first point
+								if (i === s.points.length - 1) {
+									sides.push([s.points[i], s.points[0]]);
+								} else {
+									sides.push([s.points[i], s.points[i + 1]]);
+								}
 							}
-							break;
-						} else {
-							//TODO: raycast to check if inside polygon (https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon)
+
+							//get number of times the ray intersects with the polygon
+							let numIntersections = 0;
+							for (const s of sides) {
+								if (isIntersecting(...raycastLine, ...s)) {
+									numIntersections++;
+								}
+							}
+
+							if (numIntersections % 2) {
+								//number of intersections is odd, meaning the point lies in the polygon
+								if (l.values) {
+									tempPointsInside.push(...l.values);
+								} else {
+									tempPointsInside.push(l);
+								}
+								break;
+							}
 						}
 					} else if (s.type === "circle") {
 						//check if point inside of circle
@@ -397,26 +449,46 @@ export default function ActualMap({
 					let count = 0;
 					let childrenWithValues = 0;
 					let valuesCount = 0;
+					let outsideShapesCount = 0;
 					const uniqueColors = new Set() as Set<string>;
 					const colorsArray = [] as string[];
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
 
-						if (marker.options.children.props.loc.values) {
+						const loc = marker.options.children.props.loc;
+						if (loc.values) {
 							childrenWithValues++;
-							valuesCount += marker.options.children.props.loc.values.length;
+							valuesCount += loc.values.length;
 
-							for (const val of marker.options.children.props.loc.values) {
-								const color = getLegendColorWithShapes(val);
+							for (const val of loc.values) {
+								//check if location is outside any drawn shapes
+								if (
+									Object.keys(shapes).length &&
+									pointsInside &&
+									pointsInside.find((p) => p[id] === val[id]) === undefined
+								) {
+									outsideShapesCount++;
+								} else {
+									const color = getLegendColor(legendInfo, val);
+									const c = color ? color.hex() : DEFAULT_COLOR.hex();
+									uniqueColors.add(c);
+									colorsArray.push(c);
+								}
+							}
+						} else {
+							//check if location is outside any drawn shapes
+							if (
+								Object.keys(shapes).length &&
+								pointsInside &&
+								pointsInside.find((p) => p[id] === loc[id]) === undefined
+							) {
+								outsideShapesCount++;
+							} else {
+								const color = getLegendColor(legendInfo, loc);
 								const c = color ? color.hex() : DEFAULT_COLOR.hex();
 								uniqueColors.add(c);
 								colorsArray.push(c);
 							}
-						} else {
-							const color = getLegendColorWithShapes(marker.options.children.props.loc);
-							const c = color ? color.hex() : DEFAULT_COLOR.hex();
-							uniqueColors.add(c);
-							colorsArray.push(c);
 						}
 					}
 
@@ -425,52 +497,47 @@ export default function ActualMap({
 					let size =
 						(pointSize || DEFAULT_POINT_SIZE) +
 						(pointSizeStep || DEFAULT_POINT_SIZE_STEP) * (Math.floor(combined).toString().length - 1);
-
-					const sharedStyles = "h-full w-full rounded-full";
-					const borderStyles = "border border-black";
-					const tooltipStyles = "tooltip tooltip-secondary before:text-primary-content";
+					if (count > 1) {
+						//TODO: make border size a percentage of current size
+						size += 5;
+					}
 
 					let html;
-					if (count === 1 && !valuesCount) {
-						const color = chroma.average(colorsArray);
-						html = `<div class='${sharedStyles} ${borderStyles}' style=background-color:${color.hex()};></div>`;
-					} else {
-						if (legendInfo?.mode === "discreet" && uniqueColors.size > 1) {
-							const orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueColors.has(color.hex()));
-							//move first color to end because conic gradient doesn't start at 12 o'clock
-							orderedColors.push(orderedColors.shift() as chroma.Color);
-
-							//account for points outside of drawn shapes
-							if (orderedColors.length !== uniqueColors.size) {
-								orderedColors.push(DEFAULT_OUTSIDE_COLOR);
-							}
-
-							if (count === 1) {
-								html = `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style='background:${getConicGradient(
-									orderedColors
-								)}'></div>`;
-							} else {
-								//TODO: make border size a percentage of current size
-								size += 5;
-								html =
-									`<div class='p-1 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style='background:${getConicGradient(
-										orderedColors.map((color) => color.mix("white", 0.4, "oklab"))
-									)}'>` +
-									`<div class='${sharedStyles}' style='background:${getConicGradient(orderedColors)}'></div>` +
-									`</div>`;
-							}
+					if ((uniqueColors.size === 1 && !outsideShapesCount) || (!uniqueColors.size && outsideShapesCount)) {
+						//only one color, no gradient
+						let color;
+						if (outsideShapesCount) {
+							color = DEFAULT_OUTSIDE_COLOR.hex();
 						} else {
-							//TODO: make it clear when averaging colors that there is a point outside of the drawn shapes
-							const color = chroma.average(colorsArray);
-
-							if (count === 1) {
-								html = `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style=background-color:${color.hex()};></div>`;
-							} else {
-								//TODO: make border size a percentage of current size
-								size += 5;
-								html = `<div class='border-4 border-white/40 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style=background-color:${color.hex()};></div>`;
-							}
+							color = Array.from(uniqueColors)[0];
 						}
+
+						html = getMarkerHtml(count, valuesCount, combined, `background-color:${color}`);
+					} else {
+						//more than one color, display as gradient
+						let orderedColors;
+
+						if (legendInfo?.mode === "discreet") {
+							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueColors.has(color.hex()));
+						} else {
+							orderedColors = Array.from(uniqueColors).map((c) => chroma(c));
+						}
+
+						//move first color to end because conic gradient doesn't start at 12 o'clock
+						orderedColors.push(orderedColors.shift() as chroma.Color);
+
+						//account for points outside of drawn shapes
+						if (outsideShapesCount) {
+							orderedColors.push(DEFAULT_OUTSIDE_COLOR);
+						}
+
+						html = getMarkerHtml(
+							count,
+							valuesCount,
+							combined,
+							`background:${getConicGradient(orderedColors)}`,
+							`background:${getConicGradient(orderedColors.map((color) => color.mix("white", 0.4, "oklab")))}`
+						);
 					}
 
 					return divIcon({
