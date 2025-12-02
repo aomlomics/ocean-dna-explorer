@@ -171,24 +171,27 @@ export default async function Home() {
 					</div>
 				</div> */}
 
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch mb-24">
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-24">
 					{/* Map Section */}
-					<div>
-						<div className="mb-4 text-xl text-base-content">
-							Showing all
-							<span className="text-primary"> Projects</span>
+					<div className="lg:col-span-7">
+						<div className="mb-8 text-2xl text-base-content">
+							<span>Showing all </span>
+							<span className="text-primary">Projects</span>
 						</div>
-						<div className="aspect-video w-full rounded-lg overflow-hidden bg-base-200 shadow-sm">
+						<div className="w-full h-[460px] rounded-lg overflow-hidden bg-base-200 shadow-sm">
 							<Map locations={samples} titleTable="project" cluster clusterRadius={20} />
 						</div>
 					</div>
 
 					{/* Assay Stats Section */}
-					<div>
-						<div className="mb-8 text-xl text-base-content">
-							<span className="text-primary">Assays used Across the Ocean DNA Explorer</span>
+					<div className="lg:col-span-5 flex flex-col">
+						<div className="mb-8 text-2xl text-base-content">
+							<span className="text-primary mr-1">Assays</span>
+							<span>used across the Ocean DNA Explorer</span>
 						</div>
-						<AssayStats assays={uniqueAssays} />
+						<div className="flex-1 flex flex-col justify-between">
+							<AssayStats assays={uniqueAssays} />
+						</div>
 					</div>
 				</div>
 

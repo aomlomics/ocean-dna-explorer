@@ -26,6 +26,8 @@ export async function getSummaryData() {
 				select: { target_gene: true }
 			})) as Assay[];
 
+			// Compute counts for all assays (including those with zero assignments)
+			// so the donut and legend can show real percentages where data exists.
 			for (const a of uniqueAssays) {
 				const countResult = await tx.analysis.findMany({
 					where: { Assay: { target_gene: a.target_gene } },
@@ -34,7 +36,9 @@ export async function getSummaryData() {
 				a.count = countResult.reduce((sum, current) => sum + current._count.Assignments, 0);
 			}
 
-			return { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays };
+			const assaysWithData = uniqueAssays.filter((a) => (a.count ?? 0) > 0);
+
+			return { projectCount, sampleCount, taxaCount, occurrenceCount, uniqueAssays: assaysWithData };
 		},
 		{ timeout: 1 * 60 * 1000 }
 	);

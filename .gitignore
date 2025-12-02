@@ -35,3 +35,6 @@ __pycache__
 
 # prisma (eventually can be removed once Prisma fully migrates to TS)
 /app/generated
+
+# Cursor Local Configuration
+.cursorignore
