@@ -69,13 +69,18 @@ export type NullLocation = {
 	decimalLatitude: number | null;
 	decimalLongitude: number | null;
 	[key: string]: any;
-};
-type LocationWithoutValues = {
+} & { values?: never };
+export type Location = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	[key: string]: any;
+} & { values?: never };
+export type LocationWithValues = {
+	decimalLatitude: number;
+	decimalLongitude: number;
+	values?: Location[];
+	[key: string]: any;
 };
-export type Location = LocationWithoutValues & { values: LocationWithoutValues[] };
 
 declare global {
 	namespace PrismaJson {

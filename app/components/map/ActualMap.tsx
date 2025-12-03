@@ -16,7 +16,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { capitalizeTable } from "@/app/helpers/utils";
-import { Location, LocationWithoutValues } from "@/types/globals";
+import { LocationWithValues, Location, NullLocation } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
@@ -37,12 +37,6 @@ type Point = { lat: number; lng: number };
 
 type Bounds = [[number, number], [number, number]];
 
-type NullLocation = {
-	decimalLatitude: number | null;
-	decimalLongitude: number | null;
-	[key: string]: any;
-};
-
 type LegendInfo =
 	| ({ field: string | string[] } & (
 			| { mode: "discreet"; colorMap: Record<string, Color>; hidden?: string[] }
@@ -56,7 +50,7 @@ const DEFAULT_PALETTE = "YlGnBu";
 const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 10;
 const DEFAULT_CLUSTER_RADIUS = 50;
-const chromaMin = 25;
+const chromaMin = 35;
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -92,7 +86,7 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 
 function getTitleIdValue(
 	titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"],
-	loc: Location | LocationWithoutValues,
+	loc: LocationWithValues | Location,
 	sep = "/"
 ) {
 	if (typeof titleId === "string") {
@@ -109,7 +103,7 @@ function getTitleIdValue(
 	}
 }
 
-function getLegendColor(legendInfo: LegendInfo, loc: Location | LocationWithoutValues) {
+function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Location) {
 	if (legendInfo) {
 		if (legendInfo.mode === "discreet") {
 			const titleIdVal = getTitleIdValue(legendInfo.field, loc);
@@ -126,7 +120,10 @@ function getLegendColor(legendInfo: LegendInfo, loc: Location | LocationWithoutV
 				const range = legendInfo.range as [Date, Date];
 				percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
 			}
-			return chroma.scale(legendInfo.palette)(percent);
+
+			if (percent >= 0 && percent <= 100) {
+				return chroma.scale(legendInfo.palette)(percent);
+			}
 		}
 	}
 
@@ -218,7 +215,9 @@ export default function ActualMap({
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
 	//clump locations if they have identical latlng
-	let filteredLocations = [] as Location[];
+	let filteredLocations = [] as Array<Location | LocationWithValues>;
+	//track points with invalid location data
+	let noLocationPoints = [] as NullLocation[];
 	//calculate starting map view
 	let mapProps = {} as MapProps;
 	//legend options
@@ -243,6 +242,7 @@ export default function ActualMap({
 
 			filteredLocations.push(locations[0] as Location);
 		} else {
+			noLocationPoints.push(locations[0]);
 			mapProps = { bounds: DEFAULT_BOUNDS };
 		}
 	} else {
@@ -255,7 +255,7 @@ export default function ActualMap({
 				!(nullLoc.decimalLatitude! in DeadValueEnum) &&
 				!(nullLoc.decimalLongitude! in DeadValueEnum)
 			) {
-				const loc = nullLoc as Location;
+				const loc = { ...nullLoc } as Location;
 
 				//check if point already exists
 				//don't combine points if they belong to different groups
@@ -275,7 +275,7 @@ export default function ActualMap({
 					if (filteredLocations[foundIndex].values) {
 						filteredLocations[foundIndex].values.push(loc);
 					} else {
-						filteredLocations[foundIndex].values = [filteredLocations[foundIndex], loc];
+						filteredLocations[foundIndex].values = [{ ...filteredLocations[foundIndex] } as Location, loc];
 					}
 				} else {
 					bounds[0][0] = Math.max(loc.decimalLatitude, bounds[0][0]);
@@ -287,8 +287,10 @@ export default function ActualMap({
 						defaultOptions.add(getTitleIdValue(TableMetadata[titleTable].titleField, loc));
 					}
 
-					filteredLocations.push({ ...loc });
+					filteredLocations.push(loc);
 				}
+			} else {
+				noLocationPoints.push(nullLoc);
 			}
 		}
 
@@ -310,7 +312,7 @@ export default function ActualMap({
 		defaultLegend = { field: titleId, mode: "discreet", colorMap };
 
 		//assemble locations object with assigned color and list of locations
-		pointsOrGroups = {} as Record<string, Location[]>;
+		pointsOrGroups = {} as Record<string, LocationWithValues[]>;
 		for (const loc of filteredLocations) {
 			const opt = getTitleIdValue(titleId, loc);
 			if (pointsOrGroups[opt]) {
@@ -324,7 +326,7 @@ export default function ActualMap({
 	}
 	const [legendInfo, setLegendInfo] = useState(defaultLegend);
 	const [loading, setLoading] = useState(false);
-	const [pointsInside, setPointsInside] = useState([] as Array<Location | LocationWithoutValues>);
+	const [pointsInside, setPointsInside] = useState([] as Location[]);
 
 	const [pointSize, setPointSize] = useState(DEFAULT_POINT_SIZE as number | undefined);
 	const [pointSizeStep, setPointSizeStep] = useState(DEFAULT_POINT_SIZE_STEP as number | undefined);
@@ -351,65 +353,71 @@ export default function ActualMap({
 		>
 	);
 
-	function checkShapes(locs = filteredLocations) {
-		const tempPointsInside = [] as Array<Location | LocationWithoutValues>;
+	function checkShapes() {
+		const tempPointsInside = [] as Location[];
 
 		if (Object.keys(shapes).length) {
-			for (const l of locs) {
-				for (const s of Object.values(shapes)) {
-					if (s.type === "polygon") {
-						//check if point is inside bounding box
-						if (
-							l.decimalLatitude < s.bounds.ne.lat &&
-							l.decimalLatitude > s.bounds.sw.lat &&
-							l.decimalLongitude < s.bounds.ne.lng &&
-							l.decimalLongitude > s.bounds.sw.lng
-						) {
-							//create ray to cast through polygon
-							const raycastLine = [
-								{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
-								{ lat: l.decimalLatitude, lng: l.decimalLongitude }
-							] as [Point, Point];
+			for (const l of filteredLocations) {
+				//exclude locations hidden by legend
+				if (
+					!(legendInfo && legendInfo.mode === "discreet" && legendInfo.hidden?.includes(l[legendInfo.field as string]))
+				) {
+					//test every shape
+					for (const s of Object.values(shapes)) {
+						if (s.type === "polygon") {
+							//check if point is inside bounding box
+							if (
+								l.decimalLatitude < s.bounds.ne.lat &&
+								l.decimalLatitude > s.bounds.sw.lat &&
+								l.decimalLongitude < s.bounds.ne.lng &&
+								l.decimalLongitude > s.bounds.sw.lng
+							) {
+								//create ray to cast through polygon
+								const raycastLine = [
+									{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
+									{ lat: l.decimalLatitude, lng: l.decimalLongitude }
+								] as [Point, Point];
 
-							//get sides of polygon
-							const sides = [] as [Point, Point][];
-							for (let i = 0; i < s.points.length; i++) {
-								//last point connects to first point
-								if (i === s.points.length - 1) {
-									sides.push([s.points[i], s.points[0]]);
-								} else {
-									sides.push([s.points[i], s.points[i + 1]]);
+								//get sides of polygon
+								const sides = [] as [Point, Point][];
+								for (let i = 0; i < s.points.length; i++) {
+									//last point connects to first point
+									if (i === s.points.length - 1) {
+										sides.push([s.points[i], s.points[0]]);
+									} else {
+										sides.push([s.points[i], s.points[i + 1]]);
+									}
+								}
+
+								//get number of times the ray intersects with the polygon
+								let numIntersections = 0;
+								for (const s of sides) {
+									if (isIntersecting(...raycastLine, ...s)) {
+										numIntersections++;
+									}
+								}
+
+								if (numIntersections % 2) {
+									//number of intersections is odd, meaning the point lies in the polygon
+									if (l.values) {
+										tempPointsInside.push(...l.values);
+									} else {
+										tempPointsInside.push(l as Location);
+									}
+									break;
 								}
 							}
-
-							//get number of times the ray intersects with the polygon
-							let numIntersections = 0;
-							for (const s of sides) {
-								if (isIntersecting(...raycastLine, ...s)) {
-									numIntersections++;
-								}
-							}
-
-							if (numIntersections % 2) {
-								//number of intersections is odd, meaning the point lies in the polygon
+						} else if (s.type === "circle") {
+							//check if point inside of circle
+							const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
+							if (distance <= s.radius) {
 								if (l.values) {
 									tempPointsInside.push(...l.values);
 								} else {
-									tempPointsInside.push(l);
+									tempPointsInside.push(l as Location);
 								}
 								break;
 							}
-						}
-					} else if (s.type === "circle") {
-						//check if point inside of circle
-						const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
-						if (distance <= s.radius) {
-							if (l.values) {
-								tempPointsInside.push(...l.values);
-							} else {
-								tempPointsInside.push(l);
-							}
-							break;
 						}
 					}
 				}
@@ -436,6 +444,7 @@ export default function ActualMap({
 	}, [drawAlmostReady]);
 
 	useEffect(() => {
+		checkShapes();
 		setLoading(false);
 	}, [legendInfo]);
 
@@ -460,15 +469,15 @@ export default function ActualMap({
 							childrenWithValues++;
 							valuesCount += loc.values.length;
 
-							for (const val of loc.values) {
-								//check if location is outside any drawn shapes
-								if (
-									Object.keys(shapes).length &&
-									pointsInside &&
-									pointsInside.find((p) => p[id] === val[id]) === undefined
-								) {
-									outsideShapesCount++;
-								} else {
+							//check if location is outside any drawn shapes
+							if (
+								Object.keys(shapes).length &&
+								pointsInside &&
+								pointsInside.find((p) => p[id] === loc[id]) === undefined
+							) {
+								outsideShapesCount += loc.values.length;
+							} else {
+								for (const val of loc.values) {
 									const color = getLegendColor(legendInfo, val);
 									const c = color ? color.hex() : DEFAULT_COLOR.hex();
 									uniqueColors.add(c);
@@ -553,8 +562,8 @@ export default function ActualMap({
 	}
 
 	const legendProps = titleTable
-		? { titleTable, points: pointsOrGroups as Record<string, Location[]> }
-		: { titleTable: undefined, points: pointsOrGroups as Location[] };
+		? { titleTable, points: pointsOrGroups as Record<string, LocationWithValues[]> }
+		: { titleTable: undefined, points: pointsOrGroups as LocationWithValues[] };
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
@@ -589,6 +598,16 @@ export default function ActualMap({
 			>
 				<FullscreenControl />
 
+				<div className="leaflet-top leaflet-left pt-25">
+					<NoLocationPointsControl noLocationPoints={noLocationPoints} table={table} id={id} legendInfo={legendInfo} />
+				</div>
+				<div className="leaflet-top leaflet-right pt-37">
+					{pointsInside.length ? (
+						<DrawSelectedControl pointsInside={pointsInside} table={table} id={id} legendInfo={legendInfo} />
+					) : (
+						<></>
+					)}
+				</div>
 				<div className="leaflet-bottom leaflet-left">
 					<ClusterControl
 						cluster={cluster}
@@ -736,6 +755,125 @@ export default function ActualMap({
 	);
 }
 
+function PopupWithSearchBody({
+	table,
+	titleTable,
+	loc,
+	id,
+	legendInfo,
+	className
+}: {
+	table: Uncapitalize<Prisma.ModelName>;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
+	loc: LocationWithValues;
+	id: string;
+	legendInfo: LegendInfo;
+	className?: string;
+}) {
+	const [filter, setFilter] = useState("");
+
+	return (
+		<div className={`font-sans bg-base-100 rounded-lg p-3 ${className}`}>
+			{titleTable && (
+				<Link
+					href={`/explore/${titleTable}/${
+						typeof TableMetadata[titleTable].titleField === "string"
+							? loc[TableMetadata[titleTable].titleField]
+							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
+					}`}
+					className="!w-auto !h-auto !bg-transparent !cursor-pointer !link-primary !link-hover !text-xl"
+				>
+					{typeof TableMetadata[titleTable].titleField === "string"
+						? loc[TableMetadata[titleTable].titleField]
+						: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
+				</Link>
+			)}
+			{loc.values ? (
+				<input
+					type="text"
+					onChange={(e) => setFilter(e.target.value)}
+					value={filter}
+					placeholder={`Filter ${TableMetadata[table].plural}...`}
+					className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
+				/>
+			) : (
+				<></>
+			)}
+			<>
+				{loc.values ? (
+					<>
+						<h2 className="text-primary text-lg">
+							{TableMetadata[table].plural} ({loc.values.length})
+						</h2>
+						<div className="flex flex-col max-h-20 overflow-y-scroll overscroll-contain pr-5">
+							{loc.values.reduce((acc: ReactNode[], l: Location) => {
+								if (l[id].toLowerCase().includes(filter.toLowerCase())) {
+									if (legendInfo) {
+										const color = getLegendColor(legendInfo, l);
+										acc.push(
+											<div key={l[id]} className="flex gap-2 items-center">
+												<div
+													className="aspect-square w-[1em] h-[1em]"
+													style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
+												></div>
+												<Link
+													href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+													className="!cursor-pointer !link-primary !link-hover  !leading-[1.3] text-xs"
+												>
+													{l[id]}
+												</Link>
+											</div>
+										);
+									} else {
+										acc.push(
+											<Link
+												key={l[id]}
+												href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+												className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+											>
+												{l[id]}
+											</Link>
+										);
+									}
+								}
+
+								return acc;
+							}, [])}
+						</div>
+					</>
+				) : (
+					<>
+						<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
+						{legendInfo ? (
+							<div className="flex gap-2 items-center">
+								<div
+									className="aspect-square w-[1em] h-[1em]"
+									style={{
+										backgroundColor: legendInfo ? getLegendColor(legendInfo, loc).hex() : DEFAULT_COLOR.hex()
+									}}
+								></div>
+								<Link
+									href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+									className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+								>
+									{loc[id]}
+								</Link>
+							</div>
+						) : (
+							<Link
+								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+								className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+							>
+								{loc[id]}
+							</Link>
+						)}
+					</>
+				)}
+			</>
+		</div>
+	);
+}
+
 function PopupWithSearch({
 	table,
 	titleTable,
@@ -745,111 +883,14 @@ function PopupWithSearch({
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
-	loc: Location;
+	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
 }) {
-	const [filter, setFilter] = useState("");
-
 	return (
 		<Popup className="map-popup">
-			<div className="font-sans bg-base-100 points[i]-4 rounded-lg p-3 pt-5 overscroll-contain">
-				{titleTable && (
-					<Link
-						href={`/explore/${titleTable}/${
-							typeof TableMetadata[titleTable].titleField === "string"
-								? loc[TableMetadata[titleTable].titleField]
-								: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
-						}`}
-						className="link link-primary link-hover text-xl"
-					>
-						{typeof TableMetadata[titleTable].titleField === "string"
-							? loc[TableMetadata[titleTable].titleField]
-							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join(" / ")}
-					</Link>
-				)}
-				{loc.values ? (
-					<input
-						type="text"
-						onChange={(e) => setFilter(e.target.value)}
-						value={filter}
-						placeholder={`Filter ${TableMetadata[table].plural}...`}
-						className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
-					/>
-				) : (
-					<></>
-				)}
-				<>
-					{loc.values ? (
-						<>
-							<h2 className="text-primary text-lg">
-								{TableMetadata[table].plural} ({loc.values.length})
-							</h2>
-							<div className="flex flex-col max-h-20 overflow-y-scroll pr-5">
-								{loc.values.reduce((acc: ReactNode[], l: LocationWithoutValues) => {
-									if (l[id].toLowerCase().includes(filter.toLowerCase())) {
-										if (legendInfo) {
-											const color = getLegendColor(legendInfo, l);
-											acc.push(
-												<div key={l[id]} className="flex gap-2 items-center">
-													<div
-														className="aspect-square w-[1em] h-[1em]"
-														style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
-													></div>
-													<Link
-														href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-														className="link link-primary link-hover"
-													>
-														{l[id]}
-													</Link>
-												</div>
-											);
-										} else {
-											acc.push(
-												<Link
-													key={l[id]}
-													href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-													className="link link-primary link-hover"
-												>
-													{l[id]}
-												</Link>
-											);
-										}
-									}
-
-									return acc;
-								}, [])}
-							</div>
-						</>
-					) : (
-						<>
-							<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
-							{legendInfo ? (
-								<div className="flex gap-2 items-center">
-									<div
-										className="aspect-square w-[1em] h-[1em]"
-										style={{
-											backgroundColor: legendInfo ? getLegendColor(legendInfo, loc).hex() : DEFAULT_COLOR.hex()
-										}}
-									></div>
-									<Link
-										href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-										className="link link-primary link-hover"
-									>
-										{loc[id]}
-									</Link>
-								</div>
-							) : (
-								<Link
-									href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-									className="link link-primary link-hover"
-								>
-									{loc[id]}
-								</Link>
-							)}
-						</>
-					)}
-				</>
+			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] bg-base-100 shadow-sm p-2">
+				<PopupWithSearchBody table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
 			</div>
 		</Popup>
 	);
@@ -857,17 +898,19 @@ function PopupWithSearch({
 
 function Collapsible({
 	children,
+	defaultCollapse = false,
 	hiddenText = "Show",
 	dir = "right",
 	className = ""
 }: {
 	children: ReactNode;
+	defaultCollapse?: boolean;
 	hiddenText?: string;
 	dir?: "right" | "left" | "up" | "down";
 	className?: string;
 }) {
-	const [collapse, setCollapse] = useState(false);
-	const [delayedCollapse, setDelayedCollapse] = useState(false);
+	const [collapse, setCollapse] = useState(defaultCollapse);
+	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
 
 	//delay 2nd state variable by a render cycle to fix tooltip appearing immediately after collapsing
 	useEffect(() => setDelayedCollapse(collapse), [collapse]);
@@ -1013,8 +1056,8 @@ function LegendControl({
 	legendOptions: string[];
 	table: Uncapitalize<Prisma.ModelName>;
 } & (
-	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, Location[]> }
-	| { titleTable?: undefined; points: Location[] }
+	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
+	| { titleTable?: undefined; points: LocationWithValues[] }
 )) {
 	const ref = useRef<HTMLDivElement>(null);
 
@@ -1055,22 +1098,22 @@ function LegendControl({
 									setLoading(true);
 									await new Promise((resolve) => setTimeout(resolve, 1));
 
-									const options = new Set() as Set<any>;
-									for (const loc of points) {
-										if (loc.values) {
-											for (const val of loc.values) {
-												options.add(val[field]);
-											}
-										} else {
-											options.add(loc[field]);
-										}
-									}
-									const optionsArray = Array.from(options).sort();
-
 									const shape = TableMetadata[table].schema.shape;
 									const type = getZodType(shape[field as keyof typeof shape]).type;
 
 									if (type === "string" || type === "DeadBoolean") {
+										const options = new Set() as Set<any>;
+										for (const loc of points) {
+											if (loc.values) {
+												for (const val of loc.values) {
+													options.add(val[field]);
+												}
+											} else {
+												options.add(loc[field]);
+											}
+										}
+										const optionsArray = Array.from(options).sort();
+
 										//check if invalid number of options
 										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
 											setLegendInfo({ field, mode: "discreet", colorMap: {} });
@@ -1088,27 +1131,77 @@ function LegendControl({
 
 											setLegendInfo({ field, mode: "discreet", colorMap });
 										}
-									} else if (type === "integer" || type === "float" || type === "date") {
-										//ignore DeadValues
-										const parsedOptions = optionsArray.reduce((acc, opt) => {
-											if (!DeadValueNumbers.includes(opt)) {
-												acc.push(opt);
-											}
+									} else if (type === "integer" || type === "float") {
+										let parser;
+										if (type === "integer") {
+											parser = parseInt;
+										} else if (type === "float") {
+											parser = parseFloat;
+										}
 
-											return acc;
-										}, [] as number[]);
+										const options = new Set() as Set<any>;
+										for (const loc of points) {
+											if (loc.values) {
+												for (const val of loc.values) {
+													if (!DeadValueNumbers.includes(val[field])) {
+														options.add(val[field]);
+													}
+												}
+											} else {
+												if (!DeadValueNumbers.includes(loc[field])) {
+													options.add(loc[field]);
+												}
+											}
+										}
+										const optionsArray = Array.from(options).sort();
 
 										//check if invalid number of options
-										if (parsedOptions.length === 0 || (parsedOptions.length === 1 && parsedOptions[0] == null)) {
+										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
 											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-										} else if (parsedOptions.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [parsedOptions[0]]: DEFAULT_COLOR } });
+										} else if (optionsArray.length === 1) {
+											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
 										} else {
 											//valid
 											setLegendInfo({
 												field,
 												mode: "gradient",
-												range: [parsedOptions[0], parsedOptions[parsedOptions.length - 1]],
+												range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
+												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE
+											});
+										}
+									} else if (type === "date") {
+										const options = new Set() as Set<any>;
+										for (const loc of points) {
+											if (loc.values) {
+												for (const val of loc.values) {
+													const time = val[field].getTime();
+													if (!DeadValueNumbers.includes(time)) {
+														options.add(time);
+													}
+												}
+											} else {
+												const time = loc[field].getTime();
+												if (!DeadValueNumbers.includes(time)) {
+													options.add(time);
+												}
+											}
+										}
+										const optionsArray = Array.from(options).sort();
+
+										//check if invalid number of options
+										if (
+											optionsArray.length === 0 ||
+											(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
+										) {
+											setLegendInfo({ field, mode: "discreet", colorMap: {} });
+										} else if (optionsArray.length === 1) {
+											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+										} else {
+											//valid
+											setLegendInfo({
+												field,
+												mode: "gradient",
+												range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
 												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE
 											});
 										}
@@ -1184,7 +1277,7 @@ function LegendControl({
 												acc.push(
 													<li key={scaleName} className="w-full">
 														<a
-															className="!w-full !bg-base-200 !flex items-center justify-center !rounded-md !p-1 font-semibold"
+															className="!w-auto !bg-base-200 !flex items-center justify-center !rounded-md !p-1 font-semibold"
 															style={{
 																backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
 															}}
@@ -1210,7 +1303,7 @@ function LegendControl({
 				</div>
 
 				{legendInfo ? (
-					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-50 overflow-y-auto overflow-x-hidden">
+					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-30 overflow-y-auto overflow-x-hidden">
 						{legendInfo.mode === "discreet" ? (
 							Object.keys(legendInfo.colorMap).length === 0 ? (
 								<div className="flex gap-2 items-center">
@@ -1252,7 +1345,7 @@ function LegendControl({
 														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
 													)
 												}/${encodeURIComponent(key)}`}
-												className={`!w-auto !h-auto !bg-transparent !link !link-primary !link-hover !text-xs ${
+												className={`!w-auto !h-auto !bg-transparent !cursor-pointer !link-primary !link-hover !text-xs ${
 													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
 												}`}
 											>
@@ -1273,7 +1366,8 @@ function LegendControl({
 						) : legendInfo.mode === "gradient" ? (
 							<div>
 								<div
-									className="w-full flex items-center justify-center rounded-md p-2"
+									className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
+									// data-tip={legendInfo.palette}
 									style={{
 										backgroundImage: `linear-gradient(to right, ${chroma.brewer[
 											legendInfo.palette as keyof typeof chroma.brewer
@@ -1338,7 +1432,12 @@ function PointSizeControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
-			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1" hiddenText="Show Point Size Control">
+			<Collapsible
+				dir="left"
+				defaultCollapse
+				className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1"
+				hiddenText="Show Point Size Control"
+			>
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
 						<ResetButton
@@ -1425,7 +1524,7 @@ function ClusterControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
-			<Collapsible dir="left" className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show Cluster Control">
+			<Collapsible dir="left" defaultCollapse className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show Cluster Control">
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
 						<ResetButton
@@ -1457,6 +1556,91 @@ function ClusterControl({
 						}}
 					/>
 				</div>
+			</Collapsible>
+		</div>
+	);
+}
+
+function DrawSelectedControl({
+	pointsInside,
+	table,
+	id,
+	legendInfo
+}: {
+	pointsInside: Location[];
+	table: Uncapitalize<Prisma.ModelName>;
+	id: string;
+	legendInfo: LegendInfo;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+			DomEvent.disableScrollPropagation(ref.current);
+		}
+	}, []);
+
+	return (
+		<div className="leaflet-control" ref={ref}>
+			<Collapsible hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`} className="gap-0">
+				<div className="px-3 pt-1 text-primary text-lg">Selected With Shapes</div>
+				<PopupWithSearchBody
+					table={table}
+					id={id}
+					legendInfo={legendInfo}
+					loc={{
+						decimalLatitude: NaN,
+						decimalLongitude: NaN,
+						values: pointsInside
+					}}
+					className="pt-0"
+				/>
+			</Collapsible>
+		</div>
+	);
+}
+
+function NoLocationPointsControl({
+	noLocationPoints,
+	table,
+	id,
+	legendInfo
+}: {
+	noLocationPoints: NullLocation[];
+	table: Uncapitalize<Prisma.ModelName>;
+	id: string;
+	legendInfo: LegendInfo;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+			DomEvent.disableScrollPropagation(ref.current);
+		}
+	}, []);
+
+	return (
+		<div className="leaflet-control" ref={ref}>
+			<Collapsible
+				dir="left"
+				defaultCollapse
+				hiddenText={`Show ${TableMetadata[table].plural} with no location data`}
+				className="gap-0"
+			>
+				<div className="px-3 pt-1 text-primary text-lg">No Location Data</div>
+				<PopupWithSearchBody
+					table={table}
+					id={id}
+					legendInfo={legendInfo}
+					loc={{
+						decimalLatitude: NaN,
+						decimalLongitude: NaN,
+						values: noLocationPoints as Location[] //doesn't matter here
+					}}
+					className="pt-0"
+				/>
 			</Collapsible>
 		</div>
 	);
