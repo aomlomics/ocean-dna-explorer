@@ -771,9 +771,23 @@ function PopupWithSearchBody({
 	className?: string;
 }) {
 	const [filter, setFilter] = useState("");
+	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
+
+	useEffect(() => {
+		if (loc.values) {
+			const tempFilteredValues = [] as Location[];
+			for (const l of loc.values) {
+				if (l[id].toLowerCase().includes(filter.toLowerCase())) {
+					tempFilteredValues.push(l);
+				}
+			}
+
+			setFilteredValues(tempFilteredValues);
+		}
+	}, [filter]);
 
 	return (
-		<div className={`font-sans bg-base-100 rounded-lg p-3 ${className}`}>
+		<div className={`font-sans [:where(&)]:bg-base-100 [:where(&)]:rounded-lg [:where(&)]:p-3 ${className}`}>
 			{titleTable && (
 				<Link
 					href={`/explore/${titleTable}/${
@@ -803,42 +817,39 @@ function PopupWithSearchBody({
 				{loc.values ? (
 					<>
 						<h2 className="text-primary text-lg">
-							{TableMetadata[table].plural} ({loc.values.length})
+							{TableMetadata[table].plural} ({filteredValues!.length})
 						</h2>
-						<div className="flex flex-col max-h-20 overflow-y-scroll overscroll-contain pr-5">
-							{loc.values.reduce((acc: ReactNode[], l: Location) => {
-								if (l[id].toLowerCase().includes(filter.toLowerCase())) {
-									if (legendInfo) {
-										const color = getLegendColor(legendInfo, l);
-										acc.push(
-											<div key={l[id]} className="flex gap-2 items-center">
-												<div
-													className="aspect-square w-[1em] h-[1em]"
-													style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
-												></div>
-												<Link
-													href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-													className="!cursor-pointer !link-primary !link-hover  !leading-[1.3] text-xs"
-												>
-													{l[id]}
-												</Link>
-											</div>
-										);
-									} else {
-										acc.push(
+						<div className="flex flex-col max-h-15 overflow-y-scroll overscroll-contain pr-5">
+							{filteredValues!.map((l) => {
+								if (legendInfo) {
+									const color = getLegendColor(legendInfo, l);
+
+									return (
+										<div key={l[id]} className="flex gap-2 items-center">
+											<div
+												className="aspect-square w-[1em] h-[1em]"
+												style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
+											></div>
 											<Link
-												key={l[id]}
 												href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-												className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+												className="!cursor-pointer !link-primary !link-hover  !leading-[1.3] text-xs"
 											>
 												{l[id]}
 											</Link>
-										);
-									}
+										</div>
+									);
+								} else {
+									return (
+										<Link
+											key={l[id]}
+											href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+											className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+										>
+											{l[id]}
+										</Link>
+									);
 								}
-
-								return acc;
-							}, [])}
+							})}
 						</div>
 					</>
 				) : (
@@ -917,7 +928,7 @@ function Collapsible({
 
 	const panel = (
 		<div
-			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] [:where(&)]:bg-base-100 [:where(&)]:shadow-sm [:where(&)]:p-2 ${className} ${
+			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] [:where(&)]:gap-0 [:where(&)]:bg-base-100 [:where(&)]:shadow-sm [:where(&)]:p-2 ${className} ${
 				collapse ? "hidden" : ""
 			}`}
 		>
@@ -1076,7 +1087,7 @@ function LegendControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none !mb-6 flex flex-col gap-2" ref={ref}>
-			<Collapsible hiddenText="Show Legend">
+			<Collapsible hiddenText="Show Legend" defaultCollapse={!legendInfo} className="py-3">
 				<div className="text-lg flex justify-between items-center gap-2">
 					{titleTable ? (
 						// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
@@ -1213,7 +1224,7 @@ function LegendControl({
 										});
 									}
 								}}
-								className="select select-xs select-primary select-ghost text-sm"
+								className="select select-xs select-primary select-ghost text-sm mr-3"
 							>
 								<option disabled={true} value="">
 									Select field
@@ -1303,7 +1314,7 @@ function LegendControl({
 				</div>
 
 				{legendInfo ? (
-					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-30 overflow-y-auto overflow-x-hidden">
+					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-25 overflow-y-auto overflow-x-hidden">
 						{legendInfo.mode === "discreet" ? (
 							Object.keys(legendInfo.colorMap).length === 0 ? (
 								<div className="flex gap-2 items-center">
@@ -1583,7 +1594,7 @@ function DrawSelectedControl({
 
 	return (
 		<div className="leaflet-control" ref={ref}>
-			<Collapsible hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`} className="gap-0">
+			<Collapsible hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}>
 				<div className="px-3 pt-1 text-primary text-lg">Selected With Shapes</div>
 				<PopupWithSearchBody
 					table={table}
@@ -1623,12 +1634,7 @@ function NoLocationPointsControl({
 
 	return (
 		<div className="leaflet-control" ref={ref}>
-			<Collapsible
-				dir="left"
-				defaultCollapse
-				hiddenText={`Show ${TableMetadata[table].plural} with no location data`}
-				className="gap-0"
-			>
+			<Collapsible dir="left" defaultCollapse hiddenText={`Show ${TableMetadata[table].plural} with no location data`}>
 				<div className="px-3 pt-1 text-primary text-lg">No Location Data</div>
 				<PopupWithSearchBody
 					table={table}
