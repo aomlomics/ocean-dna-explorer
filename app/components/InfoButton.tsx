@@ -3,7 +3,7 @@ import React from "react";
 export default function InfoButton({
 	infoText,
 	dir = "tooltip-top",
-	className
+	className = ""
 }: {
 	infoText: string;
 	dir?: "tooltip-top" | "tooltip-bottom" | "tooltip-left" | "tooltip-right";
@@ -11,7 +11,7 @@ export default function InfoButton({
 }) {
 	return (
 		<div
-			className={`tooltip flex items-center before:!bg-base-200 before:!text-base-content before:!border-base-300 pb-0.5 ${dir} ${className}`}
+			className={`tooltip flex items-center [:where(&)]:before:bg-base-200 [:where(&)]:before:text-base-content [:where(&)]:before:border-base-300 [:where(&)]:pb-0.5 ${dir} ${className}`}
 			data-tip={infoText}
 		>
 			<svg

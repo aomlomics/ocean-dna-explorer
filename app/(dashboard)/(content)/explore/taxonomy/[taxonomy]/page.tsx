@@ -31,60 +31,61 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 
-	const { dbTaxonomy, samples } = await prisma.$transaction(async (tx) => {
-		const dbTaxonomy = await tx.taxonomy.findUnique({
-			where: {
-				taxonomy
-			},
-			include: {
-				Assignments: {
-					distinct: ["analysis_run_name"],
-					select: {
-						analysis_run_name: true,
-						Analysis: {
-							select: {
-								isPrivate: true
-							}
+	const dbTaxonomy = await prisma.taxonomy.findUnique({
+		where: {
+			taxonomy
+		},
+		include: {
+			Assignments: {
+				distinct: ["analysis_run_name"],
+				select: {
+					analysis_run_name: true,
+					Analysis: {
+						select: {
+							isPrivate: true
 						}
 					}
 				}
 			}
-		});
-		const occurrences = await tx.occurrence.findMany({
-			where: {
-				Feature: {
-					is: {
-						Assignments: {
-							every: {
-								taxonomy
-							}
-						}
-					}
-				}
-			},
-			distinct: ["samp_name"],
-			select: {
-				samp_name: true
-			}
-		});
-
-		const samples = await tx.sample.findMany({
-			where: {
-				samp_name: {
-					in: occurrences.map((occ) => occ.samp_name)
-				}
-			},
-			select: {
-				samp_name: true,
-				decimalLatitude: true,
-				decimalLongitude: true
-			}
-		});
-
-		return { dbTaxonomy, samples };
+		}
 	});
 
-	if (!dbTaxonomy || !samples.length) return <>Taxonomy not found</>;
+	async function mapQuery() {
+		return await prisma.$transaction(async (tx) => {
+			const occurrences = await tx.occurrence.findMany({
+				where: {
+					Feature: {
+						is: {
+							Assignments: {
+								every: {
+									taxonomy
+								}
+							}
+						}
+					}
+				},
+				distinct: ["samp_name"],
+				select: {
+					samp_name: true
+				}
+			});
+
+			return await tx.sample.findMany({
+				where: {
+					samp_name: {
+						in: occurrences.map((occ) => occ.samp_name)
+					}
+				},
+				select: {
+					samp_name: true,
+					decimalLatitude: true,
+					decimalLongitude: true
+				}
+			});
+		});
+	}
+
+	if (!dbTaxonomy) return <>Taxonomy not found</>;
 
 	// Get the lowest rank name (species or genus typically)
 	const displayName = dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ");
@@ -103,9 +104,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<div className="aspect-square p-6 flex items-center justify-center">
 						<PhyloPic taxonomy={dbTaxonomy} />
 					</div>
-					<div className="py-3 px-4 text-center">
+					{/* <div className="py-3 px-4 text-center">
 						<div className="text-base-content/80 text-sm mt-1">{samples.length} occurrences found in NODE</div>
-					</div>
+					</div> */}
 				</div>
 
 				{/* Taxonomy section */}
@@ -118,9 +119,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<div className="p-4 border-b border-base-content/10">
 						<h2 className="text-base-content/80 font-medium">Which Samples was this Taxon found?</h2>
 					</div>
-					<div className="w-full aspect-5/2">
-						<Map locations={samples} cluster />
-					</div>
+					<Map query={mapQuery} cluster className="rounded-t-none" />
 				</div>
 			</div>
 

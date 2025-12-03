@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { unfocus } from "@/app/helpers/utils";
 
 export default function TabDropdown({
 	tabName,
@@ -17,19 +18,6 @@ export default function TabDropdown({
 
 	// Special case for home route to prevent it from matching all paths
 	const isActive = route === "/" ? pathname === "/" : pathname.startsWith(route);
-
-	//black magic do not touch
-	function __unfocus() {
-		const el = document.getElementById("unfocusButton");
-		if (el) {
-			el.focus();
-			el.blur();
-		}
-	}
-
-	function unfocus() {
-		__unfocus();
-	}
 
 	return (
 		<div
@@ -49,10 +37,7 @@ export default function TabDropdown({
 			>
 				{dropdown.map(({ label, href }) => (
 					<li key={label}>
-						<Link
-							href={href}
-							className={`rounded-lg ${isActive ? "hover:bg-white/10" : "hover:bg-base-100/50"}`}
-						>
+						<Link href={href} className={`rounded-lg ${isActive ? "hover:bg-white/10" : "hover:bg-base-100/50"}`}>
 							{label}
 						</Link>
 					</li>
