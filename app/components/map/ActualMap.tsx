@@ -817,7 +817,8 @@ function PopupWithSearchBody({
 				{loc.values ? (
 					<>
 						<h2 className="text-primary text-lg">
-							{TableMetadata[table].plural} ({filteredValues!.length})
+							{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
+							{filteredValues!.length})
 						</h2>
 						<div className="flex flex-col max-h-15 overflow-y-scroll overscroll-contain pr-5">
 							{filteredValues!.map((l) => {

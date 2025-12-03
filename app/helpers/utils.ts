@@ -239,7 +239,7 @@ export function uncapitalizeTable(table: Prisma.ModelName) {
 }
 
 export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
-	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
 }
 
 export function getSubmissionFileName(value: string) {
