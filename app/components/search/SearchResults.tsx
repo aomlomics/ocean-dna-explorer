@@ -51,6 +51,7 @@ export default function SearchResults() {
 								"asvFileUrl_ODE",
 								"occurrenceFileUrl_ODE"
 							]}
+							className="p-0"
 						/>
 					)
 				) : (

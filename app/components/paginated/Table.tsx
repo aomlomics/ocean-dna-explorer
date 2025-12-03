@@ -26,7 +26,8 @@ export default function Table({
 	filterHeadersAtStart,
 	defaultTake = 50,
 	showUserDefined,
-	ignoreParams
+	ignoreParams,
+	className
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	where?: Record<string, string | number>;
@@ -37,6 +38,7 @@ export default function Table({
 	defaultTake?: number;
 	showUserDefined?: boolean;
 	ignoreParams?: string[];
+	className?: string;
 }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -271,8 +273,11 @@ export default function Table({
 		setPendingFilters(count);
 	}
 
+	const baseWrapperClasses = "bg-base-100 border-base-300 rounded-box h-full w-full";
+	const wrapperClasses = className ? `${baseWrapperClasses} ${className}` : `${baseWrapperClasses} p-6`;
+
 	return (
-		<div className="bg-base-100 border-base-300 rounded-box p-6 h-full w-full">
+		<div className={wrapperClasses}>
 			<form
 				id={`${table}TableForm`}
 				onSubmit={applyFilters}
