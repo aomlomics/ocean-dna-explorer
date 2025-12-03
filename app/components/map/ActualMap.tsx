@@ -48,7 +48,7 @@ const DEFAULT_COLOR = chroma("red");
 const DEFAULT_OUTSIDE_COLOR = chroma("black");
 const DEFAULT_PALETTE = "YlGnBu";
 const DEFAULT_POINT_SIZE = 15;
-const DEFAULT_POINT_SIZE_STEP = 10;
+const DEFAULT_POINT_SIZE_STEP = 5;
 const DEFAULT_CLUSTER_RADIUS = 50;
 const chromaMin = 35;
 
@@ -84,20 +84,16 @@ function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	return d * 1000; // meters
 }
 
-function getTitleIdValue(
-	titleId: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"],
-	loc: LocationWithValues | Location,
-	sep = "/"
-) {
-	if (typeof titleId === "string") {
-		return loc[titleId];
+function getLegendValue(field: string | string[], loc: LocationWithValues | Location, sep = "/") {
+	if (typeof field === "string") {
+		return loc[field];
 	} else {
 		let joined = "";
-		for (let i = 0; i < titleId.length; i++) {
+		for (let i = 0; i < field.length; i++) {
 			if (i) {
 				joined += sep;
 			}
-			joined += loc[titleId[i]];
+			joined += loc[field[i]];
 		}
 		return joined;
 	}
@@ -106,7 +102,7 @@ function getTitleIdValue(
 function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Location) {
 	if (legendInfo) {
 		if (legendInfo.mode === "discreet") {
-			const titleIdVal = getTitleIdValue(legendInfo.field, loc);
+			const titleIdVal = getLegendValue(legendInfo.field, loc);
 			if (titleIdVal) {
 				return legendInfo.colorMap[titleIdVal];
 			}
@@ -148,7 +144,6 @@ function getTextColorHex(hex: string) {
 	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
 }
 
-//TODO: make gradient scale with number of options
 function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors
 		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
@@ -166,24 +161,25 @@ function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
 }
 
 function getMarkerHtml(count: number, valuesCount: number, combined: number, style: string, borderStyle?: string) {
-	const sharedStyles = "h-full w-full rounded-full";
-	const borderStyles = "border border-black";
-	const tooltipStyles = "tooltip tooltip-secondary before:text-primary-content";
+	const sharedClassName = "h-full w-full rounded-full";
+	const borderClassName = "border border-black";
+	const tooltipClassName = "tooltip tooltip-secondary before:text-primary-content";
 
 	if (count === 1 && !valuesCount) {
-		return `<div class='${sharedStyles} ${borderStyles}' style='${style}'></div>`;
+		return `<div class='${sharedClassName} ${borderClassName}' style='${style}'></div>`;
 	} else {
 		if (count === 1) {
-			return `<div class='${sharedStyles} ${borderStyles} ${tooltipStyles}' data-tip='${valuesCount}' style='${style}'></div>`;
+			return `<div class='${sharedClassName} ${borderClassName} ${tooltipClassName}' data-tip='${valuesCount}' style='${style}'></div>`;
 		} else {
 			if (borderStyle) {
 				return (
-					`<div class='p-1 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style='${borderStyle}'>` +
-					`<div class='${sharedStyles}' style='${style}'></div>` +
+					`<div class='p-1 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${borderStyle}'>` +
+					`<div class='${sharedClassName}' style='${style}'></div>` +
 					`</div>`
 				);
 			}
-			return `<div class='border-4 border-white/40 ${sharedStyles} ${tooltipStyles}' data-tip='${combined}' style='${style}'></div>`;
+
+			return `<div class='border-4 border-white/40 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${style}'></div>`;
 		}
 	}
 }
@@ -284,7 +280,7 @@ export default function ActualMap({
 					bounds[1][1] = Math.min(loc.decimalLongitude, bounds[1][1]);
 
 					if (titleTable) {
-						defaultOptions.add(getTitleIdValue(TableMetadata[titleTable].titleField, loc));
+						defaultOptions.add(getLegendValue(TableMetadata[titleTable].titleField, loc));
 					}
 
 					filteredLocations.push(loc);
@@ -314,7 +310,7 @@ export default function ActualMap({
 		//assemble locations object with assigned color and list of locations
 		pointsOrGroups = {} as Record<string, LocationWithValues[]>;
 		for (const loc of filteredLocations) {
-			const opt = getTitleIdValue(titleId, loc);
+			const opt = getLegendValue(titleId, loc);
 			if (pointsOrGroups[opt]) {
 				pointsOrGroups[opt].push(loc);
 			} else {
@@ -459,8 +455,8 @@ export default function ActualMap({
 					let childrenWithValues = 0;
 					let valuesCount = 0;
 					let outsideShapesCount = 0;
-					const uniqueColors = new Set() as Set<string>;
-					const colorsArray = [] as string[];
+					const uniqueColors = new Set() as Set<chroma.Color>;
+					const colorsArray = [] as chroma.Color[];
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
 
@@ -479,7 +475,7 @@ export default function ActualMap({
 							} else {
 								for (const val of loc.values) {
 									const color = getLegendColor(legendInfo, val);
-									const c = color ? color.hex() : DEFAULT_COLOR.hex();
+									const c = color ? color : DEFAULT_COLOR;
 									uniqueColors.add(c);
 									colorsArray.push(c);
 								}
@@ -494,7 +490,7 @@ export default function ActualMap({
 								outsideShapesCount++;
 							} else {
 								const color = getLegendColor(legendInfo, loc);
-								const c = color ? color.hex() : DEFAULT_COLOR.hex();
+								const c = color ? color : DEFAULT_COLOR;
 								uniqueColors.add(c);
 								colorsArray.push(c);
 							}
@@ -516,20 +512,26 @@ export default function ActualMap({
 						//only one color, no gradient
 						let color;
 						if (outsideShapesCount) {
-							color = DEFAULT_OUTSIDE_COLOR.hex();
+							color = DEFAULT_OUTSIDE_COLOR;
 						} else {
 							color = Array.from(uniqueColors)[0];
 						}
 
-						html = getMarkerHtml(count, valuesCount, combined, `background-color:${color}`);
+						html = getMarkerHtml(
+							count,
+							valuesCount,
+							combined,
+							`background-color:${color.hex()};`,
+							`background-color:${color.alpha(0.5).hex()};`
+						);
 					} else {
 						//more than one color, display as gradient
 						let orderedColors;
 
 						if (legendInfo?.mode === "discreet") {
-							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueColors.has(color.hex()));
+							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueColors.has(color));
 						} else {
-							orderedColors = Array.from(uniqueColors).map((c) => chroma(c));
+							orderedColors = Array.from(uniqueColors);
 						}
 
 						//move first color to end because conic gradient doesn't start at 12 o'clock
@@ -544,8 +546,9 @@ export default function ActualMap({
 							count,
 							valuesCount,
 							combined,
-							`background:${getConicGradient(orderedColors)}`,
-							`background:${getConicGradient(orderedColors.map((color) => color.mix("white", 0.4, "oklab")))}`
+							`background:${getConicGradient(orderedColors)};`,
+							`background:${getConicGradient(orderedColors.map((color) => color.alpha(0.5)))};`
+							// `background:${getConicGradient(orderedColors.map((color) => color.mix("white", 0.4, "oklab")))};`
 						);
 					}
 
@@ -761,7 +764,8 @@ function PopupWithSearchBody({
 	loc,
 	id,
 	legendInfo,
-	className
+	className,
+	listClassName
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -769,6 +773,7 @@ function PopupWithSearchBody({
 	id: string;
 	legendInfo: LegendInfo;
 	className?: string;
+	listClassName?: string;
 }) {
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
@@ -777,14 +782,12 @@ function PopupWithSearchBody({
 		if (loc.values) {
 			const tempFilteredValues = [] as Location[];
 			for (const l of loc.values) {
-				if (l[id].toLowerCase().includes(filter.toLowerCase())) {
-					tempFilteredValues.push(l);
-				}
+				tempFilteredValues.push(l);
 			}
 
 			setFilteredValues(tempFilteredValues);
 		}
-	}, [filter]);
+	}, [filter, loc.values]);
 
 	return (
 		<div className={`font-sans [:where(&)]:bg-base-100 [:where(&)]:rounded-lg [:where(&)]:p-3 ${className}`}>
@@ -820,7 +823,9 @@ function PopupWithSearchBody({
 							{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
 							{filteredValues!.length})
 						</h2>
-						<div className="flex flex-col max-h-15 overflow-y-scroll overscroll-contain pr-5">
+						<div
+							className={`flex flex-col [:where(&)]:max-h-15 overflow-y-scroll overscroll-contain [:where(&)]:pr-5 ${listClassName}`}
+						>
 							{filteredValues!.map((l) => {
 								if (legendInfo) {
 									const color = getLegendColor(legendInfo, l);
@@ -1088,7 +1093,7 @@ function LegendControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none !mb-6 flex flex-col gap-2" ref={ref}>
-			<Collapsible hiddenText="Show Legend" defaultCollapse={!legendInfo} className="py-3">
+			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} className="py-3">
 				<div className="text-lg flex justify-between items-center gap-2">
 					{titleTable ? (
 						// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
@@ -1448,7 +1453,7 @@ function PointSizeControl({
 				dir="left"
 				defaultCollapse
 				className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1"
-				hiddenText="Show Point Size Control"
+				hiddenText="Show point size control"
 			>
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
@@ -1536,7 +1541,7 @@ function ClusterControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
-			<Collapsible dir="left" defaultCollapse className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show Cluster Control">
+			<Collapsible dir="left" defaultCollapse className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show cluster control">
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
 						<ResetButton
@@ -1647,6 +1652,7 @@ function NoLocationPointsControl({
 						values: noLocationPoints as Location[] //doesn't matter here
 					}}
 					className="pt-0"
+					listClassName="max-h-20"
 				/>
 			</Collapsible>
 		</div>
