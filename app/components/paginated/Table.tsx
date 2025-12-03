@@ -413,7 +413,7 @@ export default function Table({
 							<tr>
 								{/* Title Header Cell */}
 								{typeof title === "string" ? (
-									<th className="p-0 pr-2 z-40">
+									<th className="px-3 py-2 z-40">
 										<label className="form-control w-full max-w-xs text-lg">
 											<div>
 												<span>{title}</span>

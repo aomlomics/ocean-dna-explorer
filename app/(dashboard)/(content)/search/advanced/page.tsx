@@ -19,8 +19,8 @@ export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-    const router = useRouter();
-    const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
+	const router = useRouter();
+	const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
 		const table = searchParams.get("table") as Prisma.ModelName;
 		if (table && TableNames.includes(uncapitalizeTable(table))) {
 			return table;
@@ -54,12 +54,12 @@ export default function AdvancedSearch() {
 					setFilterIds(advancedParsed.map(getFilterIds));
 				}
 
-                const paramTable = searchParams.get("table") as Prisma.ModelName | null;
-                if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
-                    setSearchTable(paramTable);
-                } else {
-                    setSearchTable("Project");
-                }
+				const paramTable = searchParams.get("table") as Prisma.ModelName | null;
+				if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
+					setSearchTable(paramTable);
+				} else {
+					setSearchTable("Project");
+				}
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -79,51 +79,52 @@ export default function AdvancedSearch() {
 	function getQueryDescription() {
 		// Use formUpdateTrigger to force re-evaluation
 		const _ = formUpdateTrigger;
-		
+
 		if (!formRef.current || filterIds.length === 0) return "";
 
 		function describeFilter(suffix: string): string {
 			if (!formRef.current) return "";
-			
+
 			const type = formRef.current[`type_${suffix}`]?.value as "relation" | "field";
 			const relation = type === "relation" ? formRef.current[`relation_${suffix}`]?.value : "";
 			const field = formRef.current[`field_${suffix}`]?.value as string;
 			const mode = formRef.current[`mode_${suffix}`]?.value as QueryMode;
-			
+
 			if (!field) return "";
-			
+
 			const tableName = relation || searchTable;
 			const prefix = relation ? `${relation}.` : "";
-			
-			const modeText = {
-				contains: "contains",
-				equals: "equals",
-				startsWith: "starts with",
-				endsWith: "ends with",
-				gt: ">",
-				gte: ">=",
-				lt: "<",
-				lte: "<=",
-				range: "is between"
-			}[mode] || mode;
-			
+
+			const modeText =
+				{
+					contains: "contains",
+					equals: "equals",
+					startsWith: "starts with",
+					endsWith: "ends with",
+					gt: ">",
+					gte: ">=",
+					lt: "<",
+					lte: "<=",
+					range: "is between"
+				}[mode] || mode;
+
 			let filterValue = formRef.current[`filter_${suffix}`]?.value || "";
 			if (mode === "range") {
 				const gte = formRef.current[`filter_${suffix}_gte`]?.value || "";
 				const lte = formRef.current[`filter_${suffix}_lte`]?.value || "";
 				filterValue = `${gte} and ${lte}`;
 			}
-			
+
 			return `${prefix}${field} ${modeText} "${filterValue}"`;
 		}
 
 		function recurse(ids: FilterIds, prevSuffix = "", isTopLevel = true): string {
 			const parts: string[] = [];
-			
+
 			ids.forEach((id, i) => {
 				if (id === 0) return;
 				const suffix = `${prevSuffix && prevSuffix + "|"}${i}`;
-				
+
 				if (id === 1) {
 					const desc = describeFilter(suffix);
 					if (desc) parts.push(desc);
@@ -132,7 +133,7 @@ export default function AdvancedSearch() {
 					if (orDesc) parts.push(`(${orDesc})`);
 				}
 			});
-			
+
 			return parts.join(isTopLevel ? " AND " : " OR ");
 		}
 
@@ -224,8 +225,8 @@ export default function AdvancedSearch() {
 		}
 	}
 
-    function reset() {
-        setSearchTable("Project");
+	function reset() {
+		setSearchTable("Project");
 		setFilterIds([]);
 		setParamsArray([]);
 		router.push(pathname);
@@ -243,21 +244,21 @@ export default function AdvancedSearch() {
 		router.push(`${pathname}?${params.toString()}`);
 	}
 
-    return (
-        <div className="grid grid-cols-1 gap-y-4 pt-4">
-            {searchTable && (
-                <header>
-                    <h1 className="text-4xl font-normal text-base-content">
-                        <span className="">Advanced Search</span>{" "}
-                        <span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
-                        <span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
-                    </h1>
-                </header>
-            )}
-            <div className="w-full space-y-4 text-base-content/80">
-                {searchTable && <p>{TableMetadata[searchTable].description}</p>}
-                <ExploreTabButtons activeTable={searchTable} />
-            </div>
+	return (
+		<div className="grid grid-cols-1 gap-y-4 pt-4">
+			{searchTable && (
+				<header>
+					<h1 className="text-4xl font-normal text-base-content">
+						<span className="">Advanced Search</span>{" "}
+						<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+						<span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
+					</h1>
+				</header>
+			)}
+			<div className="w-full space-y-4 text-base-content/80">
+				{searchTable && <p>{TableMetadata[searchTable].description}</p>}
+				<ExploreTabButtons activeTable={searchTable} />
+			</div>
 
 			<form
 				ref={formRef}
@@ -266,133 +267,141 @@ export default function AdvancedSearch() {
 					e.preventDefault();
 					search();
 				}}
-				onChange={() => setFormUpdateTrigger(prev => prev + 1)}
+				onChange={() => setFormUpdateTrigger((prev) => prev + 1)}
 			>
-                <div className="bg-base-100 py-6 rounded-lg">
-                        <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
-                            <span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
-								1
-							</span>
-                            <span>Select a table to search</span>
-						</h2>
-						<p className="mb-8">Select the table that you want to filter on and see at the bottom of the page.</p>
-						<div className="w-1/4">
-							<select
-								value={searchTable}
-								className="select select-bordered w-full"
-								onChange={(e) => {
-									setSearchTable(e.target.value as Prisma.ModelName);
-									setFilterIds([]);
-									setParamsArray([]);
-								}}
-								required
-							>
-								{TableNames.map((table) => (
-									<option key={table} value={table}>
-										{TableMetadata[table as Prisma.ModelName].plural}
-									</option>
-								))}
-							</select>
-						</div>
-				</div>
-
-                {searchTable && (
-					<>
-                        <div className="bg-base-100 py-6 rounded-lg">
-                                <h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
-									<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
-										2
-									</span>
-									<span>Add Filters and/or Relations</span>
-									<div className="flex items-center gap-2 bg-base-100 rounded-lg px-3 py-2 cursor-pointer hover:bg-base-300 transition-colors" onClick={() => helpModalRef.current?.showModal()}>
-										<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
-											?
-										</span>
-										<span className="text-sm">Help me use this</span>
-									</div>
-								</h2>
-                                <p className="mb-8">
-                                    Add filters for the selected table, using filters based on the data fields. To include criteria from related tables, switch the type to relation, choose the related table, then pick the field and condition. Each filter and/or relation (or each row of the menu below) is combined with AND logic. You can also add OR groups to your filters.
-                                </p>
-                                <div className="text-sm overflow-x-auto overflow-hidden border border-base-300 rounded-lg p-4">
-                                    <div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
-                                        <div>Type</div>
-                                        <div>Relation</div>
-                                        <div>Field</div>
-                                        <div>Filter</div>
-                                    </div>
-
-                                    <FilterSection
-                                        key={JSON.stringify(paramsArray)}
-                                        searchTable={searchTable}
-                                        filterIds={filterIds}
-                                        paramsArray={paramsArray}
-                                        onChange={(prev) => setFilterIds(prev)}
-                                    />
-						</div>
-				</div>
-				
 				<div className="bg-base-100 py-6 rounded-lg">
 					<h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
 						<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
-							3
+							1
 						</span>
-						<span>Review Your Query</span>
+						<span>Select a table to search</span>
 					</h2>
-					<p className="mb-8">A plain-text representation of the query that will be performed when you click Search.</p>
-					{getQueryDescription() ? (
-						<p className="text-primary">{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}</p>
-					) : (
-						<p className="text-base-content/50 italic">Build your query, and you can view a plain-text representation here...</p>
-					)}
-				</div>
-				
-				<div className="flex items-center justify-start gap-4 mt-2">
-					<button type="submit" className="btn btn-primary btn-lg gap-2">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							strokeWidth={2}
-							stroke="currentColor"
-							className="w-5 h-5"
+					<p className="mb-8">Select the table that you want to filter on and see at the bottom of the page.</p>
+					<div className="w-1/4">
+						<select
+							value={searchTable}
+							className="select select-bordered w-full"
+							onChange={(e) => {
+								setSearchTable(e.target.value as Prisma.ModelName);
+								setFilterIds([]);
+								setParamsArray([]);
+							}}
+							required
 						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-							/>
-						</svg>
-						Search
-					</button>
-					<button type="button" className="btn btn-error btn-lg gap-2" onClick={() => reset()}>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							strokeWidth={1.5}
-							stroke="currentColor"
-							className="w-5 h-5"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M6 18L18 6M6 6l12 12"
-							/>
-						</svg>
-						Clear
-					</button>
+							{TableNames.map((table) => (
+								<option key={table} value={table}>
+									{TableMetadata[table as Prisma.ModelName].plural}
+								</option>
+							))}
+						</select>
+					</div>
 				</div>
-				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
+
+				{searchTable && (
+					<>
+						<div className="bg-base-100 py-6 rounded-lg">
+							<h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+								<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+									2
+								</span>
+								<span>Add Filters and/or Relations</span>
+								<div
+									className="flex items-center gap-2 bg-base-100 rounded-lg px-3 py-2 cursor-pointer hover:bg-base-300 transition-colors"
+									onClick={() => helpModalRef.current?.showModal()}
+								>
+									<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold text-xl">
+										?
+									</span>
+									<span className="text-sm">Help me use this</span>
+								</div>
+							</h2>
+							<p className="mb-8">
+								Add filters for the selected table, using filters based on the data fields. To include criteria from
+								related tables, switch the type to relation, choose the related table, then pick the field and
+								condition. Each filter and/or relation (or each row of the menu below) is combined with AND logic. You
+								can also add OR groups to your filters.
+							</p>
+							<div className="text-sm overflow-x-auto overflow-hidden border border-base-300 rounded-lg p-4">
+								<div className="grid grid-cols-[20%_20%_20%_35%_5%] text-center mb-4">
+									<div>Type</div>
+									<div>Relation</div>
+									<div>Field</div>
+									<div>Filter</div>
+								</div>
+
+								<FilterSection
+									key={JSON.stringify(paramsArray)}
+									searchTable={searchTable}
+									filterIds={filterIds}
+									paramsArray={paramsArray}
+									onChange={(prev) => setFilterIds(prev)}
+								/>
+							</div>
+						</div>
+
+						<div className="bg-base-100 py-6 rounded-lg">
+							<h2 className="text-2xl font-normal flex items-center gap-4 mb-2">
+								<span className="bg-base-300 text-base-content rounded-md w-8 h-8 flex items-center justify-center font-semibold">
+									3
+								</span>
+								<span>Review Your Query</span>
+							</h2>
+							<p className="mb-8">
+								A plain-text representation of the query that will be performed when you click Search.
+							</p>
+							{getQueryDescription() ? (
+								<p className="text-primary">
+									{getQueryDescription().replace("Searching for ", "").replace(" where: ", " where: ")}
+								</p>
+							) : (
+								<p className="text-base-content/50 italic">
+									Build your query, and you can view a plain-text representation here...
+								</p>
+							)}
+						</div>
+
+						<div className="flex items-center justify-start gap-4 mt-2">
+							<button type="submit" className="btn btn-primary btn-lg gap-2">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									strokeWidth={2}
+									stroke="currentColor"
+									className="w-5 h-5"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+									/>
+								</svg>
+								Search
+							</button>
+							<button type="button" className="btn btn-error btn-lg gap-2" onClick={() => reset()}>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									strokeWidth={1.5}
+									stroke="currentColor"
+									className="w-5 h-5"
+								>
+									<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+								Clear
+							</button>
+						</div>
+						{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
 					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
 						<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
 					</div>
 				</div> */}
-			</>
-		)}
-	</form>
+					</>
+				)}
+			</form>
 
 			<Modal ref={helpModalRef} className="max-h-[85vh] overflow-y-auto my-8">
 				<div className="p-6">
@@ -401,26 +410,24 @@ export default function AdvancedSearch() {
 						<div>
 							<h4 className="font-semibold text-lg mb-2">Using the Filters and Relations</h4>
 							<p className="text-base-content/80">
-								Each filter row you add is combined with <span className="font-semibold">AND</span> logic.
-								For example, if you add two filters, the search will find records that match{" "}
-								<span className="italic">both</span> conditions.
+								Each filter row you add is combined with <span className="font-semibold">AND</span> logic. For example,
+								if you add two filters, the search will find records that match <span className="italic">both</span>{" "}
+								conditions.
 							</p>
 						</div>
 
 						<div>
 							<h4 className="font-semibold text-lg mb-2">Using OR</h4>
 							<p className="text-base-content/80 mb-2">
-								The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a
-								combined statement that is true if <span className="italic">any one</span> of its conditions
-								is met. The OR group itself is treated like a normal filter and is combined with other
-								filters using <span className="font-semibold">AND</span> logic.
+								The <span className="font-semibold">"+ Add OR"</span> button creates an OR group—a combined statement
+								that is true if <span className="italic">any one</span> of its conditions is met. The OR group itself is
+								treated like a normal filter and is combined with other filters using{" "}
+								<span className="font-semibold">AND</span> logic.
 							</p>
 							<div className="bg-base-200 p-3 rounded-md">
 								<p className="font-mono text-sm mb-2">Example with OR:</p>
 								<p className="font-mono text-sm">Filter A AND (Filter B OR Filter C)</p>
-								<p className="text-xs text-base-content/70 mt-1">
-									(finds records matching A, and either B or C)
-								</p>
+								<p className="text-xs text-base-content/70 mt-1">(finds records matching A, and either B or C)</p>
 							</div>
 							<div className="bg-base-200 p-3 rounded-md mt-2">
 								<p className="font-mono text-sm mb-2">Example with multiple ORs:</p>
@@ -434,8 +441,8 @@ export default function AdvancedSearch() {
 						<div>
 							<h4 className="font-semibold text-lg mb-2">Using Nested OR</h4>
 							<p className="text-base-content/80 mb-2">
-								Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to
-								create an OR within an OR. This is an advanced feature for complex queries.
+								Inside an OR group, you can click <span className="font-semibold">"+ Add Nested OR"</span> to create an
+								OR within an OR. This is an advanced feature for complex queries.
 							</p>
 							<div className="bg-base-200 p-3 rounded-md">
 								<p className="font-mono text-sm mb-2">Example with Nested OR:</p>
@@ -449,8 +456,8 @@ export default function AdvancedSearch() {
 						<div className="bg-base-200 p-3 rounded-md border border-base-300">
 							<p className="text-base-content/80">
 								<strong>Tip:</strong> Nested ORs are rarely needed for most searches. In most cases, you'll want to use{" "}
-								<span className="font-semibold">"+ Add Filter"</span> to add more conditions to an OR group
-								rather than creating a Nested OR.
+								<span className="font-semibold">"+ Add Filter"</span> to add more conditions to an OR group rather than
+								creating a Nested OR.
 							</p>
 						</div>
 					</div>
@@ -467,10 +474,10 @@ function FilterSection({
 	paramsArray,
 	onChange,
 	prevSuffix = "",
-	className,
+	className = "",
 	label,
 	hideInnerDeletes,
-	isSubSection = false,
+	isSubSection = false
 }: {
 	searchTable: string;
 	filterIds: FilterIds;
@@ -484,7 +491,7 @@ function FilterSection({
 }) {
 	let visibleItemCount = 0;
 	return (
-		<div className={`flex flex-col gap-2 ${className}`}>
+		<div className={`flex flex-col [:where(&)]:gap-2 ${className}`}>
 			{filterIds.reduce((acc: ReactNode[], id: FilterIds[0], i: number) => {
 				if (id) {
 					if (visibleItemCount > 0 && label) {
@@ -514,7 +521,10 @@ function FilterSection({
 						const orFilters = id as FilterIds;
 						const isNested = isSubSection;
 						acc.push(
-							<div key={i} className={`rounded-lg p-3 ${zebraClass} relative ${isNested ? 'border-2 border-primary/30' : ''}`}>
+							<div
+								key={i}
+								className={`rounded-lg p-3 ${zebraClass} relative ${isNested ? "border-2 border-primary/30" : ""}`}
+							>
 								{orFilters.filter((f) => f === 1).length <= 1 && (
 									<button
 										className="btn btn-xs btn-square btn-primary absolute top-6 right-4 z-10"
@@ -548,18 +558,18 @@ function FilterSection({
 			}, [])}
 
 			<div className="flex justify-center items-center gap-5 mt-4">
-				<button
-					type="button"
-					className="btn btn-md btn-primary"
-					onClick={() => onChange([...filterIds, 1])}
-				>
+				<button type="button" className="btn btn-md btn-primary" onClick={() => onChange([...filterIds, 1])}>
 					+ Add Filter
 				</button>
 				<button
 					type="button"
 					className="btn btn-md btn-primary"
 					onClick={() => onChange([...filterIds, [1]])}
-					title={isSubSection ? "Add a nested OR group - creates an OR within this OR group" : "Add an OR group - combines conditions with OR logic"}
+					title={
+						isSubSection
+							? "Add a nested OR group - creates an OR within this OR group"
+							: "Add an OR group - combines conditions with OR logic"
+					}
 				>
 					{isSubSection ? "+ Add Nested OR" : "+ Add OR"}
 				</button>
@@ -574,7 +584,7 @@ function Filter({
 	searchTable,
 	onDelete,
 	hideDelete,
-	className,
+	className = ""
 }: {
 	nameSuffix: string;
 	paramsArray?: ParamsArrayRelation | ParamsArrayField;
@@ -611,7 +621,7 @@ function Filter({
 
 	return (
 		<div
-			className={`grid grid-cols-[15%_22%_22%_1fr_auto] gap-x-2 items-center p-3 rounded-md ${className}`}
+			className={`grid grid-cols-[15%_22%_22%_1fr_auto] items-center [:where(&)]:gap-x-2 [:where(&)]:p-3 [:where(&)]:rounded-md ${className}`}
 		>
 			<div className="pr-2">
 				<select
@@ -723,7 +733,7 @@ function InputElement({
 	table,
 	field,
 	defaultMode,
-	defaultValue,
+	defaultValue
 }: {
 	nameSuffix: string;
 	table: Prisma.ModelName;
