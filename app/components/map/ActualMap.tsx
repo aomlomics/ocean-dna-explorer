@@ -40,7 +40,7 @@ type Bounds = [[number, number], [number, number]];
 type LegendInfo =
 	| ({ field: string | string[] } & (
 			| { mode: "discreet"; colorMap: Record<string, Color>; hidden?: string[] }
-			| { mode: "gradient"; range: [number, number] | [Date, Date]; palette: string }
+			| { mode: "gradient"; range: [number, number] | [Date, Date]; palette: string; someNoValue?: boolean }
 	  ))
 	| undefined;
 
@@ -107,18 +107,20 @@ function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Locati
 				return legendInfo.colorMap[titleIdVal];
 			}
 		} else if (legendInfo.mode === "gradient") {
-			const val = loc[legendInfo.field as string] as number | Date;
-			let percent;
-			if (typeof val === "number") {
-				const range = legendInfo.range as [number, number];
-				percent = (val - range[0]) / (range[1] - range[0]);
-			} else {
-				const range = legendInfo.range as [Date, Date];
-				percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
-			}
+			const val = loc[legendInfo.field as string] as number | Date | null;
+			if (val) {
+				let percent;
+				if (typeof val === "number") {
+					const range = legendInfo.range as [number, number];
+					percent = (val - range[0]) / (range[1] - range[0]);
+				} else {
+					const range = legendInfo.range as [Date, Date];
+					percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
+				}
 
-			if (percent >= 0 && percent <= 100) {
-				return chroma.scale(legendInfo.palette)(percent);
+				if (percent >= 0 && percent <= 100) {
+					return chroma.scale(legendInfo.palette)(percent);
+				}
 			}
 		}
 	}
@@ -798,7 +800,7 @@ function PopupWithSearchBody({
 							? loc[TableMetadata[titleTable].titleField]
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
 					}`}
-					className="!w-auto !h-auto !bg-transparent !cursor-pointer !link-primary !link-hover !text-xl"
+					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl!"
 				>
 					{typeof TableMetadata[titleTable].titleField === "string"
 						? loc[TableMetadata[titleTable].titleField]
@@ -838,7 +840,7 @@ function PopupWithSearchBody({
 											></div>
 											<Link
 												href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-												className="!cursor-pointer !link-primary !link-hover  !leading-[1.3] text-xs"
+												className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs"
 											>
 												{l[id]}
 											</Link>
@@ -849,7 +851,7 @@ function PopupWithSearchBody({
 										<Link
 											key={l[id]}
 											href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-											className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+											className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
 										>
 											{l[id]}
 										</Link>
@@ -871,7 +873,7 @@ function PopupWithSearchBody({
 								></div>
 								<Link
 									href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-									className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+									className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
 								>
 									{loc[id]}
 								</Link>
@@ -879,7 +881,7 @@ function PopupWithSearchBody({
 						) : (
 							<Link
 								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-								className="!cursor-pointer !link-primary !link-hover !border-none !leading-[1.3] text-xs"
+								className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
 							>
 								{loc[id]}
 							</Link>
@@ -1092,7 +1094,7 @@ function LegendControl({
 	}
 
 	return (
-		<div className="leaflet-control leaflet-bar !border-none !mb-6 flex flex-col gap-2" ref={ref}>
+		<div className="leaflet-control leaflet-bar border-none! mb-6! flex flex-col gap-2" ref={ref}>
 			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} className="py-3">
 				<div className="text-lg flex justify-between items-center gap-2">
 					{titleTable ? (
@@ -1119,6 +1121,7 @@ function LegendControl({
 									const type = getZodType(shape[field as keyof typeof shape]).type;
 
 									if (type === "string" || type === "DeadBoolean") {
+										//get unique options
 										const options = new Set() as Set<any>;
 										for (const loc of points) {
 											if (loc.values) {
@@ -1129,7 +1132,7 @@ function LegendControl({
 												options.add(loc[field]);
 											}
 										}
-										const optionsArray = Array.from(options).sort();
+										const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
 
 										//check if invalid number of options
 										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
@@ -1149,28 +1152,27 @@ function LegendControl({
 											setLegendInfo({ field, mode: "discreet", colorMap });
 										}
 									} else if (type === "integer" || type === "float") {
-										let parser;
-										if (type === "integer") {
-											parser = parseInt;
-										} else if (type === "float") {
-											parser = parseFloat;
-										}
-
+										//get unique options
 										const options = new Set() as Set<any>;
+										let someNoValue = false;
 										for (const loc of points) {
 											if (loc.values) {
 												for (const val of loc.values) {
-													if (!DeadValueNumbers.includes(val[field])) {
+													if (!(val[field] == null && DeadValueNumbers.includes(val[field]))) {
 														options.add(val[field]);
+													} else {
+														someNoValue = true;
 													}
 												}
 											} else {
-												if (!DeadValueNumbers.includes(loc[field])) {
+												if (!(loc[field] == null && DeadValueNumbers.includes(loc[field]))) {
 													options.add(loc[field]);
+												} else {
+													someNoValue = true;
 												}
 											}
 										}
-										const optionsArray = Array.from(options).sort();
+										const optionsArray = Array.from(options).sort((a, b) => a - b);
 
 										//check if invalid number of options
 										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
@@ -1183,27 +1185,42 @@ function LegendControl({
 												field,
 												mode: "gradient",
 												range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
-												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE
+												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+												someNoValue
 											});
 										}
 									} else if (type === "date") {
+										//get unique options and cast to epoch timestamp
 										const options = new Set() as Set<any>;
+										let someNoValue = false;
 										for (const loc of points) {
 											if (loc.values) {
 												for (const val of loc.values) {
-													const time = val[field].getTime();
-													if (!DeadValueNumbers.includes(time)) {
-														options.add(time);
+													if (val[field]) {
+														const time = val[field].getTime();
+														if (!DeadValueNumbers.includes(time)) {
+															options.add(time);
+														} else {
+															someNoValue = true;
+														}
+													} else {
+														someNoValue = true;
 													}
 												}
 											} else {
-												const time = loc[field].getTime();
-												if (!DeadValueNumbers.includes(time)) {
-													options.add(time);
+												if (loc[field]) {
+													const time = loc[field].getTime();
+													if (!DeadValueNumbers.includes(time)) {
+														options.add(time);
+													} else {
+														someNoValue = true;
+													}
+												} else {
+													someNoValue = true;
 												}
 											}
 										}
-										const optionsArray = Array.from(options).sort();
+										const optionsArray = Array.from(options).sort((a, b) => a - b);
 
 										//check if invalid number of options
 										if (
@@ -1219,7 +1236,8 @@ function LegendControl({
 												field,
 												mode: "gradient",
 												range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
-												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE
+												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+												someNoValue
 											});
 										}
 									} else {
@@ -1285,7 +1303,7 @@ function LegendControl({
 									/>
 								</div>
 
-								<div className="max-h-75 !overflow-y-scroll overscroll-contain flex flex-col gap-2">
+								<div className="max-h-75 overflow-y-scroll! overscroll-contain flex flex-col gap-2">
 									{Object.keys(chroma.brewer)
 										.sort()
 										.reduce((acc, scaleName) => {
@@ -1294,7 +1312,7 @@ function LegendControl({
 												acc.push(
 													<li key={scaleName} className="w-full">
 														<a
-															className="!w-auto !bg-base-200 !flex items-center justify-center !rounded-md !p-1 font-semibold"
+															className="w-auto! bg-base-200! flex! items-center justify-center rounded-md! p-1! font-semibold"
 															style={{
 																backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
 															}}
@@ -1325,7 +1343,7 @@ function LegendControl({
 							Object.keys(legendInfo.colorMap).length === 0 ? (
 								<div className="flex gap-2 items-center">
 									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
-									<div className="text-xs">No values</div>
+									<div className="text-xs">No value</div>
 								</div>
 							) : Object.keys(legendInfo.colorMap).length === 1 ? (
 								<div className="flex gap-2 items-center">
@@ -1362,7 +1380,7 @@ function LegendControl({
 														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
 													)
 												}/${encodeURIComponent(key)}`}
-												className={`!w-auto !h-auto !bg-transparent !cursor-pointer !link-primary !link-hover !text-xs ${
+												className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
 													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
 												}`}
 											>
@@ -1381,7 +1399,7 @@ function LegendControl({
 								))
 							)
 						) : legendInfo.mode === "gradient" ? (
-							<div>
+							<div className="flex flex-col items-center">
 								<div
 									className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
 									// data-tip={legendInfo.palette}
@@ -1391,13 +1409,10 @@ function LegendControl({
 										].join(",")})`
 									}}
 								/>
-								<div className="flex justify-between">
+								<div className="flex justify-between w-full">
 									{typeof legendInfo.range[0] === "number" ? (
 										<>
 											<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
-											<span>
-												{Math.round(((legendInfo.range[0] + (legendInfo.range[1] as number)) / 2) * 1000) / 1000}
-											</span>
 											<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
 										</>
 									) : (
@@ -1406,15 +1421,21 @@ function LegendControl({
 										//when dates are all on the same day, time must be displayed as well
 										<>
 											<span>{legendInfo.range[0].toLocaleDateString()}</span>
-											<span>
-												{new Date(
-													(legendInfo.range[0].getTime() + (legendInfo.range[1] as Date).getTime()) / 2
-												).toLocaleDateString()}
-											</span>
 											<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
 										</>
 									)}
 								</div>
+								{legendInfo.someNoValue ? (
+									<div className="flex gap-2 items-center">
+										<div
+											className="aspect-square w-[1em] h-[1em]"
+											style={{ backgroundColor: DEFAULT_COLOR.hex() }}
+										></div>
+										<div className="text-xs">No value</div>
+									</div>
+								) : (
+									<></>
+								)}
 							</div>
 						) : (
 							<></>
@@ -1448,7 +1469,7 @@ function PointSizeControl({
 	}, []);
 
 	return (
-		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
+		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
 			<Collapsible
 				dir="left"
 				defaultCollapse
@@ -1540,7 +1561,7 @@ function ClusterControl({
 	}
 
 	return (
-		<div className="leaflet-control leaflet-bar !border-none" ref={ref}>
+		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
 			<Collapsible dir="left" defaultCollapse className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show cluster control">
 				<div className="flex justify-between">
 					<div className="flex items-center gap-1 mt-1">
@@ -1666,7 +1687,7 @@ function LoadingControl({ loading }: { loading: boolean }) {
 
 	return (
 		<div className="leaflet-top leaflet-left w-full h-full">
-			<div className="leaflet-control leaflet-bar !border-none w-full h-full !m-0">
+			<div className="leaflet-control leaflet-bar border-none! w-full h-full m-0!">
 				<div className="bg-base-100 w-full h-full opacity-10" />
 			</div>
 		</div>
