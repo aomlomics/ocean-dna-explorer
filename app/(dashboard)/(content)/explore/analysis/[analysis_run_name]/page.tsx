@@ -42,13 +42,7 @@ export default async function Analysis_run_name({
 			Occurrences: {
 				distinct: ["samp_name"],
 				select: {
-					Sample: {
-						select: {
-							samp_name: true,
-							decimalLatitude: true,
-							decimalLongitude: true
-						}
-					}
+					Sample: true
 				}
 			}
 		}
@@ -203,6 +197,16 @@ export default async function Analysis_run_name({
 			<div className="mt-8">
 				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
 				<div role="tablist" className="tabs tabs-lifted">
+					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
+					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						<Map
+							locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
+							cluster
+							legend
+							legendOmit={["project_id"]}
+						/>
+					</div>
+
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />

@@ -239,7 +239,7 @@ export function uncapitalizeTable(table: Prisma.ModelName) {
 }
 
 export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
-	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
 }
 
 export function getSubmissionFileName(value: string) {
@@ -255,4 +255,17 @@ export function getSubmissionFileName(value: string) {
 		//do nothing
 		return value;
 	}
+}
+
+//black magic do not touch
+function __unfocus() {
+	const el = document.getElementById("unfocusButton");
+	if (el) {
+		el.focus();
+		el.blur();
+	}
+}
+
+export function unfocus() {
+	__unfocus();
 }

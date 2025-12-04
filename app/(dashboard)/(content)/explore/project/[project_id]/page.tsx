@@ -25,13 +25,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					Analyses: true
 				}
 			},
-			Samples: {
-				select: {
-					samp_name: true,
-					decimalLatitude: true,
-					decimalLongitude: true
-				}
-			},
+			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
@@ -140,7 +134,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-8">
 					<div className="h-[600px]">
-						<Map locations={project.Samples} cluster draw />
+						<Map locations={project.Samples} cluster legend draw legendOmit={["project_id"]} />
 					</div>
 
 					{/* Project Metadata and Top Taxonomy/Assays Section */}

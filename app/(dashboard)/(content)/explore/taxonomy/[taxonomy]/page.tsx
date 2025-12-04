@@ -32,8 +32,8 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 
-	const { dbTaxonomy, samples } = await prisma.$transaction(async (tx) => {
-		const dbTaxonomy = await tx.taxonomy.findUnique({
+	const {dbTaxonomy, samples} = await prisma.$transaction(async (tx) => {
+		const dbTaxonomy = await prisma.taxonomy.findUnique({
 			where: {
 				taxonomy
 			},
@@ -44,61 +44,75 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						analysis_run_name: true,
 						Analysis: {
 							select: {
-								isPrivate: true
+								project_id: true
 							}
 						}
 					}
 				}
 			}
-		});
-		const occurrences = await tx.occurrence.findMany({
+		})
+		
+		const samples = await prisma.sample.findMany({
 			where: {
-				Feature: {
-					is: {
-						Assignments: {
-							every: {
-								taxonomy
-							}
-						}
-					}
+				project_id: {
+					in: Array.from(new Set(dbTaxonomy?.Assignments.reduce((acc, a) => [...acc, a.Analysis.project_id], [] as string[])))
 				}
 			},
-			distinct: ["samp_name"],
 			select: {
 				samp_name: true
 			}
-		});
-
-		const samples = await tx.sample.findMany({
-			where: {
-				samp_name: {
-					in: occurrences.map((occ) => occ.samp_name)
-				}
-			},
-			select: {
-				samp_name: true,
-				project_id: true,
-				decimalLatitude: true,
-				decimalLongitude: true
-			}
-		});
-
-		return { dbTaxonomy, samples };
+		})
+	
+		return {dbTaxonomy, samples}
 	});
 
-	if (!dbTaxonomy || !samples.length) return <>Taxonomy not found</>;
+	async function mapQuery() {
+		return await prisma.$transaction(async (tx) => {
+			const occurrences = await tx.occurrence.findMany({
+				where: {
+					Feature: {
+						is: {
+							Assignments: {
+								every: {
+									taxonomy
+								}
+							}
+						}
+					}
+				},
+				distinct: ["samp_name"],
+				select: {
+					samp_name: true
+				}
+			});
+
+			return await tx.sample.findMany({
+				where: {
+					samp_name: {
+						in: occurrences.map((occ) => occ.samp_name)
+					}
+				},
+				select: {
+					samp_name: true,
+					project_id: true,
+					decimalLatitude: true,
+					decimalLongitude: true
+				}
+			});
+		});
+	}
+
+	if (!dbTaxonomy) return <>Taxonomy not found</>;
 
 	// Get the lowest rank name (species or genus typically)
 	const displayName = dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ");
-	const isPrivate = dbTaxonomy.Assignments.some((a) => a.Analysis.isPrivate);
 
 	// Get unique project IDs for display
-	const uniqueProjects = [...new Set(samples.map(s => s.project_id))];
+	const uniqueProjects = [...new Set(dbTaxonomy.Assignments.map(a => a.Analysis.project_id))];
 	const samplesText = samples.length === 1 ? '1 sample' : `${samples.length} samples`;
 	const projectsText = uniqueProjects.length === 1 ? '1 project' : `${uniqueProjects.length} projects`;
 
 	// Build search URLs - using Assignment/Occurrence tables directly
-	// Can't use deep relations, so search the intermediate tables
 	const assignmentFilter = JSON.stringify([["taxonomy", "equals", taxonomy]]);
 	const encodedFilter = assignmentFilter.replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/,/g, "%2C");
 	const projectSearchUrl = `/search?table=assignment&advanced=${encodedFilter}`;
@@ -111,7 +125,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip={TableMetadata.taxonomy.description}>
 						{displayName}
 					</h1>
-					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70">
 					Found in {samplesText} across {projectsText}
@@ -124,7 +137,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				<div className="space-y-6">
 					{/* Map */}
 					<div className="w-full h-[350px]">
-						<Map locations={samples} cluster />
+						<Map query={mapQuery} cluster />
 					</div>
 
 					{/* Cards Below Map */}

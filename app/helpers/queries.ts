@@ -266,7 +266,9 @@ export function parseSearchQuery(table: Uncapitalize<Prisma.ModelName>, search: 
 		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 
 		if (type === "string") {
-			ors.push({ [field]: { contains: search.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" } });
+			ors.push({
+				[field]: { contains: search.toString().replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+			});
 		}
 	}
 
@@ -508,7 +510,7 @@ export function parseApiQuery(
 						if (type === "string") {
 							query.where![key] = {
 								contains: value.replace("_", "\\_").replace("%", "\\%"),
-								mode: "insensitive",
+								mode: "insensitive"
 							};
 						} else if (type === "integer") {
 							query.where![key] = parseInt(value);
