@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup, Map } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -28,8 +28,11 @@ type MapProps =
 	| {
 			center: LatLng;
 			zoom: number;
+			bounds?: undefined;
 	  }
 	| {
+			center?: undefined;
+			zoom?: undefined;
 			bounds: LatLngBoundsExpression;
 	  };
 
@@ -210,6 +213,7 @@ export default function ActualMap({
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
 
+	const mapRef = useRef<Map>(null);
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
 	//clump locations if they have identical latlng
@@ -234,7 +238,7 @@ export default function ActualMap({
 			!(locations[0].decimalLongitude! in DeadValueEnum)
 		) {
 			mapProps = {
-				center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as [number, number] as unknown as LatLng,
+				center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as unknown as LatLng,
 				zoom: 5
 			};
 
@@ -294,6 +298,7 @@ export default function ActualMap({
 
 		mapProps = { bounds };
 	}
+	const defaultMapProps = { ...mapProps };
 
 	let defaultLegend = undefined as LegendInfo;
 	let pointsOrGroups;
@@ -591,6 +596,7 @@ export default function ActualMap({
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
+				ref={mapRef}
 				preferCanvas={false}
 				maxBounds={
 					[
@@ -604,6 +610,13 @@ export default function ActualMap({
 				<FullscreenControl />
 
 				<div className="leaflet-top leaflet-left pt-25">
+					<RecenterControl
+						reset={() =>
+							defaultMapProps.center
+								? mapRef.current?.setView(defaultMapProps.center, defaultMapProps.zoom)
+								: mapRef.current?.fitBounds(defaultMapProps.bounds)
+						}
+					/>
 					<NoLocationPointsControl noLocationPoints={noLocationPoints} table={table} id={id} legendInfo={legendInfo} />
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
@@ -915,34 +928,158 @@ function PopupWithSearch({
 	);
 }
 
+function Resizable({
+	children,
+	collapse,
+	growDirection,
+	detectChange
+}: {
+	children: ReactNode;
+	collapse: boolean;
+	growDirection: "right" | "left" | "up" | "down";
+	detectChange?: string;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	const [minWidth, setMinWidth] = useState(NaN);
+	const [minHeight, setMinHeight] = useState(NaN);
+	const [prevWidth, setPrevWidth] = useState(NaN);
+	const [prevHeight, setPrevHeight] = useState(NaN);
+	const [width, setWidth] = useState("auto" as number | "auto");
+	const [height, setHeight] = useState("auto" as number | "auto");
+
+	const [sizeClassName, setSizeClassName] = useState("" as "w-full h-full" | "");
+	const [checkSize, setCheckSize] = useState(false);
+
+	useEffect(() => {
+		if (ref.current && !collapse) {
+			setSizeClassName("");
+			setCheckSize(true);
+		}
+	}, [ref, collapse, detectChange]);
+
+	useEffect(() => {
+		if (checkSize) {
+			if (isNaN(minWidth)) {
+				setMinWidth(ref.current!.clientWidth);
+			}
+			if (isNaN(minHeight)) {
+				setMinHeight(ref.current!.clientHeight);
+			}
+
+			setPrevWidth(ref.current!.clientWidth);
+			setPrevHeight(ref.current!.clientHeight);
+
+			if (width === "auto" || width < ref.current!.clientWidth || width <= prevWidth) {
+				setWidth(ref.current!.clientWidth);
+			}
+			if (height === "auto" || height < ref.current!.clientHeight || height <= prevHeight) {
+				setHeight(ref.current!.clientHeight);
+			}
+
+			setSizeClassName("w-full h-full");
+			setCheckSize(false);
+		}
+	}, [checkSize]);
+
+	let flexClassName;
+	let handleContainerClassName;
+	let handleClassName;
+	if (growDirection === "right" || growDirection === "left") {
+		flexClassName = "flex-row";
+		handleContainerClassName = "h-full cursor-ew-resize";
+		handleClassName = "w-1 h-1/2 mx-1";
+	} else if (growDirection === "up" || growDirection === "down") {
+		flexClassName = "flex-col";
+		handleContainerClassName = "w-full cursor-ns-resize";
+		handleClassName = "w-1/2 h-1 my-1";
+	}
+
+	function handleDrag(event: React.MouseEvent<HTMLDivElement>) {
+		const startWidth = width as number;
+		const startHeight = height as number;
+		const startX = event.pageX;
+		const startY = event.pageY;
+
+		function handleMouseMove(this: HTMLElement, ev: MouseEvent) {
+			if (growDirection === "right") {
+				const newWidth = startWidth + startX - ev.pageX;
+				if (newWidth < minWidth) {
+					setWidth(minWidth);
+				} else {
+					setWidth(newWidth);
+				}
+			} else if (growDirection === "left") {
+				const newWidth = startWidth - startX + ev.pageX;
+				if (newWidth < minWidth) {
+					setWidth(minWidth);
+				} else {
+					setWidth(newWidth);
+				}
+			} else if (growDirection === "up") {
+				const newHeight = startHeight + startY - ev.pageY;
+				if (newHeight < minHeight) {
+					setHeight(minHeight);
+				} else {
+					setHeight(newHeight);
+				}
+			} else if (growDirection === "down") {
+				const newHeight = startHeight - startY + ev.pageY;
+				if (newHeight < minHeight) {
+					setHeight(minHeight);
+				} else {
+					setHeight(newHeight);
+				}
+			}
+		}
+
+		document.body.addEventListener("mousemove", handleMouseMove);
+		document.body.addEventListener(
+			"mouseup",
+			() => {
+				document.body.removeEventListener("mousemove", handleMouseMove);
+			},
+			{ once: true }
+		);
+	}
+
+	const handle = (
+		<div className={`flex justify-center items-center ${handleContainerClassName}`} onMouseDownCapture={handleDrag}>
+			<div className={`bg-gray-400 rounded-full ${handleClassName}`}></div>
+		</div>
+	);
+	return (
+		<div className="w-full h-full" style={{ width, height }}>
+			<div ref={ref} className={`flex ${flexClassName} ${sizeClassName}`}>
+				{growDirection === "left" || growDirection === "up" ? handle : <></>}
+				<div className="overflow-hidden flex">{children}</div>
+				{growDirection === "right" || growDirection === "down" ? handle : <></>}
+			</div>
+		</div>
+	);
+}
+
 function Collapsible({
 	children,
 	defaultCollapse = false,
 	hiddenText = "Show",
 	dir = "right",
-	className = ""
+	growDirection,
+	detectChange
 }: {
 	children: ReactNode;
 	defaultCollapse?: boolean;
 	hiddenText?: string;
 	dir?: "right" | "left" | "up" | "down";
-	className?: string;
-}) {
+} & (
+	| { growDirection: "right" | "left" | "up" | "down"; detectChange?: string }
+	| { growDirection?: undefined; detectChange?: undefined }
+)) {
 	const [collapse, setCollapse] = useState(defaultCollapse);
-	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
 
 	//delay 2nd state variable by a render cycle to fix tooltip appearing immediately after collapsing
+	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
 	useEffect(() => setDelayedCollapse(collapse), [collapse]);
-
-	const panel = (
-		<div
-			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] [:where(&)]:gap-0 [:where(&)]:bg-base-100 [:where(&)]:shadow-sm [:where(&)]:p-2 ${className} ${
-				collapse ? "hidden" : ""
-			}`}
-		>
-			{children}
-		</div>
-	);
 
 	let rotationOpen;
 	let rotationClosed;
@@ -980,6 +1117,22 @@ function Collapsible({
 		collapsePos = "self-end";
 		openRounded = "rounded-b-none pb-1";
 	}
+
+	let panel = (
+		<div
+			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] gap-0 bg-base-100 shadow-sm p-0 ${
+				collapse ? "hidden" : ""
+			}`}
+		>
+			{growDirection ? (
+				<Resizable collapse={collapse} growDirection={growDirection} detectChange={detectChange}>
+					{children}
+				</Resizable>
+			) : (
+				children
+			)}
+		</div>
+	);
 
 	return (
 		<div className={`flex ${flexDir} ${collapse ? collapsePos : ""}`}>
@@ -1095,121 +1248,145 @@ function LegendControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar border-none! mb-6! flex flex-col gap-2" ref={ref}>
-			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} className="py-3">
-				<div className="text-lg flex justify-between items-center gap-2">
-					{titleTable ? (
-						// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
-						<span className="pl-2">{TableMetadata[titleTable].plural}</span>
-					) : (
-						<>
-							<ResetButton
-								disabled={!legendInfo?.field}
-								dataTip="Reset Legend"
-								resetFunction={() => setLegendInfo(undefined)}
-							/>
+			<Collapsible
+				growDirection="up"
+				detectChange={
+					legendInfo
+						? typeof legendInfo.field === "string"
+							? legendInfo.field
+							: legendInfo.field.join("/")
+						: undefined
+				}
+				hiddenText="Show legend"
+				defaultCollapse={!legendInfo}
+			>
+				<div className="p-2 py-3 flex flex-col">
+					<div className="text-lg flex justify-between items-center gap-2">
+						{titleTable ? (
+							// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
+							<span className="pl-2">{TableMetadata[titleTable].plural}</span>
+						) : (
+							<>
+								<ResetButton
+									disabled={!legendInfo?.field}
+									dataTip="Reset Legend"
+									resetFunction={() => setLegendInfo(undefined)}
+								/>
 
-							<select
-								value={legendInfo ? legendInfo.field : ""}
-								onChange={async (e) => {
-									const field = e.target.value;
+								<select
+									value={legendInfo ? legendInfo.field : ""}
+									onChange={async (e) => {
+										const field = e.target.value;
 
-									//give control back to browser to display loading
-									setLoading(true);
-									await new Promise((resolve) => setTimeout(resolve, 1));
+										//give control back to browser to display loading
+										setLoading(true);
+										await new Promise((resolve) => setTimeout(resolve, 1));
 
-									const shape = TableMetadata[table].schema.shape;
-									const type = getZodType(shape[field as keyof typeof shape]).type;
+										const shape = TableMetadata[table].schema.shape;
+										const type = getZodType(shape[field as keyof typeof shape]).type;
 
-									if (type === "string" || type === "DeadBoolean") {
-										//get unique options
-										const options = new Set() as Set<any>;
-										let someNoData = false;
-										for (const loc of points) {
-											if (loc.values) {
-												for (const val of loc.values) {
-													if (val[field] != null) {
-														options.add(val[field]);
-													} else {
-														someNoData = true;
+										if (type === "string" || type === "DeadBoolean") {
+											//get unique options
+											const options = new Set() as Set<any>;
+											let someNoData = false;
+											for (const loc of points) {
+												if (loc.values) {
+													for (const val of loc.values) {
+														if (val[field] != null) {
+															options.add(val[field]);
+														} else {
+															someNoData = true;
+														}
 													}
+												} else if (loc[field] != null) {
+													options.add(loc[field]);
+												} else {
+													someNoData = true;
 												}
-											} else if (loc[field] != null) {
-												options.add(loc[field]);
+											}
+											const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+
+											//check if invalid number of options
+											if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+												setLegendInfo({ field, mode: "discreet", colorMap: {} });
+												return;
+											} else if (optionsArray.length === 1) {
+												setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+												return;
 											} else {
-												someNoData = true;
-											}
-										}
-										const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+												//valid
+												const colors = distinctColors({ count: optionsArray.length, chromaMin });
+												const colorMap = {} as Record<string, Color>;
+												for (let i = 0; i < optionsArray.length; i++) {
+													colorMap[optionsArray[i]] = colors[i];
+												}
 
-										//check if invalid number of options
-										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-											return;
-										} else if (optionsArray.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-											return;
-										} else {
-											//valid
-											const colors = distinctColors({ count: optionsArray.length, chromaMin });
-											const colorMap = {} as Record<string, Color>;
-											for (let i = 0; i < optionsArray.length; i++) {
-												colorMap[optionsArray[i]] = colors[i];
-											}
+												//add default color if there is some point with no data
+												if (someNoData) {
+													colorMap["No value"] = DEFAULT_COLOR;
+												}
 
-											//add default color if there is some point with no data
-											if (someNoData) {
-												colorMap["No value"] = DEFAULT_COLOR;
+												setLegendInfo({ field, mode: "discreet", colorMap });
 											}
-
-											setLegendInfo({ field, mode: "discreet", colorMap });
-										}
-									} else if (type === "integer" || type === "float") {
-										//get unique options
-										const options = new Set() as Set<any>;
-										let someNoValue = false;
-										for (const loc of points) {
-											if (loc.values) {
-												for (const val of loc.values) {
-													if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
-														options.add(val[field]);
+										} else if (type === "integer" || type === "float") {
+											//get unique options
+											const options = new Set() as Set<any>;
+											let someNoValue = false;
+											for (const loc of points) {
+												if (loc.values) {
+													for (const val of loc.values) {
+														if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
+															options.add(val[field]);
+														} else {
+															someNoValue = true;
+														}
+													}
+												} else {
+													if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
+														options.add(loc[field]);
 													} else {
 														someNoValue = true;
 													}
 												}
-											} else {
-												if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
-													options.add(loc[field]);
-												} else {
-													someNoValue = true;
-												}
 											}
-										}
-										const optionsArray = Array.from(options).sort((a, b) => a - b);
+											const optionsArray = Array.from(options).sort((a, b) => a - b);
 
-										//check if invalid number of options
-										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-										} else if (optionsArray.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-										} else {
-											//valid
-											setLegendInfo({
-												field,
-												mode: "gradient",
-												range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
-												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-												someNoValue
-											});
-										}
-									} else if (type === "date") {
-										//get unique options and cast to epoch timestamp
-										const options = new Set() as Set<any>;
-										let someNoValue = false;
-										for (const loc of points) {
-											if (loc.values) {
-												for (const val of loc.values) {
-													if (val[field]) {
-														const time = val[field].getTime();
+											//check if invalid number of options
+											if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+												setLegendInfo({ field, mode: "discreet", colorMap: {} });
+											} else if (optionsArray.length === 1) {
+												setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+											} else {
+												//valid
+												setLegendInfo({
+													field,
+													mode: "gradient",
+													range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
+													palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+													someNoValue
+												});
+											}
+										} else if (type === "date") {
+											//get unique options and cast to epoch timestamp
+											const options = new Set() as Set<any>;
+											let someNoValue = false;
+											for (const loc of points) {
+												if (loc.values) {
+													for (const val of loc.values) {
+														if (val[field]) {
+															const time = val[field].getTime();
+															if (!DeadValueNumbers.includes(time)) {
+																options.add(time);
+															} else {
+																someNoValue = true;
+															}
+														} else {
+															someNoValue = true;
+														}
+													}
+												} else {
+													if (loc[field]) {
+														const time = loc[field].getTime();
 														if (!DeadValueNumbers.includes(time)) {
 															options.add(time);
 														} else {
@@ -1219,226 +1396,131 @@ function LegendControl({
 														someNoValue = true;
 													}
 												}
-											} else {
-												if (loc[field]) {
-													const time = loc[field].getTime();
-													if (!DeadValueNumbers.includes(time)) {
-														options.add(time);
-													} else {
-														someNoValue = true;
-													}
-												} else {
-													someNoValue = true;
-												}
 											}
-										}
-										const optionsArray = Array.from(options).sort((a, b) => a - b);
+											const optionsArray = Array.from(options).sort((a, b) => a - b);
 
-										//check if invalid number of options
-										if (
-											optionsArray.length === 0 ||
-											(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
-										) {
-											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-										} else if (optionsArray.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+											//check if invalid number of options
+											if (
+												optionsArray.length === 0 ||
+												(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
+											) {
+												setLegendInfo({ field, mode: "discreet", colorMap: {} });
+											} else if (optionsArray.length === 1) {
+												setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+											} else {
+												//valid
+												setLegendInfo({
+													field,
+													mode: "gradient",
+													range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
+													palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+													someNoValue
+												});
+											}
 										} else {
-											//valid
 											setLegendInfo({
 												field,
-												mode: "gradient",
-												range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
-												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-												someNoValue
+												mode: "discreet",
+												colorMap: { "Unsupported field": DEFAULT_COLOR }
 											});
 										}
-									} else {
-										setLegendInfo({
-											field,
-											mode: "discreet",
-											colorMap: { "Unsupported field": DEFAULT_COLOR }
-										});
-									}
-								}}
-								className="select select-xs select-primary select-ghost text-sm mr-3"
-							>
-								<option disabled={true} value="">
-									Select field
-								</option>
-								{legendOptions.map((opt) => (
-									<option key={opt}>{opt}</option>
-								))}
-							</select>
-						</>
-					)}
-					{legendInfo && legendInfo.mode === "gradient" ? (
-						<div className="dropdown dropdown-top dropdown-end">
-							<div tabIndex={0} role="button">
-								<svg
-									height="20px"
-									width="20px"
-									version="1.1"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 32 32"
-									className="text-primary cursor-pointer"
-									stroke="currentColor"
-									fill="currentColor"
+									}}
+									className="select select-xs select-primary select-ghost text-sm mr-3"
 								>
-									<path
-										d="M27.7,3.3c-1.5-1.5-3.9-1.5-5.4,0L17,8.6l-1.3-1.3c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4l1.3,1.3L5,20.6
+									<option disabled={true} value="">
+										Select field
+									</option>
+									{legendOptions.map((opt) => (
+										<option key={opt}>{opt}</option>
+									))}
+								</select>
+							</>
+						)}
+						{legendInfo && legendInfo.mode === "gradient" ? (
+							<div className="dropdown dropdown-top dropdown-end">
+								<div tabIndex={0} role="button">
+									<svg
+										height="20px"
+										width="20px"
+										version="1.1"
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 32 32"
+										className="text-primary cursor-pointer"
+										stroke="currentColor"
+										fill="currentColor"
+									>
+										<path
+											d="M27.7,3.3c-1.5-1.5-3.9-1.5-5.4,0L17,8.6l-1.3-1.3c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4l1.3,1.3L5,20.6
 	c-0.6,0.6-1,1.4-1.1,2.3C3.3,23.4,3,24.2,3,25c0,1.7,1.3,3,3,3c0.8,0,1.6-0.3,2.2-0.9C9,27,9.8,26.6,10.4,26L21,15.4l1.3,1.3
 	c0.2,0.2,0.5,0.3,0.7,0.3s0.5-0.1,0.7-0.3c0.4-0.4,0.4-1,0-1.4L22.4,14l5.3-5.3C29.2,7.2,29.2,4.8,27.7,3.3z M9,24.6
 	c-0.4,0.4-0.8,0.6-1.3,0.5c-0.4,0-0.7,0.2-0.9,0.5C6.7,25.8,6.3,26,6,26c-0.6,0-1-0.4-1-1c0-0.3,0.2-0.7,0.5-0.8
 	c0.3-0.2,0.5-0.5,0.5-0.9c0-0.5,0.2-1,0.5-1.3L17,11.4l2.6,2.6L9,24.6z"
-									/>
-								</svg>
-							</div>
-							<ul
-								tabIndex={-1}
-								className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm p-2 flex-nowrap"
-							>
-								<div className="flex gap-2 items-center pb-2">
-									<ResetButton
-										disabled={legendInfo.palette === DEFAULT_PALETTE}
-										dataTip={"Reset to " + DEFAULT_PALETTE}
-										resetFunction={() => {
-											setLegendInfo({ ...legendInfo, palette: DEFAULT_PALETTE });
-											(document.activeElement as HTMLDivElement).blur();
-										}}
-									/>
-									<input
-										type="text"
-										onChange={(e) => setFilter(e.target.value)}
-										value={filter}
-										placeholder={`Filter colors`}
-										className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
-									/>
+										/>
+									</svg>
 								</div>
-
-								<div className="max-h-75 overflow-y-scroll! overscroll-contain flex flex-col gap-2">
-									{Object.keys(chroma.brewer)
-										.sort()
-										.reduce((acc, scaleName) => {
-											if (scaleName.toLowerCase().includes(filter.toLowerCase()) && scaleName !== legendInfo.palette) {
-												const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
-												acc.push(
-													<li key={scaleName} className="w-full">
-														<a
-															className="w-auto! bg-base-200! flex! items-center justify-center rounded-md! p-1! font-semibold"
-															style={{
-																backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
-															}}
-															onClick={() => {
-																setLegendInfo({ ...legendInfo, palette: scaleName });
-																(document.activeElement as HTMLDivElement).blur();
-															}}
-														>
-															{scaleName}
-														</a>
-													</li>
-												);
-											}
-
-											return acc;
-										}, [] as ReactNode[])}
-								</div>
-							</ul>
-						</div>
-					) : (
-						<></>
-					)}
-				</div>
-
-				{legendInfo ? (
-					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-25 overflow-y-auto overflow-x-hidden">
-						{legendInfo.mode === "discreet" ? (
-							Object.keys(legendInfo.colorMap).length === 0 ? (
-								<div className="flex gap-2 items-center">
-									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
-									<div className="text-xs">No value</div>
-								</div>
-							) : Object.keys(legendInfo.colorMap).length === 1 ? (
-								<div className="flex gap-2 items-center">
-									<div
-										className="aspect-square w-[1em] h-[1em]"
-										style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
-									></div>
-									<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
-								</div>
-							) : (
-								Object.entries(legendInfo.colorMap).map(([key, color]) => (
-									<div key={key} className="flex gap-2 items-center ">
-										<div
-											className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
-											data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
-											style={{ backgroundColor: color.hex() }}
-											onClick={(e) => {
-												if (legendInfo.hidden?.includes(key)) {
-													setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-													e.currentTarget.style.background = "";
-													e.currentTarget.style.backgroundColor = color.hex();
-												} else {
-													setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-													e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-													e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
-												}
+								<ul
+									tabIndex={-1}
+									className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm p-2 flex-nowrap"
+								>
+									<div className="flex gap-2 items-center pb-2">
+										<ResetButton
+											disabled={legendInfo.palette === DEFAULT_PALETTE}
+											dataTip={"Reset to " + DEFAULT_PALETTE}
+											resetFunction={() => {
+												setLegendInfo({ ...legendInfo, palette: DEFAULT_PALETTE });
+												(document.activeElement as HTMLDivElement).blur();
 											}}
-										></div>
-										{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
-											<Link
-												href={`/explore/${
-													titleTable ||
-													Object.keys(TableMetadata).find(
-														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-													)
-												}/${encodeURIComponent(key)}`}
-												className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
-													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-												}`}
-											>
-												{key}
-											</Link>
-										) : (
-											<div
-												className={`text-xs ${
-													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-												}`}
-											>
-												{key}
-											</div>
-										)}
+										/>
+										<input
+											type="text"
+											onChange={(e) => setFilter(e.target.value)}
+											value={filter}
+											placeholder={`Filter colors`}
+											className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
+										/>
 									</div>
-								))
-							)
-						) : legendInfo.mode === "gradient" ? (
-							<div className="flex flex-col items-center">
-								<div
-									className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
-									// data-tip={legendInfo.palette}
-									style={{
-										backgroundImage: `linear-gradient(to right, ${chroma.brewer[
-											legendInfo.palette as keyof typeof chroma.brewer
-										].join(",")})`
-									}}
-								/>
-								<div className="flex justify-between w-full">
-									{typeof legendInfo.range[0] === "number" ? (
-										<>
-											<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
-											<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
-										</>
-									) : (
-										//TODO: display dates differently depending on distance between dates
-										//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
-										//when dates are all on the same day, time must be displayed as well
-										<>
-											<span>{legendInfo.range[0].toLocaleDateString()}</span>
-											<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
-										</>
-									)}
-								</div>
-								{legendInfo.someNoValue ? (
-									//TODO: change color of no value label if palette has red
+
+									<div className="max-h-75 overflow-y-scroll! overscroll-contain flex flex-col gap-2">
+										{Object.keys(chroma.brewer)
+											.sort()
+											.reduce((acc, scaleName) => {
+												if (
+													scaleName.toLowerCase().includes(filter.toLowerCase()) &&
+													scaleName !== legendInfo.palette
+												) {
+													const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
+													acc.push(
+														<li key={scaleName} className="w-full">
+															<a
+																className="w-auto! bg-base-200! flex! items-center justify-center rounded-md! p-1! font-semibold"
+																style={{
+																	backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
+																}}
+																onClick={() => {
+																	setLegendInfo({ ...legendInfo, palette: scaleName });
+																	(document.activeElement as HTMLDivElement).blur();
+																}}
+															>
+																{scaleName}
+															</a>
+														</li>
+													);
+												}
+
+												return acc;
+											}, [] as ReactNode[])}
+									</div>
+								</ul>
+							</div>
+						) : (
+							<></>
+						)}
+					</div>
+
+					{legendInfo ? (
+						<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 overflow-y-auto overflow-x-hidden">
+							{legendInfo.mode === "discreet" ? (
+								Object.keys(legendInfo.colorMap).length === 0 ? (
 									<div className="flex gap-2 items-center">
 										<div
 											className="aspect-square w-[1em] h-[1em]"
@@ -1446,17 +1528,108 @@ function LegendControl({
 										></div>
 										<div className="text-xs">No value</div>
 									</div>
+								) : Object.keys(legendInfo.colorMap).length === 1 ? (
+									<div className="flex gap-2 items-center">
+										<div
+											className="aspect-square w-[1em] h-[1em]"
+											style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
+										></div>
+										<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+									</div>
 								) : (
-									<></>
-								)}
-							</div>
-						) : (
-							<></>
-						)}
-					</div>
-				) : (
-					<></>
-				)}
+									Object.entries(legendInfo.colorMap).map(([key, color]) => (
+										<div key={key} className="flex gap-2 items-center ">
+											<div
+												className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
+												data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
+												style={{ backgroundColor: color.hex() }}
+												onClick={(e) => {
+													if (legendInfo.hidden?.includes(key)) {
+														setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
+														e.currentTarget.style.background = "";
+														e.currentTarget.style.backgroundColor = color.hex();
+													} else {
+														setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
+														e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
+														e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+													}
+												}}
+											></div>
+											{titleTable ||
+											Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
+												<Link
+													href={`/explore/${
+														titleTable ||
+														Object.keys(TableMetadata).find(
+															(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+														)
+													}/${encodeURIComponent(key)}`}
+													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
+														legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+													}`}
+												>
+													{key}
+												</Link>
+											) : (
+												<div
+													className={`text-xs ${
+														legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+													}`}
+												>
+													{key}
+												</div>
+											)}
+										</div>
+									))
+								)
+							) : legendInfo.mode === "gradient" ? (
+								<div className="flex flex-col items-center">
+									<div
+										className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
+										// data-tip={legendInfo.palette}
+										style={{
+											backgroundImage: `linear-gradient(to right, ${chroma.brewer[
+												legendInfo.palette as keyof typeof chroma.brewer
+											].join(",")})`
+										}}
+									/>
+									<div className="flex justify-between w-full">
+										{typeof legendInfo.range[0] === "number" ? (
+											<>
+												<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
+												<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
+											</>
+										) : (
+											//TODO: display dates differently depending on distance between dates
+											//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
+											//when dates are all on the same day, time must be displayed as well
+											<>
+												<span>{legendInfo.range[0].toLocaleDateString()}</span>
+												<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
+											</>
+										)}
+									</div>
+									{legendInfo.someNoValue ? (
+										//TODO: change color of no value label if palette has red
+										<div className="flex gap-2 items-center">
+											<div
+												className="aspect-square w-[1em] h-[1em]"
+												style={{ backgroundColor: DEFAULT_COLOR.hex() }}
+											></div>
+											<div className="text-xs">No value</div>
+										</div>
+									) : (
+										<></>
+									)}
+								</div>
+							) : (
+								<></>
+							)}
+						</div>
+					) : (
+						<></>
+					)}
+				</div>
 			</Collapsible>
 		</div>
 	);
@@ -1483,67 +1656,64 @@ function PointSizeControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
-			<Collapsible
-				dir="left"
-				defaultCollapse
-				className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1"
-				hiddenText="Show point size control"
-			>
-				<div className="flex justify-between">
-					<div className="flex items-center gap-1 mt-1">
+			<Collapsible dir="left" defaultCollapse hiddenText="Show point size control">
+				<div className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1">
+					<div className="flex justify-between">
+						<div className="flex items-center gap-1 mt-1">
+							<ResetButton
+								disabled={pointSize === DEFAULT_POINT_SIZE}
+								dataTip={"Reset to " + DEFAULT_POINT_SIZE}
+								resetFunction={() => setPointSize(DEFAULT_POINT_SIZE)}
+								dir="tooltip-right"
+							/>
+							<span className="text-sm">Point Size</span>
+						</div>
+						<InfoButton
+							infoText="The size, in pixels, that the smallest points will be. Every power of 10 increases point size by the step."
+							dir="tooltip-right"
+							className="self-start"
+						/>
+					</div>
+					<div className="pr-2">
+						<input
+							type="number"
+							className="input input-primary"
+							value={pointSize === undefined ? "" : pointSize}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									setPointSize(undefined);
+								} else {
+									setPointSize(parsed);
+								}
+							}}
+						/>
+					</div>
+
+					<div className="flex items-center gap-1">
 						<ResetButton
-							disabled={pointSize === DEFAULT_POINT_SIZE}
-							dataTip={"Reset to " + DEFAULT_POINT_SIZE}
-							resetFunction={() => setPointSize(DEFAULT_POINT_SIZE)}
+							disabled={pointSizeStep === DEFAULT_POINT_SIZE_STEP}
+							dataTip={"Reset to " + DEFAULT_POINT_SIZE_STEP}
+							resetFunction={() => setPointSizeStep(DEFAULT_POINT_SIZE_STEP)}
 							dir="tooltip-right"
 						/>
-						<span className="text-sm">Point Size</span>
+						<span className="text-sm">Step</span>
 					</div>
-					<InfoButton
-						infoText="The size, in pixels, that the smallest points will be. Every power of 10 increases point size by the step."
-						dir="tooltip-right"
-						className="self-start"
-					/>
-				</div>
-				<div className="pr-2">
-					<input
-						type="number"
-						className="input input-primary"
-						value={pointSize === undefined ? "" : pointSize}
-						onChange={(e) => {
-							const parsed = parseInt(e.currentTarget.value);
-							if (isNaN(parsed)) {
-								setPointSize(undefined);
-							} else {
-								setPointSize(parsed);
-							}
-						}}
-					/>
-				</div>
-
-				<div className="flex items-center gap-1">
-					<ResetButton
-						disabled={pointSizeStep === DEFAULT_POINT_SIZE_STEP}
-						dataTip={"Reset to " + DEFAULT_POINT_SIZE_STEP}
-						resetFunction={() => setPointSizeStep(DEFAULT_POINT_SIZE_STEP)}
-						dir="tooltip-right"
-					/>
-					<span className="text-sm">Step</span>
-				</div>
-				<div className="pr-2">
-					<input
-						type="number"
-						className="input input-primary"
-						value={pointSizeStep === undefined ? "" : pointSizeStep}
-						onChange={(e) => {
-							const parsed = parseInt(e.currentTarget.value);
-							if (isNaN(parsed)) {
-								setPointSizeStep(undefined);
-							} else {
-								setPointSizeStep(parsed);
-							}
-						}}
-					/>
+					<div className="pr-2">
+						<input
+							type="number"
+							className="input input-primary"
+							value={pointSizeStep === undefined ? "" : pointSizeStep}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									setPointSizeStep(undefined);
+								} else {
+									setPointSizeStep(parsed);
+								}
+							}}
+						/>
+					</div>
 				</div>
 			</Collapsible>
 		</div>
@@ -1575,37 +1745,39 @@ function ClusterControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
-			<Collapsible dir="left" defaultCollapse className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show cluster control">
-				<div className="flex justify-between">
-					<div className="flex items-center gap-1 mt-1">
-						<ResetButton
-							disabled={clusterRadius ? value === clusterRadius : value === DEFAULT_CLUSTER_RADIUS}
-							dataTip={`Reset to ${clusterRadius || DEFAULT_CLUSTER_RADIUS}`}
-							resetFunction={() => onChange(clusterRadius || DEFAULT_CLUSTER_RADIUS)}
+			<Collapsible dir="left" defaultCollapse hiddenText="Show cluster control">
+				<div className="w-35 pl-2 pr-1 pt-1 pb-2">
+					<div className="flex justify-between">
+						<div className="flex items-center gap-1 mt-1">
+							<ResetButton
+								disabled={clusterRadius ? value === clusterRadius : value === DEFAULT_CLUSTER_RADIUS}
+								dataTip={`Reset to ${clusterRadius || DEFAULT_CLUSTER_RADIUS}`}
+								resetFunction={() => onChange(clusterRadius || DEFAULT_CLUSTER_RADIUS)}
+								dir="tooltip-right"
+							/>
+							<span className="text-sm">Cluster</span>
+						</div>
+						<InfoButton
+							infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
 							dir="tooltip-right"
+							className="self-start"
 						/>
-						<span className="text-sm">Cluster</span>
 					</div>
-					<InfoButton
-						infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
-						dir="tooltip-right"
-						className="self-start"
-					/>
-				</div>
-				<div className="pr-2">
-					<input
-						type="number"
-						className="input input-primary"
-						value={value === undefined ? "" : value}
-						onChange={(e) => {
-							const parsed = parseInt(e.currentTarget.value);
-							if (isNaN(parsed)) {
-								onChange(undefined);
-							} else {
-								onChange(parsed);
-							}
-						}}
-					/>
+					<div className="pr-2">
+						<input
+							type="number"
+							className="input input-primary"
+							value={value === undefined ? "" : value}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									onChange(undefined);
+								} else {
+									onChange(parsed);
+								}
+							}}
+						/>
+					</div>
 				</div>
 			</Collapsible>
 		</div>
@@ -1689,6 +1861,38 @@ function NoLocationPointsControl({
 					listClassName="max-h-20"
 				/>
 			</Collapsible>
+		</div>
+	);
+}
+
+function RecenterControl({ reset }: { reset: () => void }) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+		}
+	}, []);
+
+	//TODO: make this button merge with other control instead of being on its own
+	return (
+		<div
+			className="leaflet-control cursor-pointer! bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-sm"
+			style={{ padding: "calc(var(--spacing) * 0.8)" }}
+			ref={ref}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				className="text-black"
+				stroke="currentColor"
+				fill="currentColor"
+				onClick={reset}
+			>
+				<path d="M12.5 17.402V21.5q0 .213-.143.357T12 22t-.357-.143q-.143-.144-.143-.357v-4.098l-1.13 1.13q-.141.141-.342.15t-.366-.155q-.16-.16-.16-.354t.16-.354l1.773-1.773q.242-.242.565-.242t.565.242l1.773 1.773q.14.14.153.342t-.153.366q-.16.16-.35.162t-.357-.156zM6.598 12.5H2.5q-.213 0-.357-.143T2 12t.143-.357q.144-.143.357-.143h4.098l-1.13-1.13q-.141-.141-.15-.342t.155-.366q.16-.16.354-.16t.354.16l1.773 1.773q.242.242.242.565t-.242.565L6.18 14.338q-.14.14-.342.153t-.366-.153q-.16-.16-.162-.35t.156-.357zm10.804 0l1.13 1.13q.141.141.15.342t-.155.366q-.16.16-.354.16t-.354-.16l-1.773-1.773q-.242-.242-.242-.565t.242-.565l1.773-1.773q.14-.14.342-.153t.366.153q.16.16.162.35t-.156.357L17.402 11.5H21.5q.213 0 .357.143T22 12t-.143.357q-.144.143-.357.143zM12 12.98q-.413 0-.697-.283T11.019 12t.284-.697t.697-.284t.697.284t.284.697t-.284.697t-.697.284m-.5-6.383V2.5q0-.213.143-.357T12 2t.357.143q.143.144.143.357v4.098l1.13-1.13q.141-.141.342-.15t.366.155q.16.16.16.354t-.16.354l-1.773 1.773q-.242.242-.565.242t-.565-.242L9.662 6.18q-.14-.14-.153-.342t.153-.366q.16-.16.35-.162t.357.156z" />
+			</svg>
 		</div>
 	);
 }
