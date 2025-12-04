@@ -477,6 +477,55 @@ export default function AdvancedSearch() {
 											<div className="flex items-center justify-end gap-3">
 												<button
 													type="button"
+													className="btn btn-md gap-2 bg-base-200 text-base-content border-base-300 hover:bg-base-300 tooltip tooltip-bottom"
+													onClick={copyApiQuery}
+													data-tip="Copy this search as an API query URL that you can use in your browser or in code."
+												>
+													<>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															width="16"
+															height="16"
+															viewBox="0 0 24 24"
+															fill="none"
+															stroke="currentColor"
+															strokeWidth="2"
+															strokeLinecap="round"
+															strokeLinejoin="round"
+														>
+															{apiCopied ? (
+																<polyline points="20 6 9 17 4 12"></polyline>
+															) : (
+																<>
+																	<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+																	<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+																</>
+															)}
+														</svg>
+														<span className="text-sm grid">
+															<span
+																className={
+																	apiCopied
+																		? "invisible col-start-1 row-start-1"
+																		: "col-start-1 row-start-1"
+																}
+															>
+																Copy as API Query
+															</span>
+															<span
+																className={
+																	apiCopied
+																		? "col-start-1 row-start-1"
+																		: "invisible col-start-1 row-start-1"
+																}
+															>
+																Copied
+															</span>
+														</span>
+													</>
+												</button>
+												<button
+													type="button"
 													className="btn btn-error btn-md gap-2"
 													onClick={() => reset()}
 												>
@@ -519,37 +568,6 @@ export default function AdvancedSearch() {
 								/>
 							</div>
 						</div>
-
-				<div className="bg-base-100 py-3 rounded-lg mb-4">
-					<h3 className="text-sm font-medium mb-2">Copy Search as API Query</h3>
-					<div className="flex items-center gap-2 max-w-full pb-2">
-						<button
-							type="button"
-							onClick={copyApiQuery}
-							className="btn btn-sm flex-shrink-0"
-							title="Copy API query"
-						>
-							{apiCopied ? (
-								<>
-									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-										<polyline points="20 6 9 17 4 12"></polyline>
-									</svg>
-								</>
-							) : (
-								<>
-									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-										<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-									</svg>
-								</>
-							)}
-						</button>
-						<div className="bg-base-200/50 py-1 rounded text-xs font-mono whitespace-nowrap overflow-x-auto max-w-full">
-							{getApiQuery()}
-						</div>
-					</div>
-					<p className="text-xs text-base-content/60 mt-1 pb-2">Copy this URL to use directly in your browser or code</p>
-				</div>
 				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>

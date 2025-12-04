@@ -189,7 +189,11 @@
 }
 
 /* Tooltip dark mode fix */
+.tooltip {
+	z-index: 90000;
+}
 .tooltip:before {
 	background-color: oklch(var(--b2));
 	color: oklch(var(--bc));
+	z-index: 90001;
 }
