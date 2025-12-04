@@ -1004,30 +1004,22 @@ function Resizable({
 		function handleMouseMove(this: HTMLElement, ev: MouseEvent) {
 			if (growDirection === "right") {
 				const newWidth = startWidth + startX - ev.pageX;
-				if (newWidth < minWidth) {
-					setWidth(minWidth);
-				} else {
+				if (newWidth >= minWidth) {
 					setWidth(newWidth);
 				}
 			} else if (growDirection === "left") {
 				const newWidth = startWidth - startX + ev.pageX;
-				if (newWidth < minWidth) {
-					setWidth(minWidth);
-				} else {
+				if (newWidth >= minWidth) {
 					setWidth(newWidth);
 				}
 			} else if (growDirection === "up") {
 				const newHeight = startHeight + startY - ev.pageY;
-				if (newHeight < minHeight) {
-					setHeight(minHeight);
-				} else {
+				if (newHeight >= minHeight) {
 					setHeight(newHeight);
 				}
 			} else if (growDirection === "down") {
 				const newHeight = startHeight - startY + ev.pageY;
-				if (newHeight < minHeight) {
-					setHeight(minHeight);
-				} else {
+				if (newHeight >= minHeight) {
 					setHeight(newHeight);
 				}
 			}
