@@ -106,7 +106,7 @@ export async function getApiSections() {
 										endpoint={{
 											value: "/api/project",
 											label: "Get data from the Project table",
-											colorClass: "text-white"
+											colorClass: "text-primary"
 										}}
 										parameters={[
 											{
@@ -156,7 +156,7 @@ export async function getApiSections() {
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-										endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-white" }}
+										endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
 										parameters={[
 											{
 												value: `ids=${project?.id || 1}`,
@@ -814,7 +814,7 @@ if (http_status(response)$category == "Success") {
 
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-white" }}
+								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
 										value: `advanced=[["geo_loc_name","contains","Atlantic"],["collection_timestamp","gte","2019-01-01"]]`,
@@ -847,7 +847,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-white" }}
+								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
 										value: `ids=${project?.id || 1}`,

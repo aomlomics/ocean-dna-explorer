@@ -477,7 +477,7 @@ export default function AdvancedSearch() {
 											<div className="flex items-center justify-end gap-3">
 												<button
 													type="button"
-													className="btn btn-md gap-2 bg-base-200 text-base-content border-base-300 hover:bg-base-300 tooltip tooltip-bottom"
+													className="btn btn-md gap-2 bg-base-200 text-base-content hover:bg-base-300 tooltip tooltip-bottom"
 													onClick={copyApiQuery}
 													data-tip="Copy this search as an API query URL that you can use in your browser or in code."
 												>
