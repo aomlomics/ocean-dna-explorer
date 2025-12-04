@@ -1123,13 +1123,20 @@ function LegendControl({
 									if (type === "string" || type === "DeadBoolean") {
 										//get unique options
 										const options = new Set() as Set<any>;
+										let someNoData = false;
 										for (const loc of points) {
 											if (loc.values) {
 												for (const val of loc.values) {
-													options.add(val[field]);
+													if (val[field] != null) {
+														options.add(val[field]);
+													} else {
+														someNoData = true;
+													}
 												}
-											} else {
+											} else if (loc[field] != null) {
 												options.add(loc[field]);
+											} else {
+												someNoData = true;
 											}
 										}
 										const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
@@ -1149,6 +1156,11 @@ function LegendControl({
 												colorMap[optionsArray[i]] = colors[i];
 											}
 
+											//add default color if there is some point with no data
+											if (someNoData) {
+												colorMap["No value"] = DEFAULT_COLOR;
+											}
+
 											setLegendInfo({ field, mode: "discreet", colorMap });
 										}
 									} else if (type === "integer" || type === "float") {
@@ -1158,14 +1170,14 @@ function LegendControl({
 										for (const loc of points) {
 											if (loc.values) {
 												for (const val of loc.values) {
-													if (!(val[field] == null && DeadValueNumbers.includes(val[field]))) {
+													if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
 														options.add(val[field]);
 													} else {
 														someNoValue = true;
 													}
 												}
 											} else {
-												if (!(loc[field] == null && DeadValueNumbers.includes(loc[field]))) {
+												if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
 													options.add(loc[field]);
 												} else {
 													someNoValue = true;
@@ -1426,6 +1438,7 @@ function LegendControl({
 									)}
 								</div>
 								{legendInfo.someNoValue ? (
+									//TODO: change color of no value label if palette has red
 									<div className="flex gap-2 items-center">
 										<div
 											className="aspect-square w-[1em] h-[1em]"
