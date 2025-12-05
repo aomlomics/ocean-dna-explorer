@@ -938,7 +938,7 @@ function Resizable({
 	maxMinHeight
 }: {
 	children: ReactNode;
-	growDirection: "right" | "left" | "up" | "down";
+	growDirection: "up" | "down" | "left" | "right";
 	detectChange?: (string | boolean)[];
 	mapRef: RefObject<Map | null>;
 	maxMinWidth?: number;
@@ -1029,17 +1029,30 @@ function Resizable({
 		}
 	}, [checkSize]);
 
-	let flexClassName;
+	let gridClassName;
 	let handleContainerClassName;
 	let handleClassName;
-	if (growDirection === "right" || growDirection === "left") {
-		flexClassName = "flex-row";
-		handleContainerClassName = "h-full cursor-ew-resize";
-		handleClassName = "w-1 h-1/2 mx-1";
-	} else if (growDirection === "up" || growDirection === "down") {
-		flexClassName = "flex-col";
+
+	if (growDirection === "up") {
 		handleContainerClassName = "w-full cursor-ns-resize";
 		handleClassName = "w-1/2 h-1 my-1";
+
+		gridClassName = "grid-rows-[auto_minmax(0,1fr)]";
+	} else if (growDirection === "down") {
+		handleContainerClassName = "w-full cursor-ns-resize";
+		handleClassName = "w-1/2 h-1 my-1";
+
+		gridClassName = "grid-rows-[minmax(0,1fr)_auto]";
+	} else if (growDirection === "left") {
+		handleContainerClassName = "h-full cursor-ew-resize";
+		handleClassName = "w-1 h-1/2 mx-1";
+
+		gridClassName = "grid-cols-[minmax(0,1fr)_auto]";
+	} else if (growDirection === "right") {
+		handleContainerClassName = "h-full cursor-ew-resize";
+		handleClassName = "w-1 h-1/2 mx-1";
+
+		gridClassName = "grid-cols-[auto_minmax(0,1fr)]";
 	}
 
 	function handleDrag(event: React.MouseEvent<HTMLDivElement>) {
@@ -1098,9 +1111,9 @@ function Resizable({
 	);
 	return (
 		<div style={{ width, height }}>
-			<div ref={ref} className={`flex ${flexClassName} ${sizeClassName}`}>
+			<div ref={ref} className={`grid ${gridClassName} ${sizeClassName}`}>
 				{growDirection === "left" || growDirection === "up" ? handle : <></>}
-				<div className={`flex ${sizeClassName} ${selectClassName}`}>{children}</div>
+				<div className={`flex p-3 ${selectClassName}`}>{children}</div>
 				{growDirection === "right" || growDirection === "down" ? handle : <></>}
 			</div>
 		</div>
@@ -1117,7 +1130,7 @@ function Collapsible({
 	children: ReactNode;
 	defaultCollapse?: boolean;
 	hiddenText?: string;
-	dir?: "right" | "left" | "up" | "down";
+	dir?: "up" | "down" | "left" | "right";
 	onCollapse?: (collapse: boolean) => void;
 }) {
 	const [collapse, setCollapse] = useState(defaultCollapse);
@@ -1133,21 +1146,7 @@ function Collapsible({
 	let collapsePos;
 	let openRounded;
 
-	if (dir === "right") {
-		rotationOpen = "";
-		rotationClosed = "rotate-180";
-		flexDir = "flex-row";
-		tooltipDir = "tooltip-left";
-		collapsePos = "self-end";
-		openRounded = "rounded-r-none pr-1";
-	} else if (dir === "left") {
-		rotationOpen = "rotate-180";
-		rotationClosed = "";
-		flexDir = "flex-row";
-		tooltipDir = "tooltip-right";
-		collapsePos = "self-start";
-		openRounded = "rounded-l-none pl-1";
-	} else if (dir === "up") {
+	if (dir === "up") {
 		rotationOpen = "-rotate-90";
 		rotationClosed = "rotate-90";
 		flexDir = "flex-col";
@@ -1161,6 +1160,20 @@ function Collapsible({
 		tooltipDir = "tooltip-top";
 		collapsePos = "self-end";
 		openRounded = "rounded-b-none pb-1";
+	} else if (dir === "left") {
+		rotationOpen = "rotate-180";
+		rotationClosed = "";
+		flexDir = "flex-row";
+		tooltipDir = "tooltip-right";
+		collapsePos = "self-start";
+		openRounded = "rounded-l-none pl-1";
+	} else if (dir === "right") {
+		rotationOpen = "";
+		rotationClosed = "rotate-180";
+		flexDir = "flex-row";
+		tooltipDir = "tooltip-left";
+		collapsePos = "self-end";
+		openRounded = "rounded-r-none pr-1";
 	}
 
 	let panel = (
@@ -1310,7 +1323,7 @@ function LegendControl({
 					mapRef={mapRef}
 					maxMinHeight={200}
 				>
-					<div className="px-2 pt-3 pb-5 flex flex-col">
+					<div className="flex flex-col">
 						<div className="text-lg flex justify-between items-center gap-2">
 							{titleTable ? (
 								// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
