@@ -11,7 +11,7 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import "react-leaflet-markercluster/styles";
 import Link from "next/link";
-import { Dispatch, ReactNode, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
@@ -648,6 +648,7 @@ export default function ActualMap({
 						setLoading={setLoading}
 						legendOptions={legendOptions}
 						table={table}
+						mapRef={mapRef}
 						{...legendProps}
 					/>
 				</div>
@@ -932,12 +933,14 @@ function Resizable({
 	children,
 	collapse,
 	growDirection,
-	detectChange
+	detectChange,
+	mapRef
 }: {
 	children: ReactNode;
 	collapse: boolean;
 	growDirection: "right" | "left" | "up" | "down";
 	detectChange?: string;
+	mapRef: RefObject<Map | null>;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
 
@@ -1004,22 +1007,22 @@ function Resizable({
 		function handleMouseMove(this: HTMLElement, ev: MouseEvent) {
 			if (growDirection === "right") {
 				const newWidth = startWidth + startX - ev.pageX;
-				if (newWidth >= minWidth) {
+				if (newWidth >= minWidth && newWidth <= mapRef.current!.getContainer().clientWidth * 0.75) {
 					setWidth(newWidth);
 				}
 			} else if (growDirection === "left") {
 				const newWidth = startWidth - startX + ev.pageX;
-				if (newWidth >= minWidth) {
+				if (newWidth >= minWidth && newWidth <= mapRef.current!.getContainer().clientWidth * 0.75) {
 					setWidth(newWidth);
 				}
 			} else if (growDirection === "up") {
 				const newHeight = startHeight + startY - ev.pageY;
-				if (newHeight >= minHeight) {
+				if (newHeight >= minHeight && newHeight <= mapRef.current!.getContainer().clientHeight * 0.75) {
 					setHeight(newHeight);
 				}
 			} else if (growDirection === "down") {
 				const newHeight = startHeight - startY + ev.pageY;
-				if (newHeight >= minHeight) {
+				if (newHeight >= minHeight && newHeight <= mapRef.current!.getContainer().clientHeight * 0.75) {
 					setHeight(newHeight);
 				}
 			}
@@ -1041,7 +1044,7 @@ function Resizable({
 		</div>
 	);
 	return (
-		<div className="w-full h-full" style={{ width, height }}>
+		<div style={{ width, height }}>
 			<div ref={ref} className={`flex ${flexClassName} ${sizeClassName}`}>
 				{growDirection === "left" || growDirection === "up" ? handle : <></>}
 				<div className="overflow-hidden flex">{children}</div>
@@ -1056,6 +1059,7 @@ function Collapsible({
 	defaultCollapse = false,
 	hiddenText = "Show",
 	dir = "right",
+	mapRef,
 	growDirection,
 	detectChange
 }: {
@@ -1064,8 +1068,8 @@ function Collapsible({
 	hiddenText?: string;
 	dir?: "right" | "left" | "up" | "down";
 } & (
-	| { growDirection: "right" | "left" | "up" | "down"; detectChange?: string }
-	| { growDirection?: undefined; detectChange?: undefined }
+	| { growDirection: "right" | "left" | "up" | "down"; detectChange?: string; mapRef: RefObject<Map | null> }
+	| { growDirection?: undefined; detectChange?: undefined; mapRef?: undefined }
 )) {
 	const [collapse, setCollapse] = useState(defaultCollapse);
 
@@ -1117,7 +1121,7 @@ function Collapsible({
 			}`}
 		>
 			{growDirection ? (
-				<Resizable collapse={collapse} growDirection={growDirection} detectChange={detectChange}>
+				<Resizable collapse={collapse} growDirection={growDirection} detectChange={detectChange} mapRef={mapRef}>
 					{children}
 				</Resizable>
 			) : (
@@ -1209,9 +1213,10 @@ function LegendControl({
 	setLegendInfo,
 	setLoading,
 	legendOptions,
-	points,
 	table,
-	titleTable
+	mapRef,
+	titleTable,
+	points
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
@@ -1219,6 +1224,7 @@ function LegendControl({
 	setLoading: Dispatch<SetStateAction<boolean>>;
 	legendOptions: string[];
 	table: Uncapitalize<Prisma.ModelName>;
+	mapRef: RefObject<Map | null>;
 } & (
 	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
 	| { titleTable?: undefined; points: LocationWithValues[] }
@@ -1251,6 +1257,7 @@ function LegendControl({
 				}
 				hiddenText="Show legend"
 				defaultCollapse={!legendInfo}
+				mapRef={mapRef}
 			>
 				<div className="p-2 py-3 flex flex-col">
 					<div className="text-lg flex justify-between items-center gap-2">
