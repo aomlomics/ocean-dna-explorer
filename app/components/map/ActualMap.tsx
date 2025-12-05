@@ -951,6 +951,7 @@ function Resizable({
 	const [width, setWidth] = useState("auto" as number | "auto");
 	const [height, setHeight] = useState("auto" as number | "auto");
 
+	const [selectClassName, setSelectClassName] = useState("" as "select-none" | "");
 	const [sizeClassName, setSizeClassName] = useState("" as "w-full h-full" | "");
 	const [checkSize, setCheckSize] = useState(false);
 
@@ -1042,6 +1043,8 @@ function Resizable({
 	}
 
 	function handleDrag(event: React.MouseEvent<HTMLDivElement>) {
+		setSelectClassName("select-none");
+
 		const startWidth = width as number;
 		const startHeight = height as number;
 		const startX = event.pageX;
@@ -1081,6 +1084,7 @@ function Resizable({
 		document.body.addEventListener(
 			"mouseup",
 			() => {
+				setSelectClassName("");
 				document.body.removeEventListener("mousemove", handleMouseMove);
 			},
 			{ once: true }
@@ -1096,7 +1100,7 @@ function Resizable({
 		<div style={{ width, height }}>
 			<div ref={ref} className={`flex ${flexClassName} ${sizeClassName}`}>
 				{growDirection === "left" || growDirection === "up" ? handle : <></>}
-				<div className={`flex ${sizeClassName}`}>{children}</div>
+				<div className={`flex ${sizeClassName} ${selectClassName}`}>{children}</div>
 				{growDirection === "right" || growDirection === "down" ? handle : <></>}
 			</div>
 		</div>
