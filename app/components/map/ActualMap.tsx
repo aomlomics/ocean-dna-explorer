@@ -617,11 +617,23 @@ export default function ActualMap({
 								: mapRef.current?.fitBounds(defaultMapProps.bounds)
 						}
 					/>
-					<NoLocationPointsControl noLocationPoints={noLocationPoints} table={table} id={id} legendInfo={legendInfo} />
+					<NoLocationPointsControl
+						noLocationPoints={noLocationPoints}
+						table={table}
+						id={id}
+						legendInfo={legendInfo}
+						mapRef={mapRef}
+					/>
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
 					{pointsInside.length ? (
-						<DrawSelectedControl pointsInside={pointsInside} table={table} id={id} legendInfo={legendInfo} />
+						<DrawSelectedControl
+							pointsInside={pointsInside}
+							table={table}
+							id={id}
+							legendInfo={legendInfo}
+							mapRef={mapRef}
+						/>
 					) : (
 						<></>
 					)}
@@ -649,6 +661,7 @@ export default function ActualMap({
 						legendOptions={legendOptions}
 						table={table}
 						mapRef={mapRef}
+						defaultLegend={defaultLegend}
 						{...legendProps}
 					/>
 				</div>
@@ -780,7 +793,6 @@ function PopupWithSearchBody({
 	loc,
 	id,
 	legendInfo,
-	className,
 	listClassName
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -806,7 +818,7 @@ function PopupWithSearchBody({
 	}, [filter, loc.values]);
 
 	return (
-		<div className={`font-sans [:where(&)]:bg-base-100 [:where(&)]:rounded-lg [:where(&)]:p-3 ${className}`}>
+		<>
 			{titleTable && (
 				<Link
 					href={`/explore/${titleTable}/${
@@ -827,7 +839,7 @@ function PopupWithSearchBody({
 					onChange={(e) => setFilter(e.target.value)}
 					value={filter}
 					placeholder={`Filter ${TableMetadata[table].plural}...`}
-					className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
+					className="input input-primary input-xs w-full flex-initial min-w-0 text-primary my-1"
 				/>
 			) : (
 				<></>
@@ -840,7 +852,7 @@ function PopupWithSearchBody({
 							{filteredValues!.length})
 						</h2>
 						<div
-							className={`flex flex-col [:where(&)]:max-h-15 overflow-y-scroll overscroll-contain [:where(&)]:pr-5 ${listClassName}`}
+							className={`flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5 ${listClassName || ""}`}
 						>
 							{filteredValues!.map((l) => {
 								if (legendInfo) {
@@ -903,7 +915,7 @@ function PopupWithSearchBody({
 					</>
 				)}
 			</>
-		</div>
+		</>
 	);
 }
 
@@ -922,7 +934,7 @@ function PopupWithSearch({
 }) {
 	return (
 		<Popup className="map-popup">
-			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] bg-base-100 shadow-sm p-2">
+			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
 				<PopupWithSearchBody table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
 			</div>
 		</Popup>
@@ -934,24 +946,28 @@ function Resizable({
 	growDirection,
 	detectChange,
 	mapRef,
+	maxMapWidth = 0.75,
+	maxMapHeight = 0.75,
 	maxMinWidth,
 	maxMinHeight
 }: {
 	children: ReactNode;
 	growDirection: "up" | "down" | "left" | "right";
-	detectChange?: (string | boolean)[];
+	detectChange?: (string | boolean | undefined)[];
 	mapRef: RefObject<Map | null>;
+	maxMapWidth?: number;
+	maxMapHeight?: number;
 	maxMinWidth?: number;
 	maxMinHeight?: number;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
+	const childRef = useRef<HTMLDivElement>(null);
 
 	const [minWidth, setMinWidth] = useState(maxMinWidth);
 	const [minHeight, setMinHeight] = useState(maxMinHeight);
 	const [width, setWidth] = useState("auto" as number | "auto");
 	const [height, setHeight] = useState("auto" as number | "auto");
 
-	const [selectClassName, setSelectClassName] = useState("" as "select-none" | "");
 	const [sizeClassName, setSizeClassName] = useState("" as "w-full h-full" | "");
 	const [checkSize, setCheckSize] = useState(false);
 
@@ -964,20 +980,22 @@ function Resizable({
 	}, [ref, detectChange]);
 
 	useEffect(() => {
-		if (checkSize && ref.current && mapRef.current) {
+		if (checkSize && ref.current && childRef.current && mapRef.current) {
 			const mapContainer = mapRef.current.getContainer();
 
 			//set new width, and new min width if applicable
-			const mapMaxWidth = mapContainer.clientWidth * 0.75;
+			const mapMaxWidth = mapContainer.clientWidth * maxMapWidth;
+			const maxRefWidth =
+				ref.current.clientWidth > childRef.current.clientWidth ? ref.current.clientWidth : childRef.current.clientWidth;
 			if (maxMinWidth) {
 				let tempWidth;
 
 				if (maxMinWidth > mapMaxWidth) {
 					tempWidth = mapMaxWidth;
-				} else if (ref.current.clientWidth >= maxMinWidth) {
+				} else if (maxRefWidth >= maxMinWidth) {
 					tempWidth = maxMinWidth;
 				} else {
-					tempWidth = ref.current.clientWidth;
+					tempWidth = maxRefWidth;
 				}
 
 				setMinWidth(tempWidth);
@@ -985,27 +1003,31 @@ function Resizable({
 			} else {
 				//set initial min width
 				if (!minWidth) {
-					setMinWidth(ref.current.clientWidth);
+					setMinWidth(maxRefWidth);
 				}
 
-				if (ref.current.clientWidth >= mapMaxWidth) {
+				if (maxRefWidth >= mapMaxWidth) {
 					setWidth(mapMaxWidth);
 				} else {
-					setWidth(ref.current!.clientWidth);
+					setWidth(maxRefWidth);
 				}
 			}
 
 			//set new height, and new min height if applicable
-			const mapMaxHeight = mapContainer.clientHeight * 0.75;
+			const mapMaxHeight = mapContainer.clientHeight * maxMapHeight;
+			const maxRefHeight =
+				ref.current.clientHeight > childRef.current.clientHeight
+					? ref.current.clientHeight
+					: childRef.current.clientHeight;
 			if (maxMinHeight) {
 				let tempHeight;
 
 				if (maxMinHeight > mapMaxHeight) {
 					tempHeight = mapMaxHeight;
-				} else if (ref.current.clientHeight >= maxMinHeight) {
+				} else if (maxRefHeight >= maxMinHeight) {
 					tempHeight = maxMinHeight;
 				} else {
-					tempHeight = ref.current.clientHeight;
+					tempHeight = maxRefHeight;
 				}
 
 				setMinHeight(tempHeight);
@@ -1013,13 +1035,13 @@ function Resizable({
 			} else {
 				//set initial min height
 				if (!minHeight) {
-					setMinHeight(ref.current.clientHeight);
+					setMinHeight(maxRefHeight);
 				}
 
-				if (ref.current.clientHeight >= mapMaxHeight) {
+				if (maxRefHeight >= mapMaxHeight) {
 					setHeight(mapMaxHeight);
 				} else {
-					setHeight(ref.current.clientHeight);
+					setHeight(maxRefHeight);
 				}
 			}
 
@@ -1056,7 +1078,7 @@ function Resizable({
 	}
 
 	function handleDrag(event: React.MouseEvent<HTMLDivElement>) {
-		setSelectClassName("select-none");
+		document.body.classList.add("select-none");
 
 		const startWidth = width as number;
 		const startHeight = height as number;
@@ -1066,8 +1088,8 @@ function Resizable({
 		function handleMouseMove(this: HTMLElement, ev: MouseEvent) {
 			if (minWidth && minHeight && mapRef.current) {
 				const mapContainer = mapRef.current.getContainer();
-				const mapMaxWidth = mapContainer.clientWidth * 0.75;
-				const mapMaxHeight = mapContainer.clientHeight * 0.75;
+				const mapMaxWidth = mapContainer.clientWidth * maxMapWidth;
+				const mapMaxHeight = mapContainer.clientHeight * maxMapHeight;
 
 				if (growDirection === "right") {
 					const newWidth = startWidth + startX - ev.pageX;
@@ -1097,7 +1119,7 @@ function Resizable({
 		document.body.addEventListener(
 			"mouseup",
 			() => {
-				setSelectClassName("");
+				document.body.classList.remove("select-none");
 				document.body.removeEventListener("mousemove", handleMouseMove);
 			},
 			{ once: true }
@@ -1113,7 +1135,9 @@ function Resizable({
 		<div style={{ width, height }}>
 			<div ref={ref} className={`grid ${gridClassName} ${sizeClassName}`}>
 				{growDirection === "left" || growDirection === "up" ? handle : <></>}
-				<div className={`flex p-3 ${selectClassName}`}>{children}</div>
+				<div ref={childRef} className="flex p-3">
+					{children}
+				</div>
 				{growDirection === "right" || growDirection === "down" ? handle : <></>}
 			</div>
 		</div>
@@ -1277,7 +1301,8 @@ function LegendControl({
 	table,
 	mapRef,
 	titleTable,
-	points
+	points,
+	defaultLegend
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
@@ -1286,6 +1311,7 @@ function LegendControl({
 	legendOptions: string[];
 	table: Uncapitalize<Prisma.ModelName>;
 	mapRef: RefObject<Map | null>;
+	defaultLegend?: LegendInfo;
 } & (
 	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
 	| { titleTable?: undefined; points: LocationWithValues[] }
@@ -1326,179 +1352,193 @@ function LegendControl({
 					<div className="flex flex-col">
 						<div className="text-lg flex justify-between items-center gap-2">
 							{titleTable ? (
-								// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
-								<span className="pl-2">{TableMetadata[titleTable].plural}</span>
+								<InfoButton infoText={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
 							) : (
-								<>
-									<ResetButton
-										disabled={!legendInfo?.field}
-										dataTip="Reset Legend"
-										resetFunction={() => setLegendInfo(undefined)}
-									/>
+								<></>
+							)}
+							<ResetButton
+								disabled={!legendInfo || (!!defaultLegend && defaultLegend.field === legendInfo.field)}
+								dataTip="Reset Legend"
+								resetFunction={() => setLegendInfo(defaultLegend)}
+							/>
 
-									<select
-										value={legendInfo ? legendInfo.field : ""}
-										onChange={async (e) => {
-											const field = e.target.value;
+							<select
+								value={legendInfo ? legendInfo.field : ""}
+								onChange={async (e) => {
+									const field = e.target.value;
 
-											//give control back to browser to display loading
-											setLoading(true);
-											await new Promise((resolve) => setTimeout(resolve, 1));
+									//give control back to browser to display loading
+									setLoading(true);
+									await new Promise((resolve) => setTimeout(resolve, 1));
 
-											const shape = TableMetadata[table].schema.shape;
-											const type = getZodType(shape[field as keyof typeof shape]).type;
+									const shape = TableMetadata[table].schema.shape;
+									const type = getZodType(shape[field as keyof typeof shape]).type;
 
-											if (type === "string" || type === "DeadBoolean") {
-												//get unique options
-												const options = new Set() as Set<any>;
-												let someNoData = false;
-												for (const loc of points) {
-													if (loc.values) {
-														for (const val of loc.values) {
-															if (val[field] != null) {
-																options.add(val[field]);
-															} else {
-																someNoData = true;
-															}
-														}
-													} else if (loc[field] != null) {
-														options.add(loc[field]);
+									if (type === "string" || type === "DeadBoolean") {
+										//get unique options
+										const options = new Set() as Set<any>;
+										let someNoData = false;
+
+										//collapse points object into array if necessary
+										let reduced = titleTable
+											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
+											: points;
+										for (const loc of reduced) {
+											if (loc.values) {
+												for (const val of loc.values) {
+													if (val[field] != null) {
+														options.add(val[field]);
 													} else {
 														someNoData = true;
 													}
 												}
-												const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+											} else if (loc[field] != null) {
+												options.add(loc[field]);
+											} else {
+												someNoData = true;
+											}
+										}
+										const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
 
-												//check if invalid number of options
-												if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-													setLegendInfo({ field, mode: "discreet", colorMap: {} });
-													return;
-												} else if (optionsArray.length === 1) {
-													setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-													return;
-												} else {
-													//valid
-													const colors = distinctColors({ count: optionsArray.length, chromaMin });
-													const colorMap = {} as Record<string, Color>;
-													for (let i = 0; i < optionsArray.length; i++) {
-														colorMap[optionsArray[i]] = colors[i];
-													}
+										//check if invalid number of options
+										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+											setLegendInfo({ field, mode: "discreet", colorMap: {} });
+											return;
+										} else if (optionsArray.length === 1) {
+											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+											return;
+										} else {
+											//valid
+											const colors = distinctColors({ count: optionsArray.length, chromaMin });
+											const colorMap = {} as Record<string, Color>;
+											for (let i = 0; i < optionsArray.length; i++) {
+												colorMap[optionsArray[i]] = colors[i];
+											}
 
-													//add default color if there is some point with no data
-													if (someNoData) {
-														colorMap["No value"] = DEFAULT_COLOR;
-													}
+											//add default color if there is some point with no data
+											if (someNoData) {
+												colorMap["No value"] = DEFAULT_COLOR;
+											}
 
-													setLegendInfo({ field, mode: "discreet", colorMap });
-												}
-											} else if (type === "integer" || type === "float") {
-												//get unique options
-												const options = new Set() as Set<any>;
-												let someNoValue = false;
-												for (const loc of points) {
-													if (loc.values) {
-														for (const val of loc.values) {
-															if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
-																options.add(val[field]);
-															} else {
-																someNoValue = true;
-															}
-														}
+											setLegendInfo({ field, mode: "discreet", colorMap });
+										}
+									} else if (type === "integer" || type === "float") {
+										//get unique options
+										const options = new Set() as Set<any>;
+										let someNoValue = false;
+
+										//collapse points object into array if necessary
+										let reduced = titleTable
+											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
+											: points;
+										for (const loc of reduced) {
+											if (loc.values) {
+												for (const val of loc.values) {
+													if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
+														options.add(val[field]);
 													} else {
-														if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
-															options.add(loc[field]);
-														} else {
-															someNoValue = true;
-														}
+														someNoValue = true;
 													}
-												}
-												const optionsArray = Array.from(options).sort((a, b) => a - b);
-
-												//check if invalid number of options
-												if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-													setLegendInfo({ field, mode: "discreet", colorMap: {} });
-												} else if (optionsArray.length === 1) {
-													setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-												} else {
-													//valid
-													setLegendInfo({
-														field,
-														mode: "gradient",
-														range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
-														palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-														someNoValue
-													});
-												}
-											} else if (type === "date") {
-												//get unique options and cast to epoch timestamp
-												const options = new Set() as Set<any>;
-												let someNoValue = false;
-												for (const loc of points) {
-													if (loc.values) {
-														for (const val of loc.values) {
-															if (val[field]) {
-																const time = val[field].getTime();
-																if (!DeadValueNumbers.includes(time)) {
-																	options.add(time);
-																} else {
-																	someNoValue = true;
-																}
-															} else {
-																someNoValue = true;
-															}
-														}
-													} else {
-														if (loc[field]) {
-															const time = loc[field].getTime();
-															if (!DeadValueNumbers.includes(time)) {
-																options.add(time);
-															} else {
-																someNoValue = true;
-															}
-														} else {
-															someNoValue = true;
-														}
-													}
-												}
-												const optionsArray = Array.from(options).sort((a, b) => a - b);
-
-												//check if invalid number of options
-												if (
-													optionsArray.length === 0 ||
-													(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
-												) {
-													setLegendInfo({ field, mode: "discreet", colorMap: {} });
-												} else if (optionsArray.length === 1) {
-													setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-												} else {
-													//valid
-													setLegendInfo({
-														field,
-														mode: "gradient",
-														range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
-														palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-														someNoValue
-													});
 												}
 											} else {
-												setLegendInfo({
-													field,
-													mode: "discreet",
-													colorMap: { "Unsupported field": DEFAULT_COLOR }
-												});
+												if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
+													options.add(loc[field]);
+												} else {
+													someNoValue = true;
+												}
 											}
-										}}
-										className="select select-xs select-primary select-ghost text-sm mr-3"
-									>
-										<option disabled={true} value="">
-											Select field
-										</option>
-										{legendOptions.map((opt) => (
-											<option key={opt}>{opt}</option>
-										))}
-									</select>
-								</>
-							)}
+										}
+										const optionsArray = Array.from(options).sort((a, b) => a - b);
+
+										//check if invalid number of options
+										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+											setLegendInfo({ field, mode: "discreet", colorMap: {} });
+										} else if (optionsArray.length === 1) {
+											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+										} else {
+											//valid
+											setLegendInfo({
+												field,
+												mode: "gradient",
+												range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
+												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+												someNoValue
+											});
+										}
+									} else if (type === "date") {
+										//get unique options and cast to epoch timestamp
+										const options = new Set() as Set<any>;
+										let someNoValue = false;
+
+										//collapse points object into array if necessary
+										let reduced = titleTable
+											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
+											: points;
+										for (const loc of reduced) {
+											if (loc.values) {
+												for (const val of loc.values) {
+													if (val[field]) {
+														const time = val[field].getTime();
+														if (!DeadValueNumbers.includes(time)) {
+															options.add(time);
+														} else {
+															someNoValue = true;
+														}
+													} else {
+														someNoValue = true;
+													}
+												}
+											} else {
+												if (loc[field]) {
+													const time = loc[field].getTime();
+													if (!DeadValueNumbers.includes(time)) {
+														options.add(time);
+													} else {
+														someNoValue = true;
+													}
+												} else {
+													someNoValue = true;
+												}
+											}
+										}
+										const optionsArray = Array.from(options).sort((a, b) => a - b);
+
+										//check if invalid number of options
+										if (
+											optionsArray.length === 0 ||
+											(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
+										) {
+											setLegendInfo({ field, mode: "discreet", colorMap: {} });
+										} else if (optionsArray.length === 1) {
+											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
+										} else {
+											//valid
+											setLegendInfo({
+												field,
+												mode: "gradient",
+												range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
+												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+												someNoValue
+											});
+										}
+									} else {
+										setLegendInfo({
+											field,
+											mode: "discreet",
+											colorMap: { "Unsupported field": DEFAULT_COLOR }
+										});
+									}
+								}}
+								className="select select-xs select-primary select-ghost text-sm mr-3"
+							>
+								<option disabled={true} value="">
+									Select field
+								</option>
+								{legendOptions.map((opt) => (
+									<option key={opt}>{opt}</option>
+								))}
+							</select>
+
 							{legendInfo && legendInfo.mode === "gradient" ? (
 								<div className="dropdown dropdown-top dropdown-end">
 									<div tabIndex={0} role="button">
@@ -1618,15 +1658,11 @@ function LegendControl({
 														}
 													}}
 												></div>
-												{titleTable ||
-												Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
+												{Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
 													<Link
-														href={`/explore/${
-															titleTable ||
-															Object.keys(TableMetadata).find(
-																(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-															)
-														}/${encodeURIComponent(key)}`}
+														href={`/explore/${Object.keys(TableMetadata).find(
+															(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+														)}/${encodeURIComponent(key)}`}
 														className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
 															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
 														}`}
@@ -1721,7 +1757,7 @@ function PointSizeControl({
 	return (
 		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
 			<Collapsible dir="left" defaultCollapse hiddenText="Show point size control">
-				<div className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1">
+				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
 						<div className="flex items-center gap-1 mt-1">
 							<ResetButton
@@ -1810,7 +1846,7 @@ function ClusterControl({
 	return (
 		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
 			<Collapsible dir="left" defaultCollapse hiddenText="Show cluster control">
-				<div className="w-35 pl-2 pr-1 pt-1 pb-2">
+				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
 						<div className="flex items-center gap-1 mt-1">
 							<ResetButton
@@ -1852,14 +1888,17 @@ function DrawSelectedControl({
 	pointsInside,
 	table,
 	id,
-	legendInfo
+	legendInfo,
+	mapRef
 }: {
 	pointsInside: Location[];
 	table: Uncapitalize<Prisma.ModelName>;
 	id: string;
 	legendInfo: LegendInfo;
+	mapRef: RefObject<Map | null>;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
+	const [shown, setShown] = useState(true);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1870,19 +1909,25 @@ function DrawSelectedControl({
 
 	return (
 		<div className="leaflet-control" ref={ref}>
-			<Collapsible hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}>
-				<div className="px-3 pt-1 text-primary text-lg">Selected With Shapes</div>
-				<PopupWithSearchBody
-					table={table}
-					id={id}
-					legendInfo={legendInfo}
-					loc={{
-						decimalLatitude: NaN,
-						decimalLongitude: NaN,
-						values: pointsInside
-					}}
-					className="pt-0"
-				/>
+			<Collapsible
+				hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}
+				onCollapse={(c) => setShown(!c)}
+			>
+				<Resizable growDirection={"down"} detectChange={[shown]} mapRef={mapRef} maxMapHeight={0.6} maxMinHeight={175}>
+					<div className="flex flex-col px-2">
+						<div className="text-primary text-lg">Selected With Shapes</div>
+						<PopupWithSearchBody
+							table={table}
+							id={id}
+							legendInfo={legendInfo}
+							loc={{
+								decimalLatitude: NaN,
+								decimalLongitude: NaN,
+								values: pointsInside
+							}}
+						/>
+					</div>
+				</Resizable>
 			</Collapsible>
 		</div>
 	);
@@ -1892,14 +1937,17 @@ function NoLocationPointsControl({
 	noLocationPoints,
 	table,
 	id,
-	legendInfo
+	legendInfo,
+	mapRef
 }: {
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<Prisma.ModelName>;
 	id: string;
 	legendInfo: LegendInfo;
+	mapRef: RefObject<Map | null>;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
+	const [shown, setShown] = useState(false);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1910,20 +1958,27 @@ function NoLocationPointsControl({
 
 	return (
 		<div className="leaflet-control" ref={ref}>
-			<Collapsible dir="left" defaultCollapse hiddenText={`Show ${TableMetadata[table].plural} with no location data`}>
-				<div className="px-3 pt-1 text-primary text-lg">No Location Data</div>
-				<PopupWithSearchBody
-					table={table}
-					id={id}
-					legendInfo={legendInfo}
-					loc={{
-						decimalLatitude: NaN,
-						decimalLongitude: NaN,
-						values: noLocationPoints as Location[] //doesn't matter here
-					}}
-					className="pt-0"
-					listClassName="max-h-20"
-				/>
+			<Collapsible
+				dir="left"
+				defaultCollapse
+				hiddenText={`Show ${TableMetadata[table].plural} with no location data`}
+				onCollapse={(c) => setShown(!c)}
+			>
+				<Resizable growDirection={"down"} detectChange={[shown]} mapRef={mapRef} maxMapHeight={0.55} maxMinHeight={200}>
+					<div className="flex flex-col px-2">
+						<div className="text-primary text-lg">No Location Data</div>
+						<PopupWithSearchBody
+							table={table}
+							id={id}
+							legendInfo={legendInfo}
+							loc={{
+								decimalLatitude: NaN,
+								decimalLongitude: NaN,
+								values: noLocationPoints as Location[] //doesn't matter here
+							}}
+						/>
+					</div>
+				</Resizable>
 			</Collapsible>
 		</div>
 	);
