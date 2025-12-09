@@ -467,6 +467,7 @@ export default function ActualMap({
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
 
+						//TODO: make colors have less alpha when outside shapes instead of turning them black
 						const loc = marker.options.children.props.loc;
 						if (loc.values) {
 							childrenWithValues++;
@@ -846,11 +847,17 @@ function PopupWithSearchBody({
 			)}
 			<>
 				{loc.values ? (
+					//TODO: make link go to search page with results being loc.values
 					<>
-						<h2 className="text-primary text-lg">
-							{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
-							{filteredValues!.length})
-						</h2>
+						<div className="flex justify-between gap-2 items-center">
+							<h2 className="text-primary text-lg">
+								{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
+								{filteredValues!.length})
+							</h2>
+							<Link className="btn btn-xs btn-primary text-primary-content!" href="/">
+								Search
+							</Link>
+						</div>
 						<div
 							className={`flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5 ${listClassName || ""}`}
 						>
