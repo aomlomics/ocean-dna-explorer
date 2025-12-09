@@ -65,7 +65,7 @@ export default function MobileMenu() {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-[51] w-60 p-3 shadow-lg">
+				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-51 w-60 p-3 shadow-lg">
 					<li className="text-base py-1">
 						<Link href="/" onClick={handleClose}>
 							Home
@@ -120,6 +120,11 @@ export default function MobileMenu() {
 					<li className="text-base py-1">
 						<Link href="/help" onClick={handleClose}>
 							Help
+						</Link>
+					</li>
+					<li className="text-base py-1">
+						<Link href="/aboutUs" onClick={handleClose}>
+							About us
 						</Link>
 					</li>
 				</ul>
