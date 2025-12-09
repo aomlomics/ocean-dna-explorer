@@ -88,7 +88,7 @@ export default function DataDisplay({
 	});
 
 	return (
-		<div className="overflow-x-hidden overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
+		<div className="overflow-x-auto overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
 			<table className="table table-zebra bg-base-100 font-sans">
 				<tbody>
 					{sortedEntries.reduce((acc: ReactNode[], [field, value]) => {
