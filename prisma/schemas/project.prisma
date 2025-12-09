@@ -344,18 +344,20 @@ model Assay {
 
     deleted_ODE Boolean?
 
-    targetTaxonomicAssay         String //[]
-    targetTaxonomicScope         String? //[]    @default([])
-    target_gene                  String
-    target_subfragment           String?
+    targetTaxonomicAssay              String //[]
+    targetTaxonomicScope              String? //[]    @default([])
+    target_gene                       String
+    target_subfragment                String?
     /// @zod.custom.use(z.coerce.number())
-    ampliconSize                 Float?
+    ampliconSize                      Float?
     /// @zod.custom.use(z.coerce.number())
-    ampliconSize_Midpoint_ODE    Float?
+    ampliconSize_Midpoint_ODE         Float?
     /// @zod.custom.use(z.coerce.number())
-    ampliconSize_End_ODE         Float?
-    pcr_primer_reference_forward String?
-    pcr_primer_reference_reverse String?
+    ampliconSize_End_ODE              Float?
+    pcr_primer_reference_forward      String?
+    pcr_primer_reference_reverse      String?
+    pcr_primer_name_published_forward String?
+    pcr_primer_name_published_reverse String?
 
     @@unique([pcr_primer_forward, pcr_primer_reverse])
     @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
