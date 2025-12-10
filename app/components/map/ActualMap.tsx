@@ -23,6 +23,7 @@ import distinctColors from "distinct-colors";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
+import { deflateSync } from "fflate";
 
 type MapProps =
 	| {
@@ -186,6 +187,14 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 
 			return `<div class='border-4 border-white/40 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${style}'></div>`;
 		}
+	}
+}
+
+function compressIfNeeded(str: string) {
+	if (str.length > 500) {
+		return "compressed/fflate:" + String.fromCharCode(...deflateSync(new TextEncoder().encode(str), { level: 9 }));
+	} else {
+		return str;
 	}
 }
 
@@ -856,9 +865,9 @@ function PopupWithSearchBody({
 							</h2>
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
-								href={`/search/advanced?table=sample&advanced=[["samp_name","in","${loc.values
-									.map((v) => v[id])
-									.join(",")}"]]`}
+								href={`/search/advanced?table=sample&advanced=[["samp_name","in","${compressIfNeeded(
+									loc.values.map((v) => v[id]).join(",")
+								)}"]]`}
 							>
 								Search
 							</Link>

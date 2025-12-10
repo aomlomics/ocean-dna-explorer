@@ -42,7 +42,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) return <>Project not found</>;
-	const { _count: _, Analyses: __, editHistory: ___, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
