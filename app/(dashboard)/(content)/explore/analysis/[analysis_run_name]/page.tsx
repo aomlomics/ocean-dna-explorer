@@ -96,9 +96,7 @@ export default async function Analysis_run_name({
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-6">
-					<div className="h-[400px]">
-						<Map locations={samples} cluster draw />
-					</div>
+					<Map locations={samples} cluster draw className="w-full h-[440px]" />
 
 					{/* Analysis Information */}
 					<div className="bg-base-200 rounded-xl p-6">
