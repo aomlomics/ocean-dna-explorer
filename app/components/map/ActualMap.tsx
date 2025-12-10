@@ -854,7 +854,12 @@ function PopupWithSearchBody({
 								{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
 								{filteredValues!.length})
 							</h2>
-							<Link className="btn btn-xs btn-primary text-primary-content!" href="/">
+							<Link
+								className="btn btn-xs btn-primary text-primary-content!"
+								href={`/search/advanced?table=sample&advanced=[["samp_name","in","${loc.values
+									.map((v) => v[id])
+									.join(",")}"]]`}
+							>
 								Search
 							</Link>
 						</div>
