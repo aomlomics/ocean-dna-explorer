@@ -17,7 +17,7 @@ export default async function Header() {
 	const role = sessionClaims?.metadata.role as Role;
 
 	return (
-		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
+		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-9000000 relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
 			<div className="navbar-start pr-2 sm:pr-6 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
