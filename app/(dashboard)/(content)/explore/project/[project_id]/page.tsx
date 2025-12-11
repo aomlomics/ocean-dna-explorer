@@ -23,7 +23,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					Analyses: true
 				}
 			},
-			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
@@ -43,7 +42,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) return <>Project not found</>;
-	const { _count: _, Samples: __, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
@@ -102,7 +100,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-8">
-					<Map locations={project.Samples} cluster legend draw legendOmit={["project_id"]} />
+					<Map
+						query={() => prisma.sample.findMany({ where: { project_id } })}
+						cluster
+						legend
+						draw
+						legendOmit={["project_id"]}
+					/>
 					{/* Assays Section */}
 					<div>
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
@@ -112,7 +116,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 							{Object.keys(uniqueAssays).map((assay) => {
 								return (
 									<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
-										<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+										<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 											<div className="relative w-12 h-12">
 												<Suspense>
 													<AssayPhyloPic assay_name={assay} />
