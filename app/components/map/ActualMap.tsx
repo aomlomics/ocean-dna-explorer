@@ -587,6 +587,7 @@ export default function ActualMap({
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
+	//TODO: include userDefined
 	const includeOpt = (opt: string) => !GlobalOmit.includes(opt) && !legendOmit.includes(opt) && opt !== "id";
 	if (TableMetadata[table].fieldOrder) {
 		legendOptions.push(...TableMetadata[table].fieldOrder);
@@ -739,7 +740,14 @@ export default function ActualMap({
 							) {
 								acc.push(
 									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-										<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
+										<PopupWithSearch
+											table={table}
+											titleTable={titleTable}
+											loc={loc}
+											id={id}
+											legendInfo={legendInfo}
+											maxWidth={mapRef.current ? mapRef.current.getContainer().clientWidth * 0.5 : undefined}
+										/>
 									</Marker>
 								);
 							}
@@ -802,8 +810,7 @@ function PopupWithSearchBody({
 	titleTable,
 	loc,
 	id,
-	legendInfo,
-	listClassName
+	legendInfo
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -811,8 +818,8 @@ function PopupWithSearchBody({
 	id: string;
 	legendInfo: LegendInfo;
 	className?: string;
-	listClassName?: string;
 }) {
+	//TODO: filter not working
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
 
@@ -865,16 +872,15 @@ function PopupWithSearchBody({
 							</h2>
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
-								href={`/search/advanced?table=sample&advanced=[["samp_name","in","${compressIfNeeded(
-									loc.values.map((v) => v[id]).join(",")
-								)}"]]`}
+								href={`/search/advanced?table=sample&advanced=[["${id}","in",["${compressIfNeeded(
+									//TODO: use filteredValues if relevant
+									loc.values.map((v) => v[id]).join('","')
+								)}"]]]`}
 							>
 								Search
 							</Link>
 						</div>
-						<div
-							className={`flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5 ${listClassName || ""}`}
-						>
+						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
 							{filteredValues!.map((l) => {
 								if (legendInfo) {
 									const color = getLegendColor(legendInfo, l);
@@ -945,16 +951,18 @@ function PopupWithSearch({
 	titleTable,
 	loc,
 	id,
-	legendInfo
+	legendInfo,
+	maxWidth
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
+	maxWidth?: number;
 }) {
 	return (
-		<Popup className="map-popup">
+		<Popup className="map-popup" maxWidth={maxWidth}>
 			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
 				<PopupWithSearchBody table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
 			</div>
@@ -989,18 +997,20 @@ function Resizable({
 	const [width, setWidth] = useState("auto" as number | "auto");
 	const [height, setHeight] = useState("auto" as number | "auto");
 
-	const [sizeClassName, setSizeClassName] = useState("" as "w-full h-full" | "");
+	const [sizeClassName, setSizeClassName] = useState("invisible" as "w-full h-full" | "invisible");
 	const [checkSize, setCheckSize] = useState(false);
 
 	useEffect(() => {
 		if (ref.current && (!detectChange || detectChange?.every((c) => !!c))) {
 			//unlock child size to allow automatic resizing
-			setSizeClassName("");
+			setSizeClassName("invisible");
 			setCheckSize(true);
 		}
 	}, [ref, detectChange]);
 
 	useEffect(() => {
+		//TODO: doesn't shrink after resetting legend
+		//TODO: don't trigger resize when legendInfo.hidden changes
 		if (checkSize && ref.current && childRef.current && mapRef.current) {
 			const mapContainer = mapRef.current.getContainer();
 
