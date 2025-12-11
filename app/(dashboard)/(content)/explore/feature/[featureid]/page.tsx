@@ -143,7 +143,7 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 						{primaryTaxonomyDetails ? (
 							<>
 								<div className="flex flex-col items-center gap-3">
-									<div className="w-24 h-24 md:w-28 md:h-28 relative">
+									<div className="w-36 h-36 md:w-40 md:h-40 relative">
 										<PhyloPic taxonomy={primaryTaxonomyDetails} />
 									</div>
 									{primaryTaxonomyDetails.taxonomy ? (
@@ -159,8 +159,11 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 										</p>
 									)}
 								</div>
-								<div className="text-xs text-base-content/70 bg-base-200/70 rounded-md p-2 break-all w-full">
-									{primaryTaxonomyDetails.taxonomy ?? primaryTaxonomy}
+								<div className="text-xs text-base-content/70 bg-base-200/70 rounded-md p-2 w-full">
+									<span className="font-semibold uppercase tracking-wide mr-1">Taxonomy</span>
+									<span className="break-all">
+										{primaryTaxonomyDetails.taxonomy ?? primaryTaxonomy}
+									</span>
 								</div>
 							</>
 						) : (

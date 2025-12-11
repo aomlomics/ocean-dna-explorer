@@ -123,8 +123,8 @@ export default function MobileMenu() {
 						</Link>
 					</li>
 					<li className="text-base py-1">
-						<Link href="/aboutUs" onClick={handleClose}>
-							About us
+						<Link href="/about" onClick={handleClose}>
+							About
 						</Link>
 					</li>
 				</ul>

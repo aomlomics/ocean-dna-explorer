@@ -69,7 +69,7 @@ export default async function Header() {
 					<TabButton tabName="Contribute" route="/contribute" />
 					<TabButton tabName="API" route="/api" />
 					<TabButton tabName="Help" route="/help" />
-					<TabButton tabName="About us" route="/aboutUs" />
+					<TabButton tabName="About" route="/about" />
 				</div>
 			</div>
 
