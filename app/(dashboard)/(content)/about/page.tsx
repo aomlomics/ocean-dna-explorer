@@ -129,6 +129,7 @@ function DataJourneyIcon({ type }: { type: (typeof dataJourneySteps)[number]["ic
 				strokeLinecap="round"
 				strokeLinejoin="round"
 				vectorEffect="non-scaling-stroke"
+				opacity="0.1"
 			>
 				<path d="M177.09,96.19c.85-1.5,18.16-54.31,18.16-54.31,0,0,6.1-3.1,18.75.15,10.81,2.79,15.96,6.24,15.96,6.24l-4.8,56.13" />
 				<path d="M419.8,119.51c-9.19-16.33-18.31-33.36-26.1-48.55-3.79-7.5-9.88-13.32-14.73-12.97-4.36.3-7.5,1.5-6.88,8.88,1.39,18,4.96,36.3,7.18,54.46.79,9.21,13.18,17.35,26.31,14.76,12.88-2.56,19-9.18,14.22-16.57h0ZM404.97,133.68c-9,2.17-18.1-5.08-19.09-13.15-2.39-16-4.89-31.95-7.5-47.85-1.27-8.13.66-8.88,3.99-9.37,3.33-.49,5.49,4.77,8.65,11.34,7.21,15,15.61,31.62,22.5,45,3.61,6.54.28,11.91-8.55,14.04h0Z" />
@@ -239,13 +240,10 @@ export default function AboutPage() {
 						src="/images/about_us_banner.JPG"
 						alt="Ocean surface and research vessel"
 						fill
-						className="object-cover w-full h-full"
+						className="object-cover w-full h-full opacity-90 dark:opacity-90"
 						priority
 						sizes="100vw"
 					/>
-					{/* Tone overlay: lighten or darken the entire image depending on theme */}
-					<div className="absolute inset-0 bg-base-100/18 mix-blend-screen dark:hidden pointer-events-none" />
-					<div className="absolute inset-0 hidden dark:block bg-slate-950/55 mix-blend-multiply pointer-events-none" />
 					{/* Bottom gradient: fade into the current theme background color only */}
 					<div className="absolute inset-x-0 bottom-0 h-24 bg-linear-to-t from-base-100 to-transparent pointer-events-none" />
 

@@ -2,7 +2,14 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
-import { ParamsArray, ParamsArrayElement, ParamsArrayField, ParamsArrayRelation, ParamsLogicalOperator, QueryMode } from "@/types/globals";
+import {
+	ParamsArray,
+	ParamsArrayElement,
+	ParamsArrayField,
+	ParamsArrayRelation,
+	ParamsLogicalOperator,
+	QueryMode
+} from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
@@ -118,8 +125,14 @@ export default function AdvancedSearch() {
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
+	const apiFieldsModalRef = useRef<HTMLDialogElement>(null);
 	const [formUpdateTrigger, setFormUpdateTrigger] = useState(0);
 	const [apiCopied, setApiCopied] = useState(false);
+	const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
+	const apiDropdownRef = useRef<HTMLDivElement | null>(null);
+	const [apiFieldSelections, setApiFieldSelections] = useState<Record<string, string[]>>({});
+	const [fieldSelectionDraft, setFieldSelectionDraft] = useState<string[]>([]);
+	const [fieldSearchText, setFieldSearchText] = useState("");
 
 	useEffect(() => {
 		try {
@@ -183,7 +196,32 @@ export default function AdvancedSearch() {
 		}
 	}, [searchTable, searchParams, pathname, router]);
 
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (
+				apiDropdownRef.current &&
+				!apiDropdownRef.current.contains(event.target as Node)
+			) {
+				setApiDropdownOpen(false);
+			}
+		}
+
+		if (apiDropdownOpen) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [apiDropdownOpen]);
+
 	//functions
+	function getAvailableApiFields(table: Prisma.ModelName) {
+		const omitSet = new Set(GlobalOmit);
+		const allFields = TableMetadata[table].enumSchema.options as string[];
+		return allFields.filter((field) => !omitSet.has(field));
+	}
+
 	function getQueryDescription() {
 		// Use formUpdateTrigger to force re-evaluation
 		const _ = formUpdateTrigger;
@@ -395,8 +433,8 @@ export default function AdvancedSearch() {
 		}, 300);
 	}
 
-	function getApiQuery() {
-		const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_URL;
+	function getApiQuery(customFields?: string[] | null) {
+		const baseUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_URL;
 		const tableName = uncapitalizeTable(searchTable);
 
 		// Prefer the current URL params so the API box always matches what the backend sees after a search
@@ -411,19 +449,63 @@ export default function AdvancedSearch() {
 			}
 		}
 
+		const params = new URLSearchParams();
 		if (advancedStr) {
-			return `${baseUrl}/api/${tableName}?advanced=${advancedStr}`;
+			params.set("advanced", advancedStr);
+		}
+
+		let fieldsForTable: string[] | undefined;
+		if (customFields === null) {
+			fieldsForTable = undefined;
+		} else if (customFields && customFields.length) {
+			fieldsForTable = customFields;
+		} else {
+			const savedSelection = apiFieldSelections[searchTable];
+			if (savedSelection && savedSelection.length) {
+				fieldsForTable = savedSelection;
+			}
+		}
+
+		if (fieldsForTable && fieldsForTable.length) {
+			params.set("fields", fieldsForTable.join(","));
+		}
+
+		const queryString = params.toString();
+		if (queryString) {
+			return `${baseUrl}/api/${tableName}?${queryString}`;
 		}
 
 		return `${baseUrl}/api/${tableName}`;
 	}
 
-	async function copyApiQuery() {
-		const query = getApiQuery();
+	async function copyApiQuery(customFields?: string[] | null) {
+		const query = getApiQuery(customFields);
 		await navigator.clipboard.writeText(query);
 		setApiCopied(true);
 		setTimeout(() => setApiCopied(false), 2000);
 	}
+
+	function openFieldSelectionModal() {
+		if (!searchTable) {
+			return;
+		}
+
+		const availableFields = getAvailableApiFields(searchTable);
+		const savedSelection = apiFieldSelections[searchTable];
+		const initialSelection =
+			savedSelection && savedSelection.length ? savedSelection : availableFields;
+
+		setFieldSelectionDraft(initialSelection);
+		setFieldSearchText("");
+		setApiDropdownOpen(false);
+		apiFieldsModalRef.current?.showModal();
+	}
+	const availableApiFields = getAvailableApiFields(searchTable);
+	const filteredApiFields = availableApiFields.filter((field) =>
+		field.toLowerCase().includes(fieldSearchText.toLowerCase())
+	);
+	const allFieldsSelected =
+		availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
 
     return (
         <div className="grid grid-cols-1 gap-y-4 pt-4">
@@ -475,13 +557,18 @@ export default function AdvancedSearch() {
 											</div>
 
 											<div className="flex items-center justify-end gap-3">
-												<button
-													type="button"
-													className="btn btn-md gap-2 bg-base-200 text-base-content hover:bg-base-300 tooltip tooltip-bottom"
-													onClick={copyApiQuery}
-													data-tip="Copy this search as an API query URL that you can use in your browser or in code."
-												>
-													<>
+												<div className="relative inline-block text-left" ref={apiDropdownRef}>
+													<button
+														type="button"
+														className="btn btn-md gap-2 bg-base-200 text-base-content hover:bg-base-300 pr-10 relative"
+														onClick={() => {
+															if (!apiDropdownOpen) {
+																copyApiQuery();
+															} else {
+																setApiDropdownOpen(false);
+															}
+														}}
+													>
 														<svg
 															xmlns="http://www.w3.org/2000/svg"
 															width="16"
@@ -522,8 +609,57 @@ export default function AdvancedSearch() {
 																Copied
 															</span>
 														</span>
-													</>
-												</button>
+														<span
+															className="absolute inset-y-0 right-3 flex items-center"
+															onClick={(e) => {
+																e.stopPropagation();
+																setApiDropdownOpen((open) => !open);
+															}}
+															aria-label="API query field options"
+														>
+															<svg
+																xmlns="http://www.w3.org/2000/svg"
+																width="16"
+																height="16"
+																viewBox="0 0 24 24"
+																fill="none"
+																stroke="currentColor"
+																strokeWidth="2"
+																strokeLinecap="round"
+																strokeLinejoin="round"
+															>
+																<polyline points="6 9 12 15 18 9"></polyline>
+															</svg>
+														</span>
+													</button>
+													{apiDropdownOpen && (
+														<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-40">
+															<ul className="menu p-2">
+																<li>
+																	<button
+																		type="button"
+																		onClick={() => {
+																			setApiDropdownOpen(false);
+																			copyApiQuery(null);
+																		}}
+																	>
+																		Return all fields
+																	</button>
+																</li>
+																<li>
+																	<button
+																		type="button"
+																		onClick={() => {
+																			openFieldSelectionModal();
+																		}}
+																	>
+																		Select fields to return
+																	</button>
+																</li>
+															</ul>
+														</div>
+													)}
+												</div>
 												<button
 													type="button"
 													className="btn btn-error btn-md gap-2"
@@ -578,6 +714,111 @@ export default function AdvancedSearch() {
 			</>
 		)}
 	</form>
+
+			<Modal ref={apiFieldsModalRef} className="max-h-[85vh] overflow-y-auto my-8 max-w-3xl">
+				<div className="p-6 space-y-4">
+					<h3 className="text-2xl font-normal text-primary">Select Fields for API Query</h3>
+					<p className="text-sm text-base-content/70">
+						Choose which fields from {TableMetadata[searchTable].plural} to include when copying this
+						search as an API query. Leaving all fields selected will return the full records.
+					</p>
+					<div className="mt-2 space-y-3">
+						<div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+							<label className="w-full md:max-w-sm">
+								<span className="text-sm font-medium text-base-content block mb-1">Narrow list</span>
+								<input
+									type="text"
+									className="input input-bordered w-full"
+									placeholder="Filter fields..."
+									value={fieldSearchText}
+									onChange={(e) => setFieldSearchText(e.target.value)}
+								/>
+							</label>
+							<label className="flex items-center gap-2">
+								<input
+									type="checkbox"
+									className="checkbox"
+									checked={allFieldsSelected}
+									onChange={(e) =>
+										e.target.checked
+											? setFieldSelectionDraft(availableApiFields)
+											: setFieldSelectionDraft([])
+									}
+								/>
+								<span className="text-sm text-base-content/80">Select/deselect all</span>
+							</label>
+						</div>
+						<div className="border-t border-base-300 pt-3 h-[320px] overflow-y-auto">
+							{filteredApiFields.length ? (
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+									{filteredApiFields.map((field) => (
+										<label
+											key={field}
+											className="flex items-center gap-2 text-sm text-base-content/90"
+										>
+											<input
+												type="checkbox"
+												className="checkbox checkbox-sm"
+												checked={fieldSelectionDraft.includes(field)}
+												onChange={() => {
+													setFieldSelectionDraft((prev) =>
+														prev.includes(field)
+															? prev.filter((f) => f !== field)
+															: [...prev, field]
+													);
+												}}
+											/>
+											<span className="font-mono text-xs break-all">{field}</span>
+										</label>
+									))}
+								</div>
+							) : (
+								<p className="text-sm text-base-content/60 italic">
+									No fields match your search. Try a different filter term.
+								</p>
+							)}
+						</div>
+					</div>
+					<div className="mt-4 flex items-center justify-end gap-3">
+						<button
+							type="button"
+							className="btn btn-ghost"
+							onClick={() => apiFieldsModalRef.current?.close()}
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							className="btn btn-primary"
+							disabled={!fieldSelectionDraft.length}
+							onClick={() => {
+								const normalizedSelection = availableApiFields.filter((field) =>
+									fieldSelectionDraft.includes(field)
+								);
+
+								setApiFieldSelections((prev) => {
+									if (
+										!normalizedSelection.length ||
+										normalizedSelection.length === availableApiFields.length
+									) {
+										const { [searchTable]: _omit, ...rest } = prev;
+										return rest;
+									}
+
+									return {
+										...prev,
+										[searchTable]: normalizedSelection
+									};
+								});
+
+								apiFieldsModalRef.current?.close();
+							}}
+						>
+							Save selection
+						</button>
+					</div>
+				</div>
+			</Modal>
 
 			<Modal ref={helpModalRef} className="max-h-[85vh] overflow-y-auto my-8 max-w-4xl">
 				<div className="p-6">
