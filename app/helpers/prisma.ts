@@ -1,13 +1,15 @@
 import { RolePermissions } from "@/types/objects";
-import { DeadBoolean, Prisma } from "../generated/prisma/client";
+import { Assay, DeadBoolean, Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { DbType, ErrorPacket, Role } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 import { deepMerge } from "./utils";
 import TableMetadata from "@/types/tableMetadata";
-import { getZodType } from "./schema";
+import { getZodType, parseSchemaToObject } from "./schema";
 import { DeadBooleanEnum } from "@/types/enums";
+import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { parse } from "csv-parse";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -732,4 +734,99 @@ async function getWhere({
 	} else {
 		return where;
 	}
+}
+
+export async function seedAssays(client = unsafePrisma, assayMasterListUrl = process.env.ASSAY_MASTER_LIST) {
+	console.log("Seeding database with assays from " + assayMasterListUrl);
+
+	const assaySeedFile = await fetch(assayMasterListUrl as string);
+	if (!assaySeedFile.ok) {
+		throw new Error(
+			`Could not fetch seed file from Github. Verify that "${assayMasterListUrl}" is a valid URL. If the file location has moved, notify a maintainer.`
+		);
+	}
+
+	const assays = [] as Prisma.AssayCreateManyInput[];
+	const parser = parse(await assaySeedFile.text(), { columns: true, delimiter: "\t" });
+	for await (const record of parser) {
+		const recordList = Object.entries(record) as [string, string][];
+		const assayRow = {} as Assay;
+
+		for (const [field, v] of recordList) {
+			if (AssayScalarFieldEnumSchema.safeParse(field).error) {
+				throw new Error(`Could not validate field named ${field} for Assay.`);
+			}
+
+			parseSchemaToObject(field, v, assayRow, "assay");
+		}
+
+		const parsed = AssayOptionalDefaultsSchema.parse(assayRow, {
+			error: (iss) => {
+				return {
+					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+				};
+			}
+		});
+		assays.push(parsed);
+	}
+
+	const assayNames = assays.map((a) => a.assay_name);
+
+	await client.$transaction(async (tx) => {
+		//create new assays
+		const newAssays = await tx.assay.createManyAndReturn({
+			data: assays,
+			skipDuplicates: true,
+			select: {
+				assay_name: true
+			}
+		});
+
+		//update existing assays
+		const assaysToUpdate = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
+		if (assaysToUpdate.length) {
+			await updateManyRaw(tx, "Assay", assaysToUpdate, "assay_name");
+		}
+
+		//delete any removed assays that are unused
+		await tx.assay.deleteMany({
+			where: {
+				assay_name: {
+					notIn: assayNames
+				},
+				Libraries: {
+					none: {}
+				},
+				Analyses: {
+					none: {}
+				}
+			}
+		});
+
+		//flag any removed assays that are still in use as deleted
+		await tx.assay.updateMany({
+			where: {
+				assay_name: {
+					notIn: assayNames
+				},
+				OR: [
+					{
+						Libraries: {
+							some: {}
+						}
+					},
+					{
+						Analyses: {
+							some: {}
+						}
+					}
+				]
+			},
+			data: {
+				deleted_ODE: true
+			}
+		});
+	});
+
+	console.log("Seed successful");
 }
