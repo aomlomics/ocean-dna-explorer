@@ -2,11 +2,11 @@ import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
-import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import { Assay } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import PrimerDiagram from "@/app/components/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
+import { DropdownLinkBoxWithIcon, SampleStatCard } from "@/app/components/explore/StatCards";
 
 // Simple GC% calculator for summary cards
 const calculateGcContent = (seq: string) => {
@@ -80,7 +80,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-8 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -93,173 +93,196 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				</ul>
 			</div>
 
-			<div className="grid grid-cols-2 gap-8">
-				<div className="col-span-2">
-					<header className="flex gap-2 items-center">
-						<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
-						{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
-					</header>
+			<header>
+				<div className="flex gap-2 items-center">
+					<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
+					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
+			</header>
 
-				<div className="space-y-4">
-					<div className="grid grid-cols-2 gap-8">
-						<div className="stat bg-base-200 p-6">
-							<div className="text-lg font-medium text-base-content/70">Total Samples</div>
-							<div className="text-base mt-1">{assay.Samples.length}</div>
+			<section className="mt-2 space-y-8">
+				{/* Top layout: Map and Assay at a Glance */}
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+					{/* Left: Map + primer sections + legend */}
+					<div className="lg:col-span-2 space-y-8">
+						<Map locations={assay.Samples} cluster legend />
+
+						{/* Forward Primer Section */}
+						<section className="p-6 bg-base-100 rounded-lg border border-base-300">
+							<div className="space-y-3">
+								<div className="flex flex-wrap items-start justify-between gap-6">
+									{/* Left: label + primer name */}
+									<div className="min-w-[140px] space-y-1">
+										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">
+											Forward Primer
+										</p>
+										<h3 className="text-xl font-semibold text-base-content break-all">
+											{assay.pcr_primer_name_forward}
+										</h3>
+									</div>
+
+									{/* Center: sequence + reference */}
+									<div className="flex-1 min-w-0 space-y-1">
+										<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
+										<p className="font-mono text-2xl text-primary break-all">
+											{assay.pcr_primer_forward}
+										</p>
+										{assay.pcr_primer_reference_forward && (
+											<p className="text-xs">
+												<a
+													href={assay.pcr_primer_reference_forward}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="link link-primary"
+												>
+													View Reference
+												</a>
+											</p>
+										)}
+									</div>
+
+									{/* Right: GC content + length */}
+									<div className="flex items-center gap-4">
+										<div className="text-center">
+											<p className="text-xs font-semibold text-base-content/70 mb-1">GC Content</p>
+											<GcDonut percentage={forwardGc} size={64} strokeWidth={8} />
+										</div>
+										<div>
+											<p className="text-xs font-semibold text-base-content/70">Length</p>
+											<p className="text-2xl font-semibold text-base-content">
+												{assay.pcr_primer_forward.length}
+											</p>
+										</div>
+									</div>
+								</div>
+								<div className="w-full overflow-x-auto flex justify-center">
+									<PrimerDiagram
+										forwardPrimerSequence={assay.pcr_primer_forward}
+										reversePrimerSequence={assay.pcr_primer_reverse}
+										primerToDisplay="forward"
+										scale={1.1}
+										showInfo={false}
+									/>
+								</div>
+							</div>
+						</section>
+
+						{/* Reverse Primer Section */}
+						<section className="p-6 bg-base-100 rounded-lg border border-base-300">
+							<div className="space-y-3">
+								<div className="flex flex-wrap items-start justify-between gap-6">
+									{/* Left: label + primer name */}
+									<div className="min-w-[140px] space-y-1">
+										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">
+											Reverse Primer
+										</p>
+										<h3 className="text-xl font-semibold text-base-content break-all">
+											{assay.pcr_primer_name_reverse}
+										</h3>
+									</div>
+
+									{/* Center: sequence + reference */}
+									<div className="flex-1 min-w-0 space-y-1">
+										<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
+										<p className="font-mono text-2xl text-primary break-all">
+											{assay.pcr_primer_reverse}
+										</p>
+										{assay.pcr_primer_reference_reverse && (
+											<p className="text-xs">
+												<a
+													href={assay.pcr_primer_reference_reverse}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="link link-primary"
+												>
+													View Reference
+												</a>
+											</p>
+										)}
+									</div>
+
+									{/* Right: GC content + length */}
+									<div className="flex items-center gap-4">
+										<div className="text-center">
+											<p className="text-xs font-semibold text-base-content/70 mb-1">GC Content</p>
+											<GcDonut percentage={reverseGc} size={64} strokeWidth={8} />
+										</div>
+										<div>
+											<p className="text-xs font-semibold text-base-content/70">Length</p>
+											<p className="text-2xl font-semibold text-base-content">
+												{assay.pcr_primer_reverse.length}
+											</p>
+										</div>
+									</div>
+								</div>
+								<div className="w-full overflow-x-auto flex justify-center">
+									<PrimerDiagram
+										forwardPrimerSequence={assay.pcr_primer_forward}
+										reversePrimerSequence={assay.pcr_primer_reverse}
+										primerToDisplay="reverse"
+										scale={1.1}
+										showInfo={false}
+									/>
+								</div>
+							</div>
+						</section>
+
+						{/* Legend */}
+						<div className="p-4 bg-base-100 rounded-lg border border-base-300">
+							<h4 className="text-base-content font-semibold mb-2">Legend</h4>
+							<div className="flex flex-col sm:flex-row gap-x-6 gap-y-2 text-sm">
+								<div className="flex items-center gap-2">
+									<div className="w-4 h-2 bg-primary rounded"></div>
+									<span>Primer segment</span>
+								</div>
+								<div className="flex items-center gap-2">
+									<div className="w-4 h-2 bg-base-content/40 rounded"></div>
+									<span>Template/complementary strand</span>
+								</div>
+							</div>
+							<p className="text-sm text-base-content/80 mt-2">
+								Straight parallel lines show the DNA strands, read from 5&apos; to 3&apos;. Letters above/below the
+								highlighted segment show the actual primer sequence.
+							</p>
 						</div>
-						<div className="stat bg-base-200 p-6">
-							<div className="text-lg font-medium text-base-content/70">Total Libraries</div>
-							<div className="text-base mt-1">{assay.Libraries.length}</div>
-						</div>
-						<DropdownLinkBox
-							title="Total Analyses"
-							count={assay.Analyses.length}
-							content={assay.Analyses.map((a) => a.analysis_run_name)}
-							linkPrefix="/explore/analysis"
-						/>
 					</div>
-				</div>
 
-				<div className="bg-base-200 p-6 h-full">
-					<div className="text-lg font-medium text-base-content/70">Analysis Information</div>
-					<div className="h-[300px] overflow-y-auto mt-4">
-						<DataDisplay table="assay" data={justAssay} omit={["assay_name"]} />
-					</div>
-				</div>
-			</div>
-
-			{/* Forward Primer Section */}
-			<section className="p-6 bg-base-100 rounded-lg border border-base-300">
-				<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
-					<div className="space-y-4">
+					{/* Right: Assay at a Glance + Analysis Information */}
+					<div className="flex flex-col h-full space-y-8">
 						<div>
-							<div>
-								<p className="text-sm font-medium text-base-content/70">Forward Primer</p>
-								<h3 className="text-2xl font-bold text-primary">{assay.pcr_primer_name_forward}</h3>
-							</div>
-							<div className="mt-3">
-								<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
-								<p className="font-mono text-base break-all">{assay.pcr_primer_forward}</p>
+							<h2 className="text-2xl font-semibold text-base-content/90">Assay at a Glance</h2>
+							<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+								<SampleStatCard title="Total Samples" value={assay.Samples.length} />
+								<SampleStatCard title="Total Libraries" value={assay.Libraries.length} />
+								<div className="sm:col-span-2">
+									<DropdownLinkBoxWithIcon
+										title="Total Analyses"
+										count={assay.Analyses.length}
+										content={assay.Analyses.map((a) => a.analysis_run_name)}
+										linkPrefix="/explore/analysis"
+										icon="analysis"
+									/>
+								</div>
 							</div>
 						</div>
-						<div className="space-y-3 pt-1">
-							<div className="flex items-center gap-4">
-								<div className="text-center">
-									<p className="text-xs font-semibold text-base-content/70 mb-1">GC Content</p>
-									<GcDonut percentage={forwardGc} size={80} strokeWidth={9} />
-								</div>
-								<div>
-									<p className="text-xs font-semibold text-base-content/70">Length</p>
-									<p className="text-3xl font-semibold">{assay.pcr_primer_forward.length}</p>
-								</div>
+
+						<div className="bg-base-200 rounded-xl p-6">
+							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay Information</h2>
+							<div className="max-h-[400px] overflow-y-auto">
+								<DataDisplay table="assay" data={justAssay} omit={["assay_name"]} />
 							</div>
-							{assay.pcr_primer_reference_forward && (
-								<p className="text-sm">
-									<a
-										href={assay.pcr_primer_reference_forward}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="link link-primary"
-									>
-										View Reference
-									</a>
-								</p>
-							)}
 						</div>
 					</div>
-					<div className="lg:col-span-3">
-						<PrimerDiagram
-							forwardPrimerSequence={assay.pcr_primer_forward}
-							reversePrimerSequence={assay.pcr_primer_reverse}
-							primerToDisplay="forward"
-							scale={1.1}
-							showInfo={false}
-						/>
+				</div>
+
+				{/* Libraries table*/}
+				<div className="mt-8">
+					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Libraries</h2>
+					<div className="bg-base-100 border border-base-300 rounded-lg p-6">
+						<Table table="library" defaultTake={20} where={{ assay_name }} />
 					</div>
 				</div>
 			</section>
-
-			{/* Reverse Primer Section */}
-			<section className="p-6 bg-base-100 rounded-lg border border-base-300">
-				<div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
-					<div className="space-y-4">
-						<div>
-							<div>
-								<p className="text-sm font-medium text-base-content/70">Reverse Primer</p>
-								<h3 className="text-2xl font-bold text-primary">{assay.pcr_primer_name_reverse}</h3>
-							</div>
-							<div className="mt-3">
-								<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
-								<p className="font-mono text-base break-all">{assay.pcr_primer_reverse}</p>
-							</div>
-						</div>
-						<div className="space-y-3 pt-1">
-							<div className="flex items-center gap-4">
-								<div className="text-center">
-									<p className="text-xs font-semibold text-base-content/70 mb-1">GC Content</p>
-									<GcDonut percentage={reverseGc} size={80} strokeWidth={9} />
-								</div>
-								<div>
-									<p className="text-xs font-semibold text-base-content/70">Length</p>
-									<p className="text-3xl font-semibold">{assay.pcr_primer_reverse.length}</p>
-								</div>
-							</div>
-							{assay.pcr_primer_reference_reverse && (
-								<p className="text-sm">
-									<a
-										href={assay.pcr_primer_reference_reverse}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="link link-primary"
-									>
-										View Reference
-									</a>
-								</p>
-							)}
-						</div>
-					</div>
-					<div className="lg:col-span-3">
-						<PrimerDiagram
-							forwardPrimerSequence={assay.pcr_primer_forward}
-							reversePrimerSequence={assay.pcr_primer_reverse}
-							primerToDisplay="reverse"
-							scale={1.1}
-							showInfo={false}
-						/>
-					</div>
-				</div>
-			</section>
-
-			{/* Legend */}
-			<div className="p-4 bg-base-100 rounded-lg border border-base-300">
-				<h4 className="text-base-content font-semibold mb-2">Legend</h4>
-				<div className="flex flex-col sm:flex-row gap-x-6 gap-y-2 text-sm">
-					<div className="flex items-center gap-2">
-						<div className="w-4 h-2 bg-primary rounded"></div>
-						<span>Primer segment</span>
-					</div>
-					<div className="flex items-center gap-2">
-						<div className="w-4 h-2 bg-base-content/40 rounded"></div>
-						<span>Template/complementary strand</span>
-					</div>
-				</div>
-				<p className="text-sm text-base-content/80 mt-2">
-					Straight parallel lines show the DNA strands, read from 5' to 3'. Letters above/below the highlighted segment
-					show the actual primer sequence.
-				</p>
-			</div>
-
-			<div role="tablist" className="tabs tabs-lifted">
-				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Samples" defaultChecked />
-				<div role="tabpanel" className="tab-content border-base-300 rounded-lg p-6">
-					<Map locations={assay.Samples} cluster legend />
-				</div>
-
-				<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Libraries" />
-				<div role="tabpanel" className="tab-content border-base-300 rounded-lg aspect-5/2">
-					<Table table="library" where={{ assay_name }} />
-				</div>
-			</div>
 		</div>
 	);
 }

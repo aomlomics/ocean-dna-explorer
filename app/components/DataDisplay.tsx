@@ -88,8 +88,8 @@ export default function DataDisplay({
 	});
 
 	return (
-		<div className="overflow-x-hidden overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
-			<table className="table table-zebra bg-base-100 rounded-none">
+		<div className="overflow-x-auto overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
+			<table className="table table-zebra bg-base-100 font-sans">
 				<tbody>
 					{sortedEntries.reduce((acc: ReactNode[], [field, value]) => {
 						if (!omit.includes(field)) {
@@ -97,7 +97,7 @@ export default function DataDisplay({
 								acc.push(
 									<tr key={field} className="hover:bg-base-300/50 transition-colors">
 										<td className="flex flex-col gap-1.5">
-											<div className="text-sm font-semibold text-base-content/80 break-all tracking-wide">{field}</div>
+											<div className="text-sm font-medium text-base-content/70 break-all">{field}</div>
 											<ValueNode field={field} value={value} />
 										</td>
 									</tr>
@@ -106,8 +106,8 @@ export default function DataDisplay({
 								acc.push(
 									<tr key={field} className="hover:bg-base-300/50 transition-colors">
 										<td className="flex flex-col gap-1.5">
-											<div className="font-semibold">User Defined:</div>
-											<table className="table table-zebra bg-base-100 rounded-none">
+											<div className="font-medium">User Defined:</div>
+											<table className="table table-zebra bg-base-100 font-sans">
 												<tbody>
 													{Object.entries(value).reduce(
 														(acc: ReactNode[], [userDefinedField, userDefinedValue]: [string, any]) => {
@@ -115,7 +115,7 @@ export default function DataDisplay({
 																acc.push(
 																	<tr key={userDefinedField + "_userDefined"} className="hover:bg-base-300/50 transition-colors">
 																		<td className="flex flex-col gap-1.5">
-																			<div className="text-sm font-semibold text-base-content/80 break-all tracking-wide">
+																			<div className="text-sm font-medium text-base-content/70 break-all">
 																				{userDefinedField}
 																			</div>
 																			<ValueNode field={userDefinedField} value={userDefinedValue} />

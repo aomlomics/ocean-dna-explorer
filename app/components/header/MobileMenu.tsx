@@ -65,7 +65,7 @@ export default function MobileMenu() {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-[51] w-60 p-3 shadow-lg">
+				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-51 w-60 p-3 shadow-lg">
 					<li className="text-base py-1">
 						<Link href="/" onClick={handleClose}>
 							Home
@@ -86,21 +86,9 @@ export default function MobileMenu() {
 						</details>
 					</li>
 					<li className="text-base py-1">
-						<details>
-							<summary className="text-base">Search</summary>
-							<ul className="p-2">
-								<li className="py-1">
-									<Link href="/search" onClick={handleClose}>
-										Basic
-									</Link>
-								</li>
-								<li className="py-1">
-									<Link href="/search/advanced" onClick={handleClose}>
-										Advanced
-									</Link>
-								</li>
-							</ul>
-						</details>
+						<Link href="/search" onClick={handleClose}>
+							Search
+						</Link>
 					</li>
 					<li className="text-base py-1">
 						<details>
@@ -134,6 +122,11 @@ export default function MobileMenu() {
 							Help
 						</Link>
 					</li>
+					{/* <li className="text-base py-1">
+						<Link href="/about" onClick={handleClose}>
+							About
+						</Link>
+					</li> */}
 				</ul>
 			)}
 

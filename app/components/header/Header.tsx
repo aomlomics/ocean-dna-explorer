@@ -17,7 +17,7 @@ export default async function Header() {
 	const role = sessionClaims?.metadata.role as Role;
 
 	return (
-		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
+		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-9000000 relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
 			<div className="navbar-start pr-2 sm:pr-6 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
@@ -31,7 +31,7 @@ export default async function Header() {
 					>
 						<div className="avatar w-52 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
 							<NodeLogo
-								alt="NODE Logo"
+								alt="Ocean DNA Explorer Logo"
 								fill={true}
 								style={{ objectFit: "contain" }}
 								priority={true}
@@ -47,7 +47,7 @@ export default async function Header() {
 
 			{/* Desktop tabs - centered between logo and user controls and aligned to bottom */}
 			<div className="navbar-center hidden xl:flex self-end">
-				<div className="flex items-end space-x-4 z-[9999] -mb-[8px]">
+				<div className="flex items-end space-x-4 z-9999 -mb-[8px]">
 					<TabButton tabName="Home" route="/" />
 					<TabDropdown
 						tabName="Explore"
@@ -57,7 +57,7 @@ export default async function Header() {
 							href: `/explore/${uncapitalizeTable(table as Prisma.ModelName)}`
 						}))}
 					/>
-					<TabButton tabName="Search" route="/search/advanced" />
+					<TabButton tabName="Search" route="/search" />
 					<TabDropdown
 						tabName="Submit"
 						route="/submit"
@@ -69,6 +69,7 @@ export default async function Header() {
 					<TabButton tabName="Contribute" route="/contribute" />
 					<TabButton tabName="API" route="/api" />
 					<TabButton tabName="Help" route="/help" />
+					{/* <TabButton tabName="About" route="/about" /> */}
 				</div>
 			</div>
 

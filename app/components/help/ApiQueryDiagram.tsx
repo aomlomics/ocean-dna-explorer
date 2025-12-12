@@ -38,9 +38,9 @@ export default function ApiQueryDiagram({
 
 	return (
 		<div className="my-10">
-			<div className="bg-base-200/60 p-4 rounded-lg border border-base-content/10">
+			<div className="bg-base-200/30 p-4 rounded-lg border border-base-content/5">
 				{/* Full URL display (shared between mobile and desktop) */}
-				<div className="bg-base-300 p-4 rounded-md font-mono text-xs sm:text-sm mb-6 break-all shadow-inner overflow-x-auto">
+				<div className="bg-base-200/50 p-4 rounded-md font-mono text-xs sm:text-sm mb-6 break-all overflow-x-auto">
 					<span className="text-base-content/50">{protocol}</span>
 					<span className="text-base-content/70">{domain}</span>
 					<span className={`font-bold ${endpoint.colorClass}`}>{endpoint.value}</span>

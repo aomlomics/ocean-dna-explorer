@@ -67,8 +67,6 @@ export const RanksBySpecificity = TaxonomicRanks.toReversed();
 
 export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined", "deleted_ODE"];
 
-export const QueryModes = ["equals", "contains", "startsWith", "endsWith", "lt", "lte", "gt", "gte", "range"];
-
 export const TypeSeparators = {
 	string: "|",
 	date: "/",

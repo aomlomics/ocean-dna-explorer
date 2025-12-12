@@ -4,6 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import Link from "next/link";
 import distinctColors from "distinct-colors";
 
 ChartJS.register(ArcElement, Tooltip);
@@ -131,7 +132,7 @@ function CustomLegend({
   const displayedItems = shouldCollapse && !showAll ? 9 : labels.length;
   
   return (
-    <div className="flex flex-col gap-3 mt-6">
+    <div className="flex flex-col gap-3 mt-0 lg:max-h-[340px] lg:overflow-y-auto pr-2">
       <h3 className="text-lg font-semibold mb-2" style={{ color: textColor }}>
         Legend
       </h3>
@@ -143,17 +144,17 @@ function CustomLegend({
               className="w-4 h-4 rounded-sm flex-shrink-0"
               style={{ backgroundColor: colors[index] }}
             />
-            <div className="flex-1 flex items-center justify-between">
+            <div className="flex-1 min-w-0 flex items-center gap-1">
               <span 
-                className="text-sm font-medium truncate mr-2" 
+                className="text-sm font-medium truncate" 
                 style={{ color: textColor }}
                 title={label}
               >
                 {label}
               </span>
               <span 
-                className="text-sm font-semibold" 
-                style={{ color: textColor }}
+                className="text-sm font-semibold whitespace-nowrap" 
+                style={{ color: textColor, opacity: 0.75 }}
               >
                 {percentage}%
               </span>
@@ -233,15 +234,15 @@ export default function DoughnutChart({ labels, data }: DoughnutChartProps) {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full flex flex-col">
       <div className="flex flex-col lg:flex-row items-start gap-8">
         {/* Chart Container */}
-        <div className="relative h-[300px] w-[300px] flex-shrink-0 mx-auto lg:mx-0">
+        <div className="relative h-[340px] w-[300px] flex-shrink-0 mx-auto lg:mx-0">
           <Doughnut data={chartData} options={options} />
         </div>
         
         {/* Custom Legend */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 lg:max-w-xs">
           <CustomLegend 
             labels={labels} 
             data={data} 
@@ -250,6 +251,28 @@ export default function DoughnutChart({ labels, data }: DoughnutChartProps) {
           />
         </div>
       </div>
+
+      <p className="mt-6 text-md text-base-content max-w-xl mx-auto lg:mx-0">
+        Assays used on the Ocean DNA Explorer are stored in a GitHub{" "}
+        <Link
+          href="https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-primary"
+        >
+          repository
+        </Link>
+        {" "}that defines acceptable assay and target gene information for submissions. You can{" "}
+        <Link
+          href="https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-primary"
+        >
+          request an assay be added 
+        </Link>
+        {" "}by making a GitHub issue.
+      </p>
     </div>
   );
 } 

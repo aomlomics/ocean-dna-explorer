@@ -1,8 +1,14 @@
 import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 import { getZodType } from "./schema";
-import { ParamsArray, ParamsArrayField, ParamsArrayRelation, QueryMode } from "@/types/globals";
+import {
+	MapShape,
+	ParamsArray,
+	ParamsArrayField,
+	ParamsArrayRelation,
+	ParamsArrayValue,
+	QueryMode
+} from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { QueryModes } from "@/types/objects";
 import { uncapitalizeTable } from "./utils";
 
 function searchRelations(
@@ -89,6 +95,7 @@ function deepWhere(
 	}
 }
 
+const queryModes = ["equals", "contains", "startsWith", "endsWith", "lt", "lte", "gt", "gte", "range", "in", "notIn"];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation
@@ -96,25 +103,25 @@ export function parseToQuery(
 	let relation = "";
 	let field = "";
 	let mode = "" as QueryMode;
-	let value = "";
+	let value = "" as ParamsArrayValue;
 	if (queryArr.length === 2) {
 		//search field for value
 		field = queryArr[0];
-		value = queryArr[1];
+		value = queryArr[1] as string;
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
 		field = queryArr[0];
 		mode = queryArr[1];
-		value = queryArr[2] as string;
+		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
 		relation = queryArr[0];
 		field = queryArr[1];
 		mode = queryArr[2];
-		value = queryArr[3] as string;
+		value = queryArr[3];
 	}
 
-	if (mode && !QueryModes.includes(mode)) {
+	if (mode && !queryModes.includes(mode)) {
 		throw new Error(`Query mode "${mode}" not supported.`);
 	}
 
@@ -134,70 +141,101 @@ export function parseToQuery(
 	let searchWhere;
 	if (type === "string") {
 		if (mode) {
-			searchWhere = {
-				[field]: {
-					[mode]: value.replace("_", "\\_").replace("%", "\\%"),
-					mode: "insensitive"
-				}
-			};
+			if (mode === "in" || mode === "notIn") {
+				//TODO: needs testing
+				const typedVal = value as string[];
+				searchWhere = {
+					[field]: {
+						[mode]: typedVal
+					}
+				};
+			} else {
+				const typedVal = value as string;
+				searchWhere = {
+					[field]: {
+						[mode]: typedVal.replace("_", "\\_").replace("%", "\\%"),
+						mode: "insensitive"
+					}
+				};
+			}
 		} else {
+			const typedVal = value as string;
 			searchWhere = {
 				[field]: {
-					contains: value.replace("_", "\\_").replace("%", "\\%"),
+					contains: typedVal.replace("_", "\\_").replace("%", "\\%"),
 					mode: "insensitive"
 				}
 			};
 		}
 	} else if (type === "integer" || type === "float") {
 		if (mode === "range") {
-			let gte;
-			let lte;
-			if (type === "integer") {
-				gte = parseInt(value[0]);
-				lte = parseInt(value[1]);
-			} else {
-				gte = parseFloat(value[0]);
-				lte = parseFloat(value[1]);
-			}
-
-			if (isNaN(gte)) {
-				throw new Error(`The field "${field}" is a number field, but "${gte}" is not a number.`);
-			} else if (isNaN(lte)) {
-				throw new Error(`The field "${field}" is a number field, but "${lte}" is not a number.`);
-			}
-
-			searchWhere = { AND: [{ [field]: { gte } }, { [field]: { lte } }] };
+			const typedVal = value as [number, number];
+			searchWhere = {
+				AND: [
+					{
+						[field]: {
+							gte: typedVal[0]
+						}
+					},
+					{
+						[field]: {
+							lte: typedVal[1]
+						}
+					}
+				]
+			};
+		} else if (mode === "in" || mode === "notIn") {
+			//TODO: needs testing
+			const typedVal = value as number[];
+			searchWhere = {
+				[field]: {
+					[mode]: typedVal
+				}
+			};
 		} else {
-			let val;
-			if (type === "integer") {
-				val = parseInt(value);
-			} else {
-				val = parseFloat(value);
-			}
-
-			if (isNaN(val)) {
-				throw new Error(`The field "${field}" is a number field, but "${value}" is not a number.`);
-			}
+			const typedVal = value as number;
 
 			if (!mode || mode === "equals") {
-				searchWhere = { [field]: val };
+				searchWhere = { [field]: typedVal };
 			} else {
-				searchWhere = { [field]: { [mode]: val } };
+				searchWhere = { [field]: { [mode]: typedVal } };
 			}
 		}
 	} else if (type === "date") {
 		if (mode === "range") {
+			const typedVal = value as [string, string];
 			searchWhere = {
-				AND: [{ [field]: { gte: new Date(value[0]) } }, { [field]: { lte: new Date(value[1]) } }]
+				AND: [
+					{
+						[field]: {
+							gte: new Date(typedVal[0])
+						}
+					},
+					{
+						[field]: {
+							lte: new Date(typedVal[1])
+						}
+					}
+				]
+			};
+		} else if (mode === "in" || mode === "notIn") {
+			//TODO: needs testing
+			const typedVal = value as string[];
+			searchWhere = {
+				[field]: {
+					[mode]: typedVal
+				}
 			};
 		} else {
-			const dateVal = new Date(value);
+			const typedVal = value as string;
+
+			const dateVal = new Date(typedVal);
 			if (isNaN(dateVal.valueOf())) {
-				throw new Error(`The field "${field}" is a date field, but "${value}" is not a date.`);
+				throw new Error(`The field "${field}" is a date field, but "${typedVal}" is not a date.`);
 			}
 
 			let lteOffset;
-			if (value.includes("T")) {
+			if (typedVal.includes("T")) {
 				lteOffset = 60 * 60 * 1000;
 			} else {
 				lteOffset = 24 * 60 * 60 * 1000;
@@ -205,10 +243,25 @@ export function parseToQuery(
 
 			if (mode === "equals") {
 				searchWhere = {
-					AND: [{ [field]: { gte: dateVal } }, { [field]: { lte: new Date(dateVal.getTime() + lteOffset) } }]
+					AND: [
+						{
+							[field]: {
+								gte: dateVal
+							}
+						},
+						{
+							[field]: {
+								lte: new Date(dateVal.getTime() + lteOffset)
+							}
+						}
+					]
 				};
 			} else {
-				searchWhere = { [field]: { [mode]: dateVal } };
+				searchWhere = {
+					[field]: {
+						[mode]: dateVal
+					}
+				};
 			}
 		}
 	} else if (type === "string[]") {
@@ -235,13 +288,24 @@ export function parseToQuery(
 function advancedRecurse(
 	table: Uncapitalize<Prisma.ModelName>,
 	e: ParamsArray[0]
-): ReturnType<typeof parseToQuery> | { OR: ReturnType<typeof parseToQuery> } {
+): ReturnType<typeof parseToQuery> | { AND: any[] } | { OR: any[] } {
+	// New logical group support: ["AND", ...children] or ["OR", ...children]
 	if (typeof e[0] === "string") {
+		const first = e[0] as string;
+
+		if (first === "AND" || first === "OR") {
+			const operator = first;
+			const children = (e.slice(1) as ParamsArray).map((child) => advancedRecurse(table, child));
+			return { [operator]: children } as { AND: any[] } | { OR: any[] };
+		}
+
+		// Backwards-compatible behaviour: a tuple starting with a string is a field or relation filter
 		return parseToQuery(table, e as ParamsArrayField | ParamsArrayRelation);
-	} else {
-		const paramsE = e as ParamsArray;
-		return { OR: paramsE.map((e) => advancedRecurse(table, e)) };
 	}
+
+	// Legacy nested array syntax: an inner ParamsArray represents an implicit OR group
+	const paramsE = e as ParamsArray;
+	return { OR: paramsE.map((child) => advancedRecurse(table, child)) };
 }
 
 export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, paramsArray: ParamsArray) {
@@ -282,6 +346,7 @@ export function parseApiQuery(
 			filters?: true;
 			advanced?: true;
 			search?: true;
+			shapes?: true;
 		};
 		defaults?: {
 			fields?: Record<string, true>;
@@ -302,6 +367,99 @@ export function parseApiQuery(
 		};
 	}
 ) {
+	//TODO: needs testing
+	//construct shapes
+	let shapes;
+	if (!options?.features || options.features.shapes) {
+		const polygons = searchParams.getAll("polygon");
+		const circles = searchParams.getAll("circle");
+		// Only process shapes if at least one polygon or circle was provided
+		if (polygons.length > 0 || circles.length > 0) {
+			if (
+				!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+				!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+			) {
+				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
+			}
+
+			shapes = [] as Array<MapShape>;
+			searchParams.delete("polygon");
+			searchParams.delete("circle");
+
+			for (const poly of polygons) {
+				//format: <lat>/<lng>,<lat>/<lng>,etc
+				const points = poly.split(",").map((p) => {
+					const split = p.split("/");
+					if (split.length !== 2) {
+						throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
+					}
+					const pnt = {
+						lat: parseFloat(split[0]),
+						lng: parseFloat(split[1])
+					};
+					if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
+						throw new Error(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
+					}
+					if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
+						throw new Error(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
+					}
+
+					return pnt;
+				});
+
+				const bounds = { sw: { lat: -90, lng: -180 }, ne: { lat: 90, lng: 180 } };
+				for (const p of points) {
+					bounds.sw.lat = Math.max(p.lat, bounds.sw.lat);
+					bounds.sw.lng = Math.max(p.lng, bounds.sw.lng);
+					bounds.ne.lat = Math.min(p.lat, bounds.ne.lat);
+					bounds.ne.lng = Math.min(p.lng, bounds.ne.lng);
+				}
+
+				shapes.push({
+					type: "polygon",
+					bounds,
+					points
+				});
+			}
+
+			for (const cir of circles) {
+				//format: <lat>/<lng>,<radius>
+				const split = cir.split(",");
+				if (split.length !== 2) {
+					throw new Error(
+						`Invalid circle format: "${cir}". Circle must have a center followed by a radius, separated by a comma.`
+					);
+				}
+
+				const centerSplit = split[0].split("/");
+				if (split.length !== 2) {
+					throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
+				}
+				const center = {
+					lat: parseFloat(centerSplit[0]),
+					lng: parseFloat(centerSplit[1])
+				};
+				if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
+					throw new Error(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
+				}
+				if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
+					throw new Error(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
+				}
+
+				const radius = parseFloat(split[1]);
+				if (isNaN(radius)) {
+					throw new Error(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
+				}
+
+				shapes.push({
+					type: "circle",
+					radius,
+					center
+				});
+			}
+		}
+	}
+
 	const query = {} as {
 		// orderBy?: Record<string, Prisma.SortOrder>;
 		select?: Record<string, any>;
@@ -514,5 +672,5 @@ export function parseApiQuery(
 		}
 	}
 
-	return query;
+	return { query, shapes };
 }

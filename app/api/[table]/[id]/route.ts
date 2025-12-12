@@ -25,7 +25,7 @@ export async function GET(
 
 			const { searchParams } = new URL(request.url);
 
-			const query = parseApiQuery(uncapsTable, searchParams, {
+			const { query } = parseApiQuery(uncapsTable, searchParams, {
 				features: {
 					fields: true,
 					relations: true,

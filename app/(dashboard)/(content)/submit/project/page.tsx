@@ -28,7 +28,7 @@ export default function Project() {
 				<header className="my-8 space-y-3">
 					<h1 className="text-4xl font-normal text-primary">Submit a New Project</h1>
 					<p className="text-base text-base-content/80">
-						A project is the baseline record in the Ocean DNA Explorer (ODE). All other data types are linked to a project.
+						A project is the baseline record in the Ocean DNA Explorer. All other data types are linked to a project.
 					</p>
 					<p className="text-base text-base-content/80">
 						If you want to contribute to an existing project, you can submit an
@@ -43,7 +43,7 @@ export default function Project() {
 						For help formatting your data, see the
 							{" "}
 						<Link href="/help#submit" className="text-primary hover:text-primary-focus">
-							Submit section of the ODE Help page
+							Submit section of the Ocean DNA Explorer Help page
 						</Link>
 						. Submissions should follow the 
 						{" "}

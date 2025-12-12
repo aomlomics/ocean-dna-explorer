@@ -5,7 +5,7 @@ export default function SearchLayout({ children }: { children: React.ReactNode }
 		<>
 			{/* <SearchTabButtons /> */}
 			{children}
-			<div className="mt-6">
+			<div className="mt-6" id="search-results">
 				<SearchResults />
 			</div>
 		</>
