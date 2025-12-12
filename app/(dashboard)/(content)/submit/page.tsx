@@ -46,7 +46,7 @@ export default function Submit() {
 			<header className="my-8">
 				<h1 className="text-4xl font-normal text-primary">Submit to the Ocean DNA Explorer</h1>
 				<p className="mt-2 text-base text-base-content/80">
-					Choose a submission type below to contribute your data to the ODE database.
+					Choose a submission type below to contribute your data to the Ocean DNA Explorer database.
 				</p>
 				<p className="text-base text-base-content/80">
 					For more information on the submission requirements and data format, please see the{" "}
@@ -92,7 +92,7 @@ export default function Submit() {
 							<div>
 								<h2 className="text-2xl text-primary mb-4 font-normal">Analysis Submission</h2>
 								<p className="text-base text-base-content/80 mb-6">
-									Share your analysis of existing ODE data, including methods, parameters, and interpretations.
+									Share your analysis of existing Ocean DNA Explorer data, including methods, parameters, and interpretations.
 								</p>
 							</div>
 							<div className="mt-auto">

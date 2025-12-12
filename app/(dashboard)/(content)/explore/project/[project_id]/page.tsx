@@ -5,6 +5,8 @@ import BarChart from "@/app/components/charts/BarChart";
 import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import DataDisplay from "@/app/components/DataDisplay";
+import TableMetadata from "@/types/tableMetadata";
 import { Project } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
 
@@ -23,6 +25,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					Analyses: true
 				}
 			},
+			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
@@ -42,6 +45,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) return <>Project not found</>;
+	const { _count: _, Samples: __, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
@@ -54,8 +58,14 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
 	const taxaCount = {} as Record<string, number>;
 	const taxaCountByAnalysis = {} as Record<string, Record<string, number>>;
+	const taxaCountByAssay = {} as Record<string, Record<string, number>>;
+	
 	for (const a of project.Analyses) {
 		taxaCountByAnalysis[a.analysis_run_name] = {};
+		if (!taxaCountByAssay[a.assay_name]) {
+			taxaCountByAssay[a.assay_name] = {};
+		}
+		
 		for (const assign of a.Assignments) {
 			if (assign.taxonomy in taxaCount) {
 				taxaCount[assign.taxonomy] += 1;
@@ -68,16 +78,37 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			} else {
 				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] = 1;
 			}
+			
+			if (assign.taxonomy in taxaCountByAssay[a.assay_name]) {
+				taxaCountByAssay[a.assay_name][assign.taxonomy] += 1;
+			} else {
+				taxaCountByAssay[a.assay_name][assign.taxonomy] = 1;
+			}
 		}
 	}
 	const colorsArr = randomColors(Object.keys(taxaCountByAnalysis).length);
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
-	const topTaxa = [...sortedTaxa]; // Create a copy for the top taxonomy section
+	
+	// Get top 2 taxonomies per assay
+	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce((acc, [assay, taxa]) => {
+		const sortedAssayTaxa = Object.entries(taxa)
+			.sort(([, a], [, b]) => b - a)
+			.slice(0, 2)
+			.map(([taxonomy, count]) => {
+				const taxonomyParts = taxonomy.split(";").filter(Boolean);
+				const displayName = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
+				const totalAssayCount = Object.values(taxa).reduce((sum, c) => sum + c, 0);
+				const percentage = ((count / totalAssayCount) * 100).toFixed(1);
+				return { displayName, count, percentage };
+			});
+		acc[assay] = sortedAssayTaxa;
+		return acc;
+	}, {} as Record<string, Array<{ displayName: string; count: number; percentage: string }>>);
 
 	return (
 		<div className="space-y-8">
 			{/* Breadcrumb navigation */}
-			<div className="text-base breadcrumbs">
+			<div className="text-base breadcrumbs mb-4">
 				<ul>
 					<li>
 						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
@@ -90,123 +121,181 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2">{project.project_id}</h1>
+					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.project.description}>
+						{project.project_id}
+					</h1>
 					<EditHistory editHistory={project.editHistory} />
 					{project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">{project.project_name}</p>
+
+				{/* Compact project information under the description */}
+				<div className="text-sm text-base-content/80 flex flex-wrap gap-x-6 gap-y-1">
+					<div>
+						<span className="font-medium text-base-content/70">Contact: </span>
+						<span>{project.project_contact || "N/A"}</span>
+					</div>
+					<div>
+						<span className="font-medium text-base-content/70">Institution: </span>
+						<span>{project.institution || "N/A"}</span>
+					</div>
+					<div>
+						<span className="font-medium text-base-content/70">Assay Type: </span>
+						<span>{project.assay_type || "N/A"}</span>
+					</div>
+				</div>
 			</header>
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-				{/* Left side content */}
-				<div className="lg:col-span-2 space-y-8">
-					<Map
-						query={() => prisma.sample.findMany({ where: { project_id } })}
-						cluster
-						legend
-						draw
-						legendOmit={["project_id"]}
-					/>
-					{/* Assays Section */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-							Assays in this Project ({Object.keys(uniqueAssays).length})
-						</h2>
-						<div className="space-y-2">
-							{Object.keys(uniqueAssays).map((assay) => {
-								return (
-									<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
-										<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-											<div className="relative w-12 h-12">
-												<Suspense>
-													<AssayPhyloPic assay_name={assay} />
-												</Suspense>
+			{/* Map + stats + below-map content grouped so spacing between map and metadata is consistent */}
+			<section className="mt-2 space-y-8">
+				{/* Top layout: Map and Project at a Glance */}
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+					{/* Left: Map */}
+					<div className="lg:col-span-2 h-full">
+						<Map
+							query={() => prisma.sample.findMany({ where: { project_id } })}
+							cluster
+							legend
+							draw
+							legendOmit={["project_id"]}
+							className="h-full w-full min-h-[320px]"
+						/>
+					</div>
+
+					{/* Right: Project at a Glance */}
+					<div className="flex flex-col h-full">
+						<h2 className="text-2xl font-semibold text-base-content/90">Project at a Glance</h2>
+
+						{/* Stat cards */}
+						<div className="mt-4 mb-4">
+							<div className="grid grid-cols-2 gap-4">
+								<ProjectStatCard
+									title="Samples"
+									value={project._count.Samples}
+									icon="location"
+									link={`/search?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
+								/>
+								<ProjectStatCard
+									title="Analyses"
+									value={project._count.Analyses}
+									icon="analysis"
+									link={`/search?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
+								/>
+								<ProjectStatCard
+									title="Taxonomies"
+									value={sortedTaxa.length}
+									icon="fish"
+									link={`/search?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
+								/>
+								<ProjectStatCard
+									title="Occurrences"
+									value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
+									icon="eye"
+									link={`/search?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Below-map layout: Project metadata on the left, Assays + Top Taxonomies on the right */}
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+					{/* Project Metadata Table (aligned with map width) */}
+					<div className="lg:col-span-2">
+						<div className="bg-base-200 rounded-xl p-6 flex flex-col">
+							<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
+							<div className="max-h-124 overflow-y-auto">
+								<DataDisplay
+									table="project"
+									data={justProject}
+									omit={["project_id"]}
+									priorityFields={[
+										"project_name",
+										"project_contact",
+										"institution",
+										"institutionID",
+										"recordedBy",
+										"recordedByID",
+										"study_factor",
+										"assay_type"
+									]}
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Assays and Top Taxonomies (right half) */}
+					<div className="h-full flex flex-col gap-6">
+						{/* Assays Section (kept visually the same, just above Top Taxonomies) */}
+						<div id="assays-section">
+							<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
+								Assays in this Project ({Object.keys(uniqueAssays).length})
+							</h2>
+							<div className="space-y-2">
+								{Object.keys(uniqueAssays).map((assay) => {
+									return (
+										<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
+											<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+												<div className="relative w-12 h-12">
+													<Suspense>
+														<AssayPhyloPic assay_name={assay} />
+													</Suspense>
+												</div>
+											</div>
+											<div>
+												<h3 className="font-medium text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
+												<p className="text-base-content/70">{assay}</p>
 											</div>
 										</div>
-										<div>
-											<h3 className="font-bold text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
-											<p className="text-base-content/70">{assay}</p>
+									);
+								})}
+							</div>
+						</div>
+
+						{/* Top 2 Taxonomies per Assay */}
+						<div className="flex-1">
+							<h2 className="text-2xl font-semibold text-base-content/90 mb-3">Top 2 Taxonomies per Assay</h2>
+							<div className="space-y-3">
+								{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
+									<a
+										key={assay}
+										href="#taxonomy-chart"
+										className="block rounded-xl bg-base-200 hover:bg-base-200/80 hover:border-primary/60 shadow-sm hover:shadow-md transition-all cursor-pointer"
+									>
+										<div className="px-4 py-3 space-y-2">
+											<div className="flex flex-col gap-0.5">
+												<h3 className="font-medium text-base-content text-sm leading-snug">
+													{uniqueAssays[assay].target_gene}
+												</h3>
+												<p className="text-xs text-base-content/60 truncate">{assay}</p>
+											</div>
+											<div className="space-y-1">
+												{taxa.map((taxon, idx) => (
+													<div key={idx} className="relative h-7 rounded-full bg-base-300/80 overflow-hidden">
+														<div
+															className="absolute inset-y-0 left-0 bg-primary/15"
+															style={{ width: `${taxon.percentage}%` }}
+														/>
+														<div className="relative flex h-full items-center justify-between px-2 text-[0.7rem]">
+															<span className="text-base-content/80 truncate">{taxon.displayName}</span>
+															<span className="text-base-content/60 whitespace-nowrap">
+																{taxon.percentage}% ({taxon.count})
+															</span>
+														</div>
+													</div>
+												))}
+											</div>
 										</div>
-									</div>
-								);
-							})}
+									</a>
+								))}
+							</div>
 						</div>
 					</div>
 				</div>
-
-				{/* Right side content */}
-				<div className="space-y-8">
-					{/* Project at a Glance */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project at a Glance</h2>
-						<div className="grid grid-cols-2 gap-4">
-							<ProjectStatCard
-								title="Samples"
-								value={project._count.Samples}
-								icon="location"
-								link={`/search/advanced?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
-							/>
-							<ProjectStatCard
-								title="Analyses"
-								value={project._count.Analyses}
-								icon="analysis"
-								link={`/search/advanced?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
-							/>
-							<ProjectStatCard
-								title="Taxonomies"
-								value={sortedTaxa.length}
-								icon="fish"
-								link={`/search/advanced?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
-							/>
-							<ProjectStatCard
-								title="Occurrences"
-								value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
-								icon="eye"
-								link={`/search/advanced?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
-							/>
-						</div>
-					</div>
-
-					{/* Project Information */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Information</h2>
-						<div className="space-y-3 text-lg">
-							<p>
-								<span className="font-semibold text-base-content/80">Contact:</span> {project.project_contact || "N/A"}
-							</p>
-							<p>
-								<span className="font-semibold text-base-content/80">Institution:</span> {project.institution || "N/A"}
-							</p>
-							<p>
-								<span className="font-semibold text-base-content/80">Assay Type:</span> {project.assay_type || "N/A"}
-							</p>
-						</div>
-					</div>
-
-					{/* Top Taxonomy */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Top 10 Taxonomy</h2>
-						<ul className="space-y-2">
-							{topTaxa.slice(0, 10).map((taxa, index) => {
-								const taxonomyParts = taxa[0].split(";").filter(Boolean);
-								const lastTaxonomy = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
-								return (
-									<li key={taxa[0]} className="flex items-center justify-between text-base">
-										<span>
-											<span className="font-bold text-primary mr-2">{index + 1}.</span>
-											{lastTaxonomy}
-										</span>
-										<span className="badge badge-ghost">{taxa[1]}</span>
-									</li>
-								);
-							})}
-						</ul>
-					</div>
-				</div>
-			</div>
+			</section>
 
 			{/* Taxonomy Chart */}
-			<div className="mt-8">
+			<div className="mt-8" id="taxonomy-chart">
 				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Taxonomy Distribution</h2>
 				<div className="bg-base-200 p-4 rounded-lg">
 					<BarChart
@@ -239,8 +328,8 @@ function ProjectStatCard({
 }) {
 	const content = (
 		<div
-			className={`group flex flex-col items-center text-center p-2 rounded-lg ${
-				link ? "hover:bg-base-200 transition-all duration-300 hover:scale-105" : ""
+			className={`group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
+				link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
 			}`}
 		>
 			<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">

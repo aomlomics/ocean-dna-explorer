@@ -36,7 +36,7 @@ const GcDonut = ({ percentage, size = 80, strokeWidth = 10 }: GcDonutProps) => {
 					style={{ transition: "stroke-dashoffset 0.5s ease-in-out" }}
 				/>
 			</svg>
-			<span className="absolute text-sm font-bold text-primary">{`${percentage.toFixed(1)}%`}</span>
+			<span className="absolute text-sm font-bold text-base-content">{`${percentage.toFixed(1)}%`}</span>
 		</div>
 	);
 };

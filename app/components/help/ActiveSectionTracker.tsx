@@ -4,6 +4,37 @@ import { useEffect } from "react";
 
 export function ActiveSectionTracker() {
 	useEffect(() => {
+		const scrollToHash = () => {
+			if (typeof window === "undefined") return;
+
+			const rawHash = window.location.hash;
+			if (!rawHash) return;
+
+			const id = decodeURIComponent(rawHash.slice(1));
+			if (!id) return;
+
+			const target = document.getElementById(id);
+			if (!target) return;
+
+			const prefersReducedMotion =
+				window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+			target.scrollIntoView({
+				behavior: prefersReducedMotion ? "auto" : "smooth",
+				block: "start"
+			});
+		};
+
+		const timeoutId = window.setTimeout(scrollToHash, 0);
+		window.addEventListener("hashchange", scrollToHash);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+			window.removeEventListener("hashchange", scrollToHash);
+		};
+	}, []);
+
+	useEffect(() => {
 		// First, make sure the initial section is highlighted
 		const firstLink = document.querySelector('a[data-section-index="0"]');
 		if (firstLink) {

@@ -59,8 +59,11 @@ const Helix = ({
 }: HelixProps) => {
     if (!data || data.length === 0) return null;
 
-    // Compact sizing to ensure the diagram is visually small
-    const s = typeof scale === 'number' ? scale : 1;
+    // Compact sizing that automatically shrinks for very long sequences
+    const totalColumns = data.length;
+    const baseScale = typeof scale === "number" ? scale : 1;
+    const lengthScale = totalColumns > 80 ? 80 / totalColumns : 1;
+    const s = baseScale * Math.max(0.4, lengthScale);
     const unitWidth = 18 * s; // width per base (slightly larger)
     const padding = 16 * s;
     const topY = 22 * s;
@@ -68,7 +71,6 @@ const Helix = ({
     const strokeWidth = 7 * s;
     const tickHeight = 10 * s; // small ticks along the primer region
 
-    const totalColumns = data.length;
     const width = totalColumns * unitWidth + padding * 2;
     // Extra bottom room so bottom sequence letters never clip
     const height = bottomY + padding + 24 * s;
@@ -332,7 +334,7 @@ const PrimerDiagram = ({
                     <span>5'</span>
                     <span>3'</span>
                 </div>
-                <div className="flex items-center -my-1">
+                <div className="flex items-center -my-1 w-full overflow-x-auto justify-center">
                     <Helix {...reversePrimerRenderProps} />
                 </div>
                 <div className="flex justify-between w-full">
@@ -364,7 +366,7 @@ const PrimerDiagram = ({
                     <span>5'</span>
                     <span>3'</span>
                 </div>
-                <div className="flex items-center -my-1">
+                <div className="flex items-center -my-1 w-full overflow-x-auto justify-center">
                     <Helix {...forwardPrimerRenderProps} />
                 </div>
                 <div className="flex justify-between w-full">

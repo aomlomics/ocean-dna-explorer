@@ -28,7 +28,7 @@ export default function Analysis() {
 				<header className="my-8 space-y-3">
 					<h1 className="text-4xl font-normal text-primary">Submit a New Analysis</h1>
 					<p className="text-base text-base-content/80">
-						Want to contribute new analyses? You can upload analysis files to any existing ODE project where you're an authorized user. If you need access to a project, contact the project owner using the project's project_contact and institution information.
+						Want to contribute new analyses? You can upload analysis files to any existing Ocean DNA Explorer project where you're an authorized user. If you need access to a project, contact the project owner using the project's project_contact and institution information.
 					</p>
 					<p className="text-base text-base-content/80">
 						Need help? Check out the{" "}
@@ -41,7 +41,7 @@ export default function Analysis() {
 						For help formatting your data, see the
 						{" "}
 						<Link href="/help#submit" className="text-primary hover:text-primary-focus">
-							Submit section of the ODE Help page
+							Submit section of the Ocean DNA Explorer Help page
 						</Link>
 						.
 					</p>

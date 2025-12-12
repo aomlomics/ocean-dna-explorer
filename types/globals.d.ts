@@ -72,6 +72,14 @@ export type ParamsArrayField =
 	| RangeParamsArrayField
 	| InParamsArrayField;
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
+
+// Logical group support for advanced queries.
+// This extends the existing advanced query format to support arbitrary nested AND/OR groups
+// while remaining backward compatible with the original array-of-arrays structure.
+export type ParamsLogicalOperator = "AND" | "OR";
+export type ParamsArrayGroup = [ParamsLogicalOperator, ...ParamsArrayElement[]];
+export type ParamsArrayElement = ParamsArrayRelation | ParamsArrayField | ParamsArray | ParamsArrayGroup;
+export type ParamsArray = Array<ParamsArrayElement>;
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
 
 export type Point = { lat: number; lng: number };

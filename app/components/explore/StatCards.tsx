@@ -1,213 +1,8 @@
-import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import Map from "@/app/components/map/Map";
-import DropdownLinkBox from "@/app/components/DropdownLinkBox";
-import TableMetadata from "@/types/tableMetadata";
-import { Sample } from "@/app/generated/prisma/client";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 
-export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
-	let { samp_name } = await params;
-	samp_name = decodeURIComponent(samp_name);
+export type StatIconType = "location" | "eye" | "analysis" | "fish" | "ship";
 
-	const { sample, analyses, assayData } = await prisma.$transaction(async (tx) => {
-		const sample = await tx.sample.findUnique({
-			where: {
-				samp_name
-			},
-			include: {
-				Occurrences: {
-					select: {
-						featureid: true
-					}
-				},
-				Assays: {
-					select: {
-						assay_name: true
-					}
-				},
-				Project: {
-					select: {
-						isPrivate: true
-					}
-				}
-			}
-		});
-
-		if (!sample) return { sample: null, analyses: [], assayData: [] };
-
-		const occs = await tx.occurrence.findMany({
-			where: {
-				samp_name
-			},
-			distinct: ["analysis_run_name"]
-		});
-
-		const assays = await tx.assay.findMany({
-			where: {
-				assay_name: {
-					in: sample.Assays.map((a) => a.assay_name)
-				}
-			},
-			select: {
-				assay_name: true,
-				target_gene: true
-			}
-		});
-
-		return { sample, analyses: occs.map((occ) => occ.analysis_run_name), assayData: assays };
-	});
-
-	if (!sample) return <>Sample not found</>;
-	const { Occurrences: _, Assays: __, Project: ___, ...justSample } = sample;
-
-	// Build search URL - encode brackets/commas but leave quotes as-is for JSON.parse
-	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
-	const encodedFilter = advancedFilter.replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/,/g, "%2C");
-	const taxonomySearchUrl = `/search?table=taxonomy&advanced=${encodedFilter}`;
-
-	return (
-		<div className="space-y-8 pb-8">
-			{/* Breadcrumb navigation */}
-			<div className="text-base breadcrumbs">
-				<ul>
-					<li>
-						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
-							Projects
-						</Link>
-					</li>
-					<li>
-						<Link href={`/explore/project/${sample.project_id}`} className="text-primary hover:text-primary-focus">
-							{sample.project_id}
-						</Link>
-					</li>
-					<li>
-						<Link href={`/explore/sample`} className="text-primary hover:text-primary-focus">
-							Samples
-						</Link>
-					</li>
-					<li>{samp_name}</li>
-				</ul>
-			</div>
-
-			<header>
-				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.sample.description}>
-						{samp_name}
-					</h1>
-					{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
-				</div>
-				<p className="text-lg text-base-content/70 max-w-4xl">
-					This sample is a part of the{" "}
-					<Link href={`/explore/project/${sample.project_id}`} className="text-primary hover:text-primary-focus">
-						{sample.project_id}
-					</Link>{" "}
-					project
-				</p>
-			</header>
-
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-				{/* Left column - Map and Assays */}
-				<div className="space-y-8">
-					<Map locations={[sample]} className="aspect-square" />
-
-					{/* Assays Section */}
-					<div id="assays-section" className="target:animate-flash">
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-							Assays used on this Sample ({assayData.length})
-						</h2>
-						<div className="space-y-2">
-							{assayData.map((assay) => (
-								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
-									<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-										<div className="relative w-12 h-12">
-											<AssayPhyloPic assay_name={assay.assay_name} />
-										</div>
-									</div>
-									<div>
-										<h3 className="font-bold text-lg text-base-content">{assay.target_gene}</h3>
-										<p className="text-base-content/70">{assay.assay_name}</p>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
-				</div>
-
-				{/* Right column - Stats and Information */}
-				<div className="lg:col-span-2 space-y-8">
-					{/* Stats Grid */}
-					<div className="grid grid-cols-3 gap-4">
-						<SampleStatCard title="Occurrences" value={sample.Occurrences.length} icon="eye" />
-						<DropdownLinkBoxWithIcon
-							title="Total Analyses"
-							count={analyses.length}
-							content={analyses}
-							linkPrefix="/explore/analysis"
-							icon="analysis"
-						/>
-						<AssayDropdownCard count={sample.Assays.length} assayNames={sample.Assays.map((a) => a.assay_name)} />
-						<SampleStatCard
-							title="Location"
-							latitude={sample.decimalLatitude}
-							longitude={sample.decimalLongitude}
-							icon="location"
-						/>
-						<Link href={taxonomySearchUrl} className="group">
-							<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
-								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-									<StatIcon icon="fish" />
-								</div>
-								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider group-hover:text-primary transition-colors">
-									What taxonomies were found in this sample?
-								</div>
-							</div>
-						</Link>
-						<div className="bg-base-200 p-4 rounded-lg"></div>
-					</div>
-
-					{/* Sample Information */}
-					<div className="bg-base-200 rounded-xl p-6">
-						<h2 className="text-xl font-medium text-base-content/90 mb-4">Sample Information</h2>
-						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay
-								table="sample"
-								data={justSample}
-								omit={["project_id", "analysis_run_name", "assay_name"]}
-								priorityFields={[
-									"samp_name",
-									"eventDate",
-									"decimalLatitude",
-									"decimalLongitude",
-									"minimumDepthInMeters",
-									"maximumDepthInMeters",
-									"tot_depth_water_col",
-									"geo_loc_name",
-									"env_broad_scale",
-									"env_local_scale",
-									"env_medium",
-									"samp_category",
-									"neg_cont_type",
-									"pos_cont_type",
-									"expedition_id",
-									"line_id",
-									"station_id",
-									"serial_number"
-								]}
-							/>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-
-type StatIconType = "location" | "eye" | "analysis" | "fish";
-
-function SampleStatCard({
+export function SampleStatCard({
 	title,
 	value,
 	latitude,
@@ -263,9 +58,20 @@ function SampleStatCard({
 	return content;
 }
 
-function StatIcon({ icon }: { icon: StatIconType }) {
+export function StatIcon({ icon }: { icon: StatIconType }) {
 	const getIconData = () => {
 		switch (icon) {
+			case "ship":
+				return {
+					viewBox: "0 0 424 169",
+					path: (
+						<path
+							fill="currentColor"
+							stroke="none"
+							d="M177.09,96.19c.85-1.5,18.16-54.31,18.16-54.31,0,0,6.1-3.1,18.75.15,10.81,2.79,15.96,6.24,15.96,6.24l-4.8,56.13 M419.8,119.51c-9.19-16.33-18.31-33.36-26.1-48.55-3.79-7.5-9.88-13.32-14.73-12.97-4.36.3-7.5,1.5-6.88,8.88,1.39,18,4.96,36.3,7.18,54.46.79,9.21,13.18,17.35,26.31,14.76,12.88-2.56,19-9.18,14.22-16.57h0ZM404.97,133.68c-9,2.17-18.1-5.08-19.09-13.15-2.39-16-4.89-31.95-7.5-47.85-1.27-8.13.66-8.88,3.99-9.37,3.33-.49,5.49,4.77,8.65,11.34,7.21,15,15.61,31.62,22.5,45,3.61,6.54.28,11.91-8.55,14.04h0z M419.95 111.83 405.39 111.83 404.99 106.55 383.6 106.55 383.6 125.67 397.62 125.67 406.46 125.67 423.37 120.09 419.95 111.83 419.95 111.83 419.95 111.83 M173.43,2.11c-2.61,11.17-5.53,22.27-8.47,33.39l-4.5,16.62-2.29,8.29c-.84,2.76-1.14,5.62-3.51,8.02l-1.75-.42c-.79-3.13.48-5.79,1.2-8.56l2.34-8.26,4.86-16.5c3.36-11.01,6.7-22,10.38-33l1.75.42Z M330.5,119.7s-1.42-18.54-22.81-18.54c-19.69,0-33.31,2.41-37.5-2.4-6.94-7.87-19.36-6.09-19.36-6.09h-74.21v-28.29h-28.36l-11.43-7.5-37.75,7.8,5.79,8.73v19.26H1.5l27.82,27h0l50.17,48.3h325.48s5.79-6.69,11.13-20.77c3.29-8.79,5.75-17.88,7.33-27.13l-92.93-.36ZM116.02,74.02c0,2.02-1.64,3.66-3.66,3.66s-3.66-1.64-3.66-3.66v-4.66c0-2.02,1.64-3.66,3.66-3.66s3.66,1.64,3.66,3.66v4.66ZM125.68,74.02c0,2.02-1.64,3.66-3.66,3.66s-3.66-1.64-3.66-3.66v-4.66c0-2.02,1.64-3.66,3.66-3.66s3.66,1.64,3.66,3.66v4.66ZM135.34,74.02c-.13,2.03-1.88,3.56-3.9,3.43-1.84-.12-3.31-1.59-3.43-3.43v-4.66c.13-2.03,1.88-3.56,3.9-3.43,1.84.12,3.31,1.59,3.43,3.43v4.66Z M136.09,46.99l25.5,2.58s-1.23-.62-1.23-3.07,1.23-2.46,1.23-2.46l-25.5-2.58c-.79.79-1.23,1.88-1.21,3-.04.99.41,1.94,1.21,2.53h0Z M183.72,47.2l-25.24,3.24s1.21-.78,1.21-3.87-1.21-3.07-1.21-3.07l25.24-3.25c.81,1.07,1.23,2.37,1.21,3.7.1,1.21-.35,2.4-1.21,3.25h0Z M148.67,26.17l19.32,2.52s-.93-.6-.93-3,.93-2.35.93-2.35l-19.32-2.46c-.61.81-.94,1.8-.91,2.82-.08.92.26,1.83.91,2.47h0Z M185.01,26.56l-19.27,2.47s.93-.58.93-3-.93-2.37-.93-2.37l19.27-2.47c.62.81.95,1.81.93,2.83.1.94-.25,1.88-.93,2.53h0Z M162.42,7.33l9.24,1.86s-.43-.44-.43-2.13.43-1.68.43-1.68l-9.24-1.78c-.32.63-.47,1.32-.45,2.02-.04.6.12,1.2.45,1.71h0Z M178.86,7.37l-7.99,1.81s.37-.42.37-2.11-.37-1.69-.37-1.69l7.99-1.77c.28.64.41,1.33.39,2.02.04.61-.09,1.21-.39,1.74h0Z M276.54,35.11l-1.18-1.38c.56-1.48.85-3.05.85-4.63.05-7.21-5.75-13.09-12.96-13.14-7.21-.05-13.09,5.75-13.14,12.96-.01,1.65.29,3.28.88,4.81l-1.2,1.38,10.23,11.86v54h6.3v-54l10.21-11.86h0Z"
+						/>
+					)
+				};
 			case "location":
 				return {
 					viewBox: "0 0 24 24",
@@ -334,7 +140,7 @@ function StatIcon({ icon }: { icon: StatIconType }) {
 	);
 }
 
-function DropdownLinkBoxWithIcon({
+export function DropdownLinkBoxWithIcon({
 	title,
 	count,
 	content,
@@ -347,9 +153,6 @@ function DropdownLinkBoxWithIcon({
 	linkPrefix: string;
 	icon: StatIconType;
 }) {
-	const [firstLine, ...rest] = title.split(" ");
-	const secondLine = rest.join(" ");
-
 	return (
 		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
 			<div
@@ -362,10 +165,7 @@ function DropdownLinkBoxWithIcon({
 						<StatIcon icon={icon} />
 					</div>
 					<div>
-						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-							<span className="block">{firstLine}</span>
-							{secondLine && <span className="block">{secondLine}</span>}
-						</div>
+						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
 						<div className="text-2xl font-bold text-primary">{count}</div>
 					</div>
 				</div>
@@ -400,7 +200,7 @@ function DropdownLinkBoxWithIcon({
 	);
 }
 
-function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: string[] }) {
+export function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: string[] }) {
 	return (
 		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
 			<div
@@ -451,7 +251,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 	);
 }
 
-function AssayIcon() {
+	export function AssayIcon() {
 	return (
 		<svg
 			version="1.1"
@@ -953,3 +753,5 @@ z"
 		</svg>
 	);
 }
+
+
