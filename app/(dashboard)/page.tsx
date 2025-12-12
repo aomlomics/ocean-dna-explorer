@@ -130,7 +130,14 @@ export default async function Home() {
 							<span className="text-primary">Projects</span>
 						</div>
 						<div className="w-full h-[460px] rounded-lg overflow-hidden bg-base-200 shadow-sm">
-							<Map query={publicPrisma.sample.findMany} legend titleTable="project" cluster clusterRadius={20} />
+							<Map
+								query={publicPrisma.sample.findMany}
+								legend
+								titleTable="project"
+								cluster
+								clusterRadius={20}
+								className="w-full h-full"
+							/>
 						</div>
 					</div>
 

@@ -149,10 +149,17 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			{/* Map + stats + below-map content grouped so spacing between map and metadata is consistent */}
 			<section className="mt-2 space-y-8">
 				{/* Top layout: Map and Project at a Glance */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 					{/* Left: Map */}
-					<div className="lg:col-span-2">
-						<Map locations={project.Samples} cluster legend draw legendOmit={["project_id"]} />
+					<div className="lg:col-span-2 h-full">
+						<Map
+							locations={project.Samples}
+							cluster
+							legend
+							draw
+							legendOmit={["project_id"]}
+							className="h-full w-full min-h-[320px]"
+						/>
 					</div>
 
 					{/* Right: Project at a Glance */}

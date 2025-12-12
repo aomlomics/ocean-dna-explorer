@@ -347,6 +347,9 @@ function DropdownLinkBoxWithIcon({
 	linkPrefix: string;
 	icon: StatIconType;
 }) {
+	const [firstLine, ...rest] = title.split(" ");
+	const secondLine = rest.join(" ");
+
 	return (
 		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
 			<div
@@ -359,7 +362,10 @@ function DropdownLinkBoxWithIcon({
 						<StatIcon icon={icon} />
 					</div>
 					<div>
-						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
+						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+							<span className="block">{firstLine}</span>
+							{secondLine && <span className="block">{secondLine}</span>}
+						</div>
 						<div className="text-2xl font-bold text-primary">{count}</div>
 					</div>
 				</div>
