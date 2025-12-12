@@ -48,7 +48,14 @@ export default function Footer() {
 							alt="NOAA Oceanic and Atmospheric Research logo"
 							fill
 							sizes="(max-width: 640px) 8rem, 10rem"
-							className="object-contain noaa-oar-logo"
+							className="object-contain noaa-oar-logo [html[data-theme='dark']_&]:hidden"
+						/>
+						<Image
+							src="/images/noaa_oar_logo_dark.svg"
+							alt="NOAA Oceanic and Atmospheric Research logo"
+							fill
+							sizes="(max-width: 640px) 8rem, 10rem"
+							className="object-contain noaa-oar-logo hidden [html[data-theme='dark']_&]:block"
 						/>
 					</Link>
 				</div>

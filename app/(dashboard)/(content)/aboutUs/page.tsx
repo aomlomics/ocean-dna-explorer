@@ -328,17 +328,24 @@ export default function AboutUsPage() {
 					</div>
 
 					<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
-						<div className="relative h-16 w-48 lg:h-24 lg:w-64">
-							<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
-								<Image
-									src="/images/noaa_oar_logo.svg"
-									alt="NOAA Oceanic and Atmospheric Research logo"
-									fill
-									sizes="(max-width: 1024px) 12rem, 16rem"
-									className="object-contain noaa-oar-logo"
-								/>
-							</Link>
-						</div>
+					<div className="relative h-16 w-48 lg:h-24 lg:w-64">
+						<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
+							<Image
+								src="/images/noaa_oar_logo.svg"
+								alt="NOAA Oceanic and Atmospheric Research logo"
+								fill
+								sizes="(max-width: 1024px) 12rem, 16rem"
+								className="object-contain noaa-oar-logo [html[data-theme='dark']_&]:hidden"
+							/>
+							<Image
+								src="/images/noaa_oar_logo_dark.svg"
+								alt="NOAA Oceanic and Atmospheric Research logo"
+								fill
+								sizes="(max-width: 1024px) 12rem, 16rem"
+								className="object-contain noaa-oar-logo hidden [html[data-theme='dark']_&]:block"
+							/>
+						</Link>
+					</div>
 						<div className="relative h-16 w-80 lg:h-24 lg:w-104">
 							<Link href="https://www.northerngulfinstitute.org/" target="_blank" rel="noreferrer">
 								<ThemeAwareLogo

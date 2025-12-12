@@ -114,12 +114,6 @@
 	}
 }
 
-/* Dark-mode only subtle highlight for colored NOAA OAR logos without altering colors */
-[data-theme="dark"] img.noaa-oar-logo {
-	filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.85))
-		drop-shadow(0 4px 10px rgba(255, 255, 255, 0.35));
-}
-
 @keyframes fadeIn {
 	from {
 		opacity: 0;

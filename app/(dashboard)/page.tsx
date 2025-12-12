@@ -152,23 +152,14 @@ export default async function Home() {
 
 					<div className="max-w-4xl mx-auto text-lg text-main mb-8 lg:mb-16 text-center leading-tight">
 						<p>
-							The Ocean DNA Explorer is a product of{" "}
-							<Link
-								href="https://www.aoml.noaa.gov/"
-								className="text-primary hover:underline"
-								target="_blank"
-								rel="noreferrer"
-							>
-								NOAA's Atlantic Oceanographic and Meteorological Laboratory
-							</Link>{" "}
-							in collaboration with the{" "}
+							The Ocean DNA Explorer is a product of the{" "}
 							<Link
 								href="https://www.northerngulfinstitute.org/"
 								className="text-primary hover:underline"
 								target="_blank"
 								rel="noreferrer"
 							>
-								Northern Gulf Institute
+								Northern Gulf Institute (NGI)
 							</Link>{" "}
 							at{" "}
 							<Link
@@ -177,9 +168,18 @@ export default async function Home() {
 								target="_blank"
 								rel="noreferrer"
 							>
-								Mississippi State University
+								Mississippi State University (MSU)
 							</Link>{" "}
-							and is supported by{" "}
+							in collaboration with{" "}
+							<Link
+								href="https://www.aoml.noaa.gov/"
+								className="text-primary hover:underline"
+								target="_blank"
+								rel="noreferrer"
+							>
+								NOAA&apos;s Atlantic Oceanographic and Meteorological Laboratory
+							</Link>
+							. The project is supported by{" "}
 							<Link
 								href="https://oceanexplorer.noaa.gov/"
 								className="text-primary hover:underline"
@@ -204,13 +204,20 @@ export default async function Home() {
 						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
 							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
-											<Image
-												src="/images/noaa_oar_logo.svg"
-												alt="NOAA Oceanic and Atmospheric Research logo"
-												fill
-												sizes="(max-width: 1024px) 12rem, 16rem"
-												className="object-contain noaa-oar-logo"
-											/>
+									<Image
+										src="/images/noaa_oar_logo.svg"
+										alt="NOAA Oceanic and Atmospheric Research logo"
+										fill
+										sizes="(max-width: 1024px) 12rem, 16rem"
+										className="object-contain noaa-oar-logo [html[data-theme='dark']_&]:hidden"
+									/>
+									<Image
+										src="/images/noaa_oar_logo_dark.svg"
+										alt="NOAA Oceanic and Atmospheric Research logo"
+										fill
+										sizes="(max-width: 1024px) 12rem, 16rem"
+										className="object-contain noaa-oar-logo hidden [html[data-theme='dark']_&]:block"
+									/>
 								</Link>
 							</div>
 							<div className="relative h-16 w-80 lg:h-24 lg:w-[26rem]">

@@ -306,7 +306,7 @@ export default function AboutPage() {
 								target="_blank"
 								rel="noreferrer"
 							>
-								NOAA&apos;s Atlantic Oceanographic and Meteorological Laboratory (AOML)
+								NOAA&apos;s Atlantic Oceanographic and Meteorological Laboratory
 							</Link>
 							. The project is supported by{" "}
 							<Link
@@ -338,7 +338,14 @@ export default function AboutPage() {
 									alt="NOAA Oceanic and Atmospheric Research logo"
 									fill
 									sizes="(max-width: 1024px) 12rem, 16rem"
-									className="object-contain noaa-oar-logo"
+									className="object-contain noaa-oar-logo [html[data-theme='dark']_&]:hidden"
+								/>
+								<Image
+									src="/images/noaa_oar_logo_dark.svg"
+									alt="NOAA Oceanic and Atmospheric Research logo"
+									fill
+									sizes="(max-width: 1024px) 12rem, 16rem"
+									className="object-contain noaa-oar-logo hidden [html[data-theme='dark']_&]:block"
 								/>
 							</Link>
 						</div>
