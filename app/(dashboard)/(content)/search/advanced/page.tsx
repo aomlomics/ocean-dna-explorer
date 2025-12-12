@@ -105,7 +105,9 @@ export default function AdvancedSearch() {
 					gte: ">=",
 					lt: "<",
 					lte: "<=",
-					range: "is between"
+					range: "is between",
+					in: "in",
+					notIn: "notIn"
 				}[mode] || mode;
 
 			let filterValue = formRef.current[`filter_${suffix}`]?.value || "";
@@ -831,7 +833,7 @@ function InputElement({
 						<div className="input input-primary w-full rounded-none">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
-								className={`w-[20px] ${gteDateSelected ? "text-success" : "text-error"}`}
+								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[0].split("T")[0]
@@ -856,7 +858,7 @@ function InputElement({
 						<div className="input input-primary w-full rounded-l-none">
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
-								className={`w-[20px] ${lteDateSelected ? "text-success" : "text-error"}`}
+								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[1].split("T")[0]

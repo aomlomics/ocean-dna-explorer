@@ -1,6 +1,7 @@
 import { RanksBySpecificity } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
+import { Location, LocationWithValues, MapShape, Point } from "@/types/globals";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -171,14 +172,20 @@ export function parseNestedJson(json: string) {
 	let parsed;
 
 	try {
-		parsed = JSON.parse(json); // object -> object, number -> number, string -> catch block
+		parsed = JSON.parse(json); // object -> object, array -> array, number -> number, string -> catch block
 	} catch {
 		return json;
 	}
 
 	if (typeof parsed === "object") {
-		for (const [key, value] of Object.entries(parsed)) {
-			parsed[key] = parseNestedJson(value as string);
+		if (Array.isArray(parsed)) {
+			for (let i = 0; i < parsed.length; i++) {
+				parsed[i] = parseNestedJson(parsed[i] as string);
+			}
+		} else {
+			for (const [key, value] of Object.entries(parsed)) {
+				parsed[key] = parseNestedJson(value as string);
+			}
 		}
 	}
 
@@ -268,4 +275,92 @@ function __unfocus() {
 
 export function unfocus() {
 	__unfocus();
+}
+
+function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
+	// generally used geo measurement function
+	var R = 6378.137; // Radius of earth in KM
+	var dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
+	var dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
+	var a =
+		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	var d = R * c;
+	return d * 1000; // meters
+}
+
+function Turn(p1: Point, p2: Point, p3: Point) {
+	const a = (p3.lat - p1.lat) * (p2.lng - p1.lng);
+	const b = (p2.lat - p1.lat) * (p3.lng - p1.lng);
+	return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
+}
+
+function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
+	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
+}
+
+export function getLocationsInsideShapes(locs: (Location | LocationWithValues)[], shapes: MapShape[]) {
+	const locsInside = [] as Location[];
+	for (const l of locs) {
+		for (const s of shapes) {
+			if (s.type === "polygon") {
+				//check if point is inside bounding box
+				if (
+					l.decimalLatitude < s.bounds.ne.lat &&
+					l.decimalLatitude > s.bounds.sw.lat &&
+					l.decimalLongitude < s.bounds.ne.lng &&
+					l.decimalLongitude > s.bounds.sw.lng
+				) {
+					//create ray to cast through polygon
+					const raycastLine = [
+						{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
+						{ lat: l.decimalLatitude, lng: l.decimalLongitude }
+					] as [Point, Point];
+
+					//get sides of polygon
+					const sides = [] as [Point, Point][];
+					for (let i = 0; i < s.points.length; i++) {
+						//last point connects to first point
+						if (i === s.points.length - 1) {
+							sides.push([s.points[i], s.points[0]]);
+						} else {
+							sides.push([s.points[i], s.points[i + 1]]);
+						}
+					}
+
+					//get number of times the ray intersects with the polygon
+					let numIntersections = 0;
+					for (const s of sides) {
+						if (isIntersecting(...raycastLine, ...s)) {
+							numIntersections++;
+						}
+					}
+
+					if (numIntersections % 2) {
+						//number of intersections is odd, meaning the point lies in the polygon
+						if (l.values) {
+							locsInside.push(...l.values);
+						} else {
+							locsInside.push(l as Location);
+						}
+						break;
+					}
+				}
+			} else if (s.type === "circle") {
+				//check if point inside of circle
+				const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
+				if (distance <= s.radius) {
+					if (l.values) {
+						locsInside.push(...l.values);
+					} else {
+						locsInside.push(l as Location);
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	return locsInside;
 }

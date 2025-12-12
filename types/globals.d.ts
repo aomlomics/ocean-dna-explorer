@@ -58,10 +58,37 @@ export type ClerkUserObject = {
 	primaryEmailAddress?: string;
 };
 
-export type QueryMode = "equals" | "contains" | "startsWith" | "endsWith" | "lt" | "lte" | "gt" | "gte" | "range";
-export type ParamsArrayField = [string, QueryMode, string | number | [number, number] | [string, string]];
+type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
+type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
+export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn";
+type StringParamsArrayField = [string, StringQueryMode, string];
+type NumberParamsArrayField = [string, NumberQueryMode, number];
+type RangeParamsArrayField = [string, "range", [number, number] | [string, string]];
+type InParamsArrayField = [string, "in" | "notIn", number[] | string[]];
+export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[];
+export type ParamsArrayField =
+	| StringParamsArrayField
+	| NumberParamsArrayField
+	| RangeParamsArrayField
+	| InParamsArrayField;
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
+
+export type Point = { lat: number; lng: number };
+type Polygon = {
+	type: "polygon";
+	bounds: {
+		ne: Point;
+		sw: Point;
+	};
+	points: Point[];
+};
+type Circle = {
+	type: "circle";
+	center: Point;
+	radius: number;
+};
+export type MapShape = Polygon | Circle;
 
 export type DbType = "boolean" | "integer" | "float" | "string" | "string[]" | "date" | "json" | "DeadBoolean";
 
