@@ -15,8 +15,8 @@ import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useS
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
-import { capitalizeTable } from "@/app/helpers/utils";
-import { LocationWithValues, Location, NullLocation } from "@/types/globals";
+import { capitalizeTable, getLocationsInsideShapes } from "@/app/helpers/utils";
+import { LocationWithValues, Location, NullLocation, Point, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
@@ -36,8 +36,6 @@ type MapProps =
 			zoom?: undefined;
 			bounds: LatLngBoundsExpression;
 	  };
-
-type Point = { lat: number; lng: number };
 
 type Bounds = [[number, number], [number, number]];
 
@@ -73,19 +71,6 @@ function getShape(shape: any) {
 			radius: shape.layer.getRadius()
 		};
 	}
-}
-
-function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
-	// generally used geo measurement function
-	var R = 6378.137; // Radius of earth in KM
-	var dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
-	var dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
-	var a =
-		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	var d = R * c;
-	return d * 1000; // meters
 }
 
 function getLegendValue(field: string | string[], loc: LocationWithValues | Location, sep = "/") {
@@ -154,16 +139,6 @@ function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors
 		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
 		.join(",")});`;
-}
-
-function Turn(p1: Point, p2: Point, p3: Point) {
-	const a = (p3.lat - p1.lat) * (p2.lng - p1.lng);
-	const b = (p2.lat - p1.lat) * (p3.lng - p1.lng);
-	return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
-}
-
-function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
-	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
 }
 
 function getMarkerHtml(count: number, valuesCount: number, combined: number, style: string, borderStyle?: string) {
@@ -235,8 +210,8 @@ export default function ActualMap({
 	const defaultOptions = new Set() as Set<string>;
 
 	const DEFAULT_BOUNDS = [
-		[-180, -180],
-		[180, 180]
+		[-90, -180],
+		[90, 180]
 	] as Bounds;
 
 	if (locations.length === 1) {
@@ -346,97 +321,27 @@ export default function ActualMap({
 		(clusterRadius || DEFAULT_CLUSTER_RADIUS) as number | undefined
 	);
 
-	const [shapes, setShapes] = useState(
-		{} as Record<
-			string,
-			| {
-					type: "polygon";
-					bounds: {
-						ne: Point;
-						sw: Point;
-					};
-					points: Point[];
-			  }
-			| {
-					type: "circle";
-					center: Point;
-					radius: number;
-			  }
-		>
-	);
+	const [shapes, setShapes] = useState({} as Record<string, MapShape>);
 
 	function checkShapes() {
-		const tempPointsInside = [] as Location[];
-
 		if (Object.keys(shapes).length) {
-			for (const l of filteredLocations) {
-				//exclude locations hidden by legend
-				if (
-					!(legendInfo && legendInfo.mode === "discreet" && legendInfo.hidden?.includes(l[legendInfo.field as string]))
-				) {
-					//test every shape
-					for (const s of Object.values(shapes)) {
-						if (s.type === "polygon") {
-							//check if point is inside bounding box
-							if (
-								l.decimalLatitude < s.bounds.ne.lat &&
-								l.decimalLatitude > s.bounds.sw.lat &&
-								l.decimalLongitude < s.bounds.ne.lng &&
-								l.decimalLongitude > s.bounds.sw.lng
-							) {
-								//create ray to cast through polygon
-								const raycastLine = [
-									{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
-									{ lat: l.decimalLatitude, lng: l.decimalLongitude }
-								] as [Point, Point];
-
-								//get sides of polygon
-								const sides = [] as [Point, Point][];
-								for (let i = 0; i < s.points.length; i++) {
-									//last point connects to first point
-									if (i === s.points.length - 1) {
-										sides.push([s.points[i], s.points[0]]);
-									} else {
-										sides.push([s.points[i], s.points[i + 1]]);
-									}
-								}
-
-								//get number of times the ray intersects with the polygon
-								let numIntersections = 0;
-								for (const s of sides) {
-									if (isIntersecting(...raycastLine, ...s)) {
-										numIntersections++;
-									}
-								}
-
-								if (numIntersections % 2) {
-									//number of intersections is odd, meaning the point lies in the polygon
-									if (l.values) {
-										tempPointsInside.push(...l.values);
-									} else {
-										tempPointsInside.push(l as Location);
-									}
-									break;
-								}
-							}
-						} else if (s.type === "circle") {
-							//check if point inside of circle
-							const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
-							if (distance <= s.radius) {
-								if (l.values) {
-									tempPointsInside.push(...l.values);
-								} else {
-									tempPointsInside.push(l as Location);
-								}
-								break;
-							}
-						}
-					}
-				}
-			}
+			setPointsInside(
+				getLocationsInsideShapes(
+					//exclude locations hidden by legend
+					filteredLocations.filter(
+						(l) =>
+							!(
+								legendInfo &&
+								legendInfo.mode === "discreet" &&
+								legendInfo.hidden?.includes(l[legendInfo.field as string])
+							)
+					),
+					Object.values(shapes)
+				)
+			);
+		} else {
+			setPointsInside([]);
 		}
-
-		setPointsInside(tempPointsInside);
 	}
 
 	//shapes

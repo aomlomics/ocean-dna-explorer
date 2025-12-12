@@ -1,7 +1,7 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
-import { uncapitalizeTable } from "@/app/helpers/utils";
+import { getLocationsInsideShapes, uncapitalizeTable } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
@@ -20,12 +20,16 @@ export async function GET(
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const query = parseApiQuery(uncapsTable, searchParams);
+			const { query, shapes } = parseApiQuery(uncapsTable, searchParams);
 
 			//@ts-ignore
-			const result = await prisma[uncapsTable].findMany(query);
+			let result = await prisma[uncapsTable].findMany(query);
 
 			if (result) {
+				if (shapes) {
+					result = getLocationsInsideShapes(result, shapes);
+				}
+
 				return NextResponse.json({ statusMessage: "success", result });
 			} else {
 				return NextResponse.json({
