@@ -795,12 +795,11 @@ export default function AdvancedSearch() {
 								const normalizedSelection = availableApiFields.filter((field) =>
 									fieldSelectionDraft.includes(field)
 								);
+								const selectionIsAll =
+									normalizedSelection.length === availableApiFields.length;
 
 								setApiFieldSelections((prev) => {
-									if (
-										!normalizedSelection.length ||
-										normalizedSelection.length === availableApiFields.length
-									) {
+									if (!normalizedSelection.length || selectionIsAll) {
 										const { [searchTable]: _omit, ...rest } = prev;
 										return rest;
 									}
@@ -811,10 +810,11 @@ export default function AdvancedSearch() {
 									};
 								});
 
+								copyApiQuery(selectionIsAll ? null : normalizedSelection);
 								apiFieldsModalRef.current?.close();
 							}}
 						>
-							Save selection
+							Copy selection as query
 						</button>
 					</div>
 				</div>
