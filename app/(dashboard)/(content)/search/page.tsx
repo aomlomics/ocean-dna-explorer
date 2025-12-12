@@ -217,9 +217,32 @@ export default function AdvancedSearch() {
 
 	//functions
 	function getAvailableApiFields(table: Prisma.ModelName) {
-		const omitSet = new Set(GlobalOmit);
-		const allFields = TableMetadata[table].enumSchema.options as string[];
-		return allFields.filter((field) => !omitSet.has(field));
+
+		const omit = new Set(GlobalOmit);
+		const meta = TableMetadata[table];
+		const allFields = meta.enumSchema.options as string[];
+		const titleField = meta.titleField;
+
+		const ordered: string[] = [];
+
+		if (meta.fieldOrder && meta.fieldOrder.length) {
+			for (const f of meta.fieldOrder) {
+				if (!omit.has(f)) {
+					ordered.push(f);
+				}
+			}
+		}
+
+		for (const head of allFields) {
+			if (ordered.includes(head)) continue;
+			if (head === "id") continue;
+			if (typeof titleField === "string" && head === titleField) continue;
+			if (omit.has(head)) continue;
+
+			ordered.push(head);
+		}
+
+		return ordered;
 	}
 
 	function getQueryDescription() {
