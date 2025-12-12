@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import ThemeAwareLogo from "./images/ThemeAwareLogo";
 
 export default function Footer() {
@@ -42,14 +43,12 @@ export default function Footer() {
 						rel="noreferrer"
 						className="relative block h-full"
 					>
-						<ThemeAwareLogo
-							src="/images/noaa_exploration_logo_FINAL.svg"
-							alt="NOAA Exploration Logo"
-							fill={true}
+						<Image
+							src="/images/noaa_oar_logo.svg"
+							alt="NOAA Oceanic and Atmospheric Research logo"
+							fill
 							sizes="(max-width: 640px) 8rem, 10rem"
-							style={{
-								objectFit: "contain",
-							}}
+							className="object-contain noaa-oar-logo"
 						/>
 					</Link>
 				</div>

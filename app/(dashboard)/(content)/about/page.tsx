@@ -333,11 +333,12 @@ export default function AboutPage() {
 					<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
 						<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 							<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
-								<ThemeAwareLogo
-									src="/images/noaa_exploration_logo_FINAL.svg"
-									alt="National Oceanic and Atmospheric Administration Exploration Logo"
-									fill={true}
-									className="object-contain"
+								<Image
+									src="/images/noaa_oar_logo.svg"
+									alt="NOAA Oceanic and Atmospheric Research logo"
+									fill
+									sizes="(max-width: 1024px) 12rem, 16rem"
+									className="object-contain noaa-oar-logo"
 								/>
 							</Link>
 						</div>
