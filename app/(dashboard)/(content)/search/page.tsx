@@ -273,7 +273,9 @@ export default function AdvancedSearch() {
 				gte: ">=",
 				lt: "<",
 				lte: "<=",
-				range: "is between"
+				range: "is between",
+				in: "is in",
+				notIn: "is not in"
 			}[mode] || mode;
 			
 			let filterValue = formRef.current[`filter_${id}`]?.value || "";

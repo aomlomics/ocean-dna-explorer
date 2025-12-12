@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup } from "leaflet";
+import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup, Map } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -11,29 +11,31 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import "react-leaflet-markercluster/styles";
 import Link from "next/link";
-import { Dispatch, ReactNode, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
-import { capitalizeTable } from "@/app/helpers/utils";
-import { LocationWithValues, Location, NullLocation } from "@/types/globals";
+import { capitalizeTable, getLocationsInsideShapes } from "@/app/helpers/utils";
+import { LocationWithValues, Location, NullLocation, Point, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
+import { deflateSync } from "fflate";
 
 type MapProps =
 	| {
 			center: LatLng;
 			zoom: number;
+			bounds?: undefined;
 	  }
 	| {
+			center?: undefined;
+			zoom?: undefined;
 			bounds: LatLngBoundsExpression;
 	  };
-
-type Point = { lat: number; lng: number };
 
 type Bounds = [[number, number], [number, number]];
 
@@ -69,19 +71,6 @@ function getShape(shape: any) {
 			radius: shape.layer.getRadius()
 		};
 	}
-}
-
-function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
-	// generally used geo measurement function
-	var R = 6378.137; // Radius of earth in KM
-	var dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
-	var dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
-	var a =
-		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	var d = R * c;
-	return d * 1000; // meters
 }
 
 function getLegendValue(field: string | string[], loc: LocationWithValues | Location, sep = "/") {
@@ -152,16 +141,6 @@ function getConicGradient(colors: chroma.Color[]) {
 		.join(",")});`;
 }
 
-function Turn(p1: Point, p2: Point, p3: Point) {
-	const a = (p3.lat - p1.lat) * (p2.lng - p1.lng);
-	const b = (p2.lat - p1.lat) * (p3.lng - p1.lng);
-	return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
-}
-
-function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
-	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
-}
-
 function getMarkerHtml(count: number, valuesCount: number, combined: number, style: string, borderStyle?: string) {
 	const sharedClassName = "h-full w-full rounded-full";
 	const borderClassName = "border border-black";
@@ -183,6 +162,14 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 
 			return `<div class='border-4 border-white/40 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${style}'></div>`;
 		}
+	}
+}
+
+function compressIfNeeded(str: string) {
+	if (str.length > 500) {
+		return "compressed/fflate:" + String.fromCharCode(...deflateSync(new TextEncoder().encode(str), { level: 9 }));
+	} else {
+		return str;
 	}
 }
 
@@ -210,6 +197,7 @@ export default function ActualMap({
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
 
+	const mapRef = useRef<Map>(null);
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
 	//clump locations if they have identical latlng
@@ -222,8 +210,8 @@ export default function ActualMap({
 	const defaultOptions = new Set() as Set<string>;
 
 	const DEFAULT_BOUNDS = [
-		[-180, -180],
-		[180, 180]
+		[-90, -180],
+		[90, 180]
 	] as Bounds;
 
 	if (locations.length === 1) {
@@ -234,7 +222,7 @@ export default function ActualMap({
 			!(locations[0].decimalLongitude! in DeadValueEnum)
 		) {
 			mapProps = {
-				center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as [number, number] as unknown as LatLng,
+				center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as unknown as LatLng,
 				zoom: 5
 			};
 
@@ -294,6 +282,7 @@ export default function ActualMap({
 
 		mapProps = { bounds };
 	}
+	const defaultMapProps = { ...mapProps };
 
 	let defaultLegend = undefined as LegendInfo;
 	let pointsOrGroups;
@@ -332,97 +321,27 @@ export default function ActualMap({
 		(clusterRadius || DEFAULT_CLUSTER_RADIUS) as number | undefined
 	);
 
-	const [shapes, setShapes] = useState(
-		{} as Record<
-			string,
-			| {
-					type: "polygon";
-					bounds: {
-						ne: Point;
-						sw: Point;
-					};
-					points: Point[];
-			  }
-			| {
-					type: "circle";
-					center: Point;
-					radius: number;
-			  }
-		>
-	);
+	const [shapes, setShapes] = useState({} as Record<string, MapShape>);
 
 	function checkShapes() {
-		const tempPointsInside = [] as Location[];
-
 		if (Object.keys(shapes).length) {
-			for (const l of filteredLocations) {
-				//exclude locations hidden by legend
-				if (
-					!(legendInfo && legendInfo.mode === "discreet" && legendInfo.hidden?.includes(l[legendInfo.field as string]))
-				) {
-					//test every shape
-					for (const s of Object.values(shapes)) {
-						if (s.type === "polygon") {
-							//check if point is inside bounding box
-							if (
-								l.decimalLatitude < s.bounds.ne.lat &&
-								l.decimalLatitude > s.bounds.sw.lat &&
-								l.decimalLongitude < s.bounds.ne.lng &&
-								l.decimalLongitude > s.bounds.sw.lng
-							) {
-								//create ray to cast through polygon
-								const raycastLine = [
-									{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
-									{ lat: l.decimalLatitude, lng: l.decimalLongitude }
-								] as [Point, Point];
-
-								//get sides of polygon
-								const sides = [] as [Point, Point][];
-								for (let i = 0; i < s.points.length; i++) {
-									//last point connects to first point
-									if (i === s.points.length - 1) {
-										sides.push([s.points[i], s.points[0]]);
-									} else {
-										sides.push([s.points[i], s.points[i + 1]]);
-									}
-								}
-
-								//get number of times the ray intersects with the polygon
-								let numIntersections = 0;
-								for (const s of sides) {
-									if (isIntersecting(...raycastLine, ...s)) {
-										numIntersections++;
-									}
-								}
-
-								if (numIntersections % 2) {
-									//number of intersections is odd, meaning the point lies in the polygon
-									if (l.values) {
-										tempPointsInside.push(...l.values);
-									} else {
-										tempPointsInside.push(l as Location);
-									}
-									break;
-								}
-							}
-						} else if (s.type === "circle") {
-							//check if point inside of circle
-							const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
-							if (distance <= s.radius) {
-								if (l.values) {
-									tempPointsInside.push(...l.values);
-								} else {
-									tempPointsInside.push(l as Location);
-								}
-								break;
-							}
-						}
-					}
-				}
-			}
+			setPointsInside(
+				getLocationsInsideShapes(
+					//exclude locations hidden by legend
+					filteredLocations.filter(
+						(l) =>
+							!(
+								legendInfo &&
+								legendInfo.mode === "discreet" &&
+								legendInfo.hidden?.includes(l[legendInfo.field as string])
+							)
+					),
+					Object.values(shapes)
+				)
+			);
+		} else {
+			setPointsInside([]);
 		}
-
-		setPointsInside(tempPointsInside);
 	}
 
 	//shapes
@@ -462,6 +381,7 @@ export default function ActualMap({
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
 
+						//TODO: make colors have less alpha when outside shapes instead of turning them black
 						const loc = marker.options.children.props.loc;
 						if (loc.values) {
 							childrenWithValues++;
@@ -572,6 +492,7 @@ export default function ActualMap({
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
+	//TODO: include userDefined
 	const includeOpt = (opt: string) => !GlobalOmit.includes(opt) && !legendOmit.includes(opt) && opt !== "id";
 	if (TableMetadata[table].fieldOrder) {
 		legendOptions.push(...TableMetadata[table].fieldOrder);
@@ -591,6 +512,7 @@ export default function ActualMap({
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
+				ref={mapRef}
 				preferCanvas={false}
 				maxBounds={
 					[
@@ -604,11 +526,30 @@ export default function ActualMap({
 				<FullscreenControl />
 
 				<div className="leaflet-top leaflet-left pt-25">
-					<NoLocationPointsControl noLocationPoints={noLocationPoints} table={table} id={id} legendInfo={legendInfo} />
+					<RecenterControl
+						reset={() =>
+							defaultMapProps.center
+								? mapRef.current?.setView(defaultMapProps.center, defaultMapProps.zoom)
+								: mapRef.current?.fitBounds(defaultMapProps.bounds)
+						}
+					/>
+					<NoLocationPointsControl
+						noLocationPoints={noLocationPoints}
+						table={table}
+						id={id}
+						legendInfo={legendInfo}
+						mapRef={mapRef}
+					/>
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
 					{pointsInside.length ? (
-						<DrawSelectedControl pointsInside={pointsInside} table={table} id={id} legendInfo={legendInfo} />
+						<DrawSelectedControl
+							pointsInside={pointsInside}
+							table={table}
+							id={id}
+							legendInfo={legendInfo}
+							mapRef={mapRef}
+						/>
 					) : (
 						<></>
 					)}
@@ -635,6 +576,8 @@ export default function ActualMap({
 						setLoading={setLoading}
 						legendOptions={legendOptions}
 						table={table}
+						mapRef={mapRef}
+						defaultLegend={defaultLegend}
 						{...legendProps}
 					/>
 				</div>
@@ -702,7 +645,14 @@ export default function ActualMap({
 							) {
 								acc.push(
 									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
-										<PopupWithSearch table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
+										<PopupWithSearch
+											table={table}
+											titleTable={titleTable}
+											loc={loc}
+											id={id}
+											legendInfo={legendInfo}
+											maxWidth={mapRef.current ? mapRef.current.getContainer().clientWidth * 0.5 : undefined}
+										/>
 									</Marker>
 								);
 							}
@@ -765,9 +715,7 @@ function PopupWithSearchBody({
 	titleTable,
 	loc,
 	id,
-	legendInfo,
-	className,
-	listClassName
+	legendInfo
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -775,8 +723,8 @@ function PopupWithSearchBody({
 	id: string;
 	legendInfo: LegendInfo;
 	className?: string;
-	listClassName?: string;
 }) {
+	//TODO: filter not working
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
 
@@ -792,7 +740,7 @@ function PopupWithSearchBody({
 	}, [filter, loc.values]);
 
 	return (
-		<div className={`font-sans [:where(&)]:bg-base-100 [:where(&)]:rounded-lg [:where(&)]:p-3 ${className}`}>
+		<>
 			{titleTable && (
 				<Link
 					href={`/explore/${titleTable}/${
@@ -813,21 +761,31 @@ function PopupWithSearchBody({
 					onChange={(e) => setFilter(e.target.value)}
 					value={filter}
 					placeholder={`Filter ${TableMetadata[table].plural}...`}
-					className="input input-primary input-xs w-full flex-1 min-w-0 text-primary my-1"
+					className="input input-primary input-xs w-full flex-initial min-w-0 text-primary my-1"
 				/>
 			) : (
 				<></>
 			)}
 			<>
 				{loc.values ? (
+					//TODO: make link go to search page with results being loc.values
 					<>
-						<h2 className="text-primary text-lg">
-							{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
-							{filteredValues!.length})
-						</h2>
-						<div
-							className={`flex flex-col [:where(&)]:max-h-15 overflow-y-scroll overscroll-contain [:where(&)]:pr-5 ${listClassName}`}
-						>
+						<div className="flex justify-between gap-2 items-center">
+							<h2 className="text-primary text-lg">
+								{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
+								{filteredValues!.length})
+							</h2>
+							<Link
+								className="btn btn-xs btn-primary text-primary-content!"
+								href={`/search/advanced?table=sample&advanced=[["${id}","in",["${compressIfNeeded(
+									//TODO: use filteredValues if relevant
+									loc.values.map((v) => v[id]).join('","')
+								)}"]]]`}
+							>
+								Search
+							</Link>
+						</div>
+						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
 							{filteredValues!.map((l) => {
 								if (legendInfo) {
 									const color = getLegendColor(legendInfo, l);
@@ -889,7 +847,7 @@ function PopupWithSearchBody({
 					</>
 				)}
 			</>
-		</div>
+		</>
 	);
 }
 
@@ -898,20 +856,227 @@ function PopupWithSearch({
 	titleTable,
 	loc,
 	id,
-	legendInfo
+	legendInfo,
+	maxWidth
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
+	maxWidth?: number;
 }) {
 	return (
-		<Popup className="map-popup">
-			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] bg-base-100 shadow-sm p-2">
+		<Popup className="map-popup" maxWidth={maxWidth}>
+			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
 				<PopupWithSearchBody table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
 			</div>
 		</Popup>
+	);
+}
+
+function Resizable({
+	children,
+	growDirection,
+	detectChange,
+	mapRef,
+	maxMapWidth = 0.75,
+	maxMapHeight = 0.75,
+	maxMinWidth,
+	maxMinHeight
+}: {
+	children: ReactNode;
+	growDirection: "up" | "down" | "left" | "right";
+	detectChange?: (string | boolean | undefined)[];
+	mapRef: RefObject<Map | null>;
+	maxMapWidth?: number;
+	maxMapHeight?: number;
+	maxMinWidth?: number;
+	maxMinHeight?: number;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+	const childRef = useRef<HTMLDivElement>(null);
+
+	const [minWidth, setMinWidth] = useState(maxMinWidth);
+	const [minHeight, setMinHeight] = useState(maxMinHeight);
+	const [width, setWidth] = useState("auto" as number | "auto");
+	const [height, setHeight] = useState("auto" as number | "auto");
+
+	const [sizeClassName, setSizeClassName] = useState("invisible" as "w-full h-full" | "invisible");
+	const [checkSize, setCheckSize] = useState(false);
+
+	useEffect(() => {
+		if (ref.current && (!detectChange || detectChange?.every((c) => !!c))) {
+			//unlock child size to allow automatic resizing
+			setSizeClassName("invisible");
+			setCheckSize(true);
+		}
+	}, [ref, detectChange]);
+
+	useEffect(() => {
+		//TODO: doesn't shrink after resetting legend
+		//TODO: don't trigger resize when legendInfo.hidden changes
+		if (checkSize && ref.current && childRef.current && mapRef.current) {
+			const mapContainer = mapRef.current.getContainer();
+
+			//set new width, and new min width if applicable
+			const mapMaxWidth = mapContainer.clientWidth * maxMapWidth;
+			const maxRefWidth =
+				ref.current.clientWidth > childRef.current.clientWidth ? ref.current.clientWidth : childRef.current.clientWidth;
+			if (maxMinWidth) {
+				let tempWidth;
+
+				if (maxMinWidth > mapMaxWidth) {
+					tempWidth = mapMaxWidth;
+				} else if (maxRefWidth >= maxMinWidth) {
+					tempWidth = maxMinWidth;
+				} else {
+					tempWidth = maxRefWidth;
+				}
+
+				setMinWidth(tempWidth);
+				setWidth(tempWidth);
+			} else {
+				//set initial min width
+				if (!minWidth) {
+					setMinWidth(maxRefWidth);
+				}
+
+				if (maxRefWidth >= mapMaxWidth) {
+					setWidth(mapMaxWidth);
+				} else {
+					setWidth(maxRefWidth);
+				}
+			}
+
+			//set new height, and new min height if applicable
+			const mapMaxHeight = mapContainer.clientHeight * maxMapHeight;
+			const maxRefHeight =
+				ref.current.clientHeight > childRef.current.clientHeight
+					? ref.current.clientHeight
+					: childRef.current.clientHeight;
+			if (maxMinHeight) {
+				let tempHeight;
+
+				if (maxMinHeight > mapMaxHeight) {
+					tempHeight = mapMaxHeight;
+				} else if (maxRefHeight >= maxMinHeight) {
+					tempHeight = maxMinHeight;
+				} else {
+					tempHeight = maxRefHeight;
+				}
+
+				setMinHeight(tempHeight);
+				setHeight(tempHeight);
+			} else {
+				//set initial min height
+				if (!minHeight) {
+					setMinHeight(maxRefHeight);
+				}
+
+				if (maxRefHeight >= mapMaxHeight) {
+					setHeight(mapMaxHeight);
+				} else {
+					setHeight(maxRefHeight);
+				}
+			}
+
+			//lock child to size set with state variables
+			setSizeClassName("w-full h-full");
+			setCheckSize(false);
+		}
+	}, [checkSize]);
+
+	let gridClassName;
+	let handleContainerClassName;
+	let handleClassName;
+
+	if (growDirection === "up") {
+		handleContainerClassName = "w-full cursor-ns-resize";
+		handleClassName = "w-1/2 h-1 my-1";
+
+		gridClassName = "grid-rows-[auto_minmax(0,1fr)]";
+	} else if (growDirection === "down") {
+		handleContainerClassName = "w-full cursor-ns-resize";
+		handleClassName = "w-1/2 h-1 my-1";
+
+		gridClassName = "grid-rows-[minmax(0,1fr)_auto]";
+	} else if (growDirection === "left") {
+		handleContainerClassName = "h-full cursor-ew-resize";
+		handleClassName = "w-1 h-1/2 mx-1";
+
+		gridClassName = "grid-cols-[minmax(0,1fr)_auto]";
+	} else if (growDirection === "right") {
+		handleContainerClassName = "h-full cursor-ew-resize";
+		handleClassName = "w-1 h-1/2 mx-1";
+
+		gridClassName = "grid-cols-[auto_minmax(0,1fr)]";
+	}
+
+	function handleDrag(event: React.MouseEvent<HTMLDivElement>) {
+		document.body.classList.add("select-none");
+
+		const startWidth = width as number;
+		const startHeight = height as number;
+		const startX = event.pageX;
+		const startY = event.pageY;
+
+		function handleMouseMove(this: HTMLElement, ev: MouseEvent) {
+			if (minWidth && minHeight && mapRef.current) {
+				const mapContainer = mapRef.current.getContainer();
+				const mapMaxWidth = mapContainer.clientWidth * maxMapWidth;
+				const mapMaxHeight = mapContainer.clientHeight * maxMapHeight;
+
+				if (growDirection === "right") {
+					const newWidth = startWidth + startX - ev.pageX;
+					if (newWidth >= minWidth && newWidth <= mapMaxWidth) {
+						setWidth(newWidth);
+					}
+				} else if (growDirection === "left") {
+					const newWidth = startWidth - startX + ev.pageX;
+					if (newWidth >= minWidth && newWidth <= mapMaxWidth) {
+						setWidth(newWidth);
+					}
+				} else if (growDirection === "up") {
+					const newHeight = startHeight + startY - ev.pageY;
+					if (newHeight >= minHeight && newHeight <= mapMaxHeight) {
+						setHeight(newHeight);
+					}
+				} else if (growDirection === "down") {
+					const newHeight = startHeight - startY + ev.pageY;
+					if (newHeight >= minHeight && newHeight <= mapMaxHeight) {
+						setHeight(newHeight);
+					}
+				}
+			}
+		}
+
+		document.body.addEventListener("mousemove", handleMouseMove);
+		document.body.addEventListener(
+			"mouseup",
+			() => {
+				document.body.classList.remove("select-none");
+				document.body.removeEventListener("mousemove", handleMouseMove);
+			},
+			{ once: true }
+		);
+	}
+
+	const handle = (
+		<div className={`flex justify-center items-center ${handleContainerClassName}`} onMouseDownCapture={handleDrag}>
+			<div className={`bg-gray-400 rounded-full ${handleClassName}`}></div>
+		</div>
+	);
+	return (
+		<div style={{ width, height }}>
+			<div ref={ref} className={`grid ${gridClassName} ${sizeClassName}`}>
+				{growDirection === "left" || growDirection === "up" ? handle : <></>}
+				<div ref={childRef} className="flex p-3">
+					{children}
+				</div>
+				{growDirection === "right" || growDirection === "down" ? handle : <></>}
+			</div>
+		</div>
 	);
 }
 
@@ -920,29 +1085,19 @@ function Collapsible({
 	defaultCollapse = false,
 	hiddenText = "Show",
 	dir = "right",
-	className = ""
+	onCollapse
 }: {
 	children: ReactNode;
 	defaultCollapse?: boolean;
 	hiddenText?: string;
-	dir?: "right" | "left" | "up" | "down";
-	className?: string;
+	dir?: "up" | "down" | "left" | "right";
+	onCollapse?: (collapse: boolean) => void;
 }) {
 	const [collapse, setCollapse] = useState(defaultCollapse);
-	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
 
 	//delay 2nd state variable by a render cycle to fix tooltip appearing immediately after collapsing
+	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
 	useEffect(() => setDelayedCollapse(collapse), [collapse]);
-
-	const panel = (
-		<div
-			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] [:where(&)]:gap-0 [:where(&)]:bg-base-100 [:where(&)]:shadow-sm [:where(&)]:p-2 ${className} ${
-				collapse ? "hidden" : ""
-			}`}
-		>
-			{children}
-		</div>
-	);
 
 	let rotationOpen;
 	let rotationClosed;
@@ -951,21 +1106,7 @@ function Collapsible({
 	let collapsePos;
 	let openRounded;
 
-	if (dir === "right") {
-		rotationOpen = "";
-		rotationClosed = "rotate-180";
-		flexDir = "flex-row";
-		tooltipDir = "tooltip-left";
-		collapsePos = "self-end";
-		openRounded = "rounded-r-none pr-1";
-	} else if (dir === "left") {
-		rotationOpen = "rotate-180";
-		rotationClosed = "";
-		flexDir = "flex-row";
-		tooltipDir = "tooltip-right";
-		collapsePos = "self-start";
-		openRounded = "rounded-l-none pl-1";
-	} else if (dir === "up") {
+	if (dir === "up") {
 		rotationOpen = "-rotate-90";
 		rotationClosed = "rotate-90";
 		flexDir = "flex-col";
@@ -979,7 +1120,31 @@ function Collapsible({
 		tooltipDir = "tooltip-top";
 		collapsePos = "self-end";
 		openRounded = "rounded-b-none pb-1";
+	} else if (dir === "left") {
+		rotationOpen = "rotate-180";
+		rotationClosed = "";
+		flexDir = "flex-row";
+		tooltipDir = "tooltip-right";
+		collapsePos = "self-start";
+		openRounded = "rounded-l-none pl-1";
+	} else if (dir === "right") {
+		rotationOpen = "";
+		rotationClosed = "rotate-180";
+		flexDir = "flex-row";
+		tooltipDir = "tooltip-left";
+		collapsePos = "self-end";
+		openRounded = "rounded-r-none pr-1";
 	}
+
+	let panel = (
+		<div
+			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] gap-0 bg-base-100 shadow-sm p-0 ${
+				collapse ? "hidden" : ""
+			}`}
+		>
+			{children}
+		</div>
+	);
 
 	return (
 		<div className={`flex ${flexDir} ${collapse ? collapsePos : ""}`}>
@@ -989,7 +1154,12 @@ function Collapsible({
 					collapse ? "" : openRounded
 				} ${delayedCollapse ? `tooltip ${tooltipDir} tooltip-secondary before:text-primary-content` : ""}`}
 				data-tip={hiddenText}
-				onClick={() => setCollapse(!collapse)}
+				onClick={() => {
+					setCollapse(!collapse);
+					if (onCollapse) {
+						onCollapse(!collapse);
+					}
+				}}
 			>
 				{collapse ? (
 					<svg
@@ -1064,9 +1234,11 @@ function LegendControl({
 	setLegendInfo,
 	setLoading,
 	legendOptions,
-	points,
 	table,
-	titleTable
+	mapRef,
+	titleTable,
+	points,
+	defaultLegend
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
@@ -1074,6 +1246,8 @@ function LegendControl({
 	setLoading: Dispatch<SetStateAction<boolean>>;
 	legendOptions: string[];
 	table: Uncapitalize<Prisma.ModelName>;
+	mapRef: RefObject<Map | null>;
+	defaultLegend?: LegendInfo;
 } & (
 	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
 	| { titleTable?: undefined; points: LocationWithValues[] }
@@ -1081,6 +1255,7 @@ function LegendControl({
 	const ref = useRef<HTMLDivElement>(null);
 
 	const [filter, setFilter] = useState("");
+	const [shown, setShown] = useState(!!legendInfo);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1095,17 +1270,32 @@ function LegendControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar border-none! mb-6! flex flex-col gap-2" ref={ref}>
-			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} className="py-3">
-				<div className="text-lg flex justify-between items-center gap-2">
-					{titleTable ? (
-						// TODO: enable changing legend even with titleTable, keep clustering linked to titleTable
-						<span className="pl-2">{TableMetadata[titleTable].plural}</span>
-					) : (
-						<>
+			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} onCollapse={(c) => setShown(!c)}>
+				<Resizable
+					growDirection={"up"}
+					detectChange={[
+						shown,
+						//spread operator to put nothing when legendInfo doesn't exist
+						...(legendInfo
+							? typeof legendInfo.field === "string"
+								? [legendInfo.field]
+								: [legendInfo.field.join("/")]
+							: [])
+					]}
+					mapRef={mapRef}
+					maxMinHeight={200}
+				>
+					<div className="flex flex-col">
+						<div className="text-lg flex justify-between items-center gap-2">
+							{titleTable ? (
+								<InfoButton infoText={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
+							) : (
+								<></>
+							)}
 							<ResetButton
-								disabled={!legendInfo?.field}
+								disabled={!legendInfo || (!!defaultLegend && defaultLegend.field === legendInfo.field)}
 								dataTip="Reset Legend"
-								resetFunction={() => setLegendInfo(undefined)}
+								resetFunction={() => setLegendInfo(defaultLegend)}
 							/>
 
 							<select
@@ -1124,7 +1314,12 @@ function LegendControl({
 										//get unique options
 										const options = new Set() as Set<any>;
 										let someNoData = false;
-										for (const loc of points) {
+
+										//collapse points object into array if necessary
+										let reduced = titleTable
+											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
+											: points;
+										for (const loc of reduced) {
 											if (loc.values) {
 												for (const val of loc.values) {
 													if (val[field] != null) {
@@ -1167,7 +1362,12 @@ function LegendControl({
 										//get unique options
 										const options = new Set() as Set<any>;
 										let someNoValue = false;
-										for (const loc of points) {
+
+										//collapse points object into array if necessary
+										let reduced = titleTable
+											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
+											: points;
+										for (const loc of reduced) {
 											if (loc.values) {
 												for (const val of loc.values) {
 													if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
@@ -1205,7 +1405,12 @@ function LegendControl({
 										//get unique options and cast to epoch timestamp
 										const options = new Set() as Set<any>;
 										let someNoValue = false;
-										for (const loc of points) {
+
+										//collapse points object into array if necessary
+										let reduced = titleTable
+											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
+											: points;
+										for (const loc of reduced) {
 											if (loc.values) {
 												for (const val of loc.values) {
 													if (val[field]) {
@@ -1269,182 +1474,188 @@ function LegendControl({
 									<option key={opt}>{opt}</option>
 								))}
 							</select>
-						</>
-					)}
-					{legendInfo && legendInfo.mode === "gradient" ? (
-						<div className="dropdown dropdown-top dropdown-end">
-							<div tabIndex={0} role="button">
-								<svg
-									height="20px"
-									width="20px"
-									version="1.1"
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 32 32"
-									className="text-primary cursor-pointer"
-									stroke="currentColor"
-									fill="currentColor"
-								>
-									<path
-										d="M27.7,3.3c-1.5-1.5-3.9-1.5-5.4,0L17,8.6l-1.3-1.3c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4l1.3,1.3L5,20.6
+
+							{legendInfo && legendInfo.mode === "gradient" ? (
+								<div className="dropdown dropdown-top dropdown-end">
+									<div tabIndex={0} role="button">
+										<svg
+											height="20px"
+											width="20px"
+											version="1.1"
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 32 32"
+											className="text-primary cursor-pointer"
+											stroke="currentColor"
+											fill="currentColor"
+										>
+											<path
+												d="M27.7,3.3c-1.5-1.5-3.9-1.5-5.4,0L17,8.6l-1.3-1.3c-0.4-0.4-1-0.4-1.4,0s-0.4,1,0,1.4l1.3,1.3L5,20.6
 	c-0.6,0.6-1,1.4-1.1,2.3C3.3,23.4,3,24.2,3,25c0,1.7,1.3,3,3,3c0.8,0,1.6-0.3,2.2-0.9C9,27,9.8,26.6,10.4,26L21,15.4l1.3,1.3
 	c0.2,0.2,0.5,0.3,0.7,0.3s0.5-0.1,0.7-0.3c0.4-0.4,0.4-1,0-1.4L22.4,14l5.3-5.3C29.2,7.2,29.2,4.8,27.7,3.3z M9,24.6
 	c-0.4,0.4-0.8,0.6-1.3,0.5c-0.4,0-0.7,0.2-0.9,0.5C6.7,25.8,6.3,26,6,26c-0.6,0-1-0.4-1-1c0-0.3,0.2-0.7,0.5-0.8
 	c0.3-0.2,0.5-0.5,0.5-0.9c0-0.5,0.2-1,0.5-1.3L17,11.4l2.6,2.6L9,24.6z"
-									/>
-								</svg>
-							</div>
-							<ul
-								tabIndex={-1}
-								className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm p-2 flex-nowrap"
-							>
-								<div className="flex gap-2 items-center pb-2">
-									<ResetButton
-										disabled={legendInfo.palette === DEFAULT_PALETTE}
-										dataTip={"Reset to " + DEFAULT_PALETTE}
-										resetFunction={() => {
-											setLegendInfo({ ...legendInfo, palette: DEFAULT_PALETTE });
-											(document.activeElement as HTMLDivElement).blur();
-										}}
-									/>
-									<input
-										type="text"
-										onChange={(e) => setFilter(e.target.value)}
-										value={filter}
-										placeholder={`Filter colors`}
-										className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
-									/>
-								</div>
+											/>
+										</svg>
+									</div>
+									<ul
+										tabIndex={-1}
+										className="dropdown-content menu bg-base-200 rounded-box z-1 w-52 shadow-sm p-2 flex-nowrap"
+									>
+										<div className="flex gap-2 items-center pb-2">
+											<ResetButton
+												disabled={legendInfo.palette === DEFAULT_PALETTE}
+												dataTip={"Reset to " + DEFAULT_PALETTE}
+												resetFunction={() => {
+													setLegendInfo({ ...legendInfo, palette: DEFAULT_PALETTE });
+													(document.activeElement as HTMLDivElement).blur();
+												}}
+											/>
+											<input
+												type="text"
+												onChange={(e) => setFilter(e.target.value)}
+												value={filter}
+												placeholder={`Filter colors`}
+												className="input input-primary input-sm w-full flex-1 min-w-0 text-primary py-1"
+											/>
+										</div>
 
-								<div className="max-h-75 overflow-y-scroll! overscroll-contain flex flex-col gap-2">
-									{Object.keys(chroma.brewer)
-										.sort()
-										.reduce((acc, scaleName) => {
-											if (scaleName.toLowerCase().includes(filter.toLowerCase()) && scaleName !== legendInfo.palette) {
-												const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
-												acc.push(
-													<li key={scaleName} className="w-full">
-														<a
-															className="w-auto! bg-base-200! flex! items-center justify-center rounded-md! p-1! font-semibold"
-															style={{
-																backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
-															}}
-															onClick={() => {
-																setLegendInfo({ ...legendInfo, palette: scaleName });
-																(document.activeElement as HTMLDivElement).blur();
-															}}
-														>
-															{scaleName}
-														</a>
-													</li>
-												);
-											}
+										<div className="max-h-75 overflow-y-scroll! overscroll-contain flex flex-col gap-2">
+											{Object.keys(chroma.brewer)
+												.sort()
+												.reduce((acc, scaleName) => {
+													if (
+														scaleName.toLowerCase().includes(filter.toLowerCase()) &&
+														scaleName !== legendInfo.palette
+													) {
+														const scale = chroma.brewer[scaleName as keyof typeof chroma.brewer];
+														acc.push(
+															<li key={scaleName} className="w-full">
+																<a
+																	className="w-auto! bg-base-200! flex! items-center justify-center rounded-md! p-1! font-semibold"
+																	style={{
+																		backgroundImage: `linear-gradient(to right, ${scale.join(",")})`
+																	}}
+																	onClick={() => {
+																		setLegendInfo({ ...legendInfo, palette: scaleName });
+																		(document.activeElement as HTMLDivElement).blur();
+																	}}
+																>
+																	{scaleName}
+																</a>
+															</li>
+														);
+													}
 
-											return acc;
-										}, [] as ReactNode[])}
-								</div>
-							</ul>
-						</div>
-					) : (
-						<></>
-					)}
-				</div>
-
-				{legendInfo ? (
-					<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 max-h-25 overflow-y-auto overflow-x-hidden">
-						{legendInfo.mode === "discreet" ? (
-							Object.keys(legendInfo.colorMap).length === 0 ? (
-								<div className="flex gap-2 items-center">
-									<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
-									<div className="text-xs">No value</div>
-								</div>
-							) : Object.keys(legendInfo.colorMap).length === 1 ? (
-								<div className="flex gap-2 items-center">
-									<div
-										className="aspect-square w-[1em] h-[1em]"
-										style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
-									></div>
-									<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+													return acc;
+												}, [] as ReactNode[])}
+										</div>
+									</ul>
 								</div>
 							) : (
-								Object.entries(legendInfo.colorMap).map(([key, color]) => (
-									<div key={key} className="flex gap-2 items-center ">
-										<div
-											className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
-											data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
-											style={{ backgroundColor: color.hex() }}
-											onClick={(e) => {
-												if (legendInfo.hidden?.includes(key)) {
-													setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-													e.currentTarget.style.background = "";
-													e.currentTarget.style.backgroundColor = color.hex();
-												} else {
-													setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-													e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-													e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
-												}
-											}}
-										></div>
-										{titleTable || Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
-											<Link
-												href={`/explore/${
-													titleTable ||
-													Object.keys(TableMetadata).find(
-														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-													)
-												}/${encodeURIComponent(key)}`}
-												className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
-													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-												}`}
-											>
-												{key}
-											</Link>
-										) : (
+								<></>
+							)}
+						</div>
+
+						{legendInfo ? (
+							<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 overflow-y-auto overflow-x-hidden">
+								{legendInfo.mode === "discreet" ? (
+									Object.keys(legendInfo.colorMap).length === 0 ? (
+										<div className="flex gap-2 items-center">
 											<div
-												className={`text-xs ${
-													legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-												}`}
-											>
-												{key}
-											</div>
-										)}
-									</div>
-								))
-							)
-						) : legendInfo.mode === "gradient" ? (
-							<div className="flex flex-col items-center">
-								<div
-									className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
-									// data-tip={legendInfo.palette}
-									style={{
-										backgroundImage: `linear-gradient(to right, ${chroma.brewer[
-											legendInfo.palette as keyof typeof chroma.brewer
-										].join(",")})`
-									}}
-								/>
-								<div className="flex justify-between w-full">
-									{typeof legendInfo.range[0] === "number" ? (
-										<>
-											<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
-											<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
-										</>
+												className="aspect-square w-[1em] h-[1em]"
+												style={{ backgroundColor: DEFAULT_COLOR.hex() }}
+											></div>
+											<div className="text-xs">No value</div>
+										</div>
+									) : Object.keys(legendInfo.colorMap).length === 1 ? (
+										<div className="flex gap-2 items-center">
+											<div
+												className="aspect-square w-[1em] h-[1em]"
+												style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
+											></div>
+											<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+										</div>
 									) : (
-										//TODO: display dates differently depending on distance between dates
-										//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
-										//when dates are all on the same day, time must be displayed as well
-										<>
-											<span>{legendInfo.range[0].toLocaleDateString()}</span>
-											<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
-										</>
-									)}
-								</div>
-								{legendInfo.someNoValue ? (
-									//TODO: change color of no value label if palette has red
-									<div className="flex gap-2 items-center">
+										Object.entries(legendInfo.colorMap).map(([key, color]) => (
+											<div key={key} className="flex gap-2 items-center ">
+												<div
+													className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
+													data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
+													style={{ backgroundColor: color.hex() }}
+													onClick={(e) => {
+														if (legendInfo.hidden?.includes(key)) {
+															setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
+															e.currentTarget.style.background = "";
+															e.currentTarget.style.backgroundColor = color.hex();
+														} else {
+															setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
+															e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
+															e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+														}
+													}}
+												></div>
+												{Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
+													<Link
+														href={`/explore/${Object.keys(TableMetadata).find(
+															(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+														)}/${encodeURIComponent(key)}`}
+														className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
+															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+														}`}
+													>
+														{key}
+													</Link>
+												) : (
+													<div
+														className={`text-xs ${
+															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+														}`}
+													>
+														{key}
+													</div>
+												)}
+											</div>
+										))
+									)
+								) : legendInfo.mode === "gradient" ? (
+									<div className="flex flex-col items-center">
 										<div
-											className="aspect-square w-[1em] h-[1em]"
-											style={{ backgroundColor: DEFAULT_COLOR.hex() }}
-										></div>
-										<div className="text-xs">No value</div>
+											className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
+											// data-tip={legendInfo.palette}
+											style={{
+												backgroundImage: `linear-gradient(to right, ${chroma.brewer[
+													legendInfo.palette as keyof typeof chroma.brewer
+												].join(",")})`
+											}}
+										/>
+										<div className="flex justify-between w-full">
+											{typeof legendInfo.range[0] === "number" ? (
+												<>
+													<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
+													<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
+												</>
+											) : (
+												//TODO: display dates differently depending on distance between dates
+												//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
+												//when dates are all on the same day, time must be displayed as well
+												<>
+													<span>{legendInfo.range[0].toLocaleDateString()}</span>
+													<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
+												</>
+											)}
+										</div>
+										{legendInfo.someNoValue ? (
+											//TODO: change color of no value label if palette has red
+											<div className="flex gap-2 items-center">
+												<div
+													className="aspect-square w-[1em] h-[1em]"
+													style={{ backgroundColor: DEFAULT_COLOR.hex() }}
+												></div>
+												<div className="text-xs">No value</div>
+											</div>
+										) : (
+											<></>
+										)}
 									</div>
 								) : (
 									<></>
@@ -1454,9 +1665,7 @@ function LegendControl({
 							<></>
 						)}
 					</div>
-				) : (
-					<></>
-				)}
+				</Resizable>
 			</Collapsible>
 		</div>
 	);
@@ -1483,67 +1692,64 @@ function PointSizeControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
-			<Collapsible
-				dir="left"
-				defaultCollapse
-				className="w-35 pl-2 pr-1 pt-1 pb-2 gap-1"
-				hiddenText="Show point size control"
-			>
-				<div className="flex justify-between">
-					<div className="flex items-center gap-1 mt-1">
+			<Collapsible dir="left" defaultCollapse hiddenText="Show point size control">
+				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
+					<div className="flex justify-between">
+						<div className="flex items-center gap-1 mt-1">
+							<ResetButton
+								disabled={pointSize === DEFAULT_POINT_SIZE}
+								dataTip={"Reset to " + DEFAULT_POINT_SIZE}
+								resetFunction={() => setPointSize(DEFAULT_POINT_SIZE)}
+								dir="tooltip-right"
+							/>
+							<span className="text-sm">Point Size</span>
+						</div>
+						<InfoButton
+							infoText="The size, in pixels, that the smallest points will be. Every power of 10 increases point size by the step."
+							dir="tooltip-right"
+							className="self-start"
+						/>
+					</div>
+					<div className="pr-2">
+						<input
+							type="number"
+							className="input input-primary"
+							value={pointSize === undefined ? "" : pointSize}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									setPointSize(undefined);
+								} else {
+									setPointSize(parsed);
+								}
+							}}
+						/>
+					</div>
+
+					<div className="flex items-center gap-1">
 						<ResetButton
-							disabled={pointSize === DEFAULT_POINT_SIZE}
-							dataTip={"Reset to " + DEFAULT_POINT_SIZE}
-							resetFunction={() => setPointSize(DEFAULT_POINT_SIZE)}
+							disabled={pointSizeStep === DEFAULT_POINT_SIZE_STEP}
+							dataTip={"Reset to " + DEFAULT_POINT_SIZE_STEP}
+							resetFunction={() => setPointSizeStep(DEFAULT_POINT_SIZE_STEP)}
 							dir="tooltip-right"
 						/>
-						<span className="text-sm">Point Size</span>
+						<span className="text-sm">Step</span>
 					</div>
-					<InfoButton
-						infoText="The size, in pixels, that the smallest points will be. Every power of 10 increases point size by the step."
-						dir="tooltip-right"
-						className="self-start"
-					/>
-				</div>
-				<div className="pr-2">
-					<input
-						type="number"
-						className="input input-primary"
-						value={pointSize === undefined ? "" : pointSize}
-						onChange={(e) => {
-							const parsed = parseInt(e.currentTarget.value);
-							if (isNaN(parsed)) {
-								setPointSize(undefined);
-							} else {
-								setPointSize(parsed);
-							}
-						}}
-					/>
-				</div>
-
-				<div className="flex items-center gap-1">
-					<ResetButton
-						disabled={pointSizeStep === DEFAULT_POINT_SIZE_STEP}
-						dataTip={"Reset to " + DEFAULT_POINT_SIZE_STEP}
-						resetFunction={() => setPointSizeStep(DEFAULT_POINT_SIZE_STEP)}
-						dir="tooltip-right"
-					/>
-					<span className="text-sm">Step</span>
-				</div>
-				<div className="pr-2">
-					<input
-						type="number"
-						className="input input-primary"
-						value={pointSizeStep === undefined ? "" : pointSizeStep}
-						onChange={(e) => {
-							const parsed = parseInt(e.currentTarget.value);
-							if (isNaN(parsed)) {
-								setPointSizeStep(undefined);
-							} else {
-								setPointSizeStep(parsed);
-							}
-						}}
-					/>
+					<div className="pr-2">
+						<input
+							type="number"
+							className="input input-primary"
+							value={pointSizeStep === undefined ? "" : pointSizeStep}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									setPointSizeStep(undefined);
+								} else {
+									setPointSizeStep(parsed);
+								}
+							}}
+						/>
+					</div>
 				</div>
 			</Collapsible>
 		</div>
@@ -1575,37 +1781,39 @@ function ClusterControl({
 
 	return (
 		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
-			<Collapsible dir="left" defaultCollapse className="w-35 pl-2 pr-1 pt-1 pb-2" hiddenText="Show cluster control">
-				<div className="flex justify-between">
-					<div className="flex items-center gap-1 mt-1">
-						<ResetButton
-							disabled={clusterRadius ? value === clusterRadius : value === DEFAULT_CLUSTER_RADIUS}
-							dataTip={`Reset to ${clusterRadius || DEFAULT_CLUSTER_RADIUS}`}
-							resetFunction={() => onChange(clusterRadius || DEFAULT_CLUSTER_RADIUS)}
+			<Collapsible dir="left" defaultCollapse hiddenText="Show cluster control">
+				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
+					<div className="flex justify-between">
+						<div className="flex items-center gap-1 mt-1">
+							<ResetButton
+								disabled={clusterRadius ? value === clusterRadius : value === DEFAULT_CLUSTER_RADIUS}
+								dataTip={`Reset to ${clusterRadius || DEFAULT_CLUSTER_RADIUS}`}
+								resetFunction={() => onChange(clusterRadius || DEFAULT_CLUSTER_RADIUS)}
+								dir="tooltip-right"
+							/>
+							<span className="text-sm">Cluster</span>
+						</div>
+						<InfoButton
+							infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
 							dir="tooltip-right"
+							className="self-start"
 						/>
-						<span className="text-sm">Cluster</span>
 					</div>
-					<InfoButton
-						infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
-						dir="tooltip-right"
-						className="self-start"
-					/>
-				</div>
-				<div className="pr-2">
-					<input
-						type="number"
-						className="input input-primary"
-						value={value === undefined ? "" : value}
-						onChange={(e) => {
-							const parsed = parseInt(e.currentTarget.value);
-							if (isNaN(parsed)) {
-								onChange(undefined);
-							} else {
-								onChange(parsed);
-							}
-						}}
-					/>
+					<div className="pr-2">
+						<input
+							type="number"
+							className="input input-primary"
+							value={value === undefined ? "" : value}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								if (isNaN(parsed)) {
+									onChange(undefined);
+								} else {
+									onChange(parsed);
+								}
+							}}
+						/>
+					</div>
 				</div>
 			</Collapsible>
 		</div>
@@ -1616,14 +1824,17 @@ function DrawSelectedControl({
 	pointsInside,
 	table,
 	id,
-	legendInfo
+	legendInfo,
+	mapRef
 }: {
 	pointsInside: Location[];
 	table: Uncapitalize<Prisma.ModelName>;
 	id: string;
 	legendInfo: LegendInfo;
+	mapRef: RefObject<Map | null>;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
+	const [shown, setShown] = useState(true);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1634,19 +1845,25 @@ function DrawSelectedControl({
 
 	return (
 		<div className="leaflet-control" ref={ref}>
-			<Collapsible hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}>
-				<div className="px-3 pt-1 text-primary text-lg">Selected With Shapes</div>
-				<PopupWithSearchBody
-					table={table}
-					id={id}
-					legendInfo={legendInfo}
-					loc={{
-						decimalLatitude: NaN,
-						decimalLongitude: NaN,
-						values: pointsInside
-					}}
-					className="pt-0"
-				/>
+			<Collapsible
+				hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}
+				onCollapse={(c) => setShown(!c)}
+			>
+				<Resizable growDirection={"down"} detectChange={[shown]} mapRef={mapRef} maxMapHeight={0.6} maxMinHeight={175}>
+					<div className="flex flex-col px-2">
+						<div className="text-primary text-lg">Selected With Shapes</div>
+						<PopupWithSearchBody
+							table={table}
+							id={id}
+							legendInfo={legendInfo}
+							loc={{
+								decimalLatitude: NaN,
+								decimalLongitude: NaN,
+								values: pointsInside
+							}}
+						/>
+					</div>
+				</Resizable>
 			</Collapsible>
 		</div>
 	);
@@ -1656,14 +1873,17 @@ function NoLocationPointsControl({
 	noLocationPoints,
 	table,
 	id,
-	legendInfo
+	legendInfo,
+	mapRef
 }: {
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<Prisma.ModelName>;
 	id: string;
 	legendInfo: LegendInfo;
+	mapRef: RefObject<Map | null>;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
+	const [shown, setShown] = useState(false);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1674,21 +1894,60 @@ function NoLocationPointsControl({
 
 	return (
 		<div className="leaflet-control" ref={ref}>
-			<Collapsible dir="left" defaultCollapse hiddenText={`Show ${TableMetadata[table].plural} with no location data`}>
-				<div className="px-3 pt-1 text-primary text-lg">No Location Data</div>
-				<PopupWithSearchBody
-					table={table}
-					id={id}
-					legendInfo={legendInfo}
-					loc={{
-						decimalLatitude: NaN,
-						decimalLongitude: NaN,
-						values: noLocationPoints as Location[] //doesn't matter here
-					}}
-					className="pt-0"
-					listClassName="max-h-20"
-				/>
+			<Collapsible
+				dir="left"
+				defaultCollapse
+				hiddenText={`Show ${TableMetadata[table].plural} with no location data`}
+				onCollapse={(c) => setShown(!c)}
+			>
+				<Resizable growDirection={"down"} detectChange={[shown]} mapRef={mapRef} maxMapHeight={0.55} maxMinHeight={200}>
+					<div className="flex flex-col px-2">
+						<div className="text-primary text-lg">No Location Data</div>
+						<PopupWithSearchBody
+							table={table}
+							id={id}
+							legendInfo={legendInfo}
+							loc={{
+								decimalLatitude: NaN,
+								decimalLongitude: NaN,
+								values: noLocationPoints as Location[] //doesn't matter here
+							}}
+						/>
+					</div>
+				</Resizable>
 			</Collapsible>
+		</div>
+	);
+}
+
+function RecenterControl({ reset }: { reset: () => void }) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			DomEvent.disableClickPropagation(ref.current);
+		}
+	}, []);
+
+	//TODO: make this button merge with other control instead of being on its own
+	return (
+		<div
+			className="leaflet-control cursor-pointer! bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-sm"
+			style={{ padding: "calc(var(--spacing) * 0.8)" }}
+			ref={ref}
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				width="24"
+				height="24"
+				viewBox="0 0 24 24"
+				className="text-black"
+				stroke="currentColor"
+				fill="currentColor"
+				onClick={reset}
+			>
+				<path d="M12.5 17.402V21.5q0 .213-.143.357T12 22t-.357-.143q-.143-.144-.143-.357v-4.098l-1.13 1.13q-.141.141-.342.15t-.366-.155q-.16-.16-.16-.354t.16-.354l1.773-1.773q.242-.242.565-.242t.565.242l1.773 1.773q.14.14.153.342t-.153.366q-.16.16-.35.162t-.357-.156zM6.598 12.5H2.5q-.213 0-.357-.143T2 12t.143-.357q.144-.143.357-.143h4.098l-1.13-1.13q-.141-.141-.15-.342t.155-.366q.16-.16.354-.16t.354.16l1.773 1.773q.242.242.242.565t-.242.565L6.18 14.338q-.14.14-.342.153t-.366-.153q-.16-.16-.162-.35t.156-.357zm10.804 0l1.13 1.13q.141.141.15.342t-.155.366q-.16.16-.354.16t-.354-.16l-1.773-1.773q-.242-.242-.242-.565t.242-.565l1.773-1.773q.14-.14.342-.153t.366.153q.16.16.162.35t-.156.357L17.402 11.5H21.5q.213 0 .357.143T22 12t-.143.357q-.144.143-.357.143zM12 12.98q-.413 0-.697-.283T11.019 12t.284-.697t.697-.284t.697.284t.284.697t-.284.697t-.697.284m-.5-6.383V2.5q0-.213.143-.357T12 2t.357.143q.143.144.143.357v4.098l1.13-1.13q.141-.141.342-.15t.366.155q.16.16.16.354t-.16.354l-1.773 1.773q-.242.242-.565.242t-.565-.242L9.662 6.18q-.14-.14-.153-.342t.153-.366q.16-.16.35-.162t.357.156z" />
+			</svg>
 		</div>
 	);
 }
