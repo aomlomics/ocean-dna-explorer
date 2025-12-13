@@ -14,6 +14,7 @@ export default function Map({
 	legend,
 	draw,
 	legendOmit,
+	shapesToUrl,
 	className = ""
 }: {
 	id?: string;
@@ -24,6 +25,7 @@ export default function Map({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 	className?: string;
 } & (
 	| { query: () => Promise<NullLocation[]>; locations?: undefined }
@@ -53,6 +55,7 @@ export default function Map({
 					legend={legend}
 					draw={draw}
 					legendOmit={legendOmit}
+					shapesToUrl={shapesToUrl}
 				/>
 			</Suspense>
 		</div>
@@ -69,7 +72,8 @@ async function SuspenseMap({
 	clusterRadius,
 	legend,
 	draw,
-	legendOmit
+	legendOmit,
+	shapesToUrl
 }: {
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
@@ -81,6 +85,7 @@ async function SuspenseMap({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 }) {
 	if (locations) {
 		return (
@@ -94,6 +99,7 @@ async function SuspenseMap({
 				legend={legend}
 				draw={draw}
 				legendOmit={legendOmit}
+				shapesToUrl={shapesToUrl}
 			/>
 		);
 	} else if (query) {
@@ -108,6 +114,7 @@ async function SuspenseMap({
 				legend={legend}
 				draw={draw}
 				legendOmit={legendOmit}
+				shapesToUrl={shapesToUrl}
 			/>
 		);
 	}

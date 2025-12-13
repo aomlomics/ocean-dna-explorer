@@ -2,7 +2,16 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup, Map } from "leaflet";
+import {
+	divIcon,
+	DomEvent,
+	LatLng,
+	LatLngBoundsExpression,
+	FeatureGroup as LFeatureGroup,
+	Map,
+	Polygon as LPolygon,
+	Circle as LCircle
+} from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -15,8 +24,15 @@ import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useS
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
-import { capitalizeTable, getLocationsInsideShapes } from "@/app/helpers/utils";
-import { LocationWithValues, Location, NullLocation, Point, MapShape } from "@/types/globals";
+import {
+	capitalizeTable,
+	circleToString,
+	getLocationsInsideShapes,
+	polygonToString,
+	stringToCircle,
+	stringToPolygon
+} from "@/app/helpers/utils";
+import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
@@ -24,6 +40,7 @@ import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
 import { deflateSync } from "fflate";
+import { usePathname, useSearchParams } from "next/navigation";
 
 type MapProps =
 	| {
@@ -182,7 +199,8 @@ export default function ActualMap({
 	clusterRadius,
 	legend = false,
 	draw = false,
-	legendOmit = []
+	legendOmit = [],
+	shapesToUrl
 }: {
 	locations: NullLocation[];
 	id?: string;
@@ -193,7 +211,11 @@ export default function ActualMap({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 }) {
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
 
@@ -348,6 +370,22 @@ export default function ActualMap({
 	useEffect(() => {
 		if (drawReady) {
 			checkShapes();
+
+			if (shapesToUrl) {
+				const params = new URLSearchParams(searchParams.toString());
+				params.delete("polygon");
+				params.delete("circle");
+
+				for (const s of Object.values(shapes)) {
+					if (s.type === "polygon") {
+						params.append("polygon", polygonToString(s));
+					} else if (s.type === "circle") {
+						params.append("circle", circleToString(s));
+					}
+				}
+
+				window.history.replaceState(null, "", `${pathname}?${params}`);
+			}
 		}
 	}, [shapes]);
 
@@ -356,6 +394,41 @@ export default function ActualMap({
 		if (!drawAlmostReady) {
 			setDrawAlmostReady(true);
 		} else if (!drawReady) {
+			if (shapesToUrl) {
+				//get shapes from url
+				const urlShapes = [] as Array<MapShape>;
+				const polygons = searchParams.getAll("polygon");
+				const circles = searchParams.getAll("circle");
+				if (polygons || circles) {
+					for (const poly of polygons) {
+						urlShapes.push(stringToPolygon(poly));
+					}
+					for (const cir of circles) {
+						urlShapes.push(stringToCircle(cir));
+					}
+				}
+
+				if (urlShapes.length && featureGroupRef.current) {
+					const tempShapes = {} as typeof shapes;
+					for (const s of urlShapes) {
+						if (s.type === "polygon") {
+							featureGroupRef.current.addLayer(new LPolygon(s.points));
+						} else if (s.type === "circle") {
+							featureGroupRef.current.addLayer(new LCircle(s.center, s.radius));
+						}
+
+						for (const id of Object.keys(
+							(featureGroupRef.current as unknown as { _layers: Record<string, any> })._layers
+						)) {
+							if (!(id in tempShapes)) {
+								tempShapes[id] = s;
+							}
+						}
+					}
+					setShapes(tempShapes);
+				}
+			}
+
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);

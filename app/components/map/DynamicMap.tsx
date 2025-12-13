@@ -16,7 +16,8 @@ export default function DynamicMap({
 	clusterRadius,
 	legend,
 	draw,
-	legendOmit
+	legendOmit,
+	shapesToUrl
 }: {
 	locations: NullLocation[];
 	id?: string;
@@ -27,6 +28,7 @@ export default function DynamicMap({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 }) {
 	return (
 		<ActualMap
@@ -39,6 +41,7 @@ export default function DynamicMap({
 			legend={legend}
 			draw={draw}
 			legendOmit={legendOmit}
+			shapesToUrl={shapesToUrl}
 		/>
 	);
 }
