@@ -23,7 +23,7 @@ export const helpSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					ODE (Ocean DNA Explorer) is a data portal for uploading and finding ocean eDNA data. This help documentation
+					The Ocean DNA Explorer is a data portal for uploading and finding ocean eDNA data. This help documentation
 					will guide you through the various features of the platform.
 				</p>
 				<p className="mb-4">
@@ -39,7 +39,7 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							ODE requires you to login to access certain features of the platform, like submitting data.
+							The Ocean DNA Explorer requires you to login to access certain features of the platform, like submitting data.
 						</p>
 						<p className="mb-4">
 							You can login with several types of accounts using the Sign-In button in the top right corner of the
@@ -49,8 +49,8 @@ export const helpSections: Section[] = [
 							clicking "Security" and finally "Delete Account".
 						</p>
 						<p className="mb-4">
-							The roles available on ODE are listed below. Please note, Contributor is what you need to submit data, and
-							the other roles are mostly for internal use by the ODE team:
+							The roles available on the Ocean DNA Explorer are listed below. Please note, Contributor is what you need to submit data, and
+							the other roles are mostly for internal use by the Ocean DNA Explorer team:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>
@@ -101,7 +101,7 @@ export const helpSections: Section[] = [
 				title: "Features Overview",
 				content: (
 					<>
-						<p className="mb-4">ODE provides several key features to help you work with marine eDNA data:</p>
+						<p className="mb-4">The Ocean DNA Explorer provides several key features to help you work with marine eDNA data:</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>
 								{" "}
@@ -143,7 +143,7 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							We welcome your feedback to improve ODE. If you encounter any issues or have suggestions for new features,
+							We welcome your feedback to improve the Ocean DNA Explorer. If you encounter any issues or have suggestions for new features,
 							please let us know.
 						</p>
 						<p className="mb-4">
@@ -155,7 +155,7 @@ export const helpSections: Section[] = [
 								className="text-primary hover:underline"
 								target="_blank"
 							>
-								ODE GitHub Issues
+								Ocean DNA Explorer GitHub Issues
 							</Link>
 						</p>
 						<p className="mb-4">When reporting bugs, please include:</p>
@@ -184,7 +184,7 @@ export const helpSections: Section[] = [
 					to submit data.{" "}
 				</p>
 				<p className="mb-4">
-					This section will help guide you through the process of contributing your own data to the ODE platform. Once
+					This section will help guide you through the process of contributing your own data to the Ocean DNA Explorer. Once
 					you have{" "}
 					<Link className="link link-primary font-semibold" href="#data-format-rationale">
 						formatted
@@ -206,7 +206,7 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">
 							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
-							moderators and admins of ODE. You can make a private submission public at any time, but you cannot make a
+							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but you cannot make a
 							public submission private.
 						</p>
 						<p className="mb-4">
@@ -223,18 +223,18 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							ODE's data format is modeled after the{" "}
+							The Ocean DNA Explorer's data format is modeled after the{" "}
 							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
 								FAIRe eDNA standard
 							</Link>
-							, with a few modifications to enable the enhanced features which ODE provides. The FAIRe (Findable,
+							, with a few modifications to enable the enhanced features which the Ocean DNA Explorer provides. The FAIRe (Findable,
 							Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization, international collaboration
 							that has developed a comprehensive metadata checklist specifically for eDNA data.
 						</p>
 						<p className="mb-4">
 							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128
 							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, and
-							bioinformatics. ODE's data format uses the same checklist, with a few additions and subtractions. The
+							bioinformatics. The Ocean DNA Explorer's data format uses the same checklist, with a few additions and subtractions. The
 							FAIRe data fields are sourced from existing data standards including:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -272,7 +272,7 @@ export const helpSections: Section[] = [
 							</Link>{" "}
 							team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other
 							commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic
-							assignments. Tourmaline 2 output can be uploaded to ODE as an analysis. Multiple analyses can be uploaded
+							assignments. Tourmaline 2 output can be uploaded to the Ocean DNA Explorer as an analysis. Multiple analyses can be uploaded
 							for the same project, allowing users to compare the output from different sets of parameters.{" "}
 						</p>
 					</>
@@ -297,7 +297,7 @@ export const helpSections: Section[] = [
 						</p>
 						<p className="mb-4">
 							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A key
-							feature is the ability to add your own User Defined terms to this checklist. When you run FAIRe2NODE, any
+							feature is the ability to add your own User Defined terms to this checklist. When you run FAIReSheets, any
 							custom terms you've added to the checklist Excel file will be included in your generated Google Sheets
 							template, ensuring all your relevant data fields are captured.
 						</p>
@@ -308,7 +308,7 @@ export const helpSections: Section[] = [
 						</p>
 						<p className="mb-4">
 							The generated templates for project, sample, experiment run, and analysis metadata are designed for
-							instant submission to ODE. Once filled, data formatted with these templates can also be easily prepared
+							instant submission to the Ocean DNA Explorer. Once filled, data formatted with these templates can also be easily prepared
 							for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using the{" "}
 							<Link className="link link-primary" href="#obis-gbif-submission">
 								edna2obis
@@ -316,7 +316,7 @@ export const helpSections: Section[] = [
 							tool.
 						</p>
 						<p className="mb-4">
-							To use FAIRe2NODE, you will need to run a Python script on your local computer. Access to the tool is
+							To use FAIReSheets, you will need to run a Python script on your local computer. Access to the tool is
 							granted upon request by emailing bayden.willms@noaa.gov
 						</p>
 					</>
@@ -433,7 +433,7 @@ export const helpSections: Section[] = [
 						<p className="font-bold">
 							{" "}
 							Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit
-							to ODE!
+							to the Ocean DNA Explorer!
 						</p>
 					</>
 				)
@@ -444,7 +444,7 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Any metadata file submitted to ODE must be in TSV format. To submit a project, you'll need to submit one
+							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. To submit a project, you'll need to submit one
 							or more analyses alongside it.
 						</p>
 						<p className="mb-2">The following fields are required in your project metadata file:</p>
@@ -469,8 +469,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Any metadata file submitted to ODE must be in TSV format. Analyses can be submitted WITHOUT a project, as
-							long as the project it is related to is already uploaded to ODE.
+							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. Analyses can be submitted WITHOUT a project, as
+							long as the project it is related to is already uploaded to the Ocean DNA Explorer.
 						</p>
 						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -492,9 +492,9 @@ export const helpSections: Section[] = [
 							<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
 								edna2obis
 							</Link>{" "}
-							converts the ODE input files to the expected format for submission to OBIS (Ocean Biodiversity Information
+							converts the Ocean DNA Explorer input files to the expected format for submission to OBIS (Ocean Biodiversity Information
 							System), and GBIF (Global Biodiversity Information Facility). its input file structure MATCHES that of
-							ODE- so if you're submitting data here, you can easily submit to OBIS and GBIF as well.
+							the Ocean DNA Explorer, so if you're submitting data here, you can easily submit to OBIS and GBIF as well.
 						</p>
 					</>
 				)
@@ -506,57 +506,126 @@ export const helpSections: Section[] = [
 		title: "Search",
 		content: (
 			<>
-				<p className="mb-4 font-semibold text-red-500">
-					NOTE: The search functionality is currently under development and is not yet fully functional. Coming soon!
+				<p className="mb-4">
+					The{" "}
+					<Link className="link link-primary font-semibold" href="/search">
+						Search page
+					</Link>{" "}
+					allows you to query data across multiple tables in the Ocean DNA Explorer. This is different from the{" "}
+					<Link className="link link-primary font-semibold" href="#explore">
+						Explore pages
+					</Link>
+					, which let you filter and browse data within a single table at a time.
 				</p>
 				<p className="mb-4">
-					ODE's search functionality allows you to find specific data across all categories in the platform. You can
-					search by various parameters to narrow down results.
+					Use Search when you need to find data based on relationships between tables (e.g., "find all taxonomies in a
+					specific project" or "find all samples from a particular analysis").
 				</p>
 			</>
 		),
 		subsections: [
 			{
-				id: "basic-usage",
-				title: "Basic Usage",
+				id: "how-to-use-search",
+				title: "How to Use the Search Page",
 				content: (
 					<>
-						<p className="mb-4">To perform a basic search:</p>
+						<p className="mb-4">
+							The Search page provides an advanced query builder that lets you construct complex filters across
+							different data tables.
+						</p>
+						<p className="mb-4">To use the Search page:</p>
 						<ol className="list-decimal ml-6 mb-4">
-							<li>Enter keywords in the search bar</li>
-							<li>Select the category you want to search (Projects, Samples, etc.)</li>
-							<li>Use filters to narrow down results</li>
-							<li>Review the matching results</li>
+							<li>Select which table you want to search (Projects, Samples, Analyses, Features, or Taxonomies)</li>
+							<li>Add filters using the query builder to specify your search criteria</li>
+							<li>
+								Filters can include conditions based on fields from related tables (e.g., search for Samples where the
+								Project's institution is "NOAA")
+							</li>
+							<li>Combine multiple filters using AND/OR logic: Each filter and/or relation is combined with AND logic. You can add an OR condition (the filters and/or relations within the OR group are combined with OR logic), and the OR block itself is combined with the other filters and/or relations with AND logic (the same as any other filter or relation).</li>
+							<li>View the results that match your query</li>
 						</ol>
 						<p className="mb-4">
-							The search function looks for matches in titles, descriptions, metadata, and other relevant fields.
+							The key advantage of the Search page is that it allows you to query across table relationships, which is
+							not possible on individual Explore pages.
 						</p>
 					</>
 				)
 			},
 			{
-				id: "query-recipes",
-				title: "Query Recipes (examples)",
+				id: "search-vs-explore",
+				title: "Search vs Explore",
 				content: (
 					<>
-						<p className="mb-4">Here are some example queries to help you get started:</p>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find all samples from a specific location:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">location:"Gulf of Mexico"</div>
+						<p className="mb-4">Understanding when to use Search versus Explore:</p>
+						<div className="mb-4">
+							<h4 className="font-semibold mb-2">
+								Use the{" "}
+								<Link className="link link-primary" href="/search">
+									Search Page
+								</Link>{" "}
+								when:
+							</h4>
+							<ul className="list-disc ml-6 mb-4">
+								<li>You need to query across multiple tables (e.g., find taxonomies from a specific project)</li>
+								<li>You want to filter based on relationships between different data types</li>
+								<li>You need complex query logic with multiple conditions</li>
+							</ul>
 						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find projects containing a specific species:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">taxonomy:"Salmonidae"</div>
+						<div className="mb-4">
+							<h4 className="font-semibold mb-2">
+								Use the{" "}
+								<Link className="link link-primary" href="/explore">
+									Explore Pages
+								</Link>{" "}
+								when:
+							</h4>
+							<ul className="list-disc ml-6 mb-4">
+								<li>You want to browse all data in a single table</li>
+								<li>You only need to filter within one table's own fields</li>
+								<li>You want a quick overview of available data in a category</li>
+							</ul>
 						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Find analyses from a specific date range:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">date:[2020-01-01 TO 2022-12-31]</div>
-						</div>
-						<div className="mb-6">
-							<h4 className="font-medium mb-2">Combine multiple search terms:</h4>
-							<div className="bg-base-200 p-3 rounded-md font-mono text-sm mb-4">
-								location:"Atlantic Ocean" AND taxonomy:"Bacteria"
-							</div>
+					</>
+				)
+			},
+			{
+				id: "query-recipes",
+				title: "Query Examples",
+				content: (
+					<>
+						<p className="mb-4">
+							Here are some common query patterns. Click the cards below to open the Search page with these filters
+							pre-filled:
+						</p>
+
+						<div className="flex gap-8">
+							<Link href='/search?table=sample&advanced=[["project_id","equals","noaa-aoml-gomecc4"]]'>
+								<div className="group flex flex-col items-center text-center p-6 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-300 hover:scale-105 w-64">
+									<div className="w-16 h-16 mb-3 flex items-center justify-center text-primary">
+										<svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+											<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+										</svg>
+									</div>
+									<div className="text-sm font-sans font-medium uppercase tracking-wider">
+										View All Samples in a Project
+									</div>
+								</div>
+							</Link>
+
+							<Link href='/search?table=taxonomy&advanced=[["sample","samp_name","equals","GOMECC4_27N_Sta1_Deep_A"]]'>
+								<div className="group flex flex-col items-center text-center p-6 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-300 hover:scale-105 w-64">
+									<div className="w-16 h-16 mb-3 flex items-center justify-center text-primary">
+										<svg viewBox="0 0 1536 592" fill="currentColor" className="w-12 h-12">
+											<g transform="translate(0.000000,592.000000) scale(0.100000,-0.100000)">
+												<path d="M7037 5902 c-31 -19 -151 -172 -289 -365 -50 -71 -107 -147 -126 -170 -70 -84 -269 -397 -357 -561 -107 -200 -138 -239 -198 -254 -115 -29 -449 -55 -1257 -97 -1271 -66 -1607 -107 -2420 -291 -1390 -315 -2197 -634 -2335 -921 -10 -21 -21 -64 -23 -95 -4 -57 -3 -59 35 -95 22 -21 55 -47 74 -58 63 -37 40 -54 -109 -81 -43 -8 -39 -35 14 -82 101 -92 600 -404 847 -531 186 -95 360 -161 597 -226 113 -31 347 -96 520 -145 813 -229 1308 -330 2070 -425 396 -49 498 -68 514 -94 3 -5 12 -45 20 -89 8 -46 31 -118 54 -169 22 -49 48 -116 57 -149 28 -98 62 -182 134 -332 81 -165 111 -211 201 -308 36 -39 88 -102 115 -140 107 -153 169 -194 296 -194 66 0 81 4 120 28 64 42 319 312 319 339 0 5 36 67 79 137 97 156 131 238 138 331 10 133 -53 235 -212 340 -45 30 -113 68 -151 83 -73 30 -100 56 -74 72 8 5 21 8 28 5 14 -5 308 -27 617 -47 306 -19 918 -17 1160 4 264 23 496 36 860 48 366 12 474 7 531 -26 62 -35 176 -163 261 -293 42 -64 92 -141 112 -171 20 -30 76 -96 126 -146 49 -50 115 -119 146 -155 39 -44 79 -76 130 -105 56 -31 85 -55 118 -100 86 -114 363 -374 399 -374 19 0 88 67 121 117 32 49 83 201 100 298 5 33 15 112 21 175 41 404 205 650 676 1017 214 167 241 189 232 198 -4 4 -82 2 -175 -4 -227 -15 -524 5 -515 35 13 44 769 191 1150 224 183 15 265 3 465 -70 155 -56 251 -86 877 -275 351 -107 658 -212 830 -285 148 -63 579 -211 796 -274 328 -94 424 -88 424 27 0 82 -68 237 -180 406 -34 51 -81 135 -106 185 -51 104 -129 212 -270 374 -230 263 -282 336 -319 449 -16 52 -16 54 8 105 37 81 107 157 282 306 245 208 519 486 595 602 78 119 175 313 167 334 -11 27 -113 51 -217 50 -152 -1 -461 -58 -930 -169 -124 -30 -346 -83 -495 -118 -148 -36 -335 -77 -415 -92 -228 -44 -551 -110 -720 -149 -313 -71 -380 -77 -592 -50 -428 53 -1498 323 -1498 377 0 19 469 -15 595 -43 22 -5 66 -10 98 -10 80 0 76 21 -13 64 -145 72 -231 154 -299 285 -80 157 -98 244 -111 551 -18 396 -31 601 -40 626 -37 97 -326 -101 -1195 -819 l-289 -240 -221 26 c-895 107 -1296 159 -1333 173 -28 10 -47 25 -53 41 -9 24 -6 33 48 176 15 39 16 50 5 65 -29 39 -42 86 -53 179 -21 193 16 352 107 453 19 21 31 40 27 43 -4 2 -39 15 -78 27 -104 34 -198 84 -233 125 -37 41 -42 91 -17 152 34 81 9 89 -101 32 l-85 -43 -32 17 c-43 24 -76 78 -89 145 -20 107 -34 120 -91 84z" />
+											</g>
+										</svg>
+									</div>
+									<div className="text-sm font-sans font-medium uppercase tracking-wider">
+										View Taxonomies Found in a Sample
+									</div>
+								</div>
+							</Link>
 						</div>
 					</>
 				)
@@ -569,12 +638,71 @@ export const helpSections: Section[] = [
 		content: (
 			<>
 				<p className="mb-4">
-					The Explore section lets you browse through different categories of data across ODE. Each category represents
-					a table in the database, and they can filtered using the filter menu on the left side of the page.
+					The{" "}
+					<Link className="link link-primary font-semibold" href="/explore">
+						Explore pages
+					</Link>{" "}
+					let you browse and filter data within individual tables in the Ocean DNA Explorer. Each table (Projects, Samples, Analyses,
+					Features, Taxonomies) has its own dedicated Explore page with specialized filters and visualization options.
+				</p>
+				<p className="mb-4">
+					<strong>Key features of Explore pages:</strong>
+				</p>
+				<ul className="list-disc ml-6 mb-4">
+					<li>Switch between different tables using the tab buttons at the top</li>
+					<li>Apply filters from the sidebar on the left to narrow down results</li>
+					<li>Use the search bar at the top to search across all columns</li>
+					<li>Search within specific columns using the column header search inputs</li>
+					<li>View detailed information by clicking on individual records</li>
+				</ul>
+				<p className="mb-4">
+					<strong>Note:</strong> Explore pages only filter data within the selected table. To query across multiple
+					tables (e.g., find all taxonomies in a specific project), use the{" "}
+					<Link className="link link-primary font-semibold" href="#search">
+						Search page
+					</Link>{" "}
+					instead.
 				</p>
 			</>
 		),
 		subsections: [
+			{
+				id: "searching-on-explore",
+				title: "Searching on Explore Pages",
+				content: (
+					<>
+						<p className="mb-4">
+							Each Explore page has its own built-in search capabilities for quick filtering within that specific table.
+						</p>
+						<div className="mb-4">
+							<h4 className="font-semibold mb-2">Features on Explore Pages:</h4>
+							<ul className="list-disc ml-6 mb-4">
+								<li>
+									<strong>Global search bar:</strong> Located at the top of the table, this searches across all
+									columns simultaneously
+								</li>
+								<li>
+									<strong>Column-specific search:</strong> Each column has its own search input in the header, allowing
+									you to filter by that specific field
+								</li>
+								<li>
+									<strong>Filter sidebar:</strong> Use the filters on the left side to narrow results by specific
+									criteria
+								</li>
+							</ul>
+						</div>
+						<p className="mb-4">
+							<strong>Important limitation:</strong> Explore page searches only work within that table's own data. You
+							cannot filter Samples based on Project properties using the Sample Explore page. For cross-table queries,
+							use the{" "}
+							<Link className="link link-primary" href="#search">
+								Search page
+							</Link>{" "}
+							instead.
+						</p>
+					</>
+				)
+			},
 			{
 				id: "projects",
 				title: "Projects",
@@ -623,8 +751,7 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Analyses represent the results of processing samples through various methods such as DNA sequencing, PCR,
-							or other molecular techniques.
+							Analyses are bioinformatic processing runs that convert raw sequence data into occurrences (counts) of features (species), documenting all parameters and methods used.
 						</p>
 						<p className="mb-4">Important information about analyses:</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -634,7 +761,7 @@ export const helpSections: Section[] = [
 							<li>You can view and remove your own analyses through the My Submissions Manager</li>
 						</ul>
 						<p className="mb-4">
-							Analysis data typically includes information about the sequencing method, bioinformatic processing, and
+							Analysis data includes information about the sequencing method, bioinformatic processing parameters, and
 							taxonomic assignments.
 						</p>
 					</>
@@ -727,7 +854,7 @@ export const helpSections: Section[] = [
 					</div>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: How do I contact the ODE team?</h4>
+						<h4 className="font-medium mb-2">Q: How do I contact the Ocean DNA Explorer team?</h4>
 						<p>
 							A: Please contact us via the{" "}
 							<Link className="link link-primary" href="https://github.com/aomlomics/node/issues">
@@ -746,7 +873,7 @@ export const helpSections: Section[] = [
 					</div>
 
 					<div>
-						<h4 className="font-medium mb-2">Q: How do I cite data from ODE?</h4>
+						<h4 className="font-medium mb-2">Q: How do I cite data from the Ocean DNA Explorer?</h4>
 						<p>
 							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to
 							cite the project.
@@ -756,7 +883,7 @@ export const helpSections: Section[] = [
 					<div>
 						<h4 className="font-medium mb-2">Q: How do you protect our personal data?</h4>
 						<p>
-							A: There is no personal data stored in the ODE database. User authentication is handled by the platform's
+							A: There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by the platform's
 							reputableauthentication provider, Clerk, and all data is stored in a secure database.
 						</p>
 					</div>

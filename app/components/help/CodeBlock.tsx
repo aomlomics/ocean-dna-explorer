@@ -80,7 +80,7 @@ export default function CodeBlock({ language, code }: CodeBlockProps) {
     }
     
     return (
-        <div className={`bg-base-200 rounded-md overflow-hidden relative ${getWidthClass()}`}>
+        <div className={`bg-base-200/50 rounded-md overflow-hidden relative ${getWidthClass()}`}>
             <button 
                 onClick={handleCopy}
                 className="absolute right-2 top-2 p-2 rounded hover:bg-base-300 transition-colors"

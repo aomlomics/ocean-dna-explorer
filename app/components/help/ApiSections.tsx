@@ -43,7 +43,7 @@ export async function getApiSections() {
 			content: (
 				<div className="space-y-4">
 					<p>
-						The ODE API provides programmatic access to marine eDNA data. This documentation will help you understand
+						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help you understand
 						how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
@@ -53,6 +53,224 @@ export async function getApiSections() {
 				</div>
 			),
 			subsections: [
+				{
+					id: "how-to-use-api",
+					title: "Making Your First API Query",
+					content: (
+						<div className="space-y-8 mt-10">
+							{/* Step 1 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">1</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
+									<p>
+										Before you can ask for data, you need to know what's available. The best place to start is
+										our{" "}
+										<Link href="#database-schema" className="link link-primary">
+											Database Schema
+										</Link>
+										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows
+										you what tables are available and how they are linked together.
+									</p>
+									<p className="mt-2">
+										Once you know which table you're interested in (e.g., `Project`), look at the{" "}
+										<Link href="#table-definitions" className="link link-primary">
+											Table Definitions
+										</Link>{" "}
+										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in
+										your queries.
+									</p>
+								</div>
+							</div>
+
+							{/* Step 2 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">2</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Build a Basic Query</h4>
+									<p>
+										The simplest query just retrieves data from a single table. Start with the table name (the{" "}
+										<strong>endpoint</strong>) and add <strong>parameters</strong> after the `?` to refine your
+										search. For example, you can limit the number of results or specify which fields to return.
+									</p>
+									<ApiQueryDiagram
+										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+										endpoint={{
+											value: "/api/project",
+											label: "Get data from the Project table",
+											colorClass: "text-primary"
+										}}
+										parameters={[
+											{
+												value: "fields=id,project_name",
+												label: "Only include the id and project_name fields",
+												colorClass: "text-primary"
+											},
+											{ value: "limit=3", label: "Return a maximum of 3 records", colorClass: "text-primary" }
+										]}
+										description={
+											<>
+												This query asks the <strong>project</strong> table for the <strong>id</strong> and{" "}
+												<strong>project_name</strong> of the first <strong>3</strong> records.
+											</>
+										}
+									/>
+								</div>
+							</div>
+
+							{/* Step 3 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">3</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Combine Data with Relations</h4>
+									<p>
+										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
+										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you're telling
+										the API: "also give me the data from the related table."
+									</p>
+									<p className="mt-2">
+										In the example below, we get a specific project and also retrieve all the data from the{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
+									</p>
+									<p className="mt-2 text-sm bg-info/10 p-2 rounded border-l-2 border-info">
+										<strong>Note:</strong> Notice that the endpoint uses <code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), 
+										but the relation parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural). 
+										See{" "}
+										<Link href="#essential-information" className="link link-primary font-semibold">
+											Essential API Information
+										</Link>{" "}
+										for more about this important distinction.
+									</p>
+									<ApiQueryDiagram
+										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+										endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
+										parameters={[
+											{
+												value: `ids=${project?.id || 1}`,
+												label: "Filter for a specific Project ID",
+												colorClass: "text-primary"
+											},
+											{
+												value: "relations=Samples",
+												label: "Include the related Samples table",
+												colorClass: "text-primary"
+											}
+										]}
+										description={
+											<>
+												This query retrieves one specific project and includes all of its related{" "}
+												<strong>Samples</strong>. See the{" "}
+												<Link href="#relations" className="link link-primary">
+													Relations
+												</Link>{" "}
+												section for more.
+											</>
+										}
+									/>
+								</div>
+							</div>
+
+							{/* Step 4 */}
+							<div className="flex items-start space-x-6 p-6 rounded-lg">
+								<div className="flex-shrink-0">
+									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
+										<span className="text-3xl font-bold">4</span>
+									</div>
+								</div>
+								<div>
+									<h4 className="text-xl font-semibold leading-6 mb-2">Make the Request</h4>
+									<p>
+										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in
+										JSON format, a standard way for computers to exchange data. The{" "}
+										<Link href="#quick-start-code" className="link link-primary">
+											Quick Start Code Examples
+										</Link>{" "}
+										below show you how to fetch and work with this JSON data in your own scripts.
+									</p>
+								</div>
+							</div>
+						</div>
+					)
+				},
+				{
+					id: "quick-start-code",
+					title: "Quick Start Code Examples",
+					content: (
+						<>
+							<p className="mb-4">Here are some examples of how to get data in various programming environments:</p>
+							<div className="mb-4 mt-4 text-lg font-medium">Python example:</div>
+							<CodeBlock
+								language="python"
+								code={`import requests
+import json
+import pandas as pd
+
+# Make API request to desired endpoint
+url = "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
+response = requests.get(url)
+
+# Check if request was successful
+if response.status_code == 200:
+    # Parse JSON response
+    data = response.json()
+    results = data.get("result", [])
+    
+    # --> Your code here
+    
+    # Example: Print as JSON
+    print(json.dumps(results, indent=2))
+    
+    # Example: Convert to DataFrame
+    if results:
+        df = pd.DataFrame(results)
+        print(df)
+else:
+    print(f"Error: {response.status_code} - {response.reason}")`}
+							/>
+
+							<div className="mb-4 mt-8 text-lg font-medium">R example:</div>
+							<CodeBlock
+								language="r"
+								code={`library(httr)
+library(jsonlite)
+
+# Make API request
+url <- "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
+response <- GET(url)
+
+# Check if request was successful
+if (http_status(response)$category == "Success") {
+  # Parse JSON response
+  data <- content(response, "text", encoding = "UTF-8") %>% fromJSON()
+  results <- data$result
+  
+  # --> Your code here
+  
+  # Example: Print results
+  if (length(results) > 0) {
+    print(results)
+  }
+  
+} else {
+  print(paste("Error:", http_status(response)$reason))
+}`}
+							/>
+						</>
+					)
+				},
 				{
 					id: "essential-information",
 					title: "Essential API Information",
@@ -64,36 +282,30 @@ export async function getApiSections() {
 
 							<div className="space-y-6">
 								<div>
-									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data from the Ocean DNA Explorer</h4>
-									<p className="mb-2">There are multiple ways to access and explore data in ODE:</p>
-									<ul className="list-disc ml-6 space-y-2">
+									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data</h4>
+									<p className="mb-3">There are multiple ways to access and explore data in the Ocean DNA Explorer:</p>
+									<ul className="list-disc ml-6 space-y-3">
 										<li>
-											<p>Through a Graphical Interface (No Code Required):</p>
-											<ul className="list-circle ml-6 mt-1 space-y-1">
-												<li>
-													Explore Pages: View all data from each table with filters. You can only filter on fields within the table you are looking at. There is also a page for each row of the database table you are viewing, by clicking on the blue data fields. For example, if you are on the Explore: Samples page, click a samp_name in the data table to view the page for a specific sample. 
-												</li>
-												<li>
-													Search Page: Build complex queries using data from multiple tables, allowing you to filter on both
-													fields <em>and</em> relations (relations are fields from related tables). For every filter and/or relation you add to your query, it is assumed they are combined as AND logic (both must be true in the results returned). You can add an OR condition by clicking the + Add OR button. 
-												</li>
-											</ul>
+											<Link href="/explore/project" className="link link-primary font-semibold">
+												Explore Pages
+											</Link>
+											: View all data from each table with filters. You can only filter on fields within the table you are looking at. Click on any blue data field to view the detail page for that specific record.
 										</li>
 										<li>
-											<p>Programmatic Access:</p>
-											<ul className="list-circle ml-6 mt-1 space-y-1">
-												<li>
-													Direct Browser Queries: Paste API URLs directly in your browser to get JSON
-													responses. This is a great way to test your queries before you start coding.
-												</li>
-												<li>
-													Code Examples: Use our{" "}
-													<Link href="#quick-start-code" className="link link-primary">
-														starter code examples
-													</Link>{" "}
-													to fetch data programmatically in Python or R. This is a great way to pull data directly for making plots / graphs. 
-												</li>
-											</ul>
+											<Link href="/search" className="link link-primary font-semibold">
+												Search Page
+											</Link>
+											: Build complex queries using data from multiple tables, allowing you to filter on both fields <em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button to add OR conditions.
+										</li>
+										<li>
+											<strong>Direct API Access</strong>: Paste API URLs directly in your browser (e.g., <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>) to get JSON responses. Great for testing queries before coding.
+										</li>
+										<li>
+											<strong>Code Examples</strong>: Use the{" "}
+											<Link href="#quick-start-code" className="link link-primary">
+												Quick Start Code Examples
+											</Link>{" "}
+											above to fetch data programmatically in Python or R for analysis and visualization.
 										</li>
 									</ul>
 								</div>
@@ -195,238 +407,6 @@ export async function getApiSections() {
 							</div>
 						</div>
 					)
-				},
-				{
-					id: "how-to-use-api",
-					title: "Making Your First API Query",
-					content: (
-						<div className="space-y-8 mt-10">
-							{/* Step 1 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">1</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
-									<p>
-										Before you can ask for data, you need to know what's available. The best place to start is
-										our{" "}
-										<Link href="#database-schema" className="link link-primary">
-											Database Schema
-										</Link>
-										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows
-										you what tables are available and how they are linked together.
-									</p>
-									<p className="mt-2">
-										Once you know which table you're interested in (e.g., `Project`), look at the{" "}
-										<Link href="#table-definitions" className="link link-primary">
-											Table Definitions
-										</Link>{" "}
-										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in
-										your queries.
-									</p>
-								</div>
-							</div>
-
-							{/* Step 2 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">2</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Build a Basic Query</h4>
-									<p>
-										The simplest query just retrieves data from a single table. Start with the table name (the{" "}
-										<strong>endpoint</strong>) and add <strong>parameters</strong> after the `?` to refine your
-										search. For example, you can limit the number of results or specify which fields to return.
-									</p>
-									<ApiQueryDiagram
-										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-										endpoint={{
-											value: "/api/project",
-											label: "Get data from the Project table",
-											colorClass: "text-white"
-										}}
-										parameters={[
-											{
-												value: "fields=id,project_name",
-												label: "Only include the id and project_name fields",
-												colorClass: "text-primary"
-											},
-											{ value: "limit=3", label: "Return a maximum of 3 records", colorClass: "text-primary" }
-										]}
-										description={
-											<>
-												This query asks the <strong>project</strong> table for the <strong>id</strong> and{" "}
-												<strong>project_name</strong> of the first <strong>3</strong> records.
-											</>
-										}
-									/>
-								</div>
-							</div>
-
-							{/* Step 3 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">3</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Combine Data with Relations</h4>
-									<p>
-										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
-										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you're telling
-										the API: "also give me the data from the related table."
-									</p>
-									<p className="mt-2">
-										In the example below, we get a specific project and also retrieve all the data from the{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
-									</p>
-									<p className="mt-2 text-sm bg-info/10 p-2 rounded border-l-2 border-info">
-										<strong>Note:</strong> Notice that the endpoint uses <code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), 
-										but the relation parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural). 
-										See{" "}
-										<Link href="#essential-information" className="link link-primary font-semibold">
-											Essential API Information
-										</Link>{" "}
-										for more about this important distinction.
-									</p>
-									<ApiQueryDiagram
-										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-										endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-white" }}
-										parameters={[
-											{
-												value: `ids=${project?.id || 1}`,
-												label: "Filter for a specific Project ID",
-												colorClass: "text-primary"
-											},
-											{
-												value: "relations=Samples",
-												label: "Include the related Samples table",
-												colorClass: "text-primary"
-											}
-										]}
-										description={
-											<>
-												This query retrieves one specific project and includes all of its related{" "}
-												<strong>Samples</strong>. See the{" "}
-												<Link href="#relations" className="link link-primary">
-													Relations
-												</Link>{" "}
-												section for more.
-											</>
-										}
-									/>
-								</div>
-							</div>
-
-							{/* Step 4 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">4</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Make the Request</h4>
-									<p>
-										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in
-										JSON format, a standard way for computers to exchange data. The{" "}
-										<Link href="#quick-start-code" className="link link-primary">
-											Quick Start Code Examples
-										</Link>{" "}
-										below show you how to fetch and work with this JSON data in your own scripts.
-									</p>
-								</div>
-							</div>
-						</div>
-					)
-				},
-				{
-					id: "quick-start-code",
-					title: "Quick Start Code Examples",
-					content: (
-						<>
-							<p className="mb-4">Here are some examples of how to get data in various programming environments:</p>
-							<div className="mb-4 mt-4">Python (+ Pandas) example:</div>
-							<CodeBlock
-								language="python"
-								code={`import requests
-import json
-import pandas as pd
-
-# Make API request to desired endpoint
-url = "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
-response = requests.get(url)
-
-# Check if request was successful
-if response.status_code == 200:
-    # Parse JSON response and print it
-    data = response.json()
-    results = data.get("result", []) # Use .get() for safety
-    print("JSON Response:")
-    print(json.dumps(results, indent=2))
-
-    # Convert to DataFrame and print it
-    if results:
-        df = pd.DataFrame(results)
-        print("--------------------")
-        print("DataFrame:")
-        print(df)
-    else:
-        print("No results found.")
-else:
-    print(f"Error: {response.status_code} - {response.reason}")
-    try:
-        # Try to parse and print the error message from the API
-        error_data = response.json()
-        print(f"Error message: {error_data.get('error', 'No error message provided.')}")
-    except json.JSONDecodeError:
-        print("Could not parse error response as JSON.")`}
-							/>
-
-							<div className="mb-4 mt-4">R example:</div>
-							<CodeBlock
-								language="r"
-								code={`library(httr)
-library(jsonlite)
-
-# Make API request
-url <- "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
-response <- GET(url)
-
-# Check if request was successful
-if (http_status(response)$category == "Success") {
-  # Parse JSON response
-  data <- content(response, "text", encoding = "UTF-8") %>% fromJSON()
-  results <- data$result
-  
-  if (length(results) > 0) {
-    print(results)
-  } else {
-    print("No results found.")
-  }
-  
-} else {
-  print(paste("Error:", http_status(response)$reason))
-  
-  # Try to parse and print error message
-  error_content <- content(response, "parsed")
-  if (!is.null(error_content$error)) {
-    print(paste("Error message:", error_content$error))
-  } else {
-    print("No detailed error message provided in response.")
-  }
-}`}
-							/>
-						</>
-					)
 				}
 			]
 		},
@@ -488,7 +468,7 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table in ODE. You can use this information
+								The dropdown menus below show the fields available for each table in the Ocean DNA Explorer. You can use this information
 								in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
@@ -700,7 +680,7 @@ if (http_status(response)$category == "Success") {
 			subsections: [
 				{
 					id: "standard-search",
-					title: "Standard Search",
+					title: "Standard Search Parameter",
 					content: (
 						<>
 							<div className="mb-4">Parameter: `search=[query]`</div>
@@ -729,24 +709,21 @@ if (http_status(response)$category == "Success") {
 				},
 				{
 					id: "advanced-search",
-					title: "Advanced Search",
+					title: "Advanced Search Parameter",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: `advanced=[JSON_object]`</p>
+							<p>Query Parameter: `advanced=[JSON_object]`</p>
 							<p>
-								For complex queries, the `advanced` parameter allows you to build a nested query using a JSON
-								object. This enables multi-conditional filtering with `AND` and `OR` logic, as well as querying on
-								related tables.
+								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
 							</p>
 							<div className="p-4 my-4 bg-base-200 border-l-4 border-info rounded-md">
 								<h4 className="font-bold mb-2">Build Queries with the UI</h4>
 								<p>
-									The easiest way to generate an `advanced` query is to use the{" "}
-									<Link href="/search/advanced" className="link link-primary font-semibold">
-										Advanced Search page
+									Use the{" "}
+									<Link href="/search" className="link link-primary font-semibold">
+										Search page
 									</Link>
-									. Build your search using the visual interface, and then copy the `advanced` parameter from the
-									URL it generates.
+									{" "}to build filters through a user interface (no code necessary!), then copy the API query from the URL.
 								</p>
 							</div>
 
@@ -837,7 +814,7 @@ if (http_status(response)$category == "Success") {
 
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-white" }}
+								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
 										value: `advanced=[["geo_loc_name","contains","Atlantic"],["collection_timestamp","gte","2019-01-01"]]`,
@@ -870,7 +847,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-white" }}
+								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
 										value: `ids=${project?.id || 1}`,
@@ -1226,11 +1203,11 @@ if (http_status(response)$category == "Success") {
 			content: (
 				<>
 					<div className="space-y-6">
-						<p className="mb-4">Frequently asked questions about using the ODE API.</p>
+						<p className="mb-4">Frequently asked questions about using the Ocean DNA Explorer API.</p>
 
 						<div>
-							<h4 className="font-medium mb-2">Q: Do I need an API key to use the ODE API?</h4>
-							<p>A: No, the ODE API is currently open and does not require authentication or API keys.</p>
+							<h4 className="font-medium mb-2">Q: Do I need an API key to use the Ocean DNA Explorer API?</h4>
+							<p>A: No, the Ocean DNA Explorer API is currently open and does not require authentication or API keys.</p>
 						</div>
 
 						<div>

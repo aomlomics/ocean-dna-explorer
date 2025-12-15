@@ -97,7 +97,7 @@ export default function TaxaGrid({
 						className="card bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square"
 					>
 						<div className="card-body p-1 lg:p-2 gap-0">
-							<div className="tooltip tooltip-primary w-full break-words before:!w-full" data-tip={d.taxonomy}>
+							<div className="tooltip tooltip-primary w-full break-words before:!w-full before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip={d.taxonomy}>
 								<div className="mb-1">
 									{d.species ? (
 										<>

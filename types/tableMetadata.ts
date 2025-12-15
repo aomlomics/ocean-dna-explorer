@@ -80,7 +80,7 @@ const TableMetadata = {
 	},
 	analysis: {
 		plural: "Analyses",
-		description: "The processing of sequencing data to identify and quantify the organisms present in a sample.",
+		description: "Bioinformatic processing runs that convert raw sequence data into occurrences (counts) of features (species), documenting all parameters and methods used.",
 		schema: PrismaZodTypes.AnalysisSchema,
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
 		titleField: "analysis_run_name",

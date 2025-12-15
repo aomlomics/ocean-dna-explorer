@@ -1,4 +1,7 @@
-import UnderConstruction from "@/app/components/UnderConstruction";
+import Link from "next/link";
+import TableMetadata from "@/types/tableMetadata";
+import DataDisplay from "@/app/components/DataDisplay";
+import { StatIcon, AssayIcon } from "@/app/components/explore/StatCards";
 import { AssayPrep } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 
@@ -17,10 +20,153 @@ export default async function Project_id_Assay_name({
 				project_id,
 				assay_name
 			}
+		},
+		include: {
+			Project: {
+				select: {
+					project_id: true,
+					project_name: true,
+					isPrivate: true
+				}
+			},
+			Assay: {
+				select: {
+					assay_name: true,
+					target_gene: true
+				}
+			},
+			Libraries: {
+				select: {
+					lib_id: true
+				}
+			}
 		}
 	});
 
 	if (!assayPrep) return <>AssayPrep not found</>;
 
-	return <UnderConstruction />;
+	const { Project: project, Assay: assay, Libraries: libraries, ...justAssayPrep } = assayPrep;
+
+	return (
+		<div className="space-y-8 pb-8">
+			{/* Breadcrumb navigation */}
+			<div className="text-base breadcrumbs">
+				<ul>
+					<li>
+						<Link href="/explore/assayPrep" className="text-primary hover:text-primary-focus">
+							Assay preps
+						</Link>
+					</li>
+					<li>{assayPrep.assay_name}</li>
+				</ul>
+			</div>
+
+			<header>
+				<div className="flex gap-2 items-center">
+					<h1
+						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
+						data-tip={TableMetadata.assayPrep.description}
+					>
+						{assayPrep.assay_name}
+					</h1>
+				</div>
+				<p className="text-lg text-base-content/70 max-w-4xl">
+					Assay preparation for{" "}
+					{assay ? (
+						<Link
+							href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
+							className="text-primary hover:text-primary-focus break-all"
+						>
+							assay {assay.assay_name}
+						</Link>
+					) : (
+						<span className="italic">an unspecified assay</span>
+					)}{" "}
+					in project{" "}
+					{project ? (
+						<Link
+							href={`/explore/project/${encodeURIComponent(project.project_id)}`}
+							className="text-primary hover:text-primary-focus break-all"
+						>
+							{project.project_id}
+						</Link>
+					) : (
+						<span className="italic">not specified</span>
+					)}
+					.
+				</p>
+			</header>
+
+			<section className="mt-4 space-y-6">
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+					{/* Assay prep metadata table */}
+					<div className="lg:col-span-2">
+						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
+							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay prep metadata</h2>
+							<div className="h-[320px] overflow-y-auto">
+								<DataDisplay
+									table="assayPrep"
+									data={justAssayPrep}
+									omit={["project_id", "assay_name"]}
+									priorityFields={[
+										"assay_type",
+										"thermocycler",
+										"commercial_mm",
+										"custom_mm",
+										"pcr_cond",
+										"amplificationReactionVolume",
+										"assay_validation",
+										"pcr_primer_vol_forward",
+										"pcr_primer_vol_reverse",
+										"pcr_primer_conc_forward",
+										"pcr_primer_conc_reverse",
+										"probe_seq",
+										"probe_conc",
+										"pcr_dna_vol",
+										"pcr_rep",
+										"pcr_cycles"
+									]}
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Context cards */}
+					<div className="space-y-4">
+						{assay && (
+							<Link href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`} className="group block w-2/3">
+								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
+									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+										<AssayIcon />
+									</div>
+									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+										View assay
+									</div>
+									<div className="text-base font-semibold text-base-content group-hover:text-primary mt-1 break-all">
+										{assay.target_gene || assay.assay_name}
+									</div>
+								</div>
+							</Link>
+						)}
+
+						{project && (
+							<Link href={`/explore/project/${encodeURIComponent(project.project_id)}`} className="group block w-2/3">
+								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
+									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+										<StatIcon icon="ship" />
+									</div>
+									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+										View project
+									</div>
+									<div className="text-base font-semibold text-base-content group-hover:text-primary mt-1 break-all">
+										{project.project_id}
+									</div>
+								</div>
+							</Link>
+						)}
+					</div>
+				</div>
+			</section>
+		</div>
+	);
 }

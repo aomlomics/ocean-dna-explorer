@@ -24,7 +24,7 @@ export default function SearchResults() {
 
 	return (
 		<div>
-			<h2 className="text-xl mb-4">
+			<h2 className="text-xl mb-2">
 				Showing all{" "}
 				{table && TableMetadata[table] ? (
 					<span className="text-primary font-bold">{TableMetadata[table].plural}</span>
@@ -34,7 +34,7 @@ export default function SearchResults() {
 				that match your search
 			</h2>
 
-			<div className="aspect-4/2 w-full">
+			<div className="w-full">
 				{table ? (
 					table === "taxonomy" ? (
 						<TaxaGrid ignoreParams={["table"]} />
@@ -51,6 +51,7 @@ export default function SearchResults() {
 								"asvFileUrl_ODE",
 								"occurrenceFileUrl_ODE"
 							]}
+							className="p-0"
 						/>
 					)
 				) : (
