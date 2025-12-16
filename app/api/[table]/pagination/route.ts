@@ -4,6 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
+import TableMetadata from "@/types/tableMetadata";
 
 export async function GET(
 	request: Request,
@@ -25,7 +26,7 @@ export async function GET(
 					id: "asc"
 				}
 			} as {
-				orderBy: { id: Prisma.SortOrder };
+				orderBy: { [field: string]: Prisma.SortOrder };
 				where?: Record<string, any>;
 				take?: number;
 				skip?: number;
@@ -33,9 +34,20 @@ export async function GET(
 				include?: { _count: { select: Record<string, boolean> } };
 			};
 
-			const orderBy = searchParams.get("orderBy");
-			if (orderBy) {
-				query.orderBy = JSON.parse(orderBy);
+			const orderByStr = searchParams.get("orderBy");
+			if (orderByStr) {
+				const split = orderByStr?.split(",");
+				if (
+					split.length !== 2 ||
+					!TableMetadata[uncapsTable].enumSchema.options.includes(split[0]) ||
+					(split[1] !== "asc" && split[1] !== "desc")
+				) {
+					throw new Error("The orderBy must be a field and order separated by a comma.");
+				}
+
+				query.orderBy = {
+					[split[0]]: split[1]
+				};
 			}
 
 			const whereStr = searchParams.get("where");

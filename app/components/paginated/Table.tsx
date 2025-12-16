@@ -6,7 +6,6 @@ import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useEffect, useState, useRef } from "react";
 import useSWR, { preload } from "swr";
-import { useDebouncedCallback } from "use-debounce";
 import { getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
@@ -14,6 +13,8 @@ import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { fetcher } from "@/app/helpers/utils";
+
+const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order: Prisma.SortOrder };
 
 //TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
@@ -50,23 +51,23 @@ export default function Table({
 	const [headers, setHeaders] = useState([] as string[]);
 	const [userDefinedHeaders, setUserDefinedHeaders] = useState([] as string[]);
 
+	const [orderBy, setOrderBy] = useState(DEFAULT_ORDER_BY);
+
 	const [whereFilter, setWhereFilter] = useState({} as Record<string, number | string>);
 	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
 	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
 	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
 	const [pendingFilters, setPendingFilters] = useState(0);
 	const [columnsFilter, setColumnsFilter] = useState("");
-	const handleColFilter = useDebouncedCallback((f) => {
-		setColumnsFilter(f);
-	}, 300);
 
-	omit = [...omit, ...GlobalOmit];
+	const combinedOmit = [...omit, ...GlobalOmit];
 	const title = TableMetadata[table].titleField;
 
 	//api call
 	let query = new URLSearchParams({
 		take: take.toString(),
-		page: page.toString()
+		page: page.toString(),
+		orderBy: orderBy.field + "," + orderBy.order
 	});
 
 	let whereQuery = {} as Record<string, string | number>;
@@ -107,7 +108,7 @@ export default function Table({
 
 				for (let row of data.result) {
 					for (let [field, value] of Object.entries(row)) {
-						if (!omit.includes(field)) {
+						if (!combinedOmit.includes(field)) {
 							if (value === null && !exemptFields[field]) {
 								emptyFields[field] = true;
 							} else {
@@ -150,7 +151,7 @@ export default function Table({
 					}
 
 					//remove headers that have been omitted
-					if (omit.includes(head)) {
+					if (combinedOmit.includes(head)) {
 						return acc;
 					}
 
@@ -360,7 +361,7 @@ export default function Table({
 											</label>
 											<input
 												type="text"
-												onChange={(e) => handleColFilter(e.target.value)}
+												onChange={(e) => setColumnsFilter(e.target.value)}
 												placeholder="Filter columns"
 												className="input input-bordered input-xs w-full flex-1 min-w-0"
 											/>
@@ -424,10 +425,49 @@ export default function Table({
 								{/* Title Header Cell */}
 								{typeof title === "string" ? (
 									<th className="px-3 py-2 z-40">
+										<div
+											className="cursor-pointer select-none flex justify-between mb-1"
+											onClick={() =>
+												orderBy.field === title
+													? orderBy.order === "asc"
+														? setOrderBy({ field: title, order: "desc" })
+														: setOrderBy(DEFAULT_ORDER_BY)
+													: setOrderBy({ field: title, order: "asc" })
+											}
+										>
+											<span>{title}</span>
+											{orderBy.field === title ? (
+												orderBy.order === "asc" ? (
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="24"
+														height="20"
+														className="text-primary mr-2"
+														fill="none"
+														stroke="currentColor"
+														strokeWidth="2"
+													>
+														<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+													</svg>
+												) : (
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="24"
+														height="20"
+														className="text-primary mr-2"
+														fill="none"
+														stroke="currentColor"
+														strokeWidth="2"
+													>
+														<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+													</svg>
+												)
+											) : (
+												<></>
+											)}
+										</div>
+
 										<label className="form-control w-full max-w-xs text-lg">
-											<div>
-												<span>{title}</span>
-											</div>
 											{/* Value Filter */}
 											{!hideFilters && (
 												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
@@ -456,10 +496,10 @@ export default function Table({
 									</th>
 								) : (
 									<th className="p-0 pr-2 z-40">
+										<div className="select-none mb-1">
+											<span>{title.join(" / ")}</span>
+										</div>
 										<label className="form-control w-full max-w-xs text-lg">
-											<div>
-												<span>{title.join(" / ")}</span>
-											</div>
 											{/* Value Filter */}
 											{!hideFilters && (
 												<label className="input input-bordered input-sm flex items-center gap-2 w-full">
@@ -488,16 +528,49 @@ export default function Table({
 										//Header
 										acc.push(
 											<td key={head + i} className="bg-base-100">
+												<div
+													className="flex justify-between select-none mb-1 cursor-pointer"
+													onClick={() =>
+														orderBy.field === head
+															? orderBy.order === "asc"
+																? setOrderBy({ field: head, order: "desc" })
+																: setOrderBy(DEFAULT_ORDER_BY)
+															: setOrderBy({ field: head, order: "asc" })
+													}
+												>
+													{head}
+													{userDefinedHeaders.includes(head) && <sup>UD</sup>}
+													{orderBy.field === head ? (
+														orderBy.order === "asc" ? (
+															<svg
+																xmlns="http://www.w3.org/2000/svg"
+																width="24"
+																height="20"
+																className="text-primary mr-2"
+																fill="none"
+																stroke="currentColor"
+																strokeWidth="2"
+															>
+																<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+															</svg>
+														) : (
+															<svg
+																xmlns="http://www.w3.org/2000/svg"
+																width="24"
+																height="20"
+																className="text-primary mr-2"
+																fill="none"
+																stroke="currentColor"
+																strokeWidth="2"
+															>
+																<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+															</svg>
+														)
+													) : (
+														<></>
+													)}
+												</div>
 												<label className="form-control w-full max-w-xs text-lg">
-													<div className="flex justify-between">
-														<div>{head}</div>
-														{userDefinedHeaders.includes(head) && (
-															<>
-																<div className="px-1">🠢</div>
-																<div>User Defined</div>
-															</>
-														)}
-													</div>
 													{/* Value Filter */}
 													{!hideFilters && (
 														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">

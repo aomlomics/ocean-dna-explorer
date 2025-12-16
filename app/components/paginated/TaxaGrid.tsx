@@ -4,7 +4,7 @@ import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
 import PaginationControls from "./PaginationControls";
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import { useState } from "react";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { useSearchParams } from "next/navigation";
@@ -17,7 +17,7 @@ export default function TaxaGrid({
 	ignoreParams
 }: {
 	where?: Prisma.TaxonomyWhereInput;
-	orderBy?: Prisma.TaxonomyOrderByWithAggregationInput;
+	orderBy?: { field: keyof Taxonomy; order: Prisma.SortOrder };
 	ignoreParams?: string[];
 }) {
 	const searchParams = useSearchParams();
@@ -43,7 +43,7 @@ export default function TaxaGrid({
 	query.set("where", JSON.stringify(whereQuery));
 
 	if (orderBy) {
-		query.set("orderBy", JSON.stringify(orderBy));
+		query.set("orderBy", `${orderBy.field},${orderBy.order}`);
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
@@ -72,7 +72,7 @@ export default function TaxaGrid({
 			query.set("where", JSON.stringify(where));
 		}
 		if (orderBy) {
-			query.set("orderBy", JSON.stringify(orderBy));
+			query.set("orderBy", `${orderBy.field},${orderBy.order}`);
 		}
 
 		preload(`/api/taxonomy/pagination?${query.toString()}`, fetcher);
@@ -97,58 +97,61 @@ export default function TaxaGrid({
 						className="card bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square"
 					>
 						<div className="card-body p-1 lg:p-2 gap-0">
-							<div className="tooltip tooltip-primary w-full break-words before:!w-full before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip={d.taxonomy}>
+							<div
+								className="tooltip tooltip-primary w-full wrap-break-word before:w-full! before:bg-base-100 before:text-base-content before:border before:border-base-300"
+								data-tip={d.taxonomy}
+							>
 								<div className="mb-1">
 									{d.species ? (
 										<>
-											<p className="text-primary">Species:</p> <p className="break-words">{d.species}</p>
+											<p className="text-primary">Species:</p> <p className="wrap-break-word">{d.species}</p>
 										</>
 									) : d.genus ? (
 										<>
-											<p className="text-primary">Genus:</p> <p className="break-words">{d.genus}</p>
+											<p className="text-primary">Genus:</p> <p className="wrap-break-word">{d.genus}</p>
 										</>
 									) : d.family ? (
 										<>
-											<p className="text-primary">Family:</p> <p className="break-words">{d.family}</p>
+											<p className="text-primary">Family:</p> <p className="wrap-break-word">{d.family}</p>
 										</>
 									) : d.order ? (
 										<>
-											<p className="text-primary">Order:</p> <p className="break-words">{d.order}</p>
+											<p className="text-primary">Order:</p> <p className="wrap-break-word">{d.order}</p>
 										</>
 									) : d.taxonClass ? (
 										<>
-											<p className="text-primary">Class:</p> <p className="break-words">{d.taxonClass}</p>
+											<p className="text-primary">Class:</p> <p className="wrap-break-word">{d.taxonClass}</p>
 										</>
 									) : d.phylum ? (
 										<>
-											<p className="text-primary">Phylum:</p> <p className="break-words">{d.phylum}</p>
+											<p className="text-primary">Phylum:</p> <p className="wrap-break-word">{d.phylum}</p>
 										</>
 									) : d.subdivision ? (
 										<>
-											<p className="text-primary">Subdivision:</p> <p className="break-words">{d.subdivision}</p>
+											<p className="text-primary">Subdivision:</p> <p className="wrap-break-word">{d.subdivision}</p>
 										</>
 									) : d.division ? (
 										<>
-											<p className="text-primary">Division:</p> <p className="break-words">{d.division}</p>
+											<p className="text-primary">Division:</p> <p className="wrap-break-word">{d.division}</p>
 										</>
 									) : d.supergroup ? (
 										<>
-											<p className="text-primary">Supergroup:</p> <p className="break-words">{d.supergroup}</p>
+											<p className="text-primary">Supergroup:</p> <p className="wrap-break-word">{d.supergroup}</p>
 										</>
 									) : d.kingdom ? (
 										<>
-											<p className="text-primary">Kingdom:</p> <p className="break-words">{d.kingdom}</p>
+											<p className="text-primary">Kingdom:</p> <p className="wrap-break-word">{d.kingdom}</p>
 										</>
 									) : d.domain ? (
 										<>
-											<p className="text-primary">Domain:</p> <p className="break-words">{d.domain}</p>
+											<p className="text-primary">Domain:</p> <p className="wrap-break-word">{d.domain}</p>
 										</>
 									) : (
 										"Error"
 									)}
 								</div>
 							</div>
-							<div className="grow border-t-1 pt-1">
+							<div className="grow border-t pt-1">
 								<PhyloPicClient taxonomy={d} />
 							</div>
 						</div>
