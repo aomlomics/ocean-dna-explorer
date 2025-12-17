@@ -850,7 +850,7 @@ function PopupWithSearchBody({
 							</h2>
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
-								href={`/search/advanced?table=sample&advanced=[["${id}","in",["${compressIfNeeded(
+								href={`/search?table=sample&advanced=[["${id}","in",["${compressIfNeeded(
 									//TODO: use filteredValues if relevant
 									loc.values.map((v) => v[id]).join('","')
 								)}"]]]`}
