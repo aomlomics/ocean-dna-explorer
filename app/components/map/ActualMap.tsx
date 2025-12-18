@@ -989,7 +989,9 @@ function Resizable({
 	useEffect(() => {
 		//TODO: doesn't shrink after resetting legend
 		//TODO: don't trigger resize when legendInfo.hidden changes
+		//TODO: doesn't change width when shapesInside changes
 		if (checkSize && ref.current && childRef.current && mapRef.current) {
+			console.log("checking/.//");
 			const mapContainer = mapRef.current.getContainer();
 
 			//set new width, and new min width if applicable
@@ -1908,6 +1910,7 @@ function DrawSelectedControl({
 }) {
 	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(true);
+	const [delayedPointsInsize, setDelayedPointsInsize] = useState(pointsInside);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1915,6 +1918,11 @@ function DrawSelectedControl({
 			DomEvent.disableScrollPropagation(ref.current);
 		}
 	}, []);
+
+	//delay changing state variable by 1 render cycle to allow for resizable to work
+	useEffect(() => {
+		setDelayedPointsInsize(pointsInside);
+	}, [pointsInside]);
 
 	return (
 		<div className="leaflet-control" ref={ref}>
@@ -1932,7 +1940,7 @@ function DrawSelectedControl({
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
-								values: pointsInside
+								values: delayedPointsInsize
 							}}
 						/>
 					</div>
