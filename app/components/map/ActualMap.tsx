@@ -39,8 +39,8 @@ import distinctColors from "distinct-colors";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
-import { deflateSync } from "fflate";
 import { usePathname, useSearchParams } from "next/navigation";
+import { compressToEncodedURIComponent } from "lz-string";
 
 type MapProps =
 	| {
@@ -184,7 +184,7 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 
 function compressIfNeeded(str: string) {
 	if (str.length > 500) {
-		return "compressed/fflate:" + String.fromCharCode(...deflateSync(new TextEncoder().encode(str), { level: 9 }));
+		return "compressed/lz-string:" + compressToEncodedURIComponent(str);
 	} else {
 		return str;
 	}
@@ -850,10 +850,10 @@ function PopupWithSearchBody({
 							</h2>
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
-								href={`/search?table=sample&advanced=[["${id}","in",["${compressIfNeeded(
+								href={`/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
 									//TODO: use filteredValues if relevant
-									loc.values.map((v) => v[id]).join('","')
-								)}"]]]`}
+									'["' + loc.values.map((v) => v[id]).join('","') + '"]'
+								)}"]]`}
 							>
 								Search
 							</Link>

@@ -10,6 +10,7 @@ import {
 } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
 import { stringToCircle, stringToPolygon, uncapitalizeTable } from "./utils";
+import { decompressFromEncodedURIComponent } from "lz-string";
 
 function searchRelations(
 	relations: RelationMetadata[],
@@ -142,6 +143,14 @@ export function parseToQuery(
 	if (type === "string") {
 		if (mode) {
 			if (mode === "in" || mode === "notIn") {
+				//uncompress
+				if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
+					value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
+					if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
+						throw new Error("Value must be array of primitives.");
+					}
+				}
+
 				//TODO: needs testing
 				const typedVal = value as string[];
 				searchWhere = {
@@ -309,6 +318,7 @@ function advancedRecurse(
 }
 
 export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, paramsArray: ParamsArray) {
+	console.log(paramsArray);
 	return { AND: paramsArray.map((e) => advancedRecurse(table, e)) };
 }
 
