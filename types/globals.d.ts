@@ -83,7 +83,7 @@ export type ParamsArray = Array<ParamsArrayElement>;
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
 
 export type Point = { lat: number; lng: number };
-type Polygon = {
+export type Polygon = {
 	type: "polygon";
 	bounds: {
 		ne: Point;
@@ -91,7 +91,7 @@ type Polygon = {
 	};
 	points: Point[];
 };
-type Circle = {
+export type Circle = {
 	type: "circle";
 	center: Point;
 	radius: number;

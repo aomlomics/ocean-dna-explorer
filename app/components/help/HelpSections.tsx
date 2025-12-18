@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
-import { DeadBooleanEnum } from "../../../types/enums";
+import { DeadBooleanToEnum } from "../../../types/enums";
 
 // Define types for our content structure
 export type Subsection = {
@@ -39,7 +39,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							The Ocean DNA Explorer requires you to login to access certain features of the platform, like submitting data.
+							The Ocean DNA Explorer requires you to login to access certain features of the platform, like submitting
+							data.
 						</p>
 						<p className="mb-4">
 							You can login with several types of accounts using the Sign-In button in the top right corner of the
@@ -49,8 +50,8 @@ export const helpSections: Section[] = [
 							clicking "Security" and finally "Delete Account".
 						</p>
 						<p className="mb-4">
-							The roles available on the Ocean DNA Explorer are listed below. Please note, Contributor is what you need to submit data, and
-							the other roles are mostly for internal use by the Ocean DNA Explorer team:
+							The roles available on the Ocean DNA Explorer are listed below. Please note, Contributor is what you need
+							to submit data, and the other roles are mostly for internal use by the Ocean DNA Explorer team:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>
@@ -101,7 +102,9 @@ export const helpSections: Section[] = [
 				title: "Features Overview",
 				content: (
 					<>
-						<p className="mb-4">The Ocean DNA Explorer provides several key features to help you work with marine eDNA data:</p>
+						<p className="mb-4">
+							The Ocean DNA Explorer provides several key features to help you work with marine eDNA data:
+						</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>
 								{" "}
@@ -143,8 +146,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							We welcome your feedback to improve the Ocean DNA Explorer. If you encounter any issues or have suggestions for new features,
-							please let us know.
+							We welcome your feedback to improve the Ocean DNA Explorer. If you encounter any issues or have
+							suggestions for new features, please let us know.
 						</p>
 						<p className="mb-4">
 							You can submit bug reports, feature requests, or general feedback through our GitHub issues page:
@@ -184,8 +187,8 @@ export const helpSections: Section[] = [
 					to submit data.{" "}
 				</p>
 				<p className="mb-4">
-					This section will help guide you through the process of contributing your own data to the Ocean DNA Explorer. Once
-					you have{" "}
+					This section will help guide you through the process of contributing your own data to the Ocean DNA Explorer.
+					Once you have{" "}
 					<Link className="link link-primary font-semibold" href="#data-format-rationale">
 						formatted
 					</Link>{" "}
@@ -206,8 +209,8 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">
 							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
-							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but you cannot make a
-							public submission private.
+							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but
+							you cannot make a public submission private.
 						</p>
 						<p className="mb-4">
 							{" "}
@@ -227,15 +230,16 @@ export const helpSections: Section[] = [
 							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
 								FAIRe eDNA standard
 							</Link>
-							, with a few modifications to enable the enhanced features which the Ocean DNA Explorer provides. The FAIRe (Findable,
-							Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization, international collaboration
-							that has developed a comprehensive metadata checklist specifically for eDNA data.
+							, with a few modifications to enable the enhanced features which the Ocean DNA Explorer provides. The
+							FAIRe (Findable, Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization,
+							international collaboration that has developed a comprehensive metadata checklist specifically for eDNA
+							data.
 						</p>
 						<p className="mb-4">
 							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128
 							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, and
-							bioinformatics. The Ocean DNA Explorer's data format uses the same checklist, with a few additions and subtractions. The
-							FAIRe data fields are sourced from existing data standards including:
+							bioinformatics. The Ocean DNA Explorer's data format uses the same checklist, with a few additions and
+							subtractions. The FAIRe data fields are sourced from existing data standards including:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
 							<li>MIxS (Minimum Information about any Sequence) and its extensions</li>
@@ -272,8 +276,9 @@ export const helpSections: Section[] = [
 							</Link>{" "}
 							team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other
 							commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic
-							assignments. Tourmaline 2 output can be uploaded to the Ocean DNA Explorer as an analysis. Multiple analyses can be uploaded
-							for the same project, allowing users to compare the output from different sets of parameters.{" "}
+							assignments. Tourmaline 2 output can be uploaded to the Ocean DNA Explorer as an analysis. Multiple
+							analyses can be uploaded for the same project, allowing users to compare the output from different sets of
+							parameters.{" "}
 						</p>
 					</>
 				)
@@ -308,8 +313,9 @@ export const helpSections: Section[] = [
 						</p>
 						<p className="mb-4">
 							The generated templates for project, sample, experiment run, and analysis metadata are designed for
-							instant submission to the Ocean DNA Explorer. Once filled, data formatted with these templates can also be easily prepared
-							for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using the{" "}
+							instant submission to the Ocean DNA Explorer. Once filled, data formatted with these templates can also be
+							easily prepared for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using
+							the{" "}
 							<Link className="link link-primary" href="#obis-gbif-submission">
 								edna2obis
 							</Link>{" "}
@@ -378,7 +384,7 @@ export const helpSections: Section[] = [
 										<td>Boolean field is false</td>
 									</tr>
 									{/* Dead values */}
-									{Object.keys(DeadBooleanEnum)
+									{Object.keys(DeadBooleanToEnum)
 										.filter((key) => !["true", "false", "0", "1"].includes(key))
 										.map((deadValue) => (
 											<tr key={deadValue}>
@@ -444,8 +450,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. To submit a project, you'll need to submit one
-							or more analyses alongside it.
+							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. To submit a project, you'll
+							need to submit one or more analyses alongside it.
 						</p>
 						<p className="mb-2">The following fields are required in your project metadata file:</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -469,8 +475,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. Analyses can be submitted WITHOUT a project, as
-							long as the project it is related to is already uploaded to the Ocean DNA Explorer.
+							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. Analyses can be submitted
+							WITHOUT a project, as long as the project it is related to is already uploaded to the Ocean DNA Explorer.
 						</p>
 						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -492,9 +498,10 @@ export const helpSections: Section[] = [
 							<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
 								edna2obis
 							</Link>{" "}
-							converts the Ocean DNA Explorer input files to the expected format for submission to OBIS (Ocean Biodiversity Information
-							System), and GBIF (Global Biodiversity Information Facility). its input file structure MATCHES that of
-							the Ocean DNA Explorer, so if you're submitting data here, you can easily submit to OBIS and GBIF as well.
+							converts the Ocean DNA Explorer input files to the expected format for submission to OBIS (Ocean
+							Biodiversity Information System), and GBIF (Global Biodiversity Information Facility). its input file
+							structure MATCHES that of the Ocean DNA Explorer, so if you're submitting data here, you can easily submit
+							to OBIS and GBIF as well.
 						</p>
 					</>
 				)
@@ -541,7 +548,12 @@ export const helpSections: Section[] = [
 								Filters can include conditions based on fields from related tables (e.g., search for Samples where the
 								Project's institution is "NOAA")
 							</li>
-							<li>Combine multiple filters using AND/OR logic: Each filter and/or relation is combined with AND logic. You can add an OR condition (the filters and/or relations within the OR group are combined with OR logic), and the OR block itself is combined with the other filters and/or relations with AND logic (the same as any other filter or relation).</li>
+							<li>
+								Combine multiple filters using AND/OR logic: Each filter and/or relation is combined with AND logic. You
+								can add an OR condition (the filters and/or relations within the OR group are combined with OR logic),
+								and the OR block itself is combined with the other filters and/or relations with AND logic (the same as
+								any other filter or relation).
+							</li>
 							<li>View the results that match your query</li>
 						</ol>
 						<p className="mb-4">
@@ -642,8 +654,9 @@ export const helpSections: Section[] = [
 					<Link className="link link-primary font-semibold" href="/explore">
 						Explore pages
 					</Link>{" "}
-					let you browse and filter data within individual tables in the Ocean DNA Explorer. Each table (Projects, Samples, Analyses,
-					Features, Taxonomies) has its own dedicated Explore page with specialized filters and visualization options.
+					let you browse and filter data within individual tables in the Ocean DNA Explorer. Each table (Projects,
+					Samples, Analyses, Features, Taxonomies) has its own dedicated Explore page with specialized filters and
+					visualization options.
 				</p>
 				<p className="mb-4">
 					<strong>Key features of Explore pages:</strong>
@@ -678,8 +691,8 @@ export const helpSections: Section[] = [
 							<h4 className="font-semibold mb-2">Features on Explore Pages:</h4>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
-									<strong>Global search bar:</strong> Located at the top of the table, this searches across all
-									columns simultaneously
+									<strong>Global search bar:</strong> Located at the top of the table, this searches across all columns
+									simultaneously
 								</li>
 								<li>
 									<strong>Column-specific search:</strong> Each column has its own search input in the header, allowing
@@ -751,7 +764,8 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Analyses are bioinformatic processing runs that convert raw sequence data into occurrences (counts) of features (species), documenting all parameters and methods used.
+							Analyses are bioinformatic processing runs that convert raw sequence data into occurrences (counts) of
+							features (species), documenting all parameters and methods used.
 						</p>
 						<p className="mb-4">Important information about analyses:</p>
 						<ul className="list-disc ml-6 mb-4">
@@ -883,8 +897,8 @@ export const helpSections: Section[] = [
 					<div>
 						<h4 className="font-medium mb-2">Q: How do you protect our personal data?</h4>
 						<p>
-							A: There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by the platform's
-							reputableauthentication provider, Clerk, and all data is stored in a secure database.
+							A: There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by
+							the platform's reputableauthentication provider, Clerk, and all data is stored in a secure database.
 						</p>
 					</div>
 				</div>

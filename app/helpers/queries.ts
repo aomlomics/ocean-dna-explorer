@@ -9,7 +9,8 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { uncapitalizeTable } from "./utils";
+import { stringToCircle, stringToPolygon, uncapitalizeTable } from "./utils";
+import { decompressFromEncodedURIComponent } from "lz-string";
 
 function searchRelations(
 	relations: RelationMetadata[],
@@ -142,6 +143,14 @@ export function parseToQuery(
 	if (type === "string") {
 		if (mode) {
 			if (mode === "in" || mode === "notIn") {
+				//uncompress
+				if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
+					value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
+					if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
+						throw new Error("Value must be array of primitives.");
+					}
+				}
+
 				//TODO: needs testing
 				const typedVal = value as string[];
 				searchWhere = {
@@ -309,6 +318,7 @@ function advancedRecurse(
 }
 
 export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, paramsArray: ParamsArray) {
+	console.log(paramsArray);
 	return { AND: paramsArray.map((e) => advancedRecurse(table, e)) };
 }
 
@@ -382,80 +392,15 @@ export function parseApiQuery(
 				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
 			}
 
-			shapes = [] as Array<MapShape>;
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
 
+			shapes = [] as Array<MapShape>;
 			for (const poly of polygons) {
-				//format: <lat>/<lng>,<lat>/<lng>,etc
-				const points = poly.split(",").map((p) => {
-					const split = p.split("/");
-					if (split.length !== 2) {
-						throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
-					}
-					const pnt = {
-						lat: parseFloat(split[0]),
-						lng: parseFloat(split[1])
-					};
-					if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
-						throw new Error(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
-					}
-					if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
-						throw new Error(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
-					}
-
-					return pnt;
-				});
-
-				const bounds = { sw: { lat: -90, lng: -180 }, ne: { lat: 90, lng: 180 } };
-				for (const p of points) {
-					bounds.sw.lat = Math.max(p.lat, bounds.sw.lat);
-					bounds.sw.lng = Math.max(p.lng, bounds.sw.lng);
-					bounds.ne.lat = Math.min(p.lat, bounds.ne.lat);
-					bounds.ne.lng = Math.min(p.lng, bounds.ne.lng);
-				}
-
-				shapes.push({
-					type: "polygon",
-					bounds,
-					points
-				});
+				shapes.push(stringToPolygon(poly));
 			}
-
 			for (const cir of circles) {
-				//format: <lat>/<lng>,<radius>
-				const split = cir.split(",");
-				if (split.length !== 2) {
-					throw new Error(
-						`Invalid circle format: "${cir}". Circle must have a center followed by a radius, separated by a comma.`
-					);
-				}
-
-				const centerSplit = split[0].split("/");
-				if (split.length !== 2) {
-					throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
-				}
-				const center = {
-					lat: parseFloat(centerSplit[0]),
-					lng: parseFloat(centerSplit[1])
-				};
-				if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
-					throw new Error(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
-				}
-				if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
-					throw new Error(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
-				}
-
-				const radius = parseFloat(split[1]);
-				if (isNaN(radius)) {
-					throw new Error(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
-				}
-
-				shapes.push({
-					type: "circle",
-					radius,
-					center
-				});
+				shapes.push(stringToCircle(cir));
 			}
 		}
 	}

@@ -2,7 +2,16 @@
 
 import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { divIcon, DomEvent, LatLng, LatLngBoundsExpression, FeatureGroup as LFeatureGroup, Map } from "leaflet";
+import {
+	divIcon,
+	DomEvent,
+	LatLng,
+	LatLngBoundsExpression,
+	FeatureGroup as LFeatureGroup,
+	Map,
+	Polygon as LPolygon,
+	Circle as LCircle
+} from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -15,15 +24,23 @@ import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useS
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
-import { capitalizeTable, getLocationsInsideShapes } from "@/app/helpers/utils";
-import { LocationWithValues, Location, NullLocation, Point, MapShape } from "@/types/globals";
+import {
+	capitalizeTable,
+	circleToString,
+	getLocationsInsideShapes,
+	polygonToString,
+	stringToCircle,
+	stringToPolygon
+} from "@/app/helpers/utils";
+import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
 import chroma, { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
-import { deflateSync } from "fflate";
+import { usePathname, useSearchParams } from "next/navigation";
+import { compressToEncodedURIComponent } from "lz-string";
 
 type MapProps =
 	| {
@@ -167,7 +184,7 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 
 function compressIfNeeded(str: string) {
 	if (str.length > 500) {
-		return "compressed/fflate:" + String.fromCharCode(...deflateSync(new TextEncoder().encode(str), { level: 9 }));
+		return "compressed/lz-string:" + compressToEncodedURIComponent(str);
 	} else {
 		return str;
 	}
@@ -182,7 +199,8 @@ export default function ActualMap({
 	clusterRadius,
 	legend = false,
 	draw = false,
-	legendOmit = []
+	legendOmit = [],
+	shapesToUrl
 }: {
 	locations: NullLocation[];
 	id?: string;
@@ -193,7 +211,11 @@ export default function ActualMap({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 }) {
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+
 	const [drawAlmostReady, setDrawAlmostReady] = useState(false);
 	const [drawReady, setDrawReady] = useState(false);
 
@@ -348,6 +370,22 @@ export default function ActualMap({
 	useEffect(() => {
 		if (drawReady) {
 			checkShapes();
+
+			if (shapesToUrl) {
+				const params = new URLSearchParams(searchParams.toString());
+				params.delete("polygon");
+				params.delete("circle");
+
+				for (const s of Object.values(shapes)) {
+					if (s.type === "polygon") {
+						params.append("polygon", polygonToString(s));
+					} else if (s.type === "circle") {
+						params.append("circle", circleToString(s));
+					}
+				}
+
+				window.history.replaceState(null, "", `${pathname}?${params}`);
+			}
 		}
 	}, [shapes]);
 
@@ -356,6 +394,41 @@ export default function ActualMap({
 		if (!drawAlmostReady) {
 			setDrawAlmostReady(true);
 		} else if (!drawReady) {
+			if (shapesToUrl) {
+				//get shapes from url
+				const urlShapes = [] as Array<MapShape>;
+				const polygons = searchParams.getAll("polygon");
+				const circles = searchParams.getAll("circle");
+				if (polygons || circles) {
+					for (const poly of polygons) {
+						urlShapes.push(stringToPolygon(poly));
+					}
+					for (const cir of circles) {
+						urlShapes.push(stringToCircle(cir));
+					}
+				}
+
+				if (urlShapes.length && featureGroupRef.current) {
+					const tempShapes = {} as typeof shapes;
+					for (const s of urlShapes) {
+						if (s.type === "polygon") {
+							featureGroupRef.current.addLayer(new LPolygon(s.points));
+						} else if (s.type === "circle") {
+							featureGroupRef.current.addLayer(new LCircle(s.center, s.radius));
+						}
+
+						for (const id of Object.keys(
+							(featureGroupRef.current as unknown as { _layers: Record<string, any> })._layers
+						)) {
+							if (!(id in tempShapes)) {
+								tempShapes[id] = s;
+							}
+						}
+					}
+					setShapes(tempShapes);
+				}
+			}
+
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);
@@ -777,10 +850,10 @@ function PopupWithSearchBody({
 							</h2>
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
-								href={`/search/advanced?table=sample&advanced=[["${id}","in",["${compressIfNeeded(
+								href={`/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
 									//TODO: use filteredValues if relevant
-									loc.values.map((v) => v[id]).join('","')
-								)}"]]]`}
+									'["' + loc.values.map((v) => v[id]).join('","') + '"]'
+								)}"]]`}
 							>
 								Search
 							</Link>
@@ -916,7 +989,9 @@ function Resizable({
 	useEffect(() => {
 		//TODO: doesn't shrink after resetting legend
 		//TODO: don't trigger resize when legendInfo.hidden changes
+		//TODO: doesn't change width when shapesInside changes
 		if (checkSize && ref.current && childRef.current && mapRef.current) {
+			console.log("checking/.//");
 			const mapContainer = mapRef.current.getContainer();
 
 			//set new width, and new min width if applicable
@@ -1835,6 +1910,7 @@ function DrawSelectedControl({
 }) {
 	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(true);
+	const [delayedPointsInsize, setDelayedPointsInsize] = useState(pointsInside);
 
 	useEffect(() => {
 		if (ref.current) {
@@ -1842,6 +1918,11 @@ function DrawSelectedControl({
 			DomEvent.disableScrollPropagation(ref.current);
 		}
 	}, []);
+
+	//delay changing state variable by 1 render cycle to allow for resizable to work
+	useEffect(() => {
+		setDelayedPointsInsize(pointsInside);
+	}, [pointsInside]);
 
 	return (
 		<div className="leaflet-control" ref={ref}>
@@ -1859,7 +1940,7 @@ function DrawSelectedControl({
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
-								values: pointsInside
+								values: delayedPointsInsize
 							}}
 						/>
 					</div>
