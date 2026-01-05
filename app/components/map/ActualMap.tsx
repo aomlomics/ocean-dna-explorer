@@ -921,6 +921,7 @@ function PopupWithSearchBody({
 	);
 }
 
+//TODO: give search body hrefFunction using where prop and exact location lat/lng
 function PopupWithSearch({
 	table,
 	titleTable,
@@ -1967,6 +1968,7 @@ function DrawSelectedControl({
 	);
 }
 
+//TODO: give search body hrefFunction using where prop and null/DeadValueEnum
 function NoLocationPointsControl({
 	noLocationPoints,
 	table,
