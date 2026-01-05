@@ -12,7 +12,7 @@ import PaginationControls from "./PaginationControls";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { fetcher } from "@/app/helpers/utils";
+import { fetcher, getShapesFromUrl } from "@/app/helpers/utils";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order: Prisma.SortOrder };
 
@@ -77,8 +77,23 @@ export default function Table({
 	if (Object.keys(whereFilter).length) {
 		whereQuery = { ...whereQuery, ...whereFilter };
 	}
+	let shapes = [] as string[];
 	if (searchParams && searchParams.size) {
-		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
+		const tempParms = new URLSearchParams(searchParams);
+		//specifically pull out shapes from searchParams
+		const polygons = tempParms.getAll("polygon");
+		if (polygons.length) {
+			tempParms.delete("polygon");
+			shapes.push(...polygons.map((p) => "polygon=" + p));
+		}
+		const circles = tempParms.getAll("circle");
+		if (circles.length) {
+			tempParms.delete("circle");
+			shapes.push(...circles.map((c) => "circle=" + c));
+		}
+
+		//get rest of queries
+		whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
 		if (ignoreParams) {
 			for (const param of ignoreParams) {
 				delete whereQuery[param];
@@ -91,7 +106,7 @@ export default function Table({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${query.toString()}`,
+		`/api/${table}/pagination?${query.toString()}${shapes.length ? "&" + shapes.join("&") : ""}`,
 		fetcher
 	);
 
