@@ -9,7 +9,7 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { stringToCircle, stringToPolygon, uncapitalizeTable } from "./utils";
+import { getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
 
 function searchRelations(
@@ -347,6 +347,7 @@ export function parseApiQuery(
 	searchParams: URLSearchParams,
 	options?: {
 		features?: {
+			orderBy?: true;
 			fields?: true;
 			distinct?: true;
 			relations?: true;
@@ -381,10 +382,7 @@ export function parseApiQuery(
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		const polygons = searchParams.getAll("polygon");
-		const circles = searchParams.getAll("circle");
-		// Only process shapes if at least one polygon or circle was provided
-		if (polygons.length > 0 || circles.length > 0) {
+		if (table === "sample") {
 			if (
 				!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
 				!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
@@ -392,27 +390,42 @@ export function parseApiQuery(
 				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
 			}
 
+			shapes = getShapesFromUrl(searchParams);
+
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
-
-			shapes = [] as Array<MapShape>;
-			for (const poly of polygons) {
-				shapes.push(stringToPolygon(poly));
-			}
-			for (const cir of circles) {
-				shapes.push(stringToCircle(cir));
-			}
+		} else {
+			throw new Error(`Table with name of "${table}" does not have location data, so shapes may not be used.`);
 		}
 	}
 
 	const query = {} as {
-		// orderBy?: Record<string, Prisma.SortOrder>;
+		orderBy?: Record<string, Prisma.SortOrder>;
 		select?: Record<string, any>;
 		include?: Record<string, any>;
 		where?: Record<string, any>;
 		take?: number;
 		distinct?: string[];
 	};
+
+	//ordering results
+	if (!options?.features || options.features.orderBy) {
+		const orderByStr = searchParams.get("orderBy");
+		if (orderByStr) {
+			const split = orderByStr?.split(",");
+			if (
+				split.length !== 2 ||
+				!TableMetadata[table].enumSchema.options.includes(split[0]) ||
+				(split[1] !== "asc" && split[1] !== "desc")
+			) {
+				throw new Error("The orderBy must be a field and order separated by a comma.");
+			}
+
+			query.orderBy = {
+				[split[0]]: split[1]
+			};
+		}
+	}
 
 	//selecting fields
 	if (options?.defaults?.fields) {

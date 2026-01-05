@@ -156,6 +156,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<div className="lg:col-span-2 h-full">
 						<Map
 							query={() => prisma.sample.findMany({ where: { project_id } })}
+							where={{ project_id }}
 							cluster
 							legend
 							draw

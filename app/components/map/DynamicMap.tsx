@@ -9,6 +9,7 @@ const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 
 export default function DynamicMap({
 	locations,
+	where,
 	id,
 	table,
 	titleTable,
@@ -20,6 +21,7 @@ export default function DynamicMap({
 	shapesToUrl
 }: {
 	locations: NullLocation[];
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -33,6 +35,7 @@ export default function DynamicMap({
 	return (
 		<ActualMap
 			locations={locations}
+			where={where}
 			id={id}
 			table={table}
 			titleTable={titleTable}

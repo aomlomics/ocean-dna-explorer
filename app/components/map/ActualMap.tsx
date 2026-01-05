@@ -28,9 +28,8 @@ import {
 	capitalizeTable,
 	circleToString,
 	getLocationsInsideShapes,
-	polygonToString,
-	stringToCircle,
-	stringToPolygon
+	getShapesFromUrl,
+	polygonToString
 } from "@/app/helpers/utils";
 import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
@@ -192,6 +191,7 @@ function compressIfNeeded(str: string) {
 
 export default function ActualMap({
 	locations,
+	where,
 	id = "samp_name",
 	table = "sample",
 	titleTable,
@@ -203,6 +203,7 @@ export default function ActualMap({
 	shapesToUrl
 }: {
 	locations: NullLocation[];
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -396,19 +397,9 @@ export default function ActualMap({
 		} else if (!drawReady) {
 			if (shapesToUrl) {
 				//get shapes from url
-				const urlShapes = [] as Array<MapShape>;
-				const polygons = searchParams.getAll("polygon");
-				const circles = searchParams.getAll("circle");
-				if (polygons || circles) {
-					for (const poly of polygons) {
-						urlShapes.push(stringToPolygon(poly));
-					}
-					for (const cir of circles) {
-						urlShapes.push(stringToCircle(cir));
-					}
-				}
+				const urlShapes = getShapesFromUrl(searchParams);
 
-				if (urlShapes.length && featureGroupRef.current) {
+				if (urlShapes && featureGroupRef.current) {
 					const tempShapes = {} as typeof shapes;
 					for (const s of urlShapes) {
 						if (s.type === "polygon") {
@@ -619,9 +610,11 @@ export default function ActualMap({
 						<DrawSelectedControl
 							pointsInside={pointsInside}
 							table={table}
+							where={where}
 							id={id}
 							legendInfo={legendInfo}
 							mapRef={mapRef}
+							shapes={shapes}
 						/>
 					) : (
 						<></>
@@ -788,14 +781,15 @@ function PopupWithSearchBody({
 	titleTable,
 	loc,
 	id,
-	legendInfo
+	legendInfo,
+	hrefFunction
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
-	className?: string;
+	hrefFunction?: () => string;
 }) {
 	//TODO: filter not working
 	const [filter, setFilter] = useState("");
@@ -840,26 +834,29 @@ function PopupWithSearchBody({
 				<></>
 			)}
 			<>
-				{loc.values ? (
-					//TODO: make link go to search page with results being loc.values
+				{filteredValues ? (
+					//TODO: use optional where param to clean up query (both from map, and from parent of searchbody)
 					<>
 						<div className="flex justify-between gap-2 items-center">
 							<h2 className="text-primary text-lg">
-								{filteredValues!.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
-								{filteredValues!.length})
+								{filteredValues.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
+								{filteredValues.length})
 							</h2>
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
-								href={`/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
-									//TODO: use filteredValues if relevant
-									'["' + loc.values.map((v) => v[id]).join('","') + '"]'
-								)}"]]`}
+								href={
+									hrefFunction
+										? hrefFunction()
+										: `/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
+												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
+										  )}"]]`
+								}
 							>
 								Search
 							</Link>
 						</div>
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
-							{filteredValues!.map((l) => {
+							{filteredValues.map((l) => {
 								if (legendInfo) {
 									const color = getLegendColor(legendInfo, l);
 
@@ -1898,15 +1895,19 @@ function ClusterControl({
 function DrawSelectedControl({
 	pointsInside,
 	table,
+	where,
 	id,
 	legendInfo,
-	mapRef
+	mapRef,
+	shapes
 }: {
 	pointsInside: Location[];
 	table: Uncapitalize<Prisma.ModelName>;
+	where?: Record<string, string>;
 	id: string;
 	legendInfo: LegendInfo;
 	mapRef: RefObject<Map | null>;
+	shapes: Record<string, MapShape>;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(true);
@@ -1942,6 +1943,23 @@ function DrawSelectedControl({
 								decimalLongitude: NaN,
 								values: delayedPointsInsize
 							}}
+							hrefFunction={() =>
+								`/search?table=sample${
+									where
+										? `&advanced=[${Object.entries(where)
+												.map(([f, v]) => `["${f}","equals","${v}"]`)
+												.join(",")}]`
+										: ""
+								}&${Object.values(shapes)
+									.map((s) => {
+										if (s.type === "polygon") {
+											return "polygon=" + polygonToString(s);
+										} else if (s.type === "circle") {
+											return "circle=" + circleToString(s);
+										}
+									})
+									.join("&")}`
+							}
 						/>
 					</div>
 				</Resizable>

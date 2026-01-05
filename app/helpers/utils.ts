@@ -366,8 +366,8 @@ export function getLocationsInsideShapes(locs: (Location | LocationWithValues)[]
 	return locsInside;
 }
 
-export function stringToPolygon(poly: string): Polygon {
-	//format: <lat>/<lng>,<lat>/<lng>,etc
+function stringToPolygon(poly: string): Polygon {
+	//format: <lat>/<lng>,<lat>/<lng>,...
 	const points = poly.split(",").map((p) => {
 		const split = p.split("/");
 		if (split.length !== 2) {
@@ -402,7 +402,7 @@ export function stringToPolygon(poly: string): Polygon {
 	};
 }
 
-export function stringToCircle(circle: string): Circle {
+function stringToCircle(circle: string): Circle {
 	//format: <lat>/<lng>,<radius>
 	const split = circle.split(",");
 	if (split.length !== 2) {
@@ -436,6 +436,24 @@ export function stringToCircle(circle: string): Circle {
 		radius,
 		center
 	};
+}
+
+export function getShapesFromUrl(searchParams: URLSearchParams) {
+	const polygons = searchParams.getAll("polygon");
+	const circles = searchParams.getAll("circle");
+	// Only process shapes if at least one polygon or circle was provided
+	if (polygons.length || circles.length) {
+		const shapes = [] as Array<MapShape>;
+
+		for (const poly of polygons) {
+			shapes.push(stringToPolygon(poly));
+		}
+		for (const cir of circles) {
+			shapes.push(stringToCircle(cir));
+		}
+
+		return shapes;
+	}
 }
 
 const rounding = 10000;
