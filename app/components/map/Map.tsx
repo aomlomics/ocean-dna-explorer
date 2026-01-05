@@ -6,6 +6,7 @@ import { NullLocation } from "@/types/globals";
 export default function Map({
 	query,
 	locations,
+	where,
 	id,
 	table,
 	titleTable,
@@ -17,6 +18,7 @@ export default function Map({
 	shapesToUrl,
 	className = ""
 }: {
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -47,6 +49,7 @@ export default function Map({
 				<SuspenseMap
 					query={query}
 					locations={locations}
+					where={where}
 					id={id}
 					table={table}
 					titleTable={titleTable}
@@ -65,6 +68,7 @@ export default function Map({
 async function SuspenseMap({
 	query,
 	locations,
+	where,
 	id,
 	table,
 	titleTable,
@@ -77,6 +81,7 @@ async function SuspenseMap({
 }: {
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -91,6 +96,7 @@ async function SuspenseMap({
 		return (
 			<DynamicMap
 				locations={locations}
+				where={where}
 				id={id}
 				table={table}
 				titleTable={titleTable}
@@ -106,6 +112,7 @@ async function SuspenseMap({
 		return (
 			<DynamicMap
 				locations={await query()}
+				where={where}
 				id={id}
 				table={table}
 				titleTable={titleTable}

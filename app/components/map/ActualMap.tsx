@@ -191,6 +191,7 @@ function compressIfNeeded(str: string) {
 
 export default function ActualMap({
 	locations,
+	where,
 	id = "samp_name",
 	table = "sample",
 	titleTable,
@@ -202,6 +203,7 @@ export default function ActualMap({
 	shapesToUrl
 }: {
 	locations: NullLocation[];
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -608,6 +610,7 @@ export default function ActualMap({
 						<DrawSelectedControl
 							pointsInside={pointsInside}
 							table={table}
+							where={where}
 							id={id}
 							legendInfo={legendInfo}
 							mapRef={mapRef}
@@ -1892,6 +1895,7 @@ function ClusterControl({
 function DrawSelectedControl({
 	pointsInside,
 	table,
+	where,
 	id,
 	legendInfo,
 	mapRef,
@@ -1899,6 +1903,7 @@ function DrawSelectedControl({
 }: {
 	pointsInside: Location[];
 	table: Uncapitalize<Prisma.ModelName>;
+	where?: Record<string, string>;
 	id: string;
 	legendInfo: LegendInfo;
 	mapRef: RefObject<Map | null>;
@@ -1939,7 +1944,13 @@ function DrawSelectedControl({
 								values: delayedPointsInsize
 							}}
 							hrefFunction={() =>
-								`/search?table=sample&${Object.values(shapes)
+								`/search?table=sample${
+									where
+										? `&advanced=[${Object.entries(where)
+												.map(([f, v]) => `["${f}","equals","${v}"]`)
+												.join(",")}]`
+										: ""
+								}&${Object.values(shapes)
 									.map((s) => {
 										if (s.type === "polygon") {
 											return "polygon=" + polygonToString(s);
