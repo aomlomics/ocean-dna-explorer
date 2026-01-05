@@ -29,7 +29,8 @@ import {
 	circleToString,
 	getLocationsInsideShapes,
 	getShapesFromUrl,
-	polygonToString
+	polygonToString,
+	uncapitalizeTable
 } from "@/app/helpers/utils";
 import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
@@ -714,6 +715,7 @@ export default function ActualMap({
 										<PopupWithSearch
 											table={table}
 											titleTable={titleTable}
+											where={where}
 											loc={loc}
 											id={id}
 											legendInfo={legendInfo}
@@ -743,6 +745,7 @@ export default function ActualMap({
 												<PopupWithSearch
 													table={table}
 													titleTable={titleTable}
+													where={where}
 													loc={loc}
 													id={id}
 													legendInfo={legendInfo}
@@ -889,6 +892,7 @@ function PopupWithSearchBody({
 						</div>
 					</>
 				) : (
+					//TODO: name goes outside div when only 1
 					<>
 						<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
 						{legendInfo ? (
@@ -952,7 +956,17 @@ function PopupWithSearch({
 					}],["decimalLongitude","equals",${loc.decimalLongitude}]${
 						where
 							? `,${Object.entries(where)
-									.map(([f, v]) => `["${f}","equals","${v}"]`)
+									.map(([f, v]) => {
+										if (TableMetadata[table].enumSchema.options.includes(f)) {
+											return `["${f}","equals","${v}"]`;
+										} else {
+											for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
+												if (f === TableMetadata[model].titleField) {
+													return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
+												}
+											}
+										}
+									})
 									.join(",")}`
 							: ""
 					}${

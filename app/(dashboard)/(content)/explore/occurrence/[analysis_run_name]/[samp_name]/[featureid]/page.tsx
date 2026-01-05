@@ -169,17 +169,11 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					This occurrence links{" "}
-					<Link
-						href={`/explore/feature/${occurrence.Feature.featureid}`}
-						className="link link-primary link-hover"
-					>
+					<Link href={`/explore/feature/${occurrence.Feature.featureid}`} className="link link-primary link-hover">
 						feature {occurrence.Feature.featureid}
 					</Link>{" "}
 					to{" "}
-					<Link
-						href={`/explore/sample/${occurrence.Sample.samp_name}`}
-						className="link link-primary link-hover"
-					>
+					<Link href={`/explore/sample/${occurrence.Sample.samp_name}`} className="link link-primary link-hover">
 						sample {occurrence.Sample.samp_name}
 					</Link>{" "}
 					in{" "}
@@ -191,17 +185,14 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 					</Link>
 					.
 				</p>
-		</header>
+			</header>
 
 			<section className="mt-2 space-y-8">
 				{/* Top layout: map and occurrence details */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 					{/* Left: Single-sample map */}
 					<div className="h-full">
-						<Map
-							locations={[occurrence.Sample as any]}
-							className="aspect-square rounded-xl overflow-hidden"
-						/>
+						<Map locations={[occurrence.Sample]} className="aspect-square rounded-xl overflow-hidden" />
 					</div>
 
 					{/* Right: Featured data */}
@@ -218,17 +209,13 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 									<div className="space-y-3">
 										{taxonomyObject ? (
 											<Link
-												href={`/explore/taxonomy/${encodeURIComponent(
-													taxonomyObject.taxonomy
-												)}`}
+												href={`/explore/taxonomy/${encodeURIComponent(taxonomyObject.taxonomy)}`}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
 											</Link>
 										) : (
-											<p className="text-base md:text-lg font-semibold text-base-content">
-												{taxonomyName}
-											</p>
+											<p className="text-base md:text-lg font-semibold text-base-content">{taxonomyName}</p>
 										)}
 										<div className="space-y-1">
 											<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
@@ -244,23 +231,17 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 								{/* Right: full taxonomy and DNA sequence */}
 								<div className="space-y-5">
 									<div className="space-y-2">
-										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-											Full taxonomy
-										</p>
+										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Full taxonomy</p>
 										<div className="max-h-40 overflow-y-auto pr-1 bg-base-200/60 rounded-lg p-3">
 											{taxonomyObject ? (
 												formatTaxonomyDisplay(taxonomyObject)
 											) : (
-												<p className="text-sm text-base-content/70">
-													No taxonomy assignment available.
-												</p>
+												<p className="text-sm text-base-content/70">No taxonomy assignment available.</p>
 											)}
 										</div>
 									</div>
 									<div className="space-y-2">
-										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-											DNA sequence
-										</p>
+										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">DNA sequence</p>
 										<p className="font-mono text-sm md:text-base text-base-content break-all bg-base-200/60 rounded-lg p-3">
 											{occurrence.Feature.dna_sequence}
 										</p>
@@ -289,9 +270,7 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 								}}
 							/>
 							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-									Sample
-								</p>
+								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Sample</p>
 								<Link
 									href={`/explore/sample/${occurrence.Sample.samp_name}`}
 									className="text-base-content font-medium hover:text-primary break-all"
@@ -316,9 +295,7 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 								}}
 							/>
 							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-									Feature
-								</p>
+								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Feature</p>
 								<Link
 									href={`/explore/feature/${occurrence.Feature.featureid}`}
 									className="text-base-content font-medium hover:text-primary break-all"
@@ -343,9 +320,7 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 								}}
 							/>
 							<div>
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-									Analysis
-								</p>
+								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Analysis</p>
 								<Link
 									href={`/explore/analysis/${occurrence.Analysis.analysis_run_name}`}
 									className="text-base-content font-medium hover:text-primary break-all"
