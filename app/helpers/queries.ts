@@ -318,7 +318,6 @@ function advancedRecurse(
 }
 
 export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, paramsArray: ParamsArray) {
-	console.log(paramsArray);
 	return { AND: paramsArray.map((e) => advancedRecurse(table, e)) };
 }
 

@@ -988,7 +988,6 @@ function Resizable({
 		//TODO: don't trigger resize when legendInfo.hidden changes
 		//TODO: doesn't change width when shapesInside changes
 		if (checkSize && ref.current && childRef.current && mapRef.current) {
-			console.log("checking/.//");
 			const mapContainer = mapRef.current.getContainer();
 
 			//set new width, and new min width if applicable
