@@ -1985,7 +1985,17 @@ function DrawSelectedControl({
 							href={`/search?table=sample${
 								where
 									? `&advanced=[${Object.entries(where)
-											.map(([f, v]) => `["${f}","equals","${v}"]`)
+											.map(([f, v]) => {
+												if (TableMetadata[table].enumSchema.options.includes(f)) {
+													return `["${f}","equals","${v}"]`;
+												} else {
+													for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
+														if (f === TableMetadata[model].titleField) {
+															return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
+														}
+													}
+												}
+											})
 											.join(",")}]`
 									: ""
 							}&${Object.values(shapes)
