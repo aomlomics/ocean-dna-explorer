@@ -377,11 +377,12 @@ export function parseApiQuery(
 		};
 	}
 ) {
-	//TODO: needs testing
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		if (table === "sample") {
+		const tempShapes = getShapesFromUrl(searchParams);
+
+		if (tempShapes) {
 			if (
 				!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
 				!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
@@ -389,12 +390,10 @@ export function parseApiQuery(
 				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
 			}
 
-			shapes = getShapesFromUrl(searchParams);
+			shapes = tempShapes;
 
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
-		} else {
-			throw new Error(`Table with name of "${table}" does not have location data, so shapes may not be used.`);
 		}
 	}
 

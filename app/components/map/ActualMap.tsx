@@ -782,14 +782,14 @@ function PopupWithSearchBody({
 	loc,
 	id,
 	legendInfo,
-	hrefFunction
+	href
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
-	hrefFunction?: () => string;
+	href?: string;
 }) {
 	//TODO: filter not working
 	const [filter, setFilter] = useState("");
@@ -845,8 +845,8 @@ function PopupWithSearchBody({
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
 								href={
-									hrefFunction
-										? hrefFunction()
+									href
+										? href
 										: `/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
 												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
 										  )}"]]`
@@ -921,10 +921,10 @@ function PopupWithSearchBody({
 	);
 }
 
-//TODO: give search body hrefFunction using where prop and exact location lat/lng
 function PopupWithSearch({
 	table,
 	titleTable,
+	where,
 	loc,
 	id,
 	legendInfo,
@@ -932,6 +932,7 @@ function PopupWithSearch({
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
+	where?: Record<string, string>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
@@ -940,7 +941,31 @@ function PopupWithSearch({
 	return (
 		<Popup className="map-popup" maxWidth={maxWidth}>
 			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
-				<PopupWithSearchBody table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
+				<PopupWithSearchBody
+					table={table}
+					titleTable={titleTable}
+					loc={loc}
+					id={id}
+					legendInfo={legendInfo}
+					href={`/search?table=sample&advanced=[["decimalLatitude","equals",${
+						loc.decimalLatitude
+					}],["decimalLongitude","equals",${loc.decimalLongitude}]${
+						where
+							? `,${Object.entries(where)
+									.map(([f, v]) => `["${f}","equals","${v}"]`)
+									.join(",")}`
+							: ""
+					}${
+						titleTable
+							? "," +
+							  (typeof TableMetadata[titleTable].titleField === "string"
+									? `["${TableMetadata[titleTable].titleField}","equals","${
+											loc[TableMetadata[titleTable].titleField]
+									  }"]`
+									: TableMetadata[titleTable].titleField.map((f) => `["${f}","equals","${loc[f]}"]`).join(","))
+							: ""
+					}]`}
+				/>
 			</div>
 		</Popup>
 	);
@@ -1943,23 +1968,21 @@ function DrawSelectedControl({
 								decimalLongitude: NaN,
 								values: delayedPointsInsize
 							}}
-							hrefFunction={() =>
-								`/search?table=sample${
-									where
-										? `&advanced=[${Object.entries(where)
-												.map(([f, v]) => `["${f}","equals","${v}"]`)
-												.join(",")}]`
-										: ""
-								}&${Object.values(shapes)
-									.map((s) => {
-										if (s.type === "polygon") {
-											return "polygon=" + polygonToString(s);
-										} else if (s.type === "circle") {
-											return "circle=" + circleToString(s);
-										}
-									})
-									.join("&")}`
-							}
+							href={`/search?table=sample${
+								where
+									? `&advanced=[${Object.entries(where)
+											.map(([f, v]) => `["${f}","equals","${v}"]`)
+											.join(",")}]`
+									: ""
+							}&${Object.values(shapes)
+								.map((s) => {
+									if (s.type === "polygon") {
+										return "polygon=" + polygonToString(s);
+									} else if (s.type === "circle") {
+										return "circle=" + circleToString(s);
+									}
+								})
+								.join("&")}`}
 						/>
 					</div>
 				</Resizable>
@@ -1968,7 +1991,7 @@ function DrawSelectedControl({
 	);
 }
 
-//TODO: give search body hrefFunction using where prop and null/DeadValueEnum
+//TODO: give search body href using where prop and null/DeadValueEnum
 function NoLocationPointsControl({
 	noLocationPoints,
 	table,
