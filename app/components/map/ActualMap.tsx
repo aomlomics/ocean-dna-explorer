@@ -2039,13 +2039,9 @@ function NoLocationPointsControl({
 								decimalLongitude: NaN,
 								values: noLocationPoints as Location[] //doesn't matter here
 							}}
-							href={`/search?table=${table}&advanced=[["OR",["decimalLatitude","null"],["decimalLatitude","range",[${
-								DeadValueNumbers[0]
-							},${
-								DeadValueNumbers[DeadValueNumbers.length - 1]
-							}]],["decimalLongitude","null"],["decimalLongitude","range",[${DeadValueNumbers[0]},${
-								DeadValueNumbers[DeadValueNumbers.length - 1]
-							}]]]${where ? "," + getWhereAdvancedHref(where, table) : ""}]`}
+							href={`/search?table=${table}&advanced=[["OR",["decimalLatitude","null"],["decimalLatitude","deadValue","any"],["decimalLongitude","null"],["decimalLongitude","deadValue","any"]]${
+								where ? "," + getWhereAdvancedHref(where, table) : ""
+							}]`}
 						/>
 					</div>
 				</Resizable>

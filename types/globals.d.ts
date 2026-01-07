@@ -58,19 +58,22 @@ export type ClerkUserObject = {
 	primaryEmailAddress?: string;
 };
 
-type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
+type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith" | "deadValue";
 type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
 export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull";
+
 type StringParamsArrayField = [string, StringQueryMode, string];
 type NumberParamsArrayField = [string, NumberQueryMode, number];
 type RangeParamsArrayField = [string, "range", [number, number] | [string, string]];
 type InParamsArrayField = [string, "in" | "notIn", number[] | string[]];
-export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[];
+
+export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[] | DeadValue;
 export type ParamsArrayField =
 	| StringParamsArrayField
 	| NumberParamsArrayField
 	| RangeParamsArrayField
-	| InParamsArrayField;
+	| InParamsArrayField
+	| DeadParamsArrayField;
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
 
 // Logical group support for advanced queries.

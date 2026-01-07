@@ -11,6 +11,7 @@ import {
 import { Prisma } from "../generated/prisma/client";
 import { getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
+import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 
 function searchRelations(
 	relations: RelationMetadata[],
@@ -109,7 +110,8 @@ const queryModes = [
 	"in",
 	"notIn",
 	"null",
-	"notNull"
+	"notNull",
+	"deadValue"
 ];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
@@ -141,8 +143,14 @@ export function parseToQuery(
 		value = queryArr[3];
 	}
 
-	if (mode && !queryModes.includes(mode)) {
-		throw new Error(`Query mode "${mode}" not supported.`);
+	if (mode) {
+		if (!queryModes.includes(mode)) {
+			throw new Error(`Query mode "${mode}" not supported.`);
+		}
+
+		if ((mode === "null" || mode === "notNull") && queryArr.length !== 2) {
+			throw new Error('Modes "null" and "notNull" do not support values.');
+		}
 	}
 
 	const model = Object.keys(Prisma.ModelName).find(
@@ -191,13 +199,31 @@ export function parseToQuery(
 	} else if (zodType.type === "string") {
 		//string behavior
 		if (mode) {
-			const typedVal = value as string;
-			searchWhere = {
-				[field]: {
-					[mode]: typedVal.replace("_", "\\_").replace("%", "\\%"),
-					mode: "insensitive"
+			if (mode === "deadValue") {
+				if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
+					throw new Error(`Invalid deadValue option "${value}".`);
 				}
-			};
+
+				if (value.toLowerCase() === "any") {
+					searchWhere = {
+						[field]: {
+							in: DeadValues
+						}
+					};
+				} else {
+					searchWhere = {
+						[field]: value
+					};
+				}
+			} else {
+				const typedVal = value as string;
+				searchWhere = {
+					[field]: {
+						[mode]: typedVal.replace("_", "\\_").replace("%", "\\%"),
+						mode: "insensitive"
+					}
+				};
+			}
 		} else {
 			const typedVal = value as string;
 			searchWhere = {
@@ -225,6 +251,31 @@ export function parseToQuery(
 					}
 				]
 			};
+		} else if (mode === "deadValue") {
+			if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${value}".`);
+			}
+
+			if (value.toLowerCase() === "any") {
+				searchWhere = {
+					AND: [
+						{
+							[field]: {
+								gte: DeadValueNumbers[0]
+							}
+						},
+						{
+							[field]: {
+								lte: DeadValueNumbers[DeadValueNumbers.length - 1]
+							}
+						}
+					]
+				};
+			} else {
+				searchWhere = {
+					[field]: DeadValueEnum[value]
+				};
+			}
 		} else {
 			const typedVal = value as number;
 
@@ -252,6 +303,31 @@ export function parseToQuery(
 					}
 				]
 			};
+		} else if (mode === "deadValue") {
+			if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${value}".`);
+			}
+
+			if (value.toLowerCase() === "any") {
+				searchWhere = {
+					AND: [
+						{
+							[field]: {
+								gte: new Date(DeadValueNumbers[0])
+							}
+						},
+						{
+							[field]: {
+								lte: new Date(DeadValueNumbers[DeadValueNumbers.length - 1])
+							}
+						}
+					]
+				};
+			} else {
+				searchWhere = {
+					[field]: new Date(DeadValueEnum[value])
+				};
+			}
 		} else {
 			const typedVal = value as string;
 

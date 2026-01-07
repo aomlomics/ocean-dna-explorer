@@ -25,6 +25,7 @@ export enum DeadValueEnum {
 	"missing: endangered species",
 	"missing: human-identifiable"
 }
+export const DeadValues = Object.values(DeadValueEnum).filter((v) => isNaN(Number(v))) as string[];
 export const DeadValueNumbers = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
 export const DeadBooleanToEnum = {
