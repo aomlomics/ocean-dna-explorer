@@ -1437,6 +1437,7 @@ function LegendControl({
 							/>
 
 							<select
+								className="select select-xs select-primary select-ghost text-sm mr-3"
 								value={legendInfo ? legendInfo.field : ""}
 								onChange={async (e) => {
 									const field = e.target.value;
@@ -1603,9 +1604,8 @@ function LegendControl({
 										});
 									}
 								}}
-								className="select select-xs select-primary select-ghost text-sm mr-3"
 							>
-								<option disabled={true} value="">
+								<option disabled value="">
 									Select field
 								</option>
 								{legendOptions.map((opt) => (
