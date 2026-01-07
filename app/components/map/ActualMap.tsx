@@ -839,7 +839,7 @@ function PopupWithSearchBody({
 							? loc[TableMetadata[titleTable].titleField]
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
 					}`}
-					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl!"
+					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start"
 				>
 					{typeof TableMetadata[titleTable].titleField === "string"
 						? loc[TableMetadata[titleTable].titleField]
