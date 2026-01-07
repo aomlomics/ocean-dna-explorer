@@ -29,7 +29,8 @@ import {
 	circleToString,
 	getLocationsInsideShapes,
 	getShapesFromUrl,
-	polygonToString
+	polygonToString,
+	uncapitalizeTable
 } from "@/app/helpers/utils";
 import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
@@ -189,6 +190,23 @@ function compressIfNeeded(str: string) {
 	}
 }
 
+function getWhereAdvancedHref(where: Record<string, string>, table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
+	return Object.entries(where)
+		.map(([f, v]) => {
+			if (TableMetadata[table].enumSchema.options.includes(f)) {
+				return `["${f}","equals","${v}"]`;
+			} else {
+				for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
+					if (f === TableMetadata[model].titleField) {
+						return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
+					}
+				}
+			}
+		})
+		.join(",");
+}
+
+//TODO: taxonomy heatmap toggle
 export default function ActualMap({
 	locations,
 	where,
@@ -603,6 +621,7 @@ export default function ActualMap({
 						id={id}
 						legendInfo={legendInfo}
 						mapRef={mapRef}
+						where={where}
 					/>
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
@@ -700,6 +719,7 @@ export default function ActualMap({
 				</FeatureGroup>
 
 				{Array.isArray(pointsOrGroups) ? (
+					//points
 					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
 						{pointsOrGroups.reduce((acc, loc, i) => {
 							if (
@@ -714,6 +734,7 @@ export default function ActualMap({
 										<PopupWithSearch
 											table={table}
 											titleTable={titleTable}
+											where={where}
 											loc={loc}
 											id={id}
 											legendInfo={legendInfo}
@@ -727,6 +748,7 @@ export default function ActualMap({
 						}, [] as ReactNode[])}
 					</ClusterGroup>
 				) : (
+					//groups
 					<>
 						{Object.values(pointsOrGroups).map((locArray, i) => (
 							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
@@ -743,6 +765,7 @@ export default function ActualMap({
 												<PopupWithSearch
 													table={table}
 													titleTable={titleTable}
+													where={where}
 													loc={loc}
 													id={id}
 													legendInfo={legendInfo}
@@ -782,16 +805,15 @@ function PopupWithSearchBody({
 	loc,
 	id,
 	legendInfo,
-	hrefFunction
+	href
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
-	hrefFunction?: () => string;
+	href?: string;
 }) {
-	//TODO: filter not working
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
 
@@ -799,7 +821,9 @@ function PopupWithSearchBody({
 		if (loc.values) {
 			const tempFilteredValues = [] as Location[];
 			for (const l of loc.values) {
-				tempFilteredValues.push(l);
+				if (l[id].toLowerCase().includes(filter.toLowerCase())) {
+					tempFilteredValues.push(l);
+				}
 			}
 
 			setFilteredValues(tempFilteredValues);
@@ -835,7 +859,6 @@ function PopupWithSearchBody({
 			)}
 			<>
 				{filteredValues ? (
-					//TODO: use optional where param to clean up query (both from map, and from parent of searchbody)
 					<>
 						<div className="flex justify-between gap-2 items-center">
 							<h2 className="text-primary text-lg">
@@ -845,14 +868,14 @@ function PopupWithSearchBody({
 							<Link
 								className="btn btn-xs btn-primary text-primary-content!"
 								href={
-									hrefFunction
-										? hrefFunction()
-										: `/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
+									href
+										? href
+										: `/search?table=${table}&advanced=[["${id}","in","${compressIfNeeded(
 												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
 										  )}"]]`
 								}
 							>
-								Search
+								View as Search
 							</Link>
 						</div>
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
@@ -889,6 +912,7 @@ function PopupWithSearchBody({
 						</div>
 					</>
 				) : (
+					//TODO: name goes outside div when only 1
 					<>
 						<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
 						{legendInfo ? (
@@ -921,10 +945,10 @@ function PopupWithSearchBody({
 	);
 }
 
-//TODO: give search body hrefFunction using where prop and exact location lat/lng
 function PopupWithSearch({
 	table,
 	titleTable,
+	where,
 	loc,
 	id,
 	legendInfo,
@@ -932,6 +956,7 @@ function PopupWithSearch({
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
+	where?: Record<string, string>;
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
@@ -940,7 +965,27 @@ function PopupWithSearch({
 	return (
 		<Popup className="map-popup" maxWidth={maxWidth}>
 			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
-				<PopupWithSearchBody table={table} titleTable={titleTable} loc={loc} id={id} legendInfo={legendInfo} />
+				<PopupWithSearchBody
+					table={table}
+					titleTable={titleTable}
+					loc={loc}
+					id={id}
+					legendInfo={legendInfo}
+					href={`/search?table=${table}&advanced=[["decimalLatitude","equals",${
+						loc.decimalLatitude
+					}],["decimalLongitude","equals",${loc.decimalLongitude}]${
+						where ? "," + getWhereAdvancedHref(where, table) : ""
+					}${
+						titleTable
+							? "," +
+							  (typeof TableMetadata[titleTable].titleField === "string"
+									? `["${TableMetadata[titleTable].titleField}","equals","${
+											loc[TableMetadata[titleTable].titleField]
+									  }"]`
+									: TableMetadata[titleTable].titleField.map((f) => `["${f}","equals","${loc[f]}"]`).join(","))
+							: ""
+					}]`}
+				/>
 			</div>
 		</Popup>
 	);
@@ -988,6 +1033,7 @@ function Resizable({
 		//TODO: doesn't shrink after resetting legend
 		//TODO: don't trigger resize when legendInfo.hidden changes
 		//TODO: doesn't change width when shapesInside changes
+		//TODO: doesn't change width when filter changes
 		if (checkSize && ref.current && childRef.current && mapRef.current) {
 			const mapContainer = mapRef.current.getContainer();
 
@@ -1300,6 +1346,35 @@ function ResetButton({
 	);
 }
 
+function LeafletControl({
+	click,
+	scroll,
+	className,
+	style,
+	children
+}: {
+	click?: true;
+	scroll?: true;
+	className?: string;
+	style?: Record<string, string>;
+	children: ReactNode;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			if (click) DomEvent.disableClickPropagation(ref.current);
+			if (scroll) DomEvent.disableScrollPropagation(ref.current);
+		}
+	}, []);
+
+	return (
+		<div className={`leaflet-control${className ? " " + className : ""}`} ref={ref} style={style}>
+			{children}
+		</div>
+	);
+}
+
 function LegendControl({
 	legend,
 	legendInfo,
@@ -1324,24 +1399,15 @@ function LegendControl({
 	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
 	| { titleTable?: undefined; points: LocationWithValues[] }
 )) {
-	const ref = useRef<HTMLDivElement>(null);
-
 	const [filter, setFilter] = useState("");
 	const [shown, setShown] = useState(!!legendInfo);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-			DomEvent.disableScrollPropagation(ref.current);
-		}
-	}, []);
 
 	if (!legend) {
 		return null;
 	}
 
 	return (
-		<div className="leaflet-control leaflet-bar border-none! mb-6! flex flex-col gap-2" ref={ref}>
+		<LeafletControl click scroll className="leaflet-bar border-none! mb-6! flex flex-col gap-2">
 			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} onCollapse={(c) => setShown(!c)}>
 				<Resizable
 					growDirection={"up"}
@@ -1739,7 +1805,7 @@ function LegendControl({
 					</div>
 				</Resizable>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -1754,16 +1820,8 @@ function PointSizeControl({
 	pointSizeStep: number | undefined;
 	setPointSizeStep: Dispatch<SetStateAction<number | undefined>>;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-		}
-	}, []);
-
 	return (
-		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
+		<LeafletControl click className="leaflet-bar border-none!">
 			<Collapsible dir="left" defaultCollapse hiddenText="Show point size control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
@@ -1824,7 +1882,7 @@ function PointSizeControl({
 					</div>
 				</div>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -1839,20 +1897,12 @@ function ClusterControl({
 	onChange: Dispatch<SetStateAction<number | undefined>>;
 	clusterRadius?: number;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-		}
-	}, []);
-
 	if (!cluster) {
 		return null;
 	}
 
 	return (
-		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
+		<LeafletControl click className="leaflet-bar border-none!">
 			<Collapsible dir="left" defaultCollapse hiddenText="Show cluster control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
@@ -1888,7 +1938,7 @@ function ClusterControl({
 					</div>
 				</div>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -1909,24 +1959,16 @@ function DrawSelectedControl({
 	mapRef: RefObject<Map | null>;
 	shapes: Record<string, MapShape>;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(true);
-	const [delayedPointsInsize, setDelayedPointsInsize] = useState(pointsInside);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-			DomEvent.disableScrollPropagation(ref.current);
-		}
-	}, []);
+	const [delayedPointsInside, setDelayedPointsInside] = useState(pointsInside);
 
 	//delay changing state variable by 1 render cycle to allow for resizable to work
 	useEffect(() => {
-		setDelayedPointsInsize(pointsInside);
+		setDelayedPointsInside(pointsInside);
 	}, [pointsInside]);
 
 	return (
-		<div className="leaflet-control" ref={ref}>
+		<LeafletControl click scroll>
 			<Collapsible
 				hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}
 				onCollapse={(c) => setShown(!c)}
@@ -1941,59 +1983,46 @@ function DrawSelectedControl({
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
-								values: delayedPointsInsize
+								values: delayedPointsInside
 							}}
-							hrefFunction={() =>
-								`/search?table=sample${
-									where
-										? `&advanced=[${Object.entries(where)
-												.map(([f, v]) => `["${f}","equals","${v}"]`)
-												.join(",")}]`
-										: ""
-								}&${Object.values(shapes)
-									.map((s) => {
-										if (s.type === "polygon") {
-											return "polygon=" + polygonToString(s);
-										} else if (s.type === "circle") {
-											return "circle=" + circleToString(s);
-										}
-									})
-									.join("&")}`
-							}
+							href={`/search?table=${table}${
+								where ? `&advanced=[${where ? getWhereAdvancedHref(where, table) : ""}]` : ""
+							}&${Object.values(shapes)
+								.map((s) => {
+									if (s.type === "polygon") {
+										return "polygon=" + polygonToString(s);
+									} else if (s.type === "circle") {
+										return "circle=" + circleToString(s);
+									}
+								})
+								.join("&")}`}
 						/>
 					</div>
 				</Resizable>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
-//TODO: give search body hrefFunction using where prop and null/DeadValueEnum
 function NoLocationPointsControl({
 	noLocationPoints,
 	table,
+	where,
 	id,
 	legendInfo,
 	mapRef
 }: {
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<Prisma.ModelName>;
+	where?: Record<string, string>;
 	id: string;
 	legendInfo: LegendInfo;
 	mapRef: RefObject<Map | null>;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(false);
 
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-			DomEvent.disableScrollPropagation(ref.current);
-		}
-	}, []);
-
 	return (
-		<div className="leaflet-control" ref={ref}>
+		<LeafletControl click scroll>
 			<Collapsible
 				dir="left"
 				defaultCollapse
@@ -2012,29 +2041,24 @@ function NoLocationPointsControl({
 								decimalLongitude: NaN,
 								values: noLocationPoints as Location[] //doesn't matter here
 							}}
+							href={`/search?table=${table}&advanced=[["OR",["decimalLatitude","null"],["decimalLatitude","deadValue","any"],["decimalLongitude","null"],["decimalLongitude","deadValue","any"]]${
+								where ? "," + getWhereAdvancedHref(where, table) : ""
+							}]`}
 						/>
 					</div>
 				</Resizable>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
 function RecenterControl({ reset }: { reset: () => void }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-		}
-	}, []);
-
 	//TODO: make this button merge with other control instead of being on its own
 	return (
-		<div
-			className="leaflet-control cursor-pointer! bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-sm"
+		<LeafletControl
+			click
+			className="cursor-pointer! bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-sm"
 			style={{ padding: "calc(var(--spacing) * 0.8)" }}
-			ref={ref}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -2048,7 +2072,7 @@ function RecenterControl({ reset }: { reset: () => void }) {
 			>
 				<path d="M12.5 17.402V21.5q0 .213-.143.357T12 22t-.357-.143q-.143-.144-.143-.357v-4.098l-1.13 1.13q-.141.141-.342.15t-.366-.155q-.16-.16-.16-.354t.16-.354l1.773-1.773q.242-.242.565-.242t.565.242l1.773 1.773q.14.14.153.342t-.153.366q-.16.16-.35.162t-.357-.156zM6.598 12.5H2.5q-.213 0-.357-.143T2 12t.143-.357q.144-.143.357-.143h4.098l-1.13-1.13q-.141-.141-.15-.342t.155-.366q.16-.16.354-.16t.354.16l1.773 1.773q.242.242.242.565t-.242.565L6.18 14.338q-.14.14-.342.153t-.366-.153q-.16-.16-.162-.35t.156-.357zm10.804 0l1.13 1.13q.141.141.15.342t-.155.366q-.16.16-.354.16t-.354-.16l-1.773-1.773q-.242-.242-.242-.565t.242-.565l1.773-1.773q.14-.14.342-.153t.366.153q.16.16.162.35t-.156.357L17.402 11.5H21.5q.213 0 .357.143T22 12t-.143.357q-.144.143-.357.143zM12 12.98q-.413 0-.697-.283T11.019 12t.284-.697t.697-.284t.697.284t.284.697t-.284.697t-.697.284m-.5-6.383V2.5q0-.213.143-.357T12 2t.357.143q.143.144.143.357v4.098l1.13-1.13q.141-.141.342-.15t.366.155q.16.16.16.354t-.16.354l-1.773 1.773q-.242.242-.565.242t-.565-.242L9.662 6.18q-.14-.14-.153-.342t.153-.366q.16-.16.35-.162t.357.156z" />
 			</svg>
-		</div>
+		</LeafletControl>
 	);
 }
 

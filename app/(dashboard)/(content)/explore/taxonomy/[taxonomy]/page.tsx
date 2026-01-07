@@ -32,7 +32,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 
-	const {dbTaxonomy, samples} = await prisma.$transaction(async (tx) => {
+	const { dbTaxonomy, samples } = await prisma.$transaction(async (tx) => {
 		const dbTaxonomy = await prisma.taxonomy.findUnique({
 			where: {
 				taxonomy
@@ -50,20 +50,22 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					}
 				}
 			}
-		})
-		
+		});
+
 		const samples = await prisma.sample.findMany({
 			where: {
 				project_id: {
-					in: Array.from(new Set(dbTaxonomy?.Assignments.reduce((acc, a) => [...acc, a.Analysis.project_id], [] as string[])))
+					in: Array.from(
+						new Set(dbTaxonomy?.Assignments.reduce((acc, a) => [...acc, a.Analysis.project_id], [] as string[]))
+					)
 				}
 			},
 			select: {
 				samp_name: true
 			}
-		})
-	
-		return {dbTaxonomy, samples}
+		});
+
+		return { dbTaxonomy, samples };
 	});
 
 	async function mapQuery() {
@@ -91,12 +93,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					samp_name: {
 						in: occurrences.map((occ) => occ.samp_name)
 					}
-				},
-				select: {
-					samp_name: true,
-					project_id: true,
-					decimalLatitude: true,
-					decimalLongitude: true
 				}
 			});
 		});
@@ -108,9 +104,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const displayName = dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ");
 
 	// Get unique project IDs for display
-	const uniqueProjects = [...new Set(dbTaxonomy.Assignments.map(a => a.Analysis.project_id))];
-	const samplesText = samples.length === 1 ? '1 sample' : `${samples.length} samples`;
-	const projectsText = uniqueProjects.length === 1 ? '1 project' : `${uniqueProjects.length} projects`;
+	const uniqueProjects = [...new Set(dbTaxonomy.Assignments.map((a) => a.Analysis.project_id))];
+	const samplesText = samples.length === 1 ? "1 sample" : `${samples.length} samples`;
+	const projectsText = uniqueProjects.length === 1 ? "1 project" : `${uniqueProjects.length} projects`;
 
 	// Build search URLs - using Assignment/Occurrence tables directly
 	const assignmentFilter = JSON.stringify([["taxonomy", "equals", taxonomy]]);
@@ -122,7 +118,10 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip={TableMetadata.taxonomy.description}>
+					<h1
+						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300"
+						data-tip={TableMetadata.taxonomy.description}
+					>
 						{displayName}
 					</h1>
 				</div>
@@ -130,14 +129,14 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					Found in {samplesText} across {projectsText}
 				</p>
 			</header>
-			
+
 			{/* Main Grid Layout */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Left Column: Map + Bottom Cards */}
 				<div className="space-y-6">
 					{/* Map */}
 					<div className="w-full h-[350px]">
-						<Map query={mapQuery} cluster />
+						<Map query={mapQuery} where={{ taxonomy }} cluster />
 					</div>
 
 					{/* Cards Below Map */}
@@ -156,7 +155,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 										</svg>
 									</div>
 									<div>
-										<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">Total Analyses</div>
+										<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
+											Total Analyses
+										</div>
 										<div className="text-2xl font-bold text-primary mt-1">{dbTaxonomy.Assignments.length}</div>
 									</div>
 								</div>
@@ -204,7 +205,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							</div>
 							<div className="flex-1 flex flex-col ml-4">
 								<div className="text-3xl font-bold text-primary">{uniqueProjects.length}</div>
-								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Projects</div>
+								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
+									Projects
+								</div>
 							</div>
 						</Link>
 
@@ -220,11 +223,13 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							</div>
 							<div className="flex-1 flex flex-col ml-4">
 								<div className="text-3xl font-bold text-primary">{samples.length}</div>
-								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Samples</div>
+								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
+									Samples
+								</div>
 							</div>
 						</Link>
 					</div>
-			</div>
+				</div>
 
 				{/* Right Column: Taxonomy Image + Ranking */}
 				<div className="bg-base-200 rounded-xl p-6 flex flex-col">
@@ -260,8 +265,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							, using{" "}
 							<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
 								GBIF
-							</Link>
-							{" "}Suggest API to match our taxonomy with PhyloPic's database. Images on PhyloPic are contributed by scientists and artists worldwide under various Creative Commons licenses.
+							</Link>{" "}
+							Suggest API to match our taxonomy with PhyloPic's database. Images on PhyloPic are contributed by
+							scientists and artists worldwide under various Creative Commons licenses.
 						</p>
 					</div>
 				</div>

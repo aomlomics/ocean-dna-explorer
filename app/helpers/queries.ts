@@ -11,6 +11,7 @@ import {
 import { Prisma } from "../generated/prisma/client";
 import { getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
+import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 
 function searchRelations(
 	relations: RelationMetadata[],
@@ -96,7 +97,22 @@ function deepWhere(
 	}
 }
 
-const queryModes = ["equals", "contains", "startsWith", "endsWith", "lt", "lte", "gt", "gte", "range", "in", "notIn"];
+const queryModes = [
+	"equals",
+	"contains",
+	"startsWith",
+	"endsWith",
+	"lt",
+	"lte",
+	"gt",
+	"gte",
+	"range",
+	"in",
+	"notIn",
+	"null",
+	"notNull",
+	"deadValue"
+];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation
@@ -106,9 +122,14 @@ export function parseToQuery(
 	let mode = "" as QueryMode;
 	let value = "" as ParamsArrayValue;
 	if (queryArr.length === 2) {
-		//search field for value
 		field = queryArr[0];
-		value = queryArr[1] as string;
+		if (queryArr[1] === "null" || queryArr[1] === "notNull") {
+			//search field for null/notNull
+			mode = queryArr[1];
+		} else {
+			//search field for value
+			value = queryArr[1] as string;
+		}
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
 		field = queryArr[0];
@@ -122,8 +143,14 @@ export function parseToQuery(
 		value = queryArr[3];
 	}
 
-	if (mode && !queryModes.includes(mode)) {
-		throw new Error(`Query mode "${mode}" not supported.`);
+	if (mode) {
+		if (!queryModes.includes(mode)) {
+			throw new Error(`Query mode "${mode}" not supported.`);
+		}
+
+		if ((mode === "null" || mode === "notNull") && queryArr.length !== 2) {
+			throw new Error('Modes "null" and "notNull" do not support values.');
+		}
 	}
 
 	const model = Object.keys(Prisma.ModelName).find(
@@ -137,27 +164,57 @@ export function parseToQuery(
 		return { [field]: value };
 	}
 
-	const type = getZodType(TableMetadata[model].schema.shape[field]).type;
+	const zodType = getZodType(TableMetadata[model].schema.shape[field]);
 
 	let searchWhere;
-	if (type === "string") {
+	//universal mode behavior
+	if (mode === "null" || mode === "notNull") {
+		if (zodType.optional) {
+			if (mode === "null") {
+				searchWhere = {
+					[field]: null
+				};
+			} else if (mode === "notNull") {
+				searchWhere = {
+					[field]: { not: null }
+				};
+			}
+		} else {
+			throw new Error(`Mode may not be null or notNull, as field named "${field}" is not optional.`);
+		}
+	} else if (mode === "in" || mode === "notIn") {
+		//uncompress if necessary
+		if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
+			value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
+			if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
+				throw new Error("Value must be an array of primitives compressed with lz-string.");
+			}
+		}
+
+		searchWhere = {
+			[field]: {
+				[mode]: value
+			}
+		};
+	} else if (zodType.type === "string") {
+		//string behavior
 		if (mode) {
-			if (mode === "in" || mode === "notIn") {
-				//uncompress
-				if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
-					value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
-					if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
-						throw new Error("Value must be array of primitives.");
-					}
+			if (mode === "deadValue") {
+				if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
+					throw new Error(`Invalid deadValue option "${value}".`);
 				}
 
-				//TODO: needs testing
-				const typedVal = value as string[];
-				searchWhere = {
-					[field]: {
-						[mode]: typedVal
-					}
-				};
+				if (value.toLowerCase() === "any") {
+					searchWhere = {
+						[field]: {
+							in: DeadValues
+						}
+					};
+				} else {
+					searchWhere = {
+						[field]: value
+					};
+				}
 			} else {
 				const typedVal = value as string;
 				searchWhere = {
@@ -176,7 +233,8 @@ export function parseToQuery(
 				}
 			};
 		}
-	} else if (type === "integer" || type === "float") {
+	} else if (zodType.type === "integer" || zodType.type === "float") {
+		//number behavior
 		if (mode === "range") {
 			const typedVal = value as [number, number];
 			searchWhere = {
@@ -193,14 +251,31 @@ export function parseToQuery(
 					}
 				]
 			};
-		} else if (mode === "in" || mode === "notIn") {
-			//TODO: needs testing
-			const typedVal = value as number[];
-			searchWhere = {
-				[field]: {
-					[mode]: typedVal
-				}
-			};
+		} else if (mode === "deadValue") {
+			if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${value}".`);
+			}
+
+			if (value.toLowerCase() === "any") {
+				searchWhere = {
+					AND: [
+						{
+							[field]: {
+								gte: DeadValueNumbers[0]
+							}
+						},
+						{
+							[field]: {
+								lte: DeadValueNumbers[DeadValueNumbers.length - 1]
+							}
+						}
+					]
+				};
+			} else {
+				searchWhere = {
+					[field]: DeadValueEnum[value]
+				};
+			}
 		} else {
 			const typedVal = value as number;
 
@@ -210,7 +285,8 @@ export function parseToQuery(
 				searchWhere = { [field]: { [mode]: typedVal } };
 			}
 		}
-	} else if (type === "date") {
+	} else if (zodType.type === "date") {
+		//date behavior
 		if (mode === "range") {
 			const typedVal = value as [string, string];
 			searchWhere = {
@@ -227,14 +303,31 @@ export function parseToQuery(
 					}
 				]
 			};
-		} else if (mode === "in" || mode === "notIn") {
-			//TODO: needs testing
-			const typedVal = value as string[];
-			searchWhere = {
-				[field]: {
-					[mode]: typedVal
-				}
-			};
+		} else if (mode === "deadValue") {
+			if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${value}".`);
+			}
+
+			if (value.toLowerCase() === "any") {
+				searchWhere = {
+					AND: [
+						{
+							[field]: {
+								gte: new Date(DeadValueNumbers[0])
+							}
+						},
+						{
+							[field]: {
+								lte: new Date(DeadValueNumbers[DeadValueNumbers.length - 1])
+							}
+						}
+					]
+				};
+			} else {
+				searchWhere = {
+					[field]: new Date(DeadValueEnum[value])
+				};
+			}
 		} else {
 			const typedVal = value as string;
 
@@ -273,7 +366,7 @@ export function parseToQuery(
 				};
 			}
 		}
-	} else if (type === "string[]") {
+	} else if (zodType.type === "string[]") {
 		//TODO: add string arrays back to schema once Prisma supports contains on arrays
 	}
 
@@ -377,11 +470,12 @@ export function parseApiQuery(
 		};
 	}
 ) {
-	//TODO: needs testing
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		if (table === "sample") {
+		const tempShapes = getShapesFromUrl(searchParams);
+
+		if (tempShapes) {
 			if (
 				!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
 				!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
@@ -389,12 +483,10 @@ export function parseApiQuery(
 				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
 			}
 
-			shapes = getShapesFromUrl(searchParams);
+			shapes = tempShapes;
 
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
-		} else {
-			throw new Error(`Table with name of "${table}" does not have location data, so shapes may not be used.`);
 		}
 	}
 

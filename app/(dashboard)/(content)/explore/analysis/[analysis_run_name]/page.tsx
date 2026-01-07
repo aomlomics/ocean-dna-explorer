@@ -49,7 +49,7 @@ export default async function Analysis_run_name({
 	});
 	if (!analysis) return <>Analysis not found</>;
 	const { _count: _, Occurrences: __, editHistory: ___, Assay: ____, ...justAnalysis } = analysis;
-	
+
 	const samples = analysis.Occurrences.map((occ) => occ.Sample);
 
 	return (
@@ -78,7 +78,10 @@ export default async function Analysis_run_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.analysis.description}>
+					<h1
+						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
+						data-tip={TableMetadata.analysis.description}
+					>
 						{analysis_run_name}
 					</h1>
 					<EditHistory editHistory={analysis.editHistory} />
@@ -96,7 +99,7 @@ export default async function Analysis_run_name({
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-6">
-					<Map locations={samples} cluster draw className="w-full h-[440px]" />
+					<Map locations={samples} where={{ analysis_run_name }} cluster draw className="w-full h-[440px]" />
 
 					{/* Analysis Information */}
 					<div className="bg-base-200 rounded-xl p-6">
@@ -116,7 +119,7 @@ export default async function Analysis_run_name({
 					{/* Stats */}
 					<div>
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis at a Glance</h2>
-						
+
 						{/* Download Button */}
 						<a
 							href={`/api/occurrenceTable/${analysis_run_name}`}
@@ -133,7 +136,7 @@ export default async function Analysis_run_name({
 								/>
 							</svg>
 						</a>
-						
+
 						<div className="grid grid-cols-2 gap-4">
 							<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center">
 								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
@@ -141,8 +144,12 @@ export default async function Analysis_run_name({
 										<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 9a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
 									</svg>
 								</div>
-								<div className="text-3xl font-bold text-primary mb-1">{analysis._count.Occurrences.toLocaleString()}</div>
-								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Occurrences</div>
+								<div className="text-3xl font-bold text-primary mb-1">
+									{analysis._count.Occurrences.toLocaleString()}
+								</div>
+								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
+									Occurrences
+								</div>
 							</div>
 
 							<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center">
@@ -153,8 +160,12 @@ export default async function Analysis_run_name({
 										</g>
 									</svg>
 								</div>
-								<div className="text-3xl font-bold text-primary mb-1">{analysis._count.Assignments.toLocaleString()}</div>
-								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Assignments</div>
+								<div className="text-3xl font-bold text-primary mb-1">
+									{analysis._count.Assignments.toLocaleString()}
+								</div>
+								<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
+									Assignments
+								</div>
 							</div>
 
 							<Link href={sampleSearchUrl}>
@@ -165,7 +176,9 @@ export default async function Analysis_run_name({
 										</svg>
 									</div>
 									<div className="text-3xl font-bold text-primary mb-1">{samples.length.toLocaleString()}</div>
-									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">Samples</div>
+									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
+										Samples
+									</div>
 								</div>
 							</Link>
 						</div>
