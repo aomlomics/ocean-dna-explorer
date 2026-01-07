@@ -133,7 +133,7 @@ export function parseToQuery(
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
 		field = queryArr[0];
-		mode = queryArr[1];
+		mode = queryArr[1] as QueryMode;
 		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
@@ -198,13 +198,14 @@ export function parseToQuery(
 		};
 	} else if (zodType.type === "string") {
 		//string behavior
+		const typedVal = value as string;
 		if (mode) {
 			if (mode === "deadValue") {
-				if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
-					throw new Error(`Invalid deadValue option "${value}".`);
+				if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
+					throw new Error(`Invalid deadValue option "${typedVal}".`);
 				}
 
-				if (value.toLowerCase() === "any") {
+				if (typedVal.toLowerCase() === "any") {
 					searchWhere = {
 						[field]: {
 							in: DeadValues
@@ -212,11 +213,10 @@ export function parseToQuery(
 					};
 				} else {
 					searchWhere = {
-						[field]: value
+						[field]: typedVal
 					};
 				}
 			} else {
-				const typedVal = value as string;
 				searchWhere = {
 					[field]: {
 						[mode]: typedVal.replace("_", "\\_").replace("%", "\\%"),
@@ -225,7 +225,6 @@ export function parseToQuery(
 				};
 			}
 		} else {
-			const typedVal = value as string;
 			searchWhere = {
 				[field]: {
 					contains: typedVal.replace("_", "\\_").replace("%", "\\%"),
@@ -252,11 +251,13 @@ export function parseToQuery(
 				]
 			};
 		} else if (mode === "deadValue") {
-			if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
-				throw new Error(`Invalid deadValue option "${value}".`);
+			const typedVal = value as string;
+
+			if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${typedVal}".`);
 			}
 
-			if (value.toLowerCase() === "any") {
+			if (typedVal.toLowerCase() === "any") {
 				searchWhere = {
 					AND: [
 						{
@@ -273,7 +274,7 @@ export function parseToQuery(
 				};
 			} else {
 				searchWhere = {
-					[field]: DeadValueEnum[value]
+					[field]: DeadValueEnum[typedVal as keyof typeof DeadValueEnum]
 				};
 			}
 		} else {
@@ -304,11 +305,13 @@ export function parseToQuery(
 				]
 			};
 		} else if (mode === "deadValue") {
-			if (!DeadValues.includes(value) && value.toLowerCase() !== "any") {
-				throw new Error(`Invalid deadValue option "${value}".`);
+			const typedVal = value as string;
+
+			if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${typedVal}".`);
 			}
 
-			if (value.toLowerCase() === "any") {
+			if (typedVal.toLowerCase() === "any") {
 				searchWhere = {
 					AND: [
 						{
@@ -325,7 +328,7 @@ export function parseToQuery(
 				};
 			} else {
 				searchWhere = {
-					[field]: new Date(DeadValueEnum[value])
+					[field]: new Date(DeadValueEnum[typedVal as keyof typeof DeadValueEnum])
 				};
 			}
 		} else {

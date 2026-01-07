@@ -58,16 +58,17 @@ export type ClerkUserObject = {
 	primaryEmailAddress?: string;
 };
 
-type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith" | "deadValue";
+type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
 type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
-export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull";
+export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull" | "deadValue";
 
 type StringParamsArrayField = [string, StringQueryMode, string];
 type NumberParamsArrayField = [string, NumberQueryMode, number];
 type RangeParamsArrayField = [string, "range", [number, number] | [string, string]];
 type InParamsArrayField = [string, "in" | "notIn", number[] | string[]];
+type DeadParamsArrayField = [string, "deadValue"];
 
-export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[] | DeadValue;
+export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[];
 export type ParamsArrayField =
 	| StringParamsArrayField
 	| NumberParamsArrayField

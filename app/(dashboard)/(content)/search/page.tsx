@@ -7,6 +7,7 @@ import {
 	ParamsArrayElement,
 	ParamsArrayField,
 	ParamsArrayRelation,
+	ParamsArrayValue,
 	ParamsLogicalOperator,
 	QueryMode
 } from "@/types/globals";
@@ -17,6 +18,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Modal from "@/app/components/Modal";
+import { DeadValues } from "@/types/enums";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -273,9 +275,9 @@ export default function AdvancedSearch() {
 					range: "is between",
 					in: "is in",
 					notIn: "is not in",
-					null: "null",
-					notNull: "not null",
-					deadValue: "dead value"
+					null: "is null",
+					notNull: "is not null",
+					deadValue: "is the dead value"
 				}[mode] || mode;
 
 			let filterValue = formRef.current[`filter_${id}`]?.value || "";
@@ -285,7 +287,11 @@ export default function AdvancedSearch() {
 				filterValue = `${gte} and ${lte}`;
 			}
 
-			return `${prefix}${field} ${modeText} "${filterValue}"`;
+			if (mode === "deadValue" && filterValue === "any") {
+				return `${prefix}${field} is any dead value`;
+			}
+
+			return `${prefix}${field} ${modeText}${filterValue ? ` "${filterValue}"` : ""}`;
 		}
 
 		function recurseGroup(group: SearchGroupNode, isRoot = false): string {
@@ -341,51 +347,62 @@ export default function AdvancedSearch() {
 			const fieldType = getZodType(shape[field as keyof typeof shape]).type;
 
 			const mode = formRef.current[`mode_${id}`].value as QueryMode;
-			let filter = undefined as unknown as string | number | [number, number] | [string, string];
 
-			if (fieldType === "date") {
-				if (mode === "range") {
-					if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`]) return null;
-					const gteDate = formRef.current[`filter_${id}_gte_date`].value;
-					const gteTime = formRef.current[`filter_${id}_gte_time`]?.value || "";
-					const lteDate = formRef.current[`filter_${id}_lte_date`].value;
-					const lteTime = formRef.current[`filter_${id}_lte_time`]?.value || "";
+			let filter = undefined as unknown as ParamsArrayValue;
+			if (mode !== "null" && mode !== "notNull") {
+				if (fieldType === "date") {
+					if (mode === "range") {
+						if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`]) return null;
+						const gteDate = formRef.current[`filter_${id}_gte_date`].value;
+						const gteTime = formRef.current[`filter_${id}_gte_time`]?.value || "";
+						const lteDate = formRef.current[`filter_${id}_lte_date`].value;
+						const lteTime = formRef.current[`filter_${id}_lte_time`]?.value || "";
 
-					filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
-				} else {
-					if (!formRef.current[`filter_${id}_date`]) return null;
-					const filterDate = formRef.current[`filter_${id}_date`].value;
-					const filterTime = formRef.current[`filter_${id}_time`]?.value || "";
+						filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
+					} else if (mode === "deadValue") {
+						if (!formRef.current[`filter_${id}`]) return null;
+						filter = formRef.current[`filter_${id}`].value;
+					} else {
+						if (!formRef.current[`filter_${id}_date`]) return null;
+						const filterDate = formRef.current[`filter_${id}_date`].value;
+						const filterTime = formRef.current[`filter_${id}_time`]?.value || "";
 
-					filter = filterDate + (filterTime ? "T" + filterTime : "");
-				}
-			} else {
-				if (mode === "range") {
-					if (!formRef.current[`filter_${id}_gte`] || !formRef.current[`filter_${id}_lte`]) return null;
-					const gte = formRef.current[`filter_${id}_gte`].value;
-					const lte = formRef.current[`filter_${id}_lte`].value;
-					if (fieldType === "integer") {
-						filter = [parseInt(gte), parseInt(lte)];
-					} else if (fieldType === "float") {
-						filter = [parseFloat(gte), parseFloat(lte)];
+						filter = filterDate + (filterTime ? "T" + filterTime : "");
 					}
 				} else {
-					if (!formRef.current[`filter_${id}`]) return null;
-					const filterVal = formRef.current[`filter_${id}`].value;
-
-					if (fieldType === "integer") {
-						filter = parseInt(filterVal);
-					} else if (fieldType === "float") {
-						filter = parseFloat(filterVal);
+					if (mode === "range") {
+						if (!formRef.current[`filter_${id}_gte`] || !formRef.current[`filter_${id}_lte`]) return null;
+						const gte = formRef.current[`filter_${id}_gte`].value;
+						const lte = formRef.current[`filter_${id}_lte`].value;
+						if (fieldType === "integer") {
+							filter = [parseInt(gte), parseInt(lte)];
+						} else if (fieldType === "float") {
+							filter = [parseFloat(gte), parseFloat(lte)];
+						}
+					} else if (mode === "deadValue") {
+						if (!formRef.current[`filter_${id}`]) return null;
+						filter = formRef.current[`filter_${id}`].value;
 					} else {
-						filter = filterVal;
+						if (!formRef.current[`filter_${id}`]) return null;
+						const filterVal = formRef.current[`filter_${id}`].value;
+
+						if (fieldType === "integer") {
+							filter = parseInt(filterVal);
+						} else if (fieldType === "float") {
+							filter = parseFloat(filterVal);
+						} else {
+							filter = filterVal;
+						}
 					}
 				}
 			}
 
-			let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
+			let arr = [field, mode] as ParamsArrayRelation | ParamsArrayField;
+			if (filter) {
+				arr = [field, mode, filter] as ParamsArrayField;
+			}
 			if (relation) {
-				arr = [relation, ...arr] as typeof arr;
+				arr = [relation, ...arr] as ParamsArrayRelation;
 			}
 
 			return arr;
@@ -747,7 +764,7 @@ export default function AdvancedSearch() {
 								<span className="text-sm text-base-content/80">Select/deselect all</span>
 							</label>
 						</div>
-						<div className="border-t border-base-300 pt-3 h-[320px] overflow-y-auto">
+						<div className="border-t border-base-300 pt-3 h-80 overflow-y-auto">
 							{filteredApiFields.length ? (
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
 									{filteredApiFields.map((field) => (
@@ -1283,6 +1300,9 @@ function InputElement({
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
+					<option value="null">Null</option>
+					<option value="notNull">Not null</option>
+					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "range" ? (
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
@@ -1308,6 +1328,17 @@ function InputElement({
 							required
 						/>
 					</div>
+				) : mode === "null" || mode === "notNull" ? (
+					<></>
+				) : mode === "deadValue" ? (
+					<select className="select select-primary" defaultValue="any" name={`filter_${nameSuffix}`}>
+						<option value="any">any</option>
+						{DeadValues.map((dv) => (
+							<option key={dv} value={dv}>
+								{dv}
+							</option>
+						))}
+					</select>
 				) : (
 					<input
 						className="input input-primary w-full rounded-l-none"
@@ -1336,13 +1367,16 @@ function InputElement({
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
+					<option value="null">Null</option>
+					<option value="notNull">Not null</option>
+					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "range" ? (
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
 						<div className="input input-primary w-full rounded-none">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
-								className={`w-[20px] ${gteDateSelected ? "text-success" : "text-error"}`}
+								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[0].split("T")[0]
@@ -1367,7 +1401,7 @@ function InputElement({
 						<div className="input input-primary w-full rounded-l-none">
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
-								className={`w-[20px] ${lteDateSelected ? "text-success" : "text-error"}`}
+								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[1].split("T")[0]
@@ -1428,6 +1462,9 @@ function InputElement({
 					<option value="equals">Equals</option>
 					<option value="startsWith">Starts With</option>
 					<option value="endsWith">Ends With</option>
+					<option value="null">Null</option>
+					<option value="notNull">Not null</option>
+					<option value="deadValue">Dead value</option>
 				</select>
 				<input
 					className="input input-primary w-full rounded-l-none"

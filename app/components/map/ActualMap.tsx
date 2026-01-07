@@ -839,7 +839,7 @@ function PopupWithSearchBody({
 							? loc[TableMetadata[titleTable].titleField]
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
 					}`}
-					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl!"
+					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start"
 				>
 					{typeof TableMetadata[titleTable].titleField === "string"
 						? loc[TableMetadata[titleTable].titleField]
@@ -1437,6 +1437,7 @@ function LegendControl({
 							/>
 
 							<select
+								className="select select-xs select-primary select-ghost text-sm mr-3"
 								value={legendInfo ? legendInfo.field : ""}
 								onChange={async (e) => {
 									const field = e.target.value;
@@ -1603,9 +1604,8 @@ function LegendControl({
 										});
 									}
 								}}
-								className="select select-xs select-primary select-ghost text-sm mr-3"
 							>
-								<option disabled={true} value="">
+								<option disabled value="">
 									Select field
 								</option>
 								{legendOptions.map((opt) => (
