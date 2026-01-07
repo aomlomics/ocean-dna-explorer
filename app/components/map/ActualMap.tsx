@@ -1342,6 +1342,35 @@ function ResetButton({
 	);
 }
 
+function LeafletControl({
+	click,
+	scroll,
+	className,
+	style,
+	children
+}: {
+	click?: true;
+	scroll?: true;
+	className?: string;
+	style?: Record<string, string>;
+	children: ReactNode;
+}) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (ref.current) {
+			if (click) DomEvent.disableClickPropagation(ref.current);
+			if (scroll) DomEvent.disableScrollPropagation(ref.current);
+		}
+	}, []);
+
+	return (
+		<div className={`leaflet-control${className ? " " + className : ""}`} ref={ref} style={style}>
+			{children}
+		</div>
+	);
+}
+
 function LegendControl({
 	legend,
 	legendInfo,
@@ -1366,24 +1395,15 @@ function LegendControl({
 	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
 	| { titleTable?: undefined; points: LocationWithValues[] }
 )) {
-	const ref = useRef<HTMLDivElement>(null);
-
 	const [filter, setFilter] = useState("");
 	const [shown, setShown] = useState(!!legendInfo);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-			DomEvent.disableScrollPropagation(ref.current);
-		}
-	}, []);
 
 	if (!legend) {
 		return null;
 	}
 
 	return (
-		<div className="leaflet-control leaflet-bar border-none! mb-6! flex flex-col gap-2" ref={ref}>
+		<LeafletControl click scroll className="leaflet-bar border-none! mb-6! flex flex-col gap-2">
 			<Collapsible hiddenText="Show legend" defaultCollapse={!legendInfo} onCollapse={(c) => setShown(!c)}>
 				<Resizable
 					growDirection={"up"}
@@ -1781,7 +1801,7 @@ function LegendControl({
 					</div>
 				</Resizable>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -1796,16 +1816,8 @@ function PointSizeControl({
 	pointSizeStep: number | undefined;
 	setPointSizeStep: Dispatch<SetStateAction<number | undefined>>;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-		}
-	}, []);
-
 	return (
-		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
+		<LeafletControl click className="leaflet-bar border-none!">
 			<Collapsible dir="left" defaultCollapse hiddenText="Show point size control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
@@ -1866,7 +1878,7 @@ function PointSizeControl({
 					</div>
 				</div>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -1881,20 +1893,12 @@ function ClusterControl({
 	onChange: Dispatch<SetStateAction<number | undefined>>;
 	clusterRadius?: number;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-		}
-	}, []);
-
 	if (!cluster) {
 		return null;
 	}
 
 	return (
-		<div className="leaflet-control leaflet-bar border-none!" ref={ref}>
+		<LeafletControl click className="leaflet-bar border-none!">
 			<Collapsible dir="left" defaultCollapse hiddenText="Show cluster control">
 				<div className="w-35 pl-2 pr-1 pt-1 pb-2 flex flex-col gap-1">
 					<div className="flex justify-between">
@@ -1930,7 +1934,7 @@ function ClusterControl({
 					</div>
 				</div>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -1951,16 +1955,8 @@ function DrawSelectedControl({
 	mapRef: RefObject<Map | null>;
 	shapes: Record<string, MapShape>;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(true);
 	const [delayedPointsInsize, setDelayedPointsInsize] = useState(pointsInside);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-			DomEvent.disableScrollPropagation(ref.current);
-		}
-	}, []);
 
 	//delay changing state variable by 1 render cycle to allow for resizable to work
 	useEffect(() => {
@@ -1968,7 +1964,7 @@ function DrawSelectedControl({
 	}, [pointsInside]);
 
 	return (
-		<div className="leaflet-control" ref={ref}>
+		<LeafletControl click scroll>
 			<Collapsible
 				hiddenText={`Show ${TableMetadata[table].plural} selected with shapes`}
 				onCollapse={(c) => setShown(!c)}
@@ -2014,7 +2010,7 @@ function DrawSelectedControl({
 					</div>
 				</Resizable>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
@@ -2032,18 +2028,10 @@ function NoLocationPointsControl({
 	legendInfo: LegendInfo;
 	mapRef: RefObject<Map | null>;
 }) {
-	const ref = useRef<HTMLDivElement>(null);
 	const [shown, setShown] = useState(false);
 
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-			DomEvent.disableScrollPropagation(ref.current);
-		}
-	}, []);
-
 	return (
-		<div className="leaflet-control" ref={ref}>
+		<LeafletControl click scroll>
 			<Collapsible
 				dir="left"
 				defaultCollapse
@@ -2066,25 +2054,17 @@ function NoLocationPointsControl({
 					</div>
 				</Resizable>
 			</Collapsible>
-		</div>
+		</LeafletControl>
 	);
 }
 
 function RecenterControl({ reset }: { reset: () => void }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (ref.current) {
-			DomEvent.disableClickPropagation(ref.current);
-		}
-	}, []);
-
 	//TODO: make this button merge with other control instead of being on its own
 	return (
-		<div
-			className="leaflet-control cursor-pointer! bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-sm"
+		<LeafletControl
+			click
+			className="cursor-pointer! bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-sm"
 			style={{ padding: "calc(var(--spacing) * 0.8)" }}
-			ref={ref}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -2098,7 +2078,7 @@ function RecenterControl({ reset }: { reset: () => void }) {
 			>
 				<path d="M12.5 17.402V21.5q0 .213-.143.357T12 22t-.357-.143q-.143-.144-.143-.357v-4.098l-1.13 1.13q-.141.141-.342.15t-.366-.155q-.16-.16-.16-.354t.16-.354l1.773-1.773q.242-.242.565-.242t.565.242l1.773 1.773q.14.14.153.342t-.153.366q-.16.16-.35.162t-.357-.156zM6.598 12.5H2.5q-.213 0-.357-.143T2 12t.143-.357q.144-.143.357-.143h4.098l-1.13-1.13q-.141-.141-.15-.342t.155-.366q.16-.16.354-.16t.354.16l1.773 1.773q.242.242.242.565t-.242.565L6.18 14.338q-.14.14-.342.153t-.366-.153q-.16-.16-.162-.35t.156-.357zm10.804 0l1.13 1.13q.141.141.15.342t-.155.366q-.16.16-.354.16t-.354-.16l-1.773-1.773q-.242-.242-.242-.565t.242-.565l1.773-1.773q.14-.14.342-.153t.366.153q.16.16.162.35t-.156.357L17.402 11.5H21.5q.213 0 .357.143T22 12t-.143.357q-.144.143-.357.143zM12 12.98q-.413 0-.697-.283T11.019 12t.284-.697t.697-.284t.697.284t.284.697t-.284.697t-.697.284m-.5-6.383V2.5q0-.213.143-.357T12 2t.357.143q.143.144.143.357v4.098l1.13-1.13q.141-.141.342-.15t.366.155q.16.16.16.354t-.16.354l-1.773 1.773q-.242.242-.565.242t-.565-.242L9.662 6.18q-.14-.14-.153-.342t.153-.366q.16-.16.35-.162t.357.156z" />
 			</svg>
-		</div>
+		</LeafletControl>
 	);
 }
 
