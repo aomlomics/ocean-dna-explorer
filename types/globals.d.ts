@@ -60,7 +60,7 @@ export type ClerkUserObject = {
 
 type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
 type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
-export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn";
+export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull";
 type StringParamsArrayField = [string, StringQueryMode, string];
 type NumberParamsArrayField = [string, NumberQueryMode, number];
 type RangeParamsArrayField = [string, "range", [number, number] | [string, string]];

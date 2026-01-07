@@ -190,6 +190,22 @@ function compressIfNeeded(str: string) {
 	}
 }
 
+function getWhereAdvancedHref(where: Record<string, string>, table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
+	return Object.entries(where)
+		.map(([f, v]) => {
+			if (TableMetadata[table].enumSchema.options.includes(f)) {
+				return `["${f}","equals","${v}"]`;
+			} else {
+				for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
+					if (f === TableMetadata[model].titleField) {
+						return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
+					}
+				}
+			}
+		})
+		.join(",");
+}
+
 export default function ActualMap({
 	locations,
 	where,
@@ -852,7 +868,7 @@ function PopupWithSearchBody({
 								href={
 									href
 										? href
-										: `/search?table=sample&advanced=[["${id}","in","${compressIfNeeded(
+										: `/search?table=${table}&advanced=[["${id}","in","${compressIfNeeded(
 												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
 										  )}"]]`
 								}
@@ -953,24 +969,10 @@ function PopupWithSearch({
 					loc={loc}
 					id={id}
 					legendInfo={legendInfo}
-					href={`/search?table=sample&advanced=[["decimalLatitude","equals",${
+					href={`/search?table=${table}&advanced=[["decimalLatitude","equals",${
 						loc.decimalLatitude
 					}],["decimalLongitude","equals",${loc.decimalLongitude}]${
-						where
-							? `,${Object.entries(where)
-									.map(([f, v]) => {
-										if (TableMetadata[table].enumSchema.options.includes(f)) {
-											return `["${f}","equals","${v}"]`;
-										} else {
-											for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
-												if (f === TableMetadata[model].titleField) {
-													return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
-												}
-											}
-										}
-									})
-									.join(",")}`
-							: ""
+						where ? "," + getWhereAdvancedHref(where, table) : ""
 					}${
 						titleTable
 							? "," +
@@ -1956,11 +1958,11 @@ function DrawSelectedControl({
 	shapes: Record<string, MapShape>;
 }) {
 	const [shown, setShown] = useState(true);
-	const [delayedPointsInsize, setDelayedPointsInsize] = useState(pointsInside);
+	const [delayedPointsInside, setDelayedPointsInside] = useState(pointsInside);
 
 	//delay changing state variable by 1 render cycle to allow for resizable to work
 	useEffect(() => {
-		setDelayedPointsInsize(pointsInside);
+		setDelayedPointsInside(pointsInside);
 	}, [pointsInside]);
 
 	return (
@@ -1979,24 +1981,10 @@ function DrawSelectedControl({
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
-								values: delayedPointsInsize
+								values: delayedPointsInside
 							}}
-							href={`/search?table=sample${
-								where
-									? `&advanced=[${Object.entries(where)
-											.map(([f, v]) => {
-												if (TableMetadata[table].enumSchema.options.includes(f)) {
-													return `["${f}","equals","${v}"]`;
-												} else {
-													for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
-														if (f === TableMetadata[model].titleField) {
-															return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
-														}
-													}
-												}
-											})
-											.join(",")}]`
-									: ""
+							href={`/search?table=${table}${
+								where ? `&advanced=[${where ? getWhereAdvancedHref(where, table) : ""}]` : ""
 							}&${Object.values(shapes)
 								.map((s) => {
 									if (s.type === "polygon") {
@@ -2014,16 +2002,17 @@ function DrawSelectedControl({
 	);
 }
 
-//TODO: give search body href using where prop and null/DeadValueEnum
 function NoLocationPointsControl({
 	noLocationPoints,
 	table,
+	where,
 	id,
 	legendInfo,
 	mapRef
 }: {
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<Prisma.ModelName>;
+	where?: Record<string, string>;
 	id: string;
 	legendInfo: LegendInfo;
 	mapRef: RefObject<Map | null>;
@@ -2050,6 +2039,13 @@ function NoLocationPointsControl({
 								decimalLongitude: NaN,
 								values: noLocationPoints as Location[] //doesn't matter here
 							}}
+							href={`/search?table=${table}&advanced=[["OR",["decimalLatitude","null"],["decimalLatitude","range",[${
+								DeadValueNumbers[0]
+							},${
+								DeadValueNumbers[DeadValueNumbers.length - 1]
+							}]],["decimalLongitude","null"],["decimalLongitude","range",[${DeadValueNumbers[0]},${
+								DeadValueNumbers[DeadValueNumbers.length - 1]
+							}]]]${where ? "," + getWhereAdvancedHref(where, table) : ""}]`}
 						/>
 					</div>
 				</Resizable>
