@@ -330,11 +330,7 @@ function ProjectStatCard({
 	link?: string;
 }) {
 	const content = (
-		<div
-			className={`group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
-				link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
-			}`}
-		>
+		<>
 			<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">
 				<StatIcon icon={icon} />
 			</div>
@@ -342,13 +338,32 @@ function ProjectStatCard({
 				{value.toLocaleString()}
 			</div>
 			<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
-		</div>
+		</>
 	);
 
 	if (link) {
-		return <Link href={link}>{content}</Link>;
+		return (
+			<Link href={link}>
+				<div
+					className={`tooltip tooltip-secondary before:text-primary-content group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
+						link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
+					}`}
+					data-tip="View as Search"
+				>
+					{content}
+				</div>
+			</Link>
+		);
 	} else {
-		return content;
+		return (
+			<div
+				className={`group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
+					link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
+				}`}
+			>
+				{content}
+			</div>
+		);
 	}
 }
 

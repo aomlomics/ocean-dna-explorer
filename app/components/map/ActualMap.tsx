@@ -206,6 +206,7 @@ function getWhereAdvancedHref(where: Record<string, string>, table: Prisma.Model
 		.join(",");
 }
 
+//TODO: taxonomy heatmap toggle
 export default function ActualMap({
 	locations,
 	where,
@@ -620,6 +621,7 @@ export default function ActualMap({
 						id={id}
 						legendInfo={legendInfo}
 						mapRef={mapRef}
+						where={where}
 					/>
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
@@ -873,7 +875,7 @@ function PopupWithSearchBody({
 										  )}"]]`
 								}
 							>
-								Search
+								View as Search
 							</Link>
 						</div>
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
