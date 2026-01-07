@@ -701,6 +701,7 @@ export default function ActualMap({
 				</FeatureGroup>
 
 				{Array.isArray(pointsOrGroups) ? (
+					//points
 					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
 						{pointsOrGroups.reduce((acc, loc, i) => {
 							if (
@@ -729,6 +730,7 @@ export default function ActualMap({
 						}, [] as ReactNode[])}
 					</ClusterGroup>
 				) : (
+					//groups
 					<>
 						{Object.values(pointsOrGroups).map((locArray, i) => (
 							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
@@ -794,7 +796,6 @@ function PopupWithSearchBody({
 	legendInfo: LegendInfo;
 	href?: string;
 }) {
-	//TODO: filter not working
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
 
@@ -802,7 +803,9 @@ function PopupWithSearchBody({
 		if (loc.values) {
 			const tempFilteredValues = [] as Location[];
 			for (const l of loc.values) {
-				tempFilteredValues.push(l);
+				if (l[id].toLowerCase().includes(filter.toLowerCase())) {
+					tempFilteredValues.push(l);
+				}
 			}
 
 			setFilteredValues(tempFilteredValues);
@@ -838,7 +841,6 @@ function PopupWithSearchBody({
 			)}
 			<>
 				{filteredValues ? (
-					//TODO: use optional where param to clean up query (both from map, and from parent of searchbody)
 					<>
 						<div className="flex justify-between gap-2 items-center">
 							<h2 className="text-primary text-lg">
@@ -1027,6 +1029,7 @@ function Resizable({
 		//TODO: doesn't shrink after resetting legend
 		//TODO: don't trigger resize when legendInfo.hidden changes
 		//TODO: doesn't change width when shapesInside changes
+		//TODO: doesn't change width when filter changes
 		if (checkSize && ref.current && childRef.current && mapRef.current) {
 			const mapContainer = mapRef.current.getContainer();
 
