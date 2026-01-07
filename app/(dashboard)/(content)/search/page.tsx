@@ -1331,7 +1331,11 @@ function InputElement({
 				) : mode === "null" || mode === "notNull" ? (
 					<></>
 				) : mode === "deadValue" ? (
-					<select className="select select-primary" defaultValue="any" name={`filter_${nameSuffix}`}>
+					<select
+						className="select select-primary"
+						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
+						name={`filter_${nameSuffix}`}
+					>
 						<option value="any">any</option>
 						{DeadValues.map((dv) => (
 							<option key={dv} value={dv}>
