@@ -18,8 +18,8 @@ export default async function Home() {
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
-					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report bugs and feature
-					requests{" "}
+					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report
+					bugs and feature requests{" "}
 					<a
 						href="https://github.com/aomlomics/ocean-dna-explorer/issues"
 						target="_blank"
@@ -129,16 +129,7 @@ export default async function Home() {
 							<span>Showing all </span>
 							<span className="text-primary">Projects</span>
 						</div>
-						<div className="w-full h-[460px] rounded-lg overflow-hidden bg-base-200 shadow-sm">
-							<Map
-								query={publicPrisma.sample.findMany}
-								legend
-								titleTable="project"
-								cluster
-								clusterRadius={20}
-								className="w-full h-full"
-							/>
-						</div>
+						<Map query={publicPrisma.sample.findMany} legend titleTable="project" cluster clusterRadius={20} />
 					</div>
 
 					{/* Assay Stats Section */}
@@ -227,7 +218,7 @@ export default async function Home() {
 									/>
 								</Link>
 							</div>
-							<div className="relative h-16 w-80 lg:h-24 lg:w-[26rem]">
+							<div className="relative h-16 w-80 lg:h-24 lg:w-104">
 								<Link href="https://www.northerngulfinstitute.org/" target="_blank" rel="noreferrer">
 									<ThemeAwareLogo
 										src="/images/ngi_msu_logo_FINAL.svg"
