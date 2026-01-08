@@ -107,11 +107,11 @@ export default function MobileMenu() {
 							</ul>
 						</details>
 					</li>
-					<li className="text-base py-1">
+					{/* <li className="text-base py-1">
 						<Link href="/contribute" onClick={handleClose}>
 							Contribute
 						</Link>
-					</li>
+					</li> */}
 					<li className="text-base py-1">
 						<Link href="/api" onClick={handleClose}>
 							API
@@ -122,11 +122,11 @@ export default function MobileMenu() {
 							Help
 						</Link>
 					</li>
-					{/* <li className="text-base py-1">
+					<li className="text-base py-1">
 						<Link href="/about" onClick={handleClose}>
 							About
 						</Link>
-					</li> */}
+					</li>
 				</ul>
 			)}
 

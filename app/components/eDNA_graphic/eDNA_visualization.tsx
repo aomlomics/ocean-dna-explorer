@@ -54,43 +54,46 @@ const EDNAVisualization: React.FC = () => {
 		return { scale: 1, x: 0, y: 0 };
 	}, []);
 
-	const goToStep = useCallback((step: VizStep) => {
-		if (isAnimating || step === currentStep) return;
+	const goToStep = useCallback(
+		(step: VizStep) => {
+			if (isAnimating || step === currentStep) return;
 
-		// Handle water fade-out separately when leaving the project view
-		if (currentStep === "project" && step !== "project") {
-			setIsAnimating(true);
-			setIsWaterlineVisible(false); // Start fade-out
+			// Handle water fade-out separately when leaving the project view
+			if (currentStep === "project" && step !== "project") {
+				setIsAnimating(true);
+				setIsWaterlineVisible(false); // Start fade-out
 
-			// Wait for fade-out to finish, then zoom
-			setTimeout(() => {
+				// Wait for fade-out to finish, then zoom
+				setTimeout(() => {
+					const target = getStepEntryTransform(step, currentStep);
+					setCurrentStep(step);
+					requestAnimationFrame(() => {
+						setViewportZoom({ scale: target.scale, x: target.x, y: target.y });
+					});
+					setTimeout(() => setIsAnimating(false), 600);
+				}, 100); // Corresponds to the fade-out duration
+			} else {
+				setIsAnimating(true);
+				// When returning to project, delay the water's appearance
+				if (step === "project") {
+					// The main zoom is 600ms, the water fade is 300ms.
+					// Start the fade so it finishes roughly with the zoom.
+					setTimeout(() => {
+						setIsWaterlineVisible(true);
+					}, 200); // Start fade-in halfway through the 600ms zoom
+				}
 				const target = getStepEntryTransform(step, currentStep);
 				setCurrentStep(step);
+
 				requestAnimationFrame(() => {
 					setViewportZoom({ scale: target.scale, x: target.x, y: target.y });
 				});
+
 				setTimeout(() => setIsAnimating(false), 600);
-			}, 100); // Corresponds to the fade-out duration
-		} else {
-			setIsAnimating(true);
-			// When returning to project, delay the water's appearance
-			if (step === "project") {
-				// The main zoom is 600ms, the water fade is 300ms.
-				// Start the fade so it finishes roughly with the zoom.
-				setTimeout(() => {
-					setIsWaterlineVisible(true);
-				}, 200); // Start fade-in halfway through the 600ms zoom
 			}
-			const target = getStepEntryTransform(step, currentStep);
-			setCurrentStep(step);
-	
-			requestAnimationFrame(() => {
-				setViewportZoom({ scale: target.scale, x: target.x, y: target.y });
-			});
-	
-			setTimeout(() => setIsAnimating(false), 600);
-		}
-	}, [currentStep, isAnimating, getStepEntryTransform]);
+		},
+		[currentStep, isAnimating, getStepEntryTransform]
+	);
 
 	const handleNext = useCallback(() => {
 		const currentIndex = STEPS.indexOf(currentStep);
@@ -112,12 +115,16 @@ const EDNAVisualization: React.FC = () => {
 		<div className="relative w-full h-[600px] overflow-hidden rounded-lg bg-base-100/50 dark:bg-base-300/5">
 			{/* Subtle dark ocean background */}
 			<div className="absolute inset-0 bg-gradient-to-b from-slate-800/40 to-slate-900/60 dark:from-slate-900/60 dark:to-slate-950/80" />
-			<div className={`absolute top-[107px] left-0 right-0 transition-opacity duration-300 ${isWaterlineVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+			<div
+				className={`absolute top-[107px] left-0 right-0 transition-opacity duration-300 ${
+					isWaterlineVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+				}`}
+			>
 				<WaterSurface />
 			</div>
-			
+
 			{/* Main viewport - this is what zooms and pans */}
-			<div 
+			<div
 				className="absolute inset-0 transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
 				style={{
 					transform: `translate(${viewportZoom.x}px, ${viewportZoom.y}px) scale(${viewportZoom.scale})`,
@@ -125,15 +132,27 @@ const EDNAVisualization: React.FC = () => {
 				}}
 			>
 				{/* All components render simultaneously, visibility controlled by opacity */}
-				<div className={`absolute inset-0 transition-opacity duration-300 ${currentStep === "project" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-					<ProjectViz onNext={handleNext} />
+				<div
+					className={`absolute inset-0 transition-opacity duration-300 ${
+						currentStep === "project" ? "opacity-100" : "opacity-0 pointer-events-none"
+					}`}
+				>
+					<ProjectViz />
 				</div>
-				
-				<div className={`absolute inset-0 transition-opacity duration-300 ${currentStep === "sample" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+
+				<div
+					className={`absolute inset-0 transition-opacity duration-300 ${
+						currentStep === "sample" ? "opacity-100" : "opacity-0 pointer-events-none"
+					}`}
+				>
 					<SampleViz onNext={handleNext} onBack={handleBack} />
 				</div>
-				
-				<div className={`absolute inset-0 transition-opacity duration-300 ${currentStep === "bioinfo" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+
+				<div
+					className={`absolute inset-0 transition-opacity duration-300 ${
+						currentStep === "bioinfo" ? "opacity-100" : "opacity-0 pointer-events-none"
+					}`}
+				>
 					<BioinfoViz onNext={handleNext} onBack={handleBack} />
 				</div>
 			</div>
@@ -141,9 +160,7 @@ const EDNAVisualization: React.FC = () => {
 			{/* Analysis Step - Slides in from the right */}
 			<div
 				className={`absolute inset-0 transition-transform duration-500 ease-in-out ${
-					currentStep === "analysis"
-						? "translate-x-0"
-						: "translate-x-full"
+					currentStep === "analysis" ? "translate-x-0" : "translate-x-full"
 				}`}
 			>
 				<AnalysisViz onBack={handleBack} isActive={currentStep === "analysis"} />
@@ -151,7 +168,7 @@ const EDNAVisualization: React.FC = () => {
 
 			{/* Back button for non-project steps */}
 			{currentStep !== "project" && (
-				<button 
+				<button
 					onClick={handleBack}
 					disabled={isAnimating}
 					className="absolute top-4 left-4 z-40 btn btn-sm btn-primary"
@@ -178,4 +195,4 @@ const EDNAVisualization: React.FC = () => {
 	);
 };
 
-export default EDNAVisualization; 
+export default EDNAVisualization;

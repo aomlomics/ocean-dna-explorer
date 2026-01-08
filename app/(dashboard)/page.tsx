@@ -7,6 +7,7 @@ import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
+import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 
 export default async function Home() {
 	const carouselImages = (await prismaImages.image.findMany({ include: { Attribution: true } }))
@@ -149,6 +150,15 @@ export default async function Home() {
 						</div>
 						<Suspense>
 							<AssayStats />
+						</Suspense>
+					</div>
+				</div>
+
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-24">
+					<div className="hidden lg:block lg:col-span-7" />
+					<div className="lg:col-span-5 flex flex-col">
+						<Suspense>
+							<TopTaxonomiesSummary />
 						</Suspense>
 					</div>
 				</div>

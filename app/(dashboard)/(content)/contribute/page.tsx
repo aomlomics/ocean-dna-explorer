@@ -3,6 +3,7 @@
 import roleApplicationAction from "@/app/actions/roleApplication";
 import { Role } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
+import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { FormEvent, useRef, useState } from "react";
 
@@ -38,17 +39,61 @@ export default function Contribute() {
 
 	return (
 		<main className="max-w-7xl mx-auto p-6">
-			<div className="py-8 max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start gap-6 md:gap-8 lg:gap-12">
-				<div className="w-full md:max-w-xl lg:max-w-2xl">
-					<h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-primary mb-4 md:mb-6">
-						Looking to contribute?
+			<div className="py-10 md:py-12 max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start gap-6 md:gap-8 lg:gap-12">
+				<div className="w-full md:max-w-xl lg:max-w-2xl space-y-3 md:space-y-4">
+					<h1 className="text-3xl md:text-3xl lg:text-4xl font-semibold text-primary">
+						{role && RolePermissions[role].includes("contribute") ? (
+							<span className="inline-flex items-center gap-2">
+								<span className="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary p-1">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+										strokeWidth={1.5}
+										stroke="currentColor"
+										className="w-6 h-6"
+									>
+										<path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+									</svg>
+								</span>
+								<span>You are an approved contributor</span>
+							</span>
+						) : (
+							"Looking to contribute?"
+						)}
 					</h1>
-					<p className="text-base md:text-lg text-base-content/80 leading-relaxed mb-4">
-						Are you looking to contribute your data to Ocean DNA Explorer's growing collection? Sign up to be a
-						Contributor now!
-					</p>
+					{!(role && RolePermissions[role].includes("contribute")) && (
+						<p className="text-base md:text-lg text-base-content/80 leading-relaxed mb-4">
+							Data submission requires approval from our team. Use the form below if you are interested in becoming a
+							contributor!
+						</p>
+					)}
 					{role && RolePermissions[role].includes("contribute") ? (
-						<div>You already have contribute permissions, thank you for being a part of Ocean DNA Explorer!</div>
+						<div className="space-y-4">
+							<p className="text-base md:text-lg text-base-content/80 leading-relaxed">
+								You already have permission to submit data. Thank you for being a part of the Ocean DNA Explorer!
+							</p>
+							<Link
+								href="/mySubmissions"
+								className="inline-flex items-center gap-2 rounded-lg bg-base-200 text-base-content hover:bg-base-300 px-4 py-2 text-sm md:text-base"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									strokeWidth={1.5}
+									stroke="currentColor"
+									className="w-5 h-5"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M4.5 5.25h9M4.5 9.75h9m-9 4.5h5.25M14.25 5.25H18a1.5 1.5 0 0 1 1.5 1.5v11.25a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 7.5 18V6.75a1.5 1.5 0 0 1 1.5-1.5h5.25Z"
+									/>
+								</svg>
+								<span>View my submissions</span>
+							</Link>
+						</div>
 					) : roleApplication || result ? (
 						<div>
 							Thanks for applying! We will get to your application as soon as possible and notify you when you have been
@@ -57,11 +102,13 @@ export default function Contribute() {
 					) : (
 						<form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Tell us about your data</legend>
-								<textarea name="description" className="textarea textarea-primary h-24 w-full"></textarea>
+								<legend className="fieldset-legend text-base-content/80 text-base md:text-lg font-normal">
+									Tell us about your data...
+								</legend>
+								<textarea name="description" className="textarea textarea-primary h-48 w-full"></textarea>
 								<div className="label">Optional</div>
 							</fieldset>
-							<button className="btn btn-primary">Apply now</button>
+							<button className="btn btn-primary w-1/3 mx-auto">Submit</button>
 						</form>
 					)}
 				</div>

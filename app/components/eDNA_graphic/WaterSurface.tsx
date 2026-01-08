@@ -1,7 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 
-const WaterSurface = () => {
+interface WaterSurfaceProps {
+	className?: string;
+}
+
+const WaterSurface: React.FC<WaterSurfaceProps> = ({ className }) => {
 	const [pathD, setPathD] = useState("");
 	const svgRef = useRef<SVGSVGElement>(null);
 	const pointsRef = useRef<any[]>([]);
@@ -30,13 +34,15 @@ const WaterSurface = () => {
 		let animationFrameId: number;
 
 		const animate = () => {
-			const tension = 0.0005;
-			const damping = 0.93;
+			// Slightly gentler motion so the surface feels calm,
+			// not choppy or distracting.
+			const tension = 0.00025;
+			const damping = 0.965;
 
 			// Update points
-			points.forEach(p => {
-				if (Math.random() > 0.998) { // Randomly change target
-					p.targetY = p.baseY + (Math.random() - 0.5) * 10;
+			points.forEach((p) => {
+				if (Math.random() > 0.9995) {
+					p.targetY = p.baseY + (Math.random() - 0.25) * 4;
 				}
 
 				const dy = p.targetY - p.y;
@@ -67,7 +73,7 @@ const WaterSurface = () => {
 	}, []);
 
 	return (
-		<div className="w-full my-12">
+		<div className={className ?? "w-full my-12"}>
 			<svg
 				ref={svgRef}
 				className="w-full h-10"
