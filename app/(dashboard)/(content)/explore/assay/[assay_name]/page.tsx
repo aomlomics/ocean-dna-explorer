@@ -52,8 +52,10 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			assay_name
 		},
 		include: {
-			Samples: {
-				include: {
+			Libraries: true,
+			Analyses: {
+				select: {
+					analysis_run_name: true,
 					Project: {
 						select: {
 							isPrivate: true
@@ -61,19 +63,18 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 					}
 				}
 			},
-			Libraries: true,
-			Analyses: {
+			_count: {
 				select: {
-					analysis_run_name: true
+					Samples: true
 				}
 			}
 		}
 	});
 
 	if (!assay) return <>Assay not found</>;
-	const { Samples: _, Libraries: __, Analyses: ___, ...justAssay } = assay;
-	const isPrivate = assay.Samples.some((samp) => {
-		return samp.Project.isPrivate;
+	const { Libraries: _, Analyses: __, _count: ___, ...justAssay } = assay;
+	const isPrivate = assay.Analyses.some((a) => {
+		return a.Project.isPrivate;
 	});
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
@@ -105,7 +106,22 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					{/* Left: Map + primer sections + legend */}
 					<div className="lg:col-span-2 space-y-8">
-						<Map locations={assay.Samples} cluster legend />
+						<Map
+							query={() =>
+								prisma.sample.findMany({
+									where: {
+										Assays: {
+											some: {
+												assay_name
+											}
+										}
+									}
+								})
+							}
+							where={{ assay_name }}
+							cluster
+							legend
+						/>
 
 						{/* Forward Primer Section */}
 						<section className="p-6 bg-base-100 rounded-lg border border-base-300">
@@ -113,9 +129,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 								<div className="flex flex-wrap items-start justify-between gap-6">
 									{/* Left: label + primer name */}
 									<div className="min-w-[140px] space-y-1">
-										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">
-											Forward Primer
-										</p>
+										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">Forward Primer</p>
 										<h3 className="text-xl font-semibold text-base-content break-all">
 											{assay.pcr_primer_name_forward}
 										</h3>
@@ -124,9 +138,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 									{/* Center: sequence + reference */}
 									<div className="flex-1 min-w-0 space-y-1">
 										<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
-										<p className="font-mono text-2xl text-primary break-all">
-											{assay.pcr_primer_forward}
-										</p>
+										<p className="font-mono text-2xl text-primary break-all">{assay.pcr_primer_forward}</p>
 										{assay.pcr_primer_reference_forward && (
 											<p className="text-xs">
 												<a
@@ -149,9 +161,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 										</div>
 										<div>
 											<p className="text-xs font-semibold text-base-content/70">Length</p>
-											<p className="text-2xl font-semibold text-base-content">
-												{assay.pcr_primer_forward.length}
-											</p>
+											<p className="text-2xl font-semibold text-base-content">{assay.pcr_primer_forward.length}</p>
 										</div>
 									</div>
 								</div>
@@ -173,9 +183,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 								<div className="flex flex-wrap items-start justify-between gap-6">
 									{/* Left: label + primer name */}
 									<div className="min-w-[140px] space-y-1">
-										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">
-											Reverse Primer
-										</p>
+										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">Reverse Primer</p>
 										<h3 className="text-xl font-semibold text-base-content break-all">
 											{assay.pcr_primer_name_reverse}
 										</h3>
@@ -184,9 +192,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 									{/* Center: sequence + reference */}
 									<div className="flex-1 min-w-0 space-y-1">
 										<p className="text-xs font-semibold text-base-content/70 mb-1">Sequence</p>
-										<p className="font-mono text-2xl text-primary break-all">
-											{assay.pcr_primer_reverse}
-										</p>
+										<p className="font-mono text-2xl text-primary break-all">{assay.pcr_primer_reverse}</p>
 										{assay.pcr_primer_reference_reverse && (
 											<p className="text-xs">
 												<a
@@ -209,9 +215,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 										</div>
 										<div>
 											<p className="text-xs font-semibold text-base-content/70">Length</p>
-											<p className="text-2xl font-semibold text-base-content">
-												{assay.pcr_primer_reverse.length}
-											</p>
+											<p className="text-2xl font-semibold text-base-content">{assay.pcr_primer_reverse.length}</p>
 										</div>
 									</div>
 								</div>
@@ -252,7 +256,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						<div>
 							<h2 className="text-2xl font-semibold text-base-content/90">Assay at a Glance</h2>
 							<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<SampleStatCard title="Total Samples" value={assay.Samples.length} />
+								<SampleStatCard title="Total Samples" value={assay._count.Samples} />
 								<SampleStatCard title="Total Libraries" value={assay.Libraries.length} />
 								<div className="sm:col-span-2">
 									<DropdownLinkBoxWithIcon

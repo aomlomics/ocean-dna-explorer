@@ -2,7 +2,7 @@ import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { DeadBooleanEnum } from "@/types/enums";
+import { DeadBooleanToEnum } from "@/types/enums";
 import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
@@ -19,7 +19,7 @@ export default async function Assay() {
 	});
 
 	const filterOptions = getOptions(assays);
-	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
+	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanToEnum;
 
 	const tableConfig: FilterConfig[] = [
 		{

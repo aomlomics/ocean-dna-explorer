@@ -27,6 +27,18 @@ enum DeadBoolean {
     missingCOLON__restricted_accessCOLON__endangered_species              @map("missing: restricted access: endangered species")
     missingCOLON__restricted_accessCOLON__human__identifiable             @map("missing: restricted access: human-identifiable")
     missingCOLON__restricted_access                                       @map("missing: restricted access")
+    missing
+    not_collected                                                         @map("not collected")
+    not_provided                                                          @map("not provided")
+    restricted_access                                                     @map("restricted access")
+    missingCOLON__control_sample                                          @map("missing: control sample")
+    missingCOLON__sample_group                                            @map("missing: sample group")
+    missingCOLON__synthetic_construct                                     @map("missing: synthetic construct")
+    missingCOLON__lab_stock                                               @map("missing: lab stock")
+    missingCOLON__third_party_data                                        @map("missing: third party data")
+    missingCOLON__data_agreement_established_pre__2023                    @map("missing: data agreement established pre-2023")
+    missingCOLON__endangered_species                                      @map("missing: endangered species")
+    missingCOLON__human__identifiable                                     @map("missing: human-identifiable")
 }
 
 enum detection_type {

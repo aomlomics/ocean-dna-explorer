@@ -1,3 +1,4 @@
+//DO NOT CHANGE ORDER
 export enum DeadValueEnum {
 	"not applicable: control sample" = -9999,
 	"not applicable: sample group",
@@ -10,11 +11,24 @@ export enum DeadValueEnum {
 	"missing: not provided",
 	"missing: restricted access: endangered species",
 	"missing: restricted access: human-identifiable",
-	"missing: restricted access"
+	"missing: restricted access",
+	"missing",
+	"not collected",
+	"not provided",
+	"restricted access",
+	"missing: control sample",
+	"missing: sample group",
+	"missing: synthetic construct",
+	"missing: lab stock",
+	"missing: third party data",
+	"missing: data agreement established pre-2023",
+	"missing: endangered species",
+	"missing: human-identifiable"
 }
+export const DeadValues = Object.values(DeadValueEnum).filter((v) => isNaN(Number(v))) as string[];
 export const DeadValueNumbers = Object.values(DeadValueEnum).filter((v) => !isNaN(Number(v))) as number[];
 
-export const DeadBooleanEnum = {
+export const DeadBooleanToEnum = {
 	false: "false",
 	"0": "false",
 	true: "true",
@@ -31,5 +45,17 @@ export const DeadBooleanEnum = {
 	"missing: not provided": "missingCOLON__not_provided",
 	"missing: restricted access: endangered species": "missingCOLON__restricted_accessCOLON__endangered_species",
 	"missing: restricted access: human-identifiable": "missingCOLON__restricted_accessCOLON__human__identifiable",
-	"missing: restricted access": "missingCOLON__restricted_access"
+	"missing: restricted access": "missingCOLON__restricted_access",
+	missing: "missing",
+	"not collected": "not_collected",
+	"not provided": "not_provided",
+	"restricted access": "restricted_access",
+	"missing: control sample": "missingCOLON__control_sample",
+	"missing: sample group": "missingCOLON__sample_group",
+	"missing: synthetic construct": "missingCOLON__synthetic_construct",
+	"missing: lab stock": "missingCOLON__lab_stock",
+	"missing: third party data": "missingCOLON__third_party_data",
+	"missing: data agreement established pre-2023": "missingCOLON__data_agreement_established_pre__2023",
+	"missing: endangered species": "missingCOLON__endangered_species",
+	"missing: human-identifiable": "missingCOLON__human__identifiable"
 };

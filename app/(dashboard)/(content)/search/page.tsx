@@ -7,6 +7,7 @@ import {
 	ParamsArrayElement,
 	ParamsArrayField,
 	ParamsArrayRelation,
+	ParamsArrayValue,
 	ParamsLogicalOperator,
 	QueryMode
 } from "@/types/globals";
@@ -17,6 +18,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Modal from "@/app/components/Modal";
+import { DeadValues } from "@/types/enums";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -113,8 +115,8 @@ export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-    const router = useRouter();
-    const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
+	const router = useRouter();
+	const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
 		const table = searchParams.get("table") as Prisma.ModelName;
 		if (table && TableNames.includes(uncapitalizeTable(table))) {
 			return table;
@@ -162,12 +164,12 @@ export default function AdvancedSearch() {
 					setSearchTree(createEmptyGroup(0));
 				}
 
-                const paramTable = searchParams.get("table") as Prisma.ModelName | null;
-                if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
-                    setSearchTable(paramTable);
-                } else {
-                    setSearchTable("Project");
-                }
+				const paramTable = searchParams.get("table") as Prisma.ModelName | null;
+				if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
+					setSearchTable(paramTable);
+				} else {
+					setSearchTable("Project");
+				}
 			}
 		} catch (err) {
 			//ignore bad urls
@@ -198,10 +200,7 @@ export default function AdvancedSearch() {
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
-			if (
-				apiDropdownRef.current &&
-				!apiDropdownRef.current.contains(event.target as Node)
-			) {
+			if (apiDropdownRef.current && !apiDropdownRef.current.contains(event.target as Node)) {
 				setApiDropdownOpen(false);
 			}
 		}
@@ -217,7 +216,6 @@ export default function AdvancedSearch() {
 
 	//functions
 	function getAvailableApiFields(table: Prisma.ModelName) {
-
 		const omit = new Set(GlobalOmit);
 		const meta = TableMetadata[table];
 		const allFields = meta.enumSchema.options as string[];
@@ -248,44 +246,52 @@ export default function AdvancedSearch() {
 	function getQueryDescription() {
 		// Use formUpdateTrigger to force re-evaluation
 		const _ = formUpdateTrigger;
-		
+
 		if (!formRef.current || !searchTree || searchTree.children.length === 0) return "";
 
 		function describeFilter(id: string): string {
 			if (!formRef.current) return "";
-			
+
 			const type = formRef.current[`type_${id}`]?.value as "relation" | "field";
 			const relation = type === "relation" ? formRef.current[`relation_${id}`]?.value : "";
 			const field = formRef.current[`field_${id}`]?.value as string;
 			const mode = formRef.current[`mode_${id}`]?.value as QueryMode;
-			
+
 			if (!field) return "";
-			
+
 			const tableName = relation || searchTable;
 			const prefix = relation ? `${relation}.` : "";
-			
-			const modeText = {
-				contains: "contains",
-				equals: "equals",
-				startsWith: "starts with",
-				endsWith: "ends with",
-				gt: ">",
-				gte: ">=",
-				lt: "<",
-				lte: "<=",
-				range: "is between",
-				in: "is in",
-				notIn: "is not in"
-			}[mode] || mode;
-			
+
+			const modeText =
+				{
+					contains: "contains",
+					equals: "equals",
+					startsWith: "starts with",
+					endsWith: "ends with",
+					gt: ">",
+					gte: ">=",
+					lt: "<",
+					lte: "<=",
+					range: "is between",
+					in: "is in",
+					notIn: "is not in",
+					null: "is null",
+					notNull: "is not null",
+					deadValue: "is the dead value"
+				}[mode] || mode;
+
 			let filterValue = formRef.current[`filter_${id}`]?.value || "";
 			if (mode === "range") {
 				const gte = formRef.current[`filter_${id}_gte`]?.value || "";
 				const lte = formRef.current[`filter_${id}_lte`]?.value || "";
 				filterValue = `${gte} and ${lte}`;
 			}
-			
-			return `${prefix}${field} ${modeText} "${filterValue}"`;
+
+			if (mode === "deadValue" && filterValue === "any") {
+				return `${prefix}${field} is any dead value`;
+			}
+
+			return `${prefix}${field} ${modeText}${filterValue ? ` "${filterValue}"` : ""}`;
 		}
 
 		function recurseGroup(group: SearchGroupNode, isRoot = false): string {
@@ -320,11 +326,7 @@ export default function AdvancedSearch() {
 		function buildRuleTuple(id: string): ParamsArrayField | ParamsArrayRelation | null {
 			if (!formRef.current) return null;
 
-			if (
-				!formRef.current[`type_${id}`] ||
-				!formRef.current[`field_${id}`] ||
-				!formRef.current[`mode_${id}`]
-			) {
+			if (!formRef.current[`type_${id}`] || !formRef.current[`field_${id}`] || !formRef.current[`mode_${id}`]) {
 				return null;
 			}
 
@@ -345,52 +347,62 @@ export default function AdvancedSearch() {
 			const fieldType = getZodType(shape[field as keyof typeof shape]).type;
 
 			const mode = formRef.current[`mode_${id}`].value as QueryMode;
-			let filter = undefined as unknown as string | number | [number, number] | [string, string];
 
-			if (fieldType === "date") {
-				if (mode === "range") {
-					if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`])
-						return null;
-					const gteDate = formRef.current[`filter_${id}_gte_date`].value;
-					const gteTime = formRef.current[`filter_${id}_gte_time`]?.value || "";
-					const lteDate = formRef.current[`filter_${id}_lte_date`].value;
-					const lteTime = formRef.current[`filter_${id}_lte_time`]?.value || "";
+			let filter = undefined as unknown as ParamsArrayValue;
+			if (mode !== "null" && mode !== "notNull") {
+				if (fieldType === "date") {
+					if (mode === "range") {
+						if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`]) return null;
+						const gteDate = formRef.current[`filter_${id}_gte_date`].value;
+						const gteTime = formRef.current[`filter_${id}_gte_time`]?.value || "";
+						const lteDate = formRef.current[`filter_${id}_lte_date`].value;
+						const lteTime = formRef.current[`filter_${id}_lte_time`]?.value || "";
 
-					filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
-				} else {
-					if (!formRef.current[`filter_${id}_date`]) return null;
-					const filterDate = formRef.current[`filter_${id}_date`].value;
-					const filterTime = formRef.current[`filter_${id}_time`]?.value || "";
+						filter = [gteDate + (gteTime ? "T" + gteTime : ""), lteDate + (lteTime ? "T" + lteTime : "")];
+					} else if (mode === "deadValue") {
+						if (!formRef.current[`filter_${id}`]) return null;
+						filter = formRef.current[`filter_${id}`].value;
+					} else {
+						if (!formRef.current[`filter_${id}_date`]) return null;
+						const filterDate = formRef.current[`filter_${id}_date`].value;
+						const filterTime = formRef.current[`filter_${id}_time`]?.value || "";
 
-					filter = filterDate + (filterTime ? "T" + filterTime : "");
-				}
-			} else {
-				if (mode === "range") {
-					if (!formRef.current[`filter_${id}_gte`] || !formRef.current[`filter_${id}_lte`]) return null;
-					const gte = formRef.current[`filter_${id}_gte`].value;
-					const lte = formRef.current[`filter_${id}_lte`].value;
-					if (fieldType === "integer") {
-						filter = [parseInt(gte), parseInt(lte)];
-					} else if (fieldType === "float") {
-						filter = [parseFloat(gte), parseFloat(lte)];
+						filter = filterDate + (filterTime ? "T" + filterTime : "");
 					}
 				} else {
-					if (!formRef.current[`filter_${id}`]) return null;
-					const filterVal = formRef.current[`filter_${id}`].value;
-
-					if (fieldType === "integer") {
-						filter = parseInt(filterVal);
-					} else if (fieldType === "float") {
-						filter = parseFloat(filterVal);
+					if (mode === "range") {
+						if (!formRef.current[`filter_${id}_gte`] || !formRef.current[`filter_${id}_lte`]) return null;
+						const gte = formRef.current[`filter_${id}_gte`].value;
+						const lte = formRef.current[`filter_${id}_lte`].value;
+						if (fieldType === "integer") {
+							filter = [parseInt(gte), parseInt(lte)];
+						} else if (fieldType === "float") {
+							filter = [parseFloat(gte), parseFloat(lte)];
+						}
+					} else if (mode === "deadValue") {
+						if (!formRef.current[`filter_${id}`]) return null;
+						filter = formRef.current[`filter_${id}`].value;
 					} else {
-						filter = filterVal;
+						if (!formRef.current[`filter_${id}`]) return null;
+						const filterVal = formRef.current[`filter_${id}`].value;
+
+						if (fieldType === "integer") {
+							filter = parseInt(filterVal);
+						} else if (fieldType === "float") {
+							filter = parseFloat(filterVal);
+						} else {
+							filter = filterVal;
+						}
 					}
 				}
 			}
 
-			let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
+			let arr = [field, mode] as ParamsArrayRelation | ParamsArrayField;
+			if (filter) {
+				arr = [field, mode, filter] as ParamsArrayField;
+			}
 			if (relation) {
-				arr = [relation, ...arr] as typeof arr;
+				arr = [relation, ...arr] as ParamsArrayRelation;
 			}
 
 			return arr;
@@ -429,8 +441,8 @@ export default function AdvancedSearch() {
 		}
 	}
 
-    function reset() {
-        setSearchTable("Project");
+	function reset() {
+		setSearchTable("Project");
 		setSearchTree(createEmptyGroup(0));
 		router.push(pathname);
 	}
@@ -445,10 +457,10 @@ export default function AdvancedSearch() {
 		}
 
 		router.push(`${pathname}?${params.toString()}`);
-		
+
 		// Scroll to results after a brief delay to allow data to load
 		setTimeout(() => {
-			const resultsElement = document.getElementById('search-results');
+			const resultsElement = document.getElementById("search-results");
 			if (resultsElement) {
 				resultsElement.scrollIntoView({
 					block: "start",
@@ -517,8 +529,7 @@ export default function AdvancedSearch() {
 
 		const availableFields = getAvailableApiFields(searchTable);
 		const savedSelection = apiFieldSelections[searchTable];
-		const initialSelection =
-			savedSelection && savedSelection.length ? savedSelection : availableFields;
+		const initialSelection = savedSelection && savedSelection.length ? savedSelection : availableFields;
 
 		setFieldSelectionDraft(initialSelection);
 		setFieldSearchText("");
@@ -529,13 +540,12 @@ export default function AdvancedSearch() {
 	const filteredApiFields = availableApiFields.filter((field) =>
 		field.toLowerCase().includes(fieldSearchText.toLowerCase())
 	);
-	const allFieldsSelected =
-		availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
+	const allFieldsSelected = availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
 
-    return (
-        <div className="grid grid-cols-1 gap-y-4 pt-4">
-            {searchTable && (
-                <header className="flex items-start justify-between">
+	return (
+		<div className="grid grid-cols-1 gap-y-4 pt-4">
+			{searchTable && (
+				<header className="flex items-start justify-between">
 					<div>
 						<h1 className="text-4xl font-normal text-base-content">
 							<span className="">Search</span>{" "}
@@ -543,12 +553,12 @@ export default function AdvancedSearch() {
 							<span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
 						</h1>
 					</div>
-                </header>
-            )}
-            <div className="w-full space-y-4 text-base-content/80">
-                {searchTable && <p>{TableMetadata[searchTable].description}</p>}
-                <ExploreTabButtons activeTable={searchTable} />
-            </div>
+				</header>
+			)}
+			<div className="w-full space-y-4 text-base-content/80">
+				{searchTable && <p>{TableMetadata[searchTable].description}</p>}
+				<ExploreTabButtons activeTable={searchTable} />
+			</div>
 
 			<form
 				ref={formRef}
@@ -557,10 +567,9 @@ export default function AdvancedSearch() {
 					e.preventDefault();
 					search();
 				}}
-				onChange={() => setFormUpdateTrigger(prev => prev + 1)}
+				onChange={() => setFormUpdateTrigger((prev) => prev + 1)}
 			>
-
-                {searchTable && (
+				{searchTable && (
 					<>
 						<div className="bg-base-100 py-6 rounded-lg mb-4">
 							<div className="space-y-4">
@@ -616,20 +625,12 @@ export default function AdvancedSearch() {
 														</svg>
 														<span className="text-sm grid">
 															<span
-																className={
-																	apiCopied
-																		? "invisible col-start-1 row-start-1"
-																		: "col-start-1 row-start-1"
-																}
+																className={apiCopied ? "invisible col-start-1 row-start-1" : "col-start-1 row-start-1"}
 															>
 																Copy as API Query
 															</span>
 															<span
-																className={
-																	apiCopied
-																		? "col-start-1 row-start-1"
-																		: "invisible col-start-1 row-start-1"
-																}
+																className={apiCopied ? "col-start-1 row-start-1" : "invisible col-start-1 row-start-1"}
 															>
 																Copied
 															</span>
@@ -685,11 +686,7 @@ export default function AdvancedSearch() {
 														</div>
 													)}
 												</div>
-												<button
-													type="button"
-													className="btn btn-error btn-md gap-2"
-													onClick={() => reset()}
-												>
+												<button type="button" className="btn btn-error btn-md gap-2" onClick={() => reset()}>
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														fill="none"
@@ -698,11 +695,7 @@ export default function AdvancedSearch() {
 														stroke="currentColor"
 														className="w-5 h-5"
 													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															d="M6 18L18 6M6 6l12 12"
-														/>
+														<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
 													</svg>
 													Clear
 												</button>
@@ -729,23 +722,23 @@ export default function AdvancedSearch() {
 								/>
 							</div>
 						</div>
-				{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
+						{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
 					<input type="checkbox" />
 					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
 					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
 						<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
 					</div>
 				</div> */}
-			</>
-		)}
-	</form>
+					</>
+				)}
+			</form>
 
 			<Modal ref={apiFieldsModalRef} className="max-h-[85vh] overflow-y-auto my-8 max-w-3xl">
 				<div className="p-6 space-y-4">
 					<h3 className="text-2xl font-normal text-primary">Select Fields for API Query</h3>
 					<p className="text-sm text-base-content/70">
-						Choose which fields from {TableMetadata[searchTable].plural} to include when copying this
-						search as an API query. Leaving all fields selected will return the full records.
+						Choose which fields from {TableMetadata[searchTable].plural} to include when copying this search as an API
+						query. Leaving all fields selected will return the full records.
 					</p>
 					<div className="mt-2 space-y-3">
 						<div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
@@ -765,31 +758,24 @@ export default function AdvancedSearch() {
 									className="checkbox"
 									checked={allFieldsSelected}
 									onChange={(e) =>
-										e.target.checked
-											? setFieldSelectionDraft(availableApiFields)
-											: setFieldSelectionDraft([])
+										e.target.checked ? setFieldSelectionDraft(availableApiFields) : setFieldSelectionDraft([])
 									}
 								/>
 								<span className="text-sm text-base-content/80">Select/deselect all</span>
 							</label>
 						</div>
-						<div className="border-t border-base-300 pt-3 h-[320px] overflow-y-auto">
+						<div className="border-t border-base-300 pt-3 h-80 overflow-y-auto">
 							{filteredApiFields.length ? (
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
 									{filteredApiFields.map((field) => (
-										<label
-											key={field}
-											className="flex items-center gap-2 text-sm text-base-content/90"
-										>
+										<label key={field} className="flex items-center gap-2 text-sm text-base-content/90">
 											<input
 												type="checkbox"
 												className="checkbox checkbox-sm"
 												checked={fieldSelectionDraft.includes(field)}
 												onChange={() => {
 													setFieldSelectionDraft((prev) =>
-														prev.includes(field)
-															? prev.filter((f) => f !== field)
-															: [...prev, field]
+														prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
 													);
 												}}
 											/>
@@ -805,11 +791,7 @@ export default function AdvancedSearch() {
 						</div>
 					</div>
 					<div className="mt-4 flex items-center justify-end gap-3">
-						<button
-							type="button"
-							className="btn btn-ghost"
-							onClick={() => apiFieldsModalRef.current?.close()}
-						>
+						<button type="button" className="btn btn-ghost" onClick={() => apiFieldsModalRef.current?.close()}>
 							Cancel
 						</button>
 						<button
@@ -817,11 +799,8 @@ export default function AdvancedSearch() {
 							className="btn btn-primary"
 							disabled={!fieldSelectionDraft.length}
 							onClick={() => {
-								const normalizedSelection = availableApiFields.filter((field) =>
-									fieldSelectionDraft.includes(field)
-								);
-								const selectionIsAll =
-									normalizedSelection.length === availableApiFields.length;
+								const normalizedSelection = availableApiFields.filter((field) => fieldSelectionDraft.includes(field));
+								const selectionIsAll = normalizedSelection.length === availableApiFields.length;
 
 								setApiFieldSelections((prev) => {
 									if (!normalizedSelection.length || selectionIsAll) {
@@ -850,62 +829,68 @@ export default function AdvancedSearch() {
 					<h3 className="text-2xl font-normal mb-6 text-primary">How to Use This Page</h3>
 					<div className="space-y-6">
 						<div className="space-y-3">
-							<p className="text-base-content/80 font-medium">
-								Building a search
+							<p className="text-base-content/80 font-medium">Building a search</p>
+							<p className="text-base-content/70 text-sm">
+								1. Select a table using the tabs at the top (Projects, Samples, Taxonomy, etc.). This controls what type
+								of records you will see in the results table.
 							</p>
 							<p className="text-base-content/70 text-sm">
-								1. Select a table using the tabs at the top (Projects, Samples, Taxonomy, etc.). This controls what type of records you will see in the results table.
+								2. In the filter box, use the dropdowns to add filters on fields or related tables. Each row lets you
+								pick a type (Field or Relation), a field name, a condition, and a value.
 							</p>
 							<p className="text-base-content/70 text-sm">
-								2. In the filter box, use the dropdowns to add filters on fields or related tables. Each row lets you pick a type (Field or Relation), a field name, a condition, and a value.
+								3. The plain text line at the bottom of the filter box shows a readable description of your search. The
+								API Query box below shows the exact URL you can copy into your browser or code.
 							</p>
 							<p className="text-base-content/70 text-sm">
-								3. The plain text line at the bottom of the filter box shows a readable description of your search. The API Query box below shows the exact URL you can copy into your browser or code.
-							</p>
-							<p className="text-base-content/70 text-sm">
-								4. Click Search to run the query and see results in the table at the bottom of the page. Use Clear to reset all filters back to an empty search.
+								4. Click Search to run the query and see results in the table at the bottom of the page. Use Clear to
+								reset all filters back to an empty search.
 							</p>
 							<div className="bg-base-200 p-3 rounded-md mt-2 space-y-1">
 								<p className="font-mono text-sm mb-1">Examples:</p>
 								<p className="font-mono text-xs">
-									Project tab: Field = <span className="font-normal">institution</span>, Condition = <span className="font-normal">contains</span>, Value = <span className="font-normal">"NOAA"</span>
+									Project tab: Field = <span className="font-normal">institution</span>, Condition ={" "}
+									<span className="font-normal">contains</span>, Value = <span className="font-normal">"NOAA"</span>
 								</p>
 								<p className="font-mono text-xs">
-									Sample tab: Field = <span className="font-normal">minimumDepthInMeters</span>, Condition = <span className="font-normal">{">"}</span>, Value = <span className="font-normal">100</span>
+									Sample tab: Field = <span className="font-normal">minimumDepthInMeters</span>, Condition ={" "}
+									<span className="font-normal">{">"}</span>, Value = <span className="font-normal">100</span>
 								</p>
 							</div>
 						</div>
 
 						<div className="space-y-3">
-							<p className="text-base-content/80 font-medium">
-								Filters vs relations
-							</p>
+							<p className="text-base-content/80 font-medium">Filters vs relations</p>
 							<p className="text-base-content/70 text-sm">
-								A <span className="font-semibold">Field</span> filter searches a column on the table you selected in the tabs. For example, on the Projects tab you might filter by a Project field like{" "}
+								A <span className="font-semibold">Field</span> filter searches a column on the table you selected in the
+								tabs. For example, on the Projects tab you might filter by a Project field like{" "}
 								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">institution</span> or{" "}
 								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">study_factor</span>.
 							</p>
 							<p className="text-base-content/70 text-sm">
-								A <span className="font-semibold">Relation</span> filter lets you filter by data on a related table while still returning rows from the main table. For example, on the Projects tab you can choose Relation = a sample table and Field ={" "}
-								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">geo_loc_name</span> to find projects that have at least one sample in a specific location.
+								A <span className="font-semibold">Relation</span> filter lets you filter by data on a related table
+								while still returning rows from the main table. For example, on the Projects tab you can choose Relation
+								= a sample table and Field ={" "}
+								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">geo_loc_name</span> to find projects
+								that have at least one sample in a specific location.
 							</p>
 							<p className="text-base-content/70 text-sm">
-								Field and Relation filters can be mixed freely inside the same group; they all follow the same AND/OR rules described below.
+								Field and Relation filters can be mixed freely inside the same group; they all follow the same AND/OR
+								rules described below.
 							</p>
 						</div>
 
 						<div className="space-y-3">
-							<p className="text-base-content/80 font-medium">
-								AND / OR groups and parentheses
-							</p>
+							<p className="text-base-content/80 font-medium">AND / OR groups and parentheses</p>
 							<p className="text-base-content/70 text-sm">
 								Every filter lives inside a group. At the top of each group you can choose whether the group matches{" "}
 								<span className="font-semibold">ALL (AND)</span> of its filters or{" "}
 								<span className="font-semibold">ANY (OR)</span> of its filters.
 							</p>
 							<p className="text-base-content/70 text-sm">
-								Use <span className="font-semibold">+ Add Nested Group</span> to create parentheses in your logic. A nested group is evaluated as a single block. For example, if you create a group containing filters B and C with{" "}
-								<span className="font-semibold">ANY (OR)</span>, and keep filter A outside that group with{" "}
+								Use <span className="font-semibold">+ Add Nested Group</span> to create parentheses in your logic. A
+								nested group is evaluated as a single block. For example, if you create a group containing filters B and
+								C with <span className="font-semibold">ANY (OR)</span>, and keep filter A outside that group with{" "}
 								<span className="font-semibold">ALL (AND)</span>, the query behaves like:
 							</p>
 							<div className="bg-base-200 p-3 rounded-md mt-1">
@@ -917,16 +902,16 @@ export default function AdvancedSearch() {
 							</div>
 							<p className="text-base-content/70 text-sm">
 								You can nest groups inside other groups to build more complex logic such as{" "}
-								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">
-									(A OR B) AND (C OR D)
-								</span>
-								. Each nested group controls how its own filters are combined, and the parent group controls how those blocks are combined with the rest of the query.
+								<span className="font-mono text-xs bg-base-200 px-1 py-0.5 rounded">(A OR B) AND (C OR D)</span>. Each
+								nested group controls how its own filters are combined, and the parent group controls how those blocks
+								are combined with the rest of the query.
 							</p>
 							<div className="bg-base-200 p-3 rounded-md mt-2">
 								<p className="font-mono text-sm mb-1">Example (nested AND inside OR):</p>
 								<p className="font-mono text-sm">A OR [B AND (C OR D)]</p>
 								<p className="text-xs text-base-content/70 mt-1">
-									To build this, set the top group to ANY (OR), add filter A as a single row, then create a nested group set to ALL (AND) that contains filter B and another nested group set to ANY (OR) with filters C and D.
+									To build this, set the top group to ANY (OR), add filter A as a single row, then create a nested group
+									set to ALL (AND) that contains filter B and another nested group set to ANY (OR) with filters C and D.
 								</p>
 							</div>
 							<div className="bg-base-200 p-3 rounded-md mt-2">
@@ -937,7 +922,9 @@ export default function AdvancedSearch() {
 									(Sample.geo_loc_name contains "Gulf of Mexico" OR Sample.geo_loc_name contains "Caribbean Sea")
 								</p>
 								<p className="text-xs text-base-content/70 mt-1">
-									To build this, create one nested group for the two Project field filters (institution) with ANY (OR), and another nested group for the two Sample relation filters (geo_loc_name) with ANY (OR). Leave the top group on ALL (AND) so both blocks must be true.
+									To build this, create one nested group for the two Project field filters (institution) with ANY (OR),
+									and another nested group for the two Sample relation filters (geo_loc_name) with ANY (OR). Leave the
+									top group on ALL (AND) so both blocks must be true.
 								</p>
 							</div>
 						</div>
@@ -985,10 +972,7 @@ function SearchGroupComponent({
 
 	function handleAddGroup() {
 		updateGroup((g) => {
-			g.children = [
-				...g.children,
-				createEmptyGroup((g.depth || 0) + 1)
-			];
+			g.children = [...g.children, createEmptyGroup((g.depth || 0) + 1)];
 		});
 	}
 
@@ -1007,16 +991,8 @@ function SearchGroupComponent({
 	const isRoot = group.depth === 0;
 
 	return (
-		<div
-			className={`card bg-base-100 shadow-sm border border-base-300 w-full ${
-				!isRoot ? "bg-base-200/60" : ""
-			}`}
-		>
-			<div
-				className={`card-body p-4 space-y-2 relative ${
-					!isRoot ? "pl-8" : ""
-				}`}
-			>
+		<div className={`card bg-base-100 shadow-sm border border-base-300 w-full ${!isRoot ? "bg-base-200/60" : ""}`}>
+			<div className={`card-body p-4 space-y-2 relative ${!isRoot ? "pl-8" : ""}`}>
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">
 						{isRoot && (
@@ -1040,9 +1016,7 @@ function SearchGroupComponent({
 							<option value="AND">ALL</option>
 							<option value="OR">ANY</option>
 						</select>
-						<span className="text-sm text-base-content/70">
-							of the following are true:
-						</span>
+						<span className="text-sm text-base-content/70">of the following are true:</span>
 					</div>
 
 					<div className="flex items-center gap-2">
@@ -1074,22 +1048,15 @@ function SearchGroupComponent({
 
 				<div className="space-y-0.5">
 					{group.children.length === 0 && (
-						<p className="text-sm text-base-content/60 italic">
-							No criteria yet. Add a filter or nested group.
-						</p>
+						<p className="text-sm text-base-content/60 italic">No criteria yet. Add a filter or nested group.</p>
 					)}
 
 					{group.children.reduce((acc: ReactNode[], child, index) => {
 						if (index > 0) {
 							acc.push(
-								<div
-									key={child.id + "_op"}
-									className="grid grid-cols-[30px_15%_18%_18%_1fr] px-3"
-								>
+								<div key={child.id + "_op"} className="grid grid-cols-[30px_15%_18%_18%_1fr] px-3">
 									<div className="flex justify-center items-center">
-										<span className="text-xs text-base-content/60 font-semibold tracking-wide">
-											{group.operator}
-										</span>
+										<span className="text-xs text-base-content/60 font-semibold tracking-wide">{group.operator}</span>
 									</div>
 									<div />
 									<div />
@@ -1125,27 +1092,15 @@ function SearchGroupComponent({
 				</div>
 
 				<div className="flex flex-wrap items-center gap-3 pt-1 mt-1">
-					<button
-						type="button"
-						className="btn btn-sm btn-primary"
-						onClick={handleAddRule}
-					>
+					<button type="button" className="btn btn-sm btn-primary" onClick={handleAddRule}>
 						+ Add Filter
 					</button>
-					<button
-						type="button"
-						className="btn btn-sm btn-primary"
-						onClick={handleAddGroup}
-					>
+					<button type="button" className="btn btn-sm btn-primary" onClick={handleAddGroup}>
 						+ Add Nested Group
 					</button>
 				</div>
 
-				{footer && isRoot && (
-					<div className="mt-3">
-						{footer}
-					</div>
-				)}
+				{footer && isRoot && <div className="mt-3">{footer}</div>}
 			</div>
 		</div>
 	);
@@ -1192,9 +1147,7 @@ function SearchRuleComponent({
 	return (
 		<div
 			className={`grid ${
-				isRelation
-					? "grid-cols-[30px_14%_14%_20%_1fr]"
-					: "grid-cols-[30px_14%_26%_1fr]"
+				isRelation ? "grid-cols-[30px_14%_14%_20%_1fr]" : "grid-cols-[30px_14%_26%_1fr]"
 			} gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
 		>
 			<div className="flex justify-center">
@@ -1299,7 +1252,6 @@ function SearchRuleComponent({
 					<div />
 				)}
 			</div>
-
 		</div>
 	);
 }
@@ -1309,7 +1261,7 @@ function InputElement({
 	table,
 	field,
 	defaultMode,
-	defaultValue,
+	defaultValue
 }: {
 	nameSuffix: string;
 	table: Prisma.ModelName;
@@ -1348,6 +1300,9 @@ function InputElement({
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
+					<option value="null">Null</option>
+					<option value="notNull">Not null</option>
+					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "range" ? (
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
@@ -1373,6 +1328,21 @@ function InputElement({
 							required
 						/>
 					</div>
+				) : mode === "null" || mode === "notNull" ? (
+					<></>
+				) : mode === "deadValue" ? (
+					<select
+						className="select select-primary"
+						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
+						name={`filter_${nameSuffix}`}
+					>
+						<option value="any">any</option>
+						{DeadValues.map((dv) => (
+							<option key={dv} value={dv}>
+								{dv}
+							</option>
+						))}
+					</select>
 				) : (
 					<input
 						className="input input-primary w-full rounded-l-none"
@@ -1401,13 +1371,16 @@ function InputElement({
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
+					<option value="null">Null</option>
+					<option value="notNull">Not null</option>
+					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "range" ? (
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
 						<div className="input input-primary w-full rounded-none">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
-								className={`w-[20px] ${gteDateSelected ? "text-success" : "text-error"}`}
+								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[0].split("T")[0]
@@ -1432,7 +1405,7 @@ function InputElement({
 						<div className="input input-primary w-full rounded-l-none">
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
-								className={`w-[20px] ${lteDateSelected ? "text-success" : "text-error"}`}
+								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[1].split("T")[0]
@@ -1493,6 +1466,9 @@ function InputElement({
 					<option value="equals">Equals</option>
 					<option value="startsWith">Starts With</option>
 					<option value="endsWith">Ends With</option>
+					<option value="null">Null</option>
+					<option value="notNull">Not null</option>
+					<option value="deadValue">Dead value</option>
 				</select>
 				<input
 					className="input input-primary w-full rounded-l-none"

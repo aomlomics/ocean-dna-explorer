@@ -6,6 +6,7 @@ import { NullLocation } from "@/types/globals";
 export default function Map({
 	query,
 	locations,
+	where,
 	id,
 	table,
 	titleTable,
@@ -14,8 +15,10 @@ export default function Map({
 	legend,
 	draw,
 	legendOmit,
+	shapesToUrl,
 	className = ""
 }: {
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -24,6 +27,7 @@ export default function Map({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 	className?: string;
 } & (
 	| { query: () => Promise<NullLocation[]>; locations?: undefined }
@@ -45,6 +49,7 @@ export default function Map({
 				<SuspenseMap
 					query={query}
 					locations={locations}
+					where={where}
 					id={id}
 					table={table}
 					titleTable={titleTable}
@@ -53,6 +58,7 @@ export default function Map({
 					legend={legend}
 					draw={draw}
 					legendOmit={legendOmit}
+					shapesToUrl={shapesToUrl}
 				/>
 			</Suspense>
 		</div>
@@ -62,6 +68,7 @@ export default function Map({
 async function SuspenseMap({
 	query,
 	locations,
+	where,
 	id,
 	table,
 	titleTable,
@@ -69,10 +76,12 @@ async function SuspenseMap({
 	clusterRadius,
 	legend,
 	draw,
-	legendOmit
+	legendOmit,
+	shapesToUrl
 }: {
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
+	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -81,11 +90,13 @@ async function SuspenseMap({
 	legend?: boolean;
 	draw?: boolean;
 	legendOmit?: string[];
+	shapesToUrl?: true;
 }) {
 	if (locations) {
 		return (
 			<DynamicMap
 				locations={locations}
+				where={where}
 				id={id}
 				table={table}
 				titleTable={titleTable}
@@ -94,12 +105,14 @@ async function SuspenseMap({
 				legend={legend}
 				draw={draw}
 				legendOmit={legendOmit}
+				shapesToUrl={shapesToUrl}
 			/>
 		);
 	} else if (query) {
 		return (
 			<DynamicMap
 				locations={await query()}
+				where={where}
 				id={id}
 				table={table}
 				titleTable={titleTable}
@@ -108,6 +121,7 @@ async function SuspenseMap({
 				legend={legend}
 				draw={draw}
 				legendOmit={legendOmit}
+				shapesToUrl={shapesToUrl}
 			/>
 		);
 	}

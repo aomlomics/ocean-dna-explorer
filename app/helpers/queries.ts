@@ -9,7 +9,9 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { uncapitalizeTable } from "./utils";
+import { getShapesFromUrl, uncapitalizeTable } from "./utils";
+import { decompressFromEncodedURIComponent } from "lz-string";
+import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 
 function searchRelations(
 	relations: RelationMetadata[],
@@ -95,7 +97,22 @@ function deepWhere(
 	}
 }
 
-const queryModes = ["equals", "contains", "startsWith", "endsWith", "lt", "lte", "gt", "gte", "range", "in", "notIn"];
+const queryModes = [
+	"equals",
+	"contains",
+	"startsWith",
+	"endsWith",
+	"lt",
+	"lte",
+	"gt",
+	"gte",
+	"range",
+	"in",
+	"notIn",
+	"null",
+	"notNull",
+	"deadValue"
+];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation
@@ -105,13 +122,18 @@ export function parseToQuery(
 	let mode = "" as QueryMode;
 	let value = "" as ParamsArrayValue;
 	if (queryArr.length === 2) {
-		//search field for value
 		field = queryArr[0];
-		value = queryArr[1] as string;
+		if (queryArr[1] === "null" || queryArr[1] === "notNull") {
+			//search field for null/notNull
+			mode = queryArr[1];
+		} else {
+			//search field for value
+			value = queryArr[1] as string;
+		}
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
 		field = queryArr[0];
-		mode = queryArr[1];
+		mode = queryArr[1] as QueryMode;
 		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
@@ -121,8 +143,14 @@ export function parseToQuery(
 		value = queryArr[3];
 	}
 
-	if (mode && !queryModes.includes(mode)) {
-		throw new Error(`Query mode "${mode}" not supported.`);
+	if (mode) {
+		if (!queryModes.includes(mode)) {
+			throw new Error(`Query mode "${mode}" not supported.`);
+		}
+
+		if ((mode === "null" || mode === "notNull") && queryArr.length !== 2) {
+			throw new Error('Modes "null" and "notNull" do not support values.');
+		}
 	}
 
 	const model = Object.keys(Prisma.ModelName).find(
@@ -136,21 +164,59 @@ export function parseToQuery(
 		return { [field]: value };
 	}
 
-	const type = getZodType(TableMetadata[model].schema.shape[field]).type;
+	const zodType = getZodType(TableMetadata[model].schema.shape[field]);
 
 	let searchWhere;
-	if (type === "string") {
-		if (mode) {
-			if (mode === "in" || mode === "notIn") {
-				//TODO: needs testing
-				const typedVal = value as string[];
+	//universal mode behavior
+	if (mode === "null" || mode === "notNull") {
+		if (zodType.optional) {
+			if (mode === "null") {
 				searchWhere = {
-					[field]: {
-						[mode]: typedVal
-					}
+					[field]: null
 				};
+			} else if (mode === "notNull") {
+				searchWhere = {
+					[field]: { not: null }
+				};
+			}
+		} else {
+			throw new Error(`Mode may not be null or notNull, as field named "${field}" is not optional.`);
+		}
+	} else if (mode === "in" || mode === "notIn") {
+		//uncompress if necessary
+		if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
+			value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
+			if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
+				throw new Error("Value must be an array of primitives compressed with lz-string.");
+			}
+		}
+
+		searchWhere = {
+			[field]: {
+				[mode]: value
+			}
+		};
+	} else if (zodType.type === "string") {
+		//string behavior
+		const typedVal = value as string;
+		if (mode) {
+			if (mode === "deadValue") {
+				if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
+					throw new Error(`Invalid deadValue option "${typedVal}".`);
+				}
+
+				if (typedVal.toLowerCase() === "any") {
+					searchWhere = {
+						[field]: {
+							in: DeadValues
+						}
+					};
+				} else {
+					searchWhere = {
+						[field]: typedVal
+					};
+				}
 			} else {
-				const typedVal = value as string;
 				searchWhere = {
 					[field]: {
 						[mode]: typedVal.replace("_", "\\_").replace("%", "\\%"),
@@ -159,7 +225,6 @@ export function parseToQuery(
 				};
 			}
 		} else {
-			const typedVal = value as string;
 			searchWhere = {
 				[field]: {
 					contains: typedVal.replace("_", "\\_").replace("%", "\\%"),
@@ -167,7 +232,8 @@ export function parseToQuery(
 				}
 			};
 		}
-	} else if (type === "integer" || type === "float") {
+	} else if (zodType.type === "integer" || zodType.type === "float") {
+		//number behavior
 		if (mode === "range") {
 			const typedVal = value as [number, number];
 			searchWhere = {
@@ -184,14 +250,33 @@ export function parseToQuery(
 					}
 				]
 			};
-		} else if (mode === "in" || mode === "notIn") {
-			//TODO: needs testing
-			const typedVal = value as number[];
-			searchWhere = {
-				[field]: {
-					[mode]: typedVal
-				}
-			};
+		} else if (mode === "deadValue") {
+			const typedVal = value as string;
+
+			if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${typedVal}".`);
+			}
+
+			if (typedVal.toLowerCase() === "any") {
+				searchWhere = {
+					AND: [
+						{
+							[field]: {
+								gte: DeadValueNumbers[0]
+							}
+						},
+						{
+							[field]: {
+								lte: DeadValueNumbers[DeadValueNumbers.length - 1]
+							}
+						}
+					]
+				};
+			} else {
+				searchWhere = {
+					[field]: DeadValueEnum[typedVal as keyof typeof DeadValueEnum]
+				};
+			}
 		} else {
 			const typedVal = value as number;
 
@@ -201,7 +286,8 @@ export function parseToQuery(
 				searchWhere = { [field]: { [mode]: typedVal } };
 			}
 		}
-	} else if (type === "date") {
+	} else if (zodType.type === "date") {
+		//date behavior
 		if (mode === "range") {
 			const typedVal = value as [string, string];
 			searchWhere = {
@@ -218,14 +304,33 @@ export function parseToQuery(
 					}
 				]
 			};
-		} else if (mode === "in" || mode === "notIn") {
-			//TODO: needs testing
-			const typedVal = value as string[];
-			searchWhere = {
-				[field]: {
-					[mode]: typedVal
-				}
-			};
+		} else if (mode === "deadValue") {
+			const typedVal = value as string;
+
+			if (!DeadValues.includes(typedVal) && typedVal.toLowerCase() !== "any") {
+				throw new Error(`Invalid deadValue option "${typedVal}".`);
+			}
+
+			if (typedVal.toLowerCase() === "any") {
+				searchWhere = {
+					AND: [
+						{
+							[field]: {
+								gte: new Date(DeadValueNumbers[0])
+							}
+						},
+						{
+							[field]: {
+								lte: new Date(DeadValueNumbers[DeadValueNumbers.length - 1])
+							}
+						}
+					]
+				};
+			} else {
+				searchWhere = {
+					[field]: new Date(DeadValueEnum[typedVal as keyof typeof DeadValueEnum])
+				};
+			}
 		} else {
 			const typedVal = value as string;
 
@@ -264,7 +369,7 @@ export function parseToQuery(
 				};
 			}
 		}
-	} else if (type === "string[]") {
+	} else if (zodType.type === "string[]") {
 		//TODO: add string arrays back to schema once Prisma supports contains on arrays
 	}
 
@@ -337,6 +442,7 @@ export function parseApiQuery(
 	searchParams: URLSearchParams,
 	options?: {
 		features?: {
+			orderBy?: true;
 			fields?: true;
 			distinct?: true;
 			relations?: true;
@@ -367,14 +473,12 @@ export function parseApiQuery(
 		};
 	}
 ) {
-	//TODO: needs testing
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		const polygons = searchParams.getAll("polygon");
-		const circles = searchParams.getAll("circle");
-		// Only process shapes if at least one polygon or circle was provided
-		if (polygons.length > 0 || circles.length > 0) {
+		const tempShapes = getShapesFromUrl(searchParams);
+
+		if (tempShapes) {
 			if (
 				!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
 				!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
@@ -382,92 +486,40 @@ export function parseApiQuery(
 				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
 			}
 
-			shapes = [] as Array<MapShape>;
+			shapes = tempShapes;
+
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
-
-			for (const poly of polygons) {
-				//format: <lat>/<lng>,<lat>/<lng>,etc
-				const points = poly.split(",").map((p) => {
-					const split = p.split("/");
-					if (split.length !== 2) {
-						throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
-					}
-					const pnt = {
-						lat: parseFloat(split[0]),
-						lng: parseFloat(split[1])
-					};
-					if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
-						throw new Error(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
-					}
-					if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
-						throw new Error(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
-					}
-
-					return pnt;
-				});
-
-				const bounds = { sw: { lat: -90, lng: -180 }, ne: { lat: 90, lng: 180 } };
-				for (const p of points) {
-					bounds.sw.lat = Math.max(p.lat, bounds.sw.lat);
-					bounds.sw.lng = Math.max(p.lng, bounds.sw.lng);
-					bounds.ne.lat = Math.min(p.lat, bounds.ne.lat);
-					bounds.ne.lng = Math.min(p.lng, bounds.ne.lng);
-				}
-
-				shapes.push({
-					type: "polygon",
-					bounds,
-					points
-				});
-			}
-
-			for (const cir of circles) {
-				//format: <lat>/<lng>,<radius>
-				const split = cir.split(",");
-				if (split.length !== 2) {
-					throw new Error(
-						`Invalid circle format: "${cir}". Circle must have a center followed by a radius, separated by a comma.`
-					);
-				}
-
-				const centerSplit = split[0].split("/");
-				if (split.length !== 2) {
-					throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
-				}
-				const center = {
-					lat: parseFloat(centerSplit[0]),
-					lng: parseFloat(centerSplit[1])
-				};
-				if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
-					throw new Error(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
-				}
-				if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
-					throw new Error(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
-				}
-
-				const radius = parseFloat(split[1]);
-				if (isNaN(radius)) {
-					throw new Error(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
-				}
-
-				shapes.push({
-					type: "circle",
-					radius,
-					center
-				});
-			}
 		}
 	}
 
 	const query = {} as {
-		// orderBy?: Record<string, Prisma.SortOrder>;
+		orderBy?: Record<string, Prisma.SortOrder>;
 		select?: Record<string, any>;
 		include?: Record<string, any>;
 		where?: Record<string, any>;
 		take?: number;
 		distinct?: string[];
 	};
+
+	//ordering results
+	if (!options?.features || options.features.orderBy) {
+		const orderByStr = searchParams.get("orderBy");
+		if (orderByStr) {
+			const split = orderByStr?.split(",");
+			if (
+				split.length !== 2 ||
+				!TableMetadata[table].enumSchema.options.includes(split[0]) ||
+				(split[1] !== "asc" && split[1] !== "desc")
+			) {
+				throw new Error("The orderBy must be a field and order separated by a comma.");
+			}
+
+			query.orderBy = {
+				[split[0]]: split[1]
+			};
+		}
+	}
 
 	//selecting fields
 	if (options?.defaults?.fields) {
