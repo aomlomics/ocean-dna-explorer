@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
 import DataJourneySurfaceScene from "@/app/components/DataJourneySurfaceScene";
 import { AssigningTaxonomyLoop } from "@/app/components/eDNA_graphic/analysis_viz";
@@ -400,6 +401,9 @@ function DataJourneyIcon({
 }
 
 export default function AboutPage() {
+	// TEMPORARY: disable the About page route entirely (return 404). Remove to re-enable `/about`.
+	notFound();
+
 	const projectStep = dataJourneySteps.find((s) => s.key === "project");
 	const sampleCollectionStep = dataJourneySteps.find((s) => s.key === "sample-collection");
 	const sampleStep = dataJourneySteps.find((s) => s.key === "sample");
