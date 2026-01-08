@@ -17,7 +17,7 @@ export default async function Header() {
 	const role = sessionClaims?.metadata.role as Role;
 
 	return (
-		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-9000000 relative overflow-visible">
+		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
 			<div className="navbar-start pr-2 sm:pr-6 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
@@ -47,7 +47,7 @@ export default async function Header() {
 
 			{/* Desktop tabs - centered between logo and user controls and aligned to bottom */}
 			<div className="navbar-center hidden xl:flex self-end">
-				<div className="flex items-end space-x-4 z-9999 -mb-[8px]">
+				<div className="flex items-end space-x-4 z-dropdown -mb-[8px]">
 					<TabButton tabName="Home" route="/" />
 					<TabDropdown
 						tabName="Explore"
