@@ -145,14 +145,11 @@ export default async function Home() {
 					</div>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-24">
-					<div className="hidden lg:block lg:col-span-7" />
-					<div className="lg:col-span-5 flex flex-col">
-						<Suspense>
-							<TopTaxonomiesSummary />
-						</Suspense>
-					</div>
-				</div>
+			<div className="w-full mb-24">
+				<Suspense>
+					<TopTaxonomiesSummary />
+				</Suspense>
+			</div>
 
 				{/* Funding Institutes Section */}
 				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">

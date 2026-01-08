@@ -1,199 +1,165 @@
+import Image from "next/image";
 import Link from "next/link";
 import { publicPrisma } from "@/app/helpers/prisma";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import PhyloPicClient from "@/app/components/images/PhyloPicClient";
 
-type TopProjectInfo = {
-	project_id: string;
+type PhylumData = {
+	phylum: string;
 	count: number;
-	percent: number;
 };
 
-type TopTaxonomyRow = {
-	taxonomy: string;
-	count: number;
-	taxonomyRecord: Taxonomy | null;
-	topProject: TopProjectInfo | null;
+type KingdomSection = {
+	kingdom: string;
+	title: string;
+	description: string;
+	image: string;
+	phyla: PhylumData[];
 };
 
-function getDisplayName(t: Taxonomy | null, taxonomyFallback: string) {
-	if (!t) return taxonomyFallback.split(";").filter(Boolean).pop()?.trim() || taxonomyFallback || "Unknown";
+async function getPhylaByKingdom(kingdom: string, take: number = 10): Promise<PhylumData[]> {
+	const taxonomiesInKingdom = await publicPrisma.taxonomy.findMany({
+		where: { kingdom: kingdom },
+		select: { taxonomy: true, phylum: true }
+	});
+
+	const taxonomyMap = new Map(taxonomiesInKingdom.map((t) => [t.taxonomy, t.phylum]));
+	const taxonomyStrings = Array.from(taxonomyMap.keys());
+
+	const phylaData = await publicPrisma.assignment.groupBy({
+		by: ["taxonomy"],
+		where: {
+			taxonomy: { in: taxonomyStrings }
+		},
+		_count: { taxonomy: true },
+		orderBy: { _count: { taxonomy: "desc" } },
+		take: 1000
+	});
+
+	const phylumMap = new Map<string, number>();
+
+	for (const row of phylaData) {
+		const phylum = taxonomyMap.get(row.taxonomy);
+		if (phylum) {
+			phylumMap.set(phylum, (phylumMap.get(phylum) ?? 0) + row._count.taxonomy);
+		}
+	}
+
 	return (
-		t.species ||
-		t.genus ||
-		t.family ||
-		t.order ||
-		t.class ||
-		t.phylum ||
-		t.kingdom ||
-		t.domain ||
-		t.taxonomy.split(";").filter(Boolean).pop()?.trim() ||
-		t.taxonomy ||
-		"Unknown"
+		Array.from(phylumMap.entries())
+			.map(([phylum, count]) => ({ phylum, count }))
+			.sort((a, b) => b.count - a.count)
+			.filter((item) => item.count > 0)
+			.slice(0, take)
 	);
 }
 
-export default async function TopTaxonomiesSummary({
-	take = 10,
-	highlightTop = 3
-}: {
-	take?: number;
-	highlightTop?: number;
-}) {
-	const topTaxonomies = await publicPrisma.assignment.groupBy({
-		by: ["taxonomy"],
-		_count: { _all: true },
-		orderBy: { _count: { taxonomy: "desc" } },
-		take
-	});
+export default async function TopTaxonomiesSummary() {
+	const [eukaryotaPhyla, bacteriaPhyla, archaeaPhyla] = await Promise.all([
+		getPhylaByKingdom("Eukaryota"),
+		getPhylaByKingdom("Bacteria"),
+		getPhylaByKingdom("Archaea")
+	]);
 
-	if (!topTaxonomies.length) {
+	const kingdomSections: KingdomSection[] = [
+		{
+			kingdom: "Eukaryota",
+			title: "Eukaryota",
+			description: "Organisms with complex, nucleated cells. In the ocean, Eukaryotes include everything from microscopic algae and corals to large fish and marine mammals. These organisms include all the plants and animals that we know and love.",
+			image: "/images/bait_ball.jpeg",
+			phyla: eukaryotaPhyla
+		},
+		{
+			kingdom: "Bacteria",
+			title: "Bacteria",
+			description: "The Microbial Engine. The ocean's most abundant single celled life. These microbes are the primary drivers of marine nutrient cycles, breaking down organic matter to sustain the entire food web from the bottom up.",
+			image: "/images/bacteria_image.jpeg",
+			phyla: bacteriaPhyla
+		},
+		{
+			kingdom: "Archaea",
+			title: "Archaea",
+			description: "Ancient & Extreme. Evolutionarily distinct from bacteria, these ancient microbes thrive where nothing else can. They dominate extreme environments like deep-sea vents and are vital to the ocean's unique chemical and methane balances.",
+			image: "/images/hydrothermal_vent.jpg",
+			phyla: archaeaPhyla
+		}
+	];
+
+	const hasData = kingdomSections.some((section) => section.phyla.length > 0);
+
+	if (!hasData) {
 		return (
-			<div className="bg-base-200 rounded-lg p-6 flex items-center justify-center text-base-content/70">
+			<div className="bg-transparent rounded-lg p-6 flex items-center justify-center text-base-content/70">
 				No taxonomy data available yet.
 			</div>
 		);
 	}
 
-	const taxonomyStrings = topTaxonomies.map((t) => t.taxonomy);
-	const taxonomyRecords = await publicPrisma.taxonomy.findMany({
-		where: { taxonomy: { in: taxonomyStrings } }
-	});
-	const taxonomyByString = new Map<string, Taxonomy>(taxonomyRecords.map((t) => [t.taxonomy, t]));
-
-	const highlightTaxonomies = taxonomyStrings.slice(0, Math.min(highlightTop, taxonomyStrings.length));
-	let topProjectByTaxonomy = new Map<string, TopProjectInfo>();
-
-	if (highlightTaxonomies.length) {
-		const taxonomyByAnalysis = await publicPrisma.assignment.groupBy({
-			by: ["taxonomy", "analysis_run_name"],
-			where: { taxonomy: { in: highlightTaxonomies } },
-			_count: { _all: true }
-		});
-
-		const analysisRunNames = [...new Set(taxonomyByAnalysis.map((row) => row.analysis_run_name))];
-		const analyses = await publicPrisma.analysis.findMany({
-			where: { analysis_run_name: { in: analysisRunNames } },
-			select: { analysis_run_name: true, project_id: true }
-		});
-		const analysisToProject = new Map<string, string>(analyses.map((a) => [a.analysis_run_name, a.project_id]));
-
-		const countsByTaxonomyByProject = new Map<string, Map<string, number>>();
-		for (const row of taxonomyByAnalysis) {
-			const projectId = analysisToProject.get(row.analysis_run_name);
-			if (!projectId) continue;
-			const mapForTax = countsByTaxonomyByProject.get(row.taxonomy) ?? new Map<string, number>();
-			mapForTax.set(projectId, (mapForTax.get(projectId) ?? 0) + row._count._all);
-			countsByTaxonomyByProject.set(row.taxonomy, mapForTax);
-		}
-
-		const totalCountByTaxonomy = new Map<string, number>(topTaxonomies.map((t) => [t.taxonomy, t._count._all]));
-		for (const taxonomy of highlightTaxonomies) {
-			const countsByProject = countsByTaxonomyByProject.get(taxonomy);
-			if (!countsByProject || !countsByProject.size) continue;
-			const sorted = [...countsByProject.entries()].sort((a, b) => b[1] - a[1]);
-			const [project_id, count] = sorted[0];
-			const total = totalCountByTaxonomy.get(taxonomy) ?? 0;
-			const percent = total ? (count / total) * 100 : 0;
-			topProjectByTaxonomy.set(taxonomy, { project_id, count, percent });
-		}
-	}
-
-	const rows: TopTaxonomyRow[] = topTaxonomies.map((t) => ({
-		taxonomy: t.taxonomy,
-		count: t._count._all,
-		taxonomyRecord: taxonomyByString.get(t.taxonomy) ?? null,
-		topProject: topProjectByTaxonomy.get(t.taxonomy) ?? null
-	}));
-
 	return (
-		<div className="bg-base-200 rounded-lg shadow-sm p-5">
-			<div className="flex items-start justify-between gap-4 mb-4">
-				<div>
-					<h3 className="text-lg font-semibold text-base-content/90">Top Taxonomies</h3>
-					<p className="text-xs text-base-content/60">Across all assignments</p>
-				</div>
-				<Link href="/explore/taxonomy" className="text-sm text-primary hover:text-primary-focus">
-					Explore
-				</Link>
+		<div className="space-y-6 w-full max-w-6xl mx-auto">
+			{/* Title */}
+			<div className="text-2xl text-base-content px-4">
+				<span className="text-primary mr-1">Life across the</span>
+				<span>Ocean DNA Explorer</span>
 			</div>
 
-			<div className="space-y-3">
-				{rows.slice(0, Math.min(highlightTop, rows.length)).map((row) => {
-					const name = getDisplayName(row.taxonomyRecord, row.taxonomy);
-					return (
-						<Link
-							key={row.taxonomy}
-							href={`/explore/taxonomy/${encodeURIComponent(row.taxonomy)}`}
-							className="block rounded-xl bg-base-100/40 hover:bg-base-100/60 border border-base-300/40 hover:border-primary/40 transition-colors"
-						>
-							<div className="p-4 flex items-center gap-4">
-								<div className="w-14 h-14 rounded-lg bg-gradient-to-br from-base-200 to-base-300 shadow-sm overflow-hidden flex items-center justify-center">
-									<div className="relative w-10 h-10">
-										{row.taxonomyRecord ? (
-											<PhyloPicClient taxonomy={row.taxonomyRecord} />
-										) : (
-											<div className="w-full h-full flex items-center justify-center text-base-content/60 text-xs">
-												No Image
-											</div>
-										)}
-									</div>
-								</div>
+			{/* Three Kingdom Columns */}
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
+				{kingdomSections.map((section) => (
+					<div
+						key={section.kingdom}
+						className="rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col"
+					>
+						{/* Image Container */}
+						<div className="relative h-56 w-full overflow-hidden shrink-0">
+							<Image
+								src={section.image}
+								alt={section.kingdom}
+								fill
+								className="object-cover opacity-85"
+								sizes="(max-width: 768px) 100vw, 33vw"
+							/>
+						</div>
 
-								<div className="min-w-0 flex-1">
-									<div className="flex items-center justify-between gap-4">
-										<p className="font-medium text-base-content truncate">{name}</p>
-										<p className="font-semibold text-primary whitespace-nowrap">{row.count.toLocaleString()}</p>
-									</div>
-									{row.topProject ? (
-										<div className="text-xs text-base-content/70 mt-1">
-											<span className="font-semibold text-base-content/80">Within top project </span>
-											<span className="text-primary">{row.topProject.project_id}</span>{" "}
-											<span className="text-base-content/60">
-												({row.topProject.percent.toFixed(1)}%, {row.topProject.count.toLocaleString()} assignments)
-											</span>
-										</div>
-									) : (
-										<p className="text-xs text-base-content/60 mt-1">Explore this taxonomy to see where it appears most.</p>
-									)}
-								</div>
+					{/* Content Container */}
+					<div className="p-4 space-y-3 flex flex-col grow">
+							{/* Kingdom Title */}
+							<div>
+								<h3 className="text-lg font-semibold text-base-content">{section.title}</h3>
+								<p className="text-sm text-base-content/80 leading-relaxed mt-1">{section.description}</p>
 							</div>
-						</Link>
-					);
-				})}
 
-				{rows.length > highlightTop ? (
-					<div className="pt-2">
-						<div className="max-h-[280px] overflow-y-auto pr-1 space-y-2">
-							{rows.slice(highlightTop).map((row) => {
-								const name = getDisplayName(row.taxonomyRecord, row.taxonomy);
-								return (
-									<Link
-										key={row.taxonomy}
-										href={`/explore/taxonomy/${encodeURIComponent(row.taxonomy)}`}
-										className="flex items-center justify-between gap-3 rounded-lg bg-base-100/30 hover:bg-base-100/50 border border-base-300/30 hover:border-primary/30 px-3 py-2 transition-colors"
-									>
-										<div className="min-w-0 flex items-center gap-3">
-											<div className="w-10 h-10 rounded-md bg-gradient-to-br from-base-200 to-base-300 overflow-hidden flex items-center justify-center">
-												<div className="relative w-7 h-7">
-													{row.taxonomyRecord ? (
-														<PhyloPicClient taxonomy={row.taxonomyRecord} />
-													) : (
-														<div className="w-full h-full flex items-center justify-center text-base-content/60 text-[0.65rem]">
-															No Image
-														</div>
-													)}
+						{/* Phyla List - Fixed height for alignment */}
+						<div className="grow flex flex-col">
+								{section.phyla.length > 0 ? (
+									<>
+										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wider">
+											Top Phyla
+										</p>
+										<div className="space-y-1 mt-2">
+											{section.phyla.map((phylumData, index) => (
+												<Link
+													key={phylumData.phylum}
+													href={`/explore/taxonomy?phylum=${encodeURIComponent(phylumData.phylum)}`}
+													className="flex items-center justify-between text-sm hover:bg-base-300/20 px-2 py-1 rounded transition-colors cursor-pointer group"
+												>
+												<div className="flex items-center gap-2 min-w-0 flex-1">
+													<span className="text-primary font-semibold shrink-0 group-hover:text-primary/80">{index + 1}.</span>
+													<span className="text-base-content group-hover:text-primary truncate group-hover:underline">{phylumData.phylum}</span>
 												</div>
-											</div>
-											<p className="text-sm text-base-content/90 truncate">{name}</p>
+												<span className="text-primary shrink-0 ml-2 font-medium group-hover:text-primary/80">
+													{phylumData.count.toLocaleString()}
+												</span>
+												</Link>
+											))}
 										</div>
-										<p className="text-sm font-semibold text-primary whitespace-nowrap">{row.count.toLocaleString()}</p>
-									</Link>
-								);
-							})}
+									</>
+								) : (
+									<p className="text-sm text-base-content/60 italic">No data available</p>
+								)}
+							</div>
 						</div>
 					</div>
-				) : null}
+				))}
 			</div>
 		</div>
 	);
