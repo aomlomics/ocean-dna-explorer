@@ -4,6 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { useTheme } from "next-themes";
 import { useState, useMemo, useEffect } from "react";
+import { useThrottledCallback } from "use-debounce";
 import Link from "next/link";
 import distinctColors from "distinct-colors";
 
@@ -16,15 +17,10 @@ interface TaxonomyDonutChartProps {
 }
 
 function generateDistinctColors(count: number): string[] {
-	const primaryBlue = "#64ABDC";
-
 	if (count === 0) return [];
-	if (count === 1) return [primaryBlue];
-
-	const remainingCount = count - 1;
 
 	const colors = distinctColors({
-		count: remainingCount,
+		count: count,
 		hueMin: 0,
 		hueMax: 360,
 		lightMin: 30,
@@ -34,67 +30,7 @@ function generateDistinctColors(count: number): string[] {
 		quality: 100
 	});
 
-	const distinctHexColors = colors
-		.map((color) => color.hex())
-		.filter((color) => {
-			const hexColor = color.toLowerCase();
-			const primaryHex = primaryBlue.toLowerCase();
-
-			const colorR = parseInt(hexColor.slice(1, 3), 16);
-			const colorG = parseInt(hexColor.slice(3, 5), 16);
-			const colorB = parseInt(hexColor.slice(5, 7), 16);
-
-			const primaryR = parseInt(primaryHex.slice(1, 3), 16);
-			const primaryG = parseInt(primaryHex.slice(3, 5), 16);
-			const primaryB = parseInt(primaryHex.slice(5, 7), 16);
-
-			const distance = Math.sqrt(
-				Math.pow(colorR - primaryR, 2) + Math.pow(colorG - primaryG, 2) + Math.pow(colorB - primaryB, 2)
-			);
-
-			return distance > 60;
-		});
-
-	if (distinctHexColors.length < remainingCount) {
-		const additionalColors = distinctColors({
-			count: remainingCount - distinctHexColors.length + 5,
-			hueMin: 0,
-			hueMax: 360,
-			lightMin: 25,
-			lightMax: 85,
-			chromaMin: 35,
-			chromaMax: 95,
-			quality: 150
-		}).map((color) => color.hex());
-
-		distinctHexColors.push(...additionalColors);
-	}
-
-	return [primaryBlue, ...distinctHexColors.slice(0, remainingCount)];
-}
-
-function generateColorsWithPrimaryAtIndex(count: number, primaryIndex: number): string[] {
-	const primaryBlue = "#64ABDC";
-
-	if (count === 0) return [];
-	if (count === 1) return [primaryBlue];
-
-	const baseColors = generateDistinctColors(count);
-
-	if (primaryIndex === 0) return baseColors;
-
-	const colors = [...baseColors.slice(1)];
-
-	const result: string[] = new Array(count);
-	result[primaryIndex] = primaryBlue;
-
-	let cursor = 0;
-	for (let i = 0; i < count; i++) {
-		if (i === primaryIndex) continue;
-		result[i] = colors[cursor++];
-	}
-
-	return result;
+	return colors.map((color) => color.hex());
 }
 
 function CustomLegend({
@@ -115,6 +51,15 @@ function CustomLegend({
 	setOtherThreshold: (value: number) => void;
 }) {
 	const total = data.reduce((sum, value) => sum + value, 0);
+
+	// Throttle the threshold changes for smooth slider experience
+	// Throttle fires at regular intervals while dragging, giving immediate feedback
+	const throttledSetOtherThreshold = useThrottledCallback(
+		(value: number) => {
+			setOtherThreshold(value);
+		},
+		100
+	);
 
 	// Group items based on threshold
 	const { displayedItems, otherCount } = useMemo(() => {
@@ -140,26 +85,13 @@ function CustomLegend({
 	const otherPercentage = total > 0 ? ((otherCount / total) * 100).toFixed(1) : "0.0";
 
 	return (
-		<div className="flex flex-col gap-4 mt-0">
+		<div className="flex flex-col gap-4 mt-0 h-full">
 			{/* Threshold Control */}
-			<div className="flex flex-col gap-2 pb-3 border-b" style={{ borderColor: textColor + "30" }}>
-				<label className="text-sm font-medium" style={{ color: textColor }}>
+			<div className="flex flex-col gap-3 pb-3" style={{ borderColor: textColor + "20" }}>
+				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor + "99" }}>
 					Group items below (%)
 				</label>
 				<div className="flex items-center gap-3">
-					<input
-						type="range"
-						min="0"
-						max="5"
-						step="0.1"
-						value={otherThreshold}
-						onChange={(e) => setOtherThreshold(parseFloat(e.target.value))}
-						className="flex-1"
-						style={{
-							cursor: "pointer",
-							accentColor: colors[0] || "#64ABDC"
-						}}
-					/>
 					<input
 						type="number"
 						min="0"
@@ -167,58 +99,75 @@ function CustomLegend({
 						step="0.1"
 						value={otherThreshold}
 						onChange={(e) => setOtherThreshold(parseFloat(e.target.value) || 0)}
-						className="w-16 px-2 py-1 text-sm rounded border"
+						className="w-16 px-2 py-1.5 text-sm rounded border transition-colors"
 						style={{
-							borderColor: textColor + "30",
+							borderColor: "#64ABDC",
 							color: textColor,
-							backgroundColor: textColor + "05"
+							backgroundColor: "#64ABDC" + "25"
+						}}
+					/>
+					<input
+						type="range"
+						min="0"
+						max="5"
+						step="0.1"
+						value={otherThreshold}
+						onChange={(e) => throttledSetOtherThreshold(parseFloat(e.target.value))}
+						className="flex-1 h-2 rounded-lg appearance-none"
+						style={{
+							cursor: "pointer",
+							accentColor: "#64ABDC",
+							background: `linear-gradient(to right, #64ABDC 0%, #64ABDC ${(otherThreshold / 5) * 100}%, #64ABDC40 ${(otherThreshold / 5) * 100}%, #64ABDC40 100%)`
 						}}
 					/>
 				</div>
 			</div>
 
-		{/* Legend Items */}
-		<div className="flex flex-col gap-3 lg:max-h-[400px] lg:overflow-y-auto pr-2">
-				<h3 className="text-lg font-semibold" style={{ color: textColor }}>
+			{/* Legend Items - Fixed Container */}
+			<div className="flex flex-col flex-1 min-h-0 gap-0">
+				<h3 className="text-sm font-semibold mb-3 sticky top-0 bg-base-100" style={{ color: textColor }}>
 					Taxonomies
 				</h3>
-				{displayedItems.map((index) => {
-					const percentage = total > 0 ? ((data[index] / total) * 100).toFixed(1) : "0.0";
-					return (
-						<div key={index} className="flex items-center gap-3">
-							<div
-								className="w-4 h-4 rounded-sm flex-shrink-0"
-								style={{ backgroundColor: colors[index] }}
-							/>
-							<div className="flex-1 min-w-0 flex items-center gap-1">
-								<Link
-									href={`/search?table=taxonomy&query=${encodeURIComponent(labels[index])}`}
-									className="text-sm font-medium truncate hover:text-primary hover:underline transition-colors"
-									style={{ color: textColor }}
-									title={labels[index]}
-								>
-									{labels[index]}
-								</Link>
-								<span className="text-sm font-semibold whitespace-nowrap" style={{ color: textColor, opacity: 0.75 }}>
-									{percentage}%
-								</span>
+				{/* Scrollable Content */}
+				<div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2">
+					{displayedItems.map((index) => {
+						const percentage = total > 0 ? ((data[index] / total) * 100).toFixed(1) : "0.0";
+						return (
+							<div key={index} className="flex items-center gap-2.5 group">
+								<div
+									className="w-3.5 h-3.5 rounded-sm shrink-0 transition-transform group-hover:scale-110"
+									style={{ backgroundColor: colors[index] }}
+								/>
+								<div className="flex-1 min-w-0 flex items-center gap-2">
+									<Link
+										href={`/explore/taxonomy/${encodeURIComponent(labels[index])}`}
+										className="text-sm font-medium truncate transition-colors"
+										style={{ color: textColor }}
+										title={labels[index]}
+									>
+										{labels[index]}
+									</Link>
+									<span className="text-sm font-semibold whitespace-nowrap shrink-0" style={{ color: textColor, opacity: 0.6 }}>
+										{percentage}%
+									</span>
+								</div>
 							</div>
-						</div>
-					);
-				})}
+						);
+					})}
+				</div>
 
-				{/* Other Group */}
+				{/* Other Group - Always at Bottom */}
 				{otherCount > 0 && (
-					<div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: textColor + "30" }}>
+					<div className="flex items-center gap-2.5 pt-3 mt-3 border-t" style={{ borderColor: textColor + "15" }}>
 						<div
-							className="w-4 h-4 rounded-sm flex-shrink-0"
-							style={{ backgroundColor: textColor + "40" }}
+							className="w-3.5 h-3.5 rounded-sm shrink-0"
+							style={{ backgroundColor: textColor + "50" }}
 						/>
-						<div className="flex-1 min-w-0 flex items-center gap-1">
+						<div className="flex-1 min-w-0 flex items-center gap-2">
 							<span className="text-sm font-medium" style={{ color: textColor }}>
 								Other
 							</span>
-							<span className="text-sm font-semibold whitespace-nowrap" style={{ color: textColor, opacity: 0.75 }}>
+							<span className="text-sm font-semibold whitespace-nowrap shrink-0" style={{ color: textColor, opacity: 0.6 }}>
 								{otherPercentage}%
 							</span>
 						</div>
@@ -241,15 +190,19 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 		return () => clearTimeout(timer);
 	}, []);
 
-	const maxIndex = data.reduce((bestIndex, value, i, arr) => (value > arr[bestIndex] ? i : bestIndex), 0);
-	const colors = generateColorsWithPrimaryAtIndex(labels.length, maxIndex);
+	const colors = generateDistinctColors(labels.length);
 
 	// Filter data and labels based on threshold
 	const { filteredLabels, filteredData, filteredColors, otherCount } = useMemo(() => {
 		const total = data.reduce((sum, value) => sum + value, 0);
 		const thresholdPercentage = otherThreshold;
 		let otherSum = 0;
-		const filtered = {
+		const filtered: {
+			labels: string[];
+			data: number[];
+			colors: string[];
+			colorIndices: number[];
+		} = {
 			labels: [],
 			data: [],
 			colors: [],
@@ -332,10 +285,10 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 
 	return (
 		<div className="w-full h-full flex flex-col">
-			<div className="flex flex-col lg:flex-row items-start gap-8 min-h-[450px]">
+			<div className="flex flex-col lg:flex-row items-start gap-8 min-h-[450px] bg-base-200 rounded-lg p-6 w-fit">
 				{/* Chart Container with Loading State */}
 				<div
-					className={`relative h-[450px] w-[300px] flex-shrink-0 mx-auto lg:mx-0 z-0 transition-opacity duration-300 ${
+					className={`relative h-[450px] w-[300px] shrink-0 mx-auto lg:mx-0 z-10 transition-opacity duration-300 ${
 						isLoading ? "opacity-0" : "opacity-100"
 					}`}
 				>
@@ -351,8 +304,8 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 					</div>
 				)}
 
-				{/* Custom Legend - Much Wider */}
-				<div className="flex-1 min-w-0 lg:min-w-[500px] lg:max-w-2xl">
+				{/* Custom Legend - Bounded Container */}
+				<div className="flex-1 min-w-0 lg:min-w-[500px] lg:max-w-2xl h-[450px] rounded-lg p-4 bg-base-100">
 					<CustomLegend
 						labels={labels}
 						data={data}

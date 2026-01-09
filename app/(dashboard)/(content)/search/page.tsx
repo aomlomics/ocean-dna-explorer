@@ -277,14 +277,25 @@ export default function AdvancedSearch() {
 					notIn: "is not in",
 					null: "is null",
 					notNull: "is not null",
-					deadValue: "is the dead value"
+					deadValue: "is"
 				}[mode] || mode;
+
+			if (mode === "null" || mode === "notNull") {
+				return `${prefix}${field} ${modeText}`;
+			}
 
 			let filterValue = formRef.current[`filter_${id}`]?.value || "";
 			if (mode === "range") {
 				const gte = formRef.current[`filter_${id}_gte`]?.value || "";
 				const lte = formRef.current[`filter_${id}_lte`]?.value || "";
 				filterValue = `${gte} and ${lte}`;
+			} else if (mode === "in" || mode === "notIn") {
+				try {
+					const parsed = JSON.parse(filterValue) as unknown[];
+					filterValue = parsed.join(", ");
+				} catch {
+					filterValue = "";
+				}
 			}
 
 			if (mode === "deadValue" && filterValue === "any") {
@@ -350,7 +361,16 @@ export default function AdvancedSearch() {
 
 			let filter = undefined as unknown as ParamsArrayValue;
 			if (mode !== "null" && mode !== "notNull") {
-				if (fieldType === "date") {
+				if (mode === "in" || mode === "notIn") {
+					if (!formRef.current[`filter_${id}`]) return null;
+					try {
+						const filterStr = formRef.current[`filter_${id}`].value;
+						filter = JSON.parse(filterStr);
+						if (!Array.isArray(filter) || filter.length === 0) return null;
+					} catch {
+						return null;
+					}
+				} else if (fieldType === "date") {
 					if (mode === "range") {
 						if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`]) return null;
 						const gteDate = formRef.current[`filter_${id}_gte_date`].value;
@@ -398,7 +418,7 @@ export default function AdvancedSearch() {
 			}
 
 			let arr = [field, mode] as ParamsArrayRelation | ParamsArrayField;
-			if (filter) {
+			if (filter !== undefined) {
 				arr = [field, mode, filter] as ParamsArrayField;
 			}
 			if (relation) {
@@ -1283,8 +1303,19 @@ function InputElement({
 		defaultMode ? defaultMode : type === "integer" || type === "float" || type === "date" ? "equals" : "contains"
 	);
 
-	//TODO: add support for querying ranges
 	if (type === "integer" || type === "float") {
+		const [inValues, setInValues] = useState<string[]>(() => {
+			if (defaultMode === "in" || defaultMode === "notIn") {
+				try {
+					const parsed = JSON.parse(defaultValue);
+					return Array.isArray(parsed) ? parsed.map(String) : [];
+				} catch {
+					return [];
+				}
+			}
+			return [];
+		});
+
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
@@ -1300,18 +1331,69 @@ function InputElement({
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
+					<option value="in">In</option>
+					<option value="notIn">Not In</option>
 					<option value="null">Null</option>
 					<option value="notNull">Not null</option>
 					<option value="deadValue">Dead value</option>
 				</select>
-				{mode === "range" ? (
+				{mode === "null" || mode === "notNull" ? (
+					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+						{mode === "null" ? "is empty" : "is not empty"}
+					</div>
+				) : mode === "in" || mode === "notIn" ? (
+					<div className="rounded-l-md space-y-2 py-2">
+						{inValues.map((val, idx) => (
+							<div key={idx} className="flex gap-2 items-center">
+								<input
+									type="number"
+									className="input input-primary input-sm w-full"
+									placeholder={`Value ${idx + 1}`}
+									value={val}
+									onChange={(e) => {
+										const newValues = [...inValues];
+										newValues[idx] = e.target.value;
+										setInValues(newValues);
+									}}
+									name={`filter_${nameSuffix}_${idx}`}
+								/>
+								<button
+									type="button"
+									className="btn btn-xs btn-ghost text-error"
+									onClick={() => {
+										setInValues(inValues.filter((_, i) => i !== idx));
+									}}
+									aria-label="Remove value"
+								>
+									×
+								</button>
+							</div>
+						))}
+						<button
+							type="button"
+							className="btn btn-xs btn-primary w-full"
+							onClick={() => setInValues([...inValues, ""])}
+						>
+							+ Add Value
+						</button>
+						<input
+							type="hidden"
+							name={`filter_${nameSuffix}`}
+							value={JSON.stringify(
+								inValues
+									.filter((v) => v.trim() !== "")
+									.map((v) => (type === "integer" ? parseInt(v) : parseFloat(v)))
+							)}
+						/>
+					</div>
+				) : mode === "range" ? (
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
 						<input
 							className="input input-primary w-full rounded-none"
 							placeholder="Lower bound"
 							name={`filter_${nameSuffix}_gte`}
 							defaultValue={
-								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : undefined
+								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : ""
 							}
 							type="number"
 							required
@@ -1322,17 +1404,15 @@ function InputElement({
 							placeholder="Upper bound"
 							name={`filter_${nameSuffix}_lte`}
 							defaultValue={
-								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : undefined
+								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : ""
 							}
 							type="number"
 							required
 						/>
 					</div>
-				) : mode === "null" || mode === "notNull" ? (
-					<></>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary"
+						className="select select-primary rounded-l-md"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1356,6 +1436,18 @@ function InputElement({
 			</div>
 		);
 	} else if (type === "date") {
+		const [inValues, setInValues] = useState<string[]>(() => {
+			if (defaultMode === "in" || defaultMode === "notIn") {
+				try {
+					const parsed = JSON.parse(defaultValue);
+					return Array.isArray(parsed) ? parsed : [];
+				} catch {
+					return [];
+				}
+			}
+			return [];
+		});
+
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
@@ -1371,11 +1463,71 @@ function InputElement({
 					<option value="gte">{">="}</option>
 					<option value="lt">{"<"}</option>
 					<option value="lte">{"<="}</option>
+					<option value="in">In</option>
+					<option value="notIn">Not In</option>
 					<option value="null">Null</option>
 					<option value="notNull">Not null</option>
 					<option value="deadValue">Dead value</option>
 				</select>
-				{mode === "range" ? (
+				{mode === "null" || mode === "notNull" ? (
+					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+						{mode === "null" ? "is empty" : "is not empty"}
+					</div>
+				) : mode === "in" || mode === "notIn" ? (
+					<div className="rounded-l-md space-y-2 py-2">
+						{inValues.map((val, idx) => (
+							<div key={idx} className="flex gap-2 items-center">
+								<input
+									type="text"
+									className="input input-primary input-sm w-full"
+									placeholder={`ISO 8601 Date (${idx + 1})`}
+									value={val}
+									onChange={(e) => {
+										const newValues = [...inValues];
+										newValues[idx] = e.target.value;
+										setInValues(newValues);
+									}}
+									name={`filter_${nameSuffix}_${idx}`}
+								/>
+								<button
+									type="button"
+									className="btn btn-xs btn-ghost text-error"
+									onClick={() => {
+										setInValues(inValues.filter((_, i) => i !== idx));
+									}}
+									aria-label="Remove value"
+								>
+									×
+								</button>
+							</div>
+						))}
+						<button
+							type="button"
+							className="btn btn-xs btn-primary w-full"
+							onClick={() => setInValues([...inValues, ""])}
+						>
+							+ Add Date
+						</button>
+						<input
+							type="hidden"
+							name={`filter_${nameSuffix}`}
+							value={JSON.stringify(inValues.filter((v) => v.trim() !== ""))}
+						/>
+					</div>
+				) : mode === "deadValue" ? (
+					<select
+						className="select select-primary rounded-l-md"
+						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
+						name={`filter_${nameSuffix}`}
+					>
+						<option value="any">any</option>
+						{DeadValues.map((dv) => (
+							<option key={dv} value={dv}>
+								{dv}
+							</option>
+						))}
+					</select>
+				) : mode === "range" ? (
 					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
 						<div className="input input-primary w-full rounded-none">
 							<input
@@ -1384,7 +1536,7 @@ function InputElement({
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[0].split("T")[0]
-										: undefined
+										: ""
 								}
 								onChange={(e) => setGteDateSelected(!!e.target.value)}
 								type="date"
@@ -1396,7 +1548,7 @@ function InputElement({
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[0].split("T")[1]
-										: undefined
+										: ""
 								}
 								name={`filter_${nameSuffix}_gte_time`}
 							/>
@@ -1409,7 +1561,7 @@ function InputElement({
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[1].split("T")[0]
-										: undefined
+										: ""
 								}
 								onChange={(e) => setLteDateSelected(!!e.target.value)}
 								type="date"
@@ -1421,7 +1573,7 @@ function InputElement({
 								defaultValue={
 									defaultValue && defaultValue.split(",").length === 2
 										? defaultValue.split(",")[1].split("T")[1]
-										: undefined
+										: ""
 								}
 								name={`filter_${nameSuffix}_lte_time`}
 							/>
@@ -1434,7 +1586,7 @@ function InputElement({
 								name={`filter_${nameSuffix}_date`}
 								className="w-1/2"
 								defaultValue={
-									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : undefined
+									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""
 								}
 								type="date"
 								required
@@ -1443,7 +1595,7 @@ function InputElement({
 								type="time"
 								className="text-center w-1/2"
 								defaultValue={
-									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : undefined
+									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""
 								}
 								name={`filter_${nameSuffix}_time`}
 							/>
@@ -1453,6 +1605,18 @@ function InputElement({
 			</div>
 		);
 	} else {
+		const [inValues, setInValues] = useState<string[]>(() => {
+			if (defaultMode === "in" || defaultMode === "notIn") {
+				try {
+					const parsed = JSON.parse(defaultValue);
+					return Array.isArray(parsed) ? parsed : [];
+				} catch {
+					return [];
+				}
+			}
+			return [];
+		});
+
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
@@ -1466,17 +1630,79 @@ function InputElement({
 					<option value="equals">Equals</option>
 					<option value="startsWith">Starts With</option>
 					<option value="endsWith">Ends With</option>
+					<option value="in">In</option>
+					<option value="notIn">Not In</option>
 					<option value="null">Null</option>
 					<option value="notNull">Not null</option>
 					<option value="deadValue">Dead value</option>
 				</select>
-				<input
-					className="input input-primary w-full rounded-l-none"
-					placeholder="Filter..."
-					name={`filter_${nameSuffix}`}
-					defaultValue={defaultValue === "undefined" ? undefined : defaultValue}
-					required
-				/>
+				{mode === "null" || mode === "notNull" ? (
+					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+						{mode === "null" ? "is empty" : "is not empty"}
+					</div>
+				) : mode === "in" || mode === "notIn" ? (
+					<div className="rounded-l-md space-y-2 py-2">
+						{inValues.map((val, idx) => (
+							<div key={idx} className="flex gap-2 items-center">
+								<input
+									type="text"
+									className="input input-primary input-sm w-full"
+									placeholder={`Value ${idx + 1}`}
+									value={val}
+									onChange={(e) => {
+										const newValues = [...inValues];
+										newValues[idx] = e.target.value;
+										setInValues(newValues);
+									}}
+									name={`filter_${nameSuffix}_${idx}`}
+								/>
+								<button
+									type="button"
+									className="btn btn-xs btn-ghost text-error"
+									onClick={() => {
+										setInValues(inValues.filter((_, i) => i !== idx));
+									}}
+									aria-label="Remove value"
+								>
+									×
+								</button>
+							</div>
+						))}
+						<button
+							type="button"
+							className="btn btn-xs btn-primary w-full"
+							onClick={() => setInValues([...inValues, ""])}
+						>
+							+ Add Value
+						</button>
+						<input
+							type="hidden"
+							name={`filter_${nameSuffix}`}
+							value={JSON.stringify(inValues.filter((v) => v.trim() !== ""))}
+						/>
+					</div>
+				) : mode === "deadValue" ? (
+					<select
+						className="select select-primary rounded-l-md"
+						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
+						name={`filter_${nameSuffix}`}
+					>
+						<option value="any">any</option>
+						{DeadValues.map((dv) => (
+							<option key={dv} value={dv}>
+								{dv}
+							</option>
+						))}
+					</select>
+				) : (
+					<input
+						className="input input-primary w-full rounded-l-none"
+						placeholder="Filter..."
+						name={`filter_${nameSuffix}`}
+						defaultValue={defaultValue === "undefined" ? undefined : defaultValue}
+						required
+					/>
+				)}
 			</div>
 		);
 	}

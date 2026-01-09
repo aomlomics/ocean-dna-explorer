@@ -226,19 +226,21 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				</div>
 			</div>
 
-			{/* Taxonomy Relative Abundance Chart */}
-			{taxonomyData.length > 0 && (
-				<div className="bg-base-200 rounded-xl p-6">
-					<h2 className="text-xl font-medium text-base-content/90 mb-4">Taxonomies found in this sample</h2>
-					<div className="w-full">
-						<TaxonomyDonutChart
-							labels={taxonomyData.map((t) => t.taxonomy)}
-							data={taxonomyData.map((t) => t.count)}
-							sampName={samp_name}
-						/>
-					</div>
+		{/* Taxonomy Relative Abundance Chart */}
+		{taxonomyData.length > 0 && (
+			<div>
+				<h2 className="text-xl font-medium mb-4">
+					<span className="text-base-content/90">Taxonomies found in this <span className="text-primary font-bold">Sample</span></span>
+				</h2>
+				<div className="w-full">
+					<TaxonomyDonutChart
+						labels={taxonomyData.map((t) => t.taxonomy)}
+						data={taxonomyData.map((t) => t.count)}
+						sampName={samp_name}
+					/>
 				</div>
-			)}
+			</div>
+		)}
 		</div>
 	);
 }
