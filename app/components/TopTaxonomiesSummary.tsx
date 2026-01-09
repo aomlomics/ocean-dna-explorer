@@ -64,21 +64,21 @@ export default async function TopTaxonomiesSummary() {
 		{
 			kingdom: "Eukaryota",
 			title: "Eukaryota",
-			description: "Organisms with complex, nucleated cells. In the ocean, Eukaryotes include everything from microscopic algae and corals to large fish and marine mammals. These organisms include all the plants and animals that we know and love.",
+			description: "Including the plants and animals we recognize, eukaryotes are defined by complex, nucleated cells. They span everything from microscopic algae and corals to fish and whales. They represent the ocean’s visible biodiversity, making up the familiar life found across the ocean (and land).",
 			image: "/images/bait_ball.jpeg",
 			phyla: eukaryotaPhyla
 		},
 		{
 			kingdom: "Bacteria",
 			title: "Bacteria",
-			description: "The Microbial Engine. The ocean's most abundant single celled life. These microbes are the primary drivers of marine nutrient cycles, breaking down organic matter to sustain the entire food web from the bottom up.",
+			description: "As the ocean's most abundant single-celled life, these microbes are the primary drivers of global nutrient cycles. They break down organic matter to recycle essential elements, sustaining the entire marine food web from the bottom up, as well as maintaining the chemical health of the water.",
 			image: "/images/bacteria_image.jpeg",
 			phyla: bacteriaPhyla
 		},
 		{
 			kingdom: "Archaea",
 			title: "Archaea",
-			description: "Ancient & Extreme. Evolutionarily distinct from bacteria, these ancient microbes thrive where nothing else can. They dominate extreme environments like deep-sea vents and are vital to the ocean's unique chemical and methane balances.",
+			description: "Evolutionarily distinct from bacteria, these resilient microbes thrive in harsh environments where nothing else can. By dominating deep-sea hydrothermal vents, they play a critical role in regulating the ocean’s unique methane balances and provide a window into the planet’s earliest biological history.",
 			image: "/images/hydrothermal_vent.jpg",
 			phyla: archaeaPhyla
 		}
@@ -97,13 +97,13 @@ export default async function TopTaxonomiesSummary() {
 	return (
 		<div className="space-y-6 w-full max-w-6xl mx-auto">
 			{/* Title */}
-			<div className="text-2xl text-base-content px-4">
+			<div className="text-2xl text-base-content px-2 md:px-4">
 				<span className="text-primary mr-1">Life across the</span>
 				<span>Ocean DNA Explorer</span>
 			</div>
 
 			{/* Three Kingdom Columns */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:px-4">
 				{kingdomSections.map((section) => (
 					<div
 						key={section.kingdom}
@@ -121,7 +121,7 @@ export default async function TopTaxonomiesSummary() {
 						</div>
 
 					{/* Content Container */}
-					<div className="p-4 space-y-3 flex flex-col grow">
+					<div className="p-6 space-y-3 flex flex-col grow">
 							{/* Kingdom Title */}
 							<div>
 								<h3 className="text-lg font-semibold text-base-content">{section.title}</h3>
@@ -132,7 +132,7 @@ export default async function TopTaxonomiesSummary() {
 						<div className="grow flex flex-col">
 								{section.phyla.length > 0 ? (
 									<>
-										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wider">
+										<p className="text-xs font-semibold text-base-content/70 mt-4 mb-4 uppercase tracking-wider">
 											Top Phyla
 										</p>
 										<div className="space-y-1 mt-2">
