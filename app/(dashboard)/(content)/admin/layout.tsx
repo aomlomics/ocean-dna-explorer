@@ -9,6 +9,7 @@ import Link from "next/link";
 export default function AdminLayout({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const { userId, sessionClaims } = useAuth();
+
 	const role = sessionClaims?.metadata?.role;
 
 	return (
