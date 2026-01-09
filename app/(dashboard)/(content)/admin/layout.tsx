@@ -26,6 +26,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 				{userId && role && RolePermissions[role].includes("manageDatabase") && (
 					<>
 						<Link
+							href="/admin/tags"
+							className={`btn px-6 py-3 transition-colors rounded-none ${
+								pathname === "/admin/tags" ? "rounded-t-lg btn-primary" : ""
+							}`}
+						>
+							Tags
+						</Link>
+						<Link
 							href="/admin/images"
 							className={`btn px-6 py-3 transition-colors rounded-none ${
 								pathname === "/admin/images" ? "rounded-t-lg btn-primary" : ""
