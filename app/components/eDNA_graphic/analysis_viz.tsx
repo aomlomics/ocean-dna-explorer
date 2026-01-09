@@ -197,5 +197,133 @@ const AnalysisViz: React.FC<AnalysisVizProps> = ({ onBack, isActive }) => {
 		</div>
 	);
 };
+
+// A standalone laptop animation that loops the "Assigning taxonomy..."
+// sequence continuously without ever showing the final detail screen.
+export const AssigningTaxonomyLoop: React.FC = () => {
+	const [animationStep, setAnimationStep] = useState(0);
+	const currentOutline = ALL_OUTLINES[animationStep] ?? CORRECT_OUTLINE;
+
+	useEffect(() => {
+		const timer = setInterval(() => {
+			setAnimationStep((prev) => (prev + 1) % ALL_OUTLINES.length);
+		}, ANIMATION_INTERVAL);
+		return () => clearInterval(timer);
+	}, []);
+
+	return (
+		<div className="relative w-full h-full flex items-center justify-center">
+			<div className="relative w-[28rem] h-[18rem] text-primary">
+				{/* Laptop frame */}
+				<div className="absolute inset-0 w-full h-full pointer-events-none">
+					<svg
+						viewBox="0 0 1200 800"
+						xmlns="http://www.w3.org/2000/svg"
+						className="absolute inset-0 w-full h-full"
+					>
+						<g>
+							<path
+								d="M927.71,614.503H273.102V190.878c0-10.544,8.548-19.092,19.092-19.092h616.424c10.544,0,19.092,8.548,19.092,19.092V614.503z"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+							<path
+								d="M932.761,614.503h-664.71V186.495c0-10.681,8.658-19.339,19.339-19.339h626.032c10.681,0,19.339,8.658,19.339,19.339V614.503z"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+							<rect
+								x={284.558}
+								y={194.93}
+								width={630.924}
+								height={395.793}
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+							<path
+								d="M193.995,614.579v4.827h327.332c3.225,0,6.427,0.459,9.566,1.207c0.369,0.09,0.741,0.169,1.117,0.238v-6.271H193.995z"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+							<path
+								d="M667.99,614.579v6.271c-1.394,0.259-2.812,0.393-4.237,0.393H536.247c-1.425,0-2.843-0.134-4.237-0.393v-6.271H667.99z"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+							<path
+								d="M523.021,619.405c0,0,6,0.412,9,1.412h136c0,0,4-1,8-1.412h329.371c0.112,0,0.136,0.161,0.029,0.194c-28.36,8.779-57.879,13.245-87.569,13.245H600.021H282.189c-29.69,0-59.21-4.465-87.569-13.245c-0.107-0.033-0.083-0.194,0.029-0.194H523.021"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+							<path
+								d="M1006.005,614.579v4.827H678.674c-3.225,0-6.427,0.459-9.566,1.207c-0.369,0.09-0.741,0.169-1.117,0.238v-6.271H1006.005z"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeMiterlimit={10}
+							/>
+						</g>
+					</svg>
+				</div>
+
+				{/* Screen content: assigning taxonomy loop */}
+				<div
+					className="absolute z-10 flex flex-col items-center justify-center text-base-content overflow-hidden bg-base-100"
+					style={{
+						top: `${SCREEN_TOP_PCT}%`,
+						left: `${SCREEN_LEFT_PCT}%`,
+						width: `${SCREEN_WIDTH_PCT}%`,
+						height: `${SCREEN_HEIGHT_PCT}%`
+					}}
+				>
+					<div className="flex flex-col h-full w-full origin-top scale-[0.96] px-6 pt-6 pb-8 items-center justify-center gap-6">
+						<div className="text-2xl font-semibold text-base-content/80">Assigning taxonomy...</div>
+						<div
+							key={currentOutline}
+							className="w-40 h-40 bg-primary animate-flash"
+							style={{
+								WebkitMaskImage: `url(${currentOutline})`,
+								maskImage: `url(${currentOutline})`,
+								WebkitMaskSize: "contain",
+								maskSize: "contain",
+								WebkitMaskPosition: "center",
+								maskPosition: "center",
+								WebkitMaskRepeat: "no-repeat",
+								maskRepeat: "no-repeat"
+							}}
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
 export default AnalysisViz;
 

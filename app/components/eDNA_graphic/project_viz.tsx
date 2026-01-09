@@ -2,22 +2,11 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-interface ProjectVizProps {
-	onNext: () => void;
-}
-
-const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
-	const handleMagnifyingGlassClick = (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		onNext();
-	};
-
+const ProjectViz: React.FC = () => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const boatRef = useRef<HTMLDivElement>(null);
 	const ctdRef = useRef<HTMLDivElement>(null);
 	const ctdIconRef = useRef<HTMLDivElement>(null);
-	const magnifierRef = useRef<HTMLButtonElement>(null);
 	const [svgSize, setSvgSize] = useState({ w: 0, h: 0 });
 	const [connectorD, setConnectorD] = useState("");
 
@@ -30,10 +19,7 @@ const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
 
 		const cRect = container.getBoundingClientRect();
 		const bRect = boat.getBoundingClientRect();
-		// Prefer the CTD ICON bounding box (excludes the label),
-		// which keeps the endpoint stable as the label reflows on narrow screens.
 		const tRect = ctdIcon ? ctdIcon.getBoundingClientRect() : ctd.getBoundingClientRect();
-		const mRect = magnifierRef.current?.getBoundingClientRect();
 
 		// Start near boat bottom-right; End near CTD (adjustable offsets)
 		const startX = bRect.left + bRect.width * 0.7 - cRect.left;
@@ -81,10 +67,10 @@ const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
 				<div className="text-primary">
 					<svg
 						viewBox="0 0 423.43 168.09"
-						className="h-35 w-auto"
+						className="h-40 w-auto"
 						fill="none"
 						stroke="currentColor"
-						strokeWidth="4"
+						strokeWidth={4}
 						strokeLinecap="round"
 						strokeLinejoin="round"
 						vectorEffect="non-scaling-stroke"
@@ -97,7 +83,6 @@ const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
 						<path d="M276.54,35.11l-1.18-1.38c.56-1.48.85-3.05.85-4.63.05-7.21-5.75-13.09-12.96-13.14-7.21-.05-13.09,5.75-13.14,12.96-.01,1.65.29,3.28.88,4.81l-1.2,1.38,10.23,11.86v54h6.3v-54l10.21-11.86h0Z" />
 					</svg>
 				</div>
-				<span className="text-base-content/90 text-lg">Project</span>
 			</div>
 
 			{/* Responsive connector from boat to CTD */}
@@ -109,9 +94,9 @@ const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
 					<path
 						d={connectorD}
 						stroke="currentColor"
-						strokeWidth="3"
+						strokeWidth={3}
 						fill="none"
-						strokeOpacity="0.7"
+						strokeOpacity={0.7}
 						vectorEffect="non-scaling-stroke"
 						strokeLinecap="round"
 					/>
@@ -119,7 +104,10 @@ const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
 			)}
 
 			{/* CTD on the right under the boat */}
-			<div ref={ctdRef} className="absolute top-[15rem] left-[65%] -translate-x-1/2 flex flex-row items-center gap-3">
+			<div
+				ref={ctdRef}
+				className="absolute top-68 left-[65%] -translate-x-1/2 flex flex-row items-center gap-3"
+			>
 				<div className="text-primary">
 					<div
 						id="ctd-target"
@@ -142,37 +130,7 @@ const ProjectViz: React.FC<ProjectVizProps> = ({ onNext }) => {
 						}}
 					/>
 				</div>
-				<span className="text-base-content/80 text-lg">Sample Collection</span>
 			</div>
-
-			{/* Magnifying Glass at bottom left of CTD - small, blue primary, subtle flash */}
-			<button
-				onClick={handleMagnifyingGlassClick}
-				ref={magnifierRef}
-				className="absolute flex items-center justify-center text-primary cursor-pointer z-20 animate-pulse"
-				aria-label="Zoom to Sample"
-				style={{
-					animationDuration: "3s",
-					animationIterationCount: "infinite",
-					top: "calc(15rem + 14rem - 2rem)", // CTD top + height - offset
-					left: "calc(55% - 6rem)" // CTD left - offset
-				}}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-					strokeWidth="1.5"
-					stroke="currentColor"
-					className="w-12 h-12"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6"
-					/>
-				</svg>
-			</button>
 		</div>
 	);
 };

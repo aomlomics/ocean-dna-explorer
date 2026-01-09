@@ -1,13 +1,60 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import RangeFilter from "./filterTypes/RangeFilter";
 import { FilterConfig, getActiveFilters } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
 import { ReactNode } from "react";
 import SelectGroup from "./filterTypes/SelectGroup";
 import Filter from "./filterTypes/Filter";
+
+function ActiveFilterSummaries({ summaries }: { summaries: string[] }) {
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		const checkOverflow = () => {
+			const container = containerRef.current;
+			if (!container) return;
+
+			const children = Array.from(container.querySelectorAll("[data-filter-summary]"));
+
+			children.forEach((child) => {
+				(child as HTMLElement).style.display = "inline-flex";
+			});
+
+			for (let i = children.length - 1; i >= 0; i--) {
+				const child = children[i] as HTMLElement;
+				const isOverflowing = container.scrollWidth > container.clientWidth;
+
+				if (isOverflowing && i > 0) {
+					child.style.display = "none";
+				}
+			}
+		};
+
+		checkOverflow();
+		window.addEventListener("resize", checkOverflow);
+		return () => window.removeEventListener("resize", checkOverflow);
+	}, [summaries.length]);
+
+	return (
+		<div ref={containerRef} className="flex items-center gap-1 text-sm flex-wrap max-w-lg overflow-hidden">
+			{summaries.map((summary, idx) => (
+				<span
+					key={idx}
+					data-filter-summary
+					className="text-base-content/70 whitespace-nowrap"
+				>
+					{summary}
+					{idx < summaries.length - 1 && <span className="mx-1">•</span>}
+				</span>
+			))}
+		</div>
+	);
+}
 
 // Main filter component that shows in the sidebar
 // Handles all the filters for a specific table (like projects or analyses)
@@ -66,6 +113,27 @@ export default function ActualTableFilter({ tableConfig, sticky = false }: { tab
 						} catch {}
 					}
 				}
+			} else if (config.type === "selectGroup") {
+				for (const field of config.group) {
+					if (typeof field === "string") {
+						const raw = activeFilters[field];
+						if (raw !== undefined) {
+							summaries.push(`${formatLabelFromField(field)}: ${raw}`);
+						}
+					} else {
+						const rel = field.rel;
+						const f = field.f;
+						const rawRel = activeFilters[rel];
+						if (rawRel !== undefined) {
+							try {
+								const parsed = JSON.parse(rawRel);
+								if (parsed && parsed[f] !== undefined) {
+									summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
+								}
+							} catch {}
+						}
+					}
+				}
 			}
 		}
 		return summaries;
@@ -89,23 +157,28 @@ return (
                         </div>
                     </div>
                 )}
-				<div className="flex items-center gap-3">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							className="text-primary w-6 h-6"
-						>
-							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-						</svg>
+			<div className="flex items-center gap-3">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						className="text-primary w-6 h-6"
+					>
+						<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+					</svg>
                     <h3 className="text-lg font-semibold text-base-content">Filters</h3>
 				<span className={`badge badge-md rounded-full px-3 border bg-base-100 ${activeFilterCount > 0 ? "text-primary border-primary/30" : "text-base-content/70 border-base-300"}`}>
 						{activeFilterCount} active
 					</span>
+					{activeFilterCount > 0 && (
+						<div className="hidden md:block">
+							<ActiveFilterSummaries summaries={buildActiveSummaries()} />
+						</div>
+					)}
 					</div>
 				<div className="flex items-center gap-4">
 					{activeFilterCount > 0 && (
