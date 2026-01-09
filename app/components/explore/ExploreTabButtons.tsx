@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Prisma } from "@/app/generated/prisma/client";
 import { uncapitalizeTable } from "@/app/helpers/utils";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 
 export default function ExploreTabButtons({
 	activeTable
@@ -15,8 +15,8 @@ export default function ExploreTabButtons({
 	const searchParams = useSearchParams();
 	const tableParam = searchParams.get("table");
 
-    function isOnPath(table: Prisma.ModelName) {
-        if (activeTable) return uncapitalizeTable(activeTable) === uncapitalizeTable(table);
+	function isOnPath(table: Prisma.ModelName) {
+		if (activeTable) return uncapitalizeTable(activeTable) === uncapitalizeTable(table);
 
 		const splitPath = pathname.split("/");
 		if (splitPath.includes("explore")) {
@@ -25,23 +25,22 @@ export default function ExploreTabButtons({
 					return true;
 				}
 			}
-        } else if (splitPath.includes("search")) {
-            if (tableParam) {
-                return uncapitalizeTable(tableParam as Prisma.ModelName) === uncapitalizeTable(table);
-            }
-            return uncapitalizeTable("Project" as Prisma.ModelName) === uncapitalizeTable(table);
+		} else if (splitPath.includes("search")) {
+			if (tableParam) {
+				return uncapitalizeTable(tableParam as Prisma.ModelName) === uncapitalizeTable(table);
+			}
+			return uncapitalizeTable("Project" as Prisma.ModelName) === uncapitalizeTable(table);
 		}
 	}
 
 	return (
 		<nav className="flex flex-wrap gap-2">
-			{TableNames.map((table) => {
+			{DataTableNames.map((table) => {
 				const modelName = table as Prisma.ModelName;
 				const uncapitalizedTableName = uncapitalizeTable(modelName);
-				const href =
-					pathname.split("/").includes("explore")
-						? `/explore/${uncapitalizedTableName}`
-						: `/search?table=${modelName}`;
+				const href = pathname.split("/").includes("explore")
+					? `/explore/${uncapitalizedTableName}`
+					: `/search?table=${modelName}`;
 
 				return (
 					<Link

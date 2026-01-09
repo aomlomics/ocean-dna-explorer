@@ -1,13 +1,6 @@
-import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
+import TableMetadata, { RelationMetadata, TableNames } from "@/types/tableMetadata";
 import { getZodType } from "./schema";
-import {
-	MapShape,
-	ParamsArray,
-	ParamsArrayField,
-	ParamsArrayRelation,
-	ParamsArrayValue,
-	QueryMode
-} from "@/types/globals";
+import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
 import { getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
@@ -153,7 +146,7 @@ export function parseToQuery(
 		}
 	}
 
-	const model = Object.keys(Prisma.ModelName).find(
+	const model = TableNames.find(
 		(model) => model.toLowerCase() === (relation || table).toLowerCase()
 	) as Prisma.ModelName;
 	if (!model) {
@@ -375,9 +368,7 @@ export function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			const relModel = Object.keys(Prisma.ModelName).find(
-				(model) => model.toLowerCase() === relation.toLowerCase()
-			) as Prisma.ModelName;
+			const relModel = TableNames.find((model) => model.toLowerCase() === relation.toLowerCase()) as Prisma.ModelName;
 			if (!relModel) {
 				throw new Error(`Provided table "${relation}" is not a valid model name.`);
 			}

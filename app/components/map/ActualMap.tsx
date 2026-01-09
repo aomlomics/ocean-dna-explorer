@@ -22,15 +22,14 @@ import "react-leaflet-markercluster/styles";
 import Link from "next/link";
 import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import {
 	capitalizeTable,
 	circleToString,
 	getLocationsInsideShapes,
 	getShapesFromUrl,
-	polygonToString,
-	uncapitalizeTable
+	polygonToString
 } from "@/app/helpers/utils";
 import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
@@ -196,9 +195,9 @@ function getWhereAdvancedHref(where: Record<string, string>, table: Prisma.Model
 			if (TableMetadata[table].enumSchema.options.includes(f)) {
 				return `["${f}","equals","${v}"]`;
 			} else {
-				for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
+				for (const model of TableNames) {
 					if (f === TableMetadata[model].titleField) {
-						return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
+						return `["${model}","${f}","equals","${v}"]`;
 					}
 				}
 			}

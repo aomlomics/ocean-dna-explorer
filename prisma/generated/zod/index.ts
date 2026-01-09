@@ -68,6 +68,8 @@ export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequen
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
 
+export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description']);
+
 export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds','dateSubmitted','isPrivate','userDefined','editHistory','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','neg_cont_0_1','pos_cont_0_1','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep']);
 
 export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','userDefined','project_id','deleted_ODE','samp_category','neg_cont_type','pos_cont_type','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDate_Midpoint_ODE','eventDate_End_ODE','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','serial_number','line_id','station_id','ctd_cast_number','ctd_bottle_number','replicate_number','samp_collect_notes','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate','pump_flow_rate_unit','stationed_sample_dur','extract_id','extract_plate','extract_well_number','extract_well_position','materialSampleID','sample_derived_from','sample_composed_of','rel_cont_id','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','concentration_unit','date_ext','dna_yield','dna_yield_unit','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','ammonium','ammonium_unit','carbonate','carbonate_unit','hydrogen_ion','nitrate_plus_nitrite','nitrate_plus_nitrite_unit','omega_arag','pco2','pco2_unit','phosphate','phosphate_unit','pressure','pressure_unit','silicate','silicate_unit','tot_alkalinity','tot_alkalinity_unit','transmittance','transmittance_unit','biosample_accession','organism','sterilise_method']);
@@ -97,6 +99,8 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_n
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
 export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
+
+export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description']);
 
 export const ProjectOrderByRelevanceFieldEnumSchema = z.enum(['project_id','userIds','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','checkls_ver','seq_archive','code_repo']);
 
@@ -459,6 +463,7 @@ export type AnalysisRelations = {
   Assay: AssayWithRelations;
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
+  Tags: TagWithRelations[];
 };
 
 export type AnalysisWithRelations = Omit<z.infer<typeof AnalysisSchema>, "editHistory"> & {
@@ -470,6 +475,7 @@ export const AnalysisWithRelationsSchema: z.ZodType<AnalysisWithRelations> = Ana
   Assay: z.lazy(() => AssayWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
+  Tags: z.lazy(() => TagWithRelationsSchema).array(),
 }))
 
 // ANALYSIS OPTIONAL DEFAULTS RELATION SCHEMA
@@ -480,6 +486,7 @@ export type AnalysisOptionalDefaultsRelations = {
   Assay: AssayOptionalDefaultsWithRelations;
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
+  Tags: TagOptionalDefaultsWithRelations[];
 };
 
 export type AnalysisOptionalDefaultsWithRelations = Omit<z.infer<typeof AnalysisOptionalDefaultsSchema>, "editHistory"> & {
@@ -491,6 +498,7 @@ export const AnalysisOptionalDefaultsWithRelationsSchema: z.ZodType<AnalysisOpti
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
+  Tags: z.lazy(() => TagOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // ANALYSIS PARTIAL RELATION SCHEMA
@@ -501,6 +509,7 @@ export type AnalysisPartialRelations = {
   Assay?: AssayPartialWithRelations;
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
+  Tags?: TagPartialWithRelations[];
 };
 
 export type AnalysisPartialWithRelations = Omit<z.infer<typeof AnalysisPartialSchema>, "editHistory"> & {
@@ -512,6 +521,7 @@ export const AnalysisPartialWithRelationsSchema: z.ZodType<AnalysisPartialWithRe
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
 })).partial()
 
 export type AnalysisOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof AnalysisOptionalDefaultsSchema>, "editHistory"> & {
@@ -523,6 +533,7 @@ export const AnalysisOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Analy
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
 }).partial())
 
 export type AnalysisWithPartialRelations = Omit<z.infer<typeof AnalysisSchema>, "editHistory"> & {
@@ -534,6 +545,7 @@ export const AnalysisWithPartialRelationsSchema: z.ZodType<AnalysisWithPartialRe
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
@@ -910,6 +922,86 @@ export type TaxonomyWithPartialRelations = z.infer<typeof TaxonomySchema> & Taxo
 
 export const TaxonomyWithPartialRelationsSchema: z.ZodType<TaxonomyWithPartialRelations> = TaxonomySchema.merge(z.object({
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+}).partial())
+
+/////////////////////////////////////////
+// TAG SCHEMA
+/////////////////////////////////////////
+
+export const TagSchema = z.object({
+  id: z.number().int(),
+  tagName: z.string(),
+  description: z.string(),
+})
+
+export type Tag = z.infer<typeof TagSchema>
+
+/////////////////////////////////////////
+// TAG PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const TagPartialSchema = TagSchema.partial()
+
+export type TagPartial = z.infer<typeof TagPartialSchema>
+
+// TAG OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const TagOptionalDefaultsSchema = TagSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type TagOptionalDefaults = z.infer<typeof TagOptionalDefaultsSchema>
+
+// TAG RELATION SCHEMA
+//------------------------------------------------------
+
+export type TagRelations = {
+  Analyses: AnalysisWithRelations[];
+};
+
+export type TagWithRelations = z.infer<typeof TagSchema> & TagRelations
+
+export const TagWithRelationsSchema: z.ZodType<TagWithRelations> = TagSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
+}))
+
+// TAG OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type TagOptionalDefaultsRelations = {
+  Analyses: AnalysisOptionalDefaultsWithRelations[];
+};
+
+export type TagOptionalDefaultsWithRelations = z.infer<typeof TagOptionalDefaultsSchema> & TagOptionalDefaultsRelations
+
+export const TagOptionalDefaultsWithRelationsSchema: z.ZodType<TagOptionalDefaultsWithRelations> = TagOptionalDefaultsSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
+}))
+
+// TAG PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type TagPartialRelations = {
+  Analyses?: AnalysisPartialWithRelations[];
+};
+
+export type TagPartialWithRelations = z.infer<typeof TagPartialSchema> & TagPartialRelations
+
+export const TagPartialWithRelationsSchema: z.ZodType<TagPartialWithRelations> = TagPartialSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+})).partial()
+
+export type TagOptionalDefaultsWithPartialRelations = z.infer<typeof TagOptionalDefaultsSchema> & TagPartialRelations
+
+export const TagOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TagOptionalDefaultsWithPartialRelations> = TagOptionalDefaultsSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+}).partial())
+
+export type TagWithPartialRelations = z.infer<typeof TagSchema> & TagPartialRelations
+
+export const TagWithPartialRelationsSchema: z.ZodType<TagWithPartialRelations> = TagSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////

@@ -2,7 +2,6 @@ import { RanksBySpecificity } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
 import { Circle, Location, LocationWithValues, MapShape, Point, Polygon } from "@/types/globals";
-import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);

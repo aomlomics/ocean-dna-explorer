@@ -9,7 +9,7 @@ import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default async function Header() {
@@ -47,12 +47,12 @@ export default async function Header() {
 
 			{/* Desktop tabs - centered between logo and user controls and aligned to bottom */}
 			<div className="navbar-center hidden xl:flex self-end">
-				<div className="flex items-end space-x-4 z-9999 -mb-[8px]">
+				<div className="flex items-end space-x-4 z-9999 -mb-2">
 					<TabButton tabName="Home" route="/" />
 					<TabDropdown
 						tabName="Explore"
 						route="/explore"
-						dropdown={TableNames.map((table) => ({
+						dropdown={DataTableNames.map((table) => ({
 							label: TableMetadata[table as Prisma.ModelName].plural,
 							href: `/explore/${uncapitalizeTable(table as Prisma.ModelName)}`
 						}))}

@@ -8,6 +8,7 @@ import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import Table from "@/app/components/paginated/Table";
 import Pagination from "@/app/components/paginated/Pagination";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
+import TableMetadata from "@/types/tableMetadata";
 
 export default async function Analysis() {
 	const analyses = await prisma.analysis.findMany({
@@ -65,10 +66,7 @@ export default async function Analysis() {
 		<ExplorePage table="analysis" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						Bioinformatic processing runs that convert raw sequence data into species detections, documenting all
-						parameters and methods used.
-					</p>
+					<p>{TableMetadata.analysis.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">

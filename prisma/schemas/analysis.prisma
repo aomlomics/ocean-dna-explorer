@@ -13,6 +13,7 @@ model Analysis {
     Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
     Occurrences Occurrence[]
     Assignments Assignment[]
+    Tags        Tag[]
 
     // Submission File URLs
     analysisMetadataFileUrl_ODE      String
@@ -209,4 +210,14 @@ model Taxonomy {
     family                 String?
     genus                  String?
     species                String?
+}
+
+model Tag {
+    id      Int    @id @default(autoincrement())
+    tagName String @unique
+
+    // Relations
+    Analyses Analysis[]
+
+    description String
 }
