@@ -7,13 +7,15 @@ export default function Modal({
 	ref,
 	xRef,
 	clickOffRef,
-	className = ""
+	className = "",
+	onClose
 }: {
 	children?: ReactNode;
 	ref: RefObject<HTMLDialogElement | null>;
 	xRef?: RefObject<HTMLButtonElement | null>;
 	clickOffRef?: RefObject<HTMLButtonElement | null>;
 	className?: string;
+	onClose?: () => void;
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 
@@ -30,6 +32,10 @@ export default function Modal({
 						} else {
 							modalRef.current?.close();
 						}
+
+						if (onClose) {
+							onClose();
+						}
 					}}
 				>
 					✕
@@ -38,7 +44,9 @@ export default function Modal({
 				{children}
 			</div>
 			<form method="dialog" className="modal-backdrop">
-				<button ref={clickOffRef}>close</button>
+				<button ref={clickOffRef} onClick={onClose}>
+					close
+				</button>
 			</form>
 		</dialog>
 	);

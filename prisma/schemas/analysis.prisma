@@ -220,4 +220,5 @@ model Tag {
     Analyses Analysis[]
 
     description String
+    color       String
 }

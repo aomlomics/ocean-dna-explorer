@@ -68,7 +68,7 @@ export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequen
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
 
-export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description']);
+export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
 export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds','dateSubmitted','isPrivate','userDefined','editHistory','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','neg_cont_0_1','pos_cont_0_1','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep']);
 
@@ -100,7 +100,7 @@ export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_s
 
 export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
 
-export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description']);
+export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
 export const ProjectOrderByRelevanceFieldEnumSchema = z.enum(['project_id','userIds','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','checkls_ver','seq_archive','code_repo']);
 
@@ -932,6 +932,7 @@ export const TagSchema = z.object({
   id: z.number().int(),
   tagName: z.string(),
   description: z.string(),
+  color: z.string(),
 })
 
 export type Tag = z.infer<typeof TagSchema>

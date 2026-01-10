@@ -557,7 +557,7 @@ export default function AdvancedSearch() {
 			)}
 			<div className="w-full space-y-4 text-base-content/80">
 				{searchTable && <p>{TableMetadata[searchTable].description}</p>}
-				<ExploreTabButtons activeTable={searchTable} />
+				<ExploreTabButtons activeTable={searchTable} tables={TableNames} />
 			</div>
 
 			<form

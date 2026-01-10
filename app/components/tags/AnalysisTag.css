@@ -1,0 +1,4 @@
+.AnalysisTag:before {
+	background: var(--analysisTagTooltipBGColor);
+	color: var(--analysisTagTooltipTextColor);
+}

@@ -3,11 +3,13 @@ import { prismaImages } from "@/app/helpers/prismaImages";
 import ImageDeleteButton from "@/app/components/images/ImageDeleteButton";
 
 export default async function AdminImages() {
-	const attributions = await prismaImages.attribution.findMany();
-	const images = await prismaImages.image.findMany({
-		include: { Attribution: true },
-		orderBy: { dateSubmitted: "desc" }
-	});
+	const [attributions, images] = await prismaImages.$transaction([
+		prismaImages.attribution.findMany(),
+		prismaImages.image.findMany({
+			include: { Attribution: true },
+			orderBy: { dateSubmitted: "desc" }
+		})
+	]);
 
 	return (
 		<div className="space-y-6">
@@ -15,7 +17,9 @@ export default async function AdminImages() {
 
 			<div className="space-y-2">
 				<h2 className="text-xl font-semibold">Carousel images</h2>
-				<p className="text-sm opacity-70">{images.length} image{images.length === 1 ? "" : "s"} in database</p>
+				<p className="text-sm opacity-70">
+					{images.length} image{images.length === 1 ? "" : "s"} in database
+				</p>
 			</div>
 
 			{images.length === 0 ? (
@@ -31,7 +35,9 @@ export default async function AdminImages() {
 							</figure>
 							<div className="card-body p-4">
 								<div className="flex items-center justify-between gap-2">
-									<h3 className="card-title text-base truncate" title={img.name}>{img.name}</h3>
+									<h3 className="card-title text-base truncate" title={img.name}>
+										{img.name}
+									</h3>
 									<span className="badge badge-ghost">#{img.id}</span>
 								</div>
 								{img.description && <p className="text-sm opacity-80 line-clamp-2">{img.description}</p>}
@@ -44,10 +50,13 @@ export default async function AdminImages() {
 											<p>Attribution: {img.Attribution.attributionTitle}</p>
 											{img.Attribution.attributionInstitute && <p>Institute: {img.Attribution.attributionInstitute}</p>}
 											{img.Attribution.attributionUrl && (
-											<p className="break-all">
-												URL: <a className="link" href={img.Attribution.attributionUrl} target="_blank" rel="noreferrer">{img.Attribution.attributionUrl}</a>
-											</p>
-										)}
+												<p className="break-all">
+													URL:{" "}
+													<a className="link" href={img.Attribution.attributionUrl} target="_blank" rel="noreferrer">
+														{img.Attribution.attributionUrl}
+													</a>
+												</p>
+											)}
 										</div>
 									)}
 								</div>
@@ -57,8 +66,8 @@ export default async function AdminImages() {
 							</div>
 						</div>
 					))}
-					</div>
-				)}
-			</div>
+				</div>
+			)}
+		</div>
 	);
 }
