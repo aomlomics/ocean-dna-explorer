@@ -1,17 +1,18 @@
 import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import Map from "@/app/components/map/Map";
+import MapComponent from "@/app/components/map/Map";
 import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import TableMetadata from "@/types/tableMetadata";
 import { Sample } from "@/app/generated/prisma/client";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 
 export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
 	let { samp_name } = await params;
 	samp_name = decodeURIComponent(samp_name);
 
-	const { sample, analyses, assayData } = await prisma.$transaction(async (tx) => {
+	const { sample, analyses, assayData, taxonomyData } = await prisma.$transaction(async (tx) => {
 		const sample = await tx.sample.findUnique({
 			where: {
 				samp_name
@@ -35,7 +36,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			}
 		});
 
-		if (!sample) return { sample: null, analyses: [], assayData: [] };
+		if (!sample) return { sample: null, analyses: [], assayData: [], taxonomyData: [] };
 
 		const occs = await tx.occurrence.findMany({
 			where: {
@@ -56,7 +57,31 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			}
 		});
 
-		return { sample, analyses: occs.map((occ) => occ.analysis_run_name), assayData: assays };
+		const assignments = await tx.assignment.findMany({
+			where: {
+				Analysis: {
+					Occurrences: {
+						some: {
+							samp_name
+						}
+					}
+				}
+			},
+			select: {
+				taxonomy: true
+			}
+		});
+
+		const taxonomyCounts = new Map<string, number>();
+		for (const assignment of assignments) {
+			taxonomyCounts.set(assignment.taxonomy, (taxonomyCounts.get(assignment.taxonomy) ?? 0) + 1);
+		}
+
+		const taxonomyData = Array.from(taxonomyCounts.entries())
+			.map(([taxonomy, count]) => ({ taxonomy, count }))
+			.sort((a, b) => b.count - a.count);
+
+		return { sample, analyses: occs.map((occ) => occ.analysis_run_name), assayData: assays, taxonomyData };
 	});
 
 	if (!sample) return <>Sample not found</>;
@@ -110,7 +135,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left column - Map and Assays */}
 				<div className="space-y-8">
-					<Map locations={[sample]} className="aspect-square" />
+					<MapComponent locations={[sample]} className="aspect-square" />
 
 					{/* Assays Section */}
 					<div id="assays-section" className="target:animate-flash">
@@ -200,6 +225,22 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					</div>
 				</div>
 			</div>
+
+		{/* Taxonomy Relative Abundance Chart */}
+		{taxonomyData.length > 0 && (
+			<div>
+				<h2 className="text-xl font-medium mb-4">
+					<span className="text-base-content/90">Taxonomies found in this <span className="text-primary font-bold">Sample</span></span>
+				</h2>
+				<div className="w-full">
+					<TaxonomyDonutChart
+						labels={taxonomyData.map((t) => t.taxonomy)}
+						data={taxonomyData.map((t) => t.count)}
+						sampName={samp_name}
+					/>
+				</div>
+			</div>
+		)}
 		</div>
 	);
 }

@@ -7,6 +7,7 @@ import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
+import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 
 export default async function Home() {
 	const carouselImages = (await prismaImages.image.findMany({ include: { Attribution: true } }))
@@ -143,6 +144,12 @@ export default async function Home() {
 						</Suspense>
 					</div>
 				</div>
+
+			<div className="w-full mb-24">
+				<Suspense>
+					<TopTaxonomiesSummary />
+				</Suspense>
+			</div>
 
 				{/* Funding Institutes Section */}
 				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
