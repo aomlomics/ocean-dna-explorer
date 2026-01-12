@@ -1692,7 +1692,22 @@ function LegendControl({
 												className="aspect-square w-[1em] h-[1em]"
 												style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
 											></div>
-											<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+											{Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
+												<Link
+													href={`/explore/${Object.keys(TableMetadata).find(
+														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+													)}/${encodeURIComponent(Object.keys(legendInfo.colorMap)[0])}`}
+													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
+														legendInfo.hidden?.includes(Object.keys(legendInfo.colorMap)[0])
+															? "line-through text-base-content/50"
+															: ""
+													}`}
+												>
+													{Object.keys(legendInfo.colorMap)[0]}
+												</Link>
+											) : (
+												<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+											)}
 										</div>
 									) : (
 										Object.entries(legendInfo.colorMap).map(([key, color]) => (

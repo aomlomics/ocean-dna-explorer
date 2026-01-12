@@ -15,7 +15,9 @@ export async function AssayStats() {
 			distinct: ["target_gene"],
 			where: {
 				Analyses: {
-					some: {}
+					some: {
+						isPrivate: false
+					}
 				}
 			},
 			select: {
