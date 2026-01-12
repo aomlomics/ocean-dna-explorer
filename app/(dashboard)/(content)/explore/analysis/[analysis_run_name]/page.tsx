@@ -9,6 +9,7 @@ import TableMetadata from "@/types/tableMetadata";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import { Analysis } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
+import AnalysisTag from "@/app/components/tags/AnalysisTag";
 
 export default async function Analysis_run_name({
 	params
@@ -44,11 +45,12 @@ export default async function Analysis_run_name({
 				select: {
 					Sample: true
 				}
-			}
+			},
+			Tags: true
 		}
 	});
 	if (!analysis) return <>Analysis not found</>;
-	const { _count: _, Occurrences: __, editHistory: ___, Assay: ____, ...justAnalysis } = analysis;
+	const { _count: _, Occurrences: __, editHistory: ___, Assay: ____, Tags: _____, ...justAnalysis } = analysis;
 
 	const samples = analysis.Occurrences.map((occ) => occ.Sample);
 
@@ -79,13 +81,16 @@ export default async function Analysis_run_name({
 			<header>
 				<div className="flex gap-2 items-center">
 					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
+						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-secondary tooltip-right before:text-primary-content"
 						data-tip={TableMetadata.analysis.description}
 					>
 						{analysis_run_name}
 					</h1>
 					<EditHistory editHistory={analysis.editHistory} />
-					{analysis.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+					{analysis.isPrivate && <div className="badge badge-ghost p-3 select-none">Private</div>}
+					{analysis.Tags.map((t) => (
+						<AnalysisTag key={t.tagName} tag={t} />
+					))}
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
@@ -188,7 +193,7 @@ export default async function Analysis_run_name({
 					<div>
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
 						<div className="flex items-center gap-4 p-4 rounded-lg">
-							<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+							<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 								<div className="relative w-12 h-12">
 									<Suspense>
 										<AssayPhyloPic assay_name={analysis.assay_name} />

@@ -1,20 +1,21 @@
 "use server";
 
-import { Analysis } from "@/app/generated/prisma/client";
+import { Analysis, Project, Tag } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { ProgressStream } from "@/types/globals";
+import { AnalysisPartial } from "@/prisma/generated/zod";
+import { AsyncReturnType, ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
 async function doEdit(
 	stream: ProgressStream,
-	url: string,
 	editId: string,
+	project_id: Project["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
-	isPrivate?: boolean
+	{ url, isPrivate, tagNames }: { url?: string; isPrivate?: boolean; tagNames?: Tag["tagName"][] }
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -45,17 +46,19 @@ async function doEdit(
 			return;
 		}
 
-		const parseResult = await parseAnalysisFile({
-			channel: { stream, url },
-			assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
-			occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
-			isPrivate,
-			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
-		});
-		if (!parseResult) {
-			return;
+		let parseResult = undefined as AsyncReturnType<typeof parseAnalysisFile>;
+		if (url) {
+			parseResult = await parseAnalysisFile({
+				channel: { stream, url },
+				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
+				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
+				isPrivate,
+				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+			});
+			if (!parseResult) {
+				return;
+			}
 		}
-		const { analysis, analysisMd5 } = parseResult;
 
 		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
@@ -64,7 +67,7 @@ async function doEdit(
 				//check if the associated project is private, and throw an error if it is private but the submission is public
 				const project = await tx.project.findUnique({
 					where: {
-						project_id: analysis.project_id
+						project_id
 					},
 					select: {
 						isPrivate: true,
@@ -72,14 +75,14 @@ async function doEdit(
 					}
 				});
 				if (!project) {
-					throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
+					throw new Error(`Project with project_id of ${project_id} does not exist.`);
 				} else if (!project.userIds.includes(userId)) {
 					throw new Error(
-						`Permission denied for editing analysis with Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
+						`Permission denied for editing analysis with Project with project_id of ${project_id}. Please contact submission owner with a request to be added to the Project.`
 					);
 				} else if (project.isPrivate && !isPrivate) {
 					throw new Error(
-						`Project with project_id of ${analysis.project_id} is private. Analyses can't be public if the associated project is private.`
+						`Project with project_id of ${project_id} is private. Analyses can't be public if the associated project is private.`
 					);
 				}
 
@@ -91,7 +94,12 @@ async function doEdit(
 						analysisMetadataFileUrl_ODE: true,
 						analysisMetadataFileChecksum_ODE: true,
 						isPrivate: true,
-						editHistory: true
+						editHistory: true,
+						Tags: {
+							select: {
+								tagName: true
+							}
+						}
 					}
 				});
 
@@ -99,20 +107,31 @@ async function doEdit(
 					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 				}
 
-				await stream.message("All checks passed.", 80);
-
-				const editHistory = addToHistory("analysis", editId, dbAnalysis.editHistory, [
-					{
-						field: "analysisMetadataFileUrl_ODE",
-						oldValue: dbAnalysis.analysisMetadataFileUrl_ODE,
-						newValue: url
-					},
-					{
-						field: "analysisMetadataFileChecksum_ODE",
-						oldValue: dbAnalysis.analysisMetadataFileChecksum_ODE,
-						newValue: analysisMd5
+				let connect = [] as { tagName: string }[];
+				let disconnect = [] as { tagName: string }[];
+				if (tagNames) {
+					//check if all tagNames are valid
+					const dbTags = await tx.tag.findMany({
+						where: {
+							tagName: {
+								in: tagNames
+							}
+						},
+						select: {
+							tagName: true
+						}
+					});
+					if (
+						!(dbTags.length === tagNames.length && tagNames.every((name) => dbTags.some((tag) => name === tag.tagName)))
+					) {
+						throw new Error("Some provided tag names are not in database.");
 					}
-				]);
+
+					connect = dbTags.filter((t) => !dbAnalysis.Tags.some((at) => t.tagName === at.tagName));
+					disconnect = dbAnalysis.Tags.filter((at) => !dbTags.some((t) => at.tagName === t.tagName));
+				}
+
+				await stream.message("All checks passed.", 80);
 
 				//update analysis
 				await tx.analysis.update({
@@ -120,9 +139,28 @@ async function doEdit(
 						analysis_run_name
 					},
 					data: {
-						...analysis,
-						editHistory,
-						isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate
+						...(parseResult
+							? {
+									...parseResult.analysis,
+									editHistory: addToHistory("analysis", editId, dbAnalysis.editHistory, [
+										{
+											field: "analysisMetadataFileUrl_ODE",
+											oldValue: dbAnalysis.analysisMetadataFileUrl_ODE,
+											newValue: url!
+										},
+										{
+											field: "analysisMetadataFileChecksum_ODE",
+											oldValue: dbAnalysis.analysisMetadataFileChecksum_ODE,
+											newValue: parseResult.analysisMd5
+										}
+									])
+							  }
+							: {}),
+						isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate,
+						Tags: {
+							connect,
+							disconnect
+						}
 					}
 				});
 
@@ -142,14 +180,14 @@ async function doEdit(
 }
 
 export default async function analysisEditAction(
-	url: string,
 	editId: string,
+	project_id: Project["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
-	isPrivate?: boolean
+	{ url, isPrivate, tagNames }: { url?: string; isPrivate?: boolean; tagNames?: Tag["tagName"][] }
 ) {
 	const stream = createProgressStream();
 
-	doEdit(stream, url, editId, analysis_run_name, isPrivate).then(stream.close);
+	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, tagNames }).then(stream.close);
 
 	return stream.readable;
 }
