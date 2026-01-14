@@ -3,8 +3,8 @@
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
-import { Prisma } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useEffect, useState, useRef } from "react";
+import { Prisma, Tag } from "@/app/generated/prisma/client";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
@@ -12,7 +12,8 @@ import PaginationControls from "./PaginationControls";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { fetcher, getShapesFromUrl } from "@/app/helpers/utils";
+import { capitalizeTable, depluralizeTable, fetcher } from "@/app/helpers/utils";
+import AnalysisTag from "../tags/AnalysisTag";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order: Prisma.SortOrder };
 
@@ -63,6 +64,14 @@ export default function Table({
 	const combinedOmit = [...omit, ...GlobalOmit];
 	const title = TableMetadata[table].titleField;
 
+	const manyRelations = TableMetadata[table].relations.reduce((acc, r) => {
+		if (r.type.endsWith("many")) {
+			acc.push(r.field);
+		}
+
+		return acc;
+	}, [] as string[]);
+
 	//api call
 	let query = new URLSearchParams({
 		take: take.toString(),
@@ -77,19 +86,22 @@ export default function Table({
 	if (Object.keys(whereFilter).length) {
 		whereQuery = { ...whereQuery, ...whereFilter };
 	}
-	let shapes = [] as string[];
 	if (searchParams && searchParams.size) {
 		const tempParms = new URLSearchParams(searchParams);
 		//specifically pull out shapes from searchParams
 		const polygons = tempParms.getAll("polygon");
 		if (polygons.length) {
 			tempParms.delete("polygon");
-			shapes.push(...polygons.map((p) => "polygon=" + p));
+			for (const p of polygons) {
+				query.set("polygon", p);
+			}
 		}
 		const circles = tempParms.getAll("circle");
 		if (circles.length) {
 			tempParms.delete("circle");
-			shapes.push(...circles.map((c) => "circle=" + c));
+			for (const c of circles) {
+				query.set("circle", c);
+			}
 		}
 
 		//get rest of queries
@@ -105,8 +117,18 @@ export default function Table({
 		query.set("where", JSON.stringify(whereQuery));
 	}
 
+	if (manyRelations.length) {
+		if (manyRelations.includes("Tags")) {
+			query.set("relCounts", manyRelations.filter((r) => r !== "Tags").join(","));
+			query.set("relations", "Tags");
+			query.set("relationsAllFields", "true");
+		} else {
+			query.set("relCounts", manyRelations.join(","));
+		}
+	}
+
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${query.toString()}${shapes.length ? "&" + shapes.join("&") : ""}`,
+		`/api/${table}/pagination?${query.toString()}`,
 		fetcher
 	);
 
@@ -144,13 +166,26 @@ export default function Table({
 	useEffect(() => {
 		if (!Object.keys(headersFilter).length) {
 			let tempHeaders = [];
+			if (manyRelations.includes("Tags")) {
+				tempHeaders.push("Tags");
+			}
+			if (Object.keys(TableMetadata[table].relationFields).length) {
+				tempHeaders.push(...Object.keys(TableMetadata[table].relationFields));
+			}
+			const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
+			if (manyRelationsNoTags.length) {
+				tempHeaders.push(...manyRelationsNoTags);
+			}
 			if (TableMetadata[table].fieldOrder) {
 				tempHeaders.push(...TableMetadata[table].fieldOrder);
 			}
 			tempHeaders.push(
 				...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
 					//remove fields that have already been added
-					if (TableMetadata[table].fieldOrder?.includes(head)) {
+					if (
+						TableMetadata[table].fieldOrder?.includes(head) ||
+						Object.keys(TableMetadata[table].relationFields).includes(head)
+					) {
 						return acc;
 					}
 
@@ -182,7 +217,7 @@ export default function Table({
 			if (filterHeadersAtStart && TableMetadata[table].subFields) {
 				const temp = {} as Record<string, true>;
 				for (const head of tempHeaders) {
-					if (!TableMetadata[table].subFields.includes(head)) {
+					if (!TableMetadata[table].subFields.includes(head) && !manyRelations.includes(head)) {
 						temp[head] = true;
 					}
 				}
@@ -541,79 +576,107 @@ export default function Table({
 									//only render the header if it is selected in the header filter
 									if (!headersFilter[head] && !emptyFilter[head]) {
 										//Header
-										acc.push(
-											<td key={head + i} className="bg-base-100">
-												<div
-													className="flex justify-between select-none mb-1 cursor-pointer"
-													onClick={() =>
-														orderBy.field === head
-															? orderBy.order === "asc"
-																? setOrderBy({ field: head, order: "desc" })
-																: setOrderBy(DEFAULT_ORDER_BY)
-															: setOrderBy({ field: head, order: "asc" })
-													}
-												>
-													{head}
-													{userDefinedHeaders.includes(head) && <sup>UD</sup>}
-													{orderBy.field === head ? (
-														orderBy.order === "asc" ? (
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																width="24"
-																height="20"
-																className="text-primary mr-2"
-																fill="none"
-																stroke="currentColor"
-																strokeWidth="2"
-															>
-																<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-															</svg>
+										if (manyRelations.includes(head)) {
+											acc.push(
+												<td key={head + i} className="bg-base-100">
+													<div className="flex justify-between select-none mb-1">{head}</div>
+													<label className="form-control w-full max-w-xs text-lg">
+														{/* Value Filter */}
+														{!hideFilters && (
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	viewBox="0 0 16 16"
+																	fill="currentColor"
+																	className="h-4 w-4 opacity-70"
+																>
+																	<path
+																		fillRule="evenodd"
+																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+																		clipRule="evenodd"
+																	/>
+																</svg>
+																<input type="text" className="grow" disabled />
+															</label>
+														)}
+													</label>
+												</td>
+											);
+										} else {
+											acc.push(
+												<td key={head + i} className="bg-base-100">
+													<div
+														className="flex justify-between select-none mb-1 cursor-pointer"
+														onClick={() =>
+															orderBy.field === head
+																? orderBy.order === "asc"
+																	? setOrderBy({ field: head, order: "desc" })
+																	: setOrderBy(DEFAULT_ORDER_BY)
+																: setOrderBy({ field: head, order: "asc" })
+														}
+													>
+														{head}
+														{userDefinedHeaders.includes(head) && <sup>UD</sup>}
+														{orderBy.field === head ? (
+															orderBy.order === "asc" ? (
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	width="24"
+																	height="20"
+																	className="text-primary mr-2"
+																	fill="none"
+																	stroke="currentColor"
+																	strokeWidth="2"
+																>
+																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+																</svg>
+															) : (
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	width="24"
+																	height="20"
+																	className="text-primary mr-2"
+																	fill="none"
+																	stroke="currentColor"
+																	strokeWidth="2"
+																>
+																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+																</svg>
+															)
 														) : (
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																width="24"
-																height="20"
-																className="text-primary mr-2"
-																fill="none"
-																stroke="currentColor"
-																strokeWidth="2"
-															>
-																<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-															</svg>
-														)
-													) : (
-														<></>
-													)}
-												</div>
-												<label className="form-control w-full max-w-xs text-lg">
-													{/* Value Filter */}
-													{!hideFilters && (
-														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																viewBox="0 0 16 16"
-																fill="currentColor"
-																className="h-4 w-4 opacity-70"
-															>
-																<path
-																	fillRule="evenodd"
-																	d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																	clipRule="evenodd"
+															<></>
+														)}
+													</div>
+													<label className="form-control w-full max-w-xs text-lg">
+														{/* Value Filter */}
+														{!hideFilters && (
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	viewBox="0 0 16 16"
+																	fill="currentColor"
+																	className="h-4 w-4 opacity-70"
+																>
+																	<path
+																		fillRule="evenodd"
+																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+																		clipRule="evenodd"
+																	/>
+																</svg>
+																<input
+																	name={head}
+																	defaultValue={whereFilter[head] || ""}
+																	type="text"
+																	className="grow"
+																	disabled={userDefinedHeaders.includes(head)}
+																	placeholder={userDefinedHeaders.includes(head) ? "" : "Press Enter to search"}
 																/>
-															</svg>
-															<input
-																name={head}
-																defaultValue={whereFilter[head] || ""}
-																type="text"
-																className="grow"
-																disabled={userDefinedHeaders.includes(head)}
-																placeholder="Press Enter to search"
-															/>
-														</label>
-													)}
-												</label>
-											</td>
-										);
+															</label>
+														)}
+													</label>
+												</td>
+											);
+										}
 									}
 
 									return acc;
@@ -624,88 +687,137 @@ export default function Table({
 						<tbody>
 							{/* Value Row */}
 							{data.result &&
-								data.result.reduce((acc: ReactNode[], row: Record<string, any>, i: number) => {
-									//row
-									acc.push(
-										<tr key={i} className="min-h-12 h-12 align-middle">
-											{typeof title === "string" ? (
-												<th
-													className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2 ${
-														i ? "border-t-2" : ""
-													}`}
+								data.result.map((row: Record<string, any>, i: number) => (
+									<tr key={i} className="min-h-12 h-12 align-middle">
+										{typeof title === "string" ? (
+											<th
+												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2${
+													i ? " border-t-2" : ""
+												}`}
+											>
+												<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
+													{row[title]}
+												</Link>
+											</th>
+										) : (
+											<th
+												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2${
+													i ? " border-t-2" : ""
+												}`}
+											>
+												<Link
+													href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
+													className="link link-primary link-hover"
 												>
-													<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
-														{row[title]}
-													</Link>
-												</th>
-											) : (
-												<th
-													className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2 ${
-														i ? "border-t-2" : ""
-													}`}
-												>
-													<Link
-														href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
-														className="link link-primary link-hover"
-													>
-														{title.map((f) => row[f]).join(" / ")}
-													</Link>
-												</th>
-											)}
+													{title.map((f) => row[f]).join(" / ")}
+												</Link>
+											</th>
+										)}
 
-											{headers.reduce((acc: ReactNode[], head, j) => {
-												if (!headersFilter[head] && !emptyFilter[head]) {
-													//cell
-													if (userDefinedHeaders.includes(head)) {
+										{headers.reduce((acc: ReactNode[], head, j) => {
+											if (!headersFilter[head] && !emptyFilter[head]) {
+												//cell
+												if (manyRelations.includes(head)) {
+													if (head === "Tags") {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm border-base-300 ${i ? "border-t-2" : ""} ${
-																	j ? "border-l-2" : ""
-																} ${row[head] === null ? "bg-base-200" : ""}`}
-																key={row.userDefined[head] + "child" + j}
+																className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
+																	j ? " border-l-2" : ""
+																}${row[head] === null ? " bg-base-200" : ""}`}
+																key={head + "child" + j}
 															>
-																{row.userDefined[head]}
+																<div className="flex gap-3">
+																	{row.Tags.map((t: Tag) => (
+																		<AnalysisTag key={t.tagName} tag={t} />
+																	))}
+																</div>
 															</td>
 														);
 													} else {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm border-base-300 ${i ? "border-t-2" : ""} ${
-																	j ? "border-l-2" : ""
-																} ${row[head] === null ? "bg-base-200" : ""}`}
-																key={row[head] + "child" + j}
+																className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
+																	j ? " border-l-2" : ""
+																}${row[head] === null ? " bg-base-200" : ""}`}
+																key={head + "child" + j}
 															>
-																{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
-																	DeadValueEnum[row[head]]
-																) : head in TableMetadata[table].relationFields ? (
+																<div className="flex justify-center">
 																	<Link
-																		href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
-																		className="link link-primary link-hover font-bold"
+																		className="btn text-nowrap"
+																		href={`/search?table=${depluralizeTable(head as Prisma.ModelName)}&advanced=[${
+																			typeof title === "string"
+																				? `["${table}", "${title}", "equals", "${row[title]}"]`
+																				: title.map((t) => `["${table}", "${title}", "equals", "${row[t]}"]`).join(",")
+																		}]`}
 																	>
-																		{row[head]}
+																		<svg
+																			width="20px"
+																			height="20px"
+																			viewBox="0 0 32 32"
+																			version="1.1"
+																			xmlns="http://www.w3.org/2000/svg"
+																			className="text-primary"
+																			stroke="currentColor"
+																			fill="currentColor"
+																		>
+																			<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
+																		</svg>{" "}
+																		{row._count[head]}{" "}
+																		{row._count[head] === 1
+																			? capitalizeTable(depluralizeTable(head as Prisma.ModelName))
+																			: head}
 																	</Link>
-																) : URL.canParse(row[head]) && row[head].startsWith("https://") ? (
-																	<Link href={row[head]} className="link link-primary link-hover">
-																		{row[head]}
-																	</Link>
-																) : (
-																	row[head]
-																)}
+																</div>
 															</td>
 														);
 													}
+												} else if (userDefinedHeaders.includes(head)) {
+													acc.push(
+														<td
+															className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
+																j ? " border-l-2" : ""
+															}${row[head] === null ? " bg-base-200" : ""}`}
+															key={row.userDefined[head] + "child" + j}
+														>
+															{row.userDefined[head]}
+														</td>
+													);
+												} else {
+													acc.push(
+														<td
+															className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
+																j ? " border-l-2" : ""
+															}${row[head] === null ? " bg-base-200" : ""}`}
+															key={row[head] + "child" + j}
+														>
+															{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
+																DeadValueEnum[row[head]]
+															) : head in TableMetadata[table].relationFields ? (
+																<Link
+																	href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
+																	className="link link-primary link-hover font-bold"
+																>
+																	{row[head]}
+																</Link>
+															) : URL.canParse(row[head]) && row[head].startsWith("https://") ? (
+																<Link href={row[head]} className="link link-primary link-hover">
+																	{row[head]}
+																</Link>
+															) : (
+																row[head]
+															)}
+														</td>
+													);
 												}
+											}
 
-												return acc;
-											}, [])}
-											<th className={`border-base-300 border-l-2 ${i ? "border-t-2" : ""}`}>
-												{i + 1 + (page - 1) * take}
-											</th>
-										</tr>
-									);
-
-									return acc;
-								}, [])}
+											return acc;
+										}, [])}
+										<th className={`border-base-300 border-l-2${i ? " border-t-2" : ""}`}>
+											{i + 1 + (page - 1) * take}
+										</th>
+									</tr>
+								))}
 						</tbody>
 					</table>
 				</div>

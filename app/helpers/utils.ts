@@ -2,6 +2,7 @@ import { RanksBySpecificity } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
 import { Circle, Location, LocationWithValues, MapShape, Point, Polygon } from "@/types/globals";
+import TableMetadata from "@/types/tableMetadata";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -247,6 +248,10 @@ export function uncapitalizeTable(table: Prisma.ModelName) {
 
 export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
 	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
+}
+
+export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
+	return Object.entries(TableMetadata).find(([_, meta]) => meta.plural === table)![0] as Uncapitalize<Prisma.ModelName>;
 }
 
 export function getSubmissionFileName(value: string) {

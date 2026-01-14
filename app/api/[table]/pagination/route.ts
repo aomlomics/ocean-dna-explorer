@@ -29,7 +29,10 @@ export async function GET(
 				where?: Record<string, any>;
 				take?: number;
 				skip?: number;
-				include?: { _count: { select: Record<string, boolean> } };
+				include?: {
+					_count?: { select: Record<string, boolean> };
+					[key: string]: any;
+				};
 			};
 
 			const orderByStr = searchParams.get("orderBy");
@@ -83,6 +86,25 @@ export async function GET(
 							.reduce((acc: Record<string, boolean>, rel: string) => ({ ...acc, [rel]: true }), {})
 					}
 				};
+			}
+
+			const relations = searchParams.get("relations");
+			if (relations) {
+				if (!query.include) {
+					query.include = {};
+				}
+
+				const relationsAllFields = searchParams.get("relationsAllFields");
+				const relationsArr = relations.split(",");
+				if (relationsAllFields) {
+					for (const rel of relationsArr) {
+						query.include[rel] = true;
+					}
+				} else {
+					for (const rel of relationsArr) {
+						query.include[rel] = { select: { id: true } };
+					}
+				}
 			}
 
 			let take = searchParams.get("take");
