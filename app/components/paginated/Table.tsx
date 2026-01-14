@@ -166,13 +166,13 @@ export default function Table({
 	useEffect(() => {
 		if (!Object.keys(headersFilter).length) {
 			let tempHeaders = [];
-			if (manyRelations.includes("Tags")) {
+			const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
+			if (manyRelations.length !== manyRelationsNoTags.length) {
 				tempHeaders.push("Tags");
 			}
 			if (Object.keys(TableMetadata[table].relationFields).length) {
 				tempHeaders.push(...Object.keys(TableMetadata[table].relationFields));
 			}
-			const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
 			if (manyRelationsNoTags.length) {
 				tempHeaders.push(...manyRelationsNoTags);
 			}
