@@ -709,7 +709,7 @@ export default function Table({
 													href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
 													className="link link-primary link-hover"
 												>
-													{title.map((f) => row[f]).join(" / ")}
+													{title.map((f) => (row[f].length > 15 ? row[f].slice(0, 10) + "..." : row[f])).join(" / ")}
 												</Link>
 											</th>
 										)}
