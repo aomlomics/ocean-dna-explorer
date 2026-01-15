@@ -25,7 +25,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					Analyses: true
 				}
 			},
-			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
@@ -45,7 +44,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) return <>Project not found</>;
-	const { _count: _, Samples: __, Analyses: ___, editHistory: ____, ...justProject } = project;
+	const { _count: _, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
@@ -59,13 +58,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	const taxaCount = {} as Record<string, number>;
 	const taxaCountByAnalysis = {} as Record<string, Record<string, number>>;
 	const taxaCountByAssay = {} as Record<string, Record<string, number>>;
-	
+
 	for (const a of project.Analyses) {
 		taxaCountByAnalysis[a.analysis_run_name] = {};
 		if (!taxaCountByAssay[a.assay_name]) {
 			taxaCountByAssay[a.assay_name] = {};
 		}
-		
+
 		for (const assign of a.Assignments) {
 			if (assign.taxonomy in taxaCount) {
 				taxaCount[assign.taxonomy] += 1;
@@ -78,7 +77,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			} else {
 				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] = 1;
 			}
-			
+
 			if (assign.taxonomy in taxaCountByAssay[a.assay_name]) {
 				taxaCountByAssay[a.assay_name][assign.taxonomy] += 1;
 			} else {
@@ -88,7 +87,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	}
 	const colorsArr = randomColors(Object.keys(taxaCountByAnalysis).length);
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
-	
+
 	// Get top 2 taxonomies per assay
 	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce((acc, [assay, taxa]) => {
 		const sortedAssayTaxa = Object.entries(taxa)
@@ -121,7 +120,10 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.project.description}>
+					<h1
+						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
+						data-tip={TableMetadata.project.description}
+					>
 						{project.project_id}
 					</h1>
 					<EditHistory editHistory={project.editHistory} />
@@ -154,11 +156,12 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<div className="lg:col-span-2 h-full">
 						<Map
 							query={() => prisma.sample.findMany({ where: { project_id } })}
+							where={{ project_id }}
 							cluster
 							legend
 							draw
 							legendOmit={["project_id"]}
-							className="h-full w-full min-h-[320px]"
+							className="h-full w-full min-h-80"
 						/>
 					</div>
 
@@ -235,7 +238,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 								{Object.keys(uniqueAssays).map((assay) => {
 									return (
 										<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
-											<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 												<div className="relative w-12 h-12">
 													<Suspense>
 														<AssayPhyloPic assay_name={assay} />
@@ -327,11 +330,7 @@ function ProjectStatCard({
 	link?: string;
 }) {
 	const content = (
-		<div
-			className={`group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
-				link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
-			}`}
-		>
+		<>
 			<div className="w-16 h-16 mb-2 flex items-center justify-center text-primary">
 				<StatIcon icon={icon} />
 			</div>
@@ -339,13 +338,32 @@ function ProjectStatCard({
 				{value.toLocaleString()}
 			</div>
 			<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
-		</div>
+		</>
 	);
 
 	if (link) {
-		return <Link href={link}>{content}</Link>;
+		return (
+			<Link href={link}>
+				<div
+					className={`tooltip tooltip-secondary before:text-primary-content group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
+						link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
+					}`}
+					data-tip="View as Search"
+				>
+					{content}
+				</div>
+			</Link>
+		);
 	} else {
-		return content;
+		return (
+			<div
+				className={`group flex flex-col bg-base-200 items-center text-center p-2 rounded-lg ${
+					link ? "hover:bg-base-300 transition-all duration-300 hover:scale-105" : ""
+				}`}
+			>
+				{content}
+			</div>
+		);
 	}
 }
 

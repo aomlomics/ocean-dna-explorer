@@ -1,7 +1,7 @@
 "use client";
 
-import { Analysis } from "@/app/generated/prisma/client";
-import { useRef, useState } from "react";
+import { Analysis, Project, Tag } from "@/app/generated/prisma/client";
+import { ReactNode, useRef, useState } from "react";
 import Modal from "../Modal";
 import { NetworkProgressPacket } from "@/types/globals";
 import { upload } from "@vercel/blob/client";
@@ -15,21 +15,28 @@ import analysisUpdateIsPrivateAction from "@/app/actions/analysis/update/analysi
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import AnalysisTag from "../tags/AnalysisTag";
 
 export default function AnalysisEditButton({
+	project_id,
 	analysis_run_name,
 	isPrivate,
 	isPrivateDisabled,
 	analysisMetadataFileUrl_ODE,
 	asvFileUrl_ODE,
-	occurrenceFileUrl_ODE
+	occurrenceFileUrl_ODE,
+	tags,
+	currentTags
 }: {
+	project_id: Project["project_id"];
 	analysis_run_name: Analysis["analysis_run_name"];
 	isPrivate: Analysis["isPrivate"];
 	isPrivateDisabled: boolean;
 	analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
 	asvFileUrl_ODE: NonNullable<Analysis["asvFileUrl_ODE"]>;
 	occurrenceFileUrl_ODE: NonNullable<Analysis["occurrenceFileUrl_ODE"]>;
+	tags: Tag[];
+	currentTags: Tag[];
 }) {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
@@ -49,6 +56,7 @@ export default function AnalysisEditButton({
 
 	//state variables to hold contents of form for disabling submit button
 	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
+	const [selectedTags, setSelectedTags] = useState(currentTags);
 	const [analysisFile, setAnalysisFile] = useState(undefined as File | undefined);
 	const [assignmentsFile, setAssignmentsFile] = useState(undefined as File | undefined);
 	const [occurrencesFile, setOccurrencesFile] = useState(undefined as File | undefined);
@@ -57,6 +65,19 @@ export default function AnalysisEditButton({
 	const [analysisResponse, setAnalysisResponse] = useState(undefined as NetworkProgressPacket);
 	const [assignResponse, setAssignResponse] = useState(undefined as NetworkProgressPacket);
 	const [occResponse, setOccResponse] = useState(undefined as NetworkProgressPacket);
+
+	function tagsUnchanged() {
+		return (
+			currentTags.length === selectedTags.length &&
+			selectedTags.every((st) => currentTags.some((ct) => st.tagName === ct.tagName))
+		);
+	}
+
+	function finishSubmit() {
+		modalXRef.current!.disabled = false;
+		modalClickOffRef.current!.disabled = false;
+		setLoading(false);
+	}
 
 	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -70,20 +91,6 @@ export default function AnalysisEditButton({
 		setAnalysisResponse(undefined);
 		setAssignResponse(undefined);
 		setOccResponse(undefined);
-
-		if (!analysisFile && !assignmentsFile && !occurrencesFile) {
-			if (isPrivateToggle !== isPrivate) {
-				const result = await analysisUpdateIsPrivateAction(analysis_run_name, isPrivateToggle);
-				if (result.statusMessage === "error") {
-					setErrorMessage(result.error);
-				}
-			} else {
-				setErrorMessage("Must provide at least one file.");
-			}
-
-			setLoading(false);
-			return;
-		}
 
 		try {
 			//trusting client with this because they are authenticated and can only edit their own submissions anyways. if they want to break their own submissions' edit histories then so be it
@@ -104,11 +111,25 @@ export default function AnalysisEditButton({
 
 				setAnalysisResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
+				const args = [editId, project_id, analysis_run_name] as (
+					| string
+					| boolean
+					| { url?: string; isPrivate?: boolean; tagNames?: string[] }
+				)[];
+				const argsObj = { url: analysisUrl } as { url?: string; isPrivate?: boolean; tagNames?: string[] };
+				if (isPrivateToggle !== isPrivate) {
+					argsObj.isPrivate = isPrivateToggle;
+				}
+				if (!tagsUnchanged()) {
+					argsObj.tagNames = currentTags.map((t) => t.tagName);
+				}
+				args.push(argsObj);
+
 				//submit analysis file url
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: setAnalysisResponse,
-					args: [analysisUrl, editId, analysis_run_name, isPrivateToggle]
+					args: args
 				});
 
 				//handle errors
@@ -119,7 +140,7 @@ export default function AnalysisEditButton({
 					});
 
 					setErrorMessage(analysisError);
-					setLoading(false);
+					finishSubmit();
 
 					return;
 				}
@@ -128,6 +149,37 @@ export default function AnalysisEditButton({
 				if (analysisResponse?.statusMessage === "success" && analysisRef.current) {
 					analysisRef.current.value = "";
 					setAnalysisFile(undefined);
+				}
+			}
+
+			if (!analysisFile && (!tagsUnchanged() || isPrivateToggle !== isPrivate)) {
+				const args = [editId, project_id, analysis_run_name] as (
+					| string
+					| boolean
+					| { isPrivate?: boolean; tagNames?: string[] }
+				)[];
+				const argsObj = {} as { isPrivate?: boolean; tagNames?: string[] };
+				if (isPrivateToggle !== isPrivate) {
+					argsObj.isPrivate = isPrivateToggle;
+				}
+				if (!tagsUnchanged()) {
+					argsObj.tagNames = selectedTags.map((t) => t.tagName);
+				}
+				args.push(argsObj);
+
+				//submit analysis file url
+				const analysisError = await doProgressAction({
+					action: analysisEditAction,
+					setter: undefined,
+					args: args
+				});
+
+				//handle errors
+				if (analysisError) {
+					setErrorMessage(analysisError);
+					finishSubmit();
+
+					return;
 				}
 			}
 
@@ -161,7 +213,7 @@ export default function AnalysisEditButton({
 					});
 
 					setErrorMessage(assignmentsError);
-					setLoading(false);
+					finishSubmit();
 
 					return;
 				}
@@ -209,7 +261,7 @@ export default function AnalysisEditButton({
 					});
 
 					setErrorMessage(occurrencesError);
-					setLoading(false);
+					finishSubmit();
 
 					return;
 				}
@@ -219,18 +271,16 @@ export default function AnalysisEditButton({
 					occurrencesRef.current.value = "";
 					setOccurrencesFile(undefined);
 				}
-
-				//reset page
-				modalXRef.current!.disabled = false;
-				modalClickOffRef.current!.disabled = false;
-				setLoading(false);
-				router.refresh();
 			}
+
+			//reset page
+			finishSubmit();
+			router.refresh();
 		} catch (err) {
 			const error = err as Error;
 
 			setErrorMessage(error.message);
-			setLoading(false);
+			finishSubmit();
 
 			return;
 		}
@@ -259,6 +309,52 @@ export default function AnalysisEditButton({
 							onChange={(e) => setIsPrivateToggle(e.currentTarget.checked)}
 						/>
 					</fieldset>
+
+					<div className="flex gap-5 flex-wrap items-center">
+						{selectedTags.map((t) => (
+							<div key={t.tagName} className="flex gap-1 items-center">
+								<AnalysisTag tag={t} />
+								<button
+									className="btn btn-error btn-xs"
+									onClick={() => setSelectedTags(selectedTags.filter((st) => st.tagName !== t.tagName))}
+									disabled={!!loading}
+								>
+									-
+								</button>
+							</div>
+						))}
+						{tags.length !== selectedTags.length ? (
+							<div className="dropdown">
+								<button className="btn btn-sm" tabIndex={0} role="button" disabled={!!loading}>
+									+
+								</button>
+								<ul tabIndex={-1} className="dropdown-content menu bg-base-200 rounded-box shadow-sm p-2 flex-nowrap">
+									<div className="max-h-75 overflow-y-scroll overscroll-contain flex flex-col gap-2">
+										{tags.reduce((acc, t) => {
+											if (!selectedTags.find((st) => st.tagName === t.tagName)) {
+												acc.push(
+													<li key={t.tagName} className="w-full">
+														<a
+															className="flex justify-center"
+															onClick={() => {
+																setSelectedTags([...selectedTags, t]);
+																(document.activeElement as HTMLDivElement).blur();
+															}}
+														>
+															<AnalysisTag tag={t} hideDescription />
+														</a>
+													</li>
+												);
+											}
+											return acc;
+										}, [] as ReactNode[])}
+									</div>
+								</ul>
+							</div>
+						) : (
+							<></>
+						)}
+					</div>
 
 					<div className="grid grid-cols-2 gap-4 w-full">
 						<fieldset className="fieldset z-10">
@@ -319,7 +415,12 @@ export default function AnalysisEditButton({
 							type="submit"
 							className="btn"
 							disabled={
-								loading || (!analysisFile && !assignmentsFile && !occurrencesFile && isPrivateToggle === isPrivate)
+								loading ||
+								(!analysisFile &&
+									!assignmentsFile &&
+									!occurrencesFile &&
+									isPrivateToggle === isPrivate &&
+									tagsUnchanged())
 							}
 						>
 							Submit

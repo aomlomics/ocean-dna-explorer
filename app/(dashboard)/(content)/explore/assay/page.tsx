@@ -2,10 +2,11 @@ import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { DeadBooleanEnum } from "@/types/enums";
+import { DeadBooleanToEnum } from "@/types/enums";
 import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
+import TableMetadata from "@/types/tableMetadata";
 
 export default async function Assay() {
 	const assays = await prisma.assay.findMany({
@@ -19,7 +20,7 @@ export default async function Assay() {
 	});
 
 	const filterOptions = getOptions(assays);
-	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
+	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanToEnum;
 
 	const tableConfig: FilterConfig[] = [
 		{
@@ -64,10 +65,7 @@ export default async function Assay() {
 		<ExplorePage table="assay" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						The molecular targets, primer sequences, primer references, and expected amplicon size for a specific
-						molecular analysis.
-					</p>
+					<p>{TableMetadata.assay.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">

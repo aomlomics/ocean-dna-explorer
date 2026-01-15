@@ -1,4 +1,4 @@
-import { DeadBooleanEnum, DeadValueEnum } from "@/types/enums";
+import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
@@ -42,9 +42,9 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 	} else if (field instanceof ZodLazy) {
 		shape.type = "json";
 	} else if (field instanceof ZodEnum) {
-		if (Object.keys(field.def.entries).every((v: string) => Object.values(DeadBooleanEnum).includes(v))) {
+		if (Object.keys(field.def.entries).every((v: string) => Object.values(DeadBooleanToEnum).includes(v))) {
 			shape.type = "DeadBoolean";
-			shape.values = Object.keys(DeadBooleanEnum);
+			shape.values = Object.keys(DeadBooleanToEnum);
 		}
 	}
 
@@ -156,9 +156,9 @@ export function parseSchemaToObject(
 				obj[field] = dateVal;
 			}
 		} else if (type === "DeadBoolean") {
-			if (value.toLowerCase() in DeadBooleanEnum) {
+			if (value.toLowerCase() in DeadBooleanToEnum) {
 				//replace field with DeadBoolean value
-				obj[field] = DeadBooleanEnum[value.toLowerCase() as keyof typeof DeadBooleanEnum];
+				obj[field] = DeadBooleanToEnum[value.toLowerCase() as keyof typeof DeadBooleanToEnum];
 			} else {
 				obj[field] = value;
 			}

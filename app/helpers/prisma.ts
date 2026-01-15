@@ -7,7 +7,7 @@ import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime
 import { deepMerge } from "./utils";
 import TableMetadata from "@/types/tableMetadata";
 import { getZodType, parseSchemaToObject } from "./schema";
-import { DeadBooleanEnum } from "@/types/enums";
+import { DeadBooleanToEnum } from "@/types/enums";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { parse } from "csv-parse";
 
@@ -593,7 +593,7 @@ async function updateManyRawChunked(
 		})
 		.join(", ");
 
-	const deadBooleanOptions = Object.keys(DeadBooleanEnum);
+	const deadBooleanOptions = Object.keys(DeadBooleanToEnum);
 	//parameterized counts
 	const valuesSqlArr = [] as string[];
 	//parameterized values
@@ -617,7 +617,7 @@ async function updateManyRawChunked(
 				flatData.push(null);
 			} else {
 				const foundOption = deadBooleanOptions.find(
-					(db) => DeadBooleanEnum[db as keyof typeof DeadBooleanEnum] === d[f]
+					(db) => DeadBooleanToEnum[db as keyof typeof DeadBooleanToEnum] === d[f]
 				);
 				if (deadBooleanFields.includes(f) && foundOption) {
 					if (foundOption === "0") {

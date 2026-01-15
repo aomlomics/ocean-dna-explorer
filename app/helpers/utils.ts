@@ -1,7 +1,8 @@
 import { RanksBySpecificity } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
-import { Location, LocationWithValues, MapShape, Point } from "@/types/globals";
+import { Circle, Location, LocationWithValues, MapShape, Point, Polygon } from "@/types/globals";
+import TableMetadata from "@/types/tableMetadata";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -249,6 +250,10 @@ export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
 	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
 }
 
+export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
+	return Object.entries(TableMetadata).find(([_, meta]) => meta.plural === table)![0] as Uncapitalize<Prisma.ModelName>;
+}
+
 export function getSubmissionFileName(value: string) {
 	const url = new URL(value);
 	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
@@ -363,4 +368,129 @@ export function getLocationsInsideShapes(locs: (Location | LocationWithValues)[]
 	}
 
 	return locsInside;
+}
+
+function stringToPolygon(poly: string): Polygon {
+	//format: <lat>/<lng>,<lat>/<lng>,...
+	const points = poly.split(",").map((p) => {
+		const split = p.split("/");
+		if (split.length !== 2) {
+			throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
+		}
+		const pnt = {
+			lat: parseFloat(split[0]),
+			lng: parseFloat(split[1])
+		};
+		if (isNaN(pnt.lat) || Math.abs(pnt.lat) > 90) {
+			throw new Error(`Invalid format for Lat: "${pnt.lat}". Lat must be a number between -90 and 90.`);
+		}
+		if (isNaN(pnt.lng) || Math.abs(pnt.lat) > 180) {
+			throw new Error(`Invalid format for Lng: "${pnt.lng}". Lng must be a number between -180 and 180.`);
+		}
+
+		return pnt;
+	});
+
+	const bounds = { sw: { lat: -90, lng: -180 }, ne: { lat: 90, lng: 180 } };
+	for (const p of points) {
+		bounds.sw.lat = Math.min(p.lat, bounds.sw.lat);
+		bounds.sw.lng = Math.min(p.lng, bounds.sw.lng);
+		bounds.ne.lat = Math.max(p.lat, bounds.ne.lat);
+		bounds.ne.lng = Math.max(p.lng, bounds.ne.lng);
+	}
+
+	return {
+		type: "polygon",
+		bounds,
+		points
+	};
+}
+
+function stringToCircle(circle: string): Circle {
+	//format: <lat>/<lng>,<radius>
+	const split = circle.split(",");
+	if (split.length !== 2) {
+		throw new Error(
+			`Invalid circle format: "${circle}". Circle must have a center followed by a radius, separated by a comma.`
+		);
+	}
+
+	const centerSplit = split[0].split("/");
+	if (split.length !== 2) {
+		throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
+	}
+	const center = {
+		lat: parseFloat(centerSplit[0]),
+		lng: parseFloat(centerSplit[1])
+	};
+	if (isNaN(center.lat) || Math.abs(center.lat) > 90) {
+		throw new Error(`Invalid format for Lat: "${center.lat}". Lat must be a number between -90 and 90.`);
+	}
+	if (isNaN(center.lng) || Math.abs(center.lat) > 180) {
+		throw new Error(`Invalid format for Lng: "${center.lng}". Lng must be a number between -180 and 180.`);
+	}
+
+	const radius = parseFloat(split[1]);
+	if (isNaN(radius)) {
+		throw new Error(`Invalid format for radius: "${split[1]}". Radius must be a number.`);
+	}
+
+	return {
+		type: "circle",
+		radius,
+		center
+	};
+}
+
+export function getShapesFromUrl(searchParams: URLSearchParams) {
+	const polygons = searchParams.getAll("polygon");
+	const circles = searchParams.getAll("circle");
+	// Only process shapes if at least one polygon or circle was provided
+	if (polygons.length || circles.length) {
+		const shapes = [] as Array<MapShape>;
+
+		for (const poly of polygons) {
+			shapes.push(stringToPolygon(poly));
+		}
+		for (const cir of circles) {
+			shapes.push(stringToCircle(cir));
+		}
+
+		return shapes;
+	}
+}
+
+const rounding = 10000;
+export function polygonToString(poly: Polygon) {
+	return poly.points
+		.map((p) => Math.floor(p.lat * rounding) / rounding + "/" + Math.floor(p.lng * rounding) / rounding)
+		.join(",");
+}
+
+export function circleToString(circle: Circle) {
+	return (
+		Math.floor(circle.center.lat * rounding) / rounding +
+		"/" +
+		Math.floor(circle.center.lng * rounding) / rounding +
+		"," +
+		Math.floor(circle.radius * rounding) / rounding
+	);
+}
+
+export function getTextColorHex(hex: string) {
+	if (hex.indexOf("#") === 0) {
+		hex = hex.slice(1);
+	}
+	// convert 3-digit hex to 6-digits.
+	if (hex.length === 3) {
+		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+	}
+	if (hex.length !== 6) {
+		throw new Error("Invalid HEX color.");
+	}
+	var r = parseInt(hex.slice(0, 2), 16),
+		g = parseInt(hex.slice(2, 4), 16),
+		b = parseInt(hex.slice(4, 6), 16);
+
+	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
 }

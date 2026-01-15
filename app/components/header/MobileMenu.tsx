@@ -65,7 +65,7 @@ export default function MobileMenu() {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-51 w-60 p-3 shadow-lg">
+				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-50 w-60 p-3 shadow-lg">
 					<li className="text-base py-1">
 						<Link href="/" onClick={handleClose}>
 							Home
@@ -107,11 +107,11 @@ export default function MobileMenu() {
 							</ul>
 						</details>
 					</li>
-					<li className="text-base py-1">
+					{/* <li className="text-base py-1">
 						<Link href="/contribute" onClick={handleClose}>
 							Contribute
 						</Link>
-					</li>
+					</li> */}
 					<li className="text-base py-1">
 						<Link href="/api" onClick={handleClose}>
 							API
@@ -122,6 +122,7 @@ export default function MobileMenu() {
 							Help
 						</Link>
 					</li>
+					{/* TEMPORARY: hide the About page until its finished */}
 					{/* <li className="text-base py-1">
 						<Link href="/about" onClick={handleClose}>
 							About
@@ -135,7 +136,7 @@ export default function MobileMenu() {
 				isOpen &&
 				createPortal(
 					<div
-						className="fixed inset-x-0 bottom-0 top-20 lg:top-24 bg-black/10 backdrop-blur-[2px] z-30"
+						className="fixed inset-x-0 bottom-0 top-20 lg:top-24 bg-black/10 backdrop-blur-[2px] z-40"
 						onClick={handleClose}
 					></div>,
 					document.body

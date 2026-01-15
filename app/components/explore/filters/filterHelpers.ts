@@ -99,7 +99,7 @@ export function handleFilterChange(
 		}
 	}
 
-	router.push(`?${params.toString()}`);
+	router.push(`?${params.toString()}`, { scroll: false });
 }
 
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {

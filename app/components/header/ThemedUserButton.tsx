@@ -24,20 +24,34 @@ export function ThemedUserButton() {
 			appearance={{
 				baseTheme: isDark ? dark : undefined,
 				elements: {
+					// Keep the user menu popover above any header/tab dropdown stacking contexts
+					userButtonPopover: {
+						zIndex: 1000000
+					},
+					userButtonPopoverMain: {
+						zIndex: 1000000
+					},
+					userButtonPopoverActions: {
+						zIndex: 1000000
+					},
 					userButtonPopoverCard: {
-						backgroundColor: isDark ? "#141824" : "#F4F3F2",
-						color: isDark ? "#E2E8F0" : "#2D3748"
+						backgroundColor: "var(--color-base-100)",
+						color: "var(--color-base-content)",
+						position: "relative",
+						zIndex: 1000000
 					},
 					userButtonPopoverFooter: {
-						backgroundColor: isDark ? "#141824" : "#F4F3F2",
-						borderTop: `1px solid ${isDark ? "#232942" : "#E3E3E9"}`
+						backgroundColor: "var(--color-base-100)",
+						borderTop: "1px solid var(--color-base-300)",
+						position: "relative",
+						zIndex: 1000000
 					},
 					userButtonOuterIdentifier: {
-						color: isDark ? "#7DBAE5" : "#233D7F"
+						color: "var(--color-primary)"
 					},
 					userButtonTrigger: {
-						backgroundColor: isDark ? "#141824" : "#F4F3F2",
-						color: isDark ? "#E2E8F0" : "#2D3748"
+						backgroundColor: "var(--color-base-100)",
+						color: "var(--color-base-content)"
 					}
 					// userButtonPopoverCustomItemButton: {
 					//   backgroundColor: isDark ? "#7DBAE5" : "#233D7F",

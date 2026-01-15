@@ -1,12 +1,3 @@
-import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
-import projectEditAction from "@/app/actions/project/update/projectEdit";
-import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
-import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
-import analysisDeleteAction from "@/app/actions/analysis/delete/analysisDelete";
-import assignSubmitAction from "@/app/actions/analysis/create/assignSubmit";
-import assignDeleteAction from "@/app/actions/analysis/delete/assignDelete";
-import occSubmitAction from "@/app/actions/analysis/create/occSubmit";
-
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
 
@@ -60,17 +51,21 @@ export type ClerkUserObject = {
 
 type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
 type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
-export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn";
+export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull" | "deadValue";
+
 type StringParamsArrayField = [string, StringQueryMode, string];
 type NumberParamsArrayField = [string, NumberQueryMode, number];
 type RangeParamsArrayField = [string, "range", [number, number] | [string, string]];
 type InParamsArrayField = [string, "in" | "notIn", number[] | string[]];
+type DeadParamsArrayField = [string, "deadValue"];
+
 export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[];
 export type ParamsArrayField =
 	| StringParamsArrayField
 	| NumberParamsArrayField
 	| RangeParamsArrayField
-	| InParamsArrayField;
+	| InParamsArrayField
+	| DeadParamsArrayField;
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
 
 // Logical group support for advanced queries.
@@ -83,7 +78,7 @@ export type ParamsArray = Array<ParamsArrayElement>;
 export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
 
 export type Point = { lat: number; lng: number };
-type Polygon = {
+export type Polygon = {
 	type: "polygon";
 	bounds: {
 		ne: Point;
@@ -91,7 +86,7 @@ type Polygon = {
 	};
 	points: Point[];
 };
-type Circle = {
+export type Circle = {
 	type: "circle";
 	center: Point;
 	radius: number;
@@ -116,6 +111,8 @@ export type LocationWithValues = {
 	values?: Location[];
 	[key: string]: any;
 };
+
+type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R> ? R : any;
 
 declare global {
 	namespace PrismaJson {

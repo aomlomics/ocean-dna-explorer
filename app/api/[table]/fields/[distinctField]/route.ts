@@ -3,6 +3,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
+import { TableNames } from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -11,9 +12,7 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table, distinctField } = await params;
 
-	const model = Object.keys(Prisma.ModelName).find(
-		(model) => model.toLowerCase() === table.toLowerCase()
-	) as Prisma.ModelName;
+	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
 	if (model) {
 		const uncapsTable = uncapitalizeTable(model);
 

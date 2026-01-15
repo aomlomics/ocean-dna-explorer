@@ -1,9 +1,11 @@
 import { prisma } from "@/app/helpers/prisma";
-import { parseNestedJson, uncapitalizeTable } from "@/app/helpers/utils";
+import { getLocationsInsideShapes, getShapesFromUrl, parseNestedJson, uncapitalizeTable } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import { Location } from "@/types/globals";
 
 export async function GET(
 	request: Request,
@@ -11,9 +13,7 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
-	const model = Object.keys(Prisma.ModelName).find(
-		(model) => model.toLowerCase() === table.toLowerCase()
-	) as Prisma.ModelName;
+	const model = DataTableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
 	if (model) {
 		const uncapsTable = uncapitalizeTable(model);
 
@@ -25,17 +25,30 @@ export async function GET(
 					id: "asc"
 				}
 			} as {
-				orderBy: { id: Prisma.SortOrder };
+				orderBy: { [field: string]: Prisma.SortOrder };
 				where?: Record<string, any>;
 				take?: number;
 				skip?: number;
-				// cursor?: { id: number };
-				include?: { _count: { select: Record<string, boolean> } };
+				include?: {
+					_count?: { select: Record<string, boolean> };
+					[key: string]: any;
+				};
 			};
 
-			const orderBy = searchParams.get("orderBy");
-			if (orderBy) {
-				query.orderBy = JSON.parse(orderBy);
+			const orderByStr = searchParams.get("orderBy");
+			if (orderByStr) {
+				const split = orderByStr?.split(",");
+				if (
+					split.length !== 2 ||
+					!TableMetadata[uncapsTable].enumSchema.options.includes(split[0]) ||
+					(split[1] !== "asc" && split[1] !== "desc")
+				) {
+					throw new Error("The orderBy must be a field and order separated by a comma.");
+				}
+
+				query.orderBy = {
+					[split[0]]: split[1]
+				};
 			}
 
 			const whereStr = searchParams.get("where");
@@ -64,18 +77,6 @@ export async function GET(
 				}
 			}
 
-			const take = searchParams.get("take");
-			if (!take) {
-				throw new Error("take is required");
-			}
-			query.take = parseInt(take);
-
-			const page = searchParams.get("page");
-			if (page) {
-				//offset pagination
-				query.skip = (parseInt(page) - 1) * query.take;
-			}
-
 			const relCounts = searchParams.get("relCounts");
 			if (relCounts) {
 				query.include = {
@@ -87,12 +88,73 @@ export async function GET(
 				};
 			}
 
-			const [result, count] = await prisma.$transaction([
+			const relations = searchParams.get("relations");
+			if (relations) {
+				if (!query.include) {
+					query.include = {};
+				}
+
+				const relationsAllFields = searchParams.get("relationsAllFields");
+				const relationsArr = relations.split(",");
+				if (relationsAllFields) {
+					for (const rel of relationsArr) {
+						query.include[rel] = true;
+					}
+				} else {
+					for (const rel of relationsArr) {
+						query.include[rel] = { select: { id: true } };
+					}
+				}
+			}
+
+			let take = searchParams.get("take");
+			if (!take) {
+				throw new Error("Take is required");
+			}
+			const parsedTake = parseInt(take);
+			if (isNaN(parsedTake) || parsedTake < 1) {
+				throw new Error(`Take must be a positive integer, but is "${take}".`);
+			}
+
+			const page = searchParams.get("page");
+			let parsedPage;
+			if (page) {
+				parsedPage = parseInt(page);
+				if (isNaN(parsedPage) || parsedPage < 1) {
+					throw new Error(`Page must be a positive integer, but is "${page}".`);
+				}
+			}
+
+			const polygons = searchParams.getAll("polygon");
+			const circles = searchParams.getAll("circle");
+			let shapes;
+			// Only process shapes if at least one polygon or circle was provided
+			if (polygons.length || circles.length) {
+				//skip database pagination
+				shapes = getShapesFromUrl(searchParams);
+			} else {
+				query.take = parsedTake;
+
+				if (parsedPage) {
+					//offset pagination
+					query.skip = (parsedPage - 1) * query.take;
+				}
+			}
+
+			let [result, count] = (await prisma.$transaction([
 				//@ts-ignore
 				prisma[uncapsTable].findMany(query),
 				//@ts-ignore
 				prisma[uncapsTable].count({ where: query.where })
-			]);
+			])) as [Record<string, any>[], number];
+
+			if (shapes) {
+				result = getLocationsInsideShapes(result as Location[], shapes);
+				count = result.length;
+				//manually paginate
+				const start = parsedPage ? (parsedPage - 1) * parsedTake : 0;
+				result = result.slice(start, start + parsedTake);
+			}
 
 			return NextResponse.json({ statusMessage: "success", result, count });
 		} catch (err) {

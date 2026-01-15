@@ -2,7 +2,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
 import { stripSecureFields } from "@/app/helpers/prisma";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { getZodType } from "@/app/helpers/schema";
 
 export async function GET(
@@ -11,9 +11,7 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
-	const model = Object.keys(Prisma.ModelName).find(
-		(model) => model.toLowerCase() === table.toLowerCase()
-	) as Prisma.ModelName;
+	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
 	if (model) {
 		const result = {} as Record<string, ReturnType<typeof getZodType>>;
 		const shape = TableMetadata[model].schema.shape;

@@ -1,13 +1,14 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
-import { DeadBooleanEnum } from "@/types/enums";
+import { DeadBooleanToEnum } from "@/types/enums";
 import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import Table from "@/app/components/paginated/Table";
 import Pagination from "@/app/components/paginated/Pagination";
 import TableFilter from "@/app/components/explore/filters/TableFilter";
+import TableMetadata from "@/types/tableMetadata";
 
 export default async function Sample() {
 	const samples = await prisma.sample.findMany({
@@ -23,7 +24,7 @@ export default async function Sample() {
 	if (!samples) return <>Loading...</>;
 
 	const filterOptions = getOptions(samples);
-	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanEnum;
+	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanToEnum;
 
 	const tableConfig: FilterConfig[] = [
 		{
@@ -68,7 +69,7 @@ export default async function Sample() {
 		<ExplorePage table="sample" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>eDNA samples with metadata on collection, environmental conditions, storage, and processing methods.</p>
+					<p>{TableMetadata.sample.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">
