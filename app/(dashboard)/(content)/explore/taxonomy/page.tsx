@@ -3,6 +3,7 @@ import Link from "next/link";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import { TaxonomicRanks } from "@/types/objects";
+import TableMetadata from "@/types/tableMetadata";
 
 export default async function Taxonomy() {
 	const tableConfig: FilterConfig[] = [
@@ -16,9 +17,9 @@ export default async function Taxonomy() {
 		<ExplorePage table="taxonomy" tableConfig={tableConfig} displayMode="grid">
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						Hierarchical classification of detected organisms from domain to species level. For more detailed
-						information, visit our{" "}
+					<p>{TableMetadata.taxonomy.description}</p>
+					<p className="text-sm">
+						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">
 							Help page
 						</Link>

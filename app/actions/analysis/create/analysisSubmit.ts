@@ -1,5 +1,6 @@
 "use server";
 
+import { Analysis, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
@@ -10,7 +11,8 @@ async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
-	isPrivate: boolean
+	isPrivate: Analysis["isPrivate"],
+	tagNames: Tag["tagName"][]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -69,9 +71,31 @@ async function doSubmit(
 					);
 				}
 
+				//check if all tagNames are valid
+				const dbTags = await tx.tag.findMany({
+					where: {
+						tagName: {
+							in: tagNames
+						}
+					},
+					select: {
+						tagName: true
+					}
+				});
+				if (
+					!(dbTags.length === tagNames.length && tagNames.every((name) => dbTags.some((tag) => name === tag.tagName)))
+				) {
+					throw new Error("Some provided tag names are not in database.");
+				}
+
 				await tx.analysis.create({
 					//@ts-ignore issue with Json database type
-					data: analysis
+					data: {
+						...analysis,
+						Tags: {
+							connect: dbTags
+						}
+					}
 				});
 
 				await analysisChannel.stream.success("Analysis sucessfully uploaded to database.");
@@ -127,10 +151,11 @@ async function doSubmit(
 }
 
 export default async function analysisSubmitAction(
-	analysisFileUrl: string,
-	assignmentsFileUrl: string,
-	occurrencesFileUrl: string,
-	isPrivate: boolean
+	analysisFileUrl: Analysis["analysisMetadataFileUrl_ODE"],
+	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
+	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
+	isPrivate: Analysis["isPrivate"],
+	tagNames: Tag["tagName"][]
 ) {
 	const analysisStream = createProgressStream();
 	const assignmentsStream = createProgressStream();
@@ -156,7 +181,8 @@ export default async function analysisSubmitAction(
 		{ url: analysisFileUrl, stream: analysisStream },
 		{ url: assignmentsFileUrl, stream: assignmentsStream },
 		{ url: occurrencesFileUrl, stream: occurrencesStream },
-		isPrivate
+		isPrivate,
+		tagNames
 	).then(() => {
 		analysisStream.close();
 		assignmentsStream.close();

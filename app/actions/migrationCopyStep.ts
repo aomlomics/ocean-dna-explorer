@@ -1,6 +1,6 @@
 "use server";
 
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "../generated/prisma/client";
 import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
@@ -25,7 +25,7 @@ export default async function migrationCopyStepAction() {
 			throw new Error("Invalid role.");
 		}
 
-		const oldFieldsByTable = Object.keys(Prisma.ModelName).reduce((acc, t) => {
+		const oldFieldsByTable = TableNames.reduce((acc, t) => {
 			const table = uncapitalizeTable(t as Prisma.ModelName);
 			const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
 			if (tempFields.length) {

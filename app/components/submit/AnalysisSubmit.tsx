@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useReducer, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -12,6 +12,8 @@ import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
+import { Tag } from "@/app/generated/prisma/client";
+import AnalysisTag from "../tags/AnalysisTag";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;
@@ -19,11 +21,10 @@ type ResponseSet = {
 	occurrences: NetworkProgressPacket;
 };
 
-export default function AnalysisSubmit() {
+export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	const router = useRouter();
-	const [loading, setLoading] = useState(false);
 
-	//state variable that will have any error passed to it
+	const [loading, setLoading] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
 
 	//refs for popup modal
@@ -38,6 +39,9 @@ export default function AnalysisSubmit() {
 	//detecting what project the analyses are associated with, and whether the project is private
 	const [project, setProject] = useState<Project | null>(null);
 	const [isPrivate, setIsPrivate] = useState(false);
+
+	//list of tags to be added to submitted analyses
+	const [selectedTags, setSelectedTags] = useState([] as Tag[]);
 
 	//file urls to delete if an error occurs
 	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
@@ -364,7 +368,8 @@ export default function AnalysisSubmit() {
 					analysisUrl,
 					assignmentsUrl,
 					occurrencesUrl,
-					isPrivate
+					isPrivate,
+					selectedTags.map((t) => t.tagName)
 				);
 			}
 		} catch (err) {
@@ -405,6 +410,53 @@ export default function AnalysisSubmit() {
 								<p>Private submission</p>
 							</label>
 						</fieldset>
+					</SubmitFormSection>
+					<SubmitFormSection title="Add tags to analyses">
+						<div className="flex gap-5 flex-wrap items-center">
+							{selectedTags.map((t) => (
+								<div key={t.tagName} className="flex gap-1 items-center">
+									<AnalysisTag tag={t} />
+									<button
+										className="btn btn-error btn-xs"
+										onClick={() => setSelectedTags(selectedTags.filter((st) => st.tagName !== t.tagName))}
+										disabled={!!loading}
+									>
+										-
+									</button>
+								</div>
+							))}
+							{tags.length !== selectedTags.length ? (
+								<div className="dropdown">
+									<button className="btn btn-sm" tabIndex={0} role="button" disabled={!!loading}>
+										+
+									</button>
+									<ul tabIndex={-1} className="dropdown-content menu bg-base-200 rounded-box shadow-sm p-2 flex-nowrap">
+										<div className="max-h-75 overflow-y-scroll overscroll-contain flex flex-col gap-2">
+											{tags.reduce((acc, t) => {
+												if (!selectedTags.find((st) => st.tagName === t.tagName)) {
+													acc.push(
+														<li key={t.tagName} className="w-full">
+															<a
+																className="flex justify-center"
+																onClick={() => {
+																	setSelectedTags([...selectedTags, t]);
+																	(document.activeElement as HTMLDivElement).blur();
+																}}
+															>
+																<AnalysisTag tag={t} hideDescription />
+															</a>
+														</li>
+													);
+												}
+												return acc;
+											}, [] as ReactNode[])}
+										</div>
+									</ul>
+								</div>
+							) : (
+								<></>
+							)}
+						</div>
 					</SubmitFormSection>
 				</div>
 

@@ -1,15 +1,8 @@
-import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
+import TableMetadata, { RelationMetadata, TableNames } from "@/types/tableMetadata";
 import { getZodType } from "./schema";
-import {
-	MapShape,
-	ParamsArray,
-	ParamsArrayField,
-	ParamsArrayRelation,
-	ParamsArrayValue,
-	QueryMode
-} from "@/types/globals";
+import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { getShapesFromUrl, uncapitalizeTable } from "./utils";
+import { capitalizeTable, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 
@@ -18,46 +11,91 @@ function searchRelations(
 	target: Uncapitalize<Prisma.ModelName>,
 	paths: RelationMetadata[][],
 	visited: Prisma.ModelName[],
-	currPath = [] as RelationMetadata[]
+	currPath = [] as RelationMetadata[],
+	deadEnds = new Set() as Set<Prisma.ModelName>
 ) {
-	for (const rel of relations) {
-		const uncapsRel = uncapitalizeTable(rel.table);
-		const newPath = [...currPath, rel];
+	//check if target is in relations
+	const targetRel = relations.find((rel) => uncapitalizeTable(rel.table) === target);
+	if (targetRel) {
+		//target found
+		paths.push([...currPath, targetRel]);
+		return true;
+	}
 
-		if (uncapsRel === target) {
-			//target found
-			//check if newPath is a shorter version of an existing path
-			const longerPathIndex = paths.findIndex((p) =>
-				newPath.every((newStep) => p.some((step) => step.table === newStep.table))
-			);
-			if (longerPathIndex === -1) {
-				//check if a shorter version of newPath already exists
-				if (!paths.some((p) => p.every((step) => newPath.some((newStep) => newStep.table === step.table)))) {
-					paths.push(newPath);
-				}
-			} else {
-				paths.splice(longerPathIndex, 1, newPath);
-			}
-		} else {
-			//target not found
+	//flag to detect if path leads to target
+	let found = false;
+
+	//check if current path is already invalidated
+	if (currPath.every((rel) => !deadEnds.has(rel.table))) {
+		for (const rel of relations) {
 			//can't pass through project
-			if (uncapsRel !== "project") {
-				if (!visited.includes(rel.table)) {
-					//can only go to project from analysis
-					if (uncapsRel === "analysis") {
-						const projectMetadata = TableMetadata[uncapsRel].relations.find((step) => step.table === "Project");
-						if (projectMetadata) {
-							//recurse
-							searchRelations([projectMetadata], target, paths, [...visited, rel.table], newPath);
+			if (rel.table !== "Project") {
+				//don't check relation if we've already been there in this path or it is a known dead end
+				const newRelations = TableMetadata[rel.table].relations.filter(
+					(r) => !visited.includes(r.table) && !deadEnds.has(r.table)
+				);
+
+				if (newRelations.length) {
+					//can only go to project from analysis, unless coming from project
+					if (rel.table === "Analysis") {
+						if (visited.includes("Project")) {
+							//recurse, ignoring project relation
+							const res = searchRelations(
+								newRelations.filter((r) => r.table !== "Project"),
+								target,
+								paths,
+								[...visited, rel.table],
+								[...currPath, rel],
+								deadEnds
+							);
+							if (res) {
+								found = true;
+							}
+						} else {
+							const projectMetadata = newRelations.find((r) => r.table === "Project");
+							if (projectMetadata) {
+								//recurse
+								const res = searchRelations(
+									[projectMetadata],
+									target,
+									paths,
+									[...visited, rel.table],
+									[...currPath, rel],
+									deadEnds
+								);
+								if (res) {
+									found = true;
+								}
+							}
 						}
 					} else {
 						//recurse
-						searchRelations(TableMetadata[uncapsRel].relations, target, paths, [...visited, rel.table], newPath);
+						const res = searchRelations(
+							newRelations,
+							target,
+							paths,
+							[...visited, rel.table],
+							[...currPath, rel],
+							deadEnds
+						);
+						if (res) {
+							found = true;
+						}
 					}
+				} else {
+					//no new relations
+					deadEnds.add(rel.table);
 				}
 			}
 		}
+
+		if (!found) {
+			//end of recursion for this path, target not found
+			deadEnds.add(currPath[currPath.length - 1].table);
+		}
 	}
+
+	return found;
 }
 
 function deepWhere(
@@ -67,33 +105,25 @@ function deepWhere(
 ) {
 	//find all paths to target from start
 	const paths = [] as RelationMetadata[][];
-	const visited = [(start.slice(0, 1).toUpperCase() + start.slice(1)) as Prisma.ModelName];
+	const visited = [capitalizeTable(start)];
 	searchRelations(TableMetadata[start].relations, target, paths, visited);
 
 	if (paths.length) {
-		//get shortest path
-		let bestPath = paths[0];
-		if (paths.length > 1) {
-			for (let i = 1; i < paths.length; i++) {
-				if (paths[i].length < bestPath.length) {
-					bestPath = paths[i];
-				}
-			}
-		}
+		const shortestPath = paths.sort((a, b) => a.length - b.length)[0];
 
 		//assemble query
 		let where = { ...query };
-		for (const step of bestPath.toReversed()) {
-			if (step.type.endsWith("many")) {
+		for (const rel of shortestPath.toReversed()) {
+			if (rel.type.endsWith("many")) {
 				//if relation is a -to-many, add a some to the query
-				where = { [step.field]: { some: where } };
+				where = { [rel.field]: { some: where } };
 			} else {
-				where = { [step.field]: where };
+				where = { [rel.field]: where };
 			}
 		}
 		return where;
 	} else {
-		throw new Error(`No path found from table ${start} to table ${target}.`);
+		throw new Error(`No path found from table "${start}" to table "${target}".`);
 	}
 }
 
@@ -153,7 +183,7 @@ export function parseToQuery(
 		}
 	}
 
-	const model = Object.keys(Prisma.ModelName).find(
+	const model = TableNames.find(
 		(model) => model.toLowerCase() === (relation || table).toLowerCase()
 	) as Prisma.ModelName;
 	if (!model) {
@@ -375,9 +405,7 @@ export function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			const relModel = Object.keys(Prisma.ModelName).find(
-				(model) => model.toLowerCase() === relation.toLowerCase()
-			) as Prisma.ModelName;
+			const relModel = TableNames.find((model) => model.toLowerCase() === relation.toLowerCase()) as Prisma.ModelName;
 			if (!relModel) {
 				throw new Error(`Provided table "${relation}" is not a valid model name.`);
 			}

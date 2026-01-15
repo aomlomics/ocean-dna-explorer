@@ -1,4 +1,4 @@
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
@@ -9,9 +9,7 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
-	const model = Object.keys(Prisma.ModelName).find(
-		(model) => model.toLowerCase() === table.toLowerCase()
-	) as Prisma.ModelName;
+	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
 	if (model) {
 		return NextResponse.json({
 			statusMessage: "success",

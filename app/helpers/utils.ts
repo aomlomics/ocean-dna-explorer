@@ -2,7 +2,7 @@ import { RanksBySpecificity } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
 import { Circle, Location, LocationWithValues, MapShape, Point, Polygon } from "@/types/globals";
-import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
+import TableMetadata from "@/types/tableMetadata";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -250,6 +250,10 @@ export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
 	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
 }
 
+export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
+	return Object.entries(TableMetadata).find(([_, meta]) => meta.plural === table)![0] as Uncapitalize<Prisma.ModelName>;
+}
+
 export function getSubmissionFileName(value: string) {
 	const url = new URL(value);
 	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
@@ -471,4 +475,22 @@ export function circleToString(circle: Circle) {
 		"," +
 		Math.floor(circle.radius * rounding) / rounding
 	);
+}
+
+export function getTextColorHex(hex: string) {
+	if (hex.indexOf("#") === 0) {
+		hex = hex.slice(1);
+	}
+	// convert 3-digit hex to 6-digits.
+	if (hex.length === 3) {
+		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+	}
+	if (hex.length !== 6) {
+		throw new Error("Invalid HEX color.");
+	}
+	var r = parseInt(hex.slice(0, 2), 16),
+		g = parseInt(hex.slice(2, 4), 16),
+		b = parseInt(hex.slice(4, 6), 16);
+
+	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
 }

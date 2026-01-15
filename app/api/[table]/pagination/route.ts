@@ -4,7 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { Location } from "@/types/globals";
 
 export async function GET(
@@ -13,9 +13,7 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
-	const model = Object.keys(Prisma.ModelName).find(
-		(model) => model.toLowerCase() === table.toLowerCase()
-	) as Prisma.ModelName;
+	const model = DataTableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
 	if (model) {
 		const uncapsTable = uncapitalizeTable(model);
 
@@ -31,7 +29,10 @@ export async function GET(
 				where?: Record<string, any>;
 				take?: number;
 				skip?: number;
-				include?: { _count: { select: Record<string, boolean> } };
+				include?: {
+					_count?: { select: Record<string, boolean> };
+					[key: string]: any;
+				};
 			};
 
 			const orderByStr = searchParams.get("orderBy");
@@ -85,6 +86,25 @@ export async function GET(
 							.reduce((acc: Record<string, boolean>, rel: string) => ({ ...acc, [rel]: true }), {})
 					}
 				};
+			}
+
+			const relations = searchParams.get("relations");
+			if (relations) {
+				if (!query.include) {
+					query.include = {};
+				}
+
+				const relationsAllFields = searchParams.get("relationsAllFields");
+				const relationsArr = relations.split(",");
+				if (relationsAllFields) {
+					for (const rel of relationsArr) {
+						query.include[rel] = true;
+					}
+				} else {
+					for (const rel of relationsArr) {
+						query.include[rel] = { select: { id: true } };
+					}
+				}
 			}
 
 			let take = searchParams.get("take");

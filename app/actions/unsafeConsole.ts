@@ -7,6 +7,7 @@ import { RolePermissions } from "@/types/objects";
 import { unsafePrisma } from "../helpers/prisma";
 import JSON5 from "json5";
 import { uncapitalizeTable } from "../helpers/utils";
+import { TableNames } from "@/types/tableMetadata";
 
 export default async function unsafeConsoleAction(
 	table: Uncapitalize<Prisma.ModelName>,
@@ -14,9 +15,7 @@ export default async function unsafeConsoleAction(
 	query: string
 ): Promise<NetworkPacket> {
 	try {
-		const model = Object.keys(Prisma.ModelName).find(
-			(model) => model.toLowerCase() === table.toLowerCase()
-		) as Prisma.ModelName;
+		const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
 		if (model) {
 			const uncapsTable = uncapitalizeTable(model);
 

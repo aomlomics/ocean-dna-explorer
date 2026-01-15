@@ -19,7 +19,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 						strokeLinejoin="round"
 					/>
 				</svg>
-				<span className="text-base font-medium text-primary -ml-1">Edit History</span>
+				<span className="text-base font-medium text-primary -ml-1 select-none">Edit History</span>
 			</div>
 			<ul
 				tabIndex={-1}

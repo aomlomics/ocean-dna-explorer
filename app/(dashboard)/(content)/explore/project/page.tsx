@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import TableMetadata from "@/types/tableMetadata";
 
 export default async function Project() {
 	const projects = await prisma.project.findMany({
@@ -39,10 +40,7 @@ export default async function Project() {
 		<ExplorePage table="project" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						Research initiatives collecting eDNA samples, with metadata on study design, objectives, and participating
-						institutions.
-					</p>
+					<p>{TableMetadata.project.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">

@@ -22,15 +22,14 @@ import "react-leaflet-markercluster/styles";
 import Link from "next/link";
 import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import {
 	capitalizeTable,
 	circleToString,
 	getLocationsInsideShapes,
 	getShapesFromUrl,
-	polygonToString,
-	uncapitalizeTable
+	polygonToString
 } from "@/app/helpers/utils";
 import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
 import InfoButton from "../InfoButton";
@@ -134,24 +133,6 @@ function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Locati
 	return DEFAULT_COLOR;
 }
 
-function getTextColorHex(hex: string) {
-	if (hex.indexOf("#") === 0) {
-		hex = hex.slice(1);
-	}
-	// convert 3-digit hex to 6-digits.
-	if (hex.length === 3) {
-		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-	}
-	if (hex.length !== 6) {
-		throw new Error("Invalid HEX color.");
-	}
-	var r = parseInt(hex.slice(0, 2), 16),
-		g = parseInt(hex.slice(2, 4), 16),
-		b = parseInt(hex.slice(4, 6), 16);
-
-	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
-}
-
 function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors
 		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
@@ -196,9 +177,9 @@ function getWhereAdvancedHref(where: Record<string, string>, table: Prisma.Model
 			if (TableMetadata[table].enumSchema.options.includes(f)) {
 				return `["${f}","equals","${v}"]`;
 			} else {
-				for (const model of Object.keys(Prisma.ModelName) as Prisma.ModelName[]) {
+				for (const model of TableNames) {
 					if (f === TableMetadata[model].titleField) {
-						return `["${uncapitalizeTable(model)}","${f}","equals","${v}"]`;
+						return `["${model}","${f}","equals","${v}"]`;
 					}
 				}
 			}
@@ -1711,7 +1692,22 @@ function LegendControl({
 												className="aspect-square w-[1em] h-[1em]"
 												style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
 											></div>
-											<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+											{Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
+												<Link
+													href={`/explore/${Object.keys(TableMetadata).find(
+														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+													)}/${encodeURIComponent(Object.keys(legendInfo.colorMap)[0])}`}
+													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
+														legendInfo.hidden?.includes(Object.keys(legendInfo.colorMap)[0])
+															? "line-through text-base-content/50"
+															: ""
+													}`}
+												>
+													{Object.keys(legendInfo.colorMap)[0]}
+												</Link>
+											) : (
+												<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+											)}
 										</div>
 									) : (
 										Object.entries(legendInfo.colorMap).map(([key, color]) => (

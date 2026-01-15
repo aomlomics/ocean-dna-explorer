@@ -1,5 +1,6 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
+import TableMetadata from "@/types/tableMetadata";
 import Link from "next/link";
 
 export default function AssayPrep() {
@@ -7,10 +8,7 @@ export default function AssayPrep() {
 		<ExplorePage table="assayPrep" tableConfig={[]}>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>
-						The protocol-specific details describing the laboratory procedures used to perform an assay, such as the
-						chemicals, instruments, and conditions employed for sample processing and sequencing.
-					</p>
+					<p>{TableMetadata.assayPrep.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}
 						<Link href="/help" className="link link-primary link-hover">
