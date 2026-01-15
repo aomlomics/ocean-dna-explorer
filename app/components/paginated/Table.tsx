@@ -707,7 +707,7 @@ export default function Table({
 									<tr key={i} className="min-h-12 h-12 align-middle">
 										{typeof title === "string" ? (
 											<th
-												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 border-r-2${
+												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
 													i ? " border-t-2" : ""
 												}`}
 											>
@@ -717,7 +717,7 @@ export default function Table({
 											</th>
 										) : (
 											<th
-												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 border-r-2${
+												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
 													i ? " border-t-2" : ""
 												}`}
 											>
