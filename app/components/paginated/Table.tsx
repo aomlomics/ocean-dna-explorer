@@ -485,7 +485,7 @@ export default function Table({
 							<tr>
 								{/* Title Header Cell */}
 								{typeof title === "string" ? (
-									<th className="px-3 py-2 z-40">
+									<th className="px-3 py-2 z-40 bg-base-100">
 										<div
 											className="cursor-pointer select-none flex justify-between mb-1"
 											onClick={() =>
@@ -556,7 +556,7 @@ export default function Table({
 										</label>
 									</th>
 								) : (
-									<th className="p-0 pr-2 z-40">
+									<th className="p-0 pr-2 z-40 bg-base-100">
 										<div className="select-none mb-1">
 											<span>{title.join(" / ")}</span>
 										</div>
@@ -707,7 +707,7 @@ export default function Table({
 									<tr key={i} className="min-h-12 h-12 align-middle">
 										{typeof title === "string" ? (
 											<th
-												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
+												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
 													i ? " border-t-2" : ""
 												}`}
 											>
@@ -717,7 +717,7 @@ export default function Table({
 											</th>
 										) : (
 											<th
-												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
+												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
 													i ? " border-t-2" : ""
 												}`}
 											>
@@ -744,7 +744,7 @@ export default function Table({
 															>
 																<div className="flex gap-3">
 																	{row.Tags.map((t: Tag) => (
-																		<AnalysisTag key={t.tagName} tag={t} />
+																		<AnalysisTag key={t.tagName} tag={t} hideDescription />
 																	))}
 																</div>
 															</td>
