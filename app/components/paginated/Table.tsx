@@ -763,7 +763,7 @@ export default function Table({
 																		href={`/search?table=${depluralizeTable(head as Prisma.ModelName)}&advanced=[${
 																			typeof title === "string"
 																				? `["${table}", "${title}", "equals", "${row[title]}"]`
-																				: title.map((t) => `["${table}", "${title}", "equals", "${row[t]}"]`).join(",")
+																				: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																		}]`}
 																	>
 																		<svg
