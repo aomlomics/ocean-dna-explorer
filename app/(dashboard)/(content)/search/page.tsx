@@ -19,6 +19,7 @@ import { uncapitalizeTable } from "@/app/helpers/utils";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
+import { getRelationPath } from "@/app/helpers/schema";
 
 type FilterIds = Array<0 | 1 | FilterIds>;
 
@@ -1216,7 +1217,10 @@ function SearchRuleComponent({
 							Select Relation
 						</option>
 						{TableNames.reduce((acc, table) => {
-							if (table !== (searchTable.toLowerCase() as Uncapitalize<Prisma.ModelName>)) {
+							if (
+								table !== (uncapitalizeTable(searchTable) as Uncapitalize<Prisma.ModelName>) &&
+								getRelationPath(uncapitalizeTable(searchTable), table)
+							) {
 								acc.push(
 									<option key={table} value={table} title={table}>
 										{table}

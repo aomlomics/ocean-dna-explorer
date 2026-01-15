@@ -2,9 +2,9 @@ import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
-import { deadBooleanToString } from "./utils";
+import { capitalizeTable, deadBooleanToString } from "./utils";
 import { DbType } from "@/types/globals";
 
 export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
@@ -236,5 +236,38 @@ export function parseSchemaToObject(
 			//continue as normal
 			obj[field] = value;
 		}
+	}
+}
+
+export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
+	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
+	const visited = new Set() as Set<Prisma.ModelName>;
+
+	const capsTarget = capitalizeTable(target);
+	while (queue.length) {
+		let [curr, [...path]] = queue.shift()!;
+		path.push(curr);
+
+		if (curr === capsTarget) {
+			//convert to path of relation metadata
+			const pathRelations = [] as RelationMetadata[];
+			path.reduce((prev, t) => {
+				pathRelations.push(TableMetadata[prev].relations.find((rel) => rel.table === t)!);
+				return t;
+			});
+			return pathRelations;
+		}
+
+		//skip visited tables
+		//can't pass through Project, but can start at Project
+		if (!visited.has(curr) && (curr !== "Project" || path.length === 1)) {
+			for (const rel of TableMetadata[curr].relations) {
+				//  base case              Analysis to Project        Project to Analysis       starting at Analysis
+				if (curr !== "Analysis" || rel.table === "Project" || visited.has("Project") || path.length === 1) {
+					queue.push([rel.table, path]);
+				}
+			}
+		}
+		visited.add(curr);
 	}
 }
