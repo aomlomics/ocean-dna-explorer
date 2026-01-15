@@ -12,7 +12,7 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { uncapitalizeTable } from "@/app/helpers/utils";
@@ -577,7 +577,7 @@ export default function AdvancedSearch() {
 			)}
 			<div className="w-full space-y-4 text-base-content/80">
 				{searchTable && <p>{TableMetadata[searchTable].description}</p>}
-				<ExploreTabButtons activeTable={searchTable} tables={TableNames} />
+				<ExploreTabButtons activeTable={searchTable} tables={DataTableNames} />
 			</div>
 
 			<form
@@ -1380,9 +1380,7 @@ function InputElement({
 							type="hidden"
 							name={`filter_${nameSuffix}`}
 							value={JSON.stringify(
-								inValues
-									.filter((v) => v.trim() !== "")
-									.map((v) => (type === "integer" ? parseInt(v) : parseFloat(v)))
+								inValues.filter((v) => v.trim() !== "").map((v) => (type === "integer" ? parseInt(v) : parseFloat(v)))
 							)}
 						/>
 					</div>
@@ -1392,9 +1390,7 @@ function InputElement({
 							className="input input-primary w-full rounded-none"
 							placeholder="Lower bound"
 							name={`filter_${nameSuffix}_gte`}
-							defaultValue={
-								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : ""
-							}
+							defaultValue={defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : ""}
 							type="number"
 							required
 						/>
@@ -1403,9 +1399,7 @@ function InputElement({
 							className="input input-primary w-full rounded-l-none"
 							placeholder="Upper bound"
 							name={`filter_${nameSuffix}_lte`}
-							defaultValue={
-								defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : ""
-							}
+							defaultValue={defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : ""}
 							type="number"
 							required
 						/>
@@ -1534,9 +1528,7 @@ function InputElement({
 								name={`filter_${nameSuffix}_gte_date`}
 								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2
-										? defaultValue.split(",")[0].split("T")[0]
-										: ""
+									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0].split("T")[0] : ""
 								}
 								onChange={(e) => setGteDateSelected(!!e.target.value)}
 								type="date"
@@ -1546,9 +1538,7 @@ function InputElement({
 								type="time"
 								className="text-center"
 								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2
-										? defaultValue.split(",")[0].split("T")[1]
-										: ""
+									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0].split("T")[1] : ""
 								}
 								name={`filter_${nameSuffix}_gte_time`}
 							/>
@@ -1559,9 +1549,7 @@ function InputElement({
 								name={`filter_${nameSuffix}_lte_date`}
 								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
 								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2
-										? defaultValue.split(",")[1].split("T")[0]
-										: ""
+									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1].split("T")[0] : ""
 								}
 								onChange={(e) => setLteDateSelected(!!e.target.value)}
 								type="date"
@@ -1571,9 +1559,7 @@ function InputElement({
 								type="time"
 								className="text-center"
 								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2
-										? defaultValue.split(",")[1].split("T")[1]
-										: ""
+									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1].split("T")[1] : ""
 								}
 								name={`filter_${nameSuffix}_lte_time`}
 							/>
@@ -1585,18 +1571,14 @@ function InputElement({
 							<input
 								name={`filter_${nameSuffix}_date`}
 								className="w-1/2"
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""
-								}
+								defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""}
 								type="date"
 								required
 							/>
 							<input
 								type="time"
 								className="text-center w-1/2"
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""
-								}
+								defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""}
 								name={`filter_${nameSuffix}_time`}
 							/>
 						</div>

@@ -98,7 +98,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.OccurrenceSchema,
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		titleField: ["analysis_run_name", "samp_name", "featureid"],
-		subFields: ["organismQuantity"]
+		subFields: ["organismQuantity", "analysis_run_name", "samp_name", "featureid"]
 	},
 	feature: {
 		plural: "Features",
@@ -153,7 +153,6 @@ const TableMetadata = {
 		schema: ZodObject<Record<string, any>>;
 		enumSchema: ZodEnum<Record<string, string>>;
 		relations?: RelationMetadata[];
-		relationFields?: Record<string, Uncapitalize<Prisma.ModelName>>;
 		titleField: string | string[];
 		subFields?: string[];
 		fieldOrder?: string[];
@@ -234,20 +233,6 @@ for (let e in TableMetadata) {
 
 		return { field: rel, table: relationTable, type };
 	});
-
-	TableMetadata[table].relationFields = relations[table].reduce((acc, rel) => {
-		const uncapsRel = rel.slice(0, 1).toLowerCase() + rel.slice(1);
-		if (uncapsRel in relations) {
-			const relTable = uncapsRel as Uncapitalize<Prisma.ModelName>;
-			if (typeof TableMetadata[relTable].titleField === "string") {
-				acc[TableMetadata[relTable].titleField] = relTable;
-			} else {
-				acc[TableMetadata[relTable].titleField.join("/")] = relTable;
-			}
-		}
-
-		return acc;
-	}, {} as Record<string, Uncapitalize<Prisma.ModelName>>);
 }
 
 export const TableNames = Object.keys(TableMetadata) as Uncapitalize<Prisma.ModelName>[];
@@ -267,7 +252,6 @@ export default TableMetadata as Record<
 		schema: ZodObject<Record<string, any>>;
 		enumSchema: ZodEnum<Record<string, string>>;
 		relations: RelationMetadata[];
-		relationFields: Record<string, Uncapitalize<Prisma.ModelName>>;
 		titleField: string | string[];
 		subFields?: string[];
 		fieldOrder?: string[];

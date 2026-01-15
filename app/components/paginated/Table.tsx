@@ -12,7 +12,7 @@ import PaginationControls from "./PaginationControls";
 import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { capitalizeTable, depluralizeTable, fetcher } from "@/app/helpers/utils";
+import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
 import AnalysisTag from "../tags/AnalysisTag";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order: Prisma.SortOrder };
@@ -64,13 +64,21 @@ export default function Table({
 	const combinedOmit = [...omit, ...GlobalOmit];
 	const title = TableMetadata[table].titleField;
 
-	const manyRelations = TableMetadata[table].relations.reduce((acc, r) => {
-		if (r.type.endsWith("many")) {
-			acc.push(r.field);
+	const manyRelations = [] as string[];
+	const oneRelations = [] as string[];
+	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, string[]>;
+	for (const rel of TableMetadata[table].relations) {
+		if (rel.type.endsWith("many")) {
+			manyRelations.push(rel.field);
+		} else if (rel.type.endsWith("one")) {
+			const relTable = rel.field as Prisma.ModelName;
+			if (typeof TableMetadata[relTable].titleField === "string") {
+				oneRelations.push(TableMetadata[relTable].titleField);
+			} else {
+				oneRelationsArrayTitle[relTable] = TableMetadata[relTable].titleField;
+			}
 		}
-
-		return acc;
-	}, [] as string[]);
+	}
 
 	//api call
 	let query = new URLSearchParams({
@@ -165,27 +173,22 @@ export default function Table({
 
 	useEffect(() => {
 		if (!Object.keys(headersFilter).length) {
-			let tempHeaders = [];
+			let tempHeaders = [] as typeof headers;
+			//move tags to the front
 			const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
 			if (manyRelations.length !== manyRelationsNoTags.length) {
 				tempHeaders.push("Tags");
 			}
-			if (Object.keys(TableMetadata[table].relationFields).length) {
-				tempHeaders.push(...Object.keys(TableMetadata[table].relationFields));
-			}
-			if (manyRelationsNoTags.length) {
-				tempHeaders.push(...manyRelationsNoTags);
-			}
+			tempHeaders.push(...oneRelations);
+			tempHeaders.push(...Object.keys(oneRelationsArrayTitle));
+			tempHeaders.push(...manyRelationsNoTags);
 			if (TableMetadata[table].fieldOrder) {
 				tempHeaders.push(...TableMetadata[table].fieldOrder);
 			}
 			tempHeaders.push(
 				...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
 					//remove fields that have already been added
-					if (
-						TableMetadata[table].fieldOrder?.includes(head) ||
-						Object.keys(TableMetadata[table].relationFields).includes(head)
-					) {
+					if (oneRelations.includes(head) || TableMetadata[table].fieldOrder?.includes(head)) {
 						return acc;
 					}
 
@@ -217,7 +220,15 @@ export default function Table({
 			if (filterHeadersAtStart && TableMetadata[table].subFields) {
 				const temp = {} as Record<string, true>;
 				for (const head of tempHeaders) {
-					if (!TableMetadata[table].subFields.includes(head) && !manyRelations.includes(head)) {
+					if (
+						!TableMetadata[table].subFields.includes(head) &&
+						!manyRelations.includes(head) &&
+						//every title field is included in subFields
+						!(
+							head in oneRelationsArrayTitle &&
+							oneRelationsArrayTitle[head as Prisma.ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
+						)
+					) {
 						temp[head] = true;
 					}
 				}
@@ -576,10 +587,15 @@ export default function Table({
 									//only render the header if it is selected in the header filter
 									if (!headersFilter[head] && !emptyFilter[head]) {
 										//Header
-										if (manyRelations.includes(head)) {
+										if (manyRelations.includes(head) || head in oneRelationsArrayTitle) {
 											acc.push(
 												<td key={head + i} className="bg-base-100">
-													<div className="flex justify-between select-none mb-1">{head}</div>
+													<div className="flex justify-between select-none mb-1">
+														{head}
+														{head in oneRelationsArrayTitle
+															? " (" + oneRelationsArrayTitle[head as Prisma.ModelName].join(" / ") + ")"
+															: ""}
+													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
@@ -783,6 +799,44 @@ export default function Table({
 														</td>
 													);
 												} else {
+													let element;
+													if (oneRelations.includes(head as Prisma.ModelName)) {
+														element = (
+															<Link
+																href={`/explore/${
+																	Object.entries(TableMetadata).find(([_, meta]) => meta.titleField === head)![0]
+																}/${row[head]}`}
+																className="link link-primary link-hover font-bold"
+															>
+																{row[head]}
+															</Link>
+														);
+													} else if (head in oneRelationsArrayTitle) {
+														const typedHead = head as Prisma.ModelName;
+														element = (
+															<Link
+																href={`/explore/${uncapitalizeTable(typedHead)}/${oneRelationsArrayTitle[typedHead]
+																	.map((f) => row[f])
+																	.join("/")}`}
+																className="link link-primary link-hover font-bold"
+															>
+																{oneRelationsArrayTitle[typedHead]
+																	.map((f) => (row[f].length > 15 ? row[f].slice(0, 10) + "..." : row[f]))
+																	.join(" / ")}
+															</Link>
+														);
+													} else if (row[head] in DeadValueEnum && typeof row[head] === "number") {
+														element = DeadValueEnum[row[head]];
+													} else if (URL.canParse(row[head]) && row[head].startsWith("https://")) {
+														element = (
+															<Link href={row[head]} className="link link-primary link-hover">
+																{row[head]}
+															</Link>
+														);
+													} else {
+														element = row[head];
+													}
+
 													acc.push(
 														<td
 															className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
@@ -790,22 +844,7 @@ export default function Table({
 															}${row[head] === null ? " bg-base-200" : ""}`}
 															key={row[head] + "child" + j}
 														>
-															{row[head] in DeadValueEnum && typeof row[head] === "number" ? (
-																DeadValueEnum[row[head]]
-															) : head in TableMetadata[table].relationFields ? (
-																<Link
-																	href={`/explore/${TableMetadata[table].relationFields[head]}/${row[head]}`}
-																	className="link link-primary link-hover font-bold"
-																>
-																	{row[head]}
-																</Link>
-															) : URL.canParse(row[head]) && row[head].startsWith("https://") ? (
-																<Link href={row[head]} className="link link-primary link-hover">
-																	{row[head]}
-																</Link>
-															) : (
-																row[head]
-															)}
+															{element}
 														</td>
 													);
 												}
