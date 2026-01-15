@@ -707,7 +707,7 @@ export default function Table({
 									<tr key={i} className="min-h-12 h-12 align-middle">
 										{typeof title === "string" ? (
 											<th
-												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2${
+												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 border-r-2${
 													i ? " border-t-2" : ""
 												}`}
 											>
@@ -717,7 +717,7 @@ export default function Table({
 											</th>
 										) : (
 											<th
-												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 border-r-2${
+												className={`whitespace-nowrap z-1 text-sm font-bold bg-base-200 border-base-300 border-r-2${
 													i ? " border-t-2" : ""
 												}`}
 											>
@@ -737,9 +737,9 @@ export default function Table({
 													if (head === "Tags") {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
-																	j ? " border-l-2" : ""
-																}${row[head] === null ? " bg-base-200" : ""}`}
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2${
+																	i ? " border-t-2" : ""
+																}${row.Tags.length === 0 ? " bg-base-200" : ""}`}
 																key={head + "child" + j}
 															>
 																<div className="flex gap-3">
@@ -752,9 +752,9 @@ export default function Table({
 													} else {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
-																	j ? " border-l-2" : ""
-																}${row[head] === null ? " bg-base-200" : ""}`}
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2${
+																	i ? " border-t-2" : ""
+																}`}
 																key={head + "child" + j}
 															>
 																<div className="flex justify-center">
@@ -790,9 +790,9 @@ export default function Table({
 												} else if (userDefinedHeaders.includes(head)) {
 													acc.push(
 														<td
-															className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
-																j ? " border-l-2" : ""
-															}${row[head] === null ? " bg-base-200" : ""}`}
+															className={`whitespace-nowrap text-sm border-base-300 border-l-2${
+																i ? " border-t-2" : ""
+															}${row.userDefined[head] === null ? " bg-base-200" : ""}`}
 															key={row.userDefined[head] + "child" + j}
 														>
 															{row.userDefined[head]}
@@ -839,8 +839,8 @@ export default function Table({
 
 													acc.push(
 														<td
-															className={`whitespace-nowrap text-sm border-base-300${i ? " border-t-2" : ""}${
-																j ? " border-l-2" : ""
+															className={`whitespace-nowrap text-sm border-base-300 border-l-2${
+																i ? " border-t-2" : ""
 															}${row[head] === null ? " bg-base-200" : ""}`}
 															key={row[head] + "child" + j}
 														>
