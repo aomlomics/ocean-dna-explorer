@@ -12,13 +12,16 @@ export default function ExplorePage({
 	table,
 	tableConfig,
 	children,
-	displayMode = "table"
+	displayMode = "table",
+	tableWhere
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	tableConfig: FilterConfig[];
 	children: ReactNode;
-	displayMode?: "table" | "grid";
-}) {
+} & (
+	| { displayMode?: "table"; tableWhere?: Record<string, any> | undefined }
+	| { displayMode?: "grid"; tableWhere?: undefined }
+)) {
 	const titleField = TableMetadata[table].titleField;
 	return (
 		<div className="grid grid-cols-1 gap-y-4 pt-4">
@@ -62,7 +65,7 @@ export default function ExplorePage({
 				<>
 					<div className="hidden lg:block">
 						<div className="rounded-lg border border-base-300 h-[90vh]">
-							<Table table={table} defaultTake={25} filterHeadersAtStart />
+							<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} />
 						</div>
 					</div>
 					<div className="lg:hidden">

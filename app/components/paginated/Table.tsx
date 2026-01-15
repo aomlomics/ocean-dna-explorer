@@ -32,7 +32,7 @@ export default function Table({
 	className
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
-	where?: Record<string, string | number>;
+	where?: Record<string, any>;
 	omit?: string[];
 	hideFilters?: boolean;
 	hideEmptyAtStart?: boolean;
