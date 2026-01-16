@@ -21,8 +21,6 @@ import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
 import { getRelationPath } from "@/app/helpers/schema";
 
-type FilterIds = Array<0 | 1 | FilterIds>;
-
 type Operator = "AND" | "OR";
 
 interface SearchGroupNode {
@@ -124,18 +122,17 @@ export default function AdvancedSearch() {
 		}
 		return "Project";
 	});
-	const [filterIds, setFilterIds] = useState([1] as FilterIds);
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const apiFieldsModalRef = useRef<HTMLDialogElement>(null);
-	const [formUpdateTrigger, setFormUpdateTrigger] = useState(0);
 	const [apiCopied, setApiCopied] = useState(false);
 	const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
 	const apiDropdownRef = useRef<HTMLDivElement | null>(null);
 	const [apiFieldSelections, setApiFieldSelections] = useState<Record<string, string[]>>({});
 	const [fieldSelectionDraft, setFieldSelectionDraft] = useState<string[]>([]);
 	const [fieldSearchText, setFieldSearchText] = useState("");
+	const [queryDescription, setQueryDescription] = useState("");
 
 	useEffect(() => {
 		try {
@@ -178,17 +175,20 @@ export default function AdvancedSearch() {
 		}
 	}, [searchParams]);
 
-	// Recalc the plain text query description whenever the search tree changes,
-	// so saved / URL-driven filters still show a query description after navigation
-	useEffect(() => {
-		setFormUpdateTrigger((prev) => prev + 1);
-	}, [searchTree]);
 	// Ensure we always have a root group
 	useEffect(() => {
-		if (!searchTree) {
-			setSearchTree(createEmptyGroup(0));
+		if (searchTree.children.length === 0) {
+			setQueryDescription("");
+		} else {
+			handleQueryDescription();
 		}
 	}, [searchTree]);
+
+	useEffect(() => {
+		if (Object.keys(searchTree).length === 1 && !Object.values(searchTree)[0].children.length) {
+			handleQueryDescription();
+		}
+	}, [queryDescription]);
 
 	useEffect(() => {
 		// Set default table parameter without creating a new history entry
@@ -244,10 +244,7 @@ export default function AdvancedSearch() {
 		return ordered;
 	}
 
-	function getQueryDescription() {
-		// Use formUpdateTrigger to force re-evaluation
-		const _ = formUpdateTrigger;
-
+	function handleQueryDescription() {
 		if (!formRef.current || !searchTree || searchTree.children.length === 0) return "";
 
 		function describeFilter(id: string): string {
@@ -260,7 +257,6 @@ export default function AdvancedSearch() {
 
 			if (!field) return "";
 
-			const tableName = relation || searchTable;
 			const prefix = relation ? `${relation}.` : "";
 
 			const modeText =
@@ -329,7 +325,7 @@ export default function AdvancedSearch() {
 		}
 
 		const desc = recurseGroup(searchTree, true);
-		return desc ? `Searching for ${TableMetadata[searchTable].plural} where: ${desc}` : "";
+		setQueryDescription(desc ? `Searching for ${TableMetadata[searchTable].plural} where: ${desc}` : "");
 	}
 
 	function getParamsArrayFromTree(root: SearchGroupNode) {
@@ -465,6 +461,7 @@ export default function AdvancedSearch() {
 	function reset() {
 		setSearchTable("Project");
 		setSearchTree(createEmptyGroup(0));
+		setQueryDescription("");
 		router.push(pathname);
 	}
 
@@ -588,7 +585,7 @@ export default function AdvancedSearch() {
 					e.preventDefault();
 					search();
 				}}
-				onChange={() => setFormUpdateTrigger((prev) => prev + 1)}
+				onChange={handleQueryDescription}
 			>
 				{searchTable && (
 					<>
@@ -602,8 +599,8 @@ export default function AdvancedSearch() {
 									footer={
 										<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
 											<div className="flex-1 text-sm md:text-base text-base-content whitespace-pre-wrap">
-												{getQueryDescription() ? (
-													<p className="text-left">{getQueryDescription()}</p>
+												{queryDescription ? (
+													<p className="text-left">{queryDescription}</p>
 												) : (
 													<p className="text-base-content/60 italic text-sm text-left">
 														Begin selecting filters and relations, and your query will be displayed here...

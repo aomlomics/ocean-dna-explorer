@@ -33,10 +33,7 @@ export default function DropdownLinkBox({
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</div>
-			<ul
-				tabIndex={0}
-				className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-			>
+			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
 				{content.map((str) => (
 					<li key={str}>
 						<Link href={`${linkPrefix}/${str}`} className="text-base-content hover:text-primary break-all">

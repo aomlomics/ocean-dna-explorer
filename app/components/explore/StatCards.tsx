@@ -19,7 +19,7 @@ export function SampleStatCard({
 	if (icon === "eye" && value !== undefined) {
 		return (
 			<div className="bg-base-200 p-4 rounded-lg flex items-center gap-4">
-				<div className="w-16 h-16 flex-shrink-0 flex items-center justify-center text-primary">
+				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">
 					<StatIcon icon={icon} />
 				</div>
 				<div className="flex flex-col">
@@ -161,7 +161,7 @@ export function DropdownLinkBoxWithIcon({
 				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
 			>
 				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
 						<StatIcon icon={icon} />
 					</div>
 					<div>
@@ -184,10 +184,7 @@ export function DropdownLinkBoxWithIcon({
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</div>
-			<ul
-				tabIndex={0}
-				className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-			>
+			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
 				{content.map((str) => (
 					<li key={str}>
 						<Link href={`${linkPrefix}/${str}`} className="text-base-content hover:text-primary break-all">
@@ -209,7 +206,7 @@ export function AssayDropdownCard({ count, assayNames }: { count: number; assayN
 				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
 			>
 				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
 						<AssayIcon />
 					</div>
 					<div>
@@ -235,10 +232,7 @@ export function AssayDropdownCard({ count, assayNames }: { count: number; assayN
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</div>
-			<ul
-				tabIndex={0}
-				className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-			>
+			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
 				{assayNames.map((name) => (
 					<li key={name}>
 						<Link href={`/explore/assay/${name}`} className="text-base-content hover:text-primary break-all">
@@ -251,16 +245,9 @@ export function AssayDropdownCard({ count, assayNames }: { count: number; assayN
 	);
 }
 
-	export function AssayIcon() {
+export function AssayIcon() {
 	return (
-		<svg
-			version="1.1"
-			x="0px"
-			y="0px"
-			viewBox="250 0 550 544"
-			xmlSpace="preserve"
-			className="w-12 h-12"
-		>
+		<svg version="1.1" x="0px" y="0px" viewBox="250 0 550 544" xmlSpace="preserve" className="w-12 h-12">
 			<path
 				fill="currentColor"
 				opacity="1.000000"
@@ -753,5 +740,3 @@ z"
 		</svg>
 	);
 }
-
-

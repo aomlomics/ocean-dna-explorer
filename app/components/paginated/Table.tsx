@@ -334,7 +334,7 @@ export default function Table({
 		const formData = new FormData(form);
 		let count = 0;
 		formData.delete("take");
-		for (const [key, value] of formData.entries()) {
+		for (const [_, value] of formData.entries()) {
 			if (typeof value === "string" && value.trim()) {
 				count++;
 			}

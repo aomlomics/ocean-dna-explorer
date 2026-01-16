@@ -39,7 +39,7 @@ const MagnifyingGlass: React.FC<MagnifyingGlassProps> = ({ onClick, className = 
 
 // Ocean Surface Level - Research Vessel
 const OceanLevel: React.FC<{ onZoomIn: () => void }> = ({ onZoomIn }) => (
-	<div className="relative w-full h-full flex items-center justify-center bg-gradient-to-b from-sky-400 to-blue-600">
+	<div className="relative w-full h-full flex items-center justify-center bg-linear-to-b from-sky-400 to-blue-600">
 		<div className="relative">
 			{/* Research Vessel SVG - Using the actual Catcher_Vessel4.svg */}
 			<div className="relative">
@@ -90,7 +90,7 @@ const OceanLevel: React.FC<{ onZoomIn: () => void }> = ({ onZoomIn }) => (
 
 // CTD Level - Underwater instrument
 const CTDLevel: React.FC<{ onZoomIn: () => void; onZoomOut: () => void }> = ({ onZoomIn, onZoomOut }) => (
-	<div className="relative w-full h-full flex items-center justify-center bg-gradient-to-b from-blue-600 to-blue-900">
+	<div className="relative w-full h-full flex items-center justify-center bg-linear-to-b from-blue-600 to-blue-900">
 		<button onClick={onZoomOut} className="absolute top-4 left-4 btn btn-sm btn-primary">
 			← Back to Surface
 		</button>
@@ -115,7 +115,7 @@ const CTDLevel: React.FC<{ onZoomIn: () => void; onZoomOut: () => void }> = ({ o
 
 // Niskin Bottle Level - Sample container
 const NiskinLevel: React.FC<{ onZoomIn: () => void; onZoomOut: () => void }> = ({ onZoomIn, onZoomOut }) => (
-	<div className="relative w-full h-full flex items-center justify-center bg-gradient-to-b from-blue-900 to-indigo-900">
+	<div className="relative w-full h-full flex items-center justify-center bg-linear-to-b from-blue-900 to-indigo-900">
 		<button onClick={onZoomOut} className="absolute top-4 left-4 btn btn-sm btn-primary">
 			← Back to CTD
 		</button>
@@ -162,7 +162,7 @@ const NiskinLevel: React.FC<{ onZoomIn: () => void; onZoomOut: () => void }> = (
 
 // DNA Level - Molecular view
 const DNALevel: React.FC<{ onZoomIn: () => void; onZoomOut: () => void }> = ({ onZoomIn, onZoomOut }) => (
-	<div className="relative w-full h-full flex items-center justify-center bg-gradient-to-b from-indigo-900 to-purple-900">
+	<div className="relative w-full h-full flex items-center justify-center bg-linear-to-b from-indigo-900 to-purple-900">
 		<button onClick={onZoomOut} className="absolute top-4 left-4 btn btn-sm btn-primary">
 			← Back to Sample
 		</button>
@@ -211,7 +211,7 @@ const DNALevel: React.FC<{ onZoomIn: () => void; onZoomOut: () => void }> = ({ o
 
 // Analysis Level - Computer processing
 const AnalysisLevel: React.FC<{ onZoomOut: () => void }> = ({ onZoomOut }) => (
-	<div className="relative w-full h-full flex items-center justify-center bg-gradient-to-b from-purple-900 to-gray-900">
+	<div className="relative w-full h-full flex items-center justify-center bg-linear-to-b from-purple-900 to-gray-900">
 		<button onClick={onZoomOut} className="absolute top-4 left-4 btn btn-sm btn-primary">
 			← Back to DNA
 		</button>

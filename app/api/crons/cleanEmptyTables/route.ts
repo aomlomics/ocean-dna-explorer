@@ -1,4 +1,4 @@
-import { handlePrismaError, unsafePrisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/prisma";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 

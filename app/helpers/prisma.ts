@@ -2,7 +2,7 @@ import { RolePermissions } from "@/types/objects";
 import { Assay, DeadBoolean, Prisma } from "../generated/prisma/client";
 import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
-import { DbType, ErrorPacket, Role } from "@/types/globals";
+import { ErrorPacket, Role } from "@/types/globals";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 import { deepMerge } from "./utils";
 import TableMetadata from "@/types/tableMetadata";

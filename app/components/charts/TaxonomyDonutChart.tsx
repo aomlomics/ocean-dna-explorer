@@ -54,12 +54,9 @@ function CustomLegend({
 
 	// Throttle the threshold changes for smooth slider experience
 	// Throttle fires at regular intervals while dragging, giving immediate feedback
-	const throttledSetOtherThreshold = useThrottledCallback(
-		(value: number) => {
-			setOtherThreshold(value);
-		},
-		100
-	);
+	const throttledSetOtherThreshold = useThrottledCallback((value: number) => {
+		setOtherThreshold(value);
+	}, 100);
 
 	// Group items based on threshold
 	const { displayedItems, otherCount } = useMemo(() => {
@@ -117,7 +114,9 @@ function CustomLegend({
 						style={{
 							cursor: "pointer",
 							accentColor: "#64ABDC",
-							background: `linear-gradient(to right, #64ABDC 0%, #64ABDC ${(otherThreshold / 5) * 100}%, #64ABDC40 ${(otherThreshold / 5) * 100}%, #64ABDC40 100%)`
+							background: `linear-gradient(to right, #64ABDC 0%, #64ABDC ${(otherThreshold / 5) * 100}%, #64ABDC40 ${
+								(otherThreshold / 5) * 100
+							}%, #64ABDC40 100%)`
 						}}
 					/>
 				</div>
@@ -147,7 +146,10 @@ function CustomLegend({
 									>
 										{labels[index]}
 									</Link>
-									<span className="text-sm font-semibold whitespace-nowrap shrink-0" style={{ color: textColor, opacity: 0.6 }}>
+									<span
+										className="text-sm font-semibold whitespace-nowrap shrink-0"
+										style={{ color: textColor, opacity: 0.6 }}
+									>
 										{percentage}%
 									</span>
 								</div>
@@ -159,15 +161,15 @@ function CustomLegend({
 				{/* Other Group - Always at Bottom */}
 				{otherCount > 0 && (
 					<div className="flex items-center gap-2.5 pt-3 mt-3 border-t" style={{ borderColor: textColor + "15" }}>
-						<div
-							className="w-3.5 h-3.5 rounded-sm shrink-0"
-							style={{ backgroundColor: textColor + "50" }}
-						/>
+						<div className="w-3.5 h-3.5 rounded-sm shrink-0" style={{ backgroundColor: textColor + "50" }} />
 						<div className="flex-1 min-w-0 flex items-center gap-2">
 							<span className="text-sm font-medium" style={{ color: textColor }}>
 								Other
 							</span>
-							<span className="text-sm font-semibold whitespace-nowrap shrink-0" style={{ color: textColor, opacity: 0.6 }}>
+							<span
+								className="text-sm font-semibold whitespace-nowrap shrink-0"
+								style={{ color: textColor, opacity: 0.6 }}
+							>
 								{otherPercentage}%
 							</span>
 						</div>
@@ -193,7 +195,7 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 	const colors = generateDistinctColors(labels.length);
 
 	// Filter data and labels based on threshold
-	const { filteredLabels, filteredData, filteredColors, otherCount } = useMemo(() => {
+	const { filteredLabels, filteredData, filteredColors } = useMemo(() => {
 		const total = data.reduce((sum, value) => sum + value, 0);
 		const thresholdPercentage = otherThreshold;
 		let otherSum = 0;
@@ -320,4 +322,3 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 		</div>
 	);
 }
-

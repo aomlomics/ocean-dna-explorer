@@ -1,6 +1,6 @@
 "use server";
 
-import { Sample } from "@/app/generated/prisma/client";
+import { Occurrence, Sample } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -45,14 +45,22 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 				where: {
 					project_id,
 					deleted_ODE: true,
-					Occurrences: {
-						some: {}
+					Libraries: {
+						some: {
+							Occurrences: {
+								some: {}
+							}
+						}
 					}
 				},
 				select: {
 					samp_name: true,
-					Occurrences: {
-						distinct: ["analysis_run_name"]
+					Libraries: {
+						select: {
+							Occurrences: {
+								distinct: ["analysis_run_name"]
+							}
+						}
 					}
 				}
 			});
@@ -62,7 +70,7 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 				const lastSample = sampNames.pop();
 				const badAnalyses = Array.from(
 					badSamples.reduce((acc, samp) => {
-						for (const occ of samp.Occurrences) {
+						for (const occ of samp.Libraries.reduce((occs, lib) => [...occs, ...lib.Occurrences], [] as Occurrence[])) {
 							acc.add(occ.analysis_run_name);
 						}
 						return acc;
@@ -123,8 +131,12 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 					project_id,
 					deleted_ODE: true,
 					//TODO: confirm that this isn't necessary
-					Occurrences: {
-						none: {}
+					Libraries: {
+						every: {
+							Occurrences: {
+								none: {}
+							}
+						}
 					}
 				}
 			});
