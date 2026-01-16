@@ -320,15 +320,15 @@ export async function parseOccurrencesFile({
 				return;
 			}
 			for (let j = 1; j < headers.length; j++) {
-				const samp_name = headers[j];
-				if (!samp_name) {
-					await channel.stream.error(`No "samp_name" found for column ${j}.`);
+				const lib_id = headers[j];
+				if (!lib_id) {
+					await channel.stream.error(`No "lib_id" found for column ${j}.`);
 					return;
 				}
 				const organismQuantity = parseInt(record[j]);
 				if (isNaN(organismQuantity)) {
 					await channel.stream.error(
-						`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Sample ${samp_name} (column ${j}). Value is ${record[j]}.`
+						`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Library ${lib_id} (column ${j}). Value is ${record[j]}.`
 					);
 					return;
 				}
@@ -337,7 +337,7 @@ export async function parseOccurrencesFile({
 					//parse occurrence
 					const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
 						{
-							samp_name,
+							lib_id,
 							featureid,
 							organismQuantity,
 							analysis_run_name
@@ -355,7 +355,7 @@ export async function parseOccurrencesFile({
 						await channel.stream.error(
 							`Table: Occurrence\n` +
 								`Key: ${analysis_run_name}\n` +
-								`Key: ${samp_name}\n` +
+								`Key: ${lib_id}\n` +
 								`Key: ${featureid}\n\n` +
 								`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
 						);

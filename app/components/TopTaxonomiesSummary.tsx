@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { publicPrisma } from "@/app/helpers/prisma";
-import { Taxonomy } from "@/app/generated/prisma/client";
 
 type PhylumData = {
 	phylum: string;
@@ -44,13 +43,11 @@ async function getPhylaByKingdom(kingdom: string, take: number = 10): Promise<Ph
 		}
 	}
 
-	return (
-		Array.from(phylumMap.entries())
-			.map(([phylum, count]) => ({ phylum, count }))
-			.sort((a, b) => b.count - a.count)
-			.filter((item) => item.count > 0)
-			.slice(0, take)
-	);
+	return Array.from(phylumMap.entries())
+		.map(([phylum, count]) => ({ phylum, count }))
+		.sort((a, b) => b.count - a.count)
+		.filter((item) => item.count > 0)
+		.slice(0, take);
 }
 
 export default async function TopTaxonomiesSummary() {
@@ -64,21 +61,24 @@ export default async function TopTaxonomiesSummary() {
 		{
 			kingdom: "Eukaryota",
 			title: "Eukaryota",
-			description: "Including the plants and animals we recognize, eukaryotes are defined by complex, nucleated cells. They span everything from microscopic algae and corals to fish and whales. They represent the ocean’s visible biodiversity, making up the familiar life found across the ocean (and land).",
+			description:
+				"Including the plants and animals we recognize, eukaryotes are defined by complex, nucleated cells. They span everything from microscopic algae and corals to fish and whales. They represent the ocean’s visible biodiversity, making up the familiar life found across the ocean (and land).",
 			image: "/images/bait_ball.jpeg",
 			phyla: eukaryotaPhyla
 		},
 		{
 			kingdom: "Bacteria",
 			title: "Bacteria",
-			description: "As the ocean's most abundant single-celled life, these microbes are the primary drivers of global nutrient cycles. They break down organic matter to recycle essential elements, sustaining the entire marine food web from the bottom up, as well as maintaining the chemical health of the water.",
+			description:
+				"As the ocean's most abundant single-celled life, these microbes are the primary drivers of global nutrient cycles. They break down organic matter to recycle essential elements, sustaining the entire marine food web from the bottom up, as well as maintaining the chemical health of the water.",
 			image: "/images/bacteria_image.jpeg",
 			phyla: bacteriaPhyla
 		},
 		{
 			kingdom: "Archaea",
 			title: "Archaea",
-			description: "Evolutionarily distinct from bacteria, these resilient microbes thrive in harsh environments where nothing else can. By dominating deep-sea hydrothermal vents, they play a critical role in regulating the ocean’s unique methane balances and provide a window into the planet’s earliest biological history.",
+			description:
+				"Evolutionarily distinct from bacteria, these resilient microbes thrive in harsh environments where nothing else can. By dominating deep-sea hydrothermal vents, they play a critical role in regulating the ocean’s unique methane balances and provide a window into the planet’s earliest biological history.",
 			image: "/images/hydrothermal_vent.jpg",
 			phyla: archaeaPhyla
 		}
@@ -120,16 +120,16 @@ export default async function TopTaxonomiesSummary() {
 							/>
 						</div>
 
-					{/* Content Container */}
-					<div className="p-6 space-y-3 flex flex-col grow">
+						{/* Content Container */}
+						<div className="p-6 space-y-3 flex flex-col grow">
 							{/* Kingdom Title */}
 							<div>
 								<h3 className="text-lg font-semibold text-base-content">{section.title}</h3>
 								<p className="text-sm text-base-content/80 leading-relaxed mt-1">{section.description}</p>
 							</div>
 
-						{/* Phyla List - Fixed height for alignment */}
-						<div className="grow flex flex-col">
+							{/* Phyla List - Fixed height for alignment */}
+							<div className="grow flex flex-col">
 								{section.phyla.length > 0 ? (
 									<>
 										<p className="text-xs font-semibold text-base-content/70 mt-4 mb-4 uppercase tracking-wider">
@@ -142,13 +142,17 @@ export default async function TopTaxonomiesSummary() {
 													href={`/explore/taxonomy?phylum=${encodeURIComponent(phylumData.phylum)}`}
 													className="flex items-center justify-between text-sm hover:bg-base-300/20 px-2 py-1 rounded transition-colors cursor-pointer group"
 												>
-												<div className="flex items-center gap-2 min-w-0 flex-1">
-													<span className="text-primary font-semibold shrink-0 group-hover:text-primary/80">{index + 1}.</span>
-													<span className="text-base-content group-hover:text-primary truncate group-hover:underline">{phylumData.phylum}</span>
-												</div>
-												<span className="text-primary shrink-0 ml-2 font-medium group-hover:text-primary/80">
-													{phylumData.count.toLocaleString()}
-												</span>
+													<div className="flex items-center gap-2 min-w-0 flex-1">
+														<span className="text-primary font-semibold shrink-0 group-hover:text-primary/80">
+															{index + 1}.
+														</span>
+														<span className="text-base-content group-hover:text-primary truncate group-hover:underline">
+															{phylumData.phylum}
+														</span>
+													</div>
+													<span className="text-primary shrink-0 ml-2 font-medium group-hover:text-primary/80">
+														{phylumData.count.toLocaleString()}
+													</span>
 												</Link>
 											))}
 										</div>
@@ -164,5 +168,3 @@ export default async function TopTaxonomiesSummary() {
 		</div>
 	);
 }
-
-

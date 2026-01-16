@@ -560,7 +560,7 @@ export default function ActualMap({
 	if (TableMetadata[table].fieldOrder) {
 		legendOptions.push(...TableMetadata[table].fieldOrder);
 		for (const opt of TableMetadata[table].enumSchema.options) {
-			if (!(TableMetadata[table].fieldOrder && TableMetadata[table].fieldOrder.includes(opt)) && includeOpt(opt)) {
+			if (!TableMetadata[table].fieldOrder.includes(opt) && includeOpt(opt)) {
 				legendOptions.push(opt);
 			}
 		}

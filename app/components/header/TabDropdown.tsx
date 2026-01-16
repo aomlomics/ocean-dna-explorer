@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { unfocus } from "@/app/helpers/utils";
 
@@ -13,7 +13,6 @@ export default function TabDropdown({
 	route: string;
 	dropdown: Array<{ label: string; href: string }>;
 }) {
-	const router = useRouter();
 	const pathname = usePathname();
 
 	// Special case for home route to prevent it from matching all paths
@@ -31,7 +30,7 @@ export default function TabDropdown({
 			</Link>
 			<ul
 				tabIndex={0}
-				className={`dropdown-content menu rounded-box w-48 p-2 shadow rounded-t-none z-[99999] ${
+				className={`dropdown-content menu rounded-box w-48 p-2 shadow rounded-t-none z-99999 ${
 					isActive ? "bg-primary text-primary-content" : "bg-base-300"
 				}`}
 			>

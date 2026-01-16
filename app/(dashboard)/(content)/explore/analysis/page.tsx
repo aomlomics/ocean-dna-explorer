@@ -5,9 +5,6 @@ import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
-import Table from "@/app/components/paginated/Table";
-import Pagination from "@/app/components/paginated/Pagination";
-import TableFilter from "@/app/components/explore/filters/TableFilter";
 import TableMetadata from "@/types/tableMetadata";
 
 export default async function Analysis() {

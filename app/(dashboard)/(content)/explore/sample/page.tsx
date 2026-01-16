@@ -5,9 +5,6 @@ import { DeadBooleanToEnum } from "@/types/enums";
 import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import Table from "@/app/components/paginated/Table";
-import Pagination from "@/app/components/paginated/Pagination";
-import TableFilter from "@/app/components/explore/filters/TableFilter";
 import TableMetadata from "@/types/tableMetadata";
 
 export default async function Sample() {

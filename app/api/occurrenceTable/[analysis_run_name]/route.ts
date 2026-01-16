@@ -20,13 +20,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ anal
 		const headers = new Set() as Set<string>;
 		for (const occ of result as Occurrence[]) {
 			if (occ.featureid in occurrences) {
-				occurrences[occ.featureid][occ.samp_name] = occ.organismQuantity;
+				occurrences[occ.featureid][occ.lib_id] = occ.organismQuantity;
 				featAbundances[occ.featureid] += occ.organismQuantity;
 			} else {
-				occurrences[occ.featureid] = { [occ.samp_name]: occ.organismQuantity };
+				occurrences[occ.featureid] = { [occ.lib_id]: occ.organismQuantity };
 				featAbundances[occ.featureid] = occ.organismQuantity;
 			}
-			headers.add(occ.samp_name);
+			headers.add(occ.lib_id);
 		}
 		const samp_names = Array.from(headers);
 		samp_names.sort((a, b) => a.localeCompare(b));

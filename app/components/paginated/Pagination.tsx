@@ -110,7 +110,7 @@ export default function Pagination({
 											</h3>
 										))}
 										{TableMetadata[table].titleField.map((t) => (
-											<h3 key={`${t}2`} className="font-medium text-primary break-words">
+											<h3 key={`${t}2`} className="font-medium text-primary wrap-break-word">
 												{d[t]}
 											</h3>
 										))}

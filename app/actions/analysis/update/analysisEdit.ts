@@ -5,7 +5,6 @@ import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { AnalysisPartial } from "@/prisma/generated/zod";
 import { AsyncReturnType, ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";

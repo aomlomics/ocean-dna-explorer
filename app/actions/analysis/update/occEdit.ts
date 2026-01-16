@@ -54,7 +54,7 @@ async function doEdit(
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
-		const occSampNames = occurrences.map((occ) => occ.samp_name);
+		const occLibIds = occurrences.map((occ) => occ.lib_id);
 		const occFeatureids = occurrences.map((occ) => occ.featureid);
 
 		await prisma.$transaction(
@@ -100,10 +100,9 @@ async function doEdit(
 					tx,
 					"Occurrence",
 					occurrences.filter(
-						(occ) =>
-							!newOccurrences.some((dbOcc) => dbOcc.samp_name === occ.samp_name && dbOcc.featureid === occ.featureid)
+						(occ) => !newOccurrences.some((dbOcc) => dbOcc.lib_id === occ.lib_id && dbOcc.featureid === occ.featureid)
 					),
-					["analysis_run_name", "samp_name", "featureid"]
+					["analysis_run_name", "lib_id", "featureid"]
 				);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
@@ -115,13 +114,13 @@ async function doEdit(
 					},
 					select: {
 						id: true,
-						samp_name: true,
+						lib_id: true,
 						featureid: true
 					}
 				});
 
 				const occToDelete = currOccs.reduce((acc, occ) => {
-					if (!occSampNames.includes(occ.samp_name) || !occFeatureids.includes(occ.featureid)) {
+					if (!occLibIds.includes(occ.lib_id) || !occFeatureids.includes(occ.featureid)) {
 						acc.push(occ.id);
 					}
 					return acc;

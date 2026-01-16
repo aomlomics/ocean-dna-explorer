@@ -25,21 +25,19 @@ model Project {
 
     // Data
     // Project
-    recordedBy           String //[]
-    recordedByID         String? //[]     @default([])
-    project_contact      String //[]
-    institution          String? //[]     @default([])
-    institutionID        String? //[]     @default([])
-    project_name         String
-    parent_project_id    String?
-    study_factor         String? //[]     @default([])
-    assay_type           String
-    neg_cont_0_1         DeadBoolean?
-    pos_cont_0_1         DeadBoolean?
-    expedition_id        String?
-    ship_crs_expocode    String?
-    woce_sect            String?
-    bioproject_accession String? //[]     @default([])
+    recordedBy         String //[]
+    recordedByID       String? //[]     @default([])
+    project_contact    String //[]
+    institution        String? //[]     @default([])
+    institutionID      String? //[]     @default([])
+    project_name       String
+    parent_project_id  String?
+    study_factor       String? //[]     @default([])
+    assay_type         String
+    neg_cont_0_1       DeadBoolean?
+    pos_cont_0_1       DeadBoolean?
+    projectDescription String?
+    dataDescription    String?
 
     // Data Management
     license               String?
@@ -66,11 +64,10 @@ model Sample {
     userDefined Json?
 
     // Relations
-    project_id  String
-    Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    Assays      Assay[]
-    Libraries   Library[]
-    Occurrences Occurrence[]
+    project_id String
+    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    Assays     Assay[]
+    Libraries  Library[]
 
     deleted_ODE Boolean?
 
@@ -324,8 +321,14 @@ model Sample {
     // Sectionless
     biosample_accession String?
     organism            String?
+    sterilise_method    String?
 
-    sterilise_method String?
+    // Expedition
+    short_name           String
+    expedition_id        String
+    ship_crs_expocode    String?
+    woce_sect            String?
+    bioproject_accession String? //[]     @default([])
 }
 
 model Assay {
@@ -419,13 +422,14 @@ model Library {
     userDefined Json?
 
     // Relations
-    project_id String
-    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    samp_name  String
-    Sample     Sample    @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
-    assay_name String
-    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
-    AssayPrep  AssayPrep @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
+    project_id  String
+    Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    samp_name   String
+    Sample      Sample       @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    assay_name  String
+    Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
+    AssayPrep   AssayPrep    @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
+    Occurrences Occurrence[]
 
     // Data
     // Library Preparation Sequencing

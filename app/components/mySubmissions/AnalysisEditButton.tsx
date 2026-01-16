@@ -11,7 +11,6 @@ import { v4 as uuidv4 } from "uuid";
 import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
 import assignEditAction from "@/app/actions/analysis/update/assignEdit";
 import ProgressBar from "../ProgressBar";
-import analysisUpdateIsPrivateAction from "@/app/actions/analysis/update/analysisUpdateIsPrivate";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

@@ -154,16 +154,12 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 											{primaryTaxonomyName}
 										</Link>
 									) : (
-										<p className="text-lg font-semibold text-base-content break-all">
-											{primaryTaxonomyName}
-										</p>
+										<p className="text-lg font-semibold text-base-content break-all">{primaryTaxonomyName}</p>
 									)}
 								</div>
 								<div className="text-xs text-base-content/70 bg-base-200/70 rounded-md p-2 w-full">
 									<span className="font-semibold uppercase tracking-wide mr-1">Taxonomy</span>
-									<span className="break-all">
-										{primaryTaxonomyDetails.taxonomy ?? primaryTaxonomy}
-									</span>
+									<span className="break-all">{primaryTaxonomyDetails.taxonomy ?? primaryTaxonomy}</span>
 								</div>
 							</>
 						) : (
@@ -230,9 +226,13 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 
 		const samplesWithFeature = await tx.sample.findMany({
 			where: {
-				Occurrences: {
+				Libraries: {
 					some: {
-						featureid
+						Occurrences: {
+							some: {
+								featureid
+							}
+						}
 					}
 				}
 			},
@@ -298,9 +298,7 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 		<div className="flex flex-col gap-4">
 			<div className="bg-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
 				<div>
-					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-						Across all samples
-					</p>
+					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Across all samples</p>
 					<p className="text-3xl font-bold text-primary mt-1">{globalPercent.toFixed(1)}%</p>
 					<p className="text-xs text-base-content/70 mt-1">
 						{globalFeatureSamples.toLocaleString()} of {totalSamplesCount.toLocaleString()} samples
@@ -323,8 +321,8 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 					<p className="text-3xl font-bold text-primary mt-1">{projectPercent.toFixed(1)}%</p>
 					{primaryProjectId ? (
 						<p className="text-xs text-base-content/70 mt-1">
-							{primaryProjectFeatureSamples.toLocaleString()} of{" "}
-							{primaryProjectTotalSamples.toLocaleString()} samples in this project
+							{primaryProjectFeatureSamples.toLocaleString()} of {primaryProjectTotalSamples.toLocaleString()} samples
+							in this project
 						</p>
 					) : (
 						<p className="text-xs text-base-content/70 mt-1">
@@ -347,7 +345,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
 			>
 				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
 						<AssayIcon />
 					</div>
 					<div>
@@ -373,7 +371,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</div>
-			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow">
+			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
 				{assayNames.map((name) => (
 					<li key={name}>
 						<Link href={`/explore/assay/${name}`} className="text-base-content hover:text-primary break-all">
@@ -388,14 +386,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 
 function AssayIcon() {
 	return (
-		<svg
-			version="1.1"
-			x="0px"
-			y="0px"
-			viewBox="250 0 550 544"
-			xmlSpace="preserve"
-			className="w-12 h-12"
-		>
+		<svg version="1.1" x="0px" y="0px" viewBox="250 0 550 544" xmlSpace="preserve" className="w-12 h-12">
 			<path
 				fill="currentColor"
 				opacity="1.000000"
@@ -546,4 +537,3 @@ z"
 		</svg>
 	);
 }
-

@@ -97,8 +97,9 @@ const TableMetadata = {
 			"Individual detection records linking samples to specific Features (DNA sequences), including their quantified abundance as determined by the analysis of sequencing data.",
 		schema: PrismaZodTypes.OccurrenceSchema,
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
-		titleField: ["analysis_run_name", "samp_name", "featureid"],
-		subFields: ["organismQuantity", "analysis_run_name", "samp_name", "featureid"]
+		titleField: ["analysis_run_name", "lib_id", "featureid"],
+		subFields: ["organismQuantity", "analysis_run_name", "lib_id", "featureid"],
+		fieldOrder: ["analysis_run_name", "lib_id", "featureid"]
 	},
 	feature: {
 		plural: "Features",

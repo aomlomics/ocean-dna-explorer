@@ -1,102 +1,10 @@
-import TableMetadata, { RelationMetadata, TableNames } from "@/types/tableMetadata";
-import { getZodType } from "./schema";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import { getRelationPath, getZodType } from "./schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { capitalizeTable, getShapesFromUrl, uncapitalizeTable } from "./utils";
+import { getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
-
-function searchRelations(
-	relations: RelationMetadata[],
-	target: Uncapitalize<Prisma.ModelName>,
-	paths: RelationMetadata[][],
-	visited: Prisma.ModelName[],
-	currPath = [] as RelationMetadata[],
-	deadEnds = new Set() as Set<Prisma.ModelName>
-) {
-	//check if target is in relations
-	const targetRel = relations.find((rel) => uncapitalizeTable(rel.table) === target);
-	if (targetRel) {
-		//target found
-		paths.push([...currPath, targetRel]);
-		return true;
-	}
-
-	//flag to detect if path leads to target
-	let found = false;
-
-	//check if current path is already invalidated
-	if (currPath.every((rel) => !deadEnds.has(rel.table))) {
-		for (const rel of relations) {
-			//can't pass through project
-			if (rel.table !== "Project") {
-				//don't check relation if we've already been there in this path or it is a known dead end
-				const newRelations = TableMetadata[rel.table].relations.filter(
-					(r) => !visited.includes(r.table) && !deadEnds.has(r.table)
-				);
-
-				if (newRelations.length) {
-					//can only go to project from analysis, unless coming from project
-					if (rel.table === "Analysis") {
-						if (visited.includes("Project")) {
-							//recurse, ignoring project relation
-							const res = searchRelations(
-								newRelations.filter((r) => r.table !== "Project"),
-								target,
-								paths,
-								[...visited, rel.table],
-								[...currPath, rel],
-								deadEnds
-							);
-							if (res) {
-								found = true;
-							}
-						} else {
-							const projectMetadata = newRelations.find((r) => r.table === "Project");
-							if (projectMetadata) {
-								//recurse
-								const res = searchRelations(
-									[projectMetadata],
-									target,
-									paths,
-									[...visited, rel.table],
-									[...currPath, rel],
-									deadEnds
-								);
-								if (res) {
-									found = true;
-								}
-							}
-						}
-					} else {
-						//recurse
-						const res = searchRelations(
-							newRelations,
-							target,
-							paths,
-							[...visited, rel.table],
-							[...currPath, rel],
-							deadEnds
-						);
-						if (res) {
-							found = true;
-						}
-					}
-				} else {
-					//no new relations
-					deadEnds.add(rel.table);
-				}
-			}
-		}
-
-		if (!found) {
-			//end of recursion for this path, target not found
-			deadEnds.add(currPath[currPath.length - 1].table);
-		}
-	}
-
-	return found;
-}
 
 function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
@@ -104,16 +12,12 @@ function deepWhere(
 	query: { [k: string]: any }
 ) {
 	//find all paths to target from start
-	const paths = [] as RelationMetadata[][];
-	const visited = [capitalizeTable(start)];
-	searchRelations(TableMetadata[start].relations, target, paths, visited);
+	const path = getRelationPath(start, target);
 
-	if (paths.length) {
-		const shortestPath = paths.sort((a, b) => a.length - b.length)[0];
-
+	if (path) {
 		//assemble query
 		let where = { ...query };
-		for (const rel of shortestPath.toReversed()) {
+		for (const rel of path.toReversed()) {
 			if (rel.type.endsWith("many")) {
 				//if relation is a -to-many, add a some to the query
 				where = { [rel.field]: { some: where } };
