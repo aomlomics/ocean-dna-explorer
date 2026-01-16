@@ -55,8 +55,10 @@ export default async function MySubmissions() {
 		}),
 		prisma.occurrence.findMany({
 			where: {
-				Sample: {
-					deleted_ODE: true
+				Library: {
+					Sample: {
+						deleted_ODE: true
+					}
 				}
 			},
 			distinct: ["analysis_run_name"],

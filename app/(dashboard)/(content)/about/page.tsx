@@ -373,22 +373,22 @@ function DataJourneyIcon({
 					variant === "tuna"
 						? "url(/images/outlines/lg_bluefin_tuna.svg)"
 						: variant === "shark"
-							? "url(/images/outlines/xl_lamniformes.svg)"
-							: variant === "shrimp"
-								? "url(/images/outlines/md_shrimp.svg)"
-								: variant === "copepod"
-									? "url(/images/outlines/sm_copepod.svg)"
-									: "url(/images/outlines/xl_dolphin.svg)",
+						? "url(/images/outlines/xl_lamniformes.svg)"
+						: variant === "shrimp"
+						? "url(/images/outlines/md_shrimp.svg)"
+						: variant === "copepod"
+						? "url(/images/outlines/sm_copepod.svg)"
+						: "url(/images/outlines/xl_dolphin.svg)",
 				maskImage:
 					variant === "tuna"
 						? "url(/images/outlines/lg_bluefin_tuna.svg)"
 						: variant === "shark"
-							? "url(/images/outlines/xl_lamniformes.svg)"
-							: variant === "shrimp"
-								? "url(/images/outlines/md_shrimp.svg)"
-								: variant === "copepod"
-									? "url(/images/outlines/sm_copepod.svg)"
-									: "url(/images/outlines/xl_dolphin.svg)",
+						? "url(/images/outlines/xl_lamniformes.svg)"
+						: variant === "shrimp"
+						? "url(/images/outlines/md_shrimp.svg)"
+						: variant === "copepod"
+						? "url(/images/outlines/sm_copepod.svg)"
+						: "url(/images/outlines/xl_dolphin.svg)",
 				WebkitMaskRepeat: "no-repeat",
 				maskRepeat: "no-repeat",
 				WebkitMaskPosition: "center",
@@ -418,9 +418,7 @@ export default function AboutPage() {
 			{/* Mission banner */}
 			<section className="relative -mt-6 sm:-mt-8 lg:-mt-10 left-1/2 right-1/2 -mx-[50vw] w-screen mb-4 sm:mb-6">
 				<div className="px-4 pt-12 sm:pt-16 md:pt-20 pb-4 text-center">
-					<h1 className="mb-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-primary">
-						Our Mission
-					</h1>
+					<h1 className="mb-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-primary">Our Mission</h1>
 					<p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-base-content/90">
 						The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We
 						provide a unified, accessible platform for exploring, visualizing, and sharing standardized environmental
@@ -444,11 +442,11 @@ export default function AboutPage() {
 				<div className="text-center space-y-4">
 					<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary">About Us</h2>
 					<p className="text-base sm:text-lg leading-relaxed text-base-content/90 max-w-3xl mx-auto">
-						The Ocean DNA Explorer is a robust data platform, search engine, and visualization tool dedicated to
-						ocean environmental DNA (eDNA) data. As part of a larger effort to standardize eDNA data, ODE is built to
-						host datasets generated using protocols like FAIR eDNA and BeBop. We provide customized features for users
-						to compare studies, discover trends, and perform complex searches on data contributed by NOAA Omics,
-						NOAA Ocean Exploration, and partner organizations.
+						The Ocean DNA Explorer is a robust data platform, search engine, and visualization tool dedicated to ocean
+						environmental DNA (eDNA) data. As part of a larger effort to standardize eDNA data, ODE is built to host
+						datasets generated using protocols like FAIR eDNA and BeBop. We provide customized features for users to
+						compare studies, discover trends, and perform complex searches on data contributed by NOAA Omics, NOAA Ocean
+						Exploration, and partner organizations.
 					</p>
 				</div>
 
@@ -457,14 +455,9 @@ export default function AboutPage() {
 					<h2 className="text-2xl sm:text-3xl lg:text-4xl mb-16 font-semibold text-primary text-center">Team</h2>
 					<div className="grid gap-12 md:grid-cols-3">
 						{teamMembers.map((member) => (
-							<div
-								key={member.name}
-								className="flex flex-col items-center text-center space-y-2"
-							>
+							<div key={member.name} className="flex flex-col items-center text-center space-y-2">
 								<div className="mb-3 h-24 w-24 rounded-full bg-linear-to-br from-primary/70 via-primary/40 to-base-100 border-2 border-primary/50 shadow-md" />
-								<p className="text-base font-semibold tracking-wide text-base-content/90">
-									{member.name}
-								</p>
+								<p className="text-base font-semibold tracking-wide text-base-content/90">{member.name}</p>
 								<p className="text-sm sm:text-base text-base-content/75">{member.role}</p>
 							</div>
 						))}
@@ -571,17 +564,10 @@ export default function AboutPage() {
 					{/* Mobile / tablet layout – simple stacked steps with icons */}
 					<div className="space-y-10 lg:hidden">
 						{dataJourneySteps.map((step, index) => (
-							<div
-								key={step.key}
-								className="flex items-start gap-5"
-							>
+							<div key={step.key} className="flex items-start gap-5">
 								<div
 									className={`shrink-0 pt-1 ${
-										index % 3 === 0
-											? "-rotate-3"
-											: index % 3 === 1
-												? "rotate-2"
-												: "-rotate-1"
+										index % 3 === 0 ? "-rotate-3" : index % 3 === 1 ? "rotate-2" : "-rotate-1"
 									}`}
 								>
 									<DataJourneyIcon
@@ -589,12 +575,12 @@ export default function AboutPage() {
 										variant={
 											step.icon === "dolphin"
 												? step.key === "occurrence"
-														? "tuna"
-														: step.key === "feature"
-															? "shrimp"
-															: step.key === "assignment"
-																? "copepod"
-																: "dolphin"
+													? "tuna"
+													: step.key === "feature"
+													? "shrimp"
+													: step.key === "assignment"
+													? "copepod"
+													: "dolphin"
 												: undefined
 										}
 									/>
@@ -607,9 +593,7 @@ export default function AboutPage() {
 									>
 										{step.title}
 									</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{step.description}
-									</p>
+									<p className="text-base text-base-content/85 leading-relaxed">{step.description}</p>
 								</div>
 							</div>
 						))}
@@ -627,9 +611,7 @@ export default function AboutPage() {
 							{projectStep && (
 								<div className="flex-1 max-w-md space-y-3 text-left">
 									<h3 className="text-2xl font-semibold text-primary">{projectStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{projectStep.description}
-									</p>
+									<p className="text-base text-base-content/85 leading-relaxed">{projectStep.description}</p>
 								</div>
 							)}
 						</div>
@@ -639,23 +621,10 @@ export default function AboutPage() {
 							{/* Icon chain */}
 							<div className="flex items-end gap-6">
 								<div className="flex items-end h-56">
-									<DataJourneyIcon
-										type="ctd"
-										className="h-48 w-auto"
-									/>
+									<DataJourneyIcon type="ctd" className="h-48 w-auto" />
 								</div>
-								<svg
-									viewBox="0 0 60 12"
-									className="w-24 h-10 text-primary"
-									aria-hidden="true"
-								>
-									<path
-										d="M2 6h40"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="3"
-										strokeLinecap="round"
-									/>
+								<svg viewBox="0 0 60 12" className="w-24 h-10 text-primary" aria-hidden="true">
+									<path d="M2 6h40" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
 									<path
 										d="M38 2l8 4-8 4"
 										fill="none"
@@ -666,23 +635,10 @@ export default function AboutPage() {
 									/>
 								</svg>
 								<div className="flex items-end h-56">
-									<DataJourneyIcon
-										type="niskin"
-										className="h-48 w-auto -rotate-2"
-									/>
+									<DataJourneyIcon type="niskin" className="h-48 w-auto -rotate-2" />
 								</div>
-								<svg
-									viewBox="0 0 60 12"
-									className="w-24 h-10 text-primary"
-									aria-hidden="true"
-								>
-									<path
-										d="M2 6h40"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="3"
-										strokeLinecap="round"
-									/>
+								<svg viewBox="0 0 60 12" className="w-24 h-10 text-primary" aria-hidden="true">
+									<path d="M2 6h40" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
 									<path
 										d="M38 2l8 4-8 4"
 										fill="none"
@@ -721,21 +677,15 @@ export default function AboutPage() {
 							<div className="flex justify-between w-full max-w-4xl gap-10">
 								{sampleCollectionStep && (
 									<div className="flex-1 max-w-sm space-y-2 text-left">
-										<h3 className="text-2xl font-semibold text-primary">
-											{sampleCollectionStep.title}
-										</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">
-											{sampleCollectionStep.description}
-										</p>
+										<h3 className="text-2xl font-semibold text-primary">{sampleCollectionStep.title}</h3>
+										<p className="text-base text-base-content/85 leading-relaxed">{sampleCollectionStep.description}</p>
 									</div>
 								)}
 								<div className="flex-1" />
 								{sampleStep && (
 									<div className="flex-1 max-w-sm space-y-2 text-left">
 										<h3 className="text-2xl font-semibold text-primary">{sampleStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">
-											{sampleStep.description}
-										</p>
+										<p className="text-base text-base-content/85 leading-relaxed">{sampleStep.description}</p>
 									</div>
 								)}
 							</div>
@@ -777,9 +727,7 @@ export default function AboutPage() {
 							{featureStep && (
 								<div className="flex-1 max-w-md space-y-3 text-left">
 									<h3 className="text-2xl font-semibold text-primary">{featureStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{featureStep.description}
-									</p>
+									<p className="text-base text-base-content/85 leading-relaxed">{featureStep.description}</p>
 								</div>
 							)}
 						</div>
@@ -805,9 +753,7 @@ export default function AboutPage() {
 								</div>
 								<div className="flex-1 max-w-md space-y-3 text-left">
 									<h3 className="text-2xl font-semibold text-primary">{libraryStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{libraryStep.description}
-									</p>
+									<p className="text-base text-base-content/85 leading-relaxed">{libraryStep.description}</p>
 								</div>
 							</div>
 						)}
@@ -834,8 +780,8 @@ export default function AboutPage() {
 								<div className="flex-1 max-w-md space-y-3 text-left">
 									<h3 className="text-2xl font-semibold text-primary">{analysisStep.title}</h3>
 									<p className="text-base text-base-content/85 leading-relaxed">
-										{analysisStep.description} This step brings together measurements generated in the lab
-										and results from downstream computational analysis.
+										{analysisStep.description} This step brings together measurements generated in the lab and results
+										from downstream computational analysis.
 									</p>
 								</div>
 							</div>
@@ -846,28 +792,18 @@ export default function AboutPage() {
 							<div className="flex items-center gap-12">
 								<div className="flex-1 flex justify-center">
 									<div className="flex items-center gap-8">
-										<DataJourneyIcon
-											type="assay"
-											className="h-24 w-auto"
-										/>
-										<DataJourneyIcon
-											type="dna"
-											className="h-24 w-auto"
-										/>
+										<DataJourneyIcon type="assay" className="h-24 w-auto" />
+										<DataJourneyIcon type="dna" className="h-24 w-auto" />
 									</div>
 								</div>
 								<div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl text-left">
 									<div className="space-y-2">
 										<h3 className="text-2xl font-semibold text-primary">{assayStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">
-											{assayStep.description}
-										</p>
+										<p className="text-base text-base-content/85 leading-relaxed">{assayStep.description}</p>
 									</div>
 									<div className="space-y-2">
 										<h3 className="text-2xl font-semibold text-primary">{assayPrepStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">
-											{assayPrepStep.description}
-										</p>
+										<p className="text-base text-base-content/85 leading-relaxed">{assayPrepStep.description}</p>
 									</div>
 								</div>
 							</div>
@@ -877,15 +813,13 @@ export default function AboutPage() {
 						{assignmentStep && (
 							<div className="flex items-center gap-12">
 								<div className="flex-1 flex justify-center">
-									<div className="w-[28rem] h-[18rem] max-w-full">
+									<div className="w-md h-72 max-w-full">
 										<AssigningTaxonomyLoop />
 									</div>
 								</div>
 								<div className="flex-1 max-w-md space-y-3 text-left">
 									<h3 className="text-2xl font-semibold text-primary">{assignmentStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{assignmentStep.description}
-									</p>
+									<p className="text-base text-base-content/85 leading-relaxed">{assignmentStep.description}</p>
 								</div>
 							</div>
 						)}
@@ -911,9 +845,7 @@ export default function AboutPage() {
 								</div>
 								<div className="flex-1 max-w-md space-y-3 text-left">
 									<h3 className="text-2xl font-semibold text-primary">{taxonomyStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{taxonomyStep.description}
-									</p>
+									<p className="text-base text-base-content/85 leading-relaxed">{taxonomyStep.description}</p>
 								</div>
 							</div>
 						)}
@@ -937,59 +869,57 @@ export default function AboutPage() {
 												maskSize: "contain"
 											}}
 										/>
-											{/* Pulsing outlines over the oceans */}
-											<div className="absolute inset-0 pointer-events-none">
-												<div
-													className="absolute left-[28%] top-[38%] w-10 h-10 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
-													style={{
-														backgroundColor: "currentColor",
-														WebkitMaskImage: "url(/images/outlines/xl_dolphin.svg)",
-														maskImage: "url(/images/outlines/xl_dolphin.svg)",
-														WebkitMaskRepeat: "no-repeat",
-														maskRepeat: "no-repeat",
-														WebkitMaskPosition: "center",
-														maskPosition: "center",
-														WebkitMaskSize: "contain",
-														maskSize: "contain"
-													}}
-												/>
-												<div
-													className="absolute left-[55%] top-[52%] w-9 h-9 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
-													style={{
-														animationDelay: "250ms",
-														backgroundColor: "currentColor",
-														WebkitMaskImage: "url(/images/outlines/lg_bluefin_tuna.svg)",
-														maskImage: "url(/images/outlines/lg_bluefin_tuna.svg)",
-														WebkitMaskRepeat: "no-repeat",
-														maskRepeat: "no-repeat",
-														WebkitMaskPosition: "center",
-														maskPosition: "center",
-														WebkitMaskSize: "contain",
-														maskSize: "contain"
-													}}
-												/>
-												<div
-													className="absolute left-[70%] top-[32%] w-8 h-8 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
-													style={{
-														animationDelay: "500ms",
-														backgroundColor: "currentColor",
-														WebkitMaskImage: "url(/images/outlines/md_shrimp.svg)",
-														maskImage: "url(/images/outlines/md_shrimp.svg)",
-														WebkitMaskRepeat: "no-repeat",
-														maskRepeat: "no-repeat",
-														WebkitMaskPosition: "center",
-														maskPosition: "center",
-														WebkitMaskSize: "contain",
-														maskSize: "contain"
-													}}
-												/>
-											</div>
+										{/* Pulsing outlines over the oceans */}
+										<div className="absolute inset-0 pointer-events-none">
+											<div
+												className="absolute left-[28%] top-[38%] w-10 h-10 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
+												style={{
+													backgroundColor: "currentColor",
+													WebkitMaskImage: "url(/images/outlines/xl_dolphin.svg)",
+													maskImage: "url(/images/outlines/xl_dolphin.svg)",
+													WebkitMaskRepeat: "no-repeat",
+													maskRepeat: "no-repeat",
+													WebkitMaskPosition: "center",
+													maskPosition: "center",
+													WebkitMaskSize: "contain",
+													maskSize: "contain"
+												}}
+											/>
+											<div
+												className="absolute left-[55%] top-[52%] w-9 h-9 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
+												style={{
+													animationDelay: "250ms",
+													backgroundColor: "currentColor",
+													WebkitMaskImage: "url(/images/outlines/lg_bluefin_tuna.svg)",
+													maskImage: "url(/images/outlines/lg_bluefin_tuna.svg)",
+													WebkitMaskRepeat: "no-repeat",
+													maskRepeat: "no-repeat",
+													WebkitMaskPosition: "center",
+													maskPosition: "center",
+													WebkitMaskSize: "contain",
+													maskSize: "contain"
+												}}
+											/>
+											<div
+												className="absolute left-[70%] top-[32%] w-8 h-8 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
+												style={{
+													animationDelay: "500ms",
+													backgroundColor: "currentColor",
+													WebkitMaskImage: "url(/images/outlines/md_shrimp.svg)",
+													maskImage: "url(/images/outlines/md_shrimp.svg)",
+													WebkitMaskRepeat: "no-repeat",
+													maskRepeat: "no-repeat",
+													WebkitMaskPosition: "center",
+													maskPosition: "center",
+													WebkitMaskSize: "contain",
+													maskSize: "contain"
+												}}
+											/>
+										</div>
 									</div>
 									<div className="lg:w-1/3 max-w-md space-y-3 text-left">
 										<h3 className="text-2xl font-semibold text-primary">{occurrenceStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">
-											{occurrenceStep.description}
-										</p>
+										<p className="text-base text-base-content/85 leading-relaxed">{occurrenceStep.description}</p>
 									</div>
 								</div>
 							</div>
@@ -1000,19 +930,11 @@ export default function AboutPage() {
 							<div className="max-w-6xl mx-auto w-full pt-4 border-t border-base-content/20">
 								<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
 									{remainingDesktopTableSteps.map((step) => (
-										<div
-											key={step.key}
-											className="flex items-start gap-4"
-										>
-											<DataJourneyIcon
-												type={step.icon}
-												className="h-16 w-auto mt-1"
-											/>
+										<div key={step.key} className="flex items-start gap-4">
+											<DataJourneyIcon type={step.icon} className="h-16 w-auto mt-1" />
 											<div className="space-y-2 max-w-xs text-left">
 												<h3 className="text-2xl font-semibold text-primary">{step.title}</h3>
-												<p className="text-base text-base-content/85 leading-relaxed">
-													{step.description}
-												</p>
+												<p className="text-base text-base-content/85 leading-relaxed">{step.description}</p>
 											</div>
 										</div>
 									))}
@@ -1025,18 +947,15 @@ export default function AboutPage() {
 				{/* FAIR eDNA Data Model */}
 				<section className="space-y-10">
 					<div className="text-center space-y-3">
-						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary">
-							FAIR eDNA Data Model
-						</h2>
+						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary">FAIR eDNA Data Model</h2>
 						<p className="text-base sm:text-lg text-base-content/90 max-w-3xl mx-auto">
-							The Ocean DNA Explorer follows FAIR eDNA standards so that datasets are easy to find, access, combine,
-							and reuse across projects and institutions. By aligning with a shared data model, we make it
-							straightforward to move between shipboard sampling, laboratory workflows, and open data repositories.
+							The Ocean DNA Explorer follows FAIR eDNA standards so that datasets are easy to find, access, combine, and
+							reuse across projects and institutions. By aligning with a shared data model, we make it straightforward
+							to move between shipboard sampling, laboratory workflows, and open data repositories.
 						</p>
 						<p className="text-base sm:text-lg text-base-content/80 max-w-3xl mx-auto">
-							The tools and pipelines below help generate standardized metadata tables, process raw sequence data,
-							and submit results to community archives while keeping everything interoperable with the Ocean DNA
-							Explorer.
+							The tools and pipelines below help generate standardized metadata tables, process raw sequence data, and
+							submit results to community archives while keeping everything interoperable with the Ocean DNA Explorer.
 						</p>
 					</div>
 
@@ -1069,8 +988,8 @@ export default function AboutPage() {
 						<div className="space-y-2 text-left">
 							<h2 className="text-lg sm:text-xl font-semibold text-primary">Help Us Improve</h2>
 							<p className="text-sm sm:text-base text-base-content/85">
-								Found a bug, have a feature request, or want to suggest a new visualization? Open an issue on our
-								GitHub repository so we can continue improving the Ocean DNA Explorer together.
+								Found a bug, have a feature request, or want to suggest a new visualization? Open an issue on our GitHub
+								repository so we can continue improving the Ocean DNA Explorer together.
 							</p>
 							<Link
 								href="https://github.com/aomlomics/ocean-dna-explorer/issues"
