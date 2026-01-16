@@ -108,6 +108,7 @@ async function parseProjectFile({
 				} else {
 					//Project Level
 					parseSchemaToObject(field, value, projectCol, "project");
+					parseSchemaToObject(field, value, projectCol, "sample");
 					parseSchemaToObject(field, value, projectCol, "assay");
 					parseSchemaToObject(field, value, projectCol, "assayPrep");
 					parseSchemaToObject(field, value, projectCol, "library");
@@ -420,8 +421,8 @@ async function parseSampleFile({
 
 				const parsedSample = SampleOptionalDefaultsSchema.safeParse(
 					{
-						...sampleRow,
 						...projectCol,
+						...sampleRow,
 						userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
 					},
 					{

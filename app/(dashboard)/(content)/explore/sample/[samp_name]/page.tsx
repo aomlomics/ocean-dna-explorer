@@ -2,7 +2,6 @@ import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
-import DropdownLinkBox from "@/app/components/DropdownLinkBox";
 import TableMetadata from "@/types/tableMetadata";
 import { Sample } from "@/app/generated/prisma/client";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
@@ -18,9 +17,13 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				samp_name
 			},
 			include: {
-				Occurrences: {
+				Libraries: {
 					select: {
-						featureid: true
+						Occurrences: {
+							select: {
+								featureid: true
+							}
+						}
 					}
 				},
 				Assays: {
@@ -40,7 +43,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 		const occs = await tx.occurrence.findMany({
 			where: {
-				samp_name
+				Library: {
+					samp_name
+				}
 			},
 			distinct: ["analysis_run_name"]
 		});
@@ -62,7 +67,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				Analysis: {
 					Occurrences: {
 						some: {
-							samp_name
+							Library: {
+								samp_name
+							}
 						}
 					}
 				}
@@ -85,7 +92,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Occurrences: _, Assays: __, Project: ___, ...justSample } = sample;
+	const { Libraries: _, Assays: __, Project: ___, ...justSample } = sample;
 
 	// Build search URL - encode brackets/commas but leave quotes as-is for JSON.parse
 	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
@@ -118,7 +125,10 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right" data-tip={TableMetadata.sample.description}>
+					<h1
+						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
+						data-tip={TableMetadata.sample.description}
+					>
 						{samp_name}
 					</h1>
 					{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
@@ -145,7 +155,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 						<div className="space-y-2">
 							{assayData.map((assay) => (
 								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
-									<div className="w-16 h-16 flex-shrink-0 rounded-lg bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
+									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 										<div className="relative w-12 h-12">
 											<AssayPhyloPic assay_name={assay.assay_name} />
 										</div>
@@ -164,7 +174,11 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				<div className="lg:col-span-2 space-y-8">
 					{/* Stats Grid */}
 					<div className="grid grid-cols-3 gap-4">
-						<SampleStatCard title="Occurrences" value={sample.Occurrences.length} icon="eye" />
+						<SampleStatCard
+							title="Occurrences"
+							value={sample.Libraries.reduce((acc, lib) => acc + lib.Occurrences.length, 0)}
+							icon="eye"
+						/>
 						<DropdownLinkBoxWithIcon
 							title="Total Analyses"
 							count={analyses.length}
@@ -226,25 +240,26 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				</div>
 			</div>
 
-		{/* Taxonomy Relative Abundance Chart */}
-		{taxonomyData.length > 0 && (
-			<div>
-				<h2 className="text-xl font-medium mb-4">
-					<span className="text-base-content/90">Taxonomies found in this <span className="text-primary font-bold">Sample</span></span>
-				</h2>
-				<div className="w-full">
-					<TaxonomyDonutChart
-						labels={taxonomyData.map((t) => t.taxonomy)}
-						data={taxonomyData.map((t) => t.count)}
-						sampName={samp_name}
-					/>
+			{/* Taxonomy Relative Abundance Chart */}
+			{taxonomyData.length > 0 && (
+				<div>
+					<h2 className="text-xl font-medium mb-4">
+						<span className="text-base-content/90">
+							Taxonomies found in this <span className="text-primary font-bold">Sample</span>
+						</span>
+					</h2>
+					<div className="w-full">
+						<TaxonomyDonutChart
+							labels={taxonomyData.map((t) => t.taxonomy)}
+							data={taxonomyData.map((t) => t.count)}
+							sampName={samp_name}
+						/>
+					</div>
 				</div>
-			</div>
-		)}
+			)}
 		</div>
 	);
 }
-
 
 type StatIconType = "location" | "eye" | "analysis" | "fish";
 
@@ -265,7 +280,7 @@ function SampleStatCard({
 	if (icon === "eye" && value !== undefined) {
 		return (
 			<div className="bg-base-200 p-4 rounded-lg flex items-center gap-4">
-				<div className="w-16 h-16 flex-shrink-0 flex items-center justify-center text-primary">
+				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">
 					<StatIcon icon={icon} />
 				</div>
 				<div className="flex flex-col">
@@ -399,7 +414,7 @@ function DropdownLinkBoxWithIcon({
 				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
 			>
 				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
 						<StatIcon icon={icon} />
 					</div>
 					<div>
@@ -425,10 +440,7 @@ function DropdownLinkBoxWithIcon({
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</div>
-			<ul
-				tabIndex={0}
-				className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-			>
+			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
 				{content.map((str) => (
 					<li key={str}>
 						<Link href={`${linkPrefix}/${str}`} className="text-base-content hover:text-primary break-all">
@@ -450,7 +462,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
 			>
 				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-primary">
+					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
 						<AssayIcon />
 					</div>
 					<div>
@@ -476,10 +488,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</div>
-			<ul
-				tabIndex={0}
-				className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-[1] p-2 shadow"
-			>
+			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
 				{assayNames.map((name) => (
 					<li key={name}>
 						<Link href={`/explore/assay/${name}`} className="text-base-content hover:text-primary break-all">
@@ -494,14 +503,7 @@ function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: s
 
 function AssayIcon() {
 	return (
-		<svg
-			version="1.1"
-			x="0px"
-			y="0px"
-			viewBox="250 0 550 544"
-			xmlSpace="preserve"
-			className="w-12 h-12"
-		>
+		<svg version="1.1" x="0px" y="0px" viewBox="250 0 550 544" xmlSpace="preserve" className="w-12 h-12">
 			<path
 				fill="currentColor"
 				opacity="1.000000"

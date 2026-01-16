@@ -172,26 +172,32 @@ export default function Table({
 	}, [hideEmpty, data]);
 
 	useEffect(() => {
-		if (!Object.keys(headersFilter).length) {
-			let tempHeaders = [] as typeof headers;
+		if (!headers.length && data && data.statusMessage === "success") {
+			let tempHeadersSet = new Set() as Set<string>;
 			//move tags to the front
 			const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
 			if (manyRelations.length !== manyRelationsNoTags.length) {
-				tempHeaders.push("Tags");
+				tempHeadersSet.add("Tags");
 			}
-			tempHeaders.push(...oneRelations);
-			tempHeaders.push(...Object.keys(oneRelationsArrayTitle));
-			tempHeaders.push(...manyRelationsNoTags);
-			if (TableMetadata[table].fieldOrder) {
-				tempHeaders.push(...TableMetadata[table].fieldOrder);
-			}
-			tempHeaders.push(
-				...TableMetadata[table].enumSchema.options.reduce((acc: string[], head) => {
-					//remove fields that have already been added
-					if (oneRelations.includes(head) || TableMetadata[table].fieldOrder?.includes(head)) {
-						return acc;
+			if (oneRelations.length) {
+				//maintain field order for relation fields
+				if (TableMetadata[table].fieldOrder) {
+					for (const f of TableMetadata[table].fieldOrder) {
+						if (oneRelations.includes(f)) {
+							tempHeadersSet.add(f);
+						}
 					}
+				}
 
+				oneRelations.forEach(tempHeadersSet.add, tempHeadersSet);
+			}
+			Object.keys(oneRelationsArrayTitle).forEach(tempHeadersSet.add, tempHeadersSet);
+			manyRelationsNoTags.forEach(tempHeadersSet.add, tempHeadersSet);
+			if (TableMetadata[table].fieldOrder) {
+				TableMetadata[table].fieldOrder.forEach(tempHeadersSet.add, tempHeadersSet);
+			}
+			TableMetadata[table].enumSchema.options
+				.reduce((acc: string[], head) => {
 					//remove database field
 					//displaying title header differently, so removing it
 					if (head === "id" || head === title) {
@@ -214,12 +220,13 @@ export default function Table({
 
 					return acc;
 				}, [])
-			);
+				.forEach(tempHeadersSet.add, tempHeadersSet);
 
+			//apply default filters
 			let tempHeadersFilter = {} as Record<string, true>;
 			if (filterHeadersAtStart && TableMetadata[table].subFields) {
 				const temp = {} as Record<string, true>;
-				for (const head of tempHeaders) {
+				for (const head of tempHeadersSet) {
 					if (
 						!TableMetadata[table].subFields.includes(head) &&
 						!manyRelations.includes(head) &&
@@ -235,17 +242,17 @@ export default function Table({
 				tempHeadersFilter = temp;
 			}
 
-			if (showUserDefined && data && data.statusMessage === "success" && !userDefinedHeaders.length) {
+			if (showUserDefined) {
 				const tempUserDefinedHeadersSet = new Set() as Set<string>;
 				for (const r of data.result) {
 					for (const h in r.userDefined) {
 						tempUserDefinedHeadersSet.add(h);
 					}
 				}
-				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
 
-				tempHeaders = [...tempHeaders, ...tempUserDefinedHeaders];
-				setUserDefinedHeaders(Array.from(tempUserDefinedHeaders));
+				tempHeadersSet = new Set([...tempHeadersSet, ...tempUserDefinedHeadersSet]);
+				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
+				setUserDefinedHeaders(tempUserDefinedHeaders);
 
 				if (filterHeadersAtStart) {
 					tempHeadersFilter = {
@@ -255,7 +262,7 @@ export default function Table({
 				}
 			}
 
-			setHeaders(tempHeaders);
+			setHeaders(Array.from(tempHeadersSet));
 
 			if (Object.keys(tempHeadersFilter).length) {
 				setHeadersFilter(tempHeadersFilter);

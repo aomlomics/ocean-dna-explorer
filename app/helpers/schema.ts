@@ -258,15 +258,25 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 			return pathRelations;
 		}
 
-		//skip visited tables
-		//can't pass through Project, but can start at Project
-		if (!visited.has(curr) && (curr !== "Project" || path.length === 1)) {
+		if (
+			!visited.has(curr) && //skip visited tables
+			//Project restrictions
+			(curr !== "Project" || //base case
+				path.length === 1) //starting at Project
+		) {
 			for (const rel of TableMetadata[curr].relations) {
 				if (
-					curr !== "Analysis" || //base case
-					rel.table === "Project" || //Analysis to Project
-					visited.has("Project") || //Project to Analysis
-					path.length === 1 //starting at Analysis
+					//Analysis restrictions
+					(curr !== "Analysis" || //base case
+						rel.table === "Project" || //Analysis to Project
+						rel.table === "Assay" || //Analysis to Assay
+						path.includes("Project") || //Project to Analysis
+						path.length === 1) && //starting at Analysis
+					//Assay restrictions
+					(curr !== "Assay" || //base case
+						rel.table === "AssayPrep" || //Assay to AssayPrep
+						(path.includes("AssayPrep") && path.length === 2) || //starting at AssayPrep to Assay
+						path.length === 1) //starting at Assay
 				) {
 					queue.push([rel.table, path]);
 				}

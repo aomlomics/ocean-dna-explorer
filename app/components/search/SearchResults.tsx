@@ -38,6 +38,7 @@ export default function SearchResults() {
 						<TaxaGrid ignoreParams={["table"]} />
 					) : (
 						<Table
+							key={table}
 							table={table}
 							ignoreParams={["table"]}
 							defaultTake={25}

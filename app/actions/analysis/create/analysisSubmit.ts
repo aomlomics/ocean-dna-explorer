@@ -1,6 +1,6 @@
 "use server";
 
-import { Analysis, Tag } from "@/app/generated/prisma/client";
+import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
@@ -71,6 +71,46 @@ async function doSubmit(
 					);
 				}
 
+				//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
+				const libIds = new Set() as Set<Occurrence["lib_id"]>;
+				for (const occ of occurrences) {
+					libIds.add(occ.lib_id);
+				}
+				const dbLibraries = await tx.library.findMany({
+					where: {
+						project_id: analysis.project_id,
+						assay_name: analysis.assay_name,
+						lib_id: {
+							in: Array.from(libIds)
+						}
+					},
+					select: {
+						lib_id: true
+					}
+				});
+
+				//check if any provided libraries are missing from database query
+				if (libIds.size !== dbLibraries.length) {
+					const invalidLibIds = [] as string[];
+					for (const lib_id of libIds) {
+						if (!dbLibraries.some((lib) => lib.lib_id === lib_id)) {
+							invalidLibIds.push(lib_id);
+						}
+					}
+
+					if (invalidLibIds.length) {
+						if (invalidLibIds.length === 1) {
+							throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
+						} else {
+							throw new Error(
+								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
+									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
+									.join(", ")}.`
+							);
+						}
+					}
+				}
+
 				//check if all tagNames are valid
 				const dbTags = await tx.tag.findMany({
 					where: {
@@ -82,10 +122,22 @@ async function doSubmit(
 						tagName: true
 					}
 				});
-				if (
-					!(dbTags.length === tagNames.length && tagNames.every((name) => dbTags.some((tag) => name === tag.tagName)))
-				) {
-					throw new Error("Some provided tag names are not in database.");
+
+				//check if any provided tags are missing from database query
+				if (tagNames.length !== dbTags.length) {
+					const invalidTagNames = tagNames.filter((tn) => !dbTags.some((tag) => tag.tagName === tn));
+
+					if (invalidTagNames.length) {
+						if (invalidTagNames.length === 1) {
+							throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
+						} else {
+							throw new Error(
+								`Some tags are invalid. The invalid tagNames are ${invalidTagNames
+									.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
+									.join(", ")}.`
+							);
+						}
+					}
 				}
 
 				await tx.analysis.create({

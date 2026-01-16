@@ -144,8 +144,8 @@ model Occurrence {
     id Int @id @default(autoincrement())
 
     // Relations
-    samp_name         String
-    Sample            Sample   @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    lib_id            String
+    Library           Library  @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
     analysis_run_name String
     Analysis          Analysis @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
     featureid         String
@@ -155,7 +155,7 @@ model Occurrence {
     /// @zod.custom.use(z.coerce.number().int())
     organismQuantity Int
 
-    @@unique([analysis_run_name, samp_name, featureid])
+    @@unique([analysis_run_name, lib_id, featureid])
 }
 
 model Assignment {
