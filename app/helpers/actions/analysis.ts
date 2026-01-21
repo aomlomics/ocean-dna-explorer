@@ -1,4 +1,4 @@
-import { Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
+import { Analysis, Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import {
@@ -18,12 +18,14 @@ export async function parseAnalysisFile({
 	assignmentsUrl,
 	occurrencesUrl,
 	isPrivate,
+	trusted,
 	oldChecksum
 }: {
 	channel: Channel;
 	assignmentsUrl: string;
 	occurrencesUrl: string;
-	isPrivate?: boolean;
+	isPrivate?: Analysis["isPrivate"];
+	trusted?: Analysis["trusted"];
 	oldChecksum?: string;
 }) {
 	const analysisCol = {} as Record<string, string>;
@@ -67,14 +69,20 @@ export async function parseAnalysisFile({
 			}
 		}
 
-		//add to progress bar
-		await channel.stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
+		//add to progress bar every 10 percent
+		if (i % (parser.info.records / 10) === 0) {
+			await channel.stream.message(
+				`Processed line ${i} of ${parser.info.records}.`,
+				(i / parser.info.records) * 50 + 25
+			);
+		}
 	}
 
 	const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
 		{
 			...analysisCol,
 			isPrivate: isPrivate === undefined ? false : isPrivate,
+			trusted: trusted === undefined ? false : trusted,
 			editHistory: "JsonNull",
 			analysisMetadataFileUrl_ODE: channel.url,
 			analysisMetadataFileChecksum_ODE: analysisMd5,
@@ -257,11 +265,13 @@ export async function parseAssignmentsFile({
 
 			taxonomies.push(parsedTaxonomy.data);
 
-			//add to progress bar
-			await channel.stream.message(
-				`Processed line ${i} of ${parser.info.records}.`,
-				(i / parser.info.records) * 50 + 25
-			);
+			//add to progress bar every 10 percent
+			if (i % (parser.info.records / 10) === 0) {
+				await channel.stream.message(
+					`Processed line ${i} of ${parser.info.records}.`,
+					(i / parser.info.records) * 50 + 25
+				);
+			}
 		}
 	}
 
@@ -369,8 +379,13 @@ export async function parseOccurrencesFile({
 			}
 		}
 
-		//add to progress bar
-		await channel.stream.message(`Processed line ${i} of ${parser.info.records}.`, (i / parser.info.records) * 50 + 25);
+		//add to progress bar every 10 percent
+		if (i % (parser.info.records / 10) === 0) {
+			await channel.stream.message(
+				`Processed line ${i} of ${parser.info.records}.`,
+				(i / parser.info.records) * 50 + 25
+			);
+		}
 	}
 
 	return { occurrences, occurrencesMd5 };
@@ -381,12 +396,14 @@ export async function parseAnalysisFiles({
 	assignmentsChannel,
 	occurrencesChannel,
 	isPrivate,
+	trusted,
 	oldChecksums
 }: {
 	analysisChannel: Channel;
 	assignmentsChannel: Channel;
 	occurrencesChannel: Channel;
-	isPrivate?: boolean;
+	isPrivate: Analysis["isPrivate"];
+	trusted: Analysis["trusted"];
 	oldChecksums?: { analysisMd5?: string; assignmentsMd5?: string; occurrencesMd5?: string };
 }) {
 	const analysisParseResult = await parseAnalysisFile({
@@ -394,6 +411,7 @@ export async function parseAnalysisFiles({
 		assignmentsUrl: assignmentsChannel.url,
 		occurrencesUrl: occurrencesChannel.url,
 		isPrivate,
+		trusted,
 		oldChecksum: oldChecksums?.analysisMd5
 	});
 	if (!analysisParseResult) {

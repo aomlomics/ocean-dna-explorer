@@ -3,6 +3,7 @@ model Analysis {
     analysis_run_name String   @unique
     dateSubmitted     DateTime @default(now())
     isPrivate         Boolean
+    trusted           Boolean
     /// [EditHistoryType]
     editHistory       Json?
 

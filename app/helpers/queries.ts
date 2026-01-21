@@ -305,6 +305,8 @@ export function parseToQuery(
 		}
 	} else if (zodType.type === "string[]") {
 		//TODO: add string arrays back to schema once Prisma supports contains on arrays
+	} else if (zodType.type === "boolean") {
+		//TODO: boolean
 	}
 
 	if (searchWhere) {

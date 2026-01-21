@@ -89,7 +89,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.AnalysisSchema,
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
 		titleField: "analysis_run_name",
-		subFields: ["assay_name", "project_id"]
+		subFields: ["assay_name", "project_id", "trusted"]
 	},
 	occurrence: {
 		plural: "Occurrences",

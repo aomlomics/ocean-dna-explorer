@@ -1,6 +1,6 @@
 "use server";
 
-import { Analysis, Project, Tag } from "@/app/generated/prisma/client";
+import { Analysis, Occurrence, Project, Tag } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
@@ -14,7 +14,12 @@ async function doEdit(
 	editId: string,
 	project_id: Project["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
-	{ url, isPrivate, tagNames }: { url?: string; isPrivate?: boolean; tagNames?: Tag["tagName"][] }
+	{
+		url,
+		isPrivate,
+		trusted,
+		tagNames
+	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -52,6 +57,7 @@ async function doEdit(
 				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
 				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
 				isPrivate,
+				trusted,
 				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 			});
 			if (!parseResult) {
@@ -85,7 +91,7 @@ async function doEdit(
 					);
 				}
 
-				const dbAnalysis = await tx.analysis.findUnique({
+				const dbAnalysis = (await tx.analysis.findUnique({
 					where: {
 						analysis_run_name
 					},
@@ -93,14 +99,57 @@ async function doEdit(
 						analysisMetadataFileUrl_ODE: true,
 						analysisMetadataFileChecksum_ODE: true,
 						isPrivate: true,
+						trusted: true,
 						editHistory: true,
 						Tags: {
 							select: {
 								tagName: true
 							}
-						}
+						},
+						Occurrences: trusted
+							? {
+									select: {
+										featureid: true,
+										Library: {
+											select: {
+												Occurrences: {
+													where: {
+														Analysis: {
+															trusted: true
+														},
+														analysis_run_name: {
+															not: analysis_run_name
+														}
+													},
+													select: {
+														featureid: true,
+														analysis_run_name: true
+													}
+												}
+											}
+										}
+									}
+								}
+							: false
 					}
-				});
+				})) as unknown as {
+					isPrivate: Analysis["isPrivate"];
+					trusted: Analysis["trusted"];
+					editHistory: PrismaJson.EditHistoryType | null;
+					analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
+					analysisMetadataFileChecksum_ODE: Analysis["analysisMetadataFileChecksum_ODE"];
+					Tags: Tag[];
+				} & {
+					Occurrences?: {
+						featureid: Occurrence["featureid"];
+						Library: {
+							Occurrences: {
+								featureid: Occurrence["featureid"];
+								analysis_run_name: Occurrence["analysis_run_name"];
+							}[];
+						};
+					}[];
+				};
 
 				if (!dbAnalysis) {
 					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
@@ -120,10 +169,23 @@ async function doEdit(
 							tagName: true
 						}
 					});
-					if (
-						!(dbTags.length === tagNames.length && tagNames.every((name) => dbTags.some((tag) => name === tag.tagName)))
-					) {
-						throw new Error("Some provided tag names are not in database.");
+
+					//check if any provided tags are missing from database query
+					if (tagNames.length !== dbTags.length) {
+						const invalidTagNames = tagNames.filter((tn) => !dbTags.some((tag) => tag.tagName === tn));
+
+						if (invalidTagNames.length) {
+							if (invalidTagNames.length === 1) {
+								throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
+							} else {
+								//TODO: length === 2 should have no comma
+								throw new Error(
+									`Some tags are invalid. The invalid tagNames are ${invalidTagNames
+										.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
+										.join(", ")}.`
+								);
+							}
+						}
 					}
 
 					connect = dbTags.filter((t) => !dbAnalysis.Tags.some((at) => t.tagName === at.tagName));
@@ -153,15 +215,42 @@ async function doEdit(
 											newValue: parseResult.analysisMd5
 										}
 									])
-							  }
-							: {}),
-						isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate,
+								}
+							: {
+									isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate,
+									trusted: trusted === undefined ? dbAnalysis.trusted : trusted
+								}),
 						Tags: {
 							connect,
 							disconnect
 						}
 					}
 				});
+
+				if (trusted) {
+					const featureids = new Set(dbAnalysis.Occurrences!.map((occ) => occ.featureid));
+					const otherTrusted = [] as Analysis["analysis_run_name"][];
+					for (const ourOcc of dbAnalysis.Occurrences!) {
+						for (const otherOcc of ourOcc.Library!.Occurrences)
+							if (!otherTrusted.includes(otherOcc.analysis_run_name) && featureids.has(otherOcc.featureid)) {
+								otherTrusted.push(otherOcc.analysis_run_name);
+							}
+					}
+
+					if (otherTrusted.length) {
+						//remove trusted from other analyses
+						await tx.analysis.updateMany({
+							where: {
+								analysis_run_name: {
+									in: otherTrusted
+								}
+							},
+							data: {
+								trusted: false
+							}
+						});
+					}
+				}
 
 				await stream.success("Analysis file successfully updated in database.");
 			},
@@ -182,11 +271,16 @@ export default async function analysisEditAction(
 	editId: string,
 	project_id: Project["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
-	{ url, isPrivate, tagNames }: { url?: string; isPrivate?: boolean; tagNames?: Tag["tagName"][] }
+	{
+		url,
+		isPrivate,
+		trusted,
+		tagNames
+	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
 ) {
 	const stream = createProgressStream();
 
-	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, tagNames }).then(stream.close);
+	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, trusted, tagNames }).then(stream.close);
 
 	return stream.readable;
 }

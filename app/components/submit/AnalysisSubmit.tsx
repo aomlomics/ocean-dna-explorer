@@ -39,6 +39,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	//detecting what project the analyses are associated with, and whether the project is private
 	const [project, setProject] = useState<Project | null>(null);
 	const [isPrivate, setIsPrivate] = useState(false);
+	const [trusted, setTrusted] = useState(false);
 
 	//list of tags to be added to submitted analyses
 	const [selectedTags, setSelectedTags] = useState([] as Tag[]);
@@ -280,97 +281,93 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 				}
 			}) as string[];
 
-			let scrolled = false;
-			//submit for every analysis section
-			for (const id of activeIds) {
+			if (activeIds.length) {
 				//scroll first analysis into view
-				if (!scrolled) {
-					scrolled = true;
-					const element = document.getElementById(id);
-					if (element) {
-						element.scrollIntoView({
-							block: "start",
-							behavior: "smooth"
-						});
-					}
+				document.getElementById(activeIds[0])!.scrollIntoView({
+					block: "start",
+					behavior: "smooth"
+				});
+
+				//submit for every analysis section
+				for (const id of activeIds) {
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					});
+					const analysisUrl = (
+						await upload(`submissions/${files[id].analysisFile.name}`, files[id].analysisFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: files[id].analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
+					).url;
+					setResponses({
+						id,
+						key: "analysis",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
+
+					//assignments submit
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					});
+					const assignmentsUrl = (
+						await upload(`submissions/${files[id].assignmentsFile.name}`, files[id].assignmentsFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: files[id].assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
+					).url;
+					setResponses({
+						id,
+						key: "assignments",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
+
+					//occurrences submit
+					//upload file to blob storage
+					setResponses({
+						id,
+						key: "occurrences",
+						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					});
+					const occurrencesUrl = (
+						await upload(`submissions/${files[id].occurrencesFile.name}`, files[id].occurrencesFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: files[id].occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
+					).url;
+					setResponses({
+						id,
+						key: "occurrences",
+						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					});
+
+					//add file urls in case of error
+					setFileUrls({ ...fileUrls, [id]: [analysisUrl, assignmentsUrl, occurrencesUrl] });
+
+					//trigger streamed action
+					doProgressActionMany(
+						analysisSubmitAction,
+						[
+							(res) => setResponses({ id, key: "analysis", res }),
+							(res) => setResponses({ id, key: "assignments", res }),
+							(res) => setResponses({ id, key: "occurrences", res })
+						],
+						analysisUrl,
+						assignmentsUrl,
+						occurrencesUrl,
+						isPrivate,
+						trusted,
+						selectedTags.map((t) => t.tagName)
+					);
 				}
-
-				//upload file to blob storage
-				setResponses({
-					id,
-					key: "analysis",
-					res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
-				});
-				const analysisUrl = (
-					await upload(`submissions/${files[id].analysisFile.name}`, files[id].analysisFile, {
-						access: "public",
-						handleUploadUrl: "/api/file/upload",
-						multipart: files[id].analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-					})
-				).url;
-				setResponses({
-					id,
-					key: "analysis",
-					res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
-				});
-
-				//assignments submit
-				//upload file to blob storage
-				setResponses({
-					id,
-					key: "assignments",
-					res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
-				});
-				const assignmentsUrl = (
-					await upload(`submissions/${files[id].assignmentsFile.name}`, files[id].assignmentsFile, {
-						access: "public",
-						handleUploadUrl: "/api/file/upload",
-						multipart: files[id].assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-					})
-				).url;
-				setResponses({
-					id,
-					key: "assignments",
-					res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
-				});
-
-				//occurrences submit
-				//upload file to blob storage
-				setResponses({
-					id,
-					key: "occurrences",
-					res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
-				});
-				const occurrencesUrl = (
-					await upload(`submissions/${files[id].occurrencesFile.name}`, files[id].occurrencesFile, {
-						access: "public",
-						handleUploadUrl: "/api/file/upload",
-						multipart: files[id].occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-					})
-				).url;
-				setResponses({
-					id,
-					key: "occurrences",
-					res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
-				});
-
-				//add file urls in case of error
-				setFileUrls({ ...fileUrls, [id]: [analysisUrl, assignmentsUrl, occurrencesUrl] });
-
-				//trigger streamed action
-				doProgressActionMany(
-					analysisSubmitAction,
-					[
-						(res) => setResponses({ id, key: "analysis", res }),
-						(res) => setResponses({ id, key: "assignments", res }),
-						(res) => setResponses({ id, key: "occurrences", res })
-					],
-					analysisUrl,
-					assignmentsUrl,
-					occurrencesUrl,
-					isPrivate,
-					selectedTags.map((t) => t.tagName)
-				);
 			}
 		} catch (err) {
 			const error = err as Error;
@@ -390,12 +387,12 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 									{project.project_id}
 								</Link>
 							) : (
-								"No analysis selected yet"
+								"No Analysis selected yet"
 							)}
 						</div>
 					</SubmitFormSection>
 					<SubmitFormSection
-						title="Make submission private"
+						title="Make Analyses private"
 						info="Only users added to the Project for these Analyses will be able to see private submissions."
 					>
 						<fieldset className="fieldset">
@@ -411,7 +408,23 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							</label>
 						</fieldset>
 					</SubmitFormSection>
-					<SubmitFormSection title="Add tags to analyses">
+					<SubmitFormSection
+						title="Make Analyses trusted"
+						info="These Analyses will be labeled as the trusted Analysis for all Libraries used in it. Any other Analyses that use any Libraries in this submission will be no longer be trusted."
+					>
+						<fieldset className="fieldset">
+							<label className="fieldset-label flex gap-2">
+								<input
+									type="checkbox"
+									className="checkbox"
+									checked={trusted}
+									onChange={(e) => setTrusted(e.target.checked)}
+								/>
+								<p>Trusted submission</p>
+							</label>
+						</fieldset>
+					</SubmitFormSection>
+					<SubmitFormSection title="Add tags to Analyses">
 						<div className="flex gap-5 flex-wrap items-center">
 							{selectedTags.map((t) => (
 								<div key={t.tagName} className="flex gap-1 items-center">
