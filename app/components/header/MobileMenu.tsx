@@ -122,12 +122,11 @@ export default function MobileMenu() {
 							Help
 						</Link>
 					</li>
-					{/* TEMPORARY: hide the About page until its finished */}
-					{/* <li className="text-base py-1">
+					<li className="text-base py-1">
 						<Link href="/about" onClick={handleClose}>
 							About
 						</Link>
-					</li> */}
+					</li>
 				</ul>
 			)}
 

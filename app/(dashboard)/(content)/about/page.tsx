@@ -1,7 +1,8 @@
+ "use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
-import DataJourneySurfaceScene from "@/app/components/DataJourneySurfaceScene";
 import { AssigningTaxonomyLoop } from "@/app/components/eDNA_graphic/analysis_viz";
 import BasePairMatrix from "@/app/components/BasePairMatrix";
 import TableMetadata from "@/types/tableMetadata";
@@ -549,9 +550,9 @@ export default function AboutPage() {
 				</div>
 
 				{/* The Data Journey */}
-				<section className="space-y-12">
+				<section className="space-y-20 lg:space-y-28">
 					<div className="text-center space-y-4">
-						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary">The Data Journey</h2>
+						<h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary">The Data Journey</h2>
 						<p className="text-base sm:text-lg lg:text-xl text-base-content/90 max-w-4xl mx-auto leading-relaxed">
 							The Ocean DNA Explorer links physical sampling, molecular protocols, and bioinformatics into a single
 							connected data model. Each step connects real-world sampling and environmental context to downstream
@@ -559,386 +560,181 @@ export default function AboutPage() {
 						</p>
 					</div>
 
-					{/* Mobile / tablet layout – simple stacked steps with icons */}
-					<div className="space-y-10 lg:hidden">
-						{dataJourneySteps.map((step, index) => (
-							<div key={step.key} className="flex items-start gap-5">
-								<div
-									className={`shrink-0 pt-1 ${
-										index % 3 === 0 ? "-rotate-3" : index % 3 === 1 ? "rotate-2" : "-rotate-1"
-									}`}
-								>
-									<DataJourneyIcon
-										type={step.icon}
-										variant={
-											step.icon === "dolphin"
-												? step.key === "occurrence"
-													? "tuna"
-													: step.key === "feature"
-													? "shrimp"
-													: step.key === "assignment"
-													? "copepod"
-													: "dolphin"
-												: undefined
-										}
-									/>
-								</div>
-								<div className="space-y-2 text-left">
-									<h3
-										className={`text-xl sm:text-2xl font-semibold tracking-tight ${
-											step.type === "table" ? "text-primary" : "text-base-content"
-										}`}
-									>
-										{step.title}
-									</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">{step.description}</p>
-								</div>
+					{/* Step 1: Project — Ship with CTD */}
+					<div className="space-y-6">
+						<div className="grid lg:grid-cols-[1fr_400px] gap-8 lg:gap-12 items-start">
+							<div className="relative w-full h-[400px] sm:h-[500px] lg:h-[600px]">
+								<Image
+									src="/images/biorender/ship_with_ctd.png"
+									alt="Research vessel deploying CTD"
+									fill
+									sizes="(max-width: 1024px) 100vw, 900px"
+									className="object-contain object-center"
+									priority
+								/>
 							</div>
-						))}
+							<div className="flex flex-col gap-12 lg:gap-20 pt-4 lg:pt-8">
+								{projectStep && (
+									<div className="space-y-3">
+										<h3 className="text-2xl lg:text-3xl font-semibold text-primary">{projectStep.title}</h3>
+										<p className="text-base lg:text-lg text-base-content/85 leading-relaxed">
+											{projectStep.description} Projects organize sampling cruises, define research objectives, and link all downstream data to a single scientific effort.
+										</p>
+									</div>
+								)}
+								{sampleCollectionStep && (
+									<div className="space-y-3">
+										<h3 className="text-2xl lg:text-3xl font-semibold text-base-content">
+											{sampleCollectionStep.title}
+										</h3>
+										<p className="text-base lg:text-lg text-base-content/85 leading-relaxed">
+											{sampleCollectionStep.description}
+										</p>
+									</div>
+								)}
+							</div>
+						</div>
 					</div>
 
-					{/* Large-screen layout – structured journey with paired text + visuals */}
-					<div className="hidden lg:flex flex-col gap-16">
-						{/* 1. Project + Boat/CTD scene */}
-						<div className="flex items-center gap-12">
-							<div className="flex-1 flex justify-center">
-								<div className="w-full max-w-2xl h-[500px]">
-									<DataJourneySurfaceScene />
-								</div>
-							</div>
-							{projectStep && (
-								<div className="flex-1 max-w-md space-y-3 text-left">
-									<h3 className="text-2xl font-semibold text-primary">{projectStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">{projectStep.description}</p>
-								</div>
-							)}
-						</div>
-
-						{/* 2. Sample Collection + CTD → Niskin → sample bottles, icons in one row, blurbs under CTD and bottles */}
-						<div className="flex flex-col items-center gap-6">
-							{/* Icon chain */}
-							<div className="flex items-end gap-6">
-								<div className="flex items-end h-56">
-									<DataJourneyIcon type="ctd" className="h-48 w-auto" />
-								</div>
-								<svg viewBox="0 0 60 12" className="w-24 h-10 text-primary" aria-hidden="true">
-									<path d="M2 6h40" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-									<path
-										d="M38 2l8 4-8 4"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
+					{/* Step 2: Sample — CTD → Niskin → Bottles */}
+					<div className="space-y-8">
+						<div className="overflow-x-auto pb-4">
+							<div className="flex items-center justify-start lg:justify-center gap-6 lg:gap-10 min-w-max px-4">
+								{/* CTD */}
+								<div className="relative h-[340px] sm:h-[400px] lg:h-[480px] w-[180px] sm:w-[220px] lg:w-[280px] shrink-0">
+									<Image
+										src="/images/biorender/ctd_light_mode.png"
+										alt="CTD instrument"
+										fill
+										sizes="(max-width: 768px) 180px, (max-width: 1024px) 220px, 280px"
+										className="object-contain [html[data-theme='dark']_&]:hidden"
 									/>
+									<Image
+										src="/images/biorender/ctd_dark_mode.png"
+										alt="CTD instrument"
+										fill
+										sizes="(max-width: 768px) 180px, (max-width: 1024px) 220px, 280px"
+										className="object-contain hidden [html[data-theme='dark']_&]:block"
+									/>
+								</div>
+								{/* Arrow 1 */}
+								<svg viewBox="0 0 80 24" className="w-16 sm:w-20 lg:w-24 h-8 text-primary shrink-0" aria-hidden="true">
+									<defs>
+										<marker id="arrow1" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+											<path d="M0,0 L10,5 L0,10 Z" fill="currentColor" />
+										</marker>
+									</defs>
+									<line x1="4" y1="12" x2="65" y2="12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" markerEnd="url(#arrow1)" />
 								</svg>
-								<div className="flex items-end h-56">
-									<DataJourneyIcon type="niskin" className="h-48 w-auto -rotate-2" />
-								</div>
-								<svg viewBox="0 0 60 12" className="w-24 h-10 text-primary" aria-hidden="true">
-									<path d="M2 6h40" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-									<path
-										d="M38 2l8 4-8 4"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
+								{/* Niskin */}
+								<div className="relative h-[280px] sm:h-[340px] lg:h-[400px] w-[100px] sm:w-[120px] lg:w-[150px] shrink-0">
+									<Image
+										src="/images/biorender/niskin_bottle.png"
+										alt="Niskin bottle"
+										fill
+										sizes="(max-width: 768px) 100px, (max-width: 1024px) 120px, 150px"
+										className="object-contain"
 									/>
+								</div>
+								{/* Arrow 2 */}
+								<svg viewBox="0 0 80 24" className="w-16 sm:w-20 lg:w-24 h-8 text-primary shrink-0" aria-hidden="true">
+									<defs>
+										<marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+											<path d="M0,0 L10,5 L0,10 Z" fill="currentColor" />
+										</marker>
+									</defs>
+									<line x1="4" y1="12" x2="65" y2="12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" markerEnd="url(#arrow2)" />
 								</svg>
-								<div className="flex items-end h-56">
-									<div className="flex gap-3 items-end">
-										{[0, 1, 2].map((i) => (
-											<div
-												// Using index is fine here for a static decorative row
-												// eslint-disable-next-line react/no-array-index-key
-												key={i}
-												className="text-primary w-20 h-40"
-												style={{
-													backgroundColor: "currentColor",
-													WebkitMaskImage: "url(/images/icons/sample_bottle.svg)",
-													maskImage: "url(/images/icons/sample_bottle.svg)",
-													WebkitMaskRepeat: "no-repeat",
-													maskRepeat: "no-repeat",
-													WebkitMaskPosition: "center",
-													maskPosition: "center",
-													WebkitMaskSize: "contain",
-													maskSize: "contain"
-												}}
-											/>
-										))}
+								{/* Sample bottles (staggered) */}
+								<div className="relative h-[280px] sm:h-[340px] lg:h-[400px] w-[280px] sm:w-[340px] lg:w-[420px] shrink-0">
+									<div className="absolute left-0 bottom-0 w-[100px] sm:w-[120px] lg:w-[150px] h-[220px] sm:h-[260px] lg:h-[320px]">
+										<Image src="/images/biorender/sample_bottle.png" alt="Sample bottle" fill sizes="150px" className="object-contain" />
+									</div>
+									<div className="absolute left-[70px] sm:left-[90px] lg:left-[110px] bottom-4 w-[100px] sm:w-[120px] lg:w-[150px] h-[220px] sm:h-[260px] lg:h-[320px]">
+										<Image src="/images/biorender/sample_bottle.png" alt="Sample bottle" fill sizes="150px" className="object-contain" />
+									</div>
+									<div className="absolute left-[140px] sm:left-[180px] lg:left-[220px] bottom-1 w-[100px] sm:w-[120px] lg:w-[150px] h-[220px] sm:h-[260px] lg:h-[320px]">
+										<Image src="/images/biorender/sample_bottle.png" alt="Sample bottle" fill sizes="150px" className="object-contain" />
 									</div>
 								</div>
-							</div>
-
-							{/* Blurbs under CTD and sample bottles */}
-							<div className="flex justify-between w-full max-w-4xl gap-10">
-								{sampleCollectionStep && (
-									<div className="flex-1 max-w-sm space-y-2 text-left">
-										<h3 className="text-2xl font-semibold text-primary">{sampleCollectionStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">{sampleCollectionStep.description}</p>
-									</div>
-								)}
-								<div className="flex-1" />
-								{sampleStep && (
-									<div className="flex-1 max-w-sm space-y-2 text-left">
-										<h3 className="text-2xl font-semibold text-primary">{sampleStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">{sampleStep.description}</p>
-									</div>
-								)}
 							</div>
 						</div>
-
-						{/* 3. Feature: large DNA with ACTG grid */}
-						<div className="flex items-center gap-12">
-							<div className="flex-1 flex justify-center">
-								<div className="relative w-80 h-64 flex items-center justify-center">
-									{/* ACTG background grid */}
-									<div className="absolute inset-0 -z-10 flex flex-col items-center justify-center gap-1 pointer-events-none">
-										{[0, 1, 2, 3].map((row) => (
-											<div
-												// eslint-disable-next-line react/no-array-index-key
-												key={row}
-												className="text-xs font-mono tracking-[0.35em] text-primary/20"
-											>
-												ACTGACTGACTGACTG
-											</div>
-										))}
-									</div>
-									{/* Big DNA icon */}
-									<div
-										className="w-140 h-140 text-primary"
-										style={{
-											backgroundColor: "currentColor",
-											WebkitMaskImage: "url(/images/icons/dna_icon.svg)",
-											maskImage: "url(/images/icons/dna_icon.svg)",
-											WebkitMaskRepeat: "no-repeat",
-											maskRepeat: "no-repeat",
-											WebkitMaskPosition: "center",
-											maskPosition: "center",
-											WebkitMaskSize: "contain",
-											maskSize: "contain"
-										}}
-									/>
-								</div>
+						{sampleStep && (
+							<div className="max-w-lg mx-auto text-center space-y-3">
+								<h3 className="text-2xl lg:text-3xl font-semibold text-primary">{sampleStep.title}</h3>
+								<p className="text-base lg:text-lg text-base-content/85 leading-relaxed">
+									{sampleStep.description} Each sample preserves a snapshot of biodiversity from a specific place and time, ready for molecular analysis.
+								</p>
 							</div>
-							{featureStep && (
-								<div className="flex-1 max-w-md space-y-3 text-left">
-									<h3 className="text-2xl font-semibold text-primary">{featureStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">{featureStep.description}</p>
-								</div>
-							)}
+						)}
+					</div>
+
+					{/* Step 3: Into the Lab */}
+					<div className="space-y-10">
+						<div className="text-center space-y-3">
+							<h3 className="text-2xl lg:text-3xl font-semibold text-base-content">Into the Lab</h3>
+							<p className="text-base lg:text-lg text-base-content/85 leading-relaxed max-w-3xl mx-auto">
+								Samples collected at sea are filtered, preserved, and transported to the laboratory where DNA is extracted and prepared for sequencing.
+							</p>
 						</div>
+						{/* DNA Extraction */}
+						<div className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
+							<Image
+								src="/images/biorender/dna_extraction.png"
+								alt="DNA extraction workflow"
+								fill
+								sizes="100vw"
+								className="object-contain"
+							/>
+						</div>
+						<div className="max-w-lg mx-auto text-center space-y-3">
+							<h3 className="text-2xl lg:text-3xl font-semibold text-base-content">DNA Extraction</h3>
+							<p className="text-base lg:text-lg text-base-content/85 leading-relaxed">
+								Filters are processed to isolate environmental DNA, capturing genetic material shed by organisms living in the sampled water.
+							</p>
+						</div>
+					</div>
 
-						{/* 4. Library row with themed PNG icon */}
-						{libraryStep && (
-							<div className="flex items-center gap-12">
-								<div className="flex-1 flex justify-center">
-									<div
-										className="text-primary w-48 h-36"
-										style={{
-											backgroundColor: "currentColor",
-											WebkitMaskImage: "url(/images/icons/library_icon.png)",
-											maskImage: "url(/images/icons/library_icon.png)",
-											WebkitMaskRepeat: "no-repeat",
-											maskRepeat: "no-repeat",
-											WebkitMaskPosition: "center",
-											maskPosition: "center",
-											WebkitMaskSize: "contain",
-											maskSize: "contain"
-										}}
-									/>
-								</div>
-								<div className="flex-1 max-w-md space-y-3 text-left">
-									<h3 className="text-2xl font-semibold text-primary">{libraryStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">{libraryStep.description}</p>
-								</div>
+					{/* Step 4: Wet Lab Processing */}
+					<div className="space-y-10">
+						<div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+							<div className="relative w-full h-[280px] sm:h-[360px] lg:h-[440px]">
+								<Image
+									src="/images/biorender/second_wetlab_step.png"
+									alt="Wet lab processing"
+									fill
+									sizes="(max-width: 1024px) 100vw, 50vw"
+									className="object-contain"
+								/>
 							</div>
-						)}
+							<div className="space-y-3 text-center lg:text-left">
+								<h3 className="text-2xl lg:text-3xl font-semibold text-primary">AssayPrep</h3>
+								<p className="text-base lg:text-lg text-base-content/85 leading-relaxed">
+									{assayPrepStep?.description} Extracted DNA is amplified using targeted primers, creating libraries ready for high-throughput sequencing.
+								</p>
+							</div>
+						</div>
+					</div>
 
-						{/* 5. Analysis row – sequencer + ACTG matrix */}
-						{analysisStep && (
-							<div className="flex items-center gap-12">
-								<div className="flex-1 flex justify-center">
-									<div className="flex items-center gap-8">
-										{/* Lab sequencer – inline SVG, no mask so line drawing shows */}
-										<div className="relative w-40 h-40">
-											<Image
-												src="/images/icons/sequencer_icon.svg"
-												alt="Sequencer machine"
-												fill
-												sizes="160px"
-												className="object-contain"
-											/>
-										</div>
-										{/* ACTG matrix – animated base-pair grid */}
-										<BasePairMatrix />
-									</div>
-								</div>
-								<div className="flex-1 max-w-md space-y-3 text-left">
-									<h3 className="text-2xl font-semibold text-primary">{analysisStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">
-										{analysisStep.description} This step brings together measurements generated in the lab and results
-										from downstream computational analysis.
-									</p>
-								</div>
+					{/* Step 5: Thermocycler / PCR */}
+					<div className="space-y-10">
+						<div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+							<div className="space-y-3 text-center lg:text-left order-2 lg:order-1">
+								<h3 className="text-2xl lg:text-3xl font-semibold text-base-content">Pooling &amp; Sequencing</h3>
+								<p className="text-base lg:text-lg text-base-content/85 leading-relaxed">
+									Amplified samples are pooled together and loaded onto a sequencer, generating millions of DNA reads that represent the biodiversity captured in each sample.
+								</p>
 							</div>
-						)}
-
-						{/* 6. Assay + AssayPrep together */}
-						{assayStep && assayPrepStep && (
-							<div className="flex items-center gap-12">
-								<div className="flex-1 flex justify-center">
-									<div className="flex items-center gap-8">
-										<DataJourneyIcon type="assay" className="h-24 w-auto" />
-										<DataJourneyIcon type="dna" className="h-24 w-auto" />
-									</div>
-								</div>
-								<div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl text-left">
-									<div className="space-y-2">
-										<h3 className="text-2xl font-semibold text-primary">{assayStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">{assayStep.description}</p>
-									</div>
-									<div className="space-y-2">
-										<h3 className="text-2xl font-semibold text-primary">{assayPrepStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">{assayPrepStep.description}</p>
-									</div>
-								</div>
+							<div className="relative w-full h-[280px] sm:h-[360px] lg:h-[440px] order-1 lg:order-2">
+								<Image
+									src="/images/biorender/thermocycler.png"
+									alt="Thermocycler for PCR amplification"
+									fill
+									sizes="(max-width: 1024px) 100vw, 50vw"
+									className="object-contain"
+								/>
 							</div>
-						)}
-
-						{/* 7. Assignment row – reuse assigning taxonomy animation */}
-						{assignmentStep && (
-							<div className="flex items-center gap-12">
-								<div className="flex-1 flex justify-center">
-									<div className="w-md h-72 max-w-full">
-										<AssigningTaxonomyLoop />
-									</div>
-								</div>
-								<div className="flex-1 max-w-md space-y-3 text-left">
-									<h3 className="text-2xl font-semibold text-primary">{assignmentStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">{assignmentStep.description}</p>
-								</div>
-							</div>
-						)}
-
-						{/* 8. Taxonomy row – taxonomy outline */}
-						{taxonomyStep && (
-							<div className="flex items-center gap-12">
-								<div className="flex-1 flex justify-center">
-									<div
-										className="w-40 h-32 text-primary"
-										style={{
-											backgroundColor: "currentColor",
-											WebkitMaskImage: "url(/images/outlines/xl_dolphin.svg)",
-											maskImage: "url(/images/outlines/xl_dolphin.svg)",
-											WebkitMaskRepeat: "no-repeat",
-											maskRepeat: "no-repeat",
-											WebkitMaskPosition: "center",
-											maskPosition: "center",
-											WebkitMaskSize: "contain",
-											maskSize: "contain"
-										}}
-									/>
-								</div>
-								<div className="flex-1 max-w-md space-y-3 text-left">
-									<h3 className="text-2xl font-semibold text-primary">{taxonomyStep.title}</h3>
-									<p className="text-base text-base-content/85 leading-relaxed">{taxonomyStep.description}</p>
-								</div>
-							</div>
-						)}
-
-						{/* 9. Occurrence row – world map with pulsing taxa */}
-						{occurrenceStep && (
-							<div className="mt-6 flex flex-col gap-6">
-								<div className="flex flex-col lg:flex-row items-center gap-8">
-									<div className="relative w-full lg:w-2/3 h-72 text-primary">
-										<div
-											className="w-full h-full"
-											style={{
-												backgroundColor: "currentColor",
-												WebkitMaskImage: "url(/images/icons/world_map.svg)",
-												maskImage: "url(/images/icons/world_map.svg)",
-												WebkitMaskRepeat: "no-repeat",
-												maskRepeat: "no-repeat",
-												WebkitMaskPosition: "center",
-												maskPosition: "center",
-												WebkitMaskSize: "contain",
-												maskSize: "contain"
-											}}
-										/>
-										{/* Pulsing outlines over the oceans */}
-										<div className="absolute inset-0 pointer-events-none">
-											<div
-												className="absolute left-[28%] top-[38%] w-10 h-10 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
-												style={{
-													backgroundColor: "currentColor",
-													WebkitMaskImage: "url(/images/outlines/xl_dolphin.svg)",
-													maskImage: "url(/images/outlines/xl_dolphin.svg)",
-													WebkitMaskRepeat: "no-repeat",
-													maskRepeat: "no-repeat",
-													WebkitMaskPosition: "center",
-													maskPosition: "center",
-													WebkitMaskSize: "contain",
-													maskSize: "contain"
-												}}
-											/>
-											<div
-												className="absolute left-[55%] top-[52%] w-9 h-9 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
-												style={{
-													animationDelay: "250ms",
-													backgroundColor: "currentColor",
-													WebkitMaskImage: "url(/images/outlines/lg_bluefin_tuna.svg)",
-													maskImage: "url(/images/outlines/lg_bluefin_tuna.svg)",
-													WebkitMaskRepeat: "no-repeat",
-													maskRepeat: "no-repeat",
-													WebkitMaskPosition: "center",
-													maskPosition: "center",
-													WebkitMaskSize: "contain",
-													maskSize: "contain"
-												}}
-											/>
-											<div
-												className="absolute left-[70%] top-[32%] w-8 h-8 animate-flash-loop text-base-content [html[data-theme='dark']_&]:text-base-100"
-												style={{
-													animationDelay: "500ms",
-													backgroundColor: "currentColor",
-													WebkitMaskImage: "url(/images/outlines/md_shrimp.svg)",
-													maskImage: "url(/images/outlines/md_shrimp.svg)",
-													WebkitMaskRepeat: "no-repeat",
-													maskRepeat: "no-repeat",
-													WebkitMaskPosition: "center",
-													maskPosition: "center",
-													WebkitMaskSize: "contain",
-													maskSize: "contain"
-												}}
-											/>
-										</div>
-									</div>
-									<div className="lg:w-1/3 max-w-md space-y-3 text-left">
-										<h3 className="text-2xl font-semibold text-primary">{occurrenceStep.title}</h3>
-										<p className="text-base text-base-content/85 leading-relaxed">{occurrenceStep.description}</p>
-									</div>
-								</div>
-							</div>
-						)}
-
-						{/* 8. Remaining tables – icon + paragraph pairs */}
-						{remainingDesktopTableSteps.length > 0 && (
-							<div className="max-w-6xl mx-auto w-full pt-4 border-t border-base-content/20">
-								<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
-									{remainingDesktopTableSteps.map((step) => (
-										<div key={step.key} className="flex items-start gap-4">
-											<DataJourneyIcon type={step.icon} className="h-16 w-auto mt-1" />
-											<div className="space-y-2 max-w-xs text-left">
-												<h3 className="text-2xl font-semibold text-primary">{step.title}</h3>
-												<p className="text-base text-base-content/85 leading-relaxed">{step.description}</p>
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						)}
+						</div>
 					</div>
 				</section>
 

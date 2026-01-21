@@ -153,37 +153,59 @@ const DataJourneySurfaceScene: React.FC = () => {
 	}, []);
 
 	return (
-		<div ref={containerRef} className="relative w-full h-full text-primary">
-			{/* Boat at surface */}
-			<div ref={boatRef} className="absolute top-4 left-[32%] -translate-x-1/2 flex items-center z-10 h-40 w-auto">
+		<div
+			ref={containerRef}
+			className="relative w-full h-full text-primary"
+		>
+		{/* Boat at surface */}
+		<div
+			ref={boatRef}
+			className="absolute top-4 left-[34%] -translate-x-1/2 flex items-center z-10"
+		>
+			<div className="relative h-24 sm:h-28 md:h-32 lg:h-40 w-[220px] sm:w-[260px] md:w-[320px] lg:w-[380px]">
 				<Image
-					src="/images/icons/ship.png"
+					src="/images/biorender/ship_light_mode.png"
 					alt="Research vessel"
-					width={400}
-					height={160}
-					className="h-40 w-auto object-contain"
+					fill
+					sizes="(max-width: 768px) 220px, (max-width: 1024px) 320px, 380px"
+					className="object-contain [html[data-theme='dark']_&]:hidden"
+					priority
+				/>
+				<Image
+					src="/images/biorender/ship_dark_mode.png"
+					alt="Research vessel"
+					fill
+					sizes="(max-width: 768px) 220px, (max-width: 1024px) 320px, 380px"
+					className="object-contain hidden [html[data-theme='dark']_&]:block"
+					priority
 				/>
 			</div>
+		</div>
 
 			{/* CTD below the vessel, shifted left with more vertical separation */}
-			<div ref={ctdRef} className="absolute top-72 left-[30%] -translate-x-1/2 flex items-center">
+			<div
+				ref={ctdRef}
+				className="absolute top-60 sm:top-64 md:top-72 lg:top-80 left-[30%] -translate-x-1/2 flex items-center"
+			>
 				<div
 					ref={ctdIconRef}
-					style={{
-						width: "8rem",
-						height: "11rem",
-						backgroundColor: "currentColor",
-						WebkitMaskImage: "url(/images/icons/ctd_icon.svg)",
-						maskImage: "url(/images/icons/ctd_icon.svg)",
-						WebkitMaskRepeat: "no-repeat",
-						maskRepeat: "no-repeat",
-						WebkitMaskPosition: "center",
-						maskPosition: "center",
-						WebkitMaskSize: "contain",
-						maskSize: "contain",
-						transform: "rotate(356deg)"
-					}}
-				/>
+					className="relative h-44 sm:h-52 md:h-60 lg:h-72 w-[90px] sm:w-[110px] md:w-[130px] lg:w-[150px]"
+				>
+					<Image
+						src="/images/biorender/ctd_light_mode.png"
+						alt="CTD instrument"
+						fill
+						sizes="(max-width: 768px) 90px, (max-width: 1024px) 130px, 150px"
+						className="object-contain [html[data-theme='dark']_&]:hidden"
+					/>
+					<Image
+						src="/images/biorender/ctd_dark_mode.png"
+						alt="CTD instrument"
+						fill
+						sizes="(max-width: 768px) 90px, (max-width: 1024px) 130px, 150px"
+						className="object-contain hidden [html[data-theme='dark']_&]:block"
+					/>
+				</div>
 			</div>
 
 			{/* Connector rope */}
