@@ -119,7 +119,10 @@ async function doEdit(
 						if (invalidLibIds.length === 1) {
 							throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
 						} else {
-							//TODO: length === 2 should have no comma
+							let join = ", ";
+							if (invalidLibIds.length === 2) {
+								join = " ";
+							}
 							throw new Error(
 								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))

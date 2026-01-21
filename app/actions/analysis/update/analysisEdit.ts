@@ -155,6 +155,21 @@ async function doEdit(
 					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 				}
 
+				if (parseResult) {
+					//check if assay is valid
+					const dbAssay = await tx.assay.findUnique({
+						where: {
+							assay_name: parseResult.analysis.assay_name
+						},
+						select: {
+							assay_name: true
+						}
+					});
+					if (!dbAssay) {
+						throw new Error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
+					}
+				}
+
 				let connect = [] as { tagName: string }[];
 				let disconnect = [] as { tagName: string }[];
 				if (tagNames) {
@@ -178,7 +193,10 @@ async function doEdit(
 							if (invalidTagNames.length === 1) {
 								throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 							} else {
-								//TODO: length === 2 should have no comma
+								let join = ", ";
+								if (invalidTagNames.length === 2) {
+									join = " ";
+								}
 								throw new Error(
 									`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 										.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))

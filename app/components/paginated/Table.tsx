@@ -19,7 +19,6 @@ const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order
 
 //TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
-//TODO: support boolean values (check/x)
 export default function Table({
 	table,
 	where,
@@ -691,7 +690,7 @@ export default function Table({
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
-																	className="grow"
+																	className="grow min-w-10"
 																	disabled={userDefinedHeaders.includes(head)}
 																	placeholder={userDefinedHeaders.includes(head) ? "" : "Press Enter to search"}
 																/>
@@ -841,6 +840,36 @@ export default function Table({
 																{row[head]}
 															</Link>
 														);
+													} else if (typeof row[head] === "boolean") {
+														if (row[head]) {
+															element = (
+																<svg
+																	width="30px"
+																	height="30px"
+																	viewBox="0 0 1920 1920"
+																	xmlns="http://www.w3.org/2000/svg"
+																	className="text-success w-full"
+																	stroke="currentColor"
+																	fill="currentColor"
+																>
+																	<path d="M1827.701 303.065 698.835 1431.801 92.299 825.266 0 917.564 698.835 1616.4 1919.869 395.234z" />
+																</svg>
+															);
+														} else {
+															element = (
+																<svg
+																	width="45px"
+																	height="45px"
+																	viewBox="0 0 24 24"
+																	className="text-error w-full"
+																	stroke="currentColor"
+																	fill="currentColor"
+																	xmlns="http://www.w3.org/2000/svg"
+																>
+																	<path d="M6 6L18 18M18 6L6 18" />
+																</svg>
+															);
+														}
 													} else {
 														element = row[head];
 													}
