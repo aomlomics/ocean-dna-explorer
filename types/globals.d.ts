@@ -51,22 +51,32 @@ export type ClerkUserObject = {
 
 type StringQueryMode = "equals" | "contains" | "startsWith" | "endsWith";
 type NumberQueryMode = "equals" | "lt" | "lte" | "gt" | "gte";
-export type QueryMode = StringQueryMode | NumberQueryMode | "range" | "in" | "notIn" | "null" | "notNull" | "deadValue";
+export type QueryMode =
+	| StringQueryMode
+	| NumberQueryMode
+	| "range"
+	| "in"
+	| "notIn"
+	| "null"
+	| "notNull"
+	| "deadValue"
+	| "boolean";
 
-//TODO: BooleanParamsArrayField
 type StringParamsArrayField = [string, StringQueryMode, string];
 type NumberParamsArrayField = [string, NumberQueryMode, number];
 type RangeParamsArrayField = [string, "range", [number, number] | [string, string]];
 type InParamsArrayField = [string, "in" | "notIn", number[] | string[]];
-type DeadParamsArrayField = [string, "deadValue"];
+type DeadParamsArrayField = [string, "deadValue", string];
+type BooleanParamsArrayField = [string, "boolean", boolean];
 
-export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[];
+export type ParamsArrayValue = string | number | [number, number] | [string, string] | number[] | string[] | boolean;
 export type ParamsArrayField =
 	| StringParamsArrayField
 	| NumberParamsArrayField
 	| RangeParamsArrayField
 	| InParamsArrayField
-	| DeadParamsArrayField;
+	| DeadParamsArrayField
+	| BooleanParamsArrayField;
 export type ParamsArrayRelation = [string, ...ParamsArrayField];
 
 // Logical group support for advanced queries.
