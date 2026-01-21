@@ -11,32 +11,37 @@ import { v4 as uuidv4 } from "uuid";
 import analysisEditAction from "@/app/actions/analysis/update/analysisEdit";
 import assignEditAction from "@/app/actions/analysis/update/assignEdit";
 import ProgressBar from "../ProgressBar";
-import analysisUpdateIsPrivateAction from "@/app/actions/analysis/update/analysisUpdateIsPrivate";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AnalysisTag from "../tags/AnalysisTag";
 
 export default function AnalysisEditButton({
+	analysis: {
+		analysis_run_name,
+		isPrivate,
+		trusted,
+		analysisMetadataFileUrl_ODE,
+		asvFileUrl_ODE,
+		occurrenceFileUrl_ODE,
+		Tags: currentTags
+	},
 	project_id,
-	analysis_run_name,
-	isPrivate,
 	isPrivateDisabled,
-	analysisMetadataFileUrl_ODE,
-	asvFileUrl_ODE,
-	occurrenceFileUrl_ODE,
-	tags,
-	currentTags
+	tags
 }: {
+	analysis: {
+		analysis_run_name: Analysis["analysis_run_name"];
+		isPrivate: Analysis["isPrivate"];
+		trusted: Analysis["trusted"];
+		analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
+		asvFileUrl_ODE: Analysis["asvFileUrl_ODE"];
+		occurrenceFileUrl_ODE: Analysis["occurrenceFileUrl_ODE"];
+		Tags: Tag[];
+	};
 	project_id: Project["project_id"];
-	analysis_run_name: Analysis["analysis_run_name"];
-	isPrivate: Analysis["isPrivate"];
 	isPrivateDisabled: boolean;
-	analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
-	asvFileUrl_ODE: NonNullable<Analysis["asvFileUrl_ODE"]>;
-	occurrenceFileUrl_ODE: NonNullable<Analysis["occurrenceFileUrl_ODE"]>;
 	tags: Tag[];
-	currentTags: Tag[];
 }) {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
@@ -56,6 +61,7 @@ export default function AnalysisEditButton({
 
 	//state variables to hold contents of form for disabling submit button
 	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
+	const [trustedToggle, setTrustedToggle] = useState(trusted);
 	const [selectedTags, setSelectedTags] = useState(currentTags);
 	const [analysisFile, setAnalysisFile] = useState(undefined as File | undefined);
 	const [assignmentsFile, setAssignmentsFile] = useState(undefined as File | undefined);
@@ -66,8 +72,8 @@ export default function AnalysisEditButton({
 	const [assignResponse, setAssignResponse] = useState(undefined as NetworkProgressPacket);
 	const [occResponse, setOccResponse] = useState(undefined as NetworkProgressPacket);
 
-	function tagsUnchanged() {
-		return (
+	function tagsChanged() {
+		return !(
 			currentTags.length === selectedTags.length &&
 			selectedTags.every((st) => currentTags.some((ct) => st.tagName === ct.tagName))
 		);
@@ -97,6 +103,7 @@ export default function AnalysisEditButton({
 			const editId = uuidv4();
 
 			//analysis submit
+			const tagsAreChanged = tagsChanged();
 			if (analysisFile) {
 				//upload file to blob storage
 				setAnalysisResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
@@ -111,25 +118,27 @@ export default function AnalysisEditButton({
 
 				setAnalysisResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
-				const args = [editId, project_id, analysis_run_name] as (
-					| string
-					| boolean
-					| { url?: string; isPrivate?: boolean; tagNames?: string[] }
-				)[];
-				const argsObj = { url: analysisUrl } as { url?: string; isPrivate?: boolean; tagNames?: string[] };
+				const argsObj = { url: analysisUrl } as {
+					url?: string;
+					isPrivate?: boolean;
+					trusted?: boolean;
+					tagNames?: string[];
+				};
 				if (isPrivateToggle !== isPrivate) {
 					argsObj.isPrivate = isPrivateToggle;
 				}
-				if (!tagsUnchanged()) {
+				if (trustedToggle !== trusted) {
+					argsObj.trusted = trustedToggle;
+				}
+				if (tagsAreChanged) {
 					argsObj.tagNames = currentTags.map((t) => t.tagName);
 				}
-				args.push(argsObj);
 
 				//submit analysis file url
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: setAnalysisResponse,
-					args: args
+					args: [editId, project_id, analysis_run_name, argsObj]
 				});
 
 				//handle errors
@@ -152,26 +161,27 @@ export default function AnalysisEditButton({
 				}
 			}
 
-			if (!analysisFile && (!tagsUnchanged() || isPrivateToggle !== isPrivate)) {
-				const args = [editId, project_id, analysis_run_name] as (
-					| string
-					| boolean
-					| { isPrivate?: boolean; tagNames?: string[] }
-				)[];
-				const argsObj = {} as { isPrivate?: boolean; tagNames?: string[] };
+			if (!analysisFile && (tagsAreChanged || isPrivateToggle !== isPrivate || trustedToggle !== trusted)) {
+				const argsObj = {} as {
+					isPrivate?: boolean;
+					trusted?: boolean;
+					tagNames?: string[];
+				};
 				if (isPrivateToggle !== isPrivate) {
 					argsObj.isPrivate = isPrivateToggle;
 				}
-				if (!tagsUnchanged()) {
+				if (trustedToggle !== trusted) {
+					argsObj.trusted = trustedToggle;
+				}
+				if (tagsAreChanged) {
 					argsObj.tagNames = selectedTags.map((t) => t.tagName);
 				}
-				args.push(argsObj);
 
 				//submit analysis file url
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: undefined,
-					args: args
+					args: [editId, project_id, analysis_run_name, argsObj]
 				});
 
 				//handle errors
@@ -310,6 +320,18 @@ export default function AnalysisEditButton({
 						/>
 					</fieldset>
 
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex gap-2">
+							<h2>trusted</h2>
+						</legend>
+						<input
+							type="checkbox"
+							className="checkbox checkbox-primary"
+							checked={trustedToggle}
+							onChange={(e) => setTrustedToggle(e.currentTarget.checked)}
+						/>
+					</fieldset>
+
 					<div className="flex gap-5 flex-wrap items-center">
 						{selectedTags.map((t) => (
 							<div key={t.tagName} className="flex gap-1 items-center">
@@ -420,7 +442,8 @@ export default function AnalysisEditButton({
 									!assignmentsFile &&
 									!occurrencesFile &&
 									isPrivateToggle === isPrivate &&
-									tagsUnchanged())
+									trustedToggle === trusted &&
+									!tagsChanged())
 							}
 						>
 							Submit

@@ -2,9 +2,9 @@ import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
-import { deadBooleanToString } from "./utils";
+import { capitalizeTable, deadBooleanToString } from "./utils";
 import { DbType } from "@/types/globals";
 
 export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
@@ -236,5 +236,52 @@ export function parseSchemaToObject(
 			//continue as normal
 			obj[field] = value;
 		}
+	}
+}
+
+export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
+	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
+	const visited = new Set() as Set<Prisma.ModelName>;
+
+	const capsTarget = capitalizeTable(target);
+	while (queue.length) {
+		let [curr, [...path]] = queue.shift()!;
+		path.push(curr);
+
+		if (curr === capsTarget) {
+			//convert to path of relation metadata
+			const pathRelations = [] as RelationMetadata[];
+			path.reduce((prev, t) => {
+				pathRelations.push(TableMetadata[prev].relations.find((rel) => rel.table === t)!);
+				return t;
+			});
+			return pathRelations;
+		}
+
+		if (
+			!visited.has(curr) && //skip visited tables
+			//Project restrictions
+			(curr !== "Project" || //base case
+				path.length === 1) //starting at Project
+		) {
+			for (const rel of TableMetadata[curr].relations) {
+				if (
+					//Analysis restrictions
+					(curr !== "Analysis" || //base case
+						rel.table === "Project" || //Analysis to Project
+						rel.table === "Assay" || //Analysis to Assay
+						path.includes("Project") || //Project to Analysis
+						path.length === 1) && //starting at Analysis
+					//Assay restrictions
+					(curr !== "Assay" || //base case
+						rel.table === "AssayPrep" || //Assay to AssayPrep
+						(path.includes("AssayPrep") && path.length === 2) || //starting at AssayPrep to Assay
+						path.length === 1) //starting at Assay
+				) {
+					queue.push([rel.table, path]);
+				}
+			}
+		}
+		visited.add(curr);
 	}
 }

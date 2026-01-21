@@ -40,19 +40,52 @@ export default async function Analysis_run_name({
 					target_gene: true
 				}
 			},
-			Occurrences: {
-				distinct: ["samp_name"],
-				select: {
-					Sample: true
-				}
-			},
 			Tags: true
 		}
 	});
 	if (!analysis) return <>Analysis not found</>;
-	const { _count: _, Occurrences: __, editHistory: ___, Assay: ____, Tags: _____, ...justAnalysis } = analysis;
+	const { _count: _, editHistory: __, Assay: ___, Tags: ____, ...justAnalysis } = analysis;
 
-	const samples = analysis.Occurrences.map((occ) => occ.Sample);
+	async function getSamples() {
+		return await prisma.sample.findMany({
+			where: {
+				Libraries: {
+					some: {
+						Occurrences: {
+							some: {
+								analysis_run_name
+							}
+						}
+					}
+				}
+			}
+		});
+	}
+
+	async function SampleCard({ fallback }: { fallback?: true }) {
+		let samples;
+		if (!fallback) {
+			samples = await getSamples();
+		}
+
+		return (
+			<Link href={sampleSearchUrl}>
+				<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center hover:bg-base-300 transition-all duration-300 hover:scale-105">
+					<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+						<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
+							<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+						</svg>
+					</div>
+					<div className="text-3xl font-bold text-primary mb-1">
+						{fallback ? "..." : samples!.length.toLocaleString()}
+					</div>
+					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
+						Samples
+					</div>
+				</div>
+			</Link>
+		);
+	}
 
 	return (
 		<div className="space-y-8">
@@ -88,6 +121,7 @@ export default async function Analysis_run_name({
 					</h1>
 					<EditHistory editHistory={analysis.editHistory} />
 					{analysis.isPrivate && <div className="badge badge-ghost p-3 select-none">Private</div>}
+					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
 					{analysis.Tags.map((t) => (
 						<AnalysisTag key={t.tagName} tag={t} />
 					))}
@@ -104,7 +138,7 @@ export default async function Analysis_run_name({
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-6">
-					<Map locations={samples} where={{ analysis_run_name }} cluster draw className="w-full h-[440px]" />
+					<Map query={getSamples} where={{ analysis_run_name }} cluster draw className="w-full h-[440px]" />
 
 					{/* Analysis Information */}
 					<div className="bg-base-200 rounded-xl p-6">
@@ -173,19 +207,9 @@ export default async function Analysis_run_name({
 								</div>
 							</div>
 
-							<Link href={sampleSearchUrl}>
-								<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center hover:bg-base-300 transition-all duration-300 hover:scale-105">
-									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-										<svg viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
-											<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-										</svg>
-									</div>
-									<div className="text-3xl font-bold text-primary mb-1">{samples.length.toLocaleString()}</div>
-									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">
-										Samples
-									</div>
-								</div>
-							</Link>
+							<Suspense fallback={<SampleCard fallback />}>
+								<SampleCard />
+							</Suspense>
 						</div>
 					</div>
 
@@ -213,16 +237,6 @@ export default async function Analysis_run_name({
 			<div className="mt-8">
 				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
 				<div role="tablist" className="tabs tabs-lifted">
-					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Samples" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
-						<Map
-							locations={analysis.Occurrences.map((samp) => ({ ...samp.Sample }))}
-							cluster
-							legend
-							legendOmit={["project_id"]}
-						/>
-					</div>
-
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />

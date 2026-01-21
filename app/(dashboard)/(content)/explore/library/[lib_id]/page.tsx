@@ -114,7 +114,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 					<div className="lg:col-span-2">
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Library metadata</h2>
-							<div className="h-[320px] overflow-y-auto">
+							<div className="h-80 overflow-y-auto">
 								<DataDisplay
 									table="library"
 									data={justLibrary}

@@ -245,7 +245,7 @@ function UserDisplay({
 }) {
 	return (
 		<>
-			<div className={`relative h-[20px] aspect-square ${disabled ? "opacity-25" : ""}`}>
+			<div className={`relative h-5 aspect-square ${disabled ? "opacity-25" : ""}`}>
 				<Image
 					src={user.imageUrl}
 					alt={`${user.firstName} ${user.lastName} Profile Picture`}
@@ -258,11 +258,11 @@ function UserDisplay({
 			</span>
 			{deletable &&
 				(disabled ? (
-					<button className="btn btn-xs h-[20px] w-[20px] btn-circle btn-ghost text-success" onClick={onAdd}>
+					<button className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-success" onClick={onAdd}>
 						✓
 					</button>
 				) : (
-					<button className="btn btn-xs h-[20px] w-[20px] btn-circle btn-ghost text-red-400" onClick={onDelete}>
+					<button className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-red-400" onClick={onDelete}>
 						✕
 					</button>
 				))}

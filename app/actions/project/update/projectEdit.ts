@@ -361,8 +361,12 @@ async function doEdit(
 						samp_name: {
 							notIn: sampNames
 						},
-						Occurrences: {
-							none: {}
+						Libraries: {
+							every: {
+								Occurrences: {
+									none: {}
+								}
+							}
 						}
 					}
 				});
@@ -374,17 +378,25 @@ async function doEdit(
 						samp_name: {
 							notIn: sampNames
 						},
-						Occurrences: {
-							some: {}
+						Libraries: {
+							every: {
+								Occurrences: {
+									none: {}
+								}
+							}
 						}
 					},
 					select: {
 						id: true,
 						samp_name: true,
-						Occurrences: {
-							distinct: ["analysis_run_name"],
+						Libraries: {
 							select: {
-								analysis_run_name: true
+								Occurrences: {
+									distinct: ["analysis_run_name"],
+									select: {
+										analysis_run_name: true
+									}
+								}
 							}
 						}
 					}
@@ -407,7 +419,10 @@ async function doEdit(
 					//retrieve all unique analyses
 					const analysesToUpdate = Array.from(
 						samplesToDelete.reduce((acc, samp) => {
-							for (const occ of samp.Occurrences) {
+							for (const occ of samp.Libraries.reduce(
+								(occs, lib) => [...occs, ...lib.Occurrences],
+								[] as { analysis_run_name: string }[]
+							)) {
 								acc.add(occ.analysis_run_name);
 							}
 							return acc;

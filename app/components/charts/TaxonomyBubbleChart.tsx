@@ -1,8 +1,8 @@
 "use client";
 
 // import { Chart, ReactGoogleChartEvent } from "react-google-charts";
-import { randomColors } from "@/app/helpers/utils";
-import { useRouter } from "next/navigation";
+// import { randomColors } from "@/app/helpers/utils";
+// import { useRouter } from "next/navigation";
 
 const TaxonomyBubbleChart = ({
 	taxa,
@@ -11,32 +11,32 @@ const TaxonomyBubbleChart = ({
 	taxa: [string, number][];
 	onBubbleClick?: (label: string) => void;
 }) => {
-	const router = useRouter();
-	const colors = randomColors(taxa.length);
+	// const router = useRouter();
+	// const colors = randomColors(taxa.length);
 
-	const data = [
-		["ID", "X", "Y", "Group", "Value"],
-		...taxa.map(([label, value], i) => [
-			label.split(";").pop() || label,
-			Math.random() * 100,
-			Math.random() * 100,
-			label.split(";")[0],
-			value
-		])
-	];
+	// const data = [
+	// 	["ID", "X", "Y", "Group", "Value"],
+	// 	...taxa.map(([label, value], i) => [
+	// 		label.split(";").pop() || label,
+	// 		Math.random() * 100,
+	// 		Math.random() * 100,
+	// 		label.split(";")[0],
+	// 		value
+	// 	])
+	// ];
 
-	const options = {
-		colorAxis: { colors: colors },
-		bubble: {
-			textStyle: {
-				fontSize: 12,
-				fontName: "Arial",
-				color: "black",
-				bold: true,
-				italic: false
-			}
-		}
-	};
+	// const options = {
+	// 	colorAxis: { colors: colors },
+	// 	bubble: {
+	// 		textStyle: {
+	// 			fontSize: 12,
+	// 			fontName: "Arial",
+	// 			color: "black",
+	// 			bold: true,
+	// 			italic: false
+	// 		}
+	// 	}
+	// };
 
 	// const chartEvents: ReactGoogleChartEvent[] = [
 	// 	{
@@ -48,7 +48,7 @@ const TaxonomyBubbleChart = ({
 	// 				const [selectedItem] = selection;
 	// 				const dataTable = chartWrapper.getDataTable();
 	// 				const label = dataTable.getValue(selectedItem.row, 0);
-	// 
+	//
 	// 				if (onBubbleClick) {
 	// 					onBubbleClick(label);
 	// 				} else {
@@ -77,4 +77,4 @@ const TaxonomyBubbleChart = ({
 	);
 };
 
-export default TaxonomyBubbleChart; 
+export default TaxonomyBubbleChart;

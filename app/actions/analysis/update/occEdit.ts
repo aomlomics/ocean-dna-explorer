@@ -54,7 +54,7 @@ async function doEdit(
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
-		const occSampNames = occurrences.map((occ) => occ.samp_name);
+		const occLibIds = occurrences.map((occ) => occ.lib_id);
 		const occFeatureids = occurrences.map((occ) => occ.featureid);
 
 		await prisma.$transaction(
@@ -71,6 +71,7 @@ async function doEdit(
 							}
 						},
 						project_id: true,
+						assay_name: true,
 						editHistory: true,
 						occurrenceFileUrl_ODE: true,
 						occurrenceFileChecksum_ODE: true
@@ -87,6 +88,47 @@ async function doEdit(
 
 				await stream.message("All checks passed.", 80);
 
+				//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
+				const libIds = new Set() as Set<Occurrence["lib_id"]>;
+				for (const occ of occurrences) {
+					libIds.add(occ.lib_id);
+				}
+				const dbLibraries = await tx.library.findMany({
+					where: {
+						project_id: dbAnalysis.project_id,
+						assay_name: dbAnalysis.assay_name,
+						lib_id: {
+							in: Array.from(libIds)
+						}
+					},
+					select: {
+						lib_id: true
+					}
+				});
+
+				//check if any provided libraries are missing from database query
+				if (libIds.size !== dbLibraries.length) {
+					const invalidLibIds = [] as string[];
+					for (const lib_id of libIds) {
+						if (!dbLibraries.some((lib) => lib.lib_id === lib_id)) {
+							invalidLibIds.push(lib_id);
+						}
+					}
+
+					if (invalidLibIds.length) {
+						if (invalidLibIds.length === 1) {
+							throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
+						} else {
+							//TODO: length === 2 should have no comma
+							throw new Error(
+								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
+									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
+									.join(", ")}.`
+							);
+						}
+					}
+				}
+
 				//create new
 				const newOccurrences = await tx.occurrence.createManyAndReturn({
 					data: occurrences,
@@ -100,10 +142,9 @@ async function doEdit(
 					tx,
 					"Occurrence",
 					occurrences.filter(
-						(occ) =>
-							!newOccurrences.some((dbOcc) => dbOcc.samp_name === occ.samp_name && dbOcc.featureid === occ.featureid)
+						(occ) => !newOccurrences.some((dbOcc) => dbOcc.lib_id === occ.lib_id && dbOcc.featureid === occ.featureid)
 					),
-					["analysis_run_name", "samp_name", "featureid"]
+					["analysis_run_name", "lib_id", "featureid"]
 				);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
@@ -115,13 +156,13 @@ async function doEdit(
 					},
 					select: {
 						id: true,
-						samp_name: true,
+						lib_id: true,
 						featureid: true
 					}
 				});
 
 				const occToDelete = currOccs.reduce((acc, occ) => {
-					if (!occSampNames.includes(occ.samp_name) || !occFeatureids.includes(occ.featureid)) {
+					if (!occLibIds.includes(occ.lib_id) || !occFeatureids.includes(occ.featureid)) {
 						acc.push(occ.id);
 					}
 					return acc;

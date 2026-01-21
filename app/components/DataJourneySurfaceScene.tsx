@@ -3,95 +3,95 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-function AnimatedWaterSurface() {
-	const [pathD, setPathD] = useState("");
-	const svgRef = useRef<SVGSVGElement | null>(null);
-	const pointsRef = useRef<
-		{
-			x: number;
-			y: number;
-			baseY: number;
-			vy: number;
-			targetY: number;
-		}[]
-	>([]);
+// function AnimatedWaterSurface() {
+// 	const [pathD, setPathD] = useState("");
+// 	const svgRef = useRef<SVGSVGElement | null>(null);
+// 	const pointsRef = useRef<
+// 		{
+// 			x: number;
+// 			y: number;
+// 			baseY: number;
+// 			vy: number;
+// 			targetY: number;
+// 		}[]
+// 	>([]);
 
-	useEffect(() => {
-		const svg = svgRef.current;
-		if (!svg) return;
+// 	useEffect(() => {
+// 		const svg = svgRef.current;
+// 		if (!svg) return;
 
-		const numPoints = 10;
-		const width = svg.clientWidth || 1000;
-		const height = 40;
-		const pointSpacing = width / (numPoints - 1);
+// 		const numPoints = 10;
+// 		const width = svg.clientWidth || 1000;
+// 		const height = 40;
+// 		const pointSpacing = width / (numPoints - 1);
 
-		if (pointsRef.current.length === 0) {
-			pointsRef.current = Array.from({ length: numPoints }, (_, i) => ({
-				x: i * pointSpacing,
-				y: height / 2,
-				baseY: height / 2,
-				vy: 0,
-				targetY: height / 2
-			}));
-		}
+// 		if (pointsRef.current.length === 0) {
+// 			pointsRef.current = Array.from({ length: numPoints }, (_, i) => ({
+// 				x: i * pointSpacing,
+// 				y: height / 2,
+// 				baseY: height / 2,
+// 				vy: 0,
+// 				targetY: height / 2
+// 			}));
+// 		}
 
-		const points = pointsRef.current;
-		let animationFrameId: number;
+// 		const points = pointsRef.current;
+// 		let animationFrameId: number;
 
-		const animate = () => {
-			// Match the calmer surface motion used in the eDNA graphic
-			// so the waterline feels gentle instead of overly choppy.
-			const tension = 0.00025;
-			const damping = 0.965;
+// 		const animate = () => {
+// 			// Match the calmer surface motion used in the eDNA graphic
+// 			// so the waterline feels gentle instead of overly choppy.
+// 			const tension = 0.00025;
+// 			const damping = 0.965;
 
-			points.forEach((p) => {
-				// Rare, small perturbations keep a subtle sense of motion
-				// without the surface looking stormy.
-				if (Math.random() > 0.9995) {
-					p.targetY = p.baseY + (Math.random() - 0.5) * 4;
-				}
+// 			points.forEach((p) => {
+// 				// Rare, small perturbations keep a subtle sense of motion
+// 				// without the surface looking stormy.
+// 				if (Math.random() > 0.9995) {
+// 					p.targetY = p.baseY + (Math.random() - 0.5) * 4;
+// 				}
 
-				const dy = p.targetY - p.y;
-				const ay = dy * tension;
-				p.vy += ay;
-				p.vy *= damping;
-				p.y += p.vy;
-			});
+// 				const dy = p.targetY - p.y;
+// 				const ay = dy * tension;
+// 				p.vy += ay;
+// 				p.vy *= damping;
+// 				p.y += p.vy;
+// 			});
 
-			let path = `M ${points[0].x} ${points[0].y}`;
-			for (let i = 0; i < points.length - 1; i++) {
-				const p1 = points[i];
-				const p2 = points[i + 1];
-				const midX = (p1.x + p2.x) / 2;
-				path += ` C ${midX},${p1.y} ${midX},${p2.y} ${p2.x},${p2.y}`;
-			}
-			setPathD(path);
+// 			let path = `M ${points[0].x} ${points[0].y}`;
+// 			for (let i = 0; i < points.length - 1; i++) {
+// 				const p1 = points[i];
+// 				const p2 = points[i + 1];
+// 				const midX = (p1.x + p2.x) / 2;
+// 				path += ` C ${midX},${p1.y} ${midX},${p2.y} ${p2.x},${p2.y}`;
+// 			}
+// 			setPathD(path);
 
-			animationFrameId = requestAnimationFrame(animate);
-		};
+// 			animationFrameId = requestAnimationFrame(animate);
+// 		};
 
-		animationFrameId = requestAnimationFrame(animate);
+// 		animationFrameId = requestAnimationFrame(animate);
 
-		return () => cancelAnimationFrame(animationFrameId);
-	}, []);
+// 		return () => cancelAnimationFrame(animationFrameId);
+// 	}, []);
 
-	return (
-		<svg
-			ref={svgRef}
-			className="w-full h-10"
-			viewBox="0 0 1000 40"
-			preserveAspectRatio="none"
-		>
-			<path
-				d={pathD}
-				fill="none"
-				stroke="currentColor"
-				strokeWidth={2}
-				className="text-primary"
-			/>
-		</svg>
-	);
-}
+// 	return (
+// 		<svg
+// 			ref={svgRef}
+// 			className="w-full h-10"
+// 			viewBox="0 0 1000 40"
+// 			preserveAspectRatio="none"
+// 		>
+// 			<path
+// 				d={pathD}
+// 				fill="none"
+// 				stroke="currentColor"
+// 				strokeWidth={2}
+// 				className="text-primary"
+// 			/>
+// 		</svg>
+// 	);
+// }
 
 const DataJourneySurfaceScene: React.FC = () => {
 	const containerRef = useRef<HTMLDivElement | null>(null);
@@ -153,29 +153,20 @@ const DataJourneySurfaceScene: React.FC = () => {
 	}, []);
 
 	return (
-		<div
-			ref={containerRef}
-			className="relative w-full h-full text-primary"
-		>
-		{/* Boat at surface */}
-		<div
-			ref={boatRef}
-			className="absolute top-4 left-[32%] -translate-x-1/2 flex items-center z-10 h-40 w-auto"
-		>
-			<Image
-				src="/images/icons/ship.png"
-				alt="Research vessel"
-				width={400}
-				height={160}
-				className="h-40 w-auto object-contain"
-			/>
-		</div>
+		<div ref={containerRef} className="relative w-full h-full text-primary">
+			{/* Boat at surface */}
+			<div ref={boatRef} className="absolute top-4 left-[32%] -translate-x-1/2 flex items-center z-10 h-40 w-auto">
+				<Image
+					src="/images/icons/ship.png"
+					alt="Research vessel"
+					width={400}
+					height={160}
+					className="h-40 w-auto object-contain"
+				/>
+			</div>
 
 			{/* CTD below the vessel, shifted left with more vertical separation */}
-			<div
-				ref={ctdRef}
-				className="absolute top-72 left-[30%] -translate-x-1/2 flex items-center"
-			>
+			<div ref={ctdRef} className="absolute top-72 left-[30%] -translate-x-1/2 flex items-center">
 				<div
 					ref={ctdIconRef}
 					style={{

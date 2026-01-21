@@ -90,6 +90,12 @@ export default function ProjectSubmit() {
 		setLibraryResponse(undefined);
 		setErrorMessage("");
 
+		//scroll into view
+		document.getElementById("projectSubmitSection")!.scrollIntoView({
+			block: "start",
+			behavior: "smooth"
+		});
+
 		const isPrivate = event.currentTarget.isPrivate.checked;
 
 		//get all files from event beforehand
@@ -179,7 +185,7 @@ export default function ProjectSubmit() {
 				</div>
 
 				{/* Right column: files + progress + submit */}
-				<div className="col-span-6 ml-8">
+				<div id="projectSubmitSection" className="col-span-6 ml-8">
 					<SubmitFormSection
 						title="Upload files"
 						className="space-y-6 w-full text-base-content/80 text-base font-normal"

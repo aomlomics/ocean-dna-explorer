@@ -41,48 +41,45 @@ function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	);
 }
 
-export default async function Analysis_run_name_Samp_name_Featureid({
+export default async function Analysis_run_name_Lib_id_Featureid({
 	params
 }: {
 	params: Promise<{
 		analysis_run_name: Occurrence["analysis_run_name"];
-		samp_name: Occurrence["samp_name"];
+		lib_id: Occurrence["lib_id"];
 		featureid: Occurrence["featureid"];
 	}>;
 }) {
-	let { analysis_run_name, samp_name, featureid } = await params;
+	let { analysis_run_name, lib_id, featureid } = await params;
 	analysis_run_name = decodeURIComponent(analysis_run_name);
-	samp_name = decodeURIComponent(samp_name);
+	lib_id = decodeURIComponent(lib_id);
 	featureid = decodeURIComponent(featureid);
 
 	const { occurrence, assignment } = await prisma.$transaction(async (tx) => {
 		const occurrence = await tx.occurrence.findUnique({
 			where: {
-				analysis_run_name_samp_name_featureid: {
+				analysis_run_name_lib_id_featureid: {
 					analysis_run_name,
-					samp_name,
+					lib_id,
 					featureid
 				}
 			},
 			include: {
-				Sample: {
+				Library: {
 					select: {
-						samp_name: true,
-						project_id: true,
-						decimalLatitude: true,
-						decimalLongitude: true,
-						geo_loc_name: true,
-						eventDate: true,
-						Project: {
-							select: {
-								isPrivate: true
+						Sample: {
+							include: {
+								Project: {
+									select: {
+										isPrivate: true
+									}
+								}
 							}
 						}
 					}
 				},
 				Analysis: {
 					select: {
-						analysis_run_name: true,
 						assay_name: true,
 						project_id: true,
 						isPrivate: true
@@ -90,7 +87,6 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 				},
 				Feature: {
 					select: {
-						featureid: true,
 						dna_sequence: true
 					}
 				}
@@ -118,9 +114,9 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 
 	if (!occurrence) return <>Occurrence not found</>;
 
-	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Sample.Project.isPrivate;
+	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Library.Sample.Project.isPrivate;
 
-	const occurrenceTitle = `${occurrence.Feature.featureid} in ${occurrence.Sample.samp_name} (${occurrence.Analysis.analysis_run_name})`;
+	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 
 	const taxonomyObject = assignment?.Taxonomy ?? null;
 	const taxonomyName =
@@ -141,11 +137,8 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/analysis/${occurrence.Analysis.analysis_run_name}`}
-							className="text-primary hover:text-primary-focus"
-						>
-							{occurrence.Analysis.analysis_run_name}
+						<Link href={`/explore/analysis/${analysis_run_name}`} className="text-primary hover:text-primary-focus">
+							{analysis_run_name}
 						</Link>
 					</li>
 					<li>
@@ -169,19 +162,16 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					This occurrence links{" "}
-					<Link href={`/explore/feature/${occurrence.Feature.featureid}`} className="link link-primary link-hover">
-						feature {occurrence.Feature.featureid}
+					<Link href={`/explore/feature/${featureid}`} className="link link-primary link-hover">
+						feature {featureid}
 					</Link>{" "}
 					to{" "}
-					<Link href={`/explore/sample/${occurrence.Sample.samp_name}`} className="link link-primary link-hover">
-						sample {occurrence.Sample.samp_name}
+					<Link href={`/explore/library/${lib_id}`} className="link link-primary link-hover">
+						library {lib_id}
 					</Link>{" "}
 					in{" "}
-					<Link
-						href={`/explore/analysis/${occurrence.Analysis.analysis_run_name}`}
-						className="link link-primary link-hover"
-					>
-						analysis {occurrence.Analysis.analysis_run_name}
+					<Link href={`/explore/analysis/${analysis_run_name}`} className="link link-primary link-hover">
+						analysis {analysis_run_name}
 					</Link>
 					.
 				</p>
@@ -192,7 +182,7 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 					{/* Left: Single-sample map */}
 					<div className="h-full">
-						<Map locations={[occurrence.Sample]} className="aspect-square rounded-xl overflow-hidden" />
+						<Map locations={[occurrence.Library.Sample]} className="aspect-square rounded-xl overflow-hidden" />
 					</div>
 
 					{/* Right: Featured data */}
@@ -252,7 +242,7 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 					</div>
 				</div>
 
-				{/* Context: sample, feature, analysis, assay */}
+				{/* Context: library, feature, analysis, assay */}
 				<div className="pt-6">
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
@@ -270,12 +260,12 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 								}}
 							/>
 							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Sample</p>
+								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Library</p>
 								<Link
-									href={`/explore/sample/${occurrence.Sample.samp_name}`}
+									href={`/explore/library/${lib_id}`}
 									className="text-base-content font-medium hover:text-primary break-all"
 								>
-									{occurrence.Sample.samp_name}
+									{lib_id}
 								</Link>
 							</div>
 						</div>
@@ -297,10 +287,10 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 							<div className="space-y-1">
 								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Feature</p>
 								<Link
-									href={`/explore/feature/${occurrence.Feature.featureid}`}
+									href={`/explore/feature/${featureid}`}
 									className="text-base-content font-medium hover:text-primary break-all"
 								>
-									{occurrence.Feature.featureid}
+									{featureid}
 								</Link>
 							</div>
 						</div>
@@ -322,10 +312,10 @@ export default async function Analysis_run_name_Samp_name_Featureid({
 							<div>
 								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Analysis</p>
 								<Link
-									href={`/explore/analysis/${occurrence.Analysis.analysis_run_name}`}
+									href={`/explore/analysis/${analysis_run_name}`}
 									className="text-base-content font-medium hover:text-primary break-all"
 								>
-									{occurrence.Analysis.analysis_run_name}
+									{analysis_run_name}
 								</Link>
 								<p className="text-xs text-base-content/70 mt-1">
 									Assay:{" "}

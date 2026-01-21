@@ -109,7 +109,7 @@ function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Locati
 		if (legendInfo.mode === "discreet") {
 			const titleIdVal = getLegendValue(legendInfo.field, loc);
 			if (titleIdVal) {
-				return legendInfo.colorMap[titleIdVal];
+				return { color: legendInfo.colorMap[titleIdVal] };
 			}
 		} else if (legendInfo.mode === "gradient") {
 			const val = loc[legendInfo.field as string] as number | Date | null;
@@ -124,13 +124,13 @@ function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Locati
 				}
 
 				if (percent >= 0 && percent <= 100) {
-					return chroma.scale(legendInfo.palette)(percent);
+					return { color: chroma.scale(legendInfo.palette)(percent), percent };
 				}
 			}
 		}
 	}
 
-	return DEFAULT_COLOR;
+	return { color: DEFAULT_COLOR };
 }
 
 function getConicGradient(colors: chroma.Color[]) {
@@ -439,7 +439,7 @@ export default function ActualMap({
 					let childrenWithValues = 0;
 					let valuesCount = 0;
 					let outsideShapesCount = 0;
-					const uniqueColors = new Set() as Set<chroma.Color>;
+					const uniqueColors = {} as Record<string, { color: chroma.Color; percent?: number }>; //key is hex
 					const colorsArray = [] as chroma.Color[];
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
@@ -459,10 +459,9 @@ export default function ActualMap({
 								outsideShapesCount += loc.values.length;
 							} else {
 								for (const val of loc.values) {
-									const color = getLegendColor(legendInfo, val);
-									const c = color ? color : DEFAULT_COLOR;
-									uniqueColors.add(c);
-									colorsArray.push(c);
+									const { color, percent } = getLegendColor(legendInfo, val);
+									uniqueColors[color.hex()] = { color, percent };
+									colorsArray.push(color);
 								}
 							}
 						} else {
@@ -474,10 +473,9 @@ export default function ActualMap({
 							) {
 								outsideShapesCount++;
 							} else {
-								const color = getLegendColor(legendInfo, loc);
-								const c = color ? color : DEFAULT_COLOR;
-								uniqueColors.add(c);
-								colorsArray.push(c);
+								const { color, percent } = getLegendColor(legendInfo, loc);
+								uniqueColors[color.hex()] = { color, percent };
+								colorsArray.push(color);
 							}
 						}
 					}
@@ -493,13 +491,14 @@ export default function ActualMap({
 					}
 
 					let html;
-					if ((uniqueColors.size === 1 && !outsideShapesCount) || (!uniqueColors.size && outsideShapesCount)) {
+					const uniqueHex = Object.keys(uniqueColors);
+					if ((uniqueHex.length === 1 && !outsideShapesCount) || (!uniqueHex.length && outsideShapesCount)) {
 						//only one color, no gradient
 						let color;
 						if (outsideShapesCount) {
 							color = DEFAULT_OUTSIDE_COLOR;
 						} else {
-							color = Array.from(uniqueColors)[0];
+							color = Object.values(uniqueColors)[0].color;
 						}
 
 						html = getMarkerHtml(
@@ -514,9 +513,27 @@ export default function ActualMap({
 						let orderedColors;
 
 						if (legendInfo?.mode === "discreet") {
-							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueColors.has(color));
+							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueHex.includes(color.hex()));
 						} else {
-							orderedColors = Array.from(uniqueColors);
+							//gradient
+							orderedColors = Object.values(uniqueColors)
+								.sort((c1, c2) => {
+									if (c1.percent && c2.percent) {
+										return c1.percent - c2.percent;
+									} else {
+										let val = 0;
+
+										if (!c1.percent) {
+											val++;
+										}
+										if (!c2.percent) {
+											val--;
+										}
+
+										return val;
+									}
+								})
+								.map((obj) => obj.color);
 						}
 
 						//move first color to end because conic gradient doesn't start at 12 o'clock
@@ -560,7 +577,7 @@ export default function ActualMap({
 	if (TableMetadata[table].fieldOrder) {
 		legendOptions.push(...TableMetadata[table].fieldOrder);
 		for (const opt of TableMetadata[table].enumSchema.options) {
-			if (!(TableMetadata[table].fieldOrder && TableMetadata[table].fieldOrder.includes(opt)) && includeOpt(opt)) {
+			if (!TableMetadata[table].fieldOrder.includes(opt) && includeOpt(opt)) {
 				legendOptions.push(opt);
 			}
 		}
@@ -853,7 +870,7 @@ function PopupWithSearchBody({
 										? href
 										: `/search?table=${table}&advanced=[["${id}","in","${compressIfNeeded(
 												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
-										  )}"]]`
+											)}"]]`
 								}
 							>
 								View as Search
@@ -862,7 +879,7 @@ function PopupWithSearchBody({
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
 							{filteredValues.map((l) => {
 								if (legendInfo) {
-									const color = getLegendColor(legendInfo, l);
+									const { color } = getLegendColor(legendInfo, l);
 
 									return (
 										<div key={l[id]} className="flex gap-2 items-center">
@@ -901,7 +918,7 @@ function PopupWithSearchBody({
 								<div
 									className="aspect-square w-[1em] h-[1em]"
 									style={{
-										backgroundColor: legendInfo ? getLegendColor(legendInfo, loc).hex() : DEFAULT_COLOR.hex()
+										backgroundColor: legendInfo ? getLegendColor(legendInfo, loc).color.hex() : DEFAULT_COLOR.hex()
 									}}
 								></div>
 								<Link
@@ -959,10 +976,10 @@ function PopupWithSearch({
 					}${
 						titleTable
 							? "," +
-							  (typeof TableMetadata[titleTable].titleField === "string"
+								(typeof TableMetadata[titleTable].titleField === "string"
 									? `["${TableMetadata[titleTable].titleField}","equals","${
 											loc[TableMetadata[titleTable].titleField]
-									  }"]`
+										}"]`
 									: TableMetadata[titleTable].titleField.map((f) => `["${f}","equals","${loc[f]}"]`).join(","))
 							: ""
 					}]`}
@@ -1404,7 +1421,7 @@ function LegendControl({
 					mapRef={mapRef}
 					maxMinHeight={200}
 				>
-					<div className="flex flex-col">
+					<div className="flex flex-col w-full">
 						<div className="text-lg flex justify-between items-center gap-2">
 							{titleTable ? (
 								<InfoButton infoText={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
@@ -1418,7 +1435,7 @@ function LegendControl({
 							/>
 
 							<select
-								className="select select-xs select-primary select-ghost text-sm mr-3"
+								className="select select-xs select-primary select-ghost text-sm mr-3 grow min-w-max"
 								value={legendInfo ? legendInfo.field : ""}
 								onChange={async (e) => {
 									const field = e.target.value;
