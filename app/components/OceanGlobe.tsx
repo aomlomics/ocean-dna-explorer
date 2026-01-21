@@ -1,0 +1,383 @@
+// Based on code from Eldora UI (https://github.com/karthikmudunuri/eldoraui)
+// Licensed under the MIT License.
+// Copyright (c) 2024 Karthik Mudunuri
+
+"use client";
+
+import createGlobe from "cobe";
+import { useEffect, useRef, useCallback } from "react";
+import { useTheme } from "next-themes";
+
+// Ocean sampling locations - clustered groups representing eDNA sampling regions
+const baseOceanMarkers: [number, number][] = [
+	// North Atlantic cluster (Grand Banks / Gulf Stream)
+	[42.0, -50.0],
+	[40.0, -48.0],
+	[43.5, -52.0],
+	[38.0, -55.0],
+	[44.0, -47.0],
+	[39.0, -51.0],
+
+	// Caribbean / Gulf of Mexico cluster
+	[24.0, -88.0],
+	[22.0, -85.0],
+	[26.0, -90.0],
+	[18.0, -65.0],
+	[20.0, -68.0],
+	[25.0, -83.0],
+	[21.0, -87.0],
+	[19.0, -62.0],
+
+	// Sargasso Sea area
+	[28.0, -70.0],
+	[30.0, -67.0],
+	[26.0, -72.0],
+	[32.0, -65.0],
+
+	// South Atlantic
+	[-32.0, -15.0],
+	[-35.0, -12.0],
+	[-30.0, -18.0],
+	[-38.0, -10.0],
+
+	// Equatorial Atlantic
+	[5.0, -25.0],
+	[8.0, -22.0],
+	[2.0, -28.0],
+	[-2.0, -20.0],
+
+	// North Pacific cluster (Hawaii region)
+	[22.0, -158.0],
+	[20.0, -155.0],
+	[24.0, -160.0],
+	[19.0, -157.0],
+	[23.0, -154.0],
+	[21.0, -162.0],
+
+	// Central Pacific cluster
+	[0.0, -170.0],
+	[-3.0, -168.0],
+	[3.0, -172.0],
+	[-5.0, -175.0],
+	[5.0, -165.0],
+	[2.0, -178.0],
+
+	// North Pacific Gyre
+	[35.0, -145.0],
+	[33.0, -140.0],
+	[37.0, -142.0],
+	[31.0, -148.0],
+	[39.0, -138.0],
+
+	// South Pacific cluster
+	[-18.0, -150.0],
+	[-15.0, -148.0],
+	[-20.0, -152.0],
+	[-22.0, -145.0],
+	[-12.0, -155.0],
+
+	// Southeast Pacific (off Chile)
+	[-38.0, -85.0],
+	[-42.0, -88.0],
+	[-35.0, -82.0],
+	[-45.0, -90.0],
+
+	// Northwest Pacific (near Japan)
+	[35.0, 145.0],
+	[38.0, 148.0],
+	[32.0, 142.0],
+	[40.0, 150.0],
+	[30.0, 140.0],
+	[36.0, 152.0],
+
+	// Coral Triangle cluster
+	[-5.0, 120.0],
+	[-2.0, 125.0],
+	[-8.0, 118.0],
+	[2.0, 128.0],
+	[-4.0, 130.0],
+	[0.0, 122.0],
+	[-10.0, 125.0],
+
+	// Central Indian Ocean cluster (large cluster)
+	[-12.0, 72.0],
+	[-10.0, 68.0],
+	[-15.0, 75.0],
+	[-8.0, 78.0],
+	[-18.0, 70.0],
+	[-5.0, 72.0],
+	[-20.0, 65.0],
+	[-14.0, 80.0],
+	[-6.0, 68.0],
+	[-16.0, 82.0],
+	[-22.0, 75.0],
+	[-3.0, 76.0],
+
+	// Arabian Sea (expanded)
+	[15.0, 65.0],
+	[18.0, 62.0],
+	[12.0, 68.0],
+	[20.0, 60.0],
+	[10.0, 72.0],
+	[22.0, 58.0],
+	[8.0, 65.0],
+	[16.0, 70.0],
+	[14.0, 58.0],
+
+	// Bay of Bengal (expanded)
+	[12.0, 88.0],
+	[15.0, 85.0],
+	[10.0, 90.0],
+	[8.0, 86.0],
+	[18.0, 88.0],
+	[14.0, 92.0],
+	[6.0, 88.0],
+	[16.0, 82.0],
+	[20.0, 90.0],
+	[5.0, 92.0],
+
+	// Southwest Indian Ocean (Madagascar region - expanded)
+	[-28.0, 55.0],
+	[-32.0, 52.0],
+	[-25.0, 58.0],
+	[-35.0, 48.0],
+	[-22.0, 52.0],
+	[-18.0, 48.0],
+	[-15.0, 55.0],
+	[-20.0, 58.0],
+	[-30.0, 45.0],
+	[-12.0, 50.0],
+
+	// Mozambique Channel
+	[-18.0, 42.0],
+	[-22.0, 40.0],
+	[-15.0, 44.0],
+
+	// Southeast Indian Ocean (expanded)
+	[-25.0, 95.0],
+	[-30.0, 100.0],
+	[-22.0, 90.0],
+	[-28.0, 88.0],
+	[-18.0, 95.0],
+	[-32.0, 92.0],
+	[-20.0, 102.0],
+
+	// Andaman Sea (expanded)
+	[10.0, 95.0],
+	[8.0, 98.0],
+	[12.0, 92.0],
+	[6.0, 95.0],
+	[14.0, 96.0],
+
+	// Red Sea entrance
+	[14.0, 42.0],
+	[12.0, 45.0],
+
+	// TRUE Indian Ocean - west of Indonesia, south of India (40-80°E longitude)
+	[-15.0, 55.0], // West Indian Ocean
+	[-20.0, 50.0], // Southwest
+	[-25.0, 55.0], // South-central west
+	[-30.0, 60.0], // South
+	[-35.0, 55.0], // Far south
+	[-40.0, 50.0], // Deep south
+	[-45.0, 55.0], // Southern Indian Ocean
+	[-50.0, 60.0], // Near Southern Ocean
+	[-25.0, 45.0], // Near Madagascar
+	[-30.0, 50.0], // South of Madagascar
+	[-35.0, 45.0], // Southwest
+	[-20.0, 60.0], // Central
+	[-15.0, 50.0], // West-central
+	[-10.0, 55.0], // Northwest
+	[-5.0, 60.0], // North
+	[-12.0, 65.0], // Central
+	[-18.0, 58.0], // West
+	[-22.0, 52.0], // Southwest
+	[-28.0, 48.0], // Near Africa
+	[-32.0, 55.0], // South
+	[-38.0, 52.0], // Far south
+	[-42.0, 58.0], // Deep south
+	[-8.0, 50.0], // Northwest
+	[-14.0, 48.0], // West
+
+	// Greenland Sea / Arctic
+	[72.0, -10.0],
+	[75.0, -5.0],
+	[70.0, -15.0],
+	[78.0, 0.0],
+
+	// Barents Sea
+	[74.0, 30.0],
+	[72.0, 35.0],
+	[76.0, 25.0],
+
+	// Southern Ocean / Drake Passage cluster
+	[-58.0, -65.0],
+	[-60.0, -60.0],
+	[-55.0, -68.0],
+	[-62.0, -55.0],
+	[-56.0, -72.0],
+
+	// South of Australia
+	[-48.0, 140.0],
+	[-50.0, 135.0],
+	[-45.0, 145.0],
+
+	// Mediterranean
+	[36.0, 18.0],
+	[38.0, 15.0],
+	[35.0, 25.0],
+	[40.0, 12.0],
+
+	// North Sea
+	[56.0, 3.0],
+	[58.0, 0.0],
+	[54.0, 5.0],
+
+	// Bering Sea
+	[58.0, -175.0],
+	[55.0, -170.0],
+	[60.0, 180.0],
+
+	// Sea of Okhotsk
+	[52.0, 148.0],
+	[55.0, 150.0],
+	[50.0, 145.0],
+
+	// Great Australian Bight
+	[-35.0, 130.0],
+	[-33.0, 125.0],
+	[-38.0, 135.0],
+
+	// Scattered lone points throughout the oceans
+	[48.0, -30.0], // Mid-Atlantic
+	[-10.0, -5.0], // Equatorial Atlantic
+	[-45.0, -30.0], // South Atlantic
+	[15.0, -45.0], // Central Atlantic
+	[-25.0, -40.0], // South Atlantic
+	[50.0, -135.0], // Northeast Pacific
+	[-30.0, -120.0], // South Pacific
+	[10.0, -130.0], // Central Pacific
+	[-8.0, -100.0], // Southeast Pacific
+	[28.0, -175.0], // Central Pacific
+	[-40.0, -170.0], // South Pacific
+	[45.0, 165.0], // Northwest Pacific
+	[-5.0, 155.0], // Western Pacific
+	[8.0, 140.0], // Micronesia region
+	[-15.0, 165.0], // Coral Sea
+	[-42.0, 80.0], // Southern Indian Ocean
+	[-5.0, 55.0], // Western Indian Ocean
+	[5.0, 80.0], // Sri Lanka region
+	[-50.0, 30.0], // South Atlantic / Southern Ocean
+	[-65.0, 90.0], // Southern Ocean
+	[-58.0, 0.0], // Southern Ocean
+	[65.0, -35.0], // North Atlantic / Greenland
+	[62.0, -20.0] // Iceland region
+];
+
+interface OceanGlobeProps {
+	className?: string;
+}
+
+export default function OceanGlobe({ className }: OceanGlobeProps) {
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const pointerInteracting = useRef<number | null>(null);
+	const pointerInteractionMovement = useRef(0);
+	const phiRef = useRef(0); // Start showing Americas/Atlantic
+	const frameRef = useRef(0);
+	const { theme, resolvedTheme } = useTheme();
+
+	const isDark = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
+
+	const updatePointerInteraction = useCallback((value: number | null) => {
+		pointerInteracting.current = value;
+		if (canvasRef.current) {
+			canvasRef.current.style.cursor = value !== null ? "grabbing" : "grab";
+		}
+	}, []);
+
+	const updateMovement = useCallback((clientX: number) => {
+		if (pointerInteracting.current !== null) {
+			const delta = clientX - pointerInteracting.current;
+			pointerInteractionMovement.current = delta;
+		}
+	}, []);
+
+	useEffect(() => {
+		let width = 0;
+		let globe: ReturnType<typeof createGlobe> | null = null;
+
+		const onResize = () => {
+			if (canvasRef.current) {
+				width = canvasRef.current.offsetWidth;
+			}
+		};
+		onResize();
+		window.addEventListener("resize", onResize);
+
+		if (canvasRef.current) {
+			globe = createGlobe(canvasRef.current, {
+				devicePixelRatio: 2,
+				width: width * 2,
+				height: width * 2,
+				phi: 0,
+				theta: 0.2,
+				dark: isDark ? 1 : 0,
+				diffuse: isDark ? 2.5 : 2,
+				mapSamples: 16000,
+				mapBrightness: isDark ? 12 : 2.5,
+				// Light: clean white globe, Dark: rich navy blue
+				baseColor: isDark ? [0.1, 0.14, 0.22] : [1, 1, 1],
+				// Light: primary blue (#233D7F), Dark: bright cyan-blue for visibility
+				markerColor: isDark ? [0.4, 0.75, 1.0] : [0.14, 0.24, 0.5],
+				// Subtle glow - dark mode gets a soft blue rim
+				glowColor: isDark ? [0.15, 0.25, 0.45] : [0.9, 0.92, 0.95],
+				markers: baseOceanMarkers.map((location) => ({
+					location,
+					size: 0.05
+				})),
+				onRender: (state) => {
+					frameRef.current++;
+
+					// Slow auto-rotate when not interacting
+					if (pointerInteracting.current === null) {
+						phiRef.current += 0.001;
+					}
+					state.phi = phiRef.current + pointerInteractionMovement.current / 200;
+					state.width = width * 2;
+					state.height = width * 2;
+
+					// Staggered breathing animation - each marker pulses out of sync
+					state.markers = baseOceanMarkers.map((location, i) => {
+						const phase = i * 0.5; // offset each marker's phase
+						const breathe = 0.06 + Math.sin(frameRef.current * 0.025 + phase) * 0.025;
+						return { location, size: breathe };
+					});
+				}
+			});
+		}
+
+		return () => {
+			window.removeEventListener("resize", onResize);
+			if (globe) {
+				globe.destroy();
+			}
+		};
+	}, [isDark]);
+
+	return (
+		<div className={`relative aspect-square w-full ${className ?? ""}`}>
+			<canvas
+				ref={canvasRef}
+				className="w-full h-full cursor-grab"
+				style={{
+					contain: "layout paint size"
+				}}
+				onPointerDown={(e) => updatePointerInteraction(e.clientX)}
+				onPointerUp={() => updatePointerInteraction(null)}
+				onPointerOut={() => updatePointerInteraction(null)}
+				onMouseMove={(e) => updateMovement(e.clientX)}
+				onTouchMove={(e) => e.touches[0] && updateMovement(e.touches[0].clientX)}
+			/>
+		</div>
+	);
+}
