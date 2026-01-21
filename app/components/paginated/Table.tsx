@@ -690,7 +690,7 @@ export default function Table({
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
-																	className="grow"
+																	className="grow min-w-10"
 																	disabled={userDefinedHeaders.includes(head)}
 																	placeholder={userDefinedHeaders.includes(head) ? "" : "Press Enter to search"}
 																/>
@@ -844,11 +844,11 @@ export default function Table({
 														if (row[head]) {
 															element = (
 																<svg
-																	width="20px"
-																	height="20px"
+																	width="30px"
+																	height="30px"
 																	viewBox="0 0 1920 1920"
 																	xmlns="http://www.w3.org/2000/svg"
-																	className="text-success w-full h-full p-3"
+																	className="text-success w-full"
 																	stroke="currentColor"
 																	fill="currentColor"
 																>
@@ -858,10 +858,10 @@ export default function Table({
 														} else {
 															element = (
 																<svg
-																	width="20px"
-																	height="20px"
+																	width="45px"
+																	height="45px"
 																	viewBox="0 0 24 24"
-																	className="text-error w-full h-full p-1"
+																	className="text-error w-full"
 																	stroke="currentColor"
 																	fill="currentColor"
 																	xmlns="http://www.w3.org/2000/svg"
