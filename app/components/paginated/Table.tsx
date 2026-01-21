@@ -15,7 +15,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
 import AnalysisTag from "../tags/AnalysisTag";
 
-const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order: Prisma.SortOrder };
+const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
 
 //TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
@@ -497,15 +497,15 @@ export default function Table({
 											className="cursor-pointer select-none flex justify-between mb-1"
 											onClick={() =>
 												orderBy.field === title
-													? orderBy.order === "asc"
-														? setOrderBy({ field: title, order: "desc" })
+													? orderBy.order === "desc"
+														? setOrderBy({ field: title, order: "asc" })
 														: setOrderBy(DEFAULT_ORDER_BY)
-													: setOrderBy({ field: title, order: "asc" })
+													: setOrderBy({ field: title, order: "desc" })
 											}
 										>
 											<span>{title}</span>
 											{orderBy.field === title ? (
-												orderBy.order === "asc" ? (
+												orderBy.order === "desc" ? (
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														width="24"
@@ -632,16 +632,16 @@ export default function Table({
 														className="flex justify-between select-none mb-1 cursor-pointer"
 														onClick={() =>
 															orderBy.field === head
-																? orderBy.order === "asc"
-																	? setOrderBy({ field: head, order: "desc" })
+																? orderBy.order === "desc"
+																	? setOrderBy({ field: head, order: "asc" })
 																	: setOrderBy(DEFAULT_ORDER_BY)
-																: setOrderBy({ field: head, order: "asc" })
+																: setOrderBy({ field: head, order: "desc" })
 														}
 													>
 														{head}
 														{userDefinedHeaders.includes(head) && <sup>UD</sup>}
 														{orderBy.field === head ? (
-															orderBy.order === "asc" ? (
+															orderBy.order === "desc" ? (
 																<svg
 																	xmlns="http://www.w3.org/2000/svg"
 																	width="24"

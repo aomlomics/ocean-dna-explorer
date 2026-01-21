@@ -22,7 +22,7 @@ export async function GET(
 
 			const query = {
 				orderBy: {
-					id: "asc"
+					id: "desc"
 				}
 			} as {
 				orderBy: { [field: string]: Prisma.SortOrder };
