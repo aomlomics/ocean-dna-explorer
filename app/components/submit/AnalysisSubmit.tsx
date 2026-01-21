@@ -410,7 +410,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					</SubmitFormSection>
 					<SubmitFormSection
 						title="Make Analyses trusted"
-						info="These Analyses will be labeled as the trusted Analysis for all Libraries used in it. Any other Analyses that use any Libraries in this submission will be no longer be trusted."
+						info="These Analyses will be labeled as the trusted Analysis for all Libraries used in it. Any other Analyses that use any Libraries in this submission that also produce a shared feature will be no longer be trusted."
 					>
 						<fieldset className="fieldset">
 							<label className="fieldset-label flex gap-2">

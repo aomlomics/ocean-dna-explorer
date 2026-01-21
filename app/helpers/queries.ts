@@ -45,7 +45,8 @@ const queryModes = [
 	"notIn",
 	"null",
 	"notNull",
-	"deadValue"
+	"deadValue",
+	"boolean"
 ];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
@@ -67,7 +68,7 @@ export function parseToQuery(
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
 		field = queryArr[0];
-		mode = queryArr[1] as QueryMode;
+		mode = queryArr[1];
 		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
@@ -129,6 +130,17 @@ export function parseToQuery(
 			[field]: {
 				[mode]: value
 			}
+		};
+	} else if (zodType.type === "boolean") {
+		if (mode && mode !== "boolean") {
+			throw new Error(`Mode must be boolean, but is ${mode}.`);
+		}
+		if (typeof value !== "boolean") {
+			throw new Error(`Value must be boolean, but was provided ${typeof value}.`);
+		}
+
+		searchWhere = {
+			[field]: value
 		};
 	} else if (zodType.type === "string") {
 		//string behavior
@@ -305,8 +317,6 @@ export function parseToQuery(
 		}
 	} else if (zodType.type === "string[]") {
 		//TODO: add string arrays back to schema once Prisma supports contains on arrays
-	} else if (zodType.type === "boolean") {
-		//TODO: boolean
 	}
 
 	if (searchWhere) {
