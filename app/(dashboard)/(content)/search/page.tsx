@@ -1587,6 +1587,19 @@ function InputElement({
 				)}
 			</div>
 		);
+	} else if (type === "boolean") {
+		//TODO:
+		// <fieldset className="fieldset">
+		// 				<legend className="fieldset-legend flex gap-2">
+		// 					<h2>trusted</h2>
+		// 				</legend>
+		// 				<input
+		// 					type="checkbox"
+		// 					className="checkbox checkbox-primary"
+		// 					checked={trustedToggle}
+		// 					onChange={(e) => setTrustedToggle(e.currentTarget.checked)}
+		// 				/>
+		// 			</fieldset>
 	} else {
 		const [inValues, setInValues] = useState<string[]>(() => {
 			if (defaultMode === "in" || defaultMode === "notIn") {

@@ -19,6 +19,7 @@ const DEFAULT_ORDER_BY = { field: "id", order: "asc" } as { field: string; order
 
 //TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
+//TODO: support boolean values (check/x)
 export default function Table({
 	table,
 	where,

@@ -36,6 +36,7 @@ export default async function MySubmissions() {
 					select: {
 						analysis_run_name: true,
 						isPrivate: true,
+						trusted: true,
 						analysisMetadataFileUrl_ODE: true,
 						asvFileUrl_ODE: true,
 						occurrenceFileUrl_ODE: true,
@@ -186,17 +187,10 @@ export default async function MySubmissions() {
 
 																<div className="flex gap-3">
 																	<AnalysisEditButton
+																		analysis={analysis}
 																		project_id={proj.project_id}
-																		analysis_run_name={analysis.analysis_run_name}
-																		isPrivate={analysis.isPrivate}
 																		isPrivateDisabled={proj.isPrivate}
-																		analysisMetadataFileUrl_ODE={analysis.analysisMetadataFileUrl_ODE}
-																		asvFileUrl_ODE={analysis.asvFileUrl_ODE || "ERROR: missing ASV file"}
-																		occurrenceFileUrl_ODE={
-																			analysis.occurrenceFileUrl_ODE || "ERROR: missing Occurrence file"
-																		}
 																		tags={tags}
-																		currentTags={analysis.Tags}
 																	/>
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
