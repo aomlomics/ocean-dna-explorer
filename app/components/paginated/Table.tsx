@@ -497,10 +497,10 @@ export default function Table({
 											className="cursor-pointer select-none flex justify-between mb-1"
 											onClick={() =>
 												orderBy.field === title
-													? orderBy.order === "desc"
-														? setOrderBy({ field: title, order: "asc" })
+													? orderBy.order === "asc"
+														? setOrderBy({ field: title, order: "desc" })
 														: setOrderBy(DEFAULT_ORDER_BY)
-													: setOrderBy({ field: title, order: "desc" })
+													: setOrderBy({ field: title, order: "asc" })
 											}
 										>
 											<span>{title}</span>
@@ -632,10 +632,10 @@ export default function Table({
 														className="flex justify-between select-none mb-1 cursor-pointer"
 														onClick={() =>
 															orderBy.field === head
-																? orderBy.order === "desc"
-																	? setOrderBy({ field: head, order: "asc" })
+																? orderBy.order === "asc"
+																	? setOrderBy({ field: head, order: "desc" })
 																	: setOrderBy(DEFAULT_ORDER_BY)
-																: setOrderBy({ field: head, order: "desc" })
+																: setOrderBy({ field: head, order: "asc" })
 														}
 													>
 														{head}
