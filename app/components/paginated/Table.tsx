@@ -505,7 +505,7 @@ export default function Table({
 										>
 											<span>{title}</span>
 											{orderBy.field === title ? (
-												orderBy.order === "desc" ? (
+												orderBy.order === "asc" ? (
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														width="24"
@@ -515,7 +515,7 @@ export default function Table({
 														stroke="currentColor"
 														strokeWidth="2"
 													>
-														<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+														<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
 													</svg>
 												) : (
 													<svg
@@ -527,7 +527,7 @@ export default function Table({
 														stroke="currentColor"
 														strokeWidth="2"
 													>
-														<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+														<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
 													</svg>
 												)
 											) : (
@@ -641,7 +641,7 @@ export default function Table({
 														{head}
 														{userDefinedHeaders.includes(head) && <sup>UD</sup>}
 														{orderBy.field === head ? (
-															orderBy.order === "desc" ? (
+															orderBy.order === "asc" ? (
 																<svg
 																	xmlns="http://www.w3.org/2000/svg"
 																	width="24"
@@ -651,7 +651,7 @@ export default function Table({
 																	stroke="currentColor"
 																	strokeWidth="2"
 																>
-																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
 																</svg>
 															) : (
 																<svg
@@ -663,7 +663,7 @@ export default function Table({
 																	stroke="currentColor"
 																	strokeWidth="2"
 																>
-																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
 																</svg>
 															)
 														) : (
