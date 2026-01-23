@@ -89,20 +89,23 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
 
 	// Get top 2 taxonomies per assay
-	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce((acc, [assay, taxa]) => {
-		const sortedAssayTaxa = Object.entries(taxa)
-			.sort(([, a], [, b]) => b - a)
-			.slice(0, 2)
-			.map(([taxonomy, count]) => {
-				const taxonomyParts = taxonomy.split(";").filter(Boolean);
-				const displayName = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
-				const totalAssayCount = Object.values(taxa).reduce((sum, c) => sum + c, 0);
-				const percentage = ((count / totalAssayCount) * 100).toFixed(1);
-				return { displayName, count, percentage };
-			});
-		acc[assay] = sortedAssayTaxa;
-		return acc;
-	}, {} as Record<string, Array<{ displayName: string; count: number; percentage: string }>>);
+	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce(
+		(acc, [assay, taxa]) => {
+			const sortedAssayTaxa = Object.entries(taxa)
+				.sort(([, a], [, b]) => b - a)
+				.slice(0, 2)
+				.map(([taxonomy, count]) => {
+					const taxonomyParts = taxonomy.split(";").filter(Boolean);
+					const displayName = taxonomyParts[taxonomyParts.length - 1]?.trim() || "Unknown";
+					const totalAssayCount = Object.values(taxa).reduce((sum, c) => sum + c, 0);
+					const percentage = ((count / totalAssayCount) * 100).toFixed(1);
+					return { displayName, count, percentage };
+				});
+			acc[assay] = sortedAssayTaxa;
+			return acc;
+		},
+		{} as Record<string, Array<{ displayName: string; count: number; percentage: string }>>
+	);
 
 	return (
 		<div className="space-y-8">
@@ -162,6 +165,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 							draw
 							legendOmit={["project_id"]}
 							className="h-full w-full min-h-80"
+							defaultLegendField="expedition_id"
 						/>
 					</div>
 

@@ -1162,7 +1162,7 @@ function SearchRuleComponent({
 		return <></>;
 	}
 
-	const omit = [...GlobalOmit, "id"];
+	const omit = [...GlobalOmit, "id", "userDefined"];
 	const nameSuffix = node.id;
 	const isRelation = type === "relation";
 

@@ -46,6 +46,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 
 	//file urls to delete if an error occurs
 	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
+	const [triggerDeleteFiles, setTriggerDeleteFiles] = useState(false); //using trigger because useReducer can't accept an async function
 
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
@@ -64,7 +65,11 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					return temp;
 				} else {
 					if (update.res?.statusMessage === "error") {
-						doError(update.res.error);
+						setLoading(false);
+						setErrorMessage(update.res.error);
+						modalRef.current?.showModal();
+						//use trigger to call the delete once, instead of for every error
+						setTriggerDeleteFiles(true);
 					} else if (update.res?.statusMessage === "success") {
 						//check if current analysis was completed successfully
 						if (
@@ -123,18 +128,21 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		}
 	}, [analysisIds]);
 
-	async function doError(err: string) {
-		//delete files from blob storage
-		for (const url of Object.values(fileUrls).reduce((acc, urls) => [...acc, ...urls])) {
-			await fetch(`/api/file/delete?url=${url}`, {
-				method: "DELETE"
-			});
-		}
+	useEffect(() => {
+		if (triggerDeleteFiles) {
+			async function doFetch() {
+				for (const url of Object.values(fileUrls).reduce((acc, urls) => [...acc, ...urls])) {
+					await fetch(`/api/file/delete?url=${url}`, {
+						method: "DELETE"
+					});
+				}
 
-		setLoading(false);
-		setErrorMessage(err);
-		modalRef.current?.showModal();
-	}
+				setTriggerDeleteFiles(false);
+			}
+
+			doFetch();
+		}
+	}, [triggerDeleteFiles]);
 
 	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
@@ -371,7 +379,11 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			}
 		} catch (err) {
 			const error = err as Error;
-			doError(error.message);
+
+			setLoading(false);
+			setErrorMessage(error.message);
+			modalRef.current?.showModal();
+			setTriggerDeleteFiles(true);
 		}
 	}
 

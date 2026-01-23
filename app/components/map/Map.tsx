@@ -10,6 +10,7 @@ export default function Map({
 	id,
 	table,
 	titleTable,
+	defaultLegendField,
 	cluster,
 	clusterRadius,
 	legend,
@@ -21,7 +22,6 @@ export default function Map({
 	where?: Record<string, string>;
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
 	legend?: boolean;
@@ -32,7 +32,11 @@ export default function Map({
 } & (
 	| { query: () => Promise<NullLocation[]>; locations?: undefined }
 	| { query?: undefined; locations: NullLocation[] }
-)) {
+) &
+	(
+		| { titleTable?: Uncapitalize<Prisma.ModelName>; defaultLegendField?: undefined }
+		| { titleTable?: undefined; defaultLegendField?: string }
+	)) {
 	return (
 		<div
 			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className}`}
@@ -53,6 +57,7 @@ export default function Map({
 					id={id}
 					table={table}
 					titleTable={titleTable}
+					defaultLegendField={defaultLegendField}
 					cluster={cluster}
 					clusterRadius={clusterRadius}
 					legend={legend}
@@ -72,6 +77,7 @@ async function SuspenseMap({
 	id,
 	table,
 	titleTable,
+	defaultLegendField,
 	cluster,
 	clusterRadius,
 	legend,
@@ -85,6 +91,7 @@ async function SuspenseMap({
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
+	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
 	legend?: boolean;
@@ -100,6 +107,7 @@ async function SuspenseMap({
 				id={id}
 				table={table}
 				titleTable={titleTable}
+				defaultLegendField={defaultLegendField}
 				cluster={cluster}
 				clusterRadius={clusterRadius}
 				legend={legend}
@@ -116,6 +124,7 @@ async function SuspenseMap({
 				id={id}
 				table={table}
 				titleTable={titleTable}
+				defaultLegendField={defaultLegendField}
 				cluster={cluster}
 				clusterRadius={clusterRadius}
 				legend={legend}
