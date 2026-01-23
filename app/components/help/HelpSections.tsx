@@ -34,6 +34,49 @@ export const helpSections: Section[] = [
 		),
 		subsections: [
 			{
+				id: "features-overview",
+				title: "Features Overview",
+				content: (
+					<>
+						<p className="mb-4">
+							The Ocean DNA Explorer provides several key features to help you work with marine eDNA data:
+						</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>
+								{" "}
+								<Link className="link link-primary font-semibold" href="/explore">
+									Explore
+								</Link>{" "}
+								projects, samples, analyses, features, and taxonomies with filters and a graphical user interface via
+								the Explore page
+							</li>
+							<li>
+								Leverage the{" "}
+								<Link className="link link-primary font-semibold" href="/api">
+									API
+								</Link>{" "}
+								to access data programmatically
+							</li>
+							<li>
+								{" "}
+								<Link className="link link-primary font-semibold" href="/search">
+									Search
+								</Link>{" "}
+								across datasets using powerful query capabilities via the Search page
+							</li>
+							<li>
+								{" "}
+								<Link className="link link-primary font-semibold" href="/submit">
+									Submit
+								</Link>{" "}
+								your own data in standardized formats via the Submit page
+							</li>
+							<li>Download existing datasets via the API or individual Explore pages</li>
+						</ul>
+					</>
+				)
+			},
+			{
 				id: "login-and-roles",
 				title: "Login and Roles",
 				content: (
@@ -98,49 +141,6 @@ export const helpSections: Section[] = [
 				)
 			},
 			{
-				id: "features-overview",
-				title: "Features Overview",
-				content: (
-					<>
-						<p className="mb-4">
-							The Ocean DNA Explorer provides several key features to help you work with marine eDNA data:
-						</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>
-								{" "}
-								<Link className="link link-primary font-semibold" href="/explore">
-									Explore
-								</Link>{" "}
-								projects, samples, analyses, features, and taxonomies with filters and a graphical user interface via
-								the Explore page
-							</li>
-							<li>
-								Leverage the{" "}
-								<Link className="link link-primary font-semibold" href="/api">
-									API
-								</Link>{" "}
-								to access data programmatically
-							</li>
-							<li>
-								{" "}
-								<Link className="link link-primary font-semibold" href="/search">
-									Search
-								</Link>{" "}
-								across datasets using powerful query capabilities via the Search page
-							</li>
-							<li>
-								{" "}
-								<Link className="link link-primary font-semibold" href="/submit">
-									Submit
-								</Link>{" "}
-								your own data in standardized formats via the Submit page
-							</li>
-							<li>Download existing datasets via the API or individual Explore pages</li>
-						</ul>
-					</>
-				)
-			},
-			{
 				id: "contact-us",
 				title: "Contact Us, Report a Bug, Request a Feature",
 				content: (
@@ -171,338 +171,88 @@ export const helpSections: Section[] = [
 						</ul>
 					</>
 				)
-			}
-		]
-	},
-	{
-		id: "submit",
-		title: "Submit Data",
-		content: (
-			<>
-				<p className="mb-4 font-semibold">
-					NOTE: You must have a role of at least{" "}
-					<Link className="link link-primary font-semibold" href="#login-and-roles">
-						Contributor
-					</Link>{" "}
-					to submit data.{" "}
-				</p>
-				<p className="mb-4">
-					This section will help guide you through the process of contributing your own data to the Ocean DNA Explorer.
-					Once you have{" "}
-					<Link className="link link-primary font-semibold" href="#data-format-rationale">
-						formatted
-					</Link>{" "}
-					your data, you can{" "}
-					<Link className="link link-primary font-semibold" href="/submit">
-						submit
-					</Link>{" "}
-					eDNA projects and analyses to share with the scientific community on the Ocean DNA Explorer, OBIS (Ocean
-					Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
-				</p>
-			</>
-		),
-		subsections: [
-			{
-				id: "public-vs-private-data",
-				title: "Public vs Private Data",
-				content: (
-					<>
-						<p className="mb-4">
-							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
-							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but
-							you cannot make a public submission private.
-						</p>
-						<p className="mb-4">
-							{" "}
-							We encourage users to eventually make their data public. The purpose of private submissions is in case you
-							are unsure of your data quality or if you are new to the submission process.{" "}
-						</p>
-					</>
-				)
 			},
 			{
-				id: "data-format-rationale",
-				title: "Data Format Rationale",
+				id: "faq",
+				title: "FAQ",
 				content: (
 					<>
-						<p className="mb-4">
-							The Ocean DNA Explorer's data format is modeled after the{" "}
-							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
-								FAIRe eDNA standard
-							</Link>
-							, with a few modifications to enable the enhanced features which the Ocean DNA Explorer provides. The
-							FAIRe (Findable, Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization,
-							international collaboration that has developed a comprehensive metadata checklist specifically for eDNA
-							data.
-						</p>
-						<p className="mb-4">
-							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128
-							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, and
-							bioinformatics. The Ocean DNA Explorer's data format uses the same checklist, with a few additions and
-							subtractions. The FAIRe data fields are sourced from existing data standards including:
-						</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>MIxS (Minimum Information about any Sequence) and its extensions</li>
-							<li>Darwin Core (DwC) for biodiversity data</li>
-							<li>MIQE guidelines for quantitative PCR</li>
-							<li>MIEM guidelines for eDNA and eRNA metabarcoding</li>
-							<li>158 new terms specifically developed for eDNA procedures and datasets</li>
-						</ul>
-						<p className="mb-4">
-							This comprehensive approach ensures that eDNA datasets can be properly documented, discovered, and reused
-							across the scientific community, supporting data-driven biodiversity management at broad scales, aiming to
-							connect eDNA data to other environmental data for cross discipline reuse.
-						</p>
-					</>
-				)
-			},
-			{
-				id: "amplicon-sequence-processing",
-				title: "Amplicon Sequence Processing (Tourmaline)",
-				content: (
-					<>
-						<p className="mb-4">
-							{" "}
-							<Link
-								className="link link-primary"
-								href="https://github.com/aomlomics/tourmaline/tree/develop"
-								target="_blank"
-							>
-								Tourmaline 2
-							</Link>{" "}
-							is an amplicon sequence analysis workflow developed by the{" "}
-							<Link className="link link-primary" href="https://github.com/aomlomics" target="_blank">
-								AOML Omics
-							</Link>{" "}
-							team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other
-							commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic
-							assignments. Tourmaline 2 output can be uploaded to the Ocean DNA Explorer as an analysis. Multiple
-							analyses can be uploaded for the same project, allowing users to compare the output from different sets of
-							parameters.{" "}
-						</p>
-					</>
-				)
-			},
-			{
-				id: "faire-metadata-template",
-				title: "FAIRe Metadata Template",
-				content: (
-					<>
-						<p className="mb-4">
-							Metadata templates can be generated using{" "}
-							<Link className="link link-primary" href="https://github.com/aomlomics/FAIReSheets" target="_blank">
-								FAIReSheets
-							</Link>
-							, a tool that creates standardized eDNA data templates directly in Google Sheets. It is NOAA's
-							implementation of the{" "}
-							<Link className="link link-primary" href="#data-format-rationale" target="_blank">
-								FAIRe eDNA
-							</Link>{" "}
-							templates.
-						</p>
-						<p className="mb-4">
-							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A key
-							feature is the ability to add your own User Defined terms to this checklist. When you run FAIReSheets, any
-							custom terms you've added to the checklist Excel file will be included in your generated Google Sheets
-							template, ensuring all your relevant data fields are captured.
-						</p>
-						<p className="mb-4">
-							The checklist also provides controlled vocabularies for many fields, ensuring consistent data entry and
-							units of measure across the eDNA community. This standardization is crucial for data interoperability and
-							reuse.
-						</p>
-						<p className="mb-4">
-							The generated templates for project, sample, experiment run, and analysis metadata are designed for
-							instant submission to the Ocean DNA Explorer. Once filled, data formatted with these templates can also be
-							easily prepared for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using
-							the{" "}
-							<Link className="link link-primary" href="#obis-gbif-submission">
-								edna2obis
-							</Link>{" "}
-							tool.
-						</p>
-						<p className="mb-4">
-							To use FAIReSheets, you will need to run a Python script on your local computer. Access to the tool is
-							granted upon request by emailing bayden.willms@noaa.gov
-						</p>
-					</>
-				)
-			},
-			{
-				id: "fill-in-metadata-templates",
-				title: "Fill in Metadata Templates",
-				content: (
-					<>
-						<p className="mb-4">
-							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your data
-							is standardized and interoperable. Please see the{" "}
-							<a
-								href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html"
-								className="link link-primary"
-							>
-								NOAA Omics Data Management Guide
-							</a>{" "}
-							for more information on the data format and metadata requirements.
-						</p>
+						<div className="space-y-4">
+							<div className="collapse collapse-arrow bg-base-200/50">
+								<input type="checkbox" />
+								<div className="collapse-title font-medium">How do I submit data / become a Contributor?</div>
+								<div className="collapse-content">
+									<p>
+										Submitting data requires you to have the role of Contributor. You can request this role{" "}
+										<Link className="link link-primary" href="/contribute">
+											here
+										</Link>
+										.
+									</p>
+								</div>
+							</div>
 
-						<h4 className="text-lg font-medium mb-2 mt-4">Handling Missing Data (Dead Values)</h4>
-						<p className="mb-4">
-							Data can be absent for many different reasons, and the scientific community has historically used various
-							approaches to indicate missing information. For example, location data may be intentionally obscured or
-							generalized to safeguard endangered species or protect sites of cultural significance to Indigenous
-							communities.
-						</p>
-						<p className="mb-4">
-							For required fields that lack data, you must specify why the information is unavailable using the INSDC
-							missing value controlled vocabulary format. This practice is also recommended for optional fields. Rather
-							than leaving cells empty, select the most appropriate "dead value" from the controlled vocabulary:
-						</p>
-						<div className="mb-4">
-							<table className="table table-zebra w-full">
-								<thead>
-									<tr>
-										<th>Value to enter in the data templates</th>
-										<th>When to Use</th>
-									</tr>
-								</thead>
-								<tbody>
-									{/* Boolean values */}
-									<tr>
-										<td>true</td>
-										<td>Boolean field is true</td>
-									</tr>
-									<tr>
-										<td>1</td>
-										<td>Boolean field is true</td>
-									</tr>
-									<tr>
-										<td>false</td>
-										<td>Boolean field is false</td>
-									</tr>
-									<tr>
-										<td>0</td>
-										<td>Boolean field is false</td>
-									</tr>
-									{/* Dead values */}
-									{Object.keys(DeadBooleanToEnum)
-										.filter((key) => !["true", "false", "0", "1"].includes(key))
-										.map((deadValue) => (
-											<tr key={deadValue}>
-												<td>{deadValue}</td>
-												<td>
-													{deadValue.startsWith("not applicable")
-														? "Field does not apply to this column"
-														: deadValue.startsWith("missing: not collected")
-														? "Data was not collected for X reason"
-														: deadValue.startsWith("missing: not provided")
-														? "Data exists but was not provided"
-														: deadValue.startsWith("missing: restricted access")
-														? "Data cannot be shared due to restrictions"
-														: "Data should exist but is unavailable"}
-												</td>
-											</tr>
-										))}
-								</tbody>
-							</table>
+							<div className="collapse collapse-arrow bg-base-200/50">
+								<input type="checkbox" />
+								<div className="collapse-title font-medium">How do I use the API?</div>
+								<div className="collapse-content">
+									<p>
+										The API has a dedicated{" "}
+										<Link className="link link-primary" href="/api">
+											documentation page
+										</Link>
+										, or you can use the Explore page to view the data through the website.
+									</p>
+								</div>
+							</div>
+
+							<div className="collapse collapse-arrow bg-base-200/50">
+								<input type="checkbox" />
+								<div className="collapse-title font-medium">How do I contact the Ocean DNA Explorer team?</div>
+								<div className="collapse-content">
+									<p>
+										Please contact us via the{" "}
+										<Link className="link link-primary" href="https://github.com/aomlomics/node/issues">
+											GitHub issues page
+										</Link>
+										.
+									</p>
+								</div>
+							</div>
+
+							<div className="collapse collapse-arrow bg-base-200/50">
+								<input type="checkbox" />
+								<div className="collapse-title font-medium">Can I download the entire database?</div>
+								<div className="collapse-content">
+									<p>
+										While individual datasets can be downloaded, we currently don't provide a bulk download of the entire
+										database. For large-scale data access, please contact us to discuss your needs.
+									</p>
+								</div>
+							</div>
+
+							<div className="collapse collapse-arrow bg-base-200/50">
+								<input type="checkbox" />
+								<div className="collapse-title font-medium">How do I cite data from the Ocean DNA Explorer?</div>
+								<div className="collapse-content">
+									<p>
+										Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to
+										cite the project.
+									</p>
+								</div>
+							</div>
+
+							<div className="collapse collapse-arrow bg-base-200/50">
+								<input type="checkbox" />
+								<div className="collapse-title font-medium">How do you protect our personal data?</div>
+								<div className="collapse-content">
+									<p>
+										There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by
+										the platform's reputable authentication provider, Clerk, and all data is stored in a secure database.
+									</p>
+								</div>
+							</div>
 						</div>
-
-						<h4 className="text-lg font-medium mb-2 mt-12">User Defined Terms</h4>
-						<p className="mb-4">
-							If you have data fields which you want in your templates that are NOT in the FAIRe NOAA checklist (data
-							dictionary), you can add them as User Defined terms. As mentioned in the{" "}
-							<Link className="link link-primary" href="#faire-metadata-template">
-								FAIRe Metadata Template
-							</Link>{" "}
-							section, you can add these to the FAIRe NOAA checklist before generating your template, or add them
-							manually as new columns in your Google Sheet.
-						</p>
-
-						<h4 className="text-lg font-medium mb-2 mt-4">Pay Attention to these Important Fields!</h4>
-						<p className="mb-4">
-							To ensure your data is linked and interpreted correctly, please pay close attention to the following:
-						</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>
-								Project ID: The project_id must be identical across all metadata files (project, sample, etc.) to link
-								them together.
-							</li>
-							<li>
-								Analysis Run Names: Verify that each analysis file's analysis_run_name is correct in each
-								analysisMetadata file, and is unique for each analysis.
-							</li>
-							<li>
-								Assay-Specific vs. Project-Level Data: In the project metadata, fields can apply to all analyses
-								(denoted by a value in the project_level column) or they may have a different value per assay. For assay
-								specific values, use the corresponding assay-specific column (e.g., "ssu16sv4v5-emp" or "ssu18sv9-emp").
-							</li>
-						</ul>
-						<p className="font-bold">
-							{" "}
-							Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit
-							to the Ocean DNA Explorer!
-						</p>
-					</>
-				)
-			},
-			{
-				id: "project-submissions",
-				title: "Project Submissions",
-				content: (
-					<>
-						<p className="mb-4">
-							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. To submit a project, you'll
-							need to submit one or more analyses alongside it.
-						</p>
-						<p className="mb-2">The following fields are required in your project metadata file:</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>project_id</li>
-							<li>project_contact</li>
-							<li>assay_type</li>
-							<li>checkls_ver</li>
-							<li>pcr_0_1</li>
-							<li>assay_name</li>
-							<li>targetTaxonomicAssay</li>
-							<li>pcr_primer_forward</li>
-							<li>pcr_primer_reverse</li>
-						</ul>
-						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
-					</>
-				)
-			},
-			{
-				id: "analysis-submissions",
-				title: "Analysis Submissions",
-				content: (
-					<>
-						<p className="mb-4">
-							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. Analyses can be submitted
-							WITHOUT a project, as long as the project it is related to is already uploaded to the Ocean DNA Explorer.
-						</p>
-						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>project_id</li>
-							<li>assay_name</li>
-							<li>analysis_run_name</li>
-						</ul>
-						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
-					</>
-				)
-			},
-			{
-				id: "obis-gbif-submission",
-				title: "OBIS + GBIF Submission",
-				content: (
-					<>
-						<p className="mb-4">
-							{" "}
-							<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
-								edna2obis
-							</Link>{" "}
-							converts the Ocean DNA Explorer input files to the expected format for submission to OBIS (Ocean
-							Biodiversity Information System), and GBIF (Global Biodiversity Information Facility). its input file
-							structure MATCHES that of the Ocean DNA Explorer, so if you're submitting data here, you can easily submit
-							to OBIS and GBIF as well.
-						</p>
 					</>
 				)
 			}
@@ -838,71 +588,337 @@ export const helpSections: Section[] = [
 		]
 	},
 	{
-		id: "faq",
-		title: "FAQ",
+		id: "submit",
+		title: "Submit Data",
 		content: (
 			<>
-				<div className="space-y-6">
-					<p className="mb-4">Frequently asked questions about using the Ocean DNA Explorer.</p>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: How do I submit data / become a Contributor?</h4>
-						<p>
-							A: Submitting data requires you to have the role of Contributor. You can request this role{" "}
-							<Link className="link link-primary" href="/contribute">
-								here
-							</Link>
-							.
-						</p>
-					</div>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: How do I use the API?</h4>
-						<p>
-							A: The API has a dedicated{" "}
-							<Link className="link link-primary" href="/api">
-								documentation page
-							</Link>
-							, or you can use the Explore page to view the data through the website.
-						</p>
-					</div>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: How do I contact the Ocean DNA Explorer team?</h4>
-						<p>
-							A: Please contact us via the{" "}
-							<Link className="link link-primary" href="https://github.com/aomlomics/node/issues">
-								GitHub issues page
-							</Link>
-							.
-						</p>
-					</div>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: Can I download the entire database?</h4>
-						<p>
-							A: While individual datasets can be downloaded, we currently don't provide a bulk download of the entire
-							database. For large-scale data access, please contact us to discuss your needs.
-						</p>
-					</div>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: How do I cite data from the Ocean DNA Explorer?</h4>
-						<p>
-							A: Each project has a project_contact, recordedBy, institution, and institutionID, which can be used to
-							cite the project.
-						</p>
-					</div>
-
-					<div>
-						<h4 className="font-medium mb-2">Q: How do you protect our personal data?</h4>
-						<p>
-							A: There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by
-							the platform's reputableauthentication provider, Clerk, and all data is stored in a secure database.
-						</p>
-					</div>
-				</div>
+				<p className="mb-4 font-semibold">
+					NOTE: You must have a role of at least{" "}
+					<Link className="link link-primary font-semibold" href="#login-and-roles">
+						Contributor
+					</Link>{" "}
+					to submit data.{" "}
+				</p>
+				<p className="mb-4">
+					This section will help guide you through the process of contributing your own data to the Ocean DNA Explorer.
+					Once you have{" "}
+					<Link className="link link-primary font-semibold" href="#data-format-rationale">
+						formatted
+					</Link>{" "}
+					your data, head to the{" "}
+					<Link className="link link-primary font-semibold" href="/submit">
+						Submit
+					</Link>{" "}
+					tab in the website header to upload your files. Your data can then be shared with the scientific community on the Ocean DNA Explorer, OBIS (Ocean
+					Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
+				</p>
 			</>
-		)
+		),
+		subsections: [
+			{
+				id: "public-vs-private-data",
+				title: "Public vs Private Data",
+				content: (
+					<>
+						<p className="mb-4">
+							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
+							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but
+							you cannot make a public submission private.
+						</p>
+						<p className="mb-4">
+							{" "}
+							We encourage users to eventually make their data public. The purpose of private submissions is in case you
+							are unsure of your data quality or if you are new to the submission process.{" "}
+						</p>
+					</>
+				)
+			},
+			{
+				id: "data-format-rationale",
+				title: "Data Format Rationale",
+				content: (
+					<>
+						<p className="mb-4">
+							The Ocean DNA Explorer's data format is modeled after the{" "}
+							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
+								FAIRe eDNA standard
+							</Link>
+							, with a few modifications to enable the enhanced features which the Ocean DNA Explorer provides. The
+							FAIRe (Findable, Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization,
+							international collaboration that has developed a comprehensive metadata checklist specifically for eDNA
+							data.
+						</p>
+						<p className="mb-4">
+							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128
+							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, and
+							bioinformatics. The Ocean DNA Explorer's data format uses the same checklist, with a few additions and
+							subtractions. The FAIRe data fields are sourced from existing data standards including:
+						</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>MIxS (Minimum Information about any Sequence) and its extensions</li>
+							<li>Darwin Core (DwC) for biodiversity data</li>
+							<li>MIQE guidelines for quantitative PCR</li>
+							<li>MIEM guidelines for eDNA and eRNA metabarcoding</li>
+							<li>158 new terms specifically developed for eDNA procedures and datasets</li>
+						</ul>
+						<p className="mb-4">
+							This comprehensive approach ensures that eDNA datasets can be properly documented, discovered, and reused
+							across the scientific community, supporting data-driven biodiversity management at broad scales, aiming to
+							connect eDNA data to other environmental data for cross discipline reuse.
+						</p>
+					</>
+				)
+			},
+			{
+				id: "amplicon-sequence-processing",
+				title: "Amplicon Sequence Processing (Tourmaline)",
+				content: (
+					<>
+						<p className="mb-4">
+							{" "}
+							<Link
+								className="link link-primary"
+								href="https://github.com/aomlomics/tourmaline/tree/develop"
+								target="_blank"
+							>
+								Tourmaline 2
+							</Link>{" "}
+							is an amplicon sequence analysis workflow developed by the{" "}
+							<Link className="link link-primary" href="https://github.com/aomlomics" target="_blank">
+								AOML Omics
+							</Link>{" "}
+							team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other
+							commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic
+							assignments. Tourmaline 2 output can be uploaded to the Ocean DNA Explorer as an analysis. Multiple
+							analyses can be uploaded for the same project, allowing users to compare the output from different sets of
+							parameters.{" "}
+						</p>
+					</>
+				)
+			},
+			{
+				id: "faire-metadata-template",
+				title: "FAIRe Metadata Template",
+				content: (
+					<>
+						<p className="mb-4">
+							Metadata templates can be generated using{" "}
+							<Link className="link link-primary" href="https://github.com/aomlomics/FAIReSheets" target="_blank">
+								FAIReSheets
+							</Link>
+							, a tool that creates standardized eDNA data templates directly in Google Sheets. It is NOAA's
+							implementation of the{" "}
+							<Link className="link link-primary" href="#data-format-rationale" target="_blank">
+								FAIRe eDNA
+							</Link>{" "}
+							templates.
+						</p>
+						<p className="mb-4">
+							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A key
+							feature is the ability to add your own User Defined terms to this checklist. When you run FAIReSheets, any
+							custom terms you've added to the checklist Excel file will be included in your generated Google Sheets
+							template, ensuring all your relevant data fields are captured.
+						</p>
+						<p className="mb-4">
+							The checklist also provides controlled vocabularies for many fields, ensuring consistent data entry and
+							units of measure across the eDNA community. This standardization is crucial for data interoperability and
+							reuse.
+						</p>
+						<p className="mb-4">
+							The generated templates for project, sample, experiment run, and analysis metadata are designed for
+							instant submission to the Ocean DNA Explorer. Once filled, data formatted with these templates can also be
+							easily prepared for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using
+							the{" "}
+							<Link className="link link-primary" href="#obis-gbif-submission">
+								edna2obis
+							</Link>{" "}
+							tool.
+						</p>
+						<p className="mb-4">
+							To use FAIReSheets, you will need to run a Python script on your local computer. Access to the tool is
+							granted upon request by emailing bayden.willms@noaa.gov
+						</p>
+					</>
+				)
+			},
+			{
+				id: "fill-in-metadata-templates",
+				title: "Fill in Metadata Templates",
+				content: (
+					<>
+						<p className="mb-4">
+							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your data
+							is standardized and interoperable. Please see the{" "}
+							<a
+								href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html"
+								className="link link-primary"
+							>
+								NOAA Omics Data Management Guide
+							</a>{" "}
+							for more information on the data format and metadata requirements.
+						</p>
+
+						<h4 className="text-lg font-medium mb-2 mt-4">Handling Missing Data (Dead Values)</h4>
+						<p className="mb-4">
+							Data can be absent for many different reasons, and the scientific community has historically used various
+							approaches to indicate missing information. For example, location data may be intentionally obscured or
+							generalized to safeguard endangered species or protect sites of cultural significance to Indigenous
+							communities.
+						</p>
+						<p className="mb-4">
+							For required fields that lack data, you must specify why the information is unavailable using the INSDC
+							missing value controlled vocabulary format. This practice is also recommended for optional fields. Rather
+							than leaving cells empty, select the most appropriate "dead value" from the controlled vocabulary:
+						</p>
+						<div className="mb-4">
+							<table className="table table-zebra w-full">
+								<thead>
+									<tr>
+										<th>Value to enter in the data templates</th>
+										<th>When to Use</th>
+									</tr>
+								</thead>
+								<tbody>
+									{/* Boolean values */}
+									<tr>
+										<td>true</td>
+										<td>Boolean field is true</td>
+									</tr>
+									<tr>
+										<td>1</td>
+										<td>Boolean field is true</td>
+									</tr>
+									<tr>
+										<td>false</td>
+										<td>Boolean field is false</td>
+									</tr>
+									<tr>
+										<td>0</td>
+										<td>Boolean field is false</td>
+									</tr>
+									{/* Dead values */}
+									{Object.keys(DeadBooleanToEnum)
+										.filter((key) => !["true", "false", "0", "1"].includes(key))
+										.map((deadValue) => (
+											<tr key={deadValue}>
+												<td>{deadValue}</td>
+												<td>
+													{deadValue.startsWith("not applicable")
+														? "Field does not apply to this column"
+														: deadValue.startsWith("missing: not collected")
+														? "Data was not collected for X reason"
+														: deadValue.startsWith("missing: not provided")
+														? "Data exists but was not provided"
+														: deadValue.startsWith("missing: restricted access")
+														? "Data cannot be shared due to restrictions"
+														: "Data should exist but is unavailable"}
+												</td>
+											</tr>
+										))}
+								</tbody>
+							</table>
+						</div>
+
+						<h4 className="text-lg font-medium mb-2 mt-12">User Defined Terms</h4>
+						<p className="mb-4">
+							If you have data fields which you want in your templates that are NOT in the FAIRe NOAA checklist (data
+							dictionary), you can add them as User Defined terms. As mentioned in the{" "}
+							<Link className="link link-primary" href="#faire-metadata-template">
+								FAIRe Metadata Template
+							</Link>{" "}
+							section, you can add these to the FAIRe NOAA checklist before generating your template, or add them
+							manually as new columns in your Google Sheet.
+						</p>
+
+						<h4 className="text-lg font-medium mb-2 mt-4">Pay Attention to these Important Fields!</h4>
+						<p className="mb-4">
+							To ensure your data is linked and interpreted correctly, please pay close attention to the following:
+						</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>
+								Project ID: The project_id must be identical across all metadata files (project, sample, etc.) to link
+								them together.
+							</li>
+							<li>
+								Analysis Run Names: Verify that each analysis file's analysis_run_name is correct in each
+								analysisMetadata file, and is unique for each analysis.
+							</li>
+							<li>
+								Assay-Specific vs. Project-Level Data: In the project metadata, fields can apply to all analyses
+								(denoted by a value in the project_level column) or they may have a different value per assay. For assay
+								specific values, use the corresponding assay-specific column (e.g., "ssu16sv4v5-emp" or "ssu18sv9-emp").
+							</li>
+						</ul>
+						<p className="font-bold">
+							{" "}
+							Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit
+							to the Ocean DNA Explorer!
+						</p>
+					</>
+				)
+			},
+			{
+				id: "project-submissions",
+				title: "Project Submissions",
+				content: (
+					<>
+						<p className="mb-4">
+							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. To submit a project, you'll
+							need to submit one or more analyses alongside it.
+						</p>
+						<p className="mb-2">The following fields are required in your project metadata file:</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>project_id</li>
+							<li>project_contact</li>
+							<li>assay_type</li>
+							<li>checkls_ver</li>
+							<li>pcr_0_1</li>
+							<li>assay_name</li>
+							<li>targetTaxonomicAssay</li>
+							<li>pcr_primer_forward</li>
+							<li>pcr_primer_reverse</li>
+						</ul>
+						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
+					</>
+				)
+			},
+			{
+				id: "analysis-submissions",
+				title: "Analysis Submissions",
+				content: (
+					<>
+						<p className="mb-4">
+							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. Analyses can be submitted
+							WITHOUT a project, as long as the project it is related to is already uploaded to the Ocean DNA Explorer.
+						</p>
+						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
+						<ul className="list-disc ml-6 mb-4">
+							<li>project_id</li>
+							<li>assay_name</li>
+							<li>analysis_run_name</li>
+						</ul>
+						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
+					</>
+				)
+			},
+			{
+				id: "obis-gbif-submission",
+				title: "OBIS + GBIF Submission",
+				content: (
+					<>
+						<p className="mb-4">
+							{" "}
+							<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
+								edna2obis
+							</Link>{" "}
+							converts the Ocean DNA Explorer input files to the expected format for submission to OBIS (Ocean
+							Biodiversity Information System), and GBIF (Global Biodiversity Information Facility). its input file
+							structure MATCHES that of the Ocean DNA Explorer, so if you're submitting data here, you can easily submit
+							to OBIS and GBIF as well.
+						</p>
+					</>
+				)
+			}
+		]
 	}
 ];

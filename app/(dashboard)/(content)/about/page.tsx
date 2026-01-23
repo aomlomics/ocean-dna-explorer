@@ -50,8 +50,8 @@ export default function AboutPage() {
 	return (
 		<main className="min-h-screen bg-base-100 text-base-content">
 			{/* Mission banner */}
-			<section className="relative -mt-6 sm:-mt-8 lg:-mt-10 left-1/2 right-1/2 -mx-[50vw] w-screen mb-4 sm:mb-6">
-				<div className="px-4 pt-12 sm:pt-16 md:pt-20 pb-4 text-center">
+			<section className="relative w-full mb-6 sm:mb-8">
+				<div className="px-4 pt-8 sm:pt-10 md:pt-12 pb-4 text-center">
 					<h1 className="mb-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-primary">Our Mission</h1>
 					<p className="max-w-3xl mx-auto text-sm sm:text-base md:text-lg text-base-content/90">
 						The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We
@@ -59,7 +59,8 @@ export default function AboutPage() {
 						DNA (eDNA) datasets.
 					</p>
 				</div>
-				<div className="relative w-full mt-2 sm:mt-3 mb-8 sm:mb-10 h-24 sm:h-28 md:h-32 lg:h-36">
+				{/* Decorative ocean wave illustration */}
+				<div className="relative w-full mt-2 sm:mt-3 h-20 sm:h-24 md:h-28 lg:h-32">
 					<Image
 						src="/images/ocean_surface_abstract.svg"
 						alt="Abstract ocean surface line illustration"

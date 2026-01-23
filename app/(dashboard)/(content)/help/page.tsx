@@ -1,6 +1,7 @@
 import { helpSections } from "@/app/components/help/HelpSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
 import MobileTOC from "@/app/components/help/MobileTOC";
+import HelpQuickNav from "@/app/components/help/HelpQuickNav";
 
 export default function Help() {
 	return (
@@ -47,6 +48,9 @@ export default function Help() {
 
 			{/* Main content area - Full width on mobile */}
 			<main className="flex-1 p-4 md:p-6 lg:p-8">
+				{/* Quick Navigation Icons */}
+				<HelpQuickNav />
+
 				{/* Mobile Table of Contents */}
 				<MobileTOC sections={helpSections} />
 

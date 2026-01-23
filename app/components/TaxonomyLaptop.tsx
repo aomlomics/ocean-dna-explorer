@@ -25,9 +25,25 @@ function generateSequence(length: number): string {
 
 interface TaxonomyLaptopProps {
 	className?: string;
+	// Screen bounds as percentages of the laptop image
+	// Adjust these values to match your laptop.png exactly
+	screenBounds?: {
+		top: number;    // % from top where screen starts
+		left: number;   // % from left where screen starts
+		right: number;  // % from right where screen ends
+		bottom: number; // % from bottom where screen ends
+	};
 }
 
-export default function TaxonomyLaptop({ className }: TaxonomyLaptopProps) {
+// Default screen bounds - adjust these to match laptop.png exactly
+const DEFAULT_SCREEN_BOUNDS = {
+	top: 7.5,
+	left: 15.5,
+	right: 15.5,
+	bottom: 43
+};
+
+export default function TaxonomyLaptop({ className, screenBounds = DEFAULT_SCREEN_BOUNDS }: TaxonomyLaptopProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [phase, setPhase] = useState<"feature" | "matching" | "assignment">("feature");
 	const [featureId, setFeatureId] = useState(generateFeatureId());
@@ -119,7 +135,7 @@ export default function TaxonomyLaptop({ className }: TaxonomyLaptopProps) {
 
 	return (
 		<div className={`relative w-full h-full flex items-center justify-center ${className ?? ""}`}>
-			{/* Fixed aspect ratio container matching the laptop image proportions */}
+			{/* Fixed aspect ratio container matching the laptop image proportions (1320x1080) */}
 			<div
 				className="relative w-full h-auto max-h-full"
 				style={{ aspectRatio: "1320 / 1080" }}
@@ -134,48 +150,48 @@ export default function TaxonomyLaptop({ className }: TaxonomyLaptopProps) {
 					priority
 				/>
 
-				{/* Screen content container - positioned to cover the laptop screen area */}
+				{/* Screen content container - positioned to match laptop screen exactly */}
 				<div
 					className="absolute overflow-hidden"
 					style={{
-						top: "8%",
-						left: "16%",
-						right: "16%",
-						bottom: "46%"
+						top: `${screenBounds.top}%`,
+						left: `${screenBounds.left}%`,
+						right: `${screenBounds.right}%`,
+						bottom: `${screenBounds.bottom}%`
 					}}
 				>
-					{/* Content wrapper with transition - centered both ways */}
+					{/* Content wrapper with transition - always centered */}
 					<div 
-						className={`absolute inset-0 flex flex-col items-center justify-center text-center transition-opacity duration-500 ${
+						className={`absolute inset-0 flex flex-col items-center justify-center text-center p-[5%] transition-opacity duration-500 ${
 							isTransitioning ? "opacity-0" : "opacity-100"
 						}`}
 					>
-						{/* Phase 1: Feature - pushed down */}
+						{/* Phase 1: Feature */}
 						{phase === "feature" && (
-							<div className="flex flex-col items-center justify-center pt-[6%]">
-								<p className="text-[0.9em] sm:text-[1em] font-bold text-primary mb-1">
+							<div className="flex flex-col items-center justify-center w-full">
+								<p className="text-[clamp(10px,3.5cqw,16px)] font-bold text-primary mb-[2%]">
 									FEATURE
 								</p>
-								<p className="text-[0.6em] sm:text-[0.7em] text-base-content/80">
+								<p className="text-[clamp(7px,2.5cqw,12px)] text-base-content/80">
 									feature_id:
 								</p>
-								<p className="text-primary font-mono text-[0.5em] sm:text-[0.55em] mb-1 break-all leading-tight">
+								<p className="text-primary font-mono text-[clamp(6px,2cqw,10px)] mb-[2%] break-all leading-tight px-[5%]">
 									{featureId}
 								</p>
-								<p className="text-[0.55em] sm:text-[0.65em] text-base-content/70">
+								<p className="text-[clamp(7px,2.5cqw,11px)] text-base-content/70">
 									Sequence:
 								</p>
-								<p className="text-primary font-mono text-[0.5em] sm:text-[0.6em] break-all leading-tight">
+								<p className="text-primary font-mono text-[clamp(6px,2.2cqw,11px)] break-all leading-tight px-[5%]">
 									{sequence}
 								</p>
 							</div>
 						)}
 
-						{/* Phase 2: Matching - flashing outlines, nudged down */}
+						{/* Phase 2: Matching - flashing outlines */}
 						{phase === "matching" && (
-							<div className="flex flex-col items-center justify-center pt-[12%]">
+							<div className="flex flex-col items-center justify-center w-full">
 								<div
-									className="w-[28%] aspect-square mb-2 opacity-60"
+									className="w-[30%] aspect-square mb-[3%] opacity-60"
 									style={{
 										backgroundColor: "var(--color-primary)",
 										WebkitMaskImage: `url(${identifications[flashingOutlineIndex].src})`,
@@ -188,23 +204,23 @@ export default function TaxonomyLaptop({ className }: TaxonomyLaptopProps) {
 										maskSize: "contain"
 									}}
 								/>
-								<div className="flex items-center gap-2 mb-1">
-									<div className="w-4 h-4 border-[2px] border-primary/30 border-t-primary rounded-full animate-spin" />
-									<p className="text-[0.9em] sm:text-[1em] font-bold text-primary">
+								<div className="flex items-center gap-[3%] mb-[2%]">
+									<div className="w-[clamp(10px,3cqw,16px)] h-[clamp(10px,3cqw,16px)] border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+									<p className="text-[clamp(10px,3.5cqw,16px)] font-bold text-primary">
 										MATCHING
 									</p>
 								</div>
-								<p className="text-[0.6em] sm:text-[0.7em] text-base-content/70">
+								<p className="text-[clamp(7px,2.5cqw,12px)] text-base-content/70">
 									Comparing against NCBI / BOLD
 								</p>
 							</div>
 						)}
 
-						{/* Phase 3: Assignment - clean vertical layout, shifted down */}
+						{/* Phase 3: Assignment - compact layout that always fits */}
 						{phase === "assignment" && (
-							<div className="flex flex-col items-center justify-end h-full pt-[8%]">
+							<div className="flex flex-col items-center justify-center w-full h-full">
 								<div
-									className="w-[55%] aspect-square"
+									className="w-[40%] aspect-square mb-[2%]"
 									style={{
 										backgroundColor: "var(--color-primary)",
 										WebkitMaskImage: `url(${current.src})`,
@@ -217,16 +233,16 @@ export default function TaxonomyLaptop({ className }: TaxonomyLaptopProps) {
 										maskSize: "contain"
 									}}
 								/>
-								<p className="text-[0.9em] sm:text-[1.1em] font-semibold text-primary leading-tight">
+								<p className="text-[clamp(9px,3.2cqw,15px)] font-semibold text-primary leading-tight">
 									{current.common}
 								</p>
-								<p className="text-[0.65em] sm:text-[0.75em] italic text-base-content/70 leading-tight">
+								<p className="text-[clamp(7px,2.3cqw,11px)] italic text-base-content/70 leading-tight">
 									{current.scientific}
 								</p>
-								<p className="text-[0.65em] sm:text-[0.75em] text-success font-bold leading-tight">
+								<p className="text-[clamp(7px,2.3cqw,11px)] text-success font-bold leading-tight">
 									{current.confidence}% match
 								</p>
-								<p className="text-[0.8em] sm:text-[1em] font-bold text-success leading-tight">
+								<p className="text-[clamp(8px,2.8cqw,13px)] font-bold text-success leading-tight mt-[1%]">
 									✓ ASSIGNMENT
 								</p>
 							</div>
