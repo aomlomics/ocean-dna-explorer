@@ -40,7 +40,6 @@ export default function Table({
 	ignoreParams?: string[];
 	className?: string;
 }) {
-	console.log(1);
 	const title = TableMetadata[table].titleField;
 
 	const manyRelations = [] as string[];
@@ -119,7 +118,6 @@ export default function Table({
 			}
 		}
 	}
-	console.log(2);
 
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -204,14 +202,14 @@ export default function Table({
 
 	// Reset to first page whenever the table or URL search params change
 	useEffect(() => {
-		console.log("effect 1");
-		setPage(1);
+		if (page !== 1) {
+			setPage(1);
+		}
 	}, [table, searchParams]);
 
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			if (hideEmpty) {
-				console.log("effect 2 1");
 				const emptyFields = {} as Record<string, true>;
 				const exemptFields = {} as Record<string, true>;
 
@@ -229,8 +227,7 @@ export default function Table({
 				}
 
 				setEmptyFilter(emptyFields);
-			} else {
-				console.log("effect 2 2");
+			} else if (Object.keys(emptyFilter).length) {
 				setEmptyFilter({});
 			}
 		}
@@ -240,7 +237,6 @@ export default function Table({
 		if (data && data.statusMessage === "success") {
 			//set to last page if page is too large
 			if ((page - 1) * take > data.count) {
-				console.log("effect 3 1");
 				setPage(Math.floor(data.count / take) + 1);
 			}
 
@@ -253,7 +249,6 @@ export default function Table({
 			}
 
 			if (tempUserDefinedHeadersSet.size) {
-				console.log("effect 3 2");
 				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
 				setHeaders([...headers.filter((head) => !userDefinedHeaders.includes(head)), ...tempUserDefinedHeadersSet]);
 				setUserDefinedHeaders(tempUserDefinedHeaders);
@@ -265,7 +260,6 @@ export default function Table({
 					} as Record<string, true>;
 
 					if (Object.keys(tempHeadersFilter).length) {
-						console.log("effect 3 3");
 						setHeadersFilter(tempHeadersFilter);
 					}
 				}
