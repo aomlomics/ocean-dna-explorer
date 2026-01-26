@@ -1074,7 +1074,6 @@ export type ProjectPartial = z.infer<typeof ProjectPartialSchema>
 export const ProjectOptionalDefaultsSchema = ProjectSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
-  sample_type: z.string().optional(),
 }))
 
 export type ProjectOptionalDefaults = z.infer<typeof ProjectOptionalDefaultsSchema>

@@ -55,7 +55,7 @@ model Project {
     // Sample Collection
     /// @zod.custom.use(z.coerce.number().int())
     biological_rep Int?
-    sample_type    String @default("")
+    sample_type    String
 }
 
 model Sample {
