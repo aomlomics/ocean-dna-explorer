@@ -13,53 +13,61 @@ export default function LoadingTable({
 	error?: string;
 }) {
 	return (
-		<div className="bg-base-100 border-base-300 rounded-box p-6 h-full w-full">
+		<div className="bg-base-100 border-base-300 rounded-box h-full w-full p-6">
 			<div className="w-full h-full flex flex-col">
-				<div className="grid grid-cols-3 justify-items-center">
-					{/* Filters Buttons */}
-					<div className="flex items-center gap-5">
-						<button disabled className="btn btn-sm btn-error" type="button">
-							Clear Filters
-						</button>
-						<button disabled className="btn btn-sm btn-primary">
-							Apply Filters
-						</button>
-
-						<label className="input input-sm input-bordered flex items-center gap-2">
-							Per Page:
-							<input name="take" disabled defaultValue={take} type="number" className="grow max-w-12" />
-						</label>
+				<div className="flex justify-between items-center mb-4">
+					{/* Left side: Filters */}
+					<div className="flex-1 flex">
+						<div className="flex items-center gap-2">
+							<button
+								className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
+								type="button"
+								disabled
+							>
+								Clear Filters
+							</button>
+							<button type="submit" className="btn btn-sm" disabled>
+								Apply Filters
+							</button>
+							<label className="input input-sm input-bordered">
+								Per Page:
+								<input name="take" defaultValue={take} type="number" disabled />
+							</label>
+						</div>
 					</div>
 					{/* Pagination Controls */}
 					<LoadingPaginationControls />
 
 					{/* Column Selection Button */}
-					<div className="flex items-center justify-center w-full gap-5">
-						<button disabled className="btn btn-sm">
-							Columns
-						</button>
+					<div className="grid grid-cols-2 w-full gap-5 flex-1">
+						<div className="dropdown dropdown-end justify-self-end">
+							<div tabIndex={0} role="button" className="btn btn-sm btn-disabled">
+								Columns
+							</div>
+						</div>
 
 						<fieldset className="fieldset bg-base-100 border-base-300">
-							<label className="label">
+							<label className="label select-none">
 								<input type="checkbox" className="checkbox" disabled />
 								Hide empty columns
 							</label>
 						</fieldset>
 					</div>
 				</div>
-				<div className="overflow-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
-					<table className="table table-xs table-pin-rows table-pin-cols">
+				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
+					<table className="table table-sm table-pin-rows table-pin-cols">
 						{/* Headers */}
 						<thead>
 							<tr>
 								{/* Title Header Cell */}
-								<th className="p-0 pr-2 z-40">
+								<th className="px-3 py-2 z-40 bg-base-100">
+									<div className="cursor-pointer select-none flex justify-between mb-1">
+										<LoadingText />
+									</div>
+
 									<label className="form-control w-full max-w-xs text-lg">
-										<div className="flex justify-between">
-											<LoadingText />
-										</div>
 										{/* Value Filter */}
-										<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 16 16"
@@ -78,13 +86,13 @@ export default function LoadingTable({
 								</th>
 
 								{new Array(columns - 1).fill(null).map((_, i) => (
-									<td key={i}>
+									<td key={"head" + i} className="bg-base-100">
+										<div className="flex justify-between select-none mb-1">
+											<LoadingText />
+										</div>
 										<label className="form-control w-full max-w-xs text-lg">
-											<div className="flex justify-between">
-												<LoadingText />
-											</div>
 											{/* Value Filter */}
-											<label className="input input-bordered input-xs flex items-center gap-2 w-full">
+											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													viewBox="0 0 16 16"
@@ -108,20 +116,24 @@ export default function LoadingTable({
 						<tbody>
 							{/* Value Row */}
 							{new Array(take).fill(null).map((_, i) => (
-								<tr key={i} className="border-base-100 border-b-2">
-									<th className="whitespace-nowrap text-sm">
+								<tr key={"row" + i} className="h-12 align-middle">
+									<th
+										className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
+											i ? " border-t-2" : ""
+										}`}
+									>
 										<LoadingText color="primary" />
 									</th>
 
 									{new Array(columns - 1).fill(null).map((_, j) => (
 										<td
-											className={`whitespace-nowrap text-sm bg-base-300 ${j ? "border-base-100 border-l-2" : ""}`}
-											key={`${i}${j}`}
+											className={`whitespace-nowrap text-sm border-base-300 border-l-2${i ? " border-t-2" : ""}`}
+											key={"row" + i + "col" + j}
 										>
 											<LoadingText />
 										</td>
 									))}
-									<th>{i + 1 + (page - 1) * take}</th>
+									<th className={`border-base-300 border-l-2${i ? " border-t-2" : ""}`}>{i + 1 + (page - 1) * take}</th>
 								</tr>
 							))}
 						</tbody>

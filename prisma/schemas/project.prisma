@@ -55,13 +55,15 @@ model Project {
     // Sample Collection
     /// @zod.custom.use(z.coerce.number().int())
     biological_rep Int?
+    sample_type    String @default("")
 }
 
 model Sample {
-    id          Int    @id @default(autoincrement())
-    samp_name   String @unique
+    id                  Int     @id @default(autoincrement())
+    samp_name           String  @unique
+    biosample_accession String? @unique
     /// [UserDefinedType]
-    userDefined Json?
+    userDefined         Json?
 
     // Relations
     project_id String
@@ -319,9 +321,8 @@ model Sample {
     transmittance_unit        String?
 
     // Sectionless
-    biosample_accession String?
-    organism            String?
-    sterilise_method    String?
+    organism         String?
+    sterilise_method String?
 
     // Expedition
     short_name           String

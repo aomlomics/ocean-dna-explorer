@@ -77,11 +77,6 @@ export function parseSchemaToObject(
 	//check if the field name is in the Schema
 	if (value && TableMetadata[table].enumSchema.options.includes(field)) {
 		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
-		if (!type) {
-			throw new Error(
-				`Could not find the type of "${field}". Make sure a field named "${field}" exists on table named "${table}".`
-			);
-		}
 
 		if (type === "string[]") {
 			obj[field] = value.split(TypeSeparators.string).map((val) => val.trim());

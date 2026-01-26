@@ -65,7 +65,7 @@ export const TaxonomicRanks = [
 
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 
-export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "userDefined", "deleted_ODE"];
+export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "deleted_ODE"];
 
 export const TypeSeparators = {
 	string: "|",

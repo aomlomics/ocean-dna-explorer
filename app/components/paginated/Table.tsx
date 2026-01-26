@@ -4,7 +4,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma, Tag } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
@@ -27,7 +27,6 @@ export default function Table({
 	hideEmptyAtStart,
 	filterHeadersAtStart,
 	defaultTake = 50,
-	showUserDefined,
 	ignoreParams,
 	className
 }: {
@@ -38,30 +37,9 @@ export default function Table({
 	hideEmptyAtStart?: boolean;
 	filterHeadersAtStart?: boolean;
 	defaultTake?: number;
-	showUserDefined?: boolean;
 	ignoreParams?: string[];
 	className?: string;
 }) {
-	const searchParams = useSearchParams();
-	const router = useRouter();
-	const pathname = usePathname();
-
-	const [take, setTake] = useState(defaultTake);
-	const [page, setPage] = useState(1);
-
-	const [headers, setHeaders] = useState([] as string[]);
-	const [userDefinedHeaders, setUserDefinedHeaders] = useState([] as string[]);
-
-	const [orderBy, setOrderBy] = useState(DEFAULT_ORDER_BY);
-
-	const [whereFilter, setWhereFilter] = useState({} as Record<string, number | string>);
-	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
-	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
-	const [headersFilter, setHeadersFilter] = useState({} as Record<string, true>);
-	const [pendingFilters, setPendingFilters] = useState(0);
-	const [columnsFilter, setColumnsFilter] = useState("");
-
-	const combinedOmit = [...omit, ...GlobalOmit];
 	const title = TableMetadata[table].titleField;
 
 	const manyRelations = [] as string[];
@@ -79,6 +57,88 @@ export default function Table({
 			}
 		}
 	}
+
+	const combinedOmit = [...omit, ...GlobalOmit, "id"];
+	let defaultHeadersSet = new Set() as Set<string>;
+	//move tags to the front
+	const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
+	if (manyRelations.length !== manyRelationsNoTags.length) {
+		defaultHeadersSet.add("Tags");
+	}
+	if (oneRelations.length) {
+		//maintain field order for relation fields
+		if (TableMetadata[table].fieldOrder) {
+			for (const f of TableMetadata[table].fieldOrder) {
+				if (oneRelations.includes(f)) {
+					defaultHeadersSet.add(f);
+				}
+			}
+		}
+
+		oneRelations.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	}
+	Object.keys(oneRelationsArrayTitle).forEach(defaultHeadersSet.add, defaultHeadersSet);
+	manyRelationsNoTags.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	if (TableMetadata[table].fieldOrder) {
+		TableMetadata[table].fieldOrder.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	}
+	TableMetadata[table].enumSchema.options
+		.reduce((acc: string[], head) => {
+			if (
+				//displaying title header differently, so removing it
+				head !== title &&
+				//displaying userDefined differently, so removing it
+				head !== "userDefined" &&
+				//remove all headers where the value is assumed to be the same
+				!(where && Object.keys(where).includes(head)) &&
+				//remove headers that have been omitted
+				!combinedOmit.includes(head)
+			) {
+				acc.push(head);
+			}
+
+			return acc;
+		}, [])
+		.forEach(defaultHeadersSet.add, defaultHeadersSet);
+
+	//apply default filters
+	let defaultHeadersFilter = {} as Record<string, true>;
+	if (filterHeadersAtStart && TableMetadata[table].subFields) {
+		for (const head of defaultHeadersSet) {
+			if (
+				!TableMetadata[table].subFields.includes(head) &&
+				!manyRelations.includes(head) &&
+				//every title field is included in subFields
+				!(
+					head in oneRelationsArrayTitle &&
+					oneRelationsArrayTitle[head as Prisma.ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
+				)
+			) {
+				defaultHeadersFilter[head] = true;
+			}
+		}
+	}
+
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	const pathname = usePathname();
+
+	const [take, setTake] = useState(defaultTake);
+	const takeRef = useRef<HTMLInputElement>(null);
+	const [page, setPage] = useState(1);
+
+	const [headers, setHeaders] = useState(Array.from(defaultHeadersSet));
+	const [userDefinedHeaders, setUserDefinedHeaders] = useState([] as string[]);
+
+	const [orderBy, setOrderBy] = useState(DEFAULT_ORDER_BY as { field: string; order: "asc" | "desc" });
+
+	const [whereFilter, setWhereFilter] = useState({} as Record<string, number | string>);
+	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
+	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
+
+	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
+	const [pendingFilters, setPendingFilters] = useState(0);
+	const [columnsFilter, setColumnsFilter] = useState("");
 
 	//api call
 	let query = new URLSearchParams({
@@ -142,7 +202,9 @@ export default function Table({
 
 	// Reset to first page whenever the table or URL search params change
 	useEffect(() => {
-		setPage(1);
+		if (page !== 1) {
+			setPage(1);
+		}
 	}, [table, searchParams]);
 
 	useEffect(() => {
@@ -165,107 +227,42 @@ export default function Table({
 				}
 
 				setEmptyFilter(emptyFields);
-			} else {
+			} else if (Object.keys(emptyFilter).length) {
 				setEmptyFilter({});
 			}
 		}
 	}, [hideEmpty, data]);
 
 	useEffect(() => {
-		if (!headers.length && data && data.statusMessage === "success") {
-			let tempHeadersSet = new Set() as Set<string>;
-			//move tags to the front
-			const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
-			if (manyRelations.length !== manyRelationsNoTags.length) {
-				tempHeadersSet.add("Tags");
+		if (data && data.statusMessage === "success") {
+			//set to last page if page is too large
+			if ((page - 1) * take > data.count) {
+				setPage(Math.floor(data.count / take) + 1);
 			}
-			if (oneRelations.length) {
-				//maintain field order for relation fields
-				if (TableMetadata[table].fieldOrder) {
-					for (const f of TableMetadata[table].fieldOrder) {
-						if (oneRelations.includes(f)) {
-							tempHeadersSet.add(f);
-						}
-					}
+
+			//create new userDefinedHeaders
+			const tempUserDefinedHeadersSet = new Set() as Set<string>;
+			for (const r of data.result) {
+				for (const h in r.userDefined) {
+					tempUserDefinedHeadersSet.add(h);
 				}
-
-				oneRelations.forEach(tempHeadersSet.add, tempHeadersSet);
-			}
-			Object.keys(oneRelationsArrayTitle).forEach(tempHeadersSet.add, tempHeadersSet);
-			manyRelationsNoTags.forEach(tempHeadersSet.add, tempHeadersSet);
-			if (TableMetadata[table].fieldOrder) {
-				TableMetadata[table].fieldOrder.forEach(tempHeadersSet.add, tempHeadersSet);
-			}
-			TableMetadata[table].enumSchema.options
-				.reduce((acc: string[], head) => {
-					//remove database field
-					//displaying title header differently, so removing it
-					if (head === "id" || head === title) {
-						return acc;
-					}
-
-					//remove all headers where the value is assumed to be the same
-					if (where && Object.keys(where).includes(head)) {
-						return acc;
-					}
-
-					//remove headers that have been omitted
-					if (combinedOmit.includes(head)) {
-						return acc;
-					}
-
-					if (head !== "userDefined") {
-						acc.push(head);
-					}
-
-					return acc;
-				}, [])
-				.forEach(tempHeadersSet.add, tempHeadersSet);
-
-			//apply default filters
-			let tempHeadersFilter = {} as Record<string, true>;
-			if (filterHeadersAtStart && TableMetadata[table].subFields) {
-				const temp = {} as Record<string, true>;
-				for (const head of tempHeadersSet) {
-					if (
-						!TableMetadata[table].subFields.includes(head) &&
-						!manyRelations.includes(head) &&
-						//every title field is included in subFields
-						!(
-							head in oneRelationsArrayTitle &&
-							oneRelationsArrayTitle[head as Prisma.ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
-						)
-					) {
-						temp[head] = true;
-					}
-				}
-				tempHeadersFilter = temp;
 			}
 
-			if (showUserDefined) {
-				const tempUserDefinedHeadersSet = new Set() as Set<string>;
-				for (const r of data.result) {
-					for (const h in r.userDefined) {
-						tempUserDefinedHeadersSet.add(h);
-					}
-				}
-
-				tempHeadersSet = new Set([...tempHeadersSet, ...tempUserDefinedHeadersSet]);
+			if (tempUserDefinedHeadersSet.size) {
 				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
+				setHeaders([...headers.filter((head) => !userDefinedHeaders.includes(head)), ...tempUserDefinedHeadersSet]);
 				setUserDefinedHeaders(tempUserDefinedHeaders);
 
-				if (filterHeadersAtStart) {
-					tempHeadersFilter = {
-						...tempHeadersFilter,
-						...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, true>)
-					};
+				if (!userDefinedHeaders.length && filterHeadersAtStart) {
+					const tempHeadersFilter = {
+						...defaultHeadersFilter,
+						...tempUserDefinedHeaders.reduce((acc, head) => ({ ...acc, [head]: true }), {} as Record<string, boolean>)
+					} as Record<string, true>;
+
+					if (Object.keys(tempHeadersFilter).length) {
+						setHeadersFilter(tempHeadersFilter);
+					}
 				}
-			}
-
-			setHeaders(Array.from(tempHeadersSet));
-
-			if (Object.keys(tempHeadersFilter).length) {
-				setHeadersFilter(tempHeadersFilter);
 			}
 		}
 	}, [data]);
@@ -296,7 +293,7 @@ export default function Table({
 
 		const formData = new FormData(e.currentTarget);
 
-		let take = parseInt(formData.get("take") as string);
+		const formTake = parseInt(formData.get("take") as string);
 		formData.delete("take");
 
 		const temp = {} as typeof whereFilter;
@@ -315,7 +312,14 @@ export default function Table({
 				}
 			}
 		}
-		setTake(take);
+		if (!formTake || isNaN(formTake)) {
+			takeRef.current!.value = defaultTake.toString();
+			if (take !== defaultTake) {
+				setTake(defaultTake);
+			}
+		} else {
+			setTake(formTake);
+		}
 		setWhereFilter(temp);
 	}
 
@@ -342,11 +346,8 @@ export default function Table({
 		setPendingFilters(count);
 	}
 
-	const baseWrapperClasses = "bg-base-100 border-base-300 rounded-box h-full w-full";
-	const wrapperClasses = className ? `${baseWrapperClasses} ${className}` : `${baseWrapperClasses} p-6`;
-
 	return (
-		<div className={wrapperClasses}>
+		<div className={`bg-base-100 border-base-300 rounded-box h-full w-full p-6${className ? " " + className : ""}`}>
 			<form
 				id={`${table}TableForm`}
 				onSubmit={applyFilters}
@@ -366,32 +367,25 @@ export default function Table({
 									>
 										Clear Filters
 									</button>
-									<button
-										type="submit"
-										className={`btn btn-sm ${
-											pendingFilters > 0 ? "btn-primary" : "bg-base-100 border border-base-300"
-										}`}
-									>
+									<button type="submit" className="btn btn-sm btn-primary">
 										Apply Filters {pendingFilters > 0 && `(${pendingFilters})`}
 									</button>
 								</>
 							)}
 							<label className="input input-sm input-bordered">
 								Per Page:
-								<input name="take" defaultValue={take} type="number" />
+								<input ref={takeRef} name="take" defaultValue={take} type="number" />
 							</label>
 						</div>
 					</div>
 					{/* Pagination Controls */}
-					<div className="flex-1">
-						<PaginationControls
-							page={page}
-							take={take}
-							count={data.count}
-							handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
-							handlePageHover={handlePageHover}
-						/>
-					</div>
+					<PaginationControls
+						page={page}
+						take={take}
+						count={data.count}
+						handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+						handlePageHover={handlePageHover}
+					/>
 					{/* Column Selection Button */}
 					<div className="grid grid-cols-2 w-full gap-5 flex-1">
 						<div className="dropdown dropdown-end justify-self-end">
@@ -458,7 +452,9 @@ export default function Table({
 																}}
 																className="checkbox checkbox-xs"
 															/>
-															<span className="text-sm pl-2 truncate max-w-full">{head}</span>
+															<span className="text-sm pl-2 truncate max-w-full">
+																{head} {userDefinedHeaders.includes(head) && <sup className="text-xs">UD</sup>}
+															</span>
 														</label>
 													</li>
 												);
@@ -563,7 +559,7 @@ export default function Table({
 										</label>
 									</th>
 								) : (
-									<th className="p-0 pr-2 z-40 bg-base-100">
+									<th className="p-0 pr-2 z-40 bg-base-100 cursor-not-allowed">
 										<div className="select-none mb-1">
 											<span>{title.join(" / ")}</span>
 										</div>
@@ -594,14 +590,12 @@ export default function Table({
 									//only render the header if it is selected in the header filter
 									if (!headersFilter[head] && !emptyFilter[head]) {
 										//Header
-										if (manyRelations.includes(head) || head in oneRelationsArrayTitle) {
+										if (head in oneRelationsArrayTitle) {
 											acc.push(
-												<td key={head + i} className="bg-base-100">
-													<div className="flex justify-between select-none mb-1">
+												<td key={head + i} className="bg-base-100 cursor-not-allowed">
+													<div className="flex select-none mb-1">
 														{head}
-														{head in oneRelationsArrayTitle
-															? " (" + oneRelationsArrayTitle[head as Prisma.ModelName].join(" / ") + ")"
-															: ""}
+														{" (" + oneRelationsArrayTitle[head as Prisma.ModelName].join(" / ") + ")"}
 													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
@@ -620,6 +614,107 @@ export default function Table({
 																	/>
 																</svg>
 																<input type="text" className="grow" disabled />
+															</label>
+														)}
+													</label>
+												</td>
+											);
+										} else if (manyRelations.includes(head)) {
+											acc.push(
+												<td key={head + i} className="bg-base-100">
+													<div
+														className="flex justify-between select-none mb-1 cursor-pointer"
+														onClick={() =>
+															orderBy.field === head
+																? orderBy.order === "asc"
+																	? setOrderBy({ field: head, order: "desc" })
+																	: setOrderBy(DEFAULT_ORDER_BY)
+																: setOrderBy({ field: head, order: "asc" })
+														}
+													>
+														{head}
+														{orderBy.field === head ? (
+															orderBy.order === "asc" ? (
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	width="24"
+																	height="20"
+																	className="text-primary mr-2"
+																	fill="none"
+																	stroke="currentColor"
+																	strokeWidth="2"
+																>
+																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+																</svg>
+															) : (
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	width="24"
+																	height="20"
+																	className="text-primary mr-2"
+																	fill="none"
+																	stroke="currentColor"
+																	strokeWidth="2"
+																>
+																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+																</svg>
+															)
+														) : (
+															<></>
+														)}
+													</div>
+													<label className="form-control w-full max-w-xs text-lg">
+														{/* Value Filter */}
+														{!hideFilters && (
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	viewBox="0 0 16 16"
+																	fill="currentColor"
+																	className="h-4 w-4 opacity-70"
+																>
+																	<path
+																		fillRule="evenodd"
+																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+																		clipRule="evenodd"
+																	/>
+																</svg>
+																<input type="text" className="grow" disabled />
+															</label>
+														)}
+													</label>
+												</td>
+											);
+										} else if (userDefinedHeaders.includes(head)) {
+											acc.push(
+												<td key={head + i} className="bg-base-100 cursor-not-allowed">
+													<div className="flex gap-1 select-none mb-1">
+														{head}
+														<sup className="text-xs">UD</sup>
+													</div>
+													<label className="form-control w-full max-w-xs text-lg">
+														{/* Value Filter */}
+														{!hideFilters && (
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	viewBox="0 0 16 16"
+																	fill="currentColor"
+																	className="h-4 w-4 opacity-70"
+																>
+																	<path
+																		fillRule="evenodd"
+																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+																		clipRule="evenodd"
+																	/>
+																</svg>
+																<input
+																	name={head}
+																	defaultValue={whereFilter[head] || ""}
+																	type="text"
+																	className="grow min-w-10"
+																	disabled
+																/>
 															</label>
 														)}
 													</label>
@@ -691,8 +786,7 @@ export default function Table({
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
 																	className="grow min-w-10"
-																	disabled={userDefinedHeaders.includes(head)}
-																	placeholder={userDefinedHeaders.includes(head) ? "" : "Press Enter to search"}
+																	placeholder="Press Enter to search"
 																/>
 															</label>
 														)}
@@ -711,7 +805,7 @@ export default function Table({
 							{/* Value Row */}
 							{data.result &&
 								data.result.map((row: Record<string, any>, i: number) => (
-									<tr key={i} className="min-h-12 h-12 align-middle">
+									<tr key={"row" + i} className="h-12 align-middle">
 										{typeof title === "string" ? (
 											<th
 												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
@@ -878,7 +972,7 @@ export default function Table({
 														<td
 															className={`whitespace-nowrap text-sm border-base-300 border-l-2${
 																i ? " border-t-2" : ""
-															}${row[head] === null ? " bg-base-200" : ""}`}
+															}${row[head] === null || row[head] in DeadValueEnum ? " bg-base-200" : ""}`}
 															key={row[head] + "child" + j}
 														>
 															{element}

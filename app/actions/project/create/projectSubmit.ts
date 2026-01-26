@@ -55,13 +55,19 @@ async function doSubmit(
 				for (const a of assays) {
 					const dbAssay = await tx.assay.findUnique({
 						where: {
-							assay_name: a.assay_name
+							assay_name: a.assay_name,
+							pcr_primer_forward: a.pcr_primer_forward,
+							pcr_primer_reverse: a.pcr_primer_reverse
 						}
 					});
 
 					if (!dbAssay) {
-						await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-						throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+						await projectChannel.stream.error(
+							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
+						);
+						throw new Error(
+							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
+						);
 					}
 
 					for (const [f, value] of Object.entries(a)) {
@@ -71,12 +77,6 @@ async function doSubmit(
 								badAssayFields[a.assay_name] = [];
 							}
 							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
-							// await projectChannel.stream.error(
-							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
-							// );
-							// throw new Error(
-							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
-							// );
 						}
 					}
 				}
