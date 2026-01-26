@@ -125,6 +125,9 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 	return root;
 }
 
+//TODO: add map to search page
+// allow search page on any search
+// if not sample page, still use shapes query, but internally query on samples, get list of samp_names, then use those to query on actual table
 export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
