@@ -553,7 +553,7 @@ export default function ActualMap({
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
-	const omit = [...legendOmit, ...GlobalOmit, "id"];
+	const omit = [...legendOmit, ...GlobalOmit, "id", "userDefined"];
 	if (TableMetadata[table].fieldOrder) {
 		legendOptions.push(...TableMetadata[table].fieldOrder);
 		for (const opt of TableMetadata[table].enumSchema.options) {
@@ -1064,7 +1064,7 @@ function PopupWithSearchBody({
 							? loc[TableMetadata[titleTable].titleField]
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
 					}`}
-					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start"
+					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start text-nowrap"
 				>
 					{typeof TableMetadata[titleTable].titleField === "string"
 						? loc[TableMetadata[titleTable].titleField]
@@ -1077,7 +1077,7 @@ function PopupWithSearchBody({
 					onChange={(e) => setFilter(e.target.value)}
 					value={filter}
 					placeholder={`Filter ${TableMetadata[table].plural}...`}
-					className="input input-primary input-xs w-full flex-initial min-w-0 text-primary my-1"
+					className="input input-primary input-xs w-full flex-initial min-w-0 text-primary my-1 text-nowrap"
 				/>
 			) : (
 				<></>

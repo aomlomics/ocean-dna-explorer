@@ -90,7 +90,7 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 		<>
 			{!!imageUrl ? (
 				<div
-					className="w-full h-full relative flex flex-col justify-center tooltip tooltip-primary break-words before:!w-full before:bg-base-100 before:text-base-content before:border before:border-base-300"
+					className="w-full h-full relative flex flex-col justify-center tooltip tooltip-primary wrap-break-word before:w-full! before:bg-base-100 before:text-base-content before:border before:border-base-300"
 					data-tip={"PhyloPic nodes: " + imageDetails}
 				>
 					<div className="relative h-full w-full">

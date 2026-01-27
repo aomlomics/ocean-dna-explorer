@@ -51,6 +51,7 @@ const TableMetadata = {
 			"samp_category",
 			"neg_cont_type",
 			"pos_cont_type",
+			"expedition_id",
 			"line_id",
 			"station_id",
 			"serial_number"
@@ -63,7 +64,25 @@ const TableMetadata = {
 		schema: PrismaZodTypes.AssaySchema,
 		enumSchema: PrismaZodTypes.AssayScalarFieldEnumSchema,
 		titleField: "assay_name",
-		subFields: ["pcr_primer_name_forward", "pcr_primer_forward", "pcr_primer_name_reverse", "pcr_primer_reverse"]
+		subFields: ["pcr_primer_name_forward", "pcr_primer_forward", "pcr_primer_name_reverse", "pcr_primer_reverse"],
+		fieldOrder: [
+			"assay_type",
+			"thermocycler",
+			"commercial_mm",
+			"custom_mm",
+			"pcr_cond",
+			"amplificationReactionVolume",
+			"assay_validation",
+			"pcr_primer_vol_forward",
+			"pcr_primer_vol_reverse",
+			"pcr_primer_conc_forward",
+			"pcr_primer_conc_reverse",
+			"probe_seq",
+			"probe_conc",
+			"pcr_dna_vol",
+			"pcr_rep",
+			"pcr_cycles"
+		]
 	},
 	assayPrep: {
 		plural: "AssayPreps",
@@ -80,7 +99,18 @@ const TableMetadata = {
 		schema: PrismaZodTypes.LibrarySchema,
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		titleField: "lib_id",
-		subFields: ["samp_name", "seq_run_id"]
+		subFields: ["samp_name", "seq_run_id"],
+		fieldOrder: [
+			"seq_run_id",
+			"platform",
+			"instrument",
+			"seq_kit",
+			"lib_layout",
+			"input_read_count",
+			"lib_conc",
+			"lib_conc_unit",
+			"phix_perc"
+		]
 	},
 	analysis: {
 		plural: "Analyses",

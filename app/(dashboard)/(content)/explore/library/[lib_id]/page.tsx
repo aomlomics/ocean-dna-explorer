@@ -115,22 +115,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Library metadata</h2>
 							<div className="h-80 overflow-y-auto">
-								<DataDisplay
-									table="library"
-									data={justLibrary}
-									omit={["project_id", "samp_name", "assay_name"]}
-									priorityFields={[
-										"seq_run_id",
-										"platform",
-										"instrument",
-										"seq_kit",
-										"lib_layout",
-										"input_read_count",
-										"lib_conc",
-										"lib_conc_unit",
-										"phix_perc"
-									]}
-								/>
+								<DataDisplay table="library" data={justLibrary} omit={["project_id", "samp_name", "assay_name"]} />
 							</div>
 						</div>
 					</div>

@@ -212,21 +212,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<div className="bg-base-200 rounded-xl p-6 flex flex-col">
 							<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
 							<div className="max-h-124 overflow-y-auto">
-								<DataDisplay
-									table="project"
-									data={justProject}
-									omit={["project_id"]}
-									priorityFields={[
-										"project_name",
-										"project_contact",
-										"institution",
-										"institutionID",
-										"recordedBy",
-										"recordedByID",
-										"study_factor",
-										"assay_type"
-									]}
-								/>
+								<DataDisplay table="project" data={justProject} omit={["project_id"]} />
 							</div>
 						</div>
 					</div>
