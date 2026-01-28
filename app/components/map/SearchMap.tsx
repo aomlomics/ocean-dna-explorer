@@ -13,21 +13,21 @@ export default function SearchMap() {
 
 	const checkRef = useRef<HTMLInputElement>(null);
 
-	const [locations, setLocations] = useState(undefined as NullLocation[] | undefined);
-	const [table, setTable] = useState(undefined as Uncapitalize<Prisma.ModelName> | undefined);
+	const [loading, setLoading] = useState(true);
+	const [locations, setLocations] = useState([] as NullLocation[]);
 
 	useEffect(() => {
 		async function doFetch(foundTable: Uncapitalize<Prisma.ModelName>, params: URLSearchParams) {
-			const res = await fetch(`api/${foundTable}${params.toString() ? "?" + params : ""}`);
+			const res = await fetch(`api/${foundTable}?getSamples=true${params.toString() ? "&" + params : ""}`);
 			if (res.ok) {
 				const json = (await res.json()) as NetworkPacket;
 				if (json.statusMessage === "success") {
-					setLocations(json.result);
-
 					if (checkRef.current && (params.getAll("polygon").length || params.getAll("circle").length)) {
 						checkRef.current.checked = true;
 					}
 
+					setLocations(json.samples);
+					setLoading(false);
 					return;
 				}
 			}
@@ -37,10 +37,9 @@ export default function SearchMap() {
 
 		const paramsTable = searchParams.get("table");
 		const foundTable = TableNames.find((t) => t.toLowerCase() === paramsTable?.toLowerCase());
-		setTable(foundTable);
 
-		if (foundTable && foundTable === "sample") {
-			setLocations(undefined);
+		if (foundTable) {
+			setLoading(true);
 			const newParams = new URLSearchParams(searchParams);
 			newParams.delete("table");
 
@@ -48,31 +47,24 @@ export default function SearchMap() {
 		}
 	}, [searchParams]);
 
-	if (table !== "sample") {
-		return <></>;
-	}
-
-	let child;
-	if (!locations) {
-		child = (
-			<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">
-				<div className="w-full h-full flex justify-center items-center">
-					<div className="h-full aspect-square p-50">
-						<span className="loading loading-spinner loading-xl h-full w-full" />
-					</div>
-				</div>
-			</div>
-		);
-	} else {
-		child = <DynamicMap locations={locations} legend draw shapesToUrl />;
-	}
-
 	return (
 		<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
 			<input ref={checkRef} type="checkbox" />
 			<div className="collapse-title font-semibold">Show on Map</div>
 			<div className="collapse-content text-sm px-50">
-				<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">{child}</div>
+				<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">
+					{loading ? (
+						<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">
+							<div className="w-full h-full flex justify-center items-center">
+								<div className="h-full aspect-square p-50">
+									<span className="loading loading-spinner loading-xl h-full w-full" />
+								</div>
+							</div>
+						</div>
+					) : (
+						<DynamicMap locations={locations} legend draw shapesToUrl />
+					)}
+				</div>
 			</div>
 		</div>
 	);

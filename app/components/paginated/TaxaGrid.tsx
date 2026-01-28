@@ -32,8 +32,25 @@ export default function TaxaGrid({
 	if (where) {
 		whereQuery = { ...where };
 	}
-	if (searchParams) {
-		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
+	if (searchParams && searchParams.size) {
+		const tempParms = new URLSearchParams(searchParams);
+		//specifically pull out shapes from searchParams
+		const polygons = tempParms.getAll("polygon");
+		if (polygons.length) {
+			tempParms.delete("polygon");
+			for (const p of polygons) {
+				query.set("polygon", p);
+			}
+		}
+		const circles = tempParms.getAll("circle");
+		if (circles.length) {
+			tempParms.delete("circle");
+			for (const c of circles) {
+				query.set("circle", c);
+			}
+		}
+
+		whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
 		if (ignoreParams) {
 			for (const param of ignoreParams) {
 				delete whereQuery[param as keyof Prisma.TaxonomyWhereInput];

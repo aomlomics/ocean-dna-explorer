@@ -63,15 +63,15 @@ export default function SelectGroupFilter({
 					<span className="text-sm text-base-content/70 break-all">{value}</span>
 				</div>
 			</div>
-			<div className="collapse-content bg-base-200/30 pt-0 !pb-0">
+			<div className="collapse-content bg-base-200/30 pt-0 pb-0!">
 				<select
 					className="select select-bordered w-full my-3"
 					value={
 						typeof field === "string"
 							? activeFilters[field] || ""
 							: searchParams.get(field.rel)
-							? JSON.parse(searchParams.get(field.rel) as string)[field.f]
-							: ""
+								? JSON.parse(searchParams.get(field.rel) as string)[field.f]
+								: ""
 					}
 					onChange={(e) => {
 						handleFilterChange(field, e.target.value || undefined, searchParams, router);

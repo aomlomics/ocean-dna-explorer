@@ -51,11 +51,6 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	if (!sample) return <>Sample not found</>;
 	const { Assays: __, Project: ___, ...justSample } = sample;
 
-	// Build search URL - encode brackets/commas but leave quotes as-is for JSON.parse
-	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
-	const encodedFilter = advancedFilter.replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/,/g, "%2C");
-	const taxonomySearchUrl = `/search?table=taxonomy&advanced=${encodedFilter}`;
-
 	return (
 		<div className="space-y-8 pb-8">
 			{/* Breadcrumb navigation */}
@@ -172,7 +167,10 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							longitude={sample.decimalLongitude}
 							icon="location"
 						/>
-						<Link href={taxonomySearchUrl} className="group">
+						<Link
+							href={`search?table=taxonomy&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"]]`}
+							className="group"
+						>
 							<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
 								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 									<StatIcon icon="fish" />

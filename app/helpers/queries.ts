@@ -1,12 +1,19 @@
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { getRelationPath, getZodType } from "./schema";
-import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
+import {
+	MapShape,
+	ParamsArray,
+	ParamsArrayField,
+	ParamsArrayRelation,
+	ParamsArrayValue,
+	QueryMode
+} from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { getShapesFromUrl, uncapitalizeTable } from "./utils";
+import { getShapesFromUrl } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 
-function deepWhere(
+export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
 	target: Uncapitalize<Prisma.ModelName>,
 	query: { [k: string]: any }
@@ -15,17 +22,22 @@ function deepWhere(
 	const path = getRelationPath(start, target);
 
 	if (path) {
-		//assemble query
-		let where = { ...query };
-		for (const rel of path.toReversed()) {
-			if (rel.type.endsWith("many")) {
-				//if relation is a -to-many, add a some to the query
-				where = { [rel.field]: { some: where } };
-			} else {
-				where = { [rel.field]: where };
+		if (Object.keys(query).length) {
+			//assemble query
+			let where = { ...query };
+			for (const rel of path.toReversed()) {
+				if (rel.type.endsWith("many")) {
+					//if relation is a -to-many, add a some to the query
+					where = { [rel.field]: { some: where } };
+				} else {
+					where = { [rel.field]: where };
+				}
 			}
+
+			return where;
+		} else {
+			return {};
 		}
-		return where;
 	} else {
 		throw new Error(`No path found from table "${start}" to table "${target}".`);
 	}
@@ -50,9 +62,14 @@ const queryModes = [
 ];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
-	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation
+	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation,
+	swapTo?: Uncapitalize<Prisma.ModelName>
 ) {
-	let relation = "";
+	if (table === swapTo) {
+		throw new Error("Table and swapTo are the same.");
+	}
+
+	let relation = undefined as Uncapitalize<Prisma.ModelName> | undefined;
 	let field = "";
 	let mode = "" as QueryMode;
 	let value = "" as ParamsArrayValue;
@@ -66,13 +83,25 @@ export function parseToQuery(
 			value = queryArr[1] as string;
 		}
 	} else if (queryArr.length === 3) {
+		if (swapTo) {
+			relation = table;
+		}
+
 		//search field for value with mode
 		field = queryArr[0];
 		mode = queryArr[1];
 		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
-		relation = queryArr[0];
+		relation = TableNames.find((model) => model.toLowerCase() === queryArr[0].toLowerCase());
+		if (!relation) {
+			throw new Error(`Provided table "${relation}" does not exist.`);
+		} else if (relation === table) {
+			throw new Error("Relation can't be the current table.");
+		} else if (relation === swapTo) {
+			relation = undefined;
+		}
+
 		field = queryArr[1];
 		mode = queryArr[2];
 		value = queryArr[3];
@@ -88,12 +117,7 @@ export function parseToQuery(
 		}
 	}
 
-	const model = TableNames.find(
-		(model) => model.toLowerCase() === (relation || table).toLowerCase()
-	) as Prisma.ModelName;
-	if (!model) {
-		throw new Error(`Provided table "${relation || table}" is not a valid model name.`);
-	}
+	const model = relation || swapTo || table;
 
 	if (TableMetadata[model].relations.some((rel) => rel.field === field) && typeof value === "object") {
 		return { [field]: value };
@@ -321,11 +345,11 @@ export function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			const relModel = TableNames.find((model) => model.toLowerCase() === relation.toLowerCase()) as Prisma.ModelName;
+			const relModel = TableNames.find((model) => model.toLowerCase() === relation.toLowerCase());
 			if (!relModel) {
 				throw new Error(`Provided table "${relation}" is not a valid model name.`);
 			}
-			return deepWhere(table, uncapitalizeTable(relModel), searchWhere);
+			return deepWhere(table, relModel, searchWhere);
 		} else {
 			return searchWhere;
 		}
@@ -336,7 +360,8 @@ export function parseToQuery(
 
 function advancedRecurse(
 	table: Uncapitalize<Prisma.ModelName>,
-	e: ParamsArray[0]
+	e: ParamsArray[0],
+	swapTo?: Uncapitalize<Prisma.ModelName>
 ): ReturnType<typeof parseToQuery> | { AND: any[] } | { OR: any[] } {
 	// New logical group support: ["AND", ...children] or ["OR", ...children]
 	if (typeof e[0] === "string") {
@@ -349,7 +374,7 @@ function advancedRecurse(
 		}
 
 		// Backwards-compatible behaviour: a tuple starting with a string is a field or relation filter
-		return parseToQuery(table, e as ParamsArrayField | ParamsArrayRelation);
+		return parseToQuery(table, e as ParamsArrayField | ParamsArrayRelation, swapTo);
 	}
 
 	// Legacy nested array syntax: an inner ParamsArray represents an implicit OR group
@@ -357,8 +382,12 @@ function advancedRecurse(
 	return { OR: paramsE.map((child) => advancedRecurse(table, child)) };
 }
 
-export function parseAdvancedQuery(table: Uncapitalize<Prisma.ModelName>, paramsArray: ParamsArray) {
-	return { AND: paramsArray.map((e) => advancedRecurse(table, e)) };
+export function parseAdvancedQuery(
+	table: Uncapitalize<Prisma.ModelName>,
+	paramsArray: ParamsArray,
+	swapTo?: Uncapitalize<Prisma.ModelName>
+) {
+	return { AND: paramsArray.map((e) => advancedRecurse(table, e, swapTo)) };
 }
 
 export function parseSearchQuery(table: Uncapitalize<Prisma.ModelName>, search: string) {
@@ -417,26 +446,6 @@ export function parseApiQuery(
 		};
 	}
 ) {
-	//construct shapes
-	let shapes;
-	if (!options?.features || options.features.shapes) {
-		const tempShapes = getShapesFromUrl(searchParams);
-
-		if (tempShapes) {
-			if (
-				!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-				!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
-			) {
-				throw new Error(`${TableMetadata[table].plural} do not have decimalLatitude or decimalLongitude fields.`);
-			}
-
-			shapes = tempShapes;
-
-			searchParams.delete("polygon");
-			searchParams.delete("circle");
-		}
-	}
-
 	const query = {} as {
 		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
 		select?: Record<string, any>;
@@ -445,6 +454,18 @@ export function parseApiQuery(
 		take?: number;
 		distinct?: string[];
 	};
+
+	//construct shapes
+	let shapes;
+	if (!options?.features || options.features.shapes) {
+		const tempShapes = getShapesFromUrl(searchParams);
+
+		if (tempShapes) {
+			shapes = tempShapes;
+			searchParams.delete("polygon");
+			searchParams.delete("circle");
+		}
+	}
 
 	//ordering results
 	if (!options?.features || options.features.orderBy) {
@@ -554,34 +575,10 @@ export function parseApiQuery(
 		}
 	}
 
-	const ids = searchParams.get("ids");
+	let sampleWhere;
+
 	const advanced = searchParams.get("advanced");
-	const search = searchParams.get("search");
-	if ((!options?.features || options.features.ids) && ids) {
-		//list of ids
-		searchParams.delete("ids");
-
-		if (Array.from(searchParams).length) {
-			throw new Error("Filtering with a list of ids may not include other filter parameters.");
-		}
-
-		const parsedIds = [] as number[];
-		for (const id of ids.split(",")) {
-			if (id) {
-				const parsed = parseInt(id);
-				if (Number.isNaN(parsed)) {
-					throw new Error(`Invalid ID: "${id}". ID must be an integer.`);
-				}
-				parsedIds.push(parsed);
-			}
-		}
-
-		query.where = {
-			id: {
-				in: parsedIds
-			}
-		};
-	} else if ((!options?.features || options.features.advanced) && advanced) {
+	if ((!options?.features || options.features.advanced) && advanced) {
 		//advanced search
 		searchParams.delete("advanced");
 
@@ -590,89 +587,146 @@ export function parseApiQuery(
 		}
 
 		const parsed = JSON.parse(advanced) as ParamsArray;
-		query.where = { ...query.where, ...parseAdvancedQuery(table, parsed) };
-	} else if ((!options?.features || options.features.search) && search) {
-		//string search
-		searchParams.delete("search");
-
-		if (Array.from(searchParams).length) {
-			throw new Error("Search may not include other filter parameters.");
+		if (parsed.length) {
+			query.where = parseAdvancedQuery(table, parsed);
 		}
 
-		query.where = { ...query.where, ...parseSearchQuery(table, search) };
+		//assemble secondary query if table doesn't have location data
+		if (
+			!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+			!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+		) {
+			if (parsed.length) {
+				sampleWhere = parseAdvancedQuery(table, parsed, "sample");
+			} else {
+				sampleWhere = {};
+			}
+		}
 	} else {
-		//limit
-		if (!options?.features || options.features.limit) {
-			const take = searchParams.get("limit");
-			if (take) {
-				searchParams.delete("limit");
-				query.take = parseInt(take);
-				if (Number.isNaN(query.take)) {
-					throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
-				} else if (query.take < 1) {
-					throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
+		const ids = searchParams.get("ids");
+		const search = searchParams.get("search");
+
+		if ((!options?.features || options.features.ids) && ids) {
+			//list of ids
+			searchParams.delete("ids");
+
+			if (Array.from(searchParams).length) {
+				throw new Error("Filtering with a list of ids may not include other filter parameters.");
+			}
+
+			const parsedIds = [] as number[];
+			for (const id of ids.split(",")) {
+				if (id) {
+					const parsed = parseInt(id);
+					if (Number.isNaN(parsed)) {
+						throw new Error(`Invalid ID: "${id}". ID must be an integer.`);
+					}
+					parsedIds.push(parsed);
 				}
+			}
+
+			query.where = {
+				id: {
+					in: parsedIds
+				}
+			};
+		} else if ((!options?.features || options.features.search) && search) {
+			//string search
+			searchParams.delete("search");
+
+			if (Array.from(searchParams).length) {
+				throw new Error("Search may not include other filter parameters.");
+			}
+
+			query.where = parseSearchQuery(table, search);
+		} else {
+			//limit
+			if (!options?.features || options.features.limit) {
+				const take = searchParams.get("limit");
+				if (take) {
+					searchParams.delete("limit");
+					query.take = parseInt(take);
+					if (Number.isNaN(query.take)) {
+						throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
+					} else if (query.take < 1) {
+						throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
+					}
+				}
+			}
+
+			//filtering
+			if (options?.defaults?.filters) {
+				query.where = options.defaults.filters;
+			}
+
+			if (!options?.features || options.features.filters) {
+				if (!query.where) {
+					query.where = {} as Record<string, any>;
+				}
+
+				const shape = TableMetadata[table].schema.shape;
+				searchParams.forEach((value, key) => {
+					if (shape[key as keyof typeof shape]) {
+						const type = getZodType(shape[key as keyof typeof shape]).type;
+						if (!type) {
+							throw new Error(
+								`Could not find type of "${key}". Make sure a field named "${key}" exists on table named "${table}".`
+							);
+						}
+
+						const arr = value.split(",");
+						if (arr.length > 1) {
+							query.where!.OR = [];
+							if (type === "string") {
+								for (const val of arr) {
+									query.where!.OR.push({
+										[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+									});
+								}
+							} else if (type === "integer") {
+								for (const val of arr) {
+									query.where!.OR.push({ [key]: parseInt(val) });
+								}
+							} else if (type === "float") {
+								for (const val of arr) {
+									query.where!.OR.push({ [key]: parseFloat(val) });
+								}
+							} else {
+								for (const val of arr) {
+									query.where!.OR.push({ [key]: val });
+								}
+							}
+						} else {
+							if (type === "string") {
+								query.where![key] = {
+									contains: value.replace("_", "\\_").replace("%", "\\%"),
+									mode: "insensitive"
+								};
+							} else if (type === "integer") {
+								query.where![key] = parseInt(value);
+							} else if (type === "float") {
+								query.where![key] = parseFloat(value);
+							} else {
+								query.where![key] = value;
+							}
+						}
+					}
+				});
 			}
 		}
 
-		//filtering
-		if (options?.defaults?.filters) {
-			query.where = options.defaults.filters;
-		}
-
-		if (!options?.features || options.features.filters) {
-			query.where = query.where || ({} as Record<string, any>);
-
-			const shape = TableMetadata[table].schema.shape;
-			searchParams.forEach((value, key) => {
-				if (shape[key as keyof typeof shape]) {
-					const type = getZodType(shape[key as keyof typeof shape]).type;
-					if (!type) {
-						throw new Error(
-							`Could not find type of "${key}". Make sure a field named "${key}" exists on table named "${table}".`
-						);
-					}
-
-					const arr = value.split(",");
-					if (arr.length > 1) {
-						query.where!.OR = [];
-						if (type === "string") {
-							for (const val of arr) {
-								query.where!.OR.push({
-									[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
-								});
-							}
-						} else if (type === "integer") {
-							for (const val of arr) {
-								query.where!.OR.push({ [key]: parseInt(val) });
-							}
-						} else if (type === "float") {
-							for (const val of arr) {
-								query.where!.OR.push({ [key]: parseFloat(val) });
-							}
-						} else {
-							for (const val of arr) {
-								query.where!.OR.push({ [key]: val });
-							}
-						}
-					} else {
-						if (type === "string") {
-							query.where![key] = {
-								contains: value.replace("_", "\\_").replace("%", "\\%"),
-								mode: "insensitive"
-							};
-						} else if (type === "integer") {
-							query.where![key] = parseInt(value);
-						} else if (type === "float") {
-							query.where![key] = parseFloat(value);
-						} else {
-							query.where![key] = value;
-						}
-					}
-				}
-			});
+		//assemble secondary query if table doesn't have location data
+		if (
+			!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+			!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+		) {
+			if (query.where && Object.keys(query.where).length) {
+				sampleWhere = deepWhere("sample", table, query.where);
+			} else {
+				sampleWhere = {};
+			}
 		}
 	}
 
-	return { query, shapes };
+	return { query, shapes, sampleWhere };
 }
