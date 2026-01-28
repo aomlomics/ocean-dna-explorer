@@ -89,9 +89,18 @@ function getShape(shape: any) {
 	}
 }
 
-function getLegendValue(field: string | string[], loc: LocationWithValues | Location, sep = "/") {
+function getLegendValue(
+	field: string | string[],
+	loc: LocationWithValues | Location,
+	userDefinedOptions: Set<string>,
+	sep = "/"
+) {
 	if (typeof field === "string") {
-		return loc[field];
+		if (userDefinedOptions.has(field)) {
+			return loc.userDefined[field];
+		} else {
+			return loc[field];
+		}
 	} else {
 		let joined = "";
 		for (let i = 0; i < field.length; i++) {
@@ -104,15 +113,15 @@ function getLegendValue(field: string | string[], loc: LocationWithValues | Loca
 	}
 }
 
-function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Location) {
+function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Location, userDefinedOptions: Set<string>) {
 	if (legendInfo) {
 		if (legendInfo.mode === "discreet") {
-			const titleIdVal = getLegendValue(legendInfo.field, loc);
+			const titleIdVal = getLegendValue(legendInfo.field, loc, userDefinedOptions);
 			if (titleIdVal) {
-				return legendInfo.colorMap[titleIdVal];
+				return { color: legendInfo.colorMap[titleIdVal] };
 			}
 		} else if (legendInfo.mode === "gradient") {
-			const val = loc[legendInfo.field as string] as number | Date | null;
+			const val = getLegendValue(legendInfo.field, loc, userDefinedOptions) as number | Date | null;
 			if (val) {
 				let percent;
 				if (typeof val === "number") {
@@ -124,13 +133,13 @@ function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Locati
 				}
 
 				if (percent >= 0 && percent <= 100) {
-					return chroma.scale(legendInfo.palette)(percent);
+					return { color: chroma.scale(legendInfo.palette)(percent), percent };
 				}
 			}
 		}
 	}
 
-	return DEFAULT_COLOR;
+	return { color: DEFAULT_COLOR };
 }
 
 function getConicGradient(colors: chroma.Color[]) {
@@ -194,6 +203,7 @@ export default function ActualMap({
 	id = "samp_name",
 	table = "sample",
 	titleTable,
+	defaultLegendField,
 	cluster = false,
 	clusterRadius,
 	legend = false,
@@ -206,6 +216,7 @@ export default function ActualMap({
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
+	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
 	legend?: boolean;
@@ -230,6 +241,7 @@ export default function ActualMap({
 	let mapProps = {} as MapProps;
 	//legend options
 	const defaultOptions = new Set() as Set<string>;
+	const userDefinedOptions = new Set() as Set<string>;
 
 	const DEFAULT_BOUNDS = [
 		[-90, -180],
@@ -252,6 +264,12 @@ export default function ActualMap({
 		} else {
 			noLocationPoints.push(locations[0]);
 			mapProps = { bounds: DEFAULT_BOUNDS };
+		}
+
+		if (locations[0].userDefined) {
+			for (const opt of Object.keys(locations[0].userDefined)) {
+				userDefinedOptions.add(opt);
+			}
 		}
 	} else {
 		let bounds = DEFAULT_BOUNDS;
@@ -292,13 +310,19 @@ export default function ActualMap({
 					bounds[1][1] = Math.min(loc.decimalLongitude, bounds[1][1]);
 
 					if (titleTable) {
-						defaultOptions.add(getLegendValue(TableMetadata[titleTable].titleField, loc));
+						defaultOptions.add(getLegendValue(TableMetadata[titleTable].titleField, loc, userDefinedOptions));
 					}
 
 					filteredLocations.push(loc);
 				}
 			} else {
 				noLocationPoints.push(nullLoc);
+			}
+
+			if (nullLoc.userDefined) {
+				for (const opt of Object.keys(nullLoc.userDefined)) {
+					userDefinedOptions.add(opt);
+				}
 			}
 		}
 
@@ -323,7 +347,7 @@ export default function ActualMap({
 		//assemble locations object with assigned color and list of locations
 		pointsOrGroups = {} as Record<string, LocationWithValues[]>;
 		for (const loc of filteredLocations) {
-			const opt = getLegendValue(titleId, loc);
+			const opt = getLegendValue(titleId, loc, userDefinedOptions);
 			if (pointsOrGroups[opt]) {
 				pointsOrGroups[opt].push(loc);
 			} else {
@@ -333,6 +357,225 @@ export default function ActualMap({
 	} else {
 		pointsOrGroups = filteredLocations;
 	}
+	const reducedPoints = titleTable
+		? Object.values(pointsOrGroups).reduce((acc, arr) => [...acc, ...arr], [])
+		: pointsOrGroups;
+
+	function getMapLegendField(field: string): LegendInfo {
+		if (userDefinedOptions.has(field)) {
+			//get unique options
+			const options = new Set() as Set<any>;
+			let someNoData = false;
+
+			for (const loc of reducedPoints) {
+				if (loc.values) {
+					for (const val of loc.values) {
+						if (val.userDefined[field] != null && val.userDefined[field] !== "") {
+							options.add(val.userDefined[field]);
+						} else {
+							someNoData = true;
+						}
+					}
+				} else if (loc.userDefined[field] != null && loc.userDefined[field] !== "") {
+					options.add(loc.userDefined[field]);
+				} else {
+					someNoData = true;
+				}
+			}
+			const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+
+			//check if invalid number of options
+			if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+				return { field, mode: "discreet", colorMap: {} };
+			} else if (optionsArray.length === 1) {
+				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+			} else {
+				//valid
+				const colors = distinctColors({ count: optionsArray.length, chromaMin });
+				const colorMap = {} as Record<string, Color>;
+				for (let i = 0; i < optionsArray.length; i++) {
+					colorMap[optionsArray[i]] = colors[i];
+				}
+
+				//add default color if there is some point with no data
+				if (someNoData) {
+					colorMap["No value"] = DEFAULT_COLOR;
+				}
+
+				return { field, mode: "discreet", colorMap };
+			}
+		} else {
+			const shape = TableMetadata[table].schema.shape;
+			const type = getZodType(shape[field as keyof typeof shape]).type;
+
+			if (type === "string" || type === "DeadBoolean") {
+				//get unique options
+				const options = new Set() as Set<any>;
+				let someNoData = false;
+
+				for (const loc of reducedPoints) {
+					if (loc.values) {
+						for (const val of loc.values) {
+							if (val[field]) {
+								options.add(val[field]);
+							} else {
+								someNoData = true;
+							}
+						}
+					} else if (loc[field]) {
+						options.add(loc[field]);
+					} else {
+						someNoData = true;
+					}
+				}
+				const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+
+				//check if invalid number of options
+				if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+					return { field, mode: "discreet", colorMap: {} };
+				} else if (optionsArray.length === 1) {
+					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+				} else {
+					//valid
+					const colors = distinctColors({ count: optionsArray.length, chromaMin });
+					const colorMap = {} as Record<string, Color>;
+					for (let i = 0; i < optionsArray.length; i++) {
+						colorMap[optionsArray[i]] = colors[i];
+					}
+
+					//add default color if there is some point with no data
+					if (someNoData) {
+						colorMap["No value"] = DEFAULT_COLOR;
+					}
+
+					return { field, mode: "discreet", colorMap };
+				}
+			} else if (type === "integer" || type === "float") {
+				//get unique options
+				const options = new Set() as Set<any>;
+				let someNoValue = false;
+
+				for (const loc of reducedPoints) {
+					if (loc.values) {
+						for (const val of loc.values) {
+							if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
+								options.add(val[field]);
+							} else {
+								someNoValue = true;
+							}
+						}
+					} else {
+						if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
+							options.add(loc[field]);
+						} else {
+							someNoValue = true;
+						}
+					}
+				}
+				const optionsArray = Array.from(options).sort((a, b) => a - b);
+
+				//check if invalid number of options
+				if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+					return { field, mode: "discreet", colorMap: {} };
+				} else if (optionsArray.length === 1) {
+					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+				} else {
+					//valid
+					return {
+						field,
+						mode: "gradient",
+						range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
+						palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+						someNoValue
+					};
+				}
+			} else if (type === "date") {
+				//get unique options and cast to epoch timestamp
+				const options = new Set() as Set<any>;
+				let someNoValue = false;
+
+				for (const loc of reducedPoints) {
+					if (loc.values) {
+						for (const val of loc.values) {
+							if (val[field]) {
+								const time = val[field].getTime();
+								if (!DeadValueNumbers.includes(time)) {
+									options.add(time);
+								} else {
+									someNoValue = true;
+								}
+							} else {
+								someNoValue = true;
+							}
+						}
+					} else {
+						if (loc[field]) {
+							const time = loc[field].getTime();
+							if (!DeadValueNumbers.includes(time)) {
+								options.add(time);
+							} else {
+								someNoValue = true;
+							}
+						} else {
+							someNoValue = true;
+						}
+					}
+				}
+				const optionsArray = Array.from(options).sort((a, b) => a - b);
+
+				//check if invalid number of options
+				if (
+					optionsArray.length === 0 ||
+					(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
+				) {
+					return { field, mode: "discreet", colorMap: {} };
+				} else if (optionsArray.length === 1) {
+					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+				} else {
+					//valid
+					return {
+						field,
+						mode: "gradient",
+						range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
+						palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+						someNoValue
+					};
+				}
+			} else {
+				return {
+					field,
+					mode: "discreet",
+					colorMap: { "Unsupported field": DEFAULT_COLOR }
+				};
+			}
+		}
+	}
+
+	//make legend options follow fieldOrder
+	const legendOptions = [];
+	const omit = [...legendOmit, ...GlobalOmit, "id"];
+	if (TableMetadata[table].fieldOrder) {
+		legendOptions.push(...TableMetadata[table].fieldOrder);
+		for (const opt of TableMetadata[table].enumSchema.options) {
+			if (!TableMetadata[table].fieldOrder.includes(opt) && !omit.includes(opt)) {
+				legendOptions.push(opt);
+			}
+		}
+	} else {
+		for (const opt of TableMetadata[table].enumSchema.options) {
+			if (!omit.includes(opt)) {
+				legendOptions.push(opt);
+			}
+		}
+	}
+	if (userDefinedOptions.size) {
+		legendOptions.push(...userDefinedOptions);
+	}
+
+	if (defaultLegendField && legendOptions.includes(defaultLegendField)) {
+		defaultLegend = getMapLegendField(defaultLegendField);
+	}
+
 	const [legendInfo, setLegendInfo] = useState(defaultLegend);
 	const [loading, setLoading] = useState(false);
 	const [pointsInside, setPointsInside] = useState([] as Location[]);
@@ -439,7 +682,7 @@ export default function ActualMap({
 					let childrenWithValues = 0;
 					let valuesCount = 0;
 					let outsideShapesCount = 0;
-					const uniqueColors = new Set() as Set<chroma.Color>;
+					const uniqueColors = {} as Record<string, { color: chroma.Color; percent?: number }>; //key is hex
 					const colorsArray = [] as chroma.Color[];
 					for (const marker of cluster.getAllChildMarkers()) {
 						count++;
@@ -459,10 +702,9 @@ export default function ActualMap({
 								outsideShapesCount += loc.values.length;
 							} else {
 								for (const val of loc.values) {
-									const color = getLegendColor(legendInfo, val);
-									const c = color ? color : DEFAULT_COLOR;
-									uniqueColors.add(c);
-									colorsArray.push(c);
+									const { color, percent } = getLegendColor(legendInfo, val, userDefinedOptions);
+									uniqueColors[color.hex()] = { color, percent };
+									colorsArray.push(color);
 								}
 							}
 						} else {
@@ -474,10 +716,9 @@ export default function ActualMap({
 							) {
 								outsideShapesCount++;
 							} else {
-								const color = getLegendColor(legendInfo, loc);
-								const c = color ? color : DEFAULT_COLOR;
-								uniqueColors.add(c);
-								colorsArray.push(c);
+								const { color, percent } = getLegendColor(legendInfo, loc, userDefinedOptions);
+								uniqueColors[color.hex()] = { color, percent };
+								colorsArray.push(color);
 							}
 						}
 					}
@@ -493,13 +734,14 @@ export default function ActualMap({
 					}
 
 					let html;
-					if ((uniqueColors.size === 1 && !outsideShapesCount) || (!uniqueColors.size && outsideShapesCount)) {
+					const uniqueHex = Object.keys(uniqueColors);
+					if ((uniqueHex.length === 1 && !outsideShapesCount) || (!uniqueHex.length && outsideShapesCount)) {
 						//only one color, no gradient
 						let color;
 						if (outsideShapesCount) {
 							color = DEFAULT_OUTSIDE_COLOR;
 						} else {
-							color = Array.from(uniqueColors)[0];
+							color = Object.values(uniqueColors)[0].color;
 						}
 
 						html = getMarkerHtml(
@@ -514,9 +756,27 @@ export default function ActualMap({
 						let orderedColors;
 
 						if (legendInfo?.mode === "discreet") {
-							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueColors.has(color));
+							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueHex.includes(color.hex()));
 						} else {
-							orderedColors = Array.from(uniqueColors);
+							//gradient
+							orderedColors = Object.values(uniqueColors)
+								.sort((c1, c2) => {
+									if (c1.percent && c2.percent) {
+										return c1.percent - c2.percent;
+									} else {
+										let val = 0;
+
+										if (!c1.percent) {
+											val++;
+										}
+										if (!c2.percent) {
+											val--;
+										}
+
+										return val;
+									}
+								})
+								.map((obj) => obj.color);
 						}
 
 						//move first color to end because conic gradient doesn't start at 12 o'clock
@@ -549,29 +809,6 @@ export default function ActualMap({
 		);
 	}
 
-	const legendProps = titleTable
-		? { titleTable, points: pointsOrGroups as Record<string, LocationWithValues[]> }
-		: { titleTable: undefined, points: pointsOrGroups as LocationWithValues[] };
-
-	//make legend options follow fieldOrder
-	const legendOptions = [];
-	//TODO: include userDefined
-	const includeOpt = (opt: string) => !GlobalOmit.includes(opt) && !legendOmit.includes(opt) && opt !== "id";
-	if (TableMetadata[table].fieldOrder) {
-		legendOptions.push(...TableMetadata[table].fieldOrder);
-		for (const opt of TableMetadata[table].enumSchema.options) {
-			if (!TableMetadata[table].fieldOrder.includes(opt) && includeOpt(opt)) {
-				legendOptions.push(opt);
-			}
-		}
-	} else {
-		for (const opt of TableMetadata[table].enumSchema.options) {
-			if (includeOpt(opt)) {
-				legendOptions.push(opt);
-			}
-		}
-	}
-
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
 			<MapContainer
@@ -601,6 +838,7 @@ export default function ActualMap({
 						table={table}
 						id={id}
 						legendInfo={legendInfo}
+						userDefinedOptions={userDefinedOptions}
 						mapRef={mapRef}
 						where={where}
 					/>
@@ -613,6 +851,7 @@ export default function ActualMap({
 							where={where}
 							id={id}
 							legendInfo={legendInfo}
+							userDefinedOptions={userDefinedOptions}
 							mapRef={mapRef}
 							shapes={shapes}
 						/>
@@ -639,12 +878,13 @@ export default function ActualMap({
 						legend={legend}
 						legendInfo={legendInfo}
 						setLegendInfo={setLegendInfo}
+						getMapLegendField={getMapLegendField}
 						setLoading={setLoading}
 						legendOptions={legendOptions}
-						table={table}
+						userDefinedOptions={userDefinedOptions}
 						mapRef={mapRef}
 						defaultLegend={defaultLegend}
-						{...legendProps}
+						titleTable={titleTable}
 					/>
 				</div>
 
@@ -719,6 +959,7 @@ export default function ActualMap({
 											loc={loc}
 											id={id}
 											legendInfo={legendInfo}
+											userDefinedOptions={userDefinedOptions}
 											maxWidth={mapRef.current ? mapRef.current.getContainer().clientWidth * 0.5 : undefined}
 										/>
 									</Marker>
@@ -750,6 +991,7 @@ export default function ActualMap({
 													loc={loc}
 													id={id}
 													legendInfo={legendInfo}
+													userDefinedOptions={userDefinedOptions}
 												/>
 											</Marker>
 										);
@@ -786,6 +1028,7 @@ function PopupWithSearchBody({
 	loc,
 	id,
 	legendInfo,
+	userDefinedOptions,
 	href
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -793,6 +1036,7 @@ function PopupWithSearchBody({
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
+	userDefinedOptions: Set<string>;
 	href?: string;
 }) {
 	const [filter, setFilter] = useState("");
@@ -853,7 +1097,7 @@ function PopupWithSearchBody({
 										? href
 										: `/search?table=${table}&advanced=[["${id}","in","${compressIfNeeded(
 												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
-										  )}"]]`
+											)}"]]`
 								}
 							>
 								View as Search
@@ -862,7 +1106,7 @@ function PopupWithSearchBody({
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
 							{filteredValues.map((l) => {
 								if (legendInfo) {
-									const color = getLegendColor(legendInfo, l);
+									const { color } = getLegendColor(legendInfo, l, userDefinedOptions);
 
 									return (
 										<div key={l[id]} className="flex gap-2 items-center">
@@ -901,7 +1145,9 @@ function PopupWithSearchBody({
 								<div
 									className="aspect-square w-[1em] h-[1em]"
 									style={{
-										backgroundColor: legendInfo ? getLegendColor(legendInfo, loc).hex() : DEFAULT_COLOR.hex()
+										backgroundColor: legendInfo
+											? getLegendColor(legendInfo, loc, userDefinedOptions).color.hex()
+											: DEFAULT_COLOR.hex()
 									}}
 								></div>
 								<Link
@@ -933,6 +1179,7 @@ function PopupWithSearch({
 	loc,
 	id,
 	legendInfo,
+	userDefinedOptions,
 	maxWidth
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -941,6 +1188,7 @@ function PopupWithSearch({
 	loc: LocationWithValues;
 	id: string;
 	legendInfo: LegendInfo;
+	userDefinedOptions: Set<string>;
 	maxWidth?: number;
 }) {
 	return (
@@ -952,6 +1200,7 @@ function PopupWithSearch({
 					loc={loc}
 					id={id}
 					legendInfo={legendInfo}
+					userDefinedOptions={userDefinedOptions}
 					href={`/search?table=${table}&advanced=[["decimalLatitude","equals",${
 						loc.decimalLatitude
 					}],["decimalLongitude","equals",${loc.decimalLongitude}]${
@@ -959,10 +1208,10 @@ function PopupWithSearch({
 					}${
 						titleTable
 							? "," +
-							  (typeof TableMetadata[titleTable].titleField === "string"
+								(typeof TableMetadata[titleTable].titleField === "string"
 									? `["${TableMetadata[titleTable].titleField}","equals","${
 											loc[TableMetadata[titleTable].titleField]
-									  }"]`
+										}"]`
 									: TableMetadata[titleTable].titleField.map((f) => `["${f}","equals","${loc[f]}"]`).join(","))
 							: ""
 					}]`}
@@ -1360,26 +1609,25 @@ function LegendControl({
 	legend,
 	legendInfo,
 	setLegendInfo,
+	getMapLegendField,
 	setLoading,
 	legendOptions,
-	table,
+	userDefinedOptions,
 	mapRef,
 	titleTable,
-	points,
 	defaultLegend
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
 	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
+	getMapLegendField: (field: string) => LegendInfo;
 	setLoading: Dispatch<SetStateAction<boolean>>;
 	legendOptions: string[];
-	table: Uncapitalize<Prisma.ModelName>;
+	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
+	titleTable?: Uncapitalize<Prisma.ModelName>;
 	defaultLegend?: LegendInfo;
-} & (
-	| { titleTable: Uncapitalize<Prisma.ModelName>; points: Record<string, LocationWithValues[]> }
-	| { titleTable?: undefined; points: LocationWithValues[] }
-)) {
+}) {
 	const [filter, setFilter] = useState("");
 	const [shown, setShown] = useState(!!legendInfo);
 
@@ -1404,7 +1652,7 @@ function LegendControl({
 					mapRef={mapRef}
 					maxMinHeight={200}
 				>
-					<div className="flex flex-col">
+					<div className="flex flex-col w-full">
 						<div className="text-lg flex justify-between items-center gap-2">
 							{titleTable ? (
 								<InfoButton infoText={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
@@ -1418,179 +1666,24 @@ function LegendControl({
 							/>
 
 							<select
-								className="select select-xs select-primary select-ghost text-sm mr-3"
+								className="select select-xs select-primary select-ghost text-sm mr-3 grow min-w-max"
 								value={legendInfo ? legendInfo.field : ""}
 								onChange={async (e) => {
 									const field = e.target.value;
-
 									//give control back to browser to display loading
 									setLoading(true);
 									await new Promise((resolve) => setTimeout(resolve, 1));
-
-									const shape = TableMetadata[table].schema.shape;
-									const type = getZodType(shape[field as keyof typeof shape]).type;
-
-									if (type === "string" || type === "DeadBoolean") {
-										//get unique options
-										const options = new Set() as Set<any>;
-										let someNoData = false;
-
-										//collapse points object into array if necessary
-										let reduced = titleTable
-											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
-											: points;
-										for (const loc of reduced) {
-											if (loc.values) {
-												for (const val of loc.values) {
-													if (val[field] != null) {
-														options.add(val[field]);
-													} else {
-														someNoData = true;
-													}
-												}
-											} else if (loc[field] != null) {
-												options.add(loc[field]);
-											} else {
-												someNoData = true;
-											}
-										}
-										const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
-
-										//check if invalid number of options
-										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-											return;
-										} else if (optionsArray.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-											return;
-										} else {
-											//valid
-											const colors = distinctColors({ count: optionsArray.length, chromaMin });
-											const colorMap = {} as Record<string, Color>;
-											for (let i = 0; i < optionsArray.length; i++) {
-												colorMap[optionsArray[i]] = colors[i];
-											}
-
-											//add default color if there is some point with no data
-											if (someNoData) {
-												colorMap["No value"] = DEFAULT_COLOR;
-											}
-
-											setLegendInfo({ field, mode: "discreet", colorMap });
-										}
-									} else if (type === "integer" || type === "float") {
-										//get unique options
-										const options = new Set() as Set<any>;
-										let someNoValue = false;
-
-										//collapse points object into array if necessary
-										let reduced = titleTable
-											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
-											: points;
-										for (const loc of reduced) {
-											if (loc.values) {
-												for (const val of loc.values) {
-													if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
-														options.add(val[field]);
-													} else {
-														someNoValue = true;
-													}
-												}
-											} else {
-												if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
-													options.add(loc[field]);
-												} else {
-													someNoValue = true;
-												}
-											}
-										}
-										const optionsArray = Array.from(options).sort((a, b) => a - b);
-
-										//check if invalid number of options
-										if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
-											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-										} else if (optionsArray.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-										} else {
-											//valid
-											setLegendInfo({
-												field,
-												mode: "gradient",
-												range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
-												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-												someNoValue
-											});
-										}
-									} else if (type === "date") {
-										//get unique options and cast to epoch timestamp
-										const options = new Set() as Set<any>;
-										let someNoValue = false;
-
-										//collapse points object into array if necessary
-										let reduced = titleTable
-											? Object.values(points).reduce((acc, arr) => [...acc, ...arr], [])
-											: points;
-										for (const loc of reduced) {
-											if (loc.values) {
-												for (const val of loc.values) {
-													if (val[field]) {
-														const time = val[field].getTime();
-														if (!DeadValueNumbers.includes(time)) {
-															options.add(time);
-														} else {
-															someNoValue = true;
-														}
-													} else {
-														someNoValue = true;
-													}
-												}
-											} else {
-												if (loc[field]) {
-													const time = loc[field].getTime();
-													if (!DeadValueNumbers.includes(time)) {
-														options.add(time);
-													} else {
-														someNoValue = true;
-													}
-												} else {
-													someNoValue = true;
-												}
-											}
-										}
-										const optionsArray = Array.from(options).sort((a, b) => a - b);
-
-										//check if invalid number of options
-										if (
-											optionsArray.length === 0 ||
-											(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
-										) {
-											setLegendInfo({ field, mode: "discreet", colorMap: {} });
-										} else if (optionsArray.length === 1) {
-											setLegendInfo({ field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } });
-										} else {
-											//valid
-											setLegendInfo({
-												field,
-												mode: "gradient",
-												range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
-												palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
-												someNoValue
-											});
-										}
-									} else {
-										setLegendInfo({
-											field,
-											mode: "discreet",
-											colorMap: { "Unsupported field": DEFAULT_COLOR }
-										});
-									}
+									setLegendInfo(getMapLegendField(field));
 								}}
 							>
 								<option disabled value="">
 									Select field
 								</option>
 								{legendOptions.map((opt) => (
-									<option key={opt}>{opt}</option>
+									<option key={opt} value={opt}>
+										{opt}
+										{userDefinedOptions.has(opt) && " (UD)"}
+									</option>
 								))}
 							</select>
 
@@ -1944,6 +2037,7 @@ function DrawSelectedControl({
 	where,
 	id,
 	legendInfo,
+	userDefinedOptions,
 	mapRef,
 	shapes
 }: {
@@ -1952,6 +2046,7 @@ function DrawSelectedControl({
 	where?: Record<string, string>;
 	id: string;
 	legendInfo: LegendInfo;
+	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
 	shapes: Record<string, MapShape>;
 }) {
@@ -1976,6 +2071,7 @@ function DrawSelectedControl({
 							table={table}
 							id={id}
 							legendInfo={legendInfo}
+							userDefinedOptions={userDefinedOptions}
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
@@ -2006,6 +2102,7 @@ function NoLocationPointsControl({
 	where,
 	id,
 	legendInfo,
+	userDefinedOptions,
 	mapRef
 }: {
 	noLocationPoints: NullLocation[];
@@ -2013,6 +2110,7 @@ function NoLocationPointsControl({
 	where?: Record<string, string>;
 	id: string;
 	legendInfo: LegendInfo;
+	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
 }) {
 	const [shown, setShown] = useState(false);
@@ -2032,6 +2130,7 @@ function NoLocationPointsControl({
 							table={table}
 							id={id}
 							legendInfo={legendInfo}
+							userDefinedOptions={userDefinedOptions}
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,

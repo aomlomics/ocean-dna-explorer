@@ -12,6 +12,7 @@ async function doSubmit(
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
 	isPrivate: Analysis["isPrivate"],
+	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
 	const { userId, sessionClaims } = await auth();
@@ -27,7 +28,8 @@ async function doSubmit(
 			analysisChannel,
 			assignmentsChannel,
 			occurrencesChannel,
-			isPrivate
+			isPrivate,
+			trusted
 		});
 		if (!parseResult) {
 			return;
@@ -71,6 +73,19 @@ async function doSubmit(
 					);
 				}
 
+				//check if assay is valid
+				const dbAssay = await tx.assay.findUnique({
+					where: {
+						assay_name: analysis.assay_name
+					},
+					select: {
+						assay_name: true
+					}
+				});
+				if (!dbAssay) {
+					throw new Error(`The Assay with assay_name of "${analysis.assay_name}" does not exist.`);
+				}
+
 				//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
 				const libIds = new Set() as Set<Occurrence["lib_id"]>;
 				for (const occ of occurrences) {
@@ -85,7 +100,20 @@ async function doSubmit(
 						}
 					},
 					select: {
-						lib_id: true
+						lib_id: true,
+						Occurrences: trusted
+							? {
+									where: {
+										Analysis: {
+											trusted: true
+										}
+									},
+									select: {
+										analysis_run_name: true,
+										featureid: true
+									}
+								}
+							: false
 					}
 				});
 
@@ -102,6 +130,10 @@ async function doSubmit(
 						if (invalidLibIds.length === 1) {
 							throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
 						} else {
+							let join = ", ";
+							if (invalidLibIds.length === 2) {
+								join = " ";
+							}
 							throw new Error(
 								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
@@ -131,6 +163,10 @@ async function doSubmit(
 						if (invalidTagNames.length === 1) {
 							throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 						} else {
+							let join = ", ";
+							if (invalidTagNames.length === 2) {
+								join = " ";
+							}
 							throw new Error(
 								`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 									.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
@@ -179,13 +215,58 @@ async function doSubmit(
 				);
 
 				//occurrences
+				//check if any libraries have another trusted analysis with shared features
+				const otherTrusted = [] as Analysis["analysis_run_name"][];
+				if (trusted) {
+					for (const lib of dbLibraries) {
+						for (const occ of lib.Occurrences) {
+							if (
+								!otherTrusted.includes(occ.analysis_run_name) &&
+								features.find((feat) => feat.featureid === occ.featureid)
+							) {
+								otherTrusted.push(occ.analysis_run_name);
+							}
+						}
+					}
+				}
+
+				if (otherTrusted.length) {
+					//remove trusted from other analyses
+					await tx.analysis.updateMany({
+						where: {
+							analysis_run_name: {
+								in: otherTrusted
+							}
+						},
+						data: {
+							trusted: false
+						}
+					});
+
+					if (otherTrusted.length === 1) {
+						await occurrencesChannel.stream.message(
+							`Trusted has been removed from Analysis with analysis_run_name of "${otherTrusted[0]}".`,
+							85
+						);
+					} else {
+						await occurrencesChannel.stream.message(
+							`Analyses with analysis_run_names of ${otherTrusted
+								.map((analysis_run_name, i) =>
+									i === otherTrusted.length - 1 ? `and "${analysis_run_name}"` : `"${analysis_run_name}"`
+								)
+								.join(", ")}.`,
+							85
+						);
+					}
+				}
+
 				await tx.occurrence.createMany({
 					data: occurrences
 				});
 
 				await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
 			},
-			{ timeout: 3 * 60 * 1000 }
+			{ timeout: 5 * 60 * 1000 }
 		);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
@@ -207,6 +288,7 @@ export default async function analysisSubmitAction(
 	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
 	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
 	isPrivate: Analysis["isPrivate"],
+	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
 	const analysisStream = createProgressStream();
@@ -234,6 +316,7 @@ export default async function analysisSubmitAction(
 		{ url: assignmentsFileUrl, stream: assignmentsStream },
 		{ url: occurrencesFileUrl, stream: occurrencesStream },
 		isPrivate,
+		trusted,
 		tagNames
 	).then(() => {
 		analysisStream.close();

@@ -132,11 +132,13 @@ async function parseProjectFile({
 					}
 				}
 
-				//add to progress bar
-				await channel.stream.message(
-					`Processed line ${i} of ${projectParser.info.records}.`,
-					(i / projectParser.info.records) * 50 + 25
-				);
+				//add to progress bar every 10 percent
+				if (i % (projectParser.info.records / 10) === 0) {
+					await channel.stream.message(
+						`Processed line ${i} of ${projectParser.info.records}.`,
+						(i / projectParser.info.records) * 50 + 25
+					);
+				}
 			}
 		}
 
@@ -337,11 +339,13 @@ async function parseLibraryFile({
 				}
 				libraries.push(parsedLibrary.data as Prisma.LibraryCreateManyInput);
 
-				//add to progress bar
-				await channel.stream.message(
-					`Processed Library ${parsedLibrary.data.lib_id}, row ${i} of ${libraryParser.info.records}.`,
-					(i / libraryParser.info.records) * 50 + 25
-				);
+				//add to progress bar every 10 percent
+				if (i % (libraryParser.info.records / 10) === 0) {
+					await channel.stream.message(
+						`Processed Library ${parsedLibrary.data.lib_id}, row ${i} of ${libraryParser.info.records}.`,
+						(i / libraryParser.info.records) * 50 + 25
+					);
+				}
 			}
 		}
 
@@ -454,11 +458,13 @@ async function parseSampleFile({
 				//@ts-ignore issue with Json database type
 				samplesByName[parsedSample.data.samp_name] = parsedSample.data;
 
-				//add to progress bar
-				await channel.stream.message(
-					`Processed Sample ${parsedSample.data.samp_name}, row ${i} of ${sampleParser.info.records}.`,
-					(i / sampleParser.info.records) * 50 + 25
-				);
+				//add to progress bar every 10 percent
+				if (i % (sampleParser.info.records / 10) === 0) {
+					await channel.stream.message(
+						`Processed Sample ${parsedSample.data.samp_name}, row ${i} of ${sampleParser.info.records}.`,
+						(i / sampleParser.info.records) * 50 + 25
+					);
+				}
 			}
 		}
 

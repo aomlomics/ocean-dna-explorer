@@ -17,44 +17,46 @@ export default function DataDisplay({
 	omit?: (keyof typeof data)[];
 	priorityFields?: string[];
 }) {
-	omit = [...omit, ...GlobalOmit, "id"];
+	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 
-	function ValueNode({ field, value }: { field: string; value: any }) {
-		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+	function ValueNode({ field, value, userDefined }: { field: string; value: any; userDefined?: true }) {
+		if (!userDefined) {
+			const type = getZodType(TableMetadata[table].schema.shape[field]).type;
 
-		if (value === null || (Array.isArray(value) && value.length === 0)) {
-			return <div className="bg-base-300">{"\u200b"}</div>;
-		} else if (typeof value === "number" && value in DeadValueEnum) {
-			return <div className="break-words">{DeadValueEnum[value]}</div>;
-		} else if (type === "date" && value.getTime() in DeadValueEnum) {
-			return <div className="break-words">{DeadValueEnum[value.getTime()]}</div>;
-		} else {
-			const strValue = value.toString();
-
-			//TODO: change once Prisma supports contains on arrays
-			return strValue.split(TypeSeparators.string).map((v: string, i: number) => {
-				const trimmed = v.trim();
-				if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
-					return (
-						<Link
-							key={i}
-							href={trimmed}
-							className="link link-primary link-hover self-start"
-							target="_blank"
-							rel="noreferrer"
-						>
-							{trimmed}
-						</Link>
-					);
-				} else {
-					return (
-						<div key={i} className="break-words">
-							{trimmed}
-						</div>
-					);
-				}
-			});
+			if (value === null || (Array.isArray(value) && value.length === 0)) {
+				return <div className="bg-base-300">{"\u200b"}</div>;
+			} else if (typeof value === "number" && value in DeadValueEnum) {
+				return <div className="wrap-break-word">{DeadValueEnum[value]}</div>;
+			} else if (type === "date" && value.getTime() in DeadValueEnum) {
+				return <div className="wrap-break-word">{DeadValueEnum[value.getTime()]}</div>;
+			}
 		}
+
+		const strValue = value.toString();
+
+		//TODO: change once Prisma supports contains on arrays
+		return strValue.split(TypeSeparators.string).map((v: string, i: number) => {
+			const trimmed = v.trim();
+			if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
+				return (
+					<Link
+						key={i}
+						href={trimmed}
+						className="link link-primary link-hover self-start"
+						target="_blank"
+						rel="noreferrer"
+					>
+						{trimmed}
+					</Link>
+				);
+			} else {
+				return (
+					<div key={i} className="wrap-break-word">
+						{trimmed}
+					</div>
+				);
+			}
+		});
 	}
 
 	// function to check if a value is empty (we want them at the bottom of the table)
@@ -65,7 +67,7 @@ export default function DataDisplay({
 	// Sorting the field order: priority fields list first, then non-empty fields, then empty fields
 	const sortedEntries = Object.entries(data).sort(([fieldA, valueA], [fieldB, valueB]) => {
 		// Skip sorting for omitted fields
-		if (omit.includes(fieldA) || omit.includes(fieldB)) return 0;
+		if (combinedOmit.includes(fieldA) || combinedOmit.includes(fieldB)) return 0;
 
 		const priorityIndexA = priorityFields.indexOf(fieldA);
 		const priorityIndexB = priorityFields.indexOf(fieldB);
@@ -92,7 +94,7 @@ export default function DataDisplay({
 			<table className="table table-zebra bg-base-100 font-sans">
 				<tbody>
 					{sortedEntries.reduce((acc: ReactNode[], [field, value]) => {
-						if (!omit.includes(field)) {
+						if (!combinedOmit.includes(field)) {
 							if (field !== "userDefined") {
 								acc.push(
 									<tr key={field} className="hover:bg-base-300/50 transition-colors">
@@ -111,14 +113,17 @@ export default function DataDisplay({
 												<tbody>
 													{Object.entries(value).reduce(
 														(acc: ReactNode[], [userDefinedField, userDefinedValue]: [string, any]) => {
-															if (!omit.includes(userDefinedField)) {
+															if (!combinedOmit.includes(userDefinedField)) {
 																acc.push(
-																	<tr key={userDefinedField + "_userDefined"} className="hover:bg-base-300/50 transition-colors">
+																	<tr
+																		key={userDefinedField + "_userDefined"}
+																		className="hover:bg-base-300/50 transition-colors"
+																	>
 																		<td className="flex flex-col gap-1.5">
 																			<div className="text-sm font-medium text-base-content/70 break-all">
 																				{userDefinedField}
 																			</div>
-																			<ValueNode field={userDefinedField} value={userDefinedValue} />
+																			<ValueNode field={userDefinedField} value={userDefinedValue} userDefined />
 																		</td>
 																	</tr>
 																);

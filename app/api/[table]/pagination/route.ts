@@ -22,10 +22,10 @@ export async function GET(
 
 			const query = {
 				orderBy: {
-					id: "asc"
+					id: "desc"
 				}
 			} as {
-				orderBy: { [field: string]: Prisma.SortOrder };
+				orderBy: { [field: string]: Prisma.SortOrder | { _count: Prisma.SortOrder } };
 				where?: Record<string, any>;
 				take?: number;
 				skip?: number;
@@ -34,22 +34,6 @@ export async function GET(
 					[key: string]: any;
 				};
 			};
-
-			const orderByStr = searchParams.get("orderBy");
-			if (orderByStr) {
-				const split = orderByStr?.split(",");
-				if (
-					split.length !== 2 ||
-					!TableMetadata[uncapsTable].enumSchema.options.includes(split[0]) ||
-					(split[1] !== "asc" && split[1] !== "desc")
-				) {
-					throw new Error("The orderBy must be a field and order separated by a comma.");
-				}
-
-				query.orderBy = {
-					[split[0]]: split[1]
-				};
-			}
 
 			const whereStr = searchParams.get("where");
 			if (whereStr) {
@@ -74,6 +58,33 @@ export async function GET(
 
 				for (const filter of Object.entries(parsed as Record<string, string>)) {
 					query.where = { ...query.where, ...parseToQuery(uncapsTable, filter) };
+				}
+			}
+
+			//@ts-ignore
+			let count = await prisma[uncapsTable].count({ where: query.where });
+
+			const orderByStr = searchParams.get("orderBy");
+			if (orderByStr) {
+				const split = orderByStr?.split(",");
+				if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
+					if (TableMetadata[uncapsTable].enumSchema.options.includes(split[0])) {
+						query.orderBy = {
+							[split[0]]: split[1]
+						};
+					} else if (
+						TableMetadata[uncapsTable].relations.find((rel) => rel.field === split[0] && rel.type.endsWith("many"))
+					) {
+						query.orderBy = {
+							[split[0]]: {
+								_count: split[1]
+							}
+						};
+					} else {
+						throw new Error("The orderBy must be a field or a -to-many relation.");
+					}
+				} else {
+					throw new Error("The orderBy must be a field and order separated by a comma.");
 				}
 			}
 
@@ -125,6 +136,11 @@ export async function GET(
 				}
 			}
 
+			//give last page if page is too large
+			if (parsedPage && (parsedPage - 1) * parsedTake > count) {
+				parsedPage = Math.floor(count / parsedTake) + 1;
+			}
+
 			const polygons = searchParams.getAll("polygon");
 			const circles = searchParams.getAll("circle");
 			let shapes;
@@ -141,16 +157,16 @@ export async function GET(
 				}
 			}
 
-			let [result, count] = (await prisma.$transaction([
-				//@ts-ignore
-				prisma[uncapsTable].findMany(query),
-				//@ts-ignore
-				prisma[uncapsTable].count({ where: query.where })
-			])) as [Record<string, any>[], number];
+			//@ts-ignore
+			let result = await prisma[uncapsTable].findMany(query);
 
 			if (shapes) {
 				result = getLocationsInsideShapes(result as Location[], shapes);
 				count = result.length;
+				//give last page if page is too large
+				if (parsedPage && (parsedPage - 1) * parsedTake > count) {
+					parsedPage = Math.floor(count / parsedTake) + 1;
+				}
 				//manually paginate
 				const start = parsedPage ? (parsedPage - 1) * parsedTake : 0;
 				result = result.slice(start, start + parsedTake);

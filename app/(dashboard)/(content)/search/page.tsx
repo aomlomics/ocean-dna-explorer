@@ -40,6 +40,21 @@ interface SearchRuleNode {
 
 type SearchNode = SearchGroupNode | SearchRuleNode;
 
+const MODE_TEXTS = {
+	contains: "contains",
+	equals: "equals",
+	startsWith: "starts with",
+	endsWith: "ends with",
+	gt: ">",
+	gte: ">=",
+	lt: "<",
+	lte: "<=",
+	in: "is in",
+	notIn: "is not in",
+	null: "is null",
+	notNull: "is not null"
+};
+
 function isGroupElement(e: ParamsArrayElement): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
 	return Array.isArray(e) && typeof e[0] === "string" && (e[0] === "AND" || e[0] === "OR");
 }
@@ -110,6 +125,9 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 	return root;
 }
 
+//TODO: add map to search page
+// allow search page on any search
+// if not sample page, still use shapes query, but internally query on samples, get list of samp_names, then use those to query on actual table
 export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
@@ -133,6 +151,7 @@ export default function AdvancedSearch() {
 	const [fieldSelectionDraft, setFieldSelectionDraft] = useState<string[]>([]);
 	const [fieldSearchText, setFieldSearchText] = useState("");
 	const [queryDescription, setQueryDescription] = useState("");
+	const [triggerQueryDescription, setTriggerQueryDescription] = useState(false); //delay updating query description by a render cycle
 
 	useEffect(() => {
 		try {
@@ -189,6 +208,10 @@ export default function AdvancedSearch() {
 			handleQueryDescription();
 		}
 	}, [queryDescription]);
+
+	useEffect(() => {
+		handleQueryDescription();
+	}, [triggerQueryDescription]);
 
 	useEffect(() => {
 		// Set default table parameter without creating a new history entry
@@ -253,35 +276,19 @@ export default function AdvancedSearch() {
 			const type = formRef.current[`type_${id}`]?.value as "relation" | "field";
 			const relation = type === "relation" ? formRef.current[`relation_${id}`]?.value : "";
 			const field = formRef.current[`field_${id}`]?.value as string;
-			const mode = formRef.current[`mode_${id}`]?.value as QueryMode;
-
 			if (!field) return "";
+			const mode = formRef.current[`mode_${id}`]?.value as QueryMode;
 
 			const prefix = relation ? `${relation}.` : "";
 
-			const modeText =
-				{
-					contains: "contains",
-					equals: "equals",
-					startsWith: "starts with",
-					endsWith: "ends with",
-					gt: ">",
-					gte: ">=",
-					lt: "<",
-					lte: "<=",
-					range: "is between",
-					in: "is in",
-					notIn: "is not in",
-					null: "is null",
-					notNull: "is not null",
-					deadValue: "is"
-				}[mode] || mode;
+			const modeText = mode in MODE_TEXTS ? MODE_TEXTS[mode as keyof typeof MODE_TEXTS] : mode;
 
 			if (mode === "null" || mode === "notNull") {
 				return `${prefix}${field} ${modeText}`;
 			}
 
-			let filterValue = formRef.current[`filter_${id}`]?.value || "";
+			let filterValue =
+				(mode === "boolean" ? formRef.current[`filter_${id}`]?.checked : formRef.current[`filter_${id}`]?.value) || "";
 			if (mode === "range") {
 				const gte = formRef.current[`filter_${id}_gte`]?.value || "";
 				const lte = formRef.current[`filter_${id}_lte`]?.value || "";
@@ -293,10 +300,10 @@ export default function AdvancedSearch() {
 				} catch {
 					filterValue = "";
 				}
-			}
-
-			if (mode === "deadValue" && filterValue === "any") {
+			} else if (mode === "deadValue" && filterValue === "any") {
 				return `${prefix}${field} is any dead value`;
+			} else if (mode === "boolean") {
+				return `${prefix}${filterValue ? "it is" : "it is not"} ${field}`;
 			}
 
 			return `${prefix}${field} ${modeText}${filterValue ? ` "${filterValue}"` : ""}`;
@@ -367,6 +374,9 @@ export default function AdvancedSearch() {
 					} catch {
 						return null;
 					}
+				} else if (mode === "boolean") {
+					if (!formRef.current[`filter_${id}`]) return null;
+					filter = formRef.current[`filter_${id}`]?.checked ? true : false;
 				} else if (fieldType === "date") {
 					if (mode === "range") {
 						if (!formRef.current[`filter_${id}_gte_date`] || !formRef.current[`filter_${id}_lte_date`]) return null;
@@ -414,10 +424,7 @@ export default function AdvancedSearch() {
 				}
 			}
 
-			let arr = [field, mode] as ParamsArrayRelation | ParamsArrayField;
-			if (filter !== undefined) {
-				arr = [field, mode, filter] as ParamsArrayField;
-			}
+			let arr = [field, mode, filter] as ParamsArrayRelation | ParamsArrayField;
 			if (relation) {
 				arr = [relation, ...arr] as ParamsArrayRelation;
 			}
@@ -585,7 +592,7 @@ export default function AdvancedSearch() {
 					e.preventDefault();
 					search();
 				}}
-				onChange={handleQueryDescription}
+				onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
 			>
 				{searchTable && (
 					<>
@@ -1158,7 +1165,7 @@ function SearchRuleComponent({
 		return <></>;
 	}
 
-	const omit = [...GlobalOmit, "id"];
+	const omit = [...GlobalOmit, "id", "userDefined"];
 	const nameSuffix = node.id;
 	const isRelation = type === "relation";
 
@@ -1301,22 +1308,28 @@ function InputElement({
 	const type = getZodType(shape[field as keyof typeof shape]).type;
 
 	const [mode, setMode] = useState(
-		defaultMode ? defaultMode : type === "integer" || type === "float" || type === "date" ? "equals" : "contains"
+		defaultMode
+			? defaultMode
+			: type === "boolean"
+				? "boolean"
+				: type === "integer" || type === "float" || type === "date"
+					? "equals"
+					: "contains"
 	);
 
-	if (type === "integer" || type === "float") {
-		const [inValues, setInValues] = useState<string[]>(() => {
-			if (defaultMode === "in" || defaultMode === "notIn") {
-				try {
-					const parsed = JSON.parse(defaultValue);
-					return Array.isArray(parsed) ? parsed.map(String) : [];
-				} catch {
-					return [];
-				}
+	const [inValues, setInValues] = useState<string[]>(() => {
+		if (defaultMode === "in" || defaultMode === "notIn") {
+			try {
+				const parsed = JSON.parse(defaultValue);
+				return Array.isArray(parsed) ? parsed.map((e) => (typeof e !== "string" ? e.toString() : e)) : [];
+			} catch {
+				return [];
 			}
-			return [];
-		});
+		}
+		return [];
+	});
 
+	if (type === "integer" || type === "float") {
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
@@ -1431,18 +1444,6 @@ function InputElement({
 			</div>
 		);
 	} else if (type === "date") {
-		const [inValues, setInValues] = useState<string[]>(() => {
-			if (defaultMode === "in" || defaultMode === "notIn") {
-				try {
-					const parsed = JSON.parse(defaultValue);
-					return Array.isArray(parsed) ? parsed : [];
-				} catch {
-					return [];
-				}
-			}
-			return [];
-		});
-
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
@@ -1587,19 +1588,19 @@ function InputElement({
 				)}
 			</div>
 		);
+	} else if (type === "boolean") {
+		return (
+			<div className="px-2 grid grid-cols-[30%_70%]">
+				<input type="hidden" name={`mode_${nameSuffix}`} value="boolean" />
+				<input
+					type="checkbox"
+					className="checkbox checkbox-primary"
+					defaultChecked={defaultValue === "true"}
+					name={`filter_${nameSuffix}`}
+				/>
+			</div>
+		);
 	} else {
-		const [inValues, setInValues] = useState<string[]>(() => {
-			if (defaultMode === "in" || defaultMode === "notIn") {
-				try {
-					const parsed = JSON.parse(defaultValue);
-					return Array.isArray(parsed) ? parsed : [];
-				} catch {
-					return [];
-				}
-			}
-			return [];
-		});
-
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select

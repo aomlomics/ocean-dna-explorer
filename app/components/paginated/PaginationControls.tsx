@@ -12,7 +12,7 @@ export default function PaginationControls({
 	handlePageHover: Function;
 }) {
 	return (
-		<div className="w-full flex justify-center">
+		<div className="w-full flex justify-center flex-1">
 			<div className="grid grid-cols-3 items-center grow max-w-[600px]">
 				<button
 					className="btn btn-ghost gap-2 justify-self-end"
@@ -31,13 +31,13 @@ export default function PaginationControls({
 						strokeWidth="3"
 						strokeLinecap="round"
 						strokeLinejoin="round"
-						className="text-base-content"
+						className={page === 1 ? "text-base-content/30" : "text-base-content"}
 					>
 						<path d="m15 18-6-6 6-6" />
 					</svg>
 				</button>
 
-				<div className="text-base-content text-center grow">
+				<div className="text-base-content text-center grow select-none">
 					{Math.min((page - 1) * take + 1, count)}-{Math.min(page * take, count)} of {count}
 				</div>
 
@@ -58,7 +58,7 @@ export default function PaginationControls({
 						strokeWidth="3"
 						strokeLinecap="round"
 						strokeLinejoin="round"
-						className="text-base-content"
+						className={page * take > count ? "text-base-content/30" : "text-base-content"}
 					>
 						<path d="m9 18 6-6-6-6" />
 					</svg>

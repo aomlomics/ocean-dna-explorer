@@ -45,7 +45,8 @@ const queryModes = [
 	"notIn",
 	"null",
 	"notNull",
-	"deadValue"
+	"deadValue",
+	"boolean"
 ];
 export function parseToQuery(
 	table: Uncapitalize<Prisma.ModelName>,
@@ -67,7 +68,7 @@ export function parseToQuery(
 	} else if (queryArr.length === 3) {
 		//search field for value with mode
 		field = queryArr[0];
-		mode = queryArr[1] as QueryMode;
+		mode = queryArr[1];
 		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
@@ -129,6 +130,17 @@ export function parseToQuery(
 			[field]: {
 				[mode]: value
 			}
+		};
+	} else if (zodType.type === "boolean") {
+		if (mode && mode !== "boolean") {
+			throw new Error(`Mode must be boolean, but is ${mode}.`);
+		}
+		if (typeof value !== "boolean") {
+			throw new Error(`Value must be boolean, but was provided ${typeof value}.`);
+		}
+
+		searchWhere = {
+			[field]: value
 		};
 	} else if (zodType.type === "string") {
 		//string behavior
@@ -426,7 +438,7 @@ export function parseApiQuery(
 	}
 
 	const query = {} as {
-		orderBy?: Record<string, Prisma.SortOrder>;
+		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
 		select?: Record<string, any>;
 		include?: Record<string, any>;
 		where?: Record<string, any>;
@@ -439,17 +451,23 @@ export function parseApiQuery(
 		const orderByStr = searchParams.get("orderBy");
 		if (orderByStr) {
 			const split = orderByStr?.split(",");
-			if (
-				split.length !== 2 ||
-				!TableMetadata[table].enumSchema.options.includes(split[0]) ||
-				(split[1] !== "asc" && split[1] !== "desc")
-			) {
+			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
+				if (TableMetadata[table].enumSchema.options.includes(split[0])) {
+					query.orderBy = {
+						[split[0]]: split[1]
+					};
+				} else if (TableMetadata[table].relations.find((rel) => rel.field === split[0] && rel.type.endsWith("many"))) {
+					query.orderBy = {
+						[split[0]]: {
+							_count: split[1]
+						}
+					};
+				} else {
+					throw new Error("The orderBy must be a field or a -to-many relation.");
+				}
+			} else {
 				throw new Error("The orderBy must be a field and order separated by a comma.");
 			}
-
-			query.orderBy = {
-				[split[0]]: split[1]
-			};
 		}
 	}
 

@@ -1,6 +1,6 @@
 export default function LoadingPaginationControls() {
 	return (
-		<div className="w-full flex justify-center">
+		<div className="w-full flex justify-center flex-1">
 			<div className="grid grid-cols-3 items-center grow max-w-[600px]">
 				<button className="btn btn-ghost gap-2 justify-self-end" disabled={true} type="button">
 					<svg

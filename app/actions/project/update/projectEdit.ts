@@ -142,13 +142,19 @@ async function doEdit(
 				for (const a of assays) {
 					const dbAssay = await tx.assay.findUnique({
 						where: {
-							assay_name: a.assay_name
+							assay_name: a.assay_name,
+							pcr_primer_forward: a.pcr_primer_forward,
+							pcr_primer_reverse: a.pcr_primer_reverse
 						}
 					});
 
 					if (!dbAssay) {
-						await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-						throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+						await projectChannel.stream.error(
+							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
+						);
+						throw new Error(
+							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
+						);
 					}
 
 					for (const [f, value] of Object.entries(a)) {
@@ -445,12 +451,12 @@ async function doEdit(
 							//list of samp_names
 							sampNames.length > 1
 								? //at least 3
-								  ' "' + sampNames.join('", "') + '", and'
+									' "' + sampNames.join('", "') + '", and'
 								: sampNames.length === 1
-								? //exactly 2
-								  ' "' + sampNames[0] + '" and'
-								: //exactly 1
-								  ""
+									? //exactly 2
+										' "' + sampNames[0] + '" and'
+									: //exactly 1
+										""
 						} "${lastSample}" ${
 							//plural
 							sampNames.length ? "have" : "has"
@@ -467,12 +473,12 @@ async function doEdit(
 							//list of analysis_run_names
 							analysesToUpdate.length > 1
 								? // at least 3
-								  ' "' + analysesToUpdate.join('", "') + '", and'
+									' "' + analysesToUpdate.join('", "') + '", and'
 								: analysesToUpdate.length === 1
-								? //exactly 2
-								  ' "' + analysesToUpdate[0] + '" and'
-								: //exactly 1
-								  ""
+									? //exactly 2
+										' "' + analysesToUpdate[0] + '" and'
+									: //exactly 1
+										""
 						} "${lastAnalysis}". Then, click the "Fix" button on the Project with project_id of "${project_id}".`; //TODO: change name of button to match the UI
 					}
 				}

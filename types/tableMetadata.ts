@@ -17,7 +17,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.ProjectSchema,
 		enumSchema: PrismaZodTypes.ProjectScalarFieldEnumSchema,
 		titleField: "project_id",
-		subFields: ["project_name", "study_factor", "institution", "project_contact"],
+		subFields: ["project_name", "study_factor", "institution", "project_contact", "sample_type"],
 		fieldOrder: [
 			"project_name",
 			"project_contact",
@@ -89,7 +89,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.AnalysisSchema,
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
 		titleField: "analysis_run_name",
-		subFields: ["assay_name", "project_id"]
+		subFields: ["assay_name", "project_id", "trusted"]
 	},
 	occurrence: {
 		plural: "Occurrences",

@@ -39,7 +39,7 @@ export default function ExploreSearch({
 		router.push(`?${params.toString()}`);
 	}
 
-	omit = [...omit, ...GlobalOmit, "id"];
+	const combinedOmit = [...omit, ...GlobalOmit, "id", "userDefined"];
 
 	function InputElement() {
 		const shape = TableMetadata[table].schema.shape;
@@ -82,7 +82,7 @@ export default function ExploreSearch({
 					onChange={(e) => setField(e.currentTarget.value)}
 				>
 					{TableMetadata[table].enumSchema.options.reduce((acc, option) => {
-						if (!omit.includes(option)) {
+						if (!combinedOmit.includes(option)) {
 							acc.push(
 								<option key={option} value={option}>
 									{option}

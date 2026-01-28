@@ -13,6 +13,7 @@ export default function DynamicMap({
 	id,
 	table,
 	titleTable,
+	defaultLegendField,
 	cluster,
 	clusterRadius,
 	legend,
@@ -25,6 +26,7 @@ export default function DynamicMap({
 	id?: string;
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
+	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
 	legend?: boolean;
@@ -39,6 +41,7 @@ export default function DynamicMap({
 			id={id}
 			table={table}
 			titleTable={titleTable}
+			defaultLegendField={defaultLegendField}
 			cluster={cluster}
 			clusterRadius={clusterRadius}
 			legend={legend}

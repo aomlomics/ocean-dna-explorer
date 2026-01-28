@@ -55,13 +55,15 @@ model Project {
     // Sample Collection
     /// @zod.custom.use(z.coerce.number().int())
     biological_rep Int?
+    sample_type    String
 }
 
 model Sample {
-    id          Int    @id @default(autoincrement())
-    samp_name   String @unique
+    id                  Int     @id @default(autoincrement())
+    samp_name           String  @unique
+    biosample_accession String? @unique
     /// [UserDefinedType]
-    userDefined Json?
+    userDefined         Json?
 
     // Relations
     project_id String
@@ -319,9 +321,8 @@ model Sample {
     transmittance_unit        String?
 
     // Sectionless
-    biosample_accession String?
-    organism            String?
-    sterilise_method    String?
+    organism         String?
+    sterilise_method String?
 
     // Expedition
     short_name           String
@@ -347,20 +348,17 @@ model Assay {
 
     deleted_ODE Boolean?
 
+    assay_name_alternate              String?
     targetTaxonomicAssay              String //[]
     targetTaxonomicScope              String? //[]    @default([])
+    target                            String?
     target_gene                       String
     target_subfragment                String?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize                      Float?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize_Midpoint_ODE         Float?
-    /// @zod.custom.use(z.coerce.number())
-    ampliconSize_End_ODE              Float?
-    pcr_primer_reference_forward      String?
-    pcr_primer_reference_reverse      String?
     pcr_primer_name_published_forward String?
     pcr_primer_name_published_reverse String?
+    pcr_primer_reference_forward      String?
+    pcr_primer_reference_reverse      String?
+    assay_reference                   String?
 
     @@unique([pcr_primer_forward, pcr_primer_reverse])
     @@unique([pcr_primer_name_forward, pcr_primer_name_reverse])
@@ -411,6 +409,12 @@ model AssayPrep {
     pcr_analysis_software       String?
     pcr_method_additional       String?
     assay_type                  String
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize                Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_Midpoint_ODE   Float?
+    /// @zod.custom.use(z.coerce.number())
+    ampliconSize_End_ODE        Float?
 
     @@unique([project_id, assay_name])
 }
