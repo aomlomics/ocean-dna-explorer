@@ -1,7 +1,6 @@
-import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/queries";
-import { getLocationsInsideShapes, uncapitalizeTable } from "@/app/helpers/utils";
+import { deepWhere, parseApiQuery } from "@/app/helpers/queries";
+import { getLocationsInsideShapes } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { TableNames } from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
@@ -12,20 +11,49 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
-	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
+	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase());
 	if (model) {
-		const uncapsTable = uncapitalizeTable(model);
-
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const { query, shapes } = parseApiQuery(uncapsTable, searchParams);
+			const getSamples = searchParams.get("getSamples");
+			if (getSamples) {
+				searchParams.delete("getSamples");
+			}
+
+			const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams);
+
+			//retrieve only the samples that match the query
+			if (getSamples) {
+				const samples = await prisma.sample.findMany({
+					where: sampleWhere
+				});
+
+				return NextResponse.json({ statusMessage: "success", samples });
+			}
+
+			//replace the where with samp_names that match the query and are inside the shapes
+			if (shapes && sampleWhere) {
+				const samples = await prisma.sample.findMany({
+					where: sampleWhere,
+					select: {
+						samp_name: true,
+						decimalLatitude: true,
+						decimalLongitude: true
+					}
+				});
+
+				query.where = deepWhere(model, "sample", {
+					samp_name: { in: getLocationsInsideShapes(samples, shapes).map((samp) => samp.samp_name) }
+				});
+			}
 
 			//@ts-ignore
-			let result = await prisma[uncapsTable].findMany(query);
+			let result = await prisma[model].findMany(query);
 
 			if (result) {
-				if (shapes) {
+				//don't do this if already done
+				if (shapes && !sampleWhere) {
 					result = getLocationsInsideShapes(result, shapes);
 				}
 

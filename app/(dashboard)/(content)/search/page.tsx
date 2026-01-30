@@ -15,7 +15,7 @@ import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { uncapitalizeTable } from "@/app/helpers/utils";
+import { capitalizeTable } from "@/app/helpers/utils";
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
@@ -125,20 +125,18 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 	return root;
 }
 
-//TODO: add map to search page
-// allow search page on any search
-// if not sample page, still use shapes query, but internally query on samples, get list of samp_names, then use those to query on actual table
 export default function AdvancedSearch() {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const router = useRouter();
-	const [searchTable, setSearchTable] = useState<Prisma.ModelName>(() => {
-		const table = searchParams.get("table") as Prisma.ModelName;
-		if (table && TableNames.includes(uncapitalizeTable(table))) {
+	const [searchTable, setSearchTable] = useState<Uncapitalize<Prisma.ModelName>>(() => {
+		const paramTable = searchParams.get("table");
+		const table = TableNames.find((name) => name.toLowerCase() === paramTable?.toLowerCase());
+		if (table) {
 			return table;
 		}
-		return "Project";
+		return "project";
 	});
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
 	const formRef = useRef<HTMLFormElement>(null);
@@ -181,11 +179,12 @@ export default function AdvancedSearch() {
 					setSearchTree(createEmptyGroup(0));
 				}
 
-				const paramTable = searchParams.get("table") as Prisma.ModelName | null;
-				if (paramTable && TableNames.includes(uncapitalizeTable(paramTable))) {
-					setSearchTable(paramTable);
+				const paramTable = searchParams.get("table");
+				const table = TableNames.find((name) => name.toLowerCase() === paramTable?.toLowerCase());
+				if (table) {
+					setSearchTable(table);
 				} else {
-					setSearchTable("Project");
+					setSearchTable("project");
 				}
 			}
 		} catch (err) {
@@ -239,11 +238,10 @@ export default function AdvancedSearch() {
 	}, [apiDropdownOpen]);
 
 	//functions
-	function getAvailableApiFields(table: Prisma.ModelName) {
+	function getAvailableApiFields(table: Uncapitalize<Prisma.ModelName>) {
 		const omit = new Set(GlobalOmit);
 		const meta = TableMetadata[table];
 		const allFields = meta.enumSchema.options as string[];
-		const titleField = meta.titleField;
 
 		const ordered: string[] = [];
 
@@ -258,7 +256,6 @@ export default function AdvancedSearch() {
 		for (const head of allFields) {
 			if (ordered.includes(head)) continue;
 			if (head === "id") continue;
-			if (typeof titleField === "string" && head === titleField) continue;
 			if (omit.has(head)) continue;
 
 			ordered.push(head);
@@ -267,6 +264,7 @@ export default function AdvancedSearch() {
 		return ordered;
 	}
 
+	//TODO: add shapes to description
 	function handleQueryDescription() {
 		if (!formRef.current || !searchTree || searchTree.children.length === 0) return "";
 
@@ -466,7 +464,6 @@ export default function AdvancedSearch() {
 	}
 
 	function reset() {
-		setSearchTable("Project");
 		setSearchTree(createEmptyGroup(0));
 		setQueryDescription("");
 		router.push(pathname);
@@ -475,6 +472,16 @@ export default function AdvancedSearch() {
 	function search() {
 		const params = new URLSearchParams();
 		params.set("table", searchTable);
+
+		//maintain shapes
+		const polygons = searchParams.getAll("polygon");
+		if (polygons.length) {
+			polygons.forEach((poly) => params.set("polygon", poly));
+		}
+		const circles = searchParams.getAll("circle");
+		if (circles.length) {
+			circles.forEach((cir) => params.set("circle", cir));
+		}
 
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
@@ -497,7 +504,6 @@ export default function AdvancedSearch() {
 
 	function getApiQuery(customFields?: string[] | null) {
 		const baseUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_URL;
-		const tableName = uncapitalizeTable(searchTable);
 
 		// Prefer the current URL params so the API box always matches what the backend sees after a search
 		const paramsFromUrl = new URLSearchParams(searchParams.toString());
@@ -514,6 +520,16 @@ export default function AdvancedSearch() {
 		const params = new URLSearchParams();
 		if (advancedStr) {
 			params.set("advanced", advancedStr);
+		}
+
+		//maintain shapes
+		const polygons = paramsFromUrl.getAll("polygon");
+		if (polygons.length) {
+			polygons.forEach((poly) => params.set("polygon", poly));
+		}
+		const circles = paramsFromUrl.getAll("circle");
+		if (circles.length) {
+			circles.forEach((cir) => params.set("circle", cir));
 		}
 
 		let fieldsForTable: string[] | undefined;
@@ -534,10 +550,10 @@ export default function AdvancedSearch() {
 
 		const queryString = params.toString();
 		if (queryString) {
-			return `${baseUrl}/api/${tableName}?${queryString}`;
+			return `${baseUrl}/api/${searchTable}?${queryString}`;
 		}
 
-		return `${baseUrl}/api/${tableName}`;
+		return `${baseUrl}/api/${searchTable}`;
 	}
 
 	async function copyApiQuery(customFields?: string[] | null) {
@@ -568,34 +584,34 @@ export default function AdvancedSearch() {
 	const allFieldsSelected = availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
 
 	return (
-		<div className="grid grid-cols-1 gap-y-4 pt-4">
-			{searchTable && (
-				<header className="flex items-start justify-between">
-					<div>
-						<h1 className="text-4xl font-normal text-base-content">
-							<span className="">Search</span>{" "}
-							<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
-							<span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
-						</h1>
-					</div>
-				</header>
-			)}
-			<div className="w-full space-y-4 text-base-content/80">
-				{searchTable && <p>{TableMetadata[searchTable].description}</p>}
-				<ExploreTabButtons activeTable={searchTable} tables={DataTableNames} />
-			</div>
-
-			<form
-				ref={formRef}
-				className="flex flex-col gap-4"
-				onSubmit={(e) => {
-					e.preventDefault();
-					search();
-				}}
-				onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
-			>
+		<>
+			<div className="grid grid-cols-1 gap-y-4 pt-4">
 				{searchTable && (
-					<>
+					<header className="flex items-start justify-between">
+						<div>
+							<h1 className="text-4xl font-normal text-base-content">
+								<span className="">Search</span>{" "}
+								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+								<span className="text-primary font-normal">{TableMetadata[searchTable].plural}</span>
+							</h1>
+						</div>
+					</header>
+				)}
+				<div className="w-full space-y-4 text-base-content/80">
+					{searchTable && <p>{TableMetadata[searchTable].description}</p>}
+					<ExploreTabButtons activeTable={capitalizeTable(searchTable)} tables={DataTableNames} />
+				</div>
+
+				<form
+					ref={formRef}
+					className="flex flex-col gap-4"
+					onSubmit={(e) => {
+						e.preventDefault();
+						search();
+					}}
+					onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
+				>
+					{searchTable && (
 						<div className="bg-base-100 py-6 rounded-lg mb-4">
 							<div className="space-y-4">
 								<SearchGroupComponent
@@ -684,7 +700,7 @@ export default function AdvancedSearch() {
 														</span>
 													</button>
 													{apiDropdownOpen && (
-														<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-40">
+														<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-9999">
 															<ul className="menu p-2">
 																<li>
 																	<button
@@ -711,7 +727,7 @@ export default function AdvancedSearch() {
 														</div>
 													)}
 												</div>
-												<button type="button" className="btn btn-error btn-md gap-2" onClick={() => reset()}>
+												<button type="button" className="btn btn-error btn-md gap-2" onClick={reset}>
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														fill="none"
@@ -747,16 +763,9 @@ export default function AdvancedSearch() {
 								/>
 							</div>
 						</div>
-						{/* <div className="collapse collapse-arrow bg-base-100 rounded-none mt-4">
-					<input type="checkbox" />
-					<div className="collapse-title font-semibold text-xl text-primary">Show on Map</div>
-					<div className="collapse-content text-sm overflow-x-auto overflow-hidden">
-						<Map locations={[] as any[]} titleTable={uncapitalizeTable(searchTable)} />
-					</div>
-				</div> */}
-					</>
-				)}
-			</form>
+					)}
+				</form>
+			</div>
 
 			<Modal ref={apiFieldsModalRef} className="max-h-[85vh] overflow-y-auto my-8 max-w-3xl">
 				<div className="p-6 space-y-4">
@@ -956,7 +965,7 @@ export default function AdvancedSearch() {
 					</div>
 				</div>
 			</Modal>
-		</div>
+		</>
 	);
 }
 
@@ -971,7 +980,7 @@ function SearchGroupComponent({
 	onHelpClick
 }: {
 	group: SearchGroupNode;
-	searchTable: Prisma.ModelName;
+	searchTable: Uncapitalize<Prisma.ModelName>;
 	onChange: (group: SearchGroupNode) => void;
 	onDelete?: () => void;
 	footer?: ReactNode;
@@ -1023,9 +1032,7 @@ function SearchGroupComponent({
 						{isRoot && (
 							<>
 								<span className="text-sm text-base-content/70">Show</span>
-								<span className="text-sm font-normal text-primary">
-									{TableMetadata[uncapitalizeTable(searchTable)].plural}
-								</span>
+								<span className="text-sm font-normal text-primary">{TableMetadata[searchTable].plural}</span>
 								<span className="text-sm text-base-content/70">where</span>
 							</>
 						)}
@@ -1137,19 +1144,21 @@ function SearchRuleComponent({
 	onChange
 }: {
 	node: SearchRuleNode;
-	searchTable: Prisma.ModelName;
+	searchTable: Uncapitalize<Prisma.ModelName>;
 	onChange: (node: SearchRuleNode | null) => void;
 }) {
 	const paramsArray = node.initialParams;
 	const [type, setType] = useState(paramsArray && paramsArray.length === 4 ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
-		(paramsArray && type === "relation" ? paramsArray[0] : "") as Prisma.ModelName | ""
+		paramsArray && type === "relation"
+			? TableNames.find((table) => table.toLowerCase() === paramsArray[0].toLowerCase())
+			: ("" as Uncapitalize<Prisma.ModelName> | "")
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 	const [loaded, setLoaded] = useState(false);
 
-	const table = relation ? relation : (searchTable as Prisma.ModelName);
+	const table = relation ? relation : searchTable;
 	const invalidField =
 		paramsArray && !TableMetadata[table].enumSchema.options.includes(paramsArray[0 + paramsOffset] as string);
 
@@ -1211,7 +1220,7 @@ function SearchRuleComponent({
 						className="select"
 						value={relation}
 						onChange={(e) => {
-							setRelation(e.target.value as Prisma.ModelName);
+							setRelation(e.target.value as Uncapitalize<Prisma.ModelName>);
 							setField("");
 						}}
 						required
@@ -1221,10 +1230,7 @@ function SearchRuleComponent({
 							Select Relation
 						</option>
 						{TableNames.reduce((acc, table) => {
-							if (
-								table !== (uncapitalizeTable(searchTable) as Uncapitalize<Prisma.ModelName>) &&
-								getRelationPath(uncapitalizeTable(searchTable), table)
-							) {
+							if (table !== (searchTable as Uncapitalize<Prisma.ModelName>) && getRelationPath(searchTable, table)) {
 								acc.push(
 									<option key={table} value={table} title={table}>
 										{table}
@@ -1292,7 +1298,7 @@ function InputElement({
 	defaultValue
 }: {
 	nameSuffix: string;
-	table: Prisma.ModelName;
+	table: Uncapitalize<Prisma.ModelName>;
 	field: string;
 	defaultMode: string;
 	defaultValue: string;

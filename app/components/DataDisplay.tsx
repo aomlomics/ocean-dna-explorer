@@ -9,136 +9,91 @@ import { getZodType } from "../helpers/schema";
 export default function DataDisplay({
 	table,
 	data,
-	omit = [],
-	priorityFields = []
+	omit = []
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	data: Record<string, any>;
-	omit?: (keyof typeof data)[];
-	priorityFields?: string[];
+	omit?: string[];
 }) {
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 
-	function ValueNode({ field, value, userDefined }: { field: string; value: any; userDefined?: true }) {
-		if (!userDefined) {
-			const type = getZodType(TableMetadata[table].schema.shape[field]).type;
-
-			if (value === null || (Array.isArray(value) && value.length === 0)) {
-				return <div className="bg-base-300">{"\u200b"}</div>;
-			} else if (typeof value === "number" && value in DeadValueEnum) {
-				return <div className="wrap-break-word">{DeadValueEnum[value]}</div>;
-			} else if (type === "date" && value.getTime() in DeadValueEnum) {
-				return <div className="wrap-break-word">{DeadValueEnum[value.getTime()]}</div>;
+	// Sort the fields
+	const fields = new Set() as Set<string>;
+	//field order
+	if (TableMetadata[table].fieldOrder) {
+		for (const f of TableMetadata[table].fieldOrder) {
+			if (!combinedOmit.includes(f)) {
+				fields.add(f);
 			}
 		}
-
-		const strValue = value.toString();
-
-		//TODO: change once Prisma supports contains on arrays
-		return strValue.split(TypeSeparators.string).map((v: string, i: number) => {
-			const trimmed = v.trim();
-			if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
-				return (
-					<Link
-						key={i}
-						href={trimmed}
-						className="link link-primary link-hover self-start"
-						target="_blank"
-						rel="noreferrer"
-					>
-						{trimmed}
-					</Link>
-				);
-			} else {
-				return (
-					<div key={i} className="wrap-break-word">
-						{trimmed}
-					</div>
-				);
-			}
-		});
+		TableMetadata[table].fieldOrder.forEach(fields.add, fields);
 	}
-
-	// function to check if a value is empty (we want them at the bottom of the table)
-	const isEmpty = (value: any): boolean => {
-		return value === null || value === undefined || (Array.isArray(value) && value.length === 0);
-	};
-
-	// Sorting the field order: priority fields list first, then non-empty fields, then empty fields
-	const sortedEntries = Object.entries(data).sort(([fieldA, valueA], [fieldB, valueB]) => {
-		// Skip sorting for omitted fields
-		if (combinedOmit.includes(fieldA) || combinedOmit.includes(fieldB)) return 0;
-
-		const priorityIndexA = priorityFields.indexOf(fieldA);
-		const priorityIndexB = priorityFields.indexOf(fieldB);
-		const isEmptyA = isEmpty(valueA);
-		const isEmptyB = isEmpty(valueB);
-
-		// if booth are priority fields - sort by priority order
-		if (priorityIndexA !== -1 && priorityIndexB !== -1) {
-			return priorityIndexA - priorityIndexB;
+	//move empty fields to bottom
+	const emptyFields = [];
+	for (const [f, val] of Object.entries(data)) {
+		if (!combinedOmit.includes(f)) {
+			if (val == null) {
+				emptyFields.push(f);
+			} else {
+				fields.add(f);
+			}
 		}
-
-		if (priorityIndexA !== -1) return -1;
-
-		if (priorityIndexB !== -1) return 1;
-
-		if (isEmptyA && !isEmptyB) return 1;
-		if (!isEmptyA && isEmptyB) return -1;
-
-		return 0;
-	});
+	}
+	emptyFields.forEach(fields.add, fields);
 
 	return (
 		<div className="overflow-x-auto overflow-y-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100">
 			<table className="table table-zebra bg-base-100 font-sans">
 				<tbody>
-					{sortedEntries.reduce((acc: ReactNode[], [field, value]) => {
-						if (!combinedOmit.includes(field)) {
-							if (field !== "userDefined") {
-								acc.push(
-									<tr key={field} className="hover:bg-base-300/50 transition-colors">
-										<td className="flex flex-col gap-1.5">
-											<div className="text-sm font-medium text-base-content/70 break-all">{field}</div>
-											<ValueNode field={field} value={value} />
-										</td>
-									</tr>
-								);
-							} else if (value) {
-								acc.push(
-									<tr key={field} className="hover:bg-base-300/50 transition-colors">
-										<td className="flex flex-col gap-1.5">
-											<div className="font-medium">User Defined:</div>
-											<table className="table table-zebra bg-base-100 font-sans">
-												<tbody>
-													{Object.entries(value).reduce(
-														(acc: ReactNode[], [userDefinedField, userDefinedValue]: [string, any]) => {
-															if (!combinedOmit.includes(userDefinedField)) {
-																acc.push(
-																	<tr
-																		key={userDefinedField + "_userDefined"}
-																		className="hover:bg-base-300/50 transition-colors"
-																	>
-																		<td className="flex flex-col gap-1.5">
-																			<div className="text-sm font-medium text-base-content/70 break-all">
-																				{userDefinedField}
-																			</div>
-																			<ValueNode field={userDefinedField} value={userDefinedValue} userDefined />
-																		</td>
-																	</tr>
-																);
-															}
+					{Array.from(fields).reduce((acc: ReactNode[], f) => {
+						if (f !== "userDefined") {
+							acc.push(
+								<tr key={f} className="hover:bg-base-300/50 transition-colors">
+									<td className="flex flex-col gap-1.5">
+										<div className="text-sm font-medium text-base-content/70 break-all">{f}</div>
+										<ValueNode table={table} field={f} value={data[f]} />
+									</td>
+								</tr>
+							);
+						} else if (data[f]) {
+							acc.push(
+								<tr key={f} className="hover:bg-base-300/50 transition-colors">
+									<td className="flex flex-col gap-1.5">
+										<div className="font-medium">User Defined:</div>
+										<table className="table table-zebra bg-base-100 font-sans">
+											<tbody>
+												{Object.entries(data[f]).reduce(
+													(acc: ReactNode[], [userDefinedField, userDefinedValue]: [string, any]) => {
+														if (!combinedOmit.includes(userDefinedField)) {
+															acc.push(
+																<tr
+																	key={userDefinedField + "_userDefined"}
+																	className="hover:bg-base-300/50 transition-colors"
+																>
+																	<td className="flex flex-col gap-1.5">
+																		<div className="text-sm font-medium text-base-content/70 break-all">
+																			{userDefinedField}
+																		</div>
+																		<ValueNode
+																			table={table}
+																			field={userDefinedField}
+																			value={userDefinedValue}
+																			userDefined
+																		/>
+																	</td>
+																</tr>
+															);
+														}
 
-															return acc;
-														},
-														[]
-													)}
-												</tbody>
-											</table>
-										</td>
-									</tr>
-								);
-							}
+														return acc;
+													},
+													[]
+												)}
+											</tbody>
+										</table>
+									</td>
+								</tr>
+							);
 						}
 
 						return acc;
@@ -147,4 +102,54 @@ export default function DataDisplay({
 			</table>
 		</div>
 	);
+}
+
+function ValueNode({
+	table,
+	field,
+	value,
+	userDefined
+}: {
+	table: Uncapitalize<Prisma.ModelName>;
+	field: string;
+	value: any;
+	userDefined?: true;
+}) {
+	if (!userDefined) {
+		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+
+		if (value === null || (Array.isArray(value) && value.length === 0)) {
+			return <div className="bg-base-300">{"\u200b"}</div>;
+		} else if (typeof value === "number" && value in DeadValueEnum) {
+			return <div className="wrap-break-word">{DeadValueEnum[value]}</div>;
+		} else if (type === "date" && value.getTime() in DeadValueEnum) {
+			return <div className="wrap-break-word">{DeadValueEnum[value.getTime()]}</div>;
+		}
+	}
+
+	const strValue = value.toString();
+
+	//TODO: change once Prisma supports contains on arrays
+	return strValue.split(TypeSeparators.string).map((v: string, i: number) => {
+		const trimmed = v.trim();
+		if (URL.canParse(trimmed) && trimmed.startsWith("https://")) {
+			return (
+				<Link
+					key={i}
+					href={trimmed}
+					className="link link-primary link-hover self-start"
+					target="_blank"
+					rel="noreferrer"
+				>
+					{trimmed}
+				</Link>
+			);
+		} else {
+			return (
+				<div key={i} className="wrap-break-word">
+					{trimmed}
+				</div>
+			);
+		}
+	});
 }

@@ -6,26 +6,18 @@ import TableMetadata from "@/types/tableMetadata";
 import { Sample } from "@/app/generated/prisma/client";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
+import { Suspense } from "react";
 
 export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
 	let { samp_name } = await params;
 	samp_name = decodeURIComponent(samp_name);
 
-	const { sample, analyses, assayData, taxonomyData } = await prisma.$transaction(async (tx) => {
+	const { sample, assayData } = await prisma.$transaction(async (tx) => {
 		const sample = await tx.sample.findUnique({
 			where: {
 				samp_name
 			},
 			include: {
-				Libraries: {
-					select: {
-						Occurrences: {
-							select: {
-								featureid: true
-							}
-						}
-					}
-				},
 				Assays: {
 					select: {
 						assay_name: true
@@ -41,15 +33,6 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 		if (!sample) return { sample: null, analyses: [], assayData: [], taxonomyData: [] };
 
-		const occs = await tx.occurrence.findMany({
-			where: {
-				Library: {
-					samp_name
-				}
-			},
-			distinct: ["analysis_run_name"]
-		});
-
 		const assays = await tx.assay.findMany({
 			where: {
 				assay_name: {
@@ -62,42 +45,11 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			}
 		});
 
-		const assignments = await tx.assignment.findMany({
-			where: {
-				Analysis: {
-					Occurrences: {
-						some: {
-							Library: {
-								samp_name
-							}
-						}
-					}
-				}
-			},
-			select: {
-				taxonomy: true
-			}
-		});
-
-		const taxonomyCounts = new Map<string, number>();
-		for (const assignment of assignments) {
-			taxonomyCounts.set(assignment.taxonomy, (taxonomyCounts.get(assignment.taxonomy) ?? 0) + 1);
-		}
-
-		const taxonomyData = Array.from(taxonomyCounts.entries())
-			.map(([taxonomy, count]) => ({ taxonomy, count }))
-			.sort((a, b) => b.count - a.count);
-
-		return { sample, analyses: occs.map((occ) => occ.analysis_run_name), assayData: assays, taxonomyData };
+		return { sample, assayData: assays };
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Libraries: _, Assays: __, Project: ___, ...justSample } = sample;
-
-	// Build search URL - encode brackets/commas but leave quotes as-is for JSON.parse
-	const advancedFilter = JSON.stringify([["sample", "samp_name", "equals", samp_name]]);
-	const encodedFilter = advancedFilter.replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/,/g, "%2C");
-	const taxonomySearchUrl = `/search?table=taxonomy&advanced=${encodedFilter}`;
+	const { Assays: __, Project: ___, ...justSample } = sample;
 
 	return (
 		<div className="space-y-8 pb-8">
@@ -174,18 +126,40 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				<div className="lg:col-span-2 space-y-8">
 					{/* Stats Grid */}
 					<div className="grid grid-cols-3 gap-4">
-						<SampleStatCard
-							title="Occurrences"
-							value={sample.Libraries.reduce((acc, lib) => acc + lib.Occurrences.length, 0)}
-							icon="eye"
-						/>
-						<DropdownLinkBoxWithIcon
-							title="Total Analyses"
-							count={analyses.length}
-							content={analyses}
-							linkPrefix="/explore/analysis"
-							icon="analysis"
-						/>
+						<Suspense
+							fallback={
+								<SampleStatCard
+									title="Occurrences"
+									value="..."
+									icon="eye"
+									link={`search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
+								/>
+							}
+						>
+							<SampleStatCard
+								title="Occurrences"
+								query={async () =>
+									(
+										await prisma.occurrence.findMany({
+											where: {
+												Library: {
+													samp_name
+												}
+											},
+											select: {
+												featureid: true
+											}
+										})
+									).length
+								}
+								icon="eye"
+								link={`search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
+							/>
+						</Suspense>
+
+						<Suspense fallback={<AnalysisDropdownCard />}>
+							<AnalysisDropdownCard samp_name={samp_name} />
+						</Suspense>
 						<AssayDropdownCard count={sample.Assays.length} assayNames={sample.Assays.map((a) => a.assay_name)} />
 						<SampleStatCard
 							title="Location"
@@ -193,7 +167,10 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							longitude={sample.decimalLongitude}
 							icon="location"
 						/>
-						<Link href={taxonomySearchUrl} className="group">
+						<Link
+							href={`search?table=taxonomy&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"]]`}
+							className="group"
+						>
 							<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors h-full flex flex-col items-center justify-center text-center">
 								<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 									<StatIcon icon="fish" />
@@ -210,113 +187,153 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					<div className="bg-base-200 rounded-xl p-6">
 						<h2 className="text-xl font-medium text-base-content/90 mb-4">Sample Information</h2>
 						<div className="h-[300px] overflow-y-auto">
-							<DataDisplay
-								table="sample"
-								data={justSample}
-								omit={["project_id", "analysis_run_name", "assay_name"]}
-								priorityFields={[
-									"samp_name",
-									"eventDate",
-									"decimalLatitude",
-									"decimalLongitude",
-									"minimumDepthInMeters",
-									"maximumDepthInMeters",
-									"tot_depth_water_col",
-									"geo_loc_name",
-									"env_broad_scale",
-									"env_local_scale",
-									"env_medium",
-									"samp_category",
-									"neg_cont_type",
-									"pos_cont_type",
-									"expedition_id",
-									"line_id",
-									"station_id",
-									"serial_number"
-								]}
-							/>
+							<DataDisplay table="sample" data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
 						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Taxonomy Relative Abundance Chart */}
-			{taxonomyData.length > 0 && (
-				<div>
-					<h2 className="text-xl font-medium mb-4">
-						<span className="text-base-content/90">
-							Taxonomies found in this <span className="text-primary font-bold">Sample</span>
-						</span>
-					</h2>
-					<div className="w-full">
-						<TaxonomyDonutChart
-							labels={taxonomyData.map((t) => t.taxonomy)}
-							data={taxonomyData.map((t) => t.count)}
-							sampName={samp_name}
-						/>
-					</div>
-				</div>
-			)}
+			<Suspense>
+				<SuspenseTaxonomyDonutChart samp_name={samp_name} />
+			</Suspense>
 		</div>
 	);
 }
 
 type StatIconType = "location" | "eye" | "analysis" | "fish";
 
-function SampleStatCard({
+async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["samp_name"] }) {
+	const assignments = await prisma.assignment.findMany({
+		where: {
+			Analysis: {
+				Occurrences: {
+					some: {
+						Library: {
+							samp_name
+						}
+					}
+				}
+			}
+		},
+		select: {
+			taxonomy: true
+		}
+	});
+
+	const taxonomyCounts = new Map<string, number>();
+	for (const assignment of assignments) {
+		taxonomyCounts.set(assignment.taxonomy, (taxonomyCounts.get(assignment.taxonomy) ?? 0) + 1);
+	}
+
+	const taxonomyData = Array.from(taxonomyCounts.entries())
+		.map(([taxonomy, count]) => ({ taxonomy, count }))
+		.sort((a, b) => b.count - a.count);
+
+	if (!taxonomyData.length) {
+		return <></>;
+	}
+
+	return (
+		<div>
+			<h2 className="text-xl font-medium mb-4">
+				<span className="text-base-content/90">
+					Taxonomies found in this <span className="text-primary font-bold">Sample</span>
+				</span>
+			</h2>
+			<div className="w-full">
+				<TaxonomyDonutChart
+					labels={taxonomyData.map((t) => t.taxonomy)}
+					data={taxonomyData.map((t) => t.count)}
+					sampName={samp_name}
+				/>
+			</div>
+		</div>
+	);
+}
+
+async function SampleStatCard({
 	title,
 	value,
+	query,
 	latitude,
 	longitude,
-	icon
+	icon,
+	link
 }: {
 	title: string;
-	value?: number;
+	value?: number | string;
 	latitude?: number | null;
 	longitude?: number | null;
 	icon?: StatIconType;
-}) {
+	link?: string;
+} & ({ value?: number | string; query?: undefined } | { value?: undefined; query?: () => Promise<number> })) {
+	let queryVal = value;
+	if (query) {
+		await new Promise((res) => setTimeout(res, 10000));
+		queryVal = await query();
+	}
+
+	let content;
+	let className;
 	// Use horizontal layout for eye icon
-	if (icon === "eye" && value !== undefined) {
-		return (
-			<div className="bg-base-200 p-4 rounded-lg flex items-center gap-4">
+	if (icon === "eye" && queryVal !== undefined) {
+		className = "items-center gap-4";
+		content = (
+			<>
 				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">
 					<StatIcon icon={icon} />
 				</div>
 				<div className="flex flex-col">
-					<div className="text-3xl font-bold text-primary">{value.toLocaleString()}</div>
+					<div className="text-3xl font-bold text-primary">{queryVal.toLocaleString()}</div>
 					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
 				</div>
-			</div>
+			</>
+		);
+	} else {
+		// Vertical centered layout for other cards
+		className = "flex-col items-center text-center";
+		content = (
+			<>
+				{icon && icon !== "eye" && (
+					<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
+						<StatIcon icon={icon} />
+					</div>
+				)}
+				{queryVal !== undefined && (
+					<div className="text-3xl font-bold text-primary mb-1">{queryVal.toLocaleString()}</div>
+				)}
+				{latitude !== undefined && longitude !== undefined && (
+					<div className="text-base text-primary font-bold">
+						{latitude !== null && longitude !== null ? (
+							<>
+								<div>Lat: {latitude.toFixed(4)}</div>
+								<div>Lon: {longitude.toFixed(4)}</div>
+							</>
+						) : (
+							<div className="text-base-content/60">N/A</div>
+						)}
+					</div>
+				)}
+				<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">{title}</div>
+			</>
 		);
 	}
 
-	// Vertical centered layout for other cards
-	const content = (
-		<div className="bg-base-200 p-4 rounded-lg flex flex-col items-center text-center">
-			{icon && icon !== "eye" && (
-				<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-					<StatIcon icon={icon} />
+	if (link) {
+		return (
+			<Link href={link}>
+				<div
+					className={`bg-base-200 p-4 h-full rounded-lg flex tooltip tooltip-secondary before:text-primary-content ${className}`}
+					data-tip="View as Search"
+				>
+					{content}
 				</div>
-			)}
-			{value !== undefined && <div className="text-3xl font-bold text-primary mb-1">{value.toLocaleString()}</div>}
-			{latitude !== undefined && longitude !== undefined && (
-				<div className="text-base text-primary font-bold">
-					{latitude !== null && longitude !== null ? (
-						<>
-							<div>Lat: {latitude.toFixed(4)}</div>
-							<div>Lon: {longitude.toFixed(4)}</div>
-						</>
-					) : (
-						<div className="text-base-content/60">N/A</div>
-					)}
-				</div>
-			)}
-			<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider mt-2">{title}</div>
-		</div>
-	);
-
-	return content;
+			</Link>
+		);
+	} else {
+		return <div className={`bg-base-200 p-4 rounded-lg flex ${className}`}>{content}</div>;
+	}
 }
 
 function StatIcon({ icon }: { icon: StatIconType }) {
@@ -390,21 +407,24 @@ function StatIcon({ icon }: { icon: StatIconType }) {
 	);
 }
 
-function DropdownLinkBoxWithIcon({
-	title,
-	count,
-	content,
-	linkPrefix,
-	icon
-}: {
-	title: string;
-	count: number;
-	content: string[];
-	linkPrefix: string;
-	icon: StatIconType;
-}) {
-	const [firstLine, ...rest] = title.split(" ");
-	const secondLine = rest.join(" ");
+async function AnalysisDropdownCard({ samp_name }: { samp_name?: Sample["samp_name"] }) {
+	let analyses;
+	if (samp_name) {
+		analyses = await prisma.analysis.findMany({
+			where: {
+				Occurrences: {
+					some: {
+						Library: {
+							samp_name
+						}
+					}
+				}
+			},
+			select: {
+				analysis_run_name: true
+			}
+		});
+	}
 
 	return (
 		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
@@ -415,14 +435,14 @@ function DropdownLinkBoxWithIcon({
 			>
 				<div className="flex items-center gap-4">
 					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
-						<StatIcon icon={icon} />
+						<StatIcon icon="analysis" />
 					</div>
 					<div>
 						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-							<span className="block">{firstLine}</span>
-							{secondLine && <span className="block">{secondLine}</span>}
+							<span className="block">Total</span>
+							<span className="block">Analyses</span>
 						</div>
-						<div className="text-2xl font-bold text-primary">{count}</div>
+						<div className="text-2xl font-bold text-primary">{analyses ? analyses.length : "..."}</div>
 					</div>
 				</div>
 				<svg
@@ -441,13 +461,20 @@ function DropdownLinkBoxWithIcon({
 				</svg>
 			</div>
 			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
-				{content.map((str) => (
-					<li key={str}>
-						<Link href={`${linkPrefix}/${str}`} className="text-base-content hover:text-primary break-all">
-							{str}
-						</Link>
-					</li>
-				))}
+				{analyses ? (
+					analyses!.map((a) => (
+						<li key={a.analysis_run_name}>
+							<Link
+								href={`explore/analysis/${a.analysis_run_name}`}
+								className="text-base-content hover:text-primary break-all"
+							>
+								{a.analysis_run_name}
+							</Link>
+						</li>
+					))
+				) : (
+					<></>
+				)}
 			</ul>
 		</div>
 	);

@@ -1,11 +1,9 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { useSearchParams } from "next/navigation";
 import TaxaGrid from "../paginated/TaxaGrid";
 import Table from "../paginated/Table";
-import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default function SearchResults() {
 	const searchParams = useSearchParams();
@@ -14,11 +12,10 @@ export default function SearchResults() {
 	if (paramsTable === null) {
 		return <></>;
 	}
-	const model = TableNames.find((model) => model.toLowerCase() === paramsTable.toLowerCase()) as Prisma.ModelName;
-	if (!model) {
+	const table = TableNames.find((model) => model.toLowerCase() === paramsTable.toLowerCase());
+	if (!table) {
 		return <>Invalid table</>;
 	}
-	const table = uncapitalizeTable(model as Prisma.ModelName);
 
 	return (
 		<div>

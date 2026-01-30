@@ -3,7 +3,7 @@ import { getLocationsInsideShapes, getShapesFromUrl, parseNestedJson, uncapitali
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
-import { parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
+import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { Location } from "@/types/globals";
 
@@ -13,10 +13,8 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
-	const model = DataTableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
+	const model = DataTableNames.find((model) => model.toLowerCase() === table.toLowerCase());
 	if (model) {
-		const uncapsTable = uncapitalizeTable(model);
-
 		try {
 			const { searchParams } = new URL(request.url);
 
@@ -35,6 +33,18 @@ export async function GET(
 				};
 			};
 
+			const polygons = searchParams.getAll("polygon");
+			const circles = searchParams.getAll("circle");
+			let shapes;
+			// Only process shapes if at least one polygon or circle was provided
+			if (polygons.length || circles.length) {
+				//skip database pagination
+				shapes = getShapesFromUrl(searchParams);
+				searchParams.delete("polygon");
+				searchParams.delete("circle");
+			}
+
+			let shapesSampleWhere;
 			const whereStr = searchParams.get("where");
 			if (whereStr) {
 				const parsed = parseNestedJson(whereStr) as { advanced?: any; search?: any; [key: string]: string };
@@ -42,38 +52,78 @@ export async function GET(
 				if (parsed.advanced) {
 					const advanced = parsed.advanced as ParamsArray;
 					delete parsed.advanced;
-
-					try {
-						query.where = parseAdvancedQuery(uncapsTable, advanced);
-					} catch (err) {
-						const error = err as Error;
-						return NextResponse.json({ statusMessage: "error", error: error.message });
+					if (Object.keys(parsed).length) {
+						throw new Error("Advanced search may not include other filter parameters.");
 					}
-				} else if (parsed.search) {
-					const search = parsed.search;
-					delete parsed.search;
 
-					query.where = parseSearchQuery(uncapsTable, search);
-				}
+					query.where = parseAdvancedQuery(model, advanced);
 
-				for (const filter of Object.entries(parsed as Record<string, string>)) {
-					query.where = { ...query.where, ...parseToQuery(uncapsTable, filter) };
+					//assemble secondary query if table doesn't have location data
+					if (
+						shapes &&
+						(!TableMetadata[model].enumSchema.options.includes("decimalLatitude") ||
+							!TableMetadata[model].enumSchema.options.includes("decimalLongitude"))
+					) {
+						shapesSampleWhere = parseAdvancedQuery(model, advanced, "sample");
+					}
+				} else {
+					if (parsed.search) {
+						const search = parsed.search;
+						delete parsed.search;
+
+						if (Object.keys(parsed).length) {
+							throw new Error("Search may not include other filter parameters.");
+						}
+
+						query.where = parseSearchQuery(model, search);
+					} else {
+						query.where = {};
+						for (const filter of Object.entries(parsed as Record<string, string>)) {
+							query.where = { ...query.where, ...parseToQuery(model, filter) };
+						}
+					}
+
+					//assemble secondary query if table doesn't have location data
+					if (
+						shapes &&
+						(!TableMetadata[model].enumSchema.options.includes("decimalLatitude") ||
+							!TableMetadata[model].enumSchema.options.includes("decimalLongitude"))
+					) {
+						shapesSampleWhere = deepWhere("sample", model, query.where);
+					}
 				}
+			} else if (shapes) {
+				shapesSampleWhere = {};
+			}
+
+			//replace the where with samp_names that match the query and are inside the shapes
+			if (shapesSampleWhere) {
+				const samples = await prisma.sample.findMany({
+					where: shapesSampleWhere,
+					select: {
+						samp_name: true,
+						decimalLatitude: true,
+						decimalLongitude: true
+					}
+				});
+
+				const sampsNamesInside = getLocationsInsideShapes(samples, shapes!).map((samp) => samp.samp_name);
+				query.where = deepWhere(model, "sample", { samp_name: { in: sampsNamesInside } });
 			}
 
 			//@ts-ignore
-			let count = await prisma[uncapsTable].count({ where: query.where });
+			let count = await prisma[model].count({ where: query.where });
 
 			const orderByStr = searchParams.get("orderBy");
 			if (orderByStr) {
 				const split = orderByStr?.split(",");
 				if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
-					if (TableMetadata[uncapsTable].enumSchema.options.includes(split[0])) {
+					if (TableMetadata[model].enumSchema.options.includes(split[0])) {
 						query.orderBy = {
 							[split[0]]: split[1]
 						};
 					} else if (
-						TableMetadata[uncapsTable].relations.find((rel) => rel.field === split[0] && rel.type.endsWith("many"))
+						TableMetadata[model].relations.find((rel) => rel.field === split[0] && rel.type.endsWith("many"))
 					) {
 						query.orderBy = {
 							[split[0]]: {
@@ -141,14 +191,8 @@ export async function GET(
 				parsedPage = Math.floor(count / parsedTake) + 1;
 			}
 
-			const polygons = searchParams.getAll("polygon");
-			const circles = searchParams.getAll("circle");
-			let shapes;
-			// Only process shapes if at least one polygon or circle was provided
-			if (polygons.length || circles.length) {
-				//skip database pagination
-				shapes = getShapesFromUrl(searchParams);
-			} else {
+			//skip pagination if doing it after the database call
+			if (!(shapes && !shapesSampleWhere)) {
 				query.take = parsedTake;
 
 				if (parsedPage) {
@@ -158,9 +202,9 @@ export async function GET(
 			}
 
 			//@ts-ignore
-			let result = await prisma[uncapsTable].findMany(query);
+			let result = await prisma[model].findMany(query);
 
-			if (shapes) {
+			if (shapes && !shapesSampleWhere) {
 				result = getLocationsInsideShapes(result as Location[], shapes);
 				count = result.length;
 				//give last page if page is too large

@@ -4,10 +4,8 @@ import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import WarningButton from "./WarningButton";
 import { useAuth } from "@clerk/nextjs";
 import { RolePermissions } from "@/types/objects";
-import { Prisma } from "../generated/prisma/client";
 import JSON5 from "json5";
 import unsafeConsoleAction from "../actions/unsafeConsole";
-import { uncapitalizeTable } from "../helpers/utils";
 import { TableNames } from "@/types/tableMetadata";
 
 export default function PrismaConsole({ modelQueries }: { modelQueries: string[] }) {
@@ -123,8 +121,8 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 								Select Table
 							</option>
 							{TableNames.map((table) => (
-								<option key={table} value={uncapitalizeTable(table as Prisma.ModelName)}>
-									{uncapitalizeTable(table as Prisma.ModelName)}
+								<option key={table} value={table}>
+									{table}
 								</option>
 							))}
 						</select>
