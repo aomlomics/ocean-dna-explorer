@@ -26,7 +26,7 @@ export async function GET(
 			//retrieve only the samples that match the query
 			if (getSamples) {
 				const samples = await prisma.sample.findMany({
-					where: sampleWhere
+					where: model === "sample" ? query.where : sampleWhere
 				});
 
 				return NextResponse.json({ statusMessage: "success", samples });
