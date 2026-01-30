@@ -3,8 +3,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import {
-	NetworkPacket,
-	NullLocation,
 	ParamsArray,
 	ParamsArrayElement,
 	ParamsArrayField,
@@ -475,6 +473,16 @@ export default function AdvancedSearch() {
 		const params = new URLSearchParams();
 		params.set("table", searchTable);
 
+		//maintain shapes
+		const polygons = searchParams.getAll("polygon");
+		if (polygons.length) {
+			polygons.forEach((poly) => params.set("polygon", poly));
+		}
+		const circles = searchParams.getAll("circle");
+		if (circles.length) {
+			circles.forEach((cir) => params.set("circle", cir));
+		}
+
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
 			params.set("advanced", JSON.stringify(advanced));
@@ -514,6 +522,7 @@ export default function AdvancedSearch() {
 			params.set("advanced", advancedStr);
 		}
 
+		//maintain shapes
 		const polygons = paramsFromUrl.getAll("polygon");
 		if (polygons.length) {
 			polygons.forEach((poly) => params.set("polygon", poly));
