@@ -14,7 +14,7 @@ export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCo
 
 export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','url','attributionTitle','description','location','dateTaken']);
 
-export const AttributionScalarFieldEnumSchema = z.enum(['id','attributionTitle','attributionNames','attributionUrl','attributionInstitute']);
+export const AttributionScalarFieldEnumSchema = z.enum(['id','attributionTitle','attributionNames','attributionUrl','attributionInstitution']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -120,7 +120,7 @@ export const AttributionSchema = z.object({
   attributionTitle: z.string(),
   attributionNames: z.string().array(),
   attributionUrl: z.string().nullish(),
-  attributionInstitute: z.string().nullish(),
+  attributionInstitution: z.string().nullish(),
 })
 
 export type Attribution = z.infer<typeof AttributionSchema>

@@ -45,7 +45,7 @@ model Attribution {
     //relations
     Image Image[]
 
-    attributionNames     String[] @default([])
-    attributionUrl       String?
-    attributionInstitute String?
+    attributionNames       String[] @default([])
+    attributionUrl         String?
+    attributionInstitution String?
 }

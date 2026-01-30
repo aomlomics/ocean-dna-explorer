@@ -10,30 +10,27 @@ import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 
 export default async function Home() {
-	const carouselImages = (await prismaImages.image.findMany({ include: { Attribution: true } }))
-		.map((value) => ({ value, sort: Math.random() }))
-		.sort((a, b) => a.sort - b.sort)
-		.map(({ value }) => value);
-
 	return (
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
 					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report
-					bugs and feature requests{" "}
-					<a
+					bugs and feature requests on our{" "}
+					<Link
 						href="https://github.com/aomlomics/ocean-dna-explorer/issues"
 						target="_blank"
 						rel="noopener noreferrer"
 						className="underline hover:text-gray-200"
 					>
-						here
-					</a>
+						Github
+					</Link>
 					.
 				</p>
 			</div>
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
-				<Carousel images={carouselImages} />
+				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
+					<SuspenseCarousel />
+				</Suspense>
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
@@ -145,11 +142,11 @@ export default async function Home() {
 					</div>
 				</div>
 
-			<div className="w-full mb-24">
-				<Suspense>
-					<TopTaxonomiesSummary />
-				</Suspense>
-			</div>
+				<div className="w-full mb-24">
+					<Suspense>
+						<TopTaxonomiesSummary />
+					</Suspense>
+				</div>
 
 				{/* Funding Institutes Section */}
 				<div className="mt-24 lg:mt-32 mb-12 lg:mb-24">
@@ -241,4 +238,25 @@ export default async function Home() {
 			</div>
 		</main>
 	);
+}
+
+async function SuspenseCarousel() {
+	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+
+	let currentIndex = carouselImages.length;
+
+	// While there remain elements to shuffle...
+	while (currentIndex != 0) {
+		// Pick a remaining element...
+		let randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+
+		// And swap it with the current element.
+		[carouselImages[currentIndex], carouselImages[randomIndex]] = [
+			carouselImages[randomIndex],
+			carouselImages[currentIndex]
+		];
+	}
+
+	return <Carousel images={carouselImages} />;
 }

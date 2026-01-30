@@ -104,29 +104,7 @@ export default async function Project_id_Assay_name({
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay prep metadata</h2>
 							<div className="h-80 overflow-y-auto">
-								<DataDisplay
-									table="assayPrep"
-									data={justAssayPrep}
-									omit={["project_id", "assay_name"]}
-									priorityFields={[
-										"assay_type",
-										"thermocycler",
-										"commercial_mm",
-										"custom_mm",
-										"pcr_cond",
-										"amplificationReactionVolume",
-										"assay_validation",
-										"pcr_primer_vol_forward",
-										"pcr_primer_vol_reverse",
-										"pcr_primer_conc_forward",
-										"pcr_primer_conc_reverse",
-										"probe_seq",
-										"probe_conc",
-										"pcr_dna_vol",
-										"pcr_rep",
-										"pcr_cycles"
-									]}
-								/>
+								<DataDisplay table="assayPrep" data={justAssayPrep} omit={["project_id", "assay_name"]} />
 							</div>
 						</div>
 					</div>

@@ -19,7 +19,8 @@ export default function DynamicMap({
 	legend,
 	draw,
 	legendOmit,
-	shapesToUrl
+	shapesToUrl,
+	disableSearch
 }: {
 	locations: NullLocation[];
 	where?: Record<string, string>;
@@ -33,6 +34,7 @@ export default function DynamicMap({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
+	disableSearch?: true;
 }) {
 	return (
 		<ActualMap
@@ -48,6 +50,7 @@ export default function DynamicMap({
 			draw={draw}
 			legendOmit={legendOmit}
 			shapesToUrl={shapesToUrl}
+			disableSearch={disableSearch}
 		/>
 	);
 }
