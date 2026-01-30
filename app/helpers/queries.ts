@@ -349,7 +349,7 @@ export function parseToQuery(
 			if (!relModel) {
 				throw new Error(`Provided table "${relation}" is not a valid model name.`);
 			}
-			return deepWhere(table, relModel, searchWhere);
+			return deepWhere(swapTo || table, relModel, searchWhere);
 		} else {
 			return searchWhere;
 		}

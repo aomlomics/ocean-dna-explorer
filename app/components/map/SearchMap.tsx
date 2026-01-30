@@ -62,7 +62,7 @@ export default function SearchMap() {
 							</div>
 						</div>
 					) : (
-						<DynamicMap locations={locations} legend draw shapesToUrl />
+						<DynamicMap locations={locations} legend draw shapesToUrl cluster disableSearch />
 					)}
 				</div>
 			</div>

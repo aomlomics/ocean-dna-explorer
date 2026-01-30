@@ -23,7 +23,6 @@ export async function GET(
 
 			const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams);
 
-			//TODO: filter with relation queries breaks
 			//retrieve only the samples that match the query
 			if (getSamples) {
 				const samples = await prisma.sample.findMany({
