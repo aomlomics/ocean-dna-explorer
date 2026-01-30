@@ -2082,7 +2082,7 @@ function DrawSelectedControl({
 			>
 				<Resizable growDirection={"down"} detectChange={[shown]} mapRef={mapRef} maxMapHeight={0.6} maxMinHeight={175}>
 					<div className="flex flex-col px-2">
-						<div className="text-primary text-lg">Selected With Shapes</div>
+						<div className="text-primary text-lg text-nowrap">Selected With Shapes</div>
 						<PopupWithSearchBody
 							table={table}
 							id={id}
