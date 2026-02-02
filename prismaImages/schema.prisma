@@ -47,5 +47,5 @@ model Attribution {
 
     attributionNames     String[] @default([])
     attributionUrl       String?
-    attributionInstitute String?
+    attributionInstitution String?
 }

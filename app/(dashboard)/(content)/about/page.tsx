@@ -45,9 +45,9 @@ export default function AboutPage() {
 						className="object-cover opacity-50 hidden [html[data-theme='dark']_&]:block"
 						priority
 					/>
-					<div className="relative z-10 h-full flex items-center">
+					<div className="relative z-10 h-full flex pt-28">
 						<div className="w-full max-w-5xl mx-auto px-6 text-center">
-							<h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-primary [html[data-theme='dark']_&]:text-white">Our Mission</h1>
+							<h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-primary [html[data-theme='dark']_&]:text-primary">Our Mission</h1>
 							<p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-base-content [html[data-theme='dark']_&]:text-base-content/90">
 								The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We
 								provide a unified, accessible platform for exploring, visualizing, and sharing standardized
@@ -70,10 +70,10 @@ export default function AboutPage() {
 			</section>
 
 			{/* About the Platform */}
-			<section className="max-w-4xl mx-auto px-6 text-center mb-44">
+			<section className="max-w-4xl mx-auto px-6 text-center mb-36">
 				<h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary mb-10">About the Platform</h2>
 				<p className="text-lg sm:text-xl leading-relaxed text-base-content/90">
-					The Ocean DNA Explorer is a data platform, search engine, and visualization tool dedicated to ocean
+					The Ocean DNA Explorer is a data portal, search engine, and visualization tool dedicated to ocean
 					environmental DNA (eDNA) data. Built to host datasets generated using standardized protocols, it enables
 					researchers to compare studies, discover trends, and perform complex searches across data contributed by
 					NOAA Omics, NOAA Ocean Exploration, and partner organizations worldwide.
@@ -96,7 +96,7 @@ export default function AboutPage() {
 								/>
 							</div>
 							<h3 className="text-xl font-semibold text-base-content mb-2">{member.name}</h3>
-							<p className="text-base text-primary font-medium mb-1">{member.role}</p>
+							<p className="text-base text-base-content/70">{member.role}</p>
 							<p className="text-sm text-base-content/70">{member.affiliation}</p>
 						</div>
 					))}
@@ -158,93 +158,95 @@ export default function AboutPage() {
 			</section>
 
 			{/* Data Standards & Software - Redesigned */}
-			<section className="mb-28">
+			<section className="mb-24">
 				{/* Hero intro */}
 				<div className="max-w-4xl mx-auto px-6 text-center mb-10">
-					<h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary mb-8">Data Standards &amp; Software</h2>
+					<h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary mb-10">Data Standard &amp; Software Tools</h2>
 					<p className="text-lg sm:text-xl text-base-content/90 leading-relaxed">
 						The Ocean DNA Explorer implements the{" "}
 						<Link href="https://fair-edna.github.io/" className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
 							FAIR eDNA metadata standard
 						</Link>
-						—an international, community-driven standard built on Darwin Core and MIxS that helps environmental DNA data stay Findable, Accessible, Interoperable, and Reusable. For workflows and best practices, see the{" "}
+						, an international, community driven environmental DNA data standard built on existing standards like Darwin Core and MIxS that helps eDNA data become Findable, Accessible, Interoperable, and Reusable. Our team has developed a suite of open source tools to help you format your data to the FAIR eDNA standard, including metadata template generation, amplicon sequence processing workflows, and data publishing tools. For more detailed information on our software packages and workflows, see the{" "}
 						<Link href="https://noaa-omics-dmg.readthedocs.io/" className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
 							NOAA Omics Data Management Guide
 						</Link>.
 					</p>
 				</div>
 
-				{/* Software Pipeline - Full width visual */}
-				<div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200/40 py-14">
-					<div className="max-w-6xl mx-auto px-6">
-						<p className="text-center text-sm sm:text-base font-semibold tracking-widest text-base-content/70 mb-8">
-							Open-Source Tools
-						</p>
-						
-						{/* Pipeline flow */}
-						<div className="grid lg:grid-cols-4 gap-6 lg:gap-4">
-							{/* Step 1 */}
+				{/* Software tools - soft cards, no borders */}
+				<div className="max-w-5xl mx-auto px-6">
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+						<Link
+							href="https://github.com/aomlomics/fairesheets"
+							target="_blank"
+							rel="noreferrer"
+							className="group flex flex-col rounded-2xl p-6 bg-base-200/40 hover:bg-base-200/60 transition-colors"
+						>
+							<h3 className="text-lg font-semibold text-base-content group-hover:text-primary transition-colors mb-2">
+								FAIReSheets
+							</h3>
+							<p className="text-base text-base-content/75 leading-relaxed flex-1">
+								Build standardized metadata templates in Google Sheets, aligned with the FAIR eDNA standard and ready for Ocean DNA Explorer submission.
+							</p>
+							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+						</Link>
+						<Link
+							href="https://github.com/aomlomics/tourmaline"
+							target="_blank"
+							rel="noreferrer"
+							className="group flex flex-col rounded-2xl p-6 bg-base-200/40 hover:bg-base-200/60 transition-colors"
+						>
+							<h3 className="text-lg font-semibold text-base-content group-hover:text-primary transition-colors mb-2">
+								Tourmaline
+							</h3>
+							<p className="text-base text-base-content/75 leading-relaxed flex-1">
+								Amplicon sequence processing workflow using QIIME 2 and Snakemake.
+							</p>
+							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+						</Link>
+						<Link
+							href="https://github.com/aomlomics/faire2ncbi"
+							target="_blank"
+							rel="noreferrer"
+							className="group flex flex-col rounded-2xl p-6 bg-base-200/40 hover:bg-base-200/60 transition-colors"
+						>
+							<h3 className="text-lg font-semibold text-base-content group-hover:text-primary transition-colors mb-2">
+								FAIRe2NCBI
+							</h3>
+							<p className="text-base text-base-content/75 leading-relaxed flex-1">
+								Convert NOAA FAIRe Excel metadata files to NCBI BioSample and SRA submission templates.
+							</p>
+							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+						</Link>
+						<div className="flex flex-col sm:flex-row justify-center gap-6 lg:col-span-3">
 							<Link
-								href="https://github.com/aomlomics/fairesheets"
+								href="https://github.com/aomlomics/FAIRe2QIIME"
 								target="_blank"
 								rel="noreferrer"
-								className="group relative min-h-[320px] bg-base-100/80 dark:bg-base-100/10 backdrop-blur rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all border border-transparent hover:border-primary/30 flex flex-col"
+								className="group flex flex-col rounded-2xl p-6 bg-base-200/40 hover:bg-base-200/60 transition-colors w-full sm:max-w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]"
 							>
-								<h3 className="text-xl font-semibold text-base-content group-hover:text-primary transition-colors mb-3">
-									FAIReSheets
+								<h3 className="text-lg font-semibold text-base-content group-hover:text-primary transition-colors mb-2">
+									FAIRe2QIIME
 								</h3>
-								<p className="text-base text-base-content/75 leading-relaxed">
-									Build standardized metadata templates in Google Sheets, aligned with FAIR eDNA and ready for Ocean DNA Explorer submission.
+								<p className="text-base text-base-content/75 leading-relaxed flex-1">
+									A Python CLI tool that converts NOAA FAIRe Excel metadata files into QIIME2-compatible metadata and manifest files for streamlined microbiome sequencing data analysis.
 								</p>
-								<span className="mt-auto pt-6 text-base text-primary font-medium">View on GitHub →</span>
+								<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
 							</Link>
-
-							{/* Step 2 */}
-							<Link
-								href="https://github.com/aomlomics/tourmaline"
-								target="_blank"
-								rel="noreferrer"
-								className="group relative min-h-[320px] bg-base-100/80 dark:bg-base-100/10 backdrop-blur rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all border border-transparent hover:border-primary/30 flex flex-col"
-							>
-								<h3 className="text-xl font-semibold text-base-content group-hover:text-primary transition-colors mb-3">
-									Tourmaline
-								</h3>
-								<p className="text-base text-base-content/75 leading-relaxed">
-									Process raw amplicon reads into high-quality features and occurrences using reproducible, science-grade workflows.
-								</p>
-								<span className="mt-auto pt-6 text-base text-primary font-medium">View on GitHub →</span>
-							</Link>
-
-							{/* Step 3 */}
-							<Link
-								href="https://github.com/aomlomics/faire2ncbi"
-								target="_blank"
-								rel="noreferrer"
-								className="group relative min-h-[320px] bg-base-100/80 dark:bg-base-100/10 backdrop-blur rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all border border-transparent hover:border-primary/30 flex flex-col"
-							>
-								<h3 className="text-xl font-semibold text-base-content group-hover:text-primary transition-colors mb-3">
-									FAIRe2NCBI
-								</h3>
-								<p className="text-base text-base-content/75 leading-relaxed">
-									Prepare and submit sequence data and metadata to NCBI archives directly from FAIR eDNA–compliant tables.
-								</p>
-								<span className="mt-auto pt-6 text-base text-primary font-medium">View on GitHub →</span>
-							</Link>
-
-							{/* Step 4 */}
 							<Link
 								href="https://github.com/aomlomics/edna2obis"
 								target="_blank"
 								rel="noreferrer"
-								className="group relative min-h-[320px] bg-base-100/80 dark:bg-base-100/10 backdrop-blur rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all border border-transparent hover:border-primary/30 flex flex-col"
+								className="group flex flex-col rounded-2xl p-6 bg-base-200/40 hover:bg-base-200/60 transition-colors w-full sm:max-w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]"
 							>
-								<h3 className="text-xl font-semibold text-base-content group-hover:text-primary transition-colors mb-3">
+								<h3 className="text-lg font-semibold text-base-content group-hover:text-primary transition-colors mb-2">
 									edna2obis
 								</h3>
-								<p className="text-base text-base-content/75 leading-relaxed">
-									Convert occurrence outputs to Darwin Core for publishing to biodiversity aggregators like OBIS and GBIF.
+								<p className="text-base text-base-content/75 leading-relaxed flex-1">
+									Convert occurrence outputs and NOAA FAIRe metadata files to Darwin Core for publishing to biodiversity aggregators OBIS and GBIF.
 								</p>
-								<span className="mt-auto pt-6 text-base text-primary font-medium">View on GitHub →</span>
+								<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
 							</Link>
 						</div>
 					</div>
@@ -252,7 +254,7 @@ export default function AboutPage() {
 			</section>
 
 			{/* Contribute */}
-			<section className="max-w-3xl mx-auto px-6 text-center mb-32">
+			<section className="max-w-3xl mx-auto px-6 text-center mb-28">
 				<Image
 					src="/images/construction_octo.png"
 					alt="Construction octopus"

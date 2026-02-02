@@ -33,7 +33,7 @@ export default function LearnPage() {
 						className="object-cover opacity-50 hidden [html[data-theme='dark']_&]:block"
 						priority
 					/>
-					<div className="relative z-10 h-full flex items-center">
+					<div className="relative z-10 h-full flex pt-28">
 						<div className="w-full max-w-5xl mx-auto px-6 text-center">
 							<h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-primary [html[data-theme='dark']_&]:text-white">Learn</h1>
 							<p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-base-content [html[data-theme='dark']_&]:text-base-content/90">
