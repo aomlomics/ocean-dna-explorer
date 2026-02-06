@@ -16,7 +16,7 @@ export async function GET(
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams);
+			const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams, { sampleWhere: true });
 
 			//replace the where with samp_names that match the query and are inside the shapes
 			if (shapes && sampleWhere) {

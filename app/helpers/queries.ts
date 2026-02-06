@@ -432,6 +432,7 @@ export function parseApiQuery(
 			filters?: Record<string, string | number>;
 		};
 		swapToTable?: true;
+		sampleWhere?: true;
 	}
 ) {
 	const query = {} as {
@@ -581,8 +582,9 @@ export function parseApiQuery(
 
 		//assemble secondary query if table doesn't have location data
 		if (
-			!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-			!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+			sampleWhere &&
+			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
 		) {
 			if (parsed.length) {
 				sampleWhere = parseAdvancedQuery(table, parsed, "sample");
@@ -705,8 +707,9 @@ export function parseApiQuery(
 
 		//assemble secondary query if table doesn't have location data
 		if (
-			!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-			!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+			sampleWhere &&
+			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
 		) {
 			if (query.where && Object.keys(query.where).length) {
 				sampleWhere = deepWhere("sample", table, query.where);

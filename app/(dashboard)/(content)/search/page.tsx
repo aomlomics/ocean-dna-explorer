@@ -66,7 +66,7 @@ export default async function SearchLayout({
 									}
 								}
 
-								const { query, sampleWhere } = parseApiQuery(model, urlParams);
+								const { query, sampleWhere } = parseApiQuery(model, urlParams, { sampleWhere: true });
 								return await prisma.sample.findMany({
 									where: model === "sample" ? query.where : sampleWhere
 								});
