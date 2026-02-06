@@ -11,7 +11,7 @@ import { Suspense } from "react";
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
-			return TaxonomicRanks.includes(key as keyof Taxonomy) && value;
+			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
 		})
 		.map(([key, value]) => ({
 			rank: key.charAt(0).toUpperCase() + key.slice(1),
