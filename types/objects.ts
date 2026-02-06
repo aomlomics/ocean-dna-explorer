@@ -61,7 +61,7 @@ export const TaxonomicRanks = [
 	"family",
 	"genus",
 	"species"
-] as Array<keyof Taxonomy>;
+] as Array<keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">>;
 
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 

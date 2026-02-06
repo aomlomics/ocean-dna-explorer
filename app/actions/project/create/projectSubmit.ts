@@ -1,10 +1,11 @@
 "use server";
 
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { Role } from "@/types/globals";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -14,6 +15,7 @@ async function doSubmit(
 	userIds: string[],
 	isPrivate: boolean
 ) {
+	const client = await clerkClient();
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -25,6 +27,14 @@ async function doSubmit(
 	if (!userIds.includes(userId)) {
 		await globalStream.error("Must include self as a user.");
 		return;
+	}
+
+	const users = (await client.users.getUserList({ userId: userIds })).data;
+	for (const u of users) {
+		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+			await globalStream.error(`${u.fullName} does not have permission to contribute.`);
+			return;
+		}
 	}
 
 	try {

@@ -1,7 +1,9 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import SearchMap from "@/app/components/map/SearchMap";
+import Map from "@/app/components/map/Map";
 import SearchResults from "@/app/components/search/SearchResults";
 import SearchUI from "@/app/components/search/SearchUI";
+import { prisma } from "@/app/helpers/prisma";
+import { parseApiQuery } from "@/app/helpers/queries";
 import { capitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { redirect } from "next/navigation";
@@ -11,7 +13,8 @@ export default async function SearchLayout({
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const { table } = await searchParams;
+	const params = await searchParams;
+	const table = params.table;
 	if (!table || typeof table !== "string") {
 		redirect("/search?table=project");
 	}
@@ -41,7 +44,43 @@ export default async function SearchLayout({
 
 				<SearchUI />
 			</div>
-			<SearchMap />
+
+			<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
+				<input key={model} defaultChecked={!!(params.circle || params.polygon)} type="checkbox" />
+				<div className="collapse-title font-semibold">Show on Map</div>
+				<div className="collapse-content text-sm px-50">
+					<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">
+						<Map
+							key={model}
+							query={async () => {
+								const urlParams = new URLSearchParams();
+								for (const [key, val] of Object.entries(params)) {
+									if (val != null && key !== "table") {
+										if (Array.isArray(val)) {
+											for (const v of val) {
+												urlParams.append(key, v);
+											}
+										} else {
+											urlParams.set(key, val);
+										}
+									}
+								}
+
+								const { query, sampleWhere } = parseApiQuery(model, urlParams);
+								return await prisma.sample.findMany({
+									where: model === "sample" ? query.where : sampleWhere
+								});
+							}}
+							legend
+							draw
+							shapesToUrl
+							cluster
+							disableSearch
+						/>
+					</div>
+				</div>
+			</div>
+
 			<div className="mt-6" id="search-results">
 				<SearchResults />
 			</div>

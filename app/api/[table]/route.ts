@@ -16,21 +16,7 @@ export async function GET(
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const getSamples = searchParams.get("getSamples");
-			if (getSamples) {
-				searchParams.delete("getSamples");
-			}
-
 			const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams);
-
-			//retrieve only the samples that match the query
-			if (getSamples) {
-				const samples = await prisma.sample.findMany({
-					where: model === "sample" ? query.where : sampleWhere
-				});
-
-				return NextResponse.json({ statusMessage: "success", samples });
-			}
 
 			//replace the where with samp_names that match the query and are inside the shapes
 			if (shapes && sampleWhere) {

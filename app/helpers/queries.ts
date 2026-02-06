@@ -1,13 +1,6 @@
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { getRelationPath, getZodType } from "./schema";
-import {
-	MapShape,
-	ParamsArray,
-	ParamsArrayField,
-	ParamsArrayRelation,
-	ParamsArrayValue,
-	QueryMode
-} from "@/types/globals";
+import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
 import { getShapesFromUrl } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
@@ -65,10 +58,6 @@ export function parseToQuery(
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation,
 	swapTo?: Uncapitalize<Prisma.ModelName>
 ) {
-	if (table === swapTo) {
-		throw new Error("Table and swapTo are the same.");
-	}
-
 	let relation = undefined as Uncapitalize<Prisma.ModelName> | undefined;
 	let field = "";
 	let mode = "" as QueryMode;
@@ -96,10 +85,10 @@ export function parseToQuery(
 		relation = TableNames.find((model) => model.toLowerCase() === queryArr[0].toLowerCase());
 		if (!relation) {
 			throw new Error(`Provided table "${relation}" does not exist.`);
-		} else if (relation === table) {
-			throw new Error("Relation can't be the current table.");
 		} else if (relation === swapTo) {
 			relation = undefined;
+		} else if (relation === table) {
+			throw new Error("Relation can't be the current table.");
 		}
 
 		field = queryArr[1];
@@ -444,6 +433,7 @@ export function parseApiQuery(
 			// limit?: number;
 			filters?: Record<string, string | number>;
 		};
+		swapToTable?: true;
 	}
 ) {
 	const query = {} as {
@@ -588,7 +578,7 @@ export function parseApiQuery(
 
 		const parsed = JSON.parse(advanced) as ParamsArray;
 		if (parsed.length) {
-			query.where = parseAdvancedQuery(table, parsed);
+			query.where = parseAdvancedQuery(table, parsed, options && options.swapToTable ? table : undefined);
 		}
 
 		//assemble secondary query if table doesn't have location data

@@ -501,7 +501,7 @@ async function doEdit(
 
 				await globalStream.success("All files successfully updated.");
 			},
-			{ timeout: 1.5 * 60 * 1000 } //90 seconds
+			{ timeout: 3 * 60 * 1000 } //3 minutes
 		);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
