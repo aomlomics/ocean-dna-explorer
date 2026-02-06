@@ -87,8 +87,6 @@ export function parseToQuery(
 			throw new Error(`Provided table "${relation}" does not exist.`);
 		} else if (relation === swapTo) {
 			relation = undefined;
-		} else if (relation === table) {
-			throw new Error("Relation can't be the current table.");
 		}
 
 		field = queryArr[1];
