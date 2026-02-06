@@ -124,11 +124,10 @@ export default function LibraryTaxaBarChart({
 							});
 
 							if (averageBy !== "lib_id") {
-								data = groupLabels.map((val) =>
-									averageByGroups[val].length
-										? averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)!], 0) /
-											averageByGroups[val].length
-										: 0
+								data = groupLabels.map(
+									(val) =>
+										averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)], 0) /
+										averageByGroups[val].length
 								);
 							}
 						} else {
@@ -152,10 +151,8 @@ export default function LibraryTaxaBarChart({
 	return (
 		<div className="relative">
 			<div className="w-full flex justify-center items-center gap-5">
-				<ChartCopyButton ref={ref} disabled={loading} />
-
 				<fieldset className="fieldset">
-					<legend className="fieldset-legend">Taxonomic Rank</legend>
+					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 					<select
 						value={rank}
 						onChange={async (e) => {
@@ -172,7 +169,7 @@ export default function LibraryTaxaBarChart({
 				</fieldset>
 
 				<fieldset className="fieldset">
-					<legend className="fieldset-legend">Display as</legend>
+					<legend className="fieldset-legend">Display as:</legend>
 					<select
 						value={metricType}
 						onChange={async (e) => {
@@ -188,7 +185,7 @@ export default function LibraryTaxaBarChart({
 				</fieldset>
 
 				<fieldset className="fieldset">
-					<legend className="fieldset-legend">Average by</legend>
+					<legend className="fieldset-legend">Average by:</legend>
 					<select
 						value={averageBy}
 						onChange={async (e) => {
@@ -205,6 +202,8 @@ export default function LibraryTaxaBarChart({
 						<option>samp_collect_method</option>
 					</select>
 				</fieldset>
+
+				<ChartCopyButton ref={ref} disabled={loading} />
 			</div>
 
 			{chartData ? (

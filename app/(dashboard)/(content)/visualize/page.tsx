@@ -1,14 +1,15 @@
-import DateDepthScatterPlot from "@/app/components/charts/DateDepthScatterPlot";
+import DateDepthScatterPlot from "@/app/components/charts/SampleScatterPlot";
 import LibraryTaxaBarChart from "@/app/components/charts/LibraryTaxaBarChart";
 import SearchUI from "@/app/components/search/SearchUI";
 import { Library, Occurrence, Prisma, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
-import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { DeadValueNumbers } from "@/types/enums";
+import { SampleScalarFieldEnumSchema, SampleSchema } from "@/prisma/generated/zod";
+import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Suspense } from "react";
+import { getZodType } from "@/app/helpers/schema";
 
 function paramsPropToObj(params: { [key: string]: string | string[] | undefined }) {
 	const urlParams = new URLSearchParams();
@@ -38,7 +39,7 @@ export default async function SearchLayout({
 		<>
 			<SearchUI noTable />
 			<Suspense>
-				<SuspenseDateDepthScatter params={params} />
+				<SuspenseSampleScatter params={params} />
 			</Suspense>
 			<Suspense>
 				<SuspenseLibraryTaxaBar params={params} />
@@ -47,7 +48,7 @@ export default async function SearchLayout({
 	);
 }
 
-async function SuspenseDateDepthScatter({ params }: { params: { [key: string]: string | string[] | undefined } }) {
+async function SuspenseSampleScatter({ params }: { params: { [key: string]: string | string[] | undefined } }) {
 	const { query } = parseApiQuery("sample", paramsPropToObj(params), {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
@@ -75,29 +76,46 @@ async function SuspenseDateDepthScatter({ params }: { params: { [key: string]: s
 	}
 	fields.delete("id");
 	fields.delete("userDefined");
-	fields.delete("eventDate");
-	fields.delete("minimumDepthInMeters");
 	fields.delete("samp_name");
 
-	//add userDefined fields from data
-	const userDefinedFields = new Set() as Set<string>;
-	const points = samples.filter((samp) => {
-		if (
-			!DeadValueNumbers.includes(samp.eventDate.getTime()) &&
-			samp.minimumDepthInMeters != null &&
-			!DeadValueNumbers.includes(samp.minimumDepthInMeters)
-		) {
-			if (samp.userDefined) {
-				for (const ud of Object.keys(samp.userDefined)) {
-					userDefinedFields.add(ud);
+	const xyFields = new Set(["eventDate", "minimumDepthInMeters"]) as Set<keyof Sample>;
+	for (const f of fields) {
+		//remove all fields without any values
+		let hasVal = false;
+		for (const samp of samples) {
+			if (samp[f] !== null) {
+				let isDead = false;
+				const type = getZodType(SampleSchema.shape[f]).type;
+				if (type !== "boolean") {
+					if (type === "date") {
+						isDead = (samp[f] as Date).getTime() in DeadValueEnum;
+					} else {
+						isDead = (samp[f] as string | number) in DeadValueEnum;
+					}
+				}
+
+				if (!isDead) {
+					hasVal = true;
+					break;
 				}
 			}
-
-			return true;
 		}
-	});
 
-	return <DateDepthScatterPlot points={points} fields={fields} userDefinedFields={userDefinedFields} />;
+		if (!hasVal) {
+			fields.delete(f);
+		} else {
+			//add to xy field options
+			const type = getZodType(SampleSchema.shape[f]).type;
+			if (type === "integer" || type === "float" || type === "date") {
+				xyFields.add(f);
+			}
+		}
+	}
+
+	for (const f of fields) {
+	}
+
+	return <DateDepthScatterPlot samples={samples} fields={Array.from(fields)} xyFields={Array.from(xyFields)} />;
 }
 
 async function SuspenseLibraryTaxaBar({ params }: { params: { [key: string]: string | string[] | undefined } }) {
