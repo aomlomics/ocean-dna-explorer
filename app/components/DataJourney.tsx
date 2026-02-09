@@ -82,14 +82,14 @@ function TintedSection({ children }: { children: React.ReactNode }) {
 		<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50">
 			{/* Wave at top */}
 			<svg
-				className="absolute -top-px left-0 w-full h-12 sm:h-16 text-base-100"
-				viewBox="0 0 1440 100"
+				className="absolute -top-px left-0 w-full h-14 sm:h-20 text-base-100 rotate-180"
+				viewBox="0 0 1440 160"
 				preserveAspectRatio="none"
 				aria-hidden="true"
 			>
 				<path
 					fill="currentColor"
-					d="M0,100 C360,20 1080,20 1440,100 L1440,0 L0,0 Z"
+					d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
 				/>
 			</svg>
 
@@ -99,14 +99,14 @@ function TintedSection({ children }: { children: React.ReactNode }) {
 
 			{/* Wave at bottom */}
 			<svg
-				className="absolute -bottom-px left-0 w-full h-12 sm:h-16 text-base-100"
-				viewBox="0 0 1440 100"
+				className="absolute -bottom-px left-0 w-full h-14 sm:h-20 text-base-100"
+				viewBox="0 0 1440 160"
 				preserveAspectRatio="none"
 				aria-hidden="true"
 			>
 				<path
 					fill="currentColor"
-					d="M0,0 C360,80 1080,80 1440,0 L1440,100 L0,100 Z"
+					d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
 				/>
 			</svg>
 		</section>
@@ -119,7 +119,7 @@ export default function DataJourney() {
 			{/* ============================================ */}
 			{/* INTRO: How eDNA Appears in Water */}
 			{/* ============================================ */}
-			<section className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-12">
+			<section className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-12">
 				<div className="grid lg:grid-cols-[1fr_1.4fr] gap-6 items-center">
 					{/* Left: Text blurb */}
 					<div>
@@ -152,7 +152,7 @@ export default function DataJourney() {
 			{/* SECTION 1: THE EXPEDITION */}
 			{/* ============================================ */}
 			<TintedSection>
-				<div className="max-w-6xl mx-auto px-4 sm:px-6">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6">
 					<SectionHeader>The Expedition</SectionHeader>
 
 					{/* Ship with CTD - LARGE */}
@@ -163,12 +163,6 @@ export default function DataJourney() {
 								Research initiatives collecting eDNA samples. Projects organize sampling cruises, 
 								define research objectives, and link all downstream data to a single scientific effort.
 							</TableBlurb>
-
-							<ProcessBlurb title="Sample Collection" className="max-w-md">
-								Capturing an environmental snapshot. A CTD cast links biological data to 
-								physical ocean measurements—latitude, longitude, depth, temperature, and 
-								salinity—at the moment of collection.
-							</ProcessBlurb>
 						</div>
 
 						{/* Right: Ship image - LARGE */}
@@ -181,64 +175,39 @@ export default function DataJourney() {
 								className="object-contain"
 								priority
 							/>
+
+							{/* Overlay blurb on large screens (down/right, closer to CTD) */}
+							<div className="hidden lg:block absolute bottom-4 max-w-sm rounded-2xl p-5 backdrop-blur-sm">
+								<ProcessBlurb title="Sample Collection">
+									Capturing an environmental snapshot. A CTD cast links biological data to 
+									physical ocean measurements—latitude, longitude, depth, temperature, and 
+									salinity—at the moment of collection.
+								</ProcessBlurb>
+							</div>
 						</div>
+					</div>
+
+					{/* Sample Collection blurb for small screens */}
+					<div className="lg:hidden mb-10">
+						<ProcessBlurb title="Sample Collection" className="max-w-md">
+							Capturing an environmental snapshot. A CTD cast links biological data to 
+							physical ocean measurements—latitude, longitude, depth, temperature, and 
+							salinity—at the moment of collection.
+						</ProcessBlurb>
 					</div>
 
 					{/* CTD → Niskin → Bottles + Sample blurb */}
 					<div className="grid lg:grid-cols-[1.2fr_1fr] gap-8 items-center">
-						{/* Flow diagram - CTD BIGGEST, Niskin smallest, bottles medium */}
-						<div className="flex items-end justify-center lg:justify-start gap-3 sm:gap-5">
-							{/* CTD - LARGEST */}
-							<div className="relative h-[220px] sm:h-[320px] lg:h-[400px] w-[140px] sm:w-[200px] lg:w-[250px] shrink-0">
-								<Image
-									src="/images/biorender/ctd_light_mode.png"
-									alt="CTD instrument"
-									fill
-									sizes="250px"
-									className="object-contain [html[data-theme='dark']_&]:hidden"
-								/>
-								<Image
-									src="/images/biorender/ctd_dark_mode.png"
-									alt="CTD instrument"
-									fill
-									sizes="250px"
-									className="object-contain hidden [html[data-theme='dark']_&]:block"
-								/>
-							</div>
-
-							{/* Arrow */}
-							<svg viewBox="0 0 50 24" className="w-8 sm:w-12 h-5 text-primary shrink-0 mb-20 sm:mb-32 lg:mb-40" aria-hidden="true">
-								<path d="M2,12 L38,12 M32,6 L38,12 L32,18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-							</svg>
-
-							{/* Niskin - SMALLEST */}
-							<div className="relative h-[120px] sm:h-[180px] lg:h-[220px] w-[35px] sm:w-[50px] lg:w-[65px] shrink-0">
-								<Image
-									src="/images/biorender/niskin_bottle.png"
-									alt="Niskin bottle"
-									fill
-									sizes="65px"
-									className="object-contain"
-								/>
-							</div>
-
-							{/* Arrow */}
-							<svg viewBox="0 0 50 24" className="w-8 sm:w-12 h-5 text-primary shrink-0 mb-20 sm:mb-32 lg:mb-40" aria-hidden="true">
-								<path d="M2,12 L38,12 M32,6 L38,12 L32,18" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-							</svg>
-
-							{/* Sample bottles - MEDIUM */}
-							<div className="flex items-end -space-x-4 sm:-space-x-6 shrink-0">
-								<div className="relative h-[100px] sm:h-[150px] lg:h-[190px] w-[50px] sm:w-[70px] lg:w-[90px]">
-									<Image src="/images/biorender/sample_bottle.png" alt="Sample bottle" fill sizes="90px" className="object-contain" />
-								</div>
-								<div className="relative h-[95px] sm:h-[140px] lg:h-[175px] w-[50px] sm:w-[70px] lg:w-[90px]">
-									<Image src="/images/biorender/sample_bottle.png" alt="Sample bottle" fill sizes="90px" className="object-contain" />
-								</div>
-								<div className="relative h-[100px] sm:h-[150px] lg:h-[190px] w-[50px] sm:w-[70px] lg:w-[90px]">
-									<Image src="/images/biorender/sample_bottle.png" alt="Sample bottle" fill sizes="90px" className="object-contain" />
-								</div>
-							</div>
+						{/* Flow diagram - combined graphic */}
+						<div className="relative w-full h-[260px] sm:h-[360px] lg:h-[440px] flex items-center justify-center">
+							<Image
+								src="/images/biorender/sample_bio.png"
+								alt="CTD to Niskin to sample bottles workflow"
+								fill
+								sizes="(max-width: 1024px) 100vw, 760px"
+								className="object-contain"
+								priority
+							/>
 						</div>
 
 						{/* Sample blurb */}
@@ -253,95 +222,104 @@ export default function DataJourney() {
 			{/* ============================================ */}
 			{/* SECTION 2: INTO THE LAB */}
 			{/* ============================================ */}
-			<section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+			<section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 overflow-visible">
 				<SectionHeader>Into the Lab</SectionHeader>
 
-				{/* DNA Extraction */}
-				<div className="grid lg:grid-cols-[1fr_1.3fr] gap-6 items-center mb-12">
-					<ProcessBlurb title="DNA Extraction" className="max-w-md">
-						This is the bridge from the field to the bench. We isolate the total environmental 
-						DNA (eDNA) from the biomass captured on the filters, moving from liters of seawater 
-						to microliters of genetic material.
-					</ProcessBlurb>
+				<div className="space-y-2 overflow-visible">
+					{/* DNA Extraction */}
+					<div className="py-4 sm:py-6 overflow-visible">
+						<div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-6 items-center overflow-visible">
+							<ProcessBlurb title="DNA Extraction" className="max-w-xs">
+								This is the bridge from the field to the bench. We isolate the total environmental 
+								DNA (eDNA) from the biomass captured on the filters, moving from liters of seawater 
+								to microliters of genetic material.
+							</ProcessBlurb>
 
-					<div className="relative w-full h-[200px] sm:h-[280px] lg:h-[340px]">
-						<Image
-							src="/images/biorender/dna_extraction.png"
-							alt="DNA extraction workflow"
-							fill
-							sizes="(max-width: 1024px) 100vw, 600px"
-							className="object-contain"
-						/>
-					</div>
-				</div>
-
-				{/* Assay */}
-				<div className="grid lg:grid-cols-[1.3fr_1fr] gap-6 items-center mb-12">
-					<div className="relative w-full h-[220px] sm:h-[320px] lg:h-[400px]">
-						<Image
-							src="/images/biorender/second_wetlab_step.png"
-							alt="PCR amplification targeting specific genetic markers"
-							fill
-							sizes="(max-width: 1024px) 100vw, 650px"
-							className="object-contain"
-						/>
+							<div className="relative w-full h-[260px] sm:h-[340px] lg:h-[420px] overflow-visible lg:w-[calc(100%+4rem)] lg:translate-x-8">
+								<Image
+									src="/images/biorender/dna_extraction.png"
+									alt="DNA extraction workflow"
+									fill
+									sizes="(max-width: 1024px) 100vw, 760px"
+									className="object-contain scale-[1.12] origin-center"
+								/>
+							</div>
+						</div>
 					</div>
 
-					<TableBlurb title="Assay" href="/explore/assay" className="max-w-md">
-						The Assay table is your &quot;molecular lens.&quot; It stores the static definitions of the 
-						primers used to &quot;hook&quot; and find specific biological groups (like fish or bacteria) 
-						within the total eDNA pool.
-					</TableBlurb>
-				</div>
+					{/* Assay */}
+					{/* Thermocycler + AssayPrep + Pooling */}
+					<div className="py-4 sm:py-6 overflow-visible">
+						{/* Assay: blurb left, big image right */}
+						<div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-6 items-center overflow-visible">
+							<TableBlurb title="Assay" href="/explore/assay" className="max-w-xs">
+								The Assay table is your &quot;molecular lens.&quot; It stores the static definitions of the 
+								primers used to &quot;hook&quot; and find specific biological groups (like fish or bacteria) 
+								within the total eDNA pool.
+							</TableBlurb>
 
-				{/* Thermocycler + AssayPrep + Pooling */}
-				<div className="mb-12">
-					<div className="relative w-full h-[180px] sm:h-[280px] lg:h-[360px] mb-6">
-						<Image
-							src="/images/biorender/thermocycler.png"
-							alt="Thermocycler PCR amplification"
-							fill
-							sizes="(max-width: 1280px) 100vw, 900px"
-							className="object-contain"
-						/>
+							<div className="relative w-full h-[260px] sm:h-[340px] lg:h-[420px] overflow-visible lg:w-[calc(100%+4rem)] lg:translate-x-8">
+								<Image
+									src="/images/biorender/second_wetlab_step.png"
+									alt="PCR amplification targeting specific genetic markers"
+									fill
+									sizes="(max-width: 1024px) 100vw, 760px"
+									className="object-contain scale-[1.12] origin-center"
+								/>
+							</div>
+						</div>
+
+						{/* Thermocycler: centered + big, blurbs underneath */}
+						<div className="mt-2 sm:mt-3 overflow-visible">
+							<div className="relative -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] max-w-none h-[220px] sm:h-[320px] lg:h-[380px] overflow-visible">
+								<Image
+									src="/images/biorender/thermocycler.png"
+									alt="Thermocycler PCR amplification"
+									fill
+									sizes="(max-width: 1024px) 100vw, 900px"
+									className="object-contain scale-[1.08] origin-center"
+								/>
+							</div>
+
+							<div className="mt-2 sm:mt-3 grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+								<TableBlurb title="AssayPrep" href="/explore/assayPrep" className="max-w-xs">
+									The action record. This table documents exactly how the DNA was &quot;cooked&quot; in the 
+									thermocycler: the temperatures, cycle counts, and master mixes used.
+								</TableBlurb>
+
+								<ProcessBlurb title="Pooling &amp; Indexing" className="max-w-xs">
+									Individual amplified samples are combined into a single &quot;Pool.&quot; Every fragment 
+									is tagged with a unique molecular barcode so the computer can identify its origin later.
+								</ProcessBlurb>
+							</div>
+						</div>
 					</div>
 
-					<div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
-						<TableBlurb title="AssayPrep" href="/explore/assayPrep" className="max-w-md">
-							The action record. This table documents exactly how the DNA was &quot;cooked&quot; in the 
-							thermocycler: the temperatures, cycle counts, and master mixes used.
-						</TableBlurb>
+					{/* Library + Sequencing */}
+					<div className="py-4 sm:py-6 overflow-visible">
+						{/* Match the thermocycler step: centered big graphic, blurbs underneath */}
+						<div className="relative -mx-4 sm:-mx-6 w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] max-w-none h-[240px] sm:h-[340px] lg:h-[420px] overflow-visible">
+							<Image
+								src="/images/biorender/library_bio.png"
+								alt="Sequencing workflow"
+								fill
+								sizes="(max-width: 1024px) 100vw, 900px"
+								className="object-contain scale-[1.08] origin-center"
+							/>
+						</div>
 
-						<ProcessBlurb title="Pooling &amp; Indexing" className="max-w-md">
-							Individual amplified samples are combined into a single &quot;Pool.&quot; Every fragment 
-							is tagged with a unique molecular barcode so the computer can identify its origin later.
-						</ProcessBlurb>
-					</div>
-				</div>
+						<div className="mt-2 sm:mt-3 grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+							<TableBlurb title="Library" href="/explore/library" className="max-w-xs">
+								The Library table tracks the transition from liquid to data. It records the sequencing 
+								platform, the specific barcodes used, and the final raw &quot;read count&quot; of sequences 
+								generated by the machine.
+							</TableBlurb>
 
-				{/* Library + Sequencing */}
-				<div className="grid lg:grid-cols-[1fr_1.3fr] gap-6 items-center">
-					<div className="space-y-6">
-						<TableBlurb title="Library" href="/explore/library" className="max-w-md">
-							The Library table tracks the transition from liquid to data. It records the sequencing 
-							platform, the specific barcodes used, and the final raw &quot;read count&quot; of sequences 
-							generated by the machine.
-						</TableBlurb>
-
-						<ProcessBlurb title="Sequencing" className="max-w-md">
-							The pooled library enters the sequencer, where millions of DNA fragments are read 
-							simultaneously, converting molecular information into digital data.
-						</ProcessBlurb>
-					</div>
-
-					<div className="relative w-full h-[200px] sm:h-[280px] lg:h-[360px]">
-						<Image
-							src="/images/biorender/library_bio.png"
-							alt="Sequencing workflow"
-							fill
-							sizes="(max-width: 1024px) 100vw, 600px"
-							className="object-contain"
-						/>
+							<ProcessBlurb title="Sequencing" className="max-w-xs">
+								The pooled library enters the sequencer, where millions of DNA fragments are read 
+								simultaneously, converting molecular information into digital data.
+							</ProcessBlurb>
+						</div>
 					</div>
 				</div>
 			</section>
@@ -350,7 +328,7 @@ export default function DataJourney() {
 			{/* SECTION 3: DIGITAL DISCOVERY */}
 			{/* ============================================ */}
 			<TintedSection>
-				<div className="max-w-6xl mx-auto px-4 sm:px-6">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6">
 					<SectionHeader>Digital Discovery</SectionHeader>
 
 					{/* Analysis with animated laptop */}

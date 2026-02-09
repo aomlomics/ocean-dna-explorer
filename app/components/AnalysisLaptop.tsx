@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/LaptopScreen";
 
 // Terminal commands that cycle through
@@ -8,38 +8,59 @@ const terminalSequences = [
 	{
 		command: "dada2 denoise-paired",
 		lines: [
-			"Loading FASTQ files...",
-			"Filtering reads: quality > Q30",
-			"Learning error rates...",
-			"Denoising forward reads...",
-			"Denoising reverse reads...",
-			"Merging paired-end reads...",
-			"Removing chimeras...",
-			"ASVs generated: 2,847",
-			"✓ Complete"
+			"[info] Loading FASTQ files: 96 samples",
+			"[info] Trimming primers + adapters",
+			"[info] Filtering reads (Q ≥ 30, maxEE ≤ 2)",
+			"[info] Reads retained: 18,402,119 / 20,117,884",
+			"[step] Learning error rates (forward)",
+			"[step] Learning error rates (reverse)",
+			"[step] Denoising forward reads…",
+			"[step] Denoising reverse reads…",
+			"[step] Merging paired-end reads…",
+			"[step] Removing chimeras (consensus)…",
+			"[info] ASVs generated: 2,847",
+			"[info] Mean read length: 253 bp",
+			"[info] Per-sample ASV median: 2,104",
+			"[done] ✓ Complete"
 		]
 	},
 	{
 		command: "vsearch --uchime_denovo",
 		lines: [
-			"Reading sequences...",
-			"Sorting by abundance...",
-			"Detecting chimeras...",
-			"Chimeras found: 142",
-			"Writing non-chimeric...",
-			"✓ Complete"
+			"[info] Reading sequences (ASVs)…",
+			"[info] Sorting by abundance…",
+			"[step] Detecting chimeras (de novo)…",
+			"[warn] Chimeras found: 142",
+			"[info] Writing non-chimeric ASVs…",
+			"[info] Retained ASVs: 2,705",
+			"[done] ✓ Complete"
 		]
 	},
 	{
 		command: "blastn -db nt -query asvs.fasta",
 		lines: [
-			"Connecting to NCBI...",
-			"Query: 2,847 sequences",
-			"Searching nucleotide DB...",
-			"Processing hits...",
-			"Matches found: 2,651",
-			"Writing output...",
-			"✓ Complete"
+			"[info] Connecting to NCBI…",
+			"[info] Query: 2,705 ASVs",
+			"[step] Searching nt database…",
+			"[step] Processing hits…",
+			"[info] Matches found: 2,651",
+			"[info] Top-hit identity: 99.8%",
+			"[info] Writing taxonomy report…",
+			"[done] ✓ Complete"
+		]
+	},
+	{
+		command: "qiime feature-table summarize",
+		lines: [
+			"[info] Loading feature table…",
+			"[info] Samples: 96",
+			"[info] Features: 2,705",
+			"[info] Total frequency: 18,402,119",
+			"[step] Computing per-sample stats…",
+			"[info] Median frequency: 181,204",
+			"[info] Min frequency: 22,311",
+			"[info] Max frequency: 612,904",
+			"[done] ✓ Complete"
 		]
 	}
 ];
@@ -56,8 +77,10 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 	const [isTyping, setIsTyping] = useState(true);
 	const [typedCommand, setTypedCommand] = useState("");
 	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const scrollRef = useRef<HTMLDivElement | null>(null);
 
 	const currentSequence = terminalSequences[sequenceIndex];
+	const prompt = useMemo(() => "ocean-dna@lab:~$", []);
 
 	// Type out the command character by character
 	useEffect(() => {
@@ -90,7 +113,7 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 			timeoutRef.current = setTimeout(() => {
 				setVisibleLines((prev) => [...prev, lines[currentLineIndex]]);
 				setCurrentLineIndex((prev) => prev + 1);
-			}, 400);
+			}, 180);
 		} else {
 			// All lines shown, wait then move to next sequence
 			timeoutRef.current = setTimeout(() => {
@@ -99,13 +122,20 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 				setTypedCommand("");
 				setIsTyping(true);
 				setCurrentLineIndex(0);
-			}, 2500);
+			}, 1600);
 		}
 
 		return () => {
 			if (timeoutRef.current) clearTimeout(timeoutRef.current);
 		};
 	}, [currentLineIndex, isTyping, currentSequence.lines]);
+
+	// Auto-scroll as more lines appear
+	useEffect(() => {
+		const el = scrollRef.current;
+		if (!el) return;
+		el.scrollTop = el.scrollHeight;
+	}, [visibleLines, typedCommand]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -116,9 +146,9 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 
 	return (
 		<LaptopScreen className={className ?? ""} screenBounds={screenBounds} alt="Laptop showing bioinformatics analysis">
-			<div className="w-full h-full bg-base-200 [html[data-theme='dark']_&]:bg-slate-800 rounded-sm overflow-hidden font-mono text-left p-2">
+			<div className="w-full h-full bg-base-200 [html[data-theme='dark']_&]:bg-slate-800 overflow-hidden font-mono text-left flex flex-col">
 				{/* Terminal header */}
-				<div className="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-base-300 [html[data-theme='dark']_&]:border-slate-600">
+				<div className="flex items-center gap-1.5 px-2 py-2 border-b border-base-300 [html[data-theme='dark']_&]:border-slate-600 shrink-0">
 					<div className="w-2.5 h-2.5 rounded-full bg-red-400 [html[data-theme='dark']_&]:bg-red-500" />
 					<div className="w-2.5 h-2.5 rounded-full bg-yellow-400 [html[data-theme='dark']_&]:bg-yellow-500" />
 					<div className="w-2.5 h-2.5 rounded-full bg-green-400 [html[data-theme='dark']_&]:bg-green-500" />
@@ -126,10 +156,18 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 				</div>
 
 				{/* Terminal content */}
-				<div className="space-y-0.5 overflow-hidden" style={{ fontSize: 11 }}>
+				<div
+					ref={scrollRef}
+					className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5"
+					style={{
+						fontSize: 10,
+						lineHeight: 1.25,
+						scrollbarWidth: "none"
+					}}
+				>
 					{/* Command line */}
 					<div className="flex items-center gap-1">
-						<span className="text-success">$</span>
+						<span className="text-success">{prompt}</span>
 						<span className="text-base-content">{typedCommand}</span>
 						{isTyping && <span className="animate-pulse text-base-content">▌</span>}
 					</div>
@@ -139,7 +177,8 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 						<div
 							key={i}
 							className={`${
-								line.startsWith("✓") ? "text-success" : 
+								line.includes("[done]") || line.startsWith("✓") ? "text-success" : 
+								line.includes("[warn]") ? "text-warning" :
 								line.includes("found:") || line.includes("generated:") || line.includes("Matches") ? "text-primary" : 
 								"text-base-content/70"
 							}`}
