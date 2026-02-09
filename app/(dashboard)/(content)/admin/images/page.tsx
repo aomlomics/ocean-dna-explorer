@@ -48,7 +48,9 @@ export default async function AdminImages() {
 									{img.Attribution && (
 										<div className="space-y-0.5">
 											<p>Attribution: {img.Attribution.attributionTitle}</p>
-											{img.Attribution.attributionInstitute && <p>Institute: {img.Attribution.attributionInstitute}</p>}
+											{img.Attribution.attributionInstitution && (
+												<p>Institution: {img.Attribution.attributionInstitution}</p>
+											)}
 											{img.Attribution.attributionUrl && (
 												<p className="break-all">
 													URL:{" "}

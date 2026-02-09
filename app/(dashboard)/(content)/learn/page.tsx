@@ -15,7 +15,7 @@ export default function LearnPage() {
 	return (
 		<main className="min-h-screen bg-base-100 text-base-content -mt-4">
 			{/* Page Banner */}
-			<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-10 sm:mb-12 bg-base-100">
+			<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-6 sm:mb-8 bg-base-100">
 				<div className="relative h-[400px]">
 					<Image
 						src="/images/rov_boat_learn_page_light.jpg"
