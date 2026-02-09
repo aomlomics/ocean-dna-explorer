@@ -154,16 +154,16 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 						</fieldset>
 
 						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Attribution Institute</legend>
+							<legend className="fieldset-legend">Attribution Institution</legend>
 							<input
-								name="attributionInstitute"
+								name="attributionInstitution"
 								type="text"
 								className="input"
-								placeholder="Attribution Institute"
+								placeholder="Attribution Institution"
 								disabled={!newAttribution}
 								defaultValue={
-									currAttribution && !newAttribution && currAttribution.attributionInstitute
-										? currAttribution.attributionInstitute
+									currAttribution && !newAttribution && currAttribution.attributionInstitution
+										? currAttribution.attributionInstitution
 										: undefined
 								}
 							/>
