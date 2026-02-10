@@ -206,12 +206,10 @@ export default function SampleScatterPlog({
 										backgroundColor: "rgba(225, 225, 225, 0.3)",
 										borderColor: "rgba(225, 225, 225, 0.8)",
 										borderWidth: 1
-									},
-									mode: "xy"
+									}
 								},
 								pan: {
 									enabled: true,
-									mode: "xy",
 									modifierKey: "shift"
 								}
 							}

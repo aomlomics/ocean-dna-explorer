@@ -76,7 +76,7 @@ export default function Pagination({
 				page={page}
 				take={take}
 				count={data.count}
-				handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+				setPage={setPage}
 				handlePageHover={handlePageHover}
 			/>
 
@@ -151,7 +151,7 @@ export default function Pagination({
 				page={page}
 				take={take}
 				count={data.count}
-				handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+				setPage={setPage}
 				handlePageHover={handlePageHover}
 			/>
 		</div>

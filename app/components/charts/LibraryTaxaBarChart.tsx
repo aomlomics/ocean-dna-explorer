@@ -7,8 +7,12 @@ import distinctColors from "distinct-colors";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { TaxonomicRanks } from "@/types/objects";
 import ChartCopyButton from "./ChartCopyButton";
+import zoomPlugin from "chartjs-plugin-zoom";
+import InfoButton from "../InfoButton";
+import PaginationControls from "../paginated/PaginationControls";
+import LoadingPaginationControls from "../paginated/LoadingPaginationControls";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
 export default function LibraryTaxaBarChart({
 	occsByFeatureid,
@@ -35,11 +39,15 @@ export default function LibraryTaxaBarChart({
 	samplesById: Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
 	sampleIdsByLibId: Record<Library["lib_id"], Sample["id"]>;
 }) {
-	const ref = useRef<ChartJS<"bar">>(null);
+	const ref = useRef<ChartJS<"bar", { x: string; y: number }[]>>(null);
 
 	const [rank, setRank] = useState("kingdom" as (typeof TaxonomicRanks)[0]);
 	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
 	const [averageBy, setAverageBy] = useState("lib_id");
+
+	const [taxaPerPage, setTaxaPerPage] = useState(20);
+	const [taxaPage, setTaxaPage] = useState(1);
+	const [taxaCount, setTaxaCount] = useState(0);
 
 	const [loading, setLoading] = useState(false);
 	const [chartData, setChartData] = useState(
@@ -47,8 +55,7 @@ export default function LibraryTaxaBarChart({
 			| {
 					labels: string[];
 					datasets: {
-						label: string;
-						data: number[];
+						data: { x: string; y: number }[];
 						borderColor: string;
 						backgroundColor: string;
 						borderWidth: number;
@@ -87,9 +94,18 @@ export default function LibraryTaxaBarChart({
 				}
 			}
 
-			const uniqueColors = distinctColors({ count: rankValues.size });
+			setTaxaCount(rankValues.size);
+			let uniqueColors = distinctColors({ count: rankValues.size });
+
+			let ranksOnPage = Array.from(rankValues).sort();
+			if (taxaPerPage < ranksOnPage.length) {
+				const start = (taxaPage - 1) * taxaPerPage;
+				ranksOnPage = ranksOnPage.slice(start, start + taxaPerPage);
+				uniqueColors = uniqueColors.slice(start, start + taxaPerPage);
+			}
 
 			const libIds = Object.keys(libIdRankQuantities).sort();
+
 			let averageByGroups = {} as Record<string, Library["lib_id"][]>;
 			if (averageBy !== "lib_id") {
 				for (const lib_id of libIds) {
@@ -104,49 +120,57 @@ export default function LibraryTaxaBarChart({
 			}
 			const groupLabels = Object.keys(averageByGroups).sort();
 
+			let tempYMax = 0;
 			setChartData({
 				labels: averageBy === "lib_id" ? libIds : groupLabels,
-				datasets: Array.from(rankValues)
-					.sort()
-					.map((lev, i) => {
-						let data = [] as number[];
-						if (metricType === "relative") {
-							data = libIds.map((lib_id) => {
-								const absoluteValue = libIdRankQuantities[lib_id][lev];
+				datasets: ranksOnPage.map((lev, i) => {
+					let data = [] as { x: string; y: number }[];
+					if (metricType === "relative") {
+						data = libIds.map((lib_id) => {
+							const absoluteValue = libIdRankQuantities[lib_id][lev];
 
-								if (absoluteValue) {
-									// Calculate total for this lib_id across all taxonomic values at this rank
-									const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, val) => sum + val, 0);
-									return (absoluteValue / total) * 100;
-								} else {
-									return 0;
-								}
-							});
-
-							if (averageBy !== "lib_id") {
-								data = groupLabels.map(
-									(val) =>
-										averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)], 0) /
-										averageByGroups[val].length
-								);
+							if (absoluteValue) {
+								// Calculate total for this lib_id across all taxonomic values at this rank
+								const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, val) => sum + val, 0);
+								return { x: lib_id, y: (absoluteValue / total) * 100 };
+							} else {
+								return { x: lib_id, y: 0 };
 							}
-						} else {
-							data = libIds.map((lib_id) => libIdRankQuantities[lib_id][lev]);
-						}
+						});
 
-						return {
-							label: lev,
-							data,
-							borderColor: uniqueColors[i].hex(),
-							backgroundColor: uniqueColors[i].alpha(0.8).hex(),
-							borderWidth: 1
-						};
-					})
+						if (averageBy !== "lib_id") {
+							data = groupLabels.map((val) => ({
+								x: val,
+								y:
+									averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)].y, 0) /
+									averageByGroups[val].length
+							}));
+						}
+					} else {
+						data = libIds.map((lib_id) => {
+							const y = libIdRankQuantities[lib_id][lev];
+							if (y > tempYMax) {
+								tempYMax = y;
+							}
+
+							return { x: lib_id, y };
+						});
+					}
+
+					return {
+						label: lev,
+						data,
+						borderColor: uniqueColors[i].hex(),
+						backgroundColor: uniqueColors[i].alpha(0.8).hex(),
+						borderWidth: 1,
+						barThickness: "flex"
+					};
+				})
 			});
 		}
 
 		setLoading(false);
-	}, [rank, metricType, averageBy]);
+	}, [rank, metricType, averageBy, taxaPage, taxaPerPage]);
 
 	return (
 		<div className="relative">
@@ -155,7 +179,7 @@ export default function LibraryTaxaBarChart({
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 					<select
 						value={rank}
-						onChange={async (e) => {
+						onChange={(e) => {
 							setLoading(true);
 							setRank(e.target.value as (typeof TaxonomicRanks)[0]);
 						}}
@@ -172,7 +196,7 @@ export default function LibraryTaxaBarChart({
 					<legend className="fieldset-legend">Display as:</legend>
 					<select
 						value={metricType}
-						onChange={async (e) => {
+						onChange={(e) => {
 							setLoading(true);
 							setMetricType(e.target.value as typeof metricType);
 						}}
@@ -188,7 +212,7 @@ export default function LibraryTaxaBarChart({
 					<legend className="fieldset-legend">Average by:</legend>
 					<select
 						value={averageBy}
-						onChange={async (e) => {
+						onChange={(e) => {
 							setLoading(true);
 							if (e.target.value !== "lib_id" && metricType === "absolute") {
 								setMetricType("relative");
@@ -206,12 +230,49 @@ export default function LibraryTaxaBarChart({
 				<ChartCopyButton ref={ref} disabled={loading} />
 			</div>
 
+			<form
+				className="flex items-center justify-center gap-2"
+				onSubmit={(e) => {
+					e.preventDefault();
+					const val = parseInt(new FormData(e.target as HTMLFormElement).get("taxaPerPage") as string);
+					if (!isNaN(val)) {
+						setLoading(true);
+						setTaxaPerPage(val);
+					}
+				}}
+			>
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend w-full">
+						<span>Taxa Per Page:</span>
+						<InfoButton infoText="Making this too large can cause lag." type="warning" />
+					</legend>
+					<input type="number" name="taxaPerPage" className="input" defaultValue={taxaPerPage} disabled={loading} />
+				</fieldset>
+				<button className="btn btn-sm mt-7">Set</button>
+			</form>
+			<div className="flex justify-between items-center">
+				{loading ? (
+					<LoadingPaginationControls />
+				) : (
+					<PaginationControls
+						page={taxaPage}
+						take={taxaPerPage}
+						count={taxaCount}
+						setPage={setTaxaPage}
+						sideEffect={() => setLoading(true)}
+					/>
+				)}
+			</div>
+
 			{chartData ? (
 				<Bar
 					ref={ref}
 					data={chartData}
 					options={{
 						responsive: true,
+						parsing: false,
+						normalized: true,
+						animation: false,
 						plugins: {
 							legend: {
 								position: "top",
@@ -224,6 +285,28 @@ export default function LibraryTaxaBarChart({
 							title: {
 								display: true,
 								text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by Taxonomy (${rank})`
+							},
+							zoom: {
+								zoom: {
+									mode: "x",
+									wheel: {
+										enabled: true
+									},
+									pinch: {
+										enabled: true
+									},
+									drag: {
+										enabled: true,
+										backgroundColor: "rgba(225, 225, 225, 0.3)",
+										borderColor: "rgba(225, 225, 225, 0.8)",
+										borderWidth: 1
+									}
+								},
+								pan: {
+									enabled: true,
+									mode: "x",
+									modifierKey: "shift"
+								}
 							}
 						},
 						scales: {
@@ -232,19 +315,16 @@ export default function LibraryTaxaBarChart({
 								title: {
 									display: true,
 									text: averageBy
-								},
-								ticks: {
-									autoSkip: false
 								}
 							},
 							y: {
 								stacked: true,
 								beginAtZero: true,
-								max: metricType === "relative" ? 100 : undefined,
 								title: {
 									display: true,
 									text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"
-								}
+								},
+								min: 0
 							}
 						}
 					}}

@@ -102,7 +102,7 @@ export default function TaxaGrid({
 				page={page}
 				take={25}
 				count={totalCount}
-				handlePage={(dir?: number) => setPage(dir ? page + dir : page + 1)}
+				setPage={setPage}
 				handlePageHover={handlePageHover}
 			/>
 
