@@ -25,6 +25,8 @@ export interface LaptopScreenProps {
 	children: React.ReactNode;
 	className?: string;
 	screenBounds?: LaptopScreenBounds;
+	/** Tweak this to snug content to the PNG screen (0-6 is a good range). */
+	contentPaddingPercent?: number;
 	alt?: string;
 }
 
@@ -37,6 +39,7 @@ export default function LaptopScreen({
 	children,
 	className = "",
 	screenBounds = DEFAULT_SCREEN_BOUNDS,
+	contentPaddingPercent = 5,
 	alt = "Laptop"
 }: LaptopScreenProps) {
 	const screenRef = useRef<HTMLDivElement>(null);
@@ -71,7 +74,15 @@ export default function LaptopScreen({
 					alt={alt}
 					fill
 					sizes="(max-width: 1024px) 100vw, 50vw"
-					className="object-contain"
+					className="object-contain [html[data-theme='dark']_&]:hidden"
+					priority
+				/>
+				<Image
+					src="/images/biorender/laptop_dark.png"
+					alt={alt}
+					fill
+					sizes="(max-width: 1024px) 100vw, 50vw"
+					className="object-contain hidden [html[data-theme='dark']_&]:block"
 					priority
 				/>
 
@@ -93,7 +104,8 @@ export default function LaptopScreen({
 							width: CONTENT_REFERENCE_WIDTH,
 							height: CONTENT_REFERENCE_HEIGHT,
 							transform: `translate(-50%, -50%) scale(${scale})`,
-							padding: "5%"
+							// Tweak this if content feels too inset/outset inside the screen area.
+							padding: `${contentPaddingPercent}%`
 						}}
 					>
 						{children}

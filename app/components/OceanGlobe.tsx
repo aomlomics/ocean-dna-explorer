@@ -113,45 +113,45 @@ const baseOceanMarkers: [number, number][] = [
 	[-22.0, 75.0],
 	[-3.0, 76.0],
 
-	// Arabian Sea (expanded)
-	[15.0, 65.0],
-	[18.0, 62.0],
-	[12.0, 68.0],
-	[20.0, 60.0],
-	[10.0, 72.0],
-	[22.0, 58.0],
-	[8.0, 65.0],
-	[16.0, 70.0],
-	[14.0, 58.0],
+	// // Arabian Sea (expanded)
+	// [15.0, 65.0],
+	// [18.0, 62.0],
+	// [12.0, 68.0],
+	// [20.0, 60.0],
+	// [10.0, 72.0],
+	// [22.0, 58.0],
+	// [8.0, 65.0],
+	// [16.0, 70.0],
+	// [14.0, 58.0],
 
-	// Bay of Bengal (expanded)
-	[12.0, 88.0],
-	[15.0, 85.0],
-	[10.0, 90.0],
-	[8.0, 86.0],
-	[18.0, 88.0],
-	[14.0, 92.0],
-	[6.0, 88.0],
-	[16.0, 82.0],
-	[20.0, 90.0],
-	[5.0, 92.0],
+	// // Bay of Bengal (expanded)
+	// [12.0, 88.0],
+	// [15.0, 85.0],
+	// [10.0, 90.0],
+	// [8.0, 86.0],
+	// [18.0, 88.0],
+	// [14.0, 92.0],
+	// [6.0, 88.0],
+	// [16.0, 82.0],
+	// [20.0, 90.0],
+	// [5.0, 92.0],
 
-	// Southwest Indian Ocean (Madagascar region - expanded)
-	[-28.0, 55.0],
-	[-32.0, 52.0],
-	[-25.0, 58.0],
-	[-35.0, 48.0],
-	[-22.0, 52.0],
-	[-18.0, 48.0],
-	[-15.0, 55.0],
-	[-20.0, 58.0],
-	[-30.0, 45.0],
-	[-12.0, 50.0],
+	// // Southwest Indian Ocean (Madagascar region - expanded)
+	// [-28.0, 55.0],
+	// [-32.0, 52.0],
+	// [-25.0, 58.0],
+	// [-35.0, 48.0],
+	// [-22.0, 52.0],
+	// [-18.0, 48.0],
+	// [-15.0, 55.0],
+	// [-20.0, 58.0],
+	// [-30.0, 45.0],
+	// [-12.0, 50.0],
 
-	// Mozambique Channel
-	[-18.0, 42.0],
-	[-22.0, 40.0],
-	[-15.0, 44.0],
+	// // Mozambique Channel
+	// [-18.0, 42.0],
+	// [-22.0, 40.0],
+	// [-15.0, 44.0],
 
 	// Southeast Indian Ocean (expanded)
 	[-25.0, 95.0],
@@ -173,106 +173,181 @@ const baseOceanMarkers: [number, number][] = [
 	[14.0, 42.0],
 	[12.0, 45.0],
 
-	// TRUE Indian Ocean - west of Indonesia, south of India (40-80°E longitude)
-	[-15.0, 55.0], // West Indian Ocean
-	[-20.0, 50.0], // Southwest
-	[-25.0, 55.0], // South-central west
-	[-30.0, 60.0], // South
-	[-35.0, 55.0], // Far south
-	[-40.0, 50.0], // Deep south
-	[-45.0, 55.0], // Southern Indian Ocean
-	[-50.0, 60.0], // Near Southern Ocean
-	[-25.0, 45.0], // Near Madagascar
-	[-30.0, 50.0], // South of Madagascar
-	[-35.0, 45.0], // Southwest
-	[-20.0, 60.0], // Central
-	[-15.0, 50.0], // West-central
-	[-10.0, 55.0], // Northwest
-	[-5.0, 60.0], // North
-	[-12.0, 65.0], // Central
-	[-18.0, 58.0], // West
-	[-22.0, 52.0], // Southwest
-	[-28.0, 48.0], // Near Africa
-	[-32.0, 55.0], // South
-	[-38.0, 52.0], // Far south
-	[-42.0, 58.0], // Deep south
-	[-8.0, 50.0], // Northwest
-	[-14.0, 48.0], // West
+	// // TRUE Indian Ocean - west of Indonesia, south of India (40-80°E longitude)
+	[-11.0, 61.0], // West Indian Ocean (shifted NE)
+	[-16.0, 56.0], // Southwest
+	[-21.0, 61.0], // South-central west
+	[-26.0, 66.0], // South
+	[-31.0, 61.0], // Far south
+	[-36.0, 56.0], // Deep south
+	[-41.0, 61.0], // Southern Indian Ocean
+	[-46.0, 66.0], // Near Southern Ocean
+	[-21.0, 51.0], // Near Madagascar
+	[-26.0, 56.0], // South of Madagascar
+	[-31.0, 51.0], // Southwest
+	[-16.0, 66.0], // Central
+	[-11.0, 56.0], // West-central
+	[-6.0, 61.0], // Northwest
+	[-1.0, 66.0], // North
+	[-8.0, 71.0], // Central
+	[-14.0, 64.0], // West
+	[-18.0, 58.0], // Southwest
+	[-24.0, 54.0], // Near Africa
+	[-28.0, 61.0], // South
+	[-34.0, 58.0], // Far south
+	[-38.0, 64.0], // Deep south
+	[-4.0, 56.0], // Northwest
+	[-10.0, 54.0], // West
 
-	// Greenland Sea / Arctic
-	[72.0, -10.0],
-	[75.0, -5.0],
-	[70.0, -15.0],
-	[78.0, 0.0],
+	// // Greenland Sea / Arctic
+	// [72.0, -10.0],
+	// [75.0, -5.0],
+	// [70.0, -15.0],
+	// [78.0, 0.0],
 
-	// Barents Sea
-	[74.0, 30.0],
-	[72.0, 35.0],
-	[76.0, 25.0],
+	// // Barents Sea
+	// [74.0, 30.0],
+	// [72.0, 35.0],
+	// [76.0, 25.0],
 
-	// Southern Ocean / Drake Passage cluster
-	[-58.0, -65.0],
-	[-60.0, -60.0],
-	[-55.0, -68.0],
-	[-62.0, -55.0],
-	[-56.0, -72.0],
+	// // Southern Ocean / Drake Passage cluster
+	// [-58.0, -65.0],
+	// [-60.0, -60.0],
+	// [-55.0, -68.0],
+	// [-62.0, -55.0],
+	// [-56.0, -72.0],
 
-	// South of Australia
-	[-48.0, 140.0],
-	[-50.0, 135.0],
-	[-45.0, 145.0],
+	// // South of Australia
+	// [-48.0, 140.0],
+	// [-50.0, 135.0],
+	// [-45.0, 145.0],
 
-	// Mediterranean
-	[36.0, 18.0],
-	[38.0, 15.0],
-	[35.0, 25.0],
-	[40.0, 12.0],
+	// // Mediterranean
+	// [36.0, 18.0],
+	// [38.0, 15.0],
+	// [35.0, 25.0],
+	// [40.0, 12.0],
 
-	// North Sea
-	[56.0, 3.0],
-	[58.0, 0.0],
-	[54.0, 5.0],
+	// // North Sea
+	// [56.0, 3.0],
+	// [58.0, 0.0],
+	// [54.0, 5.0],
 
-	// Bering Sea
-	[58.0, -175.0],
-	[55.0, -170.0],
-	[60.0, 180.0],
+	// // Bering Sea
+	// [58.0, -175.0],
+	// [55.0, -170.0],
+	// [60.0, 180.0],
 
-	// Sea of Okhotsk
-	[52.0, 148.0],
-	[55.0, 150.0],
-	[50.0, 145.0],
+	// // Sea of Okhotsk
+	// [52.0, 148.0],
+	// [55.0, 150.0],
+	// [50.0, 145.0],
 
-	// Great Australian Bight
-	[-35.0, 130.0],
-	[-33.0, 125.0],
-	[-38.0, 135.0],
+	// // Great Australian Bight
+	// [-35.0, 130.0],
+	// [-33.0, 125.0],
+	// [-38.0, 135.0],
 
-	// Scattered lone points throughout the oceans
-	[48.0, -30.0], // Mid-Atlantic
-	[-10.0, -5.0], // Equatorial Atlantic
-	[-45.0, -30.0], // South Atlantic
-	[15.0, -45.0], // Central Atlantic
-	[-25.0, -40.0], // South Atlantic
-	[50.0, -135.0], // Northeast Pacific
-	[-30.0, -120.0], // South Pacific
-	[10.0, -130.0], // Central Pacific
-	[-8.0, -100.0], // Southeast Pacific
-	[28.0, -175.0], // Central Pacific
-	[-40.0, -170.0], // South Pacific
-	[45.0, 165.0], // Northwest Pacific
-	[-5.0, 155.0], // Western Pacific
-	[8.0, 140.0], // Micronesia region
-	[-15.0, 165.0], // Coral Sea
-	[-42.0, 80.0], // Southern Indian Ocean
-	[-5.0, 55.0], // Western Indian Ocean
-	[5.0, 80.0], // Sri Lanka region
-	[-50.0, 30.0], // South Atlantic / Southern Ocean
-	[-65.0, 90.0], // Southern Ocean
-	[-58.0, 0.0], // Southern Ocean
-	[65.0, -35.0], // North Atlantic / Greenland
-	[62.0, -20.0] // Iceland region
+	// // Scattered lone points throughout the oceans
+	// [48.0, -30.0], // Mid-Atlantic
+	// [-10.0, -5.0], // Equatorial Atlantic
+	// [-45.0, -30.0], // South Atlantic
+	// [15.0, -45.0], // Central Atlantic
+	// [-25.0, -40.0], // South Atlantic
+	// [50.0, -135.0], // Northeast Pacific
+	// [-30.0, -120.0], // South Pacific
+	// [10.0, -130.0], // Central Pacific
+	// [-8.0, -100.0], // Southeast Pacific
+	// [28.0, -175.0], // Central Pacific
+	// [-40.0, -170.0], // South Pacific
+	// [45.0, 165.0], // Northwest Pacific
+	// [-5.0, 155.0], // Western Pacific
+	// [8.0, 140.0], // Micronesia region
+	// [-15.0, 165.0], // Coral Sea
+	// [-42.0, 80.0], // Southern Indian Ocean
+	// [-5.0, 55.0], // Western Indian Ocean
+	// [5.0, 80.0], // Sri Lanka region
+	// [-50.0, 30.0], // South Atlantic / Southern Ocean
+	// [-65.0, 90.0], // Southern Ocean
+	// [-58.0, 0.0], // Southern Ocean
+	// [65.0, -35.0], // North Atlantic / Greenland
+	// [62.0, -20.0] // Iceland 
+	
+
 ];
+
+// Indian Ocean sampling locations (used for the globe markers)
+const indianOceanMarkers: [number, number][] = [
+	// Arabian Sea / west of India
+	[15.0, 65.0],
+	[12.0, 70.0],
+	[8.0, 72.0],
+	[18.0, 60.0],
+
+	// Equatorial Indian Ocean
+	[5.0, 75.0],
+	[0.0, 80.0],
+	[-5.0, 85.0],
+	[2.0, 90.0],
+
+	// Bay of Bengal / east of India
+	[12.0, 88.0],
+	[15.0, 85.0],
+	[10.0, 92.0],
+	[6.0, 90.0],
+
+	// South-central Indian Ocean
+	[-10.0, 68.0],
+	[-15.0, 75.0],
+	[-20.0, 70.0],
+	[-25.0, 80.0],
+	[-30.0, 88.0],
+
+	// Southeast Indian Ocean / west of Australia
+	[-22.0, 95.0],
+	[-28.0, 100.0],
+	[-18.0, 102.0],
+
+	// Near Indonesia (eastern Indian Ocean)
+	[-8.0, 110.0],
+	[-5.0, 105.0],
+	[-12.0, 115.0]
+];
+
+// A couple points next to Japan (kept explicitly so they don't get dropped by sampling)
+const japanMarkers: [number, number][] = [
+	[36.0, 145.0],
+	[38.0, 148.0]
+];
+
+// COBE has a hard limit on markers due to shader uniform array size.
+// Each marker uses 2 vec4 uniforms, and the shader allocates `u[64*2]`, so max markers = 64.
+const MAX_COBE_MARKERS = 64;
+
+function sampleEvenly<T>(arr: T[], count: number): T[] {
+	if (count >= arr.length) return arr;
+	if (count <= 0) return [];
+	const step = arr.length / count;
+	return Array.from({ length: count }, (_, i) => arr[Math.floor(i * step)]);
+}
+
+// Keep Indian Ocean present but not overwhelming.
+const INDIAN_MARKERS_TARGET = 9;
+const JAPAN_MARKERS_TARGET = 2;
+const BASE_MARKERS_TARGET = 53; // 9 + 53 = 62 (under the 64 marker limit)
+
+const sampledIndianMarkers = sampleEvenly(indianOceanMarkers, INDIAN_MARKERS_TARGET).slice(0, MAX_COBE_MARKERS);
+const sampledJapanMarkers = sampleEvenly(japanMarkers, JAPAN_MARKERS_TARGET).slice(0, MAX_COBE_MARKERS);
+const sampledBaseMarkers = sampleEvenly(baseOceanMarkers, BASE_MARKERS_TARGET).slice(
+	0,
+	Math.max(0, MAX_COBE_MARKERS - sampledIndianMarkers.length - sampledJapanMarkers.length)
+);
+const allOceanMarkers: [number, number][] = [
+	...sampledIndianMarkers,
+	...sampledJapanMarkers,
+	...sampledBaseMarkers
+];
+const indianMarkerCount = sampledIndianMarkers.length;
 
 interface OceanGlobeProps {
 	className?: string;
@@ -327,13 +402,13 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 				mapBrightness: isDark ? 12 : 2.5,
 				// Light: clean white globe, Dark: rich navy blue
 				baseColor: isDark ? [0.1, 0.14, 0.22] : [1, 1, 1],
-				// Light: primary blue (#233D7F), Dark: bright cyan-blue for visibility
-				markerColor: isDark ? [0.4, 0.75, 1.0] : [0.14, 0.24, 0.5],
+				// Primary blue markers (kept blue in both modes; brighter in dark for contrast)
+				markerColor: isDark ? [0.2, 0.45, 0.95] : [0.14, 0.24, 0.5],
 				// Subtle glow - dark mode gets a soft blue rim
 				glowColor: isDark ? [0.15, 0.25, 0.45] : [0.9, 0.92, 0.95],
-				markers: baseOceanMarkers.map((location) => ({
+				markers: allOceanMarkers.map((location) => ({
 					location,
-					size: 0.05
+					size: 0.07
 				})),
 				onRender: (state) => {
 					frameRef.current++;
@@ -347,9 +422,12 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 					state.height = width * 2;
 
 					// Staggered breathing animation - each marker pulses out of sync
-					state.markers = baseOceanMarkers.map((location, i) => {
+					state.markers = allOceanMarkers.map((location, i) => {
 						const phase = i * 0.5; // offset each marker's phase
-						const breathe = 0.06 + Math.sin(frameRef.current * 0.025 + phase) * 0.025;
+						const isIndianOceanMarker = i < indianMarkerCount;
+						const baseSize = 0.066 + (isIndianOceanMarker ? 0.006 : 0);
+						const amplitude = 0.01 + (isIndianOceanMarker ? 0.002 : 0);
+						const breathe = baseSize + Math.sin(frameRef.current * 0.025 + phase) * amplitude;
 						return { location, size: breathe };
 					});
 				}
