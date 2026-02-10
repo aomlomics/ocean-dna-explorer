@@ -117,7 +117,7 @@ export default function TaxaBarChart({
 					let currRanks;
 					let currColors;
 					//only display first DEFAULT_MAX_TAXONOMIES taxonomies if the list is new
-					const newTaxa = sortedRanks.some((r) => !taxonomies.includes(r));
+					const newTaxa = sortedRanks.length !== taxonomies.length || sortedRanks.some((r) => !taxonomies.includes(r));
 					if (sortedRanks.length > DEFAULT_MAX_TAXONOMIES && newTaxa) {
 						currRanks = sortedRanks.slice(0, DEFAULT_MAX_TAXONOMIES);
 						currColors = uniqueColors.slice(0, DEFAULT_MAX_TAXONOMIES);
