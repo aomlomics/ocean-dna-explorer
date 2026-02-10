@@ -11,6 +11,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import InfoButton from "../InfoButton";
 import PaginationControls from "../paginated/PaginationControls";
 import LoadingPaginationControls from "../paginated/LoadingPaginationControls";
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
@@ -40,6 +41,8 @@ export default function LibraryTaxaBarChart({
 	sampleIdsByLibId: Record<Library["lib_id"], Sample["id"]>;
 }) {
 	const ref = useRef<ChartJS<"bar", { x: string; y: number }[]>>(null);
+
+	const { textColor } = useDaisyTheme();
 
 	const [rank, setRank] = useState("kingdom" as (typeof TaxonomicRanks)[0]);
 	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
@@ -279,12 +282,14 @@ export default function LibraryTaxaBarChart({
 								display: true,
 								labels: {
 									boxWidth: 12,
-									font: { size: 10 }
+									font: { size: 10 },
+									color: textColor
 								}
 							},
 							title: {
 								display: true,
-								text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by Taxonomy (${rank})`
+								text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by Taxonomy (${rank})`,
+								color: textColor
 							},
 							zoom: {
 								zoom: {
@@ -315,16 +320,28 @@ export default function LibraryTaxaBarChart({
 								title: {
 									display: true,
 									text: averageBy
+								},
+								ticks: {
+									color: textColor
+								},
+								grid: {
+									color: textColor + "1a" // Add low opacity
 								}
 							},
 							y: {
 								stacked: true,
 								beginAtZero: true,
+								min: 0,
 								title: {
 									display: true,
 									text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"
 								},
-								min: 0
+								ticks: {
+									color: textColor
+								},
+								grid: {
+									color: textColor + "1a" // Add low opacity
+								}
 							}
 						}
 					}}

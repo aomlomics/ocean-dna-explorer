@@ -20,6 +20,7 @@ import ChartCopyButton from "./ChartCopyButton";
 import { DeadValueEnum } from "@/types/enums";
 import { getZodType } from "@/app/helpers/schema";
 import { SampleSchema } from "@/prisma/generated/zod";
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 ChartJS.register(TimeScale, LinearScale, PointElement, ScatterController, Title, Tooltip, Legend, zoomPlugin);
 
@@ -48,6 +49,8 @@ export default function SampleScatterPlog({
 	xyFields: (keyof Sample)[];
 }) {
 	const ref = useRef<ChartJS<"scatter", SamplePoint[]>>(null);
+
+	const { textColor } = useDaisyTheme();
 
 	const [xField, setXField] = useState("eventDate" as keyof Sample);
 	const [xType, setXType] = useState("date" as "date" | "number");
@@ -182,11 +185,15 @@ export default function SampleScatterPlog({
 						plugins: {
 							legend: {
 								display: true,
-								position: "top"
+								position: "top",
+								labels: {
+									color: textColor
+								}
 							},
 							title: {
 								display: true,
-								text: "Sample Depth vs. Event Date"
+								text: "Sample Depth vs. Event Date",
+								color: textColor
 							},
 							tooltip: {
 								callbacks: {
@@ -231,6 +238,12 @@ export default function SampleScatterPlog({
 								title: {
 									display: true,
 									text: xField
+								},
+								ticks: {
+									color: textColor
+								},
+								grid: {
+									color: textColor + "1a" // Add low opacity
 								}
 							},
 							y: {
@@ -249,6 +262,12 @@ export default function SampleScatterPlog({
 								title: {
 									display: true,
 									text: yField
+								},
+								ticks: {
+									color: textColor
+								},
+								grid: {
+									color: textColor + "1a" // Add low opacity
 								}
 							}
 						}
