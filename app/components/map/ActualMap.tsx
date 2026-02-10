@@ -269,7 +269,7 @@ export default function ActualMap({
 		}
 
 		if (locations[0].userDefined) {
-			for (const opt of Object.keys(locations[0].userDefined)) {
+			for (const opt in locations[0].userDefined) {
 				userDefinedOptions.add(opt);
 			}
 		}
@@ -322,7 +322,7 @@ export default function ActualMap({
 			}
 
 			if (nullLoc.userDefined) {
-				for (const opt of Object.keys(nullLoc.userDefined)) {
+				for (const opt in nullLoc.userDefined) {
 					userDefinedOptions.add(opt);
 				}
 			}
@@ -652,9 +652,7 @@ export default function ActualMap({
 							featureGroupRef.current.addLayer(new LCircle(s.center, s.radius));
 						}
 
-						for (const id of Object.keys(
-							(featureGroupRef.current as unknown as { _layers: Record<string, any> })._layers
-						)) {
+						for (const id in (featureGroupRef.current as unknown as { _layers: Record<string, any> })._layers) {
 							if (!(id in tempShapes)) {
 								tempShapes[id] = s;
 							}
@@ -905,7 +903,7 @@ export default function ActualMap({
 							position="topright"
 							onEdited={(e) => {
 								const temp = {} as typeof shapes;
-								for (const edit of Object.keys(e.layers._layers)) {
+								for (const edit in e.layers._layers) {
 									if (shapes[edit]) {
 										temp[edit] = getShape({
 											layerType: shapes[edit].type,
@@ -925,7 +923,7 @@ export default function ActualMap({
 							}}
 							onDeleted={(e) => {
 								const temp = { ...shapes };
-								for (const del of Object.keys(e.layers._layers)) {
+								for (const del in e.layers._layers) {
 									delete temp[del];
 								}
 								setShapes(temp);

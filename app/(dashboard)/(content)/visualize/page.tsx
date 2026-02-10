@@ -1,4 +1,4 @@
-import DateDepthScatterPlot from "@/app/components/charts/SampleScatterPlot";
+import SampleScatterPlot from "@/app/components/charts/SampleScatterPlot";
 import TaxaBarChart from "@/app/components/charts/TaxaBarChart";
 import SearchUI from "@/app/components/search/SearchUI";
 import { Library, Occurrence, Prisma, Sample, Taxonomy } from "@/app/generated/prisma/client";
@@ -26,6 +26,27 @@ function paramsPropToObj(params: { [key: string]: string | string[] | undefined 
 	}
 
 	return urlParams;
+}
+
+function getSampFields() {
+	const sampFields = new Set(["project_id"]) as Set<string>;
+	//build fields in fieldOrder
+	for (const f of TableMetadata.sample.fieldOrder!) {
+		sampFields.add(f);
+	}
+	for (const f of SampleScalarFieldEnumSchema.options.sort()) {
+		sampFields.add(f);
+	}
+
+	//remove bad fields
+	for (const omit of GlobalOmit) {
+		sampFields.delete(omit);
+	}
+	sampFields.delete("id");
+	sampFields.delete("userDefined");
+	sampFields.delete("samp_name");
+
+	return sampFields;
 }
 
 export default async function SearchLayout({
@@ -59,42 +80,28 @@ async function SuspenseSampleScatter({ params }: { params: { [key: string]: stri
 	});
 
 	const samples = await prisma.sample.findMany({
-		...(query as Prisma.SampleFindManyArgs),
-		orderBy: {
-			eventDate: "asc"
-		}
+		...(query as Prisma.SampleFindManyArgs)
 	});
 
-	const fields = new Set(["project_id"]) as Set<keyof Sample>;
-	//build fields in fieldOrder
-	for (const f of TableMetadata.sample.fieldOrder!) {
-		fields.add(f as keyof Sample);
-	}
-	for (const f of SampleScalarFieldEnumSchema.options.sort()) {
-		fields.add(f);
-	}
+	const fields = getSampFields();
 
-	//remove bad fields
-	for (const omit of GlobalOmit) {
-		fields.delete(omit as keyof Sample);
-	}
-	fields.delete("id");
-	fields.delete("userDefined");
-	fields.delete("samp_name");
+	const xyFields = new Set(["eventDate", "minimumDepthInMeters"]) as Set<string>;
+	const userDefinedFields = new Set() as Set<string>;
+	for (const f of Array.from(fields)) {
+		const key = f as keyof Sample;
+		const type = getZodType(SampleSchema.shape[key]).type;
 
-	const xyFields = new Set(["eventDate", "minimumDepthInMeters"]) as Set<keyof Sample>;
-	for (const f of fields) {
 		//remove all fields without any values
 		let hasVal = false;
 		for (const samp of samples) {
-			if (samp[f] !== null) {
+			if (samp[key] !== null) {
 				let isDead = false;
-				const type = getZodType(SampleSchema.shape[f]).type;
+
 				if (type !== "boolean") {
 					if (type === "date") {
-						isDead = (samp[f] as Date).getTime() in DeadValueEnum;
+						isDead = (samp[key] as Date).getTime() in DeadValueEnum;
 					} else {
-						isDead = (samp[f] as string | number) in DeadValueEnum;
+						isDead = (samp[key] as string | number) in DeadValueEnum;
 					}
 				}
 
@@ -103,23 +110,46 @@ async function SuspenseSampleScatter({ params }: { params: { [key: string]: stri
 					break;
 				}
 			}
+
+			//add userDefined fields
+			if (samp.userDefined) {
+				for (const ud in samp.userDefined) {
+					if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
+						fields.add(ud);
+						userDefinedFields.add(ud);
+
+						if (
+							!isNaN(parseFloat(samp.userDefined[ud])) ||
+							!isNaN(new Date(samp.userDefined[ud]) as unknown as number)
+						) {
+							xyFields.add(ud);
+						} else if (xyFields.has(ud)) {
+							xyFields.delete(ud);
+						}
+					}
+				}
+			}
 		}
 
 		if (!hasVal) {
 			fields.delete(f);
 		} else {
 			//add to xy field options
-			const type = getZodType(SampleSchema.shape[f]).type;
+			const type = getZodType(SampleSchema.shape[key]).type;
 			if (type === "integer" || type === "float" || type === "date") {
-				xyFields.add(f);
+				xyFields.add(key);
 			}
 		}
 	}
 
-	for (const f of fields) {
-	}
-
-	return <DateDepthScatterPlot samples={samples} fields={Array.from(fields)} xyFields={Array.from(xyFields)} />;
+	return (
+		<SampleScatterPlot
+			samples={samples}
+			fields={Array.from(fields)}
+			xyFields={Array.from(xyFields)}
+			userDefinedFields={userDefinedFields}
+		/>
+	);
 }
 
 async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | string[] | undefined } }) {
@@ -194,6 +224,10 @@ async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | s
 		taxonomiesById[taxa.id] = taxa;
 	}
 
+	const sampFields = getSampFields();
+	const fieldsWithValues = new Set() as Set<string>;
+	const userDefinedFields = new Set() as Set<string>;
+
 	const samplesById = {} as Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
 	const sampleIdsByLibId = {} as Record<Library["lib_id"], Sample["id"]>;
 	for (const samp of samples) {
@@ -201,6 +235,34 @@ async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | s
 
 		for (const lib of samp.Libraries) {
 			sampleIdsByLibId[lib.lib_id] = samp.id;
+		}
+
+		//check if fields have values
+		for (const f of sampFields) {
+			const key = f as keyof Sample;
+
+			if (!fieldsWithValues.has(f) && samp[key] != null) {
+				const type = getZodType(SampleSchema.shape[key]).type;
+
+				if (type !== "boolean") {
+					if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {
+						fieldsWithValues.add(f);
+					} else if (!((samp[key] as string | number) in DeadValueEnum)) {
+						fieldsWithValues.add(f);
+					}
+				}
+			}
+		}
+
+		//add userDefined fields
+		if (samp.userDefined) {
+			for (const ud in samp.userDefined) {
+				if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
+					sampFields.add(ud);
+					fieldsWithValues.add(ud);
+					userDefinedFields.add(ud);
+				}
+			}
 		}
 	}
 
@@ -211,6 +273,8 @@ async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | s
 			taxonomiesById={taxonomiesById}
 			samplesById={samplesById}
 			sampleIdsByLibId={sampleIdsByLibId}
+			sampFields={Array.from(sampFields)}
+			userDefinedFields={userDefinedFields}
 		/>
 	);
 }

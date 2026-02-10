@@ -39,14 +39,18 @@ type DataPoint = {
 	backgroundColor: string;
 } & typeof POINT_STYLES;
 
-export default function SampleScatterPlog({
+//TODO: style dates in legend properly (options.plugins.legend.labels.generateLabels)
+//TODO: add checklist for legendField
+export default function SampleScatterPlot({
 	samples,
 	fields,
-	xyFields
+	xyFields,
+	userDefinedFields
 }: {
 	samples: Sample[];
-	fields: (keyof Sample)[];
-	xyFields: (keyof Sample)[];
+	fields: string[];
+	xyFields: string[];
+	userDefinedFields?: Set<string>;
 }) {
 	const ref = useRef<ChartJS<"scatter", SamplePoint[]>>(null);
 
@@ -59,53 +63,116 @@ export default function SampleScatterPlog({
 	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
 
 	const [loading, setLoading] = useState(true);
-	const [datasets, setDatasets] = useState([] as DataPoint[]);
+	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
+		labels: string[];
+		datasets: DataPoint[];
+	});
 
 	useEffect(() => {
-		const type = getZodType(SampleSchema.shape[xField]).type;
+		if (userDefinedFields?.has(xField)) {
+			let tempType = "date" as typeof xType;
 
-		if (type === "integer" || type === "float") {
-			setXType("number");
-		} else if (type === "date") {
-			setXType("date");
+			for (const samp of samples) {
+				if (samp.userDefined && samp.userDefined[xField] != null) {
+					if (!isNaN(parseFloat(samp.userDefined[xField]))) {
+						tempType = "number";
+						break;
+					}
+				}
+			}
+
+			setXType(tempType);
+		} else {
+			const type = getZodType(SampleSchema.shape[xField]).type;
+
+			if (type === "integer" || type === "float") {
+				setXType("number");
+			} else if (type === "date") {
+				setXType("date");
+			}
 		}
 	}, [xField]);
 
 	useEffect(() => {
-		const type = getZodType(SampleSchema.shape[yField]).type;
+		if (userDefinedFields?.has(yField)) {
+			let tempType = "date" as typeof yType;
 
-		if (type === "integer" || type === "float") {
-			setYType("number");
-		} else if (type === "date") {
-			setYType("date");
+			for (const samp of samples) {
+				if (samp.userDefined && samp.userDefined[yField] != null) {
+					if (!isNaN(parseFloat(samp.userDefined[yField]))) {
+						tempType = "number";
+						break;
+					}
+				}
+			}
+
+			setYType(tempType);
+		} else {
+			const type = getZodType(SampleSchema.shape[yField]).type;
+
+			if (type === "integer" || type === "float") {
+				setYType("number");
+			} else if (type === "date") {
+				setYType("date");
+			}
 		}
 	}, [yField]);
 
 	useEffect(() => {
+		const labels = new Set() as Set<string>;
 		//construct datasets using legendField
 		const tempDatasets = samples.reduce(
 			(acc, p) => {
-				const val = p[legendField as keyof Sample];
+				let val = null;
+				if (userDefinedFields?.has(legendField)) {
+					if (p.userDefined) {
+						val = p.userDefined[legendField];
+					}
+				} else {
+					val = p[legendField];
+				}
 
-				if (val !== null) {
-					const setIndex = acc.findIndex((s) => s.label === val);
-					const xVal = p[xField] as number | Date | null;
-					const yVal = p[yField] as number | Date | null;
-
-					if (
-						xVal !== null &&
-						!(typeof xVal === "number" ? xVal in DeadValueEnum : xVal.getTime() in DeadValueEnum) &&
-						yVal !== null &&
-						!(typeof yVal === "number" ? yVal in DeadValueEnum : yVal.getTime() in DeadValueEnum)
-					) {
-						if (setIndex !== -1) {
-							acc[setIndex].data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
+				if (val != null && !((val as string | number) in DeadValueEnum) && val !== "") {
+					let xVal = null as number | Date | null;
+					if (userDefinedFields?.has(xField) && p.userDefined) {
+						if (xType === "number") {
+							xVal = parseFloat(p.userDefined[xField]);
 						} else {
-							acc.push({
-								label: val.toString(),
-								data: [{ x: xVal, y: yVal, samp_name: p.samp_name }],
-								...POINT_STYLES
-							});
+							xVal = new Date(p.userDefined[xField]);
+						}
+					} else {
+						xVal = p[xField] as typeof xVal;
+					}
+
+					if (xVal !== null && !(typeof xVal === "number" ? xVal in DeadValueEnum : xVal.getTime() in DeadValueEnum)) {
+						let yVal = null as number | Date | null;
+						if (userDefinedFields?.has(yField) && p.userDefined) {
+							if (yType === "number") {
+								yVal = parseFloat(p.userDefined[yField]);
+							} else {
+								yVal = new Date(p.userDefined[yField]);
+							}
+						} else {
+							yVal = p[yField] as typeof yVal;
+						}
+
+						if (
+							yVal !== null &&
+							!(typeof yVal === "number" ? yVal in DeadValueEnum : yVal.getTime() in DeadValueEnum)
+						) {
+							const setIndex = acc.findIndex((s) => s.label === val);
+
+							if (setIndex !== -1) {
+								acc[setIndex].data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
+							} else {
+								const label = val.toString();
+								labels.add(label);
+								acc.push({
+									label,
+									data: [{ x: xVal, y: yVal, samp_name: p.samp_name }],
+									...POINT_STYLES
+								});
+							}
 						}
 					}
 				}
@@ -121,7 +188,7 @@ export default function SampleScatterPlog({
 			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
 		});
 
-		setDatasets(tempDatasets as DataPoint[]);
+		setChartData({ labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] });
 		setLoading(false);
 	}, [xField, yField, legendField]);
 
@@ -141,7 +208,12 @@ export default function SampleScatterPlog({
 					>
 						{xyFields.reduce((acc, f) => {
 							if (f !== yField && f !== legendField) {
-								acc.push(<option key={f}>{f}</option>);
+								acc.push(
+									<option key={f} value={f}>
+										{f}
+										{userDefinedFields?.has(f) ? " (UD)" : ""}
+									</option>
+								);
 							}
 
 							return acc;
@@ -162,7 +234,12 @@ export default function SampleScatterPlog({
 					>
 						{xyFields.reduce((acc, f) => {
 							if (f !== xField && f !== legendField) {
-								acc.push(<option key={f}>{f}</option>);
+								acc.push(
+									<option key={f} value={f}>
+										{f}
+										{userDefinedFields?.has(f) ? " (UD)" : ""}
+									</option>
+								);
 							}
 
 							return acc;
@@ -183,7 +260,12 @@ export default function SampleScatterPlog({
 					>
 						{fields.reduce((acc, f) => {
 							if (f !== xField && f !== yField) {
-								acc.push(<option key={f}>{f}</option>);
+								acc.push(
+									<option key={f} value={f}>
+										{f}
+										{userDefinedFields?.has(f) ? " (UD)" : ""}
+									</option>
+								);
 							}
 
 							return acc;
@@ -200,7 +282,7 @@ export default function SampleScatterPlog({
 
 			<Scatter
 				ref={ref}
-				data={{ datasets }}
+				data={chartData}
 				options={{
 					responsive: true,
 					plugins: {

@@ -271,7 +271,7 @@ export const DataTableNames = TableNames.filter((t) => t !== "tag") as Uncapital
 
 //duplicates keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
-for (const model of Object.keys(Prisma.ModelName)) {
+for (const model in Prisma.ModelName) {
 	(TableMetadata as any)[model] = TableMetadata[uncapitalizeTable(model as Prisma.ModelName)];
 }
 

@@ -2,10 +2,10 @@
 
 import { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import { Bar } from "react-chartjs-2";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import distinctColors from "distinct-colors";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-import { TaxonomicRanks } from "@/types/objects";
+import { RankPlurals, TaxonomicRanks } from "@/types/objects";
 import ChartCopyButton from "./ChartCopyButton";
 import zoomPlugin from "chartjs-plugin-zoom";
 import InfoButton from "../InfoButton";
@@ -22,7 +22,9 @@ export default function TaxaBarChart({
 	assignments,
 	taxonomiesById,
 	samplesById,
-	sampleIdsByLibId
+	sampleIdsByLibId,
+	sampFields,
+	userDefinedFields
 }: {
 	occsByFeatureid: Record<
 		Occurrence["featureid"],
@@ -41,6 +43,8 @@ export default function TaxaBarChart({
 	taxonomiesById: Record<Taxonomy["id"], Omit<Taxonomy, "taxonomy" | "verbatimIdentification">>;
 	samplesById: Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
 	sampleIdsByLibId: Record<Library["lib_id"], Sample["id"]>;
+	sampFields: string[];
+	userDefinedFields?: Set<string>;
 }) {
 	const ref = useRef<ChartJS<"bar", { x: string; y: number }[]>>(null);
 
@@ -147,7 +151,16 @@ export default function TaxaBarChart({
 					let averageByGroups = {} as Record<string, Library["lib_id"][]>;
 					if (averageBy !== "lib_id") {
 						for (const lib_id of libIds) {
-							const val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() || "undefined";
+							let val;
+							if (userDefinedFields?.has(averageBy)) {
+								if (samplesById[sampleIdsByLibId[lib_id]].userDefined) {
+									val = samplesById[sampleIdsByLibId[lib_id]].userDefined![averageBy]?.toString() || "undefined";
+								} else {
+									val = "undefined";
+								}
+							} else {
+								val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() || "undefined";
+							}
 
 							if (averageByGroups[val]) {
 								averageByGroups[val].push(lib_id);
@@ -269,9 +282,18 @@ export default function TaxaBarChart({
 						disabled={loading}
 					>
 						<option>lib_id</option>
-						<option>samp_collect_method</option>
+						{sampFields.map((f) => (
+							<option key={f} value={f}>
+								{f}
+								{userDefinedFields?.has(f) ? " (UD)" : ""}
+							</option>
+						))}
 					</select>
 				</fieldset>
+
+				<button className="btn mt-7" onClick={() => ref.current?.resetZoom()} disabled={loading}>
+					Reset Zoom
+				</button>
 
 				<ChartCopyButton ref={ref} disabled={loading} />
 			</div>
@@ -281,7 +303,7 @@ export default function TaxaBarChart({
 					<InfoButton infoText="Selecting many taxonomies may cause lag" type="warning" />
 
 					<Checklist
-						label="Taxonomies"
+						label={RankPlurals[rank]}
 						list={taxonomies}
 						colorList={taxaColors}
 						listFilter={taxonomiesFilter}

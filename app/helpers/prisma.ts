@@ -664,7 +664,7 @@ export async function updateManyRaw(
 	//get fields from data
 	const fieldsWithId = new Set() as Set<string>;
 	for (const d of data) {
-		for (const field of Object.keys(d)) {
+		for (const field in d) {
 			fieldsWithId.add(field);
 		}
 	}
