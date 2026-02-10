@@ -9,11 +9,13 @@ import { TaxonomicRanks } from "@/types/objects";
 import ChartCopyButton from "./ChartCopyButton";
 import zoomPlugin from "chartjs-plugin-zoom";
 import InfoButton from "../InfoButton";
-import PaginationControls from "../paginated/PaginationControls";
-import LoadingPaginationControls from "../paginated/LoadingPaginationControls";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
+import Checklist from "../Checklist";
+import chroma from "chroma-js";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
+
+const DEFAULT_MAX_TAXONOMIES = 20;
 
 export default function TaxaBarChart({
 	occsByFeatureid,
@@ -48,9 +50,12 @@ export default function TaxaBarChart({
 	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
 	const [averageBy, setAverageBy] = useState("lib_id");
 
-	const [taxaPerPage, setTaxaPerPage] = useState(20);
-	const [taxaPage, setTaxaPage] = useState(1);
-	const [taxaCount, setTaxaCount] = useState(0);
+	const [taxonomies, setTaxonomies] = useState([] as string[]);
+	const [taxaColors, setTaxaColors] = useState([] as chroma.Color[]);
+	const [taxonomiesFilter, setTaxonomiesFilter] = useState({} as Record<string, true>);
+	const [taxaFilterGate, setTaxaFilterGate] = useState(false); //used to set default filter without retriggering effect
+	const [xLabels, setXLabels] = useState([] as string[]);
+	const [xLabelsFilter, setXLabelsFilter] = useState({} as Record<string, true>);
 
 	const [loading, setLoading] = useState(true);
 	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
@@ -64,116 +69,158 @@ export default function TaxaBarChart({
 	});
 
 	useEffect(() => {
-		if (!(averageBy !== "lib_id" && metricType === "absolute")) {
-			//assemble counts on label.rank
-			const rankValues = new Set() as Set<string>;
-			const libIdRankQuantities = {} as Record<string, Record<string, number>>;
-			for (const assign of assignments) {
-				if (occsByFeatureid[assign.featureid]) {
-					let rankVal = taxonomiesById[assign.Taxonomy.id][rank];
-					if (!rankVal) {
-						rankVal = "undefined";
-					}
-					rankValues.add(rankVal);
+		if (taxaFilterGate) {
+			setTaxaFilterGate(false);
+		} else {
+			async function doLoad() {
+				if (!(averageBy !== "lib_id" && metricType === "absolute")) {
+					//give control back to browser to display loading
+					await new Promise((resolve) => setTimeout(resolve, 1));
 
-					for (const occ of occsByFeatureid[assign.featureid]) {
-						if (!libIdRankQuantities[occ.lib_id]) {
-							//initialize both library and rank
-							libIdRankQuantities[occ.lib_id] = {
-								[rankVal]: occ.organismQuantity
-							};
-						} else if (!libIdRankQuantities[occ.lib_id][rankVal]) {
-							//initialize rank
-							libIdRankQuantities[occ.lib_id][rankVal] = occ.organismQuantity;
+					//assemble counts on label.rank
+					const rankValues = new Set() as Set<string>;
+					const libIdRankQuantities = {} as Record<string, Record<string, number>>;
+					for (const assign of assignments) {
+						if (occsByFeatureid[assign.featureid]) {
+							let rankVal = taxonomiesById[assign.Taxonomy.id][rank];
+							if (!rankVal) {
+								rankVal = "undefined";
+							}
+							rankValues.add(rankVal);
+
+							for (const occ of occsByFeatureid[assign.featureid]) {
+								if (!libIdRankQuantities[occ.lib_id]) {
+									//initialize both library and rank
+									libIdRankQuantities[occ.lib_id] = {
+										[rankVal]: occ.organismQuantity
+									};
+								} else if (!libIdRankQuantities[occ.lib_id][rankVal]) {
+									//initialize rank
+									libIdRankQuantities[occ.lib_id][rankVal] = occ.organismQuantity;
+								} else {
+									//add to count
+									libIdRankQuantities[occ.lib_id][rankVal] += occ.organismQuantity;
+								}
+							}
+						}
+					}
+
+					const uniqueColors = distinctColors({ count: rankValues.size });
+					setTaxaColors(uniqueColors);
+					const sortedRanks = Array.from(rankValues).sort();
+					setTaxonomies(sortedRanks);
+
+					let currRanks;
+					let currColors;
+					//only display first DEFAULT_MAX_TAXONOMIES taxonomies if the list is new
+					const newTaxa = sortedRanks.some((r) => !taxonomies.includes(r));
+					if (sortedRanks.length > DEFAULT_MAX_TAXONOMIES && newTaxa) {
+						currRanks = sortedRanks.slice(0, DEFAULT_MAX_TAXONOMIES);
+						currColors = uniqueColors.slice(0, DEFAULT_MAX_TAXONOMIES);
+
+						setTaxaFilterGate(true);
+						setTaxonomiesFilter(
+							sortedRanks
+								.slice(DEFAULT_MAX_TAXONOMIES)
+								.reduce((acc, r) => ({ ...acc, [r]: true }), {} as typeof taxonomiesFilter)
+						);
+					} else {
+						currRanks = [...sortedRanks];
+						currColors = [...uniqueColors];
+
+						if (newTaxa) {
+							setTaxaFilterGate(true);
+							setTaxonomiesFilter({});
 						} else {
-							//add to count
-							libIdRankQuantities[occ.lib_id][rankVal] += occ.organismQuantity;
+							//filter taxonomies
+							for (let i = 0; i < currRanks.length; i++) {
+								if (taxonomiesFilter[currRanks[i]]) {
+									currRanks.splice(i, 1);
+									currColors.splice(i, 1);
+									i--;
+								}
+							}
 						}
 					}
-				}
-			}
 
-			setTaxaCount(rankValues.size);
-			let uniqueColors = distinctColors({ count: rankValues.size });
+					let libIds = Object.keys(libIdRankQuantities).sort();
+					let averageByGroups = {} as Record<string, Library["lib_id"][]>;
+					if (averageBy !== "lib_id") {
+						for (const lib_id of libIds) {
+							const val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() || "undefined";
 
-			let ranksOnPage = Array.from(rankValues).sort();
-			if (taxaPerPage < ranksOnPage.length) {
-				const start = (taxaPage - 1) * taxaPerPage;
-				ranksOnPage = ranksOnPage.slice(start, start + taxaPerPage);
-				uniqueColors = uniqueColors.slice(start, start + taxaPerPage);
-			}
-
-			const libIds = Object.keys(libIdRankQuantities).sort();
-
-			let averageByGroups = {} as Record<string, Library["lib_id"][]>;
-			if (averageBy !== "lib_id") {
-				for (const lib_id of libIds) {
-					const val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() || "undefined";
-
-					if (averageByGroups[val]) {
-						averageByGroups[val].push(lib_id);
-					} else {
-						averageByGroups[val] = [lib_id];
-					}
-				}
-			}
-			const groupLabels = Object.keys(averageByGroups).sort();
-
-			let tempYMax = 0;
-			setChartData({
-				labels: averageBy === "lib_id" ? libIds : groupLabels,
-				datasets: ranksOnPage.map((lev, i) => {
-					let data = [] as { x: string; y: number }[];
-					if (metricType === "relative") {
-						data = libIds.map((lib_id) => {
-							const absoluteValue = libIdRankQuantities[lib_id][lev];
-
-							if (absoluteValue) {
-								// Calculate total for this lib_id across all taxonomic values at this rank
-								const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, val) => sum + val, 0);
-								return { x: lib_id, y: (absoluteValue / total) * 100 };
+							if (averageByGroups[val]) {
+								averageByGroups[val].push(lib_id);
 							} else {
-								return { x: lib_id, y: 0 };
+								averageByGroups[val] = [lib_id];
 							}
-						});
-
-						if (averageBy !== "lib_id") {
-							data = groupLabels.map((val) => ({
-								x: val,
-								y:
-									averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)].y, 0) /
-									averageByGroups[val].length
-							}));
 						}
-					} else {
-						data = libIds.map((lib_id) => {
-							const y = libIdRankQuantities[lib_id][lev];
-							if (y > tempYMax) {
-								tempYMax = y;
-							}
+					}
+					let groupLabels = Object.keys(averageByGroups).sort();
 
-							return { x: lib_id, y };
-						});
+					//filter labels
+					let labels;
+					if (averageBy === "lib_id") {
+						setXLabels(libIds);
+						libIds = libIds.filter((l) => !xLabelsFilter[l]);
+						labels = libIds;
+					} else {
+						setXLabels(groupLabels);
+						groupLabels = groupLabels.filter((l) => !xLabelsFilter[l]);
+						labels = groupLabels;
 					}
 
-					return {
-						label: lev,
-						data,
-						borderColor: uniqueColors[i].hex(),
-						backgroundColor: uniqueColors[i].alpha(0.8).hex(),
-						borderWidth: 1,
-						barThickness: "flex"
-					};
-				})
-			});
-		}
+					setChartData({
+						labels,
+						datasets: currRanks.map((lev, i) => {
+							let data = [] as { x: string; y: number }[];
+							if (metricType === "relative") {
+								data = libIds.map((lib_id) => {
+									const absoluteValue = libIdRankQuantities[lib_id][lev];
 
-		setLoading(false);
-	}, [rank, metricType, averageBy, taxaPage, taxaPerPage]);
+									if (absoluteValue) {
+										// Calculate total for this lib_id across all taxonomic values at this rank
+										const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, val) => sum + val, 0);
+										return { x: lib_id, y: (absoluteValue / total) * 100 };
+									} else {
+										return { x: lib_id, y: 0 };
+									}
+								});
+
+								if (averageBy !== "lib_id") {
+									data = groupLabels.map((val) => ({
+										x: val,
+										y:
+											averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)].y, 0) /
+											averageByGroups[val].length
+									}));
+								}
+							} else {
+								data = libIds.map((lib_id) => ({ x: lib_id, y: libIdRankQuantities[lib_id][lev] }));
+							}
+
+							return {
+								label: lev,
+								data,
+								borderColor: currColors[i].hex(),
+								backgroundColor: currColors[i].alpha(0.8).hex(),
+								borderWidth: 1,
+								barThickness: "flex"
+							};
+						})
+					});
+				}
+
+				setLoading(false);
+			}
+
+			doLoad();
+		}
+	}, [rank, metricType, averageBy, taxonomiesFilter, xLabelsFilter]);
 
 	return (
 		<div className="relative">
-			<div className="w-full flex justify-center items-center gap-5">
+			<div className="w-full flex justify-center items-center gap-5 mb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 					<select
@@ -229,38 +276,27 @@ export default function TaxaBarChart({
 				<ChartCopyButton ref={ref} disabled={loading} />
 			</div>
 
-			<form
-				className="flex items-center justify-center gap-2"
-				onSubmit={(e) => {
-					e.preventDefault();
-					const val = parseInt(new FormData(e.target as HTMLFormElement).get("taxaPerPage") as string);
-					if (!isNaN(val)) {
-						setLoading(true);
-						setTaxaPerPage(val);
-					}
-				}}
-			>
-				<fieldset className="fieldset">
-					<legend className="fieldset-legend w-full">
-						<span>Taxa Per Page:</span>
-						<InfoButton infoText="Making this too large can cause lag." type="warning" />
-					</legend>
-					<input type="number" name="taxaPerPage" className="input" defaultValue={taxaPerPage} disabled={loading} />
-				</fieldset>
-				<button className="btn btn-sm mt-7">Set</button>
-			</form>
-			<div className="flex justify-between items-center">
-				{loading ? (
-					<LoadingPaginationControls />
-				) : (
-					<PaginationControls
-						page={taxaPage}
-						take={taxaPerPage}
-						count={taxaCount}
-						setPage={setTaxaPage}
+			<div className="w-full flex justify-center items-center gap-5">
+				<div className="flex gap-1">
+					<InfoButton infoText="Selecting many taxonomies may cause lag" type="warning" />
+
+					<Checklist
+						label="Taxonomies"
+						list={taxonomies}
+						colorList={taxaColors}
+						listFilter={taxonomiesFilter}
+						setListFilter={setTaxonomiesFilter}
 						sideEffect={() => setLoading(true)}
 					/>
-				)}
+				</div>
+
+				<Checklist
+					label={`"${averageBy}"s`}
+					list={xLabels}
+					listFilter={xLabelsFilter}
+					setListFilter={setXLabelsFilter}
+					sideEffect={() => setLoading(true)}
+				/>
 			</div>
 
 			<Bar
@@ -327,6 +363,7 @@ export default function TaxaBarChart({
 							stacked: true,
 							beginAtZero: true,
 							min: 0,
+							max: metricType === "relative" ? 100 : undefined,
 							title: {
 								display: true,
 								text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"

@@ -213,7 +213,7 @@ export default function SampleScatterPlog({
 						},
 						title: {
 							display: true,
-							text: "Sample Depth vs. Event Date",
+							text: `Sample ${yField} vs. ${xField}`,
 							color: textColor
 						},
 						tooltip: {

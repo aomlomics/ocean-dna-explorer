@@ -38,9 +38,13 @@ export default async function SearchLayout({
 	return (
 		<>
 			<SearchUI noTable />
+
 			<Suspense fallback={<>Loading...</>}>
 				<SuspenseSampleScatter params={params} />
 			</Suspense>
+
+			<div className="border-t border-primary pt-3 mt-3"></div>
+
 			<Suspense fallback={<>Loading...</>}>
 				<SuspenseTaxaBar params={params} />
 			</Suspense>

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
 import AnalysisTag from "../tags/AnalysisTag";
+import Checklist from "../Checklist";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
 
@@ -388,84 +389,15 @@ export default function Table({
 					/>
 					{/* Column Selection Button */}
 					<div className="grid grid-cols-2 w-full gap-5 flex-1">
-						<div className="dropdown dropdown-end justify-self-end">
-							<div tabIndex={0} role="button" className="btn btn-sm">
-								{headers.length - Object.keys(headersFilter).length}/{headers.length} Columns
-							</div>
-							{/* Dropdown */}
-							<div tabIndex={0} className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden">
-								<div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">
-									{/* Header: All toggle + search */}
-									<div className="sticky top-0 bg-base-200 border-b border-base-300 p-2">
-										<div className="form-control flex-row items-center w-full gap-2 min-w-0">
-											<label className="label cursor-pointer justify-start gap-2 m-0 p-0">
-												<input
-													type="checkbox"
-													onChange={(e) => {
-														if (e.target.checked) {
-															setHeadersFilter({});
-														} else {
-															setHeadersFilter(
-																headers.reduce((acc: Record<string, true>, head) => {
-																	if (!headersFilter[head]) {
-																		return { ...acc, [head]: true };
-																	} else {
-																		return { ...acc };
-																	}
-																}, {})
-															);
-														}
-													}}
-													checked={!Object.values(headersFilter).some((bool) => bool)}
-													className="checkbox checkbox-xs"
-												/>
-												<span className="label-text text-sm">All</span>
-											</label>
-											<input
-												type="text"
-												onChange={(e) => setColumnsFilter(e.target.value)}
-												placeholder="Filter columns"
-												className="input input-bordered input-xs w-full flex-1 min-w-0"
-											/>
-										</div>
-									</div>
-
-									{/* Body: column list */}
-									<ul className="bg-base-100 max-h-64 overflow-y-auto overflow-x-hidden p-2 pt-1 w-full flex flex-col gap-1">
-										{headers.reduce((acc: ReactNode[], head, i) => {
-											//only render the header name if it is selected in the header name filter
-											if (head.toLowerCase().includes(columnsFilter.toLowerCase())) {
-												acc.push(
-													<li key={head + "_dropdown" + i}>
-														<label className="flex items-center cursor-pointer p-2 hover:bg-base-200 rounded w-full gap-2 min-w-0">
-															<input
-																type="checkbox"
-																checked={!headersFilter[head]}
-																onChange={() => {
-																	const temp = { ...headersFilter };
-																	if (headersFilter[head]) {
-																		delete temp[head];
-																	} else {
-																		temp[head] = true;
-																	}
-																	setHeadersFilter(temp);
-																}}
-																className="checkbox checkbox-xs"
-															/>
-															<span className="text-sm pl-2 truncate max-w-full">
-																{head} {userDefinedHeaders.includes(head) && <sup className="text-xs">UD</sup>}
-															</span>
-														</label>
-													</li>
-												);
-											}
-
-											return acc;
-										}, [])}
-									</ul>
-								</div>
-							</div>
-						</div>
+						<Checklist
+							label="Columns"
+							list={headers}
+							listFilter={headersFilter}
+							setListFilter={setHeadersFilter}
+							extraLists={[{ list: userDefinedHeaders, label: "UD" }]}
+							className="justify-self-end"
+							buttonClassName="btn-sm"
+						/>
 
 						<fieldset className="fieldset bg-base-100 border-base-300">
 							<label className="label select-none">
