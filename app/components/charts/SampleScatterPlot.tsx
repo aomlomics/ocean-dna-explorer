@@ -58,7 +58,8 @@ export default function SampleScatterPlog({
 	const [yType, setYType] = useState("number" as "date" | "number");
 	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
 
-	const [datasets, setDatasets] = useState(undefined as DataPoint[] | undefined);
+	const [loading, setLoading] = useState(true);
+	const [datasets, setDatasets] = useState([] as DataPoint[]);
 
 	useEffect(() => {
 		const type = getZodType(SampleSchema.shape[xField]).type;
@@ -121,14 +122,23 @@ export default function SampleScatterPlog({
 		});
 
 		setDatasets(tempDatasets as DataPoint[]);
+		setLoading(false);
 	}, [xField, yField, legendField]);
 
 	return (
-		<>
+		<div className="relative">
 			<div className="w-full flex justify-center items-center gap-5">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">X-Axis:</legend>
-					<select value={xField} onChange={(e) => setXField(e.target.value as keyof Sample)} className="select">
+					<select
+						value={xField}
+						onChange={(e) => {
+							setLoading(true);
+							setXField(e.target.value as keyof Sample);
+						}}
+						className="select"
+						disabled={loading}
+					>
 						{xyFields.reduce((acc, f) => {
 							if (f !== yField && f !== legendField) {
 								acc.push(<option key={f}>{f}</option>);
@@ -141,7 +151,15 @@ export default function SampleScatterPlog({
 
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Y-Axis:</legend>
-					<select value={yField} onChange={(e) => setYField(e.target.value as keyof Sample)} className="select">
+					<select
+						value={yField}
+						onChange={(e) => {
+							setLoading(true);
+							setYField(e.target.value as keyof Sample);
+						}}
+						className="select"
+						disabled={loading}
+					>
 						{xyFields.reduce((acc, f) => {
 							if (f !== xField && f !== legendField) {
 								acc.push(<option key={f}>{f}</option>);
@@ -156,8 +174,12 @@ export default function SampleScatterPlog({
 					<legend className="fieldset-legend">Color points by:</legend>
 					<select
 						value={legendField}
-						onChange={(e) => setLegendField(e.target.value as keyof Sample)}
+						onChange={(e) => {
+							setLoading(true);
+							setLegendField(e.target.value as keyof Sample);
+						}}
 						className="select"
+						disabled={loading}
 					>
 						{fields.reduce((acc, f) => {
 							if (f !== xField && f !== yField) {
@@ -169,113 +191,111 @@ export default function SampleScatterPlog({
 					</select>
 				</fieldset>
 
-				<button className="btn mt-7" onClick={() => ref.current?.resetZoom()}>
+				<button className="btn mt-7" onClick={() => ref.current?.resetZoom()} disabled={loading}>
 					Reset Zoom
 				</button>
 
-				<ChartCopyButton ref={ref} />
+				<ChartCopyButton ref={ref} disabled={loading} />
 			</div>
 
-			{datasets ? (
-				<Scatter
-					ref={ref}
-					data={{ datasets }}
-					options={{
-						responsive: true,
-						plugins: {
-							legend: {
-								display: true,
-								position: "top",
-								labels: {
-									color: textColor
-								}
-							},
-							title: {
-								display: true,
-								text: "Sample Depth vs. Event Date",
+			<Scatter
+				ref={ref}
+				data={{ datasets }}
+				options={{
+					responsive: true,
+					plugins: {
+						legend: {
+							display: true,
+							position: "top",
+							labels: {
 								color: textColor
-							},
-							tooltip: {
-								callbacks: {
-									afterLabel: (ctx) => (ctx.raw as SamplePoint).samp_name
-								}
-							},
-							zoom: {
-								zoom: {
-									wheel: {
-										enabled: true
-									},
-									pinch: {
-										enabled: true
-									},
-									drag: {
-										enabled: true,
-										backgroundColor: "rgba(225, 225, 225, 0.3)",
-										borderColor: "rgba(225, 225, 225, 0.8)",
-										borderWidth: 1
-									}
-								},
-								pan: {
-									enabled: true,
-									modifierKey: "shift"
-								}
 							}
 						},
-						scales: {
-							x: {
-								...(xType === "date"
-									? {
-											type: "time",
-											time: {
-												unit: "day",
-												tooltipFormat: "yyyy MMM dd",
-												displayFormats: {
-													day: "yyyy MMM dd"
-												}
-											}
-										}
-									: {}),
-								title: {
-									display: true,
-									text: xField
+						title: {
+							display: true,
+							text: "Sample Depth vs. Event Date",
+							color: textColor
+						},
+						tooltip: {
+							callbacks: {
+								afterLabel: (ctx) => (ctx.raw as SamplePoint).samp_name
+							}
+						},
+						zoom: {
+							zoom: {
+								wheel: {
+									enabled: true
 								},
-								ticks: {
-									color: textColor
+								pinch: {
+									enabled: true
 								},
-								grid: {
-									color: textColor + "1a" // Add low opacity
+								drag: {
+									enabled: true,
+									backgroundColor: "rgba(225, 225, 225, 0.3)",
+									borderColor: "rgba(225, 225, 225, 0.8)",
+									borderWidth: 1
 								}
 							},
-							y: {
-								...(yType === "date"
-									? {
-											type: "time",
-											time: {
-												unit: "day",
-												tooltipFormat: "yyyy MMM dd",
-												displayFormats: {
-													day: "yyyy MMM dd"
-												}
-											}
-										}
-									: {}),
-								title: {
-									display: true,
-									text: yField
-								},
-								ticks: {
-									color: textColor
-								},
-								grid: {
-									color: textColor + "1a" // Add low opacity
-								}
+							pan: {
+								enabled: true,
+								modifierKey: "shift"
 							}
 						}
-					}}
-				/>
-			) : (
-				<></>
-			)}
-		</>
+					},
+					scales: {
+						x: {
+							...(xType === "date"
+								? {
+										type: "time",
+										time: {
+											unit: "day",
+											tooltipFormat: "yyyy MMM dd",
+											displayFormats: {
+												day: "yyyy MMM dd"
+											}
+										}
+									}
+								: {}),
+							title: {
+								display: true,
+								text: xField
+							},
+							ticks: {
+								color: textColor
+							},
+							grid: {
+								color: textColor + "1a" // Add low opacity
+							}
+						},
+						y: {
+							...(yType === "date"
+								? {
+										type: "time",
+										time: {
+											unit: "day",
+											tooltipFormat: "yyyy MMM dd",
+											displayFormats: {
+												day: "yyyy MMM dd"
+											}
+										}
+									}
+								: {}),
+							title: {
+								display: true,
+								text: yField
+							},
+							ticks: {
+								color: textColor
+							},
+							grid: {
+								color: textColor + "1a" // Add low opacity
+							}
+						}
+					}
+				}}
+			/>
+
+			{loading ? <div className="absolute left-0 top-0 w-full h-full bg-black/20 rounded-md"></div> : <></>}
+		</div>
 	);
 }

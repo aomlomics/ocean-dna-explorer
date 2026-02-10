@@ -1,11 +1,11 @@
 import DateDepthScatterPlot from "@/app/components/charts/SampleScatterPlot";
-import LibraryTaxaBarChart from "@/app/components/charts/LibraryTaxaBarChart";
+import TaxaBarChart from "@/app/components/charts/TaxaBarChart";
 import SearchUI from "@/app/components/search/SearchUI";
 import { Library, Occurrence, Prisma, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { SampleScalarFieldEnumSchema, SampleSchema } from "@/prisma/generated/zod";
-import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
+import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { Suspense } from "react";
@@ -38,11 +38,11 @@ export default async function SearchLayout({
 	return (
 		<>
 			<SearchUI noTable />
-			<Suspense>
+			<Suspense fallback={<>Loading...</>}>
 				<SuspenseSampleScatter params={params} />
 			</Suspense>
-			<Suspense>
-				<SuspenseLibraryTaxaBar params={params} />
+			<Suspense fallback={<>Loading...</>}>
+				<SuspenseTaxaBar params={params} />
 			</Suspense>
 		</>
 	);
@@ -118,7 +118,7 @@ async function SuspenseSampleScatter({ params }: { params: { [key: string]: stri
 	return <DateDepthScatterPlot samples={samples} fields={Array.from(fields)} xyFields={Array.from(xyFields)} />;
 }
 
-async function SuspenseLibraryTaxaBar({ params }: { params: { [key: string]: string | string[] | undefined } }) {
+async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | string[] | undefined } }) {
 	const { query: occQuery } = parseApiQuery("occurrence", paramsPropToObj(params), {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
@@ -201,7 +201,7 @@ async function SuspenseLibraryTaxaBar({ params }: { params: { [key: string]: str
 	}
 
 	return (
-		<LibraryTaxaBarChart
+		<TaxaBarChart
 			occsByFeatureid={occsByFeatureid}
 			assignments={assignments}
 			taxonomiesById={taxonomiesById}

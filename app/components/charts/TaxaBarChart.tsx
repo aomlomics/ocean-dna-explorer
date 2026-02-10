@@ -15,7 +15,7 @@ import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
-export default function LibraryTaxaBarChart({
+export default function TaxaBarChart({
 	occsByFeatureid,
 	assignments,
 	taxonomiesById,
@@ -52,20 +52,16 @@ export default function LibraryTaxaBarChart({
 	const [taxaPage, setTaxaPage] = useState(1);
 	const [taxaCount, setTaxaCount] = useState(0);
 
-	const [loading, setLoading] = useState(false);
-	const [chartData, setChartData] = useState(
-		undefined as
-			| {
-					labels: string[];
-					datasets: {
-						data: { x: string; y: number }[];
-						borderColor: string;
-						backgroundColor: string;
-						borderWidth: number;
-					}[];
-			  }
-			| undefined
-	);
+	const [loading, setLoading] = useState(true);
+	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
+		labels: string[];
+		datasets: {
+			data: { x: string; y: number }[];
+			borderColor: string;
+			backgroundColor: string;
+			borderWidth: number;
+		}[];
+	});
 
 	useEffect(() => {
 		if (!(averageBy !== "lib_id" && metricType === "absolute")) {
@@ -267,88 +263,84 @@ export default function LibraryTaxaBarChart({
 				)}
 			</div>
 
-			{chartData ? (
-				<Bar
-					ref={ref}
-					data={chartData}
-					options={{
-						responsive: true,
-						parsing: false,
-						normalized: true,
-						animation: false,
-						plugins: {
-							legend: {
-								position: "top",
-								display: true,
-								labels: {
-									boxWidth: 12,
-									font: { size: 10 },
-									color: textColor
-								}
-							},
-							title: {
-								display: true,
-								text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by Taxonomy (${rank})`,
+			<Bar
+				ref={ref}
+				data={chartData}
+				options={{
+					responsive: true,
+					parsing: false,
+					normalized: true,
+					animation: false,
+					plugins: {
+						legend: {
+							position: "top",
+							display: true,
+							labels: {
+								boxWidth: 12,
+								font: { size: 10 },
 								color: textColor
-							},
-							zoom: {
-								zoom: {
-									mode: "x",
-									wheel: {
-										enabled: true
-									},
-									pinch: {
-										enabled: true
-									},
-									drag: {
-										enabled: true,
-										backgroundColor: "rgba(225, 225, 225, 0.3)",
-										borderColor: "rgba(225, 225, 225, 0.8)",
-										borderWidth: 1
-									}
-								},
-								pan: {
-									enabled: true,
-									mode: "x",
-									modifierKey: "shift"
-								}
 							}
 						},
-						scales: {
-							x: {
-								stacked: true,
-								title: {
-									display: true,
-									text: averageBy
+						title: {
+							display: true,
+							text: `${metricType === "relative" ? "Relative Abundance" : "Occurrences"} ${averageBy !== "lib_id" ? `averaged by ${averageBy}` : "in each Library"} colored by Taxonomy (${rank})`,
+							color: textColor
+						},
+						zoom: {
+							zoom: {
+								mode: "x",
+								wheel: {
+									enabled: true
 								},
-								ticks: {
-									color: textColor
+								pinch: {
+									enabled: true
 								},
-								grid: {
-									color: textColor + "1a" // Add low opacity
+								drag: {
+									enabled: true,
+									backgroundColor: "rgba(225, 225, 225, 0.3)",
+									borderColor: "rgba(225, 225, 225, 0.8)",
+									borderWidth: 1
 								}
 							},
-							y: {
-								stacked: true,
-								beginAtZero: true,
-								min: 0,
-								title: {
-									display: true,
-									text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"
-								},
-								ticks: {
-									color: textColor
-								},
-								grid: {
-									color: textColor + "1a" // Add low opacity
-								}
+							pan: {
+								enabled: true,
+								mode: "x",
+								modifierKey: "shift"
 							}
 						}
-					}}
-				/>
-			) : (
-				<></>
-			)}
+					},
+					scales: {
+						x: {
+							stacked: true,
+							title: {
+								display: true,
+								text: averageBy
+							},
+							ticks: {
+								color: textColor
+							},
+							grid: {
+								color: textColor + "1a" // Add low opacity
+							}
+						},
+						y: {
+							stacked: true,
+							beginAtZero: true,
+							min: 0,
+							title: {
+								display: true,
+								text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"
+							},
+							ticks: {
+								color: textColor
+							},
+							grid: {
+								color: textColor + "1a" // Add low opacity
+							}
+						}
+					}
+				}}
+			/>
 
 			{loading ? <div className="absolute left-0 top-0 w-full h-full bg-black/20 rounded-md"></div> : <></>}
 		</div>
