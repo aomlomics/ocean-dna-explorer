@@ -49,7 +49,7 @@ function getSampFields() {
 	return sampFields;
 }
 
-export default async function SearchLayout({
+export default async function Visualize({
 	searchParams
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -74,7 +74,9 @@ export default async function SearchLayout({
 }
 
 async function SuspenseSampleScatter({ params }: { params: { [key: string]: string | string[] | undefined } }) {
-	const { query } = parseApiQuery("sample", paramsPropToObj(params), {
+	const searchParams = paramsPropToObj(params);
+
+	const { query } = parseApiQuery("sample", searchParams, {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
 	});
@@ -144,6 +146,7 @@ async function SuspenseSampleScatter({ params }: { params: { [key: string]: stri
 
 	return (
 		<SampleScatterPlot
+			key={searchParams.toString()}
 			samples={samples}
 			fields={Array.from(fields)}
 			xyFields={Array.from(xyFields)}
@@ -153,19 +156,21 @@ async function SuspenseSampleScatter({ params }: { params: { [key: string]: stri
 }
 
 async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | string[] | undefined } }) {
-	const { query: occQuery } = parseApiQuery("occurrence", paramsPropToObj(params), {
+	const searchParams = paramsPropToObj(params);
+
+	const { query: occQuery } = parseApiQuery("occurrence", searchParams, {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
 	});
-	const { query: assignQuery } = parseApiQuery("assignment", paramsPropToObj(params), {
+	const { query: assignQuery } = parseApiQuery("assignment", searchParams, {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
 	});
-	const { query: taxaQuery } = parseApiQuery("taxonomy", paramsPropToObj(params), {
+	const { query: taxaQuery } = parseApiQuery("taxonomy", searchParams, {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
 	});
-	const { query: sampleQuery } = parseApiQuery("sample", paramsPropToObj(params), {
+	const { query: sampleQuery } = parseApiQuery("sample", searchParams, {
 		features: { advanced: true, shapes: true },
 		swapToTable: true
 	});
@@ -268,6 +273,7 @@ async function SuspenseTaxaBar({ params }: { params: { [key: string]: string | s
 
 	return (
 		<TaxaBarChart
+			key={searchParams.toString()}
 			occsByFeatureid={occsByFeatureid}
 			assignments={assignments}
 			taxonomiesById={taxonomiesById}

@@ -31,10 +31,9 @@ export default function Checklist({
 			<div tabIndex={0} role="button" className={`btn${buttonClassName ? " " + buttonClassName : ""}`}>
 				{list.length - Object.keys(listFilter).length}/{list.length} {label}
 			</div>
-			{/* Dropdown */}
+
 			<div tabIndex={0} className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden">
 				<div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">
-					{/* Header: All toggle + search */}
 					<div className="sticky top-0 bg-base-200 border-b border-base-300 p-2">
 						<div className="form-control flex-row items-center w-full gap-2 min-w-0">
 							<label className="label cursor-pointer justify-start gap-2 m-0 p-0">
@@ -73,10 +72,8 @@ export default function Checklist({
 						</div>
 					</div>
 
-					{/* Body: column list */}
 					<ul className="bg-base-100 max-h-64 overflow-y-auto overflow-x-hidden p-2 pt-1 w-full flex flex-col gap-1">
 						{list.reduce((acc: ReactNode[], head, i) => {
-							//only render the header name if it is selected in the header name filter
 							if (head.toLowerCase().includes(search.toLowerCase())) {
 								const extraLabel = extraLists?.find((e) => e.list.includes(head))?.label;
 

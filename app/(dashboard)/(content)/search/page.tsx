@@ -8,7 +8,7 @@ import { capitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { redirect } from "next/navigation";
 
-export default async function SearchLayout({
+export default async function Search({
 	searchParams
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

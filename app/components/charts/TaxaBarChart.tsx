@@ -2,7 +2,7 @@
 
 import { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import { Bar } from "react-chartjs-2";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import distinctColors from "distinct-colors";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { RankPlurals, TaxonomicRanks } from "@/types/objects";
