@@ -5,10 +5,10 @@ import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/LaptopSc
 
 // Marine species with verified scientific names
 const identifications = [
-	{ src: "/images/outlines/xl_dolphin.svg", common: "Bottlenose Dolphin", scientific: "Tursiops truncatus", confidence: "98.7" },
+	{ src: "/images/outlines/xl_dolphin.svg", common: "Clymene Dolphin", scientific: "Stenella clymene", confidence: "98.7" },
 	{ src: "/images/outlines/lg_bluefin_tuna.svg", common: "Bluefin Tuna", scientific: "Thunnus thynnus", confidence: "94.2" },
-	{ src: "/images/outlines/xl_lamniformes.svg", common: "Great White Shark", scientific: "Carcharodon carcharias", confidence: "91.5" },
-	{ src: "/images/outlines/sm_copepod.svg", common: "Copepod", scientific: "Calanus finmarchicus", confidence: "89.3" }
+	{ src: "/images/outlines/xl_lamniformes.svg", common: "Order: Lamniformes", scientific: "Carcharodon carcharias", confidence: "91.5" },
+	{ src: "/images/outlines/sm_copepod.svg", common: "Type of: Copepod", scientific: "Calanus finmarchicus", confidence: "92.3" }
 ];
 
 // Generate random MD5-like hash for feature ID

@@ -14,33 +14,55 @@ const OceanGlobe = dynamic(() => import("@/app/components/OceanGlobe"), {
 
 import TaxonomyLaptop from "@/app/components/TaxonomyLaptop";
 import AnalysisLaptop from "@/app/components/AnalysisLaptop";
+import TableMetadata from "@/types/tableMetadata";
 
-// Database table blurb with link to explore page
-function TableBlurb({ 
-	title, 
-	href, 
+// Tables that appear in the data journey (have descriptions in TableMetadata)
+type DataJourneyTableKey = keyof Pick<
+	typeof TableMetadata,
+	"project" | "sample" | "assay" | "assayPrep" | "library" | "analysis" | "feature" | "taxonomy" | "assignment" | "occurrence"
+>;
+
+// Database table blurb with link to explore page. Uses TableMetadata description when table is set; children = supplemental text.
+function TableBlurb({
+	title,
+	href,
+	table,
 	children,
-	className = "",
-	accent = true
-}: { 
-	title: string; 
+	className = ""
+}: {
+	title: string;
 	href: string;
-	children: React.ReactNode;
+	table?: DataJourneyTableKey;
+	children?: React.ReactNode;
 	className?: string;
-	accent?: boolean;
 }) {
+	const description = table != null ? TableMetadata[table].description : null;
+	const definitionPrefix = description ? (children ? " " : "") : null;
+	const linkPlural = table != null ? TableMetadata[table].plural : `${title}s`;
 	return (
-		<div className={`${accent ? "border-l-2 border-primary/25 pl-5" : ""} ${className}`}>
-			<h3 className="text-xl sm:text-2xl font-semibold text-primary mb-2">{title}</h3>
+		<div className={`rounded-2xl p-4 sm:p-5 ${className}`}>
+			<div className="flex flex-wrap items-center gap-2 mb-2">
+				<h3 className="text-xl sm:text-2xl font-semibold text-primary">{title}</h3>
+				<span className="rounded-full bg-primary/15 text-primary px-2.5 py-0.5 text-xs font-medium">
+					Database table
+				</span>
+			</div>
 			<p className="text-sm sm:text-base text-base-content/80 leading-relaxed mb-3">
 				{children}
+				{definitionPrefix}
+				{description ? (
+					<>
+						<span className="text-primary">ODE Definition: </span>
+						{description}
+					</>
+				) : null}
 			</p>
 			<Link 
 				href={href} 
 				target="_blank"
-				className="inline-flex items-center gap-1.5 text-sm font-medium text-primary/80 hover:text-primary hover:underline transition-colors"
+				className="inline-flex items-center gap-1.5 text-sm font-normal text-primary hover:underline transition-colors"
 			>
-				Show me {title}s
+				Show me {linkPlural}
 				<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
 				</svg>
@@ -50,19 +72,17 @@ function TableBlurb({
 }
 
 // Process step blurb (not a database table)
-function ProcessBlurb({ 
-	title, 
+function ProcessBlurb({
+	title,
 	children,
-	className = "",
-	accent = true
-}: { 
-	title: string; 
+	className = ""
+}: {
+	title: string;
 	children: React.ReactNode;
 	className?: string;
-	accent?: boolean;
 }) {
 	return (
-		<div className={`${accent ? "border-l-2 border-base-content/15 pl-5" : ""} ${className}`}>
+		<div className={`rounded-2xl p-4 sm:p-5 ${className}`}>
 			<h3 className="text-xl sm:text-2xl font-semibold text-base-content mb-2">{title}</h3>
 			<p className="text-sm sm:text-base text-base-content/80 leading-relaxed">
 				{children}
@@ -123,8 +143,8 @@ export default function DataJourney() {
 			{/* ============================================ */}
 			{/* INTRO: How eDNA Appears in Water */}
 			{/* ============================================ */}
-			<section className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-6 sm:pb-8">
-				<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
+			<section className="max-w-7xl mx-auto px-8 sm:px-6 pt-2 sm:pb-8">
+				<div className="grid lg:grid-cols-[1fr_1.3fr] pb-8 gap-4 lg:gap-8 items-center">
 					{/* Left: Text blurb */}
 					<div>
 						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary mb-4">
@@ -139,13 +159,13 @@ export default function DataJourney() {
 					</div>
 
 					{/* Right: Water drop diagram */}
-					<div className="relative w-full h-[360px] sm:h-[440px] lg:h-[520px]">
+					<div className="relative w-full h-[360px] sm:h-[440px] lg:h-[520px] overflow-hidden">
 						<Image
 							src="/images/biorender/water_drop.png"
 							alt="Sources of environmental DNA in water"
 							fill
 							sizes="(max-width: 1024px) 140vw, 900px"
-							className="object-contain [html[data-theme='dark']_&]:hidden"
+							className="object-contain scale-105 sm:scale-110 lg:scale-[1.15] [html[data-theme='dark']_&]:hidden"
 							priority
 						/>
 						<Image
@@ -153,7 +173,7 @@ export default function DataJourney() {
 							alt="Sources of environmental DNA in water"
 							fill
 							sizes="(max-width: 1024px) 140vw, 900px"
-							className="object-contain hidden [html[data-theme='dark']_&]:block"
+							className="object-contain scale-105 sm:scale-110 lg:scale-[1.15] hidden [html[data-theme='dark']_&]:block"
 							priority
 						/>
 					</div>
@@ -167,7 +187,7 @@ export default function DataJourney() {
 				<div className="max-w-7xl mx-auto pt-10 px-4 sm:px-6">
 					<SectionHeader>The Expedition</SectionHeader>
 
-					<div className="space-y-3 lg:space-y-6">
+					<div className="space-y-1 lg:space-y-2 pb-6">
 						{/* Ship with CTD + Project & Sample Collection blurbs */}
 						<div className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
 							{/* Ship image */}
@@ -191,26 +211,22 @@ export default function DataJourney() {
 							</div>
 
 							{/* Project + Sample Collection blurbs, stacked */}
-							<div className="space-y-4">
-								<TableBlurb title="Project" href="/explore/project">
-									Research initiatives collecting eDNA samples. Projects organize sampling cruises, 
-									define research objectives, and link all downstream data to a single scientific effort.
+							<div className="space-y-8 ">
+								<TableBlurb title="Project" href="/explore/project" table="project">
+									This is a core foundation of the database which groups every expedition and scientific goal into one shared effort.
 								</TableBlurb>
 
 								<ProcessBlurb title="Sample Collection">
-									Capturing an environmental snapshot. A CTD cast links biological data to 
-									physical ocean measurements—latitude, longitude, depth, temperature, and 
-									salinity—at the moment of collection.
+									The act of gathering material from the environment in many different ways, for example water with a CTD rosette, ROV, or hand-collected bags, or sediment or air. Collection can happen in many environments, from ocean water to sediment, freshwater, air, and more. The way we structure the data lets us connect the DNA we find to environmental measurements like pH, salinity, and temperature.
 								</ProcessBlurb>
 							</div>
 						</div>
 
 						{/* Sample blurb + Sample bio image */}
-						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
+						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-end">
 							{/* Sample blurb */}
-							<TableBlurb title="Sample" href="/explore/sample">
-								The physical material. This table tracks filtration volumes, pore sizes, and 
-								storage conditions (e.g., -80°C) before DNA extraction.
+							<TableBlurb title="Sample" href="/explore/sample" table="sample">
+								A specific piece of environmental material captured at a distinct place and time. Samples often follow a hierarchy: one collection event can include multiple depths, replicate bottles (e.g. A, B, C), and negative controls. This table tracks the filtration and storage methods used to preserve the biology before it reaches the lab.
 							</TableBlurb>
 
 							{/* Sample bio image */}
@@ -249,9 +265,7 @@ export default function DataJourney() {
 						{/* DNA Extraction: text left, image right */}
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
 							<ProcessBlurb title="DNA Extraction">
-								This is the bridge from the field to the bench. We isolate the total environmental 
-								DNA (eDNA) from the biomass captured on the filters, moving from liters of seawater 
-								to microliters of genetic material.
+								The bridge from the field to the bench. We take the biomass (the living material) captured on filters and use chemicals to break open the cells and isolate the DNA. That turns liters of filtered water into a small volume of purified genetic material we can work with in the lab.
 							</ProcessBlurb>
 
 							<div className="relative w-full h-[240px] sm:h-[300px] lg:h-[350px]">
@@ -291,10 +305,8 @@ export default function DataJourney() {
 								/>
 							</div>
 
-							<TableBlurb title="Assay" href="/explore/assay">
-								The Assay table is your &quot;molecular lens.&quot; It stores the static definitions of the 
-								primers used to &quot;hook&quot; and find specific biological groups (like fish or bacteria) 
-								within the total eDNA pool.
+							<TableBlurb title="Assay" href="/explore/assay" table="assay">
+								The molecular search tool used to find specific life by defining the genetic hooks that pull targeted information out of the total DNA mix.
 							</TableBlurb>
 						</div>
 
@@ -320,14 +332,12 @@ export default function DataJourney() {
 							</div>
 
 							<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
-								<TableBlurb title="AssayPrep" href="/explore/assayPrep">
-									The action record. This table documents exactly how the DNA was &quot;cooked&quot; in the 
-									thermocycler: the temperatures, cycle counts, and master mixes used.
+								<TableBlurb title="AssayPrep" href="/explore/assayPrep" table="assayPrep">
+									The laboratory logbook for the step where we use a thermocycler to make many copies of the target DNA (PCR). It records the exact recipe and machine settings used for that reaction.
 								</TableBlurb>
 
 								<ProcessBlurb title="Pooling &amp; Indexing">
-									Individual amplified samples are combined into a single &quot;Pool.&quot; Every fragment 
-									is tagged with a unique molecular barcode so the computer can identify its origin later.
+									After the thermocycler has made many copies of the target DNA (PCR), we combine (pool) those amplified samples into one mixture. We attach a unique molecular barcode to every fragment so the computer can trace each sequence back to its original sample when the mix is sequenced together.
 								</ProcessBlurb>
 							</div>
 						</div>
@@ -355,15 +365,12 @@ export default function DataJourney() {
 						</div>
 
 						<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
-							<TableBlurb title="Library" href="/explore/library">
-								The Library table tracks the transition from liquid to data. It records the sequencing 
-								platform, the specific barcodes used, and the final raw &quot;read count&quot; of sequences 
-								generated by the machine.
+							<TableBlurb title="Library" href="/explore/library" table="library">
+								The final pool of prepared DNA that tracks the transition from a liquid sample to a digital file.
 							</TableBlurb>
 
 							<ProcessBlurb title="Sequencing">
-								The pooled library enters the sequencer, where millions of DNA fragments are read 
-								simultaneously, converting molecular information into digital data.
+								We load the pooled, barcoded library into a sequencer (e.g. an Illumina machine). The machine reads the order of DNA letters (A, T, C, G) in millions of fragments at once, turning the liquid library into digital files of raw sequence data for the next step: bioinformatics.
 							</ProcessBlurb>
 						</div>
 					</div>
@@ -384,19 +391,15 @@ export default function DataJourney() {
 								<AnalysisLaptop className="w-full h-full" />
 							</div>
 
-							<TableBlurb title="Analysis" href="/explore/analysis">
-								The digital audit trail. This table records the software versions (like DADA2), 
-								the quality filters, and the parameters used to &quot;denoise&quot; raw data into clean 
-								biological signals.
+							<TableBlurb title="Analysis" href="/explore/analysis" table="analysis">
+								This is a core foundation of the digital database where raw data is cleaned and processed through software pipelines to turn genetic reads into clear results.
 							</TableBlurb>
 						</div>
 
 						{/* Feature: blurb left, image right */}
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
-							<TableBlurb title="Feature" href="/explore/feature">
-								The collapse of millions of individual reads into unique &quot;fingerprints&quot; called Features. 
-								This table is a dictionary of every unique DNA sequence discovered, allowing us to 
-								track specific organisms across different oceans and years.
+							<TableBlurb title="Feature" href="/explore/feature" table="feature">
+								A master dictionary of unique genetic fingerprints which allows us to track the same organism across different studies and years.
 							</TableBlurb>
 
 							<div className="relative w-full h-[320px] sm:h-[420px] lg:h-[500px] lg:-mt-10">
@@ -424,14 +427,12 @@ export default function DataJourney() {
 							</div>
 
 							<div className="space-y-4">
-								<TableBlurb title="Taxonomy" href="/explore/taxonomy">
-									Naming the DNA. Taxonomy stores scientific names from Kingdom to Species, 
-									providing the biological identity behind each genetic sequence.
+								<TableBlurb title="Taxonomy" href="/explore/taxonomy" table="taxonomy">
+									This is the official tree of life that provides the hierarchical ranks used to categorize every organism in the database.
 								</TableBlurb>
 
-								<TableBlurb title="Assignment" href="/explore/assignment">
-									The final identity. Assignment records our statistical confidence telling 
-									users how sure we are that a DNA sequence belongs to a specific animal.
+								<TableBlurb title="Assignment" href="/explore/assignment" table="assignment">
+									This is the bridge where we connect a specific DNA sequence to a biological identity and record our confidence in that match.
 								</TableBlurb>
 							</div>
 						</div>
@@ -442,20 +443,31 @@ export default function DataJourney() {
 								<OceanGlobe className="w-full" />
 							</div>
 
-							<TableBlurb title="Occurrence" href="/explore/occurrence" accent={false} className="max-w-lg text-center">
-								The heart of the database. The Occurrence table records exactly how many times 
-								each DNA fingerprint (Feature) was detected in each specific bottle of water (Sample).
+							<TableBlurb title="Occurrence" href="/explore/occurrence" table="occurrence" className="max-w-lg text-left">
+								The core census where we pair a specific organism with a specific environment to show exactly how much life was detected in a sample.
 							</TableBlurb>
 						</div>
 					</div>
 				</div>
 			</TintedSection>
 
-			{/* Closing */}
-			<div className="py-8 text-center">
-				<p className="text-base text-base-content/60 italic">
-					From ocean to database — every step connected, every observation traceable.
-				</p>
+			{/* BioRender attribution */}
+			<div className="py-12 sm:py-16 flex justify-center">
+				<a
+					href="https://www.biorender.com"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex flex-col items-center gap-2 text-base-content/60 hover:text-base-content/80 transition-colors"
+				>
+					<Image
+						src="/images/biorender/biorender_logo.jpeg"
+						alt="BioRender"
+						width={360}
+						height={120}
+						className="h-18 w-auto object-contain"
+					/>
+					<span className="text-base text-center pt-2">Graphics created using BioRender</span>
+				</a>
 			</div>
 		</div>
 	);

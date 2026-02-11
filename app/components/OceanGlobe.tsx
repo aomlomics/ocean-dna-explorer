@@ -323,6 +323,7 @@ const japanMarkers: [number, number][] = [
 // COBE has a hard limit on markers due to shader uniform array size.
 // Each marker uses 2 vec4 uniforms, and the shader allocates `u[64*2]`, so max markers = 64.
 const MAX_COBE_MARKERS = 64;
+const TARGET_MARKERS = 60;
 
 function sampleEvenly<T>(arr: T[], count: number): T[] {
 	if (count >= arr.length) return arr;
@@ -331,23 +332,36 @@ function sampleEvenly<T>(arr: T[], count: number): T[] {
 	return Array.from({ length: count }, (_, i) => arr[Math.floor(i * step)]);
 }
 
-// Keep Indian Ocean present but not overwhelming.
-const INDIAN_MARKERS_TARGET = 9;
-const JAPAN_MARKERS_TARGET = 2;
-const BASE_MARKERS_TARGET = 53; // 9 + 53 = 62 (under the 64 marker limit)
+// Round-robin interleave so no single region dominates the start of the list.
+function interleaveMarkers(
+	base: [number, number][],
+	indian: [number, number][],
+	japan: [number, number][]
+): { markers: [number, number][]; indianIndices: Set<number> } {
+	const markers: [number, number][] = [];
+	const indianIndices = new Set<number>();
+	let bi = 0, ii = 0, ji = 0;
+	while (bi < base.length || ii < indian.length || ji < japan.length) {
+		if (bi < base.length) { markers.push(base[bi]); bi++; }
+		if (ii < indian.length) { markers.push(indian[ii]); indianIndices.add(markers.length - 1); ii++; }
+		if (ji < japan.length) { markers.push(japan[ji]); ji++; }
+	}
+	return { markers, indianIndices };
+}
 
-const sampledIndianMarkers = sampleEvenly(indianOceanMarkers, INDIAN_MARKERS_TARGET).slice(0, MAX_COBE_MARKERS);
-const sampledJapanMarkers = sampleEvenly(japanMarkers, JAPAN_MARKERS_TARGET).slice(0, MAX_COBE_MARKERS);
-const sampledBaseMarkers = sampleEvenly(baseOceanMarkers, BASE_MARKERS_TARGET).slice(
-	0,
-	Math.max(0, MAX_COBE_MARKERS - sampledIndianMarkers.length - sampledJapanMarkers.length)
+const JAPAN_COUNT = 2;
+const INDIAN_COUNT = 9;
+const BASE_COUNT = TARGET_MARKERS - JAPAN_COUNT - INDIAN_COUNT; // 49
+
+const sampledBase = sampleEvenly(baseOceanMarkers, BASE_COUNT);
+const sampledIndian = sampleEvenly(indianOceanMarkers, INDIAN_COUNT);
+const sampledJapan = sampleEvenly(japanMarkers, JAPAN_COUNT);
+
+const { markers: allOceanMarkers, indianIndices: indianOceanIndices } = interleaveMarkers(
+	sampledBase,
+	sampledIndian,
+	sampledJapan
 );
-const allOceanMarkers: [number, number][] = [
-	...sampledIndianMarkers,
-	...sampledJapanMarkers,
-	...sampledBaseMarkers
-];
-const indianMarkerCount = sampledIndianMarkers.length;
 
 interface OceanGlobeProps {
 	className?: string;
@@ -404,8 +418,8 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 				baseColor: isDark ? [0.1, 0.14, 0.22] : [1, 1, 1],
 				// Primary blue markers (kept blue in both modes; brighter in dark for contrast)
 				markerColor: isDark ? [0.2, 0.45, 0.95] : [0.14, 0.24, 0.5],
-				// Subtle glow - dark mode gets a soft blue rim
-				glowColor: isDark ? [0.15, 0.25, 0.45] : [0.9, 0.92, 0.95],
+				// Light: unchanged. Dark: dimmer glow in theme primary blue (#64abdc → dimmed)
+				glowColor: isDark ? [0.1, 0.28, 0.36] : [0.9, 0.92, 0.95],
 				markers: allOceanMarkers.map((location) => ({
 					location,
 					size: 0.07
@@ -422,11 +436,16 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 					state.height = width * 2;
 
 					// Staggered breathing animation - each marker pulses out of sync
+					// Dark: smaller size/amplitude so overlapping markers don't show black blend artifact
 					state.markers = allOceanMarkers.map((location, i) => {
 						const phase = i * 0.5; // offset each marker's phase
-						const isIndianOceanMarker = i < indianMarkerCount;
-						const baseSize = 0.066 + (isIndianOceanMarker ? 0.006 : 0);
-						const amplitude = 0.01 + (isIndianOceanMarker ? 0.002 : 0);
+						const isIndianOceanMarker = indianOceanIndices.has(i);
+						const baseSize = isDark
+							? 0.054 + (isIndianOceanMarker ? 0.005 : 0)
+							: 0.066 + (isIndianOceanMarker ? 0.006 : 0);
+						const amplitude = isDark
+							? 0.006 + (isIndianOceanMarker ? 0.001 : 0)
+							: 0.01 + (isIndianOceanMarker ? 0.002 : 0);
 						const breathe = baseSize + Math.sin(frameRef.current * 0.025 + phase) * amplitude;
 						return { location, size: breathe };
 					});
