@@ -300,7 +300,10 @@ export default function TaxaBarChart({
 
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex gap-1">
-					<InfoButton infoText="Selecting many taxonomies may cause lag" type="warning" />
+					<InfoButton
+						infoText={`Selecting many ${RankPlurals[rank]} may cause lag. If more than 20 ${RankPlurals[rank]} exist, only the first 20 will default to selected.`}
+						type="warning"
+					/>
 
 					<Checklist
 						label={RankPlurals[rank]}
