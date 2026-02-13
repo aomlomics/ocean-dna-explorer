@@ -22,6 +22,7 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	return taxonomicData;
 }
 
+//TODO: add features
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: Taxonomy["taxonomy"] }> }) {
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
