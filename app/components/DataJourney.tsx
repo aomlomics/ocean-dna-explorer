@@ -28,20 +28,22 @@ function TableBlurb({
 	href,
 	table,
 	children,
-	className = ""
+	className = "",
+	centerTitle = false
 }: {
 	title: string;
 	href: string;
 	table?: DataJourneyTableKey;
 	children?: React.ReactNode;
 	className?: string;
+	centerTitle?: boolean;
 }) {
 	const description = table != null ? TableMetadata[table].description : null;
 	const definitionPrefix = description ? (children ? " " : "") : null;
 	const linkPlural = table != null ? TableMetadata[table].plural : `${title}s`;
 	return (
 		<div className={`rounded-2xl p-4 sm:p-5 ${className}`}>
-			<div className="flex flex-wrap items-center gap-2 mb-2">
+			<div className={`flex flex-wrap items-center gap-2 mb-2 ${centerTitle ? "justify-center" : ""}`}>
 				<h3 className="text-xl sm:text-2xl font-semibold text-primary">{title}</h3>
 				<span className="rounded-full bg-primary/15 text-primary px-2.5 py-0.5 text-xs font-medium">
 					Database table
@@ -148,12 +150,11 @@ export default function DataJourney() {
 					{/* Left: Text blurb */}
 					<div>
 						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary mb-4">
-							The Invisible Signature of Life
+							An Invisible Signature of Life
 						</h2>
 						<p className="text-base sm:text-lg text-base-content/80 leading-relaxed">
-							Every organism leaves behind traces of genetic material in its environment. 
-							By sampling water or sediment, we can detect this environmental DNA (eDNA)—
-							shed through skin cells, scales, mucus, waste, and decay. A single water sample 
+							Every organism, whether it be a microbe or a whale, leaves behind traces of genetic material in its environment. 
+							We can detect this environmental DNA (eDNA) by taking a water sample. A single bottle of seawater 
 							contains the genetic fingerprints of an entire community.
 						</p>
 					</div>
@@ -164,16 +165,16 @@ export default function DataJourney() {
 							src="/images/biorender/water_drop.png"
 							alt="Sources of environmental DNA in water"
 							fill
-							sizes="(max-width: 1024px) 140vw, 900px"
-							className="object-contain scale-105 sm:scale-110 lg:scale-[1.15] [html[data-theme='dark']_&]:hidden"
+							sizes="(max-width: 1024px) 180vw, 1200px"
+							className="object-contain scale-125 sm:scale-135 lg:scale-[1.32] [html[data-theme='dark']_&]:hidden"
 							priority
 						/>
 						<Image
 							src="/images/biorender/water_drop_dark.png"
 							alt="Sources of environmental DNA in water"
 							fill
-							sizes="(max-width: 1024px) 140vw, 900px"
-							className="object-contain scale-105 sm:scale-110 lg:scale-[1.15] hidden [html[data-theme='dark']_&]:block"
+							sizes="(max-width: 1024px) 180vw, 1200px"
+							className="object-contain scale-125 sm:scale-135 lg:scale-[1.32] hidden [html[data-theme='dark']_&]:block"
 							priority
 						/>
 					</div>
@@ -213,11 +214,11 @@ export default function DataJourney() {
 							{/* Project + Sample Collection blurbs, stacked */}
 							<div className="space-y-8 ">
 								<TableBlurb title="Project" href="/explore/project" table="project">
-									This is a core foundation of the database which groups every expedition and scientific goal into one shared effort.
+									A foundtaional table in the database which brings together all expeditions and scientific objectives under a unified project.
 								</TableBlurb>
 
 								<ProcessBlurb title="Sample Collection">
-									The act of gathering material from the environment in many different ways, for example water with a CTD rosette, ROV, or hand-collected bags, or sediment or air. Collection can happen in many environments, from ocean water to sediment, freshwater, air, and more. The way we structure the data lets us connect the DNA we find to environmental measurements like pH, salinity, and temperature.
+									Samples can be taken from different environments like water, sediment, air, soil, and many others. Marine water is typically collected with a CTD rosette (seen here), but it can also be collected with an autonomous sampler, ROV, by scuba or snorkeling, and more. With proper data management, we can connect DNA data with environmental measurements like pH, salinity, and temperature.
 								</ProcessBlurb>
 							</div>
 						</div>
@@ -226,7 +227,7 @@ export default function DataJourney() {
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-end">
 							{/* Sample blurb */}
 							<TableBlurb title="Sample" href="/explore/sample" table="sample">
-								A specific piece of environmental material captured at a distinct place and time. Samples often follow a hierarchy: one collection event can include multiple depths, replicate bottles (e.g. A, B, C), and negative controls. This table tracks the filtration and storage methods used to preserve the biology before it reaches the lab.
+								A piece of environmental material captured at a distinct place and time. Samples often follow a hierarchy: one collection event can include multiple depths, replicate bottles (e.g. A, B, C), and negative controls. This table tracks the filtration and storage methods used to preserve the DNA before it reaches the lab.
 							</TableBlurb>
 
 							{/* Sample bio image */}
@@ -265,7 +266,7 @@ export default function DataJourney() {
 						{/* DNA Extraction: text left, image right */}
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
 							<ProcessBlurb title="DNA Extraction">
-								The bridge from the field to the bench. We take the biomass (the living material) captured on filters and use chemicals to break open the cells and isolate the DNA. That turns liters of filtered water into a small volume of purified genetic material we can work with in the lab.
+								First, we have to extract the DNA from the sampled water. We take the biomass (or living material) captured on filters and use chemicals to break open the cells and isolate the DNA. This laboratory process turns liters of filtered water into a small volume of purified genetic material we can work with in the lab.
 							</ProcessBlurb>
 
 							<div className="relative w-full h-[240px] sm:h-[300px] lg:h-[350px]">
@@ -306,7 +307,7 @@ export default function DataJourney() {
 							</div>
 
 							<TableBlurb title="Assay" href="/explore/assay" table="assay">
-								The molecular search tool used to find specific life by defining the genetic hooks that pull targeted information out of the total DNA mix.
+							An assay is a molecular lens used to find specific organisms or groups of organisms by defining the genetic hooks (called primers) that target specific sequences out of the total environmental DNA mix. Primers are designed to only bind to the sequences from specific organisms.
 							</TableBlurb>
 						</div>
 
@@ -333,11 +334,11 @@ export default function DataJourney() {
 
 							<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
 								<TableBlurb title="AssayPrep" href="/explore/assayPrep" table="assayPrep">
-									The laboratory logbook for the step where we use a thermocycler to make many copies of the target DNA (PCR). It records the exact recipe and machine settings used for that reaction.
+								The parameters for the PCR (polymerase chain reaction) used to make copies of a target DNA segment. It records the specific thermocycler settings and chemical mixes used to amplify the DNA for further processing.
 								</TableBlurb>
 
 								<ProcessBlurb title="Pooling &amp; Indexing">
-									After the thermocycler has made many copies of the target DNA (PCR), we combine (pool) those amplified samples into one mixture. We attach a unique molecular barcode to every fragment so the computer can trace each sequence back to its original sample when the mix is sequenced together.
+								This step combines multiple amplified samples into a single mixture (pooling) while adding unique molecular barcodes to every fragment. These digital tags allow the computer to identify which sample each sequence came from after the mixture is sequenced.
 								</ProcessBlurb>
 							</div>
 						</div>
@@ -366,7 +367,7 @@ export default function DataJourney() {
 
 						<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
 							<TableBlurb title="Library" href="/explore/library" table="library">
-								The final pool of prepared DNA that tracks the transition from a liquid sample to a digital file.
+							The final collection of prepared DNA that tracks the transition from physical samples to digital files. This table records the indexing details and sequencing run parameters.
 							</TableBlurb>
 
 							<ProcessBlurb title="Sequencing">
@@ -392,14 +393,23 @@ export default function DataJourney() {
 							</div>
 
 							<TableBlurb title="Analysis" href="/explore/analysis" table="analysis">
-								This is a core foundation of the digital database where raw data is cleaned and processed through software pipelines to turn genetic reads into clear results.
+								Raw data is cleaned and processed through software pipelines like {" "}
+								<a
+									href="https://github.com/aomlomics/tourmaline"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-primary hover:underline hover:text-primary-focus"
+								>
+									Tourmaline
+								</a>
+								{", seen here, to turn raw data into clear biological results."}
 							</TableBlurb>
 						</div>
 
 						{/* Feature: blurb left, image right */}
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
 							<TableBlurb title="Feature" href="/explore/feature" table="feature">
-								A master dictionary of unique genetic fingerprints which allows us to track the same organism across different studies and years.
+								A dictionary of unique genetic fingerprints which allows us to track the same organism across different samples and studies.
 							</TableBlurb>
 
 							<div className="relative w-full h-[320px] sm:h-[420px] lg:h-[500px] lg:-mt-10">
@@ -432,7 +442,7 @@ export default function DataJourney() {
 								</TableBlurb>
 
 								<TableBlurb title="Assignment" href="/explore/assignment" table="assignment">
-									This is the bridge where we connect a specific DNA sequence to a biological identity and record our confidence in that match.
+									This is the bridge where we connect a specific DNA sequence to a taxonomic classification and record our confidence in that match.
 								</TableBlurb>
 							</div>
 						</div>
@@ -443,8 +453,8 @@ export default function DataJourney() {
 								<OceanGlobe className="w-full" />
 							</div>
 
-							<TableBlurb title="Occurrence" href="/explore/occurrence" table="occurrence" className="max-w-lg text-left">
-								The core census where we pair a specific organism with a specific environment to show exactly how much life was detected in a sample.
+							<TableBlurb title="Occurrence" href="/explore/occurrence" table="occurrence" className="max-w-lg text-center" centerTitle>
+								An occurrence is an organism at a time and place. It links a specific DNA sequence to a taxonomic classification and records the confidence in that match.
 							</TableBlurb>
 						</div>
 					</div>

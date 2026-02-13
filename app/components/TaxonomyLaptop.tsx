@@ -7,7 +7,7 @@ import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/LaptopSc
 const identifications = [
 	{ src: "/images/outlines/xl_dolphin.svg", common: "Clymene Dolphin", scientific: "Stenella clymene", confidence: "98.7" },
 	{ src: "/images/outlines/lg_bluefin_tuna.svg", common: "Bluefin Tuna", scientific: "Thunnus thynnus", confidence: "94.2" },
-	{ src: "/images/outlines/xl_lamniformes.svg", common: "Order: Lamniformes", scientific: "Carcharodon carcharias", confidence: "91.5" },
+	{ src: "/images/outlines/xl_lamniformes.svg", common: "Order: Lamniformes", scientific: "", confidence: "91.5" },
 	{ src: "/images/outlines/sm_copepod.svg", common: "Type of: Copepod", scientific: "Calanus finmarchicus", confidence: "92.3" }
 ];
 
@@ -171,7 +171,7 @@ export default function TaxonomyLaptop({ className, screenBounds }: TaxonomyLapt
 							</p>
 						</div>
 						<p className="text-base-content/70" style={{ fontSize: 14 }}>
-							Comparing against NCBI / BOLD
+							Performing taxonomic assignment...
 						</p>
 					</div>
 				)}
@@ -201,7 +201,7 @@ export default function TaxonomyLaptop({ className, screenBounds }: TaxonomyLapt
 							{current.scientific}
 						</p>
 						<p className="text-success font-bold leading-tight mt-0.5" style={{ fontSize: 14 }}>
-							✓ ASSIGNMENT: {current.confidence}%
+							Assignment confidence: {current.confidence}%
 						</p>
 					</div>
 				)}

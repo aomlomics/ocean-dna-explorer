@@ -199,81 +199,79 @@ const baseOceanMarkers: [number, number][] = [
 	[-4.0, 56.0], // Northwest
 	[-10.0, 54.0], // West
 
-	// // Greenland Sea / Arctic
-	// [72.0, -10.0],
-	// [75.0, -5.0],
-	// [70.0, -15.0],
-	// [78.0, 0.0],
+	// Greenland Sea / Arctic
+	[72.0, -10.0],
+	[75.0, -5.0],
+	[70.0, -15.0],
+	[78.0, 0.0],
 
-	// // Barents Sea
-	// [74.0, 30.0],
-	// [72.0, 35.0],
-	// [76.0, 25.0],
+	// Barents Sea
+	[74.0, 30.0],
+	[72.0, 35.0],
+	[76.0, 25.0],
 
-	// // Southern Ocean / Drake Passage cluster
-	// [-58.0, -65.0],
-	// [-60.0, -60.0],
-	// [-55.0, -68.0],
-	// [-62.0, -55.0],
-	// [-56.0, -72.0],
+	// Southern Ocean / Drake Passage cluster
+	[-58.0, -65.0],
+	[-60.0, -60.0],
+	[-55.0, -68.0],
+	[-62.0, -55.0],
+	[-56.0, -72.0],
 
-	// // South of Australia
-	// [-48.0, 140.0],
-	// [-50.0, 135.0],
-	// [-45.0, 145.0],
+	// South of Australia
+	[-48.0, 140.0],
+	[-50.0, 135.0],
+	[-45.0, 145.0],
 
-	// // Mediterranean
-	// [36.0, 18.0],
-	// [38.0, 15.0],
-	// [35.0, 25.0],
-	// [40.0, 12.0],
+	// Mediterranean
+	[36.0, 18.0],
+	[38.0, 15.0],
+	[35.0, 25.0],
+	[40.0, 12.0],
 
-	// // North Sea
-	// [56.0, 3.0],
-	// [58.0, 0.0],
-	// [54.0, 5.0],
+	// North Sea
+	[56.0, 3.0],
+	[58.0, 0.0],
+	[54.0, 5.0],
 
-	// // Bering Sea
-	// [58.0, -175.0],
-	// [55.0, -170.0],
-	// [60.0, 180.0],
+	// Bering Sea
+	[58.0, -175.0],
+	[55.0, -170.0],
+	[60.0, 180.0],
 
-	// // Sea of Okhotsk
-	// [52.0, 148.0],
-	// [55.0, 150.0],
-	// [50.0, 145.0],
+	// Sea of Okhotsk
+	[52.0, 148.0],
+	[55.0, 150.0],
+	[50.0, 145.0],
 
-	// // Great Australian Bight
-	// [-35.0, 130.0],
-	// [-33.0, 125.0],
-	// [-38.0, 135.0],
+	// Great Australian Bight
+	[-35.0, 130.0],
+	[-33.0, 125.0],
+	[-38.0, 135.0],
 
-	// // Scattered lone points throughout the oceans
-	// [48.0, -30.0], // Mid-Atlantic
-	// [-10.0, -5.0], // Equatorial Atlantic
-	// [-45.0, -30.0], // South Atlantic
-	// [15.0, -45.0], // Central Atlantic
-	// [-25.0, -40.0], // South Atlantic
-	// [50.0, -135.0], // Northeast Pacific
-	// [-30.0, -120.0], // South Pacific
-	// [10.0, -130.0], // Central Pacific
-	// [-8.0, -100.0], // Southeast Pacific
-	// [28.0, -175.0], // Central Pacific
-	// [-40.0, -170.0], // South Pacific
-	// [45.0, 165.0], // Northwest Pacific
-	// [-5.0, 155.0], // Western Pacific
-	// [8.0, 140.0], // Micronesia region
-	// [-15.0, 165.0], // Coral Sea
-	// [-42.0, 80.0], // Southern Indian Ocean
-	// [-5.0, 55.0], // Western Indian Ocean
-	// [5.0, 80.0], // Sri Lanka region
-	// [-50.0, 30.0], // South Atlantic / Southern Ocean
-	// [-65.0, 90.0], // Southern Ocean
-	// [-58.0, 0.0], // Southern Ocean
-	// [65.0, -35.0], // North Atlantic / Greenland
-	// [62.0, -20.0] // Iceland 
-	
-
+	// Scattered points throughout the oceans
+	[48.0, -30.0],
+	[-10.0, -5.0],
+	[-45.0, -30.0],
+	[15.0, -45.0],
+	[-25.0, -40.0],
+	[50.0, -135.0],
+	[-30.0, -120.0],
+	[10.0, -130.0],
+	[-8.0, -100.0],
+	[28.0, -175.0],
+	[-40.0, -170.0],
+	[45.0, 165.0],
+	[-5.0, 155.0],
+	[8.0, 140.0],
+	[-15.0, 165.0],
+	[-42.0, 80.0],
+	[-5.0, 55.0],
+	[5.0, 80.0],
+	[-50.0, 30.0],
+	[-65.0, 90.0],
+	[-58.0, 0.0],
+	[65.0, -35.0],
+	[62.0, -20.0]
 ];
 
 // Indian Ocean sampling locations (used for the globe markers)

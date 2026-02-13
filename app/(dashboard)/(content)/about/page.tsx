@@ -30,19 +30,11 @@ export default function AboutPage() {
 			<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-28 bg-base-100">
 				<div className="relative h-[400px]">
 					<Image
-						src="/images/sponge_about_page_light.jpg"
-						alt="Ocean sponge close-up"
+						src="/images/about_banner.jpg"
+						alt="About page banner"
 						fill
 						sizes="100vw"
-						className="object-cover opacity-20 [html[data-theme='dark']_&]:hidden"
-						priority
-					/>
-					<Image
-						src="/images/squid_about_page_dark.jpg"
-						alt="Deep sea squid"
-						fill
-						sizes="200vw"
-						className="object-cover opacity-50 hidden [html[data-theme='dark']_&]:block"
+						className="object-cover opacity-15"
 						priority
 					/>
 					<div className="relative z-10 h-full flex pt-28">

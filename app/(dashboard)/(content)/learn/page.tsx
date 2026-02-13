@@ -18,26 +18,21 @@ export default function LearnPage() {
 			<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-6 sm:mb-8 bg-base-100">
 				<div className="relative h-[400px]">
 					<Image
-						src="/images/rov_boat_learn_page_light.jpg"
-						alt="ROV on research vessel deck"
+						src="/images/learn_page_banner.jpg"
+						alt="Learn page banner"
 						fill
 						sizes="100vw"
-						className="object-cover opacity-10 [html[data-theme='dark']_&]:hidden"
-						priority
-					/>
-					<Image
-						src="/images/rov_deep_learn_page_dark.jpg"
-						alt="ROV exploring deep ocean"
-						fill
-						sizes="100vw"
-						className="object-cover opacity-50 hidden [html[data-theme='dark']_&]:block"
+						className="object-cover opacity-20"
 						priority
 					/>
 					<div className="relative z-10 h-full flex pt-28">
 						<div className="w-full max-w-6xl mx-auto px-5 text-center">
 							<h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-primary">Learn</h1>
 							<p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-base-content [html[data-theme='dark']_&]:text-base-content/90">
-								Discover how environmental DNA data flows from ocean sampling to taxonomic discovery.
+								Discover how environmental DNA is collected and analyzed, its impact on science, and how to make your own scientific discoveries on the Ocean DNA Explorer
+							</p>
+							<p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-base-content [html[data-theme='dark']_&]:text-base-content/90">
+								Use the toggle below to switch between sections
 							</p>
 						</div>
 					</div>
