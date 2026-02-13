@@ -64,7 +64,15 @@ const TableMetadata = {
 		schema: PrismaZodTypes.AssaySchema,
 		enumSchema: PrismaZodTypes.AssayScalarFieldEnumSchema,
 		titleField: "assay_name",
-		subFields: ["pcr_primer_name_forward", "pcr_primer_forward", "pcr_primer_name_reverse", "pcr_primer_reverse"],
+		subFields: ["pcr_primer_name_forward", "pcr_primer_forward", "pcr_primer_name_reverse", "pcr_primer_reverse"]
+	},
+	assayPrep: {
+		plural: "AssayPreps",
+		description:
+			"The protocol-specific details describing the laboratory procedures used to perform an assay, such as the chemicals, instruments, and conditions employed for sample processing and sequencing.",
+		schema: PrismaZodTypes.AssayPrepSchema,
+		enumSchema: PrismaZodTypes.AssayPrepScalarFieldEnumSchema,
+		titleField: ["project_id", "assay_name"],
 		fieldOrder: [
 			"assay_type",
 			"thermocycler",
@@ -83,14 +91,6 @@ const TableMetadata = {
 			"pcr_rep",
 			"pcr_cycles"
 		]
-	},
-	assayPrep: {
-		plural: "AssayPreps",
-		description:
-			"The protocol-specific details describing the laboratory procedures used to perform an assay, such as the chemicals, instruments, and conditions employed for sample processing and sequencing.",
-		schema: PrismaZodTypes.AssayPrepSchema,
-		enumSchema: PrismaZodTypes.AssayPrepScalarFieldEnumSchema,
-		titleField: ["project_id", "assay_name"]
 	},
 	library: {
 		plural: "Libraries",

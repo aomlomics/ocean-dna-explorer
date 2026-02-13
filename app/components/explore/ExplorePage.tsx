@@ -8,6 +8,7 @@ import TaxaGrid from "../paginated/TaxaGrid";
 import TableMetadata from "@/types/tableMetadata";
 import SearchBar from "../search/SearchBar";
 
+//TODO: checkbox to switch between cards and tables on taxonomy and project
 export default function ExplorePage({
 	table,
 	tableConfig,
