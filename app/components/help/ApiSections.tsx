@@ -463,7 +463,7 @@ if (http_status(response)$category == "Success") {
 										alt="ERD notation key"
 										width="279"
 										height="137"
-										className="w-1/4 h-auto absolute left-0 top-0 px-6 py-6"
+										className="w-1/4 h-auto absolute right-0 top-0 px-6 py-6"
 									/>
 								</div>
 							</div>

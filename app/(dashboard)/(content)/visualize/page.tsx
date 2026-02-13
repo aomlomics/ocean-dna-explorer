@@ -49,6 +49,9 @@ function getSampFields() {
 	return sampFields;
 }
 
+//TODO: add tab for each visualization, each tab is its own url
+//Scatter = /metadata
+//Bar = /taxonomy
 export default async function Visualize({
 	searchParams
 }: {

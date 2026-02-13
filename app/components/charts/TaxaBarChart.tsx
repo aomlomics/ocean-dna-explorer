@@ -17,6 +17,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 
 const DEFAULT_MAX_TAXONOMIES = 20;
 
+//TODO: paginate on averageBy
 export default function TaxaBarChart({
 	occsByFeatureid,
 	assignments,
