@@ -10,7 +10,10 @@ export default function TabButton({ tabName, route }: { tabName: string; route: 
 	const isActive = route === "/" ? pathname === "/" : pathname.startsWith(route);
 
 	return (
-		<Link href={route} className={`px-4 py-2 rounded-t-lg ${isActive ? "bg-primary text-white" : "hover:bg-base-300"}`}>
+		<Link
+			href={route}
+			className={`px-4 py-2 rounded-t-lg select-none ${isActive ? "bg-primary text-white" : "hover:bg-base-300"}`}
+		>
 			{tabName}
 		</Link>
 	);

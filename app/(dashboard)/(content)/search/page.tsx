@@ -1333,7 +1333,9 @@ function InputElement({
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
-					className="select rounded-r-none"
+					className={`select rounded-r-none ${
+						(mode === "in" || mode === "notIn") && inValues.length > 1 ? "mt-2 self-start" : ""
+					}`}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
@@ -1356,12 +1358,12 @@ function InputElement({
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
 				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
+					<div className="space-y-2 py-2">
 						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
+							<div key={idx} className="grid grid-cols-[1fr_auto] gap-2 items-center">
 								<input
 									type="number"
-									className="input input-primary input-sm w-full"
+									className="input input-primary input-sm w-full rounded-l-none"
 									placeholder={`Value ${idx + 1}`}
 									value={val}
 									onChange={(e) => {
@@ -1373,19 +1375,19 @@ function InputElement({
 								/>
 								<button
 									type="button"
-									className="btn btn-xs btn-ghost text-error"
+									className="btn btn-xs btn-square btn-primary"
 									onClick={() => {
 										setInValues(inValues.filter((_, i) => i !== idx));
 									}}
 									aria-label="Remove value"
 								>
-									×
+									<span className="text-primary-content text-sm leading-none">×</span>
 								</button>
 							</div>
 						))}
 						<button
 							type="button"
-							className="btn btn-xs btn-primary w-full"
+							className="btn btn-xs btn-primary w-full mt-1"
 							onClick={() => setInValues([...inValues, ""])}
 						>
 							+ Add Value
@@ -1447,7 +1449,9 @@ function InputElement({
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
-					className="select rounded-r-none"
+					className={`select rounded-r-none ${
+						(mode === "in" || mode === "notIn") && inValues.length > 1 ? "mt-2 self-start" : ""
+					}`}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
@@ -1470,12 +1474,12 @@ function InputElement({
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
 				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
+					<div className="space-y-2 py-2">
 						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
+							<div key={idx} className="grid grid-cols-[1fr_auto] gap-2 items-center">
 								<input
 									type="text"
-									className="input input-primary input-sm w-full"
+									className="input input-primary input-sm w-full rounded-l-none"
 									placeholder={`ISO 8601 Date (${idx + 1})`}
 									value={val}
 									onChange={(e) => {
@@ -1487,19 +1491,19 @@ function InputElement({
 								/>
 								<button
 									type="button"
-									className="btn btn-xs btn-ghost text-error"
+									className="btn btn-xs btn-square btn-primary"
 									onClick={() => {
 										setInValues(inValues.filter((_, i) => i !== idx));
 									}}
 									aria-label="Remove value"
 								>
-									×
+									<span className="text-primary-content text-sm leading-none">×</span>
 								</button>
 							</div>
 						))}
 						<button
 							type="button"
-							className="btn btn-xs btn-primary w-full"
+							className="btn btn-xs btn-primary w-full mt-1"
 							onClick={() => setInValues([...inValues, ""])}
 						>
 							+ Add Date
@@ -1604,7 +1608,9 @@ function InputElement({
 		return (
 			<div className="px-2 grid grid-cols-[30%_70%]">
 				<select
-					className="select rounded-r-none"
+					className={`select rounded-r-none ${
+						(mode === "in" || mode === "notIn") && inValues.length > 1 ? "mt-2 self-start" : ""
+					}`}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
@@ -1625,12 +1631,12 @@ function InputElement({
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
 				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
+					<div className="space-y-2 py-2">
 						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
+							<div key={idx} className="grid grid-cols-[1fr_auto] gap-2 items-center">
 								<input
 									type="text"
-									className="input input-primary input-sm w-full"
+									className="input input-primary input-sm w-full rounded-l-none"
 									placeholder={`Value ${idx + 1}`}
 									value={val}
 									onChange={(e) => {
@@ -1642,19 +1648,19 @@ function InputElement({
 								/>
 								<button
 									type="button"
-									className="btn btn-xs btn-ghost text-error"
+									className="btn btn-xs btn-square btn-primary"
 									onClick={() => {
 										setInValues(inValues.filter((_, i) => i !== idx));
 									}}
 									aria-label="Remove value"
 								>
-									×
+									<span className="text-primary-content text-sm leading-none">×</span>
 								</button>
 							</div>
 						))}
 						<button
 							type="button"
-							className="btn btn-xs btn-primary w-full"
+							className="btn btn-xs btn-primary w-full mt-1"
 							onClick={() => setInValues([...inValues, ""])}
 						>
 							+ Add Value
