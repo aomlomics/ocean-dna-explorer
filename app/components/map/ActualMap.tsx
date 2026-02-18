@@ -1611,7 +1611,7 @@ function LeafletControl({
 	}, []);
 
 	return (
-		<div className={`leaflet-control${className ? " " + className : ""}`} ref={ref} style={style}>
+		<div className={`leaflet-control ${className}`} ref={ref} style={style}>
 			{children}
 		</div>
 	);

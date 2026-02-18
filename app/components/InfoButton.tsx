@@ -13,7 +13,7 @@ export default function InfoButton({
 }) {
 	return (
 		<div
-			className={`tooltip flex items-center ${dir} ${type ? (type === "warning" ? "tooltip-warning" : "tooltip-error") : "[:where(&)]:before:bg-base-200 [:where(&)]:before:text-base-content [:where(&)]:before:border-base-300"}${className ? " " + className : ""}`}
+			className={`tooltip flex items-center ${dir} ${type ? (type === "warning" ? "tooltip-warning" : "tooltip-error") : "[:where(&)]:before:bg-base-200 [:where(&)]:before:text-base-content [:where(&)]:before:border-base-300"} ${className}`}
 			data-tip={infoText}
 		>
 			<svg

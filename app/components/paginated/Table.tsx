@@ -348,7 +348,7 @@ export default function Table({
 	}
 
 	return (
-		<div className={`bg-base-100 border-base-300 rounded-box h-full w-full p-6${className ? " " + className : ""}`}>
+		<div className={`bg-base-100 border-base-300 rounded-box h-full w-full p-6 ${className}`}>
 			<form
 				id={`${table}TableForm`}
 				onSubmit={applyFilters}

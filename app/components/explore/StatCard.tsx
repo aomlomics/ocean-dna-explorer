@@ -130,7 +130,7 @@ async function SuspenseStatCard({
 	} else {
 		return (
 			<div
-				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName}${tooltip ? " tooltip tooltip-secondary before:text-primary-content" : ""}${className ? " " + className : ""}`}
+				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName}${tooltip ? " tooltip tooltip-secondary before:text-primary-content" : ""} ${className}`}
 				data-tip={tooltip}
 			>
 				{content}
