@@ -7,8 +7,8 @@ export default function AnalysisTag({ tag, hideDescription }: { tag: Omit<Tag, "
 
 	return (
 		<div
-			className={`AnalysisTag rounded-xl px-3 inline-flex items-center justify-center text-nowrap select-none${
-				hideDescription ? "" : " tooltip"
+			className={`AnalysisTag rounded-xl px-3 inline-flex items-center justify-center text-nowrap select-none ${
+				hideDescription ? "" : "tooltip"
 			}`}
 			style={{
 				backgroundColor: tag.color,

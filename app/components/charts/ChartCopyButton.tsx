@@ -54,7 +54,7 @@ export default function ChartCopyButton({
 				)}
 			</svg>
 			<span className={copied ? "invisible" : ""}>Copy Chart</span>
-			<span className={`absolute${copied ? "" : " hidden"}`}>Copied</span>
+			<span className={`absolute ${copied ? "" : "hidden"}`}>Copied</span>
 		</button>
 	);
 }

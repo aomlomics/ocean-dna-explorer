@@ -18,7 +18,7 @@ export default function NodeLogo(props: NodeLogoProps) {
 					transition-opacity duration-200
 					[html[data-theme='dark']_&]:opacity-100
 					[html[data-theme='light']_&]:opacity-0
-					${className}
+					${className ?? ""}
 				`}
 			/>
 			<Image
@@ -29,7 +29,7 @@ export default function NodeLogo(props: NodeLogoProps) {
 					transition-opacity duration-200
 					[html[data-theme='dark']_&]:opacity-0
 					[html[data-theme='light']_&]:opacity-100
-					${className}
+					${className ?? ""}
 				`}
 			/>
 		</div>

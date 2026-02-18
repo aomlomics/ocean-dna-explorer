@@ -44,7 +44,7 @@ async function SuspenseDropdownCard({
 
 	return (
 		<div
-			className={`dropdown dropdown-hover bg-base-200 rounded-lg ${queryItems && queryItems.length ? "hover:bg-base-300 hover:rounded-b-none" : ""} ${className}`}
+			className={`dropdown dropdown-hover bg-base-200 rounded-lg ${queryItems && queryItems.length ? "hover:bg-base-300 hover:rounded-b-none" : ""} ${className ?? ""}`}
 		>
 			<div tabIndex={0} role="button" className="w-full p-4 flex items-center gap-4 justify-between">
 				<div className="flex items-center gap-4">
