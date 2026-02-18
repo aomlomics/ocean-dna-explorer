@@ -54,7 +54,7 @@ export async function GET(
 			//assemble queries
 			const queries = [] as PrismaPromise<any>[];
 			//filtered
-			for (let field of Object.keys(where)) {
+			for (let field in where) {
 				const temp = { ...where };
 				delete temp[field];
 

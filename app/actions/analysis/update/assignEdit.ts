@@ -89,17 +89,27 @@ async function doEdit(
 				//add new
 				const newFeatures = await tx.feature.createManyAndReturn({
 					data: features,
-					skipDuplicates: true
+					skipDuplicates: true,
+					select: {
+						featureid: true
+					}
 				});
 
 				const newTaxonomies = await tx.taxonomy.createManyAndReturn({
 					data: taxonomies,
-					skipDuplicates: true
+					skipDuplicates: true,
+					select: {
+						taxonomy: true
+					}
 				});
 
 				const newAssignments = await tx.assignment.createManyAndReturn({
 					data: assignments,
-					skipDuplicates: true
+					skipDuplicates: true,
+					select: {
+						analysis_run_name: true,
+						featureid: true
+					}
 				});
 
 				await stream.message("New entries successfully added to database.", 85);
@@ -188,10 +198,12 @@ async function doEdit(
 					}
 				});
 
-				await stream.success("Success");
+				await stream.message("Analysis successfully updated with new file URL.", 99);
 			},
 			{ timeout: 1 * 60 * 1000 }
 		);
+
+		await stream.success("Success");
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

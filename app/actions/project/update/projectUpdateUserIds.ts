@@ -3,18 +3,27 @@
 import { Project } from "@/app/generated/prisma/client";
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
-import { auth } from "@clerk/nextjs/server";
+import { NetworkPacket, Role } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export default async function projectUpdateUserIdsAction(
 	target: Project["project_id"],
 	newUserIds: Project["userIds"],
 	deletedUserIds: Project["userIds"]
 ): Promise<NetworkPacket> {
+	const client = await clerkClient();
 	const { userId } = await auth();
 
 	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
+	}
+
+	const users = (await client.users.getUserList({ userId: newUserIds })).data;
+	for (const u of users) {
+		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+			throw new Error(`${u.fullName} does not have permission to contribute.`);
+		}
 	}
 
 	const parsed = ProjectSchema.shape.project_id.safeParse(target);

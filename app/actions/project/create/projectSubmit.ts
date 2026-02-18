@@ -1,10 +1,11 @@
 "use server";
 
 import { handlePrismaError, prisma } from "@/app/helpers/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { Role } from "@/types/globals";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -14,6 +15,7 @@ async function doSubmit(
 	userIds: string[],
 	isPrivate: boolean
 ) {
+	const client = await clerkClient();
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -25,6 +27,14 @@ async function doSubmit(
 	if (!userIds.includes(userId)) {
 		await globalStream.error("Must include self as a user.");
 		return;
+	}
+
+	const users = (await client.users.getUserList({ userId: userIds })).data;
+	for (const u of users) {
+		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+			await globalStream.error(`${u.fullName} does not have permission to contribute.`);
+			return;
+		}
 	}
 
 	try {
@@ -49,73 +59,83 @@ async function doSubmit(
 
 		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
 
-		await prisma.$transaction(
-			async (tx) => {
-				//check if assay data is correct
-				for (const a of assays) {
-					const dbAssay = await tx.assay.findUnique({
-						where: {
-							assay_name: a.assay_name,
-							pcr_primer_forward: a.pcr_primer_forward,
-							pcr_primer_reverse: a.pcr_primer_reverse
-						}
-					});
+		//error checks
+		const dbAssays = await prisma.assay.findMany({
+			where: {
+				assay_name: {
+					in: assays.map((a) => a.assay_name)
+				}
+			}
+		});
 
-					if (!dbAssay) {
-						await projectChannel.stream.error(
-							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
-						);
-						throw new Error(
-							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
-						);
-					}
+		//check if assay data is correct
+		for (const a of assays) {
+			const dbA = dbAssays.find((db) => a.assay_name === db.assay_name);
 
-					for (const [f, value] of Object.entries(a)) {
-						const field = f as keyof typeof dbAssay;
-						if (value !== dbAssay[field]) {
-							if (!(a.assay_name in badAssayFields)) {
-								badAssayFields[a.assay_name] = [];
-							}
-							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
+			if (!dbA) {
+				//assay does not exist
+				await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+				throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+			} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
+				//assay has incorrect pcr_primer_forward
+				await projectChannel.stream.error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
+				);
+				throw new Error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
+				);
+			} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
+				//assay has incorrect pcr_primer_reverse
+				await projectChannel.stream.error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
+				);
+				throw new Error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
+				);
+			} else {
+				//get all non-essential fields that do not match
+				for (const [f, value] of Object.entries(a)) {
+					const field = f as keyof (typeof dbAssays)[0];
+					if (value !== dbA[field]) {
+						if (!(a.assay_name in badAssayFields)) {
+							badAssayFields[a.assay_name] = [];
 						}
+						badAssayFields[a.assay_name].push({ field, provided: value, actual: dbA[field] });
 					}
 				}
+			}
+		}
 
-				await projectChannel.stream.message("All checks successful.", 85);
+		await projectChannel.stream.message("All checks successful.", 85);
 
-				await tx.project.create({
-					data: project
-				});
-
-				await tx.assayPrep.createMany({
-					data: assayPreps
-				});
-
-				await projectChannel.stream.success("Project and AssayPreps successfully uploaded to database.");
-
-				for (const a of assays) {
-					await tx.assay.update({
-						where: {
-							assay_name: a.assay_name
-						},
-						data: {
-							Samples: {
-								connectOrCreate: samplesByAssay[a.assay_name]
-							}
+		//submission
+		await prisma.$transaction([
+			prisma.project.create({
+				data: project
+			}),
+			prisma.assayPrep.createMany({
+				data: assayPreps
+			}),
+			...assays.map((a) =>
+				prisma.assay.update({
+					where: {
+						assay_name: a.assay_name
+					},
+					data: {
+						Samples: {
+							connectOrCreate: samplesByAssay[a.assay_name]
 						}
-					});
-				}
+					}
+				})
+			),
+			prisma.library.createMany({
+				data: libraries
+			})
+		]);
 
-				await sampleChannel.stream.success("Samples successfully uploaded to database.");
-
-				await tx.library.createMany({
-					data: libraries
-				});
-
-				await libraryChannel.stream.success("Libraries successfully uploaded to database.");
-			},
-			{ timeout: 3 * 60 * 1000 } //3 minutes
-		);
+		await projectChannel.stream.success("Project and AssayPreps successfully uploaded to database.");
+		await sampleChannel.stream.success("Samples successfully uploaded to database.");
+		await libraryChannel.stream.success("Libraries successfully uploaded to database.");
 
 		let successMsg = "Project successfully submitted!";
 		if (Object.keys(badAssayFields).length) {

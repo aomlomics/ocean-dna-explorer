@@ -43,8 +43,8 @@ export async function getApiSections() {
 			content: (
 				<div className="space-y-4">
 					<p>
-						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help you understand
-						how to use the API to query and retrieve data from the Ocean DNA Explorer.
+						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help
+						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
 						Our API is designed to be straightforward. All you need is a web browser or a simple script to start
@@ -60,7 +60,7 @@ export async function getApiSections() {
 						<div className="space-y-8 mt-10">
 							{/* Step 1 */}
 							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
+								<div className="shrink-0">
 									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
 										<span className="text-3xl font-bold">1</span>
 									</div>
@@ -68,28 +68,27 @@ export async function getApiSections() {
 								<div>
 									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
 									<p>
-										Before you can ask for data, you need to know what's available. The best place to start is
-										our{" "}
+										Before you can ask for data, you need to know what's available. The best place to start is our{" "}
 										<Link href="#database-schema" className="link link-primary">
 											Database Schema
 										</Link>
-										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows
-										you what tables are available and how they are linked together.
+										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows you
+										what tables are available and how they are linked together.
 									</p>
 									<p className="mt-2">
 										Once you know which table you're interested in (e.g., `Project`), look at the{" "}
 										<Link href="#table-definitions" className="link link-primary">
 											Table Definitions
 										</Link>{" "}
-										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in
-										your queries.
+										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in your
+										queries.
 									</p>
 								</div>
 							</div>
 
 							{/* Step 2 */}
 							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
+								<div className="shrink-0">
 									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
 										<span className="text-3xl font-bold">2</span>
 									</div>
@@ -98,8 +97,8 @@ export async function getApiSections() {
 									<h4 className="text-xl font-semibold leading-6 mb-2">Build a Basic Query</h4>
 									<p>
 										The simplest query just retrieves data from a single table. Start with the table name (the{" "}
-										<strong>endpoint</strong>) and add <strong>parameters</strong> after the `?` to refine your
-										search. For example, you can limit the number of results or specify which fields to return.
+										<strong>endpoint</strong>) and add <strong>parameters</strong> after the `?` to refine your search.
+										For example, you can limit the number of results or specify which fields to return.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -128,7 +127,7 @@ export async function getApiSections() {
 
 							{/* Step 3 */}
 							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
+								<div className="shrink-0">
 									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
 										<span className="text-3xl font-bold">3</span>
 									</div>
@@ -138,16 +137,17 @@ export async function getApiSections() {
 									<p>
 										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
 										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you're telling
-										the API: "also give me the data from the related table."
+										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you're telling the
+										API: "also give me the data from the related table."
 									</p>
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
 										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
 									</p>
 									<p className="mt-2 text-sm bg-info/10 p-2 rounded border-l-2 border-info">
-										<strong>Note:</strong> Notice that the endpoint uses <code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), 
-										but the relation parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural). 
+										<strong>Note:</strong> Notice that the endpoint uses{" "}
+										<code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), but the relation
+										parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural).
 										See{" "}
 										<Link href="#essential-information" className="link link-primary font-semibold">
 											Essential API Information
@@ -185,7 +185,7 @@ export async function getApiSections() {
 
 							{/* Step 4 */}
 							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="flex-shrink-0">
+								<div className="shrink-0">
 									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
 										<span className="text-3xl font-bold">4</span>
 									</div>
@@ -193,8 +193,8 @@ export async function getApiSections() {
 								<div>
 									<h4 className="text-xl font-semibold leading-6 mb-2">Make the Request</h4>
 									<p>
-										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in
-										JSON format, a standard way for computers to exchange data. The{" "}
+										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in JSON
+										format, a standard way for computers to exchange data. The{" "}
 										<Link href="#quick-start-code" className="link link-primary">
 											Quick Start Code Examples
 										</Link>{" "}
@@ -289,16 +289,21 @@ if (http_status(response)$category == "Success") {
 											<Link href="/explore/project" className="link link-primary font-semibold">
 												Explore Pages
 											</Link>
-											: View all data from each table with filters. You can only filter on fields within the table you are looking at. Click on any blue data field to view the detail page for that specific record.
+											: View all data from each table with filters. You can only filter on fields within the table you
+											are looking at. Click on any blue data field to view the detail page for that specific record.
 										</li>
 										<li>
 											<Link href="/search" className="link link-primary font-semibold">
 												Search Page
 											</Link>
-											: Build complex queries using data from multiple tables, allowing you to filter on both fields <em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button to add OR conditions.
+											: Build complex queries using data from multiple tables, allowing you to filter on both fields{" "}
+											<em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button
+											to add OR conditions.
 										</li>
 										<li>
-											<strong>Direct API Access</strong>: Paste API URLs directly in your browser (e.g., <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>) to get JSON responses. Great for testing queries before coding.
+											<strong>Direct API Access</strong>: Paste API URLs directly in your browser (e.g.,{" "}
+											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>
+											) to get JSON responses. Great for testing queries before coding.
 										</li>
 										<li>
 											<strong>Code Examples</strong>: Use the{" "}
@@ -312,9 +317,12 @@ if (http_status(response)$category == "Success") {
 
 								<div>
 									<div className="p-4 bg-warning/20 border-l-4 border-warning rounded-md">
-										<h4 className="mb-2 text-lg font-medium">2. Table Names vs. Relation Names: Understanding Plurality</h4>
+										<h4 className="mb-2 text-lg font-medium">
+											2. Table Names vs. Relation Names: Understanding Plurality
+										</h4>
 										<p>
-											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference those same tables as relations in queries, the relation names are PLURAL.
+											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference
+											those same tables as relations in queries, the relation names are PLURAL.
 										</p>
 									</div>
 
@@ -328,25 +336,28 @@ if (http_status(response)$category == "Success") {
 											</p>
 											<div className="ml-4 space-y-2">
 												<div>
-													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
+													Query the table:{" "}
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
 												</div>
 												<div>
-													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code> (plural)
+													Include related data:{" "}
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code>{" "}
+													(plural)
 												</div>
 											</div>
 										</div>
 
 										<div>
 											<p className="mb-2">2. Finding all samples collected during a specific project</p>
-											<p className="mb-2 ml-4">
-												You want to query the project table and get all its samples:
-											</p>
+											<p className="mb-2 ml-4">You want to query the project table and get all its samples:</p>
 											<div className="ml-4 space-y-2">
 												<div>
-													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+													Query the table:{" "}
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
 												</div>
 												<div>
-													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
+													Include related data:{" "}
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
 												</div>
 											</div>
 										</div>
@@ -358,16 +369,21 @@ if (http_status(response)$category == "Success") {
 											</p>
 											<div className="ml-4 space-y-2">
 												<div>
-													Query the table: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+													Query the table:{" "}
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
 												</div>
 												<div>
-													Include related data: <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code> (plural, spelled differently!)
+													Include related data:{" "}
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code>{" "}
+													(plural, spelled differently!)
 												</div>
 											</div>
 										</div>
 
 										<p className="mt-6">
-											Pro tip: Use the <code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint to see the exact relation names available for any table. Or check the{" "}
+											Pro tip: Use the{" "}
+											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint
+											to see the exact relation names available for any table. Or check the{" "}
 											<Link href="#table-definitions" className="link link-primary">
 												Table Definitions
 											</Link>{" "}
@@ -447,7 +463,7 @@ if (http_status(response)$category == "Success") {
 										alt="ERD notation key"
 										width="279"
 										height="137"
-										className="h-1/5 w-auto absolute right-0 bottom-0 pr-6 pb-6"
+										className="w-1/4 h-auto absolute right-0 top-0 px-6 py-6"
 									/>
 								</div>
 							</div>
@@ -468,8 +484,8 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table in the Ocean DNA Explorer. You can use this information
-								in your API requests to query and filter on specific fields.
+								The dropdown menus below show the fields available for each table in the Ocean DNA Explorer. You can use
+								this information in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
 						</>
@@ -486,12 +502,12 @@ if (http_status(response)$category == "Success") {
 									<Link href="/mySubmissions" className="link link-primary link-hover">
 										My Submissions
 									</Link>{" "}
-									page, a record of the changes is stored in the `editHistory` field. This field contains a JSON
-									array of objects, where each object represents a set of edits made at a specific time.
+									page, a record of the changes is stored in the `editHistory` field. This field contains a JSON array
+									of objects, where each object represents a set of edits made at a specific time.
 								</p>
 								<p className="mb-4">
-									Note: While the example shows an `id` for each edit, this is for illustrative purposes. The
-									current implementation does not yet include a unique ID for each edit record.
+									Note: While the example shows an `id` for each edit, this is for illustrative purposes. The current
+									implementation does not yet include a unique ID for each edit record.
 								</p>
 							</div>
 							<h4 className="font-medium mb-2">Structure of an Edit Record:</h4>
@@ -625,7 +641,11 @@ if (http_status(response)$category == "Success") {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`} defaultClosed={true} />
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}
+								defaultClosed={true}
+							/>
 						</>
 					)
 				},
@@ -685,20 +705,17 @@ if (http_status(response)$category == "Success") {
 						<>
 							<div className="mb-4">Parameter: `search=[query]`</div>
 							<p className="mb-4">
-								This is the simplest way to search. It performs a case-insensitive search across all text-based
-								fields in a specified table for your query string.
+								This is the simplest way to search. It performs a case-insensitive search across all text-based fields
+								in a specified table for your query string.
 							</p>
 							<div className="mb-4">
-								<strong>Use Case:</strong> Ideal for quick, general searches when you're not sure which specific
-								field contains the information.
+								<strong>Use Case:</strong> Ideal for quick, general searches when you're not sure which specific field
+								contains the information.
 							</div>
 							<div className="mb-4">
-								Example URL:{" "}
-								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
+								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
 							</div>
-							<p className="mb-2">
-								This will return all projects where the string "gomecc" appears in any text field.
-							</p>
+							<p className="mb-2">This will return all projects where the string "gomecc" appears in any text field.</p>
 							<ApiCodeBlock
 								language="json"
 								url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`}
@@ -714,7 +731,8 @@ if (http_status(response)$category == "Success") {
 						<div className="space-y-4">
 							<p>Query Parameter: `advanced=[JSON_object]`</p>
 							<p>
-								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
+								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table
+								queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
 							</p>
 							<div className="p-4 my-4 bg-base-200 border-l-4 border-info rounded-md">
 								<h4 className="font-bold mb-2">Build Queries with the UI</h4>
@@ -722,20 +740,18 @@ if (http_status(response)$category == "Success") {
 									Use the{" "}
 									<Link href="/search" className="link link-primary font-semibold">
 										Search page
-									</Link>
-									{" "}to build filters through a user interface (no code necessary!), then copy the API query from the URL.
+									</Link>{" "}
+									to build filters through a user interface (no code necessary!), then copy the API query from the URL.
 								</p>
 							</div>
 
 							<div>
-								<strong>Use Case:</strong> Perfect for detailed data exploration, such as finding all samples from
-								a specific location collected after a certain date.
+								<strong>Use Case:</strong> Perfect for detailed data exploration, such as finding all samples from a
+								specific location collected after a certain date.
 							</div>
 
 							<h4 className="font-medium mt-6 mb-2">JSON Structure:</h4>
-							<p>
-								The JSON object is an array of conditions. Nesting arrays creates an `OR` condition.
-							</p>
+							<p>The JSON object is an array of conditions. Nesting arrays creates an `OR` condition.</p>
 							<CodeBlock
 								language="json"
 								code={`[
@@ -824,8 +840,8 @@ if (http_status(response)$category == "Success") {
 								]}
 								description={
 									<>
-										This query returns samples where the <strong>geo_loc_name</strong> contains "Atlantic" AND
-										the <strong>collection_timestamp</strong> is on or after January 1st, 2019.
+										This query returns samples where the <strong>geo_loc_name</strong> contains "Atlantic" AND the{" "}
+										<strong>collection_timestamp</strong> is on or after January 1st, 2019.
 									</>
 								}
 							/>
@@ -839,8 +855,7 @@ if (http_status(response)$category == "Success") {
 						<>
 							<div className="mb-4">Parameter: `ids=[id1],[id2],...`</div>
 							<p className="mb-4">
-								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of
-								IDs.
+								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of IDs.
 							</p>
 							<div className="mb-4">
 								<strong>Use Case:</strong> Useful when you have a specific list of records you want to fetch.
@@ -873,21 +888,18 @@ if (http_status(response)$category == "Success") {
 						<>
 							<div className="mb-4">Parameter: `[fieldName]=[value]`</div>
 							<p className="mb-4">
-								This method allows you to filter results based on the value of one or more specific fields. This
-								cannot be combined with `advanced`, `search`, or `ids` parameters.
+								This method allows you to filter results based on the value of one or more specific fields. This cannot
+								be combined with `advanced`, `search`, or `ids` parameters.
 							</p>
 							<div className="mb-4">
 								<strong>Use Case:</strong> Good for simple, direct filtering on one or more known fields.
 							</div>
 							<div className="mb-4">
 								Example URL:{" "}
-								<InlineCode
-									code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`}
-								/>
+								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`} />
 							</div>
 							<p className="mb-2">
-								This query returns projects where `project_name` contains "gomecc" AND `institution` contains
-								"noaa".
+								This query returns projects where `project_name` contains "gomecc" AND `institution` contains "noaa".
 							</p>
 							<ApiCodeBlock
 								language="json"
@@ -942,8 +954,8 @@ if (http_status(response)$category == "Success") {
 							<div className="mb-4">Parameter: fieldName=value</div>
 
 							<p className="mb-4">
-								Filters results to return only records where the specified field contains the provided value. For
-								more details, see the{" "}
+								Filters results to return only records where the specified field contains the provided value. For more
+								details, see the{" "}
 								<Link className="link link-primary" href="#direct-field-filtering">
 									Direct Field Filtering
 								</Link>{" "}
@@ -974,15 +986,17 @@ if (http_status(response)$category == "Success") {
 							<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
 								<h4 className="font-bold mb-2">Critical: Relation Names Are Plural</h4>
 								<p className="mb-2">
-									While table names in API endpoints are <strong>singular</strong> (e.g., <InlineCode code="/api/sample" />), 
-									relation names must be <strong>plural</strong> (e.g., <InlineCode code="relations=Samples" />).
+									While table names in API endpoints are <strong>singular</strong> (e.g.,{" "}
+									<InlineCode code="/api/sample" />
+									), relation names must be <strong>plural</strong> (e.g., <InlineCode code="relations=Samples" />
+									).
 								</p>
 								<p className="mb-2">
 									<strong>Example:</strong> To get a project with all its related samples:
 								</p>
 								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=Samples`} />
 								<p className="mt-2 text-sm">
-									Not sure what the relation name is? Use <InlineCode code="/api/[table]/relations" /> to see all 
+									Not sure what the relation name is? Use <InlineCode code="/api/[table]/relations" /> to see all
 									available relation names for any table. See the{" "}
 									<Link href="#essential-information" className="link link-primary font-semibold">
 										Essential API Information
@@ -994,15 +1008,13 @@ if (http_status(response)$category == "Success") {
 							<div className="my-8 p-4 bg-base-200/50 border-l-4 border-accent shadow-sm">
 								<h5 className="font-semibold mb-2 text-accent">Why Use Relations?</h5>
 								<p className="text-sm">
-									Relations are powerful because they let you fetch data from multiple connected tables in a single
-									API call. For instance, without relations, to get a project and all its samples, you would have
-									to:
+									Relations are powerful because they let you fetch data from multiple connected tables in a single API
+									call. For instance, without relations, to get a project and all its samples, you would have to:
 								</p>
 								<ol className="list-decimal list-inside text-sm mt-2 space-y-1">
 									<li>Make a first request to get the project data.</li>
 									<li>
-										Make a second request to the sample table, filtering by the project's ID to get the related
-										samples.
+										Make a second request to the sample table, filtering by the project's ID to get the related samples.
 									</li>
 								</ol>
 								<p className="text-sm mt-2">
@@ -1019,10 +1031,7 @@ if (http_status(response)$category == "Success") {
 						<div className="space-y-4">
 							<p>Parameter: relationsAllFields=true or relationsAllFields=false</p>
 
-							<p>
-								Controls whether to include all fields on related records (true) or just their ID (false,
-								default).
-							</p>
+							<p>Controls whether to include all fields on related records (true) or just their ID (false, default).</p>
 
 							<div>
 								Example URL: <InlineCode code="/api/project?relations=samples&relationsAllFields=true" />
@@ -1093,7 +1102,9 @@ if (http_status(response)$category == "Success") {
 			title: "Response Format",
 			content: (
 				<div className="space-y-4">
-					<p>This section explains the structure of API responses so you can properly parse and use the returned data.</p>
+					<p>
+						This section explains the structure of API responses so you can properly parse and use the returned data.
+					</p>
 				</div>
 			),
 			subsections: [
@@ -1170,9 +1181,7 @@ if (http_status(response)$category == "Success") {
 										<strong>Invalid Field:</strong> Using a field name that does not exist in a filter or field
 										selection.
 									</p>
-									<InlineCode
-										code={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`}
-									/>
+									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`} />
 									<ApiCodeBlock
 										language="json"
 										url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`}
@@ -1207,7 +1216,9 @@ if (http_status(response)$category == "Success") {
 
 						<div>
 							<h4 className="font-medium mb-2">Q: Do I need an API key to use the Ocean DNA Explorer API?</h4>
-							<p>A: No, the Ocean DNA Explorer API is currently open and does not require authentication or API keys.</p>
+							<p>
+								A: No, the Ocean DNA Explorer API is currently open and does not require authentication or API keys.
+							</p>
 						</div>
 
 						<div>

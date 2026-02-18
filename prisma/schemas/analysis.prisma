@@ -196,6 +196,7 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
+    Libraries   Library[]
     Assignments Assignment[]
 
     // Data

@@ -131,7 +131,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const [searchTable, setSearchTable] = useState(() => {
 		const paramTable = searchParams.get("table");
 		return TableNames.find((name) => name.toLowerCase() === paramTable?.toLowerCase());
-	}); //will always exist when necessary, parent redirects to ?table=project
+	}); //either noTable or searchTable will always exist, parent without noTable redirects to ?table=project
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
@@ -573,6 +573,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		setApiDropdownOpen(false);
 		apiFieldsModalRef.current?.showModal();
 	}
+
 	const availableApiFields = getAvailableApiFields(searchTable);
 	const filteredApiFields = availableApiFields.filter((field) =>
 		field.toLowerCase().includes(fieldSearchText.toLowerCase())
