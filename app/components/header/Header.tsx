@@ -48,6 +48,7 @@ export default async function Header() {
 					<TabButton tabName="Home" route="/" />
 					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />
+					<TabButton tabName="Visualize" route="/visualize" />
 					<SubmitMegaMenu />
 					{/* <TabButton tabName="Contribute" route="/contribute" /> */}
 					<DocsMegaMenu />
