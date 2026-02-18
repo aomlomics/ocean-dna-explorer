@@ -14,7 +14,7 @@ export default function ChartCopyButton({
 
 	return (
 		<button
-			className={`btn mt-7 relative flex justify-center${copied ? " btn-success" : ""}`}
+			className={`btn mt-7 relative flex justify-center ${copied ? "btn-success" : ""}`}
 			onClick={() => {
 				if (ref.current) {
 					try {

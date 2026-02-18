@@ -740,8 +740,8 @@ export default function Table({
 									<tr key={"row" + i} className="h-12 align-middle">
 										{typeof title === "string" ? (
 											<th
-												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
-													i ? " border-t-2" : ""
+												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2 ${
+													i ? "border-t-2" : ""
 												}`}
 											>
 												<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
@@ -750,8 +750,8 @@ export default function Table({
 											</th>
 										) : (
 											<th
-												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
-													i ? " border-t-2" : ""
+												className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2 ${
+													i ? "border-t-2" : ""
 												}`}
 											>
 												<Link
@@ -770,9 +770,9 @@ export default function Table({
 													if (head === "Tags") {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm border-base-300 border-l-2${
-																	i ? " border-t-2" : ""
-																}${row.Tags.length === 0 ? " bg-base-200" : ""}`}
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																	i ? "border-t-2" : ""
+																} ${row.Tags.length === 0 ? "bg-base-200" : ""}`}
 																key={head + "child" + j}
 															>
 																<div className="flex gap-3">
@@ -785,8 +785,8 @@ export default function Table({
 													} else {
 														acc.push(
 															<td
-																className={`whitespace-nowrap text-sm border-base-300 border-l-2${
-																	i ? " border-t-2" : ""
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																	i ? "border-t-2" : ""
 																}`}
 																key={head + "child" + j}
 															>
@@ -823,9 +823,9 @@ export default function Table({
 												} else if (userDefinedHeaders.includes(head)) {
 													acc.push(
 														<td
-															className={`whitespace-nowrap text-sm border-base-300 border-l-2${
-																i ? " border-t-2" : ""
-															}${row.userDefined[head] === null ? " bg-base-200" : ""}`}
+															className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																i ? "border-t-2" : ""
+															} ${row.userDefined[head] === null ? "bg-base-200" : ""}`}
 															key={row.userDefined[head] + "child" + j}
 														>
 															{row.userDefined[head]}
@@ -902,9 +902,9 @@ export default function Table({
 
 													acc.push(
 														<td
-															className={`whitespace-nowrap text-sm border-base-300 border-l-2${
-																i ? " border-t-2" : ""
-															}${row[head] === null || row[head] in DeadValueEnum ? " bg-base-200" : ""}`}
+															className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																i ? "border-t-2" : ""
+															} ${row[head] === null || row[head] in DeadValueEnum ? "bg-base-200" : ""}`}
 															key={row[head] + "child" + j}
 														>
 															{element}
@@ -915,7 +915,7 @@ export default function Table({
 
 											return acc;
 										}, [])}
-										<th className={`border-base-300 border-l-2${i ? " border-t-2" : ""}`}>
+										<th className={`border-base-300 border-l-2 ${i ? "border-t-2" : ""}`}>
 											{i + 1 + (page - 1) * take}
 										</th>
 									</tr>

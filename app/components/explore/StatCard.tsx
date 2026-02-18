@@ -120,7 +120,7 @@ async function SuspenseStatCard({
 		return (
 			<Link href={link} className={className}>
 				<div
-					className={`bg-base-200 p-4 h-full rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName}${tooltip ? " tooltip tooltip-secondary before:text-primary-content" : ""}`}
+					className={`bg-base-200 p-4 h-full rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""}`}
 					data-tip={tooltip}
 				>
 					{content}
@@ -130,7 +130,7 @@ async function SuspenseStatCard({
 	} else {
 		return (
 			<div
-				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName}${tooltip ? " tooltip tooltip-secondary before:text-primary-content" : ""} ${className}`}
+				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""} ${className}`}
 				data-tip={tooltip}
 			>
 				{content}

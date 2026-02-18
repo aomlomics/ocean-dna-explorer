@@ -118,8 +118,8 @@ export default function LoadingTable({
 							{new Array(take).fill(null).map((_, i) => (
 								<tr key={"row" + i} className="h-12 align-middle">
 									<th
-										className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2${
-											i ? " border-t-2" : ""
+										className={`whitespace-nowrap text-sm font-bold bg-base-200 border-base-300 py-5 border-r-2 ${
+											i ? "border-t-2" : ""
 										}`}
 									>
 										<LoadingText color="primary" />
@@ -127,13 +127,13 @@ export default function LoadingTable({
 
 									{new Array(columns - 1).fill(null).map((_, j) => (
 										<td
-											className={`whitespace-nowrap text-sm border-base-300 border-l-2${i ? " border-t-2" : ""}`}
+											className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${i ? "border-t-2" : ""}`}
 											key={"row" + i + "col" + j}
 										>
 											<LoadingText />
 										</td>
 									))}
-									<th className={`border-base-300 border-l-2${i ? " border-t-2" : ""}`}>{i + 1 + (page - 1) * take}</th>
+									<th className={`border-base-300 border-l-2 ${i ? "border-t-2" : ""}`}>{i + 1 + (page - 1) * take}</th>
 								</tr>
 							))}
 						</tbody>
