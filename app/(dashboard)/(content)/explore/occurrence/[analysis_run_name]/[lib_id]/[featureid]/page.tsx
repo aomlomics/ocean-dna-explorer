@@ -4,6 +4,8 @@ import TableMetadata from "@/types/tableMetadata";
 import { Occurrence, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import StatCard from "@/app/components/explore/StatCard";
+import { AnalysisIcon, DnaIcon, LocationIcon } from "@/app/components/icons";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -245,89 +247,27 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 				{/* Context: library, feature, analysis, assay */}
 				<div className="pt-6">
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
-							<div
-								className="w-10 h-10 text-primary"
-								style={{
-									backgroundColor: "currentColor",
-									WebkitMaskImage: "url(/images/icons/location_pin.svg)",
-									maskImage: "url(/images/icons/location_pin.svg)",
-									WebkitMaskRepeat: "no-repeat",
-									maskRepeat: "no-repeat",
-									WebkitMaskPosition: "center",
-									maskPosition: "center",
-									WebkitMaskSize: "contain"
-								}}
-							/>
-							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Library</p>
-								<Link
-									href={`/explore/library/${lib_id}`}
-									className="text-base-content font-medium hover:text-primary break-all"
-								>
-									{lib_id}
-								</Link>
-							</div>
-						</div>
-
-						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
-							<div
-								className="w-12 h-10 text-primary"
-								style={{
-									backgroundColor: "currentColor",
-									WebkitMaskImage: "url(/images/icons/dna_icon.svg)",
-									maskImage: "url(/images/icons/dna_icon.svg)",
-									WebkitMaskRepeat: "no-repeat",
-									maskRepeat: "no-repeat",
-									WebkitMaskPosition: "center",
-									maskPosition: "center",
-									WebkitMaskSize: "contain"
-								}}
-							/>
-							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Feature</p>
-								<Link
-									href={`/explore/feature/${featureid}`}
-									className="text-base-content font-medium hover:text-primary break-all"
-								>
-									{featureid}
-								</Link>
-							</div>
-						</div>
-
-						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
-							<div
-								className="w-10 h-10 text-primary"
-								style={{
-									backgroundColor: "currentColor",
-									WebkitMaskImage: "url(/images/analysis_outline_image.svg)",
-									maskImage: "url(/images/analysis_outline_image.svg)",
-									WebkitMaskRepeat: "no-repeat",
-									maskRepeat: "no-repeat",
-									WebkitMaskPosition: "center",
-									maskPosition: "center",
-									WebkitMaskSize: "contain"
-								}}
-							/>
-							<div>
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Analysis</p>
-								<Link
-									href={`/explore/analysis/${analysis_run_name}`}
-									className="text-base-content font-medium hover:text-primary break-all"
-								>
-									{analysis_run_name}
-								</Link>
-								<p className="text-xs text-base-content/70 mt-1">
-									Assay:{" "}
-									<Link
-										href={`/explore/assay/${occurrence.Analysis.assay_name}`}
-										className="link link-primary link-hover"
-									>
-										{occurrence.Analysis.assay_name}
-									</Link>
-								</p>
-							</div>
-						</div>
+						<StatCard
+							title="Library"
+							icon={<LocationIcon />}
+							value={lib_id}
+							link={`/explore/library/${lib_id}`}
+							layout="horizontal"
+						/>
+						<StatCard
+							title="Feature"
+							icon={<DnaIcon />}
+							value={featureid}
+							link={`/explore/feature/${featureid}`}
+							layout="horizontal"
+						/>
+						<StatCard
+							title="Analysis"
+							icon={<AnalysisIcon />}
+							value={analysis_run_name}
+							link={`/explore/analysis/${analysis_run_name}`}
+							layout="horizontal"
+						/>
 					</div>
 				</div>
 			</section>

@@ -6,7 +6,9 @@ import { Assay } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import PrimerDiagram from "@/app/components/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
-import { DropdownLinkBoxWithIcon, SampleStatCard } from "@/app/components/explore/StatCards";
+import StatCard from "@/app/components/explore/StatCard";
+import { AnalysisIcon, LocationIcon } from "@/app/components/icons";
+import DropdownCard from "@/app/components/explore/DropdownCard";
 
 // Simple GC% calculator for summary cards
 const calculateGcContent = (seq: string) => {
@@ -256,17 +258,26 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						<div>
 							<h2 className="text-2xl font-semibold text-base-content/90">Assay at a Glance</h2>
 							<div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<SampleStatCard title="Total Samples" value={assay._count.Samples} />
-								<SampleStatCard title="Total Libraries" value={assay.Libraries.length} />
-								<div className="sm:col-span-2">
-									<DropdownLinkBoxWithIcon
-										title="Total Analyses"
-										count={assay.Analyses.length}
-										content={assay.Analyses.map((a) => a.analysis_run_name)}
-										linkPrefix="/explore/analysis"
-										icon="analysis"
-									/>
-								</div>
+								<StatCard
+									title="Samples"
+									icon={<LocationIcon />}
+									value={assay._count.Samples}
+									link={`/search?table=occurrence&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
+									tooltip="View as Search"
+								/>
+								<StatCard
+									title="Libraries"
+									icon={<LocationIcon />}
+									value={assay.Libraries.length}
+									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
+									tooltip="View as Search"
+								/>
+								<DropdownCard
+									table="analysis"
+									items={assay.Analyses}
+									icon={<AnalysisIcon />}
+									className="sm:col-span-2"
+								/>
 							</div>
 						</div>
 
