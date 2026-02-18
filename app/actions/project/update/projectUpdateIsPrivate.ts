@@ -27,31 +27,25 @@ export default async function projectUpdateIsPrivateAction(
 	const project_id = parsed.data;
 
 	try {
-		await prisma.$transaction(async (tx) => {
-			const project = await tx.project.findUnique({
-				where: {
-					project_id
-				},
-				select: {
-					userIds: true
+		const dbProject = await prisma.project.update({
+			where: {
+				project_id,
+				userIds: {
+					has: userId
 				}
-			});
-
-			if (!project) {
-				throw new Error(`No Project with project_id of "${project_id}" found.`);
-			} else if (!project.userIds.includes(userId)) {
-				throw new Error("Unauthorized action.");
+			},
+			data: {
+				isPrivate
+			},
+			select: {
+				userIds: true
 			}
-
-			await tx.project.update({
-				where: {
-					project_id
-				},
-				data: {
-					isPrivate
-				}
-			});
 		});
+
+		//TODO: test if necessary
+		if (!dbProject.userIds.includes(userId)) {
+			throw new Error("Unauthorized action.");
+		}
 
 		return { statusMessage: "success" };
 	} catch (err: any) {

@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default function MobileMenu() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -77,8 +75,8 @@ export default function MobileMenu() {
 							<ul className="p-2">
 								{TableNames.map((table) => (
 									<li key={table} className="py-1">
-										<Link href={`/explore/${uncapitalizeTable(table as Prisma.ModelName)}`} onClick={handleClose}>
-											{TableMetadata[table as Prisma.ModelName].plural}
+										<Link href={`/explore/${table}`} onClick={handleClose}>
+											{TableMetadata[table].plural}
 										</Link>
 									</li>
 								))}
@@ -88,6 +86,11 @@ export default function MobileMenu() {
 					<li className="text-base py-1">
 						<Link href="/search" onClick={handleClose}>
 							Search
+						</Link>
+					</li>
+					<li className="text-base py-1">
+						<Link href="/visualize" onClick={handleClose}>
+							Visualize
 						</Link>
 					</li>
 					<li className="text-base py-1">

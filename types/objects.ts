@@ -61,9 +61,21 @@ export const TaxonomicRanks = [
 	"family",
 	"genus",
 	"species"
-] as Array<keyof Taxonomy>;
-
+] as Array<keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">>;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
+export const RankPlurals = {
+	domain: "Domains",
+	kingdom: "Kingdoms",
+	supergroup: "Supergroups",
+	division: "Divisions",
+	subdivision: "Subdivisions",
+	phylum: "Phyla",
+	class: "Classes",
+	order: "Orders",
+	family: "Families",
+	genus: "Genera",
+	species: "Species"
+};
 
 export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "deleted_ODE"];
 

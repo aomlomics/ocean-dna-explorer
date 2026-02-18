@@ -51,6 +51,7 @@ const TableMetadata = {
 			"samp_category",
 			"neg_cont_type",
 			"pos_cont_type",
+			"expedition_id",
 			"line_id",
 			"station_id",
 			"serial_number"
@@ -71,7 +72,25 @@ const TableMetadata = {
 			"The protocol-specific details describing the laboratory procedures used to perform an assay, such as the chemicals, instruments, and conditions employed for sample processing and sequencing.",
 		schema: PrismaZodTypes.AssayPrepSchema,
 		enumSchema: PrismaZodTypes.AssayPrepScalarFieldEnumSchema,
-		titleField: ["project_id", "assay_name"]
+		titleField: ["project_id", "assay_name"],
+		fieldOrder: [
+			"assay_type",
+			"thermocycler",
+			"commercial_mm",
+			"custom_mm",
+			"pcr_cond",
+			"amplificationReactionVolume",
+			"assay_validation",
+			"pcr_primer_vol_forward",
+			"pcr_primer_vol_reverse",
+			"pcr_primer_conc_forward",
+			"pcr_primer_conc_reverse",
+			"probe_seq",
+			"probe_conc",
+			"pcr_dna_vol",
+			"pcr_rep",
+			"pcr_cycles"
+		]
 	},
 	library: {
 		plural: "Libraries",
@@ -80,7 +99,18 @@ const TableMetadata = {
 		schema: PrismaZodTypes.LibrarySchema,
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		titleField: "lib_id",
-		subFields: ["samp_name", "seq_run_id"]
+		subFields: ["samp_name", "seq_run_id"],
+		fieldOrder: [
+			"seq_run_id",
+			"platform",
+			"instrument",
+			"seq_kit",
+			"lib_layout",
+			"input_read_count",
+			"lib_conc",
+			"lib_conc_unit",
+			"phix_perc"
+		]
 	},
 	analysis: {
 		plural: "Analyses",
@@ -241,7 +271,7 @@ export const DataTableNames = TableNames.filter((t) => t !== "tag") as Uncapital
 
 //duplicates keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
-for (const model of Object.keys(Prisma.ModelName)) {
+for (const model in Prisma.ModelName) {
 	(TableMetadata as any)[model] = TableMetadata[uncapitalizeTable(model as Prisma.ModelName)];
 }
 

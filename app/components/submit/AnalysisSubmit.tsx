@@ -165,6 +165,13 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					if (field && value) {
 						//get value if the row is for the analysis_run_name field
 						if (field === "analysis_run_name") {
+							if (analysisIds.includes(value)) {
+								setErrorMessage(`Analysis with analysis_run_name of "${value}" is already in the form.`);
+								modalRef.current?.showModal();
+								event.target.value = "";
+								return;
+							}
+
 							currAnalysis_run_name = value;
 						}
 

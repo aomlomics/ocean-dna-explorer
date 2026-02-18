@@ -1,7 +1,5 @@
-import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
-import { uncapitalizeTable } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
 import { TableNames } from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
@@ -12,14 +10,12 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table, distinctField } = await params;
 
-	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase()) as Prisma.ModelName;
+	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase());
 	if (model) {
-		const uncapsTable = uncapitalizeTable(model);
-
 		try {
 			const { searchParams } = new URL(request.url);
 
-			const { query } = parseApiQuery(uncapsTable, searchParams, {
+			const { query } = parseApiQuery(model, searchParams, {
 				features: {
 					relationsLimit: true,
 					filters: true,
@@ -33,7 +29,7 @@ export async function GET(
 			});
 
 			//@ts-ignore
-			const result = await prisma[uncapsTable].findMany(query);
+			const result = await prisma[model].findMany(query);
 
 			if (result) {
 				return NextResponse.json({

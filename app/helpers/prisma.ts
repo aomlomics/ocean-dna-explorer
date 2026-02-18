@@ -30,8 +30,6 @@ type PrismaExtension = DynamicClientExtensionThis<
 	}
 >;
 
-export const secureFields = ["userIds"];
-
 const readOperations = [
 	"findUnique",
 	"findUniqueOrThrow",
@@ -505,7 +503,42 @@ if (process.env.NODE_ENV !== "production") {
 
 export { unsafePrisma, publicPrisma, prisma };
 
+async function getWhere({
+	where,
+	userId,
+	role,
+	signedOutQuery,
+	noPermQuery
+}: {
+	where: any;
+	userId?: string | null;
+	role?: Role | undefined;
+	signedOutQuery: Record<string, any>;
+	noPermQuery?: Record<string, any>;
+}) {
+	if (!userId) {
+		if (where) {
+			return deepMerge(where, signedOutQuery);
+		} else {
+			return signedOutQuery;
+		}
+	} else if (!role || !RolePermissions[role].includes("manageUsers")) {
+		if (where) {
+			if (noPermQuery) {
+				return deepMerge(where, noPermQuery);
+			} else {
+				return where;
+			}
+		} else {
+			return noPermQuery;
+		}
+	} else {
+		return where;
+	}
+}
+
 //database helper functions
+const secureFields = ["userIds"];
 export function stripSecureFields(queryResult: Record<string, any> | Record<string, any>[]) {
 	if (Array.isArray(queryResult)) {
 		for (let e of queryResult) {
@@ -664,7 +697,7 @@ export async function updateManyRaw(
 	//get fields from data
 	const fieldsWithId = new Set() as Set<string>;
 	for (const d of data) {
-		for (const field of Object.keys(d)) {
+		for (const field in d) {
 			fieldsWithId.add(field);
 		}
 	}
@@ -700,40 +733,6 @@ export async function updateManyRaw(
 	}
 
 	return rowsAffected;
-}
-
-async function getWhere({
-	where,
-	userId,
-	role,
-	signedOutQuery,
-	noPermQuery
-}: {
-	where: any;
-	userId?: string | null;
-	role?: Role | undefined;
-	signedOutQuery: Record<string, any>;
-	noPermQuery?: Record<string, any>;
-}) {
-	if (!userId) {
-		if (where) {
-			return deepMerge(where, signedOutQuery);
-		} else {
-			return signedOutQuery;
-		}
-	} else if (!role || !RolePermissions[role].includes("manageUsers")) {
-		if (where) {
-			if (noPermQuery) {
-				return deepMerge(where, noPermQuery);
-			} else {
-				return where;
-			}
-		} else {
-			return noPermQuery;
-		}
-	} else {
-		return where;
-	}
 }
 
 export async function seedAssays(client = unsafePrisma, assayMasterListUrl = process.env.ASSAY_MASTER_LIST) {

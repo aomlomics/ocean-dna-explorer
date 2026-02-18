@@ -209,7 +209,8 @@ export default function ActualMap({
 	legend = false,
 	draw = false,
 	legendOmit = [],
-	shapesToUrl
+	shapesToUrl,
+	disableSearch
 }: {
 	locations: NullLocation[];
 	where?: Record<string, string>;
@@ -223,6 +224,7 @@ export default function ActualMap({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
+	disableSearch?: true;
 }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
@@ -267,7 +269,7 @@ export default function ActualMap({
 		}
 
 		if (locations[0].userDefined) {
-			for (const opt of Object.keys(locations[0].userDefined)) {
+			for (const opt in locations[0].userDefined) {
 				userDefinedOptions.add(opt);
 			}
 		}
@@ -320,7 +322,7 @@ export default function ActualMap({
 			}
 
 			if (nullLoc.userDefined) {
-				for (const opt of Object.keys(nullLoc.userDefined)) {
+				for (const opt in nullLoc.userDefined) {
 					userDefinedOptions.add(opt);
 				}
 			}
@@ -553,7 +555,7 @@ export default function ActualMap({
 
 	//make legend options follow fieldOrder
 	const legendOptions = [];
-	const omit = [...legendOmit, ...GlobalOmit, "id"];
+	const omit = [...legendOmit, ...GlobalOmit, "id", "userDefined"];
 	if (TableMetadata[table].fieldOrder) {
 		legendOptions.push(...TableMetadata[table].fieldOrder);
 		for (const opt of TableMetadata[table].enumSchema.options) {
@@ -650,9 +652,7 @@ export default function ActualMap({
 							featureGroupRef.current.addLayer(new LCircle(s.center, s.radius));
 						}
 
-						for (const id of Object.keys(
-							(featureGroupRef.current as unknown as { _layers: Record<string, any> })._layers
-						)) {
+						for (const id in (featureGroupRef.current as unknown as { _layers: Record<string, any> })._layers) {
 							if (!(id in tempShapes)) {
 								tempShapes[id] = s;
 							}
@@ -841,6 +841,7 @@ export default function ActualMap({
 						userDefinedOptions={userDefinedOptions}
 						mapRef={mapRef}
 						where={where}
+						disableSearch={disableSearch}
 					/>
 				</div>
 				<div className="leaflet-top leaflet-right pt-37">
@@ -854,6 +855,7 @@ export default function ActualMap({
 							userDefinedOptions={userDefinedOptions}
 							mapRef={mapRef}
 							shapes={shapes}
+							disableSearch={disableSearch}
 						/>
 					) : (
 						<></>
@@ -901,7 +903,7 @@ export default function ActualMap({
 							position="topright"
 							onEdited={(e) => {
 								const temp = {} as typeof shapes;
-								for (const edit of Object.keys(e.layers._layers)) {
+								for (const edit in e.layers._layers) {
 									if (shapes[edit]) {
 										temp[edit] = getShape({
 											layerType: shapes[edit].type,
@@ -921,7 +923,7 @@ export default function ActualMap({
 							}}
 							onDeleted={(e) => {
 								const temp = { ...shapes };
-								for (const del of Object.keys(e.layers._layers)) {
+								for (const del in e.layers._layers) {
 									delete temp[del];
 								}
 								setShapes(temp);
@@ -960,6 +962,7 @@ export default function ActualMap({
 											id={id}
 											legendInfo={legendInfo}
 											userDefinedOptions={userDefinedOptions}
+											disableSearch={disableSearch}
 											maxWidth={mapRef.current ? mapRef.current.getContainer().clientWidth * 0.5 : undefined}
 										/>
 									</Marker>
@@ -1029,7 +1032,8 @@ function PopupWithSearchBody({
 	id,
 	legendInfo,
 	userDefinedOptions,
-	href
+	href,
+	disableSearch
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -1038,6 +1042,7 @@ function PopupWithSearchBody({
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	href?: string;
+	disableSearch?: true;
 }) {
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
@@ -1064,7 +1069,7 @@ function PopupWithSearchBody({
 							? loc[TableMetadata[titleTable].titleField]
 							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
 					}`}
-					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start"
+					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start text-nowrap"
 				>
 					{typeof TableMetadata[titleTable].titleField === "string"
 						? loc[TableMetadata[titleTable].titleField]
@@ -1077,7 +1082,7 @@ function PopupWithSearchBody({
 					onChange={(e) => setFilter(e.target.value)}
 					value={filter}
 					placeholder={`Filter ${TableMetadata[table].plural}...`}
-					className="input input-primary input-xs w-full flex-initial min-w-0 text-primary my-1"
+					className="input input-primary input-xs w-full flex-initial min-w-0 text-primary my-1 text-nowrap"
 				/>
 			) : (
 				<></>
@@ -1090,18 +1095,22 @@ function PopupWithSearchBody({
 								{filteredValues.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
 								{filteredValues.length})
 							</h2>
-							<Link
-								className="btn btn-xs btn-primary text-primary-content!"
-								href={
-									href
-										? href
-										: `/search?table=${table}&advanced=[["${id}","in","${compressIfNeeded(
-												'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
-											)}"]]`
-								}
-							>
-								View as Search
-							</Link>
+							{disableSearch ? (
+								<></>
+							) : (
+								<Link
+									className="btn btn-xs btn-primary text-primary-content!"
+									href={
+										href
+											? href
+											: `/search?table=${table}&advanced=[["${id}","in","${compressIfNeeded(
+													'["' + filteredValues.map((v) => v[id]).join('","') + '"]'
+												)}"]]`
+									}
+								>
+									View as Search
+								</Link>
+							)}
 						</div>
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
 							{filteredValues.map((l) => {
@@ -1180,7 +1189,8 @@ function PopupWithSearch({
 	id,
 	legendInfo,
 	userDefinedOptions,
-	maxWidth
+	maxWidth,
+	disableSearch
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
@@ -1190,6 +1200,7 @@ function PopupWithSearch({
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	maxWidth?: number;
+	disableSearch?: true;
 }) {
 	return (
 		<Popup className="map-popup" maxWidth={maxWidth}>
@@ -1201,6 +1212,7 @@ function PopupWithSearch({
 					id={id}
 					legendInfo={legendInfo}
 					userDefinedOptions={userDefinedOptions}
+					disableSearch={disableSearch}
 					href={`/search?table=${table}&advanced=[["decimalLatitude","equals",${
 						loc.decimalLatitude
 					}],["decimalLongitude","equals",${loc.decimalLongitude}]${
@@ -2039,7 +2051,8 @@ function DrawSelectedControl({
 	legendInfo,
 	userDefinedOptions,
 	mapRef,
-	shapes
+	shapes,
+	disableSearch
 }: {
 	pointsInside: Location[];
 	table: Uncapitalize<Prisma.ModelName>;
@@ -2049,6 +2062,7 @@ function DrawSelectedControl({
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
 	shapes: Record<string, MapShape>;
+	disableSearch?: true;
 }) {
 	const [shown, setShown] = useState(true);
 	const [delayedPointsInside, setDelayedPointsInside] = useState(pointsInside);
@@ -2066,12 +2080,13 @@ function DrawSelectedControl({
 			>
 				<Resizable growDirection={"down"} detectChange={[shown]} mapRef={mapRef} maxMapHeight={0.6} maxMinHeight={175}>
 					<div className="flex flex-col px-2">
-						<div className="text-primary text-lg">Selected With Shapes</div>
+						<div className="text-primary text-lg text-nowrap">Selected With Shapes</div>
 						<PopupWithSearchBody
 							table={table}
 							id={id}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}
+							disableSearch={disableSearch}
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
@@ -2103,7 +2118,8 @@ function NoLocationPointsControl({
 	id,
 	legendInfo,
 	userDefinedOptions,
-	mapRef
+	mapRef,
+	disableSearch
 }: {
 	noLocationPoints: NullLocation[];
 	table: Uncapitalize<Prisma.ModelName>;
@@ -2112,6 +2128,7 @@ function NoLocationPointsControl({
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
+	disableSearch?: true;
 }) {
 	const [shown, setShown] = useState(false);
 
@@ -2131,6 +2148,7 @@ function NoLocationPointsControl({
 							id={id}
 							legendInfo={legendInfo}
 							userDefinedOptions={userDefinedOptions}
+							disableSearch={disableSearch}
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,

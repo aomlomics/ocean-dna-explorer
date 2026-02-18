@@ -1,9 +1,9 @@
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
-import { StatIcon, AssayIcon } from "@/app/components/explore/StatCards";
 import { AssayPrep } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
+import { AssayIcon, ProjectIcon } from "@/app/components/icons";
 
 export default async function Project_id_Assay_name({
 	params
@@ -104,29 +104,7 @@ export default async function Project_id_Assay_name({
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay prep metadata</h2>
 							<div className="h-80 overflow-y-auto">
-								<DataDisplay
-									table="assayPrep"
-									data={justAssayPrep}
-									omit={["project_id", "assay_name"]}
-									priorityFields={[
-										"assay_type",
-										"thermocycler",
-										"commercial_mm",
-										"custom_mm",
-										"pcr_cond",
-										"amplificationReactionVolume",
-										"assay_validation",
-										"pcr_primer_vol_forward",
-										"pcr_primer_vol_reverse",
-										"pcr_primer_conc_forward",
-										"pcr_primer_conc_reverse",
-										"probe_seq",
-										"probe_conc",
-										"pcr_dna_vol",
-										"pcr_rep",
-										"pcr_cycles"
-									]}
-								/>
+								<DataDisplay table="assayPrep" data={justAssayPrep} omit={["project_id", "assay_name"]} />
 							</div>
 						</div>
 					</div>
@@ -153,7 +131,7 @@ export default async function Project_id_Assay_name({
 							<Link href={`/explore/project/${encodeURIComponent(project.project_id)}`} className="group block w-2/3">
 								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-										<StatIcon icon="ship" />
+										<ProjectIcon />
 									</div>
 									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
 										View project

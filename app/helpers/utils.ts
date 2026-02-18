@@ -1,8 +1,9 @@
 import { RanksBySpecificity } from "@/types/objects";
 import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
 import distinctColors from "distinct-colors";
-import { Circle, Location, LocationWithValues, MapShape, Point, Polygon } from "@/types/globals";
+import { Circle, Location, LocationWithValues, MapShape, NullLocation, Point, Polygon } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
+import { DeadValueEnum } from "@/types/enums";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -305,45 +306,63 @@ function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
 	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
 }
 
-export function getLocationsInsideShapes(locs: (Location | LocationWithValues)[], shapes: MapShape[]) {
+export function getLocationsInsideShapes(locs: (NullLocation | Location | LocationWithValues)[], shapes: MapShape[]) {
 	const locsInside = [] as Location[];
 	for (const l of locs) {
-		for (const s of shapes) {
-			if (s.type === "polygon") {
-				//check if point is inside bounding box
-				if (
-					l.decimalLatitude < s.bounds.ne.lat &&
-					l.decimalLatitude > s.bounds.sw.lat &&
-					l.decimalLongitude < s.bounds.ne.lng &&
-					l.decimalLongitude > s.bounds.sw.lng
-				) {
-					//create ray to cast through polygon
-					const raycastLine = [
-						{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
-						{ lat: l.decimalLatitude, lng: l.decimalLongitude }
-					] as [Point, Point];
+		if (
+			l.decimalLatitude !== null &&
+			l.decimalLongitude !== null &&
+			!(l.decimalLatitude! in DeadValueEnum) &&
+			!(l.decimalLongitude! in DeadValueEnum)
+		) {
+			for (const s of shapes) {
+				if (s.type === "polygon") {
+					//check if point is inside bounding box
+					if (
+						l.decimalLatitude < s.bounds.ne.lat &&
+						l.decimalLatitude > s.bounds.sw.lat &&
+						l.decimalLongitude < s.bounds.ne.lng &&
+						l.decimalLongitude > s.bounds.sw.lng
+					) {
+						//create ray to cast through polygon
+						const raycastLine = [
+							{ lat: s.bounds.sw.lat - Number.EPSILON, lng: l.decimalLongitude },
+							{ lat: l.decimalLatitude, lng: l.decimalLongitude }
+						] as [Point, Point];
 
-					//get sides of polygon
-					const sides = [] as [Point, Point][];
-					for (let i = 0; i < s.points.length; i++) {
-						//last point connects to first point
-						if (i === s.points.length - 1) {
-							sides.push([s.points[i], s.points[0]]);
-						} else {
-							sides.push([s.points[i], s.points[i + 1]]);
+						//get sides of polygon
+						const sides = [] as [Point, Point][];
+						for (let i = 0; i < s.points.length; i++) {
+							//last point connects to first point
+							if (i === s.points.length - 1) {
+								sides.push([s.points[i], s.points[0]]);
+							} else {
+								sides.push([s.points[i], s.points[i + 1]]);
+							}
+						}
+
+						//get number of times the ray intersects with the polygon
+						let numIntersections = 0;
+						for (const s of sides) {
+							if (isIntersecting(...raycastLine, ...s)) {
+								numIntersections++;
+							}
+						}
+
+						if (numIntersections % 2) {
+							//number of intersections is odd, meaning the point lies in the polygon
+							if (l.values) {
+								locsInside.push(...l.values);
+							} else {
+								locsInside.push(l as Location);
+							}
+							break;
 						}
 					}
-
-					//get number of times the ray intersects with the polygon
-					let numIntersections = 0;
-					for (const s of sides) {
-						if (isIntersecting(...raycastLine, ...s)) {
-							numIntersections++;
-						}
-					}
-
-					if (numIntersections % 2) {
-						//number of intersections is odd, meaning the point lies in the polygon
+				} else if (s.type === "circle") {
+					//check if point inside of circle
+					const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
+					if (distance <= s.radius) {
 						if (l.values) {
 							locsInside.push(...l.values);
 						} else {
@@ -351,17 +370,6 @@ export function getLocationsInsideShapes(locs: (Location | LocationWithValues)[]
 						}
 						break;
 					}
-				}
-			} else if (s.type === "circle") {
-				//check if point inside of circle
-				const distance = measure(s.center.lat, s.center.lng, l.decimalLatitude, l.decimalLongitude);
-				if (distance <= s.radius) {
-					if (l.values) {
-						locsInside.push(...l.values);
-					} else {
-						locsInside.push(l as Location);
-					}
-					break;
 				}
 			}
 		}
