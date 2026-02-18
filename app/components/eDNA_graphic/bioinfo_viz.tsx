@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { DnaIcon } from "../icons";
 
 interface BioinfoVizProps {
 	onNext: () => void;
@@ -18,20 +19,7 @@ const BioinfoViz: React.FC<BioinfoVizProps> = ({ onNext, onBack }) => {
 		<div className="relative w-full h-full overflow-hidden">
 			{/* DNA Helix Icon */}
 			<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -mt-2 -ml-9 text-primary">
-				<div
-					className="w-8 h-8"
-					style={{
-						backgroundColor: "currentColor",
-						WebkitMaskImage: "url(/images/icons/dna_icon.svg)",
-						maskImage: "url(/images/icons/dna_icon.svg)",
-						WebkitMaskRepeat: "no-repeat",
-						maskRepeat: "no-repeat",
-						WebkitMaskPosition: "center",
-						maskPosition: "center",
-						WebkitMaskSize: "contain",
-						maskSize: "contain"
-					}}
-				/>
+				<DnaIcon />
 			</div>
 
 			{/* Laptop Icon */}
@@ -55,13 +43,13 @@ const BioinfoViz: React.FC<BioinfoVizProps> = ({ onNext, onBack }) => {
 			{/* DNA Text */}
 			<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-6 -ml-9 text-center">
 				<div className="text-[0.25rem] leading-[0.3rem] font-medium text-base-content/80">DNA Sequence</div>
-				<div className="text-[0.2rem] leading-[0.25rem] text-base-content/60">Raw eDNA Data</div>
+				<div className="text-[0.2rem] leading-1 text-base-content/60">Raw eDNA Data</div>
 			</div>
 
 			{/* Bioinfo Text */}
 			<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 mt-6 ml-8 text-center">
 				<div className="text-[0.25rem] leading-[0.3rem] font-medium text-base-content/80">Bioinformatics</div>
-				<div className="text-[0.2rem] leading-[0.25rem] text-base-content/60">Data Processing</div>
+				<div className="text-[0.2rem] leading-1 text-base-content/60">Data Processing</div>
 			</div>
 
 			{/* Magnifying glass at bottom center */}

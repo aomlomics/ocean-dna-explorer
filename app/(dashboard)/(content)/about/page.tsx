@@ -5,6 +5,7 @@ import DataJourneySurfaceScene from "@/app/components/DataJourneySurfaceScene";
 import { AssigningTaxonomyLoop } from "@/app/components/eDNA_graphic/analysis_viz";
 import BasePairMatrix from "@/app/components/BasePairMatrix";
 import TableMetadata from "@/types/tableMetadata";
+import { DnaIcon } from "@/app/components/icons";
 
 const dataJourneySteps: {
 	key: string;
@@ -230,22 +231,7 @@ function DataJourneyIcon({
 	}
 
 	if (type === "dna") {
-		return (
-			<div
-				className={`text-primary ${className ?? "w-14 h-14"}`}
-				style={{
-					backgroundColor: "currentColor",
-					WebkitMaskImage: "url(/images/icons/dna_icon.svg)",
-					maskImage: "url(/images/icons/dna_icon.svg)",
-					WebkitMaskRepeat: "no-repeat",
-					maskRepeat: "no-repeat",
-					WebkitMaskPosition: "center",
-					maskPosition: "center",
-					WebkitMaskSize: "contain",
-					maskSize: "contain"
-				}}
-			/>
-		);
+		return <DnaIcon />;
 	}
 
 	if (type === "laptop") {
@@ -371,22 +357,22 @@ function DataJourneyIcon({
 					variant === "tuna"
 						? "url(/images/outlines/lg_bluefin_tuna.svg)"
 						: variant === "shark"
-						? "url(/images/outlines/xl_lamniformes.svg)"
-						: variant === "shrimp"
-						? "url(/images/outlines/md_shrimp.svg)"
-						: variant === "copepod"
-						? "url(/images/outlines/sm_copepod.svg)"
-						: "url(/images/outlines/xl_dolphin.svg)",
+							? "url(/images/outlines/xl_lamniformes.svg)"
+							: variant === "shrimp"
+								? "url(/images/outlines/md_shrimp.svg)"
+								: variant === "copepod"
+									? "url(/images/outlines/sm_copepod.svg)"
+									: "url(/images/outlines/xl_dolphin.svg)",
 				maskImage:
 					variant === "tuna"
 						? "url(/images/outlines/lg_bluefin_tuna.svg)"
 						: variant === "shark"
-						? "url(/images/outlines/xl_lamniformes.svg)"
-						: variant === "shrimp"
-						? "url(/images/outlines/md_shrimp.svg)"
-						: variant === "copepod"
-						? "url(/images/outlines/sm_copepod.svg)"
-						: "url(/images/outlines/xl_dolphin.svg)",
+							? "url(/images/outlines/xl_lamniformes.svg)"
+							: variant === "shrimp"
+								? "url(/images/outlines/md_shrimp.svg)"
+								: variant === "copepod"
+									? "url(/images/outlines/sm_copepod.svg)"
+									: "url(/images/outlines/xl_dolphin.svg)",
 				WebkitMaskRepeat: "no-repeat",
 				maskRepeat: "no-repeat",
 				WebkitMaskPosition: "center",
@@ -575,10 +561,10 @@ export default function AboutPage() {
 												? step.key === "occurrence"
 													? "tuna"
 													: step.key === "feature"
-													? "shrimp"
-													: step.key === "assignment"
-													? "copepod"
-													: "dolphin"
+														? "shrimp"
+														: step.key === "assignment"
+															? "copepod"
+															: "dolphin"
 												: undefined
 										}
 									/>
@@ -705,21 +691,7 @@ export default function AboutPage() {
 											</div>
 										))}
 									</div>
-									{/* Big DNA icon */}
-									<div
-										className="w-140 h-140 text-primary"
-										style={{
-											backgroundColor: "currentColor",
-											WebkitMaskImage: "url(/images/icons/dna_icon.svg)",
-											maskImage: "url(/images/icons/dna_icon.svg)",
-											WebkitMaskRepeat: "no-repeat",
-											maskRepeat: "no-repeat",
-											WebkitMaskPosition: "center",
-											maskPosition: "center",
-											WebkitMaskSize: "contain",
-											maskSize: "contain"
-										}}
-									/>
+									<DnaIcon />
 								</div>
 							</div>
 							{featureStep && (
