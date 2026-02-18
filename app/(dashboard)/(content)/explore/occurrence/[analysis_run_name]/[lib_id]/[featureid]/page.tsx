@@ -163,17 +163,21 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
-					This occurrence links{" "}
+					This occurrence links the feature{" "}
 					<Link href={`/explore/feature/${featureid}`} className="link link-primary link-hover">
-						feature {featureid}
+						{featureid}
 					</Link>{" "}
-					to{" "}
+					to the library{" "}
 					<Link href={`/explore/library/${lib_id}`} className="link link-primary link-hover">
-						library {lib_id}
+						{lib_id}
 					</Link>{" "}
-					in{" "}
+					in the analysis{" "}
 					<Link href={`/explore/analysis/${analysis_run_name}`} className="link link-primary link-hover">
-						analysis {analysis_run_name}
+						{analysis_run_name}
+					</Link>{" "}
+					with the assay{" "}
+					<Link href={`/explore/assay/${occurrence.Analysis.assay_name}`} className="link link-primary link-hover">
+						{occurrence.Analysis.assay_name}
 					</Link>
 					.
 				</p>
