@@ -78,10 +78,8 @@ async function SuspenseStatCard({
 		content = (
 			<>
 				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
-				<div className="flex flex-col">
-					<div className={`font-bold text-primary ${typeof queryVal === "string" ? "" : "text-3xl"}`}>
-						{queryVal.toLocaleString()}
-					</div>
+				<div className="flex flex-col overflow-hidden">
+					<div className={`font-bold text-primary ${typeof queryVal === "string" ? "" : "text-3xl"}`}>{queryVal}</div>
 					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
 				</div>
 			</>
@@ -95,8 +93,10 @@ async function SuspenseStatCard({
 					<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">{icon}</div>
 				)}
 				{queryVal !== undefined && (
-					<div className={`font-bold text-primary ${typeof queryVal === "string" ? "" : "text-3xl"}`}>
-						{queryVal.toLocaleString()}
+					<div
+						className={`font-bold text-primary w-full overflow-hidden ${typeof queryVal === "string" ? "" : "text-3xl"}`}
+					>
+						{queryVal}
 					</div>
 				)}
 				{latitude !== undefined && longitude !== undefined && (

@@ -146,11 +146,12 @@ model Occurrence {
 
     // Relations
     lib_id            String
-    Library           Library  @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
+    Library           Library    @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
     analysis_run_name String
-    Analysis          Analysis @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis          Analysis   @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
     featureid         String
-    Feature           Feature  @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+    Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+    Assignment        Assignment @relation(fields: [analysis_run_name, featureid], references: [analysis_run_name, featureid])
 
     // Data
     /// @zod.custom.use(z.coerce.number().int())
@@ -164,11 +165,12 @@ model Assignment {
 
     // Relations
     analysis_run_name String
-    Analysis          Analysis @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis          Analysis     @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
     featureid         String
-    Feature           Feature  @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+    Feature           Feature      @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     taxonomy          String
-    Taxonomy          Taxonomy @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+    Taxonomy          Taxonomy     @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+    Occurrences       Occurrence[]
 
     // Data
     /// @zod.custom.use(z.coerce.number())
@@ -196,7 +198,6 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
-    Libraries   Library[]
     Assignments Assignment[]
 
     // Data
