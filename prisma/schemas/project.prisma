@@ -434,7 +434,6 @@ model Library {
     Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
     AssayPrep   AssayPrep    @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
     Occurrences Occurrence[]
-    Taxonomies  Taxonomy[]
 
     // Data
     // Library Preparation Sequencing

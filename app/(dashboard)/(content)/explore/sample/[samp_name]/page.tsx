@@ -15,44 +15,27 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	let { samp_name } = await params;
 	samp_name = decodeURIComponent(samp_name);
 
-	const { sample, assayData } = await prisma.$transaction(async (tx) => {
-		const sample = await tx.sample.findUnique({
-			where: {
-				samp_name
-			},
-			include: {
-				Assays: {
-					select: {
-						assay_name: true
-					}
-				},
-				Project: {
-					select: {
-						isPrivate: true
-					}
-				}
-			}
-		});
-
-		if (!sample) return { sample: null, analyses: [], assayData: [], taxonomyData: [] };
-
-		const assays = await tx.assay.findMany({
-			where: {
-				assay_name: {
-					in: sample.Assays.map((a) => a.assay_name)
+	const sample = await prisma.sample.findUnique({
+		where: {
+			samp_name
+		},
+		include: {
+			Assays: {
+				select: {
+					assay_name: true,
+					target_gene: true
 				}
 			},
-			select: {
-				assay_name: true,
-				target_gene: true
+			Project: {
+				select: {
+					isPrivate: true
+				}
 			}
-		});
-
-		return { sample, assayData: assays };
+		}
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Assays: __, Project: ___, ...justSample } = sample;
+	const { Assays: _, Project: __, ...justSample } = sample;
 
 	return (
 		<div className="space-y-8 pb-8">
@@ -105,10 +88,10 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					{/* Assays Section */}
 					<div id="assays-section" className="target:animate-flash">
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-							Assays used on this Sample ({assayData.length})
+							Assays used on this Sample ({sample.Assays.length})
 						</h2>
 						<div className="space-y-2">
-							{assayData.map((assay) => (
+							{sample.Assays.map((assay) => (
 								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
 									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 										<div className="relative w-12 h-12">
@@ -180,9 +163,15 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 								(
 									await prisma.taxonomy.findMany({
 										where: {
-											Libraries: {
+											Assignments: {
 												some: {
-													samp_name
+													Occurrences: {
+														some: {
+															Library: {
+																samp_name
+															}
+														}
+													}
 												}
 											}
 										},
@@ -227,14 +216,21 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["samp_name"] }) {
 	const taxonomies = await prisma.taxonomy.findMany({
 		where: {
-			Libraries: {
+			Assignments: {
 				some: {
-					samp_name
+					Occurrences: {
+						some: {
+							Library: {
+								samp_name
+							}
+						}
+					}
 				}
 			}
 		},
-		select: {
-			taxonomy: true
+		omit: {
+			id: true,
+			verbatimIdentification: true
 		}
 	});
 

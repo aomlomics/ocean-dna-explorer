@@ -34,7 +34,7 @@ export default function WarningButton({
 		<>
 			<button
 				type="submit"
-				className={`btn btn-error ${className}`}
+				className={`btn btn-error ${className ?? ""}`}
 				disabled={disabled}
 				onClick={() => modalRef.current?.showModal()}
 			>

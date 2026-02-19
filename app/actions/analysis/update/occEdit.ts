@@ -53,26 +53,15 @@ async function doEdit(
 			return;
 		}
 
-		//manually assemble featsToTaxa
-		const featsToTaxa = {} as Record<Feature["featureid"], Taxonomy["taxonomy"][]>;
-		for (const a of assignments) {
-			if (featsToTaxa[a.featureid]) {
-				featsToTaxa[a.featureid].push(a.taxonomy);
-			} else {
-				featsToTaxa[a.featureid] = [a.taxonomy];
-			}
-		}
-
 		const parseResult = await parseOccurrencesFile({
 			channel: { stream, url },
 			analysis_run_name,
-			featsToTaxa,
 			oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
 		});
 		if (!parseResult) {
 			return;
 		}
-		const { occurrences, libIdsToTaxa, occurrencesMd5 } = parseResult;
+		const { occurrences, occurrencesMd5 } = parseResult;
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
@@ -226,26 +215,9 @@ async function doEdit(
 						occurrenceFileChecksum_ODE: occurrencesMd5
 					}
 				});
-
-				await stream.message("Analysis successfully updated in database.", 99);
 			},
 			{ timeout: 1 * 60 * 1000 }
 		);
-
-		await prisma.$transaction([
-			...Object.entries(libIdsToTaxa).map(([lib_id, taxa]) =>
-				prisma.library.update({
-					where: {
-						lib_id
-					},
-					data: {
-						Taxonomies: {
-							connect: taxa
-						}
-					}
-				})
-			)
-		]);
 
 		await stream.success("Success");
 	} catch (err: any) {

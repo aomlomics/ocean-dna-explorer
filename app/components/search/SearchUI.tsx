@@ -1192,7 +1192,7 @@ function SearchRuleComponent({
 				</button>
 			</div>
 			<select
-				className={`select${noTable ? " invisible" : ""}`}
+				className={`select ${noTable ? "invisible" : ""}`}
 				hidden={noTable}
 				value={type}
 				onChange={(e) => {

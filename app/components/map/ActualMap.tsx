@@ -1611,7 +1611,7 @@ function LeafletControl({
 	}, []);
 
 	return (
-		<div className={`leaflet-control${className ? " " + className : ""}`} ref={ref} style={style}>
+		<div className={`leaflet-control ${className ?? ""}`} ref={ref} style={style}>
 			{children}
 		</div>
 	);
@@ -1679,7 +1679,7 @@ function LegendControl({
 
 							<select
 								className="select select-xs select-primary select-ghost text-sm mr-3 grow min-w-max"
-								value={legendInfo ? legendInfo.field : ""}
+								value={legendInfo?.field ?? ""}
 								onChange={async (e) => {
 									const field = e.target.value;
 									//give control back to browser to display loading

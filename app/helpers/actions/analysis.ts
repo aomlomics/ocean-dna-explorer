@@ -133,7 +133,6 @@ export async function parseAssignmentsFile({
 	const features = [] as Prisma.FeatureCreateManyInput[];
 	const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
 	const assignments = [] as Prisma.AssignmentCreateManyInput[];
-	const featsToTaxa = {} as Record<Feature["featureid"], Taxonomy["taxonomy"][]>;
 
 	//fetch file from blob storage
 	await channel.stream.message("Downloading file", 10);
@@ -268,12 +267,6 @@ export async function parseAssignmentsFile({
 
 			taxonomies.push(parsedTaxonomy.data);
 
-			if (featsToTaxa[parsedFeature.data.featureid]) {
-				featsToTaxa[parsedFeature.data.featureid].push(parsedTaxonomy.data.taxonomy);
-			} else {
-				featsToTaxa[parsedFeature.data.featureid] = [parsedTaxonomy.data.taxonomy];
-			}
-
 			//add to progress bar every 10 percent
 			if (i % (parser.info.records / 10) === 0) {
 				await channel.stream.message(
@@ -284,22 +277,19 @@ export async function parseAssignmentsFile({
 		}
 	}
 
-	return { features, taxonomies, featsToTaxa, assignments, assignmentsMd5 };
+	return { features, taxonomies, assignments, assignmentsMd5 };
 }
 
 export async function parseOccurrencesFile({
 	channel,
 	analysis_run_name,
-	featsToTaxa,
 	oldChecksum
 }: {
 	channel: Channel;
 	analysis_run_name: Occurrence["analysis_run_name"];
-	featsToTaxa: Record<Feature["featureid"], Taxonomy["taxonomy"][]>;
 	oldChecksum?: string;
 }) {
 	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
-	const libIdsToTaxa = {} as Record<Occurrence["lib_id"], { taxonomy: Taxonomy["taxonomy"] }[]>;
 
 	//fetch from blob storage
 	await channel.stream.message("Downloading file", 10);
@@ -387,22 +377,6 @@ export async function parseOccurrencesFile({
 					//no optional fields
 
 					occurrences.push(parsedOccurrence.data);
-
-					//assemble shortcut object
-					const taxaArr = featsToTaxa[parsedOccurrence.data.featureid];
-					if (taxaArr) {
-						for (const taxonomy of taxaArr) {
-							if (libIdsToTaxa[parsedOccurrence.data.lib_id]) {
-								libIdsToTaxa[parsedOccurrence.data.lib_id].push({ taxonomy });
-							} else {
-								libIdsToTaxa[parsedOccurrence.data.lib_id] = [{ taxonomy }];
-							}
-						}
-					} else {
-						//TODO: check if this should be an error or not
-						// await channel.stream.error(`Occurrence has featureid of "${parsedOccurrence.data.featureid}", which does not exist in data provided.`);
-						// return;
-					}
 				}
 			}
 		}
@@ -416,7 +390,7 @@ export async function parseOccurrencesFile({
 		}
 	}
 
-	return { occurrences, libIdsToTaxa, occurrencesMd5 };
+	return { occurrences, occurrencesMd5 };
 }
 
 export async function parseAnalysisFiles({
@@ -455,18 +429,17 @@ export async function parseAnalysisFiles({
 	if (!assignmentsParseResult) {
 		return;
 	}
-	const { features, taxonomies, featsToTaxa, assignments, assignmentsMd5 } = assignmentsParseResult;
+	const { features, taxonomies, assignments, assignmentsMd5 } = assignmentsParseResult;
 
 	const occurrencesParseResult = await parseOccurrencesFile({
 		channel: occurrencesChannel,
 		analysis_run_name: analysis.analysis_run_name,
-		featsToTaxa,
 		oldChecksum: oldChecksums?.occurrencesMd5
 	});
 	if (!occurrencesParseResult) {
 		return;
 	}
-	const { occurrences, libIdsToTaxa, occurrencesMd5 } = occurrencesParseResult;
+	const { occurrences, occurrencesMd5 } = occurrencesParseResult;
 
 	return {
 		analysis: {
@@ -478,7 +451,6 @@ export async function parseAnalysisFiles({
 		taxonomies,
 		assignments,
 		occurrences,
-		libIdsToTaxa,
 		checksums: {
 			analysisMd5,
 			assignmentsMd5,

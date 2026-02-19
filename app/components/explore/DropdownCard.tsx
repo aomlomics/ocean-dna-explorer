@@ -44,7 +44,7 @@ async function SuspenseDropdownCard({
 
 	return (
 		<div
-			className={`dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg hover:rounded-b-none${className ? " " + className : ""}`}
+			className={`dropdown dropdown-hover bg-base-200 rounded-lg ${queryItems && queryItems.length ? "hover:bg-base-300 hover:rounded-b-none" : ""} ${className ?? ""}`}
 		>
 			<div tabIndex={0} role="button" className="w-full p-4 flex items-center gap-4 justify-between">
 				<div className="flex items-center gap-4">
@@ -57,23 +57,27 @@ async function SuspenseDropdownCard({
 						<div className="text-2xl font-bold text-primary">{queryItems ? queryItems.length : "..."}</div>
 					</div>
 				</div>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					className="text-base-content/70"
-				>
-					<path d="m6 9 6 6 6-6" />
-				</svg>
+				{queryItems && queryItems.length ? (
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						className="text-base-content/70"
+					>
+						<path d="m6 9 6 6 6-6" />
+					</svg>
+				) : (
+					<></>
+				)}
 			</div>
 
-			{queryItems ? (
+			{queryItems && queryItems.length ? (
 				<ul
 					tabIndex={0}
 					className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow"

@@ -41,7 +41,7 @@ export default function Map({
 	)) {
 	return (
 		<div
-			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className}`}
+			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className ?? ""}`}
 		>
 			<Suspense
 				fallback={
