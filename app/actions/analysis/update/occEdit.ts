@@ -1,6 +1,6 @@
 "use server";
 
-import { Occurrence } from "@/app/generated/prisma/client";
+import { Feature, Occurrence, Taxonomy } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
@@ -24,15 +24,26 @@ async function doEdit(
 	}
 
 	try {
-		const dbAnalysis = await prisma.analysis.findUnique({
-			where: {
-				analysis_run_name
-			},
-			select: {
-				occurrenceFileChecksum_ODE: true,
-				Project: { select: { userIds: true } }
-			}
-		});
+		const [dbAnalysis, assignments] = await prisma.$transaction([
+			prisma.analysis.findUnique({
+				where: {
+					analysis_run_name
+				},
+				select: {
+					occurrenceFileChecksum_ODE: true,
+					Project: { select: { userIds: true } }
+				}
+			}),
+			prisma.assignment.findMany({
+				where: {
+					analysis_run_name
+				},
+				select: {
+					featureid: true,
+					taxonomy: true
+				}
+			})
+		]);
 
 		if (!dbAnalysis) {
 			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
@@ -54,9 +65,17 @@ async function doEdit(
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
-		const occLibIds = occurrences.map((occ) => occ.lib_id);
-		const occFeatureids = occurrences.map((occ) => occ.featureid);
+		const occLibIds = [] as Occurrence["lib_id"][];
+		const occFeatureids = [] as Occurrence["featureid"][];
+		const libIds = new Set() as Set<Occurrence["lib_id"]>;
 
+		for (const occ of occurrences) {
+			occLibIds.push(occ.lib_id);
+			occFeatureids.push(occ.featureid);
+			libIds.add(occ.lib_id);
+		}
+
+		//edit
 		await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
@@ -82,17 +101,9 @@ async function doEdit(
 					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
 					throw new Error("Unauthorized action.");
-				} else if (!dbAnalysis.occurrenceFileUrl_ODE || !dbAnalysis.occurrenceFileChecksum_ODE) {
-					throw new Error("Invalid Analysis. Missing file for Occurrences.");
 				}
-
-				await stream.message("All checks passed.", 80);
 
 				//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
-				const libIds = new Set() as Set<Occurrence["lib_id"]>;
-				for (const occ of occurrences) {
-					libIds.add(occ.lib_id);
-				}
 				const dbLibraries = await tx.library.findMany({
 					where: {
 						project_id: dbAnalysis.project_id,
@@ -119,10 +130,6 @@ async function doEdit(
 						if (invalidLibIds.length === 1) {
 							throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
 						} else {
-							let join = ", ";
-							if (invalidLibIds.length === 2) {
-								join = " ";
-							}
 							throw new Error(
 								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
@@ -131,6 +138,8 @@ async function doEdit(
 						}
 					}
 				}
+
+				await stream.message("All checks passed.", 80);
 
 				//create new
 				const newOccurrences = await tx.occurrence.createManyAndReturn({
@@ -206,11 +215,11 @@ async function doEdit(
 						occurrenceFileChecksum_ODE: occurrencesMd5
 					}
 				});
-
-				await stream.success("Success");
 			},
 			{ timeout: 1 * 60 * 1000 }
 		);
+
+		await stream.success("Success");
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

@@ -2,11 +2,19 @@ import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
 import { FilterConfig } from "./filterHelpers";
 
-export default function TableFilter({ tableConfig, sticky = false }: { tableConfig: FilterConfig[]; sticky?: boolean }) {
+export default function TableFilter({
+	tableConfig,
+	sticky = false
+}: {
+	tableConfig: FilterConfig[];
+	sticky?: boolean;
+}) {
 	return (
 		<Suspense
 			fallback={
-				<div className={`bg-base-100 rounded-lg border border-base-300 shadow-inner max-w-lg${sticky ? " sticky top-6 z-30" : ""}`}>
+				<div
+					className={`bg-base-100 rounded-lg border border-base-300 shadow-inner max-w-lg ${sticky ? "sticky top-6 z-30" : ""}`}
+				>
 					<div className="px-5 py-3 border-b border-base-300 bg-base-200/50">
 						<div className="flex items-center gap-3">
 							<svg

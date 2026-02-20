@@ -35,14 +35,20 @@ async function doEdit(
 				project_id
 			},
 			select: {
-				projectMetadataFileUrl_ODE: missingProjectFile,
-				sampleMetadataFileUrl_ODE: missingSampleFile,
-				libraryMetadataFileUrl_ODE: missingLibraryFile,
-				projectMetadataFileChecksum_ODE: true,
-				sampleMetadataFileChecksum_ODE: true,
-				libraryMetadataFileChecksum_ODE: true,
 				userIds: true,
-				isPrivate: true
+				editHistory: true,
+				isPrivate: true,
+				projectMetadataFileUrl_ODE: true,
+				projectMetadataFileChecksum_ODE: true,
+				sampleMetadataFileUrl_ODE: true,
+				sampleMetadataFileChecksum_ODE: true,
+				libraryMetadataFileUrl_ODE: true,
+				libraryMetadataFileChecksum_ODE: true,
+				_count: {
+					select: {
+						Analyses: true
+					}
+				}
 			}
 		});
 
@@ -108,186 +114,153 @@ async function doEdit(
 		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
 
 		//TODO: only do updates if relevant file was provided
+		//error checks
+		const [dbAssays, dbSamples, dbLibraries] = await prisma.$transaction([
+			prisma.assay.findMany({
+				where: {
+					assay_name: {
+						in: assays.map((a) => a.assay_name)
+					}
+				}
+			}),
+			prisma.sample.findMany({
+				where: {
+					samp_name: {
+						in: sampNames
+					}
+				},
+				select: {
+					project_id: true
+				}
+			}),
+			prisma.library.findMany({
+				where: {
+					lib_id: {
+						in: libraries.map((lib) => lib.lib_id)
+					}
+				},
+				select: {
+					Sample: {
+						select: {
+							project_id: true
+						}
+					}
+				}
+			})
+		]);
+
+		//check if assay data is correct
+		for (const a of assays) {
+			const dbA = dbAssays.find((db) => a.assay_name === db.assay_name);
+
+			if (!dbA) {
+				//assay does not exist
+				await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+				throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+			} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
+				//assay has incorrect pcr_primer_forward
+				await projectChannel.stream.error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
+				);
+				throw new Error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
+				);
+			} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
+				//assay has incorrect pcr_primer_reverse
+				await projectChannel.stream.error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
+				);
+				throw new Error(
+					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
+				);
+			} else {
+				//get all non-essential fields that do not match
+				for (const [f, value] of Object.entries(a)) {
+					const field = f as keyof (typeof dbAssays)[0];
+					if (value !== dbA[field]) {
+						if (!(a.assay_name in badAssayFields)) {
+							badAssayFields[a.assay_name] = [];
+						}
+						badAssayFields[a.assay_name].push({ field, provided: value, actual: dbA[field] });
+					}
+				}
+			}
+		}
+
+		await projectChannel.stream.message("All checks passed.", 80);
+
+		//check if samples all belong to project
+		if (dbSamples.some((samp) => samp.project_id !== project_id)) {
+			await sampleChannel.stream.error(
+				`Some Sample in file does not belong to Project with project_id of "${project_id}".`
+			);
+			throw new Error(`Some Sample in file does not belong to Project with project_id of "${project_id}".`);
+		}
+
+		await sampleChannel.stream.message("All checks passed.", 80);
+
+		//check if libraries all belong to project
+		if (dbLibraries.some((lib) => lib.Sample.project_id !== project_id)) {
+			await libraryChannel.stream.error(
+				`Some Library in file does not belong to Project with project_id of "${project_id}".`
+			);
+			throw new Error(`Some Library in file does not belong to Project with project_id of "${project_id}".`);
+		}
+
+		await libraryChannel.stream.message("All checks passed.", 80);
+
+		//assemble edit history
+		const change = [] as PrismaJson.ChangesType;
+		if (!missingProjectFile) {
+			change.push(
+				{
+					field: "projectMetadataFileUrl_ODE",
+					oldValue: dbProject.projectMetadataFileUrl_ODE,
+					newValue: projectChannel.url
+				},
+				{
+					field: "projectMetadataFileChecksum_ODE",
+					oldValue: dbProject.projectMetadataFileChecksum_ODE,
+					newValue: checksums.projectMd5
+				}
+			);
+		}
+
+		if (!missingSampleFile) {
+			change.push(
+				{
+					field: "sampleMetadataFileUrl_ODE",
+					oldValue: dbProject.sampleMetadataFileUrl_ODE,
+					newValue: sampleChannel.url
+				},
+				{
+					field: "sampleMetadataFileChecksum_ODE",
+					oldValue: dbProject.sampleMetadataFileChecksum_ODE,
+					newValue: checksums.sampleMd5
+				}
+			);
+		}
+
+		if (!missingLibraryFile) {
+			change.push(
+				{
+					field: "libraryMetadataFileUrl_ODE",
+					oldValue: dbProject.libraryMetadataFileUrl_ODE,
+					newValue: libraryChannel.url
+				},
+				{
+					field: "libraryMetadataFileChecksum_ODE",
+					oldValue: dbProject.libraryMetadataFileChecksum_ODE,
+					newValue: checksums.libraryMd5
+				}
+			);
+		}
+
+		const editHistory = addToHistory("project", uuidv4(), dbProject.editHistory, change);
+
+		//edit
 		await prisma.$transaction(
 			async (tx) => {
-				//check if allowed
-				const dbProject = await tx.project.findUnique({
-					where: {
-						project_id
-					},
-					select: {
-						userIds: true,
-						editHistory: true,
-						isPrivate: true,
-						projectMetadataFileUrl_ODE: true,
-						projectMetadataFileChecksum_ODE: true,
-						sampleMetadataFileUrl_ODE: true,
-						sampleMetadataFileChecksum_ODE: true,
-						libraryMetadataFileUrl_ODE: true,
-						libraryMetadataFileChecksum_ODE: true,
-						_count: {
-							select: {
-								Analyses: true
-							}
-						}
-					}
-				});
-
-				if (!dbProject) {
-					throw new Error(`No Project with project_id of "${project_id}" found.`);
-				} else if (!dbProject.userIds.includes(userId)) {
-					throw new Error("Unauthorized action.");
-				}
-
-				for (const a of assays) {
-					const dbAssay = await tx.assay.findUnique({
-						where: {
-							assay_name: a.assay_name,
-							pcr_primer_forward: a.pcr_primer_forward,
-							pcr_primer_reverse: a.pcr_primer_reverse
-						}
-					});
-
-					if (!dbAssay) {
-						await projectChannel.stream.error(
-							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
-						);
-						throw new Error(
-							`Assay with assay_name of "${a.assay_name}", pcr_primer_forward of "${a.pcr_primer_forward}", and pcr_primer_reverse of "${a.pcr_primer_reverse}" does not exist.`
-						);
-					}
-
-					for (const [f, value] of Object.entries(a)) {
-						const field = f as keyof typeof dbAssay;
-						if (value !== dbAssay[field]) {
-							if (!(a.assay_name in badAssayFields)) {
-								badAssayFields[a.assay_name] = [];
-							}
-							badAssayFields[a.assay_name].push({ field, provided: value, actual: dbAssay[field] });
-							// throw new Error(
-							// 	`Provided Assay with assay_name of "${a.assay_name}" has an invalid value for field named "${field}". Provided value is "${value}", but it should be "${dbAssay[field]}".`
-							// );
-						}
-					}
-				}
-
-				for (const prep of assayPreps) {
-					const dbMeta = await tx.assayPrep.findUnique({
-						where: {
-							project_id_assay_name: {
-								project_id: prep.project_id,
-								assay_name: prep.assay_name
-							}
-						},
-						select: {
-							Project: {
-								select: {
-									userIds: true
-								}
-							}
-						}
-					});
-
-					if (dbMeta && !dbMeta.Project.userIds.includes(userId)) {
-						await projectChannel.stream.error("Unauthorized action.");
-						throw new Error("Unauthorized action.");
-					}
-				}
-
-				await projectChannel.stream.message("All checks passed.", 80);
-
-				const dbSamples = await tx.sample.findMany({
-					where: {
-						samp_name: {
-							in: sampNames
-						}
-					},
-					select: {
-						project_id: true
-					}
-				});
-
-				if (dbSamples.some((samp) => samp.project_id !== project_id)) {
-					await sampleChannel.stream.error(
-						`Some Sample in file does not belong to Project with project_id of "${project_id}".`
-					);
-					throw new Error(`Some Sample in file does not belong to Project with project_id of "${project_id}".`);
-				}
-
-				await sampleChannel.stream.message("All checks passed.", 80);
-
-				const dbLibraries = await tx.library.findMany({
-					where: {
-						lib_id: {
-							in: libraries.map((lib) => lib.lib_id)
-						}
-					},
-					select: {
-						Sample: {
-							select: {
-								project_id: true
-							}
-						}
-					}
-				});
-
-				if (dbLibraries.some((lib) => lib.Sample.project_id !== project_id)) {
-					await libraryChannel.stream.error(
-						`Some Library in file does not belong to Project with project_id of "${project_id}".`
-					);
-					throw new Error(`Some Library in file does not belong to Project with project_id of "${project_id}".`);
-				}
-
-				await libraryChannel.stream.message("All checks passed.", 80);
-
-				const change = [] as PrismaJson.ChangesType;
-				if (!missingProjectFile) {
-					change.push(
-						{
-							field: "projectMetadataFileUrl_ODE",
-							oldValue: dbProject.projectMetadataFileUrl_ODE,
-							newValue: projectChannel.url
-						},
-						{
-							field: "projectMetadataFileChecksum_ODE",
-							oldValue: dbProject.projectMetadataFileChecksum_ODE,
-							newValue: checksums.projectMd5
-						}
-					);
-				}
-
-				if (!missingSampleFile) {
-					change.push(
-						{
-							field: "sampleMetadataFileUrl_ODE",
-							oldValue: dbProject.sampleMetadataFileUrl_ODE,
-							newValue: sampleChannel.url
-						},
-						{
-							field: "sampleMetadataFileChecksum_ODE",
-							oldValue: dbProject.sampleMetadataFileChecksum_ODE,
-							newValue: checksums.sampleMd5
-						}
-					);
-				}
-
-				if (!missingLibraryFile) {
-					change.push(
-						{
-							field: "libraryMetadataFileUrl_ODE",
-							oldValue: dbProject.libraryMetadataFileUrl_ODE,
-							newValue: libraryChannel.url
-						},
-						{
-							field: "libraryMetadataFileChecksum_ODE",
-							oldValue: dbProject.libraryMetadataFileChecksum_ODE,
-							newValue: checksums.libraryMd5
-						}
-					);
-				}
-
-				const editHistory = addToHistory("project", uuidv4(), dbProject.editHistory, change);
-
 				//update project
 				await tx.project.update({
 					where: {
@@ -501,7 +474,7 @@ async function doEdit(
 
 				await globalStream.success("All files successfully updated.");
 			},
-			{ timeout: 1.5 * 60 * 1000 } //90 seconds
+			{ timeout: 3 * 60 * 1000 } //3 minutes
 		);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);

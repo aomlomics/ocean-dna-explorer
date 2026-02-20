@@ -19,7 +19,7 @@ export default function ThemeAwareSvg(props: ThemeAwareSvgProps) {
           transition-opacity duration-200
           [html[data-theme='dark']_&]:opacity-100
           [html[data-theme='light']_&]:opacity-0
-          ${className}
+          ${className ?? ""}
         `}
 				style={{ backgroundColor: "transparent" }}
 			/>
@@ -31,7 +31,7 @@ export default function ThemeAwareSvg(props: ThemeAwareSvgProps) {
           transition-opacity duration-200
           [html[data-theme='dark']_&]:opacity-0
           [html[data-theme='light']_&]:opacity-100
-          ${className}
+          ${className ?? ""}
         `}
 				style={{ backgroundColor: "transparent" }}
 			/>

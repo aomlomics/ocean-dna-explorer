@@ -204,7 +204,8 @@ async function parseProjectFile({
 			const parsedAssayPrep = AssayPrepOptionalDefaultsSchema.safeParse({
 				...projectCol,
 				...assayCols[assay_name],
-				assay_name
+				assay_name,
+				project_id: projectCol.project_id
 			});
 			if (!parsedAssayPrep.success) {
 				await channel.stream.error(

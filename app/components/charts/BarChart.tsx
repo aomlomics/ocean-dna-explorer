@@ -1,5 +1,6 @@
 "use client";
 
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import {
 	Chart as ChartJS,
 	ChartDataset,
@@ -13,7 +14,6 @@ import {
 } from "chart.js";
 ChartJS.register(BarController, BarElement, LinearScale, CategoryScale, Tooltip, Legend, Title);
 import { Bar } from "react-chartjs-2";
-import { useEffect, useState } from "react";
 
 export default function BarChart({
 	title,
@@ -24,28 +24,8 @@ export default function BarChart({
 	labels: string[];
 	datasets: ChartDataset<"bar", (number | [number, number] | null)[]>[];
 }) {
-	const [textColor, setTextColor] = useState("currentColor");
-	
-	useEffect(() => {
-		// Get the actual computed color value
-		const updateColor = () => {
-			const color = getComputedStyle(document.documentElement).getPropertyValue('color') || 
-				           getComputedStyle(document.body).color;
-			setTextColor(color);
-		};
-		
-		updateColor();
-		
-		// Listen for theme changes
-		const observer = new MutationObserver(updateColor);
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ['data-theme']
-		});
-		
-		return () => observer.disconnect();
-	}, []);
-	
+	const { textColor } = useDaisyTheme();
+
 	return (
 		<Bar
 			data={{
@@ -76,7 +56,7 @@ export default function BarChart({
 							color: textColor
 						},
 						grid: {
-							color: textColor + '1a' // Add low opacity
+							color: textColor + "1a" // Add low opacity
 						}
 					},
 					y: {
@@ -85,7 +65,7 @@ export default function BarChart({
 							color: textColor
 						},
 						grid: {
-							color: textColor + '1a' // Add low opacity
+							color: textColor + "1a" // Add low opacity
 						}
 					}
 				}

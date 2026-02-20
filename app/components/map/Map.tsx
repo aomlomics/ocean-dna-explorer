@@ -17,6 +17,7 @@ export default function Map({
 	draw,
 	legendOmit,
 	shapesToUrl,
+	disableSearch,
 	className = ""
 }: {
 	where?: Record<string, string>;
@@ -28,6 +29,7 @@ export default function Map({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
+	disableSearch?: true;
 	className?: string;
 } & (
 	| { query: () => Promise<NullLocation[]>; locations?: undefined }
@@ -39,7 +41,7 @@ export default function Map({
 	)) {
 	return (
 		<div
-			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className}`}
+			className={`overflow-hidden [:where(&)]:bg-base-200 [:where(&)]:aspect-video [:where(&)]:rounded-lg ${className ?? ""}`}
 		>
 			<Suspense
 				fallback={
@@ -64,6 +66,7 @@ export default function Map({
 					draw={draw}
 					legendOmit={legendOmit}
 					shapesToUrl={shapesToUrl}
+					disableSearch={disableSearch}
 				/>
 			</Suspense>
 		</div>
@@ -83,7 +86,8 @@ async function SuspenseMap({
 	legend,
 	draw,
 	legendOmit,
-	shapesToUrl
+	shapesToUrl,
+	disableSearch
 }: {
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
@@ -98,6 +102,7 @@ async function SuspenseMap({
 	draw?: boolean;
 	legendOmit?: string[];
 	shapesToUrl?: true;
+	disableSearch?: true;
 }) {
 	if (locations) {
 		return (
@@ -114,6 +119,7 @@ async function SuspenseMap({
 				draw={draw}
 				legendOmit={legendOmit}
 				shapesToUrl={shapesToUrl}
+				disableSearch={disableSearch}
 			/>
 		);
 	} else if (query) {
@@ -131,6 +137,7 @@ async function SuspenseMap({
 				draw={draw}
 				legendOmit={legendOmit}
 				shapesToUrl={shapesToUrl}
+				disableSearch={disableSearch}
 			/>
 		);
 	}

@@ -263,6 +263,8 @@ export async function parseAssignmentsFile({
 				}
 			}
 
+			//TODO: verify taxonomy.taxonomy matches all rank fields
+
 			taxonomies.push(parsedTaxonomy.data);
 
 			//add to progress bar every 10 percent

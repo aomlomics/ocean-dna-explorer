@@ -4,6 +4,8 @@ import TableMetadata from "@/types/tableMetadata";
 import { Occurrence, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import StatCard from "@/app/components/explore/StatCard";
+import { AnalysisIcon, DnaIcon, LocationIcon } from "@/app/components/icons";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -55,75 +57,57 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 	lib_id = decodeURIComponent(lib_id);
 	featureid = decodeURIComponent(featureid);
 
-	const { occurrence, assignment } = await prisma.$transaction(async (tx) => {
-		const occurrence = await tx.occurrence.findUnique({
-			where: {
-				analysis_run_name_lib_id_featureid: {
-					analysis_run_name,
-					lib_id,
-					featureid
-				}
-			},
-			include: {
-				Library: {
-					select: {
-						Sample: {
-							include: {
-								Project: {
-									select: {
-										isPrivate: true
-									}
+	const occurrence = await prisma.occurrence.findUnique({
+		where: {
+			analysis_run_name_lib_id_featureid: {
+				analysis_run_name,
+				lib_id,
+				featureid
+			}
+		},
+		include: {
+			Library: {
+				select: {
+					Sample: {
+						include: {
+							Project: {
+								select: {
+									isPrivate: true
 								}
 							}
 						}
 					}
-				},
-				Analysis: {
-					select: {
-						assay_name: true,
-						project_id: true,
-						isPrivate: true
-					}
-				},
-				Feature: {
-					select: {
-						dna_sequence: true
-					}
-				}
-			}
-		});
-
-		if (!occurrence) {
-			return { occurrence: null, assignment: null };
-		}
-
-		const assignment = await tx.assignment.findUnique({
-			where: {
-				analysis_run_name_featureid: {
-					analysis_run_name,
-					featureid
 				}
 			},
-			include: {
-				Taxonomy: true
+			Analysis: {
+				select: {
+					assay_name: true,
+					project_id: true,
+					isPrivate: true
+				}
+			},
+			Feature: {
+				select: {
+					dna_sequence: true
+				}
+			},
+			Assignment: {
+				select: {
+					Taxonomy: true
+				}
 			}
-		});
-
-		return { occurrence, assignment };
+		}
 	});
-
 	if (!occurrence) return <>Occurrence not found</>;
 
 	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Library.Sample.Project.isPrivate;
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 
-	const taxonomyObject = assignment?.Taxonomy ?? null;
 	const taxonomyName =
-		taxonomyObject?.species ||
-		taxonomyObject?.genus ||
-		taxonomyObject?.taxonomy ||
-		assignment?.taxonomy ||
+		occurrence.Assignment.Taxonomy.species ||
+		occurrence.Assignment.Taxonomy.genus ||
+		occurrence.Assignment.Taxonomy.taxonomy ||
 		"Unknown taxonomy";
 
 	return (
@@ -161,17 +145,21 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
-					This occurrence links{" "}
+					This occurrence links the feature{" "}
 					<Link href={`/explore/feature/${featureid}`} className="link link-primary link-hover">
-						feature {featureid}
+						{featureid}
 					</Link>{" "}
-					to{" "}
+					to the library{" "}
 					<Link href={`/explore/library/${lib_id}`} className="link link-primary link-hover">
-						library {lib_id}
+						{lib_id}
 					</Link>{" "}
-					in{" "}
+					in the analysis{" "}
 					<Link href={`/explore/analysis/${analysis_run_name}`} className="link link-primary link-hover">
-						analysis {analysis_run_name}
+						{analysis_run_name}
+					</Link>{" "}
+					with the assay{" "}
+					<Link href={`/explore/assay/${occurrence.Analysis.assay_name}`} className="link link-primary link-hover">
+						{occurrence.Analysis.assay_name}
 					</Link>
 					.
 				</p>
@@ -191,15 +179,15 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-stretch">
 								{/* Left: taxonomic image, name, and organism quantity */}
 								<div className="flex flex-col items-center justify-center gap-6 h-full text-center">
-									{taxonomyObject && (
+									{occurrence.Assignment.Taxonomy && (
 										<div className="w-32 h-32 md:w-40 md:h-40 relative">
-											<PhyloPic taxonomy={taxonomyObject} />
+											<PhyloPic taxonomy={occurrence.Assignment.Taxonomy} />
 										</div>
 									)}
 									<div className="space-y-3">
-										{taxonomyObject ? (
+										{occurrence.Assignment.Taxonomy ? (
 											<Link
-												href={`/explore/taxonomy/${encodeURIComponent(taxonomyObject.taxonomy)}`}
+												href={`/explore/taxonomy/${encodeURIComponent(occurrence.Assignment.Taxonomy.taxonomy)}`}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -223,8 +211,8 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 									<div className="space-y-2">
 										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Full taxonomy</p>
 										<div className="max-h-40 overflow-y-auto pr-1 bg-base-200/60 rounded-lg p-3">
-											{taxonomyObject ? (
-												formatTaxonomyDisplay(taxonomyObject)
+											{occurrence.Assignment.Taxonomy ? (
+												formatTaxonomyDisplay(occurrence.Assignment.Taxonomy)
 											) : (
 												<p className="text-sm text-base-content/70">No taxonomy assignment available.</p>
 											)}
@@ -245,89 +233,27 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 				{/* Context: library, feature, analysis, assay */}
 				<div className="pt-6">
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
-							<div
-								className="w-10 h-10 text-primary"
-								style={{
-									backgroundColor: "currentColor",
-									WebkitMaskImage: "url(/images/icons/location_pin.svg)",
-									maskImage: "url(/images/icons/location_pin.svg)",
-									WebkitMaskRepeat: "no-repeat",
-									maskRepeat: "no-repeat",
-									WebkitMaskPosition: "center",
-									maskPosition: "center",
-									WebkitMaskSize: "contain"
-								}}
-							/>
-							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Library</p>
-								<Link
-									href={`/explore/library/${lib_id}`}
-									className="text-base-content font-medium hover:text-primary break-all"
-								>
-									{lib_id}
-								</Link>
-							</div>
-						</div>
-
-						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
-							<div
-								className="w-12 h-10 text-primary"
-								style={{
-									backgroundColor: "currentColor",
-									WebkitMaskImage: "url(/images/icons/dna_icon.svg)",
-									maskImage: "url(/images/icons/dna_icon.svg)",
-									WebkitMaskRepeat: "no-repeat",
-									maskRepeat: "no-repeat",
-									WebkitMaskPosition: "center",
-									maskPosition: "center",
-									WebkitMaskSize: "contain"
-								}}
-							/>
-							<div className="space-y-1">
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Feature</p>
-								<Link
-									href={`/explore/feature/${featureid}`}
-									className="text-base-content font-medium hover:text-primary break-all"
-								>
-									{featureid}
-								</Link>
-							</div>
-						</div>
-
-						<div className="bg-base-200 rounded-xl px-4 py-3 flex items-center gap-3">
-							<div
-								className="w-10 h-10 text-primary"
-								style={{
-									backgroundColor: "currentColor",
-									WebkitMaskImage: "url(/images/analysis_outline_image.svg)",
-									maskImage: "url(/images/analysis_outline_image.svg)",
-									WebkitMaskRepeat: "no-repeat",
-									maskRepeat: "no-repeat",
-									WebkitMaskPosition: "center",
-									maskPosition: "center",
-									WebkitMaskSize: "contain"
-								}}
-							/>
-							<div>
-								<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Analysis</p>
-								<Link
-									href={`/explore/analysis/${analysis_run_name}`}
-									className="text-base-content font-medium hover:text-primary break-all"
-								>
-									{analysis_run_name}
-								</Link>
-								<p className="text-xs text-base-content/70 mt-1">
-									Assay:{" "}
-									<Link
-										href={`/explore/assay/${occurrence.Analysis.assay_name}`}
-										className="link link-primary link-hover"
-									>
-										{occurrence.Analysis.assay_name}
-									</Link>
-								</p>
-							</div>
-						</div>
+						<StatCard
+							title="Library"
+							icon={<LocationIcon />}
+							value={lib_id}
+							link={`/explore/library/${lib_id}`}
+							layout="horizontal"
+						/>
+						<StatCard
+							title="Feature"
+							icon={<DnaIcon />}
+							value={featureid}
+							link={`/explore/feature/${featureid}`}
+							layout="horizontal"
+						/>
+						<StatCard
+							title="Analysis"
+							icon={<AnalysisIcon />}
+							value={analysis_run_name}
+							link={`/explore/analysis/${analysis_run_name}`}
+							layout="horizontal"
+						/>
 					</div>
 				</div>
 			</section>

@@ -165,6 +165,13 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					if (field && value) {
 						//get value if the row is for the analysis_run_name field
 						if (field === "analysis_run_name") {
+							if (analysisIds.includes(value)) {
+								setErrorMessage(`Analysis with analysis_run_name of "${value}" is already in the form.`);
+								modalRef.current?.showModal();
+								event.target.value = "";
+								return;
+							}
+
 							currAnalysis_run_name = value;
 						}
 
@@ -550,7 +557,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
 					{errorMessage ? "Submission Failed" : "Analysis Submitted Successfully"}
 				</h3>
-				<p className="mb-2 font-light whitespace-pre-wrap">{errorMessage ? errorMessage : ""}</p>
+				<p className="mb-2 font-light whitespace-pre-wrap">{errorMessage ?? ""}</p>
 				{!errorMessage && (
 					<div className="mt-4 flex items-center justify-center gap-2">
 						<span className="loading loading-spinner loading-sm"></span>

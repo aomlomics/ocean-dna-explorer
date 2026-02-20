@@ -4,6 +4,7 @@ import ScrollToTop from "@/app/components/ScrollToTop";
 import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
+import { ReactNode } from "react";
 
 const sourceSans = Source_Sans_3({
 	weight: ["300", "400", "500", "600", "700", "800"],
@@ -18,7 +19,7 @@ export const metadata = {
 	metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org")
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="en" className="scroll-smooth" suppressHydrationWarning>
 			<head>

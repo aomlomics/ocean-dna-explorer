@@ -1,13 +1,6 @@
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { getRelationPath, getZodType } from "./schema";
-import {
-	MapShape,
-	ParamsArray,
-	ParamsArrayField,
-	ParamsArrayRelation,
-	ParamsArrayValue,
-	QueryMode
-} from "@/types/globals";
+import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
 import { getShapesFromUrl } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
@@ -65,10 +58,6 @@ export function parseToQuery(
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation,
 	swapTo?: Uncapitalize<Prisma.ModelName>
 ) {
-	if (table === swapTo) {
-		throw new Error("Table and swapTo are the same.");
-	}
-
 	let relation = undefined as Uncapitalize<Prisma.ModelName> | undefined;
 	let field = "";
 	let mode = "" as QueryMode;
@@ -96,8 +85,6 @@ export function parseToQuery(
 		relation = TableNames.find((model) => model.toLowerCase() === queryArr[0].toLowerCase());
 		if (!relation) {
 			throw new Error(`Provided table "${relation}" does not exist.`);
-		} else if (relation === table) {
-			throw new Error("Relation can't be the current table.");
 		} else if (relation === swapTo) {
 			relation = undefined;
 		}
@@ -444,8 +431,13 @@ export function parseApiQuery(
 			// limit?: number;
 			filters?: Record<string, string | number>;
 		};
+		swapToTable?: true;
+		sampleWhere?: true;
 	}
 ) {
+	//copy search params
+	const params = new URLSearchParams(searchParams);
+
 	const query = {} as {
 		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
 		select?: Record<string, any>;
@@ -458,18 +450,18 @@ export function parseApiQuery(
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		const tempShapes = getShapesFromUrl(searchParams);
+		const tempShapes = getShapesFromUrl(params);
 
 		if (tempShapes) {
 			shapes = tempShapes;
-			searchParams.delete("polygon");
-			searchParams.delete("circle");
+			params.delete("polygon");
+			params.delete("circle");
 		}
 	}
 
 	//ordering results
 	if (!options?.features || options.features.orderBy) {
-		const orderByStr = searchParams.get("orderBy");
+		const orderByStr = params.get("orderBy");
 		if (orderByStr) {
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
@@ -498,9 +490,9 @@ export function parseApiQuery(
 	}
 
 	if (!options?.features || options.features.fields) {
-		const fields = searchParams.get("fields");
+		const fields = params.get("fields");
 		if (fields) {
-			searchParams.delete("fields");
+			params.delete("fields");
 			const split = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
 			query.select = query.select ? { ...query.select, ...split } : split;
 		}
@@ -512,9 +504,9 @@ export function parseApiQuery(
 	}
 
 	if (!options?.features || options.features.distinct) {
-		const distinct = searchParams.get("distinct");
+		const distinct = params.get("distinct");
 		if (distinct) {
-			searchParams.delete("distinct");
+			params.delete("distinct");
 			const split = distinct.split(",");
 			query.distinct = query.distinct ? [...query.distinct, ...split] : split;
 		}
@@ -522,9 +514,9 @@ export function parseApiQuery(
 
 	//relations
 	if (!options?.features || options.features.relations) {
-		const relations = searchParams.get("relations");
+		const relations = params.get("relations");
 		if (relations) {
-			searchParams.delete("relations");
+			params.delete("relations");
 
 			let relationVal = true as
 				| true
@@ -537,9 +529,9 @@ export function parseApiQuery(
 			//relations limit
 			//TODO: (bug) breaks when relations isn't an array
 			if (!options?.features || options.features.relationsLimit) {
-				const relationsLimit = searchParams.get("relationsLimit");
+				const relationsLimit = params.get("relationsLimit");
 				if (relationsLimit) {
-					searchParams.delete("relationsLimit");
+					params.delete("relationsLimit");
 					const take = parseInt(relationsLimit);
 					if (Number.isNaN(take)) {
 						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be an integer.`);
@@ -552,8 +544,8 @@ export function parseApiQuery(
 			}
 
 			//include all fields in relations
-			const allFields = searchParams.get("relationsAllFields");
-			searchParams.delete("relationsAllFields");
+			const allFields = params.get("relationsAllFields");
+			params.delete("relationsAllFields");
 			if (!allFields || allFields.toLowerCase() === "false") {
 				if (typeof relationVal === "boolean") {
 					relationVal = { select: { id: true } };
@@ -577,24 +569,25 @@ export function parseApiQuery(
 
 	let sampleWhere;
 
-	const advanced = searchParams.get("advanced");
+	const advanced = params.get("advanced");
 	if ((!options?.features || options.features.advanced) && advanced) {
 		//advanced search
-		searchParams.delete("advanced");
+		params.delete("advanced");
 
-		if (Array.from(searchParams).length) {
+		if (Array.from(params).length) {
 			throw new Error("Advanced search may not include other filter parameters.");
 		}
 
 		const parsed = JSON.parse(advanced) as ParamsArray;
 		if (parsed.length) {
-			query.where = parseAdvancedQuery(table, parsed);
+			query.where = parseAdvancedQuery(table, parsed, options && options.swapToTable ? table : undefined);
 		}
 
 		//assemble secondary query if table doesn't have location data
 		if (
-			!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-			!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+			sampleWhere &&
+			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
 		) {
 			if (parsed.length) {
 				sampleWhere = parseAdvancedQuery(table, parsed, "sample");
@@ -603,14 +596,14 @@ export function parseApiQuery(
 			}
 		}
 	} else {
-		const ids = searchParams.get("ids");
-		const search = searchParams.get("search");
+		const ids = params.get("ids");
+		const search = params.get("search");
 
 		if ((!options?.features || options.features.ids) && ids) {
 			//list of ids
-			searchParams.delete("ids");
+			params.delete("ids");
 
-			if (Array.from(searchParams).length) {
+			if (Array.from(params).length) {
 				throw new Error("Filtering with a list of ids may not include other filter parameters.");
 			}
 
@@ -632,9 +625,9 @@ export function parseApiQuery(
 			};
 		} else if ((!options?.features || options.features.search) && search) {
 			//string search
-			searchParams.delete("search");
+			params.delete("search");
 
-			if (Array.from(searchParams).length) {
+			if (Array.from(params).length) {
 				throw new Error("Search may not include other filter parameters.");
 			}
 
@@ -642,9 +635,9 @@ export function parseApiQuery(
 		} else {
 			//limit
 			if (!options?.features || options.features.limit) {
-				const take = searchParams.get("limit");
+				const take = params.get("limit");
 				if (take) {
-					searchParams.delete("limit");
+					params.delete("limit");
 					query.take = parseInt(take);
 					if (Number.isNaN(query.take)) {
 						throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
@@ -665,7 +658,7 @@ export function parseApiQuery(
 				}
 
 				const shape = TableMetadata[table].schema.shape;
-				searchParams.forEach((value, key) => {
+				params.forEach((value, key) => {
 					if (shape[key as keyof typeof shape]) {
 						const type = getZodType(shape[key as keyof typeof shape]).type;
 						if (!type) {
@@ -717,8 +710,9 @@ export function parseApiQuery(
 
 		//assemble secondary query if table doesn't have location data
 		if (
-			!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-			!TableMetadata[table].enumSchema.options.includes("decimalLongitude")
+			sampleWhere &&
+			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
+				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
 		) {
 			if (query.where && Object.keys(query.where).length) {
 				sampleWhere = deepWhere("sample", table, query.where);

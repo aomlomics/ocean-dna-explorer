@@ -587,6 +587,7 @@ export type OccurrenceRelations = {
   Library: LibraryWithRelations;
   Analysis: AnalysisWithRelations;
   Feature: FeatureWithRelations;
+  Assignment: AssignmentWithRelations;
 };
 
 export type OccurrenceWithRelations = z.infer<typeof OccurrenceSchema> & OccurrenceRelations
@@ -595,6 +596,7 @@ export const OccurrenceWithRelationsSchema: z.ZodType<OccurrenceWithRelations> =
   Library: z.lazy(() => LibraryWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisWithRelationsSchema),
   Feature: z.lazy(() => FeatureWithRelationsSchema),
+  Assignment: z.lazy(() => AssignmentWithRelationsSchema),
 }))
 
 // OCCURRENCE OPTIONAL DEFAULTS RELATION SCHEMA
@@ -604,6 +606,7 @@ export type OccurrenceOptionalDefaultsRelations = {
   Library: LibraryOptionalDefaultsWithRelations;
   Analysis: AnalysisOptionalDefaultsWithRelations;
   Feature: FeatureOptionalDefaultsWithRelations;
+  Assignment: AssignmentOptionalDefaultsWithRelations;
 };
 
 export type OccurrenceOptionalDefaultsWithRelations = z.infer<typeof OccurrenceOptionalDefaultsSchema> & OccurrenceOptionalDefaultsRelations
@@ -612,6 +615,7 @@ export const OccurrenceOptionalDefaultsWithRelationsSchema: z.ZodType<Occurrence
   Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
   Feature: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema),
+  Assignment: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema),
 }))
 
 // OCCURRENCE PARTIAL RELATION SCHEMA
@@ -621,6 +625,7 @@ export type OccurrencePartialRelations = {
   Library?: LibraryPartialWithRelations;
   Analysis?: AnalysisPartialWithRelations;
   Feature?: FeaturePartialWithRelations;
+  Assignment?: AssignmentPartialWithRelations;
 };
 
 export type OccurrencePartialWithRelations = z.infer<typeof OccurrencePartialSchema> & OccurrencePartialRelations
@@ -629,6 +634,7 @@ export const OccurrencePartialWithRelationsSchema: z.ZodType<OccurrencePartialWi
   Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
+  Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 })).partial()
 
 export type OccurrenceOptionalDefaultsWithPartialRelations = z.infer<typeof OccurrenceOptionalDefaultsSchema> & OccurrencePartialRelations
@@ -637,6 +643,7 @@ export const OccurrenceOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Occ
   Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
+  Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 }).partial())
 
 export type OccurrenceWithPartialRelations = z.infer<typeof OccurrenceSchema> & OccurrencePartialRelations
@@ -645,6 +652,7 @@ export const OccurrenceWithPartialRelationsSchema: z.ZodType<OccurrenceWithParti
   Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
+  Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 }).partial())
 
 /////////////////////////////////////////
@@ -685,6 +693,7 @@ export type AssignmentRelations = {
   Analysis: AnalysisWithRelations;
   Feature: FeatureWithRelations;
   Taxonomy: TaxonomyWithRelations;
+  Occurrences: OccurrenceWithRelations[];
 };
 
 export type AssignmentWithRelations = z.infer<typeof AssignmentSchema> & AssignmentRelations
@@ -693,6 +702,7 @@ export const AssignmentWithRelationsSchema: z.ZodType<AssignmentWithRelations> =
   Analysis: z.lazy(() => AnalysisWithRelationsSchema),
   Feature: z.lazy(() => FeatureWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyWithRelationsSchema),
+  Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
 }))
 
 // ASSIGNMENT OPTIONAL DEFAULTS RELATION SCHEMA
@@ -702,6 +712,7 @@ export type AssignmentOptionalDefaultsRelations = {
   Analysis: AnalysisOptionalDefaultsWithRelations;
   Feature: FeatureOptionalDefaultsWithRelations;
   Taxonomy: TaxonomyOptionalDefaultsWithRelations;
+  Occurrences: OccurrenceOptionalDefaultsWithRelations[];
 };
 
 export type AssignmentOptionalDefaultsWithRelations = z.infer<typeof AssignmentOptionalDefaultsSchema> & AssignmentOptionalDefaultsRelations
@@ -710,6 +721,7 @@ export const AssignmentOptionalDefaultsWithRelationsSchema: z.ZodType<Assignment
   Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
   Feature: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema),
+  Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // ASSIGNMENT PARTIAL RELATION SCHEMA
@@ -719,6 +731,7 @@ export type AssignmentPartialRelations = {
   Analysis?: AnalysisPartialWithRelations;
   Feature?: FeaturePartialWithRelations;
   Taxonomy?: TaxonomyPartialWithRelations;
+  Occurrences?: OccurrencePartialWithRelations[];
 };
 
 export type AssignmentPartialWithRelations = z.infer<typeof AssignmentPartialSchema> & AssignmentPartialRelations
@@ -727,6 +740,7 @@ export const AssignmentPartialWithRelationsSchema: z.ZodType<AssignmentPartialWi
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+  Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
 })).partial()
 
 export type AssignmentOptionalDefaultsWithPartialRelations = z.infer<typeof AssignmentOptionalDefaultsSchema> & AssignmentPartialRelations
@@ -735,6 +749,7 @@ export const AssignmentOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Ass
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+  Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
 }).partial())
 
 export type AssignmentWithPartialRelations = z.infer<typeof AssignmentSchema> & AssignmentPartialRelations
@@ -743,6 +758,7 @@ export const AssignmentWithPartialRelationsSchema: z.ZodType<AssignmentWithParti
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+  Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////

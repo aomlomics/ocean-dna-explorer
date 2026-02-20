@@ -14,7 +14,7 @@ export default async function Taxonomy() {
 		}
 	];
 	return (
-		<ExplorePage table="taxonomy" tableConfig={tableConfig} displayMode="grid">
+		<ExplorePage table="taxonomy" tableConfig={tableConfig} displayMode="grid" toggle>
 			<div className="w-full space-y-4">
 				<div className="text-base-content/80 pb-4 space-y-2">
 					<p>{TableMetadata.taxonomy.description}</p>

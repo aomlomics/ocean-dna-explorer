@@ -193,10 +193,6 @@ async function doEdit(
 							if (invalidTagNames.length === 1) {
 								throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 							} else {
-								let join = ", ";
-								if (invalidTagNames.length === 2) {
-									join = " ";
-								}
 								throw new Error(
 									`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 										.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
