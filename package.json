@@ -41,6 +41,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-zoom": "^2.2.0",
     "chroma-js": "^3.2.0",
+    "cobe": "^0.6.5",
     "concurrently": "^9.2.1",
     "cssnano": "^7.1.2",
     "csv-parse": "^6.1.0",

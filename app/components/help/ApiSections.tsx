@@ -42,6 +42,21 @@ export async function getApiSections() {
 			title: "Introduction",
 			content: (
 				<div className="space-y-4">
+					<div>
+						<Link href="/search">
+							<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-base-200/80 hover:bg-base-300/80 transition-colors text-sm">
+								<span className="w-4 h-4 shrink-0 text-primary">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+										<path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+									</svg>
+								</span>
+								<span className="text-base-content">Search Page</span>
+							</div>
+						</Link>
+						<p className="text-base-content/90 mt-2">
+							You can build complex queries using the Search page user interface, then copy the URL to use as an API call in your code. This is a great way to get started quickly.
+						</p>
+					</div>
 					<p>
 						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help
 						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
@@ -211,10 +226,11 @@ export async function getApiSections() {
 					content: (
 						<>
 							<p className="mb-4">Here are some examples of how to get data in various programming environments:</p>
-							<div className="mb-4 mt-4 text-lg font-medium">Python example:</div>
-							<CodeBlock
-								language="python"
-								code={`import requests
+							<div className="ml-4">
+								<div className="mb-4 mt-4 text-lg font-medium">Python example:</div>
+								<CodeBlock
+									language="python"
+									code={`import requests
 import json
 import pandas as pd
 
@@ -239,12 +255,12 @@ if response.status_code == 200:
         print(df)
 else:
     print(f"Error: {response.status_code} - {response.reason}")`}
-							/>
+								/>
 
-							<div className="mb-4 mt-8 text-lg font-medium">R example:</div>
-							<CodeBlock
-								language="r"
-								code={`library(httr)
+								<div className="mb-4 mt-8 text-lg font-medium">R example:</div>
+								<CodeBlock
+									language="r"
+									code={`library(httr)
 library(jsonlite)
 
 # Make API request
@@ -267,7 +283,8 @@ if (http_status(response)$category == "Success") {
 } else {
   print(paste("Error:", http_status(response)$reason))
 }`}
-							/>
+								/>
+							</div>
 						</>
 					)
 				},

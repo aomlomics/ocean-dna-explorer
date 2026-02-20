@@ -3,14 +3,11 @@ import Link from "next/link";
 import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
-import TabDropdown from "./TabDropdown";
+import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu, VisualizeMegaMenu } from "./MegaMenus";
 import MobileMenu from "./MobileMenu";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
-import { uncapitalizeTable } from "@/app/helpers/utils";
 
 export default async function Header() {
 	const { sessionClaims } = await auth();
@@ -49,28 +46,13 @@ export default async function Header() {
 			<div className="navbar-center hidden xl:flex self-end">
 				<div className="flex items-end space-x-4 z-dropdown -mb-2">
 					<TabButton tabName="Home" route="/" />
-					<TabDropdown
-						tabName="Explore"
-						route="/explore"
-						dropdown={DataTableNames.map((table) => ({
-							label: TableMetadata[table as Prisma.ModelName].plural,
-							href: `/explore/${uncapitalizeTable(table as Prisma.ModelName)}`
-						}))}
-					/>
+					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />
-					<TabButton tabName="Visualize" route="/visualize" />
-					<TabDropdown
-						tabName="Submit"
-						route="/submit"
-						dropdown={[
-							{ label: "Project", href: "/submit/project" },
-							{ label: "Analysis", href: "/submit/analysis" }
-						]}
-					/>
-					<TabButton tabName="API" route="/api" />
-					<TabButton tabName="Help" route="/help" />
-					{/* TEMPORARY: hide the About tab until its finished */}
-					{/* <TabButton tabName="About" route="/about" /> */}
+					<VisualizeMegaMenu />
+					<SubmitMegaMenu />
+					{/* <TabButton tabName="Contribute" route="/contribute" /> */}
+					<DocsMegaMenu />
+					<TabButton tabName="About" route="/about" />
 				</div>
 			</div>
 

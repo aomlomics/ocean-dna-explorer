@@ -5,12 +5,12 @@ import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import Image from "next/image";
 import SubmissionUsersButton from "@/app/components/mySubmissions/SubmissionUsersButton";
 import projectUpdateUserIdsAction from "@/app/actions/project/update/projectUpdateUserIds";
 import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButton";
 import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
 import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
+import { ProjectIcon } from "@/app/components/icons";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -117,12 +117,7 @@ export default async function MySubmissions() {
 										</Link>
 									</div>
 									<div className="absolute bottom-5 right-0 w-3/4 h-60 translate-x-1/3 translate-y-1/3">
-										<Image
-											src="/images/Catcher_Vessel4.svg"
-											alt="Project Upload Illustration"
-											fill
-											className="object-contain"
-										/>
+										<ProjectIcon className="w-full h-full text-primary" />
 									</div>
 								</>
 							) : (
