@@ -78,10 +78,8 @@ async function SuspenseStatCard({
 		content = (
 			<>
 				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
-				<div className="flex flex-col">
-					<div className={`font-bold text-primary${typeof queryVal === "string" ? "" : " text-3xl"}`}>
-						{queryVal.toLocaleString()}
-					</div>
+				<div className="flex flex-col overflow-hidden">
+					<div className={`font-bold text-primary ${typeof queryVal === "string" ? "" : "text-3xl"}`}>{queryVal}</div>
 					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
 				</div>
 			</>
@@ -95,8 +93,10 @@ async function SuspenseStatCard({
 					<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">{icon}</div>
 				)}
 				{queryVal !== undefined && (
-					<div className={`font-bold text-primary${typeof queryVal === "string" ? "" : " text-3xl"}`}>
-						{queryVal.toLocaleString()}
+					<div
+						className={`font-bold text-primary w-full overflow-hidden ${typeof queryVal === "string" ? "" : "text-3xl"}`}
+					>
+						{queryVal}
 					</div>
 				)}
 				{latitude !== undefined && longitude !== undefined && (
@@ -120,7 +120,7 @@ async function SuspenseStatCard({
 		return (
 			<Link href={link} className={className}>
 				<div
-					className={`bg-base-200 p-4 h-full rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName}${tooltip ? " tooltip tooltip-secondary before:text-primary-content" : ""}`}
+					className={`bg-base-200 p-4 h-full rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""}`}
 					data-tip={tooltip}
 				>
 					{content}
@@ -130,7 +130,7 @@ async function SuspenseStatCard({
 	} else {
 		return (
 			<div
-				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName}${tooltip ? " tooltip tooltip-secondary before:text-primary-content" : ""}${className ? " " + className : ""}`}
+				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""} ${className ?? ""}`}
 				data-tip={tooltip}
 			>
 				{content}

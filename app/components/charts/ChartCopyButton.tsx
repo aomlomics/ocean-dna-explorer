@@ -14,7 +14,7 @@ export default function ChartCopyButton({
 
 	return (
 		<button
-			className={`btn mt-7 relative flex justify-center${copied ? " btn-success" : ""}`}
+			className={`btn mt-7 relative flex justify-center ${copied ? "btn-success" : ""}`}
 			onClick={() => {
 				if (ref.current) {
 					try {
@@ -54,7 +54,7 @@ export default function ChartCopyButton({
 				)}
 			</svg>
 			<span className={copied ? "invisible" : ""}>Copy Chart</span>
-			<span className={`absolute${copied ? "" : " hidden"}`}>Copied</span>
+			<span className={`absolute ${copied ? "" : "hidden"}`}>Copied</span>
 		</button>
 	);
 }

@@ -21,7 +21,7 @@ export default function Modal({
 
 	return (
 		<dialog ref={ref || modalRef} className="modal">
-			<div className={`modal-box [:where(&)]:m-10 ${className}`}>
+			<div className={`modal-box [:where(&)]:m-10 ${className ?? ""}`}>
 				<button
 					ref={xRef}
 					className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"

@@ -111,9 +111,11 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			where: {
 				Libraries: {
 					some: {
-						Taxonomies: {
+						Occurrences: {
 							some: {
-								taxonomy
+								Assignment: {
+									taxonomy
+								}
 							}
 						}
 					}

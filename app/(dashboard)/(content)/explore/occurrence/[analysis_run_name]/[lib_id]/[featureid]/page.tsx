@@ -57,75 +57,57 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 	lib_id = decodeURIComponent(lib_id);
 	featureid = decodeURIComponent(featureid);
 
-	const { occurrence, assignment } = await prisma.$transaction(async (tx) => {
-		const occurrence = await tx.occurrence.findUnique({
-			where: {
-				analysis_run_name_lib_id_featureid: {
-					analysis_run_name,
-					lib_id,
-					featureid
-				}
-			},
-			include: {
-				Library: {
-					select: {
-						Sample: {
-							include: {
-								Project: {
-									select: {
-										isPrivate: true
-									}
+	const occurrence = await prisma.occurrence.findUnique({
+		where: {
+			analysis_run_name_lib_id_featureid: {
+				analysis_run_name,
+				lib_id,
+				featureid
+			}
+		},
+		include: {
+			Library: {
+				select: {
+					Sample: {
+						include: {
+							Project: {
+								select: {
+									isPrivate: true
 								}
 							}
 						}
 					}
-				},
-				Analysis: {
-					select: {
-						assay_name: true,
-						project_id: true,
-						isPrivate: true
-					}
-				},
-				Feature: {
-					select: {
-						dna_sequence: true
-					}
-				}
-			}
-		});
-
-		if (!occurrence) {
-			return { occurrence: null, assignment: null };
-		}
-
-		const assignment = await tx.assignment.findUnique({
-			where: {
-				analysis_run_name_featureid: {
-					analysis_run_name,
-					featureid
 				}
 			},
-			include: {
-				Taxonomy: true
+			Analysis: {
+				select: {
+					assay_name: true,
+					project_id: true,
+					isPrivate: true
+				}
+			},
+			Feature: {
+				select: {
+					dna_sequence: true
+				}
+			},
+			Assignment: {
+				select: {
+					Taxonomy: true
+				}
 			}
-		});
-
-		return { occurrence, assignment };
+		}
 	});
-
 	if (!occurrence) return <>Occurrence not found</>;
 
 	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Library.Sample.Project.isPrivate;
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 
-	const taxonomyObject = assignment?.Taxonomy ?? null;
 	const taxonomyName =
-		taxonomyObject?.species ||
-		taxonomyObject?.genus ||
-		taxonomyObject?.taxonomy ||
-		assignment?.taxonomy ||
+		occurrence.Assignment.Taxonomy.species ||
+		occurrence.Assignment.Taxonomy.genus ||
+		occurrence.Assignment.Taxonomy.taxonomy ||
 		"Unknown taxonomy";
 
 	return (
@@ -197,15 +179,15 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-stretch">
 								{/* Left: taxonomic image, name, and organism quantity */}
 								<div className="flex flex-col items-center justify-center gap-6 h-full text-center">
-									{taxonomyObject && (
+									{occurrence.Assignment.Taxonomy && (
 										<div className="w-32 h-32 md:w-40 md:h-40 relative">
-											<PhyloPic taxonomy={taxonomyObject} />
+											<PhyloPic taxonomy={occurrence.Assignment.Taxonomy} />
 										</div>
 									)}
 									<div className="space-y-3">
-										{taxonomyObject ? (
+										{occurrence.Assignment.Taxonomy ? (
 											<Link
-												href={`/explore/taxonomy/${encodeURIComponent(taxonomyObject.taxonomy)}`}
+												href={`/explore/taxonomy/${encodeURIComponent(occurrence.Assignment.Taxonomy.taxonomy)}`}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -229,8 +211,8 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 									<div className="space-y-2">
 										<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Full taxonomy</p>
 										<div className="max-h-40 overflow-y-auto pr-1 bg-base-200/60 rounded-lg p-3">
-											{taxonomyObject ? (
-												formatTaxonomyDisplay(taxonomyObject)
+											{occurrence.Assignment.Taxonomy ? (
+												formatTaxonomyDisplay(occurrence.Assignment.Taxonomy)
 											) : (
 												<p className="text-sm text-base-content/70">No taxonomy assignment available.</p>
 											)}

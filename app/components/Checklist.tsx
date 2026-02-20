@@ -27,8 +27,8 @@ export default function Checklist({
 	const [search, setSearch] = useState("");
 
 	return (
-		<div className={`dropdown dropdown-end${className ? " " + className : ""}`}>
-			<div tabIndex={0} role="button" className={`btn${buttonClassName ? " " + buttonClassName : ""}`}>
+		<div className={`dropdown dropdown-end ${className ?? ""}`}>
+			<div tabIndex={0} role="button" className={`btn ${buttonClassName}`}>
 				{list.length - Object.keys(listFilter).length}/{list.length} {label}
 			</div>
 

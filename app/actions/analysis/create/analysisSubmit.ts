@@ -34,7 +34,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { analysis, features, taxonomies, assignments, occurrences, libIdsToTaxa } = parseResult;
+		const { analysis, features, taxonomies, assignments, occurrences } = parseResult;
 
 		await analysisChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -212,18 +212,6 @@ async function doSubmit(
 			prisma.occurrence.createMany({
 				data: occurrences
 			}),
-			...Object.entries(libIdsToTaxa).map(([lib_id, taxa]) =>
-				prisma.library.update({
-					where: {
-						lib_id
-					},
-					data: {
-						Taxonomies: {
-							connect: taxa
-						}
-					}
-				})
-			),
 			...(otherTrusted.length
 				? [
 						prisma.analysis.updateMany({
