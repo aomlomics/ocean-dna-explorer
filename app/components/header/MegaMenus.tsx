@@ -12,40 +12,6 @@ import { uncapitalizeTable } from "@/app/helpers/utils";
 // Shared mega-menu primitives
 // -----------------------------
 
-function ShipIcon({ className }: { className?: string }) {
-	return (
-		<svg
-			viewBox="0 0 424 169"
-			className={className ?? "h-5 w-auto"}
-			fill="currentColor"
-			stroke="none"
-			aria-hidden="true"
-		>
-			<path d="M177.09,96.19c.85-1.5,18.16-54.31,18.16-54.31,0,0,6.1-3.1,18.75.15,10.81,2.79,15.96,6.24,15.96,6.24l-4.8,56.13 M419.8,119.51c-9.19-16.33-18.31-33.36-26.1-48.55-3.79-7.5-9.88-13.32-14.73-12.97-4.36.3-7.5,1.5-6.88,8.88,1.39,18,4.96,36.3,7.18,54.46.79,9.21,13.18,17.35,26.31,14.76,12.88-2.56,19-9.18,14.22-16.57h0ZM404.97,133.68c-9,2.17-18.1-5.08-19.09-13.15-2.39-16-4.89-31.95-7.5-47.85-1.27-8.13.66-8.88,3.99-9.37,3.33-.49,5.49,4.77,8.65,11.34,7.21,15,15.61,31.62,22.5,45,3.61,6.54.28,11.91-8.55,14.04h0z M419.95 111.83 405.39 111.83 404.99 106.55 383.6 106.55 383.6 125.67 397.62 125.67 406.46 125.67 423.37 120.09 419.95 111.83 419.95 111.83 419.95 111.83 M173.43,2.11c-2.61,11.17-5.53,22.27-8.47,33.39l-4.5,16.62-2.29,8.29c-.84,2.76-1.14,5.62-3.51,8.02l-1.75-.42c-.79-3.13.48-5.79,1.2-8.56l2.34-8.26,4.86-16.5c3.36-11.01,6.7-22,10.38-33l1.75.42Z M330.5,119.7s-1.42-18.54-22.81-18.54c-19.69,0-33.31,2.41-37.5-2.4-6.94-7.87-19.36-6.09-19.36-6.09h-74.21v-28.29h-28.36l-11.43-7.5-37.75,7.8,5.79,8.73v19.26H1.5l27.82,27h0l50.17,48.3h325.48s5.79-6.69,11.13-20.77c3.29-8.79,5.75-17.88,7.33-27.13l-92.93-.36Z M276.54,35.11l-1.18-1.38c.56-1.48.85-3.05.85-4.63.05-7.21-5.75-13.09-12.96-13.14-7.21-.05-13.09,5.75-13.14,12.96-.01,1.65.29,3.28.88,4.81l-1.2,1.38,10.23,11.86v54h6.3v-54l10.21-11.86h0Z" />
-		</svg>
-	);
-}
-
-function AnalysisStatIcon({ className }: { className?: string }) {
-	return (
-		<svg
-			viewBox="0 0 1024 1024"
-			className={className ?? "w-5 h-5"}
-			fill="currentColor"
-			stroke="none"
-			aria-hidden="true"
-		>
-			<path
-				d="M878.3 152.9H145.7c-38.6 0-70 31.4-70 70V706c0 38.6 31.4 70 70 70h732.6c38.6 0 70-31.4 70-70V222.9c0-38.6-31.4-70-70-70z m30 531V706c0 16.5-13.5 30-30 30H145.7c-16.5 0-30-13.5-30-30V222.9c0-16.5 13.5-30 30-30h732.6c16.5 0 30 13.5 30 30v461zM678 871.1H346c-11 0-20-9-20-20s9-20 20-20h332c11 0 20 9 20 20s-9 20-20 20z"
-			/>
-			<path d="M127.1 662.7c-2.7 0-5.4-1.1-7.3-3.2-3.7-4.1-3.5-10.4 0.6-14.1l236.5-219.6L463 541.9l258.9-290.7 183.7 196.3c3.8 4 3.6 10.4-0.4 14.1-4 3.8-10.3 3.6-14.1-0.4L722.3 280.8l-259 290.9L355.7 454 133.9 660c-2 1.8-4.4 2.7-6.8 2.7z" />
-			<path d="M208.9 541.9a30.2 30.3 0 1 0 60.4 0 30.2 30.3 0 1 0-60.4 0Z" />
-			<path d="M633.4 329.9a30.2 30.3 0 1 0 60.4 0 30.2 30.3 0 1 0-60.4 0Z" />
-			<path d="M748.7 539.6a16.9 17 0 1 0 33.8 0 16.9 17 0 1 0-33.8 0Z" />
-		</svg>
-	);
-}
-
 function useIsActive(route: string, activePaths?: string[]) {
 	const pathname = usePathname();
 	return useMemo(() => {
@@ -134,15 +100,15 @@ function MegaMenu({
 			) : null}
 
 			{/* Trigger */}
-			<div
+			<Link
 				tabIndex={0}
+				href={route}
 				className={`flex items-center gap-1 px-4 py-2 rounded-t-lg transition-colors ${
 					isHighlighted ? "bg-primary text-primary-content" : "hover:bg-base-300"
 				} select-none`}
+				onClick={handleTabLinkClick}
 			>
-				<Link href={route} className="leading-none select-none" onClick={handleTabLinkClick}>
-					{tabName}
-				</Link>
+				<div className="leading-none select-none">{tabName}</div>
 				<span
 					aria-hidden="true"
 					className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
@@ -161,7 +127,7 @@ function MegaMenu({
 						<path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
 					</svg>
 				</span>
-			</div>
+			</Link>
 
 			{/* Panel */}
 			<div
@@ -247,7 +213,9 @@ function MenuItemWithSubtitle({
 					<span className="mt-0.5 text-base-content/70 group-hover:text-primary transition-colors">{icon}</span>
 				) : null}
 				<span>
-					<div className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors">{title}</div>
+					<div className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors">
+						{title}
+					</div>
 					<div className="text-xs text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
 				</span>
 			</div>
@@ -316,9 +284,7 @@ export function ExploreMegaMenu() {
 			<div className="grid grid-cols-[1fr_280px] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<div className="text-base font-semibold text-base-content">Explore</div>
-					<div className="text-xs text-base-content/60 mt-1">
-						Filter and sort data in each database table
-					</div>
+					<div className="text-xs text-base-content/60 mt-1">Filter and sort data in each database table</div>
 
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
@@ -484,10 +450,8 @@ export function SubmitMegaMenu() {
 					fetch("/api/analysis/pagination?take=1").then((r) => r.json())
 				]);
 
-				const nextProjectCount =
-					typeof projectsRes?.count === "number" ? projectsRes.count.toLocaleString() : "—";
-				const nextAnalysisCount =
-					typeof analysesRes?.count === "number" ? analysesRes.count.toLocaleString() : "—";
+				const nextProjectCount = typeof projectsRes?.count === "number" ? projectsRes.count.toLocaleString() : "—";
+				const nextAnalysisCount = typeof analysesRes?.count === "number" ? analysesRes.count.toLocaleString() : "—";
 
 				if (!cancelled) {
 					setProjectCount(nextProjectCount);
@@ -605,4 +569,3 @@ export function VisualizeMegaMenu() {
 		</MegaMenu>
 	);
 }
-
