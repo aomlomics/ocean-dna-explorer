@@ -13,6 +13,15 @@ const DataJourney = dynamic(() => import("@/app/components/DataJourney"), {
 	)
 });
 
+const ImpactLearnPage = dynamic(() => import("@/app/components/ImpactLearnPage"), {
+	ssr: true,
+	loading: () => (
+		<div className="min-h-[400px] flex items-center justify-center">
+			<div className="animate-pulse text-primary text-xl">Loading Impact...</div>
+		</div>
+	)
+});
+
 const TABS = [
 	{ id: "edna101", label: "eDNA 101" },
 	{ id: "impact", label: "Impact" },
@@ -74,7 +83,7 @@ export default async function LearnPage({ searchParams }: PageProps) {
 			)}
 			{section === "impact" && (
 				<div id="panel-impact">
-					<UnderConstruction message="This page is under construction." />
+					<ImpactLearnPage />
 				</div>
 			)}
 			{section === "discoveries" && (
