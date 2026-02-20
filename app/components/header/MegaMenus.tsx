@@ -532,3 +532,64 @@ export function SubmitMegaMenu() {
 	);
 }
 
+export function VisualizeMegaMenu() {
+	return (
+		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[640px]">
+			<div className="grid grid-cols-[1fr_220px] gap-0">
+				<div className="p-5 border-r border-base-200">
+					<MenuSectionHeader
+						href="/visualize"
+						title="Visualize"
+						subtitle={
+							<>
+								<span className="text-primary font-normal">Start here</span>
+								<span>, or choose a visualization type below</span>
+							</>
+						}
+						titleClassName="text-base-content group-hover:text-primary"
+					/>
+
+					<div className="mt-4 space-y-1">
+						<MenuItemWithSubtitle
+							href="/visualize/metadata"
+							title="Metadata"
+							subtitle="Chart and compare sample and analysis metadata."
+						/>
+						<MenuItemWithSubtitle
+							href="/visualize/taxonomy"
+							title="Taxonomy"
+							subtitle="Explore taxa distributions across projects and analyses."
+						/>
+					</div>
+				</div>
+
+				<MiniFeatureCard
+					title=""
+					description="Switch between metadata and taxonomy charts to compare patterns across the dataset."
+					stats={[{ value: "2", label: "views" }]}
+					media={
+						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
+							<Image
+								src="/images/visualize_mega_menu_light.png"
+								alt="Visualize mega menu preview (light mode)"
+								fill
+								sizes="220px"
+								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
+								priority={false}
+							/>
+							<Image
+								src="/images/visualize_mega_menu_dark.png"
+								alt="Visualize mega menu preview (dark mode)"
+								fill
+								sizes="220px"
+								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
+								priority={false}
+							/>
+						</div>
+					}
+				/>
+			</div>
+		</MegaMenu>
+	);
+}
+

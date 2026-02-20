@@ -3,7 +3,7 @@ import Link from "next/link";
 import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
-import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu } from "./MegaMenus";
+import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu, VisualizeMegaMenu } from "./MegaMenus";
 import MobileMenu from "./MobileMenu";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -48,7 +48,7 @@ export default async function Header() {
 					<TabButton tabName="Home" route="/" />
 					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />
-					<TabButton tabName="Visualize" route="/visualize" />
+					<VisualizeMegaMenu />
 					<SubmitMegaMenu />
 					{/* <TabButton tabName="Contribute" route="/contribute" /> */}
 					<DocsMegaMenu />

@@ -89,9 +89,21 @@ export default function MobileMenu() {
 						</Link>
 					</li>
 					<li className="text-base py-1">
-						<Link href="/visualize" onClick={handleClose}>
-							Visualize
-						</Link>
+						<details>
+							<summary className="text-base">Visualize</summary>
+							<ul className="p-2">
+								<li className="py-1">
+									<Link href="/visualize/metadata" onClick={handleClose}>
+										Metadata
+									</Link>
+								</li>
+								<li className="py-1">
+									<Link href="/visualize/taxonomy" onClick={handleClose}>
+										Taxonomy
+									</Link>
+								</li>
+							</ul>
+						</details>
 					</li>
 					<li className="text-base py-1">
 						<details>
