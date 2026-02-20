@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
-import { unfocus, uncapitalizeTable } from "@/app/helpers/utils";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 // -----------------------------
 // Shared mega-menu primitives
@@ -57,6 +57,16 @@ function useIsActive(route: string, activePaths?: string[]) {
 	}, [activePaths, pathname, route]);
 }
 
+function unfocusWithoutScrollJump() {
+	const el = document.getElementById("unfocusButton");
+	if (!el) return;
+	const currentX = window.scrollX;
+	const currentY = window.scrollY;
+	el.focus({ preventScroll: true });
+	el.blur();
+	window.scrollTo(currentX, currentY);
+}
+
 function MegaMenu({
 	tabName,
 	route,
@@ -73,6 +83,7 @@ function MegaMenu({
 	panelTopClass?: string;
 }) {
 	const isActive = useIsActive(route, activePaths);
+	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const isHighlighted = open || isActive;
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,11 +94,15 @@ function MegaMenu({
 		};
 	}, []);
 
-	const toggleOpen = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-		// Do NOT navigate; just toggle.
-		e.preventDefault();
-		e.stopPropagation();
-		setOpen((v) => !v);
+	useEffect(() => {
+		// Ensure dropdown/backdrop always closes after route transitions.
+		setOpen(false);
+	}, [pathname]);
+
+	const handleTabLinkClick = useCallback(() => {
+		// Close immediately for a clean transition when navigating via the tab label.
+		setOpen(false);
+		unfocusWithoutScrollJump();
 	}, []);
 
 	const handleMouseEnter = useCallback(() => {
@@ -104,7 +119,7 @@ function MegaMenu({
 
 	return (
 		<div
-			onClick={unfocus}
+			onClick={unfocusWithoutScrollJump}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			className={`dropdown group/menu ${open ? "dropdown-open" : ""}`}
@@ -125,15 +140,14 @@ function MegaMenu({
 					isHighlighted ? "bg-primary text-primary-content" : "hover:bg-base-300"
 				} select-none`}
 			>
-				<Link href={route} className="leading-none select-none">
+				<Link href={route} className="leading-none select-none" onClick={handleTabLinkClick}>
 					{tabName}
 				</Link>
-				<button
-					type="button"
-					aria-label={`Toggle ${tabName} menu`}
-					aria-expanded={open}
-					className={`p-1 -mr-1 rounded-md select-none ${isHighlighted ? "text-primary-content" : "text-base-content"}`}
-					onClick={toggleOpen}
+				<span
+					aria-hidden="true"
+					className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
+						isHighlighted ? "text-primary-content" : "text-base-content"
+					}`}
 				>
 					<svg
 						className={`w-3.5 h-3.5 opacity-80 transition-transform duration-200 ${
@@ -146,7 +160,7 @@ function MegaMenu({
 					>
 						<path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
 					</svg>
-				</button>
+				</span>
 			</div>
 
 			{/* Panel */}
@@ -259,8 +273,8 @@ function MiniFeatureCard({
 				{title ? <div className="text-sm font-semibold text-base-content">{title}</div> : null}
 				<div className="text-xs text-base-content/60 mt-2 leading-relaxed">{description}</div>
 			</div>
-			<div className="mt-4">
-				{stats?.length ? (
+			{stats?.length ? (
+				<div className="mt-4">
 					<div className="space-y-1">
 						{stats.map((s) => (
 							<div key={s.label} className="flex items-baseline gap-2">
@@ -269,8 +283,8 @@ function MiniFeatureCard({
 							</div>
 						))}
 					</div>
-				) : null}
-			</div>
+				</div>
+			) : null}
 		</div>
 	);
 }
@@ -566,7 +580,6 @@ export function VisualizeMegaMenu() {
 				<MiniFeatureCard
 					title=""
 					description="Switch between metadata and taxonomy charts to compare patterns across the dataset."
-					stats={[{ value: "2", label: "views" }]}
 					media={
 						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
 							<Image
