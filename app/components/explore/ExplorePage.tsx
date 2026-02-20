@@ -1,12 +1,11 @@
 import { ReactNode } from "react";
-import Pagination from "@/app/components/paginated/Pagination";
-import Table from "@/app/components/paginated/Table";
 import { FilterConfig } from "./filters/filterHelpers";
 import TableFilter from "./filters/TableFilter";
 import { Prisma } from "@/app/generated/prisma/client";
 import TaxaGrid from "../paginated/TaxaGrid";
 import TableMetadata from "@/types/tableMetadata";
 import SearchBar from "../search/SearchBar";
+import ExploreDisplay from "./ExploreDisplay";
 
 //TODO: checkbox to switch between cards and tables on taxonomy and project
 export default function ExplorePage({
@@ -14,11 +13,13 @@ export default function ExplorePage({
 	tableConfig,
 	children,
 	displayMode = "table",
-	tableWhere
+	tableWhere,
+	toggle
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	tableConfig: FilterConfig[];
 	children: ReactNode;
+	toggle?: true;
 } & (
 	| { displayMode?: "table"; tableWhere?: Record<string, any> | undefined }
 	| { displayMode?: "grid"; tableWhere?: undefined }
@@ -50,41 +51,11 @@ export default function ExplorePage({
 				</div>
 			</header>
 
-			<div className="prose max-w-full text-base-content/80">
-				{children}
-				{/* <p className="text-sm mt-4">
-					<strong>How to use this page:</strong> This page offers three primary ways to filter data. You can use the dropdown filters for
-					specific values, the search bars within each column header for text-based searches, or the column visibility dropdown to show and hide
-					columns as needed.
-				</p> */}
-			</div>
+			<div className="prose max-w-full text-base-content/80">{children}</div>
 
 			<SearchBar table={table} />
 			<TableFilter tableConfig={tableConfig} />
-
-			{displayMode === "table" && (
-				<>
-					<div className="hidden lg:block">
-						<div className="rounded-lg border border-base-300 h-[90vh]">
-							<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} />
-						</div>
-					</div>
-					<div className="lg:hidden">
-						<Pagination table={table} />
-					</div>
-				</>
-			)}
-
-			{displayMode === "grid" && (
-				<>
-					<div className="hidden lg:block rounded-lg border border-base-300 lg:mt-6">
-						<TaxaGrid />
-					</div>
-					<div className="lg:hidden">
-						<TaxaGrid />
-					</div>
-				</>
-			)}
+			<ExploreDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
 		</div>
 	);
 }
