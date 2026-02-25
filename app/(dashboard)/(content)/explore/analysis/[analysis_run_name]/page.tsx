@@ -1,4 +1,4 @@
-import TaxaGrid from "@/app/components/paginated/TaxaGrid";
+import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";

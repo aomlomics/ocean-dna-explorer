@@ -2,10 +2,9 @@ import { ReactNode } from "react";
 import { FilterConfig } from "./filters/filterHelpers";
 import TableFilter from "./filters/TableFilter";
 import { Prisma } from "@/app/generated/prisma/client";
-import TaxaGrid from "../paginated/TaxaGrid";
 import TableMetadata from "@/types/tableMetadata";
 import SearchBar from "../search/SearchBar";
-import ExploreDisplay from "./ExploreDisplay";
+import TableDisplay from "../paginated/TableDisplay";
 
 //TODO: checkbox to switch between cards and tables on taxonomy and project
 export default function ExplorePage({
@@ -55,7 +54,7 @@ export default function ExplorePage({
 
 			<SearchBar table={table} />
 			<TableFilter tableConfig={tableConfig} />
-			<ExploreDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
+			<TableDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
 		</div>
 	);
 }

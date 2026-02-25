@@ -12,16 +12,19 @@ import projectUpdateIsPrivateAction from "@/app/actions/project/update/projectUp
 import Link from "next/link";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import { useRouter } from "next/navigation";
+import projectUpdateImageAction from "@/app/actions/project/update/projectUpdateImage";
 
 export default function ProjectEditButton({
 	project_id,
 	isPrivate,
+	imageFileUrl_ODE,
 	projectMetadataFileUrl_ODE,
 	sampleMetadataFileUrl_ODE,
 	libraryMetadataFileUrl_ODE
 }: {
 	project_id: Project["project_id"];
 	isPrivate: Project["isPrivate"];
+	imageFileUrl_ODE: Project["imageFileUrl_ODE"];
 	projectMetadataFileUrl_ODE: Project["projectMetadataFileUrl_ODE"];
 	sampleMetadataFileUrl_ODE: Project["sampleMetadataFileUrl_ODE"];
 	libraryMetadataFileUrl_ODE: Project["libraryMetadataFileUrl_ODE"];
@@ -31,12 +34,14 @@ export default function ProjectEditButton({
 	const [loading, setLoading] = useState(false);
 
 	//file input refs to clear inputs after submission
+	const imageRef = useRef<HTMLInputElement>(null);
 	const projectRef = useRef<HTMLInputElement>(null);
 	const sampleRef = useRef<HTMLInputElement>(null);
 	const libraryRef = useRef<HTMLInputElement>(null);
 
 	//state variables to hold contents of form for disabling submit button
 	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
+	const [imageFile, setImageFile] = useState(undefined as File | undefined);
 	const [projectFile, setProjectFile] = useState(undefined as File | undefined);
 	const [sampleFile, setSampleFile] = useState(undefined as File | undefined);
 	const [libraryFile, setLibraryFile] = useState(undefined as File | undefined);
@@ -120,8 +125,38 @@ export default function ProjectEditButton({
 		setSampleResponse(undefined);
 		setLibraryResponse(undefined);
 
+		const args = { project_id, isPrivate: isPrivateToggle } as {
+			project_id: Project["project_id"];
+			projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
+			sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
+			libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
+			isPrivate?: Project["isPrivate"];
+			imageFileUrl?: Project["imageFileUrl_ODE"];
+		};
+
+		if (imageFile) {
+			args.imageFileUrl = (
+				await upload(`submissions/${imageFile.name}`, imageFile, {
+					access: "public",
+					handleUploadUrl: "/api/file/upload"
+				})
+			).url;
+		}
+
 		if (!projectFile && !sampleFile && !libraryFile) {
-			if (isPrivateToggle !== isPrivate) {
+			if (args.imageFileUrl) {
+				try {
+					setGlobalResponse(await projectUpdateImageAction(project_id, args.imageFileUrl));
+					if (imageRef.current) {
+						imageRef.current.value = "";
+						setImageFile(undefined);
+					}
+				} catch {
+					await fetch(`/api/file/delete?url=${args.imageFileUrl}`, {
+						method: "DELETE"
+					});
+				}
+			} else if (isPrivateToggle !== isPrivate) {
 				setGlobalResponse(await projectUpdateIsPrivateAction(project_id, isPrivateToggle));
 			} else {
 				setGlobalResponse({ statusMessage: "error", error: "Must provide at least one file." });
@@ -133,13 +168,12 @@ export default function ProjectEditButton({
 
 		try {
 			const setters = [] as ((value: SetStateAction<NetworkProgressPacket>) => void)[];
-			const urls = {} as { projectFileUrl?: string; sampleFileUrl?: string; libraryFileUrl?: string };
 
 			if (projectFile) {
 				setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				setters.push(setProjectResponse);
-				urls.projectFileUrl = (
+				args.projectFileUrl = (
 					await upload(`submissions/${projectFile.name}`, projectFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
@@ -149,7 +183,7 @@ export default function ProjectEditButton({
 
 				setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
-				setFileUrls([...fileUrls, urls.projectFileUrl]);
+				setFileUrls([...fileUrls, args.projectFileUrl]);
 			} else {
 				setters.push(setFillerResponse);
 			}
@@ -158,7 +192,7 @@ export default function ProjectEditButton({
 				setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				setters.push(setSampleResponse);
-				urls.sampleFileUrl = (
+				args.sampleFileUrl = (
 					await upload(`submissions/${sampleFile.name}`, sampleFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
@@ -168,7 +202,7 @@ export default function ProjectEditButton({
 
 				setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
-				setFileUrls([...fileUrls, urls.sampleFileUrl]);
+				setFileUrls([...fileUrls, args.sampleFileUrl]);
 			} else {
 				setters.push(setFillerResponse);
 			}
@@ -177,7 +211,7 @@ export default function ProjectEditButton({
 				setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				setters.push(setLibraryResponse);
-				urls.libraryFileUrl = (
+				args.libraryFileUrl = (
 					await upload(`submissions/${libraryFile.name}`, libraryFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
@@ -187,20 +221,13 @@ export default function ProjectEditButton({
 
 				setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
-				setFileUrls([...fileUrls, urls.libraryFileUrl]);
+				setFileUrls([...fileUrls, args.libraryFileUrl]);
 			} else {
 				setters.push(setFillerResponse);
 			}
 
 			//trigger streamed action
-			await doProgressActionManyGlobal(
-				projectEditAction,
-				setters,
-				setGlobalResponse,
-				urls,
-				project_id,
-				isPrivateToggle
-			);
+			await doProgressActionManyGlobal(projectEditAction, setters, setGlobalResponse, args);
 		} catch (err) {
 			const error = err as Error;
 			doError(error.message);
@@ -231,14 +258,45 @@ export default function ProjectEditButton({
 						/>
 					</fieldset>
 
-					<div className="grid grid-cols-2 gap-4 w-full">
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend flex-col items-start gap-0">
-								Project Metadata File:
-								<Link href={projectMetadataFileUrl_ODE} className="link link-primary link-hover">
-									{getSubmissionFileName(projectMetadataFileUrl_ODE)}
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							Cover Image:
+							{imageFileUrl_ODE ? (
+								<Link href={imageFileUrl_ODE} className="link link-primary link-hover">
+									{getSubmissionFileName(imageFileUrl_ODE)}
 								</Link>
-							</legend>
+							) : (
+								<></>
+							)}
+						</legend>
+						<div className="grid grid-cols-2 gap-4">
+							<input
+								type="file"
+								className="file-input file-input-primary"
+								disabled={loading}
+								accept="image/*"
+								onChange={(e) => setImageFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								ref={imageRef}
+							/>
+							<button
+								className="btn btn-error"
+								onClick={async () => setGlobalResponse(await projectUpdateImageAction(project_id, null))}
+								disabled={loading || !imageFileUrl_ODE}
+							>
+								DELETE IMAGE
+							</button>
+						</div>
+					</fieldset>
+
+					<h1 className="text-2xl text-primary border-b border-primary">Metadata Files:</h1>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							Project Metadata File:
+							<Link href={projectMetadataFileUrl_ODE} className="link link-primary link-hover">
+								{getSubmissionFileName(projectMetadataFileUrl_ODE)}
+							</Link>
+						</legend>
+						<div className="grid grid-cols-2 gap-4 items-center">
 							<input
 								type="file"
 								className="file-input file-input-primary"
@@ -247,16 +305,18 @@ export default function ProjectEditButton({
 								onChange={(e) => setProjectFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
 								ref={projectRef}
 							/>
-						</fieldset>
-						<ProgressBar loading={loading && !!projectFile} data={projectResponse} />
+							<ProgressBar loading={loading && !!projectFile} data={projectResponse} />
+						</div>
+					</fieldset>
 
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend flex-col items-start gap-0">
-								Sample Metadata File:
-								<Link href={sampleMetadataFileUrl_ODE} className="link link-primary link-hover">
-									{getSubmissionFileName(sampleMetadataFileUrl_ODE)}
-								</Link>
-							</legend>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							Sample Metadata File:
+							<Link href={sampleMetadataFileUrl_ODE} className="link link-primary link-hover">
+								{getSubmissionFileName(sampleMetadataFileUrl_ODE)}
+							</Link>
+						</legend>
+						<div className="grid grid-cols-2 gap-4 items-center">
 							<input
 								type="file"
 								className="file-input file-input-primary"
@@ -265,16 +325,18 @@ export default function ProjectEditButton({
 								onChange={(e) => setSampleFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
 								ref={sampleRef}
 							/>
-						</fieldset>
-						<ProgressBar loading={loading && !!sampleFile} data={sampleResponse} />
+							<ProgressBar loading={loading && !!sampleFile} data={sampleResponse} />
+						</div>
+					</fieldset>
 
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend flex-col items-start gap-0">
-								Library (Experiment Run) Metadata File:
-								<Link href={libraryMetadataFileUrl_ODE} className="link link-primary link-hover">
-									{getSubmissionFileName(libraryMetadataFileUrl_ODE)}
-								</Link>
-							</legend>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend flex-col items-start gap-0">
+							Library (Experiment Run) Metadata File:
+							<Link href={libraryMetadataFileUrl_ODE} className="link link-primary link-hover">
+								{getSubmissionFileName(libraryMetadataFileUrl_ODE)}
+							</Link>
+						</legend>
+						<div className="grid grid-cols-2 gap-4 items-center">
 							<input
 								type="file"
 								className="file-input file-input-primary"
@@ -283,33 +345,35 @@ export default function ProjectEditButton({
 								onChange={(e) => setLibraryFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
 								ref={libraryRef}
 							/>
-						</fieldset>
-						<ProgressBar loading={loading && !!libraryFile} data={libraryResponse} />
+							<ProgressBar loading={loading && !!libraryFile} data={libraryResponse} />
+						</div>
+					</fieldset>
 
-						<button
-							type="submit"
-							className="btn"
-							disabled={loading || (!projectFile && !sampleFile && !libraryFile && isPrivateToggle === isPrivate)}
-						>
-							Submit
-						</button>
+					<button
+						type="submit"
+						className="btn"
+						disabled={
+							loading || (!projectFile && !sampleFile && !libraryFile && isPrivateToggle === isPrivate && !imageFile)
+						}
+					>
+						Submit
+					</button>
 
-						{loading ? (
+					{loading ? (
+						<div className="flex justify-center">
+							<span className="loading loading-spinner loading-xl"></span>
+						</div>
+					) : (
+						globalResponse?.statusMessage === "error" && (
 							<div className="flex justify-center">
-								<span className="loading loading-spinner loading-xl"></span>
-							</div>
-						) : (
-							globalResponse?.statusMessage === "error" && (
-								<div className="flex justify-center">
-									<div className="tooltip tooltip-error" data-tip={globalResponse.error}>
-										<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
-											✕
-										</span>
-									</div>
+								<div className="tooltip tooltip-error" data-tip={globalResponse.error}>
+									<span className="text-white text-xl w-8 aspect-square rounded-full flex items-center justify-center border-2 border-error bg-error/10">
+										✕
+									</span>
 								</div>
-							)
-						)}
-					</div>
+							</div>
+						)
+					)}
 				</form>
 			</Modal>
 		</>

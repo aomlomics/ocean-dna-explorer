@@ -22,12 +22,12 @@ export default function ProgressBar({ loading, data }: { loading: boolean; data:
 		<div className="flex items-center h-2 w-full">
 			{data ? (
 				<div
-					className={`tooltip w-full ${
+					className={`tooltip before:w-full w-full ${
 						data.statusMessage === "progress"
 							? "tooltip-primary"
 							: data.statusMessage === "success"
-							? "tooltip-success"
-							: data.statusMessage === "error" && "tooltip-error"
+								? "tooltip-success"
+								: data.statusMessage === "error" && "tooltip-error"
 					}`}
 					data-tip={message}
 				>
@@ -36,19 +36,17 @@ export default function ProgressBar({ loading, data }: { loading: boolean; data:
 							data.statusMessage === "progress"
 								? "progress-primary"
 								: data.statusMessage === "success"
-								? "progress-success"
-								: data.statusMessage === "error" && "progress-error"
+									? "progress-success"
+									: data.statusMessage === "error" && "progress-error"
 						}`}
 						value={value}
 						max="100"
 					></progress>
 				</div>
+			) : loading ? (
+				<progress className="progress progress-primary" value={0} max="100"></progress>
 			) : (
-				loading ? (
-					<progress className="progress progress-primary" value={0} max="100"></progress>
-				) : (
-					<div className="w-full h-4"></div>
-				)
+				<div className="w-full h-4"></div>
 			)}
 		</div>
 	);

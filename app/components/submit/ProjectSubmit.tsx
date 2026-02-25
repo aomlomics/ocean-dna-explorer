@@ -102,6 +102,10 @@ export default function ProjectSubmit() {
 		const projectFile = event.currentTarget.project.files[0] as File;
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
+		const imageFile = event.currentTarget.image.files[0] as File | undefined;
+		if (imageFile && !imageFile.type.startsWith("image")) {
+			doError("Image file must have type image/*");
+		}
 
 		try {
 			//upload files
@@ -141,6 +145,17 @@ export default function ProjectSubmit() {
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl]);
 
+			let imageFileUrl;
+			if (imageFile) {
+				imageFileUrl = (
+					await upload(`submissions/${imageFile.name}`, imageFile, {
+						access: "public",
+						handleUploadUrl: "/api/file/upload"
+					})
+				).url;
+				setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl, imageFileUrl]);
+			}
+
 			//trigger streamed action
 			doProgressActionManyGlobal(
 				projectSubmitAction,
@@ -150,7 +165,8 @@ export default function ProjectSubmit() {
 				sampleFileUrl,
 				libraryFileUrl,
 				userIds,
-				isPrivate
+				isPrivate,
+				imageFileUrl
 			);
 		} catch (err) {
 			const error = err as Error;
@@ -164,22 +180,40 @@ export default function ProjectSubmit() {
 				{/* Left column: give more space to users */}
 				<div className="col-span-6 space-y-6">
 					<SubmitFormSection
+						title="Add a cover image"
+						info="This image will be displayed on the page for this project."
+					>
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Cover image:</legend>
+							<input
+								type="file"
+								className="file-input file-input-primary"
+								name="image"
+								disabled={loading}
+								accept="image/*"
+							/>
+							<label className="label">Optional</label>
+						</fieldset>
+					</SubmitFormSection>
+
+					<SubmitFormSection
 						title="Make submission private"
 						info="Only users added to this Project will be able to see private submissions."
 					>
 						<fieldset className="fieldset">
 							<label className="fieldset-label flex gap-2">
-								<input name="isPrivate" type="checkbox" className="checkbox" />
+								<input name="isPrivate" type="checkbox" className="checkbox" disabled={loading} />
 								<p>Private submission</p>
 							</label>
 						</fieldset>
 					</SubmitFormSection>
+
 					<SubmitFormSection
 						title="Add users to Project"
 						info="Users added to this Project are able to submit new Analyses for it, edit it, and delete it."
 					>
 						<div className="flex flex-col w-3/4">
-							<UserAdder userIds={userIds} setUserIds={setUserIds} />
+							<UserAdder userIds={userIds} setUserIds={setUserIds} disabled={loading} />
 						</div>
 					</SubmitFormSection>
 				</div>

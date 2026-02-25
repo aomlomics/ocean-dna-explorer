@@ -1,6 +1,6 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Map from "@/app/components/map/Map";
-import SearchResults from "@/app/components/search/SearchResults";
+import TableDisplay from "@/app/components/paginated/TableDisplay";
 import SearchUI from "@/app/components/search/SearchUI";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
@@ -82,7 +82,25 @@ export default async function Search({
 			</div>
 
 			<div className="mt-6" id="search-results">
-				<SearchResults />
+				<h2 className="text-xl mb-2">
+					Showing all{" "}
+					{table && TableMetadata[model] ? (
+						<span className="text-primary font-bold">{TableMetadata[model].plural}</span>
+					) : (
+						"results"
+					)}{" "}
+					that match your search
+				</h2>
+
+				<div className="w-full">
+					<TableDisplay
+						key={model}
+						table={model}
+						displayMode={model === "taxonomy" ? "grid" : "table"}
+						ignoreParams={["table"]}
+						toggle={model === "taxonomy" || undefined}
+					/>
+				</div>
 			</div>
 		</>
 	);
