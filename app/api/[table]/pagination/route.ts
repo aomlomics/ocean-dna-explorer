@@ -1,11 +1,18 @@
 import { prisma } from "@/app/helpers/prisma";
-import { getLocationsInsideShapes, getShapesFromUrl, parseNestedJson, uncapitalizeTable } from "@/app/helpers/utils";
+import {
+	deepMerge,
+	getLocationsInsideShapes,
+	getShapesFromUrl,
+	parseNestedJson,
+	uncapitalizeTable
+} from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { Location } from "@/types/globals";
+import { getRelationPath } from "@/app/helpers/schema";
 
 export async function GET(
 	request: Request,
@@ -168,6 +175,68 @@ export async function GET(
 				}
 			}
 
+			//get deep relation data
+			let deepRelsArray = undefined as Uncapitalize<Prisma.ModelName>[] | undefined;
+			const deepRelations = searchParams.get("deepRelations");
+			if (deepRelations) {
+				//get relation tables
+				if (deepRelations === "true") {
+					//all relations
+					deepRelsArray = TableNames.filter(
+						(name) =>
+							name !== table &&
+							TableMetadata[model].relations.every(
+								(rel) => uncapitalizeTable(rel.table) !== name && getRelationPath(model, name)
+							)
+					);
+				} else {
+					//comma separated list of relations
+					deepRelsArray = deepRelations.split(",").map((rel) => {
+						const name = TableNames.find((name) => name.toLowerCase() === rel.toLowerCase());
+
+						if (!name) {
+							throw new Error(`Deep relation named "${rel}" does not exist.`);
+						}
+
+						return name;
+					});
+				}
+
+				const alreadyDone = [] as typeof deepRelsArray;
+				for (const dr of deepRelsArray) {
+					const path = getRelationPath(model, dr);
+
+					if (!path) {
+						throw new Error(`No path exists from "${model}" to "${dr}".`);
+					}
+
+					if (!path.some((p) => p.type.endsWith("many"))) {
+						alreadyDone.push(dr);
+
+						if (!query.include) {
+							query.include = {};
+						}
+
+						let include =
+							typeof TableMetadata[dr].titleField === "string"
+								? { [TableMetadata[dr].titleField]: true }
+								: TableMetadata[dr].titleField.reduce((acc, f) => ({ ...acc, [f]: true }), {});
+
+						for (const rel of path.toReversed()) {
+							include = { [rel.field]: { select: include } };
+						}
+
+						//maintain previous includes
+						deepMerge(query.include, include);
+					}
+				}
+
+				//remove deep relations that are already included in the query
+				for (const ad of alreadyDone) {
+					deepRelsArray.splice(deepRelsArray.indexOf(ad), 1);
+				}
+			}
+
 			let take = searchParams.get("take");
 			if (!take) {
 				throw new Error("Take is required");
@@ -214,6 +283,58 @@ export async function GET(
 				//manually paginate
 				const start = parsedPage ? (parsedPage - 1) * parsedTake : 0;
 				result = result.slice(start, start + parsedTake);
+			}
+
+			if (deepRelsArray?.length) {
+				//do queries
+				const deepTransactionResult = await prisma.$transaction(
+					//for each row
+					result.reduce(
+						(acc: any[], res: Record<string, any>) => [
+							...acc,
+							//for each deep relation
+							...deepRelsArray.map((dr) => {
+								const path = getRelationPath(dr, model);
+
+								if (path) {
+									let where = { id: res.id } as Record<string, any>;
+
+									//assemble full path
+									for (const rel of path.toReversed()) {
+										if (rel.type.endsWith("many")) {
+											//if relation is a -to-many, add a some to the query
+											where = { [rel.field]: { some: where } };
+										} else {
+											where = { [rel.field]: where };
+										}
+									}
+
+									//only deep relations that are -to-many need to be gathered here
+									//@ts-ignore
+									return prisma[dr].count({
+										where
+									});
+								} else {
+									throw new Error(`Deep relation named "${dr}" has no path to target "${model}".`);
+								}
+							})
+						],
+						[]
+					)
+				);
+
+				//assemble rows with extra data
+				for (let i = 0; i < result.length; i++) {
+					for (const rel of deepRelsArray) {
+						const res = deepTransactionResult.shift();
+
+						if (typeof res === "number") {
+							result[i]._count[TableMetadata[rel].plural] = res;
+						} else {
+							result[i] = { ...result[i], ...res };
+						}
+					}
+				}
 			}
 
 			return NextResponse.json({ statusMessage: "success", result, count });

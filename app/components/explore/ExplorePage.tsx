@@ -7,7 +7,6 @@ import TableMetadata from "@/types/tableMetadata";
 import SearchBar from "../search/SearchBar";
 import ExploreDisplay from "./ExploreDisplay";
 
-//TODO: checkbox to switch between cards and tables on taxonomy and project
 export default function ExplorePage({
 	table,
 	tableConfig,
