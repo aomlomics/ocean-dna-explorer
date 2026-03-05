@@ -42,7 +42,6 @@ type DataPoint = {
 
 //TODO: style dates in legend properly (options.plugins.legend.labels.generateLabels)
 //TODO: add checklist for legendField
-//TODO: calculate minimum value (dates currently start at 0, IE jan 1 1970)
 //TODO: store zoom as state, don't reset zoom when changing legendField
 export default function SampleScatterPlot({
 	samples,

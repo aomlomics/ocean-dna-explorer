@@ -15,36 +15,63 @@ export default function Pagination({
 	table,
 	where,
 	relCounts,
-	take = 10
+	take = 10,
+	ignoreParams
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	where?: Record<string, string>;
 	relCounts?: string[];
 	take?: number;
+	ignoreParams?: string[];
 }) {
 	const searchParams = useSearchParams();
 	const [page, setPage] = useState(1);
 
-	let query = new URLSearchParams({
-		take: take.toString(),
-		page: page.toString()
-	});
+	function getQuery(dir?: 1 | -1) {
+		let query = new URLSearchParams({
+			take: (25).toString(),
+			page: (dir ? page + dir : page).toString()
+		});
 
-	let whereQuery = {} as Record<string, string>;
-	if (where) {
-		whereQuery = { ...where };
-	}
-	if (searchParams) {
-		whereQuery = { ...whereQuery, ...Object.fromEntries(searchParams) };
-	}
-	query.set("where", JSON.stringify(whereQuery));
+		let whereQuery = {} as Record<string, string>;
+		if (where) {
+			whereQuery = { ...where };
+		}
 
-	if (relCounts) {
-		query.set("relCounts", relCounts.toString());
+		if (searchParams && searchParams.size) {
+			const tempParms = new URLSearchParams(searchParams);
+
+			//specifically pull out shapes from searchParams
+			const polygons = tempParms.getAll("polygon");
+			if (polygons.length) {
+				tempParms.delete("polygon");
+				for (const p of polygons) {
+					query.set("polygon", p);
+				}
+			}
+			const circles = tempParms.getAll("circle");
+			if (circles.length) {
+				tempParms.delete("circle");
+				for (const c of circles) {
+					query.set("circle", c);
+				}
+			}
+
+			whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
+			if (ignoreParams) {
+				for (const param of ignoreParams) {
+					delete whereQuery[param];
+				}
+			}
+		}
+
+		query.set("where", JSON.stringify(whereQuery));
+
+		return query;
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${query.toString()}`,
+		`/api/${table}/pagination?${getQuery().toString()}`,
 		fetcher,
 		{
 			keepPreviousData: true
@@ -54,21 +81,6 @@ export default function Pagination({
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
-	function handlePageHover(dir = 1) {
-		let query = new URLSearchParams({
-			take: take.toString(),
-			page: page.toString()
-		});
-		if (where) {
-			query.set("where", JSON.stringify(where));
-		}
-		if (relCounts) {
-			query.set("relCounts", relCounts.toString());
-		}
-
-		preload(`/api/${table}/pagination?${query.toString()}`, fetcher);
-	}
-
 	return (
 		<div className="space-y-6 p-6">
 			{/* Pagination Controls */}
@@ -77,7 +89,9 @@ export default function Pagination({
 				take={take}
 				count={data.count}
 				setPage={setPage}
-				handlePageHover={handlePageHover}
+				handlePageHover={(dir = 1 as 1 | -1) =>
+					preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher)
+				}
 			/>
 
 			{/* Project Cards */}
@@ -152,7 +166,9 @@ export default function Pagination({
 				take={take}
 				count={data.count}
 				setPage={setPage}
-				handlePageHover={handlePageHover}
+				handlePageHover={(dir = 1 as 1 | -1) =>
+					preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher)
+				}
 			/>
 		</div>
 	);

@@ -487,15 +487,21 @@ async function doEdit(
 	}
 }
 
-export default async function projectEditAction(
-	{
-		projectFileUrl,
-		sampleFileUrl,
-		libraryFileUrl
-	}: { projectFileUrl?: string; sampleFileUrl?: string; libraryFileUrl?: string },
-	project_id: Project["project_id"],
-	isPrivate?: boolean
-) {
+export default async function projectEditAction({
+	project_id,
+	projectFileUrl,
+	sampleFileUrl,
+	libraryFileUrl,
+	isPrivate,
+	imageFileUrl
+}: {
+	project_id: Project["project_id"];
+	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
+	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
+	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
+	isPrivate?: Project["isPrivate"];
+	imageFileUrl?: Project["imageFileUrl_ODE"];
+}) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
 	const sampleStream = createProgressStream();

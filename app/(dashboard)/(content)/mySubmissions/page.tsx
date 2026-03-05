@@ -29,6 +29,7 @@ export default async function MySubmissions() {
 				project_id: true,
 				userIds: true,
 				isPrivate: true,
+				imageFileUrl_ODE: true,
 				projectMetadataFileUrl_ODE: true,
 				sampleMetadataFileUrl_ODE: true,
 				libraryMetadataFileUrl_ODE: true,
@@ -148,6 +149,7 @@ export default async function MySubmissions() {
 													<ProjectEditButton
 														project_id={proj.project_id}
 														isPrivate={proj.isPrivate}
+														imageFileUrl_ODE={proj.imageFileUrl_ODE}
 														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
 														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
 														libraryMetadataFileUrl_ODE={proj.libraryMetadataFileUrl_ODE}

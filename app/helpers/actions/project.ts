@@ -23,6 +23,7 @@ async function parseProjectFile({
 	sampleUrl,
 	libraryUrl,
 	isPrivate,
+	imageFileUrl,
 	oldChecksum
 }: {
 	channel: Channel;
@@ -30,6 +31,7 @@ async function parseProjectFile({
 	sampleUrl: string;
 	libraryUrl: string;
 	isPrivate?: boolean;
+	imageFileUrl?: string;
 	oldChecksum?: string;
 }) {
 	try {
@@ -151,6 +153,7 @@ async function parseProjectFile({
 				editHistory: "JsonNull",
 				projectMetadataFileUrl_ODE: channel.url,
 				projectMetadataFileChecksum_ODE: projectMd5,
+				imageFileUrl_ODE: imageFileUrl,
 				sampleMetadataFileUrl_ODE: sampleUrl,
 				libraryMetadataFileUrl_ODE: libraryUrl,
 				//placeholders, must override later
@@ -495,6 +498,7 @@ export async function parseProjectFiles({
 	libraryChannel,
 	userIds,
 	isPrivate,
+	imageFileUrl,
 	oldChecksums
 }: {
 	projectChannel: Channel;
@@ -502,6 +506,7 @@ export async function parseProjectFiles({
 	libraryChannel: Channel;
 	userIds: string[];
 	isPrivate?: boolean;
+	imageFileUrl?: string;
 	oldChecksums?: { projectMd5?: string; sampleMd5?: string; libraryMd5?: string };
 }) {
 	const projectParseResult = await parseProjectFile({
@@ -510,6 +515,7 @@ export async function parseProjectFiles({
 		sampleUrl: sampleChannel.url,
 		libraryUrl: libraryChannel.url,
 		isPrivate,
+		imageFileUrl,
 		oldChecksum: oldChecksums?.projectMd5
 	});
 	if (!projectParseResult) {
