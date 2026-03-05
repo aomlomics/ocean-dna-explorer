@@ -11,6 +11,7 @@ import { Project } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
+import Image from "next/image";
 
 export default async function Project_id({ params }: { params: Promise<{ project_id: Project["project_id"] }> }) {
 	let { project_id } = await params;
@@ -153,9 +154,49 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				</div>
 			</header>
 
+			<div className="flex flex-col h-full">
+				<h2 className="text-2xl font-semibold text-base-content/90 pb-2">Project at a Glance</h2>
+
+				{/* Stat cards */}
+				<div className="grid grid-cols-4 gap-4">
+					<StatCard
+						title="Samples"
+						value={project._count.Samples}
+						icon={<LocationIcon />}
+						link={`/search?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
+						tooltip="View as Search"
+						layout="horizontal"
+					/>
+					<StatCard
+						title="Analyses"
+						value={project._count.Analyses}
+						icon={<AnalysisIcon />}
+						link={`/search?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
+						tooltip="View as Search"
+						layout="horizontal"
+					/>
+					<StatCard
+						title="Taxonomies"
+						value={sortedTaxa.length}
+						icon={<FishIcon />}
+						link={`/search?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
+						tooltip="View as Search"
+						layout="horizontal"
+					/>
+					<StatCard
+						title="Occurrences"
+						value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
+						icon={<EyeIcon />}
+						link={`/search?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
+						tooltip="View as Search"
+						layout="horizontal"
+					/>
+				</div>
+			</div>
+
 			{/* Map + stats + below-map content grouped so spacing between map and metadata is consistent */}
 			<section className="mt-2 space-y-8">
-				{/* Top layout: Map and Project at a Glance */}
+				{/* Top layout: Map and Cover image */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 					{/* Left: Map */}
 					<div className="lg:col-span-2 h-full">
@@ -171,43 +212,19 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						/>
 					</div>
 
-					{/* Right: Project at a Glance */}
-					<div className="flex flex-col h-full">
-						<h2 className="text-2xl font-semibold text-base-content/90">Project at a Glance</h2>
-
-						{/* Stat cards */}
-						<div className="mt-4 mb-4">
-							<div className="grid grid-cols-2 gap-4">
-								<StatCard
-									title="Samples"
-									value={project._count.Samples}
-									icon={<LocationIcon />}
-									link={`/search?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
-									tooltip="View as Search"
-								/>
-								<StatCard
-									title="Analyses"
-									value={project._count.Analyses}
-									icon={<AnalysisIcon />}
-									link={`/search?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
-									tooltip="View as Search"
-								/>
-								<StatCard
-									title="Taxonomies"
-									value={sortedTaxa.length}
-									icon={<FishIcon />}
-									link={`/search?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
-									tooltip="View as Search"
-								/>
-								<StatCard
-									title="Occurrences"
-									value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
-									icon={<EyeIcon />}
-									link={`/search?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
-									tooltip="View as Search"
-								/>
-							</div>
-						</div>
+					{/* Right: Cover image */}
+					<div className="grow relative flex items-center justify-center aspect-square">
+						{project.imageFileUrl_ODE ? (
+							<Image
+								src={project.imageFileUrl_ODE}
+								alt={`Cover image for the ${project.project_id} project.`}
+								fill
+								objectFit="cover"
+								className="rounded-md"
+							/>
+						) : (
+							<></>
+						)}
 					</div>
 				</div>
 
@@ -218,7 +235,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						<div className="bg-base-200 rounded-xl p-6 flex flex-col">
 							<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
 							<div className="max-h-124 overflow-y-auto">
-								<DataDisplay table="project" data={justProject} omit={["project_id"]} />
+								<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
 							</div>
 						</div>
 					</div>
