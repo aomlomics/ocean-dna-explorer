@@ -1,4 +1,3 @@
-import TaxaGrid from "@/app/components/paginated/TaxaGrid";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
@@ -12,6 +11,8 @@ import { Suspense } from "react";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import TaxaGridItem from "@/app/components/paginated/grid/TaxaGridItem";
+import Grid from "@/app/components/paginated/grid/Grid";
 
 export default async function Analysis_run_name({
 	params
@@ -224,7 +225,9 @@ export default async function Analysis_run_name({
 
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Taxa" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box">
-						<TaxaGrid
+						<Grid
+							Child={TaxaGridItem}
+							table={"taxonomy"}
 							where={{
 								Assignments: {
 									some: {

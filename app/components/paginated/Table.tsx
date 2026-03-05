@@ -165,59 +165,62 @@ export default function Table({
 	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
 	const [pendingFilters, setPendingFilters] = useState(0);
 
-	//api call
-	let query = new URLSearchParams({
-		take: take.toString(),
-		page: page.toString(),
-		orderBy: orderBy.field + "," + orderBy.order
-	});
+	function getQuery(dir?: 1 | -1) {
+		let query = new URLSearchParams({
+			take: take.toString(),
+			page: (dir ? page + dir : page).toString(),
+			orderBy: orderBy.field + "," + orderBy.order
+		});
 
-	let whereQuery = {} as Record<string, string | number>;
-	if (where) {
-		whereQuery = { ...where };
-	}
-	if (Object.keys(whereFilter).length) {
-		whereQuery = { ...whereQuery, ...whereFilter };
-	}
-	if (searchParams && searchParams.size) {
-		const tempParms = new URLSearchParams(searchParams);
-		//specifically pull out shapes from searchParams
-		const polygons = tempParms.getAll("polygon");
-		if (polygons.length) {
-			tempParms.delete("polygon");
-			for (const p of polygons) {
-				query.set("polygon", p);
+		let whereQuery = {} as Record<string, string | number>;
+		if (where) {
+			whereQuery = { ...where };
+		}
+		if (Object.keys(whereFilter).length) {
+			whereQuery = { ...whereQuery, ...whereFilter };
+		}
+		if (searchParams && searchParams.size) {
+			const tempParms = new URLSearchParams(searchParams);
+			//specifically pull out shapes from searchParams
+			const polygons = tempParms.getAll("polygon");
+			if (polygons.length) {
+				tempParms.delete("polygon");
+				for (const p of polygons) {
+					query.set("polygon", p);
+				}
+			}
+			const circles = tempParms.getAll("circle");
+			if (circles.length) {
+				tempParms.delete("circle");
+				for (const c of circles) {
+					query.set("circle", c);
+				}
+			}
+
+			//get rest of queries
+			whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
+			if (ignoreParams) {
+				for (const param of ignoreParams) {
+					delete whereQuery[param];
+				}
 			}
 		}
-		const circles = tempParms.getAll("circle");
-		if (circles.length) {
-			tempParms.delete("circle");
-			for (const c of circles) {
-				query.set("circle", c);
+
+		if (Object.keys(whereQuery).length) {
+			query.set("where", JSON.stringify(whereQuery));
+		}
+
+		if (manyRelations.length) {
+			if (manyRelations.includes("Tags")) {
+				query.set("relCounts", manyRelations.filter((r) => r !== "Tags").join(","));
+				query.set("relations", "Tags");
+				query.set("relationsAllFields", "true");
+			} else {
+				query.set("relCounts", manyRelations.join(","));
 			}
 		}
 
-		//get rest of queries
-		whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
-		if (ignoreParams) {
-			for (const param of ignoreParams) {
-				delete whereQuery[param];
-			}
-		}
-	}
-
-	if (Object.keys(whereQuery).length) {
-		query.set("where", JSON.stringify(whereQuery));
-	}
-
-	if (manyRelations.length) {
-		if (manyRelations.includes("Tags")) {
-			query.set("relCounts", manyRelations.filter((r) => r !== "Tags").join(","));
-			query.set("relations", "Tags");
-			query.set("relationsAllFields", "true");
-		} else {
-			query.set("relCounts", manyRelations.join(","));
-		}
+		return query;
 	}
 
 	if (deepRelations.length !== Object.keys(deepRelationsFilter).length) {
@@ -240,7 +243,7 @@ export default function Table({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${query.toString()}`,
+		`/api/${table}/pagination?${getQuery().toString()}`,
 		fetcher
 	);
 
@@ -314,22 +317,6 @@ export default function Table({
 	if (isLoading) return <LoadingTable take={take} page={page} />;
 	if (error) return <div>failed to load: {error}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
-
-	function handlePageHover(dir = 1) {
-		let query = new URLSearchParams({
-			take: take.toString(),
-			page: (page + dir).toString()
-		});
-		if (where) {
-			if (Object.keys(whereFilter).length) {
-				query.set("where", JSON.stringify({ ...where, ...whereFilter }));
-			} else {
-				query.set("where", JSON.stringify(where));
-			}
-		}
-
-		preload(`/api/${table}/pagination?${query.toString()}`, fetcher);
-	}
 
 	//filters in the column header
 	function applyFilters(e: FormEvent<HTMLFormElement>) {
@@ -428,7 +415,9 @@ export default function Table({
 						take={take}
 						count={data.count}
 						setPage={setPage}
-						handlePageHover={handlePageHover}
+						handlePageHover={(dir = 1 as 1 | -1) =>
+							preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher)
+						}
 					/>
 					{/* Column Selection Button */}
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
@@ -1122,7 +1111,9 @@ export default function Table({
 						take={take}
 						count={data.count}
 						setPage={setPage}
-						handlePageHover={handlePageHover}
+						handlePageHover={(dir = 1 as 1 | -1) =>
+							preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher)
+						}
 					/>
 				</div>
 			</form>

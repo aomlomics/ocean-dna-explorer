@@ -1,20 +1,15 @@
 import { useEffect, useState } from "react";
 
+function getColor() {
+	return getComputedStyle(document.documentElement).getPropertyValue("color") || getComputedStyle(document.body).color;
+}
+
 export default function useDaisyTheme() {
-	const [textColor, setTextColor] = useState("currentColor");
+	const [textColor, setTextColor] = useState(getColor());
 
 	useEffect(() => {
-		// Get the actual computed color value
-		function updateColor() {
-			setTextColor(
-				getComputedStyle(document.documentElement).getPropertyValue("color") || getComputedStyle(document.body).color
-			);
-		}
-
-		updateColor();
-
 		// Listen for theme changes
-		const observer = new MutationObserver(updateColor);
+		const observer = new MutationObserver(() => setTextColor(getColor()));
 		observer.observe(document.documentElement, {
 			attributes: true,
 			attributeFilter: ["data-theme"]

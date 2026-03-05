@@ -22,6 +22,7 @@ model Project {
     sampleMetadataFileChecksum_ODE  String
     libraryMetadataFileUrl_ODE      String
     libraryMetadataFileChecksum_ODE String
+    imageFileUrl_ODE                String?
 
     // Data
     // Project

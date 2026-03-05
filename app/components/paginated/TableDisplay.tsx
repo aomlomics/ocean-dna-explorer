@@ -4,18 +4,22 @@ import { Prisma } from "@/app/generated/prisma/client";
 import Table from "../paginated/Table";
 import Pagination from "../paginated/Pagination";
 import { useEffect, useState } from "react";
-import TaxaGrid from "../paginated/TaxaGrid";
+import Grid from "./grid/Grid";
+import TaxaGridItem from "./grid/TaxaGridItem";
+import ProjectGridItem from "./grid/ProjectGridItem";
 
-export default function ExploreDisplay({
+export default function TableDisplay({
 	table,
 	tableWhere,
-	displayMode,
-	toggle
+	displayMode = "table",
+	toggle,
+	ignoreParams
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	tableWhere?: Record<string, any> | undefined;
-	displayMode: "table" | "grid";
+	displayMode?: "table" | "grid";
 	toggle?: true;
+	ignoreParams?: string[];
 }) {
 	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
 	const [mode, setMode] = useState(displayMode);
@@ -43,7 +47,8 @@ export default function ExploreDisplay({
 						<input
 							type="checkbox"
 							className="toggle"
-							onChange={(e) => (e.target.checked ? setMode("table") : setMode("grid"))}
+							defaultChecked={mode === "grid"}
+							onChange={(e) => (e.target.checked ? setMode("grid") : setMode("table"))}
 						/>
 						{mode}
 					</label>
@@ -52,21 +57,21 @@ export default function ExploreDisplay({
 				<></>
 			)}
 
-			{mode === "table" ? (
-				size === "lg" ? (
-					<div className="rounded-lg border border-base-300 h-[90vh]">
-						<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} />
-					</div>
+			<div className="rounded-lg border border-base-300 h-[90vh]">
+				{mode === "table" ? (
+					size === "lg" ? (
+						<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} ignoreParams={ignoreParams} />
+					) : (
+						<Pagination table={table} ignoreParams={ignoreParams} />
+					)
+				) : table === "project" ? (
+					<Grid Child={ProjectGridItem} table={table} ignoreParams={ignoreParams} />
+				) : table === "taxonomy" ? (
+					<Grid Child={TaxaGridItem} table={table} ignoreParams={ignoreParams} />
 				) : (
-					<Pagination table={table} />
-				)
-			) : table === "taxonomy" ? (
-				<div className="rounded-lg border border-base-300">
-					<TaxaGrid />
-				</div>
-			) : (
-				<>Invalid</>
-			)}
+					<>Invalid</>
+				)}
+			</div>
 		</div>
 	);
 }
