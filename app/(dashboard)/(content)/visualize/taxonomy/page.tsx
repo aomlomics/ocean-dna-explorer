@@ -132,7 +132,7 @@ export default async function VisualizeTaxonomy({
 			const key = f as keyof Sample;
 
 			if (!fieldsWithValues.has(f) && samp[key] != null) {
-				const type = getZodType(SampleSchema.shape[key]).type;
+				const type = getZodType("sample", key).type;
 
 				if (type !== "boolean") {
 					if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {

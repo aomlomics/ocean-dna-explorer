@@ -1,6 +1,7 @@
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
+import { getTableName } from "@/app/helpers/schema";
 
 export async function GET(
 	request: Request,
@@ -8,13 +9,10 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
-	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase());
-	if (model) {
-		return NextResponse.json({
-			statusMessage: "success",
-			result: TableMetadata[model].relations
-		});
-	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
-	}
+	const model = getTableName(table);
+
+	return NextResponse.json({
+		statusMessage: "success",
+		result: TableMetadata[model].relations
+	});
 }

@@ -16,7 +16,15 @@ export async function GET(
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams, { sampleWhere: true });
+		const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
+			features: {
+				filters: true,
+				advanced: true,
+				search: true,
+				shapes: true
+			},
+			sampleWhere: true
+		});
 
 		//replace the where with samp_names that match the query and are inside the shapes
 		if (shapes && sampleWhere) {
@@ -35,7 +43,7 @@ export async function GET(
 		}
 
 		//@ts-ignore
-		let result = await prisma[model].findMany(query);
+		let result = await prisma[model].count(query);
 
 		if (result) {
 			//don't do this if already done

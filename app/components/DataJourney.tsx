@@ -7,20 +7,15 @@ import dynamic from "next/dynamic";
 // Dynamic imports to avoid SSR issues
 const OceanGlobe = dynamic(() => import("@/app/components/OceanGlobe"), {
 	ssr: false,
-	loading: () => (
-		<div className="aspect-square w-full max-w-xs mx-auto bg-base-200/50 rounded-full animate-pulse" />
-	)
+	loading: () => <div className="aspect-square w-full max-w-xs mx-auto bg-base-200/50 rounded-full animate-pulse" />
 });
 
 import TaxonomyLaptop from "@/app/components/TaxonomyLaptop";
 import AnalysisLaptop from "@/app/components/AnalysisLaptop";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 
 // Tables that appear in the data journey (have descriptions in TableMetadata)
-type DataJourneyTableKey = keyof Pick<
-	typeof TableMetadata,
-	"project" | "sample" | "assay" | "assayPrep" | "library" | "analysis" | "feature" | "taxonomy" | "assignment" | "occurrence"
->;
+type DataJourneyTableKey = (typeof DataTableNames)[0];
 
 // Database table blurb with link to explore page. Uses TableMetadata description when table is set; children = supplemental text.
 function TableBlurb({
@@ -59,14 +54,19 @@ function TableBlurb({
 					</>
 				) : null}
 			</p>
-			<Link 
-				href={href} 
+			<Link
+				href={href}
 				target="_blank"
 				className="inline-flex items-center gap-1.5 text-sm font-normal text-primary hover:underline transition-colors"
 			>
 				Show me {linkPlural}
 				<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						strokeWidth={2}
+						d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+					/>
 				</svg>
 			</Link>
 		</div>
@@ -86,9 +86,7 @@ function ProcessBlurb({
 	return (
 		<div className={`rounded-2xl p-4 sm:p-5 ${className}`}>
 			<h3 className="text-xl sm:text-2xl font-semibold text-base-content mb-2">{title}</h3>
-			<p className="text-sm sm:text-base text-base-content/80 leading-relaxed">
-				{children}
-			</p>
+			<p className="text-sm sm:text-base text-base-content/80 leading-relaxed">{children}</p>
 		</div>
 	);
 }
@@ -113,15 +111,10 @@ function TintedSection({ children }: { children: React.ReactNode }) {
 				preserveAspectRatio="none"
 				aria-hidden="true"
 			>
-				<path
-					fill="currentColor"
-					d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
-				/>
+				<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
 			</svg>
 
-			<div className="pt-10 sm:pt-12 pb-10 sm:pb-12">
-				{children}
-			</div>
+			<div className="pt-10 sm:pt-12 pb-10 sm:pb-12">{children}</div>
 
 			{/* Wave at bottom */}
 			<svg
@@ -130,10 +123,7 @@ function TintedSection({ children }: { children: React.ReactNode }) {
 				preserveAspectRatio="none"
 				aria-hidden="true"
 			>
-				<path
-					fill="currentColor"
-					d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
-				/>
+				<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
 			</svg>
 		</section>
 	);
@@ -153,9 +143,9 @@ export default function DataJourney() {
 							An Invisible Signature of Life
 						</h2>
 						<p className="text-base sm:text-lg text-base-content/80 leading-relaxed">
-							Every organism, whether it be a microbe or a whale, leaves behind traces of genetic material in its environment. 
-							We can detect this environmental DNA (eDNA) by taking a water sample. A single bottle of seawater 
-							contains the genetic fingerprints of an entire community.
+							Every organism, whether it be a microbe or a whale, leaves behind traces of genetic material in its
+							environment. We can detect this environmental DNA (eDNA) by taking a water sample. A single bottle of
+							seawater contains the genetic fingerprints of an entire community.
 						</p>
 					</div>
 
@@ -214,11 +204,15 @@ export default function DataJourney() {
 							{/* Project + Sample Collection blurbs, stacked */}
 							<div className="space-y-8 ">
 								<TableBlurb title="Project" href="/explore/project" table="project">
-									A foundtaional table in the database which brings together all expeditions and scientific objectives under a unified project.
+									A foundational table in the database which brings together all expeditions and scientific objectives
+									under a unified project.
 								</TableBlurb>
 
 								<ProcessBlurb title="Sample Collection">
-									Samples can be taken from different environments like water, sediment, air, soil, and many others. Marine water is typically collected with a CTD rosette (seen here), but it can also be collected with an autonomous sampler, ROV, by scuba or snorkeling, and more. With proper data management, we can connect DNA data with environmental measurements like pH, salinity, and temperature.
+									Samples can be taken from different environments like water, sediment, air, soil, and many others.
+									Marine water is typically collected with a CTD rosette (seen here), but it can also be collected with
+									an autonomous sampler, ROV, by scuba or snorkeling, and more. With proper data management, we can
+									connect DNA data with environmental measurements like pH, salinity, and temperature.
 								</ProcessBlurb>
 							</div>
 						</div>
@@ -227,7 +221,10 @@ export default function DataJourney() {
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-end">
 							{/* Sample blurb */}
 							<TableBlurb title="Sample" href="/explore/sample" table="sample">
-								A piece of environmental material captured at a distinct place and time. Samples often follow a hierarchy: one collection event can include multiple depths, replicate bottles (e.g. A, B, C), and negative controls. This table tracks the filtration and storage methods used to preserve the DNA before it reaches the lab.
+								A piece of environmental material captured at a distinct place and time. Samples often follow a
+								hierarchy: one collection event can include multiple depths, replicate bottles (e.g. A, B, C), and
+								negative controls. This table tracks the filtration and storage methods used to preserve the DNA before
+								it reaches the lab.
 							</TableBlurb>
 
 							{/* Sample bio image */}
@@ -266,10 +263,13 @@ export default function DataJourney() {
 						{/* DNA Extraction: text left, image right */}
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
 							<ProcessBlurb title="DNA Extraction">
-								First, we have to extract the DNA from the sampled water. We take the biomass (or living material) captured on filters and use chemicals to break open the cells and isolate the DNA. This laboratory process turns liters of filtered water into a small volume of purified genetic material we can work with in the lab.
+								First, we have to extract the DNA from the sampled water. We take the biomass (or living material)
+								captured on filters and use chemicals to break open the cells and isolate the DNA. This laboratory
+								process turns liters of filtered water into a small volume of purified genetic material we can work with
+								in the lab.
 							</ProcessBlurb>
 
-							<div className="relative w-full h-[240px] sm:h-[300px] lg:h-[350px]">
+							<div className="relative w-full h-60 sm:h-[300px] lg:h-[350px]">
 								<Image
 									src="/images/biorender/dna_extraction.png"
 									alt="DNA extraction workflow"
@@ -289,7 +289,7 @@ export default function DataJourney() {
 
 						{/* Assay: image left, text right */}
 						<div className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
-							<div className="relative w-full h-[240px] sm:h-[300px] lg:h-[350px]">
+							<div className="relative w-full h-60 sm:h-[300px] lg:h-[350px]">
 								<Image
 									src="/images/biorender/second_wetlab_step.png"
 									alt="PCR amplification targeting specific genetic markers"
@@ -307,13 +307,15 @@ export default function DataJourney() {
 							</div>
 
 							<TableBlurb title="Assay" href="/explore/assay" table="assay">
-							An assay is a molecular lens used to find specific organisms or groups of organisms by defining the genetic hooks (called primers) that target specific sequences out of the total environmental DNA mix. Primers are designed to only bind to the sequences from specific organisms.
+								An assay is a molecular lens used to find specific organisms or groups of organisms by defining the
+								genetic hooks (called primers) that target specific sequences out of the total environmental DNA mix.
+								Primers are designed to only bind to the sequences from specific organisms.
 							</TableBlurb>
 						</div>
 
 						{/* Thermocycler + AssayPrep & Pooling */}
 						<div>
-							<div className="relative w-full max-w-5xl mx-auto h-[220px] sm:h-[280px] lg:h-[320px] overflow-hidden">
+							<div className="relative w-full max-w-5xl mx-auto h-[220px] sm:h-[280px] lg:h-80 overflow-hidden">
 								<Image
 									src="/images/biorender/thermocycler.png"
 									alt="Thermocycler PCR amplification"
@@ -334,11 +336,15 @@ export default function DataJourney() {
 
 							<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
 								<TableBlurb title="AssayPrep" href="/explore/assayPrep" table="assayPrep">
-								The parameters for the PCR (polymerase chain reaction) used to make copies of a target DNA segment. It records the specific thermocycler settings and chemical mixes used to amplify the DNA for further processing.
+									The parameters for the PCR (polymerase chain reaction) used to make copies of a target DNA segment. It
+									records the specific thermocycler settings and chemical mixes used to amplify the DNA for further
+									processing.
 								</TableBlurb>
 
 								<ProcessBlurb title="Pooling &amp; Indexing">
-								This step combines multiple amplified samples into a single mixture (pooling) while adding unique molecular barcodes to every fragment. These digital tags allow the computer to identify which sample each sequence came from after the mixture is sequenced.
+									This step combines multiple amplified samples into a single mixture (pooling) while adding unique
+									molecular barcodes to every fragment. These digital tags allow the computer to identify which sample
+									each sequence came from after the mixture is sequenced.
 								</ProcessBlurb>
 							</div>
 						</div>
@@ -346,7 +352,7 @@ export default function DataJourney() {
 
 					{/* Library + Sequencing */}
 					<div>
-						<div className="relative w-full max-w-5xl mx-auto h-[220px] sm:h-[280px] lg:h-[320px] overflow-hidden mt-0">
+						<div className="relative w-full max-w-5xl mx-auto h-[220px] sm:h-[280px] lg:h-80 overflow-hidden mt-0">
 							<Image
 								src="/images/biorender/library_bio.png"
 								alt="Sequencing workflow"
@@ -367,11 +373,14 @@ export default function DataJourney() {
 
 						<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
 							<TableBlurb title="Library" href="/explore/library" table="library">
-							The final collection of prepared DNA that tracks the transition from physical samples to digital files. This table records the indexing details and sequencing run parameters.
+								The final collection of prepared DNA that tracks the transition from physical samples to digital files.
+								This table records the indexing details and sequencing run parameters.
 							</TableBlurb>
 
 							<ProcessBlurb title="Sequencing">
-								We load the pooled, barcoded library into a sequencer (e.g. an Illumina machine). The machine reads the order of DNA letters (A, T, C, G) in millions of fragments at once, turning the liquid library into digital files of raw sequence data for the next step: bioinformatics.
+								We load the pooled, barcoded library into a sequencer (e.g. an Illumina machine). The machine reads the
+								order of DNA letters (A, T, C, G) in millions of fragments at once, turning the liquid library into
+								digital files of raw sequence data for the next step: bioinformatics.
 							</ProcessBlurb>
 						</div>
 					</div>
@@ -393,7 +402,7 @@ export default function DataJourney() {
 							</div>
 
 							<TableBlurb title="Analysis" href="/explore/analysis" table="analysis">
-								Raw data is cleaned and processed through software pipelines like {" "}
+								Raw data is cleaned and processed through software pipelines like{" "}
 								<a
 									href="https://github.com/aomlomics/tourmaline"
 									target="_blank"
@@ -409,24 +418,25 @@ export default function DataJourney() {
 						{/* Feature: blurb left, image right */}
 						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
 							<TableBlurb title="Feature" href="/explore/feature" table="feature">
-								A dictionary of unique genetic fingerprints which allows us to track the same organism across different samples and studies.
+								A dictionary of unique genetic fingerprints which allows us to track the same organism across different
+								samples and studies.
 							</TableBlurb>
 
-							<div className="relative w-full h-[320px] sm:h-[420px] lg:h-[500px] lg:-mt-10">
+							<div className="relative w-full h-80 sm:h-[420px] lg:h-[500px] lg:-mt-10">
 								<Image
 									src="/images/biorender/feature_bio.png"
 									alt="Feature identification from sequence data"
 									fill
 									sizes="(max-width: 1024px) 100vw, 700px"
-								className="object-contain [html[data-theme='dark']_&]:hidden"
+									className="object-contain [html[data-theme='dark']_&]:hidden"
 								/>
-							<Image
-								src="/images/biorender/feature_bio_dark.png"
-								alt="Feature identification from sequence data"
-								fill
-								sizes="(max-width: 1024px) 100vw, 700px"
-								className="object-contain hidden [html[data-theme='dark']_&]:block"
-							/>
+								<Image
+									src="/images/biorender/feature_bio_dark.png"
+									alt="Feature identification from sequence data"
+									fill
+									sizes="(max-width: 1024px) 100vw, 700px"
+									className="object-contain hidden [html[data-theme='dark']_&]:block"
+								/>
 							</div>
 						</div>
 
@@ -438,11 +448,13 @@ export default function DataJourney() {
 
 							<div className="space-y-4">
 								<TableBlurb title="Taxonomy" href="/explore/taxonomy" table="taxonomy">
-									This is the official tree of life that provides the hierarchical ranks used to categorize every organism in the database.
+									This is the official tree of life that provides the hierarchical ranks used to categorize every
+									organism in the database.
 								</TableBlurb>
 
 								<TableBlurb title="Assignment" href="/explore/assignment" table="assignment">
-									This is the bridge where we connect a specific DNA sequence to a taxonomic classification and record our confidence in that match.
+									This is the bridge where we connect a specific DNA sequence to a taxonomic classification and record
+									our confidence in that match.
 								</TableBlurb>
 							</div>
 						</div>
@@ -453,8 +465,15 @@ export default function DataJourney() {
 								<OceanGlobe className="w-full" />
 							</div>
 
-							<TableBlurb title="Occurrence" href="/explore/occurrence" table="occurrence" className="max-w-lg text-center" centerTitle>
-								An occurrence is an organism at a time and place. It links a specific DNA sequence to a taxonomic classification and records the confidence in that match.
+							<TableBlurb
+								title="Occurrence"
+								href="/explore/occurrence"
+								table="occurrence"
+								className="max-w-lg text-center"
+								centerTitle
+							>
+								An occurrence is an organism at a time and place. It links a specific DNA sequence to a taxonomic
+								classification and records the confidence in that match.
 							</TableBlurb>
 						</div>
 					</div>

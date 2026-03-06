@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
 import { stripSecureFields } from "@/app/helpers/prisma";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { getZodType } from "@/app/helpers/schema";
+import TableMetadata from "@/types/tableMetadata";
+import { getTableName, getZodType } from "@/app/helpers/schema";
 
 export async function GET(
 	request: Request,
@@ -10,21 +10,17 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
-	const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase());
-	if (model) {
-		const result = {} as Record<string, ReturnType<typeof getZodType>>;
-		const shape = TableMetadata[model].schema.shape;
-		for (const f of TableMetadata[model].enumSchema.options) {
-			if (f !== "userDefined") {
-				const type = getZodType(shape[f as keyof typeof shape]);
-				result[f] = type;
-			}
+	const model = getTableName(table);
+
+	const result = {} as Record<string, ReturnType<typeof getZodType>>;
+	for (const f of TableMetadata[model].enumSchema.options) {
+		if (f !== "userDefined") {
+			const type = getZodType(model, f);
+			result[f] = type;
 		}
-
-		stripSecureFields(result);
-
-		return NextResponse.json({ statusMessage: "success", result });
-	} else {
-		return NextResponse.json({ statusMessage: "error", error: `Invalid table name: "${table}".` });
 	}
+
+	stripSecureFields(result);
+
+	return NextResponse.json({ statusMessage: "success", result });
 }

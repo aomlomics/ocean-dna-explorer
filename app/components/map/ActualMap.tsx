@@ -407,8 +407,7 @@ export default function ActualMap({
 				return { field, mode: "discreet", colorMap };
 			}
 		} else {
-			const shape = TableMetadata[table].schema.shape;
-			const type = getZodType(shape[field as keyof typeof shape]).type;
+			const type = getZodType(table, field).type;
 
 			if (type === "string" || type === "DeadBoolean") {
 				//get unique options

@@ -220,26 +220,26 @@ export default function Table({
 			}
 		}
 
-		return query;
-	}
+		if (deepRelations.length !== Object.keys(deepRelationsFilter).length) {
+			if (Object.keys(deepRelationsFilter).length === 0) {
+				query.set("deepRelations", "true");
+			} else {
+				query.set(
+					"deepRelations",
+					deepRelations
+						.reduce((acc, rel) => {
+							if (!deepRelationsFilter[rel.label]) {
+								acc.push(rel.table);
+							}
 
-	if (deepRelations.length !== Object.keys(deepRelationsFilter).length) {
-		if (Object.keys(deepRelationsFilter).length === 0) {
-			query.set("deepRelations", "true");
-		} else {
-			query.set(
-				"deepRelations",
-				deepRelations
-					.reduce((acc, rel) => {
-						if (!deepRelationsFilter[rel.label]) {
-							acc.push(rel.table);
-						}
-
-						return acc;
-					}, [] as string[])
-					.join(",")
-			);
+							return acc;
+						}, [] as string[])
+						.join(",")
+				);
+			}
 		}
+
+		return query;
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
@@ -297,6 +297,7 @@ export default function Table({
 
 			if (tempUserDefinedHeadersSet.size) {
 				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
+				//TODO: inject deep relations headers after close relation headers
 				setHeaders([...headers.filter((head) => !userDefinedHeaders.includes(head)), ...tempUserDefinedHeadersSet]);
 				setUserDefinedHeaders(tempUserDefinedHeaders);
 
@@ -330,7 +331,7 @@ export default function Table({
 		const temp = {} as typeof whereFilter;
 		for (const [field, value] of formData.entries()) {
 			if (typeof value === "string" && value.trim()) {
-				const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+				const type = getZodType(table, field).type;
 
 				if (type === "string") {
 					temp[field] = value;

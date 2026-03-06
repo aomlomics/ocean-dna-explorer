@@ -42,8 +42,7 @@ export default function ExploreSearch({
 	const combinedOmit = [...omit, ...GlobalOmit, "id", "userDefined"];
 
 	function InputElement() {
-		const shape = TableMetadata[table].schema.shape;
-		const type = getZodType(shape[field as keyof typeof shape]).type;
+		const type = getZodType(table, field).type;
 
 		let inputType = undefined;
 		let step = undefined;

@@ -92,7 +92,7 @@ export default function SampleScatterPlot({
 
 			setXType(tempType);
 		} else {
-			const type = getZodType(SampleSchema.shape[xField]).type;
+			const type = getZodType("sample", xField).type;
 
 			if (type === "integer" || type === "float") {
 				setXType("number");
@@ -117,7 +117,7 @@ export default function SampleScatterPlot({
 
 			setYType(tempType);
 		} else {
-			const type = getZodType(SampleSchema.shape[yField]).type;
+			const type = getZodType("sample", yField).type;
 
 			if (type === "integer" || type === "float") {
 				setYType("number");
@@ -268,8 +268,8 @@ export default function SampleScatterPlot({
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 						xmlns="http://www.w3.org/2000/svg"
 						className="w-8 h-8 text-primary mt-7 cursor-pointer"
 						onClick={() => {
@@ -353,7 +353,8 @@ export default function SampleScatterPlot({
 							position: "top",
 							labels: {
 								color: textColor
-							}
+							},
+							onHover: () => {}
 						},
 						title: {
 							display: true,
@@ -402,7 +403,8 @@ export default function SampleScatterPlot({
 								: {}),
 							title: {
 								display: true,
-								text: xField
+								text: xField,
+								color: textColor
 							},
 							ticks: {
 								color: textColor
@@ -428,7 +430,8 @@ export default function SampleScatterPlot({
 								: {}),
 							title: {
 								display: true,
-								text: yField
+								text: yField,
+								color: textColor
 							},
 							ticks: {
 								color: textColor

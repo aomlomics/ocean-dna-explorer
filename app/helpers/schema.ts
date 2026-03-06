@@ -2,7 +2,7 @@ import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
-import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, RelationMetadata, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
 import { capitalizeTable, deadBooleanToString } from "./utils";
 import { DbType } from "@/types/globals";
@@ -56,10 +56,14 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 	}
 }
 
-export function getZodType(field: any): { type: DbType; optional?: boolean; values?: string[] } {
-	const result = getTypeRecursive(field);
+export function getZodType(
+	table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>,
+	field: string
+): { type: DbType; optional?: boolean; values?: string[] } {
+	const result = getTypeRecursive(TableMetadata[table].schema.shape[field]);
+
 	if (!result.type) {
-		throw new Error(`Could not find type of "${field}".`);
+		throw new Error(`Could not find type of "${field}" on table named ${table}.`);
 	}
 
 	return result;
@@ -76,7 +80,7 @@ export function parseSchemaToObject(
 	const value = v.trim();
 	//check if the field name is in the Schema
 	if (value && TableMetadata[table].enumSchema.options.includes(field)) {
-		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+		const type = getZodType(table, field).type;
 
 		if (type === "string[]") {
 			obj[field] = value.split(TypeSeparators.string).map((val) => val.trim());
@@ -278,5 +282,37 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 			}
 		}
 		visited.add(curr);
+	}
+}
+
+export function getTableName(table: string, err?: string) {
+	const found = TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+
+	if (!found) {
+		throw new Error(err || `Invalid table name: "${table}".`);
+	}
+
+	return found;
+}
+
+export function getDataTableName(table: string, err?: string) {
+	const found = DataTableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+
+	if (!found) {
+		throw new Error(err || `Invalid table name: "${table}".`);
+	}
+
+	return found;
+}
+
+export function getTableNameSafe(table?: string | null) {
+	if (table) {
+		return TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+	}
+}
+
+export function getDataTableNameSafe(table?: string | null) {
+	if (table) {
+		return DataTableNames.find((t) => t.toLowerCase() === table.toLowerCase());
 	}
 }
