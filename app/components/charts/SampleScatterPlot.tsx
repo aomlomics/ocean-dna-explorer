@@ -19,7 +19,6 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import ChartCopyButton from "./ChartCopyButton";
 import { DeadValueEnum } from "@/types/enums";
 import { getZodType } from "@/app/helpers/schema";
-import { SampleSchema } from "@/prisma/generated/zod";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
 
@@ -70,6 +69,7 @@ export default function SampleScatterPlot({
 	const [yMax, setYMax] = useState(undefined as number | undefined);
 
 	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
+	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
 
 	const [loading, setLoading] = useState(true);
 	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
@@ -225,14 +225,19 @@ export default function SampleScatterPlot({
 		}
 
 		//assign colors
-		distinctColors({ count: Object.keys(tempDatasets).length }).forEach((color, i) => {
-			tempDatasets[i].borderColor = color.hex();
-			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35 }).forEach((color, i) => {
+			if (hoveredLegend && tempDatasets[i].label !== hoveredLegend) {
+				tempDatasets[i].borderColor = color.alpha(0.1).hex();
+				tempDatasets[i].backgroundColor = "#00000000";
+			} else {
+				tempDatasets[i].borderColor = color.hex();
+				tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+			}
 		});
 
 		setChartData({ labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] });
 		setLoading(false);
-	}, [xField, yField, legendField]);
+	}, [xField, yField, legendField, hoveredLegend]);
 
 	return (
 		<div className="relative">
@@ -354,7 +359,12 @@ export default function SampleScatterPlot({
 							labels: {
 								color: textColor
 							},
-							onHover: () => {}
+							onHover: (event, item) => {
+								setHoveredLegend(item.text);
+							},
+							onLeave: () => {
+								setHoveredLegend(undefined);
+							}
 						},
 						title: {
 							display: true,
