@@ -131,15 +131,6 @@ const TableMetadata = {
 		subFields: ["organismQuantity", "analysis_run_name", "lib_id", "featureid"],
 		fieldOrder: ["analysis_run_name", "lib_id", "featureid"]
 	},
-	feature: {
-		plural: "Features",
-		description:
-			"Unique DNA sequences (eg, ASVs) found in samples, typically representing distinct organisms, with their taxonomic classifications.",
-		schema: PrismaZodTypes.FeatureSchema,
-		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
-		titleField: "featureid",
-		subFields: ["dna_sequence", "sequenceLength_ODE"]
-	},
 	assignment: {
 		plural: "Assignments",
 		description:
@@ -148,6 +139,15 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
 		titleField: ["analysis_run_name", "featureid"],
 		subFields: ["taxonomy", "Confidence"]
+	},
+	feature: {
+		plural: "Features",
+		description:
+			"Unique DNA sequences (eg, ASVs) found in samples, typically representing distinct organisms, with their taxonomic classifications.",
+		schema: PrismaZodTypes.FeatureSchema,
+		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
+		titleField: "featureid",
+		subFields: ["dna_sequence", "sequenceLength_ODE"]
 	},
 	taxonomy: {
 		plural: "Taxonomies",

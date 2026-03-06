@@ -4,8 +4,9 @@ import TableDisplay from "@/app/components/paginated/TableDisplay";
 import SearchUI from "@/app/components/search/SearchUI";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
+import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable } from "@/app/helpers/utils";
-import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { redirect } from "next/navigation";
 
 export default async function Search({
@@ -18,7 +19,7 @@ export default async function Search({
 	if (!table || typeof table !== "string") {
 		redirect("/search?table=project");
 	}
-	const model = TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+	const model = getDataTableNameSafe(table);
 	if (!model) {
 		redirect("/search?table=project");
 	}

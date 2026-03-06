@@ -5,7 +5,7 @@ import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { unsafePrisma } from "../helpers/prisma";
 import JSON5 from "json5";
-import { TableNames } from "@/types/tableMetadata";
+import { getTableName } from "../helpers/schema";
 
 export default async function unsafeConsoleAction(
 	table: string,
@@ -13,39 +13,36 @@ export default async function unsafeConsoleAction(
 	query: string
 ): Promise<NetworkPacket> {
 	try {
-		const model = TableNames.find((model) => model.toLowerCase() === table.toLowerCase());
-		if (model) {
-			const { userId, sessionClaims } = await auth();
-			const role = sessionClaims?.metadata?.role;
+		const model = getTableName(table);
 
-			if (!userId) {
-				return { statusMessage: "error", error: "Must be logged in." };
-			}
+		const { userId, sessionClaims } = await auth();
+		const role = sessionClaims?.metadata?.role;
 
-			if (!role || !RolePermissions[role].includes("manageDatabase")) {
-				return { statusMessage: "error", error: "Invalid role." };
-			}
-
-			if (modelQuery && typeof modelQuery !== "string") {
-				return { statusMessage: "error", error: "Model query must be string." };
-			}
-
-			if (!Object.keys(unsafePrisma[model]).includes(modelQuery)) {
-				return { statusMessage: "error", error: "Invalid model query." };
-			}
-
-			if (query && typeof query !== "string") {
-				return { statusMessage: "error", error: "Query must be string." };
-			}
-
-			//@ts-ignore
-			JSON5.parse(query);
-			// await unsafePrisma[model][modelQuery](JSON.parse(query));
-
-			return { statusMessage: "success" };
-		} else {
-			return { statusMessage: "error", error: `Invalid table name: "${table}".` };
+		if (!userId) {
+			return { statusMessage: "error", error: "Must be logged in." };
 		}
+
+		if (!role || !RolePermissions[role].includes("manageDatabase")) {
+			return { statusMessage: "error", error: "Invalid role." };
+		}
+
+		if (modelQuery && typeof modelQuery !== "string") {
+			return { statusMessage: "error", error: "Model query must be string." };
+		}
+
+		if (!Object.keys(unsafePrisma[model]).includes(modelQuery)) {
+			return { statusMessage: "error", error: "Invalid model query." };
+		}
+
+		if (query && typeof query !== "string") {
+			return { statusMessage: "error", error: "Query must be string." };
+		}
+
+		//@ts-ignore
+		JSON5.parse(query);
+		// await unsafePrisma[model][modelQuery](JSON.parse(query));
+
+		return { statusMessage: "success" };
 	} catch (err) {
 		const error = err as Error;
 

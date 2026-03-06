@@ -446,16 +446,13 @@ export function SubmitMegaMenu() {
 		async function loadCounts() {
 			try {
 				const [projectsRes, analysesRes] = await Promise.all([
-					fetch("/api/project/pagination?take=1").then((r) => r.json()),
-					fetch("/api/analysis/pagination?take=1").then((r) => r.json())
+					fetch("/api/project/count").then((r) => r.json()),
+					fetch("/api/analysis/count").then((r) => r.json())
 				]);
 
-				const nextProjectCount = typeof projectsRes?.count === "number" ? projectsRes.count.toLocaleString() : "—";
-				const nextAnalysisCount = typeof analysesRes?.count === "number" ? analysesRes.count.toLocaleString() : "—";
-
 				if (!cancelled) {
-					setProjectCount(nextProjectCount);
-					setAnalysisCount(nextAnalysisCount);
+					setProjectCount(projectsRes.result);
+					setAnalysisCount(analysesRes.result);
 				}
 			} catch {
 				// Leave placeholders if the request fails.

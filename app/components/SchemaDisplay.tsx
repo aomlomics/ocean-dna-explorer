@@ -6,7 +6,7 @@ import { stripSecureFields } from "../helpers/prisma";
 import { capitalizeTable } from "../helpers/utils";
 
 export default function SchemaDisplay() {
-	const tables = TableNames.map((tableName) => {
+	const tables = TableNames.map((t) => {
 		const result = {} as Record<
 			string,
 			{
@@ -15,9 +15,9 @@ export default function SchemaDisplay() {
 				values?: string[];
 			}
 		>;
-		const shape = TableMetadata[tableName].schema.shape;
-		for (const f of TableMetadata[tableName].enumSchema.options) {
-			const type = getZodType(shape[f as keyof typeof shape]);
+
+		for (const f of TableMetadata[t].enumSchema.options) {
+			const type = getZodType(t, f);
 			if (type.type === "json") {
 				if (f === "userDefined") {
 					result[f] = type;
@@ -30,7 +30,7 @@ export default function SchemaDisplay() {
 		}
 
 		stripSecureFields(result);
-		return [tableName, result] as [Uncapitalize<Prisma.ModelName>, typeof result];
+		return [t, result] as [Uncapitalize<Prisma.ModelName>, typeof result];
 	});
 
 	return (

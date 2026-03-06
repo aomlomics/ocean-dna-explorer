@@ -19,7 +19,6 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import ChartCopyButton from "./ChartCopyButton";
 import { DeadValueEnum } from "@/types/enums";
 import { getZodType } from "@/app/helpers/schema";
-import { SampleSchema } from "@/prisma/generated/zod";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
 
@@ -70,6 +69,7 @@ export default function SampleScatterPlot({
 	const [yMax, setYMax] = useState(undefined as number | undefined);
 
 	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
+	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
 
 	const [loading, setLoading] = useState(true);
 	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
@@ -92,7 +92,7 @@ export default function SampleScatterPlot({
 
 			setXType(tempType);
 		} else {
-			const type = getZodType(SampleSchema.shape[xField]).type;
+			const type = getZodType("sample", xField).type;
 
 			if (type === "integer" || type === "float") {
 				setXType("number");
@@ -117,7 +117,7 @@ export default function SampleScatterPlot({
 
 			setYType(tempType);
 		} else {
-			const type = getZodType(SampleSchema.shape[yField]).type;
+			const type = getZodType("sample", yField).type;
 
 			if (type === "integer" || type === "float") {
 				setYType("number");
@@ -225,14 +225,19 @@ export default function SampleScatterPlot({
 		}
 
 		//assign colors
-		distinctColors({ count: Object.keys(tempDatasets).length }).forEach((color, i) => {
-			tempDatasets[i].borderColor = color.hex();
-			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35 }).forEach((color, i) => {
+			if (hoveredLegend && tempDatasets[i].label !== hoveredLegend) {
+				tempDatasets[i].borderColor = color.alpha(0.1).hex();
+				tempDatasets[i].backgroundColor = "#00000000";
+			} else {
+				tempDatasets[i].borderColor = color.hex();
+				tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+			}
 		});
 
 		setChartData({ labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] });
 		setLoading(false);
-	}, [xField, yField, legendField]);
+	}, [xField, yField, legendField, hoveredLegend]);
 
 	return (
 		<div className="relative">
@@ -268,8 +273,8 @@ export default function SampleScatterPlot({
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 						xmlns="http://www.w3.org/2000/svg"
 						className="w-8 h-8 text-primary mt-7 cursor-pointer"
 						onClick={() => {
@@ -353,6 +358,12 @@ export default function SampleScatterPlot({
 							position: "top",
 							labels: {
 								color: textColor
+							},
+							onHover: (event, item) => {
+								setHoveredLegend(item.text);
+							},
+							onLeave: () => {
+								setHoveredLegend(undefined);
 							}
 						},
 						title: {
@@ -402,7 +413,8 @@ export default function SampleScatterPlot({
 								: {}),
 							title: {
 								display: true,
-								text: xField
+								text: xField,
+								color: textColor
 							},
 							ticks: {
 								color: textColor
@@ -428,7 +440,8 @@ export default function SampleScatterPlot({
 								: {}),
 							title: {
 								display: true,
-								text: yField
+								text: yField,
+								color: textColor
 							},
 							ticks: {
 								color: textColor

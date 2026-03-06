@@ -2,11 +2,11 @@
 
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma, Tag } from "@/app/generated/prisma/client";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
-import { getZodType } from "../../helpers/schema";
+import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
 import { NetworkPacket } from "@/types/globals";
@@ -15,6 +15,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
 import AnalysisTag from "../tags/AnalysisTag";
 import Checklist from "../Checklist";
+import InfoButton from "../InfoButton";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
 
@@ -137,6 +138,30 @@ export default function Table({
 	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
 	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
 
+	const deepRelations = TableNames.reduce(
+		(acc, name) => {
+			if (name !== table && TableMetadata[table].relations.every((rel) => uncapitalizeTable(rel.table) !== name)) {
+				const path = getRelationPath(table, name);
+				if (path) {
+					if (path.some((p) => p.type.endsWith("many"))) {
+						acc.push({ label: TableMetadata[name].plural, table: name, type: "many" });
+					} else {
+						if (typeof TableMetadata[name].titleField === "string") {
+							acc.push({ label: TableMetadata[name].titleField, table: name, type: "field" });
+						} else {
+							acc.push({ label: capitalizeTable(name), table: name, type: "table" });
+						}
+					}
+				}
+			}
+
+			return acc;
+		},
+		[] as { label: string; table: Uncapitalize<Prisma.ModelName>; type: "field" | "table" | "many" }[]
+	);
+	const [deepRelationsFilter, setDeepRelationsFilter] = useState(
+		deepRelations.reduce((acc, rel) => ({ ...acc, [rel.label]: true }), {}) as Record<string, true>
+	);
 	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
 	const [pendingFilters, setPendingFilters] = useState(0);
 
@@ -192,6 +217,25 @@ export default function Table({
 				query.set("relationsAllFields", "true");
 			} else {
 				query.set("relCounts", manyRelations.join(","));
+			}
+		}
+
+		if (deepRelations.length !== Object.keys(deepRelationsFilter).length) {
+			if (Object.keys(deepRelationsFilter).length === 0) {
+				query.set("deepRelations", "true");
+			} else {
+				query.set(
+					"deepRelations",
+					deepRelations
+						.reduce((acc, rel) => {
+							if (!deepRelationsFilter[rel.label]) {
+								acc.push(rel.table);
+							}
+
+							return acc;
+						}, [] as string[])
+						.join(",")
+				);
 			}
 		}
 
@@ -253,6 +297,7 @@ export default function Table({
 
 			if (tempUserDefinedHeadersSet.size) {
 				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
+				//TODO: inject deep relations headers after close relation headers
 				setHeaders([...headers.filter((head) => !userDefinedHeaders.includes(head)), ...tempUserDefinedHeadersSet]);
 				setUserDefinedHeaders(tempUserDefinedHeaders);
 
@@ -286,7 +331,7 @@ export default function Table({
 		const temp = {} as typeof whereFilter;
 		for (const [field, value] of formData.entries()) {
 			if (typeof value === "string" && value.trim()) {
-				const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+				const type = getZodType(table, field).type;
 
 				if (type === "string") {
 					temp[field] = value;
@@ -376,7 +421,25 @@ export default function Table({
 						}
 					/>
 					{/* Column Selection Button */}
-					<div className="grid grid-cols-2 w-full gap-5 flex-1">
+					<div className="grid grid-cols-3 w-full gap-5 flex-1">
+						<div className="flex gap-2">
+							<InfoButton
+								infoText="If many rows are displayed per page, selecting these options can cause long load times."
+								type="warning"
+								dir="tooltip-left"
+								className="z-60"
+							/>
+
+							<Checklist
+								label="Deep Relations"
+								list={deepRelations.map((rel) => rel.label)}
+								listFilter={deepRelationsFilter}
+								setListFilter={setDeepRelationsFilter}
+								className="justify-self-end"
+								buttonClassName="btn-sm"
+							/>
+						</div>
+
 						<Checklist
 							label="Columns"
 							list={headers}
@@ -479,9 +542,12 @@ export default function Table({
 										</label>
 									</th>
 								) : (
-									<th className="p-0 pr-2 z-40 bg-base-100 cursor-not-allowed">
+									<th className="px-3 py-2 z-40 bg-base-100 cursor-not-allowed">
 										<div className="select-none mb-1">
-											<span>{title.join(" / ")}</span>
+											<div className="flex select-none mb-1">
+												{capitalizeTable(table)}
+												{" (" + title.join(" / ") + ")"}
+											</div>
 										</div>
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
@@ -718,6 +784,46 @@ export default function Table({
 
 									return acc;
 								}, [])}
+
+								{deepRelations.reduce((acc, rel, i) => {
+									if (!deepRelationsFilter[rel.label]) {
+										acc.push(
+											<td key={rel.label + i} className="bg-base-100 cursor-not-allowed">
+												<div className="flex select-none mb-1">
+													{rel.label}
+													{rel.type === "table"
+														? " (" +
+															(TableMetadata[rel.label as Prisma.ModelName].titleField as string[]).join(" / ") +
+															")"
+														: ""}
+												</div>
+												<label className="form-control w-full max-w-xs text-lg">
+													{/* Value Filter */}
+													{!hideFilters && (
+														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<svg
+																xmlns="http://www.w3.org/2000/svg"
+																viewBox="0 0 16 16"
+																fill="currentColor"
+																className="h-4 w-4 opacity-70"
+															>
+																<path
+																	fillRule="evenodd"
+																	d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+																	clipRule="evenodd"
+																/>
+															</svg>
+															<input type="text" className="grow" disabled />
+														</label>
+													)}
+												</label>
+											</td>
+										);
+									}
+
+									return acc;
+								}, [] as ReactNode[])}
+
 								<th></th>
 							</tr>
 						</thead>
@@ -903,6 +1009,93 @@ export default function Table({
 
 											return acc;
 										}, [])}
+
+										{deepRelations.reduce((acc, rel, j) => {
+											if (!deepRelationsFilter[rel.label]) {
+												if (rel.type === "many") {
+													acc.push(
+														<td
+															className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																i ? "border-t-2" : ""
+															}`}
+															key={rel.label + "child" + j}
+														>
+															<div className="flex justify-center">
+																<Link
+																	className="btn text-nowrap"
+																	href={`/search?table=${rel.table}&advanced=[${
+																		typeof title === "string"
+																			? `["${table}", "${title}", "equals", "${row[title]}"]`
+																			: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
+																	}]`}
+																>
+																	<svg
+																		width="20px"
+																		height="20px"
+																		viewBox="0 0 32 32"
+																		version="1.1"
+																		xmlns="http://www.w3.org/2000/svg"
+																		className="text-primary"
+																		stroke="currentColor"
+																		fill="currentColor"
+																	>
+																		<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
+																	</svg>{" "}
+																	{row._count[rel.label]}{" "}
+																	{row._count[rel.label] === 1 ? capitalizeTable(rel.table) : rel.label}
+																</Link>
+															</div>
+														</td>
+													);
+												} else {
+													const path = getRelationPath(table, rel.table)!;
+													const titleFieldObj = path.reduce((obj, curr) => obj[curr.field], row[path.shift()!.field]);
+
+													if (rel.type === "table") {
+														acc.push(
+															<td
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																	i ? "border-t-2" : ""
+																} ${"test" === null ? "bg-base-200" : ""}`}
+																key={rel.label + "child" + j}
+															>
+																<Link
+																	href={`/explore/${rel.table}/${(TableMetadata[rel.table].titleField as string[]).map((f) => titleFieldObj[f])}`}
+																	className="link link-primary link-hover font-bold"
+																>
+																	{(TableMetadata[rel.table].titleField as string[])
+																		.map((f) =>
+																			titleFieldObj[f].length > 15
+																				? titleFieldObj[f].slice(0, 10) + "..."
+																				: titleFieldObj[f]
+																		)
+																		.join(" / ")}
+																</Link>
+															</td>
+														);
+													} else if (rel.type === "field") {
+														acc.push(
+															<td
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																	i ? "border-t-2" : ""
+																} ${"test" === null ? "bg-base-200" : ""}`}
+																key={rel.label + "child" + j}
+															>
+																<Link
+																	href={`/explore/${rel.table}/${titleFieldObj[rel.label]}`}
+																	className="link link-primary link-hover font-bold"
+																>
+																	{titleFieldObj[rel.label]}
+																</Link>
+															</td>
+														);
+													}
+												}
+											}
+
+											return acc;
+										}, [] as ReactNode[])}
+
 										<th className={`border-base-300 border-l-2 ${i ? "border-t-2" : ""}`}>
 											{i + 1 + (page - 1) * take}
 										</th>

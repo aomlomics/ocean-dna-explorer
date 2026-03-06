@@ -111,7 +111,7 @@ export default function TaxaBarChart({
 						}
 					}
 
-					const uniqueColors = distinctColors({ count: rankValues.size });
+					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35 });
 					setTaxaColors(uniqueColors);
 					const sortedRanks = Array.from(rankValues).sort();
 					setTaxonomies(sortedRanks);
@@ -377,7 +377,8 @@ export default function TaxaBarChart({
 							stacked: true,
 							title: {
 								display: true,
-								text: averageBy
+								text: averageBy,
+								color: textColor
 							},
 							ticks: {
 								color: textColor
@@ -393,7 +394,8 @@ export default function TaxaBarChart({
 							max: metricType === "relative" ? 100 : undefined,
 							title: {
 								display: true,
-								text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"
+								text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences",
+								color: textColor
 							},
 							ticks: {
 								color: textColor
