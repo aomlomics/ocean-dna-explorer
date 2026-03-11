@@ -61,7 +61,7 @@ export default function Tour() {
 			const projectIdRes = await fetch("/api/project?limit=1&fields=project_id");
 			if (projectIdRes.ok) {
 				const response = (await projectIdRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success") {
+				if (response.statusMessage === "success" && response.result[0]) {
 					project_id = response.result[0].project_id;
 				}
 			}
