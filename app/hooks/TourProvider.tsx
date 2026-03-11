@@ -17,7 +17,6 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 	function stopTour() {
 		document.removeEventListener("click", stopTour);
 		document.removeEventListener("keydown", stopTour);
-		document.removeEventListener("scroll", stopTour);
 		clearTimeout(timeoutRef.current!);
 
 		setStep(undefined);
@@ -29,7 +28,6 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 
 		document.addEventListener("click", stopTour);
 		document.addEventListener("keydown", stopTour);
-		document.addEventListener("scroll", stopTour);
 
 		setStep(0);
 	}
