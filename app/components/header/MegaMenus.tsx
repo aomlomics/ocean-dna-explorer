@@ -4,13 +4,50 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
-import { uncapitalizeTable } from "@/app/helpers/utils";
 
 // -----------------------------
 // Shared mega-menu primitives
 // -----------------------------
+
+const MENU_LINK_PREFETCH = false;
+
+const EXPLORE_LEFT_ITEMS = [
+	{ label: "Projects", href: "/explore/project" },
+	{ label: "Samples", href: "/explore/sample" },
+	{ label: "Assays", href: "/explore/assay" },
+	{ label: "AssayPreps", href: "/explore/assayPrep" },
+	{ label: "Libraries", href: "/explore/library" }
+];
+
+const EXPLORE_RIGHT_ITEMS = [
+	{ label: "Analyses", href: "/explore/analysis" },
+	{ label: "Occurrences", href: "/explore/occurrence" },
+	{ label: "Assignments", href: "/explore/assignment" },
+	{ label: "Features", href: "/explore/feature" },
+	{ label: "Taxonomies", href: "/explore/taxonomy" }
+];
+
+const HELP_ITEMS = [
+	{ label: "Overview", href: "/help#node-overview" },
+	{ label: "Login and Roles", href: "/help#login-and-roles" },
+	{ label: "Search", href: "/help#search" },
+	{ label: "Explore", href: "/help#explore" },
+	{ label: "Visualize", href: "/explore" }
+];
+
+const API_ITEMS = [
+	{ label: "Introduction", href: "/api#introduction" },
+	{ label: "Database Schema", href: "/api#database-schema" },
+	{ label: "API Endpoints", href: "/api#api-endpoints" },
+	{ label: "Searching & Filtering", href: "/api#searching-and-filtering" },
+	{ label: "Query Parameters", href: "/api#query-parameters" }
+];
+
+const LEARN_ITEMS = [
+	{ label: "What is eDNA?", href: "/learn?section=edna101" },
+	{ label: "Impact", href: "/learn?section=impact" },
+	{ label: "Make your own scientific discoveries", href: "/learn?section=discoveries" }
+];
 
 function useIsActive(route: string, activePaths?: string[]) {
 	const pathname = usePathname();
@@ -52,6 +89,7 @@ function MegaMenu({
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const isHighlighted = open || isActive;
+	const containerRef = useRef<HTMLDivElement | null>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
@@ -80,22 +118,25 @@ function MegaMenu({
 		// Small delay so slow mouse movement doesn't collapse the menu.
 		// We also add a "hover bridge" in the panel container so there isn't a dead-zone.
 		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		closeTimerRef.current = setTimeout(() => setOpen(false), 150);
+		closeTimerRef.current = setTimeout(() => {
+			// Guard against ultra-fast cursor movement where enter/leave events can race.
+			if (containerRef.current?.matches(":hover")) return;
+			setOpen(false);
+		}, 120);
 	}, []);
 
 	return (
 		<div
+			ref={containerRef}
 			onClick={unfocusWithoutScrollJump}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className={`dropdown group/menu ${open ? "dropdown-open" : ""}`}
+			className="group/menu"
 		>
-			{/* Subtle backdrop blur when open (below header) */}
 			{open ? (
 				<div
 					aria-hidden="true"
-					// NOTE: backdrop-blur is easiest to notice with a slight translucent fill.
-					className="fixed inset-0 top-20 lg:top-24 z-99998 pointer-events-none backdrop-blur-[2px] bg-base-100/10"
+					className="fixed inset-0 top-20 lg:top-24 z-99998 pointer-events-none bg-base-100/10 backdrop-blur-[2px]"
 				/>
 			) : null}
 
@@ -103,6 +144,7 @@ function MegaMenu({
 			<Link
 				tabIndex={0}
 				href={route}
+				prefetch={MENU_LINK_PREFETCH}
 				className={`flex items-center gap-1 px-4 py-2 rounded-t-lg transition-colors ${
 					isHighlighted ? "bg-primary text-primary-content" : "hover:bg-base-300"
 				} select-none`}
@@ -130,23 +172,27 @@ function MegaMenu({
 			</Link>
 
 			{/* Panel */}
-			<div
-				tabIndex={0}
-				// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
-				// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
-				className={[
-					"dropdown-content z-99999",
-					"fixed left-1/2 -translate-x-1/2",
-					panelTopClass ?? "top-20 lg:top-24", // matches header heights (h-20 / lg:h-24)
-					"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
-					"w-[calc(100vw-2rem)]",
-					widthClass
-				].join(" ")}
-			>
-				<div className="bg-base-100 rounded-xl shadow-2xl shadow-black/25 border border-base-200 ring-1 ring-base-content/10 overflow-hidden">
-					{children}
+			{open ? (
+				<div
+					tabIndex={0}
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
+					// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
+					// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
+					className={[
+						"z-99999",
+						"fixed left-1/2 -translate-x-1/2",
+						panelTopClass ?? "top-20 lg:top-24", // matches header heights (h-20 / lg:h-24)
+						"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
+						"w-[calc(100vw-2rem)]",
+						widthClass
+					].join(" ")}
+				>
+					<div className="bg-base-100 rounded-xl shadow-lg shadow-black/10 border border-base-200 overflow-hidden contain-[paint]">
+						{children}
+					</div>
 				</div>
-			</div>
+			) : null}
 		</div>
 	);
 }
@@ -165,7 +211,7 @@ function MenuSectionHeader({
 	titleClassName?: string;
 }) {
 	return (
-		<Link href={href} className="flex items-start gap-2 group">
+		<Link href={href} prefetch={MENU_LINK_PREFETCH} className="flex items-start gap-2 group">
 			{icon ? (
 				<span className="mt-0.5 text-base-content/70 group-hover:text-primary transition-colors">{icon}</span>
 			) : null}
@@ -188,7 +234,8 @@ function MenuItem({ href, label }: { href: string; label: string }) {
 	return (
 		<Link
 			href={href}
-			className="block py-1 px-2 text-sm text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md transition-colors"
+			prefetch={MENU_LINK_PREFETCH}
+			className="block py-1 px-2 text-sm text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
 		>
 			{label}
 		</Link>
@@ -207,13 +254,17 @@ function MenuItemWithSubtitle({
 	icon?: React.ReactNode;
 }) {
 	return (
-		<Link href={href} className="group block rounded-lg px-2 py-2 hover:bg-base-200/60 transition-colors">
+		<Link
+			href={href}
+			prefetch={MENU_LINK_PREFETCH}
+			className="group block rounded-lg px-2 py-2 hover:bg-base-200/60"
+		>
 			<div className="flex items-start gap-2">
 				{icon ? (
-					<span className="mt-0.5 text-base-content/70 group-hover:text-primary transition-colors">{icon}</span>
+					<span className="mt-0.5 text-base-content/70 group-hover:text-primary">{icon}</span>
 				) : null}
 				<span>
-					<div className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors">
+					<div className="text-sm font-semibold text-base-content group-hover:text-primary">
 						{title}
 					</div>
 					<div className="text-xs text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
@@ -258,26 +309,7 @@ function MiniFeatureCard({
 }
 
 export function ExploreMegaMenu() {
-	const leftModels = ["Project", "Sample", "Assay", "AssayPrep", "Library"] as const;
-	const rightModels = ["Analysis", "Occurrence", "Assignment", "Feature", "Taxonomy"] as const;
-
-	const leftItems = leftModels.map((m) => {
-		const model = m as Prisma.ModelName;
-		return {
-			label: TableMetadata[model].plural,
-			href: `/explore/${uncapitalizeTable(model)}`
-		};
-	});
-
-	const rightItems = rightModels.map((m) => {
-		const model = m as Prisma.ModelName;
-		return {
-			label: TableMetadata[model].plural,
-			href: `/explore/${uncapitalizeTable(model)}`
-		};
-	});
-
-	const totalTables = leftItems.length + rightItems.length;
+	const totalTables = EXPLORE_LEFT_ITEMS.length + EXPLORE_RIGHT_ITEMS.length;
 
 	return (
 		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[820px]">
@@ -288,12 +320,12 @@ export function ExploreMegaMenu() {
 
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
-							{leftItems.map((i) => (
+							{EXPLORE_LEFT_ITEMS.map((i) => (
 								<MenuItem key={i.label} href={i.href} label={i.label} />
 							))}
 						</div>
 						<div className="space-y-1">
-							{rightItems.map((i) => (
+							{EXPLORE_RIGHT_ITEMS.map((i) => (
 								<MenuItem key={i.label} href={i.href} label={i.label} />
 							))}
 						</div>
@@ -307,20 +339,22 @@ export function ExploreMegaMenu() {
 					media={
 						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/taxonomy_explore_mega_menu_light.png"
+								src="/images/taxonomy_explore_mega_menu_light.webp"
 								alt="Taxonomy explore preview (light mode)"
 								fill
 								sizes="280px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={80}
 							/>
 							<Image
-								src="/images/taxonomy_explore_mega_menu_dark.png"
+								src="/images/taxonomy_explore_mega_menu_dark.webp"
 								alt="Taxonomy explore preview (dark mode)"
 								fill
 								sizes="280px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={80}
 							/>
 						</div>
 					}
@@ -337,28 +371,6 @@ export function ExploreMegaMenu() {
 export function DocsMegaMenu() {
 	// NOTE: There is no `help#visualize` section in HelpSections currently.
 	// Using `/explore` as the closest existing “visualize-like” UI.
-	const helpItems = [
-		{ label: "Overview", href: "/help#node-overview" },
-		{ label: "Login and Roles", href: "/help#login-and-roles" },
-		{ label: "Search", href: "/help#search" },
-		{ label: "Explore", href: "/help#explore" },
-		{ label: "Visualize", href: "/explore" }
-	];
-
-	const apiItems = [
-		{ label: "Introduction", href: "/api#introduction" },
-		{ label: "Database Schema", href: "/api#database-schema" },
-		{ label: "API Endpoints", href: "/api#api-endpoints" },
-		{ label: "Searching & Filtering", href: "/api#searching-and-filtering" },
-		{ label: "Query Parameters", href: "/api#query-parameters" }
-	];
-
-	const learnItems = [
-		{ label: "What is eDNA?", href: "/learn?section=edna101" },
-		{ label: "Impact", href: "/learn?section=impact" },
-		{ label: "Make your own scientific discoveries", href: "/learn?section=discoveries" }
-	];
-
 	return (
 		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/learn", "/api"]} widthClass="max-w-[980px]">
 			<div className="grid grid-cols-[1fr_1fr_1fr_280px] gap-0">
@@ -370,7 +382,7 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{helpItems.map((i) => (
+						{HELP_ITEMS.map((i) => (
 							<MenuItem key={i.label} href={i.href} label={i.label} />
 						))}
 					</div>
@@ -384,7 +396,7 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{apiItems.map((i) => (
+						{API_ITEMS.map((i) => (
 							<MenuItem key={i.label} href={i.href} label={i.label} />
 						))}
 					</div>
@@ -398,7 +410,7 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{learnItems.map((i) => (
+						{LEARN_ITEMS.map((i) => (
 							<MenuItem key={i.label} href={i.href} label={i.label} />
 						))}
 					</div>
@@ -410,20 +422,22 @@ export function DocsMegaMenu() {
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/docs_mega_menu_light.png"
+								src="/images/docs_mega_menu_light.webp"
 								alt="Docs mega menu preview (light mode)"
 								fill
 								sizes="280px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={80}
 							/>
 							<Image
-								src="/images/docs_mega_menu_dark.png"
+								src="/images/docs_mega_menu_dark.webp"
 								alt="Docs mega menu preview (dark mode)"
 								fill
 								sizes="280px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={80}
 							/>
 						</div>
 					}
@@ -544,20 +558,22 @@ export function VisualizeMegaMenu() {
 					media={
 						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/visualize_mega_menu_light.png"
+								src="/images/visualize_mega_menu_light.webp"
 								alt="Visualize mega menu preview (light mode)"
 								fill
 								sizes="220px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={80}
 							/>
 							<Image
-								src="/images/visualize_mega_menu_dark.png"
+								src="/images/visualize_mega_menu_dark.webp"
 								alt="Visualize mega menu preview (dark mode)"
 								fill
 								sizes="220px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={80}
 							/>
 						</div>
 					}
