@@ -107,7 +107,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				{/* Top layout: Map and Assay at a Glance */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					{/* Left: Map + primer sections + legend */}
-					<div className="lg:col-span-2 space-y-8">
+					<div className="lg:col-span-2">
 						<Map
 							query={() =>
 								prisma.sample.findMany({
@@ -126,8 +126,8 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						/>
 
 						{/* Forward Primer Section */}
-						<section id="primerSection" className="p-6 bg-base-100 rounded-lg border border-base-300">
-							<div className="space-y-3">
+						<section id="primerSection" className="pt-8">
+							<div className="space-y-3 p-6 bg-base-100 rounded-lg border border-base-300">
 								<div className="flex flex-wrap items-start justify-between gap-6">
 									{/* Left: label + primer name */}
 									<div className="min-w-35 space-y-1">
@@ -180,7 +180,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						</section>
 
 						{/* Reverse Primer Section */}
-						<section className="p-6 bg-base-100 rounded-lg border border-base-300">
+						<section className="p-6 bg-base-100 rounded-lg border border-base-300 my-8">
 							<div className="space-y-3">
 								<div className="flex flex-wrap items-start justify-between gap-6">
 									{/* Left: label + primer name */}
