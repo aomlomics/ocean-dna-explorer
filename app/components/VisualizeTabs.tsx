@@ -8,7 +8,7 @@ export default function VisualizeTabs() {
 	const searchParams = useSearchParams();
 
 	return (
-		<nav className="flex">
+		<nav id="visualizations" className="flex pt-2">
 			<Link
 				href={`/visualize/metadata?${searchParams.toString()}`}
 				className={`btn px-6 py-3 transition-colors rounded-none ${

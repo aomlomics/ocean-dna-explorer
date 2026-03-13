@@ -148,17 +148,17 @@ export default function Tour() {
 			{ url: featureid ? `/explore/feature/${featureid}#feature` : "/search?table=feature" },
 			{
 				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
-				stepTime: 3
+				stepTime: 2
 			},
 			{
-				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#sampleScatter`
+				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#visualizations`
 			},
 			{
 				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
-				stepTime: 3
+				stepTime: 2
 			},
 			{
-				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#taxaBar`
+				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#visualizations`
 			},
 			{ url: "/learn?section=edna101#learn" },
 			{ url: "/learn?section=edna101#step1" },

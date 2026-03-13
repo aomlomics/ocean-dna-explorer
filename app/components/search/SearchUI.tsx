@@ -727,24 +727,20 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		<>
 			<form
 				ref={formRef}
-				className="flex flex-col gap-4"
+				className="bg-base-100 rounded-lg"
 				onSubmit={(e) => {
 					e.preventDefault();
 					search();
 				}}
 				onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
 			>
-				<div className="bg-base-100 py-6 rounded-lg mb-4">
-					<div className="space-y-4">
-						<SearchGroupComponent
-							group={searchTree}
-							onChange={setSearchTree}
-							onHelpClick={() => helpModalRef.current?.showModal()}
-							footer={rootFooter}
-							{...tableArgs}
-						/>
-					</div>
-				</div>
+				<SearchGroupComponent
+					group={searchTree}
+					onChange={setSearchTree}
+					onHelpClick={() => helpModalRef.current?.showModal()}
+					footer={rootFooter}
+					{...tableArgs}
+				/>
 			</form>
 
 			{searchTable ? (

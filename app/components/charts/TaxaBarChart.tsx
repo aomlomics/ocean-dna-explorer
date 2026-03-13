@@ -234,7 +234,7 @@ export default function TaxaBarChart({
 	}, [rank, metricType, averageBy, taxonomiesFilter, xLabelsFilter]);
 
 	return (
-		<div id="taxaBar" className="relative">
+		<div className="relative">
 			<div className="w-full flex justify-center items-center gap-5 mb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
