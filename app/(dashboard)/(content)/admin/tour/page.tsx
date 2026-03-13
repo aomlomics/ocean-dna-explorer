@@ -4,131 +4,214 @@ import InfoButton from "@/app/components/InfoButton";
 import { DEFAULT_TOUR_STEP_TIME, TourContext, TourStep } from "@/app/hooks/TourProvider";
 import { NetworkPacket } from "@/types/globals";
 import { useAuth } from "@clerk/clerk-react";
-import { Fragment, useContext, useEffect, useReducer, useState } from "react";
+import { Fragment, useContext, useEffect, useReducer, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
+
+type TourStepWithInvalid = TourStep & { invalid?: boolean };
 
 export default function Tour() {
 	const startTour = useContext(TourContext);
 	const { signOut } = useAuth();
 
+	const addRef = useRef<HTMLInputElement>(null);
+
 	const [loading, setLoading] = useState(true);
+
+	const [stepTime, setStepTime] = useState(DEFAULT_TOUR_STEP_TIME as number | undefined);
+
+	const [currProject, setCurrProject] = useState("");
 	const [projects, setProjects] = useState([] as string[]);
+	const [currSample, setCurrSample] = useState("");
+	const [samples, setSamples] = useState([] as string[]);
+	const [currAnalysis, setCurrAnalysis] = useState("");
+	const [analyses, setAnalyses] = useState([] as string[]);
+	const [currTaxonomy, setCurrTaxonomy] = useState("");
+	const [taxonomies, setTaxonomies] = useState([] as string[]);
+	const [featuresEnabled, setFeaturesEnabled] = useState(false);
+	const [currFeature, setCurrFeature] = useState("");
+	const [features, setFeatures] = useState([] as string[]);
+
 	const [tourSteps, setTourSteps] = useReducer(
 		(
-			state: (TourStep & { invalid?: boolean })[],
-			update?:
+			state: TourStepWithInvalid[],
+			update:
 				| ({ i: number } & (
-						| { delete: true; value?: undefined; shift?: undefined }
+						| { add: true; delete?: undefined; shift?: undefined; value?: undefined }
+						| { add?: undefined; delete: true; shift?: undefined; value?: undefined }
+						| { add?: undefined; delete?: undefined; shift: -1 | 1; value?: undefined }
 						| {
+								add?: undefined;
 								delete?: undefined;
-								value: TourStep;
 								shift?: undefined;
+								value: Omit<TourStep, "url"> & { url?: string; invalid?: boolean };
 						  }
-						| { delete?: undefined; value?: undefined; shift: -1 | 1 }
 				  ))
-				| (TourStep & { invalid?: boolean })[]
-				| undefined
-		) => {
-			if (update) {
-				if (Array.isArray(update)) {
-					return update;
-				} else if (update.delete) {
-					const temp = [...state];
-					temp.splice(update.i, 1);
-					return temp;
-				} else if (update.shift) {
-					const temp = [...state];
-					//swap current element with element in direction of shift
-					[temp[update.i], temp[update.i + update.shift]] = [temp[update.i + update.shift], temp[update.i]];
-					return temp;
-				} else {
-					const temp = [...state];
-					temp[update.i] = { ...temp[update.i], ...update.value };
-					return temp;
-				}
-			} else {
+				| TourStep[]
+		): TourStepWithInvalid[] => {
+			if (Array.isArray(update)) {
+				return update;
+			} else if (update.add) {
 				const temp = [...state];
-				temp.push({ url: "" });
+				temp.splice(update.i - 1, 0, { url: "" });
+				return temp;
+			} else if (update.delete) {
+				const temp = [...state];
+				temp.splice(update.i, 1);
+				return temp;
+			} else if (update.shift) {
+				const temp = [...state];
+				//swap current element with element in direction of shift
+				[temp[update.i], temp[update.i + update.shift]] = [temp[update.i + update.shift], temp[update.i]];
+				return temp;
+			} else {
+				//update.value
+				const temp = [...state];
+				temp[update.i] = { ...temp[update.i], ...update.value };
 				return temp;
 			}
 		},
 		[]
 	);
 
-	async function generateTourSteps(selectedProject?: string) {
+	async function generateTourSteps({
+		selectedProject,
+		selectedSample,
+		selectedAnalysis,
+		selectedTaxonomy,
+		selectedFeature
+	}: {
+		selectedProject?: string;
+		selectedSample?: string;
+		selectedAnalysis?: string;
+		selectedTaxonomy?: string;
+		selectedFeature?: string;
+	} = {}) {
 		//project
 		let project_id = selectedProject;
+		let samp_name = selectedSample;
+		let analysis_run_name = selectedAnalysis;
+		let assay_name;
+		let taxonomy = selectedTaxonomy;
+		let featureid = selectedFeature;
+
+		//use previous values when possible
+		if (!selectedProject) {
+			project_id = project_id || currProject;
+			analysis_run_name = analysis_run_name || currAnalysis;
+
+			if (!selectedAnalysis) {
+				samp_name = samp_name || currSample;
+
+				if (!selectedSample) {
+					taxonomy = taxonomy || currTaxonomy;
+					featureid = featureid || currFeature;
+				}
+			}
+		}
+
+		//query for missing values
 		if (!project_id) {
 			const res = await fetch("/api/project?fields=project_id");
 			if (res.ok) {
 				const response = (await res.json()) as NetworkPacket;
-				if (response.statusMessage === "success" && response.result[0]) {
-					project_id = response.result[0].project_id as string;
+				if (response.statusMessage === "success" && response.result.length) {
+					project_id = response.result[0].project_id;
+
+					if (!projects.length) {
+						setProjects(response.result.map((r: { project_id: string }) => r.project_id).sort());
+					}
 				}
 			}
 		}
 
-		let samp_name;
-		let assay_name;
-		let analysis_run_name;
 		if (project_id) {
-			//sample
-			const sampRes = await fetch(
-				`/api/sample?fields=samp_name&limit=1&advanced=[["project_id","equals","${project_id}"]]`
-			);
-			if (sampRes.ok) {
-				const response = (await sampRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success" && response.result[0]) {
-					samp_name = response.result[0].samp_name;
-				}
-			}
-
-			//assay
-			const assayRes = await fetch(
-				`/api/assay?fields=assay_name&limit=1&advanced=[["sample","samp_name","equals","${samp_name}"]]`
-			);
-			if (assayRes.ok) {
-				const response = (await assayRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success" && response.result[0]) {
-					assay_name = response.result[0].assay_name;
-				}
-			}
-
 			//analysis
-			const analysisRes = await fetch(
-				`/api/analysis?fields=analysis_run_name&limit=1&advanced=[["assay_name","equals","${assay_name}"],["project_id","equals","${project_id}"]]`
-			);
-			if (analysisRes.ok) {
-				const response = (await analysisRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success" && response.result[0]) {
-					analysis_run_name = response.result[0].analysis_run_name;
+			if (!analysis_run_name) {
+				const analysisRes = await fetch(
+					`/api/analysis?fields=analysis_run_name,assay_name&advanced=[["project_id","equals","${project_id}"]]`
+				);
+				if (analysisRes.ok) {
+					const response = (await analysisRes.json()) as NetworkPacket;
+					if (response.statusMessage === "success") {
+						if (!analyses.length || selectedProject) {
+							setAnalyses(response.result.map((r: { analysis_run_name: string }) => r.analysis_run_name).sort());
+						}
+
+						if (response.result.length) {
+							assay_name = response.result[0].assay_name;
+							analysis_run_name = response.result[0].analysis_run_name;
+						}
+					}
+				}
+			}
+
+			if (analysis_run_name) {
+				//sample
+				if (!samp_name) {
+					const sampRes = await fetch(
+						`/api/sample?fields=samp_name&advanced=[["occurrence","analysis_run_name","equals","${analysis_run_name}"]]`
+					);
+					if (sampRes.ok) {
+						const response = (await sampRes.json()) as NetworkPacket;
+						if (response.statusMessage === "success") {
+							if (!samples.length || selectedProject || selectedAnalysis) {
+								setSamples(response.result.map((r: { samp_name: string }) => r.samp_name).sort());
+							}
+
+							if (response.result.length) {
+								samp_name = response.result[0].samp_name;
+							}
+						}
+					}
+				}
+
+				if (samp_name) {
+					const occRes = await fetch(
+						`/api/occurrence?fields=featureid&relations=Assignment&relationsAllFields=true&advanced=[["sample","samp_name","equals","${samp_name}"],["analysis_run_name","equals","${analysis_run_name}"]]`
+					);
+					if (occRes.ok) {
+						const response = (await occRes.json()) as NetworkPacket;
+						if (response.statusMessage === "success") {
+							//taxonomy and feature
+							const taxaOptions = new Set() as Set<string>;
+							const featOptions = new Set() as Set<string>;
+							const doNewTaxa = !taxonomies.length || selectedProject || selectedAnalysis || selectedSample;
+							const doNewFeats =
+								featuresEnabled && (!features.length || selectedProject || selectedAnalysis || selectedSample);
+							if (doNewTaxa || doNewFeats) {
+								for (const occ of response.result) {
+									if (doNewTaxa) {
+										taxaOptions.add(occ.Assignment.taxonomy);
+									}
+									if (doNewFeats) {
+										featOptions.add(occ.featureid);
+									}
+								}
+
+								if (doNewTaxa) {
+									setTaxonomies(Array.from(taxaOptions).sort());
+								}
+								if (doNewFeats) {
+									setFeatures(Array.from(featOptions).sort());
+								}
+							}
+
+							if (response.result.length) {
+								taxonomy = response.result[0].Assignment.taxonomy;
+								featureid = response.result[0].featureid;
+							}
+						}
+					}
 				}
 			}
 		}
 
-		let taxonomy;
-		let featureid;
-		if (analysis_run_name) {
-			const taxaRes = await fetch(
-				`/api/taxonomy?fields=taxonomy&limit=1&advanced=[["assignment","analysis_run_name","equals","${analysis_run_name}"]]`
-			);
-			if (taxaRes.ok) {
-				const response = (await taxaRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success" && response.result[0]) {
-					taxonomy = response.result[0].taxonomy;
-				}
-			}
-
-			const featureRes = await fetch(
-				`/api/feature?fields=featureid&limit=1&advanced=[["occurrence","analysis_run_name","equals","${analysis_run_name}"]]`
-			);
-			if (featureRes.ok) {
-				const response = (await featureRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success" && response.result[0]) {
-					featureid = response.result[0].featureid;
-				}
-			}
-		}
+		//update state with new values
+		setCurrProject(project_id || "");
+		setCurrAnalysis(analysis_run_name || "");
+		setCurrSample(samp_name || "");
+		setCurrTaxonomy(taxonomy || "");
+		setCurrFeature(featureid || "");
 
 		setTourSteps([
 			{ url: "/" },
@@ -160,24 +243,24 @@ export default function Tour() {
 			{
 				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#visualizations`
 			},
-			{ url: "/learn?section=edna101#learn" },
-			{ url: "/learn?section=edna101#step1" },
-			{ url: "/learn?section=edna101#step2" },
-			{ url: "/learn?section=edna101#step3" },
-			{ url: "/learn?section=edna101#step4" },
-			{ url: "/learn?section=edna101#step5" },
-			{ url: "/learn?section=edna101#step6" },
-			{ url: "/learn?section=edna101#step7" },
-			{ url: "/learn?section=edna101#step8" },
-			{ url: "/learn?section=edna101#step9" },
-			{ url: "/learn?section=edna101#step10" },
-			{ url: "/learn?section=edna101#step11" },
-			{ url: "/learn?section=impact#learn" },
-			{ url: "/learn?section=impact#step1" },
-			{ url: "/learn?section=impact#step2" },
-			{ url: "/learn?section=impact#step3" },
-			{ url: "/learn?section=impact#step4" },
-			{ url: "/learn?section=impact#step5" },
+			{ url: "/learn?section=edna101#learn", stepTime: 15 },
+			{ url: "/learn?section=edna101#step1", stepTime: 15 },
+			{ url: "/learn?section=edna101#step2", stepTime: 15 },
+			{ url: "/learn?section=edna101#step3", stepTime: 15 },
+			{ url: "/learn?section=edna101#step4", stepTime: 15 },
+			{ url: "/learn?section=edna101#step5", stepTime: 15 },
+			{ url: "/learn?section=edna101#step6", stepTime: 15 },
+			{ url: "/learn?section=edna101#step7", stepTime: 15 },
+			{ url: "/learn?section=edna101#step8", stepTime: 15 },
+			{ url: "/learn?section=edna101#step9", stepTime: 15 },
+			{ url: "/learn?section=edna101#step10", stepTime: 15 },
+			{ url: "/learn?section=edna101#step11", stepTime: 15 },
+			{ url: "/learn?section=impact#learn", stepTime: 15 },
+			{ url: "/learn?section=impact#step1", stepTime: 15 },
+			{ url: "/learn?section=impact#step2", stepTime: 15 },
+			{ url: "/learn?section=impact#step3", stepTime: 15 },
+			{ url: "/learn?section=impact#step4", stepTime: 15 },
+			{ url: "/learn?section=impact#step5", stepTime: 15 },
 			{ url: "/about#mission" },
 			{ url: "/about#team" },
 			{ url: "/about#supportedBy" },
@@ -187,17 +270,6 @@ export default function Tour() {
 	}
 
 	useEffect(() => {
-		async function fetchProjects() {
-			const projectIdRes = await fetch("/api/project?fields=project_id");
-			if (projectIdRes.ok) {
-				const response = (await projectIdRes.json()) as NetworkPacket;
-				if (response.statusMessage === "success") {
-					setProjects(response.result.map((r: { project_id: string }) => r.project_id).sort());
-				}
-			}
-		}
-
-		fetchProjects();
 		generateTourSteps();
 	}, []);
 
@@ -208,16 +280,182 @@ export default function Tour() {
 
 	return (
 		<>
-			<select defaultValue="Pick a color" className="select">
-				<option disabled={true}>Pick a Project</option>
-				{projects.map((id) => (
-					<option key={id}>{id}</option>
-				))}
-			</select>
+			<h1>Tour Destinations:</h1>
+			<div className="grid grid-cols-5 gap-2 border-b border-primary pb-2">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Project</legend>
+					<select
+						className="select"
+						value={currProject}
+						onChange={(e) => {
+							setLoading(true);
+							generateTourSteps({ selectedProject: e.target.value });
+						}}
+						disabled={loading}
+					>
+						<option disabled={true}>Pick a Project</option>
+						{projects.map((id) => (
+							<option key={id}>{id}</option>
+						))}
+					</select>
+				</fieldset>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Analysis</legend>
+					<select
+						className="select"
+						value={currAnalysis}
+						onChange={(e) => {
+							setLoading(true);
+							generateTourSteps({ selectedAnalysis: e.target.value });
+						}}
+						disabled={loading}
+					>
+						<option disabled={true}>Pick an Analysis</option>
+						{analyses.map((id) => (
+							<option key={id}>{id}</option>
+						))}
+					</select>
+				</fieldset>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Sample</legend>
+					<select
+						className="select"
+						value={currSample}
+						onChange={(e) => {
+							setLoading(true);
+							generateTourSteps({ selectedSample: e.target.value });
+						}}
+						disabled={loading}
+					>
+						<option disabled={true}>Pick a Sample</option>
+						{samples.map((id) => (
+							<option key={id}>{id}</option>
+						))}
+					</select>
+				</fieldset>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Taxonomy</legend>
+					<select
+						className="select"
+						value={currTaxonomy}
+						onChange={(e) => {
+							setLoading(true);
+							generateTourSteps({ selectedTaxonomy: e.target.value });
+						}}
+						disabled={loading}
+					>
+						<option disabled={true}>Pick a Taxonomy</option>
+						{taxonomies.map((id) => (
+							<option key={id}>{id}</option>
+						))}
+					</select>
+				</fieldset>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">
+						Feature{" "}
+						<InfoButton
+							infoText="Enabling this might cause slow load times when changing other options"
+							type="warning"
+							className="h-4"
+						/>
+						<div
+							className="tooltip tooltip-secondary before:text-primary-content"
+							data-tip={`${featuresEnabled ? "Disable" : "Enable"} selecting Feature destination`}
+						>
+							<input
+								type="checkbox"
+								className="toggle toggle-xs"
+								checked={featuresEnabled}
+								onChange={async (e) => {
+									setFeaturesEnabled(e.target.checked);
+
+									if (e.target.checked) {
+										setLoading(true);
+
+										const res = await fetch(
+											`/api/feature?fields=featureid&advanced=[["occurrence","analysis_run_name","equals","${currAnalysis}"]]`
+										);
+										if (res.ok) {
+											const response = (await res.json()) as NetworkPacket;
+											if (response.statusMessage === "success" && response.result.length) {
+												setFeatures(response.result.map((r: { featureid: string }) => r.featureid).sort());
+											}
+										}
+
+										setLoading(false);
+									}
+								}}
+								disabled={loading}
+							/>
+						</div>
+					</legend>
+					<select
+						className="select"
+						value={currFeature}
+						onChange={(e) => {
+							setLoading(true);
+							generateTourSteps({ selectedFeature: e.target.value });
+						}}
+						disabled={loading || !featuresEnabled}
+					>
+						<option disabled={true}>Pick a Feature</option>
+						{!featuresEnabled ? <option>{currFeature}</option> : <></>}
+						{features.map((id) => (
+							<option key={id}>{id}</option>
+						))}
+					</select>
+				</fieldset>
+			</div>
+
 			<div className="grid grid-cols-[6%_5%_42%_42%_5%] gap-y-2 py-2">
-				<button className="btn btn-success p-2 justify-self-center" onClick={() => setTourSteps()} disabled={loading}>
-					Add Step
-				</button>
+				<form
+					className="flex"
+					onSubmit={(e) => {
+						e.preventDefault();
+						if (addRef.current) {
+							const i = parseInt(addRef.current.value);
+							if (i > 0 && i <= tourSteps.length + 1) {
+								addRef.current.value = `${i + 1}`;
+								setTourSteps({ i, add: true });
+							}
+						}
+					}}
+				>
+					{tourSteps.length ? (
+						<input
+							ref={addRef}
+							className="input pl-1.5 pr-1 w-full rounded-r-none"
+							type="number"
+							disabled={loading}
+							defaultValue={tourSteps.length + 1}
+							onChange={(e) => {
+								const i = parseInt(e.target.value);
+								if (i <= 0 || i > tourSteps.length + 1) {
+									if (!e.target.classList.contains("input-error")) {
+										e.target.classList.add("input-error");
+									}
+								} else {
+									e.target.classList.remove("input-error");
+								}
+							}}
+						/>
+					) : (
+						<input
+							key={tourSteps.length}
+							className="input pl-1.5 pr-1 w-full rounded-r-none"
+							type="number"
+							disabled
+							defaultValue={1}
+						/>
+					)}
+					<button className="btn btn-success p-1.5 justify-self-center rounded-l-none" disabled={loading}>
+						Add
+					</button>
+				</form>
 
 				<div className="self-center justify-self-center">Step</div>
 
@@ -226,18 +464,36 @@ export default function Tour() {
 				</div>
 
 				<div className="flex items-center">
-					Step Time <span className="text-primary text-xs pl-5">({DEFAULT_TOUR_STEP_TIME} Seconds)</span>
+					Step Time{" "}
+					<input
+						className="input input-xs ml-5 mr-2 w-12 px-1"
+						type="number"
+						value={stepTime !== undefined ? stepTime : ""}
+						onChange={(e) => {
+							const parsed = parseInt(e.target.value);
+							setStepTime(isNaN(parsed) ? undefined : parsed);
+
+							if (parsed <= 0) {
+								if (!e.target.classList.contains("input-error")) {
+									e.target.classList.add("input-error");
+								}
+							} else {
+								e.target.classList.remove("input-error");
+							}
+						}}
+					/>{" "}
+					<span className="text-primary text-xs">Seconds</span>
 				</div>
 
 				<div></div>
 
 				{tourSteps.map((step, i) => (
 					<Fragment key={i}>
-						<div className="flex gap-1 justify-self-center">
+						<div className="flex gap-1 justify-self-center self-center w-full">
 							<button
 								className="btn aspect-square p-2"
 								onClick={() => setTourSteps({ i, shift: -1 })}
-								disabled={i === 0}
+								disabled={loading || i === 0}
 							>
 								<svg
 									className="w-full h-full text-primary"
@@ -252,7 +508,7 @@ export default function Tour() {
 							<button
 								className="btn aspect-square p-2"
 								onClick={() => setTourSteps({ i, shift: 1 })}
-								disabled={i === tourSteps.length - 1}
+								disabled={loading || i === tourSteps.length - 1}
 							>
 								<svg
 									className="w-full h-full text-primary"
@@ -267,9 +523,11 @@ export default function Tour() {
 							</button>
 						</div>
 
-						<div className="self-center justify-self-center">{i + 1}</div>
+						<div className={`flex items-center justify-center w-full h-full${i % 2 === 0 ? " bg-base-200" : ""}`}>
+							{i + 1}
+						</div>
 
-						<div className="w-full pr-2">
+						<div className={`w-full pr-2 py-1${i % 2 === 0 ? " bg-base-200" : ""}`}>
 							<input
 								className={`input w-full${tourSteps[i].url && !tourSteps[i].invalid ? "" : " input-error"}`}
 								value={step.url}
@@ -278,26 +536,50 @@ export default function Tour() {
 									setTourSteps({ i, value: { url } });
 									checkUrl(i, url);
 								}}
+								disabled={loading}
 							/>
 						</div>
 
-						<input
-							className="input w-full"
-							type="number"
-							value={step.stepTime || ""}
-							onChange={(e) => setTourSteps({ i, value: { stepTime: parseInt(e.currentTarget.value) } })}
-							placeholder="Step time in seconds..."
-						/>
+						<div className={`w-full py-1${i % 2 === 0 ? " bg-base-200" : ""}`}>
+							<input
+								className="input w-full"
+								type="number"
+								value={step.stepTime !== undefined ? step.stepTime : ""}
+								onChange={(e) => {
+									const parsed = parseInt(e.currentTarget.value);
+									setTourSteps({ i, value: { stepTime: isNaN(parsed) ? undefined : parsed } });
 
-						<button
-							className="btn btn-error aspect-square p-2 justify-self-center"
-							onClick={() => setTourSteps({ i, delete: true })}
-						>
-							<svg fill="black" className="w-full h-full" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-								<path d="M20 6h-3.155a.949.949 0 0 0-.064-.125l-1.7-2.124A1.989 1.989 0 0 0 13.519 3h-3.038a1.987 1.987 0 0 0-1.562.75l-1.7 2.125A.949.949 0 0 0 7.155 6H4a1 1 0 0 0 0 2h1v11a2 2 0 0 0 1.994 2h10.011A2 2 0 0 0 19 19V8h1a1 1 0 0 0 0-2zm-9.519-1h3.038l.8 1H9.681zm6.524 14H7V8h10z" />
-								<path d="M14 18a1 1 0 0 1-1-1v-7a1 1 0 0 1 2 0v7a1 1 0 0 1-1 1zM10 18a1 1 0 0 1-1-1v-7a1 1 0 0 1 2 0v7a1 1 0 0 1-1 1z" />
-							</svg>
-						</button>
+									if (parsed <= 0) {
+										if (!e.target.classList.contains("input-error")) {
+											e.target.classList.add("input-error");
+										}
+									} else {
+										e.target.classList.remove("input-error");
+									}
+								}}
+								placeholder="Step time in seconds..."
+								disabled={loading}
+							/>
+						</div>
+
+						<div className={`flex justify-center items-center w-full h-full${i % 2 === 0 ? " bg-base-200" : ""}`}>
+							<button
+								className="btn btn-error aspect-square p-2"
+								onClick={() => {
+									if (addRef.current && parseInt(addRef.current.value) > tourSteps.length) {
+										addRef.current.value = `${tourSteps.length}`;
+									}
+
+									setTourSteps({ i, delete: true });
+								}}
+								disabled={loading}
+							>
+								<svg fill="black" className="w-full h-full" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+									<path d="M20 6h-3.155a.949.949 0 0 0-.064-.125l-1.7-2.124A1.989 1.989 0 0 0 13.519 3h-3.038a1.987 1.987 0 0 0-1.562.75l-1.7 2.125A.949.949 0 0 0 7.155 6H4a1 1 0 0 0 0 2h1v11a2 2 0 0 0 1.994 2h10.011A2 2 0 0 0 19 19V8h1a1 1 0 0 0 0-2zm-9.519-1h3.038l.8 1H9.681zm6.524 14H7V8h10z" />
+									<path d="M14 18a1 1 0 0 1-1-1v-7a1 1 0 0 1 2 0v7a1 1 0 0 1-1 1zM10 18a1 1 0 0 1-1-1v-7a1 1 0 0 1 2 0v7a1 1 0 0 1-1 1z" />
+								</svg>
+							</button>
+						</div>
 					</Fragment>
 				))}
 			</div>
@@ -307,9 +589,13 @@ export default function Tour() {
 					className="btn btn-primary"
 					onClick={async () => {
 						await signOut();
-						startTour(tourSteps);
+						startTour(tourSteps, stepTime);
 					}}
-					disabled={loading || tourSteps.some((step) => !step.url || step.invalid)}
+					disabled={
+						loading ||
+						tourSteps.some((step) => !step.url || step.invalid || (step.stepTime && step.stepTime <= 0)) ||
+						(stepTime !== undefined && stepTime <= 0)
+					}
 				>
 					Start Tour
 				</button>

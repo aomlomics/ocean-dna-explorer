@@ -5,13 +5,14 @@ import { createContext, ReactNode, useEffect, useRef, useState } from "react";
 
 export type TourStep = { url: string; stepTime?: number };
 
-export const TourContext = createContext<(tourSteps: TourStep[]) => void>(() => {});
-export const DEFAULT_TOUR_STEP_TIME = 5; //seconds
+export const TourContext = createContext<(tourSteps: TourStep[], stepTime?: number) => void>(() => {});
+export const DEFAULT_TOUR_STEP_TIME = 30; //seconds
 
 export default function TourProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
 	const [tourSteps, setTourSteps] = useState(undefined as TourStep[] | undefined);
 	const [step, setStep] = useState(undefined as number | undefined);
+	const [stepTime, setStepTime] = useState(DEFAULT_TOUR_STEP_TIME);
 	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	function stopTour() {
@@ -23,7 +24,10 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 		timeoutRef.current = null;
 	}
 
-	function startTour(tourSteps: TourStep[]) {
+	function startTour(tourSteps: TourStep[], stepTime?: number) {
+		if (stepTime && stepTime > 0) {
+			setStepTime(stepTime);
+		}
 		setTourSteps(tourSteps);
 
 		document.addEventListener("click", stopTour);
@@ -37,10 +41,7 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 			const nextI = (step + 1) % tourSteps.length;
 
 			//next step navigation timeout
-			timeoutRef.current = setTimeout(
-				() => setStep(nextI),
-				(tourSteps[step].stepTime || DEFAULT_TOUR_STEP_TIME) * 1000
-			);
+			timeoutRef.current = setTimeout(() => setStep(nextI), (tourSteps[step].stepTime || stepTime) * 1000);
 
 			//prefetch next step
 			router.prefetch(tourSteps[nextI].url);
