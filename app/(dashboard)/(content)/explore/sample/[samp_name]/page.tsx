@@ -38,7 +38,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	const { Assays: _, Project: __, ...justSample } = sample;
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div id="sample" className="space-y-8 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -198,7 +198,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					{/* Sample Information */}
 					<div className="bg-base-200 rounded-xl p-6">
 						<h2 className="text-xl font-medium text-base-content/90 mb-4">Sample Information</h2>
-						<div className="h-[300px] overflow-y-auto">
+						<div className="h-75 overflow-y-auto">
 							<DataDisplay table="sample" data={justSample} omit={["project_id", "analysis_run_name", "assay_name"]} />
 						</div>
 					</div>

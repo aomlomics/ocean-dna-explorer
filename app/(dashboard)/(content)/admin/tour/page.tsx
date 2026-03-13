@@ -12,6 +12,7 @@ export default function Tour() {
 	const { signOut } = useAuth();
 
 	const [loading, setLoading] = useState(true);
+	const [projects, setProjects] = useState([] as string[]);
 	const [tourSteps, setTourSteps] = useReducer(
 		(
 			state: (TourStep & { invalid?: boolean })[],
@@ -54,28 +55,149 @@ export default function Tour() {
 		[]
 	);
 
-	useEffect(() => {
-		async function generateTourSteps() {
-			//project_id
-			let project_id;
-			const projectIdRes = await fetch("/api/project?limit=1&fields=project_id");
-			if (projectIdRes.ok) {
-				const response = (await projectIdRes.json()) as NetworkPacket;
+	async function generateTourSteps(selectedProject?: string) {
+		//project
+		let project_id = selectedProject;
+		if (!project_id) {
+			const res = await fetch("/api/project?fields=project_id");
+			if (res.ok) {
+				const response = (await res.json()) as NetworkPacket;
 				if (response.statusMessage === "success" && response.result[0]) {
-					project_id = response.result[0].project_id;
+					project_id = response.result[0].project_id as string;
+				}
+			}
+		}
+
+		let samp_name;
+		let assay_name;
+		let analysis_run_name;
+		if (project_id) {
+			//sample
+			const sampRes = await fetch(
+				`/api/sample?fields=samp_name&limit=1&advanced=[["project_id","equals","${project_id}"]]`
+			);
+			if (sampRes.ok) {
+				const response = (await sampRes.json()) as NetworkPacket;
+				if (response.statusMessage === "success" && response.result[0]) {
+					samp_name = response.result[0].samp_name;
 				}
 			}
 
-			setTourSteps([
-				{ url: "/" },
-				{ url: "/#siteSummary" },
-				{ url: "/explore/project", stepTime: 2 },
-				{ url: "/explore/project#table" },
-				{ url: project_id ? `/explore/project/${project_id}` : "/search?table=project" }
-			]);
-			setLoading(false);
+			//assay
+			const assayRes = await fetch(
+				`/api/assay?fields=assay_name&limit=1&advanced=[["sample","samp_name","equals","${samp_name}"]]`
+			);
+			if (assayRes.ok) {
+				const response = (await assayRes.json()) as NetworkPacket;
+				if (response.statusMessage === "success" && response.result[0]) {
+					assay_name = response.result[0].assay_name;
+				}
+			}
+
+			//analysis
+			const analysisRes = await fetch(
+				`/api/analysis?fields=analysis_run_name&limit=1&advanced=[["assay_name","equals","${assay_name}"],["project_id","equals","${project_id}"]]`
+			);
+			if (analysisRes.ok) {
+				const response = (await analysisRes.json()) as NetworkPacket;
+				if (response.statusMessage === "success" && response.result[0]) {
+					analysis_run_name = response.result[0].analysis_run_name;
+				}
+			}
 		}
 
+		let taxonomy;
+		let featureid;
+		if (analysis_run_name) {
+			const taxaRes = await fetch(
+				`/api/taxonomy?fields=taxonomy&limit=1&advanced=[["assignment","analysis_run_name","equals","${analysis_run_name}"]]`
+			);
+			if (taxaRes.ok) {
+				const response = (await taxaRes.json()) as NetworkPacket;
+				if (response.statusMessage === "success" && response.result[0]) {
+					taxonomy = response.result[0].taxonomy;
+				}
+			}
+
+			const featureRes = await fetch(
+				`/api/feature?fields=featureid&limit=1&advanced=[["occurrence","analysis_run_name","equals","${analysis_run_name}"]]`
+			);
+			if (featureRes.ok) {
+				const response = (await featureRes.json()) as NetworkPacket;
+				if (response.statusMessage === "success" && response.result[0]) {
+					featureid = response.result[0].featureid;
+				}
+			}
+		}
+
+		setTourSteps([
+			{ url: "/" },
+			{ url: "/#dataSummary" },
+			{ url: "/#dataTaxa" },
+			{ url: "/explore/project" },
+			{ url: project_id ? `/explore/project/${project_id}#project` : "/search?table=project" },
+			{
+				url: project_id ? `/search?table=sample&advanced=[["project_id","equals","${project_id}"]]` : "/explore/sample"
+			},
+			{ url: samp_name ? `/explore/sample/${samp_name}#sample` : "/search?table=sample" },
+			{ url: assay_name ? `/explore/assay/${assay_name}#assay` : "/explore/assay" },
+			{ url: assay_name ? `/explore/assay/${assay_name}#primerSection` : "/search?table=assay" },
+			{ url: analysis_run_name ? `/explore/analysis/${analysis_run_name}#analysis` : "/explore/analysis" },
+			{ url: analysis_run_name ? `/explore/analysis/${analysis_run_name}#dataExplorer` : "/search?table=analysis" },
+			{ url: taxonomy ? `/explore/taxonomy/${taxonomy}#taxonomy` : "/search?table=taxonomy" },
+			{ url: featureid ? `/explore/feature/${featureid}#feature` : "/search?table=feature" },
+			{
+				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
+				stepTime: 3
+			},
+			{
+				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#sampleScatter`
+			},
+			{
+				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
+				stepTime: 3
+			},
+			{
+				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#taxaBar`
+			},
+			{ url: "/learn?section=edna101#learn" },
+			{ url: "/learn?section=edna101#step1" },
+			{ url: "/learn?section=edna101#step2" },
+			{ url: "/learn?section=edna101#step3" },
+			{ url: "/learn?section=edna101#step4" },
+			{ url: "/learn?section=edna101#step5" },
+			{ url: "/learn?section=edna101#step6" },
+			{ url: "/learn?section=edna101#step7" },
+			{ url: "/learn?section=edna101#step8" },
+			{ url: "/learn?section=edna101#step9" },
+			{ url: "/learn?section=edna101#step10" },
+			{ url: "/learn?section=edna101#step11" },
+			{ url: "/learn?section=impact#learn" },
+			{ url: "/learn?section=impact#step1" },
+			{ url: "/learn?section=impact#step2" },
+			{ url: "/learn?section=impact#step3" },
+			{ url: "/learn?section=impact#step4" },
+			{ url: "/learn?section=impact#step5" },
+			{ url: "/about#mission" },
+			{ url: "/about#team" },
+			{ url: "/about#supportedBy" },
+			{ url: "/about#dataStandards" }
+		]);
+		setLoading(false);
+	}
+
+	useEffect(() => {
+		async function fetchProjects() {
+			const projectIdRes = await fetch("/api/project?fields=project_id");
+			if (projectIdRes.ok) {
+				const response = (await projectIdRes.json()) as NetworkPacket;
+				if (response.statusMessage === "success") {
+					setProjects(response.result.map((r: { project_id: string }) => r.project_id).sort());
+				}
+			}
+		}
+
+		fetchProjects();
 		generateTourSteps();
 	}, []);
 
@@ -86,6 +208,12 @@ export default function Tour() {
 
 	return (
 		<>
+			<select defaultValue="Pick a color" className="select">
+				<option disabled={true}>Pick a Project</option>
+				{projects.map((id) => (
+					<option key={id}>{id}</option>
+				))}
+			</select>
 			<div className="grid grid-cols-[6%_5%_42%_42%_5%] gap-y-2 py-2">
 				<button className="btn btn-success p-2 justify-self-center" onClick={() => setTourSteps()} disabled={loading}>
 					Add Step

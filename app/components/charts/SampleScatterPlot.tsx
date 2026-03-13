@@ -240,7 +240,7 @@ export default function SampleScatterPlot({
 	}, [xField, yField, legendField, hoveredLegend]);
 
 	return (
-		<div className="relative">
+		<div id="sampleScatter" className="relative">
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex justify-center items-center gap-2">
 					<fieldset className="fieldset">

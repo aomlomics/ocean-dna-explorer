@@ -111,7 +111,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	return (
-		<div className="space-y-8">
+		<div id="project" className="space-y-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs mb-4">
 				<ul>

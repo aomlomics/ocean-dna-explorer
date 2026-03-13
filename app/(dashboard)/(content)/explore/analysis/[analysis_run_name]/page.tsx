@@ -13,6 +13,7 @@ import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import TaxaGridItem from "@/app/components/paginated/grid/TaxaGridItem";
 import Grid from "@/app/components/paginated/grid/Grid";
+import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 
 export default async function Analysis_run_name({
 	params
@@ -45,7 +46,7 @@ export default async function Analysis_run_name({
 	const { _count: _, editHistory: __, Assay: ___, Tags: ____, ...justAnalysis } = analysis;
 
 	return (
-		<div className="space-y-8">
+		<div id="analysis" className="space-y-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -114,13 +115,13 @@ export default async function Analysis_run_name({
 						where={{ analysis_run_name }}
 						cluster
 						draw
-						className="w-full h-[440px]"
+						className="w-full h-110"
 					/>
 
 					{/* Analysis Information */}
 					<div className="bg-base-200 rounded-xl p-6">
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Analysis Information</h2>
-						<div className="h-[300px] overflow-y-auto">
+						<div className="h-75 overflow-y-auto">
 							<DataDisplay
 								table="analysis"
 								data={justAnalysis}
@@ -215,7 +216,7 @@ export default async function Analysis_run_name({
 			</div>
 
 			{/* Data Explorer */}
-			<div className="mt-8">
+			<div id="dataExplorer" className="mt-8">
 				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
 				<div role="tablist" className="tabs tabs-lifted">
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
@@ -225,17 +226,7 @@ export default async function Analysis_run_name({
 
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Taxa" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box">
-						<Grid
-							Child={TaxaGridItem}
-							table={"taxonomy"}
-							where={{
-								Assignments: {
-									some: {
-										analysis_run_name
-									}
-								}
-							}}
-						/>
+						<TaxaGrid analysis_run_name={analysis_run_name} />
 					</div>
 				</div>
 			</div>
