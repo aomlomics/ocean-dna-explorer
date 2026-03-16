@@ -248,7 +248,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 	}
 
 	return (
-		<div>
+		<div id="taxonomyChart">
 			<h2 className="text-xl font-medium mb-4">
 				<span className="text-base-content/90">
 					Taxonomies found in this <span className="text-primary font-bold">Sample</span>

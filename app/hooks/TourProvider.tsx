@@ -6,7 +6,7 @@ import { createContext, ReactNode, useEffect, useRef, useState } from "react";
 export type TourStep = { url: string; stepTime?: number };
 
 export const TourContext = createContext<(tourSteps: TourStep[], stepTime?: number) => void>(() => {});
-export const DEFAULT_TOUR_STEP_TIME = 30; //seconds
+export const DEFAULT_TOUR_STEP_TIME = 5; //seconds
 
 export default function TourProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
