@@ -199,3 +199,35 @@
 		opacity: 1;
 	}
 }
+
+/* Hide Microsoft social button */
+.ode-signin-page [class*="microsoft"] {
+	display: none !important;
+}
+
+/* cl-socialButtonsRoot is the outer wrapper; its direct child (cl-socialButtons) is
+   the actual flex container. Force row layout and centering here since Clerk's own
+   stylesheet overrides Tailwind utility classes passed via appearance.elements. */
+.ode-signin-page [class*="cl-socialButtonsRoot"] > div {
+	display: flex !important;
+	flex-direction: row !important;
+	justify-content: center !important;
+	gap: 0.5rem !important;
+	flex-wrap: wrap !important;
+}
+
+/* Clerk's own stylesheet applies font-weight: 600 to the header title — override it. */
+.ode-signin-page [class*="cl-headerTitle"] {
+	font-weight: 400 !important;
+}
+
+/* Clerk renders button text in a child span (cl-socialButtonsBlockButtonText) with its
+   own grey color that doesn't inherit from the parent button element. */
+[data-theme="dark"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
+	color: #E2E8F0 !important;
+}
+[data-theme="light"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"],
+.ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
+	color: #233D7F !important;
+}
+

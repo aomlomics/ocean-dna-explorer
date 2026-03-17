@@ -3,7 +3,6 @@ import { SignIn } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { dark } from "@clerk/themes";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 
 export default function Page() {
 	const { resolvedTheme } = useTheme();
@@ -13,21 +12,34 @@ export default function Page() {
 		: "/images/node_logo_light_mode.svg";
 
 	const searchParams = useSearchParams();
-	const redirectUrl = searchParams.get("redirect_url");
+	const redirectUrl = searchParams?.get("redirect_url");
 	const decodedRedirectUrl = redirectUrl ? decodeURIComponent(redirectUrl) : null;
 	const isSubmissionFlow =
 		decodedRedirectUrl?.includes("/submit") || decodedRedirectUrl?.includes("/contribute");
 	const helperText = isSubmissionFlow
-		? "Signing in is required to continue data submission."
-		: "Signing in is required for data submission.";
-
+		? "Sign in to submit data. Contributor access can be requested on the Submit page."
+		: "Need contributor access? Visit the Submit page after signing in.";
+{/* 1st case: Shown when you try to go to submit without being signed in */}
+{/* 2nd case: If they click the Sign In button */}
 	const cardVariantClass = isSubmissionFlow
 		? "ode-signin-card ode-signin-card--submission"
 		: "ode-signin-card";
 
 	return (
-		<div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-base-100 px-4 py-10">
-			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(100,171,220,0.14)_0%,transparent_42%),radial-gradient(circle_at_right,rgba(35,61,127,0.12)_0%,transparent_40%)]" />
+		<div className="ode-signin-page relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-base-200 [html[data-theme='dark']_&]:bg-base-300/50 px-4 py-16">
+			{/* Radial gradient colour wash */}
+			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(100,171,220,0.18)_0%,transparent_42%),radial-gradient(circle_at_right,rgba(35,61,127,0.16)_0%,transparent_40%)]" />
+
+			{/* Top wave — 300px tall SVG; proportionally scaled from 480px baseline.
+			<svg className="pointer-events-none absolute inset-x-0 top-0 w-full rotate-180 text-base-100" height="300" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+				<path fill="currentColor" d="M0,278 C240,300 480,300 720,285 C960,255 1200,255 1440,278 L1440,300 L0,300 Z" />
+			</svg>
+
+			{/* Bottom wave */}
+			{/* <svg className="pointer-events-none absolute inset-x-0 bottom-0 w-full text-base-100" height="300" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+				<path fill="currentColor" d="M0,278 C240,300 480,300 720,285 C960,255 1200,255 1440,278 L1440,300 L0,300 Z" />
+			</svg> */}
+
 			<div className="relative z-10 flex w-full max-w-xl flex-col items-center">
 				<SignIn
 					appearance={{
@@ -47,21 +59,25 @@ export default function Page() {
 									colorInputBackground: "#FFFFFF",
 									colorInputText: "#233D7F"
 							  },
-						layout: {
-							logoPlacement: "inside",
-							logoImageUrl
-						},
+					layout: {
+						logoPlacement: "inside",
+						logoImageUrl,
+						socialButtonsVariant: "blockButton"
+					},
 						elements: {
 							card: `w-full border shadow-2xl rounded-3xl px-8 py-9 sm:px-10 ${cardVariantClass} ${isDark ? "border-[#4B95C3]/40 bg-[#111A2D]/90 backdrop-blur-md" : "border-[#233D7F]/25 bg-white/95 backdrop-blur-md"}`,
 							logoImage: "mx-auto h-auto w-[330px] max-w-full",
-							headerTitle: `text-center text-sm font-semibold tracking-tight ${isDark ? "text-[#E2E8F0]" : "text-[#1F2F57]"}`,
-							headerSubtitle: "hidden",
-							formButtonPrimary: isDark
+							headerTitle: `text-center font-normal ${isDark ? "text-[#E2E8F0]" : "text-[#1F2F57]"}`,
+						headerSubtitle: "hidden",
+						formButtonPrimary: isDark
 								? "bg-[#64ABDC] text-white hover:bg-[#4B95C3] font-semibold rounded-lg"
 								: "bg-[#233D7F] text-white hover:bg-[#1E346B] font-semibold rounded-lg",
-							socialButtonsBlockButton: isDark
-								? "bg-[#181f32] text-[#E2E8F0] font-normal hover:bg-[#233D7F]/50 rounded-lg border border-[#4B95C3]/40"
-								: "bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20",
+							socialButtonsRoot: "w-full",
+						socialButtons: "flex flex-row justify-center gap-2 w-full",
+						socialButtonsBlockButton: isDark
+								? "flex-1 bg-[#181f32] text-[#E2E8F0] font-normal hover:bg-[#233D7F]/50 rounded-lg border border-[#4B95C3]/40"
+								: "flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20",
+						socialButtonsBlockButtonText: isDark ? "text-[#E2E8F0]" : "text-[#233D7F]",
 							formFieldInput: isDark
 								? "bg-[#1E2A45] text-[#E2E8F0] border border-[#4B95C3]/60 rounded-lg"
 								: "bg-[#FFFFFF] text-[#233D7F] border border-[#233D7F]/35 rounded-lg",
@@ -71,14 +87,6 @@ export default function Page() {
 					path="/sign-in"
 					routing="path"
 					signUpUrl="/sign-up"
-					localization={{
-						signIn: {
-							start: {
-								title: "Sign In",
-								titleCombined: "Sign In"
-							}
-						}
-					}}
 				/>
 				<p
 					className={`mt-5 max-w-md text-center text-sm font-semibold tracking-tight leading-relaxed ${
@@ -86,21 +94,11 @@ export default function Page() {
 					}`}
 				>
 					{helperText}
-					{" "}
-					<Link
-						href="/contribute"
-						className={`underline underline-offset-2 transition-colors ${
-							isDark ? "text-[#9FCDF0] hover:text-[#C4E2F8]" : "text-[#233D7F] hover:text-[#1E346B]"
-						}`}
-					>
-						Request contributor access
-					</Link>
-					.
 				</p>
 			</div>
 			<button
 				onClick={() => window.history.back()}
-				className="relative z-10 mt-8 flex items-center gap-2 rounded-lg bg-base-200 px-6 py-3 text-sm font-semibold tracking-tight text-base-content transition-colors duration-200 hover:bg-base-300"
+				className="relative z-10 mt-8 flex items-center gap-2 rounded-lg bg-base-100/80 backdrop-blur-sm px-6 py-3 text-sm font-semibold tracking-tight text-base-content transition-colors duration-200 hover:bg-base-300"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
