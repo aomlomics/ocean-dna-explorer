@@ -23,6 +23,11 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
 		<ClerkProvider
 			appearance={{
 				baseTheme: isDark ? dark : undefined,
+				layout: {
+					logoImageUrl: isDark
+						? "/images/node_logo_dark_mode.svg"
+						: "/images/node_logo_light_mode.svg"
+				},
 				variables: {
 					colorPrimary: "#233D7F",
 					colorBackground: isDark ? "#141824" : "#F4F3F2",
@@ -55,16 +60,16 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
 					},
 					card: "shadow-2xl p-10 rounded-2xl border-4",
 					logoImage: {
-						width: "1000px",
-						height: "40px"
+						width: "300px",
+						height: "auto"
 					}
 				}
 			}}
 			localization={{
 				signIn: {
 					start: {
-						title: "Sign in to the Ocean DNA Explorer",
-						titleCombined: "Sign in to the Ocean DNA Explorer"
+						title: "Sign In",
+						titleCombined: "Sign In"
 					}
 				},
 				dividerText: "or"
