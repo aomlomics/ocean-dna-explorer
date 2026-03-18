@@ -95,7 +95,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
 									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 										<div className="relative w-12 h-12">
-											<AssayPhyloPic assay_name={assay.assay_name} />
+											<Suspense>
+												<AssayPhyloPic assay_name={assay.assay_name} />
+											</Suspense>
 										</div>
 									</div>
 									<div>
@@ -261,127 +263,6 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 					sampName={samp_name}
 				/>
 			</div>
-		</div>
-	);
-}
-
-async function AnalysisDropdownCard({ samp_name }: { samp_name?: Sample["samp_name"] }) {
-	let analyses;
-	if (samp_name) {
-		analyses = await prisma.analysis.findMany({
-			where: {
-				Occurrences: {
-					some: {
-						Library: {
-							samp_name
-						}
-					}
-				}
-			},
-			select: {
-				analysis_run_name: true
-			}
-		});
-	}
-
-	return (
-		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
-			<div
-				tabIndex={0}
-				role="button"
-				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
-			>
-				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
-						<AnalysisIcon />
-					</div>
-					<div>
-						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-							<span className="block">Total</span>
-							<span className="block">Analyses</span>
-						</div>
-						<div className="text-2xl font-bold text-primary">{analyses ? analyses.length : "..."}</div>
-					</div>
-				</div>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					className="text-base-content/70"
-				>
-					<path d="m6 9 6 6 6-6" />
-				</svg>
-			</div>
-			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
-				{analyses ? (
-					analyses!.map((a) => (
-						<li key={a.analysis_run_name}>
-							<Link
-								href={`/explore/analysis/${a.analysis_run_name}`}
-								className="text-base-content hover:text-primary break-all"
-							>
-								{a.analysis_run_name}
-							</Link>
-						</li>
-					))
-				) : (
-					<></>
-				)}
-			</ul>
-		</div>
-	);
-}
-
-function AssayDropdownCard({ count, assayNames }: { count: number; assayNames: string[] }) {
-	return (
-		<div className="dropdown dropdown-hover bg-base-200 hover:bg-base-300 rounded-lg">
-			<div
-				tabIndex={0}
-				role="button"
-				className="focus:bg-base-300 rounded-lg w-full p-4 flex items-center gap-4 justify-between"
-			>
-				<div className="flex items-center gap-4">
-					<div className="w-12 h-12 shrink-0 flex items-center justify-center text-primary">
-						<AssayIcon />
-					</div>
-					<div>
-						<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-							<span className="block">Total</span>
-							<span className="block">Assays</span>
-						</div>
-						<div className="text-2xl font-bold text-primary">{count}</div>
-					</div>
-				</div>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					className="text-base-content/70"
-				>
-					<path d="m6 9 6 6 6-6" />
-				</svg>
-			</div>
-			<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-b-box rounded-t-none w-full z-1 p-2 shadow">
-				{assayNames.map((name) => (
-					<li key={name}>
-						<Link href={`/explore/assay/${name}`} className="text-base-content hover:text-primary break-all">
-							{name}
-						</Link>
-					</li>
-				))}
-			</ul>
 		</div>
 	);
 }
