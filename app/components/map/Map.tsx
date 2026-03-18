@@ -47,7 +47,7 @@ export default function Map({
 				fallback={
 					<div className="w-full h-full flex justify-center items-center">
 						<div className="h-full aspect-square p-50">
-							<span className="loading loading-spinner loading-xl h-full w-full" />
+							{/* <span className="loading loading-spinner loading-xl h-full w-full" /> */}
 						</div>
 					</div>
 				}
