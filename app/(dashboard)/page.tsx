@@ -2,7 +2,7 @@ import { MainStats, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
-import { publicPrisma } from "../helpers/prisma";
+// import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
