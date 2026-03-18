@@ -28,9 +28,9 @@ export default async function Home() {
 				</p>
 			</div>
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
-				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
+				{/* <Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
-				</Suspense>
+				</Suspense> */}
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
@@ -72,53 +72,12 @@ export default async function Home() {
 				</div>
 			</div>
 
-			{/* Removing data summary arrow for now */}
-			{/* <div className="relative mb-12 text-center">
-				<Link
-					href="#dataSummary"
-					className="relative inline-block after:absolute after:content-[''] after:inset-[-40px] after:cursor-pointer"
-				>
-					<p className="text-primary text-xl font-medium">Start Here!</p>
-					<div>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-8 w-12 text-primary mx-auto"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-						</svg>
-					</div>
-				</Link>
-			</div> */}
 			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
 				<div className="mb-20">
-					<Suspense>
+					{/* <Suspense>
 						<MainStats />
-					</Suspense>
+					</Suspense> */}
 				</div>
-
-				{/* Interactive Data Journey Visualization */}
-				{/* <div className="mb-32">
-					<div className="text-center mb-12">
-						<h2 className="text-3xl lg:text-4xl text-primary mb-4 font-light">
-							Explore the Data Journey
-						</h2>
-						<p className="text-lg text-base-content/80 max-w-3xl mx-auto leading-relaxed">
-							Discover how ocean environmental DNA data flows from research vessels to taxonomic identification. 
-							Click the magnifying glasses to zoom deeper into each step of the scientific process.
-						</p>
-					</div>
-					
-					<div className="max-w-6xl mx-auto">
-						<EDNAVisualization />
-					</div>
-					
-					<div className="text-center mt-8 text-sm text-base-content/60">
-						<p>Interactive visualization showing the relationship between database tables and real-world sampling</p>
-					</div>
-				</div> */}
 
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-20">
 					{/* Map Section */}
@@ -136,16 +95,16 @@ export default async function Home() {
 							<span className="text-primary mr-1">Assays</span>
 							<span>used across the Ocean DNA Explorer</span>
 						</div>
-						<Suspense>
+						{/* <Suspense>
 							<AssayStats />
-						</Suspense>
+						</Suspense> */}
 					</div>
 				</div>
 
 				<div id="dataTaxa" className="w-full mb-24 pt-4">
-					<Suspense>
+					{/* <Suspense>
 						<TopTaxonomiesSummary />
-					</Suspense>
+					</Suspense> */}
 				</div>
 
 				{/* Funding Institutes Section */}
