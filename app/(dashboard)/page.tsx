@@ -87,10 +87,13 @@ export default function Home() {
 							<span>Showing all </span>
 							<span className="text-primary">Projects</span>
 						</div>
-
-						<Suspense>
-							<SuspenseHomeMap />
-						</Suspense>
+						<Map
+							query={async () => await publicPrisma.sample.findMany()}
+							legend
+							titleTable="project"
+							cluster
+							clusterRadius={20}
+						/>
 					</div>
 
 					{/* Assay Stats Section */}
@@ -202,10 +205,6 @@ export default function Home() {
 			</div>
 		</main>
 	);
-}
-
-function SuspenseHomeMap() {
-	return <Map query={publicPrisma.sample.findMany} legend titleTable="project" cluster clusterRadius={20} />;
 }
 
 async function SuspenseCarousel() {
