@@ -13,7 +13,8 @@ async function doSubmit(
 	sampleChannel: Channel,
 	libraryChannel: Channel,
 	userIds: string[],
-	isPrivate: boolean
+	isPrivate: boolean,
+	imageFileUrl?: string
 ) {
 	const client = await clerkClient();
 	const { userId, sessionClaims } = await auth();
@@ -38,7 +39,14 @@ async function doSubmit(
 	}
 
 	try {
-		const parseResult = await parseProjectFiles({ projectChannel, sampleChannel, libraryChannel, userIds, isPrivate });
+		const parseResult = await parseProjectFiles({
+			projectChannel,
+			sampleChannel,
+			libraryChannel,
+			userIds,
+			isPrivate,
+			imageFileUrl
+		});
 		if (!parseResult) {
 			return;
 		}
@@ -169,14 +177,22 @@ export default async function projectSubmitAction(
 	sampleFileUrl: string,
 	libraryFileUrl: string,
 	userIds: string[],
-	isPrivate: boolean
+	isPrivate: boolean,
+	imageFileUrl?: string
 ) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	if (typeof projectFileUrl !== "string" || typeof sampleFileUrl !== "string" || typeof libraryFileUrl !== "string") {
+	if (
+		typeof projectFileUrl !== "string" ||
+		typeof sampleFileUrl !== "string" ||
+		typeof libraryFileUrl !== "string" ||
+		userIds.some((id) => typeof id !== "string") ||
+		typeof isPrivate !== "boolean" ||
+		(imageFileUrl && typeof imageFileUrl !== "string")
+	) {
 		await globalStream.error("Arguments are not of correct type");
 
 		await globalStream.close();
@@ -196,7 +212,8 @@ export default async function projectSubmitAction(
 		{ url: sampleFileUrl, stream: sampleStream },
 		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
-		isPrivate
+		isPrivate,
+		imageFileUrl
 	).then(() => {
 		globalStream.close();
 		projectStream.close();

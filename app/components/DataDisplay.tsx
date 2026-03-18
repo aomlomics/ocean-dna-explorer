@@ -116,7 +116,7 @@ function ValueNode({
 	userDefined?: true;
 }) {
 	if (!userDefined) {
-		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+		const type = getZodType(table, field).type;
 
 		if (value === null || (Array.isArray(value) && value.length === 0)) {
 			return <div className="bg-base-300">{"\u200b"}</div>;

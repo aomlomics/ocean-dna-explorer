@@ -5,10 +5,11 @@ import { handlePrismaError, prisma } from "@/app/helpers/prisma";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
-export default async function projectUpdateIsPrivateAction(
+export default async function projectUpdateImageAction(
 	target: Project["project_id"],
-	isPrivate: Project["isPrivate"]
+	imageFileUrl_ODE: Project["imageFileUrl_ODE"] | null
 ): Promise<NetworkPacket> {
 	const { userId } = await auth();
 
@@ -28,24 +29,34 @@ export default async function projectUpdateIsPrivateAction(
 
 	try {
 		await prisma.$transaction(async (tx) => {
-			const dbProject = await tx.project.update({
+			const dbProject = await tx.project.findUnique({
 				where: {
-					project_id,
-					userIds: {
-						has: userId
-					}
-				},
-				data: {
-					isPrivate
+					project_id
 				},
 				select: {
+					imageFileUrl_ODE: true,
 					userIds: true
 				}
 			});
 
-			if (!dbProject.userIds.includes(userId)) {
+			if (!dbProject) {
+				throw new Error(`Project with project_id of "${project_id}" was not found.`);
+			} else if (!dbProject.userIds.includes(userId)) {
 				throw new Error("Unauthorized action.");
 			}
+
+			if (dbProject.imageFileUrl_ODE) {
+				del(dbProject.imageFileUrl_ODE);
+			}
+
+			await tx.project.update({
+				where: {
+					project_id
+				},
+				data: {
+					imageFileUrl_ODE
+				}
+			});
 		});
 
 		return { statusMessage: "success" };

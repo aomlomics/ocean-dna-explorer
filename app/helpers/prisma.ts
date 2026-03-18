@@ -598,13 +598,12 @@ async function updateManyRawChunked(
 ) {
 	//get shape of table to allow typecasting
 	//also verifies against SQL injection attacks
-	const shape = TableMetadata[table].schema.shape;
 	const deadBooleanFields = [] as string[];
 
 	//add set for provided fields
 	const setSql = fields
 		.map((f) => {
-			const type = getZodType(shape[f]).type;
+			const type = getZodType(table, f).type;
 			let typecast = "";
 
 			if (type === "DeadBoolean") {

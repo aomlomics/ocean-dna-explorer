@@ -57,7 +57,7 @@ export default async function VisualizeMetadata({
 	const userDefinedFields = new Set() as Set<string>;
 	for (const f of Array.from(fields)) {
 		const key = f as keyof Sample;
-		const type = getZodType(SampleSchema.shape[key]).type;
+		const type = getZodType("sample", key).type;
 
 		//remove all fields without any values
 		let hasVal = false;
@@ -103,7 +103,7 @@ export default async function VisualizeMetadata({
 			fields.delete(f);
 		} else {
 			//add to xy field options
-			const type = getZodType(SampleSchema.shape[key]).type;
+			const type = getZodType("sample", key).type;
 			if (type === "integer" || type === "float" || type === "date") {
 				xyFields.add(key);
 			}

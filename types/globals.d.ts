@@ -123,7 +123,9 @@ export type LocationWithValues = {
 	[key: string]: any;
 };
 
-type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R> ? R : any;
+export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R>
+	? R
+	: any;
 
 declare global {
 	namespace PrismaJson {

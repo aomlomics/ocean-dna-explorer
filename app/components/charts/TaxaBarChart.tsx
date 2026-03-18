@@ -50,6 +50,7 @@ export default function TaxaBarChart({
 	const ref = useRef<ChartJS<"bar", { x: string; y: number }[]>>(null);
 
 	const { textColor } = useDaisyTheme();
+	const gridColor = chroma(textColor).alpha(0.3).hex();
 
 	const [rank, setRank] = useState("kingdom" as (typeof TaxonomicRanks)[0]);
 	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
@@ -110,7 +111,7 @@ export default function TaxaBarChart({
 						}
 					}
 
-					const uniqueColors = distinctColors({ count: rankValues.size });
+					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35 });
 					setTaxaColors(uniqueColors);
 					const sortedRanks = Array.from(rankValues).sort();
 					setTaxonomies(sortedRanks);
@@ -376,13 +377,14 @@ export default function TaxaBarChart({
 							stacked: true,
 							title: {
 								display: true,
-								text: averageBy
+								text: averageBy,
+								color: textColor
 							},
 							ticks: {
 								color: textColor
 							},
 							grid: {
-								color: textColor + "1a" // Add low opacity
+								color: gridColor
 							}
 						},
 						y: {
@@ -392,13 +394,14 @@ export default function TaxaBarChart({
 							max: metricType === "relative" ? 100 : undefined,
 							title: {
 								display: true,
-								text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences"
+								text: metricType === "relative" ? "Relative Abundance (%)" : "Occurrences",
+								color: textColor
 							},
 							ticks: {
 								color: textColor
 							},
 							grid: {
-								color: textColor + "1a" // Add low opacity
+								color: gridColor
 							}
 						}
 					}

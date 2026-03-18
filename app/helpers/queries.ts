@@ -1,5 +1,5 @@
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { getRelationPath, getZodType } from "./schema";
+import { getRelationPath, getTableName, getZodType } from "./schema";
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
 import { getShapesFromUrl } from "./utils";
@@ -82,10 +82,8 @@ export function parseToQuery(
 		value = queryArr[2];
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
-		relation = TableNames.find((model) => model.toLowerCase() === queryArr[0].toLowerCase());
-		if (!relation) {
-			throw new Error(`Provided table "${relation}" does not exist.`);
-		} else if (relation === swapTo) {
+		relation = getTableName(queryArr[0]);
+		if (relation === swapTo) {
 			relation = undefined;
 		}
 
@@ -110,7 +108,7 @@ export function parseToQuery(
 		return { [field]: value };
 	}
 
-	const zodType = getZodType(TableMetadata[model].schema.shape[field]);
+	const zodType = getZodType(model, field);
 
 	let searchWhere;
 	//universal mode behavior
@@ -332,11 +330,7 @@ export function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			const relModel = TableNames.find((model) => model.toLowerCase() === relation.toLowerCase());
-			if (!relModel) {
-				throw new Error(`Provided table "${relation}" is not a valid model name.`);
-			}
-			return deepWhere(swapTo || table, relModel, searchWhere);
+			return deepWhere(swapTo || table, getTableName(relation), searchWhere);
 		} else {
 			return searchWhere;
 		}
@@ -381,7 +375,7 @@ export function parseSearchQuery(table: Uncapitalize<Prisma.ModelName>, search: 
 	//search entire table for value
 	const ors = [] as { [field: string]: { contains: string; mode: "insensitive" } }[];
 	for (const field of TableMetadata[table].enumSchema.options) {
-		const type = getZodType(TableMetadata[table].schema.shape[field]).type;
+		const type = getZodType(table, field).type;
 
 		if (type === "string") {
 			ors.push({
@@ -463,6 +457,7 @@ export function parseApiQuery(
 	if (!options?.features || options.features.orderBy) {
 		const orderByStr = params.get("orderBy");
 		if (orderByStr) {
+			params.delete("orderBy");
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
 				if (TableMetadata[table].enumSchema.options.includes(split[0])) {
@@ -567,6 +562,20 @@ export function parseApiQuery(
 		}
 	}
 
+	//limit
+	if (!options?.features || options.features.limit) {
+		const take = params.get("limit");
+		if (take) {
+			params.delete("limit");
+			query.take = parseInt(take);
+			if (Number.isNaN(query.take)) {
+				throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
+			} else if (query.take < 1) {
+				throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
+			}
+		}
+	}
+
 	let sampleWhere;
 
 	const advanced = params.get("advanced");
@@ -633,20 +642,6 @@ export function parseApiQuery(
 
 			query.where = parseSearchQuery(table, search);
 		} else {
-			//limit
-			if (!options?.features || options.features.limit) {
-				const take = params.get("limit");
-				if (take) {
-					params.delete("limit");
-					query.take = parseInt(take);
-					if (Number.isNaN(query.take)) {
-						throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
-					} else if (query.take < 1) {
-						throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
-					}
-				}
-			}
-
 			//filtering
 			if (options?.defaults?.filters) {
 				query.where = options.defaults.filters;
@@ -657,51 +652,43 @@ export function parseApiQuery(
 					query.where = {} as Record<string, any>;
 				}
 
-				const shape = TableMetadata[table].schema.shape;
 				params.forEach((value, key) => {
-					if (shape[key as keyof typeof shape]) {
-						const type = getZodType(shape[key as keyof typeof shape]).type;
-						if (!type) {
-							throw new Error(
-								`Could not find type of "${key}". Make sure a field named "${key}" exists on table named "${table}".`
-							);
-						}
+					const type = getZodType(table, key).type;
 
-						const arr = value.split(",");
-						if (arr.length > 1) {
-							query.where!.OR = [];
-							if (type === "string") {
-								for (const val of arr) {
-									query.where!.OR.push({
-										[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
-									});
-								}
-							} else if (type === "integer") {
-								for (const val of arr) {
-									query.where!.OR.push({ [key]: parseInt(val) });
-								}
-							} else if (type === "float") {
-								for (const val of arr) {
-									query.where!.OR.push({ [key]: parseFloat(val) });
-								}
-							} else {
-								for (const val of arr) {
-									query.where!.OR.push({ [key]: val });
-								}
+					const arr = value.split(",");
+					if (arr.length > 1) {
+						query.where!.OR = [];
+						if (type === "string") {
+							for (const val of arr) {
+								query.where!.OR.push({
+									[key]: { contains: val.replace("_", "\\_").replace("%", "\\%"), mode: "insensitive" }
+								});
+							}
+						} else if (type === "integer") {
+							for (const val of arr) {
+								query.where!.OR.push({ [key]: parseInt(val) });
+							}
+						} else if (type === "float") {
+							for (const val of arr) {
+								query.where!.OR.push({ [key]: parseFloat(val) });
 							}
 						} else {
-							if (type === "string") {
-								query.where![key] = {
-									contains: value.replace("_", "\\_").replace("%", "\\%"),
-									mode: "insensitive"
-								};
-							} else if (type === "integer") {
-								query.where![key] = parseInt(value);
-							} else if (type === "float") {
-								query.where![key] = parseFloat(value);
-							} else {
-								query.where![key] = value;
+							for (const val of arr) {
+								query.where!.OR.push({ [key]: val });
 							}
+						}
+					} else {
+						if (type === "string") {
+							query.where![key] = {
+								contains: value.replace("_", "\\_").replace("%", "\\%"),
+								mode: "insensitive"
+							};
+						} else if (type === "integer") {
+							query.where![key] = parseInt(value);
+						} else if (type === "float") {
+							query.where![key] = parseFloat(value);
+						} else {
+							query.where![key] = value;
 						}
 					}
 				});

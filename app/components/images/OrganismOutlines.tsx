@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useMediaQuery } from "@/app/helpers/useMediaQuery";
+import { useMediaQuery } from "@/app/hooks/useMediaQuery";
 
 const sizeMap = {
 	sm: "w-32 h-32", // 128px
@@ -92,4 +92,4 @@ export default function OrganismOutlines({ outlines }: { outlines: string[] }) {
 			))}
 		</div>
 	);
-} 
+}

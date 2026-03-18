@@ -6,14 +6,18 @@ import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
-//TODO: delete files from blob store
 export default async function projectDeleteAction(target: Project["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId) {
 		return { statusMessage: "error", error: "Unauthorized" };
+	}
+
+	if (!role || !RolePermissions[role].includes("manageUsers")) {
+		throw new Error("Unauthorized action.");
 	}
 
 	const parsed = ProjectSchema.shape.project_id.safeParse(target);
@@ -26,20 +30,24 @@ export default async function projectDeleteAction(target: Project["project_id"])
 	const project_id = parsed.data;
 
 	try {
-		await prisma.$transaction(
+		const dbProject = await prisma.$transaction(
 			async (tx) => {
-				const project = await tx.project.findUnique({
+				const dbProject = await tx.project.findUnique({
 					where: {
 						project_id
 					},
 					select: {
-						userIds: true
+						userIds: true,
+						imageFileUrl_ODE: true,
+						projectMetadataFileUrl_ODE: true,
+						sampleMetadataFileUrl_ODE: true,
+						libraryMetadataFileUrl_ODE: true
 					}
 				});
 
-				if (!project) {
+				if (!dbProject) {
 					throw new Error(`No Project with project_id of "${project_id}" found.`);
-				} else if (!project.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
+				} else if (!dbProject.userIds.includes(userId)) {
 					throw new Error("Unauthorized action.");
 				}
 
@@ -67,9 +75,22 @@ export default async function projectDeleteAction(target: Project["project_id"])
 				// 		}
 				// 	}
 				// });
+
+				return dbProject;
 			},
 			{ timeout: 1.5 * 60 * 1000 }
 		);
+
+		//delete files
+		const delArr = [
+			dbProject.projectMetadataFileUrl_ODE,
+			dbProject.sampleMetadataFileUrl_ODE,
+			dbProject.libraryMetadataFileUrl_ODE
+		];
+		if (dbProject.imageFileUrl_ODE) {
+			delArr.push(dbProject.imageFileUrl_ODE);
+		}
+		await del(delArr);
 
 		return { statusMessage: "success" };
 	} catch (err: any) {

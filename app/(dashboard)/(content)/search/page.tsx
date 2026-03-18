@@ -1,11 +1,12 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Map from "@/app/components/map/Map";
-import SearchResults from "@/app/components/search/SearchResults";
+import TableDisplay from "@/app/components/paginated/TableDisplay";
 import SearchUI from "@/app/components/search/SearchUI";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
+import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable } from "@/app/helpers/utils";
-import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { redirect } from "next/navigation";
 
 export default async function Search({
@@ -18,26 +19,24 @@ export default async function Search({
 	if (!table || typeof table !== "string") {
 		redirect("/search?table=project");
 	}
-	const model = TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+	const model = getDataTableNameSafe(table);
 	if (!model) {
 		redirect("/search?table=project");
 	}
 
 	return (
 		<>
-			<div className="grid grid-cols-1 gap-y-4 pt-4">
+			<div className="py-4">
 				{table && (
 					<header className="flex items-start justify-between">
-						<div>
-							<h1 className="text-4xl font-normal text-base-content">
-								<span className="">Search</span>{" "}
-								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
-								<span className="text-primary font-normal">{TableMetadata[model].plural}</span>
-							</h1>
-						</div>
+						<h1 className="text-4xl font-normal text-base-content">
+							<span className="">Search</span>{" "}
+							<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+							<span className="text-primary font-normal">{TableMetadata[model].plural}</span>
+						</h1>
 					</header>
 				)}
-				<div className="w-full space-y-4 text-base-content/80">
+				<div className="w-full space-y-4 text-base-content/80 py-4">
 					<p>{TableMetadata[model].description}</p>
 					<ExploreTabButtons activeTable={capitalizeTable(model)} tables={DataTableNames} />
 				</div>
@@ -82,7 +81,25 @@ export default async function Search({
 			</div>
 
 			<div className="mt-6" id="search-results">
-				<SearchResults />
+				<h2 className="text-xl mb-2">
+					Showing all{" "}
+					{table && TableMetadata[model] ? (
+						<span className="text-primary font-bold">{TableMetadata[model].plural}</span>
+					) : (
+						"results"
+					)}{" "}
+					that match your search
+				</h2>
+
+				<div className="w-full">
+					<TableDisplay
+						key={model}
+						table={model}
+						displayMode={model === "taxonomy" ? "grid" : "table"}
+						ignoreParams={["table"]}
+						toggle={model === "taxonomy" || undefined}
+					/>
+				</div>
 			</div>
 		</>
 	);

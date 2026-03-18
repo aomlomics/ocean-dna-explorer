@@ -120,7 +120,7 @@ export default async function Home() {
 					</div>
 				</div> */}
 
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-24">
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-20">
 					{/* Map Section */}
 					<div className="lg:col-span-7">
 						<div className="mb-8 text-2xl text-base-content">
@@ -142,7 +142,7 @@ export default async function Home() {
 					</div>
 				</div>
 
-				<div className="w-full mb-24">
+				<div id="dataTaxa" className="w-full mb-24 pt-4">
 					<Suspense>
 						<TopTaxonomiesSummary />
 					</Suspense>

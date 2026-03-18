@@ -1,7 +1,7 @@
 "use client";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { getZodType } from "@/app/helpers/schema";
+import { getTableNameSafe, getZodType } from "@/app/helpers/schema";
 import {
 	ParamsArray,
 	ParamsArrayElement,
@@ -130,7 +130,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const router = useRouter();
 	const [searchTable, setSearchTable] = useState(() => {
 		const paramTable = searchParams.get("table");
-		return TableNames.find((name) => name.toLowerCase() === paramTable?.toLowerCase());
+		return getTableNameSafe(paramTable);
 	}); //either noTable or searchTable will always exist, parent without noTable redirects to ?table=project
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
 	const formRef = useRef<HTMLFormElement>(null);
@@ -174,7 +174,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				}
 
 				const paramTable = searchParams.get("table");
-				const table = TableNames.find((name) => name.toLowerCase() === paramTable?.toLowerCase());
+				const table = getTableNameSafe(paramTable);
 				if (table) {
 					setSearchTable(table);
 				}
@@ -354,8 +354,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				return null;
 			}
 
-			const shape = TableMetadata[table].schema.shape;
-			const fieldType = getZodType(shape[field as keyof typeof shape]).type;
+			const fieldType = getZodType(table, field).type;
 
 			const mode = formRef.current[`mode_${id}`].value as QueryMode;
 
@@ -728,24 +727,20 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		<>
 			<form
 				ref={formRef}
-				className="flex flex-col gap-4"
+				className="bg-base-100 rounded-lg"
 				onSubmit={(e) => {
 					e.preventDefault();
 					search();
 				}}
 				onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
 			>
-				<div className="bg-base-100 py-6 rounded-lg mb-4">
-					<div className="space-y-4">
-						<SearchGroupComponent
-							group={searchTree}
-							onChange={setSearchTree}
-							onHelpClick={() => helpModalRef.current?.showModal()}
-							footer={rootFooter}
-							{...tableArgs}
-						/>
-					</div>
-				</div>
+				<SearchGroupComponent
+					group={searchTree}
+					onChange={setSearchTree}
+					onHelpClick={() => helpModalRef.current?.showModal()}
+					footer={rootFooter}
+					{...tableArgs}
+				/>
 			</form>
 
 			{searchTable ? (
@@ -1149,9 +1144,9 @@ function SearchRuleComponent({
 	const [type, setType] = useState(noTable || (paramsArray && paramsArray.length === 4) ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
-		(paramsArray && type === "relation"
-			? TableNames.find((table) => table.toLowerCase() === paramsArray[0].toLowerCase()) || ""
-			: "") as Uncapitalize<Prisma.ModelName> | ""
+		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as
+			| Uncapitalize<Prisma.ModelName>
+			| ""
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 	const [loaded, setLoaded] = useState(false);
@@ -1306,8 +1301,7 @@ function InputElement({
 		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[1].split("T")[0]
 	);
 
-	const shape = TableMetadata[table].schema.shape;
-	const type = getZodType(shape[field as keyof typeof shape]).type;
+	const type = getZodType(table, field).type;
 
 	const [mode, setMode] = useState(
 		defaultMode

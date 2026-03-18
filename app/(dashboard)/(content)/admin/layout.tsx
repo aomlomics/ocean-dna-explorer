@@ -24,6 +24,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 					Manage Users
 				</Link>
 
+				<Link
+					href="/admin/tour"
+					className={`btn px-6 py-3 transition-colors rounded-none ${
+						pathname === "/admin/tour" ? "rounded-t-lg btn-primary" : ""
+					}`}
+				>
+					Tour
+				</Link>
+
 				{userId && role && RolePermissions[role].includes("manageDatabase") && (
 					<>
 						<Link

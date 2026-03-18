@@ -19,8 +19,8 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import ChartCopyButton from "./ChartCopyButton";
 import { DeadValueEnum } from "@/types/enums";
 import { getZodType } from "@/app/helpers/schema";
-import { SampleSchema } from "@/prisma/generated/zod";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
+import chroma from "chroma-js";
 
 ChartJS.register(TimeScale, LinearScale, PointElement, ScatterController, Title, Tooltip, Legend, zoomPlugin);
 
@@ -41,6 +41,7 @@ type DataPoint = {
 
 //TODO: style dates in legend properly (options.plugins.legend.labels.generateLabels)
 //TODO: add checklist for legendField
+//TODO: store zoom as state, don't reset zoom when changing legendField
 export default function SampleScatterPlot({
 	samples,
 	fields,
@@ -55,12 +56,20 @@ export default function SampleScatterPlot({
 	const ref = useRef<ChartJS<"scatter", SamplePoint[]>>(null);
 
 	const { textColor } = useDaisyTheme();
+	const gridColor = chroma(textColor).alpha(0.3).hex();
 
 	const [xField, setXField] = useState("eventDate" as keyof Sample);
 	const [xType, setXType] = useState("date" as "date" | "number");
+	const [xMin, setXMin] = useState(undefined as number | undefined);
+	const [xMax, setXMax] = useState(undefined as number | undefined);
+
 	const [yField, setYField] = useState("minimumDepthInMeters" as keyof Sample);
 	const [yType, setYType] = useState("number" as "date" | "number");
+	const [yMin, setYMin] = useState(undefined as number | undefined);
+	const [yMax, setYMax] = useState(undefined as number | undefined);
+
 	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
+	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
 
 	const [loading, setLoading] = useState(true);
 	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
@@ -83,7 +92,7 @@ export default function SampleScatterPlot({
 
 			setXType(tempType);
 		} else {
-			const type = getZodType(SampleSchema.shape[xField]).type;
+			const type = getZodType("sample", xField).type;
 
 			if (type === "integer" || type === "float") {
 				setXType("number");
@@ -108,7 +117,7 @@ export default function SampleScatterPlot({
 
 			setYType(tempType);
 		} else {
-			const type = getZodType(SampleSchema.shape[yField]).type;
+			const type = getZodType("sample", yField).type;
 
 			if (type === "integer" || type === "float") {
 				setYType("number");
@@ -120,6 +129,12 @@ export default function SampleScatterPlot({
 
 	useEffect(() => {
 		const labels = new Set() as Set<string>;
+
+		let tempXMin = undefined as number | undefined;
+		let tempXMax = undefined as number | undefined;
+		let tempYMin = undefined as number | undefined;
+		let tempYMax = undefined as number | undefined;
+
 		//construct datasets using legendField
 		const tempDatasets = samples.reduce(
 			(acc, p) => {
@@ -160,8 +175,23 @@ export default function SampleScatterPlot({
 							yVal !== null &&
 							!(typeof yVal === "number" ? yVal in DeadValueEnum : yVal.getTime() in DeadValueEnum)
 						) {
-							const setIndex = acc.findIndex((s) => s.label === val);
+							const numXVal = typeof xVal === "number" ? xVal : xVal.getTime();
+							if (!tempXMin || numXVal < tempXMin) {
+								tempXMin = numXVal;
+							}
+							if (!tempXMax || numXVal > tempXMax) {
+								tempXMax = numXVal;
+							}
 
+							const numYVal = typeof yVal === "number" ? yVal : yVal.getTime();
+							if (!tempYMin || numYVal < tempYMin) {
+								tempYMin = numYVal;
+							}
+							if (!tempYMax || numYVal > tempYMax) {
+								tempYMax = numYVal;
+							}
+
+							const setIndex = acc.findIndex((s) => s.label === val);
 							if (setIndex !== -1) {
 								acc[setIndex].data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
 							} else {
@@ -182,70 +212,107 @@ export default function SampleScatterPlot({
 			[] as (Omit<DataPoint, "borderColor" | "backgroundColor"> & { borderColor?: string; backgroundColor?: string })[]
 		);
 
+		if (tempXMin !== undefined && tempXMax !== undefined) {
+			const xBuffer = (tempXMax - tempXMin) / 20;
+			setXMin(tempXMin - xBuffer);
+			setXMax(tempXMax + xBuffer);
+		}
+
+		if (tempYMin !== undefined && tempYMax !== undefined) {
+			const yBuffer = (tempYMax - tempYMin) / 20;
+			setYMin(tempYMin - yBuffer);
+			setYMax(tempYMax + yBuffer);
+		}
+
 		//assign colors
-		distinctColors({ count: Object.keys(tempDatasets).length }).forEach((color, i) => {
-			tempDatasets[i].borderColor = color.hex();
-			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35 }).forEach((color, i) => {
+			if (hoveredLegend && tempDatasets[i].label !== hoveredLegend) {
+				tempDatasets[i].borderColor = color.alpha(0.1).hex();
+				tempDatasets[i].backgroundColor = "#00000000";
+			} else {
+				tempDatasets[i].borderColor = color.hex();
+				tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+			}
 		});
 
 		setChartData({ labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] });
 		setLoading(false);
-	}, [xField, yField, legendField]);
+	}, [xField, yField, legendField, hoveredLegend]);
 
 	return (
 		<div className="relative">
 			<div className="w-full flex justify-center items-center gap-5">
-				<fieldset className="fieldset">
-					<legend className="fieldset-legend">X-Axis:</legend>
-					<select
-						value={xField}
-						onChange={(e) => {
+				<div className="flex justify-center items-center gap-2">
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend">X-Axis:</legend>
+						<select
+							value={xField}
+							onChange={(e) => {
+								setLoading(true);
+								setXField(e.target.value as keyof Sample);
+							}}
+							className="select"
+							disabled={loading}
+						>
+							{xyFields.reduce((acc, f) => {
+								if (f !== yField && f !== legendField) {
+									acc.push(
+										<option key={f} value={f}>
+											{f}
+											{userDefinedFields?.has(f) ? " (UD)" : ""}
+										</option>
+									);
+								}
+
+								return acc;
+							}, [] as ReactNode[])}
+						</select>
+					</fieldset>
+
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						xmlns="http://www.w3.org/2000/svg"
+						className="w-8 h-8 text-primary mt-7 cursor-pointer"
+						onClick={() => {
 							setLoading(true);
-							setXField(e.target.value as keyof Sample);
+							setXField(yField);
+							setYField(xField);
 						}}
-						className="select"
-						disabled={loading}
 					>
-						{xyFields.reduce((acc, f) => {
-							if (f !== yField && f !== legendField) {
-								acc.push(
-									<option key={f} value={f}>
-										{f}
-										{userDefinedFields?.has(f) ? " (UD)" : ""}
-									</option>
-								);
-							}
+						<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
+						<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
+					</svg>
 
-							return acc;
-						}, [] as ReactNode[])}
-					</select>
-				</fieldset>
+					<fieldset className="fieldset">
+						<legend className="fieldset-legend">Y-Axis:</legend>
+						<select
+							value={yField}
+							onChange={(e) => {
+								setLoading(true);
+								setYField(e.target.value as keyof Sample);
+							}}
+							className="select"
+							disabled={loading}
+						>
+							{xyFields.reduce((acc, f) => {
+								if (f !== xField && f !== legendField) {
+									acc.push(
+										<option key={f} value={f}>
+											{f}
+											{userDefinedFields?.has(f) ? " (UD)" : ""}
+										</option>
+									);
+								}
 
-				<fieldset className="fieldset">
-					<legend className="fieldset-legend">Y-Axis:</legend>
-					<select
-						value={yField}
-						onChange={(e) => {
-							setLoading(true);
-							setYField(e.target.value as keyof Sample);
-						}}
-						className="select"
-						disabled={loading}
-					>
-						{xyFields.reduce((acc, f) => {
-							if (f !== xField && f !== legendField) {
-								acc.push(
-									<option key={f} value={f}>
-										{f}
-										{userDefinedFields?.has(f) ? " (UD)" : ""}
-									</option>
-								);
-							}
-
-							return acc;
-						}, [] as ReactNode[])}
-					</select>
-				</fieldset>
+								return acc;
+							}, [] as ReactNode[])}
+						</select>
+					</fieldset>
+				</div>
 
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Color points by:</legend>
@@ -291,6 +358,12 @@ export default function SampleScatterPlot({
 							position: "top",
 							labels: {
 								color: textColor
+							},
+							onHover: (event, item) => {
+								setHoveredLegend(item.text);
+							},
+							onLeave: () => {
+								setHoveredLegend(undefined);
 							}
 						},
 						title: {
@@ -340,14 +413,17 @@ export default function SampleScatterPlot({
 								: {}),
 							title: {
 								display: true,
-								text: xField
+								text: xField,
+								color: textColor
 							},
 							ticks: {
 								color: textColor
 							},
 							grid: {
-								color: textColor + "1a" // Add low opacity
-							}
+								color: gridColor
+							},
+							min: xMin,
+							max: xMax
 						},
 						y: {
 							...(yType === "date"
@@ -364,14 +440,17 @@ export default function SampleScatterPlot({
 								: {}),
 							title: {
 								display: true,
-								text: yField
+								text: yField,
+								color: textColor
 							},
 							ticks: {
 								color: textColor
 							},
 							grid: {
-								color: textColor + "1a" // Add low opacity
-							}
+								color: gridColor
+							},
+							min: yMin,
+							max: yMax
 						}
 					}
 				}}

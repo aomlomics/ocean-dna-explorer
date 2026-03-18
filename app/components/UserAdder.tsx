@@ -7,6 +7,7 @@ import { useDebouncedCallback } from "use-debounce";
 import Image from "next/image";
 
 export default function UserAdder({
+	disabled,
 	submittable,
 	userIds,
 	setUserIds,
@@ -15,27 +16,20 @@ export default function UserAdder({
 	reset,
 	afterSubmit,
 	cols = 2
-}:
+}: { disabled?: boolean; userIds: string[]; reset?: boolean; afterSubmit?: () => void; cols?: number } & (
 	| {
 			submittable?: false;
-			userIds: string[];
 			setUserIds: Dispatch<SetStateAction<string[]>>;
 			submitAction?: undefined;
 			target?: undefined;
-			reset?: boolean;
-			afterSubmit?: () => void;
-			cols?: number;
 	  }
 	| {
 			submittable: true;
-			userIds: string[];
 			setUserIds?: undefined;
 			submitAction: TargetAction;
 			target: string;
-			reset?: boolean;
-			afterSubmit?: () => void;
-			cols?: number;
-	  }) {
+	  }
+)) {
 	const { userId } = useAuth();
 
 	const [users, setUsers] = useState([] as ClerkUserObject[]);
@@ -166,6 +160,7 @@ export default function UserAdder({
 								setSearch(e.target.value);
 								handleSearch(e.target.value);
 							}}
+							disabled={disabled}
 						/>
 					</fieldset>
 					{!!searchedUsers.filter((u) => !users.some((nu) => u.id === nu.id) && !newUsers.some((nu) => u.id === nu.id))
@@ -184,7 +179,7 @@ export default function UserAdder({
 										>
 											<a>
 												<div key={u.id} className="flex items-center gap-2 p-1">
-													<UserDisplay user={u} />
+													<UserDisplay user={u} parentDisabled={disabled} />
 												</div>
 											</a>
 										</li>
@@ -213,6 +208,7 @@ export default function UserAdder({
 							<UserDisplay
 								user={u}
 								disabled={deletedUsers.some((nu) => u.id === nu.id)}
+								parentDisabled={disabled}
 								deletable={u.id !== userId}
 								onDelete={() => setDeletedUsers([...deletedUsers, u])}
 								onAdd={() => setDeletedUsers(deletedUsers.filter((nu) => u.id !== nu.id))}
@@ -221,7 +217,12 @@ export default function UserAdder({
 					))}
 					{newUsers.map((u) => (
 						<div key={u.id} className="inline-flex items-center gap-2 p-1 border-2 border-secondary rounded-lg">
-							<UserDisplay user={u} deletable onDelete={() => setNewUsers(newUsers.filter((nu) => u.id !== nu.id))} />
+							<UserDisplay
+								user={u}
+								deletable
+								parentDisabled={disabled}
+								onDelete={() => setNewUsers(newUsers.filter((nu) => u.id !== nu.id))}
+							/>
 						</div>
 					))}
 				</div>
@@ -233,12 +234,14 @@ export default function UserAdder({
 function UserDisplay({
 	user,
 	disabled,
+	parentDisabled,
 	deletable,
 	onDelete,
 	onAdd
 }: {
 	user: ClerkUserObject;
 	disabled?: boolean;
+	parentDisabled?: boolean;
 	deletable?: boolean;
 	onDelete?: MouseEventHandler<HTMLButtonElement>;
 	onAdd?: MouseEventHandler<HTMLButtonElement>;
@@ -258,11 +261,19 @@ function UserDisplay({
 			</span>
 			{deletable &&
 				(disabled ? (
-					<button className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-success" onClick={onAdd}>
+					<button
+						className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-success"
+						onClick={onAdd}
+						disabled={parentDisabled}
+					>
 						✓
 					</button>
 				) : (
-					<button className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-red-400" onClick={onDelete}>
+					<button
+						className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-red-400"
+						onClick={onDelete}
+						disabled={parentDisabled}
+					>
 						✕
 					</button>
 				))}
