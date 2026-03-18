@@ -9,9 +9,7 @@ import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 
-export default async function Home() {
-	const samples = await publicPrisma.sample.findMany();
-
+export default function Home() {
 	return (
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
@@ -89,7 +87,10 @@ export default async function Home() {
 							<span>Showing all </span>
 							<span className="text-primary">Projects</span>
 						</div>
-						<Map locations={samples} legend titleTable="project" cluster clusterRadius={20} />
+
+						<Suspense>
+							<SuspenseHomeMap />
+						</Suspense>
 					</div>
 
 					{/* Assay Stats Section */}
@@ -201,6 +202,10 @@ export default async function Home() {
 			</div>
 		</main>
 	);
+}
+
+function SuspenseHomeMap() {
+	return <Map query={publicPrisma.sample.findMany} legend titleTable="project" cluster clusterRadius={20} />;
 }
 
 async function SuspenseCarousel() {
