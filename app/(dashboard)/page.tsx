@@ -29,9 +29,9 @@ export default async function Home() {
 			</div>
 
 			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
-				{/* <Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
+				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
-				</Suspense> */}
+				</Suspense>
 
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
@@ -75,9 +75,9 @@ export default async function Home() {
 
 			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
 				<div className="mb-20">
-					{/* <Suspense>
+					<Suspense>
 						<MainStats />
-					</Suspense> */}
+					</Suspense>
 				</div>
 
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-20">
@@ -96,16 +96,16 @@ export default async function Home() {
 							<span className="text-primary mr-1">Assays</span>
 							<span>used across the Ocean DNA Explorer</span>
 						</div>
-						{/* <Suspense>
+						<Suspense>
 							<AssayStats />
-						</Suspense> */}
+						</Suspense>
 					</div>
 				</div>
 
 				<div id="dataTaxa" className="w-full mb-24 pt-4">
-					{/* <Suspense>
+					<Suspense>
 						<TopTaxonomiesSummary />
-					</Suspense> */}
+					</Suspense>
 				</div>
 
 				{/* Funding Institutes Section */}
@@ -163,7 +163,7 @@ export default async function Home() {
 						</p>
 					</div>
 
-					{/* <div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:-mt-4">
+					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:-mt-4">
 						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
 							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
 								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
@@ -194,30 +194,30 @@ export default async function Home() {
 								</Link>
 							</div>
 						</div>
-					</div> */}
+					</div>
 				</div>
 			</div>
 		</main>
 	);
 }
 
-// async function SuspenseCarousel() {
-// 	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+async function SuspenseCarousel() {
+	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
 
-// 	let currentIndex = carouselImages.length;
+	let currentIndex = carouselImages.length;
 
-// 	// While there remain elements to shuffle...
-// 	while (currentIndex != 0) {
-// 		// Pick a remaining element...
-// 		let randomIndex = Math.floor(Math.random() * currentIndex);
-// 		currentIndex--;
+	// While there remain elements to shuffle...
+	while (currentIndex != 0) {
+		// Pick a remaining element...
+		let randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
 
-// 		// And swap it with the current element.
-// 		[carouselImages[currentIndex], carouselImages[randomIndex]] = [
-// 			carouselImages[randomIndex],
-// 			carouselImages[currentIndex]
-// 		];
-// 	}
+		// And swap it with the current element.
+		[carouselImages[currentIndex], carouselImages[randomIndex]] = [
+			carouselImages[randomIndex],
+			carouselImages[currentIndex]
+		];
+	}
 
-// 	return <Carousel images={carouselImages} />;
-// }
+	return <Carousel images={carouselImages} />;
+}
