@@ -136,7 +136,7 @@ export default function DataJourney() {
 			{/* INTRO: How eDNA Appears in Water */}
 			{/* ============================================ */}
 			<section className="max-w-7xl mx-auto px-8 sm:px-6 pt-2 sm:pb-8">
-				<div className="grid lg:grid-cols-[1fr_1.3fr] pb-8 gap-4 lg:gap-8 items-center">
+				<div id="step1" className="grid lg:grid-cols-[1fr_1.3fr] pb-8 gap-4 lg:gap-8 items-center">
 					{/* Left: Text blurb */}
 					<div>
 						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary mb-4">
@@ -150,7 +150,7 @@ export default function DataJourney() {
 					</div>
 
 					{/* Right: Water drop diagram */}
-					<div className="relative w-full h-[360px] sm:h-[440px] lg:h-[520px] overflow-hidden">
+					<div className="relative w-full h-90 sm:h-110 lg:h-130 overflow-hidden">
 						<Image
 							src="/images/biorender/water_drop.png"
 							alt="Sources of environmental DNA in water"
@@ -175,14 +175,14 @@ export default function DataJourney() {
 			{/* SECTION 1: THE EXPEDITION */}
 			{/* ============================================ */}
 			<TintedSection>
-				<div className="max-w-7xl mx-auto pt-10 px-4 sm:px-6">
+				<div id="step2" className="max-w-7xl mx-auto pt-10 px-4 sm:px-6">
 					<SectionHeader>The Expedition</SectionHeader>
 
 					<div className="space-y-1 lg:space-y-2 pb-6">
 						{/* Ship with CTD + Project & Sample Collection blurbs */}
 						<div className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
 							{/* Ship image */}
-							<div className="relative w-full h-[300px] sm:h-[380px] lg:h-[460px]">
+							<div className="relative w-full h-75 sm:h-95 lg:h-115">
 								<Image
 									src="/images/biorender/ship_with_ctd.png"
 									alt="Research vessel deploying CTD rosette"
@@ -218,7 +218,7 @@ export default function DataJourney() {
 						</div>
 
 						{/* Sample blurb + Sample bio image */}
-						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-end">
+						<div id="step3" className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-end">
 							{/* Sample blurb */}
 							<TableBlurb title="Sample" href="/explore/sample" table="sample">
 								A piece of environmental material captured at a distinct place and time. Samples often follow a
@@ -228,7 +228,7 @@ export default function DataJourney() {
 							</TableBlurb>
 
 							{/* Sample bio image */}
-							<div className="relative w-full h-[260px] sm:h-[340px] lg:h-[400px]">
+							<div className="relative w-full h-65 sm:h-85 lg:h-100">
 								<Image
 									src="/images/biorender/sample_bio.png"
 									alt="CTD to Niskin to sample bottles workflow"
@@ -254,7 +254,7 @@ export default function DataJourney() {
 			{/* ============================================ */}
 			{/* SECTION 2: INTO THE LAB */}
 			{/* ============================================ */}
-			<section className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-10 sm:pb-12">
+			<section id="step4" className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10 pb-10 sm:pb-12">
 				<SectionHeader className="mb-2 sm:mb-3">Into the Lab</SectionHeader>
 
 				<div className="space-y-3 lg:space-y-5">
@@ -269,7 +269,7 @@ export default function DataJourney() {
 								in the lab.
 							</ProcessBlurb>
 
-							<div className="relative w-full h-60 sm:h-[300px] lg:h-[350px]">
+							<div className="relative w-full h-60 sm:h-75 lg:h-87.5">
 								<Image
 									src="/images/biorender/dna_extraction.png"
 									alt="DNA extraction workflow"
@@ -288,8 +288,8 @@ export default function DataJourney() {
 						</div>
 
 						{/* Assay: image left, text right */}
-						<div className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
-							<div className="relative w-full h-60 sm:h-[300px] lg:h-[350px]">
+						<div id="step5" className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
+							<div className="relative w-full h-60 sm:h-75 lg:h-87.5">
 								<Image
 									src="/images/biorender/second_wetlab_step.png"
 									alt="PCR amplification targeting specific genetic markers"
@@ -315,7 +315,7 @@ export default function DataJourney() {
 
 						{/* Thermocycler + AssayPrep & Pooling */}
 						<div>
-							<div className="relative w-full max-w-5xl mx-auto h-[220px] sm:h-[280px] lg:h-80 overflow-hidden">
+							<div className="relative w-full max-w-5xl mx-auto h-55 sm:h-70 lg:h-80 overflow-hidden">
 								<Image
 									src="/images/biorender/thermocycler.png"
 									alt="Thermocycler PCR amplification"
@@ -334,7 +334,7 @@ export default function DataJourney() {
 								/>
 							</div>
 
-							<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
+							<div id="step6" className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
 								<TableBlurb title="AssayPrep" href="/explore/assayPrep" table="assayPrep">
 									The parameters for the PCR (polymerase chain reaction) used to make copies of a target DNA segment. It
 									records the specific thermocycler settings and chemical mixes used to amplify the DNA for further
@@ -352,7 +352,7 @@ export default function DataJourney() {
 
 					{/* Library + Sequencing */}
 					<div>
-						<div className="relative w-full max-w-5xl mx-auto h-[220px] sm:h-[280px] lg:h-80 overflow-hidden mt-0">
+						<div className="relative w-full max-w-5xl mx-auto h-55 sm:h-70 lg:h-80 overflow-hidden mt-0">
 							<Image
 								src="/images/biorender/library_bio.png"
 								alt="Sequencing workflow"
@@ -371,7 +371,7 @@ export default function DataJourney() {
 							/>
 						</div>
 
-						<div className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
+						<div id="step7" className="mt-0 grid md:grid-cols-2 gap-6 lg:gap-10 max-w-4xl mx-auto">
 							<TableBlurb title="Library" href="/explore/library" table="library">
 								The final collection of prepared DNA that tracks the transition from physical samples to digital files.
 								This table records the indexing details and sequencing run parameters.
@@ -391,13 +391,13 @@ export default function DataJourney() {
 			{/* SECTION 3: DIGITAL DISCOVERY */}
 			{/* ============================================ */}
 			<TintedSection>
-				<div className="max-w-7xl mx-auto pt-10 px-4 sm:px-6">
+				<div id="step8" className="max-w-7xl mx-auto pt-10 px-4 sm:px-6">
 					<SectionHeader className="mb-8 sm:mb-10">Digital Discovery</SectionHeader>
 
 					<div className="space-y-6 lg:space-y-8">
 						{/* Analysis with animated laptop */}
 						<div className="grid lg:grid-cols-[1.3fr_1fr] gap-4 lg:gap-8 items-center">
-							<div className="relative w-full h-[280px] sm:h-[360px] lg:h-[420px]">
+							<div className="relative w-full h-70 sm:h-90 lg:h-105">
 								<AnalysisLaptop className="w-full h-full" />
 							</div>
 
@@ -416,13 +416,13 @@ export default function DataJourney() {
 						</div>
 
 						{/* Feature: blurb left, image right */}
-						<div className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
+						<div id="step9" className="grid lg:grid-cols-[1fr_1.3fr] gap-4 lg:gap-8 items-center">
 							<TableBlurb title="Feature" href="/explore/feature" table="feature">
 								A dictionary of unique genetic fingerprints which allows us to track the same organism across different
 								samples and studies.
 							</TableBlurb>
 
-							<div className="relative w-full h-80 sm:h-[420px] lg:h-[500px] lg:-mt-10">
+							<div className="relative w-full h-80 sm:h-105 lg:h-125 lg:-mt-10">
 								<Image
 									src="/images/biorender/feature_bio.png"
 									alt="Feature identification from sequence data"
@@ -441,8 +441,8 @@ export default function DataJourney() {
 						</div>
 
 						{/* Taxonomy & Assignment with animated laptop */}
-						<div className="pt-0 grid lg:grid-cols-[1.2fr_1fr] gap-4 lg:gap-8 items-center">
-							<div className="relative w-full h-[280px] sm:h-[360px] lg:h-[420px]">
+						<div id="step10" className="pt-0 grid lg:grid-cols-[1.2fr_1fr] gap-4 lg:gap-8 items-center">
+							<div className="relative w-full h-70 sm:h-90 lg:h-105">
 								<TaxonomyLaptop className="w-full h-full" />
 							</div>
 
@@ -460,8 +460,8 @@ export default function DataJourney() {
 						</div>
 
 						{/* Occurrence with Globe - centered */}
-						<div className="flex flex-col items-center">
-							<div className="w-full max-w-[400px] sm:max-w-[480px] lg:max-w-[560px] mb-2">
+						<div id="step11" className="flex flex-col items-center">
+							<div className="w-full max-w-100 sm:max-w-120 lg:max-w-140 mb-2">
 								<OceanGlobe className="w-full" />
 							</div>
 

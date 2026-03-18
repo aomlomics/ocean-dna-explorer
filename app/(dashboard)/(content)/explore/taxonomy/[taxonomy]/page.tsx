@@ -22,7 +22,9 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	return taxonomicData;
 }
 
-async function resolvePhyloPicVector(taxonomyObj: Taxonomy): Promise<{ imageUrl: string; rank: string; title: string } | null> {
+async function resolvePhyloPicVector(
+	taxonomyObj: Taxonomy
+): Promise<{ imageUrl: string; rank: string; title: string } | null> {
 	let gbifTaxonomy: any;
 	let imageDetails = { rank: "", title: "" };
 
@@ -132,7 +134,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const phyloPic = await resolvePhyloPicVector(dbTaxonomy as unknown as Taxonomy);
 
 	return (
-		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
+		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
 				<div className="flex gap-2 items-center">
 					<h1
@@ -219,9 +221,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 											/>
 										</div>
 									) : (
-										<div className="w-full h-full flex items-center justify-center text-base-content/50">
-											No Image
-										</div>
+										<div className="w-full h-full flex items-center justify-center text-base-content/50">No Image</div>
 									)}
 								</div>
 
@@ -229,7 +229,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								{speciesDisplay && (
 									<div className="mt-2 text-center">
 										<div className="flex items-center justify-center gap-2">
-											<div className="text-[10px] font-medium text-base-content/50 uppercase tracking-widest">Species</div>
+											<div className="text-[10px] font-medium text-base-content/50 uppercase tracking-widest">
+												Species
+											</div>
 											<div className="dropdown dropdown-end">
 												<div
 													tabIndex={0}
@@ -253,7 +255,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 													</svg>
 												</div>
 												<div tabIndex={0} className="dropdown-content z-50 w-80 bg-base-200 rounded-box shadow-sm p-3">
-													<h4 className="text-sm font-semibold text-base-content/80 mb-1">Taxonomic Image Attribution</h4>
+													<h4 className="text-sm font-semibold text-base-content/80 mb-1">
+														Taxonomic Image Attribution
+													</h4>
 													<p className="text-xs text-base-content/60 leading-relaxed">
 														The taxonomic outline image is sourced through{" "}
 														<Link
@@ -264,11 +268,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 															PhyloPic
 														</Link>
 														, using{" "}
-														<Link
-															href="https://www.gbif.org/"
-															className="text-primary hover:underline"
-															target="_blank"
-														>
+														<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
 															GBIF
 														</Link>{" "}
 														Suggest API to match our taxonomy with PhyloPic&apos;s database.
@@ -292,23 +292,23 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									{formatTaxonomyDisplay(dbTaxonomy)
 										.filter((item) => item.rankKey !== "species")
 										.map((item) => {
-										const rankSearchUrl = `/explore/taxonomy?${item.rankKey}=${encodeURIComponent(
-											item.name.replace(" ", "_")
-										)}`;
+											const rankSearchUrl = `/explore/taxonomy?${item.rankKey}=${encodeURIComponent(
+												item.name.replace(" ", "_")
+											)}`;
 
-										return (
-											<Link key={item.rank} href={rankSearchUrl}>
-												<div className="text-left cursor-pointer hover:bg-base-300/30 transition-colors rounded-md px-2 py-1">
-													<div className="text-[10px] font-medium text-base-content/50 uppercase tracking-widest">
-														{item.rank}
+											return (
+												<Link key={item.rank} href={rankSearchUrl}>
+													<div className="text-left cursor-pointer hover:bg-base-300/30 transition-colors rounded-md px-2 py-1">
+														<div className="text-[10px] font-medium text-base-content/50 uppercase tracking-widest">
+															{item.rank}
+														</div>
+														<div className="text-sm font-semibold text-primary hover:text-primary-focus transition-colors">
+															{item.name}
+														</div>
 													</div>
-													<div className="text-sm font-semibold text-primary hover:text-primary-focus transition-colors">
-														{item.name}
-													</div>
-												</div>
-											</Link>
-										);
-									})}
+												</Link>
+											);
+										})}
 								</div>
 							</div>
 						</div>
@@ -331,7 +331,12 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 									{phyloPic ? (
 										<div className="relative w-12 h-12 opacity-95">
-											<ThemeAwarePhyloPic src={phyloPic.imageUrl} alt="Taxonomic outline" fill className="object-contain" />
+											<ThemeAwarePhyloPic
+												src={phyloPic.imageUrl}
+												alt="Taxonomic outline"
+												fill
+												className="object-contain"
+											/>
 										</div>
 									) : (
 										<div className="text-primary text-3xl font-semibold leading-none">?</div>

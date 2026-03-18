@@ -57,7 +57,7 @@ export default function TableDisplay({
 				<></>
 			)}
 
-			<div className="rounded-lg border border-base-300 h-[90vh]">
+			<div id="table" className="rounded-lg border border-base-300 h-[90vh]">
 				{mode === "table" ? (
 					size === "lg" ? (
 						<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} ignoreParams={ignoreParams} />
