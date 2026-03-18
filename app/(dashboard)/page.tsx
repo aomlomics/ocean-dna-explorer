@@ -5,9 +5,9 @@ import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
-import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
+import ClientMap from "../components/map/ClientMap";
 
 export default function Home() {
 	return (
@@ -87,13 +87,7 @@ export default function Home() {
 							<span>Showing all </span>
 							<span className="text-primary">Projects</span>
 						</div>
-						<Map
-							query={async () => await publicPrisma.sample.findMany()}
-							legend
-							titleTable="project"
-							cluster
-							clusterRadius={20}
-						/>
+						<ClientMap url={"/api/sample"} legend titleTable="project" cluster clusterRadius={20} />
 					</div>
 
 					{/* Assay Stats Section */}
