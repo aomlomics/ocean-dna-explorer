@@ -3,7 +3,6 @@
 import { Role } from "@/types/globals";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RoleHeirarchy, RolePermissions, Roles } from "@/types/objects";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/app/helpers/prisma";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -53,8 +52,6 @@ async function editUser(
 	} else if (options.action === "unban") {
 		await client.users.unbanUser(targetUserId);
 	}
-
-	revalidatePath("/admin");
 }
 
 const roleSchema = z.object({
