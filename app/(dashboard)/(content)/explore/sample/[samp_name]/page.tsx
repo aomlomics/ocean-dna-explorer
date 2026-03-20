@@ -228,16 +228,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 		}
 	});
 
-	const taxonomyCounts = new Map<string, number>();
-	for (const taxa of taxonomies) {
-		taxonomyCounts.set(taxa.taxonomy, (taxonomyCounts.get(taxa.taxonomy) ?? 0) + 1);
-	}
-
-	const taxonomyData = Array.from(taxonomyCounts.entries())
-		.map(([taxonomy, count]) => ({ taxonomy, count }))
-		.sort((a, b) => b.count - a.count);
-
-	if (!taxonomyData.length) {
+	if (!taxonomies.length) {
 		return <></>;
 	}
 
@@ -249,11 +240,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 				</span>
 			</h2>
 			<div className="w-full">
-				<TaxonomyDonutChart
-					labels={taxonomyData.map((t) => t.taxonomy)}
-					data={taxonomyData.map((t) => t.count)}
-					sampName={samp_name}
-				/>
+				<TaxonomyDonutChart taxonomies={taxonomies} sampName={samp_name} />
 			</div>
 		</div>
 	);
