@@ -3,7 +3,7 @@
 import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { useTheme } from "next-themes";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useThrottledCallback } from "use-debounce";
 import Link from "next/link";
 import distinctColors from "distinct-colors";
@@ -75,6 +75,18 @@ function CustomLegend({
 }) {
 	const total = data.reduce((sum, value) => sum + value, 0);
 
+	// Local string state for the text box so we can show "1.0" for whole numbers
+	// without the browser stripping the trailing zero (which type="number" always does)
+	const [inputValue, setInputValue] = useState(() => otherThreshold.toFixed(1));
+	const inputFocused = useRef(false);
+
+	// When the slider moves, sync the text box — but only if the user isn't typing in it
+	useEffect(() => {
+		if (!inputFocused.current) {
+			setInputValue(Number.isInteger(otherThreshold) ? otherThreshold.toFixed(1) : String(otherThreshold));
+		}
+	}, [otherThreshold]);
+
 	// Throttle fires at regular intervals while dragging, giving immediate feedback
 	const throttledSetOtherThreshold = useThrottledCallback((value: number) => {
 		setOtherThreshold(value);
@@ -127,7 +139,7 @@ function CustomLegend({
 							<li key={level}>
 								<button
 									className={`text-base w-full text-left px-3 py-1.5 rounded ${taxLevel === level ? "font-semibold text-primary" : ""}`}
-									onClick={() => setTaxLevel(level)}
+									onClick={() => { setTaxLevel(level); (document.activeElement as HTMLElement)?.blur(); }}
 								>
 									{level.charAt(0).toUpperCase() + level.slice(1)}
 								</button>
@@ -144,12 +156,25 @@ function CustomLegend({
 				</label>
 				<div className="flex items-center gap-3">
 					<input
-						type="number"
-						min="0"
-						max="100"
-						step="0.1"
-						value={otherThreshold}
-						onChange={(e) => setOtherThreshold(parseFloat(e.target.value) || 0)}
+						type="text"
+						inputMode="decimal"
+						value={inputValue}
+						onFocus={() => { inputFocused.current = true; }}
+						onBlur={() => {
+							inputFocused.current = false;
+							// On blur, reformat: add .0 if the value is a whole number
+							const parsed = parseFloat(inputValue);
+							const clamped = isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
+							setOtherThreshold(clamped);
+							setInputValue(Number.isInteger(clamped) ? clamped.toFixed(1) : String(clamped));
+						}}
+						onChange={(e) => {
+							setInputValue(e.target.value);
+							const parsed = parseFloat(e.target.value);
+							if (!isNaN(parsed)) {
+								setOtherThreshold(Math.min(100, Math.max(0, parsed)));
+							}
+						}}
 						className="w-16 px-2 py-1.5 text-sm rounded border transition-colors"
 						style={{
 							borderColor: textColor + "30",
@@ -161,7 +186,7 @@ function CustomLegend({
 						type="range"
 						min="0"
 						max="100"
-						step="0.1"
+						step="1"
 						value={otherThreshold}
 						onChange={(e) => throttledSetOtherThreshold(parseFloat(e.target.value))}
 						className="flex-1 h-2 rounded-lg appearance-none"
