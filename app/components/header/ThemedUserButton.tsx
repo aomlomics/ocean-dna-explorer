@@ -1,7 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import { dark } from "@clerk/ui/themes";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
@@ -19,10 +19,10 @@ export function ThemedUserButton() {
 	}
 
 	return (
-		<UserButton
+        <UserButton
 			key={`${theme}-${mounted}`}
 			appearance={{
-				baseTheme: isDark ? dark : undefined,
+				theme: isDark ? dark : undefined,
 				elements: {
 					// Keep the user menu popover above any header/tab dropdown stacking contexts
 					userButtonPopover: {
@@ -59,7 +59,7 @@ export function ThemedUserButton() {
 				}
 			}}
 		>
-			<UserButton.MenuItems>
+            <UserButton.MenuItems>
 				<UserButton.Link
 					href="/mySubmissions"
 					label="My submissions"
@@ -71,6 +71,6 @@ export function ThemedUserButton() {
 					}
 				/>
 			</UserButton.MenuItems>
-		</UserButton>
-	);
+        </UserButton>
+    );
 }

@@ -85,8 +85,7 @@ export type ParamsArrayRelation = [string, ...ParamsArrayField];
 export type ParamsLogicalOperator = "AND" | "OR";
 export type ParamsArrayGroup = [ParamsLogicalOperator, ...ParamsArrayElement[]];
 export type ParamsArrayElement = ParamsArrayRelation | ParamsArrayField | ParamsArray | ParamsArrayGroup;
-export type ParamsArray = Array<ParamsArrayElement>;
-export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
+export type ParamsArray = ParamsArrayElement[];
 
 export type Point = { lat: number; lng: number };
 export type Polygon = {
