@@ -33,7 +33,7 @@ export default async function Home() {
 				</Suspense>
 				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
-				<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
+				<div className="w-full px-4 xl:px-8 max-w-[95%] xl:max-w-[85%] mx-auto">
 					<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
 						<h1 className="text-6xl sm:text-7xl md:text-7xl lg:text-7xl xl:text-8xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
 							<span className="block text-primary font-light">Welcome</span>

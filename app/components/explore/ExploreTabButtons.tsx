@@ -48,7 +48,7 @@ export default function ExploreTabButtons({
 					<Link
 						key={t}
 						href={href}
-						className={`btn btn-sm text-base font-normal normal-case ${
+						className={`btn text-base font-normal normal-case ${
 							isOnPath(modelName)
 								? "btn-primary"
 								: "bg-base-200 hover:bg-base-300 border-transparent hover:border-transparent"

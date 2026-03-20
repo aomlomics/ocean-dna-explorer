@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import RangeFilter from "./filterTypes/RangeFilter";
-import { FilterConfig, getActiveFilters } from "./filterHelpers";
+import { FilterConfig, getActiveFilters, buildActiveSummaries } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
 import { ReactNode } from "react";
 import SelectGroup from "./filterTypes/SelectGroup";
@@ -56,89 +56,76 @@ function ActiveFilterSummaries({ summaries }: { summaries: string[] }) {
 // Handles all the filters for a specific table (like projects or analyses)
 export default function ActualTableFilter({
 	tableConfig,
-	sticky = false
+	sticky = false,
+	defaultOpen = false
 }: {
 	tableConfig: FilterConfig[];
 	sticky?: boolean;
+	defaultOpen?: boolean;
 }) {
 	const router = useRouter();
 	const searchParams = useSearchParams()!;
-	const [isOpen, setIsOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(defaultOpen);
 
 	// Get what filters are currently active from the URL
 	const activeFilters = getActiveFilters(searchParams, tableConfig);
 	const activeFilterCount = Object.keys(activeFilters).length;
 
-	function formatLabelFromField(fieldKey: string): string {
-		const withSpaces = fieldKey.replace(/_/g, " ");
-		return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+	function clearAllFilters() {
+		const params = new URLSearchParams(searchParams);
+		tableConfig.forEach((config) => {
+			if (config.type === "selectGroup") {
+				for (const field of config.group) {
+					params.delete(typeof field === "string" ? field : field.rel);
+				}
+			} else {
+				params.delete(typeof config.field === "string" ? config.field : config.field.rel);
+			}
+		});
+		router.push(`?${params.toString()}`);
 	}
 
-	function buildActiveSummaries(): string[] {
-		const summaries: string[] = [];
-		for (const config of tableConfig) {
+	function renderFilterFields() {
+		return tableConfig.reduce((acc: ReactNode[], config, i) => {
 			if (config.type === "select" || config.type === "enum") {
-				if (typeof config.field === "string") {
-					const raw = activeFilters[config.field];
-					if (raw !== undefined) {
-						let valueLabel = String(raw);
-						if (config.type === "select" && Array.isArray(config.options)) {
-							const idx = (config.options as any[]).indexOf(raw);
-							if (idx !== -1 && Array.isArray((config as any).optionsLabels)) {
-								valueLabel = (config as any).optionsLabels[idx] ?? valueLabel;
-							}
+				acc.push(
+					<SelectFilter
+						key={i}
+						config={config}
+						activeFilters={activeFilters}
+						fieldName={typeof config.field === "string" ? config.field : config.field.f}
+						value={
+							typeof config.field === "string" && activeFilters[config.field] !== undefined
+								? activeFilters[config.field]
+								: typeof config.field === "object" &&
+									activeFilters[config.field.rel] !== undefined &&
+									JSON.parse(activeFilters[config.field.rel])[config.field.f]
 						}
-						summaries.push(`${formatLabelFromField(config.field)}: ${valueLabel}`);
-					}
-				} else {
-					const rel = config.field.rel;
-					const f = (config.field as any).f;
-					const rawRel = activeFilters[rel];
-					if (rawRel !== undefined) {
-						try {
-							const parsed = JSON.parse(rawRel);
-							if (parsed && parsed[f] !== undefined) {
-								summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
-							}
-						} catch {}
-					}
-				}
+					/>
+				);
 			} else if (config.type === "range") {
-				if (typeof config.field === "string") {
-					const raw = activeFilters[config.field];
-					if (raw !== undefined) {
-						try {
-							const parsed = JSON.parse(raw);
-							const g = parsed.gte ?? config.gte;
-							const l = parsed.lte ?? config.lte;
-							summaries.push(`${formatLabelFromField(config.field)}: ${g}–${l}`);
-						} catch {}
-					}
-				}
+				acc.push(
+					<Filter
+						key={i}
+						fieldName={typeof config.field === "string" ? config.field : config.field.f}
+						value={
+							typeof config.field === "string" && activeFilters[config.field] !== undefined
+								? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
+									" to " +
+									(JSON.parse(activeFilters[config.field]).lte || config.lte)
+								: typeof config.field === "object" &&
+									activeFilters[config.field.rel] !== undefined &&
+									JSON.parse(activeFilters[config.field.rel])[config.field.f]
+						}
+					>
+						<RangeFilter config={config} />
+					</Filter>
+				);
 			} else if (config.type === "selectGroup") {
-				for (const field of config.group) {
-					if (typeof field === "string") {
-						const raw = activeFilters[field];
-						if (raw !== undefined) {
-							summaries.push(`${formatLabelFromField(field)}: ${raw}`);
-						}
-					} else {
-						const rel = field.rel;
-						const f = field.f;
-						const rawRel = activeFilters[rel];
-						if (rawRel !== undefined) {
-							try {
-								const parsed = JSON.parse(rawRel);
-								if (parsed && parsed[f] !== undefined) {
-									summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
-								}
-							} catch {}
-						}
-					}
-				}
+				acc.push(<SelectGroup key={i} config={config} activeFilters={activeFilters} />);
 			}
-		}
-		return summaries;
+			return acc;
+		}, []);
 	}
 
 	return (
@@ -180,32 +167,22 @@ export default function ActualTableFilter({
 					</span>
 					{activeFilterCount > 0 && (
 						<div className="hidden md:block">
-							<ActiveFilterSummaries summaries={buildActiveSummaries()} />
+							<ActiveFilterSummaries summaries={buildActiveSummaries(tableConfig, activeFilters)} />
 						</div>
 					)}
 				</div>
 				<div className="flex items-center gap-4">
-					{activeFilterCount > 0 && (
-						<button
-							onClick={(e) => {
-								e.stopPropagation();
-								const params = new URLSearchParams(searchParams);
-								tableConfig.forEach((config) => {
-									if (config.type === "selectGroup") {
-										for (let field of config.group) {
-											params.delete(typeof field === "string" ? field : field.rel);
-										}
-									} else {
-										params.delete(typeof config.field === "string" ? config.field : config.field.rel);
-									}
-								});
-								router.push(`?${params.toString()}`);
-							}}
-							className="btn btn-primary btn-sm normal-case"
-						>
-							Clear Filters
-						</button>
-					)}
+				{activeFilterCount > 0 && (
+					<button
+						onClick={(e) => {
+							e.stopPropagation();
+							clearAllFilters();
+						}}
+						className="btn btn-primary btn-sm normal-case"
+					>
+						Clear Filters
+					</button>
+				)}
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						viewBox="0 0 24 24"
@@ -221,52 +198,12 @@ export default function ActualTableFilter({
 				</div>
 			</div>
 
-			{/* Filter controls */}
-			{isOpen && (
-				<div className="p-5 pt-3 pb-6 flex flex-col gap-5 min-h-[220px]">
-					{tableConfig.reduce((acc: ReactNode[], config, i) => {
-						if (config.type === "select" || config.type === "enum") {
-							acc.push(
-								<SelectFilter
-									key={i}
-									config={config}
-									activeFilters={activeFilters}
-									fieldName={typeof config.field === "string" ? config.field : config.field.f}
-									value={
-										typeof config.field === "string" && activeFilters[config.field] !== undefined
-											? activeFilters[config.field]
-											: typeof config.field === "object" &&
-												activeFilters[config.field.rel] !== undefined &&
-												JSON.parse(activeFilters[config.field.rel])[config.field.f]
-									}
-								/>
-							);
-						} else if (config.type === "range") {
-							acc.push(
-								<Filter
-									key={i}
-									fieldName={typeof config.field === "string" ? config.field : config.field.f}
-									value={
-										typeof config.field === "string" && activeFilters[config.field] !== undefined
-											? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
-												" to " +
-												(JSON.parse(activeFilters[config.field]).lte || config.lte)
-											: typeof config.field === "object" &&
-												activeFilters[config.field.rel] !== undefined &&
-												JSON.parse(activeFilters[config.field.rel])[config.field.f]
-									}
-								>
-									<RangeFilter config={config} />
-								</Filter>
-							);
-						} else if (config.type === "selectGroup") {
-							acc.push(<SelectGroup key={i} config={config} activeFilters={activeFilters} />);
-						}
-
-						return acc;
-					}, [])}
-				</div>
-			)}
+		{/* Filter controls */}
+		{isOpen && (
+			<div className="p-5 pt-3 pb-6 flex flex-col gap-5 min-h-[220px]">
+				{renderFilterFields()}
+			</div>
+		)}
 		</div>
 	);
 }

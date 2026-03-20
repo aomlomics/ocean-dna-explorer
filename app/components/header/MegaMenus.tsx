@@ -136,7 +136,7 @@ function MegaMenu({
 			{open ? (
 				<div
 					aria-hidden="true"
-					className="fixed inset-0 top-20 lg:top-24 z-99998 pointer-events-none bg-base-100/10 backdrop-blur-[2px]"
+					className="fixed inset-0 top-20 xl:top-24 z-99998 pointer-events-none bg-base-100/10 backdrop-blur-[2px]"
 				/>
 			) : null}
 
@@ -182,7 +182,7 @@ function MegaMenu({
 					className={[
 						"z-99999",
 						"fixed left-1/2 -translate-x-1/2",
-						panelTopClass ?? "top-20 lg:top-24", // matches header heights (h-20 / lg:h-24)
+						panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
 						"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
 						"w-[calc(100vw-2rem)]",
 						widthClass

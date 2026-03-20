@@ -517,7 +517,7 @@ export default function Table({
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
 											{!hideFilters && (
-												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														viewBox="0 0 16 16"
@@ -530,13 +530,13 @@ export default function Table({
 															clipRule="evenodd"
 														/>
 													</svg>
-													<input
-														name={title}
-														defaultValue={whereFilter[title] || ""}
-														type="text"
-														className="grow"
-														placeholder="Press Enter to search"
-													/>
+												<input
+													name={title}
+													defaultValue={whereFilter[title] || ""}
+													type="text"
+													className="grow"
+													placeholder="Press Enter to search"
+												/>
 												</label>
 											)}
 										</label>
@@ -586,7 +586,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<svg
 																	xmlns="http://www.w3.org/2000/svg"
 																	viewBox="0 0 16 16"
@@ -652,7 +652,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<svg
 																	xmlns="http://www.w3.org/2000/svg"
 																	viewBox="0 0 16 16"
@@ -681,7 +681,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<svg
 																	xmlns="http://www.w3.org/2000/svg"
 																	viewBox="0 0 16 16"
@@ -698,8 +698,8 @@ export default function Table({
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
-																	className="grow min-w-10"
-																	disabled
+																className="grow min-w-10"
+																disabled
 																/>
 															</label>
 														)}
@@ -754,7 +754,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<svg
 																	xmlns="http://www.w3.org/2000/svg"
 																	viewBox="0 0 16 16"
@@ -771,8 +771,8 @@ export default function Table({
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
-																	className="grow min-w-10"
-																	placeholder="Press Enter to search"
+																className="grow min-w-10"
+																placeholder="Press Enter to search"
 																/>
 															</label>
 														)}
@@ -800,7 +800,7 @@ export default function Table({
 												<label className="form-control w-full max-w-xs text-lg">
 													{/* Value Filter */}
 													{!hideFilters && (
-														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 															<svg
 																xmlns="http://www.w3.org/2000/svg"
 																viewBox="0 0 16 16"

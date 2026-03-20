@@ -1,10 +1,8 @@
 import { ReactNode } from "react";
 import { FilterConfig } from "./filters/filterHelpers";
-import TableFilter from "./filters/TableFilter";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
-import SearchBar from "../search/SearchBar";
-import TableDisplay from "../paginated/TableDisplay";
+import ExploreControls from "./ExploreControls";
 
 export default function ExplorePage({
 	table,
@@ -51,9 +49,7 @@ export default function ExplorePage({
 
 			<div className="prose max-w-full text-base-content/80">{children}</div>
 
-			<SearchBar table={table} />
-			<TableFilter tableConfig={tableConfig} />
-			<TableDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
+			<ExploreControls table={table} tableConfig={tableConfig} toggle={toggle} displayMode={displayMode} tableWhere={tableWhere} />
 		</div>
 	);
 }

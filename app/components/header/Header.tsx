@@ -14,29 +14,29 @@ export default async function Header() {
 	const role = sessionClaims?.metadata.role as Role;
 
 	return (
-		<header className="navbar bg-base-100 border-b-4 border-primary h-20 lg:h-24 top-0 z-header relative overflow-visible">
+		<header className="navbar bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
-			<div className="navbar-start w-auto xl:w-1/2 pr-2 sm:pr-6 xl:pr-8">
+			<div className="navbar-start w-auto xl:w-1/2 pr-2 xl:pr-8">
 				{/* Mobile hamburger dropdown */}
 				<MobileMenu />
 
 				{/* Logo */}
 				<div className="flex items-center min-w-0">
 					<Link
-						className="px-1 sm:px-2 lg:px-8 lg:ml-6 normal-case text-xl h-14 w-48 sm:h-18 sm:w-64 lg:h-22 lg:w-80 flex flex-col items-center justify-center shrink"
+						className="px-2 xl:px-8 xl:ml-6 normal-case text-xl h-14 w-48 xl:h-22 xl:w-80 flex flex-col items-center justify-center shrink"
 						href="/"
 					>
-						<div className="avatar w-44 h-12 sm:w-60 sm:h-16 lg:w-88 lg:h-22 relative">
+						<div className="avatar w-44 h-12 xl:w-88 xl:h-22 relative">
 							<NodeLogo
 								alt="Ocean DNA Explorer Logo"
 								fill={true}
 								style={{ objectFit: "contain" }}
 								priority={true}
-								sizes="(max-width: 768px) 100vw, 33vw"
+								sizes="(max-width: 1280px) 100vw, 33vw"
 							/>
 						</div>
 					</Link>
-					<div className="bg-orange-500 text-white font-semibold rounded-md ml-1 sm:ml-2 lg:ml-8 text-[clamp(9px,2.6vw,12px)] px-[clamp(6px,2vw,12px)] py-[clamp(2px,0.9vw,4px)] leading-none sm:text-xs sm:px-3 sm:py-1.5 sm:leading-tight lg:px-4">
+					<div className="bg-orange-500 text-white font-semibold rounded-md ml-2 xl:ml-8 text-xs px-3 py-1.5 leading-tight xl:px-4">
 						BETA
 					</div>
 				</div>

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Grid from "./grid/Grid";
 import TaxaGridItem from "./grid/TaxaGridItem";
 import ProjectGridItem from "./grid/ProjectGridItem";
+import { useViewMode } from "../explore/ViewModeContext";
 
 export default function TableDisplay({
 	table,
@@ -22,7 +23,21 @@ export default function TableDisplay({
 	ignoreParams?: string[];
 }) {
 	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
-	const [mode, setMode] = useState(displayMode);
+
+	// When inside an ExplorePage, mode is driven by ViewModeContext (set by ActionBar).
+	// On other pages (e.g. search), the context is absent so we fall back to local state,
+	// which keeps the built-in toggle working independently.
+	const viewModeCtx = useViewMode();
+	const [localMode, setLocalMode] = useState<"table" | "grid">(displayMode);
+	const mode = viewModeCtx?.mode ?? localMode;
+	const setMode = (m: "table" | "grid") => {
+		if (viewModeCtx) {
+			viewModeCtx.setMode(m);
+		} else {
+			setLocalMode(m);
+		}
+	};
+	const showBuiltInToggle = !viewModeCtx && toggle;
 
 	useEffect(() => {
 		function handleResize() {
@@ -40,22 +55,20 @@ export default function TableDisplay({
 
 	return (
 		<div className="flex flex-col">
-			{toggle ? (
-				<fieldset className="fieldset bg-base-100 border-base-300 rounded-box w-36 border self-center p-2 mb-6">
-					<legend className="fieldset-legend">Display Mode</legend>
-					<label className="label">
-						<input
-							type="checkbox"
-							className="toggle"
-							defaultChecked={mode === "grid"}
-							onChange={(e) => (e.target.checked ? setMode("grid") : setMode("table"))}
-						/>
-						{mode}
-					</label>
-				</fieldset>
-			) : (
-				<></>
-			)}
+		{showBuiltInToggle && (
+			<fieldset className="fieldset bg-base-100 border-base-300 rounded-box w-36 border self-center p-2 mb-6">
+				<legend className="fieldset-legend">Display Mode</legend>
+				<label className="label">
+					<input
+						type="checkbox"
+						className="toggle"
+						defaultChecked={mode === "grid"}
+						onChange={(e) => (e.target.checked ? setMode("grid") : setMode("table"))}
+					/>
+					{mode}
+				</label>
+			</fieldset>
+		)}
 
 			<div className="rounded-lg border border-base-300 h-[90vh]">
 				{mode === "table" ? (

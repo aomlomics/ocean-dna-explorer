@@ -30,7 +30,7 @@ export default function LoadingTable({
 							<button type="submit" className="btn btn-sm" disabled>
 								Apply Filters
 							</button>
-							<label className="input input-sm input-bordered">
+							<label className="input input-sm input-bordered focus-within:outline-none">
 								Per Page:
 								<input name="take" defaultValue={take} type="number" disabled />
 							</label>
@@ -81,7 +81,7 @@ export default function LoadingTable({
 
 									<label className="form-control w-full max-w-xs text-lg">
 										{/* Value Filter */}
-										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 16 16"
@@ -106,7 +106,7 @@ export default function LoadingTable({
 										</div>
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
-											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													viewBox="0 0 16 16"
