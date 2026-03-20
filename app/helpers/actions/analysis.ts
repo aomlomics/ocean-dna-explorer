@@ -458,3 +458,82 @@ export async function parseAnalysisFiles({
 		}
 	};
 }
+
+export function calculateRarefactions(
+	occurrences: {
+		lib_id: Occurrence["lib_id"];
+		organismQuantity: Occurrence["organismQuantity"];
+		featureid: Occurrence["featureid"];
+	}[],
+	depth: number,
+	iterations = 10
+) {
+	//calculate total quantity of each feature per library
+	const featQuantitiesByLib = {} as Record<
+		Occurrence["lib_id"],
+		{ features: Record<Occurrence["featureid"], Occurrence["organismQuantity"]>; sum: number }
+	>;
+	for (const occ of occurrences) {
+		if (!featQuantitiesByLib[occ.lib_id]) {
+			featQuantitiesByLib[occ.lib_id] = {
+				features: { [occ.featureid]: occ.organismQuantity },
+				sum: occ.organismQuantity
+			};
+		} else {
+			featQuantitiesByLib[occ.lib_id].sum += occ.organismQuantity;
+			if (!featQuantitiesByLib[occ.lib_id].features[occ.featureid]) {
+				featQuantitiesByLib[occ.lib_id].features[occ.featureid] = occ.organismQuantity;
+			} else {
+				featQuantitiesByLib[occ.lib_id].features[occ.featureid] += occ.organismQuantity;
+			}
+		}
+	}
+
+	const richness = [] as { lib_id: Occurrence["lib_id"]; index: number }[];
+	const chao1 = [] as { lib_id: Occurrence["lib_id"]; index: number }[];
+	const pielou = [] as { lib_id: Occurrence["lib_id"]; index: number }[];
+	for (const [lib_id, { features, sum }] of Object.entries(featQuantitiesByLib)) {
+		//only include libraries that exceed the depth requirement
+		if (sum > depth) {
+			const richnessIterations = [] as number[];
+			const chao1Iterations = [] as number[];
+			const pielouIterations = [] as number[];
+			for (let i = 0; i < iterations; i++) {
+				//copy features object to track which ones have already been selected this iteration
+				const iterationFeatures = { ...features };
+
+				const uniqueFeatures = new Set() as Set<Occurrence["featureid"]>;
+				for (let j = 0; j < depth; j++) {
+					//randomly select feature using quantity as weighted average
+					let rand = Math.floor(Math.random() * sum + 1);
+					let selectedFeat;
+					for (const [feat, quantity] of Object.entries(iterationFeatures)) {
+						selectedFeat = feat;
+						rand -= quantity;
+						if (rand <= 0) {
+							break;
+						}
+					}
+
+					//remove one quantity of selected feature from bucket
+					iterationFeatures[selectedFeat!]--;
+					uniqueFeatures.add(selectedFeat!);
+				}
+
+				richnessIterations.push(uniqueFeatures.size);
+
+				//TODO: chao1
+
+				//TODO: pielou
+			}
+
+			richness.push({
+				lib_id,
+				index: richnessIterations.reduce((res, curr) => res + curr) / richnessIterations.length
+			});
+		} else {
+		}
+	}
+
+	return { richness, chao1, pielou };
+}

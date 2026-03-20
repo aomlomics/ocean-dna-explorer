@@ -3,7 +3,7 @@ import { Prisma, Sample } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { getZodType } from "@/app/helpers/schema";
-import { SampleScalarFieldEnumSchema, SampleSchema } from "@/prisma/generated/zod";
+import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
