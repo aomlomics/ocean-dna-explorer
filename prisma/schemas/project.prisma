@@ -427,14 +427,15 @@ model Library {
     userDefined Json?
 
     // Relations
-    project_id  String
-    Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    samp_name   String
-    Sample      Sample       @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
-    assay_name  String
-    Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
-    AssayPrep   AssayPrep    @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
-    Occurrences Occurrence[]
+    project_id            String
+    Project               Project               @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    samp_name             String
+    Sample                Sample                @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    assay_name            String
+    Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name])
+    AssayPrep             AssayPrep             @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
+    Occurrences           Occurrence[]
+    AlphaDiversityIndexes AlphaDiversityIndex[]
 
     // Data
     // Library Preparation Sequencing

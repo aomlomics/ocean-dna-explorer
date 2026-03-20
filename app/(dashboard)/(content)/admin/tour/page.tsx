@@ -166,6 +166,7 @@ export default function Tour() {
 				}
 
 				if (samp_name) {
+					//TODO: only show features for selected taxonomy
 					const occRes = await fetch(
 						`/api/occurrence?fields=featureid&relations=Assignment&relationsAllFields=true&advanced=[["sample","samp_name","equals","${samp_name}"],["analysis_run_name","equals","${analysis_run_name}"]]`
 					);
