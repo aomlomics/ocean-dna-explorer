@@ -113,6 +113,26 @@
 		color-scheme: dark;
 	}
 
+	html {
+		/* Base scaling: 1rem = 16px at exactly 1920px wide (16 ÷ 1920 × 100 = 0.8333vw) */
+		font-size: 0.8333vw;
+	}
+
+	@media (max-width: 1024px) {
+		html {
+			/* Reset to browser default on tablets and mobile —
+			   those breakpoints already have their own responsive design. */
+			font-size: 16px;
+		}
+	}
+
+	@media (min-width: 3840px) {
+		html {
+			/* Cap at 4K (32px = 2rem equivalent) so text doesn't become absurdly large. */
+			font-size: 32px;
+		}
+	}
+
 	html,
 	body {
 		overflow-x: clip;
@@ -149,7 +169,7 @@
 
 /* Global breadcrumb styling */
 .breadcrumbs {
-	font-size: 0.875rem; /* text-sm */
+	font-size: 1.1rem;
 }
 
 /* Global modal backdrop styling - make darker */

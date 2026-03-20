@@ -89,7 +89,7 @@ export default function Page() {
 					signUpUrl="/sign-up"
 				/>
 				<p
-					className={`mt-5 max-w-md text-center text-sm font-semibold tracking-tight leading-relaxed ${
+					className={`mt-5 max-w-md text-center text-base font-semibold tracking-tight leading-relaxed ${
 						isDark ? "text-[#D6E2F3]" : "text-[#33446D]"
 					}`}
 				>
@@ -98,7 +98,7 @@ export default function Page() {
 			</div>
 			<button
 				onClick={() => window.history.back()}
-				className="relative z-10 mt-8 flex items-center gap-2 rounded-lg bg-base-100/80 backdrop-blur-sm px-6 py-3 text-sm font-semibold tracking-tight text-base-content transition-colors duration-200 hover:bg-base-300"
+				className="relative z-10 mt-8 flex items-center gap-2 rounded-lg bg-base-100/80 backdrop-blur-sm px-6 py-3 text-base font-semibold tracking-tight text-base-content transition-colors duration-200 hover:bg-base-300"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

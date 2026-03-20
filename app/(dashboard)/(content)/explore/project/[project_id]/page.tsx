@@ -4,11 +4,10 @@ import Map from "@/app/components/map/Map";
 import BarChart from "@/app/components/charts/BarChart";
 import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import AssayCard from "@/app/components/assay/AssayCard";
 import DataDisplay from "@/app/components/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
 import { Project } from "@/app/generated/prisma/client";
-import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
 import Image from "next/image";
@@ -248,23 +247,13 @@ export default async function Project_id({ params }: { params: Promise<{ project
 								Assays in this Project ({Object.keys(uniqueAssays).length})
 							</h2>
 							<div className="space-y-2">
-								{Object.keys(uniqueAssays).map((assay) => {
-									return (
-										<div key={assay} className="flex items-center gap-4 p-4 rounded-lg">
-											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-												<div className="relative w-12 h-12">
-													<Suspense>
-														<AssayPhyloPic assay_name={assay} />
-													</Suspense>
-												</div>
-											</div>
-											<div>
-												<h3 className="font-medium text-lg text-base-content">{uniqueAssays[assay].target_gene}</h3>
-												<p className="text-base-content/70">{assay}</p>
-											</div>
-										</div>
-									);
-								})}
+							{Object.keys(uniqueAssays).map((assay) => (
+								<AssayCard
+									key={assay}
+									assay_name={assay}
+									target_gene={uniqueAssays[assay].target_gene}
+								/>
+							))}
 							</div>
 						</div>
 

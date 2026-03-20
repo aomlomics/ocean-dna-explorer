@@ -5,9 +5,8 @@ import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import AssayCard from "@/app/components/assay/AssayCard";
 import { Analysis } from "@/app/generated/prisma/client";
-import { Suspense } from "react";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
@@ -194,23 +193,11 @@ export default async function Analysis_run_name({
 						</div>
 					</div>
 
-					{/* Assay Card */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
-						<div className="flex items-center gap-4 p-4 rounded-lg">
-							<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-								<div className="relative w-12 h-12">
-									<Suspense>
-										<AssayPhyloPic assay_name={analysis.assay_name} />
-									</Suspense>
-								</div>
-							</div>
-							<div>
-								<h3 className="font-medium text-lg text-base-content">{analysis.Assay.target_gene}</h3>
-								<p className="text-base-content/70">{analysis.assay_name}</p>
-							</div>
-						</div>
-					</div>
+				{/* Assay Card */}
+				<div>
+					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
+					<AssayCard assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} />
+				</div>
 				</div>
 			</div>
 

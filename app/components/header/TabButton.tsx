@@ -12,7 +12,7 @@ export default function TabButton({ tabName, route }: { tabName: string; route: 
 	return (
 		<Link
 			href={route}
-			className={`px-4 py-2 rounded-t-lg select-none ${isActive ? "bg-primary text-white" : "hover:bg-base-300"}`}
+			className={`px-4 py-2 rounded-t-lg select-none text-lg ${isActive ? "bg-primary text-white" : "hover:bg-base-300"}`}
 		>
 			{tabName}
 		</Link>

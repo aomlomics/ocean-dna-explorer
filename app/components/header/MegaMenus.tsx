@@ -131,7 +131,7 @@ function MegaMenu({
 			onClick={unfocusWithoutScrollJump}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className="group/menu"
+			className="relative z-100000 group/menu"
 		>
 			{open ? (
 				<div
@@ -145,17 +145,17 @@ function MegaMenu({
 				tabIndex={0}
 				href={route}
 				prefetch={MENU_LINK_PREFETCH}
-				className={`flex items-center gap-1 px-4 py-2 rounded-t-lg transition-colors ${
-					isHighlighted ? "bg-primary text-primary-content" : "hover:bg-base-300"
-				} select-none`}
-				onClick={handleTabLinkClick}
-			>
-				<div className="leading-none select-none">{tabName}</div>
-				<span
-					aria-hidden="true"
-					className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
-						isHighlighted ? "text-primary-content" : "text-base-content"
-					}`}
+			className={`flex items-center gap-1 px-4 py-2 rounded-t-lg transition-colors text-lg ${
+				isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
+			} select-none`}
+			onClick={handleTabLinkClick}
+		>
+			<div className="select-none">{tabName}</div>
+			<span
+				aria-hidden="true"
+				className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
+					isActive ? "text-primary-content" : "text-base-content"
+				}`}
 				>
 					<svg
 						className={`w-3.5 h-3.5 opacity-80 transition-transform duration-200 ${
@@ -224,7 +224,7 @@ function MenuSectionHeader({
 				>
 					{title}
 				</span>
-				<span className="block text-xs text-base-content/55">{subtitle}</span>
+				<span className="block text-sm text-base-content/55">{subtitle}</span>
 			</span>
 		</Link>
 	);
@@ -235,7 +235,7 @@ function MenuItem({ href, label }: { href: string; label: string }) {
 		<Link
 			href={href}
 			prefetch={MENU_LINK_PREFETCH}
-			className="block py-1 px-2 text-sm text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
+			className="block py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
 		>
 			{label}
 		</Link>
@@ -264,10 +264,10 @@ function MenuItemWithSubtitle({
 					<span className="mt-0.5 text-base-content/70 group-hover:text-primary">{icon}</span>
 				) : null}
 				<span>
-					<div className="text-sm font-semibold text-base-content group-hover:text-primary">
+					<div className="text-base font-semibold text-base-content group-hover:text-primary">
 						{title}
 					</div>
-					<div className="text-xs text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
+					<div className="text-sm text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
 				</span>
 			</div>
 		</Link>
@@ -289,8 +289,8 @@ function MiniFeatureCard({
 		<div className="p-5 bg-base-200/35 border-l border-base-200 flex flex-col justify-between">
 			<div>
 				{media ? <div className="mb-4">{media}</div> : null}
-				{title ? <div className="text-sm font-semibold text-base-content">{title}</div> : null}
-				<div className="text-xs text-base-content/60 mt-2 leading-relaxed">{description}</div>
+		{title ? <div className="text-base font-semibold text-base-content">{title}</div> : null}
+			<div className="text-sm text-base-content/60 mt-2 leading-relaxed">{description}</div>
 			</div>
 			{stats?.length ? (
 				<div className="mt-4">
@@ -312,11 +312,11 @@ export function ExploreMegaMenu() {
 	const totalTables = EXPLORE_LEFT_ITEMS.length + EXPLORE_RIGHT_ITEMS.length;
 
 	return (
-		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[820px]">
-			<div className="grid grid-cols-[1fr_280px] gap-0">
+		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[51.25rem]">
+			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
 				<div className="p-5 border-r border-base-200">
-					<div className="text-base font-semibold text-base-content">Explore</div>
-					<div className="text-xs text-base-content/60 mt-1">Filter and sort data in each database table</div>
+				<div className="text-base font-semibold text-base-content">Explore</div>
+				<div className="text-sm text-base-content/60 mt-1">Filter and sort data in each database table</div>
 
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
@@ -372,8 +372,8 @@ export function DocsMegaMenu() {
 	// NOTE: There is no `help#visualize` section in HelpSections currently.
 	// Using `/explore` as the closest existing “visualize-like” UI.
 	return (
-		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/learn", "/api"]} widthClass="max-w-[980px]">
-			<div className="grid grid-cols-[1fr_1fr_1fr_280px] gap-0">
+		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/learn", "/api"]} widthClass="max-w-[61.25rem]">
+			<div className="grid grid-cols-[1fr_1fr_1fr_17.5rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/help"
@@ -479,8 +479,8 @@ export function SubmitMegaMenu() {
 	}, []);
 
 	return (
-		<MegaMenu tabName="Submit" route="/submit" widthClass="max-w-[640px]">
-			<div className="grid grid-cols-[1fr_220px] gap-0">
+		<MegaMenu tabName="Submit" route="/submit" widthClass="max-w-[48rem]">
+			<div className="grid grid-cols-[1fr_16rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/submit"
@@ -523,8 +523,8 @@ export function SubmitMegaMenu() {
 
 export function VisualizeMegaMenu() {
 	return (
-		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[640px]">
-			<div className="grid grid-cols-[1fr_220px] gap-0">
+		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[48rem]">
+			<div className="grid grid-cols-[1fr_16rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/visualize"

@@ -130,7 +130,7 @@ function CustomLegend({
 	const displayedItems = shouldCollapse && !showAll ? 9 : labels.length;
 
 	return (
-		<div className="flex flex-col gap-3 mt-0 lg:max-h-[340px] lg:overflow-y-auto pr-2">
+		<div className="flex flex-col gap-3 mt-0 lg:max-h-[21.25rem] lg:overflow-y-auto pr-2">
 			<h3 className="text-lg font-semibold mb-2" style={{ color: textColor }}>
 				Legend
 			</h3>
@@ -225,7 +225,7 @@ export default function DoughnutChart({ labels, data }: DoughnutChartProps) {
 		<div className="w-full h-full flex flex-col">
 			<div className="flex flex-col lg:flex-row items-start gap-8">
 				{/* Chart Container */}
-				<div className="relative h-[340px] w-[300px] shrink-0 mx-auto lg:mx-0">
+				<div className="relative h-[21.25rem] w-[18.75rem] shrink-0 mx-auto lg:mx-0">
 					<Doughnut data={chartData} options={options} />
 				</div>
 

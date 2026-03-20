@@ -4,7 +4,7 @@ import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
 import { Sample } from "@/app/generated/prisma/client";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import AssayCard from "@/app/components/assay/AssayCard";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
@@ -91,19 +91,13 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							Assays used on this Sample ({sample.Assays.length})
 						</h2>
 						<div className="space-y-2">
-							{sample.Assays.map((assay) => (
-								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
-									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-										<div className="relative w-12 h-12">
-											<AssayPhyloPic assay_name={assay.assay_name} />
-										</div>
-									</div>
-									<div>
-										<h3 className="font-bold text-lg text-base-content">{assay.target_gene}</h3>
-										<p className="text-base-content/70">{assay.assay_name}</p>
-									</div>
-								</div>
-							))}
+						{sample.Assays.map((assay) => (
+							<AssayCard
+								key={assay.assay_name}
+								assay_name={assay.assay_name}
+								target_gene={assay.target_gene}
+							/>
+						))}
 						</div>
 					</div>
 				</div>

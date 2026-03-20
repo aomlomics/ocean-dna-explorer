@@ -3,7 +3,8 @@ import TableMetadata from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
 import { AssayPrep } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { AssayIcon, ProjectIcon } from "@/app/components/icons";
+import { ProjectIcon } from "@/app/components/icons";
+import AssayCard from "@/app/components/assay/AssayCard";
 
 export default async function Project_id_Assay_name({
 	params
@@ -103,7 +104,7 @@ export default async function Project_id_Assay_name({
 					<div className="lg:col-span-2">
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay prep metadata</h2>
-							<div className="h-80 overflow-y-auto">
+							<div className="h-128 overflow-y-auto">
 								<DataDisplay table="assayPrep" data={justAssayPrep} omit={["project_id", "assay_name"]} />
 							</div>
 						</div>
@@ -112,19 +113,7 @@ export default async function Project_id_Assay_name({
 					{/* Context cards */}
 					<div className="space-y-4">
 						{assay && (
-							<Link href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`} className="group block w-2/3">
-								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
-									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-										<AssayIcon />
-									</div>
-									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-										View assay
-									</div>
-									<div className="text-base font-semibold text-base-content group-hover:text-primary mt-1 break-all">
-										{assay.target_gene || assay.assay_name}
-									</div>
-								</div>
-							</Link>
+							<AssayCard assay_name={assay.assay_name} target_gene={assay.target_gene ?? assay.assay_name} />
 						)}
 
 						{project && (
