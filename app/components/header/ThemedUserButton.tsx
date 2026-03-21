@@ -5,9 +5,8 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export function ThemedUserButton() {
-	const { theme, resolvedTheme } = useTheme();
+	const { theme } = useTheme();
 	const [mounted, setMounted] = useState(false);
-	const isDark = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
 	useEffect(() => {
 		setMounted(true);

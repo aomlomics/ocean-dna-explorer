@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig } from "prisma/config";
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
 	schema: "prisma/",
@@ -8,6 +8,6 @@ export default defineConfig({
 		seed: "tsx prisma/seed.ts"
 	},
 	datasource: {
-		url: process.env.POSTGRES_PRISMA_URL
+		url: env("POSTGRES_PRISMA_URL")
 	}
 });
