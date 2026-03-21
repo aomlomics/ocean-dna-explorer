@@ -3,13 +3,11 @@ import { seedAssays } from "@/app/helpers/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 
+console.warn("TEST", process.env.ASSAY_SEED_URL, process.env.POSTGRES_PRISMA_URL);
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.POSTGRES_PRISMA_URL }) });
-const ASSAY_SEED_URL =
-	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
-
 async function load() {
 	try {
-		await seedAssays(prisma, ASSAY_SEED_URL);
+		await seedAssays(prisma, process.env.ASSAY_SEED_URL);
 	} catch (err) {
 		console.error(err);
 		await prisma.$disconnect();

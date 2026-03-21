@@ -18,12 +18,12 @@ async function main() {
 		const sitemaps = await findSitemapFiles(APP_DIR);
 		const SITEMAP_INDEX_PATH = path.join(ROOT_DIR, "public", "/sitemap.xml");
 
-		const createSitemap = (url) => /* XML */ `
+		const createSitemap = (url: string) => /* XML */ `
       <sitemap>
         <loc>${url}</loc>
       </sitemap>`;
 
-		const createSitemapIndex = (urls) => /* XML */ `
+		const createSitemapIndex = (urls: string[]) => /* XML */ `
       <?xml version="1.0" encoding="UTF-8"?>
       <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 		${createSitemap(`${process.env.NEXT_PUBLIC_URL}/static-sitemap.xml`)}
@@ -55,8 +55,8 @@ async function main() {
  * @param {string} dir - The base directory to begin searching for sitemap files.
  * @returns {Promise<string[]>} A promise that resolves to an array of sitemap URLs.
  */
-async function findSitemapFiles(dir) {
-	let sitemaps = [];
+async function findSitemapFiles(dir: string): Promise<string[]> {
+	let sitemaps: string[] = [];
 	try {
 		const files = await fs.readdir(dir, { withFileTypes: true });
 		for (const file of files) {
@@ -84,7 +84,7 @@ async function findSitemapFiles(dir) {
 				const sitemapFile = await import(fullPath);
 				if (sitemapFile.generateSitemaps) {
 					const result = await sitemapFile.generateSitemaps();
-					result.forEach((item) => {
+					result.forEach((item: { id: number }) => {
 						sitemaps.push(`${process.env.NEXT_PUBLIC_URL}/${relativePath}/sitemap/${item.id}.xml`);
 					});
 				} else {
