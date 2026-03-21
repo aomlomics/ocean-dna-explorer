@@ -23,13 +23,5 @@ module.exports = {
 	},
 	images: {
 		remotePatterns
-	},
-	turbopack: (config, { isServer }) => {
-		if (isServer) {
-			require("./sitemap-index");
-			require("./prisma/seed");
-		}
-
-		return config;
 	}
 };

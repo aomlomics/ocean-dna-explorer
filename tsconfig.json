@@ -36,7 +36,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "sitemap-index.js", "prisma/seed.js"  ],
   "exclude": [
     "node_modules"
   ]
