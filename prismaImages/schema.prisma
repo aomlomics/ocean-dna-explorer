@@ -1,15 +1,15 @@
-datasource db {
+datasource images_db {
     provider = "postgresql"
 }
 
-generator client {
+generator images_client {
     provider            = "prisma-client"
     output              = "../app/generated/prismaImages"
     runtime             = "edge-light"
     importFileExtension = ""
 }
 
-generator zod {
+generator images_zod {
     provider                         = "zod-prisma-types"
     prismaClientPath                 = "@/app/generated/prismaImages"
     createInputTypes                 = false
