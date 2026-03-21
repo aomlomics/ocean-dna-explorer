@@ -40,11 +40,19 @@ export async function GET(request: Request) {
 		<lastmod>${new Date()}</lastmod>
 	</url>
 	<url>
+		<loc>${SITE_URL}/help</loc>
+		<lastmod>${new Date()}</lastmod>
+	</url>
+	<url>
 		<loc>${SITE_URL}/api</loc>
 		<lastmod>${new Date()}</lastmod>
 	</url>
 	<url>
-		<loc>${SITE_URL}/help</loc>
+		<loc>${SITE_URL}/learn</loc>
+		<lastmod>${new Date()}</lastmod>
+	</url>
+	<url>
+		<loc>${SITE_URL}/about</loc>
 		<lastmod>${new Date()}</lastmod>
 	</url>
 </urlset>`,
