@@ -459,7 +459,9 @@ async function parseSampleFile({
 					}
 				}
 
-				samplesByName[parsedSample.data.samp_name] = parsedSample.data;
+				samplesByName[parsedSample.data.samp_name] = parsedSample.data as typeof parsedSample.data & {
+					userDefined: PrismaJson.UserDefinedType;
+				};
 
 				//add to progress bar every 10 percent
 				if (i % (sampleParser.info.records / 10) === 0) {
