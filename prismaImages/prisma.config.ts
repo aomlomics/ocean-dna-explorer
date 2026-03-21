@@ -7,6 +7,6 @@ export default defineConfig({
 		path: "prismaImages/migrations"
 	},
 	datasource: {
-		url: env("IMAGE_POSTGRES_URL_NON_POOLING")
+		url: env("IMAGE_POSTGRES_PRISMA_URL")
 	}
 });
