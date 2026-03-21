@@ -1,9 +1,8 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { seedAssays } from "@/app/helpers/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
-import "dotenv/config";
 
-console.warn("TEST", process.env.ASSAY_SEED_URL, process.env.POSTGRES_PRISMA_URL);
+console.log("TEST", process.env.ASSAY_SEED_URL, process.env.POSTGRES_PRISMA_URL);
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.POSTGRES_PRISMA_URL }) });
 async function load() {
 	try {
