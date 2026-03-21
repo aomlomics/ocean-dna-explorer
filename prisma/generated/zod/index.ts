@@ -8,7 +8,7 @@ import { Prisma } from '@/app/generated/prisma/client';
 // JSON
 //------------------------------------------------------
 
-export type NullableJsonInput = Prisma.JsonValue | null | 'JsonNull' | 'DbNull' | Prisma.NullTypes.DbNull | Prisma.NullTypes.JsonNull;
+export type NullableJsonInput = JsonValue | null | 'JsonNull' | 'DbNull' | typeof objectEnumValues.instances.DbNull | typeof objectEnumValues.instances.JsonNull;
 
 export const transformJsonNull = (v?: NullableJsonInput) => {
   if (!v || v === 'DbNull') return Prisma.NullTypes.DbNull;
