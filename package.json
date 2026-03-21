@@ -22,7 +22,7 @@
 		"generate": "npx prisma generate --schema ./prisma/ --config ./prisma/prisma.config.ts && npx prisma generate --schema ./prismaImages/schema.prisma --config ./prismaImages/prisma.config.ts",
 		"migrate": "npx prisma migrate deploy --schema ./prisma/ --config ./prisma/prisma.config.ts && npx prisma migrate deploy --schema ./prismaImages/schema.prisma --config ./prismaImages/prisma.config.ts",
 		"postinstall": "npm run migrate && npm run generate",
-		"postbuild": "npx tsx ./sitemap-index.ts"
+		"postbuild": "node ./sitemap-index.mjs"
 	},
 	"dependencies": {
 		"@clerk/nextjs": "^7.0.6",
