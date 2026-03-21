@@ -24,7 +24,7 @@ module.exports = {
 	images: {
 		remotePatterns
 	},
-	webpack: (config, { isServer }) => {
+	turbopack: (config, { isServer }) => {
 		if (isServer) {
 			require("./sitemap-index");
 			require("./prisma/seed");
