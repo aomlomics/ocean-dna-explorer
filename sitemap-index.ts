@@ -1,8 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-
-//env variables don't seem to be loadable in postbuild scripts, have to hardcode the url instead
-const SITE_URL = "https://www.oceandnaexplorer.org";
+import "dotenv/config";
 
 /**
  * 🗺️ Generates the main sitemap index file.
@@ -28,7 +26,7 @@ async function main() {
 		const createSitemapIndex = (urls: string[]) => /* XML */ `
       <?xml version="1.0" encoding="UTF-8"?>
       <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-		${createSitemap(`${SITE_URL}/static-sitemap.xml`)}
+		${createSitemap(`${process.env.NEXT_PUBLIC_URL}/static-sitemap.xml`)}
         ${urls.map(createSitemap).join("")}
       </sitemapindex>`;
 
@@ -87,10 +85,10 @@ async function findSitemapFiles(dir: string): Promise<string[]> {
 				if (sitemapFile.generateSitemaps) {
 					const result = await sitemapFile.generateSitemaps();
 					result.forEach((item: { id: number }) => {
-						sitemaps.push(`${SITE_URL}/${relativePath}/sitemap/${item.id}.xml`);
+						sitemaps.push(`${process.env.NEXT_PUBLIC_URL}/${relativePath}/sitemap/${item.id}.xml`);
 					});
 				} else {
-					sitemaps.push(`${SITE_URL}/${relativePath}/sitemap.xml`);
+					sitemaps.push(`${process.env.NEXT_PUBLIC_URL}/${relativePath}/sitemap.xml`);
 				}
 			}
 		}

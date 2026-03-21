@@ -1,6 +1,7 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { seedAssays } from "@/app/helpers/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.POSTGRES_URL_NON_POOLING }) });
 const ASSAY_SEED_URL =
