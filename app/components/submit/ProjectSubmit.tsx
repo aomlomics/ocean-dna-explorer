@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
+import { SubmitEvent, Fragment, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
 import { NetworkProgressPacket } from "@/types/globals";
@@ -79,7 +79,7 @@ export default function ProjectSubmit() {
 		modalRef.current?.showModal();
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setLoading(true);
 
@@ -175,8 +175,8 @@ export default function ProjectSubmit() {
 	}
 
 	return (
-        <>
-            <form className="grid grid-cols-12 gap-12 w-full" onSubmit={handleSubmit}>
+		<>
+			<form className="grid grid-cols-12 gap-12 w-full" onSubmit={handleSubmit}>
 				{/* Left column: give more space to users */}
 				<div className="col-span-6 space-y-6">
 					<SubmitFormSection
@@ -299,7 +299,7 @@ export default function ProjectSubmit() {
 					</SubmitFormSection>
 				</div>
 			</form>
-            <Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
+			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
 				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}
 				</h3>
@@ -309,11 +309,12 @@ export default function ProjectSubmit() {
 						<Fragment key={i}>
 							{i !== 0 ? (
 								//this is a naive solution
-								(<Link
+								<Link
 									href={process.env.NEXT_PUBLIC_ASSAY_MASTER_LIST_URL as string}
 									className="link link-primary link-hover"
-								>Assay Master List
-                                                                    </Link>)
+								>
+									Assay Master List
+								</Link>
 							) : (
 								""
 							)}
@@ -331,6 +332,6 @@ export default function ProjectSubmit() {
 					</div>
 				)}
 			</Modal>
-        </>
-    );
+		</>
+	);
 }

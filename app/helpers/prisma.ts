@@ -1,15 +1,14 @@
 import { RolePermissions } from "@/types/objects";
-import { Assay, DeadBoolean, Prisma } from "../generated/prisma/client";
-import { PrismaClient } from "../generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { ErrorPacket, Role } from "@/types/globals";
-import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/library";
 import { deepMerge } from "./utils";
-import TableMetadata from "@/types/tableMetadata";
 import { getZodType, parseSchemaToObject } from "./schema";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { parse } from "csv-parse";
+import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/client";
+import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -51,26 +50,7 @@ const globalForPrisma = global as unknown as {
 //prisma client with no restrictions
 const unsafePrisma =
 	globalForPrisma.unsafePrisma ||
-	new PrismaClient({
-		log: [
-			// {
-			// 	emit: "stdout",
-			// 	level: "query"
-			// },
-			{
-				emit: "stdout",
-				level: "error"
-			},
-			{
-				emit: "stdout",
-				level: "info"
-			},
-			{
-				emit: "stdout",
-				level: "warn"
-			}
-		]
-	});
+	new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.POSTGRES_PRISMA_URL }) });
 
 //prisma client that can never get private data
 const publicPrisma =

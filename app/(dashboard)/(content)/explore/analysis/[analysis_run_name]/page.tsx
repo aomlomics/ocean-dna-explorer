@@ -11,8 +11,6 @@ import { Suspense } from "react";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
-import TaxaGridItem from "@/app/components/paginated/grid/TaxaGridItem";
-import Grid from "@/app/components/paginated/grid/Grid";
 import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 
 export default async function Analysis_run_name({

@@ -234,64 +234,64 @@ async function doSubmit(
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
 
 		//diversity
-		after(async () => {
-			const diversities = await prisma.alphaDiversity.createManyAndReturn({
-				data: [
-					{
-						analysis_run_name: analysis.analysis_run_name,
-						indexType: "richness",
-						rarefied: true,
-						depth: 5000
-					},
-					{
-						analysis_run_name: analysis.analysis_run_name,
-						indexType: "richness",
-						rarefied: true,
-						depth: 10000
-					},
-					{
-						analysis_run_name: analysis.analysis_run_name,
-						indexType: "richness",
-						rarefied: true,
-						depth: 50000
-					},
-					{
-						analysis_run_name: analysis.analysis_run_name,
-						indexType: "richness",
-						rarefied: true,
-						depth: 100000
-					}
-				]
-			});
+		// after(async () => {
+		// 	const diversities = await prisma.alphaDiversity.createManyAndReturn({
+		// 		data: [
+		// 			{
+		// 				analysis_run_name: analysis.analysis_run_name,
+		// 				indexType: "richness",
+		// 				rarefied: true,
+		// 				depth: 5000
+		// 			},
+		// 			{
+		// 				analysis_run_name: analysis.analysis_run_name,
+		// 				indexType: "richness",
+		// 				rarefied: true,
+		// 				depth: 10000
+		// 			},
+		// 			{
+		// 				analysis_run_name: analysis.analysis_run_name,
+		// 				indexType: "richness",
+		// 				rarefied: true,
+		// 				depth: 50000
+		// 			},
+		// 			{
+		// 				analysis_run_name: analysis.analysis_run_name,
+		// 				indexType: "richness",
+		// 				rarefied: true,
+		// 				depth: 100000
+		// 			}
+		// 		]
+		// 	});
 
-			const rarefactions = {} as Record<NonNullable<AlphaDiversity["depth"]>, ReturnType<typeof calculateRarefactions>>;
-			const diversityUpdates = [] as Prisma.AlphaDiversityUpdateArgs[];
-			for (const div of diversities) {
-				if (div.depth) {
-					//rarefied diversities
-					if (!rarefactions[div.depth]) {
-						rarefactions[div.depth] = calculateRarefactions(occurrences, div.depth);
-					}
+		// 	const rarefactions = {} as Record<NonNullable<AlphaDiversity["depth"]>, ReturnType<typeof calculateRarefactions>>;
+		// 	const diversityUpdates = [] as Prisma.AlphaDiversityUpdateArgs[];
+		// 	for (const div of diversities) {
+		// 		if (div.depth) {
+		// 			//rarefied diversities
+		// 			if (!rarefactions[div.depth]) {
+		// 				rarefactions[div.depth] = calculateRarefactions(occurrences, div.depth);
+		// 			}
 
-					diversityUpdates.push({
-						where: {
-							id: div.id
-						},
-						data: {
-							AlphaDiversityIndexes: {
-								createMany: {
-									data: rarefactions[div.depth][div.indexType as keyof ReturnType<typeof calculateRarefactions>]
-								}
-							}
-						}
-					});
-				} else {
-					//unrarefied diversities
-				}
-			}
+		// 			diversityUpdates.push({
+		// 				where: {
+		// 					id: div.id
+		// 				},
+		// 				data: {
+		// 					AlphaDiversityIndexes: {
+		// 						createMany: {
+		// 							data: rarefactions[div.depth][div.indexType as keyof ReturnType<typeof calculateRarefactions>]
+		// 						}
+		// 					}
+		// 				}
+		// 			});
+		// 		} else {
+		// 			//unrarefied diversities
+		// 		}
+		// 	}
 
-			await prisma.$transaction(diversityUpdates.map((up) => prisma.alphaDiversity.update(up)));
-		});
+		// 	await prisma.$transaction(diversityUpdates.map((up) => prisma.alphaDiversity.update(up)));
+		// });
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

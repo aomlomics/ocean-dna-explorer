@@ -126,20 +126,21 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 	? R
 	: any;
 
+export type UserMetadata = {
+	role?: Role;
+	roleApplication?: {
+		role: Role;
+		description?: string;
+	};
+};
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;
 		type ChangesType = { field: string; oldValue: string; newValue: string }[];
-		type EditHistoryType = { id: string; dateEdited: string; changes: ChangesType }[];
+		type EditHistoryType = { id: string; dateEdited: Date; changes: ChangesType }[];
 	}
 
 	interface CustomJwtSessionClaims {
-		metadata: {
-			role?: Role;
-			roleApplication?: {
-				role: Role;
-				description?: string;
-			};
-		};
+		metadata: UserMetadata;
 	}
 }

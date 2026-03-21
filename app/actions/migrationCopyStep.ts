@@ -25,15 +25,18 @@ export default async function migrationCopyStepAction() {
 			throw new Error("Invalid role.");
 		}
 
-		const oldFieldsByTable = TableNames.reduce((acc, t) => {
-			const table = uncapitalizeTable(t as Prisma.ModelName);
-			const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
-			if (tempFields.length) {
-				acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));
-			}
+		const oldFieldsByTable = TableNames.reduce(
+			(acc, t) => {
+				const table = uncapitalizeTable(t as Prisma.ModelName);
+				const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
+				if (tempFields.length) {
+					acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));
+				}
 
-			return acc;
-		}, {} as Record<Uncapitalize<Prisma.ModelName>, string[]>);
+				return acc;
+			},
+			{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
+		);
 
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
@@ -42,9 +45,8 @@ export default async function migrationCopyStepAction() {
 				// @ts-ignore
 				const result = (await tx[table].findMany({
 					select: {
-						//@ts-ignore
-						...oldFieldsByTable[t].reduce(
-							(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
+						...oldFieldsByTable[table].reduce(
+							(acc: Record<string, boolean>, field: string) => ({ ...acc, [field]: true }),
 							{}
 						),
 						id: true

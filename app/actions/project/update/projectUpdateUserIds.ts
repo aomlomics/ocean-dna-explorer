@@ -21,7 +21,8 @@ export default async function projectUpdateUserIdsAction(
 
 	const users = (await client.users.getUserList({ userId: newUserIds })).data;
 	for (const u of users) {
-		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+		const uRole = u.publicMetadata.role as Role;
+		if (!uRole || !RolePermissions[uRole].includes("contribute")) {
 			throw new Error(`${u.fullName} does not have permission to contribute.`);
 		}
 	}

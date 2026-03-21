@@ -459,7 +459,6 @@ async function parseSampleFile({
 					}
 				}
 
-				//@ts-ignore issue with Json database type
 				samplesByName[parsedSample.data.samp_name] = parsedSample.data;
 
 				//add to progress bar every 10 percent

@@ -5,7 +5,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
-import { Role } from "@/types/globals";
+import { UserMetadata } from "@/types/globals";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -32,7 +32,8 @@ async function doSubmit(
 
 	const users = (await client.users.getUserList({ userId: userIds })).data;
 	for (const u of users) {
-		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+		const uRole = (u.publicMetadata as UserMetadata).role;
+		if (!uRole || !RolePermissions[uRole].includes("contribute")) {
 			await globalStream.error(`${u.fullName} does not have permission to contribute.`);
 			return;
 		}

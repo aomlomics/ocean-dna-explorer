@@ -4,7 +4,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { Prisma, Tag } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
@@ -321,7 +321,7 @@ export default function Table({
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	//filters in the column header
-	function applyFilters(e: FormEvent<HTMLFormElement>) {
+	function applyFilters(e: SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		const formData = new FormData(e.currentTarget);

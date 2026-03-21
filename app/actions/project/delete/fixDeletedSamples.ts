@@ -93,12 +93,12 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 						//list of samp_names
 						sampNames.length > 1
 							? //at least 3
-							  ' "' + sampNames.join('", "') + '", and'
+								' "' + sampNames.join('", "') + '", and'
 							: sampNames.length === 1
-							? //exactly 2
-							  ' "' + sampNames[0] + '" and'
-							: //exactly 1
-							  ""
+								? //exactly 2
+									' "' + sampNames[0] + '" and'
+								: //exactly 1
+									""
 					} "${lastSample}" ${
 						//plural
 						sampNames.length ? "have" : "has"
@@ -115,12 +115,12 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 						//list of analysis_run_names
 						badAnalyses.length > 1
 							? // at least 3
-							  ' "' + badAnalyses.join('", "') + '", and'
+								' "' + badAnalyses.join('", "') + '", and'
 							: badAnalyses.length === 1
-							? //exactly 2
-							  ' "' + badAnalyses[0] + '" and'
-							: //exactly 1
-							  ""
+								? //exactly 2
+									' "' + badAnalyses[0] + '" and'
+								: //exactly 1
+									""
 					} "${lastAnalysis}". Then, click the "Fix" button on the Project with project_id of "${project_id}".`
 				);
 			}
