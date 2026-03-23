@@ -22,14 +22,24 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	return taxonomicData;
 }
 
-async function resolvePhyloPicVector(taxonomyObj: Taxonomy): Promise<{ imageUrl: string; rank: string; title: string } | null> {
+async function resolvePhyloPicVector(
+	taxonomyObj: Taxonomy
+): Promise<{ imageUrl: string | null; rank: string; title: string; commonName: string | null } | null> {
 	let gbifTaxonomy: any;
 	let imageDetails = { rank: "", title: "" };
 
 	for (const rank of RanksBySpecificity) {
-		if (taxonomyObj[rank] && /^[a-zA-Z]+$/.test(taxonomyObj[rank].toString())) {
+		const rawRank = taxonomyObj[rank]?.toString().trim();
+		// Allow typical scientific / DB names (underscores, hyphens, digits e.g. Candidatus); skip empty or odd chars
+		if (
+			rawRank &&
+			/^[a-zA-Z0-9][a-zA-Z0-9_\s.-]*$/.test(rawRank)
+		) {
+			const suggestQuery = rawRank.replace(/_/g, " ");
 			// retrieve suggested taxonomies from GBIF
-			const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${taxonomyObj[rank]}`);
+			const gbifTaxaRes = await fetch(
+				`https://api.gbif.org/v1/species/suggest?q=${encodeURIComponent(suggestQuery)}`
+			);
 			const gbifTaxa = await gbifTaxaRes.json();
 
 			// get only the taxonomies that match the specific rank
@@ -47,6 +57,9 @@ async function resolvePhyloPicVector(taxonomyObj: Taxonomy): Promise<{ imageUrl:
 
 	if (!gbifTaxonomy) return null;
 
+	const taxonKey = gbifTaxonomy.key ?? gbifTaxonomy.nubKey;
+	if (taxonKey == null) return null;
+
 	// use result of GBIF API to query PhyloPics for the vector image
 	const objectIDs =
 		`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
@@ -57,16 +70,48 @@ async function resolvePhyloPicVector(taxonomyObj: Taxonomy): Promise<{ imageUrl:
 		`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
 		`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
 
-	const phyloPicRes = await fetch(
-		`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`
-	);
+	const [speciesRes, phyloPicRes] = await Promise.all([
+		fetch(`https://api.gbif.org/v1/species/${taxonKey}?language=en`),
+		fetch(`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${objectIDs}`)
+	]);
+
+	let commonName: string | null = null;
+	try {
+		const speciesJson = await speciesRes.json();
+		const v = speciesJson?.vernacularName;
+		if (typeof v === "string" && v.trim()) commonName = v.trim();
+	} catch {
+		// ignore; common name is optional
+	}
+
+	if (!commonName) {
+		try {
+			const vnRes = await fetch(
+				`https://api.gbif.org/v1/species/${taxonKey}/vernacularNames?limit=40`
+			);
+			const vnJson = await vnRes.json();
+			const results: { vernacularName?: string; language?: string }[] = Array.isArray(vnJson?.results)
+				? vnJson.results
+				: [];
+			const eng = results.find((r) => {
+				const lang = (r.language ?? "").toLowerCase();
+				return lang === "eng" || lang === "en";
+			});
+			const name = eng?.vernacularName ?? results[0]?.vernacularName;
+			if (typeof name === "string" && name.trim()) commonName = name.trim();
+		} catch {
+			// optional
+		}
+	}
+
 	const phyloPic = await phyloPicRes.json();
-	if (phyloPic.errors) return null;
+	let imageUrl: string | null = null;
+	if (!phyloPic.errors && phyloPic._embedded?.primaryImage?._links?.vectorFile?.href) {
+		imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href;
+		imageDetails.title = phyloPic._embedded.primaryImage._links.self.title ?? "";
+	}
 
-	const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href;
-	imageDetails.title = phyloPic._embedded.primaryImage._links.self.title;
-
-	return { imageUrl, rank: imageDetails.rank, title: imageDetails.title };
+	return { imageUrl, rank: imageDetails.rank, title: imageDetails.title, commonName };
 }
 
 function StaticActgBackdrop({ className = "" }: { className?: string }) {
@@ -134,7 +179,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
-				<div className="flex gap-2 items-center">
+				<div className="flex gap-2 items-center flex-wrap">
 					<h1
 						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300"
 						data-tip={TableMetadata.taxonomy.description}
@@ -142,6 +187,12 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 					</h1>
 				</div>
+				{phyloPic?.commonName ? (
+					<p className="text-sm text-base-content/70 -mt-1 mb-1">
+						<span className="font-medium text-base-content/60">GBIF common name: </span>
+						<span className="first-letter:uppercase">{phyloPic.commonName}</span>
+					</p>
+				) : null}
 				<p className="text-lg text-base-content/70">
 					Found in {samples.length === 1 ? "1 sample" : `${samples!.length} samples`} across{" "}
 					{uniqueProjects.length === 1 ? "1 project" : `${uniqueProjects.length} projects`}
@@ -205,7 +256,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							{/* Taxonomic Image (spans 2 columns) */}
 							<div className="md:col-span-2 flex flex-col items-center">
 								<div className="w-full max-w-xs aspect-square flex items-center justify-center relative">
-									{phyloPic ? (
+									{phyloPic?.imageUrl ? (
 										<div
 											className="tooltip tooltip-bottom tooltip-primary w-full h-full before:bg-base-100 before:text-base-content before:border before:border-base-300"
 											data-tip={`Image of ${phyloPic.rank[0].toUpperCase() + phyloPic.rank.slice(1)}: ${phyloPic.title}`}
@@ -329,7 +380,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
 								<StaticActgBackdrop className="opacity-60" />
 								<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-									{phyloPic ? (
+									{phyloPic?.imageUrl ? (
 										<div className="relative w-12 h-12 opacity-95">
 											<ThemeAwarePhyloPic src={phyloPic.imageUrl} alt="Taxonomic outline" fill className="object-contain" />
 										</div>
