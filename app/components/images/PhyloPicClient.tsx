@@ -5,7 +5,14 @@ import { useEffect, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 
-export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
+export default function PhyloPicClient({
+	taxonomy,
+	phylopicObjectIds
+}: {
+	taxonomy: Taxonomy;
+	/** Optional: server already matched GBIF — same `objectIDs` as PhyloPic on the taxonomy page (skip client suggest). */
+	phylopicObjectIds?: string | null;
+}) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState("");
@@ -13,6 +20,37 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 	useEffect(() => {
 		async function fetchData() {
 			setLoading(true);
+			const prebuiltIds = phylopicObjectIds?.trim();
+
+			if (prebuiltIds) {
+				for (let i = 0; i < 3; i++) {
+					try {
+						const phyloPicRes = await fetch(
+							`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${prebuiltIds}`,
+							{ signal: AbortSignal.timeout(3000) }
+						);
+						const phyloPic = await phyloPicRes.json();
+
+						if (phyloPic.errors) {
+							break;
+						}
+						setImageUrl(phyloPic._embedded.primaryImage._links.vectorFile.href);
+						setImageDetails(
+							phyloPic._embedded.primaryImage._links.nodes.reduce(
+								(acc: string, n: { title: string }) => (acc ? n.title + " | " + acc : n.title),
+								""
+							)
+						);
+
+						break;
+					} catch {
+						await new Promise((res) => setTimeout(res, 1000));
+					}
+				}
+				setLoading(false);
+				return;
+			}
+
 			let gbifTaxonomy;
 			try {
 				for (const rank of RanksBySpecificity) {
@@ -84,7 +122,7 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 		}
 
 		fetchData();
-	}, []);
+	}, [taxonomy, phylopicObjectIds]);
 
 	return (
 		<>

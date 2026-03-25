@@ -1,36 +1,55 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+
+/** Bottom strip of the viewport where the fixed button sits (~btn + padding + margin). */
+const BUTTON_ZONE_PX = 120;
 
 export default function ScrollToTop() {
 	const [isVisible, setIsVisible] = useState(false);
 	const [footerOffset, setFooterOffset] = useState(0);
-	const footerRef = useRef<HTMLElement | null>(null);
 
 	useEffect(() => {
-		footerRef.current = document.querySelector("footer");
-
 		const updatePosition = () => {
 			setIsVisible(window.scrollY > 300);
 
-			if (!footerRef.current) return;
+			const footer = document.querySelector("footer");
+			if (!footer) {
+				setFooterOffset(0);
+				return;
+			}
 
-			// getBoundingClientRect gives the footer's position relative to the viewport.
-			// If footerRect.top < viewportHeight, the footer has scrolled into view and we
-			// need to lift the button by however many pixels of footer are visible.
-			const footerRect = footerRef.current.getBoundingClientRect();
-			const footerVisiblePx = Math.max(0, window.innerHeight - footerRect.top);
-
-			// 1.5rem gap above the footer — use the computed root font-size so this
-			// scales correctly with the fluid font-size: 0.8333vw rule.
+			const r = footer.getBoundingClientRect();
+			const ih = window.innerHeight;
 			const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
-			setFooterOffset(footerVisiblePx > 0 ? footerVisiblePx + remPx * 1.5 : 0);
+			const gap = remPx * 1.5;
+
+			// Footer does not intersect the viewport.
+			if (r.bottom <= 0 || r.top >= ih) {
+				setFooterOffset(0);
+				return;
+			}
+
+			// Only lift when the footer reaches the bottom strip where the button lives.
+			// Avoids huge `bottom` values when the footer is tall and its top is above the viewport.
+			const stripTop = ih - BUTTON_ZONE_PX;
+			if (r.bottom <= stripTop) {
+				setFooterOffset(0);
+				return;
+			}
+
+			const effectiveTop = Math.max(r.top, stripTop);
+			setFooterOffset(ih - effectiveTop + gap);
 		};
 
 		window.addEventListener("scroll", updatePosition);
-		updatePosition(); // Initial check in case page loads near bottom
+		window.addEventListener("resize", updatePosition);
+		updatePosition();
 
-		return () => window.removeEventListener("scroll", updatePosition);
+		return () => {
+			window.removeEventListener("scroll", updatePosition);
+			window.removeEventListener("resize", updatePosition);
+		};
 	}, []);
 
 	const scrollToTop = () => {
@@ -48,7 +67,7 @@ export default function ScrollToTop() {
 					style={{
 						bottom: footerOffset > 0 ? `${footerOffset}px` : "2rem"
 					}}
-					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 z-3000"
+					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 z-20"
 					aria-label="Scroll to top"
 				>
 					<svg

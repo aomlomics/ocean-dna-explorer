@@ -53,6 +53,13 @@ export default function TableDisplay({
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
 
+	const dataShellClass =
+		mode !== "grid"
+			? "rounded-lg h-[90vh]"
+			: table === "taxonomy"
+				? "rounded-lg"
+				: "rounded-lg h-[90vh] min-h-0 flex flex-col";
+
 	return (
 		<div className="flex flex-col">
 		{showBuiltInToggle && (
@@ -70,7 +77,7 @@ export default function TableDisplay({
 			</fieldset>
 		)}
 
-			<div className="rounded-lg border border-base-300 h-[90vh]">
+			<div className={dataShellClass}>
 				{mode === "table" ? (
 					size === "lg" ? (
 						<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} ignoreParams={ignoreParams} />
@@ -80,7 +87,14 @@ export default function TableDisplay({
 				) : table === "project" ? (
 					<Grid Child={ProjectGridItem} table={table} ignoreParams={ignoreParams} />
 				) : table === "taxonomy" ? (
-					<Grid Child={TaxaGridItem} table={table} ignoreParams={ignoreParams} />
+					<Grid
+						Child={TaxaGridItem}
+						table={table}
+						ignoreParams={ignoreParams}
+						fillViewport={false}
+						take={30}
+						itemsGridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4"
+					/>
 				) : (
 					<>Invalid</>
 				)}
