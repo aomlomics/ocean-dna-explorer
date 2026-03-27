@@ -3,6 +3,7 @@
 import type { Taxonomy } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { TaxonomicRanks } from "@/types/objects";
 import { createPortal } from "react-dom";
 import type { GbifImagePayload } from "./GbifClient";
 import { formatGbifAttributionDisplay } from "./GbifClient";
@@ -14,13 +15,21 @@ const SESSION_CONSENT_KEY = "opal-gbif-photo-warning-ok";
 
 type Mode = "phylopic" | "gbif";
 
+function rankAllowsGbifPhoto(rankKey: (typeof TaxonomicRanks)[number] | null | undefined): boolean {
+	if (rankKey == null) return false;
+	const idx = TaxonomicRanks.indexOf(rankKey);
+	const familyIdx = TaxonomicRanks.indexOf("family");
+	if (idx < 0 || familyIdx < 0) return false;
+	return idx >= familyIdx;
+}
+
 type TaxonomyVisualToggleProps = {
 	taxonomy: Taxonomy;
 	/** When null, only PhyloPic is shown (no GBIF photo mode). */
 	mediaTaxonKey: number | null;
+	/** Finest populated rank key on the taxonomy row; GBIF photo is disabled above family. */
+	databaseRankKey: (typeof TaxonomicRanks)[number] | null;
 	phyloPicUrl: string | null;
-	/** Server-resolved PhyloPic objectID chain (same GBIF match as common name / GBIF photo). */
-	phylopicObjectIds?: string | null;
 	phyloRank: string;
 	phyloTitle: string;
 	altScientificName: string;
@@ -32,8 +41,8 @@ type TaxonomyVisualToggleProps = {
 export default function TaxonomyVisualToggle({
 	taxonomy,
 	mediaTaxonKey,
+	databaseRankKey,
 	phyloPicUrl,
-	phylopicObjectIds = null,
 	phyloRank,
 	phyloTitle,
 	altScientificName,
@@ -52,18 +61,29 @@ export default function TaxonomyVisualToggle({
 		setPortalReady(true);
 	}, []);
 
+	const gbifPhotoAllowed = rankAllowsGbifPhoto(databaseRankKey);
+
+	useEffect(() => {
+		if (!gbifPhotoAllowed) {
+			setMode("phylopic");
+			setGbifLayerMounted(false);
+			setGbifPayload(null);
+		}
+	}, [gbifPhotoAllowed]);
+
 	const activateGbifMode = useCallback(() => {
 		setGbifLayerMounted(true);
 		setMode("gbif");
 	}, []);
 
 	const openGbifOrWarn = useCallback(() => {
+		if (!gbifPhotoAllowed) return;
 		if (typeof window !== "undefined" && sessionStorage.getItem(SESSION_CONSENT_KEY) === "1") {
 			activateGbifMode();
 			return;
 		}
 		setModalOpen(true);
-	}, [activateGbifMode]);
+	}, [activateGbifMode, gbifPhotoAllowed]);
 
 	const confirmGbif = useCallback(() => {
 		if (skipWarn && typeof window !== "undefined") {
@@ -77,7 +97,7 @@ export default function TaxonomyVisualToggle({
 		? `${phyloRank[0].toUpperCase() + phyloRank.slice(1)}: ${phyloTitle}`
 		: phyloTitle;
 
-	const showGbifToggle = mediaTaxonKey != null;
+	const showGbifToggle = mediaTaxonKey != null && gbifPhotoAllowed;
 
 	const phylopicLayerClass =
 		mode === "phylopic" || !showGbifToggle
@@ -88,10 +108,10 @@ export default function TaxonomyVisualToggle({
 		mode === "gbif" && showGbifToggle ? "opacity-100 z-[2]" : "pointer-events-none opacity-0 z-0";
 
 	return (
-		<div className="flex w-full max-w-sm flex-col items-center">
-			{showGbifToggle ? (
+		<div className="flex w-full min-w-0 max-w-full flex-col items-center">
+			{mediaTaxonKey != null ? (
 				<div className="mb-2 flex flex-wrap items-center justify-center gap-2">
-					<div className="join border border-base-300/80 bg-base-300/20 p-0.5">
+					<div className="join bg-base-100 p-0.5">
 						<button
 							type="button"
 							className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "phylopic" ? "btn-primary" : "btn-ghost"}`}
@@ -102,7 +122,13 @@ export default function TaxonomyVisualToggle({
 						<button
 							type="button"
 							className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "gbif" ? "btn-primary" : "btn-ghost"}`}
+							disabled={!gbifPhotoAllowed}
 							onClick={openGbifOrWarn}
+							title={
+								gbifPhotoAllowed
+									? undefined
+									: "GBIF occurrence photos are only available for ranks at family or below (family, genus, species)."
+							}
 						>
 							GBIF photo
 						</button>
@@ -110,9 +136,9 @@ export default function TaxonomyVisualToggle({
 				</div>
 			) : null}
 
-			{/* Square holds only the image; GBIF credit line sits below so it is not squeezed inside aspect-square. */}
-			<div className="flex w-full flex-col gap-2">
-				<div className="relative aspect-square w-full rounded-lg">
+			{/* Square matches PhyloPic frame; GBIF uses the same fill + object-contain pattern as ThemeAwarePhyloPic inside GbifImage. */}
+			<div className="flex w-full min-w-0 max-w-xs shrink-0 flex-col gap-2 self-center">
+				<div className="relative isolate aspect-square w-full max-w-full shrink-0 overflow-clip rounded-lg">
 					<div className={`absolute inset-0 overflow-hidden transition-opacity duration-150 ${phylopicLayerClass}`}>
 						{phyloPicUrl ? (
 							<div
@@ -129,13 +155,15 @@ export default function TaxonomyVisualToggle({
 							</div>
 						) : (
 							<div className="absolute inset-0 h-full w-full">
-								<PhyloPicClient taxonomy={taxonomy} phylopicObjectIds={phylopicObjectIds} />
+								<PhyloPicClient taxonomy={taxonomy} />
 							</div>
 						)}
 					</div>
 
 					{showGbifToggle && gbifLayerMounted ? (
-						<div className={`absolute inset-0 flex flex-col p-1 transition-opacity duration-150 ${gbifLayerClass}`}>
+						<div
+							className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 ${gbifLayerClass}`}
+						>
 							<GbifImage
 								taxonKey={mediaTaxonKey!}
 								taxonomy={taxonomy}
@@ -144,30 +172,36 @@ export default function TaxonomyVisualToggle({
 								objectFit="contain"
 								showAttribution={false}
 								onPayloadChange={setGbifPayload}
-								className="min-h-0 h-full flex-1"
+								className="h-full w-full"
 							/>
 						</div>
 					) : null}
 				</div>
 
-				{mode === "gbif" && showGbifToggle && gbifLayerMounted ? (
-					<p className="min-h-11 w-full px-1 text-center text-xs leading-snug text-base-content/60">
-						{gbifPayload
-							? formatGbifAttributionDisplay(gbifPayload) ?? "GBIF image shown (no attribution provided by GBIF for this record)."
-							: "Loading image attribution…"}
+				{showGbifToggle ? (
+					<p
+						className={`line-clamp-2 h-11 w-full shrink-0 overflow-hidden px-1 text-center text-xs leading-snug text-base-content/60 ${
+							mode === "gbif" && gbifLayerMounted ? "" : "invisible"
+						}`}
+						aria-hidden={!(mode === "gbif" && gbifLayerMounted)}
+					>
+						{mode === "gbif" && gbifLayerMounted
+							? gbifPayload
+								? formatGbifAttributionDisplay(gbifPayload) ??
+									"GBIF image shown (no attribution provided by GBIF for this record)."
+								: "\u00a0"
+							: "\u00a0"}
 					</p>
 				) : null}
 			</div>
 
-			<div className="mt-4 w-full max-w-2xl">
-				<div className="grid w-full grid-cols-2 items-start gap-x-12">
-					<div className="text-center">
-						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">
-							Scientific name
-						</div>
-						<div className="mt-0.5 flex h-10 items-center justify-center gap-2 sm:h-12">
+			<div className="mt-4 w-full max-w-2xl px-2">
+				<div className="mx-auto grid w-full min-w-0 grid-cols-1 gap-y-4 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-2">
+					<div className="min-w-0 text-center sm:text-left">
+						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">Scientific name</div>
+						<div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
 							<div
-								className="whitespace-nowrap text-xl font-semibold italic leading-tight text-base-content sm:text-2xl"
+								className="min-w-0 flex-1 truncate text-left text-xl font-semibold italic leading-tight text-base-content sm:text-2xl"
 								title={databaseScientificName}
 							>
 								{databaseScientificName}
@@ -207,8 +241,8 @@ export default function TaxonomyVisualToggle({
 										<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
 											GBIF
 										</Link>{" "}
-										backbone taxonomy (resolved using the species suggest API). On this taxonomy page, GBIF photo and English
-										common name use that same backbone match (one server request chain). <strong>GBIF photo</strong> mode
+										backbone taxonomy — the same GBIF species-suggest step as PhyloPic on the explore grid (<span className="whitespace-nowrap">matchGbifForPhylopic</span>).
+										GBIF photo, English common name, and IUCN data on this page all use that match only. <strong>GBIF photo</strong> mode
 										prefers occurrence still images (e.g.
 										iNaturalist), then filtered checklist media, skipping obvious range maps when possible. Third‑party
 										licenses apply; see the credit line under the GBIF photo when shown.
@@ -216,16 +250,16 @@ export default function TaxonomyVisualToggle({
 								</div>
 							</div>
 						</div>
-						<div className="mt-0.5 text-xs text-base-content/50">Assigned to: {databaseRankLabel}</div>
+						<div className="mt-1.5 text-xs text-base-content/50">Assigned to: {databaseRankLabel}</div>
 					</div>
 
 					{commonName ? (
-						<div className="text-center">
-							<div className="whitespace-nowrap text-[10px] font-medium uppercase tracking-widest text-base-content/50">
+						<div className="min-w-0 text-center sm:text-left">
+							<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">
 								Common name <span className="text-base-content/40">(GBIF, approximate)</span>
 							</div>
-							<div className="mt-0.5 flex h-10 items-center justify-center gap-2 sm:h-12">
-								<div className="whitespace-nowrap text-lg font-semibold leading-tight text-base-content first-letter:uppercase sm:text-xl">
+							<div className="mt-1 flex items-start justify-center gap-2 sm:justify-start">
+								<div className="wrap-break-word text-lg font-semibold leading-snug text-base-content first-letter:uppercase sm:text-xl">
 									{commonName}
 								</div>
 								<span
@@ -250,7 +284,6 @@ export default function TaxonomyVisualToggle({
 						</div>
 					)}
 				</div>
-
 			</div>
 
 			{portalReady && modalOpen
@@ -269,12 +302,11 @@ export default function TaxonomyVisualToggle({
 							/>
 							<div className="relative z-10 w-full max-w-md rounded-box border border-base-300 bg-base-200 p-5 shadow-xl">
 								<h3 id="gbif-photo-warn-title" className="text-lg font-semibold text-base-content">
-									GBIF occurrence photos
+									GBIF Occurrence Photos
 								</h3>
 								<p className="py-3 text-sm text-base-content/80">
-									These images come from GBIF <strong>occurrence</strong> records and checklist media. They may show{" "}
-									<strong>dead animals</strong>, strandings, museum specimens, dissections, or other sensitive content — not
-									only &quot;field guide&quot; style photos.
+									These images come from GBIF occurrence records and checklist media. They may show{" "}
+									dead animals, strandings, museum specimens, dissections, or other sensitive content.
 								</p>
 								<label className="label cursor-pointer justify-start gap-2 py-1">
 									<input

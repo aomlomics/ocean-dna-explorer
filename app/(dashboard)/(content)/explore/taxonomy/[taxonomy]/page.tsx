@@ -8,6 +8,7 @@ import { Taxonomy } from "@/app/generated/prisma/client";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
+import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
@@ -24,11 +25,16 @@ function formatTaxonomyDisplay(dbTaxonomy: any) {
 	return taxonomicData;
 }
 
-function finestDisplayedRank(db: Taxonomy): { rankLabel: string; displayName: string } | null {
+function finestDisplayedRank(db: Taxonomy): {
+	rankKey: (typeof TaxonomicRanks)[number];
+	rankLabel: string;
+	displayName: string;
+} | null {
 	for (const rank of RanksBySpecificity) {
 		const raw = db[rank as keyof Taxonomy]?.toString().trim();
 		if (raw) {
 			return {
+				rankKey: rank,
 				rankLabel: rank.charAt(0).toUpperCase() + rank.slice(1),
 				displayName: raw.replace(/_/g, " ")
 			};
@@ -44,51 +50,17 @@ function isEnglishVernacularLang(raw: string | undefined): boolean {
 	return lang.startsWith("en-") || lang.startsWith("en_");
 }
 
-/** GBIF suggest + common name + PhyloPic URL for this page only (PhyloPic components stay unchanged). */
+/** GBIF + PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). */
 async function resolveTaxonomyPageGbif(taxonomyObj: Taxonomy): Promise<{
 	taxonKey: number;
-	/** Backbone / nub key — GBIF `/species/{id}/media` is often populated here, not on every checklist key. */
 	mediaTaxonKey: number;
 	commonName: string | null;
 	phyloPic: { imageUrl: string | null; rank: string; title: string };
-	/** Same GBIF key chain passed to PhyloPic `objectIDs` — use client-side so silhouettes align with server common name / GBIF photo. */
-	phylopicObjectIds: string;
 } | null> {
-	let gbifTaxonomy: any;
-	let rankMatched = "";
+	const matched = await matchGbifForPhylopic(taxonomyObj);
+	if (!matched) return null;
 
-	for (const rank of RanksBySpecificity) {
-		const rawRank = taxonomyObj[rank]?.toString().trim();
-		if (!rawRank || !/^[a-zA-Z0-9][a-zA-Z0-9_\s.-]*$/.test(rawRank)) continue;
-
-		const suggestQuery = rawRank.replace(/_/g, " ");
-		const gbifTaxaRes = await fetch(
-			`https://api.gbif.org/v1/species/suggest?q=${encodeURIComponent(suggestQuery)}`
-		);
-		const gbifTaxa = await gbifTaxaRes.json();
-		const gbifTaxonomyArr = gbifTaxa.filter(
-			(taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank && taxa.status === "ACCEPTED"
-		);
-		if (gbifTaxonomyArr.length === 1) {
-			gbifTaxonomy = gbifTaxonomyArr[0];
-			rankMatched = rank;
-			break;
-		}
-	}
-
-	if (!gbifTaxonomy) return null;
-
-	const taxonKey = gbifTaxonomy.key ?? gbifTaxonomy.nubKey;
-	if (taxonKey == null) return null;
-
-	const objectIDs =
-		`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
-		`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
-		`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
-		`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
-		`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
-		`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
-		`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
+	const { taxonKey, objectIDs, rankMatched, mediaTaxonKey } = matched;
 
 	const [vnRes, phyloPicRes] = await Promise.all([
 		fetch(`https://api.gbif.org/v1/species/${taxonKey}/vernacularNames?limit=80`),
@@ -116,14 +88,11 @@ async function resolveTaxonomyPageGbif(taxonomyObj: Taxonomy): Promise<{
 		title = phyloPicJson._embedded.primaryImage._links.self.title ?? "";
 	}
 
-	const mediaTaxonKey = Number(gbifTaxonomy.nubKey ?? taxonKey);
-
 	return {
-		taxonKey: Number(taxonKey),
+		taxonKey,
 		mediaTaxonKey,
 		commonName,
-		phyloPic: { imageUrl, rank: rankMatched, title },
-		phylopicObjectIds: objectIDs
+		phyloPic: { imageUrl, rank: rankMatched, title }
 	};
 }
 
@@ -192,6 +161,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const databaseScientificName =
 		finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
+	const databaseRankKey = finestRank?.rankKey ?? null;
 	const breadcrumbRanks = [...RanksBySpecificity].reverse().filter((rank) => {
 		const raw = (dbTaxonomy as any)[rank]?.toString().trim();
 		return Boolean(raw);
@@ -200,14 +170,14 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	return (
 		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
-				<div className="flex gap-4 items-baseline flex-wrap">
+				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
 					<h1
-						className="text-4xl font-semibold text-primary tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300"
+						className="mb-0 text-4xl font-semibold leading-[1.05] text-primary tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300"
 						data-tip={TableMetadata.taxonomy.description}
 					>
 						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 					</h1>
-					<span className="badge bg-base-200 text-base-content ml-2">
+					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
 						{databaseRankLabel}
 					</span>
 				</div>
@@ -257,12 +227,12 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				<div className="lg:col-span-2 grid grid-cols-1 gap-4 items-stretch">
 					<div className="bg-base-200 rounded-lg p-6 shadow-sm flex flex-col gap-4">
 						<div className="grid grid-cols-1 gap-6 items-start min-h-0">
-							<div className="flex flex-col items-center">
+							<div className="flex min-w-0 w-full max-w-full flex-col items-center">
 								<TaxonomyVisualToggle
 									taxonomy={dbTaxonomy as unknown as Taxonomy}
 									mediaTaxonKey={pageGbif?.mediaTaxonKey ?? null}
+									databaseRankKey={databaseRankKey}
 									phyloPicUrl={phyloPic?.imageUrl ?? null}
-									phylopicObjectIds={pageGbif?.phylopicObjectIds ?? null}
 									phyloRank={phyloPic?.rank ?? ""}
 									phyloTitle={phyloPic?.title ?? ""}
 									altScientificName={databaseScientificName}
@@ -288,7 +258,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className="w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<AnalysisIcon />
 								</div>
@@ -300,7 +270,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						</Link>
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className="w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<ProjectIcon />
 								</div>
@@ -313,7 +283,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 						<Link
 							href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}
-							className="w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-colors"
+							className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors"
 						>
 							<div className="w-full h-full tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
@@ -335,7 +305,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								}
 							}}
 						>
-							<div className="w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
 									<StaticActgBackdrop className="opacity-60" />
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">

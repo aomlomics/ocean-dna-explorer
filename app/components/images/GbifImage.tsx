@@ -31,19 +31,21 @@ export default function GbifImage({
 	showAttribution = false,
 	onPayloadChange
 }: GbifImageProps) {
-	const [loading, setLoading] = useState(true);
+	const [fetching, setFetching] = useState(true);
 	const [payload, setPayload] = useState<GbifImagePayload | null>(null);
 	const [activeSrc, setActiveSrc] = useState<string | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
+	const [imageLoaded, setImageLoaded] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
 
 		async function run() {
-			setLoading(true);
+			setFetching(true);
 			setPayload(null);
 			setActiveSrc(null);
 			setLoadFailed(false);
+			setImageLoaded(false);
 			try {
 				const p = await getGbifStillImagePayload(taxonKey);
 				if (!cancelled) {
@@ -57,7 +59,7 @@ export default function GbifImage({
 					setLoadFailed(true);
 				}
 			} finally {
-				if (!cancelled) setLoading(false);
+				if (!cancelled) setFetching(false);
 			}
 		}
 
@@ -71,6 +73,10 @@ export default function GbifImage({
 		onPayloadChange?.(payload);
 	}, [payload, onPayloadChange]);
 
+	useEffect(() => {
+		setImageLoaded(false);
+	}, [activeSrc]);
+
 	function handleImgError() {
 		if (payload && activeSrc === payload.proxyUrl && payload.directUrl !== payload.proxyUrl) {
 			setActiveSrc(payload.directUrl);
@@ -80,14 +86,16 @@ export default function GbifImage({
 		setActiveSrc(null);
 	}
 
-	if (loading) {
+	function handleImgLoad() {
+		setImageLoaded(true);
+	}
+
+	if (fetching) {
 		return (
-			<div
-				className={`flex h-full w-full min-h-32 flex-col items-center justify-center gap-2 ${className}`}
-				aria-busy="true"
-			>
-				<span className="loading loading-spinner loading-lg text-primary" />
-				<span className="text-center text-xs font-medium text-primary">Loading GBIF photo…</span>
+			<div className={`relative h-full w-full overflow-hidden ${className}`} aria-busy="true">
+				<div className="absolute inset-0 flex items-center justify-center bg-base-200/85">
+					<span className="loading loading-spinner loading-lg text-primary" />
+				</div>
 			</div>
 		);
 	}
@@ -95,38 +103,59 @@ export default function GbifImage({
 	if (loadFailed || !payload || !activeSrc) {
 		if (showPhylopicFallback) {
 			return (
-				<div className={`relative h-full w-full min-h-32 ${className}`}>
+				<div className={`relative h-full w-full overflow-hidden ${className}`}>
 					<PhyloPicClient taxonomy={taxonomy} />
 				</div>
 			);
 		}
 		return (
 			<div
-				className={`flex h-full min-h-32 w-full items-center justify-center rounded-lg border border-base-300/50 bg-base-200/50 px-2 text-center text-xs text-base-content/50 ${className}`}
+				className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-lg border border-base-300/50 bg-base-200/50 px-2 text-center text-xs text-base-content/50 ${className}`}
 			>
 				No suitable GBIF photo found (occurrence or checklist media).
 			</div>
 		);
 	}
 
-	const fitClass = objectFit === "contain" ? "object-contain" : "object-cover";
 	const attributionLine = payload ? formatGbifAttributionDisplay(payload) : null;
+	const showImageSpinner = !imageLoaded && !loadFailed;
+	const fitClass = objectFit === "cover" ? "object-cover" : "object-contain";
 
-	return (
-		<div className={`flex h-full w-full flex-col ${className}`}>
-			<div className="relative min-h-0 flex-1">
-				<img
-					src={activeSrc}
-					alt={altText}
-					onError={handleImgError}
-					className={`h-full w-full ${fitClass}`}
-				/>
+	// Same stacking as PhyloPicClient: outer relative fill box, inner relative h-full w-full, bitmap absolute inset-0 h-full w-full + object-* (Next/Image fill + object-contain).
+	const imageArea = (
+		<div className="relative h-full w-full overflow-hidden">
+			<div className="relative flex h-full w-full flex-col justify-center">
+				<div className="relative h-full w-full">
+					{showImageSpinner ? (
+						<div className="absolute inset-0 z-10 flex items-center justify-center bg-base-200/85" aria-busy="true">
+							<span className="loading loading-spinner loading-lg text-primary" />
+						</div>
+					) : null}
+					<img
+						src={activeSrc}
+						alt={altText}
+						width={480}
+						height={480}
+						onLoad={handleImgLoad}
+						onError={handleImgError}
+						className={`absolute inset-0 box-border h-full w-full max-h-full max-w-full ${fitClass}`}
+						decoding="async"
+					/>
+				</div>
 			</div>
-			{showAttribution && attributionLine ? (
+		</div>
+	);
+
+	if (showAttribution && attributionLine) {
+		return (
+			<div className={`flex h-full w-full flex-col overflow-hidden ${className}`}>
+				<div className="min-h-0 flex-1 overflow-hidden">{imageArea}</div>
 				<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/50">
 					{attributionLine}
 				</p>
-			) : null}
-		</div>
-	);
+			</div>
+		);
+	}
+
+	return <div className={`relative h-full w-full overflow-hidden ${className}`}>{imageArea}</div>;
 }

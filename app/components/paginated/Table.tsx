@@ -316,8 +316,8 @@ export default function Table({
 	}, [data]);
 
 	if (isLoading) return <LoadingTable take={take} page={page} />;
-	if (error) return <div>failed to load: {error}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+	if (error) return <div>failed to load: {error instanceof Error ? error.message : String(error)}</div>;
+	if (data.statusMessage === "error") return <div>failed to load: {String(data.error ?? "")}</div>;
 
 	//filters in the column header
 	function applyFilters(e: FormEvent<HTMLFormElement>) {

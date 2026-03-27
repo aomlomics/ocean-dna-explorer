@@ -62,7 +62,7 @@ export default async function Analysis() {
 	return (
 		<ExplorePage table="analysis" tableConfig={tableConfig}>
 			<div className="w-full space-y-4">
-				<div className="text-base-content/80 pb-4 space-y-2">
+				<div className="text-base-content/80 space-y-2">
 					<p>{TableMetadata.analysis.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}

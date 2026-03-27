@@ -7,7 +7,7 @@ export default function AssayPrep() {
 	return (
 		<ExplorePage table="assayPrep" tableConfig={[]}>
 			<div className="w-full space-y-4">
-				<div className="text-base-content/80 pb-4 space-y-2">
+				<div className="text-base-content/80 space-y-2">
 					<p>{TableMetadata.assayPrep.description}</p>
 					<p className="text-sm">
 						For more detailed information, visit our{" "}

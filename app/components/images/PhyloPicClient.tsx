@@ -2,17 +2,10 @@
 
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
-import { RanksBySpecificity } from "@/types/objects";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
+import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
 
-export default function PhyloPicClient({
-	taxonomy,
-	phylopicObjectIds
-}: {
-	taxonomy: Taxonomy;
-	/** Optional: server already matched GBIF — same `objectIDs` as PhyloPic on the taxonomy page (skip client suggest). */
-	phylopicObjectIds?: string | null;
-}) {
+export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState("");
@@ -20,77 +13,13 @@ export default function PhyloPicClient({
 	useEffect(() => {
 		async function fetchData() {
 			setLoading(true);
-			const prebuiltIds = phylopicObjectIds?.trim();
-
-			if (prebuiltIds) {
-				for (let i = 0; i < 3; i++) {
-					try {
-						const phyloPicRes = await fetch(
-							`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${prebuiltIds}`,
-							{ signal: AbortSignal.timeout(3000) }
-						);
-						const phyloPic = await phyloPicRes.json();
-
-						if (phyloPic.errors) {
-							break;
-						}
-						setImageUrl(phyloPic._embedded.primaryImage._links.vectorFile.href);
-						setImageDetails(
-							phyloPic._embedded.primaryImage._links.nodes.reduce(
-								(acc: string, n: { title: string }) => (acc ? n.title + " | " + acc : n.title),
-								""
-							)
-						);
-
-						break;
-					} catch {
-						await new Promise((res) => setTimeout(res, 1000));
-					}
-				}
+			const match = await matchGbifForPhylopic(taxonomy);
+			if (!match) {
 				setLoading(false);
 				return;
 			}
 
-			let gbifTaxonomy;
-			try {
-				for (const rank of RanksBySpecificity) {
-					if (taxonomy[rank] && /^[a-zA-Z]+$/.test(taxonomy[rank].toString())) {
-						//retrieve suggested taxonomies from GBIF
-						//TODO: split more logically
-						const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${taxonomy[rank]}`);
-						const gbifTaxa = await gbifTaxaRes.json();
-
-						//get only the taxonomies that match the specific rank
-						//TODO: check GBIF API docs to do this step in the previous fetch
-						const gbifTaxonomyArr = gbifTaxa.filter(
-							(taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank && taxa.status === "ACCEPTED"
-						);
-						if (gbifTaxonomyArr.length) {
-							if (gbifTaxonomyArr.length === 1) {
-								gbifTaxonomy = gbifTaxonomyArr[0];
-								break;
-							}
-						}
-					}
-				}
-				if (!gbifTaxonomy) {
-					setLoading(false);
-					return;
-				}
-			} catch {
-				setLoading(false);
-				return;
-			}
-
-			//use result of GBIF API to query PhyloPics for the vector image
-			const objectIDs =
-				`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
-				`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
-				`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
-				`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
-				`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
-				`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
-				`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
+			const objectIDs = match.objectIDs;
 
 			//retry PhyloPic API call
 			for (let i = 0; i < 3; i++) {
@@ -102,7 +31,7 @@ export default function PhyloPicClient({
 					const phyloPic = await phyloPicRes.json();
 
 					if (phyloPic.errors) {
-						return;
+						break;
 					}
 					setImageUrl(phyloPic._embedded.primaryImage._links.vectorFile.href);
 					setImageDetails(
@@ -122,7 +51,7 @@ export default function PhyloPicClient({
 		}
 
 		fetchData();
-	}, [taxonomy, phylopicObjectIds]);
+	}, [taxonomy]);
 
 	return (
 		<>

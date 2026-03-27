@@ -18,7 +18,7 @@ function IucnLogoMark() {
 	);
 }
 
-const FETCH_MS = 4500;
+const FETCH_MS = 7000;
 
 /**
  * Category strip left → right follows IUCN Red List ordering. Colors are conventional
@@ -99,23 +99,19 @@ function parseIucnFromGbifDescriptions(descriptions: { type?: string; language?:
 
 type DistRow = { threatStatus?: string; source?: string };
 
-/**
- * Use only distribution rows whose source is the IUCN Red List checklist in GBIF.
- * Other checklists also set `threatStatus` but are not the global Red List assessment.
- */
-function categoryFromIucnDistributionsOnly(results: DistRow[]): CategoryId | null {
-	const iucnRows = results.filter((r) => {
-		const t = (r.threatStatus ?? "").trim();
-		if (!t || t.toUpperCase() === "NOT_APPLICABLE") return false;
-		const src = (r.source ?? "").toLowerCase();
-		return src.includes("iucn") && src.includes("red list");
-	});
-	if (!iucnRows.length) return null;
+function isIucnRedListSource(source: string | undefined): boolean {
+	const s = (source ?? "").toLowerCase();
+	if (!s.includes("iucn")) return false;
+	return /\bred\s*list\b/i.test(s) || /\bredlist\b/i.test(s) || /threatened\s+species/i.test(s);
+}
 
+function categoryFromThreatRows(rows: DistRow[]): CategoryId | null {
 	let worstSev = -1;
 	let picked: CategoryId | null = null;
-	for (const r of iucnRows) {
-		const raw = (r.threatStatus ?? "").trim().toUpperCase().replace(/\s+/g, "_");
+	for (const r of rows) {
+		const t = (r.threatStatus ?? "").trim();
+		if (!t || t.toUpperCase() === "NOT_APPLICABLE") continue;
+		const raw = t.toUpperCase().replace(/\s+/g, "_");
 		const id = GBIF_THREAT_TO_CATEGORY[raw];
 		if (!id) continue;
 		const sev = severityIndex(id);
@@ -127,9 +123,35 @@ function categoryFromIucnDistributionsOnly(results: DistRow[]): CategoryId | nul
 	return picked;
 }
 
+/** Prefer rows whose source names the IUCN Red List in GBIF (wording varies by dataset). */
+function categoryFromIucnNamedDistributions(results: DistRow[]): CategoryId | null {
+	const iucnRows = results.filter((r) => {
+		const t = (r.threatStatus ?? "").trim();
+		if (!t || t.toUpperCase() === "NOT_APPLICABLE") return false;
+		return isIucnRedListSource(r.source);
+	});
+	return categoryFromThreatRows(iucnRows);
+}
+
+/** Any GBIF distribution with a mapped threatStatus (regional / other checklists). */
+function categoryFromOtherDistributions(results: DistRow[]): CategoryId | null {
+	return categoryFromThreatRows(results);
+}
+
+async function resolveBackboneSpeciesKeyForGbif(initialKey: number | string, signal?: AbortSignal): Promise<number> {
+	const k = Number(initialKey);
+	if (!Number.isFinite(k)) return k;
+	const res = await fetch(`https://api.gbif.org/v1/species/${k}`, { signal });
+	if (!res.ok) return k;
+	const d = (await res.json()) as { nubKey?: number; key?: number };
+	if (d.nubKey != null) return Number(d.nubKey);
+	if (d.key != null) return Number(d.key);
+	return k;
+}
+
 type Props = { taxonKey: number | string; className?: string };
 
-type SourceKind = "iucn_distribution" | "description" | null;
+type SourceKind = "iucn_distribution" | "distribution_other" | "description" | null;
 
 export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 	const [loading, setLoading] = useState(true);
@@ -146,11 +168,14 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 			setCategory(null);
 			setSourceKind(null);
 			try {
+				const lookupKey = await resolveBackboneSpeciesKeyForGbif(taxonKey, controller.signal);
+				if (cancelled) return;
+
 				const [distRes, descRes] = await Promise.all([
-					fetch(`https://api.gbif.org/v1/species/${taxonKey}/distributions?limit=200`, {
+					fetch(`https://api.gbif.org/v1/species/${lookupKey}/distributions?limit=200`, {
 						signal: controller.signal
 					}),
-					fetch(`https://api.gbif.org/v1/species/${taxonKey}/descriptions?limit=80`, {
+					fetch(`https://api.gbif.org/v1/species/${lookupKey}/descriptions?limit=80`, {
 						signal: controller.signal
 					})
 				]);
@@ -158,10 +183,14 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 				if (cancelled) return;
 
 				let fromIucnDist: CategoryId | null = null;
+				let fromOtherDist: CategoryId | null = null;
 				if (distRes.ok) {
 					const distData = (await distRes.json()) as { results?: DistRow[] };
 					const rows = Array.isArray(distData?.results) ? distData.results : [];
-					fromIucnDist = categoryFromIucnDistributionsOnly(rows);
+					fromIucnDist = categoryFromIucnNamedDistributions(rows);
+					if (!fromIucnDist) {
+						fromOtherDist = categoryFromOtherDistributions(rows);
+					}
 				}
 
 				let fromDesc: CategoryId | null = null;
@@ -173,8 +202,14 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 					fromDesc = parseIucnFromGbifDescriptions(results);
 				}
 
-				const chosen = fromIucnDist ?? fromDesc;
-				const kind: SourceKind = fromIucnDist ? "iucn_distribution" : fromDesc ? "description" : null;
+				let chosen: CategoryId | null = fromIucnDist ?? fromOtherDist ?? fromDesc;
+				let kind: SourceKind = fromIucnDist
+					? "iucn_distribution"
+					: fromOtherDist
+						? "distribution_other"
+						: fromDesc
+							? "description"
+							: null;
 				if (!cancelled) {
 					setCategory(chosen);
 					setSourceKind(kind);
@@ -196,9 +231,8 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 
 	if (loading) {
 		return (
-			<div className={`flex min-h-28 w-full flex-col items-center justify-center gap-2 py-6 ${className}`} aria-busy="true">
+			<div className={`flex min-h-28 w-full items-center justify-center py-6 ${className}`} aria-busy="true">
 				<span className="loading loading-spinner loading-lg text-base-content/50" />
-				<p className="text-sm text-base-content/55">Loading Red List data from GBIF…</p>
 			</div>
 		);
 	}
@@ -207,28 +241,45 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 	const active = category != null ? SCALE[activeIndex] : null;
 
 	const sourceLine =
-		sourceKind === "description"
-			? "Fallback: detected in GBIF conservation description text (less reliable)."
-			: null;
+		sourceKind === "iucn_distribution"
+			? "Threat status from a GBIF distribution row sourced from the IUCN Red List."
+			: sourceKind === "distribution_other"
+				? "Threat status from another GBIF distribution source (regional or national checklist — not necessarily the global IUCN assessment)."
+				: sourceKind === "description"
+					? "Fallback: detected in GBIF conservation description text (less reliable)."
+					: null;
+
+	const supportBlock = (
+		<>
+			IUCN Red List status is retrieved from <span className="font-medium text-base-content/65">GBIF</span> and is often
+			missing for a given taxonomy.
+			{sourceLine ? <> {sourceLine}</> : null} Official assessments:{" "}
+			<a href="https://www.iucnredlist.org/" className="font-medium text-primary hover:underline" target="_blank" rel="noreferrer">
+				iucnredlist.org
+			</a>
+			.
+		</>
+	);
 
 	return (
 		<div className={`w-full space-y-3 ${className}`}>
-			<div className="flex items-center justify-start gap-3">
+			<div className="flex items-start justify-start gap-3">
 				<div className="shrink-0">
 					<IucnLogoMark />
 				</div>
-				<div className="min-w-0">
+				<div className="min-w-0 flex-1 space-y-2">
 					{active ? (
-						<p className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-semibold ${active.bg} ${active.text}`}>
-							{active.short} · {active.line}
+						<p
+							className={`inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-4 py-2.5 text-base font-semibold leading-snug sm:text-lg ${active.bg} ${active.text}`}
+						>
+							<span className="font-black tracking-tight">{active.short}</span>
+							<span className={`opacity-90 ${active.text}`}>·</span>
+							<span className="font-semibold uppercase">{active.line}</span>
 						</p>
 					) : (
 						<p className="text-sm leading-snug text-base-content/65">No IUCN category found in GBIF for this taxon.</p>
 					)}
-					<p className="mt-2 text-xs leading-snug text-base-content/55">
-						IUCN Red List status is retrieved from <span className="font-medium">GBIF</span> and is often missing for a given taxonomy.
-					</p>
-					{sourceLine ? <p className="mt-1 text-xs leading-snug text-base-content/45">{sourceLine}</p> : null}
+					<p className="text-xs leading-relaxed text-base-content/55">{supportBlock}</p>
 				</div>
 			</div>
 
@@ -253,13 +304,6 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 					);
 				})}
 			</div>
-
-			<p className="text-xs leading-snug text-base-content/55">
-				Official assessments:{" "}
-				<a href="https://www.iucnredlist.org/" className="text-primary hover:underline" target="_blank" rel="noreferrer">
-					iucnredlist.org
-				</a>
-			</p>
 		</div>
 	);
 }

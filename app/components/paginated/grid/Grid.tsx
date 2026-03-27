@@ -89,9 +89,9 @@ export default function Grid({
 		}
 	);
 	if (isLoading || !data) return <>Loading...</>;
-	if (error) return <div>failed to load: {error}</div>;
+	if (error) return <div>failed to load: {error instanceof Error ? error.message : String(error)}</div>;
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result) || !data.count) {
-		return <div>failed to load: {data.error || "no result found"}</div>;
+		return <div>failed to load: {String(data.error ?? "no result found")}</div>;
 	}
 
 	function handlePageHover(dir = 1 as 1 | -1) {

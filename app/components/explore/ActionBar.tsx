@@ -1,227 +1,163 @@
 "use client";
 
-import { useSearchParams, usePathname } from "next/navigation";
-import { useRef, useEffect } from "react";
-import { FilterConfig, getActiveFilters, buildActiveSummaries } from "./filters/filterHelpers";
-import TableMetadata from "@/types/tableMetadata";
-import { Prisma } from "@/app/generated/prisma/client";
-import { useViewMode } from "./ViewModeContext";
+import { ReactNode } from "react";
+
+const toolLabelClass = "w-full text-center text-xs font-semibold leading-none";
+
+const toolBtnBase = [
+	"flex min-w-17 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1 text-center sm:min-w-20 sm:px-3 sm:py-1.5",
+	"transition-[background-color,color,box-shadow] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+	"disabled:pointer-events-none disabled:opacity-35"
+].join(" ");
+
+function toolBtnActive(active: boolean) {
+	return active ? "bg-primary text-primary-content shadow-md" : "text-base-content hover:bg-base-300/60";
+}
+
+function ActionTool({
+	active,
+	onClick,
+	label,
+	icon,
+	disabled
+}: {
+	active?: boolean;
+	onClick: () => void;
+	label: string;
+	icon: ReactNode;
+	disabled?: boolean;
+}) {
+	return (
+		<button
+			type="button"
+			disabled={disabled}
+			onClick={onClick}
+			className={`${toolBtnBase} ${toolBtnActive(!!active)} ${disabled ? "" : "active:scale-[0.97]"}`}
+		>
+			<span className="flex h-5 w-full shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">{icon}</span>
+			<span className={toolLabelClass}>{label}</span>
+		</button>
+	);
+}
 
 export default function ActionBar({
-	table,
-	tableConfig,
-	toggle,
-	isFilterOpen,
-	onFilterToggle
+	activePanel,
+	onPanelChange,
+	activeFilterCount,
+	currentView,
+	onViewModeChange,
+	showGridToggle,
+	canClear,
+	onClear
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
-	tableConfig: FilterConfig[];
-	toggle?: true;
-	isFilterOpen: boolean;
-	onFilterToggle: () => void;
+	activePanel: "search" | "filters" | null;
+	onPanelChange: (panel: "search" | "filters") => void;
+	activeFilterCount: number;
+	currentView: "table" | "grid";
+	onViewModeChange?: (mode: "table" | "grid") => void;
+	showGridToggle?: boolean;
+	canClear: boolean;
+	onClear: () => void;
 }) {
-	const searchParams = useSearchParams();
-	const pathname = usePathname();
-	const searchRef = useRef<HTMLInputElement>(null);
-	const formRef = useRef<HTMLFormElement>(null);
+	const stroke = "currentColor";
+	const sw = 1.75;
+	const filtersActive = activePanel === "filters";
 
-	const ctx = useViewMode();
-	const currentView = ctx?.mode ?? "table";
-
-	const activeFilters = getActiveFilters(searchParams, tableConfig);
-	const activeFilterCount = Object.keys(activeFilters).length;
-	const currentSearch = searchParams.get("search") || "";
-	const activeSummaries = buildActiveSummaries(tableConfig, activeFilters);
-	const hasActiveState = !!currentSearch || activeFilterCount > 0 || (!!toggle && currentView === "grid");
-
-	const plural = TableMetadata[table as Prisma.ModelName]?.plural || table;
-
-	// Sync search input value when URL changes (e.g. browser back/forward)
-	useEffect(() => {
-		if (searchRef.current) {
-			searchRef.current.value = currentSearch;
-		}
-	}, [currentSearch]);
-
-	function handleSearch() {
-		if (!formRef.current) return;
-		const formData = new FormData(formRef.current);
-		const searchValue = formData.get("searchInput") as string;
-		const params = new URLSearchParams(searchParams.toString());
-		if (searchValue) {
-			params.set("search", searchValue);
-		} else {
-			params.delete("search");
-		}
-		window.history.pushState(null, "", `${pathname}?${params.toString()}`);
-	}
+	const filterIcon = (
+		<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
+			<path d="M4 6h12M8 12h12M4 18h12" />
+			<circle cx="17" cy="6" r="2" fill={stroke} stroke="none" />
+			<circle cx="7" cy="12" r="2" fill={stroke} stroke="none" />
+			<circle cx="17" cy="18" r="2" fill={stroke} stroke="none" />
+		</svg>
+	);
 
 	return (
-		<div className="flex flex-col gap-2">
-			{/* Main action bar — single flat container, no nested boxes */}
-			<div className="flex flex-wrap items-center gap-3 px-4 py-3 bg-base-100 rounded-xl shadow-sm">
-				{/* Search — takes up the majority of the bar width */}
-				<form
-					ref={formRef}
-					onSubmit={(e) => {
-						e.preventDefault();
-						handleSearch();
-					}}
-					className="flex items-center gap-2 flex-1 min-w-[240px]"
-				>
-					<label className="input flex-1 flex items-center gap-2 focus-within:outline-none">
-						{/* Magnifying glass icon */}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 16 16"
-							fill="currentColor"
-							className="h-4 w-4 opacity-50 shrink-0"
-						>
-							<path
-								fillRule="evenodd"
-								d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-								clipRule="evenodd"
-							/>
+		<div
+			className="w-fit max-w-full rounded-full bg-base-200 px-2 py-1 shadow-md sm:px-2.5 sm:py-1.5"
+			role="toolbar"
+			aria-label="Table tools"
+		>
+			<div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+				<ActionTool
+					active={activePanel === "search"}
+					onClick={() => onPanelChange("search")}
+					label="Search"
+					icon={
+						<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
+							<circle cx="11" cy="11" r="7" />
+							<path d="M20 20l-4.3-4.3" strokeLinecap="round" />
 						</svg>
-						<input
-							type="search"
-					className="grow min-w-0"
-						name="searchInput"
-							ref={searchRef}
-							placeholder={`Search ${plural}...`}
-							defaultValue={currentSearch}
-						/>
-					</label>
-					<button type="submit" className="btn btn-primary shrink-0">
-						Search
-					</button>
-				</form>
+					}
+				/>
 
-				{/* Visual divider */}
-				<div className="hidden sm:block h-8 w-px bg-base-300 shrink-0" />
-
-				{/* Right controls: filter button + view toggle */}
-				<div className="flex items-center gap-2 shrink-0">
-					{/* Filter toggle button */}
+				<div className="indicator">
+					{activeFilterCount > 0 ? (
+						<span
+							className="indicator-item indicator-end indicator-top z-1 flex h-4.5 min-h-4.5 min-w-4.5 translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full border border-primary/80 bg-primary px-1 text-[0.65rem] font-semibold leading-none text-primary-content shadow-sm"
+							aria-hidden
+						>
+							{activeFilterCount}
+						</span>
+					) : null}
 					<button
 						type="button"
-						onClick={onFilterToggle}
-						className={`btn gap-2 ${isFilterOpen ? "btn-primary" : "btn-ghost border border-base-300"}`}
+						onClick={() => onPanelChange("filters")}
+						className={`${toolBtnBase} ${toolBtnActive(filtersActive)} active:scale-[0.97]`}
+						aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
 					>
-						{/* Adjustments / sliders icon */}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							className="w-4 h-4"
-						>
-							<line x1="4" y1="6" x2="16" y2="6" />
-							<line x1="8" y1="12" x2="20" y2="12" />
-							<line x1="4" y1="18" x2="16" y2="18" />
-							<circle cx="18" cy="6" r="2" />
-							<circle cx="6" cy="12" r="2" />
-							<circle cx="18" cy="18" r="2" />
-						</svg>
-						<span>Filters</span>
-						{activeFilterCount > 0 && (
-							<span className="badge badge-sm badge-primary px-1.5">{activeFilterCount}</span>
-						)}
+						<span className="flex h-5 w-full shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
+							{filterIcon}
+						</span>
+						<span className={toolLabelClass}>Filters</span>
 					</button>
-
-					{/* View toggle — always rendered; disabled for pages without grid support */}
-					<div
-						className={`join ${!toggle ? "opacity-40 pointer-events-none" : ""}`}
-						title={!toggle ? "Grid view is not available for this data type" : undefined}
-					>
-						<button
-							type="button"
-							className={`btn join-item gap-2 ${currentView === "table" ? "btn-primary" : "btn-ghost border border-base-300"}`}
-							onClick={() => ctx?.setMode("table")}
-						>
-							{/* List icon */}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								className="w-4 h-4"
-							>
-								<line x1="8" y1="6" x2="21" y2="6" />
-								<line x1="8" y1="12" x2="21" y2="12" />
-								<line x1="8" y1="18" x2="21" y2="18" />
-								<line x1="3" y1="6" x2="3.01" y2="6" />
-								<line x1="3" y1="12" x2="3.01" y2="12" />
-								<line x1="3" y1="18" x2="3.01" y2="18" />
-							</svg>
-							<span className="hidden sm:inline">List</span>
-						</button>
-						<button
-							type="button"
-							className={`btn join-item gap-2 ${currentView === "grid" ? "btn-primary" : "btn-ghost border border-base-300"}`}
-							onClick={() => ctx?.setMode("grid")}
-						>
-							{/* Grid icon */}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								className="w-4 h-4"
-							>
-								<rect x="3" y="3" width="7" height="7" />
-								<rect x="14" y="3" width="7" height="7" />
-								<rect x="3" y="14" width="7" height="7" />
-								<rect x="14" y="14" width="7" height="7" />
-							</svg>
-							<span className="hidden sm:inline">Grid</span>
-						</button>
-					</div>
 				</div>
+
+				{showGridToggle ? (
+					<>
+						<ActionTool
+							active={currentView === "table"}
+							onClick={() => onViewModeChange?.("table")}
+							disabled={!onViewModeChange}
+							label="List"
+							icon={
+								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
+									<path d="M9 6h12M9 12h12M9 18h12" strokeLinecap="round" />
+									<circle cx="5" cy="6" r="1.5" fill={stroke} />
+									<circle cx="5" cy="12" r="1.5" fill={stroke} />
+									<circle cx="5" cy="18" r="1.5" fill={stroke} />
+								</svg>
+							}
+						/>
+						<ActionTool
+							active={currentView === "grid"}
+							onClick={() => onViewModeChange?.("grid")}
+							disabled={!onViewModeChange}
+							label="Grid"
+							icon={
+								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
+									<rect x="4" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+									<rect x="13" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+									<rect x="4" y="13" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+									<rect x="13" y="13" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+								</svg>
+							}
+						/>
+					</>
+				) : null}
+
+				<ActionTool
+					active={false}
+					disabled={!canClear}
+					onClick={() => canClear && onClear()}
+					label="Clear all"
+					icon={
+						<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
+							<path d="M18 6L6 18M6 6l12 12" />
+						</svg>
+					}
+				/>
 			</div>
-
-			{/* Active state chips — only shown when search / filters / grid view are active */}
-			{hasActiveState && (
-				<div className="flex items-center flex-wrap gap-1.5 px-1 text-xs">
-					{currentSearch && (
-						<span className="badge badge-sm bg-base-200 text-base-content/70 border-0 gap-1">
-							{/* Mini search icon */}
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								viewBox="0 0 16 16"
-								fill="currentColor"
-								className="h-3 w-3 opacity-60"
-							>
-								<path
-									fillRule="evenodd"
-									d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-									clipRule="evenodd"
-								/>
-							</svg>
-							&ldquo;{currentSearch}&rdquo;
-						</span>
-					)}
-					{activeSummaries.map((summary, idx) => (
-						<span key={idx} className="badge badge-sm bg-base-200 text-base-content/70 border-0">
-							{summary}
-						</span>
-					))}
-					{toggle && currentView === "grid" && (
-						<span className="badge badge-sm bg-base-200 text-base-content/70 border-0">
-							Grid view
-						</span>
-					)}
-				</div>
-			)}
 		</div>
 	);
 }
