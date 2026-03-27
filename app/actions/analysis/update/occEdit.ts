@@ -1,6 +1,6 @@
 "use server";
 
-import { AlphaDiversity, Occurrence, Prisma } from "@/app/generated/prisma/client";
+import { Occurrence } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
@@ -18,9 +18,8 @@ async function doEdit(
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
-	const sessionToken = await getToken();
 
-	if (!userId || !role || !RolePermissions[role].includes("contribute") || !sessionToken) {
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		await stream.error("Unauthorized");
 		return;
 	}
@@ -212,14 +211,17 @@ async function doEdit(
 
 		await stream.success("Success");
 
-		after(
-			async () =>
-				await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
-					method: "POST",
-					headers: {
-						Authorization: "Bearer " + sessionToken
-					}
+		after(async () =>
+			fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken()),
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					delete: true
 				})
+			})
 		);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);

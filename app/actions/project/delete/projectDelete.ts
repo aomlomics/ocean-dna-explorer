@@ -30,56 +30,37 @@ export default async function projectDeleteAction(target: Project["project_id"])
 	const project_id = parsed.data;
 
 	try {
-		const dbProject = await prisma.$transaction(
-			async (tx) => {
-				const dbProject = await tx.project.findUnique({
-					where: {
-						project_id
-					},
-					select: {
-						userIds: true,
-						imageFileUrl_ODE: true,
-						projectMetadataFileUrl_ODE: true,
-						sampleMetadataFileUrl_ODE: true,
-						libraryMetadataFileUrl_ODE: true
-					}
-				});
-
-				if (!dbProject) {
-					throw new Error(`No Project with project_id of "${project_id}" found.`);
-				} else if (!dbProject.userIds.includes(userId)) {
-					throw new Error("Unauthorized action.");
-				}
-
-				//project delete
-				await tx.project.delete({
-					where: {
-						project_id
-					}
-				});
-
-				// features delete
-				// await tx.feature.deleteMany({
-				// 	where: {
-				// 		Assignments: {
-				// 			none: {}
-				// 		}
-				// 	}
-				// });
-
-				//taxonomies delete
-				// await tx.taxonomy.deleteMany({
-				// 	where: {
-				// 		Assignments: {
-				// 			none: {}
-				// 		}
-				// 	}
-				// });
-
-				return dbProject;
+		const dbProject = await prisma.project.findUnique({
+			where: {
+				project_id
 			},
-			{ timeout: 1.5 * 60 * 1000 }
-		);
+			select: {
+				userIds: true,
+				imageFileUrl_ODE: true,
+				projectMetadataFileUrl_ODE: true,
+				sampleMetadataFileUrl_ODE: true,
+				libraryMetadataFileUrl_ODE: true,
+				Analyses: {
+					select: {
+						analysisMetadataFileUrl_ODE: true,
+						asvFileUrl_ODE: true,
+						occurrenceFileUrl_ODE: true
+					}
+				}
+			}
+		});
+
+		if (!dbProject) {
+			throw new Error(`No Project with project_id of "${project_id}" found.`);
+		} else if (!dbProject.userIds.includes(userId)) {
+			throw new Error("Unauthorized action.");
+		}
+
+		await prisma.project.delete({
+			where: {
+				project_id
+			}
+		});
 
 		//delete files
 		const delArr = [
@@ -89,6 +70,9 @@ export default async function projectDeleteAction(target: Project["project_id"])
 		];
 		if (dbProject.imageFileUrl_ODE) {
 			delArr.push(dbProject.imageFileUrl_ODE);
+		}
+		for (const a of dbProject.Analyses) {
+			delArr.push(a.analysisMetadataFileUrl_ODE, a.asvFileUrl_ODE, a.occurrenceFileUrl_ODE);
 		}
 		await del(delArr);
 

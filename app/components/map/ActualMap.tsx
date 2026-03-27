@@ -67,7 +67,7 @@ const DEFAULT_OUTSIDE_COLOR = chroma("black");
 const DEFAULT_PALETTE = "YlGnBu";
 const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 5;
-const DEFAULT_CLUSTER_RADIUS = 50;
+const DEFAULT_CLUSTER_RADIUS = 0;
 const chromaMin = 35;
 
 function getShape(shape: any) {

@@ -406,4 +406,6 @@ model Library {
     block_taxa           String? //[]     @default([])
     inhibition_check     String?
     inhibition_check_0_1 DeadBoolean?
+
+    @@index(fields: [project_id, assay_name])
 }

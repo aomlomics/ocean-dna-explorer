@@ -217,14 +217,14 @@ export default async function Analysis_run_name({
 			<div id="dataExplorer" className="mt-8">
 				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
 				<div role="tablist" className="tabs tabs-lifted">
-					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
-					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
-						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
-					</div>
-
 					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Taxa" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box">
 						<TaxaGrid analysis_run_name={analysis_run_name} />
+					</div>
+
+					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
+					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
+						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
 					</div>
 				</div>
 			</div>

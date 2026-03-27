@@ -18,9 +18,8 @@ async function doSubmit(
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
-	const sessionToken = await getToken();
 
-	if (!userId || !role || !RolePermissions[role].includes("contribute") || !sessionToken) {
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		await analysisChannel.stream.error("Unauthorized");
 		return;
 	}
@@ -282,14 +281,13 @@ async function doSubmit(
 		await assignmentsChannel.stream.success("Features, Taxonomies, and Assignments successfully uploaded to database.");
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
 
-		after(
-			async () =>
-				await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
-					method: "POST",
-					headers: {
-						Authorization: "Bearer " + sessionToken
-					}
-				})
+		after(async () =>
+			fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 300 }))
+				}
+			})
 		);
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);

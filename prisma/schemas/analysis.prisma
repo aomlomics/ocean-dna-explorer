@@ -113,12 +113,13 @@ model Occurrence {
     Analysis          Analysis   @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
     featureid         String
     Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
-    Assignment        Assignment @relation(fields: [analysis_run_name, featureid], references: [analysis_run_name, featureid])
+    Assignment        Assignment @relation(fields: [analysis_run_name, featureid], references: [analysis_run_name, featureid], onDelete: Cascade)
 
     // Data
     organismQuantity Int
 
     @@unique([analysis_run_name, lib_id, featureid])
+    @@index(fields: [analysis_run_name, featureid])
 }
 
 model Assignment {
@@ -188,6 +189,7 @@ model Tag {
 model AlphaDiversity {
     id             Int      @id @default(autoincrement())
     dateCalculated DateTime @default(now())
+    finished       Boolean  @default(false)
 
     // Relations
     analysis_run_name     String

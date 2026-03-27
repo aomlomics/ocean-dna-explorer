@@ -148,6 +148,7 @@ export function parseToQuery(
 			throw new Error(`Value must be boolean, but was provided ${typeof value}.`);
 		}
 
+		//TODO: test if booleans work properly
 		searchWhere = {
 			[field]: value
 		};
