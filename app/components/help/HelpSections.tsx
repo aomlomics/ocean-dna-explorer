@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { DeadBooleanToEnum } from "../../../types/enums";
+import { AnalysisAsvTablePreview, AnalysisOccurrenceMatrixPreview } from "./DocExampleTables";
 
 // Define types for our content structure
 export type Subsection = {
@@ -15,6 +16,27 @@ export type Section = {
 	content: ReactNode; // Allows JSX content
 	subsections?: Subsection[]; // Optional array of subsections
 };
+
+/** Heroicons outline folder (24), stroke 1.5. Pass className for size (e.g. size-14) and text-primary. */
+function FolderGlyph({ className }: { className?: string }) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			strokeWidth={1.5}
+			stroke="currentColor"
+			className={className ?? "size-6 shrink-0 text-primary"}
+			aria-hidden
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
+			/>
+		</svg>
+	);
+}
 
 export const helpSections: Section[] = [
 	{
@@ -592,43 +614,222 @@ export const helpSections: Section[] = [
 		title: "Submit Data",
 		content: (
 			<>
-				<p className="mb-4 font-semibold">
-					NOTE: You must have a role of at least{" "}
-					<Link className="link link-primary font-semibold" href="#login-and-roles">
+				<p className="mb-4">
+					You need the{" "}
+					<Link className="link link-primary" href="#login-and-roles">
 						Contributor
 					</Link>{" "}
-					to submit data.{" "}
-				</p>
-				<p className="mb-4">
-					This section will help guide you through the process of contributing your own data to the Ocean DNA Explorer.
-					Once you have{" "}
-					<Link className="link link-primary font-semibold" href="#data-format-rationale">
-						formatted
-					</Link>{" "}
-					your data, head to the{" "}
-					<Link className="link link-primary font-semibold" href="/submit">
+					role to upload data. Use the{" "}
+					<Link className="link link-primary" href="/submit">
 						Submit
 					</Link>{" "}
-					tab in the website header to upload your files. Your data can then be shared with the scientific community on the Ocean DNA Explorer, OBIS (Ocean
-					Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
+					tab in the header. Start from the example dataset below, then follow the project and analysis file layouts.
+					For OBIS and GBIF publishing, see{" "}
+					<Link className="link link-primary" href="#obis-gbif-submission">
+						edna2obis
+					</Link>
+					.
 				</p>
 			</>
 		),
 		subsections: [
+			{
+				id: "example-dataset-ode-testdata",
+				title: "Example dataset (ODE test data)",
+				content: (
+					<>
+						<p className="mb-4">
+							A full example bundle lives in{" "}
+							<Link
+								className="link link-primary"
+								href="https://github.com/aomlomics/ODE_testdata/tree/main/noaa-sefsc-gu1901"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								ODE_testdata (noaa-sefsc-gu1901)
+							</Link>
+							. It shows real file names and TSV shapes you can copy before building your own submission.
+						</p>
+						<ul className="mb-4 list-disc pl-6">
+							<li>
+								<strong>Project step:</strong> three FAIRe metadata TSVs (project, sample, library). The project form only
+								uploads these three.
+							</li>
+							<li>
+								<strong>Analysis step:</strong> three TSVs per run (FAIRe analysis metadata, ASV or feature table, occurrence
+								matrix). Submit at least one analysis per project so ASVs and counts load into Explore and Search.
+							</li>
+							<li>
+								<strong>Order:</strong> create the project first, then add analyses. The two forms are separate pages in
+								the app.
+							</li>
+						</ul>
+					</>
+				)
+			},
+			{
+				id: "project-submissions",
+				title: "Project Submissions",
+				content: (
+					<>
+						<p className="mb-4">
+							All of these are tab-separated (TSV) and follow the FAIRe template. Files with{" "}
+							<code className="text-sm">metadata</code> in the name are checklist sheets, not raw sequence tables.
+						</p>
+						<div className="mb-6 flex flex-wrap justify-center gap-10 sm:justify-start sm:gap-14">
+							<div className="flex w-28 flex-col items-center text-center">
+								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">projectMetadata.tsv</span>
+							</div>
+							<div className="flex w-28 flex-col items-center text-center">
+								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">sampleMetadata.tsv</span>
+							</div>
+							<div className="flex w-28 flex-col items-center text-center">
+								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">libraryMetadata.tsv</span>
+							</div>
+						</div>
+						<p className="mb-2">
+							<strong>projectMetadata.tsv</strong> uses the wide project layout: each row is one FAIRe field. You need
+							columns <code className="text-sm">term_name</code> and <code className="text-sm">project_level</code>, then
+							one column per assay. The header names after <code className="text-sm">project_level</code> are your assay
+							identifiers (for example <code className="text-sm">ssu16sv4v5-emp</code>). Those names must match the assay
+							columns you use in the sample and library files.
+						</p>
+						<p className="mb-2">
+							<strong>sampleMetadata.tsv</strong> is one row per sample. Column names are FAIRe field names.
+						</p>
+						<p className="mb-4">
+							<strong>libraryMetadata.tsv</strong> is one row per library (experiment run in FAIRe terms). Lines may start
+							with <code className="text-sm">#</code> as comments; the parser ignores them.{" "}
+							<code className="text-sm">lib_id</code> values here must match the column headers in your occurrence matrix
+							for each analysis.
+						</p>
+						<p className="mb-2">
+							<code className="text-sm">project_id</code> must be identical across all three files. Assay headers must line
+							up everywhere you reference an assay.
+						</p>
+						<p className="mb-2">Required fields in the project metadata file include:</p>
+						<ul className="mb-0 list-disc pl-6">
+							<li>project_id</li>
+							<li>project_contact</li>
+							<li>assay_type</li>
+							<li>checkls_ver</li>
+							<li>pcr_0_1</li>
+							<li>assay_name</li>
+							<li>targetTaxonomicAssay</li>
+							<li>pcr_primer_forward</li>
+							<li>pcr_primer_reverse</li>
+						</ul>
+					</>
+				)
+			},
+			{
+				id: "analysis-submissions",
+				title: "Analysis Submissions",
+				content: (
+					<>
+						<p className="mb-4">
+							You pick an existing project you are allowed to edit. Each analysis run uploads three TSV files: FAIRe
+							analysis metadata, then two data tables (ASV or feature table and occurrence matrix). Those two are not
+							FAIRe checklist spreadsheets; they hold sequences, taxonomy, and counts.
+						</p>
+						<div className="mb-6 flex flex-wrap justify-center gap-10 sm:justify-start sm:gap-14">
+							<div className="flex w-32 flex-col items-center text-center">
+								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">analysisMetadata.tsv</span>
+							</div>
+							<div className="flex w-32 flex-col items-center text-center">
+								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">ASV table (TSV)</span>
+							</div>
+							<div className="flex w-32 flex-col items-center text-center">
+								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">occurrence matrix (TSV)</span>
+							</div>
+						</div>
+						<p className="mb-2">
+							<strong>analysisMetadata.tsv</strong> is long format: each row has <code className="text-sm">term_name</code>{" "}
+							and <code className="text-sm">values</code>. It must include <code className="text-sm">project_id</code>,{" "}
+							<code className="text-sm">assay_name</code>, and a unique <code className="text-sm">analysis_run_name</code>{" "}
+							for every run you upload.
+						</p>
+						<p className="mb-2">
+							<strong>ASV table (TSV)</strong> has one row per ASV. The importer maps columns into Feature, Assignment, and
+							Taxonomy rows. The first column is <code className="text-sm">featureid</code>. You also need{" "}
+							<code className="text-sm">dna_sequence</code>, taxonomy fields such as <code className="text-sm">taxonomy</code>{" "}
+							and <code className="text-sm">verbatimIdentification</code>, rank columns, and{" "}
+							<code className="text-sm">Confidence</code>, using the same names as FAIRe or Tourmaline exports.
+						</p>
+						<p className="mb-4">
+							If you use{" "}
+							<a
+								className="link link-primary"
+								href="https://github.com/aomlomics/tourmaline/tree/develop"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								Tourmaline
+							</a>{" "}
+							for amplicon processing, it writes these two data files in the same general shape as the examples below: wide
+							ASV table with taxonomy columns, and a wide occurrence matrix keyed by <code className="text-sm">featureid</code>{" "}
+							with one column per library. You still need the separate FAIRe <code className="text-sm">analysisMetadata.tsv</code>{" "}
+							for run metadata.
+						</p>
+						<p className="mb-4">
+							<strong>Not using Tourmaline:</strong> match the column headers and types from the examples (or from a
+							Tourmaline run on your checklist version). For <code className="text-sm">featureid</code>, Tourmaline uses the
+							MD5 hash (hex) of the ASV DNA sequence. You can check a sequence with:
+						</p>
+						<pre className="mb-4 overflow-x-auto rounded-lg bg-base-300 p-4 font-mono text-sm leading-relaxed">
+							{`$ echo -n "YOUR_DNA_SEQUENCE_HERE" | md5sum
+abc12d6cd12a574f2183f003593d3940  -`}
+						</pre>
+						<p className="mb-4">
+							Replace the string with your full sequence (no newline inside the quotes). The left column of the output is the{" "}
+							<code className="text-sm">featureid</code> value to use for that ASV. The sample hash above is only an
+							illustration; your result depends on the sequence you pass in.
+						</p>
+						<AnalysisAsvTablePreview />
+						<p className="mb-3">
+							<strong>Occurrence matrix (TSV)</strong> is a wide table: first row is the header. The first column is feature
+							IDs (usually under the header <code className="text-sm">featureid</code>). Every other column is one{" "}
+							<code className="text-sm">lib_id</code> from your library metadata, in the same spelling. Each later row is one
+							ASV and the cells are non-negative integers. Use <code className="text-sm">0</code> where a feature is absent
+							in a library. Empty or non-numeric cells fail validation. Only counts greater than zero are stored as
+							occurrence records in the database.
+						</p>
+						<AnalysisOccurrenceMatrixPreview />
+						<p className="mb-3">
+							Other pipelines (DADA2, QIIME 2, and so on) can work if you export the same layout and column names. Compare
+							your headers to the{" "}
+							<a
+								className="link link-primary"
+								href="https://github.com/aomlomics/ODE_testdata/tree/main/noaa-sefsc-gu1901"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								ODE_testdata
+							</a>{" "}
+							example or a Tourmaline export when you are unsure.
+						</p>
+					</>
+				)
+			},
 			{
 				id: "public-vs-private-data",
 				title: "Public vs Private Data",
 				content: (
 					<>
 						<p className="mb-4">
-							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
-							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but
-							you cannot make a public submission private.
+							You can submit privately or publicly. Private data are visible to you and to Ocean DNA Explorer moderators
+							and admins. Public data can be seen by everyone using the site.
 						</p>
 						<p className="mb-4">
-							{" "}
-							We encourage users to eventually make their data public. The purpose of private submissions is in case you
-							are unsure of your data quality or if you are new to the submission process.{" "}
+							You can change a private submission to public later. You cannot change a public submission back to private.
+							Private submission is there if you are still checking quality or learning the workflow; we still encourage
+							moving to public when you are ready.
 						</p>
 					</>
 				)
@@ -639,32 +840,28 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							The Ocean DNA Explorer's data format is modeled after the{" "}
+							Ocean DNA Explorer is aligned with the{" "}
 							<Link className="link link-primary" href="https://fair-edna.github.io/" target="_blank">
-								FAIRe eDNA standard
-							</Link>
-							, with a few modifications to enable the enhanced features which the Ocean DNA Explorer provides. The
-							FAIRe (Findable, Accessible, Interoperable, Reusable) eDNA initiative is a multi-organization,
-							international collaboration that has developed a comprehensive metadata checklist specifically for eDNA
-							data.
+								FAIRe eDNA
+							</Link>{" "}
+							standard, with small changes for features on this site. FAIRe is a shared checklist for eDNA metadata so
+							datasets stay findable and reusable.
 						</p>
-						<p className="mb-4">
-							The FAIRe metadata checklist consists of 337 data terms (38 mandatory, 51 highly recommended, 128
-							recommended and 120 optional terms), organized into workflow sections such as sample collection, PCR, and
-							bioinformatics. The Ocean DNA Explorer's data format uses the same checklist, with a few additions and
-							subtractions. The FAIRe data fields are sourced from existing data standards including:
+						<p className="mb-2">
+							The checklist has 337 terms (mandatory, recommended, and optional) across steps like sample collection, PCR,
+							and bioinformatics. Ocean DNA Explorer uses the same term set with minor additions or omissions. Fields draw
+							on standards such as:
 						</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>MIxS (Minimum Information about any Sequence) and its extensions</li>
-							<li>Darwin Core (DwC) for biodiversity data</li>
-							<li>MIQE guidelines for quantitative PCR</li>
-							<li>MIEM guidelines for eDNA and eRNA metabarcoding</li>
-							<li>158 new terms specifically developed for eDNA procedures and datasets</li>
+						<ul className="mb-4 list-disc pl-6">
+							<li>MIxS (Minimum Information about any Sequence) and extensions</li>
+							<li>Darwin Core for biodiversity</li>
+							<li>MIQE for quantitative PCR</li>
+							<li>MIEM for eDNA and eRNA metabarcoding</li>
+							<li>Terms written specifically for eDNA workflows</li>
 						</ul>
-						<p className="mb-4">
-							This comprehensive approach ensures that eDNA datasets can be properly documented, discovered, and reused
-							across the scientific community, supporting data-driven biodiversity management at broad scales, aiming to
-							connect eDNA data to other environmental data for cross discipline reuse.
+						<p className="mb-0">
+							That shared structure helps your data work here, in downstream tools, and alongside other environmental
+							datasets.
 						</p>
 					</>
 				)
@@ -675,23 +872,24 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							{" "}
-							<Link
-								className="link link-primary"
-								href="https://github.com/aomlomics/tourmaline/tree/develop"
-								target="_blank"
-							>
+							<Link className="link link-primary" href="https://github.com/aomlomics/tourmaline/tree/develop" target="_blank">
 								Tourmaline 2
 							</Link>{" "}
-							is an amplicon sequence analysis workflow developed by the{" "}
+							from{" "}
 							<Link className="link link-primary" href="https://github.com/aomlomics" target="_blank">
 								AOML Omics
 							</Link>{" "}
-							team. It provides a simple command line interface for a Snakemake workflow that calls QIIME 2 and other
-							commands, generating quality controlled sequence data, amplicon sequence variant tables, and taxonomic
-							assignments. Tourmaline 2 output can be uploaded to the Ocean DNA Explorer as an analysis. Multiple
-							analyses can be uploaded for the same project, allowing users to compare the output from different sets of
-							parameters.{" "}
+							is a Snakemake workflow around QIIME 2. It produces quality-filtered reads, ASV tables, and taxonomic
+							assignments you can upload as an analysis. You can attach several analyses to one project to compare
+							parameter choices. Output file shapes match{" "}
+							<Link className="link link-primary" href="#analysis-submissions">
+								Analysis Submissions
+							</Link>{" "}
+							and the{" "}
+							<Link className="link link-primary" href="#example-dataset-ode-testdata">
+								example dataset
+							</Link>
+							.
 						</p>
 					</>
 				)
@@ -702,41 +900,27 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Metadata templates can be generated using{" "}
 							<Link className="link link-primary" href="https://github.com/aomlomics/FAIReSheets" target="_blank">
 								FAIReSheets
-							</Link>
-							, a tool that creates standardized eDNA data templates directly in Google Sheets. It is NOAA's
-							implementation of the{" "}
-							<Link className="link link-primary" href="#data-format-rationale" target="_blank">
-								FAIRe eDNA
 							</Link>{" "}
-							templates.
+							builds Google Sheets from the NOAA FAIRe checklist. You can add your own terms to the checklist first; those
+							show up as extra columns when you generate sheets. The checklist is the data dictionary and includes
+							controlled vocabularies for many fields.
 						</p>
 						<p className="mb-4">
-							The templates are generated based on the FAIRe NOAA checklist, which serves as the data dictionary. A key
-							feature is the ability to add your own User Defined terms to this checklist. When you run FAIReSheets, any
-							custom terms you've added to the checklist Excel file will be included in your generated Google Sheets
-							template, ensuring all your relevant data fields are captured.
-						</p>
-						<p className="mb-4">
-							The checklist also provides controlled vocabularies for many fields, ensuring consistent data entry and
-							units of measure across the eDNA community. This standardization is crucial for data interoperability and
-							reuse.
-						</p>
-						<p className="mb-4">
-							The generated templates for project, sample, experiment run, and analysis metadata are designed for
-							instant submission to the Ocean DNA Explorer. Once filled, data formatted with these templates can also be
-							easily prepared for submission to the Ocean DNA Explorer, but ALSO for submission to OBIS and GBIF using
-							the{" "}
+							Generated sheets cover project, sample, experiment run (library), and analysis metadata with field names the
+							portal expects. The same filled templates can feed{" "}
 							<Link className="link link-primary" href="#obis-gbif-submission">
 								edna2obis
 							</Link>{" "}
-							tool.
+							for OBIS and GBIF.
 						</p>
-						<p className="mb-4">
-							To use FAIReSheets, you will need to run a Python script on your local computer. Access to the tool is
-							granted upon request by emailing bayden.willms@noaa.gov
+						<p className="mb-0">
+							FAIReSheets runs as a Python script on your computer. Request access by emailing{" "}
+							<a className="link link-primary" href="mailto:bayden.willms@noaa.gov">
+								bayden.willms@noaa.gov
+							</a>
+							.
 						</p>
 					</>
 				)
@@ -747,28 +931,21 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							Now it's time to fill in your data to the metadata templates. This is a critical step to ensure your data
-							is standardized and interoperable. Please see the{" "}
+							See the{" "}
 							<a
 								href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html"
 								className="link link-primary"
 							>
 								NOAA Omics Data Management Guide
 							</a>{" "}
-							for more information on the data format and metadata requirements.
+							for field-level detail. Below is how to record missing values and how to keep IDs consistent across sheets.
 						</p>
 
-						<h4 className="text-lg font-medium mb-2 mt-4">Handling Missing Data (Dead Values)</h4>
+						<h4 className="mb-2 mt-4 text-lg font-medium">Handling missing data (dead values)</h4>
 						<p className="mb-4">
-							Data can be absent for many different reasons, and the scientific community has historically used various
-							approaches to indicate missing information. For example, location data may be intentionally obscured or
-							generalized to safeguard endangered species or protect sites of cultural significance to Indigenous
-							communities.
-						</p>
-						<p className="mb-4">
-							For required fields that lack data, you must specify why the information is unavailable using the INSDC
-							missing value controlled vocabulary format. This practice is also recommended for optional fields. Rather
-							than leaving cells empty, select the most appropriate "dead value" from the controlled vocabulary:
+							Data can be missing for many reasons. Some locations are generalized on purpose to protect species or
+							culturally sensitive places. For any required field you cannot fill, use the INSDC missing-value vocabulary
+							instead of leaving the cell empty. Optional fields should use the same pattern when missing.
 						</p>
 						<div className="mb-4">
 							<table className="table table-zebra w-full">
@@ -819,85 +996,33 @@ export const helpSections: Section[] = [
 							</table>
 						</div>
 
-						<h4 className="text-lg font-medium mb-2 mt-12">User Defined Terms</h4>
+						<h4 className="mb-2 mt-8 text-lg font-medium">User defined terms</h4>
 						<p className="mb-4">
-							If you have data fields which you want in your templates that are NOT in the FAIRe NOAA checklist (data
-							dictionary), you can add them as User Defined terms. As mentioned in the{" "}
+							If you need columns that are not in the NOAA checklist, add them as user defined terms in the checklist
+							before you run FAIReSheets, or add columns by hand in the sheet. See{" "}
 							<Link className="link link-primary" href="#faire-metadata-template">
 								FAIRe Metadata Template
-							</Link>{" "}
-							section, you can add these to the FAIRe NOAA checklist before generating your template, or add them
-							manually as new columns in your Google Sheet.
+							</Link>
+							.
 						</p>
 
-						<h4 className="text-lg font-medium mb-2 mt-4">Pay Attention to these Important Fields!</h4>
-						<p className="mb-4">
-							To ensure your data is linked and interpreted correctly, please pay close attention to the following:
-						</p>
-						<ul className="list-disc ml-6 mb-4">
+						<h4 className="mb-2 text-lg font-medium">Important linking fields</h4>
+						<ul className="mb-4 list-disc pl-6">
 							<li>
-								Project ID: The project_id must be identical across all metadata files (project, sample, etc.) to link
-								them together.
+								<code className="text-sm">project_id</code> must be the same string in every metadata file for that
+								project.
 							</li>
 							<li>
-								Analysis Run Names: Verify that each analysis file's analysis_run_name is correct in each
-								analysisMetadata file, and is unique for each analysis.
+								<code className="text-sm">analysis_run_name</code> must be unique for each analysis and must match what
+								you put in the analysisMetadata TSV.
 							</li>
 							<li>
-								Assay-Specific vs. Project-Level Data: In the project metadata, fields can apply to all analyses
-								(denoted by a value in the project_level column) or they may have a different value per assay. For assay
-								specific values, use the corresponding assay-specific column (e.g., "ssu16sv4v5-emp" or "ssu18sv9-emp").
+								In project metadata, use <code className="text-sm">project_level</code> for values that apply to the whole
+								project, and the per-assay columns (for example <code className="text-sm">ssu16sv4v5-emp</code>) when values
+								differ by assay.
 							</li>
 						</ul>
-						<p className="font-bold">
-							{" "}
-							Once you have filled in your Google Sheet, download each sheet as a TSV File, and you are ready to submit
-							to the Ocean DNA Explorer!
-						</p>
-					</>
-				)
-			},
-			{
-				id: "project-submissions",
-				title: "Project Submissions",
-				content: (
-					<>
-						<p className="mb-4">
-							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. To submit a project, you'll
-							need to submit one or more analyses alongside it.
-						</p>
-						<p className="mb-2">The following fields are required in your project metadata file:</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>project_id</li>
-							<li>project_contact</li>
-							<li>assay_type</li>
-							<li>checkls_ver</li>
-							<li>pcr_0_1</li>
-							<li>assay_name</li>
-							<li>targetTaxonomicAssay</li>
-							<li>pcr_primer_forward</li>
-							<li>pcr_primer_reverse</li>
-						</ul>
-						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
-					</>
-				)
-			},
-			{
-				id: "analysis-submissions",
-				title: "Analysis Submissions",
-				content: (
-					<>
-						<p className="mb-4">
-							Any metadata file submitted to the Ocean DNA Explorer must be in TSV format. Analyses can be submitted
-							WITHOUT a project, as long as the project it is related to is already uploaded to the Ocean DNA Explorer.
-						</p>
-						<p className="mb-2">The following fields are required in your analysis metadata file(s):</p>
-						<ul className="list-disc ml-6 mb-4">
-							<li>project_id</li>
-							<li>assay_name</li>
-							<li>analysis_run_name</li>
-						</ul>
-						<p className="mb-4">All files must be in TSV format and follow the FAIRe template structure exactly.</p>
+						<p className="mb-0">Download each sheet as TSV before you upload.</p>
 					</>
 				)
 			},
@@ -906,15 +1031,12 @@ export const helpSections: Section[] = [
 				title: "OBIS + GBIF Submission",
 				content: (
 					<>
-						<p className="mb-4">
-							{" "}
+						<p className="mb-0">
 							<Link className="link link-primary" href="https://github.com/baydenwillms/edna2obis-3.0/tree/main">
 								edna2obis
 							</Link>{" "}
-							converts the Ocean DNA Explorer input files to the expected format for submission to OBIS (Ocean
-							Biodiversity Information System), and GBIF (Global Biodiversity Information Facility). its input file
-							structure MATCHES that of the Ocean DNA Explorer, so if you're submitting data here, you can easily submit
-							to OBIS and GBIF as well.
+							reads the same file layout you use for Ocean DNA Explorer and converts it to Darwin Core for submission to
+							OBIS (Ocean Biodiversity Information System) and GBIF (Global Biodiversity Information Facility).
 						</p>
 					</>
 				)

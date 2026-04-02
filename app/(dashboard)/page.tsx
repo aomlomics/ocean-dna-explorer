@@ -1,4 +1,4 @@
-import { MainStats, AssayStats } from "@/app/components/DataSummary";
+import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
@@ -8,6 +8,9 @@ import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
+
+const heroPrimaryBtnClass =
+	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
 
 export default async function Home() {
 	return (
@@ -27,24 +30,23 @@ export default async function Home() {
 					.
 				</p>
 			</div>
-			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
+			<div className="relative w-full h-screen max-h-[68vh] min-h-[320px] sm:max-h-[64vh] bg-black overflow-hidden z-content-overlay">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
 				</Suspense>
-				{/* Updated hero content container */}
 				<div className="absolute inset-0 flex items-center z-content">
-				<div className="w-full px-4 xl:px-8 max-w-[95%] xl:max-w-[85%] mx-auto">
-					<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
-						<h1 className="text-6xl sm:text-7xl md:text-7xl lg:text-7xl xl:text-8xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
-							<span className="block text-primary font-light">Welcome</span>
-						</h1>
+					<div className="w-full px-4 xl:px-8 max-w-[95%] xl:max-w-[85%] mx-auto">
+						<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
+							<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl xl:text-7xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
+								<span className="block text-primary font-normal">Welcome</span>
+							</h1>
 
-						<div className="text-base-content/90 font-normal -mt-1 sm:-mt-2">
-							<span className="block text-3xl text-shadow-2xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
-								to the <span className="text-primary">Ocean DNA Explorer</span>
-							</span>
+							<div className="text-base-content/90 font-normal -mt-1 sm:-mt-2">
+								<span className="block text-4xl text-shadow-3xl sm:text-5xl md:text-5xl lg:text-5xl xl:text-6xl font-normal leading-tight mb-2 sm:mb-3">
+									to the <span className="text-primary font-normal">Ocean DNA Explorer</span>
+								</span>
 
-							<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
+								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-4 sm:mb-5">
 									<span className="block">
 										a data sharing platform, search engine, and visualization
 										<br />
@@ -54,17 +56,14 @@ export default async function Home() {
 							</div>
 
 							<div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-								<Link
-									href="#dataSummary"
-									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
-								>
+								<Link href="#dataSummary" className={heroPrimaryBtnClass}>
 									Start Here
 								</Link>
-								<Link
-									href="/explore/project"
-									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
-								>
+								<Link href="/explore/project" className={heroPrimaryBtnClass}>
 									Explore the Data
+								</Link>
+								<Link href="/learn?section=edna101" className={heroPrimaryBtnClass}>
+									What is eDNA?
 								</Link>
 							</div>
 						</div>
@@ -92,9 +91,12 @@ export default async function Home() {
 					</div>
 				</Link>
 			</div> */}
-			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
-				<div className="mb-20">
-					<Suspense>
+			<div
+				id="dataSummary"
+				className="z-1000 scroll-mt-20 px-4 pt-3 sm:px-6 sm:pt-5 lg:px-8 pb-12 -mt-2 sm:-mt-4 md:-mt-3"
+			>
+				<div className="mb-28 sm:mb-32">
+					<Suspense fallback={<MainStatsSkeleton />}>
 						<MainStats />
 					</Suspense>
 				</div>

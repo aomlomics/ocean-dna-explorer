@@ -1,6 +1,9 @@
 import { AnalysisIcon, ProjectIcon } from "@/app/components/icons";
 import Link from "next/link";
 
+const ODE_TESTDATA_HREF = "https://github.com/aomlomics/ODE_testdata";
+const FAIRESHEETS_HREF = "https://github.com/aomlomics/FAIReSheets";
+
 export default function Submit() {
 	return (
 		<div className="container mx-auto px-4 py-4">
@@ -15,24 +18,33 @@ export default function Submit() {
 				</ul>
 			</div>
 
-			<header className="my-8">
+			<header className="my-8 space-y-3">
 				<h1 className="text-4xl font-normal text-primary">Submit to the Ocean DNA Explorer</h1>
-				<p className="mt-2 text-base text-base-content/80">
-					Choose a submission type below to contribute your data to the Ocean DNA Explorer database.
-				</p>
+				<p className="text-base text-base-content/80">Choose a submission type below to contribute your data.</p>
 				<p className="text-base text-base-content/80">
-					For more information on the submission requirements and data format, please see the{" "}
-					<a href="/help#submit" className="text-primary hover:text-primary-focus">
-						Submit Data
-					</a>{" "}
-					section of our Help page, or the{" "}
+					See example datasets compatible for ODE submission here:{" "}
 					<a
-						href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html"
+						href={ODE_TESTDATA_HREF}
 						className="text-primary hover:text-primary-focus"
+						target="_blank"
+						rel="noopener noreferrer"
 					>
-						NOAA Omics Data Management Guide
+						ODE_testdata
 					</a>
-					.
+					.{" "}
+					<a
+						href={FAIRESHEETS_HREF}
+						className="text-primary hover:text-primary-focus"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						FAIReSheets
+					</a>{" "}
+					helps with FAIRe metadata.{" "}
+					<Link href="/help#submit" className="text-primary hover:text-primary-focus">
+						Visit the help page
+					</Link>{" "}
+					for more data submission information.
 				</p>
 			</header>
 

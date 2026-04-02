@@ -15,34 +15,36 @@ export default async function API() {
 				<nav>
 					<h2 className="text-xl mb-6 px-2">Contents</h2>
 					<ul className="space-y-5">
-						{/* Map through sections to generate navigation */}
-						{apiSections.map((section, index) => (
-							<li key={section.id} className="mb-1">
-								<a
-									href={`#${section.id}`}
-									className="block py-1 px-2 hover:text-primary transition-colors main-section-link"
-									data-section-index={index}
-								>
-									{section.title}
-								</a>
-
-								{/* Render subsection navigation if they exist */}
-								{section.subsections && section.subsections.length > 0 && (
-									<ul className="mt-2 mb-1 ml-2 space-y-1 border-l border-base-300 pl-2">
-										{section.subsections.map((subsection) => (
-											<li key={subsection.id}>
-												<a
-													href={`#${subsection.id}`}
-													className="block py-1 px-2 text-sm hover:text-primary transition-colors"
-												>
-													{subsection.title}
-												</a>
-											</li>
-										))}
-									</ul>
-								)}
-							</li>
-						))}
+						{apiSections.map((section, index) => {
+							const hasSubs = Boolean(section.subsections?.length);
+							return (
+								<li key={section.id}>
+									<div className={`flex flex-col ${hasSubs ? "gap-2.5" : "gap-0"}`}>
+										<a
+											href={`#${section.id}`}
+											className="block px-2 py-1 hover:text-primary transition-colors main-section-link"
+											data-section-index={index}
+										>
+											{section.title}
+										</a>
+										{hasSubs && section.subsections && (
+											<ul className="ml-2 space-y-1 border-l border-base-300 pl-2">
+												{section.subsections.map((subsection) => (
+													<li key={subsection.id}>
+														<a
+															href={`#${subsection.id}`}
+															className="block py-1 px-2 text-sm hover:text-primary transition-colors"
+														>
+															{subsection.title}
+														</a>
+													</li>
+												))}
+											</ul>
+										)}
+									</div>
+								</li>
+							);
+						})}
 					</ul>
 				</nav>
 			</aside>
@@ -54,16 +56,16 @@ export default async function API() {
 
 				{/* Map through sections to generate content */}
 				{apiSections.map((section, index) => (
-					<section key={section.id} id={section.id} data-section-index={index} className="mb-24">
-						<h2 className="text-3xl font-semibold text-primary mb-6">{section.title}</h2>
+					<section key={section.id} id={section.id} data-section-index={index} className="mb-48">
+						<h2 className="text-4xl font-semibold tracking-tight text-primary mb-3">{section.title}</h2>
 						<div className="prose max-w-none">{section.content}</div>
 
 						{/* Render subsections if they exist */}
 						{section.subsections && section.subsections.length > 0 && (
-							<div className="space-y-12 mt-8">
+							<div className="mt-12 space-y-24">
 								{section.subsections.map((subsection) => (
 									<div key={subsection.id} id={subsection.id}>
-										<h3 className="text-2xl font-semibold text-base-content mb-4">{subsection.title}</h3>
+										<h3 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{subsection.title}</h3>
 										<div className="prose max-w-none">{subsection.content}</div>
 									</div>
 								))}
