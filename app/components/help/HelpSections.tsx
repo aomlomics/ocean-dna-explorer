@@ -38,6 +38,18 @@ function FolderGlyph({ className }: { className?: string }) {
 	);
 }
 
+function deadBooleanHelpDescription(deadValue: string) {
+	return deadValue.startsWith("not applicable")
+		? "Field does not apply to this column"
+		: deadValue.startsWith("missing: not collected")
+			? "Data was not collected for X reason"
+			: deadValue.startsWith("missing: not provided")
+				? "Data exists but was not provided"
+				: deadValue.startsWith("missing: restricted access")
+					? "Data cannot be shared due to restrictions"
+					: "Data should exist but is unavailable";
+}
+
 export const helpSections: Section[] = [
 	{
 		id: "node-overview",
@@ -342,7 +354,7 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">Understanding when to use Search versus Explore:</p>
 						<div className="mb-4">
-							<h4 className="font-semibold mb-2">
+							<h4>
 								Use the{" "}
 								<Link className="link link-primary" href="/search">
 									Search Page
@@ -356,7 +368,7 @@ export const helpSections: Section[] = [
 							</ul>
 						</div>
 						<div className="mb-4">
-							<h4 className="font-semibold mb-2">
+							<h4>
 								Use the{" "}
 								<Link className="link link-primary" href="/explore">
 									Explore Pages
@@ -460,7 +472,7 @@ export const helpSections: Section[] = [
 							Each Explore page has its own built-in search capabilities for quick filtering within that specific table.
 						</p>
 						<div className="mb-4">
-							<h4 className="font-semibold mb-2">Features on Explore Pages:</h4>
+							<h4>Features on Explore Pages:</h4>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
 									<strong>Global search bar:</strong> Located at the top of the table, this searches across all columns
@@ -941,62 +953,227 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							for field-level detail. Below is how to record missing values and how to keep IDs consistent across sheets.
 						</p>
 
-						<h4 className="mb-2 mt-4 text-lg font-medium">Handling missing data (dead values)</h4>
+						<h4>Handling missing data (dead values)</h4>
 						<p className="mb-4">
-							Data can be missing for many reasons. Some locations are generalized on purpose to protect species or
-							culturally sensitive places. For any required field you cannot fill, use the INSDC missing-value vocabulary
-							instead of leaving the cell empty. Optional fields should use the same pattern when missing.
+							For NCBI and other INSDC archives, use their controlled missing-value vocabulary—do not leave cells empty.
+							Following{" "}
+							<a
+								className="link link-primary"
+								href="https://www.insdc.org/submitting-standards/missing-value-reporting/"
+								target="_blank"
+								rel="noreferrer"
+							>
+								INSDC missing-value reporting
+							</a>{" "}
+							keeps templates aligned with what those systems expect at submission time. Data can be missing for many
+							reasons; some locations are generalized on purpose to protect species or culturally sensitive places. For any
+							required field you cannot fill, use that vocabulary; optional fields should use the same pattern when
+							missing.
 						</p>
-						<div className="mb-4">
+
+						<h4>Recommended dead values</h4>
+						<p className="mb-4">
+							The table below lists the recommended sentinels for new metadata. Ocean DNA Explorer still accepts every
+							legacy or more specific form the templates and database allow—open <strong>All accepted dead values</strong>{" "}
+							below for the complete list, including older options.
+						</p>
+						<div className="mb-4 overflow-x-auto">
 							<table className="table table-zebra w-full">
 								<thead>
 									<tr>
 										<th>Value to enter in the data templates</th>
-										<th>When to Use</th>
+										<th>When to use</th>
+										<th>Applies to</th>
 									</tr>
 								</thead>
 								<tbody>
-									{/* Boolean values */}
 									<tr>
-										<td>true</td>
-										<td>Boolean field is true</td>
+										<td>
+											<code>missing</code>
+										</td>
+										<td>
+											The value exists but was not recorded at the time of data collection; it is unknown whether it
+											could be obtained.
+										</td>
+										<td>All fields</td>
 									</tr>
 									<tr>
-										<td>1</td>
-										<td>Boolean field is true</td>
+										<td>
+											<code>not applicable</code>
+										</td>
+										<td>
+											The field is not relevant to this sample type or experimental context; the concept does not apply
+											(e.g., &quot;depth&quot; for a terrestrial soil sample in a marine-focused schema).
+										</td>
+										<td>All fields</td>
 									</tr>
 									<tr>
-										<td>false</td>
-										<td>Boolean field is false</td>
+										<td>
+											<code>not collected</code>
+										</td>
+										<td>
+											The value was not collected intentionally; the decision was made not to measure or record it,
+											and it cannot be retrieved retrospectively.
+										</td>
+										<td>All fields</td>
 									</tr>
 									<tr>
-										<td>0</td>
-										<td>Boolean field is false</td>
+										<td>
+											<code>not provided</code>
+										</td>
+										<td>
+											The value may exist and may have been collected, but was not included in the submission.
+											Distinct from not collected in that the information could potentially still be obtained from the
+											submitter.
+										</td>
+										<td>All fields</td>
 									</tr>
-									{/* Dead values */}
-									{Object.keys(DeadBooleanToEnum)
-										.filter((key) => !["true", "false", "0", "1"].includes(key))
-										.map((deadValue) => (
-											<tr key={deadValue}>
-												<td>{deadValue}</td>
-												<td>
-													{deadValue.startsWith("not applicable")
-														? "Field does not apply to this column"
-														: deadValue.startsWith("missing: not collected")
-														? "Data was not collected for X reason"
-														: deadValue.startsWith("missing: not provided")
-														? "Data exists but was not provided"
-														: deadValue.startsWith("missing: restricted access")
-														? "Data cannot be shared due to restrictions"
-														: "Data should exist but is unavailable"}
-												</td>
-											</tr>
-										))}
+									<tr>
+										<td>
+											<code>restricted access</code>
+										</td>
+										<td>
+											The value exists and is known but cannot be shared publicly, typically due to legal, ethical, or
+											privacy constraints (e.g., precise coordinates of endangered species localities, or indigenous
+											community data).
+										</td>
+										<td>All fields</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: control sample</code>
+										</td>
+										<td>
+											The sample is a negative or positive control; the field is not meaningful in that context (e.g., a
+											blank extraction control has no meaningful geographic origin).
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: sample group</code>
+										</td>
+										<td>
+											The metadata value has been intentionally aggregated or suppressed at the group level rather than
+											reported per-sample, to avoid identifying individual samples within a pooled or grouped submission.
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: synthetic construct</code>
+										</td>
+										<td>
+											The sample is a synthetic or artificial construct (e.g., a plasmid, spike-in standard, or synthetic
+											community); the field doesn&apos;t apply in the same way as for environmental samples.
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: lab stock</code>
+										</td>
+										<td>
+											The sample derives from a laboratory stock or culture collection where provenance metadata (e.g.,
+											original collection location/date) is unknown or was never recorded.
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: third party data</code>
+										</td>
+										<td>
+											The data originated with a third party and the submitter does not have access to the underlying
+											metadata; the value exists somewhere but is not in the submitter&apos;s possession.
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: data agreement established pre-2023</code>
+										</td>
+										<td>
+											The data were collected or shared under a prior agreement that predates current metadata
+											requirements; the submitter is contractually or procedurally unable to provide the value
+											retroactively.
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: endangered species</code>
+										</td>
+										<td>
+											Precise metadata (typically locality coordinates) are withheld to protect an endangered or sensitive
+											species from poaching, disturbance, or exploitation.
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
+									<tr>
+										<td>
+											<code>missing: human-identifiable</code>
+										</td>
+										<td>
+											The value is withheld because it could be used to identify a human subject, in compliance with
+											privacy regulations (GDPR, HIPAA, etc.).
+										</td>
+										<td>eventDate, geo_loc_name</td>
+									</tr>
 								</tbody>
 							</table>
 						</div>
 
-						<h4 className="mb-2 mt-8 text-lg font-medium">User defined terms</h4>
+						<details className="border border-base-300 bg-base-200/40 rounded-lg mb-4">
+							<summary className="cursor-pointer py-4 px-4 text-base font-medium">
+								All accepted dead values (full list)
+							</summary>
+							<div className="border-t border-base-300 px-4 pb-4">
+								<p className="mb-4 pt-3">
+									This list matches every sentinel the upload pipeline and database accept—including older or longer
+									forms not shown in the recommended table above. Use them when your sheet or an existing project
+									already uses one of those strings; Ocean DNA Explorer still ingests and stores them.
+								</p>
+								<div className="overflow-x-auto">
+									<table className="table table-zebra w-full">
+									<thead>
+										<tr>
+											<th>Value to enter in the data templates</th>
+											<th>When to Use</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td>true</td>
+											<td>Boolean field is true</td>
+										</tr>
+										<tr>
+											<td>1</td>
+											<td>Boolean field is true</td>
+										</tr>
+										<tr>
+											<td>false</td>
+											<td>Boolean field is false</td>
+										</tr>
+										<tr>
+											<td>0</td>
+											<td>Boolean field is false</td>
+										</tr>
+										{Object.keys(DeadBooleanToEnum)
+											.filter((key) => !["true", "false", "0", "1"].includes(key))
+											.map((deadValue) => (
+												<tr key={deadValue}>
+													<td>{deadValue}</td>
+													<td>{deadBooleanHelpDescription(deadValue)}</td>
+												</tr>
+											))}
+									</tbody>
+								</table>
+								</div>
+							</div>
+						</details>
+
+						<h4>User defined terms</h4>
 						<p className="mb-4">
 							If you need columns that are not in the NOAA checklist, add them as user defined terms in the checklist
 							before you run FAIReSheets, or add columns by hand in the sheet. See{" "}
@@ -1006,7 +1183,7 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							.
 						</p>
 
-						<h4 className="mb-2 text-lg font-medium">Important linking fields</h4>
+						<h4>Important linking fields</h4>
 						<ul className="mb-4 list-disc pl-6">
 							<li>
 								<code className="text-sm">project_id</code> must be the same string in every metadata file for that

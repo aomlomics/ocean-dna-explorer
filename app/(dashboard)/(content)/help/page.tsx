@@ -1,3 +1,4 @@
+import { docContentProseClassName } from "@/app/components/help/docContentProse";
 import { helpSections } from "@/app/components/help/HelpSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
 import MobileTOC from "@/app/components/help/MobileTOC";
@@ -60,7 +61,7 @@ export default function Help() {
 				{helpSections.map((section, index) => (
 					<section key={section.id} id={section.id} data-section-index={index} className="mb-48">
 						<h2 className="text-4xl font-semibold tracking-tight text-primary mb-3">{section.title}</h2>
-						<div className="prose max-w-none">{section.content}</div>
+						<div className={docContentProseClassName}>{section.content}</div>
 
 						{/* Render subsections if they exist */}
 						{section.subsections && section.subsections.length > 0 && (
@@ -68,7 +69,7 @@ export default function Help() {
 								{section.subsections.map((subsection) => (
 									<div key={subsection.id} id={subsection.id}>
 										<h3 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{subsection.title}</h3>
-										<div className="prose max-w-none">{subsection.content}</div>
+										<div className={docContentProseClassName}>{subsection.content}</div>
 									</div>
 								))}
 							</div>
