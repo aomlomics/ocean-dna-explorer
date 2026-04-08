@@ -27,55 +27,53 @@ npm run dev
 
 - You need to create an environment file named .env.
 - This file is required to configure environment variables for the application.
-- **See `.env.template` to see the required variables and their format.**
+- **See [.env.template](/.env.template) to see the required variables and their format.**
+- In the POSTGRES_PRISMA_URL and POSTGRES_URL_NON_POOLING variables, replace `<username>`, `<password>`, `<server>`, and `<db name>` with your own.
 
 ## Local Database Setup / Commands
 
-1. Install Postgres DB (If you've already followed the instructions for ocean-dna-explorer, skip this step)
-   - Follow instructions per your system, use default parameters
-   - Note your postgres username and password. We recommend username: postgres, password: admin.
+1. Install [Postgres](https://www.postgresql.org/download/)
+	- Follow instructions per your system, use default parameters
+	- Note your postgres username and password. We recommend username: postgres, password: admin.
 
 2. Create your database using either:
 
-   ```bash
-   # In terminal:
-   createdb <dbname>
+	```bash
+	# In terminal:
+	createdb <dbname>
 
-   # Or in psql:
-   CREATE DATABASE <dbname>;
-   ```
+	# Or in psql:
+	CREATE DATABASE <dbname>;
+	```
 
 3. To view all local databases in psql:
 
-   ```sql
-   \l
-   ```
-
-4. Configure your .ENV file:
-   - Fill out all missing values following the instructions from the comments.
-   - In the POSTGRES_PRISMA_URL and POSTGRES_URL_NON_POOLING variables, replace `<username>`, `<password>`, `<server>`, and `<db name>` with your own.
+	```sql
+	\l
+	```
 
 ### Database Commands
 
 1. First Time Setup (Fresh Install):
 
 ```bash
-npx prisma generate  # Creates Prisma Client based on your schema
-npx prisma db push   # Creates database tables based on schema
+npx prisma generate	# Creates Prisma Client based on your schema
+npx prisma db push	# Creates database tables based on schema
 ```
 
 2. Schema Changes (Keep Data):
 
 ```bash
-npx prisma db push   # Updates database schema while preserving existing data
-                     # Will fail if changes would cause data loss
+npx prisma db push	# Updates database schema while preserving existing data
+					# Will fail if changes would cause data loss
 ```
 
 3. Schema Changes (Can't Keep Data):
 
 ```bash
-npx prisma db push --force-reset # Completely resets database, deleting all data
-npx prisma db seed               # Re-adds seed data if needed
+npx prisma db push --force-reset	# Completely resets database, deleting all data
+									# Must reseed database from admin panel. If you need to be added as an admin, contact a maintainer
+
 ```
 
 **Important: To populate the local database, you must upload the files from [ODE_testdata](https://github.com/aomlomics/ODE_testdata) by navigating to the `Submit` tab on the website.** Then click `Submit a Project`.
