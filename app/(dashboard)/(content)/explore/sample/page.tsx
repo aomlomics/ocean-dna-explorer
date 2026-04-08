@@ -1,4 +1,3 @@
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
@@ -75,7 +74,6 @@ export default async function Sample() {
 						.
 					</p>
 				</div>
-				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

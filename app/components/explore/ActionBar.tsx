@@ -2,66 +2,34 @@
 
 import { ReactNode } from "react";
 
-const toolLabelClass = "w-full text-center text-xs font-semibold leading-none";
+const sw = 1.75;
+const stroke = "currentColor";
 
-const toolBtnBase = [
-	"flex min-w-17 flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1 text-center sm:min-w-20 sm:px-3 sm:py-1.5",
-	"transition-[background-color,color,box-shadow] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
-	"disabled:pointer-events-none disabled:opacity-35"
-].join(" ");
+const segBase =
+	"inline-flex min-h-9 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem] active:brightness-95";
 
-function toolBtnActive(active: boolean) {
-	return active ? "bg-primary text-primary-content shadow-md" : "text-base-content hover:bg-base-300/60";
-}
+const segOn = "bg-primary text-primary-content shadow-md";
+const segOff = "bg-base-200/90 text-base-content hover:bg-base-300";
 
-function ActionTool({
-	active,
-	onClick,
-	label,
-	icon,
-	disabled
-}: {
-	active?: boolean;
-	onClick: () => void;
-	label: string;
-	icon: ReactNode;
-	disabled?: boolean;
-}) {
-	return (
-		<button
-			type="button"
-			disabled={disabled}
-			onClick={onClick}
-			className={`${toolBtnBase} ${toolBtnActive(!!active)} ${disabled ? "" : "active:scale-[0.97]"}`}
-		>
-			<span className="flex h-5 w-full shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">{icon}</span>
-			<span className={toolLabelClass}>{label}</span>
-		</button>
-	);
+function IconWrap({ children }: { children: ReactNode }) {
+	return <span className="flex h-4 w-4 shrink-0 items-center justify-center sm:h-4.5 sm:w-4.5 [&_svg]:h-4 [&_svg]:w-4 sm:[&_svg]:h-4.5 sm:[&_svg]:w-4.5">{children}</span>;
 }
 
 export default function ActionBar({
 	activePanel,
 	onPanelChange,
 	activeFilterCount,
-	currentView,
-	onViewModeChange,
-	showGridToggle,
 	canClear,
 	onClear
 }: {
 	activePanel: "search" | "filters" | null;
 	onPanelChange: (panel: "search" | "filters") => void;
 	activeFilterCount: number;
-	currentView: "table" | "grid";
-	onViewModeChange?: (mode: "table" | "grid") => void;
-	showGridToggle?: boolean;
 	canClear: boolean;
 	onClear: () => void;
 }) {
-	const stroke = "currentColor";
-	const sw = 1.75;
 	const filtersActive = activePanel === "filters";
+	const searchActive = activePanel === "search";
 
 	const filterIcon = (
 		<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
@@ -73,91 +41,59 @@ export default function ActionBar({
 	);
 
 	return (
-		<div
-			className="w-fit max-w-full rounded-full bg-base-200 px-2 py-1 shadow-md sm:px-2.5 sm:py-1.5"
-			role="toolbar"
-			aria-label="Table tools"
-		>
-			<div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-				<ActionTool
-					active={activePanel === "search"}
-					onClick={() => onPanelChange("search")}
-					label="Search"
-					icon={
-						<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
-							<circle cx="11" cy="11" r="7" />
-							<path d="M20 20l-4.3-4.3" strokeLinecap="round" />
-						</svg>
-					}
-				/>
+		<div className="inline-flex max-w-full flex-wrap items-stretch gap-1.5 sm:gap-2" role="toolbar" aria-label="Search and filters">
+			<button
+				type="button"
+				onClick={() => onPanelChange("search")}
+				className={`${segBase} ${searchActive ? segOn : segOff}`}
+				aria-pressed={searchActive}
+			>
+				<IconWrap>
+					<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
+						<circle cx="11" cy="11" r="7" />
+						<path d="M20 20l-4.3-4.3" strokeLinecap="round" />
+					</svg>
+				</IconWrap>
+				Search
+			</button>
 
-				<div className="indicator">
-					{activeFilterCount > 0 ? (
-						<span
-							className="indicator-item indicator-end indicator-top z-1 flex h-4.5 min-h-4.5 min-w-4.5 translate-x-0.5 -translate-y-0.5 items-center justify-center rounded-full border border-primary/80 bg-primary px-1 text-[0.65rem] font-semibold leading-none text-primary-content shadow-sm"
-							aria-hidden
-						>
-							{activeFilterCount}
-						</span>
-					) : null}
-					<button
-						type="button"
-						onClick={() => onPanelChange("filters")}
-						className={`${toolBtnBase} ${toolBtnActive(filtersActive)} active:scale-[0.97]`}
-						aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
+			<button
+				type="button"
+				onClick={() => onPanelChange("filters")}
+				className={`${segBase} relative ${filtersActive ? segOn : segOff}`}
+				aria-pressed={filtersActive}
+				aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : "Filters"}
+			>
+				{activeFilterCount > 0 ? (
+					<span
+						className={`absolute -right-1 -top-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none shadow-md ring-2 ring-base-100 ${
+							filtersActive
+								? "bg-base-100 text-primary ring-offset-0"
+								: "border border-base-content/15 bg-base-300 text-base-content"
+						}`}
+						aria-hidden
 					>
-						<span className="flex h-5 w-full shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
-							{filterIcon}
-						</span>
-						<span className={toolLabelClass}>Filters</span>
-					</button>
-				</div>
-
-				{showGridToggle ? (
-					<>
-						<ActionTool
-							active={currentView === "table"}
-							onClick={() => onViewModeChange?.("table")}
-							disabled={!onViewModeChange}
-							label="List"
-							icon={
-								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
-									<path d="M9 6h12M9 12h12M9 18h12" strokeLinecap="round" />
-									<circle cx="5" cy="6" r="1.5" fill={stroke} />
-									<circle cx="5" cy="12" r="1.5" fill={stroke} />
-									<circle cx="5" cy="18" r="1.5" fill={stroke} />
-								</svg>
-							}
-						/>
-						<ActionTool
-							active={currentView === "grid"}
-							onClick={() => onViewModeChange?.("grid")}
-							disabled={!onViewModeChange}
-							label="Grid"
-							icon={
-								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
-									<rect x="4" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
-									<rect x="13" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
-									<rect x="4" y="13" width="7" height="7" rx="1.5" strokeLinejoin="round" />
-									<rect x="13" y="13" width="7" height="7" rx="1.5" strokeLinejoin="round" />
-								</svg>
-							}
-						/>
-					</>
+						{activeFilterCount}
+					</span>
 				) : null}
+				<IconWrap>{filterIcon}</IconWrap>
+				Filters
+			</button>
 
-				<ActionTool
-					active={false}
-					disabled={!canClear}
-					onClick={() => canClear && onClear()}
-					label="Clear all"
-					icon={
-						<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
-							<path d="M18 6L6 18M6 6l12 12" />
-						</svg>
-					}
-				/>
-			</div>
+			<button
+				type="button"
+				disabled={!canClear}
+				onClick={onClear}
+				className={`${segBase} ${segOff} disabled:pointer-events-none disabled:opacity-35`}
+				aria-disabled={!canClear}
+			>
+				<IconWrap>
+					<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>
+						<path d="M18 6L6 18M6 6l12 12" />
+					</svg>
+				</IconWrap>
+				Clear all
+			</button>
 		</div>
 	);
 }

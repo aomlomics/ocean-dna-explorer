@@ -96,6 +96,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 												<li key={subsection.id} className="w-full">
 													<a
 														href={`#${subsection.id}`}
+														data-toc-target={subsection.id}
 														className="block w-full py-1 px-2 text-sm hover:text-primary transition-colors whitespace-normal break-words"
 														onClick={handleClose}
 													>

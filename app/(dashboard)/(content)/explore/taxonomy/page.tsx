@@ -1,4 +1,3 @@
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Link from "next/link";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
@@ -33,7 +32,6 @@ export default async function Taxonomy() {
 						. The images are contributed by scientists and artists worldwide under various Creative Commons licenses.
 					</p>
 				</div>
-				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

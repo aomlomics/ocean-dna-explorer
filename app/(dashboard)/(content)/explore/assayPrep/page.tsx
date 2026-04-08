@@ -1,5 +1,4 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import TableMetadata from "@/types/tableMetadata";
 import Link from "next/link";
 
@@ -17,7 +16,6 @@ export default function AssayPrep() {
 						.
 					</p>
 				</div>
-				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

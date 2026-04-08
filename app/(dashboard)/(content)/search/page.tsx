@@ -38,7 +38,7 @@ export default async function Search({
 						</div>
 					</header>
 				)}
-				<div className="w-full space-y-4 text-base-content/80">
+				<div className="w-full space-y-6 text-base-content/80">
 					<p>{TableMetadata[model].description}</p>
 					<ExploreTabButtons activeTable={capitalizeTable(model)} tables={DataTableNames} />
 				</div>

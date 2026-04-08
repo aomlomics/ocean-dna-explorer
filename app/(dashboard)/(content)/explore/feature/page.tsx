@@ -1,4 +1,3 @@
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
@@ -38,7 +37,6 @@ export default async function Feature() {
 						.
 					</p>
 				</div>
-				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

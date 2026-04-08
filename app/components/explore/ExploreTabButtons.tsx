@@ -6,12 +6,17 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 
+const tabBase =
+	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
+
 export default function ExploreTabButtons({
 	activeTable,
-	tables = DataTableNames
+	tables = DataTableNames,
+	className
 }: {
 	activeTable?: Prisma.ModelName;
 	tables?: string[];
+	className?: string;
 } = {}) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -36,23 +41,28 @@ export default function ExploreTabButtons({
 	}
 
 	return (
-		<nav className="flex flex-wrap gap-2">
+		<nav
+			className={["flex min-w-0 flex-wrap content-center items-center gap-2.5 sm:gap-3", className].filter(Boolean).join(" ")}
+			aria-label="Data tables"
+		>
 			{tables.map((t) => {
 				const modelName = t as Prisma.ModelName;
 				const uncapitalizedTableName = uncapitalizeTable(modelName);
 				const href = pathname.split("/").includes("explore")
 					? `/explore/${uncapitalizedTableName}`
 					: `/search?table=${modelName}`;
+				const active = isOnPath(modelName);
 
 				return (
 					<Link
 						key={t}
 						href={href}
-						className={`btn text-base font-normal normal-case ${
-							isOnPath(modelName)
-								? "btn-primary"
-								: "bg-base-200 hover:bg-base-300 border-transparent hover:border-transparent"
+						className={`${tabBase} ${
+							active
+								? "bg-primary text-primary-content shadow-md"
+								: "bg-base-200/90 text-base-content hover:bg-base-300 active:brightness-95"
 						}`}
+						aria-current={active ? "page" : undefined}
 					>
 						{TableMetadata[modelName].plural}
 					</Link>

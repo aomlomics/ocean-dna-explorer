@@ -1,4 +1,3 @@
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
@@ -74,7 +73,6 @@ export default async function Assay() {
 						.
 					</p>
 				</div>
-				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

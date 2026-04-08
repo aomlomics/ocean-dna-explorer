@@ -7,12 +7,12 @@ export default async function API() {
 	const apiSections = await getApiSections();
 
 	return (
-		<div className="flex min-h-screen">
+		<div className="flex min-h-screen items-start">
 			{/* Invisible component that handles scroll tracking */}
 			<ActiveSectionTracker />
 
 			{/* Sidebar navigation - Hidden on mobile */}
-			<aside className="hidden lg:block w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 sticky top-0 h-screen overflow-y-auto">
+			<aside className="hidden lg:block w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
 				<nav>
 					<h2 className="text-xl mb-6 px-2">Contents</h2>
 					<ul className="space-y-5">
@@ -34,6 +34,7 @@ export default async function API() {
 													<li key={subsection.id}>
 														<a
 															href={`#${subsection.id}`}
+															data-toc-target={subsection.id}
 															className="block py-1 px-2 text-sm hover:text-primary transition-colors"
 														>
 															{subsection.title}
@@ -57,7 +58,12 @@ export default async function API() {
 
 				{/* Map through sections to generate content */}
 				{apiSections.map((section, index) => (
-					<section key={section.id} id={section.id} data-section-index={index} className="mb-48">
+					<section
+						key={section.id}
+						id={section.id}
+						data-section-index={index}
+						className="doc-toc-anchor mb-48 scroll-mt-24"
+					>
 						<h2 className="text-4xl font-semibold tracking-tight text-primary mb-3">{section.title}</h2>
 						<div className={docContentProseClassName}>{section.content}</div>
 
@@ -65,7 +71,7 @@ export default async function API() {
 						{section.subsections && section.subsections.length > 0 && (
 							<div className="mt-12 space-y-24">
 								{section.subsections.map((subsection) => (
-									<div key={subsection.id} id={subsection.id}>
+									<div key={subsection.id} id={subsection.id} className="doc-toc-anchor scroll-mt-24">
 										<h3 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{subsection.title}</h3>
 										<div className={docContentProseClassName}>{subsection.content}</div>
 									</div>

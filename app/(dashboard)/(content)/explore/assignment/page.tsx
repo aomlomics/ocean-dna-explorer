@@ -1,6 +1,5 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { Metadata } from "next";
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 
@@ -22,7 +21,6 @@ const Page = async () => {
 						.
 					</p>
 				</div>
-				<ExploreTabButtons />
 			</div>
 		</ExplorePage>
 	);

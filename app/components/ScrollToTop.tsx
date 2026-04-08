@@ -53,6 +53,7 @@ export default function ScrollToTop() {
 	}, []);
 
 	const scrollToTop = () => {
+		window.dispatchEvent(new CustomEvent("opal:scroll-to-top"));
 		window.scrollTo({
 			top: 0,
 			behavior: "smooth"

@@ -8,6 +8,7 @@ import Grid from "./grid/Grid";
 import TaxaGridItem from "./grid/TaxaGridItem";
 import ProjectGridItem from "./grid/ProjectGridItem";
 import { useViewMode } from "../explore/ViewModeContext";
+import ViewModeToggle from "../explore/ViewModeToggle";
 
 export default function TableDisplay({
 	table,
@@ -24,7 +25,7 @@ export default function TableDisplay({
 }) {
 	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
 
-	// When inside an ExplorePage, mode is driven by ViewModeContext (set by ActionBar).
+	// When inside an ExplorePage, mode is driven by ViewModeContext (list/grid control above the table).
 	// On other pages (e.g. search), the context is absent so we fall back to local state,
 	// which keeps the built-in toggle working independently.
 	const viewModeCtx = useViewMode();
@@ -62,25 +63,38 @@ export default function TableDisplay({
 
 	return (
 		<div className="flex flex-col">
-		{showBuiltInToggle && (
-			<fieldset className="fieldset bg-base-100 border-base-300 rounded-box w-36 border self-center p-2 mb-6">
-				<legend className="fieldset-legend">Display Mode</legend>
-				<label className="label">
-					<input
-						type="checkbox"
-						className="toggle"
-						defaultChecked={mode === "grid"}
-						onChange={(e) => (e.target.checked ? setMode("grid") : setMode("table"))}
-					/>
-					{mode}
-				</label>
-			</fieldset>
-		)}
+			{showBuiltInToggle && (
+				<fieldset className="fieldset bg-base-100 border-base-300 rounded-box w-36 border self-center p-2 mb-6">
+					<legend className="fieldset-legend">Display Mode</legend>
+					<label className="label">
+						<input
+							type="checkbox"
+							className="toggle"
+							defaultChecked={mode === "grid"}
+							onChange={(e) => (e.target.checked ? setMode("grid") : setMode("table"))}
+						/>
+						{mode}
+					</label>
+				</fieldset>
+			)}
+
+			{viewModeCtx ? (
+				<div className="flex justify-center pb-0.5">
+					<ViewModeToggle displayMode={displayMode} toggle={toggle} />
+				</div>
+			) : null}
 
 			<div className={dataShellClass}>
 				{mode === "table" ? (
 					size === "lg" ? (
-						<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} ignoreParams={ignoreParams} />
+						<Table
+							table={table}
+							defaultTake={25}
+							filterHeadersAtStart
+							where={tableWhere}
+							ignoreParams={ignoreParams}
+							className={viewModeCtx ? "pl-0!" : undefined}
+						/>
 					) : (
 						<Pagination table={table} ignoreParams={ignoreParams} />
 					)
