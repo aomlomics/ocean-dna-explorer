@@ -2,11 +2,12 @@
 
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "../generated/prisma/client";
-import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
+import { unsafePrisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
 import { uncapitalizeTable } from "../helpers/utils";
+import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
 	return value !== null && value !== undefined && value.toString;

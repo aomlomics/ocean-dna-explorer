@@ -2,8 +2,9 @@
 
 import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError } from "@/app/helpers/queries";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { after } from "next/server";
@@ -285,7 +286,7 @@ async function doSubmit(
 			fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
 				method: "POST",
 				headers: {
-					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 300 }))
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 }))
 				}
 			})
 		);

@@ -959,12 +959,14 @@ export type AlphaDiversityIndexOptionalDefaults = z.infer<typeof AlphaDiversityI
 //------------------------------------------------------
 
 export type AlphaDiversityIndexRelations = {
+  Library: LibraryWithRelations;
   AlphaDiversity: AlphaDiversityWithRelations;
 };
 
 export type AlphaDiversityIndexWithRelations = z.infer<typeof AlphaDiversityIndexSchema> & AlphaDiversityIndexRelations
 
 export const AlphaDiversityIndexWithRelationsSchema: z.ZodType<AlphaDiversityIndexWithRelations> = AlphaDiversityIndexSchema.merge(z.object({
+  Library: z.lazy(() => LibraryWithRelationsSchema),
   AlphaDiversity: z.lazy(() => AlphaDiversityWithRelationsSchema),
 }))
 
@@ -972,12 +974,14 @@ export const AlphaDiversityIndexWithRelationsSchema: z.ZodType<AlphaDiversityInd
 //------------------------------------------------------
 
 export type AlphaDiversityIndexOptionalDefaultsRelations = {
+  Library: LibraryOptionalDefaultsWithRelations;
   AlphaDiversity: AlphaDiversityOptionalDefaultsWithRelations;
 };
 
 export type AlphaDiversityIndexOptionalDefaultsWithRelations = z.infer<typeof AlphaDiversityIndexOptionalDefaultsSchema> & AlphaDiversityIndexOptionalDefaultsRelations
 
 export const AlphaDiversityIndexOptionalDefaultsWithRelationsSchema: z.ZodType<AlphaDiversityIndexOptionalDefaultsWithRelations> = AlphaDiversityIndexOptionalDefaultsSchema.merge(z.object({
+  Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
   AlphaDiversity: z.lazy(() => AlphaDiversityOptionalDefaultsWithRelationsSchema),
 }))
 
@@ -985,24 +989,28 @@ export const AlphaDiversityIndexOptionalDefaultsWithRelationsSchema: z.ZodType<A
 //------------------------------------------------------
 
 export type AlphaDiversityIndexPartialRelations = {
+  Library?: LibraryPartialWithRelations;
   AlphaDiversity?: AlphaDiversityPartialWithRelations;
 };
 
 export type AlphaDiversityIndexPartialWithRelations = z.infer<typeof AlphaDiversityIndexPartialSchema> & AlphaDiversityIndexPartialRelations
 
 export const AlphaDiversityIndexPartialWithRelationsSchema: z.ZodType<AlphaDiversityIndexPartialWithRelations> = AlphaDiversityIndexPartialSchema.merge(z.object({
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
 })).partial()
 
 export type AlphaDiversityIndexOptionalDefaultsWithPartialRelations = z.infer<typeof AlphaDiversityIndexOptionalDefaultsSchema> & AlphaDiversityIndexPartialRelations
 
 export const AlphaDiversityIndexOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AlphaDiversityIndexOptionalDefaultsWithPartialRelations> = AlphaDiversityIndexOptionalDefaultsSchema.merge(z.object({
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
 }).partial())
 
 export type AlphaDiversityIndexWithPartialRelations = z.infer<typeof AlphaDiversityIndexSchema> & AlphaDiversityIndexPartialRelations
 
 export const AlphaDiversityIndexWithPartialRelationsSchema: z.ZodType<AlphaDiversityIndexWithPartialRelations> = AlphaDiversityIndexSchema.merge(z.object({
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
 }).partial())
 
@@ -1784,6 +1792,7 @@ export type LibraryRelations = {
   Assay: AssayWithRelations;
   AssayPrep: AssayPrepWithRelations;
   Occurrences: OccurrenceWithRelations[];
+  AlphaDiversityIndexes: AlphaDiversityIndexWithRelations[];
 };
 
 export type LibraryWithRelations = Omit<z.infer<typeof LibrarySchema>, "userDefined"> & {
@@ -1796,6 +1805,7 @@ export const LibraryWithRelationsSchema: z.ZodType<LibraryWithRelations> = Libra
   Assay: z.lazy(() => AssayWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexWithRelationsSchema).array(),
 }))
 
 // LIBRARY OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1807,6 +1817,7 @@ export type LibraryOptionalDefaultsRelations = {
   Assay: AssayOptionalDefaultsWithRelations;
   AssayPrep: AssayPrepOptionalDefaultsWithRelations;
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
+  AlphaDiversityIndexes: AlphaDiversityIndexOptionalDefaultsWithRelations[];
 };
 
 export type LibraryOptionalDefaultsWithRelations = Omit<z.infer<typeof LibraryOptionalDefaultsSchema>, "userDefined"> & {
@@ -1819,6 +1830,7 @@ export const LibraryOptionalDefaultsWithRelationsSchema: z.ZodType<LibraryOption
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // LIBRARY PARTIAL RELATION SCHEMA
@@ -1830,6 +1842,7 @@ export type LibraryPartialRelations = {
   Assay?: AssayPartialWithRelations;
   AssayPrep?: AssayPrepPartialWithRelations;
   Occurrences?: OccurrencePartialWithRelations[];
+  AlphaDiversityIndexes?: AlphaDiversityIndexPartialWithRelations[];
 };
 
 export type LibraryPartialWithRelations = Omit<z.infer<typeof LibraryPartialSchema>, "userDefined"> & {
@@ -1842,6 +1855,7 @@ export const LibraryPartialWithRelationsSchema: z.ZodType<LibraryPartialWithRela
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 })).partial()
 
 export type LibraryOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof LibraryOptionalDefaultsSchema>, "userDefined"> & {
@@ -1854,6 +1868,7 @@ export const LibraryOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Librar
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 }).partial())
 
 export type LibraryWithPartialRelations = Omit<z.infer<typeof LibrarySchema>, "userDefined"> & {
@@ -1866,4 +1881,5 @@ export const LibraryWithPartialRelationsSchema: z.ZodType<LibraryWithPartialRela
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 }).partial())

@@ -1,11 +1,12 @@
 "use server";
 
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { UserMetadata } from "@/types/globals";
+import { handlePrismaError } from "@/app/helpers/queries";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,

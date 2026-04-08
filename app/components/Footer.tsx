@@ -7,7 +7,7 @@ export default function Footer() {
 		<footer className="footer p-4 text-neutral-content mt-auto z-30 bg-base-100 border-t-4 border-primary flex flex-row items-center justify-between">
 			<div className="text-left text-base-content text-ui flex flex-col gap-1">
 				<p className="text-sm sm:text-base sm:leading-tight">
-					© 2024-2025{" "}
+					© 2024-2026{" "}
 					<a href="https://www.msstate.edu/" className="text-primary hover:underline" target="_blank" rel="noreferrer">
 						Mississippi State University
 					</a>

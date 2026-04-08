@@ -3,8 +3,9 @@
 import { Occurrence } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -215,8 +216,7 @@ async function doEdit(
 			fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
 				method: "POST",
 				headers: {
-					Authorization: "Bearer " + (await getToken()),
-					"Content-Type": "application/json"
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 }))
 				},
 				body: JSON.stringify({
 					delete: true

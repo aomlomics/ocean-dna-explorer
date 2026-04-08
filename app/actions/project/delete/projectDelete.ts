@@ -1,7 +1,8 @@
 "use server";
 
 import { Project } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
