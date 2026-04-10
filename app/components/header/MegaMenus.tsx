@@ -43,10 +43,22 @@ const API_ITEMS = [
 	{ label: "Query Parameters", href: "/api#query-parameters" }
 ];
 
-const LEARN_ITEMS = [
-	{ label: "What is eDNA?", href: "/learn?section=edna101" },
-	{ label: "Impact", href: "/learn?section=impact" },
-	{ label: "Make your own scientific discoveries", href: "/learn?section=discoveries" }
+const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[] = [
+	{
+		href: "/learn?section=edna101",
+		title: "eDNA 101",
+		subtitle: "Discover how eDNA data is created and stored."
+	},
+	{
+		href: "/learn?section=impact",
+		title: "Impact",
+		subtitle: "Real-world ways eDNA advances biodiversity science and informs conservation."
+	},
+	{
+		href: "/learn?section=discoveries",
+		title: "Make your own Discoveries",
+		subtitle: "Use the Ocean DNA Explorer to make discoveries."
+	}
 ];
 
 function useIsActive(route: string, activePaths?: string[]) {
@@ -145,7 +157,7 @@ function MegaMenu({
 				tabIndex={0}
 				href={route}
 				prefetch={MENU_LINK_PREFETCH}
-			className={`flex items-center gap-1 px-4 py-2 rounded-t-lg transition-colors text-lg ${
+			className={`flex items-center gap-1 px-2 xl:px-4 py-2 rounded-t-lg transition-colors text-sm xl:text-lg ${
 				isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
 			} select-none`}
 			onClick={handleTabLinkClick}
@@ -372,8 +384,8 @@ export function DocsMegaMenu() {
 	// NOTE: There is no `help#visualize` section in HelpSections currently.
 	// Using `/explore` as the closest existing “visualize-like” UI.
 	return (
-		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/learn", "/api"]} widthClass="max-w-[61.25rem]">
-			<div className="grid grid-cols-[1fr_1fr_1fr_17.5rem] gap-0">
+		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/api"]} widthClass="max-w-[48rem]">
+			<div className="grid grid-cols-[1fr_1fr_17.5rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/help"
@@ -402,20 +414,6 @@ export function DocsMegaMenu() {
 					</div>
 				</div>
 
-				<div className="p-5 border-r border-base-200">
-					<MenuSectionHeader
-						href="/learn"
-						title="Learn"
-						subtitle="eDNA science & discovery"
-						titleClassName="text-base-content group-hover:text-primary"
-					/>
-					<div className="mt-4 space-y-1">
-						{LEARN_ITEMS.map((i) => (
-							<MenuItem key={i.label} href={i.href} label={i.label} />
-						))}
-					</div>
-				</div>
-
 				<MiniFeatureCard
 					title="Become an eDNA and ODE pro"
 					description="Walk through the basics, learn the workflow, and get comfortable exploring real datasets."
@@ -433,6 +431,66 @@ export function DocsMegaMenu() {
 							<Image
 								src="/images/docs_mega_menu_dark.webp"
 								alt="Docs mega menu preview (dark mode)"
+								fill
+								sizes="280px"
+								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
+								priority={false}
+								quality={80}
+							/>
+						</div>
+					}
+				/>
+			</div>
+		</MegaMenu>
+	);
+}
+
+export function LearnMegaMenu() {
+	return (
+		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[48rem]">
+			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
+				<div className="p-5 border-r border-base-200">
+					<MenuSectionHeader
+						href="/learn"
+						title="Learn"
+						subtitle={
+							<>
+								<span className="text-primary font-normal">Start here</span>
+								<span>, or open a section below</span>
+							</>
+						}
+						titleClassName="text-base-content group-hover:text-primary"
+					/>
+
+					<div className="mt-4 space-y-1">
+						{LEARN_MEGA_MENU_ITEMS.map((i) => (
+							<MenuItemWithSubtitle
+								key={i.href}
+								href={i.href}
+								title={i.title}
+								subtitle={i.subtitle}
+							/>
+						))}
+					</div>
+				</div>
+
+				<MiniFeatureCard
+					title=""
+					description="Pick a track to explore eDNA concepts, real-world impact, and how to investigate data on ODE."
+					media={
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
+							<Image
+								src="/images/learn_page_mega_menu_light.webp"
+								alt="Learn mega menu preview (light mode)"
+								fill
+								sizes="280px"
+								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
+								priority={false}
+								quality={80}
+							/>
+							<Image
+								src="/images/learn_page_mega_menu_dark.webp"
+								alt="Learn mega menu preview (dark mode)"
 								fill
 								sizes="280px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"

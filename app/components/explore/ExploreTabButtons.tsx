@@ -42,7 +42,7 @@ export default function ExploreTabButtons({
 
 	return (
 		<nav
-			className={["flex min-w-0 flex-wrap content-center items-center gap-2.5 sm:gap-3", className].filter(Boolean).join(" ")}
+			className={["flex min-w-0 flex-wrap content-center items-center gap-2 sm:gap-2", className].filter(Boolean).join(" ")}
 			aria-label="Data tables"
 		>
 			{tables.map((t) => {

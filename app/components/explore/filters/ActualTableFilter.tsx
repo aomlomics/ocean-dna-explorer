@@ -129,7 +129,9 @@ export default function ActualTableFilter({
 	}
 
 	return (
-		<div className={`bg-base-200 rounded-xl shadow-inner relative z-20 ${sticky ? "sticky top-6 z-30" : ""}`}>
+		<div
+			className={`${embedded ? "bg-base-200/90" : "bg-base-200"} rounded-xl shadow-inner relative z-20 ${sticky ? "sticky top-6 z-30" : ""}`}
+		>
 			{!embedded ? (
 				<div
 					className="relative group flex justify-between items-center px-5 py-3 select-none transition-colors rounded-xl cursor-pointer hover:bg-primary/10"

@@ -41,7 +41,7 @@ export default function ActionBar({
 	);
 
 	return (
-		<div className="inline-flex max-w-full flex-wrap items-stretch gap-1.5 sm:gap-2" role="toolbar" aria-label="Search and filters">
+		<div className="inline-flex max-w-full flex-wrap items-stretch gap-2" role="toolbar" aria-label="Search and filters">
 			<button
 				type="button"
 				onClick={() => onPanelChange("search")}
@@ -66,10 +66,10 @@ export default function ActionBar({
 			>
 				{activeFilterCount > 0 ? (
 					<span
-						className={`absolute -right-1 -top-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none shadow-md ring-2 ring-base-100 ${
+						className={`absolute -right-1 -top-1 z-10 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none shadow-md ${
 							filtersActive
-								? "bg-base-100 text-primary ring-offset-0"
-								: "border border-base-content/15 bg-base-300 text-base-content"
+								? "bg-base-100 text-primary ring-2 ring-primary ring-offset-0"
+								: "bg-primary text-primary-content ring-2 ring-base-100"
 						}`}
 						aria-hidden
 					>

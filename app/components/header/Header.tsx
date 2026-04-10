@@ -3,7 +3,7 @@ import Link from "next/link";
 import TabButton from "./TabButton";
 import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
-import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu, VisualizeMegaMenu } from "./MegaMenus";
+import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu, LearnMegaMenu, VisualizeMegaMenu } from "./MegaMenus";
 import MobileMenu from "./MobileMenu";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -42,9 +42,9 @@ export default async function Header() {
 				</div>
 			</div>
 
-			{/* Desktop tabs - centered between logo and user controls and aligned to bottom */}
-			<div className="navbar-center hidden xl:flex self-end">
-				<div className="flex items-end space-x-4 z-dropdown -mb-2">
+			{/* Desktop tabs - lg shows compact labels; xl is full size. Below lg, use the mobile menu. */}
+			<div className="navbar-center hidden lg:flex self-end">
+				<div className="flex items-end space-x-1 xl:space-x-4 z-dropdown -mb-2">
 					<TabButton tabName="Home" route="/" />
 					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />
@@ -52,6 +52,7 @@ export default async function Header() {
 					<SubmitMegaMenu />
 					{/* <TabButton tabName="Contribute" route="/contribute" /> */}
 					<DocsMegaMenu />
+					<LearnMegaMenu />
 					<TabButton tabName="About" route="/about" />
 				</div>
 			</div>

@@ -95,11 +95,11 @@ function ControlsBody({
 	const canUseClear = canClearBar || activePanel !== null;
 
 	return (
-		<div className="flex flex-col gap-6">
-			<div className="flex flex-col gap-5">
+		<div className="flex flex-col gap-8">
+			<div className="flex flex-col gap-4">
 				<ExploreTabButtons activeTable={capitalizeTable(table)} tables={DataTableNames} />
 
-				<div className="flex w-full max-w-full flex-col items-start gap-3">
+				<div className="flex w-full max-w-full flex-col items-start gap-4">
 					<ActionBar
 						activePanel={activePanel}
 						onPanelChange={(panel) => setActivePanel((prev) => (prev === panel ? null : panel))}
@@ -109,16 +109,16 @@ function ControlsBody({
 					/>
 
 					{activePanel === "search" ? (
-						<div className="w-full max-w-full">
+						<div className="w-full max-w-full flex justify-center px-0">
 							<form
 								ref={formRef}
 								onSubmit={(e) => {
 									e.preventDefault();
 									handleSearch();
 								}}
-								className="flex w-full max-w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:gap-3"
+								className="flex w-full max-w-full flex-col gap-3 sm:max-w-2xl sm:flex-row sm:flex-wrap sm:items-center"
 							>
-								<label className="input input-bordered input-md flex h-12 min-h-12 w-full min-w-0 flex-1 items-center gap-2 border-base-300 bg-base-100 text-base focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none sm:min-w-0">
+								<label className="input input-bordered input-md flex h-12 min-h-12 w-full min-w-0 flex-1 items-center gap-2 border-base-300 bg-base-100 text-left text-base focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none sm:min-w-0">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4 shrink-0 opacity-70">
 										<path
 											fillRule="evenodd"
@@ -151,7 +151,10 @@ function ControlsBody({
 										</button>
 									) : null}
 								</label>
-								<button type="submit" className="btn btn-primary btn-md h-12 min-h-12 w-full shrink-0 px-8 text-base sm:w-auto">
+								<button
+									type="submit"
+									className="btn btn-primary btn-sm h-10 min-h-10 w-full shrink-0 px-5 text-sm sm:w-auto"
+								>
 									Search
 								</button>
 							</form>
@@ -159,8 +162,10 @@ function ControlsBody({
 					) : null}
 
 					{activePanel === "filters" ? (
-						<div className="w-full max-w-full">
-							<TableFilter tableConfig={tableConfig} embedded />
+						<div className="w-full max-w-full flex justify-center">
+							<div className="w-full sm:max-w-2xl">
+								<TableFilter tableConfig={tableConfig} embedded />
+							</div>
 						</div>
 					) : null}
 				</div>

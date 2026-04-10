@@ -61,6 +61,35 @@ export default function TableDisplay({
 				? "rounded-lg"
 				: "rounded-lg h-[90vh] min-h-0 flex flex-col";
 
+	const dataContent =
+		mode === "table" ? (
+			size === "lg" ? (
+				<Table
+					table={table}
+					defaultTake={25}
+					filterHeadersAtStart
+					where={tableWhere}
+					ignoreParams={ignoreParams}
+					className={viewModeCtx ? "pl-0!" : undefined}
+				/>
+			) : (
+				<Pagination table={table} ignoreParams={ignoreParams} />
+			)
+		) : table === "project" ? (
+			<Grid Child={ProjectGridItem} table={table} ignoreParams={ignoreParams} />
+		) : table === "taxonomy" ? (
+			<Grid
+				Child={TaxaGridItem}
+				table={table}
+				ignoreParams={ignoreParams}
+				fillViewport={false}
+				take={30}
+				itemsGridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4"
+			/>
+		) : (
+			<>Invalid</>
+		);
+
 	return (
 		<div className="flex flex-col">
 			{showBuiltInToggle && (
@@ -79,40 +108,15 @@ export default function TableDisplay({
 			)}
 
 			{viewModeCtx ? (
-				<div className="flex justify-center pb-0.5">
-					<ViewModeToggle displayMode={displayMode} toggle={toggle} />
+				<div className="flex w-full flex-col items-center gap-4">
+					<div className="flex w-full justify-center">
+						<ViewModeToggle displayMode={displayMode} toggle={toggle} />
+					</div>
+					<div className={`w-full ${dataShellClass}`}>{dataContent}</div>
 				</div>
-			) : null}
-
-			<div className={dataShellClass}>
-				{mode === "table" ? (
-					size === "lg" ? (
-						<Table
-							table={table}
-							defaultTake={25}
-							filterHeadersAtStart
-							where={tableWhere}
-							ignoreParams={ignoreParams}
-							className={viewModeCtx ? "pl-0!" : undefined}
-						/>
-					) : (
-						<Pagination table={table} ignoreParams={ignoreParams} />
-					)
-				) : table === "project" ? (
-					<Grid Child={ProjectGridItem} table={table} ignoreParams={ignoreParams} />
-				) : table === "taxonomy" ? (
-					<Grid
-						Child={TaxaGridItem}
-						table={table}
-						ignoreParams={ignoreParams}
-						fillViewport={false}
-						take={30}
-						itemsGridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4"
-					/>
-				) : (
-					<>Invalid</>
-				)}
-			</div>
+			) : (
+				<div className={dataShellClass}>{dataContent}</div>
+			)}
 		</div>
 	);
 }
