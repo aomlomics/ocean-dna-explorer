@@ -24,27 +24,17 @@ export function ThemedUserButton() {
 			appearance={{
 				baseTheme: isDark ? dark : undefined,
 				elements: {
-					// Keep the user menu popover above any header/tab dropdown stacking contexts
-					userButtonPopover: {
-						zIndex: 1000000
-					},
-					userButtonPopoverMain: {
-						zIndex: 1000000
-					},
-					userButtonPopoverActions: {
-						zIndex: 1000000
+					// Real portal wrapper (see @clerk/shared Elements); old userButtonPopover* keys are ignored
+					userButtonPopoverRootBox: {
+						zIndex: 2147483647
 					},
 					userButtonPopoverCard: {
 						backgroundColor: "var(--color-base-100)",
-						color: "var(--color-base-content)",
-						position: "relative",
-						zIndex: 1000000
+						color: "var(--color-base-content)"
 					},
 					userButtonPopoverFooter: {
 						backgroundColor: "var(--color-base-100)",
-						borderTop: "1px solid var(--color-base-300)",
-						position: "relative",
-						zIndex: 1000000
+						borderTop: "1px solid var(--color-base-300)"
 					},
 					userButtonOuterIdentifier: {
 						color: "var(--color-primary)"

@@ -34,6 +34,10 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
 					colorText: isDark ? "#E2E8F0" : "#2D3748"
 				},
 				elements: {
+					// Portal root for <UserButton /> menu; must stack above Clerk's fixed instance banner
+					userButtonPopoverRootBox: {
+						zIndex: 2147483647
+					},
 					userPreviewSecondaryIdentifier: {
 						color: isDark ? "#7DBAE5" : "#233D7F" // Email and secondary text
 					},
