@@ -52,12 +52,12 @@ const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[]
 	{
 		href: "/learn?section=impact",
 		title: "Impact",
-		subtitle: "Real-world ways eDNA advances biodiversity science and informs conservation."
+		subtitle: "How eDNA advances biodiversity science and informs conservation."
 	},
 	{
 		href: "/learn?section=discoveries",
 		title: "Make your own Discoveries",
-		subtitle: "Use the Ocean DNA Explorer to make discoveries."
+		subtitle: "Tech to match the science, using ODE to make discoveries."
 	}
 ];
 
@@ -88,7 +88,9 @@ function MegaMenu({
 	activePaths,
 	children,
 	widthClass,
-	panelTopClass
+	panelTopClass,
+	/** Nudge the centered panel right (CSS length, e.g. 0.75rem). */
+	panelShiftRight
 }: {
 	tabName: string;
 	route: string;
@@ -96,11 +98,11 @@ function MegaMenu({
 	children: React.ReactNode;
 	widthClass: string;
 	panelTopClass?: string;
+	panelShiftRight?: string;
 }) {
 	const isActive = useIsActive(route, activePaths);
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
-	const isHighlighted = open || isActive;
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -114,6 +116,18 @@ function MegaMenu({
 		// Ensure dropdown/backdrop always closes after route transitions.
 		setOpen(false);
 	}, [pathname]);
+
+	useEffect(() => {
+		if (!open) return;
+		let prevY = window.scrollY;
+		const onScroll = () => {
+			const y = window.scrollY;
+			if (y > prevY) setOpen(false);
+			prevY = y;
+		};
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, [open]);
 
 	const handleTabLinkClick = useCallback(() => {
 		// Close immediately for a clean transition when navigating via the tab label.
@@ -148,20 +162,30 @@ function MegaMenu({
 			{open ? (
 				<div
 					aria-hidden="true"
-					className="fixed inset-0 top-20 xl:top-24 z-99998 pointer-events-none bg-base-100/10 backdrop-blur-[2px]"
+					className="fixed inset-0 top-20 xl:top-24 z-1 pointer-events-none bg-base-100/10 backdrop-blur-[2px]"
 				/>
 			) : null}
 
-			{/* Trigger */}
+			{/* Trigger — folder tab: top/L/R border only; ::after masks header border-b under this tab (rest of bar stays visible) */}
 			<Link
 				tabIndex={0}
 				href={route}
 				prefetch={MENU_LINK_PREFETCH}
-			className={`flex items-center gap-1 px-2 xl:px-4 py-2 rounded-t-lg transition-colors text-sm xl:text-lg ${
-				isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
-			} select-none`}
-			onClick={handleTabLinkClick}
-		>
+				className={[
+					"flex items-center gap-1 px-2 xl:px-4 py-2 transition-colors text-sm xl:text-lg select-none",
+					// border-4 always (swap transparent → primary on open) so no hover jump; -m-1 offsets border so size matches TabButton
+					"-m-1 border-4",
+					open
+						? [
+								"relative z-20 rounded-t-xl rounded-b-none border-t-primary border-l-primary border-r-primary border-b-transparent shadow-none",
+								"after:pointer-events-none after:absolute after:-left-px after:-right-px after:top-full after:z-30 after:h-1 after:content-['']",
+								isActive ? "after:bg-primary" : "after:bg-base-300"
+							].join(" ")
+						: "rounded-t-lg border-transparent",
+					isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
+				].join(" ")}
+				onClick={handleTabLinkClick}
+			>
 			<div className="select-none">{tabName}</div>
 			<span
 				aria-hidden="true"
@@ -192,16 +216,25 @@ function MegaMenu({
 					// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
 					// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
 					className={[
-						"z-99999",
-						"fixed left-1/2 -translate-x-1/2",
+						"z-5",
+						"fixed",
+						"left-1/2",
+						panelShiftRight ? "" : "-translate-x-1/2",
 						panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
 						"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
 						"w-[calc(100vw-2rem)]",
 						widthClass
 					].join(" ")}
+					style={
+						panelShiftRight
+							? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
+							: undefined
+					}
 				>
-					<div className="bg-base-100 rounded-xl shadow-lg shadow-black/10 border border-base-200 overflow-hidden contain-[paint]">
-						{children}
+					<div
+						className="-mt-[4px] bg-base-100 rounded-t-none rounded-b-xl shadow-lg shadow-black/10 border-4 border-primary"
+					>
+						<div className="overflow-hidden rounded-t-none rounded-b-xl">{children}</div>
 					</div>
 				</div>
 			) : null}
@@ -415,8 +448,8 @@ export function DocsMegaMenu() {
 				</div>
 
 				<MiniFeatureCard
-					title="Become an eDNA and ODE pro"
-					description="Walk through the basics, learn the workflow, and get comfortable exploring real datasets."
+					title="Become an ODE pro"
+					description="Walk through the basics, learn the workflows and data formats, and get comfortable exploring datasets and using the API."
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
@@ -447,7 +480,7 @@ export function DocsMegaMenu() {
 
 export function LearnMegaMenu() {
 	return (
-		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[48rem]">
+		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[48rem]" panelShiftRight="3rem">
 			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
@@ -476,7 +509,7 @@ export function LearnMegaMenu() {
 
 				<MiniFeatureCard
 					title=""
-					description="Pick a track to explore eDNA concepts, real-world impact, and how to investigate data on ODE."
+					description="Learn about the data stored on ODE, about eDNA and its impact, and how to make discoveries with the data."
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image

@@ -348,7 +348,7 @@ export default function ImpactLearnPage() {
 							where to look, what to monitor, and how ecosystems change over time.
 						</p>
 						<p className="mt-4 text-base sm:text-lg text-base-content/80 leading-relaxed">
-							Learn more below about why eDNA is changing how we study the sea.
+							Learn more below about how eDNA is changing how we study the sea.
 						</p>
 					</div>
 

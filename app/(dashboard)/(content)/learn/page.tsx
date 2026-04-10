@@ -113,7 +113,7 @@ export default async function LearnPage({ searchParams }: PageProps) {
 											Search
 										</p>
 										<h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-base-content mb-4">
-											UI search with API export
+											UI-driven search with API export
 										</h3>
 										<p className="text-base text-base-content/80 leading-relaxed mb-6">
 											Search projects, samples, and occurrences. Build filters and relations in the UI, then use{" "}
@@ -358,8 +358,30 @@ export default async function LearnPage({ searchParams }: PageProps) {
 										</a>
 									</div>
 									<div className="flex flex-col gap-4">
-										<div className="rounded-2xl bg-base-300/60 aspect-video w-full min-h-50" aria-hidden />
-										<div className="rounded-2xl bg-base-300/60 aspect-video w-full min-h-40" aria-hidden />
+										<div className="flex flex-col items-center justify-center gap-1 sm:gap-4 rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15 bg-base-200/50 aspect-video w-full min-h-50 px-4 py-6">
+											<div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0">
+												<Image
+													src="/images/construction_octo.png"
+													alt="Construction octopus"
+													fill
+													className="object-contain"
+													sizes="144px"
+												/>
+											</div>
+											<p className="text-lg sm:text-xl font-semibold text-primary text-center">Coming Soon!</p>
+										</div>
+										<div className="flex flex-col items-center justify-center gap-1 sm:gap-4 rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15 bg-base-200/50 aspect-video w-full min-h-40 px-4 py-6">
+											<div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0">
+												<Image
+													src="/images/construction_octo.png"
+													alt="Construction octopus"
+													fill
+													className="object-contain"
+													sizes="144px"
+												/>
+											</div>
+											<p className="text-lg sm:text-xl font-semibold text-primary text-center">Coming Soon!</p>
+										</div>
 									</div>
 								</div>
 							</div>
