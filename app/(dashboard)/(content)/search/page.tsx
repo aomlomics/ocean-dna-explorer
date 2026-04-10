@@ -26,16 +26,14 @@ export default async function Search({
 
 	return (
 		<>
-			<div className="grid grid-cols-1 gap-y-4 pt-4">
+			<div className="py-4">
 				{table && (
 					<header className="flex items-start justify-between">
-						<div>
-							<h1 className="text-4xl font-normal text-base-content">
-								<span className="">Search</span>{" "}
-								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
-								<span className="text-primary font-normal">{TableMetadata[model].plural}</span>
-							</h1>
-						</div>
+						<h1 className="text-4xl font-normal text-base-content">
+							<span className="">Search</span>{" "}
+							<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+							<span className="text-primary font-normal">{TableMetadata[model].plural}</span>
+						</h1>
 					</header>
 				)}
 				<div className="w-full space-y-6 text-base-content/80">

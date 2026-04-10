@@ -1,20 +1,14 @@
-import Link from "next/link"
-import Image from "next/image"
-import type { ReactNode } from "react"
+import Link from "next/link";
+import Image from "next/image";
+import type { ReactNode } from "react";
 
-function SectionTitle({
-	title,
-	subtitle
-}: {
-	title: string
-	subtitle?: string
-}) {
+function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
 	return (
 		<header className="text-center max-w-3xl mx-auto">
 			<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary">{title}</h2>
 			{subtitle ? <p className="mt-4 text-base sm:text-lg text-base-content/80 leading-relaxed">{subtitle}</p> : null}
 		</header>
-	)
+	);
 }
 
 function WaveSection({
@@ -22,12 +16,12 @@ function WaveSection({
 	tinted = true,
 	size = "md"
 }: {
-	children: ReactNode
-	tinted?: boolean
-	size?: "md" | "lg"
+	children: ReactNode;
+	tinted?: boolean;
+	size?: "md" | "lg";
 }) {
-	const bgClass = tinted ? "bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50" : "bg-base-100"
-	const padClass = size === "lg" ? "pt-24 sm:pt-32 pb-24 sm:pb-32" : "pt-12 sm:pt-16 pb-12 sm:pb-16"
+	const bgClass = tinted ? "bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50" : "bg-base-100";
+	const padClass = size === "lg" ? "pt-24 sm:pt-32 pb-24 sm:pb-32" : "pt-12 sm:pt-16 pb-12 sm:pb-16";
 
 	return (
 		<section className={`relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] ${bgClass}`}>
@@ -51,24 +45,16 @@ function WaveSection({
 				<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
 			</svg>
 		</section>
-	)
+	);
 }
 
-function InfoCard({
-	title,
-	children,
-	className = ""
-}: {
-	title: string
-	children: ReactNode
-	className?: string
-}) {
+function InfoCard({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) {
 	return (
 		<div className={`rounded-2xl bg-base-200 p-6 shadow-sm border border-base-300/60 ${className}`}>
 			<h3 className="text-xl font-semibold text-base-content">{title}</h3>
 			<div className="mt-3 text-base text-base-content/80 leading-relaxed">{children}</div>
 		</div>
-	)
+	);
 }
 
 function MediaFrame({
@@ -80,15 +66,15 @@ function MediaFrame({
 	aspect = "16/10",
 	sizes = "(max-width: 1024px) 100vw, 640px"
 }: {
-	label: string
-	src?: string
-	alt?: string
-	fit?: "cover" | "contain"
-	priority?: boolean
-	aspect?: "16/10" | "video" | "square"
-	sizes?: string
+	label: string;
+	src?: string;
+	alt?: string;
+	fit?: "cover" | "contain";
+	priority?: boolean;
+	aspect?: "16/10" | "video" | "square";
+	sizes?: string;
 }) {
-	const aspectClass = aspect === "square" ? "aspect-square" : aspect === "video" ? "aspect-video" : "aspect-16/10"
+	const aspectClass = aspect === "square" ? "aspect-square" : aspect === "video" ? "aspect-video" : "aspect-16/10";
 	return (
 		<div className={`relative overflow-hidden rounded-2xl ${aspectClass} w-full bg-base-200/40`}>
 			{src ? (
@@ -116,7 +102,7 @@ function MediaFrame({
 				</>
 			)}
 		</div>
-	)
+	);
 }
 
 function FaqItem({ q, children }: { q: string; children: ReactNode }) {
@@ -139,7 +125,7 @@ function FaqItem({ q, children }: { q: string; children: ReactNode }) {
 				{children}
 			</div>
 		</details>
-	)
+	);
 }
 
 function CompareCard({
@@ -151,19 +137,19 @@ function CompareCard({
 	pros,
 	cons
 }: {
-	title: string
-	mediaLabel: string
-	mediaSrc: string
-	mediaAlt: string
-	mediaFit?: "cover" | "contain"
-	pros: string[]
-	cons: string[]
+	title: string;
+	mediaLabel: string;
+	mediaSrc: string;
+	mediaAlt: string;
+	mediaFit?: "cover" | "contain";
+	pros: string[];
+	cons: string[];
 }) {
 	return (
 		<div className="rounded-3xl p-0">
 			<h3 className="text-2xl font-semibold text-base-content">{title}</h3>
 
-			<div className="mt-6 max-w-[520px] mx-auto">
+			<div className="mt-6 max-w-130 mx-auto">
 				<MediaFrame
 					label={mediaLabel}
 					src={mediaSrc}
@@ -222,7 +208,7 @@ function CompareCard({
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
 
 function ExampleRow({
@@ -235,14 +221,14 @@ function ExampleRow({
 	reverse = false,
 	mediaComment
 }: {
-	title: string
-	body: ReactNode
-	mediaLabel: string
-	mediaSrc: string
-	mediaAlt: string
-	mediaFit?: "cover" | "contain"
-	reverse?: boolean
-	mediaComment?: string
+	title: string;
+	body: ReactNode;
+	mediaLabel: string;
+	mediaSrc: string;
+	mediaAlt: string;
+	mediaFit?: "cover" | "contain";
+	reverse?: boolean;
+	mediaComment?: string;
 }) {
 	return (
 		<div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
@@ -252,12 +238,12 @@ function ExampleRow({
 			</div>
 
 			<div className={`${reverse ? "lg:order-1" : ""}`}>
-				<div className={`max-w-[640px] ${reverse ? "lg:mr-auto" : "lg:ml-auto"} mx-auto`}>
+				<div className={`max-w-160 ${reverse ? "lg:mr-auto" : "lg:ml-auto"} mx-auto`}>
 					<MediaFrame label={mediaLabel} src={mediaSrc} alt={mediaAlt} fit={mediaFit} />
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
 
 function SplitMediaCard({
@@ -273,19 +259,19 @@ function SplitMediaCard({
 	reverse = false,
 	imageFit = "cover"
 }: {
-	title: string
-	body: ReactNode
-	imageSrc: string
-	imageAlt: string
-	secondaryImageSrc?: string
-	secondaryImageAlt?: string
-	secondaryAspect?: "square" | "16/10" | "video"
-	primaryMaxWidthClass?: string
-	secondaryMaxWidthClass?: string
-	reverse?: boolean
-	imageFit?: "cover" | "contain"
+	title: string;
+	body: ReactNode;
+	imageSrc: string;
+	imageAlt: string;
+	secondaryImageSrc?: string;
+	secondaryImageAlt?: string;
+	secondaryAspect?: "square" | "16/10" | "video";
+	primaryMaxWidthClass?: string;
+	secondaryMaxWidthClass?: string;
+	reverse?: boolean;
+	imageFit?: "cover" | "contain";
 }) {
-	const alignPrimary = reverse ? "lg:mr-auto" : "lg:ml-auto"
+	const alignPrimary = reverse ? "lg:mr-auto" : "lg:ml-auto";
 	return (
 		<div className="rounded-3xl p-0 grid lg:grid-cols-12 gap-8 items-center">
 			<div className={`lg:col-span-7 space-y-4 ${reverse ? "lg:order-2" : ""}`}>
@@ -311,7 +297,7 @@ function SplitMediaCard({
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
 
 function DifferenceCard({
@@ -322,12 +308,12 @@ function DifferenceCard({
 	imageMaxWidthClass = "max-w-[420px]",
 	imageAspect = "video"
 }: {
-	title: string
-	body: ReactNode
-	imageSrc: string
-	imageAlt: string
-	imageMaxWidthClass?: string
-	imageAspect?: "video" | "16/10" | "square"
+	title: string;
+	body: ReactNode;
+	imageSrc: string;
+	imageAlt: string;
+	imageMaxWidthClass?: string;
+	imageAspect?: "video" | "16/10" | "square";
 }) {
 	return (
 		<div className="rounded-3xl p-0">
@@ -347,13 +333,13 @@ function DifferenceCard({
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
 
 export default function ImpactLearnPage() {
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-16 space-y-28">
-			<section className="max-w-6xl mx-auto py-6 sm:py-10">
+			<section id="step1" className="max-w-6xl mx-auto py-6 sm:py-10">
 				<div className="grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-14 items-center">
 					<div className="text-center lg:text-left">
 						<h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary">Why do we study eDNA?</h1>
@@ -378,7 +364,7 @@ export default function ImpactLearnPage() {
 			</section>
 
 			<WaveSection tinted size="lg">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-14">
+				<div id="step2" className="max-w-7xl mx-auto px-4 sm:px-6 space-y-14 pt-4">
 					<SectionTitle
 						title="eDNA and other survey methods"
 						subtitle="eDNA is most useful when it is paired with other tools. A simple way to think about it is disturbance, coverage, and repeatability."
@@ -424,13 +410,13 @@ export default function ImpactLearnPage() {
 				</div>
 			</WaveSection>
 
-			<section className="space-y-16 py-8 sm:py-12">
+			<section id="step3" className="space-y-16 py-8 sm:py-12">
 				<SectionTitle
 					title="How eDNA is used"
 					subtitle="In practice, eDNA is most valuable when it makes monitoring easier to repeat and easier to scale."
 				/>
 
-				<div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8">
+				<div className="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8 mb-10">
 					<div className="rounded-3xl p-0 space-y-4">
 						<MediaFrame
 							label="Biodiversity monitoring"
@@ -464,20 +450,23 @@ export default function ImpactLearnPage() {
 						/>
 						<h3 className="text-xl font-semibold text-base-content">Mapping</h3>
 						<p className="text-base text-base-content/80 leading-relaxed">
-							Mapping detections across geography can help prioritize follow up surveys, especially for rare and cryptic species.
+							Mapping detections across geography can help prioritize follow up surveys, especially for rare and cryptic
+							species.
 						</p>
 					</div>
 				</div>
 
-				<div className="max-w-6xl mx-auto">
+				<div id="step4" className="max-w-6xl mx-auto pt-8">
 					<div className="rounded-3xl p-0 grid lg:grid-cols-12 gap-8 items-center">
 						<div className="lg:col-span-7 space-y-4">
 							<h3 className="text-2xl font-semibold text-base-content">Evidence for better decisions</h3>
 							<p className="text-base text-base-content/80 leading-relaxed">
-								eDNA can add biodiversity evidence to planning and monitoring in places where direct observation is difficult and expensive.
+								eDNA can add biodiversity evidence to planning and monitoring in places where direct observation is
+								difficult and expensive.
 							</p>
 							<p className="text-base text-base-content/80 leading-relaxed">
-								In deep sea exploration and mineral mining, repeated sampling can help track change over time when combined with other measurements.
+								In deep sea exploration and mineral mining, repeated sampling can help track change over time when
+								combined with other measurements.
 							</p>
 						</div>
 						<div className="lg:col-span-5">
@@ -492,7 +481,7 @@ export default function ImpactLearnPage() {
 			</section>
 
 			<WaveSection tinted size="lg">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+				<div id="step5" className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10 pt-4">
 					<SectionTitle
 						title="Where it makes a difference"
 						subtitle="These are situations where eDNA is especially useful because life is hard to observe directly or monitoring needs to be low impact."
@@ -510,8 +499,9 @@ export default function ImpactLearnPage() {
 								/>
 								<h3 className="text-xl sm:text-2xl font-semibold text-base-content">Dark taxa</h3>
 								<p className="text-base text-base-content/80 leading-relaxed">
-									Some sequences do not match a named species in reference databases. Those detections can still be useful because they show patterns across
-									sites and highlight where reference libraries are missing coverage.
+									Some sequences do not match a named species in reference databases. Those detections can still be
+									useful because they show patterns across sites and highlight where reference libraries are missing
+									coverage.
 								</p>
 							</div>
 
@@ -525,8 +515,8 @@ export default function ImpactLearnPage() {
 								/>
 								<h3 className="text-xl sm:text-2xl font-semibold text-base-content">Deep sea signals</h3>
 								<p className="text-base text-base-content/80 leading-relaxed">
-									If you can collect water at depth, eDNA can reveal patterns without needing to visually spot every organism, especially when paired with
-									careful controls and follow up tools for confirmation.
+									If you can collect water at depth, eDNA can reveal patterns without needing to visually spot every
+									organism, especially when paired with careful controls and follow up tools for confirmation.
 								</p>
 							</div>
 						</div>
@@ -542,7 +532,7 @@ export default function ImpactLearnPage() {
 										sizes="(max-width: 1024px) 100vw, 520px"
 									/>
 								</div>
-								<div className="w-full sm:w-[240px]">
+								<div className="w-full sm:w-60">
 									<MediaFrame
 										label="More frequent monitoring (secondary)"
 										src="/images/learn_page/why_eDNA_matters.jpg"
@@ -554,8 +544,8 @@ export default function ImpactLearnPage() {
 							</div>
 							<h3 className="text-2xl font-semibold text-base-content">More frequent monitoring</h3>
 							<p className="text-base text-base-content/80 leading-relaxed">
-								Because sampling is relatively simple, eDNA can be repeated more often, providing earlier signals of ecosystem change and helping separate
-								real shifts from one off noise when paired with ocean conditions.
+								Because sampling is relatively simple, eDNA can be repeated more often, providing earlier signals of
+								ecosystem change and helping separate real shifts from one off noise when paired with ocean conditions.
 							</p>
 						</div>
 					</div>
@@ -571,57 +561,67 @@ export default function ImpactLearnPage() {
 
 					<div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-5 items-start">
 						<FaqItem q="How useful is eDNA at finding deep sea creatures">
-							It can be very useful if you can collect water at depth. The biggest constraint is access to deep samples. Mixing and transport still matter,
-							so studies often use multiple depths and repeated sampling to improve confidence.
+							It can be very useful if you can collect water at depth. The biggest constraint is access to deep samples.
+							Mixing and transport still matter, so studies often use multiple depths and repeated sampling to improve
+							confidence.
 						</FaqItem>
 
 						<FaqItem q="Does eDNA help us know where to look for something new">
-							eDNA can show signals that do not match reference databases. That does not automatically mean a new species, but it can reveal reference gaps
-							or unexpected distributions. Those signals are useful for prioritizing follow up work with cameras, nets, or targeted sampling.
+							eDNA can show signals that do not match reference databases. That does not automatically mean a new
+							species, but it can reveal reference gaps or unexpected distributions. Those signals are useful for
+							prioritizing follow up work with cameras, nets, or targeted sampling.
 						</FaqItem>
 
 						<FaqItem q="What are scientists actually using eDNA for">
-							The most common uses are biodiversity monitoring, invasive species surveillance, mapping detections across space and time, and tracking change
-							before and after events. In many projects, eDNA complements surveys rather than replacing them.
+							The most common uses are biodiversity monitoring, invasive species surveillance, mapping detections across
+							space and time, and tracking change before and after events. In many projects, eDNA complements surveys
+							rather than replacing them.
 						</FaqItem>
 
 						<FaqItem q="If currents move DNA, how can we pin down location">
-							You usually cannot pinpoint a single animal. A detection is best interpreted as presence within a local area and recent time window. Researchers
-							improve location confidence by sampling many sites and depths and combining results with oceanography such as currents and stratification.
+							You usually cannot pinpoint a single animal. A detection is best interpreted as presence within a local
+							area and recent time window. Researchers improve location confidence by sampling many sites and depths and
+							combining results with oceanography such as currents and stratification.
 						</FaqItem>
 
 						<FaqItem q="What is dark taxa">
-							Dark taxa is a common label for sequences that are real and repeatable but cannot be confidently assigned to a named species using current
-							reference databases. They can still be useful for tracking patterns and for highlighting where reference libraries need improvement.
+							Dark taxa is a common label for sequences that are real and repeatable but cannot be confidently assigned
+							to a named species using current reference databases. They can still be useful for tracking patterns and
+							for highlighting where reference libraries need improvement.
 						</FaqItem>
 
 						<FaqItem q="Is it true that most sea life is yet to be described">
-							It depends on the group. For microbes and many small invertebrates, a large fraction of diversity is not formally described, especially in the
-							deep sea. Big percentages vary widely by region and organism, so treat them as a sign of uncertainty rather than a precise number.
+							It depends on the group. For microbes and many small invertebrates, a large fraction of diversity is not
+							formally described, especially in the deep sea. Big percentages vary widely by region and organism, so
+							treat them as a sign of uncertainty rather than a precise number.
 						</FaqItem>
 
 						<FaqItem q="Can eDNA help fill those gaps">
-							It can help by showing where unknown lineages are common and by expanding reference databases when sequences are linked to confirmed specimens.
-							eDNA works best as part of a loop that includes sampling, sequencing, building references, and returning with better tools.
+							It can help by showing where unknown lineages are common and by expanding reference databases when
+							sequences are linked to confirmed specimens. eDNA works best as part of a loop that includes sampling,
+							sequencing, building references, and returning with better tools.
 						</FaqItem>
 
 						<FaqItem q="How does barcoding work">
-							Barcoding targets a short genetic marker that tends to differ between species. In eDNA metabarcoding, you amplify one or more markers from a mixed
-							sample, sequence them, and match sequences to a reference database. Marker choice affects which groups are detected and how specific IDs can be.
+							Barcoding targets a short genetic marker that tends to differ between species. In eDNA metabarcoding, you
+							amplify one or more markers from a mixed sample, sequence them, and match sequences to a reference
+							database. Marker choice affects which groups are detected and how specific IDs can be.
 						</FaqItem>
 
 						<FaqItem q="How is eDNA improving our understanding of ocean ecosystems">
-							It increases how often and how broadly communities can be measured. That makes it easier to connect biodiversity patterns to temperature, depth,
-							and seasonality, and to detect change early enough that management can respond.
+							It increases how often and how broadly communities can be measured. That makes it easier to connect
+							biodiversity patterns to temperature, depth, and seasonality, and to detect change early enough that
+							management can respond.
 						</FaqItem>
 
 						<FaqItem q="Is eDNA better than other methods">
-							It is different. Traditional surveys provide direct observations, behavior, and specimens. eDNA is efficient for broad screening and for detecting
-							hard to observe species. The strongest work often combines both.
+							It is different. Traditional surveys provide direct observations, behavior, and specimens. eDNA is
+							efficient for broad screening and for detecting hard to observe species. The strongest work often combines
+							both.
 						</FaqItem>
 					</div>
 				</div>
 			</section>
 		</div>
-	)
+	);
 }

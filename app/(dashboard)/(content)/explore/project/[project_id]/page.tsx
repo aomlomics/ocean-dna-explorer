@@ -1,7 +1,6 @@
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import BarChart from "@/app/components/charts/BarChart";
 import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import AssayCard from "@/app/components/assay/AssayCard";
@@ -110,7 +109,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	return (
-		<div className="space-y-8">
+		<div id="project" className="space-y-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs mb-4">
 				<ul>
@@ -298,22 +297,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					</div>
 				</div>
 			</section>
-
-			{/* Taxonomy Chart */}
-			<div className="mt-8" id="taxonomy-chart">
-				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Taxonomy Distribution</h2>
-				<div className="bg-base-200 p-4 rounded-lg">
-					<BarChart
-						title="Top 10 Taxonomies"
-						labels={sortedTaxa.slice(0, 10).map((taxaArr) => taxaArr[0].split(";").pop() || "Unknown")}
-						datasets={Object.keys(taxaCountByAnalysis).map((taxa, i) => ({
-							label: taxa.split(";").pop() || "Unknown",
-							data: sortedTaxa.slice(0, 10).map((taxaArr) => taxaCountByAnalysis[taxa][taxaArr[0]] || 0),
-							backgroundColor: colorsArr[i]
-						}))}
-					/>
-				</div>
-			</div>
 		</div>
 	);
 }

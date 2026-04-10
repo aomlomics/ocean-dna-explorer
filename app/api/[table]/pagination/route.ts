@@ -25,12 +25,8 @@ export async function GET(
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const query = {
-			orderBy: {
-				id: "desc"
-			}
-		} as {
-			orderBy: { [field: string]: Prisma.SortOrder | { _count: Prisma.SortOrder } };
+		const query = {} as {
+			orderBy?: { [field: string]: Prisma.SortOrder | { _count: Prisma.SortOrder } };
 			where?: Record<string, any>;
 			take?: number;
 			skip?: number;

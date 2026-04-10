@@ -168,7 +168,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	});
 
 	return (
-		<div className="container mx-auto py-6 space-y-6 max-w-full pb-8">
+		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
 					<h1
@@ -311,7 +311,12 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 										{phyloPic?.imageUrl ? (
 											<div className="relative w-12 h-12 opacity-95">
-												<ThemeAwarePhyloPic src={phyloPic.imageUrl} alt="Taxonomic outline" fill className="object-contain" />
+												<ThemeAwarePhyloPic
+												src={phyloPic.imageUrl}
+												alt="Taxonomic outline"
+												fill
+												className="object-contain"
+											/>
 											</div>
 										) : (
 											<div className="text-primary text-3xl font-semibold leading-none">?</div>

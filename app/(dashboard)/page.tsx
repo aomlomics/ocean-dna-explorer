@@ -5,15 +5,15 @@ import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
-import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
+import ClientMap from "../components/map/ClientMap";
 // import DataSummaryHighlights from "../components/DataSummaryHighlights";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
 
-export default async function Home() {
+export default function Home() {
 	return (
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
@@ -31,10 +31,12 @@ export default async function Home() {
 					.
 				</p>
 			</div>
+
 			<div className="relative w-full h-screen max-h-[68vh] min-h-[320px] sm:max-h-[64vh] bg-black overflow-hidden z-content-overlay">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
 				</Suspense>
+
 				<div className="absolute inset-0 flex items-center z-content">
 					<div className="w-full px-4 xl:px-8 max-w-[95%] xl:max-w-[85%] mx-auto">
 						<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
@@ -72,26 +74,6 @@ export default async function Home() {
 				</div>
 			</div>
 
-			{/* Removing data summary arrow for now */}
-			{/* <div className="relative mb-12 text-center">
-				<Link
-					href="#dataSummary"
-					className="relative inline-block after:absolute after:content-[''] after:inset-[-40px] after:cursor-pointer"
-				>
-					<p className="text-primary text-xl font-medium">Start Here!</p>
-					<div>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							className="h-8 w-12 text-primary mx-auto"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-						</svg>
-					</div>
-				</Link>
-			</div> */}
 			<div
 				id="dataSummary"
 				className="z-1000 scroll-mt-20 px-4 pt-3 sm:px-6 sm:pt-5 lg:px-8 pb-12 -mt-2 sm:-mt-4 md:-mt-3"
@@ -102,35 +84,14 @@ export default async function Home() {
 					</Suspense>
 				</div>
 
-				{/* Interactive Data Journey Visualization */}
-				{/* <div className="mb-32">
-					<div className="text-center mb-12">
-						<h2 className="text-3xl lg:text-4xl text-primary mb-4 font-light">
-							Explore the Data Journey
-						</h2>
-						<p className="text-lg text-base-content/80 max-w-3xl mx-auto leading-relaxed">
-							Discover how ocean environmental DNA data flows from research vessels to taxonomic identification. 
-							Click the magnifying glasses to zoom deeper into each step of the scientific process.
-						</p>
-					</div>
-					
-					<div className="max-w-6xl mx-auto">
-						<EDNAVisualization />
-					</div>
-					
-					<div className="text-center mt-8 text-sm text-base-content/60">
-						<p>Interactive visualization showing the relationship between database tables and real-world sampling</p>
-					</div>
-				</div> */}
-
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-24">
+				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-20">
 					{/* Map Section */}
 					<div className="lg:col-span-7">
 						<div className="mb-8 text-2xl text-base-content">
 							<span>Showing all </span>
 							<span className="font-semibold">Projects</span>
 						</div>
-						<Map query={publicPrisma.sample.findMany} legend titleTable="project" cluster clusterRadius={20} />
+						<ClientMap url={"/api/sample"} legend titleTable="project" cluster clusterRadius={20} />
 					</div>
 
 					{/* Assay Stats Section */}
@@ -151,7 +112,7 @@ export default async function Home() {
 				</Suspense>
 				*/}
 
-				<div className="w-full mb-24">
+				<div id="dataTaxa" className="w-full mb-24 pt-4">
 					<Suspense>
 						<TopTaxonomiesSummary />
 					</Suspense>
@@ -211,6 +172,7 @@ export default async function Home() {
 							projects NO_0062 and NO_0066.
 						</p>
 					</div>
+
 					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:-mt-4">
 						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
 							<div className="relative h-16 w-48 lg:h-24 lg:w-64">

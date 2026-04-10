@@ -83,7 +83,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div id="assay" className="space-y-8 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -107,7 +107,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				{/* Top layout: Map and Assay at a Glance */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					{/* Left: Map + primer sections + legend */}
-					<div className="lg:col-span-2 space-y-8">
+					<div className="lg:col-span-2">
 						<Map
 							query={() =>
 								prisma.sample.findMany({
@@ -126,11 +126,11 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						/>
 
 						{/* Forward Primer Section */}
-						<section className="p-6 bg-base-100 rounded-lg border border-base-300">
-							<div className="space-y-3">
+						<section id="primerSection" className="pt-8">
+							<div className="space-y-3 p-6 bg-base-100 rounded-lg border border-base-300">
 								<div className="flex flex-wrap items-start justify-between gap-6">
 									{/* Left: label + primer name */}
-									<div className="min-w-[140px] space-y-1">
+									<div className="min-w-35 space-y-1">
 										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">Forward Primer</p>
 										<h3 className="text-xl font-semibold text-base-content break-all">
 											{assay.pcr_primer_name_forward}
@@ -180,11 +180,11 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						</section>
 
 						{/* Reverse Primer Section */}
-						<section className="p-6 bg-base-100 rounded-lg border border-base-300">
+						<section className="p-6 bg-base-100 rounded-lg border border-base-300 my-8">
 							<div className="space-y-3">
 								<div className="flex flex-wrap items-start justify-between gap-6">
 									{/* Left: label + primer name */}
-									<div className="min-w-[140px] space-y-1">
+									<div className="min-w-35 space-y-1">
 										<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">Reverse Primer</p>
 										<h3 className="text-xl font-semibold text-base-content break-all">
 											{assay.pcr_primer_name_reverse}
@@ -283,7 +283,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 						<div className="bg-base-200 rounded-xl p-6">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay Information</h2>
-							<div className="max-h-[400px] overflow-y-auto">
+							<div className="max-h-100 overflow-y-auto">
 								<DataDisplay table="assay" data={justAssay} omit={["assay_name"]} />
 							</div>
 						</div>

@@ -5,14 +5,9 @@ import NodeLogo from "@/app/components/images/NodeLogo";
 import User from "./User";
 import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu, LearnMegaMenu, VisualizeMegaMenu } from "./MegaMenus";
 import MobileMenu from "./MobileMenu";
-import { RolePermissions } from "@/types/objects";
-import { auth } from "@clerk/nextjs/server";
-import { Role } from "@/types/globals";
+import AdminButton from "./AdminButton";
 
 export default async function Header() {
-	const { sessionClaims } = await auth();
-	const role = sessionClaims?.metadata.role as Role;
-
 	return (
 		<header className="navbar bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
@@ -59,11 +54,7 @@ export default async function Header() {
 
 			{/* Right side - theme toggle, user, admin */}
 			<div className="navbar-end w-auto xl:w-1/2 ml-auto flex items-center gap-2 sm:gap-4">
-				{role && RolePermissions[role].includes("manageUsers") && (
-					<Link href="/admin" className="btn hidden sm:inline-flex">
-						Admin
-					</Link>
-				)}
+				<AdminButton />
 				<ThemeToggle />
 				<div className="mr-2 sm:mr-5 flex items-center">
 					<User />

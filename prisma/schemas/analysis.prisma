@@ -8,13 +8,14 @@ model Analysis {
     editHistory       Json?
 
     // Relations
-    project_id  String
-    Project     Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    assay_name  String
-    Assay       Assay        @relation(fields: [assay_name], references: [assay_name])
-    Occurrences Occurrence[]
-    Assignments Assignment[]
-    Tags        Tag[]
+    project_id       String
+    Project          Project          @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    assay_name       String
+    Assay            Assay            @relation(fields: [assay_name], references: [assay_name])
+    Occurrences      Occurrence[]
+    Assignments      Assignment[]
+    Tags             Tag[]
+    AlphaDiversities AlphaDiversity[]
 
     // Submission File URLs
     analysisMetadataFileUrl_ODE      String
@@ -224,4 +225,30 @@ model Tag {
 
     description String
     color       String
+}
+
+model AlphaDiversity {
+    id             Int      @id @default(autoincrement())
+    dateCalculated DateTime @default(now())
+
+    // Relations
+    analysis_run_name     String
+    Analysis              Analysis              @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    AlphaDiversityIndexes AlphaDiversityIndex[]
+
+    indexType String
+    rarefied  Boolean
+    depth     Int?
+}
+
+model AlphaDiversityIndex {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    lib_id         String
+    Library        Library        @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
+    parentId       Int
+    AlphaDiversity AlphaDiversity @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+    index Float
 }

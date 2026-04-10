@@ -5,6 +5,7 @@ import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
 import { ReactNode } from "react";
+import TourProvider from "./hooks/TourProvider";
 
 const sourceSans = Source_Sans_3({
 	weight: ["300", "400", "500", "600", "700", "800"],
@@ -49,10 +50,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
 				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
 					<ClerkAppearanceProvider>
-						{children}
-						<Analytics />
+						<TourProvider>{children}</TourProvider>
 					</ClerkAppearanceProvider>
 				</ThemeProvider>
+				<Analytics />
 				<ScrollToTop />
 			</body>
 		</html>

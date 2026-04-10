@@ -457,6 +457,7 @@ export function parseApiQuery(
 	if (!options?.features || options.features.orderBy) {
 		const orderByStr = params.get("orderBy");
 		if (orderByStr) {
+			params.delete("orderBy");
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
 				if (TableMetadata[table].enumSchema.options.includes(split[0])) {
@@ -561,6 +562,20 @@ export function parseApiQuery(
 		}
 	}
 
+	//limit
+	if (!options?.features || options.features.limit) {
+		const take = params.get("limit");
+		if (take) {
+			params.delete("limit");
+			query.take = parseInt(take);
+			if (Number.isNaN(query.take)) {
+				throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
+			} else if (query.take < 1) {
+				throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
+			}
+		}
+	}
+
 	let sampleWhere;
 
 	const advanced = params.get("advanced");
@@ -627,20 +642,6 @@ export function parseApiQuery(
 
 			query.where = parseSearchQuery(table, search);
 		} else {
-			//limit
-			if (!options?.features || options.features.limit) {
-				const take = params.get("limit");
-				if (take) {
-					params.delete("limit");
-					query.take = parseInt(take);
-					if (Number.isNaN(query.take)) {
-						throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
-					} else if (query.take < 1) {
-						throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
-					}
-				}
-			}
-
 			//filtering
 			if (options?.defaults?.filters) {
 				query.where = options.defaults.filters;

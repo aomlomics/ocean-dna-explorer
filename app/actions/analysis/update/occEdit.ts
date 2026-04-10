@@ -1,13 +1,14 @@
 "use server";
 
-import { Feature, Occurrence, Taxonomy } from "@/app/generated/prisma/client";
+import { AlphaDiversity, Occurrence, Prisma } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
-import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
+import { calculateRarefactions, parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { after } from "next/server";
 
 async function doEdit(
 	stream: ProgressStream,
@@ -24,26 +25,15 @@ async function doEdit(
 	}
 
 	try {
-		const [dbAnalysis, assignments] = await prisma.$transaction([
-			prisma.analysis.findUnique({
-				where: {
-					analysis_run_name
-				},
-				select: {
-					occurrenceFileChecksum_ODE: true,
-					Project: { select: { userIds: true } }
-				}
-			}),
-			prisma.assignment.findMany({
-				where: {
-					analysis_run_name
-				},
-				select: {
-					featureid: true,
-					taxonomy: true
-				}
-			})
-		]);
+		const dbAnalysis = await prisma.analysis.findUnique({
+			where: {
+				analysis_run_name
+			},
+			select: {
+				occurrenceFileChecksum_ODE: true,
+				Project: { select: { userIds: true } }
+			}
+		});
 
 		if (!dbAnalysis) {
 			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
@@ -220,6 +210,72 @@ async function doEdit(
 		);
 
 		await stream.success("Success");
+
+		after(async () => {
+			const [_, diversities] = await prisma.$transaction([
+				prisma.alphaDiversity.deleteMany({
+					where: {
+						analysis_run_name
+					}
+				}),
+				prisma.alphaDiversity.createManyAndReturn({
+					data: [
+						{
+							analysis_run_name,
+							indexType: "richness",
+							rarefied: true,
+							depth: 5000
+						},
+						{
+							analysis_run_name,
+							indexType: "richness",
+							rarefied: true,
+							depth: 10000
+						},
+						{
+							analysis_run_name,
+							indexType: "richness",
+							rarefied: true,
+							depth: 50000
+						},
+						{
+							analysis_run_name,
+							indexType: "richness",
+							rarefied: true,
+							depth: 100000
+						}
+					]
+				})
+			]);
+
+			const rarefactions = {} as Record<NonNullable<AlphaDiversity["depth"]>, ReturnType<typeof calculateRarefactions>>;
+			const diversityUpdates = [] as Prisma.AlphaDiversityUpdateArgs[];
+			for (const div of diversities) {
+				if (div.depth) {
+					//rarefied diversities
+					if (!rarefactions[div.depth]) {
+						rarefactions[div.depth] = calculateRarefactions(occurrences, div.depth);
+					}
+
+					diversityUpdates.push({
+						where: {
+							id: div.id
+						},
+						data: {
+							AlphaDiversityIndexes: {
+								createMany: {
+									data: rarefactions[div.depth][div.indexType as keyof ReturnType<typeof calculateRarefactions>]
+								}
+							}
+						}
+					});
+				} else {
+					//unrarefied diversities
+				}
+			}
+
+			await prisma.$transaction(diversityUpdates.map((up) => prisma.alphaDiversity.update(up)));
+		});
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
