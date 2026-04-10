@@ -156,7 +156,7 @@ export default function DataJourney() {
 							alt="Sources of environmental DNA in water"
 							fill
 							sizes="(max-width: 1024px) 180vw, 1200px"
-							className="object-contain scale-125 sm:scale-135 lg:scale-[1.32] [html[data-theme='dark']_&]:hidden"
+							className="object-contain scale-[1.22] sm:scale-[1.31] lg:scale-[1.28] [html[data-theme='dark']_&]:hidden"
 							priority
 						/>
 						<Image
@@ -164,7 +164,7 @@ export default function DataJourney() {
 							alt="Sources of environmental DNA in water"
 							fill
 							sizes="(max-width: 1024px) 180vw, 1200px"
-							className="object-contain scale-125 sm:scale-135 lg:scale-[1.32] hidden [html[data-theme='dark']_&]:block"
+							className="object-contain scale-[1.22] sm:scale-[1.31] lg:scale-[1.28] hidden [html[data-theme='dark']_&]:block"
 							priority
 						/>
 					</div>

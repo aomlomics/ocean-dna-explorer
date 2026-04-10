@@ -29,15 +29,6 @@ const TABS = [
 
 const VALID_SECTIONS: readonly string[] = TABS.map((t) => t.id);
 
-/** Dark assets for now. Swap or extend with light paths when adding theme switching. */
-const DISCOVER_IMAGES = {
-	search: [
-		"/images/discover_search_example_dark.webp",
-		"/images/discover_search_Example_2_dark.webp"
-	],
-	maps: ["/images/discover_map_draw_shape.webp", "/images/discover_map_ex_2_dark.webp"]
-} as const;
-
 type SectionId = (typeof TABS)[number]["id"];
 type PageProps = { searchParams: Promise<{ section?: string }> };
 
@@ -154,18 +145,42 @@ export default async function LearnPage({ searchParams }: PageProps) {
 										</a>
 									</div>
 									<div className="flex flex-col gap-4 lg:order-1">
-										{DISCOVER_IMAGES.search.map((src, i) => (
-											<div key={src} className="w-full">
-												<Image
-													src={src}
-													alt={i === 0 ? "Search page with filters" : "Search page with copy as API query"}
-													width={1920}
-													height={1080}
-													className="h-auto w-full rounded-2xl"
-													sizes="(max-width: 1024px) 100vw, 42vw"
-												/>
-											</div>
-										))}
+										<div className="w-full rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15 overflow-hidden">
+											<Image
+												src="/images/discover_search_example_light.webp"
+												alt="Search page with filters"
+												width={1920}
+												height={1080}
+												className="h-auto w-full [html[data-theme='dark']_&]:hidden"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+											<Image
+												src="/images/discover_search_example_dark.webp"
+												alt="Search page with filters"
+												width={1920}
+												height={1080}
+												className="hidden h-auto w-full [html[data-theme='dark']_&]:block"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+										</div>
+										<div className="w-full">
+											<Image
+												src="/images/discover_search_example_2_light.webp"
+												alt="Search page with copy as API query"
+												width={1920}
+												height={1080}
+												className="h-auto w-full rounded-2xl [html[data-theme='dark']_&]:hidden"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+											<Image
+												src="/images/discover_search_Example_2_dark.webp"
+												alt="Search page with copy as API query"
+												width={1920}
+												height={1080}
+												className="hidden h-auto w-full rounded-2xl [html[data-theme='dark']_&]:block"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -222,18 +237,32 @@ export default async function LearnPage({ searchParams }: PageProps) {
 										</a>
 									</div>
 									<div className="flex flex-col gap-4 pb-6 sm:pb-8">
-										{DISCOVER_IMAGES.maps.map((src, i) => (
-											<div key={src} className="w-full">
-												<Image
-													src={src}
-													alt={i === 0 ? "Map with drawn shape" : "Map example"}
-													width={1920}
-													height={1080}
-													className="h-auto w-full rounded-2xl"
-													sizes="(max-width: 1024px) 100vw, 42vw"
-												/>
-											</div>
-										))}
+										<div className="w-full">
+											<Image
+												src="/images/discover_map_draw_shape.webp"
+												alt="Map with drawn shape"
+												width={1920}
+												height={1080}
+												className="h-auto w-full rounded-2xl"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+										</div>
+										<div className="relative w-full aspect-video overflow-hidden rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15">
+											<Image
+												src="/images/discover_map_ex_2_light.webp"
+												alt="Map example"
+												fill
+												className="object-fill [html[data-theme='dark']_&]:hidden"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+											<Image
+												src="/images/discover_map_ex_2_dark.webp"
+												alt="Map example"
+												fill
+												className="hidden object-fill [html[data-theme='dark']_&]:block"
+												sizes="(max-width: 1024px) 100vw, 42vw"
+											/>
+										</div>
 									</div>
 								</div>
 							</div>

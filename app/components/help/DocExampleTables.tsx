@@ -112,7 +112,7 @@ export function AnalysisOccurrenceTablePreview() {
 			</div>
 			<div className={tableWrap}>
 				<div className="overflow-x-auto rounded-xl -mx-1 px-1">
-					<table className="w-full min-w-[1100px] border-collapse text-left">
+					<table className="w-full min-w-[1600px] border-collapse text-left">
 						<thead>
 							<tr className={theadRow}>
 								{ODE_OCCURRENCE_HEADERS.map((h, i) => (

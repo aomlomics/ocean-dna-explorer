@@ -205,7 +205,7 @@ function CompareCard({
 								<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</span>
-						<span>Tradeoffs</span>
+						<span>Cons</span>
 					</div>
 					<ul className="mt-3 space-y-2.5 text-base text-base-content/80">
 						{cons.map((c) => (
@@ -356,13 +356,13 @@ export default function ImpactLearnPage() {
 			<section className="max-w-6xl mx-auto py-6 sm:py-10">
 				<div className="grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-14 items-center">
 					<div className="text-center lg:text-left">
-						<h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary">Why eDNA matters</h1>
+						<h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary">Why do we study eDNA?</h1>
 						<p className="mt-5 text-base sm:text-lg text-base-content/80 leading-relaxed">
-							eDNA adds a fast, low impact way to measure life in the ocean. It works best alongside other methods, helping scientists decide
+							eDNA is a flexible,low impact method to measure life in the ocean. It works best alongside other methods, helping scientists decide
 							where to look, what to monitor, and how ecosystems change over time.
 						</p>
 						<p className="mt-4 text-base sm:text-lg text-base-content/80 leading-relaxed">
-							This page is a practical overview of what eDNA is good for, what it is not, and why it is changing how we study the sea.
+							Learn more below about why eDNA is changing how we study the sea.
 						</p>
 					</div>
 
@@ -399,7 +399,7 @@ export default function ImpactLearnPage() {
 								"Disturbs ecosystems and can change animal behavior",
 								"Avoidance can bias what you see or catch",
 								"Nets can injure or kill organisms",
-								"Fixed cameras see a small area of the ocean"
+								"Fixed cameras only see a small area at a time"
 							]}
 						/>
 
@@ -409,22 +409,18 @@ export default function ImpactLearnPage() {
 							mediaSrc="/images/learn_page/eDNA_sampling_method_compare.jpeg"
 							mediaAlt="Collecting water samples for environmental DNA analysis"
 							pros={[
-								"Low disturbance sampling",
+								"Low impact sampling",
 								"Scales across many sites and repeated time points",
-								"Can detect species that avoid gear or stay hidden"
+								"Can detect 'avoidant' species that avoid gear or stay hidden"
 							]}
 							cons={[
-								"Signals can move and fade in water",
+								"Only lasts a limited time in the water",
 								"Not a direct headcount or biomass measure",
 								"Names depend on reference databases",
 								"Protocol and controls matter a lot"
 							]}
 						/>
 					</div>
-
-					<p className="max-w-4xl mx-auto text-center text-base text-base-content/70 leading-relaxed">
-						A common workflow is screen broadly with eDNA, then follow up with the right targeted method for confirmation, counts, or behavior.
-					</p>
 				</div>
 			</WaveSection>
 
@@ -573,7 +569,7 @@ export default function ImpactLearnPage() {
 						subtitle="Short answers to common questions. Context matters, especially sampling depth, timing, and lab methods."
 					/>
 
-					<div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-5">
+					<div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-4 sm:gap-5 items-start">
 						<FaqItem q="How useful is eDNA at finding deep sea creatures">
 							It can be very useful if you can collect water at depth. The biggest constraint is access to deep samples. Mixing and transport still matter,
 							so studies often use multiple depths and repeated sampling to improve confidence.

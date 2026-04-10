@@ -8,6 +8,7 @@ import Carousel from "../components/images/Carousel";
 import Map from "@/app/components/map/Map";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
+// import DataSummaryHighlights from "../components/DataSummaryHighlights";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
@@ -127,7 +128,7 @@ export default async function Home() {
 					<div className="lg:col-span-7">
 						<div className="mb-8 text-2xl text-base-content">
 							<span>Showing all </span>
-							<span className="text-primary">Projects</span>
+							<span className="font-semibold">Projects</span>
 						</div>
 						<Map query={publicPrisma.sample.findMany} legend titleTable="project" cluster clusterRadius={20} />
 					</div>
@@ -135,7 +136,7 @@ export default async function Home() {
 					{/* Assay Stats Section */}
 					<div className="lg:col-span-5 flex flex-col">
 						<div className="mb-8 text-2xl text-base-content">
-							<span className="text-primary mr-1">Assays</span>
+							<span className="font-semibold mr-1">Assays</span>
 							<span>used across the Ocean DNA Explorer</span>
 						</div>
 						<Suspense>
@@ -143,6 +144,12 @@ export default async function Home() {
 						</Suspense>
 					</div>
 				</div>
+
+				{/* Latest submissions + Creature Features — re-enable when ready for main
+				<Suspense>
+					<DataSummaryHighlights />
+				</Suspense>
+				*/}
 
 				<div className="w-full mb-24">
 					<Suspense>

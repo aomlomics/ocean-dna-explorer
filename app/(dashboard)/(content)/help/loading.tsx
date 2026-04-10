@@ -1,7 +1,7 @@
 export default function Loading() {
 	return (
-		<div className="flex min-h-screen items-start">
-			<aside className="hidden lg:block w-64 min-w-[16rem] border-r border-base-300 pt-9 p-6 lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
+		<div className="flex min-h-screen min-w-0 items-start">
+			<aside className="hidden lg:block w-64 shrink-0 border-r border-base-300 pt-9 p-6 lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto">
 				<div className="skeleton h-7 w-28 mb-6 px-2" />
 				<ul className="space-y-5">
 					{[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
@@ -13,7 +13,13 @@ export default function Loading() {
 				</ul>
 			</aside>
 
-			<main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-auto space-y-8">
+			<main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8 space-y-8">
+				<div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+					{[0, 1, 2, 3].map((i) => (
+						<div key={i} className="skeleton size-12 rounded-lg shrink-0" />
+					))}
+				</div>
+
 				<div className="skeleton h-10 w-full max-w-md rounded-lg lg:hidden" />
 
 				<div className="space-y-16">

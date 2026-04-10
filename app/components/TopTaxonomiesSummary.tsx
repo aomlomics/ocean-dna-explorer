@@ -98,7 +98,7 @@ export default async function TopTaxonomiesSummary() {
 		<div className="space-y-6 w-full max-w-6xl mx-auto">
 			{/* Title */}
 			<div className="text-2xl text-base-content px-2 md:px-4">
-				<span className="text-primary mr-1">Life across the</span>
+				<span className="font-semibold mr-1">Life across the</span>
 				<span>Ocean DNA Explorer</span>
 			</div>
 
