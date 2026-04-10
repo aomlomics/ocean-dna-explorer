@@ -10,6 +10,10 @@ For feature requests, please raise a GitHub issue. To propose a change:
 
 ## Quick Start
 
+### Install Node.js and npm
+
+Install the 
+
 ### Install Dependencies
 
 This will only show you the site with no data. You need to setup a local Postgres Database, OR visit the dev or main website to see the website's full functionality.
