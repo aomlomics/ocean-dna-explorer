@@ -1,17 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 /** Bottom strip of the viewport where the fixed button sits (~btn + padding + margin). */
 const BUTTON_ZONE_PX = 120;
 
+/** Above Leaflet controls/popups (max ~1000) so the button stays clickable over the map. */
+const BUTTON_Z_INDEX = 10050;
+
+function getScrollTop(): number {
+	if (typeof window === "undefined") return 0;
+	const el = document.scrollingElement ?? document.documentElement;
+	return window.scrollY ?? el.scrollTop ?? 0;
+}
+
 export default function ScrollToTop() {
 	const [isVisible, setIsVisible] = useState(false);
 	const [footerOffset, setFooterOffset] = useState(0);
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	useEffect(() => {
 		const updatePosition = () => {
-			setIsVisible(window.scrollY > 300);
+			setIsVisible(getScrollTop() > 300);
 
 			const footer = document.querySelector("footer");
 			if (!footer) {
@@ -24,14 +39,11 @@ export default function ScrollToTop() {
 			const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
 			const gap = remPx * 1.5;
 
-			// Footer does not intersect the viewport.
 			if (r.bottom <= 0 || r.top >= ih) {
 				setFooterOffset(0);
 				return;
 			}
 
-			// Only lift when the footer reaches the bottom strip where the button lives.
-			// Avoids huge `bottom` values when the footer is tall and its top is above the viewport.
 			const stripTop = ih - BUTTON_ZONE_PX;
 			if (r.bottom <= stripTop) {
 				setFooterOffset(0);
@@ -42,7 +54,7 @@ export default function ScrollToTop() {
 			setFooterOffset(ih - effectiveTop + gap);
 		};
 
-		window.addEventListener("scroll", updatePosition);
+		window.addEventListener("scroll", updatePosition, { passive: true });
 		window.addEventListener("resize", updatePosition);
 		updatePosition();
 
@@ -54,21 +66,26 @@ export default function ScrollToTop() {
 
 	const scrollToTop = () => {
 		window.dispatchEvent(new CustomEvent("opal:scroll-to-top"));
-		window.scrollTo({
-			top: 0,
-			behavior: "smooth"
-		});
+		const root = document.scrollingElement ?? document.documentElement;
+		root.scrollTo({ top: 0, behavior: "smooth" });
+		window.scrollTo({ top: 0, behavior: "smooth" });
 	};
 
-	return (
+	if (!mounted) {
+		return null;
+	}
+
+	const button = (
 		<>
 			{isVisible && (
 				<button
+					type="button"
 					onClick={scrollToTop}
 					style={{
-						bottom: footerOffset > 0 ? `${footerOffset}px` : "2rem"
+						bottom: footerOffset > 0 ? `${footerOffset}px` : "2rem",
+						zIndex: BUTTON_Z_INDEX
 					}}
-					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 z-20"
+					className="fixed right-8 p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 pointer-events-auto"
 					aria-label="Scroll to top"
 				>
 					<svg
@@ -84,4 +101,6 @@ export default function ScrollToTop() {
 			)}
 		</>
 	);
+
+	return createPortal(button, document.body);
 }

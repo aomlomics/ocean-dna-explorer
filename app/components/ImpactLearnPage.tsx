@@ -121,11 +121,21 @@ function MediaFrame({
 
 function FaqItem({ q, children }: { q: string; children: ReactNode }) {
 	return (
-		<details className="group collapse collapse-arrow rounded-2xl bg-base-100 [html[data-theme='dark']_&]:bg-base-200 border border-base-300/60">
-			<summary className="collapse-title text-base sm:text-lg font-normal text-base-content">
-				{q}
+		<details className="rounded-2xl border border-base-300/60 bg-base-100 [html[data-theme='dark']_&]:bg-base-200 open:[&>summary]:border-b open:[&>summary]:border-base-300/50 open:[&_summary_svg]:rotate-180">
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-transparent px-4 py-4 text-base sm:text-lg font-normal text-base-content [&::-webkit-details-marker]:hidden">
+				<span className="min-w-0 pr-2">{q}</span>
+				<svg
+					className="h-5 w-5 shrink-0 rotate-0 text-primary transition-transform duration-200"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					strokeWidth={2}
+					aria-hidden
+				>
+					<path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+				</svg>
 			</summary>
-			<div className="collapse-content text-base text-base-content/80 leading-relaxed">
+			<div className="px-4 pb-4 pt-3 text-base leading-relaxed text-base-content/80">
 				{children}
 			</div>
 		</details>

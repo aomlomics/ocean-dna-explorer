@@ -5,34 +5,45 @@ import {
 	ODE_OCCURRENCE_ROWS
 } from "./docExampleAnalysisData";
 
-/** Alternating column backgrounds (0 = first column). */
-function colStripe(colIndex: number) {
-	return colIndex % 2 === 0 ? "bg-base-100" : "bg-base-200/50";
-}
+const theadCell =
+	"px-4 py-3 text-left text-sm font-medium text-base-content/90 border-b border-base-content/10";
 
-const theadCell = "px-3 py-3.5 text-left text-sm font-semibold text-base-content";
+const theadRow = "bg-base-200/40";
 
-const theadRow = "bg-base-300 border-b border-base-content/10 shadow-sm";
+const dataCell = "border-b border-base-content/[0.06] px-4 py-2.5 text-sm align-middle text-base-content/85";
 
-const dataCell = "border-b border-base-200/90 px-3 py-2.5 text-sm align-middle";
+const tableWrap =
+	"rounded-2xl border border-base-content/10 bg-base-100/40 p-4 sm:p-5 shadow-sm";
 
 export function AnalysisAsvTablePreview() {
 	return (
-		<div className="not-prose my-6">
-			<p className="mb-3 text-base text-base-content/90">
-				Sample rows from{" "}
-				<a
-					className="link link-primary"
-					href="https://github.com/aomlomics/ODE_testdata/tree/main/noaa-sefsc-gu1901"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					ODE_testdata (noaa-sefsc-gu1901)
-				</a>
-				. Column order matches Tourmaline export for this project.
-			</p>
-			<div className="overflow-hidden rounded-xl border border-base-300/70 bg-base-100 shadow-md">
-				<div className="overflow-x-auto">
+		<div className="not-prose my-10 space-y-5">
+			<div>
+				<h3 className="text-lg font-semibold tracking-tight text-base-content">ASV Taxa Features</h3>
+				<p className="mt-1.5 text-sm leading-relaxed text-base-content/65">
+					Example shape from a{" "}
+					<a
+						className="link link-primary"
+						href="https://github.com/aomlomics/tourmaline/tree/develop"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						Tourmaline
+					</a>{" "}
+					export. Sample rows from{" "}
+					<a
+						className="link link-primary"
+						href="https://github.com/aomlomics/ODE_testdata/tree/main/noaa-sefsc-gu1901"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						ODE_testdata (noaa-sefsc-gu1901)
+					</a>
+					; column order matches that project&apos;s export.
+				</p>
+			</div>
+			<div className={tableWrap}>
+				<div className="overflow-x-auto rounded-xl -mx-1 px-1">
 					<table className="w-full min-w-[1200px] border-collapse text-left">
 						<thead>
 							<tr className={theadRow}>
@@ -45,27 +56,31 @@ export function AnalysisAsvTablePreview() {
 						</thead>
 						<tbody>
 							{ODE_ASV_ROWS.map((row, rowIdx) => (
-								<tr key={row.featureid} className={rowIdx === ODE_ASV_ROWS.length - 1 ? "[&>td]:border-b-0" : undefined}>
+								<tr
+									key={row.featureid}
+									className={
+										rowIdx % 2 === 0
+											? "bg-base-100/50"
+											: "bg-base-200/12"
+									}
+								>
 									<td
-										className={`${dataCell} max-w-40 truncate font-mono text-xs text-base-content/90 ${colStripe(0)} border-r border-base-200/60`}
+										className={`${dataCell} max-w-40 truncate font-mono text-xs text-base-content/80`}
 										title={row.featureid}
 									>
 										{row.featureid}
 									</td>
 									<td
-										className={`${dataCell} max-w-md truncate font-mono text-[0.7rem] leading-snug text-base-content/80 ${colStripe(1)}`}
+										className={`${dataCell} max-w-md truncate font-mono text-[0.7rem] leading-snug text-base-content/75`}
 										title={row.dna_sequence}
 									>
 										{row.dna_sequence}
 									</td>
-									{row.cells.map((cell, j) => {
-										const col = j + 2;
-										return (
-											<td key={`${row.featureid}-c${j}`} className={`${dataCell} text-base-content/90 ${colStripe(col)}`}>
-												{cell}
-											</td>
-										);
-									})}
+									{row.cells.map((cell, j) => (
+										<td key={`${row.featureid}-c${j}`} className={`${dataCell} text-base-content/85`}>
+											{cell}
+										</td>
+									))}
 								</tr>
 							))}
 						</tbody>
@@ -76,58 +91,68 @@ export function AnalysisAsvTablePreview() {
 	);
 }
 
-export function AnalysisOccurrenceMatrixPreview() {
+export function AnalysisOccurrenceTablePreview() {
 	return (
-		<div className="not-prose my-6">
-				<p className="mb-3 text-base text-base-content/90">
-					Matching <code className="text-sm">featureid</code> values from the ASV table above. Library columns are{" "}
+		<div className="not-prose my-10 space-y-5">
+			<div>
+				<h3 className="text-lg font-semibold tracking-tight text-base-content">Occurrence Table</h3>
+				<p className="mt-1.5 text-sm leading-relaxed text-base-content/65">
+					Example shape from{" "}
+					<a
+						className="link link-primary"
+						href="https://github.com/aomlomics/tourmaline/tree/develop"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						Tourmaline
+					</a>
+					. Matching <code className="text-sm">featureid</code> values tie to the ASV table above; other columns are{" "}
 					<code className="text-sm">lib_id</code> values from metadata. Scroll horizontally to see all libraries.
 				</p>
-				<div className="overflow-hidden rounded-xl border border-base-300/70 bg-base-100 shadow-md">
-					<div className="overflow-x-auto">
-						<table className="w-full min-w-[2400px] border-collapse text-left">
-							<thead>
-								<tr className={theadRow}>
-									{ODE_OCCURRENCE_HEADERS.map((h, i) => (
-										<th
-											key={h}
-											className={`${theadCell} whitespace-nowrap ${i === 0 ? "text-left" : "text-right tabular-nums"}`}
+			</div>
+			<div className={tableWrap}>
+				<div className="overflow-x-auto rounded-xl -mx-1 px-1">
+					<table className="w-full min-w-[1100px] border-collapse text-left">
+						<thead>
+							<tr className={theadRow}>
+								{ODE_OCCURRENCE_HEADERS.map((h, i) => (
+									<th
+										key={h}
+										className={`${theadCell} whitespace-nowrap ${i === 0 ? "text-left" : "text-right tabular-nums"}`}
+									>
+										{h}
+									</th>
+								))}
+							</tr>
+						</thead>
+						<tbody>
+							{ODE_OCCURRENCE_ROWS.map((row, i) => {
+								const rowBg = i % 2 === 0 ? "bg-base-100/50" : "bg-base-200/12";
+								return (
+								<tr key={row.id} className={rowBg}>
+									<td
+										className={`sticky left-0 z-1 ${rowBg} ${dataCell} max-w-44 truncate border-r border-base-content/10 font-mono text-[0.7rem] text-base-content/80 shadow-[2px_0_6px_-4px_rgba(0,0,0,0.25)]`}
+										title={row.id}
+									>
+										{row.id}
+									</td>
+									{row.counts.map((n, j) => (
+										<td
+											key={`${row.id}-${j}`}
+											className={`whitespace-nowrap ${dataCell} text-right tabular-nums text-base-content/85 ${
+												n === 0 ? "text-base-content/30" : ""
+											}`}
 										>
-											{h}
-										</th>
+											{n}
+										</td>
 									))}
 								</tr>
-							</thead>
-							<tbody>
-								{ODE_OCCURRENCE_ROWS.map((row, i) => (
-									<tr key={row.id} className={i === ODE_OCCURRENCE_ROWS.length - 1 ? "[&>td]:border-b-0" : undefined}>
-										<td
-											className={`sticky left-0 z-1 ${dataCell} max-w-44 truncate border-r border-base-300/80 font-mono text-[0.7rem] text-base-content/90 shadow-[3px_0_8px_-4px_rgba(0,0,0,0.12)] ${colStripe(
-												0
-											)}`}
-											title={row.id}
-										>
-											{row.id}
-										</td>
-										{row.counts.map((n, j) => {
-											const col = j + 1;
-											const stripe = colStripe(col);
-											const pad = `${dataCell} text-right tabular-nums ${stripe}`;
-											return (
-												<td
-													key={`${row.id}-${j}`}
-													className={`whitespace-nowrap ${pad} ${n === 0 ? "text-base-content/35" : "text-base-content"}`}
-												>
-													{n}
-												</td>
-											);
-										})}
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+								);
+							})}
+						</tbody>
+					</table>
 				</div>
 			</div>
+		</div>
 	);
 }

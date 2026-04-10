@@ -1,11 +1,17 @@
 import Link from "next/link";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
-import { TaxonomicRanks } from "@/types/objects";
+import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 
 export default async function Taxonomy() {
 	const tableConfig: FilterConfig[] = [
+		{
+			type: "select",
+			field: "assignmentLevel",
+			options: ["", ...RanksBySpecificity],
+			optionsLabels: ["All levels", ...RanksBySpecificity.map((rank) => rank[0].toUpperCase() + rank.slice(1))]
+		},
 		{
 			type: "selectGroup",
 			group: TaxonomicRanks,

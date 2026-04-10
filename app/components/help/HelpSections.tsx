@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { DeadBooleanToEnum } from "../../../types/enums";
-import { AnalysisAsvTablePreview, AnalysisOccurrenceMatrixPreview } from "./DocExampleTables";
+import { AnalysisAsvTablePreview, AnalysisOccurrenceTablePreview } from "./DocExampleTables";
 
 // Define types for our content structure
 export type Subsection = {
@@ -17,23 +17,18 @@ export type Section = {
 	subsections?: Subsection[]; // Optional array of subsections
 };
 
-/** Heroicons outline folder (24), stroke 1.5. Pass className for size (e.g. size-14) and text-primary. */
-function FolderGlyph({ className }: { className?: string }) {
+/** File icon for example TSV filenames. Pass className for size (e.g. size-14) and text-primary. */
+function ExampleFileGlyph({ className }: { className?: string }) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
-			fill="none"
 			viewBox="0 0 24 24"
-			strokeWidth={1.5}
-			stroke="currentColor"
+			fill="currentColor"
 			className={className ?? "size-6 shrink-0 text-primary"}
 			aria-hidden
 		>
-			<path
-				strokeLinecap="round"
-				strokeLinejoin="round"
-				d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"
-			/>
+			<path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+			<path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
 		</svg>
 	);
 }
@@ -669,7 +664,7 @@ export const helpSections: Section[] = [
 							</li>
 							<li>
 								<strong>Analysis step:</strong> three TSVs per run (FAIRe analysis metadata, ASV or feature table, occurrence
-								matrix). Submit at least one analysis per project so ASVs and counts load into Explore and Search.
+								table). Submit at least one analysis per project so ASVs and counts load into Explore and Search.
 							</li>
 							<li>
 								<strong>Order:</strong> create the project first, then add analyses. The two forms are separate pages in
@@ -690,15 +685,15 @@ export const helpSections: Section[] = [
 						</p>
 						<div className="mb-6 flex flex-wrap justify-center gap-10 sm:justify-start sm:gap-14">
 							<div className="flex w-28 flex-col items-center text-center">
-								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<ExampleFileGlyph className="size-14 shrink-0 text-primary" />
 								<span className="mt-2 text-sm">projectMetadata.tsv</span>
 							</div>
 							<div className="flex w-28 flex-col items-center text-center">
-								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<ExampleFileGlyph className="size-14 shrink-0 text-primary" />
 								<span className="mt-2 text-sm">sampleMetadata.tsv</span>
 							</div>
 							<div className="flex w-28 flex-col items-center text-center">
-								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<ExampleFileGlyph className="size-14 shrink-0 text-primary" />
 								<span className="mt-2 text-sm">libraryMetadata.tsv</span>
 							</div>
 						</div>
@@ -715,7 +710,7 @@ export const helpSections: Section[] = [
 						<p className="mb-4">
 							<strong>libraryMetadata.tsv</strong> is one row per library (experiment run in FAIRe terms). Lines may start
 							with <code className="text-sm">#</code> as comments; the parser ignores them.{" "}
-							<code className="text-sm">lib_id</code> values here must match the column headers in your occurrence matrix
+							<code className="text-sm">lib_id</code> values here must match the column headers in your occurrence table
 							for each analysis.
 						</p>
 						<p className="mb-2">
@@ -744,21 +739,21 @@ export const helpSections: Section[] = [
 					<>
 						<p className="mb-4">
 							You pick an existing project you are allowed to edit. Each analysis run uploads three TSV files: FAIRe
-							analysis metadata, then two data tables (ASV or feature table and occurrence matrix). Those two are not
+							analysis metadata, then two data tables (ASV or feature table and occurrence table). Those two are not
 							FAIRe checklist spreadsheets; they hold sequences, taxonomy, and counts.
 						</p>
 						<div className="mb-6 flex flex-wrap justify-center gap-10 sm:justify-start sm:gap-14">
 							<div className="flex w-32 flex-col items-center text-center">
-								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<ExampleFileGlyph className="size-14 shrink-0 text-primary" />
 								<span className="mt-2 text-sm">analysisMetadata.tsv</span>
 							</div>
 							<div className="flex w-32 flex-col items-center text-center">
-								<FolderGlyph className="size-14 shrink-0 text-primary" />
+								<ExampleFileGlyph className="size-14 shrink-0 text-primary" />
 								<span className="mt-2 text-sm">ASV table (TSV)</span>
 							</div>
 							<div className="flex w-32 flex-col items-center text-center">
-								<FolderGlyph className="size-14 shrink-0 text-primary" />
-								<span className="mt-2 text-sm">occurrence matrix (TSV)</span>
+								<ExampleFileGlyph className="size-14 shrink-0 text-primary" />
+								<span className="mt-2 text-sm">occurrence table (TSV)</span>
 							</div>
 						</div>
 						<p className="mb-2">
@@ -785,9 +780,9 @@ export const helpSections: Section[] = [
 								Tourmaline
 							</a>{" "}
 							for amplicon processing, it writes these two data files in the same general shape as the examples below: wide
-							ASV table with taxonomy columns, and a wide occurrence matrix keyed by <code className="text-sm">featureid</code>{" "}
-							with one column per library. You still need the separate FAIRe <code className="text-sm">analysisMetadata.tsv</code>{" "}
-							for run metadata.
+							ASV taxa features table with taxonomy columns, and a wide occurrence table keyed by{" "}
+							<code className="text-sm">featureid</code> with one column per library. You still need the separate FAIRe{" "}
+							<code className="text-sm">analysisMetadata.tsv</code> for run metadata.
 						</p>
 						<p className="mb-4">
 							<strong>Not using Tourmaline:</strong> match the column headers and types from the examples (or from a
@@ -804,15 +799,15 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							illustration; your result depends on the sequence you pass in.
 						</p>
 						<AnalysisAsvTablePreview />
-						<p className="mb-3">
-							<strong>Occurrence matrix (TSV)</strong> is a wide table: first row is the header. The first column is feature
-							IDs (usually under the header <code className="text-sm">featureid</code>). Every other column is one{" "}
+						<p className="mb-3 mt-10">
+							<strong>Occurrence Table</strong> (Tourmaline export) is a wide table: first row is the header. The first column
+							is feature IDs (usually under the header <code className="text-sm">featureid</code>). Every other column is one{" "}
 							<code className="text-sm">lib_id</code> from your library metadata, in the same spelling. Each later row is one
 							ASV and the cells are non-negative integers. Use <code className="text-sm">0</code> where a feature is absent
 							in a library. Empty or non-numeric cells fail validation. Only counts greater than zero are stored as
 							occurrence records in the database.
 						</p>
-						<AnalysisOccurrenceMatrixPreview />
+						<AnalysisOccurrenceTablePreview />
 						<p className="mb-3">
 							Other pipelines (DADA2, QIIME 2, and so on) can work if you export the same layout and column names. Compare
 							your headers to the{" "}

@@ -29,9 +29,9 @@ const EXPLORE_RIGHT_ITEMS = [
 
 const HELP_ITEMS = [
 	{ label: "Overview", href: "/help#node-overview" },
+	{ label: "Submit Data", href: "/help#submit" },
 	{ label: "Login and Roles", href: "/help#login-and-roles" },
 	{ label: "Search", href: "/help#search" },
-	{ label: "Explore", href: "/help#explore" },
 	{ label: "Visualize", href: "/explore" }
 ];
 

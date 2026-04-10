@@ -1,6 +1,5 @@
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import UnderConstruction from "@/app/components/UnderConstruction";
 import LearnSectionToggle from "@/app/components/LearnSectionToggle";
 
 // Dynamic import for the DataJourney component to optimize loading
@@ -29,6 +28,15 @@ const TABS = [
 ] as const;
 
 const VALID_SECTIONS: readonly string[] = TABS.map((t) => t.id);
+
+/** Dark assets for now. Swap or extend with light paths when adding theme switching. */
+const DISCOVER_IMAGES = {
+	search: [
+		"/images/discover_search_example_dark.webp",
+		"/images/discover_search_Example_2_dark.webp"
+	],
+	maps: ["/images/discover_map_draw_shape.webp", "/images/discover_map_ex_2_dark.webp"]
+} as const;
 
 type SectionId = (typeof TABS)[number]["id"];
 type PageProps = { searchParams: Promise<{ section?: string }> };
@@ -87,40 +95,46 @@ export default async function LearnPage({ searchParams }: PageProps) {
 				</div>
 			)}
 			{section === "discoveries" && (
-				<div id="panel-discoveries">
-					<UnderConstruction message="This page is under construction." />
-
-					{/* Title above first wave */}
-					<div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-12 pb-6">
-						<h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-primary text-center mb-2">
-							Tech to match the science
+				<div id="panel-discoveries" className="pb-8 sm:pb-12">
+					{/* Title above first wave (same bg as first band: base-100) */}
+					<div className="max-w-7xl mx-auto px-4 sm:px-6 pt-12 sm:pt-14 pb-8 sm:pb-10">
+						<h2 className="text-center text-2xl sm:text-3xl font-semibold text-base-content max-w-3xl mx-auto leading-snug">
+							Tech built to promote discovery
 						</h2>
-						<p className="text-base sm:text-lg text-base-content/80 text-center max-w-2xl mx-auto">
-							The Ocean DNA Explorer was built not just to display data, but to help answer scientific questions about eDNA data.
+						<p className="mt-4 text-base sm:text-lg text-base-content/80 text-center max-w-2xl mx-auto leading-relaxed">
+							Built to help you ask and answer questions with eDNA data.
 						</p>
 					</div>
 
-					{/* Wave section 1: Visualize */}
-					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50">
-						<svg className="absolute -top-px left-0 w-full h-14 sm:h-20 text-base-100 rotate-180" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
+					{/* Wave section 1: Search */}
+					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-100">
+						<svg
+							className="absolute -top-px left-0 w-full h-16 sm:h-24 text-base-100 rotate-180"
+							viewBox="0 0 1440 160"
+							preserveAspectRatio="none"
+							aria-hidden="true"
+						>
 							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
 						</svg>
-						<div className="pt-14 sm:pt-16 pb-14 sm:pb-16">
+						<div className="pt-20 sm:pt-28 pb-20 sm:pb-28">
 							<div className="max-w-7xl mx-auto px-4 sm:px-6">
 								<div className="grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
-									<div>
-										<p className="text-sm font-medium uppercase tracking-wider text-primary mb-2">Visualize</p>
+									<div className="lg:order-2">
+										<p className="text-lg sm:text-xl md:text-2xl font-semibold uppercase tracking-wider text-primary mb-3">
+											Search
+										</p>
 										<h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-base-content mb-4">
-											Build the right charts for your question
+											UI search with API export
 										</h3>
 										<p className="text-base text-base-content/80 leading-relaxed mb-6">
-											Choose filters and dimensions on the Visualize page to compare taxa, sites, or time periods and spot trends in your eDNA data.
+											Search projects, samples, and occurrences. Build filters and relations in the UI, then use{" "}
+											<span className="font-medium text-base-content">Copy as API query</span> to copy the URL and get that data outside the app.
 										</p>
 										<ul className="space-y-3 mb-8">
 											{[
-												"Filter by taxonomy, project, or sample metadata",
-												"Pick dimensions (e.g. site, date, species) for axes and grouping",
-												"Export or share views for reports and collaboration"
+												"Build the query in the UI",
+												"Copy as API query to pull the same data anywhere",
+												"Export rows from the results table"
 											].map((item, i) => (
 												<li key={i} className="flex gap-3 items-start">
 													<span className="shrink-0 mt-0.5 text-primary" aria-hidden>
@@ -132,7 +146,151 @@ export default async function LearnPage({ searchParams }: PageProps) {
 												</li>
 											))}
 										</ul>
-										<a href="/explore" className="inline-flex items-center gap-1.5 text-sm font-normal text-primary hover:underline transition-colors">
+										<a href="/search" className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors">
+											Go to Search
+											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+											</svg>
+										</a>
+									</div>
+									<div className="flex flex-col gap-4 lg:order-1">
+										{DISCOVER_IMAGES.search.map((src, i) => (
+											<div key={src} className="w-full">
+												<Image
+													src={src}
+													alt={i === 0 ? "Search page with filters" : "Search page with copy as API query"}
+													width={1920}
+													height={1080}
+													className="h-auto w-full rounded-2xl"
+													sizes="(max-width: 1024px) 100vw, 42vw"
+												/>
+											</div>
+										))}
+									</div>
+								</div>
+							</div>
+						</div>
+						<svg
+							className="absolute -bottom-px left-0 w-full h-16 sm:h-24 text-base-200"
+							viewBox="0 0 1440 160"
+							preserveAspectRatio="none"
+							aria-hidden="true"
+						>
+							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+						</svg>
+					</section>
+
+					{/* Section 2: Maps */}
+					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200">
+						<div className="py-16 sm:py-20">
+							<div className="max-w-7xl mx-auto px-4 sm:px-6">
+								<div className="grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
+									<div>
+										<p className="text-lg sm:text-xl md:text-2xl font-semibold uppercase tracking-wider text-primary mb-3">
+											Maps
+										</p>
+										<h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-base-content mb-4">
+											Custom maps across the site
+										</h3>
+										<p className="text-base text-base-content/80 leading-relaxed mb-6">
+											Maps are tailored to each part of the site and the level you are working at. Draw polygons, view search hits on the map, and filter by metadata such as taxonomy, temperature, salinity, or any other fields you have.
+										</p>
+										<ul className="space-y-3 mb-8">
+											{[
+												"Draw polygons for areas you care about",
+												"Search hits on the map",
+												"Filter by any metadata the data carries"
+											].map((item, i) => (
+												<li key={i} className="flex gap-3 items-start">
+													<span className="shrink-0 mt-0.5 text-primary" aria-hidden>
+														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+															<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+														</svg>
+													</span>
+													<span className="text-base text-base-content/80">{item}</span>
+												</li>
+											))}
+										</ul>
+										<a
+											href="/#dataSummary"
+											className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors"
+										>
+											See the home page project map
+											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+											</svg>
+										</a>
+									</div>
+									<div className="flex flex-col gap-4 pb-6 sm:pb-8">
+										{DISCOVER_IMAGES.maps.map((src, i) => (
+											<div key={src} className="w-full">
+												<Image
+													src={src}
+													alt={i === 0 ? "Map with drawn shape" : "Map example"}
+													width={1920}
+													height={1080}
+													className="h-auto w-full rounded-2xl"
+													sizes="(max-width: 1024px) 100vw, 42vw"
+												/>
+											</div>
+										))}
+									</div>
+								</div>
+							</div>
+						</div>
+						<svg
+							className="absolute -bottom-px left-0 w-full h-16 sm:h-24 text-base-100"
+							viewBox="0 0 1440 160"
+							preserveAspectRatio="none"
+							aria-hidden="true"
+						>
+							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+						</svg>
+					</section>
+
+					{/* Wave section 3: Visualize */}
+					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-100">
+						<svg
+							className="absolute -top-px left-0 w-full h-16 sm:h-24 text-base-100 rotate-180"
+							viewBox="0 0 1440 160"
+							preserveAspectRatio="none"
+							aria-hidden="true"
+						>
+							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+						</svg>
+						<div className="pt-20 sm:pt-28 pb-20 sm:pb-28">
+							<div className="max-w-7xl mx-auto px-4 sm:px-6">
+								<div className="grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
+									<div>
+										<p className="text-lg sm:text-xl md:text-2xl font-semibold uppercase tracking-wider text-primary mb-3">
+											Visualize
+										</p>
+										<h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-base-content mb-4">
+											Build charts directly in your browser
+										</h3>
+										<p className="text-base text-base-content/80 leading-relaxed mb-6">
+											Filter your input data with the search query builder, then open sample scatter plots or taxonomy bar charts. Pick axes, ranks, and absolute or relative abundance. Diversity metrics are computed on the backend from your filters. Pan, zoom, and copy the chart image.
+										</p>
+										<ul className="space-y-3 mb-8">
+											{[
+												"Scatter plots for dates, depth, numbers, and custom sample fields",
+												"Taxon bars by rank, per library or grouped by sample fields",
+												"All in the page, no coding required"
+											].map((item, i) => (
+												<li key={i} className="flex gap-3 items-start">
+													<span className="shrink-0 mt-0.5 text-primary" aria-hidden>
+														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+															<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+														</svg>
+													</span>
+													<span className="text-base text-base-content/80">{item}</span>
+												</li>
+											))}
+										</ul>
+										<a
+											href="/visualize/metadata"
+											className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors"
+										>
 											Go to Visualize
 											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -146,103 +304,12 @@ export default async function LearnPage({ searchParams }: PageProps) {
 								</div>
 							</div>
 						</div>
-						<svg className="absolute -bottom-px left-0 w-full h-14 sm:h-20 text-base-100" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
-						</svg>
-					</section>
-
-					{/* Wave section 2: Search */}
-					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-100">
-						<div className="pt-10 sm:pt-12 pb-10 sm:pb-12">
-							<div className="max-w-7xl mx-auto px-4 sm:px-6">
-								<div className="grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
-									<div className="lg:order-2">
-										<p className="text-sm font-medium uppercase tracking-wider text-primary mb-2">Search</p>
-										<h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-base-content mb-4">
-											Pull the right data with targeted searches
-										</h3>
-										<p className="text-base text-base-content/80 leading-relaxed mb-6">
-											Use the Search page to query across projects, samples, and occurrences. Combine filters and advanced search to narrow results to the exact subset you need.
-										</p>
-										<ul className="space-y-3 mb-8">
-											{[
-												"Search by species, location, assay, or sample metadata",
-												"Use advanced filters for complex questions",
-												"Export results for further analysis or reporting"
-											].map((item, i) => (
-												<li key={i} className="flex gap-3 items-start">
-													<span className="shrink-0 mt-0.5 text-primary" aria-hidden>
-														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-															<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-														</svg>
-													</span>
-													<span className="text-base text-base-content/80">{item}</span>
-												</li>
-											))}
-										</ul>
-										<a href="/search" className="inline-flex items-center gap-1.5 text-sm font-normal text-primary hover:underline transition-colors">
-											Go to Search
-											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-											</svg>
-										</a>
-									</div>
-									<div className="flex flex-col gap-4 lg:order-1">
-										<div className="rounded-2xl bg-base-200/80 aspect-video w-full min-h-[200px]" aria-hidden />
-										<div className="rounded-2xl bg-base-200/80 aspect-video w-full min-h-[160px]" aria-hidden />
-									</div>
-								</div>
-							</div>
-						</div>
-					</section>
-
-					{/* Wave section 3: Map */}
-					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50">
-						<svg className="absolute -top-px left-0 w-full h-14 sm:h-20 text-base-100 rotate-180" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
-						</svg>
-						<div className="pt-14 sm:pt-16 pb-14 sm:pb-16">
-							<div className="max-w-7xl mx-auto px-4 sm:px-6">
-								<div className="grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
-									<div>
-										<p className="text-sm font-medium uppercase tracking-wider text-primary mb-2">Map</p>
-										<h3 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-base-content mb-4">
-											Focus on regions and sites that matter
-										</h3>
-										<p className="text-base text-base-content/80 leading-relaxed mb-6">
-											Draw on the map or select sites to restrict your view to a study area, watershed, or transect. Combine map selection with Search and Visualize to analyze by geography.
-										</p>
-										<ul className="space-y-3 mb-8">
-											{[
-												"Draw polygons or circles to define areas of interest",
-												"Filter by detected vs. not detected at sites",
-												"Compare presence across sites over time"
-											].map((item, i) => (
-												<li key={i} className="flex gap-3 items-start">
-													<span className="shrink-0 mt-0.5 text-primary" aria-hidden>
-														<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-															<path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-														</svg>
-													</span>
-													<span className="text-base text-base-content/80">{item}</span>
-												</li>
-											))}
-										</ul>
-										<a href="/explore" className="inline-flex items-center gap-1.5 text-sm font-normal text-primary hover:underline transition-colors">
-											Explore the map
-											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-											</svg>
-										</a>
-									</div>
-									<div className="flex flex-col gap-4">
-										<div className="rounded-2xl bg-base-300/60 aspect-video w-full min-h-[200px]" aria-hidden />
-										<div className="rounded-2xl bg-base-300/60 aspect-video w-full min-h-[160px]" aria-hidden />
-									</div>
-								</div>
-							</div>
-						</div>
-						<svg className="absolute -bottom-px left-0 w-full h-14 sm:h-20 text-base-100" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
+						<svg
+							className="absolute -bottom-px left-0 w-full h-16 sm:h-24 text-base-100"
+							viewBox="0 0 1440 160"
+							preserveAspectRatio="none"
+							aria-hidden="true"
+						>
 							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
 						</svg>
 					</section>

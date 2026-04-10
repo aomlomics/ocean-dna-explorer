@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
+import LoadingTaxaGrid from "../LoadingTaxaGrid";
+import { RanksBySpecificity } from "@/types/objects";
 
 const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
 
@@ -16,15 +18,17 @@ export default function Grid({
 	where,
 	orderBy,
 	ignoreParams,
+	childProps,
 	itemsGridClassName = defaultItemsGridClass,
 	fillViewport = true,
 	take = 25
 }: {
-	Child: FunctionComponent<{ item: any }>;
+	Child: FunctionComponent<{ item: any; [key: string]: any }>;
 	table: Uncapitalize<Prisma.ModelName>;
 	where?: Record<string, any>;
 	orderBy?: { field: string; order: Prisma.SortOrder };
 	ignoreParams?: string[];
+	childProps?: Record<string, any>;
 	itemsGridClassName?: string;
 	/** When false, grid grows with the page (document scroll) instead of a fixed viewport + inner scroll. */
 	fillViewport?: boolean;
@@ -40,7 +44,7 @@ export default function Grid({
 			page: (dir ? page + dir : page).toString()
 		});
 
-		let whereQuery = {} as Record<string, string>;
+		let whereQuery = {} as Record<string, any>;
 		if (where) {
 			whereQuery = { ...where };
 		}
@@ -65,11 +69,23 @@ export default function Grid({
 			}
 
 			whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
+			if (table === "taxonomy") {
+				const assignmentLevel = tempParms.get("assignmentLevel");
+				if (assignmentLevel && RanksBySpecificity.includes(assignmentLevel as (typeof RanksBySpecificity)[number])) {
+					const advanced: any[] = [[assignmentLevel, "notNull"]];
+					for (const finerRank of RanksBySpecificity) {
+						if (finerRank === assignmentLevel) break;
+						advanced.push([finerRank, "null"]);
+					}
+					whereQuery.advanced = advanced;
+				}
+			}
 			if (ignoreParams) {
 				for (const param of ignoreParams) {
 					delete whereQuery[param];
 				}
 			}
+			delete whereQuery.assignmentLevel;
 		}
 
 		query.set("where", JSON.stringify(whereQuery));
@@ -88,7 +104,12 @@ export default function Grid({
 			keepPreviousData: true
 		}
 	);
-	if (isLoading || !data) return <>Loading...</>;
+	if (isLoading || !data) {
+		if (table === "taxonomy") {
+			return <LoadingTaxaGrid cols={5} />;
+		}
+		return <>Loading...</>;
+	}
 	if (error) return <div>failed to load: {error instanceof Error ? error.message : String(error)}</div>;
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result) || !data.count) {
 		return <div>failed to load: {String(data.error ?? "no result found")}</div>;
@@ -132,7 +153,7 @@ export default function Grid({
 
 				<div className={itemsGridClassName}>
 					{data.result.map((item: any, i: number) => (
-						<Child key={i} item={item} />
+						<Child key={i} item={item} {...childProps} />
 					))}
 				</div>
 
@@ -150,7 +171,7 @@ export default function Grid({
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				<div className={itemsGridClassName}>
 					{data.result.map((item: any, i: number) => (
-						<Child key={i} item={item} />
+						<Child key={i} item={item} {...childProps} />
 					))}
 				</div>
 			</div>

@@ -24,6 +24,7 @@ export default function TableDisplay({
 	ignoreParams?: string[];
 }) {
 	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
+	const [showCommonNames, setShowCommonNames] = useState(true);
 
 	// When inside an ExplorePage, mode is driven by ViewModeContext (list/grid control above the table).
 	// On other pages (e.g. search), the context is absent so we fall back to local state,
@@ -39,6 +40,8 @@ export default function TableDisplay({
 		}
 	};
 	const showBuiltInToggle = !viewModeCtx && toggle;
+	const effectiveIgnoreParams =
+		table === "taxonomy" ? Array.from(new Set([...(ignoreParams ?? []), "assignmentLevel"])) : ignoreParams;
 
 	useEffect(() => {
 		function handleResize() {
@@ -69,19 +72,20 @@ export default function TableDisplay({
 					defaultTake={25}
 					filterHeadersAtStart
 					where={tableWhere}
-					ignoreParams={ignoreParams}
+					ignoreParams={effectiveIgnoreParams}
 					className={viewModeCtx ? "pl-0!" : undefined}
 				/>
 			) : (
-				<Pagination table={table} ignoreParams={ignoreParams} />
+				<Pagination table={table} ignoreParams={effectiveIgnoreParams} />
 			)
 		) : table === "project" ? (
-			<Grid Child={ProjectGridItem} table={table} ignoreParams={ignoreParams} />
+			<Grid Child={ProjectGridItem} table={table} ignoreParams={effectiveIgnoreParams} />
 		) : table === "taxonomy" ? (
 			<Grid
 				Child={TaxaGridItem}
 				table={table}
-				ignoreParams={ignoreParams}
+				ignoreParams={effectiveIgnoreParams}
+				childProps={{ showCommonName: showCommonNames }}
 				fillViewport={false}
 				take={30}
 				itemsGridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 lg:gap-4"
@@ -108,9 +112,31 @@ export default function TableDisplay({
 			)}
 
 			{viewModeCtx ? (
-				<div className="flex w-full flex-col items-center gap-4">
-					<div className="flex w-full justify-center">
+				<div className="flex w-full flex-col items-center gap-3">
+					<div className="flex w-full flex-wrap items-center justify-center gap-3">
 						<ViewModeToggle displayMode={displayMode} toggle={toggle} />
+						{table === "taxonomy" ? (
+							<label className="inline-flex items-center justify-center gap-2 text-sm">
+								<input
+									type="checkbox"
+									className="checkbox checkbox-sm"
+									checked={showCommonNames}
+									onChange={(e) => setShowCommonNames(e.target.checked)}
+								/>
+								<span>Show common names</span>
+								<div
+									className="tooltip tooltip-left before:max-w-xs before:bg-base-100 before:text-base-content before:border before:border-base-300"
+									data-tip="GBIF common names are approximations and are not stored in our database."
+								>
+									<span
+										aria-label="Common-name disclaimer"
+										className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-[10px] font-semibold leading-none text-primary"
+									>
+										i
+									</span>
+								</div>
+							</label>
+						) : null}
 					</div>
 					<div className={`w-full ${dataShellClass}`}>{dataContent}</div>
 				</div>
