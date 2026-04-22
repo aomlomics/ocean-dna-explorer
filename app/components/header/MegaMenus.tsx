@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 // -----------------------------
 // Shared mega-menu primitives
@@ -90,7 +90,9 @@ function MegaMenu({
 	widthClass,
 	panelTopClass,
 	/** Nudge the centered panel right (CSS length, e.g. 0.75rem). */
-	panelShiftRight
+	panelShiftRight,
+	/** Place the panel so its right edge sits this many px past the trigger link's right edge (viewport-relative). */
+	panelRightBeyondTriggerPx
 }: {
 	tabName: string;
 	route: string;
@@ -99,12 +101,17 @@ function MegaMenu({
 	widthClass: string;
 	panelTopClass?: string;
 	panelShiftRight?: string;
+	panelRightBeyondTriggerPx?: number;
 }) {
 	const isActive = useIsActive(route, activePaths);
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement | null>(null);
+	const triggerRef = useRef<HTMLAnchorElement | null>(null);
+	const [panelRightStyle, setPanelRightStyle] = useState<{ right: number } | null>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const anchorPanelToTrigger =
+		typeof panelRightBeyondTriggerPx === "number" && !Number.isNaN(panelRightBeyondTriggerPx);
 
 	useEffect(() => {
 		return () => {
@@ -128,6 +135,24 @@ function MegaMenu({
 		window.addEventListener("scroll", onScroll, { passive: true });
 		return () => window.removeEventListener("scroll", onScroll);
 	}, [open]);
+
+	const updatePanelRightFromTrigger = useCallback(() => {
+		if (!anchorPanelToTrigger || !triggerRef.current) return;
+		const r = triggerRef.current.getBoundingClientRect();
+		const gap = panelRightBeyondTriggerPx ?? 0;
+		setPanelRightStyle({ right: Math.round(window.innerWidth - r.right - gap) });
+	}, [anchorPanelToTrigger, panelRightBeyondTriggerPx]);
+
+	useLayoutEffect(() => {
+		if (!open || !anchorPanelToTrigger) {
+			setPanelRightStyle(null);
+			return;
+		}
+		updatePanelRightFromTrigger();
+		const onResize = () => updatePanelRightFromTrigger();
+		window.addEventListener("resize", onResize);
+		return () => window.removeEventListener("resize", onResize);
+	}, [open, anchorPanelToTrigger, updatePanelRightFromTrigger]);
 
 	const handleTabLinkClick = useCallback(() => {
 		// Close immediately for a clean transition when navigating via the tab label.
@@ -168,11 +193,12 @@ function MegaMenu({
 
 			{/* Trigger — folder tab: top/L/R border only; ::after masks header border-b under this tab (rest of bar stays visible) */}
 			<Link
+				ref={triggerRef}
 				tabIndex={0}
 				href={route}
 				prefetch={MENU_LINK_PREFETCH}
 				className={[
-					"flex items-center gap-1 px-2 xl:px-4 py-2 transition-colors text-sm xl:text-lg select-none",
+					"flex items-center gap-1 px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none",
 					// border-4 always (swap transparent → primary on open) so no hover jump; -m-1 offsets border so size matches TabButton
 					"-m-1 border-4",
 					open
@@ -218,17 +244,19 @@ function MegaMenu({
 					className={[
 						"z-5",
 						"fixed",
-						"left-1/2",
-						panelShiftRight ? "" : "-translate-x-1/2",
+						anchorPanelToTrigger ? "left-auto" : "left-1/2",
+						anchorPanelToTrigger ? "" : panelShiftRight ? "" : "-translate-x-1/2",
 						panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
 						"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
 						"w-[calc(100vw-2rem)]",
 						widthClass
 					].join(" ")}
 					style={
-						panelShiftRight
-							? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
-							: undefined
+						anchorPanelToTrigger && panelRightStyle
+							? { right: panelRightStyle.right }
+							: panelShiftRight
+								? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
+								: undefined
 					}
 				>
 					<div
@@ -480,7 +508,7 @@ export function DocsMegaMenu() {
 
 export function LearnMegaMenu() {
 	return (
-		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[48rem]" panelShiftRight="3rem">
+		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[48rem]" panelRightBeyondTriggerPx={28}>
 			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader

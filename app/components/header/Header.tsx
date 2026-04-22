@@ -11,17 +11,17 @@ export default async function Header() {
 	return (
 		<header className="navbar bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
-			<div className="navbar-start w-auto xl:w-1/2 pr-2 xl:pr-8">
+			<div className="navbar-start w-auto shrink-0 min-w-0 pr-2 md:pr-3 xl:pr-6">
 				{/* Mobile hamburger dropdown */}
 				<MobileMenu />
 
 				{/* Logo */}
 				<div className="flex items-center min-w-0">
 					<Link
-						className="px-2 xl:px-8 xl:ml-6 normal-case text-xl h-14 w-48 xl:h-22 xl:w-80 flex flex-col items-center justify-center shrink"
+						className="px-2 md:px-3 xl:px-8 md:ml-2 xl:ml-6 normal-case text-xl h-16 w-56 md:w-64 xl:h-22 xl:w-80 flex flex-col items-center justify-center shrink"
 						href="/"
 					>
-						<div className="avatar w-44 h-12 xl:w-88 xl:h-22 relative">
+						<div className="avatar w-52 h-14 md:w-60 md:h-14 xl:w-88 xl:h-22 relative">
 							<NodeLogo
 								alt="Ocean DNA Explorer Logo"
 								fill={true}
@@ -31,15 +31,15 @@ export default async function Header() {
 							/>
 						</div>
 					</Link>
-					<div className="bg-orange-500 text-white font-semibold rounded-md ml-2 xl:ml-8 text-xs px-3 py-1.5 leading-tight xl:px-4">
+					<div className="bg-orange-500 text-white font-semibold rounded-md ml-2 md:ml-3 xl:ml-8 text-[10px] md:text-[11px] xl:text-xs px-2.5 md:px-3 xl:px-4 py-1 md:py-1.5 leading-tight">
 						BETA
 					</div>
 				</div>
 			</div>
 
 			{/* Desktop tabs - lg shows compact labels; xl is full size. Below lg, use the mobile menu. */}
-			<div className="navbar-center hidden lg:flex self-end">
-				<div className="flex items-end space-x-1 xl:space-x-4 z-dropdown -mb-2">
+			<div className="navbar-center hidden lg:flex flex-1 min-w-0 justify-center self-end px-2 xl:px-4">
+				<div className="flex w-full max-w-4xl items-end justify-center gap-1.5 xl:gap-3 z-dropdown -mb-2">
 					<TabButton tabName="Home" route="/" />
 					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />
@@ -53,7 +53,7 @@ export default async function Header() {
 			</div>
 
 			{/* Right side - theme toggle, user, admin */}
-			<div className="navbar-end w-auto xl:w-1/2 ml-auto flex items-center gap-2 sm:gap-4">
+			<div className="navbar-end w-auto shrink-0 ml-auto pl-2 md:pl-3 xl:pl-6 flex items-center gap-2 sm:gap-3 xl:gap-4">
 				<AdminButton />
 				<ThemeToggle />
 				<div className="mr-2 sm:mr-5 flex items-center">
