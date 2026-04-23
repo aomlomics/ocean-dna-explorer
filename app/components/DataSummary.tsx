@@ -10,7 +10,7 @@ export type SummaryItemData = {
 	icon?: "ship" | "location" | "fish" | "eye";
 };
 
-export async function AssayStats() {
+export async function AssayStats({ compact = false }: { compact?: boolean } = {}) {
 	const [uniqueAssays, analyses] = await publicPrisma.$transaction([
 		publicPrisma.assay.findMany({
 			distinct: ["target_gene"],
@@ -64,6 +64,7 @@ export async function AssayStats() {
 				<DoughnutChart
 					labels={targetGeneCounts.map((a) => a.target_gene)}
 					data={targetGeneCounts.map((a) => a.count || 0)}
+					compact={compact}
 				/>
 			</div>
 		</div>

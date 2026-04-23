@@ -15,7 +15,7 @@ type KingdomSection = {
 	phyla: PhylumData[];
 };
 
-async function getPhylaByKingdom(kingdom: string, take: number = 10): Promise<PhylumData[]> {
+async function getPhylaByKingdom(kingdom: string, take: number = 8): Promise<PhylumData[]> {
 	const taxonomiesInKingdom = await publicPrisma.taxonomy.findMany({
 		where: { kingdom: kingdom },
 		select: { taxonomy: true, phylum: true }
@@ -62,7 +62,7 @@ export default async function TopTaxonomiesSummary() {
 			kingdom: "Eukaryota",
 			title: "Eukaryota",
 			description:
-				"Including the plants and animals we recognize, eukaryotes are defined by complex, nucleated cells. They span everything from microscopic algae and corals to fish and whales. They represent the ocean’s visible biodiversity, making up the familiar life found across the ocean (and land).",
+				"Complex, nucleated cells spanning microscopic algae and corals to fish and whales. Represents the ocean's visible biodiversity.",
 			image: "/images/bait_ball.jpeg",
 			phyla: eukaryotaPhyla
 		},
@@ -70,7 +70,7 @@ export default async function TopTaxonomiesSummary() {
 			kingdom: "Bacteria",
 			title: "Bacteria",
 			description:
-				"As the ocean's most abundant single-celled life, these microbes are the primary drivers of global nutrient cycles. They break down organic matter to recycle essential elements, sustaining the entire marine food web from the bottom up, as well as maintaining the chemical health of the water.",
+				"The ocean's most abundant single-celled life. Primary drivers of global nutrient cycles and the marine food web from the bottom up.",
 			image: "/images/bacteria_image.jpeg",
 			phyla: bacteriaPhyla
 		},
@@ -78,7 +78,7 @@ export default async function TopTaxonomiesSummary() {
 			kingdom: "Archaea",
 			title: "Archaea",
 			description:
-				"Evolutionarily distinct from bacteria, these resilient microbes thrive in harsh environments where nothing else can. By dominating deep-sea hydrothermal vents, they play a critical role in regulating the ocean’s unique methane balances and provide a window into the planet’s earliest biological history.",
+				"Evolutionarily distinct microbes that thrive in harsh environments; critical for regulating ocean methane and early biological history.",
 			image: "/images/hydrothermal_vent.jpg",
 			phyla: archaeaPhyla
 		}
@@ -88,82 +88,102 @@ export default async function TopTaxonomiesSummary() {
 
 	if (!hasData) {
 		return (
-			<div className="bg-transparent rounded-lg p-6 flex items-center justify-center text-base-content/70">
+			<div
+				className={[
+					"rounded-2xl bg-base-100 border border-base-300/70 p-8",
+					"shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_12px_28px_-16px_rgba(0,0,0,0.45)]",
+					"flex items-center justify-center text-base-content/70"
+				].join(" ")}
+			>
 				No taxonomy data available yet.
 			</div>
 		);
 	}
 
 	return (
-		<div className="space-y-6 w-full max-w-6xl mx-auto">
-			{/* Title */}
-			<div className="text-2xl text-base-content px-2 md:px-4">
-				<span className="font-semibold mr-1">Life across the</span>
-				<span>Ocean DNA Explorer</span>
+		<section className="space-y-6">
+			<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">
+				Life Across ODE
+			</h2>
+
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+				{kingdomSections.map((section) => (
+					<KingdomCard key={section.kingdom} section={section} />
+				))}
+			</div>
+		</section>
+	);
+}
+
+function KingdomCard({ section }: { section: KingdomSection }) {
+	return (
+		<div
+			className={[
+				"relative flex flex-col overflow-hidden rounded-2xl h-full",
+				"bg-base-100",
+				"bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,transparent_38%,rgba(0,0,0,0.13)_100%)]",
+				"shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_10px_28px_-16px_rgba(0,0,0,0.5),0_2px_6px_-2px_rgba(0,0,0,0.22)]",
+				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.07)_inset,0_14px_34px_-14px_rgba(0,0,0,0.55),0_3px_8px_-2px_rgba(0,0,0,0.25)]",
+				"transition-shadow duration-300"
+			].join(" ")}
+		>
+			<div className="relative h-44 w-full overflow-hidden">
+				<Image
+					src={section.image}
+					alt={section.kingdom}
+					fill
+					className="object-cover"
+					sizes="(max-width: 768px) 100vw, 33vw"
+				/>
+				{/*
+				 * Stronger faded gradient so the image softly bleeds into the
+				 * card body rather than ending on a hard horizontal line.
+				 */}
+				<div className="absolute inset-0 bg-linear-to-t from-base-100 via-base-100/70 to-base-100/0" />
+				<div className="absolute bottom-3 left-4 right-4">
+					<h3 className="text-2xl font-semibold text-base-content leading-tight drop-shadow-sm">
+						{section.title}
+					</h3>
+				</div>
 			</div>
 
-			{/* Three Kingdom Columns */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:px-4">
-				{kingdomSections.map((section) => (
-					<div
-						key={section.kingdom}
-						className="rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col"
-					>
-						{/* Image Container */}
-						<div className="relative h-56 w-full overflow-hidden shrink-0">
-							<Image
-								src={section.image}
-								alt={section.kingdom}
-								fill
-								className="object-cover opacity-85"
-								sizes="(max-width: 768px) 100vw, 33vw"
-							/>
-						</div>
+			<div className="p-5 flex flex-col gap-4 grow">
+				<p className="text-sm text-base-content/70 leading-relaxed">{section.description}</p>
 
-						{/* Content Container */}
-						<div className="p-6 space-y-3 flex flex-col grow">
-							{/* Kingdom Title */}
-							<div>
-								<h3 className="text-lg font-semibold text-base-content">{section.title}</h3>
-								<p className="text-sm text-base-content/80 leading-relaxed mt-1">{section.description}</p>
-							</div>
-
-							{/* Phyla List - Fixed height for alignment */}
-							<div className="grow flex flex-col">
-								{section.phyla.length > 0 ? (
-									<>
-										<p className="text-xs font-semibold text-base-content/70 mt-4 mb-4 uppercase tracking-wider">
-											Top Phyla
-										</p>
-										<div className="space-y-1 mt-2">
-											{section.phyla.map((phylumData, index) => (
-												<Link
-													key={phylumData.phylum}
-													href={`/explore/taxonomy?phylum=${encodeURIComponent(phylumData.phylum)}`}
-													className="flex items-center justify-between text-sm hover:bg-base-300/20 px-2 py-1 rounded transition-colors cursor-pointer group"
-												>
-													<div className="flex items-center gap-2 min-w-0 flex-1">
-														<span className="text-primary font-semibold shrink-0 group-hover:text-primary/80">
-															{index + 1}.
-														</span>
-														<span className="text-base-content group-hover:text-primary truncate group-hover:underline">
-															{phylumData.phylum}
-														</span>
-													</div>
-													<span className="text-primary shrink-0 ml-2 font-medium group-hover:text-primary/80">
-														{phylumData.count.toLocaleString()}
-													</span>
-												</Link>
-											))}
-										</div>
-									</>
-								) : (
-									<p className="text-sm text-base-content/60 italic">No data available</p>
-								)}
-							</div>
-						</div>
+				<div>
+					<div className="flex items-center justify-between mb-2.5">
+						<p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/55">
+							Top phyla
+						</p>
+						<span className="text-[11px] text-base-content/50">Count</span>
 					</div>
-				))}
+					<ul className="divide-y divide-base-content/5">
+						{section.phyla.length > 0 ? (
+							section.phyla.map((p, idx) => (
+								<li key={p.phylum}>
+									<Link
+										href={`/explore/taxonomy?phylum=${encodeURIComponent(p.phylum)}`}
+										className="flex items-center justify-between text-sm px-1 py-1.5 rounded-md hover:bg-base-200/40 transition-colors group"
+									>
+										<span className="flex items-center gap-2 min-w-0">
+											<span className="text-primary/80 font-semibold shrink-0 text-xs w-4 text-right tabular-nums">
+												{idx + 1}
+											</span>
+											<span className="text-base-content truncate group-hover:text-primary transition-colors">
+												{p.phylum}
+											</span>
+										</span>
+										<span className="text-xs font-semibold text-base-content/70 tabular-nums ml-2">
+											{p.count.toLocaleString()}
+										</span>
+									</Link>
+								</li>
+							))
+						) : (
+							<li className="text-sm text-base-content/60 italic px-2 py-1">No data available</li>
+						)}
+					</ul>
+				</div>
 			</div>
 		</div>
 	);

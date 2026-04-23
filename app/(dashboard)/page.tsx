@@ -2,16 +2,42 @@ import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/DataS
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
-import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 import ClientMap from "../components/map/ClientMap";
-// import DataSummaryHighlights from "../components/DataSummaryHighlights";
+import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
+import DashCard from "../components/dashboard/DashCard";
+import {
+	TopInstitutionsCard,
+	SamplingEnvironmentsCard,
+	SampleCategoriesCard,
+	TemporalCoverageCard,
+	DepthCoverageCard,
+	MetadataCompletenessCard,
+	WidgetCardSkeleton
+} from "../components/DashboardExtras";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
+
+const NullComponent = () => null;
+const MainStatsSafe = MainStats ?? NullComponent;
+const MainStatsSkeletonSafe = MainStatsSkeleton ?? NullComponent;
+const AssayStatsSafe = AssayStats ?? NullComponent;
+const TopTaxonomiesSummarySafe = TopTaxonomiesSummary ?? NullComponent;
+const ClientMapSafe = ClientMap ?? NullComponent;
+const DataSummaryHighlightsSafe = DataSummaryHighlights ?? NullComponent;
+const FeaturedOrganismsSectionSafe = FeaturedOrganismsSection ?? NullComponent;
+const DashCardSafe = DashCard ?? NullComponent;
+const TopInstitutionsCardSafe = TopInstitutionsCard ?? NullComponent;
+const SamplingEnvironmentsCardSafe = SamplingEnvironmentsCard ?? NullComponent;
+const SampleCategoriesCardSafe = SampleCategoriesCard ?? NullComponent;
+const TemporalCoverageCardSafe = TemporalCoverageCard ?? NullComponent;
+const DepthCoverageCardSafe = DepthCoverageCard ?? NullComponent;
+const MetadataCompletenessCardSafe = MetadataCompletenessCard ?? NullComponent;
+const WidgetCardSkeletonSafe = WidgetCardSkeleton ?? NullComponent;
 
 export default function Home() {
 	return (
@@ -76,46 +102,114 @@ export default function Home() {
 
 			<div
 				id="dataSummary"
-				className="z-1000 scroll-mt-20 px-4 pt-3 sm:px-6 sm:pt-5 lg:px-8 pb-12 -mt-2 sm:-mt-4 md:-mt-3"
+				className="z-1000 scroll-mt-20 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8 pb-12"
 			>
-				<div className="mb-28 sm:mb-32">
-					<Suspense fallback={<MainStatsSkeleton />}>
-						<MainStats />
-					</Suspense>
-				</div>
+				<div className="max-w-7xl mx-auto space-y-14">
 
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-20">
-					{/* Map Section */}
-					<div className="lg:col-span-7">
-						<div className="mb-8 text-2xl text-base-content">
-							<span>Showing all </span>
-							<span className="font-semibold">Projects</span>
+					{/* Row 1 — The 4 headline stat cards. */}
+					<Suspense fallback={<MainStatsSkeletonSafe />}>
+						<MainStatsSafe />
+					</Suspense>
+
+					{/*
+					 * Row 2 — Map + right column that stacks Target Genes on top and
+					 * Top Institutions on the bottom. Target Genes is intentionally
+					 * shorter now; map's height grows via flex to line up roughly
+					 * with the bottom of the Top Institutions list.
+					 *
+					 * The map has NO card wrapper or title — the map is self-
+					 * explanatory, so we just give it a rounded container.
+					 */}
+					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+						<div className="lg:col-span-8 relative rounded-2xl overflow-hidden shadow-[0_10px_28px_-16px_rgba(0,0,0,0.5),0_2px_6px_-2px_rgba(0,0,0,0.22)]">
+							<div className="h-[420px] sm:h-[520px] lg:h-full min-h-[520px] w-full">
+								<ClientMapSafe
+									url={"/api/sample"}
+									legend
+									titleTable="project"
+									cluster
+									clusterRadius={20}
+								/>
+							</div>
 						</div>
-						<ClientMap url={"/api/sample"} legend titleTable="project" cluster clusterRadius={20} />
+
+						<div className="lg:col-span-4 flex flex-col gap-5">
+							<DashCardSafe
+								title="Target genes"
+								info={{
+									title: "Target genes",
+									description:
+										"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
+									links: [
+										{ label: "Browse assays", href: "/explore/assay" },
+										{ label: "View analyses", href: "/explore/analysis" },
+										{
+											label: "About this chart",
+											href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays",
+											target: "_blank"
+										},
+										{
+											label: "Request an assay",
+											href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues",
+											target: "_blank"
+										}
+									]
+								}}
+							>
+								<Suspense fallback={<div className="h-64 skeleton rounded-lg" />}>
+									<AssayStatsSafe compact />
+								</Suspense>
+							</DashCardSafe>
+							<Suspense fallback={<WidgetCardSkeletonSafe className="h-64" />}>
+								<TopInstitutionsCardSafe />
+							</Suspense>
+						</div>
 					</div>
 
-					{/* Assay Stats Section */}
-					<div className="lg:col-span-5 flex flex-col">
-						<div className="mb-8 text-2xl text-base-content">
-							<span className="font-semibold mr-1">Assays</span>
-							<span>used across the Ocean DNA Explorer</span>
-						</div>
-						<Suspense>
-							<AssayStats />
+					{/* Row 3 — Latest submissions (project + analysis) */}
+					<Suspense>
+						<DataSummaryHighlightsSafe />
+					</Suspense>
+
+					{/*
+					 * Row 4 — Dispersed real-data widgets. Three useful stats about
+					 * the sampling record. These all hit the Sample table directly
+					 * with single-pass aggregates, so they're cheap.
+					 */}
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+						<Suspense fallback={<WidgetCardSkeletonSafe />}>
+							<SamplingEnvironmentsCardSafe />
+						</Suspense>
+						<Suspense fallback={<WidgetCardSkeletonSafe />}>
+							<TemporalCoverageCardSafe />
+						</Suspense>
+						<Suspense fallback={<WidgetCardSkeletonSafe />}>
+							<DepthCoverageCardSafe />
 						</Suspense>
 					</div>
-				</div>
 
-				{/* Latest submissions + Creature Features — re-enable when ready for main
-				<Suspense>
-					<DataSummaryHighlights />
-				</Suspense>
-				*/}
+					{/* Row 5 — Featured Organisms carousel */}
+					<FeaturedOrganismsSectionSafe />
 
-				<div id="dataTaxa" className="w-full mb-24 pt-4">
+					{/* Row 6 — Life Across ODE (moved AFTER featured orgs) */}
 					<Suspense>
-						<TopTaxonomiesSummary />
+						<TopTaxonomiesSummarySafe />
 					</Suspense>
+
+					{/*
+					 * Row 7 — Metadata Completeness (wider, holistic) alongside
+					 * Sample Categories so the metadata row still feels balanced.
+					 */}
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+						<div className="lg:col-span-2">
+							<Suspense fallback={<WidgetCardSkeletonSafe className="h-60" />}>
+								<MetadataCompletenessCardSafe />
+							</Suspense>
+						</div>
+						<Suspense fallback={<WidgetCardSkeletonSafe className="h-60" />}>
+							<SampleCategoriesCardSafe />
+						</Suspense>
+					</div>
 				</div>
 
 				{/* Funding Institutes Section */}
