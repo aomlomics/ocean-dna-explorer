@@ -18,7 +18,6 @@ import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
-import "react-leaflet-markercluster/styles";
 import Link from "next/link";
 import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -328,7 +327,15 @@ export default function ActualMap({
 			}
 		}
 
-		mapProps = { bounds };
+		//check if all points are in the same spot
+		if (bounds[0][0] === bounds[1][0] && bounds[0][1] === bounds[1][1]) {
+			mapProps = {
+				center: [bounds[0][0], bounds[0][1]] as unknown as LatLng,
+				zoom: 5
+			};
+		} else {
+			mapProps = { bounds };
+		}
 	}
 	const defaultMapProps = { ...mapProps };
 
@@ -813,12 +820,10 @@ export default function ActualMap({
 			<MapContainer
 				ref={mapRef}
 				preferCanvas={false}
-				maxBounds={
-					[
-						[-180, -180],
-						[180, 180]
-					] as LatLngBoundsExpression
-				}
+				maxBounds={[
+					[-90, -180],
+					[90, 180]
+				]}
 				className="w-full h-full grow"
 				{...mapProps}
 			>

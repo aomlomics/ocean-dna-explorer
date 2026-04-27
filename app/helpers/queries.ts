@@ -106,7 +106,7 @@ export function parseToQuery(
 			throw new Error(`Query mode "${mode}" not supported.`);
 		}
 
-		if ((mode === "null" || mode === "notNull") && queryArr.length !== 2) {
+		if ((mode === "null" || mode === "notNull") && queryArr[2] != null) {
 			throw new Error('Modes "null" and "notNull" do not support values.');
 		}
 	}
