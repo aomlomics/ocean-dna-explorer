@@ -67,7 +67,7 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name',
 
 export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
-export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
+export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
@@ -103,7 +103,7 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_n
 
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
-export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
+export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
@@ -667,11 +667,8 @@ export const TaxonomySchema = z.object({
   id: z.number().int(),
   taxonomy: z.string(),
   verbatimIdentification: z.string(),
-  domain: z.string().nullish(),
+  higherClassification: z.string().nullish(),
   kingdom: z.string().nullish(),
-  supergroup: z.string().nullish(),
-  division: z.string().nullish(),
-  subdivision: z.string().nullish(),
   phylum: z.string().nullish(),
   class: z.string().nullish(),
   order: z.string().nullish(),

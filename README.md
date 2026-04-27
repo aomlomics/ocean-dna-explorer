@@ -1,7 +1,5 @@
 ![Ocean DNA Explorer Banner](public/images/banner_ode.png)
 
-[![NODE CI/CD workflow](https://github.com/aomlomics/node/actions/workflows/testAndDeploy.yml/badge.svg)](https://github.com/aomlomics/node/actions/workflows/testAndDeploy.yml)
-
 ## Development Workflow
 
 For feature requests, please raise a GitHub issue. To propose a change:
@@ -12,32 +10,27 @@ For feature requests, please raise a GitHub issue. To propose a change:
 
 ### Install Node.js and npm
 
-Install the 
+Install the version of [node.js](https://nodejs.org/en/download) specified in the engines.node field of the [package.json](/package.json). This should automatically install [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), but you can check if it's installed:
+
+```bash
+node --version && npm --version
+```
 
 ### Install Dependencies
 
-This will only show you the site with no data. You need to setup a local Postgres Database, OR visit the dev or main website to see the website's full functionality.
+This will only show you the site with no data. You need to setup a local PostgreSQL Database, OR visit the [main website](https://www.oceandnaexplorer.org) to see the website's full functionality.
 
 After cloning the repository locally:
 
 ```bash
 npm install --ignore-scripts
-npm run generate
-npx prisma db push
 npm run dev
 ```
 
-### Configure .env File
-
-- You need to create an environment file named .env.
-- This file is required to configure environment variables for the application.
-- **See [.env.template](/.env.template) to see the required variables and their format.**
-- In the POSTGRES_PRISMA_URL and POSTGRES_URL_NON_POOLING variables, replace `<username>`, `<password>`, `<server>`, and `<db name>` with your own.
-
 ## Local Database Setup / Commands
 
-1. Install [Postgres](https://www.postgresql.org/download/)
-	- Follow instructions per your system, use default parameters
+1. Install [PostgreSQL](https://www.postgresql.org/download/)
+	- Follow instructions per your system, use default parameters (NOTE: Do not change the default port of 5432)
 	- Note your postgres username and password. We recommend username: postgres, password: admin.
 
 2. Create your database using either:
@@ -55,6 +48,13 @@ npm run dev
 	```sql
 	\l
 	```
+
+### Configure .env File
+
+- You need to create an environment file named .env.
+- This file is required to configure environment variables for the application.
+- **See [.env.template](/.env.template) to see the required variables and their format.**
+- In the POSTGRES_PRISMA_URL variables, replace `<username>`, `<password>`, `<server>`, and `<dbname>` with your own.
 
 ### Database Commands
 
@@ -80,7 +80,7 @@ npx prisma db push --force-reset	# Completely resets database, deleting all data
 
 ```
 
-**Important: To populate the local database, you must upload the files from [ODE_testdata](https://github.com/aomlomics/ODE_testdata) by navigating to the `Submit` tab on the website.** Then click `Submit a Project`.
+**Important: To populate the local database, you must upload the files from [ODE_testdata](https://github.com/aomlomics/ODE_testdata) by navigating to the `Submit` tab on the website.** Then, click `Submit a Project`.
 
 ## Development Process
 
@@ -91,7 +91,7 @@ Feature branches must be made from **dev** branch. Get latest from dev:
 git checkout -b dev origin/dev
 
 # If you intend to make a change:
-git checkout -b <FeatureBranchName>
+git checkout -b <featureBranchName>
 git merge dev
 ```
 
@@ -119,12 +119,6 @@ Push schema changes to database:
 
 ```bash
 npx prisma migrate dev --name "<insert migration name>" --create-only
-```
-
-Pull schema changes from database:
-
-```bash
-npx prisma db pull
 ```
 
 Clear the database of all entries:

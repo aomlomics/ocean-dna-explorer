@@ -38,25 +38,9 @@ export default function TaxaGridItem({ item }: { item: Taxonomy }) {
 						<>
 							<p className="text-primary">Phylum:</p> <p className="wrap-break-word">{item.phylum}</p>
 						</>
-					) : item.subdivision ? (
-						<>
-							<p className="text-primary">Subdivision:</p> <p className="wrap-break-word">{item.subdivision}</p>
-						</>
-					) : item.division ? (
-						<>
-							<p className="text-primary">Division:</p> <p className="wrap-break-word">{item.division}</p>
-						</>
-					) : item.supergroup ? (
-						<>
-							<p className="text-primary">Supergroup:</p> <p className="wrap-break-word">{item.supergroup}</p>
-						</>
 					) : item.kingdom ? (
 						<>
 							<p className="text-primary">Kingdom:</p> <p className="wrap-break-word">{item.kingdom}</p>
-						</>
-					) : item.domain ? (
-						<>
-							<p className="text-primary">Domain:</p> <p className="wrap-break-word">{item.domain}</p>
 						</>
 					) : (
 						"Error: no taxonomy rank found"

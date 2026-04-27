@@ -49,26 +49,12 @@ export const ZodBooleanSchema = z
 	.union([z.boolean(), z.literal("true"), z.literal("false"), z.literal("on")])
 	.transform((value) => value === true || value === "true" || value === "on");
 
-export const TaxonomicRanks = [
-	"domain",
-	"kingdom",
-	"supergroup",
-	"division",
-	"subdivision",
-	"phylum",
-	"class",
-	"order",
-	"family",
-	"genus",
-	"species"
-] as Array<keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">>;
+export const TaxonomicRanks = ["kingdom", "phylum", "class", "order", "family", "genus", "species"] as Array<
+	keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">
+>;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
-	domain: "Domains",
 	kingdom: "Kingdoms",
-	supergroup: "Supergroups",
-	division: "Divisions",
-	subdivision: "Subdivisions",
 	phylum: "Phyla",
 	class: "Classes",
 	order: "Orders",

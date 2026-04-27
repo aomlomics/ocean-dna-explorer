@@ -9,7 +9,6 @@ import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
-import { after } from "next/server";
 
 async function doEdit(
 	stream: ProgressStream,
@@ -212,17 +211,15 @@ async function doEdit(
 
 		await stream.success("Success");
 
-		after(async () =>
-			fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
-				method: "POST",
-				headers: {
-					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 }))
-				},
-				body: JSON.stringify({
-					delete: true
-				})
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
+			method: "POST",
+			headers: {
+				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+			},
+			body: JSON.stringify({
+				delete: true
 			})
-		);
+		});
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

@@ -60,7 +60,14 @@ export default function TableDisplay({
 			<div id="table" className="rounded-lg border border-base-300 h-[90vh]">
 				{mode === "table" ? (
 					size === "lg" ? (
-						<Table table={table} defaultTake={25} filterHeadersAtStart where={tableWhere} ignoreParams={ignoreParams} />
+						<Table
+							table={table}
+							defaultTake={25}
+							filterHeadersAtStart
+							where={tableWhere}
+							ignoreParams={ignoreParams}
+							hideEmptyAtStart={table === "taxonomy"}
+						/>
 					) : (
 						<Pagination table={table} ignoreParams={ignoreParams} />
 					)
