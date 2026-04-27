@@ -50,7 +50,7 @@ export const ZodBooleanSchema = z
 	.transform((value) => value === true || value === "true" || value === "on");
 
 export const TaxonomicRanks = ["kingdom", "phylum", "class", "order", "family", "genus", "species"] as Array<
-	keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">
+	keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification" | "higherClassification">
 >;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
