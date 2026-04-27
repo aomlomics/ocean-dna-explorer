@@ -85,7 +85,7 @@ export default function AnalysisEditButton({
 		setLoading(false);
 	}
 
-	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+	async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		modalXRef.current!.disabled = true;

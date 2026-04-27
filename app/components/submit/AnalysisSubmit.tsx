@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -241,7 +241,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		}
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		if (!project) {

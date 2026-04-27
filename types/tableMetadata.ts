@@ -2,6 +2,7 @@ import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum, ZodObject } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
 import { uncapitalizeTable } from "@/app/helpers/utils";
+import { TaxonomicRanks } from "./objects";
 
 export type RelationMetadata = {
 	field: string;
@@ -155,19 +156,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.TaxonomySchema,
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
 		titleField: "taxonomy",
-		subFields: [
-			"domain",
-			"kingdom",
-			"supergroup",
-			"division",
-			"subdivision",
-			"phylum",
-			"class",
-			"order",
-			"family",
-			"genus",
-			"species"
-		]
+		subFields: TaxonomicRanks
 	},
 	tag: {
 		plural: "Tags",
@@ -175,6 +164,20 @@ const TableMetadata = {
 		schema: PrismaZodTypes.TagSchema,
 		enumSchema: PrismaZodTypes.TagScalarFieldEnumSchema,
 		titleField: "tagName"
+	},
+	alphaDiversity: {
+		plural: "AlphaDiversities",
+		description: "",
+		schema: PrismaZodTypes.AlphaDiversitySchema,
+		enumSchema: PrismaZodTypes.AlphaDiversityScalarFieldEnumSchema,
+		titleField: "id"
+	},
+	alphaDiversityIndex: {
+		plural: "AlphaDiversityIndexes",
+		description: "",
+		schema: PrismaZodTypes.AlphaDiversityIndexSchema,
+		enumSchema: PrismaZodTypes.AlphaDiversityIndexScalarFieldEnumSchema,
+		titleField: "id"
 	}
 } as Record<
 	Uncapitalize<Prisma.ModelName>,
@@ -221,7 +224,15 @@ const relations = {
 		PrismaZodTypes.TaxonomyScalarFieldEnumSchema.options,
 		PrismaZodTypes.TaxonomyWithRelationsSchema
 	),
-	tag: getRelations(PrismaZodTypes.TagScalarFieldEnumSchema.options, PrismaZodTypes.TagWithRelationsSchema)
+	tag: getRelations(PrismaZodTypes.TagScalarFieldEnumSchema.options, PrismaZodTypes.TagWithRelationsSchema),
+	alphaDiversity: getRelations(
+		PrismaZodTypes.AlphaDiversityScalarFieldEnumSchema.options,
+		PrismaZodTypes.AlphaDiversityWithRelationsSchema
+	),
+	alphaDiversityIndex: getRelations(
+		PrismaZodTypes.AlphaDiversityIndexScalarFieldEnumSchema.options,
+		PrismaZodTypes.AlphaDiversityIndexWithRelationsSchema
+	)
 } as Record<Uncapitalize<Prisma.ModelName>, string[]>;
 
 for (let e in TableMetadata) {
@@ -245,7 +256,7 @@ for (let e in TableMetadata) {
 				//plural
 				type = "many-to-one";
 			}
-		} else if (rel !== "AnalysisTags") {
+		} else {
 			//plural
 			const lowercaseRelation = Object.entries(TableMetadata).find(
 				(e) => e[1].plural === rel
@@ -267,7 +278,9 @@ for (let e in TableMetadata) {
 }
 
 export const TableNames = Object.keys(TableMetadata) as Uncapitalize<Prisma.ModelName>[];
-export const DataTableNames = TableNames.filter((t) => t !== "tag") as Uncapitalize<Exclude<Prisma.ModelName, "Tag">>[];
+export const DataTableNames = TableNames.filter(
+	(t) => t !== "tag" && t !== "alphaDiversity" && t !== "alphaDiversityIndex"
+) as Exclude<Uncapitalize<Prisma.ModelName>, "tag" | "alphaDiversity" | "alphaDiversityIndex">[];
 
 //duplicates keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value

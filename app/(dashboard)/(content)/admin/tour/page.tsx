@@ -3,7 +3,7 @@
 import InfoButton from "@/app/components/InfoButton";
 import { DEFAULT_TOUR_STEP_TIME, TourContext, TourStep } from "@/app/hooks/TourProvider";
 import { NetworkPacket } from "@/types/globals";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { Fragment, useContext, useEffect, useReducer, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
@@ -166,6 +166,7 @@ export default function Tour() {
 				}
 
 				if (samp_name) {
+					//TODO: only show features for selected taxonomy
 					const occRes = await fetch(
 						`/api/occurrence?fields=featureid&relations=Assignment&relationsAllFields=true&advanced=[["sample","samp_name","equals","${samp_name}"],["analysis_run_name","equals","${analysis_run_name}"]]`
 					);

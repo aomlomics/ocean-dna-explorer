@@ -2,9 +2,9 @@
 
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { Prisma, Tag } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
@@ -48,16 +48,17 @@ export default function Table({
 	const oneRelations = [] as string[];
 	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, string[]>;
 	for (const rel of TableMetadata[table].relations) {
-		if (rel.type.endsWith("many")) {
-			manyRelations.push(rel.field);
-		} else if (rel.type.endsWith("one")) {
-			const relTable = rel.field as Prisma.ModelName;
-			if (typeof TableMetadata[relTable].titleField === "string") {
-				oneRelations.push(TableMetadata[relTable].titleField);
-			} else {
-				oneRelationsArrayTitle[relTable] = TableMetadata[relTable].titleField;
+		if (rel.table !== "AlphaDiversity" && rel.table !== "AlphaDiversityIndex")
+			if (rel.type.endsWith("many")) {
+				manyRelations.push(rel.field);
+			} else if (rel.type.endsWith("one")) {
+				const relTable = rel.field as Prisma.ModelName;
+				if (typeof TableMetadata[relTable].titleField === "string") {
+					oneRelations.push(TableMetadata[relTable].titleField);
+				} else {
+					oneRelationsArrayTitle[relTable] = TableMetadata[relTable].titleField;
+				}
 			}
-		}
 	}
 
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
@@ -138,7 +139,7 @@ export default function Table({
 	const [hideEmpty, setHideEmpty] = useState(hideEmptyAtStart || false);
 	const [emptyFilter, setEmptyFilter] = useState({} as Record<string, true>);
 
-	const deepRelations = TableNames.reduce(
+	const deepRelations = DataTableNames.reduce(
 		(acc, name) => {
 			if (name !== table && TableMetadata[table].relations.every((rel) => uncapitalizeTable(rel.table) !== name)) {
 				const path = getRelationPath(table, name);
@@ -320,7 +321,7 @@ export default function Table({
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	//filters in the column header
-	function applyFilters(e: FormEvent<HTMLFormElement>) {
+	function applyFilters(e: SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		const formData = new FormData(e.currentTarget);

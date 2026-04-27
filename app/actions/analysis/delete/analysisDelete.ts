@@ -1,10 +1,12 @@
 "use server";
 
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 import { AnalysisSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 //TODO: delete files from blob store
 export default async function analysisDeleteAction(target: string): Promise<NetworkPacket> {
@@ -28,59 +30,38 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 	const analysis_run_name = parsed.data;
 
 	try {
-		await prisma.$transaction(
-			async (tx) => {
-				const analysis = await tx.analysis.findUnique({
-					where: {
-						analysis_run_name
-					},
-					select: {
-						Project: {
-							select: {
-								userIds: true
-							}
-						}
-					}
-				});
-
-				if (!analysis) {
-					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
-				} else if (
-					!analysis.Project.userIds.includes(userId) &&
-					(!role || !RolePermissions[role].includes("manageUsers"))
-				) {
-					throw new Error("Unauthorized action.");
-				}
-
-				//analysis delete
-				await tx.analysis.delete({
-					where: {
-						analysis_run_name
-					}
-				});
-
-				//features delete
-				// console.log("empty features delete");
-				// await tx.feature.deleteMany({
-				// 	where: {
-				// 		Assignments: {
-				// 			none: {}
-				// 		}
-				// 	}
-				// });
-
-				//taxonomies delete
-				// console.log("empty taxonomies delete");
-				// await tx.taxonomy.deleteMany({
-				// 	where: {
-				// 		Assignments: {
-				// 			none: {}
-				// 		}
-				// 	}
-				// });
+		const analysis = await prisma.analysis.findUnique({
+			where: {
+				analysis_run_name
 			},
-			{ timeout: 1.5 * 60 * 1000 }
-		);
+			select: {
+				analysisMetadataFileUrl_ODE: true,
+				asvFileUrl_ODE: true,
+				occurrenceFileUrl_ODE: true,
+				Project: {
+					select: {
+						userIds: true
+					}
+				}
+			}
+		});
+
+		if (!analysis) {
+			throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+		} else if (
+			!analysis.Project.userIds.includes(userId) &&
+			(!role || !RolePermissions[role].includes("manageUsers"))
+		) {
+			throw new Error("Unauthorized action.");
+		}
+
+		await prisma.analysis.delete({
+			where: {
+				analysis_run_name
+			}
+		});
+
+		await del([analysis.analysisMetadataFileUrl_ODE, analysis.asvFileUrl_ODE, analysis.occurrenceFileUrl_ODE]);
 
 		return { statusMessage: "success" };
 	} catch (err: any) {

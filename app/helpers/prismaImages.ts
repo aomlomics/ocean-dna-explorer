@@ -1,7 +1,8 @@
 import { PrismaClient } from "../generated/prismaImages/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 function getPrisma() {
-	return new PrismaClient();
+	return new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.IMAGE_POSTGRES_PRISMA_URL }) });
 }
 
 const globalForPrismaImages = global as unknown as {

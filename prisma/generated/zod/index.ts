@@ -1,5 +1,6 @@
-import { z } from 'zod';
-import { Prisma } from '@/app/generated/prisma/client';
+import { z } from "zod";
+import { Prisma } from "@/app/generated/prisma/client";
+import { JsonValue } from "@prisma/client/runtime/client";
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -8,12 +9,12 @@ import { Prisma } from '@/app/generated/prisma/client';
 // JSON
 //------------------------------------------------------
 
-export type NullableJsonInput = Prisma.JsonValue | null | 'JsonNull' | 'DbNull' | Prisma.NullTypes.DbNull | Prisma.NullTypes.JsonNull;
+export type NullableJsonInput = JsonValue | null | 'JsonNull' | 'DbNull' | typeof Prisma.NullTypes.DbNull | typeof Prisma.NullTypes.JsonNull;
 
 export const transformJsonNull = (v?: NullableJsonInput) => {
-  if (!v || v === 'DbNull') return Prisma.NullTypes.DbNull;
-  if (v === 'JsonNull') return Prisma.NullTypes.JsonNull;
-  return v;
+	if (!v || v === "DbNull") return typeof Prisma.NullTypes.DbNull;
+	if (v === "JsonNull") return typeof Prisma.NullTypes.JsonNull;
+	return v;
 };
 
 export const JsonValueSchema: z.ZodType<Prisma.JsonValue> = z.lazy(() =>
@@ -66,9 +67,13 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name',
 
 export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
-export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
+export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
+
+export const AlphaDiversityScalarFieldEnumSchema = z.enum(['id','dateCalculated','finished','analysis_run_name','indexType','rarefied','depth']);
+
+export const AlphaDiversityIndexScalarFieldEnumSchema = z.enum(['id','lib_id','parentId','index']);
 
 export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds','dateSubmitted','isPrivate','userDefined','editHistory','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','imageFileUrl_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','neg_cont_0_1','pos_cont_0_1','projectDescription','dataDescription','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep','sample_type']);
 
@@ -82,11 +87,11 @@ export const LibraryScalarFieldEnumSchema = z.enum(['id','lib_id','userDefined',
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
-export const NullableJsonNullValueInputSchema = z.enum(['DbNull','JsonNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value);
+export const NullableJsonNullValueInputSchema: z.ZodType<Prisma.NullableJsonNullValueInput> = z.enum(['DbNull','JsonNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
 
-export const JsonNullValueFilterSchema = z.enum(['DbNull','JsonNull','AnyNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value === 'AnyNull' ? Prisma.AnyNull : value);
+export const JsonNullValueFilterSchema: z.ZodType<Prisma.JsonNullValueFilter> = z.enum(['DbNull','JsonNull','AnyNull',]).transform((value) => value === 'JsonNull' ? Prisma.JsonNull : value === 'DbNull' ? Prisma.DbNull : value === 'AnyNull' ? Prisma.AnyNull : value);
 
 export const NullsOrderSchema = z.enum(['first','last']);
 
@@ -98,9 +103,13 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_n
 
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
-export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','domain','kingdom','supergroup','division','subdivision','phylum','class','order','family','genus','species']);
+export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
+
+export const AlphaDiversityOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_name','indexType']);
+
+export const AlphaDiversityIndexOrderByRelevanceFieldEnumSchema = z.enum(['lib_id']);
 
 export const ProjectOrderByRelevanceFieldEnumSchema = z.enum(['project_id','userIds','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','imageFileUrl_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','projectDescription','dataDescription','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','checkls_ver','seq_archive','code_repo','sample_type']);
 
@@ -116,225 +125,17 @@ export const DeadBooleanSchema = z.enum(['false','true','not_applicableCOLON__co
 
 export type DeadBooleanType = `${z.infer<typeof DeadBooleanSchema>}`
 
-export const detection_typeSchema = z.enum(['targeted_taxon_detection','multi_taxon_detection','other']);
-
-export type detection_typeType = `${z.infer<typeof detection_typeSchema>}`
-
-export const neg_cont_typeSchema = z.enum(['site_negative','field_negative','process_negative','extraction_negative','PCR_negative','other']);
-
-export type neg_cont_typeType = `${z.infer<typeof neg_cont_typeSchema>}`
-
 export const target_geneSchema = z.enum(['TWELVE__S_rRNA','SIXTEEN__S_rRNA','EIGHTEEN__S_rRNA','TWENTY_THREE__S_rRNA','TWENTY_EIGHT__S_rRNA','rbcL','CytB','COI','COII','COIII','nifH','ITS','ND1','ND2','ND3','ND4','ND5','ND6','amoA','rpoB','rpoC1','rpoC2','matK','trnH','trnL','psbK','D__loop','other']);
 
 export type target_geneType = `${z.infer<typeof target_geneSchema>}`
-
-export const probeQuencherSchema = z.enum(['Zero__End_Quencher_PAREN1_ZENPAREN2_','TAMRA','lowa_Black','Minor_Groove_Binder_PAREN1_MGBPAREN2_','Black_Hole_Quencher_PAREN1_BHQPAREN2_','other']);
-
-export type probeQuencherType = `${z.infer<typeof probeQuencherSchema>}`
-
-export const barcoding_pcr_apprSchema = z.enum(['one__step_PCR','two__step_PCR','ligation__based','other']);
-
-export type barcoding_pcr_apprType = `${z.infer<typeof barcoding_pcr_apprSchema>}`
-
-export const platformSchema = z.enum(['ILLUMINA','BGISEQ','CAPILLARY','DNBSEQ','ELEMENT','GENAPSYS','GENEMIND','HELICOS','ION_TORRENT','LS454','OXFORD_NANOPORE','PACBIO_SMRT','TAPESTRI','VELA_DIAGNOSTICS','ULTIMA','other']);
-
-export type platformType = `${z.infer<typeof platformSchema>}`
-
-export const lib_layoutSchema = z.enum(['paired_end','single_end','other']);
-
-export type lib_layoutType = `${z.infer<typeof lib_layoutSchema>}`
-
-export const error_rate_typeSchema = z.enum(['Phred_score','expected_error_rate','other']);
-
-export type error_rate_typeType = `${z.infer<typeof error_rate_typeSchema>}`
-
-export const min_reads_cutoff_unitSchema = z.enum(['reads','PERCENT_','other']);
-
-export type min_reads_cutoff_unitType = `${z.infer<typeof min_reads_cutoff_unitSchema>}`
-
-export const tax_assign_catSchema = z.enum(['sequence_similarity','sequence_composition','phylogeny','probabilistic','other']);
-
-export type tax_assign_catType = `${z.infer<typeof tax_assign_catSchema>}`
-
-export const samp_categorySchema = z.enum(['sample','negative_control','positive_control','PCR_standard','other']);
-
-export type samp_categoryType = `${z.infer<typeof samp_categorySchema>}`
-
-export const verbatimCoordinateSystemSchema = z.enum(['decimal_degrees','degrees_minutes_seconds','UTM','other']);
-
-export type verbatimCoordinateSystemType = `${z.infer<typeof verbatimCoordinateSystemSchema>}`
-
-export const verbatimSRSSchema = z.enum(['WGS84','NAD84','NAD27','GDA94','GDA2020','ETRS89','JGD2000','other']);
-
-export type verbatimSRSType = `${z.infer<typeof verbatimSRSSchema>}`
-
-export const eventDurationUnitSchema = z.enum(['minutes','hours','days','months','years']);
-
-export type eventDurationUnitType = `${z.infer<typeof eventDurationUnitSchema>}`
-
-export const samp_size_unitSchema = z.enum(['mL','L','mg','g','kg','cm2','m2','cm3','m3','other']);
-
-export type samp_size_unitType = `${z.infer<typeof samp_size_unitSchema>}`
-
-export const samp_store_solSchema = z.enum(['ethanol','sodium_acetate','longmire','lysis_buffer','none','other']);
-
-export type samp_store_solType = `${z.infer<typeof samp_store_solSchema>}`
-
-export const filter_materialSchema = z.enum(['cellulose','cellulose_ester','glass_fiber','thermoplastic_membrane','track_etched_polycarbonate','nylon','other']);
-
-export type filter_materialType = `${z.infer<typeof filter_materialSchema>}`
-
-export const precip_chem_prepSchema = z.enum(['ethanol','isopropanol','sodium_chloride','other']);
-
-export type precip_chem_prepType = `${z.infer<typeof precip_chem_prepSchema>}`
-
-export const prepped_samp_store_solSchema = z.enum(['ethanol','sodium_acetate','longmire','lysis_buffer','none','other']);
-
-export type prepped_samp_store_solType = `${z.infer<typeof prepped_samp_store_solSchema>}`
-
-export const samp_vol_we_dna_ext_unitSchema = z.enum(['mL','L','mg','g','kg','cm2','m2','cm3','m3','other']);
-
-export type samp_vol_we_dna_ext_unitType = `${z.infer<typeof samp_vol_we_dna_ext_unitSchema>}`
-
-export const nucl_acid_ext_lysisSchema = z.enum(['physical','chemical','enzymatic','thermal','osmotic','other']);
-
-export type nucl_acid_ext_lysisType = `${z.infer<typeof nucl_acid_ext_lysisSchema>}`
-
-export const nucl_acid_ext_sepSchema = z.enum(['column__based','magnetic_beads','centrifugation','precipitation','phenol_chloroform','g','electrophoresis','other']);
-
-export type nucl_acid_ext_sepType = `${z.infer<typeof nucl_acid_ext_sepSchema>}`
 
 export const asv_methodSchema = z.enum(['dada2pe','dada2se','deblur','other']);
 
 export type asv_methodType = `${z.infer<typeof asv_methodSchema>}`
 
-export const dada2_pooling_methodSchema = z.enum(['independent','pseudo','standard']);
-
-export type dada2_pooling_methodType = `${z.infer<typeof dada2_pooling_methodSchema>}`
-
-export const dada2_chimera_methodSchema = z.enum(['consensus','none','pooled']);
-
-export type dada2_chimera_methodType = `${z.infer<typeof dada2_chimera_methodSchema>}`
-
-export const lib_conc_unitSchema = z.enum(['ngFSLASH_µL','nM','pM','other']);
-
-export type lib_conc_unitType = `${z.infer<typeof lib_conc_unitSchema>}`
-
-export const checksum_methodSchema = z.enum(['MD5','SHA__256','CRC__32','other']);
-
-export type checksum_methodType = `${z.infer<typeof checksum_methodSchema>}`
-
 export const assay_typeSchema = z.enum(['targeted','metabarcoding','other']);
 
 export type assay_typeType = `${z.infer<typeof assay_typeSchema>}`
-
-export const diss_inorg_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type diss_inorg_carb_unitType = `${z.infer<typeof diss_inorg_carb_unitSchema>}`
-
-export const diss_inorg_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type diss_inorg_nitro_unitType = `${z.infer<typeof diss_inorg_nitro_unitSchema>}`
-
-export const diss_org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type diss_org_carb_unitType = `${z.infer<typeof diss_org_carb_unitSchema>}`
-
-export const diss_org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type diss_org_nitro_unitType = `${z.infer<typeof diss_org_nitro_unitSchema>}`
-
-export const diss_oxygen_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','mLFSLASH_L','mmolFSLASH_kg','parts_per_million','other']);
-
-export type diss_oxygen_unitType = `${z.infer<typeof diss_oxygen_unitSchema>}`
-
-export const nitrate_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type nitrate_unitType = `${z.infer<typeof nitrate_unitSchema>}`
-
-export const nitrite_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type nitrite_unitType = `${z.infer<typeof nitrite_unitSchema>}`
-
-export const nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type nitro_unitType = `${z.infer<typeof nitro_unitSchema>}`
-
-export const org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type org_carb_unitType = `${z.infer<typeof org_carb_unitSchema>}`
-
-export const org_matter_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type org_matter_unitType = `${z.infer<typeof org_matter_unitSchema>}`
-
-export const org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type org_nitro_unitType = `${z.infer<typeof org_nitro_unitSchema>}`
-
-export const part_org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type part_org_carb_unitType = `${z.infer<typeof part_org_carb_unitSchema>}`
-
-export const part_org_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type part_org_nitro_unitType = `${z.infer<typeof part_org_nitro_unitSchema>}`
-
-export const tot_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_carb_unitType = `${z.infer<typeof tot_carb_unitSchema>}`
-
-export const tot_diss_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_diss_nitro_unitType = `${z.infer<typeof tot_diss_nitro_unitSchema>}`
-
-export const tot_inorg_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_inorg_nitro_unitType = `${z.infer<typeof tot_inorg_nitro_unitSchema>}`
-
-export const tot_nitro_content_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_nitro_content_unitType = `${z.infer<typeof tot_nitro_content_unitSchema>}`
-
-export const tot_nitro_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_nitro_unitType = `${z.infer<typeof tot_nitro_unitSchema>}`
-
-export const tot_org_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_org_carb_unitType = `${z.infer<typeof tot_org_carb_unitSchema>}`
-
-export const tot_part_carb_unitSchema = z.enum(['µM','molFSLASH_m3','mmolFSLASH_m3','µmolFSLASH_m3','molFSLASH_L','mmolFSLASH_L','µmolFSLASH_L','mgFSLASH_L','µgFSLASH_L','µmolFSLASH_kg','mmolFSLASH_kg','parts_per_million','other']);
-
-export type tot_part_carb_unitType = `${z.infer<typeof tot_part_carb_unitSchema>}`
-
-export const concentration_unitSchema = z.enum(['ngFSLASH_µl','copiesFSLASH_µl','other']);
-
-export type concentration_unitType = `${z.infer<typeof concentration_unitSchema>}`
-
-export const pump_flow_rate_unitSchema = z.enum(['m3FSLASH_s','m3FSLASH_min','m3FSLASH_h','LFSLASH_s','LFSLASH_min','LFSLASH_h','other']);
-
-export type pump_flow_rate_unitType = `${z.infer<typeof pump_flow_rate_unitSchema>}`
-
-export const ammonium_unitSchema = z.enum(['micromole_per_liter','milligram_per_liter','parts_per_million']);
-
-export type ammonium_unitType = `${z.infer<typeof ammonium_unitSchema>}`
-
-export const phosphate_unitSchema = z.enum(['micromole_per_liter']);
-
-export type phosphate_unitType = `${z.infer<typeof phosphate_unitSchema>}`
-
-export const pressure_unitSchema = z.enum(['atmosphere']);
-
-export type pressure_unitType = `${z.infer<typeof pressure_unitSchema>}`
-
-export const silicate_unitSchema = z.enum(['micromole_per_liter']);
-
-export type silicate_unitType = `${z.infer<typeof silicate_unitSchema>}`
-
-export const tourmaline_classify_methodSchema = z.enum(['consensus__blast','naive__bayes','consensus__vsearch','bt2__blca']);
-
-export type tourmaline_classify_methodType = `${z.infer<typeof tourmaline_classify_methodSchema>}`
 
 /////////////////////////////////////////
 // MODELS
@@ -367,27 +168,27 @@ export const AnalysisSchema = z.object({
   trim_method: z.string().nullish(),
   trim_param: z.string().nullish(),
   demux_tool: z.string().nullish(),
-  demux_max_mismatch: z.coerce.number().int().nullish(),
+  demux_max_mismatch: z.number().int().nullish(),
   merge_tool: z.string().nullish(),
-  merge_min_overlap: z.coerce.number().int().nullish(),
-  min_len_cutoff: z.coerce.number().int().nullish(),
+  merge_min_overlap: z.number().int().nullish(),
+  min_len_cutoff: z.number().int().nullish(),
   min_len_tool: z.string().nullish(),
   error_rate_tool: z.string().nullish(),
   error_rate_type: z.string().nullish(),
-  error_rate_cutoff: z.coerce.number().nullish(),
+  error_rate_cutoff: z.number().nullish(),
   chimera_check_method: z.string().nullish(),
   chimera_check_param: z.string().nullish(),
   otu_clust_tool: z.string().nullish(),
-  otu_clust_cutoff: z.coerce.number().nullish(),
-  min_reads_cutoff: z.coerce.number().nullish(),
+  otu_clust_cutoff: z.number().nullish(),
+  min_reads_cutoff: z.number().nullish(),
   min_reads_cutoff_unit: z.string().nullish(),
   min_reads_tool: z.string().nullish(),
   otu_db: z.string().nullish(),
   otu_db_custom: z.string().nullish(),
   tax_assign_cat: z.string().nullish(),
   otu_seq_comp_appr: z.string().nullish(),
-  tax_class_id_cutoff: z.coerce.number().nullish(),
-  tax_class_query_cutoff: z.coerce.number().nullish(),
+  tax_class_id_cutoff: z.number().nullish(),
+  tax_class_query_cutoff: z.number().nullish(),
   tax_class_collapse: z.string().nullish(),
   tax_class_other: z.string().nullish(),
   screen_contam_method: z.string().nullish(),
@@ -396,44 +197,44 @@ export const AnalysisSchema = z.object({
   screen_other: z.string().nullish(),
   bioinfo_method_additional: z.string().nullish(),
   asv_method: z.string().nullish(),
-  dada2_trunc_len_f: z.coerce.number().int().nullish(),
-  dada2pe_trunc_len_r: z.coerce.number().int().nullish(),
-  dada2_trim_left_f: z.coerce.number().int().nullish(),
-  dada2pe_trim_left_r: z.coerce.number().int().nullish(),
-  dada2_max_ee_f: z.coerce.number().int().nullish(),
-  dada2pe_max_ee_r: z.coerce.number().int().nullish(),
-  dada2_trunc_q: z.coerce.number().int().nullish(),
+  dada2_trunc_len_f: z.number().int().nullish(),
+  dada2pe_trunc_len_r: z.number().int().nullish(),
+  dada2_trim_left_f: z.number().int().nullish(),
+  dada2pe_trim_left_r: z.number().int().nullish(),
+  dada2_max_ee_f: z.number().int().nullish(),
+  dada2pe_max_ee_r: z.number().int().nullish(),
+  dada2_trunc_q: z.number().int().nullish(),
   dada2_pooling_method: z.string().nullish(),
   dada2_chimera_method: z.string().nullish(),
-  dada2_min_fold_parent_over_abundance: z.coerce.number().int().nullish(),
-  dada2_n_reads_learn: z.coerce.number().int().nullish(),
-  deblur_trim_length: z.coerce.number().int().nullish(),
-  deblur_mean_error: z.coerce.number().nullish(),
-  deblur_indel_prob: z.coerce.number().nullish(),
-  deblur_indel_max: z.coerce.number().int().nullish(),
-  deblur_min_reads: z.coerce.number().int().nullish(),
-  deblur_min_size: z.coerce.number().int().nullish(),
-  repseqs_min_length: z.coerce.number().int().nullish(),
-  repseqs_max_length: z.coerce.number().int().nullish(),
-  repseqs_min_abundance: z.coerce.number().nullish(),
-  repseqs_min_prevalence: z.coerce.number().nullish(),
-  otu_num_tax_assigned: z.coerce.number().int().nullish(),
-  output_otu_num: z.coerce.number().int().nullish(),
-  output_read_count: z.coerce.number().int().nullish(),
+  dada2_min_fold_parent_over_abundance: z.number().int().nullish(),
+  dada2_n_reads_learn: z.number().int().nullish(),
+  deblur_trim_length: z.number().int().nullish(),
+  deblur_mean_error: z.number().nullish(),
+  deblur_indel_prob: z.number().nullish(),
+  deblur_indel_max: z.number().int().nullish(),
+  deblur_min_reads: z.number().int().nullish(),
+  deblur_min_size: z.number().int().nullish(),
+  repseqs_min_length: z.number().int().nullish(),
+  repseqs_max_length: z.number().int().nullish(),
+  repseqs_min_abundance: z.number().nullish(),
+  repseqs_min_prevalence: z.number().nullish(),
+  otu_num_tax_assigned: z.number().int().nullish(),
+  output_otu_num: z.number().int().nullish(),
+  output_read_count: z.number().int().nullish(),
   otu_final_description: z.string().nullish(),
   otu_raw_description: z.string().nullish(),
   qiime2_version: z.string().nullish(),
   tourmaline_asv_method: z.string().nullish(),
-  skl_confidence: z.coerce.number().nullish(),
-  min_consensus: z.coerce.number().nullish(),
+  skl_confidence: z.number().nullish(),
+  min_consensus: z.number().nullish(),
   tourmaline_classify_method: z.string().nullish(),
-  blca_confidence: z.coerce.number().nullish(),
-  percent_match: z.coerce.number().nullish(),
-  percent_match_Midpoint_ODE: z.coerce.number().nullish(),
-  percent_match_End_ODE: z.coerce.number().nullish(),
-  percent_query_cover: z.coerce.number().nullish(),
-  percent_query_cover_Midpoint_ODE: z.coerce.number().nullish(),
-  percent_query_cover_End_ODE: z.coerce.number().nullish(),
+  blca_confidence: z.number().nullish(),
+  percent_match: z.number().nullish(),
+  percent_match_Midpoint_ODE: z.number().nullish(),
+  percent_match_End_ODE: z.number().nullish(),
+  percent_query_cover: z.number().nullish(),
+  percent_query_cover_Midpoint_ODE: z.number().nullish(),
+  percent_query_cover_End_ODE: z.number().nullish(),
 })
 
 export type Analysis = z.infer<typeof AnalysisSchema>
@@ -465,6 +266,7 @@ export type AnalysisRelations = {
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
   Tags: TagWithRelations[];
+  AlphaDiversities: AlphaDiversityWithRelations[];
 };
 
 export type AnalysisWithRelations = Omit<z.infer<typeof AnalysisSchema>, "editHistory"> & {
@@ -477,6 +279,7 @@ export const AnalysisWithRelationsSchema: z.ZodType<AnalysisWithRelations> = Ana
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
   Tags: z.lazy(() => TagWithRelationsSchema).array(),
+  AlphaDiversities: z.lazy(() => AlphaDiversityWithRelationsSchema).array(),
 }))
 
 // ANALYSIS OPTIONAL DEFAULTS RELATION SCHEMA
@@ -488,6 +291,7 @@ export type AnalysisOptionalDefaultsRelations = {
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
   Tags: TagOptionalDefaultsWithRelations[];
+  AlphaDiversities: AlphaDiversityOptionalDefaultsWithRelations[];
 };
 
 export type AnalysisOptionalDefaultsWithRelations = Omit<z.infer<typeof AnalysisOptionalDefaultsSchema>, "editHistory"> & {
@@ -500,6 +304,7 @@ export const AnalysisOptionalDefaultsWithRelationsSchema: z.ZodType<AnalysisOpti
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
   Tags: z.lazy(() => TagOptionalDefaultsWithRelationsSchema).array(),
+  AlphaDiversities: z.lazy(() => AlphaDiversityOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // ANALYSIS PARTIAL RELATION SCHEMA
@@ -511,6 +316,7 @@ export type AnalysisPartialRelations = {
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
   Tags?: TagPartialWithRelations[];
+  AlphaDiversities?: AlphaDiversityPartialWithRelations[];
 };
 
 export type AnalysisPartialWithRelations = Omit<z.infer<typeof AnalysisPartialSchema>, "editHistory"> & {
@@ -523,6 +329,7 @@ export const AnalysisPartialWithRelationsSchema: z.ZodType<AnalysisPartialWithRe
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
+  AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 })).partial()
 
 export type AnalysisOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof AnalysisOptionalDefaultsSchema>, "editHistory"> & {
@@ -535,6 +342,7 @@ export const AnalysisOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Analy
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
+  AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 }).partial())
 
 export type AnalysisWithPartialRelations = Omit<z.infer<typeof AnalysisSchema>, "editHistory"> & {
@@ -547,6 +355,7 @@ export const AnalysisWithPartialRelationsSchema: z.ZodType<AnalysisWithPartialRe
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
+  AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
@@ -558,7 +367,7 @@ export const OccurrenceSchema = z.object({
   lib_id: z.string(),
   analysis_run_name: z.string(),
   featureid: z.string(),
-  organismQuantity: z.coerce.number().int(),
+  organismQuantity: z.number().int(),
 })
 
 export type Occurrence = z.infer<typeof OccurrenceSchema>
@@ -664,7 +473,7 @@ export const AssignmentSchema = z.object({
   analysis_run_name: z.string(),
   featureid: z.string(),
   taxonomy: z.string(),
-  Confidence: z.coerce.number(),
+  Confidence: z.number(),
 })
 
 export type Assignment = z.infer<typeof AssignmentSchema>
@@ -769,7 +578,7 @@ export const FeatureSchema = z.object({
   id: z.number().int(),
   featureid: z.string(),
   dna_sequence: z.string(),
-  sequenceLength_ODE: z.coerce.number().int(),
+  sequenceLength_ODE: z.number().int(),
 })
 
 export type Feature = z.infer<typeof FeatureSchema>
@@ -858,11 +667,8 @@ export const TaxonomySchema = z.object({
   id: z.number().int(),
   taxonomy: z.string(),
   verbatimIdentification: z.string(),
-  domain: z.string().nullish(),
+  higherClassification: z.string().nullish(),
   kingdom: z.string().nullish(),
-  supergroup: z.string().nullish(),
-  division: z.string().nullish(),
-  subdivision: z.string().nullish(),
   phylum: z.string().nullish(),
   class: z.string().nullish(),
   order: z.string().nullish(),
@@ -1023,6 +829,189 @@ export const TagWithPartialRelationsSchema: z.ZodType<TagWithPartialRelations> =
 }).partial())
 
 /////////////////////////////////////////
+// ALPHA DIVERSITY SCHEMA
+/////////////////////////////////////////
+
+export const AlphaDiversitySchema = z.object({
+  id: z.number().int(),
+  dateCalculated: z.coerce.date(),
+  finished: z.boolean(),
+  analysis_run_name: z.string(),
+  indexType: z.string(),
+  rarefied: z.boolean(),
+  depth: z.number().int().nullish(),
+})
+
+export type AlphaDiversity = z.infer<typeof AlphaDiversitySchema>
+
+/////////////////////////////////////////
+// ALPHA DIVERSITY PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const AlphaDiversityPartialSchema = AlphaDiversitySchema.partial()
+
+export type AlphaDiversityPartial = z.infer<typeof AlphaDiversityPartialSchema>
+
+// ALPHA DIVERSITY OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const AlphaDiversityOptionalDefaultsSchema = AlphaDiversitySchema.merge(z.object({
+  id: z.number().int().optional(),
+  dateCalculated: z.coerce.date().optional(),
+  finished: z.boolean().optional(),
+}))
+
+export type AlphaDiversityOptionalDefaults = z.infer<typeof AlphaDiversityOptionalDefaultsSchema>
+
+// ALPHA DIVERSITY RELATION SCHEMA
+//------------------------------------------------------
+
+export type AlphaDiversityRelations = {
+  Analysis: AnalysisWithRelations;
+  AlphaDiversityIndexes: AlphaDiversityIndexWithRelations[];
+};
+
+export type AlphaDiversityWithRelations = z.infer<typeof AlphaDiversitySchema> & AlphaDiversityRelations
+
+export const AlphaDiversityWithRelationsSchema: z.ZodType<AlphaDiversityWithRelations> = AlphaDiversitySchema.merge(z.object({
+  Analysis: z.lazy(() => AnalysisWithRelationsSchema),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexWithRelationsSchema).array(),
+}))
+
+// ALPHA DIVERSITY OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type AlphaDiversityOptionalDefaultsRelations = {
+  Analysis: AnalysisOptionalDefaultsWithRelations;
+  AlphaDiversityIndexes: AlphaDiversityIndexOptionalDefaultsWithRelations[];
+};
+
+export type AlphaDiversityOptionalDefaultsWithRelations = z.infer<typeof AlphaDiversityOptionalDefaultsSchema> & AlphaDiversityOptionalDefaultsRelations
+
+export const AlphaDiversityOptionalDefaultsWithRelationsSchema: z.ZodType<AlphaDiversityOptionalDefaultsWithRelations> = AlphaDiversityOptionalDefaultsSchema.merge(z.object({
+  Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexOptionalDefaultsWithRelationsSchema).array(),
+}))
+
+// ALPHA DIVERSITY PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type AlphaDiversityPartialRelations = {
+  Analysis?: AnalysisPartialWithRelations;
+  AlphaDiversityIndexes?: AlphaDiversityIndexPartialWithRelations[];
+};
+
+export type AlphaDiversityPartialWithRelations = z.infer<typeof AlphaDiversityPartialSchema> & AlphaDiversityPartialRelations
+
+export const AlphaDiversityPartialWithRelationsSchema: z.ZodType<AlphaDiversityPartialWithRelations> = AlphaDiversityPartialSchema.merge(z.object({
+  Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
+})).partial()
+
+export type AlphaDiversityOptionalDefaultsWithPartialRelations = z.infer<typeof AlphaDiversityOptionalDefaultsSchema> & AlphaDiversityPartialRelations
+
+export const AlphaDiversityOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AlphaDiversityOptionalDefaultsWithPartialRelations> = AlphaDiversityOptionalDefaultsSchema.merge(z.object({
+  Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
+}).partial())
+
+export type AlphaDiversityWithPartialRelations = z.infer<typeof AlphaDiversitySchema> & AlphaDiversityPartialRelations
+
+export const AlphaDiversityWithPartialRelationsSchema: z.ZodType<AlphaDiversityWithPartialRelations> = AlphaDiversitySchema.merge(z.object({
+  Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
+}).partial())
+
+/////////////////////////////////////////
+// ALPHA DIVERSITY INDEX SCHEMA
+/////////////////////////////////////////
+
+export const AlphaDiversityIndexSchema = z.object({
+  id: z.number().int(),
+  lib_id: z.string(),
+  parentId: z.number().int(),
+  index: z.number(),
+})
+
+export type AlphaDiversityIndex = z.infer<typeof AlphaDiversityIndexSchema>
+
+/////////////////////////////////////////
+// ALPHA DIVERSITY INDEX PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const AlphaDiversityIndexPartialSchema = AlphaDiversityIndexSchema.partial()
+
+export type AlphaDiversityIndexPartial = z.infer<typeof AlphaDiversityIndexPartialSchema>
+
+// ALPHA DIVERSITY INDEX OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const AlphaDiversityIndexOptionalDefaultsSchema = AlphaDiversityIndexSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type AlphaDiversityIndexOptionalDefaults = z.infer<typeof AlphaDiversityIndexOptionalDefaultsSchema>
+
+// ALPHA DIVERSITY INDEX RELATION SCHEMA
+//------------------------------------------------------
+
+export type AlphaDiversityIndexRelations = {
+  Library: LibraryWithRelations;
+  AlphaDiversity: AlphaDiversityWithRelations;
+};
+
+export type AlphaDiversityIndexWithRelations = z.infer<typeof AlphaDiversityIndexSchema> & AlphaDiversityIndexRelations
+
+export const AlphaDiversityIndexWithRelationsSchema: z.ZodType<AlphaDiversityIndexWithRelations> = AlphaDiversityIndexSchema.merge(z.object({
+  Library: z.lazy(() => LibraryWithRelationsSchema),
+  AlphaDiversity: z.lazy(() => AlphaDiversityWithRelationsSchema),
+}))
+
+// ALPHA DIVERSITY INDEX OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type AlphaDiversityIndexOptionalDefaultsRelations = {
+  Library: LibraryOptionalDefaultsWithRelations;
+  AlphaDiversity: AlphaDiversityOptionalDefaultsWithRelations;
+};
+
+export type AlphaDiversityIndexOptionalDefaultsWithRelations = z.infer<typeof AlphaDiversityIndexOptionalDefaultsSchema> & AlphaDiversityIndexOptionalDefaultsRelations
+
+export const AlphaDiversityIndexOptionalDefaultsWithRelationsSchema: z.ZodType<AlphaDiversityIndexOptionalDefaultsWithRelations> = AlphaDiversityIndexOptionalDefaultsSchema.merge(z.object({
+  Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
+  AlphaDiversity: z.lazy(() => AlphaDiversityOptionalDefaultsWithRelationsSchema),
+}))
+
+// ALPHA DIVERSITY INDEX PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type AlphaDiversityIndexPartialRelations = {
+  Library?: LibraryPartialWithRelations;
+  AlphaDiversity?: AlphaDiversityPartialWithRelations;
+};
+
+export type AlphaDiversityIndexPartialWithRelations = z.infer<typeof AlphaDiversityIndexPartialSchema> & AlphaDiversityIndexPartialRelations
+
+export const AlphaDiversityIndexPartialWithRelationsSchema: z.ZodType<AlphaDiversityIndexPartialWithRelations> = AlphaDiversityIndexPartialSchema.merge(z.object({
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
+  AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
+})).partial()
+
+export type AlphaDiversityIndexOptionalDefaultsWithPartialRelations = z.infer<typeof AlphaDiversityIndexOptionalDefaultsSchema> & AlphaDiversityIndexPartialRelations
+
+export const AlphaDiversityIndexOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AlphaDiversityIndexOptionalDefaultsWithPartialRelations> = AlphaDiversityIndexOptionalDefaultsSchema.merge(z.object({
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
+  AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
+}).partial())
+
+export type AlphaDiversityIndexWithPartialRelations = z.infer<typeof AlphaDiversityIndexSchema> & AlphaDiversityIndexPartialRelations
+
+export const AlphaDiversityIndexWithPartialRelationsSchema: z.ZodType<AlphaDiversityIndexWithPartialRelations> = AlphaDiversityIndexSchema.merge(z.object({
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
+  AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
+}).partial())
+
+/////////////////////////////////////////
 // PROJECT SCHEMA
 /////////////////////////////////////////
 
@@ -1071,7 +1060,7 @@ export const ProjectSchema = z.object({
   checkls_ver: z.string(),
   seq_archive: z.string().nullish(),
   code_repo: z.string().nullish(),
-  biological_rep: z.coerce.number().int().nullish(),
+  biological_rep: z.number().int().nullish(),
   sample_type: z.string(),
 })
 
@@ -1205,8 +1194,8 @@ export const SampleSchema = z.object({
   samp_category: z.string(),
   neg_cont_type: z.string().nullish(),
   pos_cont_type: z.string().nullish(),
-  decimalLatitude: z.coerce.number().nullish(),
-  decimalLongitude: z.coerce.number().nullish(),
+  decimalLatitude: z.number().nullish(),
+  decimalLongitude: z.number().nullish(),
   verbatimLatitude: z.string().nullish(),
   verbatimLongitude: z.string().nullish(),
   verbatimCoordinateSystem: z.string().nullish(),
@@ -1226,7 +1215,7 @@ export const SampleSchema = z.object({
   env_medium: z.string().nullish(),
   samp_collect_method: z.string().nullish(),
   samp_collect_device: z.string().nullish(),
-  samp_size: z.coerce.number().nullish(),
+  samp_size: z.number().nullish(),
   samp_size_unit: z.string().nullish(),
   serial_number: z.string().nullish(),
   line_id: z.string().nullish(),
@@ -1235,7 +1224,7 @@ export const SampleSchema = z.object({
   ctd_bottle_number: z.string().nullish(),
   replicate_number: z.string().nullish(),
   samp_collect_notes: z.string().nullish(),
-  samp_store_temp: z.coerce.number().nullish(),
+  samp_store_temp: z.number().nullish(),
   samp_store_sol: z.string().nullish(),
   samp_store_dur: z.string().nullish(),
   samp_store_method_additional: z.string().nullish(),
@@ -1244,33 +1233,33 @@ export const SampleSchema = z.object({
   samp_mat_process: z.string().nullish(),
   filter_onsite_dur: z.string().nullish(),
   size_frac_low: z.string().nullish(),
-  size_frac: z.coerce.number().nullish(),
-  filter_diameter: z.coerce.number().nullish(),
-  filter_surface_area: z.coerce.number().nullish(),
+  size_frac: z.number().nullish(),
+  filter_diameter: z.number().nullish(),
+  filter_surface_area: z.number().nullish(),
   filter_material: z.string().nullish(),
   filter_name: z.string().nullish(),
   precip_chem_prep: z.string().nullish(),
-  precip_force_prep: z.coerce.number().nullish(),
-  precip_time_prep: z.coerce.number().nullish(),
-  precip_temp_prep: z.coerce.number().nullish(),
+  precip_force_prep: z.number().nullish(),
+  precip_time_prep: z.number().nullish(),
+  precip_temp_prep: z.number().nullish(),
   prepped_samp_store_temp: z.string().nullish(),
   prepped_samp_store_sol: z.string().nullish(),
   prepped_samp_store_dur: z.string().nullish(),
   prep_method_additional: z.string().nullish(),
   prefilter_material: z.string().nullish(),
-  pump_flow_rate: z.coerce.number().nullish(),
+  pump_flow_rate: z.number().nullish(),
   pump_flow_rate_unit: z.string().nullish(),
   stationed_sample_dur: z.string().nullish(),
   extract_id: z.string().nullish(),
   extract_plate: z.string().nullish(),
-  extract_well_number: z.coerce.number().int().nullish(),
+  extract_well_number: z.number().int().nullish(),
   extract_well_position: z.string().nullish(),
   materialSampleID: z.string().nullish(),
   sample_derived_from: z.string().nullish(),
   sample_composed_of: z.string().nullish(),
   rel_cont_id: z.string().nullish(),
   biological_rep_relation: z.string().nullish(),
-  samp_vol_we_dna_ext: z.coerce.number().nullish(),
+  samp_vol_we_dna_ext: z.number().nullish(),
   samp_vol_we_dna_ext_unit: z.string().nullish(),
   nucl_acid_ext_lysis: z.string().nullish(),
   nucl_acid_ext_sep: z.string().nullish(),
@@ -1278,56 +1267,56 @@ export const SampleSchema = z.object({
   nucl_acid_ext_kit: z.string().nullish(),
   nucl_acid_ext_modify: z.string().nullish(),
   dna_cleanup_method: z.string().nullish(),
-  concentration: z.coerce.number().nullish(),
+  concentration: z.number().nullish(),
   concentration_method: z.string().nullish(),
-  ratioOfAbsorbance260_280: z.coerce.number().nullish(),
-  pool_dna_num: z.coerce.number().int().nullish(),
+  ratioOfAbsorbance260_280: z.number().nullish(),
+  pool_dna_num: z.number().int().nullish(),
   nucl_acid_ext_method_additional: z.string().nullish(),
   concentration_unit: z.string().nullish(),
   date_ext: z.coerce.date().nullish(),
-  dna_yield: z.coerce.number().nullish(),
+  dna_yield: z.number().nullish(),
   dna_yield_unit: z.string().nullish(),
   samp_weather: z.string().nullish(),
-  minimumDepthInMeters: z.coerce.number().nullish(),
-  maximumDepthInMeters: z.coerce.number().nullish(),
-  tot_depth_water_col: z.coerce.number().nullish(),
-  elev: z.coerce.number().nullish(),
-  temp: z.coerce.number().nullish(),
-  chlorophyll: z.coerce.number().nullish(),
-  light_intensity: z.coerce.number().nullish(),
-  misc_param: z.coerce.number().nullish(),
-  ph: z.coerce.number().nullish(),
+  minimumDepthInMeters: z.number().nullish(),
+  maximumDepthInMeters: z.number().nullish(),
+  tot_depth_water_col: z.number().nullish(),
+  elev: z.number().nullish(),
+  temp: z.number().nullish(),
+  chlorophyll: z.number().nullish(),
+  light_intensity: z.number().nullish(),
+  misc_param: z.number().nullish(),
+  ph: z.number().nullish(),
   ph_meth: z.string().nullish(),
-  salinity: z.coerce.number().nullish(),
-  suspend_part_matter: z.coerce.number().nullish(),
+  salinity: z.number().nullish(),
+  suspend_part_matter: z.number().nullish(),
   tidal_stage: z.string().nullish(),
-  turbidity: z.coerce.number().nullish(),
-  water_current: z.coerce.number().nullish(),
+  turbidity: z.number().nullish(),
+  water_current: z.number().nullish(),
   solar_irradiance: z.string().nullish(),
   wind_direction: z.string().nullish(),
-  wind_speed: z.coerce.number().nullish(),
-  diss_inorg_carb: z.coerce.number().nullish(),
-  diss_inorg_nitro: z.coerce.number().nullish(),
-  diss_org_carb: z.coerce.number().nullish(),
-  diss_org_nitro: z.coerce.number().nullish(),
-  diss_oxygen: z.coerce.number().nullish(),
-  tot_diss_nitro: z.coerce.number().nullish(),
-  tot_inorg_nitro: z.coerce.number().nullish(),
-  tot_nitro: z.coerce.number().nullish(),
-  tot_part_carb: z.coerce.number().nullish(),
-  tot_org_carb: z.coerce.number().nullish(),
-  tot_org_c_meth: z.coerce.number().nullish(),
-  tot_nitro_content: z.coerce.number().nullish(),
-  tot_nitro_cont_meth: z.coerce.number().nullish(),
-  tot_carb: z.coerce.number().nullish(),
-  part_org_carb: z.coerce.number().nullish(),
-  part_org_nitro: z.coerce.number().nullish(),
-  nitrate: z.coerce.number().nullish(),
-  nitrite: z.coerce.number().nullish(),
-  nitro: z.coerce.number().nullish(),
-  org_carb: z.coerce.number().nullish(),
-  org_matter: z.coerce.number().nullish(),
-  org_nitro: z.coerce.number().nullish(),
+  wind_speed: z.number().nullish(),
+  diss_inorg_carb: z.number().nullish(),
+  diss_inorg_nitro: z.number().nullish(),
+  diss_org_carb: z.number().nullish(),
+  diss_org_nitro: z.number().nullish(),
+  diss_oxygen: z.number().nullish(),
+  tot_diss_nitro: z.number().nullish(),
+  tot_inorg_nitro: z.number().nullish(),
+  tot_nitro: z.number().nullish(),
+  tot_part_carb: z.number().nullish(),
+  tot_org_carb: z.number().nullish(),
+  tot_org_c_meth: z.number().nullish(),
+  tot_nitro_content: z.number().nullish(),
+  tot_nitro_cont_meth: z.number().nullish(),
+  tot_carb: z.number().nullish(),
+  part_org_carb: z.number().nullish(),
+  part_org_nitro: z.number().nullish(),
+  nitrate: z.number().nullish(),
+  nitrite: z.number().nullish(),
+  nitro: z.number().nullish(),
+  org_carb: z.number().nullish(),
+  org_matter: z.number().nullish(),
+  org_nitro: z.number().nullish(),
   diss_inorg_carb_unit: z.string().nullish(),
   diss_inorg_nitro_unit: z.string().nullish(),
   diss_org_carb_unit: z.string().nullish(),
@@ -1350,23 +1339,23 @@ export const SampleSchema = z.object({
   tot_part_carb_unit: z.string().nullish(),
   ammonium: z.string().nullish(),
   ammonium_unit: z.string().nullish(),
-  carbonate: z.coerce.number().nullish(),
+  carbonate: z.number().nullish(),
   carbonate_unit: z.string().nullish(),
-  hydrogen_ion: z.coerce.number().nullish(),
-  nitrate_plus_nitrite: z.coerce.number().nullish(),
+  hydrogen_ion: z.number().nullish(),
+  nitrate_plus_nitrite: z.number().nullish(),
   nitrate_plus_nitrite_unit: z.string().nullish(),
-  omega_arag: z.coerce.number().nullish(),
-  pco2: z.coerce.number().int().nullish(),
+  omega_arag: z.number().nullish(),
+  pco2: z.number().int().nullish(),
   pco2_unit: z.string().nullish(),
-  phosphate: z.coerce.number().nullish(),
+  phosphate: z.number().nullish(),
   phosphate_unit: z.string().nullish(),
-  pressure: z.coerce.number().int().nullish(),
+  pressure: z.number().int().nullish(),
   pressure_unit: z.string().nullish(),
-  silicate: z.coerce.number().nullish(),
+  silicate: z.number().nullish(),
   silicate_unit: z.string().nullish(),
-  tot_alkalinity: z.coerce.number().nullish(),
+  tot_alkalinity: z.number().nullish(),
   tot_alkalinity_unit: z.string().nullish(),
-  transmittance: z.coerce.number().nullish(),
+  transmittance: z.number().nullish(),
   transmittance_unit: z.string().nullish(),
   organism: z.string().nullish(),
   sterilise_method: z.string().nullish(),
@@ -1606,27 +1595,27 @@ export const AssayPrepSchema = z.object({
   custom_mm: z.string().nullish(),
   pcr_cond: z.string().nullish(),
   nucl_acid_amp: z.string().nullish(),
-  amplificationReactionVolume: z.coerce.number().nullish(),
+  amplificationReactionVolume: z.number().nullish(),
   assay_validation: z.string().nullish(),
-  pcr_primer_vol_forward: z.coerce.number().nullish(),
-  pcr_primer_vol_reverse: z.coerce.number().nullish(),
-  pcr_primer_conc_forward: z.coerce.number().nullish(),
-  pcr_primer_conc_reverse: z.coerce.number().nullish(),
+  pcr_primer_vol_forward: z.number().nullish(),
+  pcr_primer_vol_reverse: z.number().nullish(),
+  pcr_primer_conc_forward: z.number().nullish(),
+  pcr_primer_conc_reverse: z.number().nullish(),
   probeReporter: z.string().nullish(),
   probeQuencher: z.string().nullish(),
   probe_seq: z.string().nullish(),
   probe_ref: z.string().nullish(),
-  probe_conc: z.coerce.number().nullish(),
-  pcr_dna_vol: z.coerce.number().nullish(),
-  pcr_rep: z.coerce.number().int().nullish(),
+  probe_conc: z.number().nullish(),
+  pcr_dna_vol: z.number().nullish(),
+  pcr_rep: z.number().int().nullish(),
   annealingTemp: z.string().nullish(),
-  pcr_cycles: z.coerce.number().nullish(),
+  pcr_cycles: z.number().nullish(),
   pcr_analysis_software: z.string().nullish(),
   pcr_method_additional: z.string().nullish(),
   assay_type: z.string(),
-  ampliconSize: z.coerce.number().nullish(),
-  ampliconSize_Midpoint_ODE: z.coerce.number().nullish(),
-  ampliconSize_End_ODE: z.coerce.number().nullish(),
+  ampliconSize: z.number().nullish(),
+  ampliconSize_Midpoint_ODE: z.number().nullish(),
+  ampliconSize_End_ODE: z.number().nullish(),
 })
 
 export type AssayPrep = z.infer<typeof AssayPrepSchema>
@@ -1745,22 +1734,22 @@ export const LibrarySchema = z.object({
   filename: z.string().nullish(),
   filename2: z.string().nullish(),
   seq_run_id: z.string(),
-  input_read_count: z.coerce.number().int().nullish(),
+  input_read_count: z.number().int().nullish(),
   checksum_filename: z.string().nullish(),
   checksum_filename2: z.string().nullish(),
-  lib_conc: z.coerce.number().nullish(),
+  lib_conc: z.number().nullish(),
   lib_conc_meth: z.string().nullish(),
   lib_conc_unit: z.string().nullish(),
-  phix_perc: z.coerce.number().nullish(),
+  phix_perc: z.number().nullish(),
   checksum_method: z.string().nullish(),
-  pcr2_amplificationReactionVolume: z.coerce.number().nullish(),
+  pcr2_amplificationReactionVolume: z.number().nullish(),
   pcr2_analysis_software: z.string().nullish(),
-  pcr2_annealingTemp: z.coerce.number().nullish(),
+  pcr2_annealingTemp: z.number().nullish(),
   pcr2_commercial_mm: z.string().nullish(),
   pcr2_cond: z.string().nullish(),
   pcr2_custom_mm: z.string().nullish(),
-  pcr2_cycles: z.coerce.number().int().nullish(),
-  pcr2_dna_vol: z.coerce.number().nullish(),
+  pcr2_cycles: z.number().int().nullish(),
+  pcr2_dna_vol: z.number().nullish(),
   pcr2_method_additional: z.string().nullish(),
   pcr2_plate_id: z.string().nullish(),
   pcr2_thermocycler: z.string().nullish(),
@@ -1800,6 +1789,7 @@ export type LibraryRelations = {
   Assay: AssayWithRelations;
   AssayPrep: AssayPrepWithRelations;
   Occurrences: OccurrenceWithRelations[];
+  AlphaDiversityIndexes: AlphaDiversityIndexWithRelations[];
 };
 
 export type LibraryWithRelations = Omit<z.infer<typeof LibrarySchema>, "userDefined"> & {
@@ -1812,6 +1802,7 @@ export const LibraryWithRelationsSchema: z.ZodType<LibraryWithRelations> = Libra
   Assay: z.lazy(() => AssayWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexWithRelationsSchema).array(),
 }))
 
 // LIBRARY OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1823,6 +1814,7 @@ export type LibraryOptionalDefaultsRelations = {
   Assay: AssayOptionalDefaultsWithRelations;
   AssayPrep: AssayPrepOptionalDefaultsWithRelations;
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
+  AlphaDiversityIndexes: AlphaDiversityIndexOptionalDefaultsWithRelations[];
 };
 
 export type LibraryOptionalDefaultsWithRelations = Omit<z.infer<typeof LibraryOptionalDefaultsSchema>, "userDefined"> & {
@@ -1835,6 +1827,7 @@ export const LibraryOptionalDefaultsWithRelationsSchema: z.ZodType<LibraryOption
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // LIBRARY PARTIAL RELATION SCHEMA
@@ -1846,6 +1839,7 @@ export type LibraryPartialRelations = {
   Assay?: AssayPartialWithRelations;
   AssayPrep?: AssayPrepPartialWithRelations;
   Occurrences?: OccurrencePartialWithRelations[];
+  AlphaDiversityIndexes?: AlphaDiversityIndexPartialWithRelations[];
 };
 
 export type LibraryPartialWithRelations = Omit<z.infer<typeof LibraryPartialSchema>, "userDefined"> & {
@@ -1858,6 +1852,7 @@ export const LibraryPartialWithRelationsSchema: z.ZodType<LibraryPartialWithRela
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 })).partial()
 
 export type LibraryOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof LibraryOptionalDefaultsSchema>, "userDefined"> & {
@@ -1870,6 +1865,7 @@ export const LibraryOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Librar
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 }).partial())
 
 export type LibraryWithPartialRelations = Omit<z.infer<typeof LibrarySchema>, "userDefined"> & {
@@ -1882,4 +1878,5 @@ export const LibraryWithPartialRelationsSchema: z.ZodType<LibraryWithPartialRela
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
+  AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 }).partial())

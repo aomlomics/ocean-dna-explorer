@@ -3,8 +3,9 @@
 import { Assignment } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAssignmentsFile } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";

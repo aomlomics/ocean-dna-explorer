@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
-import { stripSecureFields } from "@/app/helpers/prisma";
 import TableMetadata from "@/types/tableMetadata";
 import { getTableName, getZodType } from "@/app/helpers/schema";
+import { stripSecureFields } from "@/app/helpers/queries";
 
 export async function GET(
 	request: Request,

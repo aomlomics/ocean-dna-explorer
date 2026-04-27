@@ -2,8 +2,10 @@
 
 import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError } from "@/app/helpers/queries";
+import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
@@ -15,7 +17,7 @@ async function doSubmit(
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
-	const { userId, sessionClaims } = await auth();
+	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
@@ -188,49 +190,104 @@ async function doSubmit(
 		}
 
 		//submission
-		await prisma.$transaction([
-			prisma.analysis.create({
-				//@ts-ignore issue with Json database type
-				data: {
-					...analysis,
-					Tags: {
-						connect: dbTags
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.analysis.create({
+					//@ts-ignore issue with Json database type
+					data: {
+						...analysis,
+						Tags: {
+							connect: dbTags
+						}
 					}
-				}
-			}),
-			prisma.feature.createMany({
-				data: features,
-				skipDuplicates: true
-			}),
-			prisma.taxonomy.createMany({
-				data: taxonomies,
-				skipDuplicates: true
-			}),
-			prisma.assignment.createMany({
-				data: assignments
-			}),
-			prisma.occurrence.createMany({
-				data: occurrences
-			}),
-			...(otherTrusted.length
-				? [
-						prisma.analysis.updateMany({
-							where: {
-								analysis_run_name: {
-									in: otherTrusted
-								}
-							},
-							data: {
-								trusted: false
+				});
+
+				await tx.feature.createMany({
+					data: features,
+					skipDuplicates: true
+				});
+
+				await tx.taxonomy.createMany({
+					data: taxonomies,
+					skipDuplicates: true
+				});
+
+				await tx.assignment.createMany({
+					data: assignments
+				});
+
+				await tx.occurrence.createMany({
+					data: occurrences
+				});
+
+				if (otherTrusted.length) {
+					await tx.analysis.updateMany({
+						where: {
+							analysis_run_name: {
+								in: otherTrusted
 							}
-						})
-					]
-				: [])
-		]);
+						},
+						data: {
+							trusted: false
+						}
+					});
+				}
+			},
+			{
+				timeout: 3 * 60 * 1000
+			}
+		);
+
+		// await prisma.$transaction([
+		// 	prisma.analysis.create({
+		// 		//@ts-ignore issue with Json database type
+		// 		data: {
+		// 			...analysis,
+		// 			Tags: {
+		// 				connect: dbTags
+		// 			}
+		// 		}
+		// 	}),
+		// 	prisma.feature.createMany({
+		// 		data: features,
+		// 		skipDuplicates: true
+		// 	}),
+		// 	prisma.taxonomy.createMany({
+		// 		data: taxonomies,
+		// 		skipDuplicates: true
+		// 	}),
+		// 	prisma.assignment.createMany({
+		// 		data: assignments
+		// 	}),
+		// 	prisma.occurrence.createMany({
+		// 		data: occurrences
+		// 	}),
+		// 	...(otherTrusted.length
+		// 		? [
+		// 				prisma.analysis.updateMany({
+		// 					where: {
+		// 						analysis_run_name: {
+		// 							in: otherTrusted
+		// 						}
+		// 					},
+		// 					data: {
+		// 						trusted: false
+		// 					}
+		// 				})
+		// 			]
+		// 		: [])
+		// ]);
 
 		await analysisChannel.stream.success("Analysis sucessfully uploaded to database.");
 		await assignmentsChannel.stream.success("Features, Taxonomies, and Assignments successfully uploaded to database.");
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
+
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
+			method: "POST",
+			headers: {
+				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+			}
+		});
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
