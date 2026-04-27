@@ -67,7 +67,7 @@ const DEFAULT_OUTSIDE_COLOR = chroma("black");
 const DEFAULT_PALETTE = "YlGnBu";
 const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 5;
-const DEFAULT_CLUSTER_RADIUS = 50;
+const DEFAULT_CLUSTER_RADIUS = 0;
 const chromaMin = 35;
 
 function getShape(shape: any) {
@@ -1203,7 +1203,7 @@ function PopupWithSearch({
 }) {
 	return (
 		<Popup className="map-popup" maxWidth={maxWidth}>
-			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
+			<div className="card card-xs card-body justify-center min-h-11.25 min-w-11.25 max-h-50 bg-base-100 shadow-sm p-4 gap-0">
 				<PopupWithSearchBody
 					table={table}
 					titleTable={titleTable}
@@ -1497,7 +1497,7 @@ function Collapsible({
 
 	let panel = (
 		<div
-			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] gap-0 bg-base-100 shadow-sm p-0 ${
+			className={`card card-xs card-body justify-center min-h-11.25 min-w-11.25 gap-0 bg-base-100 shadow-sm p-0 ${
 				collapse ? "hidden" : ""
 			}`}
 		>

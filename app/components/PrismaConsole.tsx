@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { ChangeEvent, SubmitEvent, useRef, useState } from "react";
 import WarningButton from "./WarningButton";
 import { useAuth } from "@clerk/nextjs";
 import { RolePermissions } from "@/types/objects";
@@ -90,7 +90,7 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 		}
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		try {
@@ -111,7 +111,7 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 	}
 
 	return (
-		<div className="min-h-[500px] flex flex-col">
+		<div className="min-h-125 flex flex-col">
 			{confirmed ? (
 				<form className="flex flex-col gap-6 grow" onSubmit={handleSubmit}>
 					<h1 className="text-4xl font-semibold text-primary">Prisma Console</h1>

@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { RolePermissions } from "@/types/objects";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 

@@ -1,11 +1,11 @@
 import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
-import { JsonValue } from "@prisma/client/runtime/library";
 import TableMetadata, { DataTableNames, RelationMetadata, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
 import { capitalizeTable, deadBooleanToString } from "./utils";
 import { DbType } from "@/types/globals";
+import { JsonValue } from "@prisma/client/runtime/client";
 
 export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	const newEnum = {} as Record<string, string>;

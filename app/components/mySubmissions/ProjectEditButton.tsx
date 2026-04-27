@@ -110,7 +110,7 @@ export default function ProjectEditButton({
 		setLoading(false);
 	}
 
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+	async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		modalXRef.current!.disabled = true;

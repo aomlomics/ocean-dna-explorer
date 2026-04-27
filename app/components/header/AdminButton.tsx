@@ -1,13 +1,12 @@
 "use client";
 
-import { Role } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function AdminButton() {
 	const { sessionClaims } = useAuth();
-	const role = sessionClaims?.metadata.role as Role;
+	const role = sessionClaims?.metadata.role;
 
 	if (!role || !RolePermissions[role].includes("manageUsers")) {
 		return <></>;

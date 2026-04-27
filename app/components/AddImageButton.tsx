@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { SubmitEvent, useRef, useState } from "react";
 import { Attribution } from "../generated/prismaImages/client";
 import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
@@ -26,7 +26,7 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 		formRef.current?.reset();
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		setLoading(true);

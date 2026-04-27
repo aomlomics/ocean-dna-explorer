@@ -1,7 +1,8 @@
 "use server";
 
 import { Project } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket, Role } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
@@ -21,7 +22,8 @@ export default async function projectUpdateUserIdsAction(
 
 	const users = (await client.users.getUserList({ userId: newUserIds })).data;
 	for (const u of users) {
-		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+		const uRole = u.publicMetadata.role as Role;
+		if (!uRole || !RolePermissions[uRole].includes("contribute")) {
 			throw new Error(`${u.fullName} does not have permission to contribute.`);
 		}
 	}

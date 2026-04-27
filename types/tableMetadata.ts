@@ -2,6 +2,7 @@ import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum, ZodObject } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
 import { uncapitalizeTable } from "@/app/helpers/utils";
+import { TaxonomicRanks } from "./objects";
 
 export type RelationMetadata = {
 	field: string;
@@ -155,19 +156,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.TaxonomySchema,
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
 		titleField: "taxonomy",
-		subFields: [
-			"domain",
-			"kingdom",
-			"supergroup",
-			"division",
-			"subdivision",
-			"phylum",
-			"class",
-			"order",
-			"family",
-			"genus",
-			"species"
-		]
+		subFields: TaxonomicRanks
 	},
 	tag: {
 		plural: "Tags",

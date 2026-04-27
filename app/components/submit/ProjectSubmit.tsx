@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
+import { SubmitEvent, Fragment, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
 import { NetworkProgressPacket } from "@/types/globals";
@@ -79,7 +79,7 @@ export default function ProjectSubmit() {
 		modalRef.current?.showModal();
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 		setLoading(true);
 
@@ -299,7 +299,6 @@ export default function ProjectSubmit() {
 					</SubmitFormSection>
 				</div>
 			</form>
-
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
 				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}

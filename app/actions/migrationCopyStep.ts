@@ -2,11 +2,12 @@
 
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "../generated/prisma/client";
-import { unsafePrisma, updateManyRaw } from "../helpers/prisma";
+import { unsafePrisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
 import { uncapitalizeTable } from "../helpers/utils";
+import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
 	return value !== null && value !== undefined && value.toString;
@@ -25,15 +26,18 @@ export default async function migrationCopyStepAction() {
 			throw new Error("Invalid role.");
 		}
 
-		const oldFieldsByTable = TableNames.reduce((acc, t) => {
-			const table = uncapitalizeTable(t as Prisma.ModelName);
-			const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
-			if (tempFields.length) {
-				acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));
-			}
+		const oldFieldsByTable = TableNames.reduce(
+			(acc, t) => {
+				const table = uncapitalizeTable(t as Prisma.ModelName);
+				const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
+				if (tempFields.length) {
+					acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));
+				}
 
-			return acc;
-		}, {} as Record<Uncapitalize<Prisma.ModelName>, string[]>);
+				return acc;
+			},
+			{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
+		);
 
 		await unsafePrisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
@@ -42,9 +46,8 @@ export default async function migrationCopyStepAction() {
 				// @ts-ignore
 				const result = (await tx[table].findMany({
 					select: {
-						//@ts-ignore
-						...oldFieldsByTable[t].reduce(
-							(acc: Record<string, true>, field: string) => ({ ...acc, [field]: true }),
+						...oldFieldsByTable[table].reduce(
+							(acc: Record<string, boolean>, field: string) => ({ ...acc, [field]: true }),
 							{}
 						),
 						id: true

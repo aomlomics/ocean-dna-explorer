@@ -1,4 +1,5 @@
-import { handlePrismaError } from "@/app/helpers/queries";
+import { unsafePrisma } from "@/app/helpers/prisma";
+import { handlePrismaError, seedAssays } from "@/app/helpers/queries";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
@@ -9,23 +10,7 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	}
 
 	try {
-		// console.log("empty features delete");
-		// await unsafePrisma.feature.deleteMany({
-		// 	where: {
-		// 		Occurrences: {
-		// 			none: {}
-		// 		}
-		// 	}
-		// });
-
-		// console.log("empty taxonomies delete");
-		// await unsafePrisma.taxonomy.deleteMany({
-		// 	where: {
-		// 		Assignments: {
-		// 			none: {}
-		// 		}
-		// 	}
-		// });
+		await seedAssays(unsafePrisma);
 
 		return NextResponse.json({ statusMessage: "success" });
 	} catch (err: any) {

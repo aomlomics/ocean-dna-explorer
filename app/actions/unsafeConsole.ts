@@ -38,7 +38,6 @@ export default async function unsafeConsoleAction(
 			return { statusMessage: "error", error: "Query must be string." };
 		}
 
-		//@ts-ignore
 		JSON5.parse(query);
 		// await unsafePrisma[model][modelQuery](JSON.parse(query));
 

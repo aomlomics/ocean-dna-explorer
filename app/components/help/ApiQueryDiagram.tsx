@@ -62,14 +62,10 @@ export default function ApiQueryDiagram({
 					{allParts.map((part, index) => (
 						<div key={index} className="flex items-start space-x-3">
 							<div
-								className={`w-3 h-3 mt-1.5 rounded-full flex-shrink-0 ${
-									colorMap[part.colorClass] || "bg-base-content"
-								}`}
+								className={`w-3 h-3 mt-1.5 rounded-full shrink-0 ${colorMap[part.colorClass] || "bg-base-content"}`}
 							></div>
 							<div>
-								<div className={`font-mono text-sm break-all font-bold ${part.colorClass}`}>
-									{part.value}
-								</div>
+								<div className={`font-mono text-sm break-all font-bold ${part.colorClass}`}>{part.value}</div>
 								<div className="text-base-content/70 text-sm">{part.label}</div>
 							</div>
 						</div>
@@ -79,7 +75,7 @@ export default function ApiQueryDiagram({
 				{/* Desktop View: Detailed Breakdown */}
 				<div className="hidden md:block space-y-4 px-2">
 					<div className="flex items-center space-x-4">
-						<div className="flex-shrink-0 w-28">
+						<div className="shrink-0 w-28">
 							<div className="font-mono text-xs font-bold text-base-content/60 tracking-widest">ENDPOINT</div>
 						</div>
 						<div className="font-mono text-sm">
@@ -91,10 +87,8 @@ export default function ApiQueryDiagram({
 					{parameters &&
 						parameters.map((param, index) => (
 							<div key={index} className="flex items-center space-x-4">
-								<div className="flex-shrink-0 w-28">
-									<div className="font-mono text-xs font-bold text-base-content/60 tracking-widest">
-										PARAMETER
-									</div>
+								<div className="shrink-0 w-28">
+									<div className="font-mono text-xs font-bold text-base-content/60 tracking-widest">PARAMETER</div>
 								</div>
 								<div className="font-mono text-sm break-all">
 									<span className={`font-bold ${param.colorClass}`}>{param.value}</span>

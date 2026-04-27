@@ -1,19 +1,17 @@
-datasource db {
-    provider  = "postgresql"
-    url       = env("IMAGE_POSTGRES_PRISMA_URL")
-    directUrl = env("IMAGE_POSTGRES_URL_NON_POOLING")
+datasource images_db {
+    provider = "postgresql"
 }
 
-generator js {
-    provider            = "prisma-client-js"
-    output              = "../app/generated/prismaImages/client"
+generator images_client {
+    provider            = "prisma-client"
+    output              = "../app/generated/prismaImages"
     runtime             = "edge-light"
     importFileExtension = ""
 }
 
-generator zod {
+generator images_zod {
     provider                         = "zod-prisma-types"
-    prismaClientPath                 = "@/app/generated/prismaImages/client"
+    prismaClientPath                 = "@/app/generated/prismaImages"
     createInputTypes                 = false
     addIncludeType                   = false
     addSelectType                    = false
