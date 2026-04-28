@@ -8,36 +8,20 @@ import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 import ClientMap from "../components/map/ClientMap";
 import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
-import DashCard from "../components/dashboard/DashCard";
+import DashCard from "../components/dataSummary/DashCard";
+import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
 import {
 	TopInstitutionsCard,
 	SamplingEnvironmentsCard,
-	SampleCategoriesCard,
+	SamplesOverTimeCard,
 	TemporalCoverageCard,
-	DepthCoverageCard,
 	MetadataCompletenessCard,
+	TableCountsCard,
 	WidgetCardSkeleton
 } from "../components/DashboardExtras";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
-
-const NullComponent = () => null;
-const MainStatsSafe = MainStats ?? NullComponent;
-const MainStatsSkeletonSafe = MainStatsSkeleton ?? NullComponent;
-const AssayStatsSafe = AssayStats ?? NullComponent;
-const TopTaxonomiesSummarySafe = TopTaxonomiesSummary ?? NullComponent;
-const ClientMapSafe = ClientMap ?? NullComponent;
-const DataSummaryHighlightsSafe = DataSummaryHighlights ?? NullComponent;
-const FeaturedOrganismsSectionSafe = FeaturedOrganismsSection ?? NullComponent;
-const DashCardSafe = DashCard ?? NullComponent;
-const TopInstitutionsCardSafe = TopInstitutionsCard ?? NullComponent;
-const SamplingEnvironmentsCardSafe = SamplingEnvironmentsCard ?? NullComponent;
-const SampleCategoriesCardSafe = SampleCategoriesCard ?? NullComponent;
-const TemporalCoverageCardSafe = TemporalCoverageCard ?? NullComponent;
-const DepthCoverageCardSafe = DepthCoverageCard ?? NullComponent;
-const MetadataCompletenessCardSafe = MetadataCompletenessCard ?? NullComponent;
-const WidgetCardSkeletonSafe = WidgetCardSkeleton ?? NullComponent;
 
 export default function Home() {
 	return (
@@ -106,24 +90,25 @@ export default function Home() {
 			>
 				<div className="max-w-7xl mx-auto space-y-14">
 
-					{/* Row 1 — The 4 headline stat cards. */}
-					<Suspense fallback={<MainStatsSkeletonSafe />}>
-						<MainStatsSafe />
+					{/*
+					 * Row 1 — The 4 headline stat cards at the top. This row is
+					 * untouched on purpose — the user likes its current look,
+					 * animation and skeleton.
+					 */}
+					<Suspense fallback={<MainStatsSkeleton />}>
+						<MainStats />
 					</Suspense>
 
 					{/*
-					 * Row 2 — Map + right column that stacks Target Genes on top and
-					 * Top Institutions on the bottom. Target Genes is intentionally
-					 * shorter now; map's height grows via flex to line up roughly
-					 * with the bottom of the Top Institutions list.
-					 *
-					 * The map has NO card wrapper or title — the map is self-
-					 * explanatory, so we just give it a rounded container.
+					 * Row 2 — Map on the left, three small stat cards stacked on
+					 * the right (Target Genes donut, Temporal Coverage, Data
+					 * Contributors). The map fills its column edge-to-edge, no
+					 * decorative wrapper.
 					 */}
 					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-						<div className="lg:col-span-8 relative rounded-2xl overflow-hidden shadow-[0_10px_28px_-16px_rgba(0,0,0,0.5),0_2px_6px_-2px_rgba(0,0,0,0.22)]">
-							<div className="h-[420px] sm:h-[520px] lg:h-full min-h-[520px] w-full">
-								<ClientMapSafe
+						<div className="lg:col-span-8">
+							<div className="h-[420px] sm:h-[520px] w-full">
+								<ClientMap
 									url={"/api/sample"}
 									legend
 									titleTable="project"
@@ -134,7 +119,7 @@ export default function Home() {
 						</div>
 
 						<div className="lg:col-span-4 flex flex-col gap-5">
-							<DashCardSafe
+							<DashCard
 								title="Target genes"
 								info={{
 									title: "Target genes",
@@ -157,58 +142,73 @@ export default function Home() {
 								}}
 							>
 								<Suspense fallback={<div className="h-64 skeleton rounded-lg" />}>
-									<AssayStatsSafe compact />
+									<AssayStats compact />
 								</Suspense>
-							</DashCardSafe>
-							<Suspense fallback={<WidgetCardSkeletonSafe className="h-64" />}>
-								<TopInstitutionsCardSafe />
+							</DashCard>
+							<Suspense fallback={<WidgetCardSkeleton className="h-56" />}>
+								<TemporalCoverageCard />
+							</Suspense>
+							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
+								<TopInstitutionsCard />
 							</Suspense>
 						</div>
 					</div>
 
 					{/* Row 3 — Latest submissions (project + analysis) */}
 					<Suspense>
-						<DataSummaryHighlightsSafe />
+						<DataSummaryHighlights />
 					</Suspense>
 
 					{/*
-					 * Row 4 — Dispersed real-data widgets. Three useful stats about
-					 * the sampling record. These all hit the Sample table directly
-					 * with single-pass aggregates, so they're cheap.
+					 * Row 4 — Samples over time line chart paired with the
+					 * env_local_scale donut (formerly Sampling Environments,
+					 * formerly under the map). 7/5 split keeps the line chart
+					 * the feature while giving the donut + legend room to
+					 * breathe.
 					 */}
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-						<Suspense fallback={<WidgetCardSkeletonSafe />}>
-							<SamplingEnvironmentsCardSafe />
-						</Suspense>
-						<Suspense fallback={<WidgetCardSkeletonSafe />}>
-							<TemporalCoverageCardSafe />
-						</Suspense>
-						<Suspense fallback={<WidgetCardSkeletonSafe />}>
-							<DepthCoverageCardSafe />
-						</Suspense>
+					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+						<div className="lg:col-span-7">
+							<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
+								<SamplesOverTimeCard />
+							</Suspense>
+						</div>
+						<div className="lg:col-span-5">
+							<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
+								<SamplingEnvironmentsCard />
+							</Suspense>
+						</div>
 					</div>
 
 					{/* Row 5 — Featured Organisms carousel */}
-					<FeaturedOrganismsSectionSafe />
+					<FeaturedOrganismsSection />
 
-					{/* Row 6 — Life Across ODE (moved AFTER featured orgs) */}
+					{/* Row 6 — Life Across ODE */}
 					<Suspense>
-						<TopTaxonomiesSummarySafe />
+						<TopTaxonomiesSummary />
 					</Suspense>
 
 					{/*
-					 * Row 7 — Metadata Completeness (wider, holistic) alongside
-					 * Sample Categories so the metadata row still feels balanced.
+					 * Row 7 — Three equal-width stat cards: Metadata richness
+					 * (tall radials), Depth Coverage (the ocean-floor art card),
+					 * and Explore-the-data "by the numbers" tiles. Each card is
+					 * one quarter-width tile so none feels overgrown.
 					 */}
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-						<div className="lg:col-span-2">
-							<Suspense fallback={<WidgetCardSkeletonSafe className="h-60" />}>
-								<MetadataCompletenessCardSafe />
+					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+						<div className="lg:col-span-4">
+							<Suspense fallback={<WidgetCardSkeleton className="h-112" />}>
+								<MetadataCompletenessCard />
 							</Suspense>
 						</div>
-						<Suspense fallback={<WidgetCardSkeletonSafe className="h-60" />}>
-							<SampleCategoriesCardSafe />
-						</Suspense>
+						<div className="lg:col-span-4">
+							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
+								<DepthCoverageCard />
+							</Suspense>
+						</div>
+						<div className="lg:col-span-4">
+							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
+								<TableCountsCard />
+							</Suspense>
+						</div>
 					</div>
 				</div>
 

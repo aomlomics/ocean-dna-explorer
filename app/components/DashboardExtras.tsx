@@ -1,21 +1,74 @@
-import { publicPrisma } from "@/app/helpers/prisma";
-import DashCard from "./dashboard/DashCard";
+import Link from "next/link";
+import { publicPrisma, unsafePrisma } from "@/app/helpers/prisma";
+import DashCard from "./dataSummary/DashCard";
+import DoughnutChart from "./charts/DoughnutChart";
+import { EARLIEST_VALID_SAMPLE_DATE } from "./dataSummary/TemporalCoverageCard";
 
 /**
  * ---------------------------------------------------------------------------
- * Individual, real-data dashboard widgets
+ * Individual, real-data dashboard widgets for the Data Summary.
  * ---------------------------------------------------------------------------
  * Each widget is its own async server component so the page can arrange them
- * newspaper-style — alongside the map, stacked under Target Genes, in their
- * own rows, etc. — without one giant "widget row" dictating the layout.
+ * newspaper-style — alongside the map, under Target Genes, in their own
+ * rows, etc. — without one giant "widget row" dictating the layout.
  *
- * Every query is a single COUNT / GROUP BY / AGGREGATE pass against a single
- * table and uses publicPrisma (which already filters isPrivate=false), so
- * they're cheap even on a large dataset.
+ * A few cross-cutting notes:
+ *   - All Prisma reads go through publicPrisma, which already filters
+ *     isPrivate=false automatically, so counts/aggregates only include
+ *     public data.
+ *   - Some fields use -9999 as a "not applicable" sentinel. For dates this
+ *     can surface as a very-early DateTime (e.g. year <1900) or — more
+ *     subtly — as a Unix-epoch ghost (≈1969-12-31). For depths it surfaces
+ *     as a large negative number. Every widget that aggregates these
+ *     fields filters sentinels out BEFORE the min/max/avg is taken so the
+ *     dashboard never shows "9999 BCE" or "-9999 m".
+ *   - Raw SQL uses unsafePrisma + an explicit isPrivate=false JOIN, because
+ *     $queryRaw bypasses the publicPrisma $extends wrapper.
+ *   - Each card uses the shared DashCard shell so they all read as part of
+ *     the same dashboard family.
  * ---------------------------------------------------------------------------
  */
 
-// --------------------------- Top Institutions ----------------------------
+// Backward-compat alias: older compiled chunks referenced EARLIEST_VALID_DATE.
+const EARLIEST_VALID_DATE = EARLIEST_VALID_SAMPLE_DATE;
+
+type RichnessEntityConfig = {
+	label: string;
+	modelName: "Project" | "Sample" | "Assay" | "Analysis";
+	delegate: "project" | "sample" | "assay" | "analysis";
+	href: string;
+};
+
+const METADATA_RICHNESS_ENTITIES: RichnessEntityConfig[] = [
+	{ label: "Projects", modelName: "Project", delegate: "project", href: "/explore/project" },
+	{ label: "Samples", modelName: "Sample", delegate: "sample", href: "/explore/sample" },
+	{ label: "Assays", modelName: "Assay", delegate: "assay", href: "/explore/assay" },
+	{ label: "Analyses", modelName: "Analysis", delegate: "analysis", href: "/explore/analysis" }
+];
+
+function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"]): string[] {
+	const runtimeDataModel = (unsafePrisma as unknown as {
+		_runtimeDataModel?: {
+			models?: Record<string, { fields?: { name: string; kind: string; isRequired: boolean; isList: boolean }[] }>;
+		};
+	})._runtimeDataModel;
+
+	const model = runtimeDataModel?.models?.[modelName];
+	if (!model?.fields) return [];
+
+	// Include every optional scalar metadata column (no hard-coded field list).
+	return model.fields
+		.filter((field) => field.kind === "scalar" && !field.isRequired && !field.isList)
+		.map((field) => field.name);
+}
+
+// ============================ Data Contributors ============================
+/**
+ * Renamed from "Top institutions". Same data (group public projects by
+ * the institution field), but presented as the data contributors of the
+ * platform. Long institution names are allowed to wrap across multiple
+ * lines instead of truncating, since these are a small, high-value list.
+ */
 export async function TopInstitutionsCard() {
 	const rows = await publicPrisma.project.groupBy({
 		by: ["institution"],
@@ -30,13 +83,13 @@ export async function TopInstitutionsCard() {
 
 	return (
 		<DashCard
-			title="Top institutions"
-			subtitle="By submitted public projects"
+			title="Data Contributors"
+			subtitle="By number of submitted public projects"
 			padding="md"
 			info={{
-				title: "Top institutions",
+				title: "Data Contributors",
 				description:
-					"Counts the number of public projects submitted by each institution. An institution is whatever was entered in the Project’s institution field.",
+					"Institutions contributing the most public projects to ODE. The institution name is whatever was entered in each project's `institution` field — same string is treated as the same contributor.",
 				links: [{ label: "Browse all projects", href: "/explore/project" }]
 			}}
 		>
@@ -45,16 +98,18 @@ export async function TopInstitutionsCard() {
 					<li className="text-sm text-base-content/60 italic py-2">No institution data yet.</li>
 				)}
 				{institutions.map((inst, idx) => (
-					<li key={inst.name} className="flex items-center justify-between py-1.5 text-sm gap-3">
-						<span className="flex items-center gap-2 min-w-0">
-							<span className="text-[11px] w-4 text-right text-primary/80 font-semibold tabular-nums">
+					<li key={inst.name} className="flex items-start justify-between py-2 text-sm gap-3">
+						<span className="flex items-start gap-2 min-w-0">
+							<span className="text-[11px] mt-0.5 w-4 text-right text-primary/80 font-semibold tabular-nums shrink-0">
 								{idx + 1}
 							</span>
-							<span className="truncate text-base-content" title={inst.name}>
+							{/* Allow the name to wrap to multiple lines instead of
+							    truncating — institutions can have very long names. */}
+							<span className="text-base-content leading-snug wrap-break-word" title={inst.name}>
 								{inst.name}
 							</span>
 						</span>
-						<span className="text-xs font-semibold text-base-content/80 tabular-nums">
+						<span className="text-xs font-semibold text-base-content/80 tabular-nums shrink-0 mt-0.5">
 							{inst.count}
 						</span>
 					</li>
@@ -64,91 +119,44 @@ export async function TopInstitutionsCard() {
 	);
 }
 
-// ------------------------ Sampling Environments -------------------------
-// Per user: switch from env_broad_scale to env_local_scale.
+// ========================= Sampling Environments ===========================
+/**
+ * Donut chart of env_local_scale values across all public samples. Reuses
+ * the shared DoughnutChart so the visual language matches Target Genes
+ * and the previous Sample Categories donut. We pull the top N values and
+ * stuff the long tail into a single "Other" slice so the legend doesn't
+ * blow out at hundreds of ENVO terms.
+ */
+const ENV_SCALE_TOP_N = 8;
 export async function SamplingEnvironmentsCard() {
 	const rows = await publicPrisma.sample.groupBy({
 		by: ["env_local_scale"],
 		where: { env_local_scale: { not: null } },
 		_count: { samp_name: true },
-		orderBy: { _count: { samp_name: "desc" } },
-		take: 5
+		orderBy: { _count: { samp_name: "desc" } }
 	});
-	const envs = rows
+	const all = rows
 		.filter((r) => r.env_local_scale)
 		.map((r) => ({ label: r.env_local_scale as string, count: r._count.samp_name }));
 
-	return (
-		<DashCard
-			title="Sampling environments"
-			subtitle="Top env_local_scale values"
-			info={{
-				title: "Sampling environments",
-				description:
-					"Groups public samples by their env_local_scale (ENVO term describing the immediate environment being sampled). The top 5 environments are shown with sample counts.",
-				links: [{ label: "Browse samples", href: "/explore/sample" }]
-			}}
-		>
-			<ul className="space-y-2.5 mt-1">
-				{envs.length === 0 && (
-					<li className="text-sm text-base-content/60 italic py-2">No environment data yet.</li>
-				)}
-				{envs.map((env, idx) => {
-					const max = envs[0].count;
-					const widthPct = Math.max(4, Math.round((env.count / max) * 100));
-					return (
-						<li key={env.label}>
-							<div className="flex items-center justify-between text-sm mb-1 gap-3">
-								<span className="flex items-center gap-2 min-w-0">
-									<span className="text-[11px] w-4 text-right text-primary/80 font-semibold tabular-nums">
-										{idx + 1}
-									</span>
-									<span className="truncate text-base-content capitalize" title={env.label}>
-										{env.label}
-									</span>
-								</span>
-								<span className="text-xs font-semibold text-base-content/80 tabular-nums">
-									{env.count.toLocaleString()}
-								</span>
-							</div>
-							<div className="h-1.5 rounded-full bg-base-200/70 overflow-hidden">
-								<div
-									className="h-full rounded-full bg-linear-to-r from-primary/70 to-primary"
-									style={{ width: `${widthPct}%` }}
-								/>
-							</div>
-						</li>
-					);
-				})}
-			</ul>
-		</DashCard>
-	);
-}
+	const top = all.slice(0, ENV_SCALE_TOP_N);
+	const tail = all.slice(ENV_SCALE_TOP_N);
+	const tailSum = tail.reduce((sum, t) => sum + t.count, 0);
+	const slices = tailSum > 0 ? [...top, { label: `Other (${tail.length})`, count: tailSum }] : top;
 
-// --------------------------- Sample Categories ---------------------------
-// samp_category is a required field so coverage is 100%. It's a useful
-// breakdown of sample type (e.g. sample vs control vs blank).
-export async function SampleCategoriesCard() {
-	const rows = await publicPrisma.sample.groupBy({
-		by: ["samp_category"],
-		_count: { samp_name: true },
-		orderBy: { _count: { samp_name: "desc" } }
-	});
-	const totalSamples = rows.reduce((sum, r) => sum + r._count.samp_name, 0);
-	const categories = rows.map((r) => ({ label: r.samp_category, count: r._count.samp_name }));
+	const totalSamples = all.reduce((sum, e) => sum + e.count, 0);
 
 	return (
 		<DashCard
-			title="Sample categories"
-			subtitle="Breakdown of public samples"
+			title="env_local_scale values"
 			info={{
-				title: "Sample categories",
+				title: "env_local_scale values",
 				description:
-					"The samp_category field classifies each sample as e.g. a biological sample, a negative control, a positive control, etc. This chart shows how many public samples fall into each category.",
+					"Distribution of public samples grouped by their env_local_scale (ENVO term for the immediate environment sampled). The top values are shown as their own slices; everything else is collapsed into 'Other' so the legend stays readable.",
 				links: [{ label: "Browse samples", href: "/explore/sample" }]
 			}}
 		>
-			<div className="flex items-baseline justify-between mb-3">
+			<div className="flex items-baseline justify-between mb-2">
 				<span className="text-2xl font-bold text-base-content tabular-nums leading-none">
 					{totalSamples.toLocaleString()}
 				</span>
@@ -156,266 +164,424 @@ export async function SampleCategoriesCard() {
 					Public samples
 				</span>
 			</div>
-			<ul className="space-y-2">
-				{categories.length === 0 && (
-					<li className="text-sm text-base-content/60 italic py-2">No sample data yet.</li>
-				)}
-				{categories.map((cat) => {
-					const pct = totalSamples ? Math.round((cat.count / totalSamples) * 100) : 0;
-					return (
-						<li key={cat.label}>
-							<div className="flex items-center justify-between text-sm mb-1 gap-3">
-								<span className="truncate text-base-content capitalize" title={cat.label}>
-									{cat.label}
-								</span>
-								<span className="text-xs text-base-content/70 tabular-nums">
-									{cat.count.toLocaleString()}{" "}
-									<span className="text-base-content/45">· {pct}%</span>
-								</span>
-							</div>
-							<div className="h-1.5 rounded-full bg-base-200/70 overflow-hidden">
-								<div
-									className="h-full rounded-full bg-linear-to-r from-secondary/70 to-secondary"
-									style={{ width: `${Math.max(2, pct)}%` }}
-								/>
-							</div>
-						</li>
-					);
-				})}
-			</ul>
+
+			{slices.length === 0 ? (
+				<div className="text-sm text-base-content/60 italic py-2">No environment data yet.</div>
+			) : (
+				<DoughnutChart
+					labels={slices.map((s) => s.label)}
+					data={slices.map((s) => s.count)}
+					compact
+				/>
+			)}
 		</DashCard>
 	);
 }
 
-// --------------------------- Temporal Coverage ---------------------------
-export async function TemporalCoverageCard() {
-	const agg = await publicPrisma.sample.aggregate({
-		_min: { eventDate: true },
-		_max: { eventDate: true },
-		_count: { eventDate: true }
-	});
-	const min = agg._min.eventDate;
-	const max = agg._max.eventDate;
-	const totalWithDate = agg._count.eventDate;
+// ========================== Temporal Coverage ==============================
+// Moved to ./dataSummary/TemporalCoverageCard.tsx so it can be reused on
+// the project detail page. Re-export here to keep this module the single
+// import site for dashboard widgets.
+export {
+	TemporalCoverageCard,
+	TemporalCoverageCardSkeleton
+} from "./dataSummary/TemporalCoverageCard";
 
-	const fmt = (d: Date | null) =>
-		d
-			? new Date(d).toLocaleDateString(undefined, { month: "short", year: "numeric" })
-			: "—";
+// ======================== Samples Collected Over Time ======================
+/**
+ * Line chart of sample collection volume over time (bucketed by year).
+ *
+ * Why eventDate and not dateSubmitted?
+ *   eventDate is the date the sample was actually collected in the field.
+ *   It reaches back decades, produces a richer curve, and matches the
+ *   ODE record's scientific framing. Sample doesn't have dateSubmitted of
+ *   its own anyway — that's on Project.
+ *
+ * Why raw SQL?
+ *   Prisma doesn't natively support "group by date_trunc". The alternatives
+ *   are (a) findMany all eventDates and bucket in JS, which doesn't scale,
+ *   or (b) 100 parallel count() queries per-year, which is wasteful. A single
+ *   GROUP BY date_trunc('year', ...) is both cheapest and simplest.
+ *
+ * Why unsafePrisma here?
+ *   $queryRaw bypasses the publicPrisma $extends wrapper, so the isPrivate
+ *   filter has to be applied manually via the Project JOIN.
+ */
+export async function SamplesOverTimeCard() {
+	type Row = { bucket: Date; count: bigint };
+	// 1990-01-01 floor: matches the EARLIEST_VALID_SAMPLE_DATE used by the
+	// Temporal Coverage card. This excludes both the -9999 sentinel and
+	// Unix-epoch ghost rows around 1969-12-31 / 1970-01-01 that previously
+	// pulled the chart's left edge way back and squashed everything.
+	const rows = await unsafePrisma.$queryRaw<Row[]>`
+		SELECT
+			date_trunc('year', s."eventDate") AS bucket,
+			COUNT(*)::bigint AS count
+		FROM "Sample" s
+		JOIN "Project" p ON s."project_id" = p."project_id"
+		WHERE p."isPrivate" = false
+		  AND s."eventDate" >= ${EARLIEST_VALID_DATE}
+		GROUP BY bucket
+		ORDER BY bucket ASC
+	`;
 
-	// Rough span in years, for the headline number.
-	let yearsSpan: number | null = null;
-	if (min && max) {
-		const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
-		yearsSpan = Math.max(0, (max.getTime() - min.getTime()) / msPerYear);
+	const points = rows.map((r) => ({
+		year: r.bucket.getUTCFullYear(),
+		count: Number(r.count)
+	}));
+
+	return (
+		<DashCard
+			title="Samples collected over time"
+			subtitle="Yearly sample collection volume"
+			info={{
+				title: "Samples collected over time",
+				description:
+					"Count of public samples grouped by the year they were collected (eventDate). Samples with placeholder dates are excluded.",
+				links: [{ label: "Browse samples", href: "/explore/sample" }]
+			}}
+		>
+			<SamplesOverTimeChart points={points} />
+		</DashCard>
+	);
+}
+
+/**
+ * Simple server-rendered SVG line chart with a labeled Y axis and a faded
+ * area beneath the line. Intentionally lightweight — no Chart.js client
+ * boundary, no interactivity — the point is a "glanceable" graph that
+ * matches the calm-dashboard aesthetic.
+ *
+ * Why no "Year" X-axis title: the tick values are 4-digit years, which
+ * are self-explanatory. Adding the word "Year" only made it crowd the
+ * tick labels at the bottom of the SVG.
+ */
+function SamplesOverTimeChart({ points }: { points: { year: number; count: number }[] }) {
+	if (points.length === 0) {
+		return (
+			<div className="h-56 flex items-center justify-center text-sm text-base-content/60 italic">
+				No sample data yet.
+			</div>
+		);
 	}
 
-	return (
-		<DashCard
-			title="Temporal coverage"
-			subtitle="When samples were collected"
-			info={{
-				title: "Temporal coverage",
-				description:
-					"The earliest and latest eventDate across all public samples. Gives you a sense of how far back the ODE record reaches and how recent the newest field collections are.",
-				links: [{ label: "Browse samples", href: "/explore/sample" }]
-			}}
-		>
-			<div className="flex items-baseline gap-2 mb-4">
-				<span className="text-3xl font-bold text-base-content tabular-nums leading-none">
-					{yearsSpan !== null ? yearsSpan.toFixed(1) : "—"}
-				</span>
-				<span className="text-sm text-base-content/60 font-medium">years of coverage</span>
-			</div>
+	// Chart layout (kept in a single place so the axis labels and the path
+	// stay consistent). Bottom padding only needs to cover the year tick
+	// labels now that we removed the "Year" axis title.
+	const width = 640;
+	const height = 220;
+	const padding = { top: 12, right: 12, bottom: 22, left: 44 };
 
-			<div className="relative mb-3">
-				<div className="h-1.5 rounded-full bg-base-200/70 overflow-hidden">
-					<div className="h-full w-full rounded-full bg-linear-to-r from-primary/50 via-primary to-accent" />
-				</div>
-				<span className="absolute -top-1 left-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-base-100" />
-				<span className="absolute -top-1 right-0 w-2.5 h-2.5 rounded-full bg-accent ring-2 ring-base-100" />
-			</div>
-			<div className="flex items-center justify-between text-xs">
-				<div>
-					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">
-						Earliest
-					</div>
-					<div className="text-base-content tabular-nums font-semibold">{fmt(min)}</div>
-				</div>
-				<div className="text-right">
-					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">
-						Latest
-					</div>
-					<div className="text-base-content tabular-nums font-semibold">{fmt(max)}</div>
-				</div>
-			</div>
+	const innerW = width - padding.left - padding.right;
+	const innerH = height - padding.top - padding.bottom;
 
-			<p className="text-xs text-base-content/55 mt-4">
-				Across {totalWithDate.toLocaleString()} samples with recorded dates.
-			</p>
-		</DashCard>
-	);
-}
+	const minYear = points[0].year;
+	const maxYear = points[points.length - 1].year;
+	const yearRange = Math.max(1, maxYear - minYear);
 
-// ---------------------------- Depth Coverage -----------------------------
-export async function DepthCoverageCard() {
-	const agg = await publicPrisma.sample.aggregate({
-		_min: { minimumDepthInMeters: true },
-		_max: { maximumDepthInMeters: true },
-		_avg: { minimumDepthInMeters: true }
-	});
-	const min = agg._min.minimumDepthInMeters;
-	const max = agg._max.maximumDepthInMeters;
-	const avg = agg._avg.minimumDepthInMeters;
+	const maxCount = Math.max(1, ...points.map((p) => p.count));
 
-	const fmtDepth = (n: number | null) =>
-		n === null || n === undefined ? "—" : `${n.toLocaleString(undefined, { maximumFractionDigits: 0 })} m`;
+	const x = (year: number) => padding.left + ((year - minYear) / yearRange) * innerW;
+	const y = (count: number) => padding.top + innerH - (count / maxCount) * innerH;
+
+	const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.year).toFixed(2)},${y(p.count).toFixed(2)}`).join(" ");
+
+	const areaPath = [
+		`M${x(points[0].year).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
+		...points.map((p) => `L${x(p.year).toFixed(2)},${y(p.count).toFixed(2)}`),
+		`L${x(points[points.length - 1].year).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
+		"Z"
+	].join(" ");
+
+	// Pick ~5 evenly-spaced x-axis ticks (years).
+	const xTickCount = Math.min(5, points.length);
+	const xTicks: number[] = [];
+	for (let i = 0; i < xTickCount; i++) {
+		const t = xTickCount === 1 ? 0 : i / (xTickCount - 1);
+		xTicks.push(Math.round(minYear + t * yearRange));
+	}
+
+	// 4 y-axis ticks: 0, 1/3, 2/3, max.
+	const yTickValues = [0, Math.round(maxCount / 3), Math.round((maxCount / 3) * 2), maxCount];
+
+	const gradientId = "samples-over-time-area";
 
 	return (
-		<DashCard
-			title="Depth coverage"
-			subtitle="Sampled water column range"
-			info={{
-				title: "Depth coverage",
-				description:
-					"Minimum and maximum recorded sampling depth (in meters) across all public samples — plus the average minimum depth so you can see roughly where most sampling happens.",
-				links: [{ label: "Browse samples", href: "/explore/sample" }]
-			}}
-		>
-			<div className="grid grid-cols-3 gap-3 mb-4">
-				<DepthStat label="Shallowest" value={fmtDepth(min)} />
-				<DepthStat label="Avg min" value={fmtDepth(avg)} muted />
-				<DepthStat label="Deepest" value={fmtDepth(max)} />
-			</div>
-
-			{/*
-			 * Simple column-style visual of the water column. Purely decorative
-			 * — gives the numbers some visual weight.
-			 */}
-			<div className="relative h-20 rounded-lg overflow-hidden bg-linear-to-b from-sky-400/20 via-primary/20 to-indigo-900/40">
-				<div className="absolute inset-x-0 top-2 text-[10px] uppercase tracking-wider font-semibold text-base-content/55 text-center">
-					Surface
-				</div>
-				<div className="absolute inset-x-0 bottom-2 text-[10px] uppercase tracking-wider font-semibold text-base-content/55 text-center">
-					Abyssal
-				</div>
-			</div>
-		</DashCard>
-	);
-}
-
-function DepthStat({ label, value, muted = false }: { label: string; value: string; muted?: boolean }) {
-	return (
-		<div>
-			<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55 mb-0.5">
-				{label}
-			</div>
-			<div
-				className={[
-					"tabular-nums font-semibold leading-tight",
-					muted ? "text-base sm:text-lg text-base-content/70" : "text-lg sm:text-xl text-base-content"
-				].join(" ")}
+		<div className="w-full">
+			<svg
+				viewBox={`0 0 ${width} ${height}`}
+				className="w-full h-56"
+				role="img"
+				aria-label="Samples collected per year"
 			>
-				{value}
-			</div>
+				<defs>
+					<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+						<stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
+						<stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+					</linearGradient>
+				</defs>
+
+				{/* Gridlines — lightweight, just under the line */}
+				{yTickValues.map((v) => (
+					<line
+						key={`grid-${v}`}
+						x1={padding.left}
+						x2={padding.left + innerW}
+						y1={y(v)}
+						y2={y(v)}
+						stroke="currentColor"
+						className="text-base-content/10"
+						strokeWidth="1"
+					/>
+				))}
+
+				{/* Fade area under the line */}
+				<path d={areaPath} fill={`url(#${gradientId})`} className="text-primary" />
+
+				{/* The line itself */}
+				<path
+					d={linePath}
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					className="text-primary"
+				/>
+
+				{/* X-axis baseline */}
+				<line
+					x1={padding.left}
+					x2={padding.left + innerW}
+					y1={padding.top + innerH}
+					y2={padding.top + innerH}
+					stroke="currentColor"
+					className="text-base-content/30"
+					strokeWidth="1"
+				/>
+				{/* Y-axis baseline */}
+				<line
+					x1={padding.left}
+					x2={padding.left}
+					y1={padding.top}
+					y2={padding.top + innerH}
+					stroke="currentColor"
+					className="text-base-content/30"
+					strokeWidth="1"
+				/>
+
+				{/* Y-axis tick labels (count) */}
+				{yTickValues.map((v) => (
+					<text
+						key={`ytick-${v}`}
+						x={padding.left - 6}
+						y={y(v)}
+						textAnchor="end"
+						dominantBaseline="middle"
+						className="fill-base-content/60 text-[10px] tabular-nums"
+					>
+						{v.toLocaleString()}
+					</text>
+				))}
+
+				{/* X-axis tick labels (year). dominantBaseline=hanging so the
+				    label sits below the axis line cleanly without overlapping. */}
+				{xTicks.map((year) => (
+					<text
+						key={`xtick-${year}`}
+						x={x(year)}
+						y={padding.top + innerH + 6}
+						textAnchor="middle"
+						dominantBaseline="hanging"
+						className="fill-base-content/60 text-[10px] tabular-nums"
+					>
+						{year}
+					</text>
+				))}
+
+				{/* Axis title: Y. (We deliberately don't render an "X" axis
+				    title — the tick values are 4-digit years and don't need
+				    "Year" repeated underneath them.) */}
+				<text
+					transform={`translate(12, ${padding.top + innerH / 2}) rotate(-90)`}
+					textAnchor="middle"
+					className="fill-base-content/55 text-[10px] uppercase tracking-wider font-semibold"
+				>
+					Samples
+				</text>
+			</svg>
 		</div>
 	);
 }
 
-// ------------------------- Metadata Completeness -------------------------
+// =========================== Sample Categories =============================
+// Removed (was a donut of samp_category — biological vs control samples).
+// We replaced it with the env_local_scale donut above, which is more
+// informative; biological-vs-control was dominated by one category and
+// didn't pull its weight on the dashboard.
+
+// =========================== Table Counts ==================================
 /**
- * Holistic FAIR-ish completeness. We spot-check representative optional
- * fields across each major entity (Project, Sample, Assay, Analysis) and
- * report:
- *   - An overall % score (average across all fields across all entities)
- *   - Per-entity score breakdowns so you can see where gaps are
+ * "Explore the data — by the numbers." Inspired by the OOI in-Numbers
+ * infographic style: punchy abbreviated numbers (1.2K, 3.4M, etc.), each
+ * one a tile that links into its explore page. Tiles are stacked in a
+ * 2-column grid so the card stays narrow on the dashboard.
  *
- * Each field check is a single COUNT query, all fired in parallel.
+ * Why an abbreviated number format and not raw .toLocaleString():
+ *   The purpose of this card is "scale at a glance". Raw ints like 601,865
+ *   read fine on a wide column, but at the narrower size the user wants
+ *   they wrap awkwardly and stop being scannable. K/M/B abbreviations
+ *   keep each tile to a single visually-loud token, with the exact count
+ *   available in the tile's tooltip.
  */
-export async function MetadataCompletenessCard() {
-	// Parallel counts: totals + per-field "has value" counts, per entity.
+export async function TableCountsCard() {
 	const [
-		totalProjects,
-		totalSamples,
-		totalAssays,
-		totalAnalyses,
-		// Project optional metadata
-		p_description,
-		p_institution,
-		p_citation,
-		p_license,
-		// Sample optional metadata
-		s_lat,
-		s_long,
-		s_envLocal,
-		s_depth,
-		s_collect,
-		// Assay optional metadata
-		a_alternate,
-		a_subfragment,
-		a_reference,
-		// Analysis optional metadata
-		an_sop,
-		an_trim,
-		an_clust,
-		an_taxCat
+		projects,
+		samples,
+		assays,
+		assayPreps,
+		libraries,
+		analyses,
+		occurrences,
+		features,
+		taxa,
+		assignments
 	] = await Promise.all([
 		publicPrisma.project.count(),
 		publicPrisma.sample.count(),
 		publicPrisma.assay.count(),
+		publicPrisma.assayPrep.count(),
+		publicPrisma.library.count(),
 		publicPrisma.analysis.count(),
-		publicPrisma.project.count({ where: { projectDescription: { not: null } } }),
-		publicPrisma.project.count({ where: { institution: { not: null } } }),
-		publicPrisma.project.count({ where: { bibliographicCitation: { not: null } } }),
-		publicPrisma.project.count({ where: { license: { not: null } } }),
-		publicPrisma.sample.count({ where: { decimalLatitude: { not: null } } }),
-		publicPrisma.sample.count({ where: { decimalLongitude: { not: null } } }),
-		publicPrisma.sample.count({ where: { env_local_scale: { not: null } } }),
-		publicPrisma.sample.count({ where: { minimumDepthInMeters: { not: null } } }),
-		publicPrisma.sample.count({ where: { samp_collect_method: { not: null } } }),
-		publicPrisma.assay.count({ where: { assay_name_alternate: { not: null } } }),
-		publicPrisma.assay.count({ where: { target_subfragment: { not: null } } }),
-		publicPrisma.assay.count({ where: { assay_reference: { not: null } } }),
-		publicPrisma.analysis.count({ where: { sop_bioinformatics: { not: null } } }),
-		publicPrisma.analysis.count({ where: { trim_method: { not: null } } }),
-		publicPrisma.analysis.count({ where: { otu_clust_tool: { not: null } } }),
-		publicPrisma.analysis.count({ where: { tax_assign_cat: { not: null } } })
+		publicPrisma.occurrence.count(),
+		publicPrisma.feature.count(),
+		publicPrisma.taxonomy.count(),
+		publicPrisma.assignment.count()
 	]);
 
-	const rate = (n: number, total: number) => (total === 0 ? 0 : (n / total) * 100);
-
-	// Per-entity scores = mean of its field coverage rates.
-	const projectFields = [p_description, p_institution, p_citation, p_license];
-	const sampleFields = [s_lat, s_long, s_envLocal, s_depth, s_collect];
-	const assayFields = [a_alternate, a_subfragment, a_reference];
-	const analysisFields = [an_sop, an_trim, an_clust, an_taxCat];
-
-	const mean = (nums: number[]) =>
-		nums.length === 0 ? 0 : nums.reduce((a, b) => a + b, 0) / nums.length;
-
-	const projectScore = Math.round(mean(projectFields.map((n) => rate(n, totalProjects))));
-	const sampleScore = Math.round(mean(sampleFields.map((n) => rate(n, totalSamples))));
-	const assayScore = Math.round(mean(assayFields.map((n) => rate(n, totalAssays))));
-	const analysisScore = Math.round(mean(analysisFields.map((n) => rate(n, totalAnalyses))));
-
-	// Overall = average of the four entity scores (equal weight per entity
-	// rather than per row — otherwise Samples would totally dominate the
-	// metric because they typically outnumber every other table).
-	const overallScore = Math.round(
-		mean([projectScore, sampleScore, assayScore, analysisScore])
-	);
-
-	const totalFieldsChecked =
-		projectFields.length + sampleFields.length + assayFields.length + analysisFields.length;
+	const tables: { label: string; count: number; href: string }[] = [
+		{ label: "Projects", count: projects, href: "/explore/project" },
+		{ label: "Samples", count: samples, href: "/explore/sample" },
+		{ label: "Assays", count: assays, href: "/explore/assay" },
+		{ label: "Assay preps", count: assayPreps, href: "/explore/assayPrep" },
+		{ label: "Libraries", count: libraries, href: "/explore/library" },
+		{ label: "Analyses", count: analyses, href: "/explore/analysis" },
+		{ label: "Occurrences", count: occurrences, href: "/explore/occurrence" },
+		{ label: "Features", count: features, href: "/explore/feature" },
+		{ label: "Taxa", count: taxa, href: "/explore/taxonomy" },
+		{ label: "Assignments", count: assignments, href: "/explore/assignment" }
+	];
 
 	return (
 		<DashCard
-			title="Metadata completeness"
-			subtitle={`Across ${totalFieldsChecked} FAIR-ish metadata fields`}
+			title="Explore the data"
+			subtitle="By the numbers"
 			info={{
-				title: "Metadata completeness",
+				title: "Explore the data",
 				description:
-					"For each entity (projects, samples, assays, analyses) we measure what % of records have a value for a representative set of optional metadata fields. Each entity's score is the average of its per-field rates, and the overall score is the average of the four entity scores — so one huge table doesn't drown out the others.",
+					"Live row counts for every public table in ODE, abbreviated for quick scanning. Click any tile to open that table's explore page.",
+				links: [{ label: "Explore hub", href: "/explore" }]
+			}}
+		>
+			<div className="grid grid-cols-2 gap-2">
+				{tables.map((t) => (
+					<BigCountTile key={t.label} label={t.label} count={t.count} href={t.href} />
+				))}
+			</div>
+		</DashCard>
+	);
+}
+
+/**
+ * Single "by the numbers" tile. The BIG abbreviated number is the hero;
+ * the label sits underneath in small caps. Whole tile is the link.
+ */
+function BigCountTile({ label, count, href }: { label: string; count: number; href: string }) {
+	const exact = count.toLocaleString();
+	return (
+		<Link
+			href={href}
+			title={`${exact} ${label.toLowerCase()}`}
+			className="group flex flex-col gap-0.5 px-3 py-3 rounded-xl bg-base-300/40 hover:bg-base-300/70 transition-colors"
+		>
+			<span className="text-2xl sm:text-3xl font-extrabold text-base-content leading-none tabular-nums tracking-tight group-hover:text-primary transition-colors">
+				{formatPunchy(count)}
+			</span>
+			<span className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55 leading-snug">
+				{label}
+			</span>
+		</Link>
+	);
+}
+
+/**
+ * 1.2K / 3.4M / 1.7B style abbreviation. We keep one decimal of precision
+ * for readability without going past 4 visible characters.
+ */
+function formatPunchy(n: number): string {
+	if (n < 1000) return n.toString();
+	if (n < 10_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+	if (n < 1_000_000) return `${Math.round(n / 1000)}K`;
+	if (n < 10_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+	if (n < 1_000_000_000) return `${Math.round(n / 1_000_000)}M`;
+	return `${(n / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
+}
+
+// ======================== Metadata Completeness ============================
+/**
+ * "Beyond the minimum" — shows, for each entity, what percentage of that
+ * entity's OPTIONAL metadata fields are populated on average across all
+ * records. Required fields are always 100% by definition, so they're
+ * excluded — the point is to highlight how much *extra* information
+ * submitters choose to include.
+ *
+ * Math:
+ *   For each entity:
+ *     - Discover all optional scalar fields from the Prisma schema.
+ *     - For each field, count how many records have a non-null value.
+ *     - The entity's score = mean(fieldFillRate) across those fields.
+ *
+ * Layout: tall card with one radial gauge per entity stacked vertically.
+ */
+export async function MetadataCompletenessCard() {
+	const rate = (n: number, total: number) => (total === 0 ? 0 : (n / total) * 100);
+	const mean = (nums: number[]) => (nums.length === 0 ? 0 : nums.reduce((a, b) => a + b, 0) / nums.length);
+
+	const entities = await Promise.all(
+		METADATA_RICHNESS_ENTITIES.map(async (entity) => {
+			const delegate = (publicPrisma as unknown as Record<string, { count: (args?: unknown) => Promise<number> }>)[
+				entity.delegate
+			];
+
+			const optionalFields = getOptionalScalarFieldNames(entity.modelName);
+			const total = await delegate.count();
+			const populatedCounts = await Promise.all(
+				optionalFields.map((field) =>
+					delegate.count({
+						where: { [field]: { not: null } }
+					})
+				)
+			);
+
+			return {
+				label: entity.label,
+				score: Math.round(mean(populatedCounts.map((n) => rate(n, total)))),
+				total,
+				fieldCount: optionalFields.length,
+				href: entity.href
+			};
+		})
+	);
+
+	return (
+		<DashCard
+			title="Metadata richness"
+			subtitle="Optional fields filled beyond the minimum"
+			padding="md"
+			info={{
+				title: "Metadata richness",
+				description:
+					"How much extra (non-required) metadata submitters choose to include. For each entity we track all optional scalar fields from the schema and score by the mean fill rate across those fields. Required fields aren't included — they're always 100% and don't tell us anything about submitter effort.",
 				links: [
 					{ label: "What is FAIR data?", href: "/learn" },
 					{ label: "Browse projects", href: "/explore/project" },
@@ -423,27 +589,49 @@ export async function MetadataCompletenessCard() {
 				]
 			}}
 		>
-			<div className="flex flex-col sm:flex-row items-center gap-5">
-				<RadialGauge value={overallScore} size="lg" />
-				<div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-					<CoverageRow label="Projects" value={projectScore} total={totalProjects} />
-					<CoverageRow label="Samples" value={sampleScore} total={totalSamples} />
-					<CoverageRow label="Assays" value={assayScore} total={totalAssays} />
-					<CoverageRow label="Analyses" value={analysisScore} total={totalAnalyses} />
-				</div>
-			</div>
-			<div className="text-[11px] text-base-content/55 mt-4 leading-relaxed">
-				Higher is better. Equal weight per entity — not per row — so tables with many rows
-				don&apos;t drown out tables with fewer rows.
-			</div>
+			<ul className="flex flex-col gap-5">
+				{entities.map((e) => (
+					<li key={e.label}>
+						<Link
+							href={e.href}
+							className="flex items-center gap-4 p-2 -mx-2 rounded-lg hover:bg-base-300/50 transition-colors group"
+						>
+							<RadialGauge value={e.score} size="sm" />
+							<div className="flex-1 min-w-0">
+								<div className="flex items-baseline justify-between gap-2">
+									<span className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors truncate">
+										{e.label}
+									</span>
+									<span className="text-[10px] uppercase tracking-wider text-base-content/50 tabular-nums shrink-0">
+										{e.total.toLocaleString()} records
+									</span>
+								</div>
+								<div className="text-[11px] text-base-content/55 mt-0.5">
+									{e.fieldCount} optional fields tracked
+								</div>
+							</div>
+						</Link>
+					</li>
+				))}
+			</ul>
+			<p className="text-[11px] text-base-content/50 mt-5 leading-relaxed">
+				Higher scores mean submitters went beyond the minimum and filled in richer,
+				more reusable metadata.
+			</p>
 		</DashCard>
 	);
 }
 
-// --------------------------- Shared primitives ---------------------------
-function RadialGauge({ value, size = "md" }: { value: number; size?: "md" | "lg" }) {
-	const dim = size === "lg" ? 112 : 92;
-	const stroke = size === "lg" ? 12 : 10;
+// ============================ Shared primitives ============================
+/**
+ * Donut-style radial gauge. The stroke is drawn as a fraction of the
+ * circumference via `strokeDasharray`, which is the standard trick for
+ * SVG progress circles. The `-rotate-90` on the SVG means the stroke
+ * starts at the 12-o'clock position (otherwise SVG starts at 3-o'clock).
+ */
+function RadialGauge({ value, size = "md" }: { value: number; size?: "sm" | "md" | "lg" }) {
+	const dim = size === "lg" ? 112 : size === "sm" ? 60 : 92;
+	const stroke = size === "lg" ? 12 : size === "sm" ? 8 : 10;
 	const radius = (dim - stroke) / 2;
 	const circumference = 2 * Math.PI * radius;
 	const dash = (value / 100) * circumference;
@@ -458,7 +646,7 @@ function RadialGauge({ value, size = "md" }: { value: number; size?: "md" | "lg"
 					fill="none"
 					stroke="currentColor"
 					strokeWidth={stroke}
-					className="text-base-200/80"
+					className="text-base-300/80"
 				/>
 				<circle
 					cx={dim / 2}
@@ -473,50 +661,20 @@ function RadialGauge({ value, size = "md" }: { value: number; size?: "md" | "lg"
 				/>
 			</svg>
 			<div className="absolute inset-0 flex items-center justify-center">
-				<div className="text-center">
-					<div
-						className={[
-							"font-bold text-base-content leading-none tabular-nums",
-							size === "lg" ? "text-2xl" : "text-xl"
-						].join(" ")}
-					>
-						{value}%
-					</div>
-					<div className="text-[10px] uppercase tracking-wider text-base-content/55 mt-0.5">
-						Score
-					</div>
+				<div
+					className={[
+						"font-bold text-base-content leading-none tabular-nums",
+						size === "lg" ? "text-2xl" : size === "sm" ? "text-xs" : "text-xl"
+					].join(" ")}
+				>
+					{value}%
 				</div>
 			</div>
 		</div>
 	);
 }
 
-function CoverageRow({ label, value, total }: { label: string; value: number; total?: number }) {
-	return (
-		<div>
-			<div className="flex items-center justify-between text-xs">
-				<span className="text-base-content/80 font-medium">
-					{label}
-					{typeof total === "number" && (
-						<span className="text-base-content/45 font-normal">
-							{" "}
-							· {total.toLocaleString()}
-						</span>
-					)}
-				</span>
-				<span className="font-semibold text-base-content tabular-nums">{value}%</span>
-			</div>
-			<div className="h-1.5 mt-1 rounded-full bg-base-200/70 overflow-hidden">
-				<div
-					className="h-full rounded-full bg-linear-to-r from-primary/70 to-primary"
-					style={{ width: `${value}%` }}
-				/>
-			</div>
-		</div>
-	);
-}
-
-// ------------------------------ Skeletons --------------------------------
+// ================================ Skeletons ================================
 export function WidgetCardSkeleton({ className = "h-60" }: { className?: string }) {
 	return <div className={["skeleton rounded-2xl", className].join(" ")} aria-hidden="true" />;
 }

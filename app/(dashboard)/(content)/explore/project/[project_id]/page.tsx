@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
@@ -10,6 +11,10 @@ import { Project } from "@/app/generated/prisma/client";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
 import Image from "next/image";
+import {
+	DepthCoverageCard,
+	DepthCoverageCardSkeleton
+} from "@/app/components/dataSummary/DepthCoverageCard";
 
 export default async function Project_id({ params }: { params: Promise<{ project_id: Project["project_id"] }> }) {
 	let { project_id } = await params;
@@ -210,19 +215,30 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						/>
 					</div>
 
-					{/* Right: Cover image */}
-					<div className="grow relative flex items-center justify-center aspect-square">
-						{project.imageFileUrl_ODE ? (
-							<Image
-								src={project.imageFileUrl_ODE}
-								alt={`Cover image for the ${project.project_id} project.`}
-								fill
-								objectFit="cover"
-								className="rounded-md"
-							/>
-						) : (
-							<></>
+					{/*
+					 * Right column: optional half-height cover image stacked
+					 * over the project's depth-coverage card. When there's no
+					 * cover image, the depth card stands in for it. This keeps
+					 * the right column always populated so the layout below
+					 * (project metadata + assays grid) lines up consistently.
+					 */}
+					<div className="flex flex-col gap-4 h-full min-h-80">
+						{project.imageFileUrl_ODE && (
+							<div className="relative w-full aspect-2/1 rounded-md overflow-hidden bg-base-300/40 shrink-0">
+								<Image
+									src={project.imageFileUrl_ODE}
+									alt={`Cover image for the ${project.project_id} project.`}
+									fill
+									className="object-cover"
+									sizes="(max-width: 1024px) 100vw, 33vw"
+								/>
+							</div>
 						)}
+						<div className="flex-1 flex flex-col">
+							<Suspense fallback={<DepthCoverageCardSkeleton />}>
+								<DepthCoverageCard projectId={project_id} />
+							</Suspense>
+						</div>
 					</div>
 				</div>
 

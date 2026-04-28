@@ -45,12 +45,12 @@ const padMap: Record<NonNullable<Props["padding"]>, { body: string; header: stri
  * Shared card shell for the dashboard / data-summary area.
  *
  * Design rules every card shares:
- *  - bg-base-100 base + a more noticeable diagonal gradient wash so the
- *    card feels like it has depth (matches the reference dashboards).
- *  - Borderless (we rely on the soft shadow + the gradient edges to define
- *    the card).
- *  - Layered drop shadow + faint inset top highlight for a lifted feel.
- *  - A very subtle shadow bump on hover (no translate, no colored ring).
+ *  - Solid bg-base-200 (no diagonal gradient). base-200 is tuned (in
+ *    globals.css) to sit just off the page background so cards feel lifted
+ *    without any wash.
+ *  - Borderless. A gentle drop shadow does the separation work, plus a
+ *    hair of inset top highlight for a clean edge.
+ *  - Minimal hover state (just a whisper of extra shadow).
  */
 export default function DashCard({
 	eyebrow,
@@ -71,15 +71,9 @@ export default function DashCard({
 		<div
 			className={[
 				"relative flex flex-col overflow-hidden rounded-2xl",
-				"bg-base-100",
-				// More noticeable diagonal gradient — brighter top-left highlight,
-				// darker bottom-right fade — so the card reads with depth even
-				// without a hard border.
-				"bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,transparent_38%,rgba(0,0,0,0.13)_100%)]",
-				// No border at all — shadow does the edge work. If we need a hair
-				// of separation, the inset top highlight on the shadow handles it.
-				"shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_10px_28px_-16px_rgba(0,0,0,0.5),0_2px_6px_-2px_rgba(0,0,0,0.22)]",
-				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.07)_inset,0_14px_34px_-14px_rgba(0,0,0,0.55),0_3px_8px_-2px_rgba(0,0,0,0.25)]",
+				"bg-base-200",
+				"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]",
+				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_10px_24px_-14px_rgba(0,0,0,0.5),0_2px_5px_-1px_rgba(0,0,0,0.22)]",
 				"transition-shadow duration-300",
 				className
 			].join(" ")}
@@ -144,7 +138,7 @@ export function DashCardInfoButton({ info }: { info: DashCardInfo }) {
 			</button>
 			<div
 				tabIndex={0}
-				className="dropdown-content bg-base-100 rounded-xl shadow-2xl z-50 w-72 p-4 mt-2 bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,transparent_40%,rgba(0,0,0,0.12)_100%)]"
+				className="dropdown-content bg-base-100 rounded-xl shadow-2xl z-50 w-72 p-4 mt-2"
 			>
 				{info.title && (
 					<div className="text-sm font-semibold text-base-content mb-1">{info.title}</div>

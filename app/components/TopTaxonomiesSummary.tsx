@@ -90,8 +90,8 @@ export default async function TopTaxonomiesSummary() {
 		return (
 			<div
 				className={[
-					"rounded-2xl bg-base-100 border border-base-300/70 p-8",
-					"shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_12px_28px_-16px_rgba(0,0,0,0.45)]",
+					"rounded-2xl bg-base-200 p-8",
+					"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45)]",
 					"flex items-center justify-center text-base-content/70"
 				].join(" ")}
 			>
@@ -120,10 +120,11 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 		<div
 			className={[
 				"relative flex flex-col overflow-hidden rounded-2xl h-full",
-				"bg-base-100",
-				"bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,transparent_38%,rgba(0,0,0,0.13)_100%)]",
-				"shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_10px_28px_-16px_rgba(0,0,0,0.5),0_2px_6px_-2px_rgba(0,0,0,0.22)]",
-				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.07)_inset,0_14px_34px_-14px_rgba(0,0,0,0.55),0_3px_8px_-2px_rgba(0,0,0,0.25)]",
+				// Solid card background — same shell language as DashCard so
+				// Life Across ODE reads as part of the same dashboard family.
+				"bg-base-200",
+				"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]",
+				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_10px_24px_-14px_rgba(0,0,0,0.5),0_2px_5px_-1px_rgba(0,0,0,0.22)]",
 				"transition-shadow duration-300"
 			].join(" ")}
 		>
@@ -136,10 +137,12 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 					sizes="(max-width: 768px) 100vw, 33vw"
 				/>
 				{/*
-				 * Stronger faded gradient so the image softly bleeds into the
-				 * card body rather than ending on a hard horizontal line.
+				 * Faded gradient so the image softly bleeds into the card
+				 * body rather than ending on a hard horizontal line.
+				 * Fade target is base-200 (the card color) so the fade blends
+				 * perfectly with the body below.
 				 */}
-				<div className="absolute inset-0 bg-linear-to-t from-base-100 via-base-100/70 to-base-100/0" />
+				<div className="absolute inset-0 bg-linear-to-t from-base-200 via-base-200/70 to-base-200/0" />
 				<div className="absolute bottom-3 left-4 right-4">
 					<h3 className="text-2xl font-semibold text-base-content leading-tight drop-shadow-sm">
 						{section.title}

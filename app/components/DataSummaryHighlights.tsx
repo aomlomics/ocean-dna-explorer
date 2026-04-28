@@ -4,7 +4,8 @@ import Image from "next/image";
 import { publicPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import DataSummaryCreatureCarousel, { type FeaturedCreature } from "./DataSummaryCreatureCarousel";
-import DashCard, { DashCardInfoButton } from "./dashboard/DashCard";
+import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
+import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
 
 const featuredCreatures: FeaturedCreature[] = [
 	{
@@ -103,7 +104,7 @@ function CompactAssayChip({
 	return (
 		<Link
 			href={`/explore/assay/${encodeURIComponent(assay_name)}`}
-			className="group inline-flex items-center gap-2 rounded-lg bg-base-200/50 hover:bg-base-200 px-2 py-1.5 transition-colors max-w-full"
+			className="group inline-flex items-center gap-2 rounded-lg bg-base-300/60 hover:bg-base-300 px-2 py-1.5 transition-colors max-w-full"
 		>
 			<div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
 				<Suspense
@@ -123,46 +124,18 @@ function CompactAssayChip({
 	);
 }
 
-/** Subtle ship icon. No background box, just the glyph. */
-function ShipGlyph({ className = "" }: { className?: string }) {
-	return (
-		<svg
-			className={["shrink-0", className].join(" ")}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth={1.6}
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			aria-hidden="true"
-		>
-			<path d="M3 18c2 .5 4 .5 6 0s4-.5 6 0 4 .5 6 0" />
-			<path d="M4.5 14l.5-3h14l.5 3" />
-			<path d="M12 3v8" />
-			<path d="M8 11V8h8v3" />
-		</svg>
-	);
+/**
+ * Header glyphs — same icons used on the /submit page so the visual
+ * language is consistent. ProjectIcon is the boat (≈2.5:1 aspect ratio,
+ * so we give it a wide w-12 by default) and AnalysisIcon is the laptop
+ * with a chart (1:1).
+ */
+function ProjectGlyph({ className = "" }: { className?: string }) {
+	return <ProjectIcon className={["shrink-0", className].join(" ")} />;
 }
 
-/** Subtle analysis icon (bar-chart style). No background box. */
 function AnalysisGlyph({ className = "" }: { className?: string }) {
-	return (
-		<svg
-			className={["shrink-0", className].join(" ")}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth={1.6}
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			aria-hidden="true"
-		>
-			<path d="M4 20V10" />
-			<path d="M10 20V4" />
-			<path d="M16 20v-8" />
-			<path d="M22 20H2" />
-		</svg>
-	);
+	return <AnalysisIcon className={["shrink-0", className].join(" ")} />;
 }
 
 export default async function DataSummaryHighlights() {
@@ -278,17 +251,9 @@ type ProjectProps = {
 };
 
 /**
- * Latest Project Card — image is the TOP of the card (full-bleed, no padding
- * around it). The card outline IS the image outline at the top.
- *
- * Hierarchy:
- *   1. Image (full width, top of card, large)
- *   2. project_id (prominent, serves as the project's "name") + date next to it
- *   3. project_name (human-readable secondary)
- *   4. Description
- *   5. Institution + assay type meta row
- *   6. Assay chips
- *   7. "View project" button tucked bottom-right, no divider line above it
+ * Latest Project Card — card-first design. The image is a small optional
+ * thumbnail at the top of the card body; the card looks good whether or not
+ * an image was submitted. No gradient scrim on the image.
  */
 function LatestProjectCard({ project }: ProjectProps) {
 	const hasImage = Boolean(project.imageFileUrl_ODE);
@@ -298,62 +263,52 @@ function LatestProjectCard({ project }: ProjectProps) {
 
 	return (
 		<DashCard padding="none" className="overflow-hidden h-full">
-			{/* Image is the top of the card — flush to card edges, rounded by parent overflow-hidden */}
-			<div className="relative w-full h-52 sm:h-60 bg-base-200">
-				{hasImage ? (
-					<Image
-						src={project.imageFileUrl_ODE as string}
-						alt={project.project_name}
-						fill
-						className="object-cover"
-						sizes="(max-width: 1024px) 100vw, 60vw"
-					/>
-				) : (
-					<div
-						className="absolute inset-0"
-						style={{
-							background:
-								"radial-gradient(circle at 20% 20%, rgba(125,186,229,0.35), transparent 55%), radial-gradient(circle at 80% 80%, rgba(35,61,127,0.55), transparent 60%), linear-gradient(135deg, #0f1a33 0%, #1a2f63 100%)"
-						}}
-					/>
-				)}
-				{/* Top scrim so the pill + info button read clearly against bright images */}
-				<div className="absolute inset-x-0 top-0 h-20 bg-linear-to-b from-black/45 to-transparent" />
-				{/* Bottom scrim — fades the image into the card body for a softer transition */}
-				<div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-base-100 to-transparent" />
-
-				<div className="absolute top-3 left-3">
-					<span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-base-100/85 backdrop-blur text-primary border border-primary/20 shadow-sm">
+			<div className="p-5 sm:p-6 flex flex-col gap-4 grow relative">
+				{/* Header row — "Latest project" pill + info button */}
+				<div className="flex items-center justify-between gap-3">
+					<span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/15">
 						<span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
 						Latest project
 					</span>
+					<div className="flex items-center gap-2">
+						{/* Boat icon (≈2.5:1) — give it width so it doesn't
+						    squish into a square. */}
+						<ProjectGlyph className="w-12 h-5 text-primary/40" />
+						<DashCardInfoButton
+							info={{
+								title: "Most recent public project",
+								description:
+									"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
+								links: [
+									{ label: "View project", href: `/explore/project/${project.project_id}` },
+									{ label: "Browse all projects", href: "/explore/project" }
+								]
+							}}
+						/>
+					</div>
 				</div>
 
-				{/* Info popover button overlaid on the top-right of the image */}
-				<div className="absolute top-2 right-2 z-10 rounded-lg bg-base-100/80 backdrop-blur shadow-sm">
-					<DashCardInfoButton
-						info={{
-							title: "Most recent public project",
-							description:
-								"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
-							links: [
-								{
-									label: "View project",
-									href: `/explore/project/${project.project_id}`
-								},
-								{ label: "Browse all projects", href: "/explore/project" }
-							]
-						}}
-					/>
-				</div>
-			</div>
-
-			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
-				{/* Subtle ship icon — no box, just a glyph in the top-right corner */}
-				<ShipGlyph className="absolute top-5 right-5 w-6 h-6 text-primary/25" />
+				{/*
+				 * Optional thumbnail. Contained inside the card padding (not
+				 * flush to card edges) and modestly sized — the card should
+				 * read as a "project card with an image" not as an "image
+				 * with a card below it". If there's no image, we show
+				 * nothing here and the title takes the lead instead.
+				 */}
+				{hasImage && (
+					<div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-base-300/40">
+						<Image
+							src={project.imageFileUrl_ODE as string}
+							alt={project.project_name}
+							fill
+							className="object-cover"
+							sizes="(max-width: 1024px) 100vw, 60vw"
+						/>
+					</div>
+				)}
 
 				{/* Row 1 — project_id (big, serves as name) + submitted date next to it */}
-				<div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 pr-10">
+				<div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
 					<h3
 						className="text-2xl sm:text-3xl font-semibold text-base-content font-mono leading-tight tracking-tight break-all"
 						title={project.project_id}
@@ -363,7 +318,6 @@ function LatestProjectCard({ project }: ProjectProps) {
 					<BigSubmittedDate date={project.dateSubmitted} />
 				</div>
 
-				{/* Row 2 — project_name (secondary, same size as current "largest text") */}
 				<p className="text-lg sm:text-xl font-medium text-base-content/85 leading-snug line-clamp-2">
 					{project.project_name}
 				</p>
@@ -393,12 +347,6 @@ function LatestProjectCard({ project }: ProjectProps) {
 					)}
 				</dl>
 
-				{/*
-				 * Assay chips + "View project" button share the same row. Chips
-				 * take whatever space they need (they don't stretch), and the
-				 * button sits tucked in the bottom-right corner. No divider
-				 * line above the button.
-				 */}
 				{assays.length > 0 ? (
 					<div className="mt-auto flex flex-wrap items-end justify-between gap-3">
 						<div className="flex flex-wrap gap-1.5 min-w-0">
@@ -458,8 +406,9 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 	return (
 		<DashCard padding="none" className="overflow-hidden">
 			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
-				{/* Subtle analysis glyph in the top-right corner, no box */}
-				<AnalysisGlyph className="absolute top-5 right-5 w-6 h-6 text-accent/30" />
+				{/* Laptop / analysis glyph in the top-right corner — same icon
+				    used on the /submit page. */}
+				<AnalysisGlyph className="absolute top-5 right-5 w-7 h-7 text-accent/40" />
 
 				<div className="flex items-center gap-2 pr-10">
 					<span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent-focus border border-accent/20">
@@ -471,7 +420,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 							"inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold",
 							analysis.trusted
 								? "bg-emerald-500/10 text-emerald-500"
-								: "bg-base-200/70 text-base-content/70"
+								: "bg-base-300/70 text-base-content/70"
 						].join(" ")}
 					>
 						{analysis.trusted ? (
@@ -528,7 +477,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 								className="text-base-content/85 hover:text-primary transition-colors inline-flex items-baseline gap-1.5 max-w-full"
 								title={analysis.Project?.project_name || analysis.project_id}
 							>
-								<span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-base-200/70">
+								<span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-base-300/70">
 									{analysis.project_id}
 								</span>
 								{analysis.Project?.project_name && (

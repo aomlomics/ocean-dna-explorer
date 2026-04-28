@@ -114,10 +114,10 @@ function CreatureCard({ creature }: { creature: FeaturedCreature }) {
 		<div
 			className={[
 				"relative flex flex-col overflow-hidden rounded-2xl h-full",
-				"bg-base-100",
-				"bg-[linear-gradient(145deg,rgba(255,255,255,0.07)_0%,transparent_38%,rgba(0,0,0,0.13)_100%)]",
-				"shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_10px_28px_-16px_rgba(0,0,0,0.5),0_2px_6px_-2px_rgba(0,0,0,0.22)]",
-				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.07)_inset,0_14px_34px_-14px_rgba(0,0,0,0.55),0_3px_8px_-2px_rgba(0,0,0,0.25)]",
+				// Solid base-200 to match DashCard / KingdomCard
+				"bg-base-200",
+				"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]",
+				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_10px_24px_-14px_rgba(0,0,0,0.5),0_2px_5px_-1px_rgba(0,0,0,0.22)]",
 				"transition-shadow duration-300"
 			].join(" ")}
 		>
@@ -144,10 +144,10 @@ function CreatureCard({ creature }: { creature: FeaturedCreature }) {
 					</div>
 				)}
 				{/*
-				 * Stronger fade so the image dissolves into the card body
-				 * instead of ending on a hard horizontal edge.
+				 * Fade the image down into the card body so it doesn't end on
+				 * a hard horizontal edge. Fade target is base-200 (card color).
 				 */}
-				<div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-base-100 via-base-100/70 to-transparent" />
+				<div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-base-200 via-base-200/70 to-transparent" />
 			</figure>
 
 			<div className="p-5 flex flex-col gap-2.5 grow">

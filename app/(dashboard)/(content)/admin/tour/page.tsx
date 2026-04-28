@@ -215,7 +215,7 @@ export default function Tour() {
 		setCurrFeature(featureid || "");
 
 		setTourSteps([
-			{ url: "/" },
+			{ url: "/ambient" },
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
