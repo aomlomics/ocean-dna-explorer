@@ -21,6 +21,8 @@ export type DashCardInfo = {
 type Props = {
 	eyebrow?: ReactNode;
 	title?: ReactNode;
+	/** Optional override for the title's text color/weight classes. */
+	titleClassName?: string;
 	subtitle?: ReactNode;
 	action?: ReactNode;
 	/** Info popover content for the triple-dot button. */
@@ -55,6 +57,7 @@ const padMap: Record<NonNullable<Props["padding"]>, { body: string; header: stri
 export default function DashCard({
 	eyebrow,
 	title,
+	titleClassName = "text-base-content",
 	subtitle,
 	action,
 	info,
@@ -89,7 +92,9 @@ export default function DashCard({
 							</div>
 						)}
 						{title && (
-							<h3 className="text-base sm:text-lg font-semibold text-base-content leading-tight">{title}</h3>
+							<h3 className={["text-base sm:text-lg font-semibold leading-tight", titleClassName].join(" ")}>
+								{title}
+							</h3>
 						)}
 						{subtitle && <p className="text-xs sm:text-sm text-base-content/60 mt-1 leading-snug">{subtitle}</p>}
 					</div>
@@ -102,7 +107,7 @@ export default function DashCard({
 			<div
 				className={[
 					pad.body,
-					hasHeader && padding !== "none" ? "pt-4 sm:pt-5" : "",
+					hasHeader && padding !== "none" ? "pt-3 sm:pt-4" : "",
 					"grow",
 					bodyClassName
 				]

@@ -84,7 +84,7 @@ export async function TopInstitutionsCard() {
 	return (
 		<DashCard
 			title="Data Contributors"
-			subtitle="By number of submitted public projects"
+			titleClassName="text-base-content/75"
 			padding="md"
 			info={{
 				title: "Data Contributors",
@@ -98,8 +98,8 @@ export async function TopInstitutionsCard() {
 					<li className="text-sm text-base-content/60 italic py-2">No institution data yet.</li>
 				)}
 				{institutions.map((inst, idx) => (
-					<li key={inst.name} className="flex items-start justify-between py-2 text-sm gap-3">
-						<span className="flex items-start gap-2 min-w-0">
+					<li key={inst.name} className="flex items-start py-2 text-sm gap-3">
+						<span className="flex items-start gap-2 min-w-0 w-full">
 							<span className="text-[11px] mt-0.5 w-4 text-right text-primary/80 font-semibold tabular-nums shrink-0">
 								{idx + 1}
 							</span>
@@ -108,9 +108,6 @@ export async function TopInstitutionsCard() {
 							<span className="text-base-content leading-snug wrap-break-word" title={inst.name}>
 								{inst.name}
 							</span>
-						</span>
-						<span className="text-xs font-semibold text-base-content/80 tabular-nums shrink-0 mt-0.5">
-							{inst.count}
 						</span>
 					</li>
 				))}
@@ -144,27 +141,17 @@ export async function SamplingEnvironmentsCard() {
 	const tailSum = tail.reduce((sum, t) => sum + t.count, 0);
 	const slices = tailSum > 0 ? [...top, { label: `Other (${tail.length})`, count: tailSum }] : top;
 
-	const totalSamples = all.reduce((sum, e) => sum + e.count, 0);
-
 	return (
 		<DashCard
-			title="env_local_scale values"
+			title="Sampling Environments"
+			titleClassName="text-base-content/75"
 			info={{
-				title: "env_local_scale values",
+				title: "env_local_scale",
 				description:
-					"Distribution of public samples grouped by their env_local_scale (ENVO term for the immediate environment sampled). The top values are shown as their own slices; everything else is collapsed into 'Other' so the legend stays readable.",
+					"Distribution of public samples grouped by env_local_scale (ENVO local environment). Long tail is collapsed into “Other”.",
 				links: [{ label: "Browse samples", href: "/explore/sample" }]
 			}}
 		>
-			<div className="flex items-baseline justify-between mb-2">
-				<span className="text-2xl font-bold text-base-content tabular-nums leading-none">
-					{totalSamples.toLocaleString()}
-				</span>
-				<span className="text-xs text-base-content/55 uppercase tracking-wider font-semibold">
-					Public samples
-				</span>
-			</div>
-
 			{slices.length === 0 ? (
 				<div className="text-sm text-base-content/60 italic py-2">No environment data yet.</div>
 			) : (
@@ -233,6 +220,7 @@ export async function SamplesOverTimeCard() {
 	return (
 		<DashCard
 			title="Samples collected over time"
+			titleClassName="text-base-content/75"
 			subtitle="Yearly sample collection volume"
 			info={{
 				title: "Samples collected over time",
@@ -316,8 +304,9 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 			>
 				<defs>
 					<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
-						<stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+						<stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.55" />
+						<stop offset="55%" stopColor="var(--color-primary)" stopOpacity="0.18" />
+						<stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0" />
 					</linearGradient>
 				</defs>
 
@@ -475,7 +464,9 @@ export async function TableCountsCard() {
 	return (
 		<DashCard
 			title="Explore the data"
-			subtitle="By the numbers"
+			titleClassName="text-base-content/75"
+			className="h-88"
+			bodyClassName="h-full flex flex-col"
 			info={{
 				title: "Explore the data",
 				description:
@@ -483,7 +474,7 @@ export async function TableCountsCard() {
 				links: [{ label: "Explore hub", href: "/explore" }]
 			}}
 		>
-			<div className="grid grid-cols-2 gap-2">
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 flex-1 min-h-0">
 				{tables.map((t) => (
 					<BigCountTile key={t.label} label={t.label} count={t.count} href={t.href} />
 				))}
@@ -576,7 +567,8 @@ export async function MetadataCompletenessCard() {
 	return (
 		<DashCard
 			title="Metadata richness"
-			subtitle="Optional fields filled beyond the minimum"
+			titleClassName="text-base-content/75"
+			subtitle="Percent of optional fields recorded"
 			padding="md"
 			info={{
 				title: "Metadata richness",

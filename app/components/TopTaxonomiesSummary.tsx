@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { publicPrisma } from "@/app/helpers/prisma";
+import ThemeAwareSvg from "@/app/components/help/ThemeAwareSvg";
 
 type PhylumData = {
 	phylum: string;
@@ -129,22 +130,33 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 			].join(" ")}
 		>
 			<div className="relative h-44 w-full overflow-hidden">
-				<Image
-					src={section.image}
-					alt={section.kingdom}
-					fill
-					className="object-cover"
-					sizes="(max-width: 768px) 100vw, 33vw"
-				/>
+				{section.kingdom === "Bacteria" ? (
+					<ThemeAwareSvg
+						lightSrc="/images/bacteria_image_dark.png"
+						darkSrc="/images/bacteria_image_dark.png"
+						alt={section.kingdom}
+						fill
+						className="object-cover"
+						sizes="(max-width: 768px) 100vw, 33vw"
+						priority={false}
+					/>
+				) : (
+					<Image
+						src={section.image}
+						alt={section.kingdom}
+						fill
+						className="object-cover"
+						sizes="(max-width: 768px) 100vw, 33vw"
+					/>
+				)}
 				{/*
 				 * Faded gradient so the image softly bleeds into the card
 				 * body rather than ending on a hard horizontal line.
 				 * Fade target is base-200 (the card color) so the fade blends
 				 * perfectly with the body below.
 				 */}
-				<div className="absolute inset-0 bg-linear-to-t from-base-200 via-base-200/70 to-base-200/0" />
 				<div className="absolute bottom-3 left-4 right-4">
-					<h3 className="text-2xl font-semibold text-base-content leading-tight drop-shadow-sm">
+					<h3 className="text-2xl font-semibold leading-tight drop-shadow-sm text-white [html[data-theme='dark']_&]:text-base-content">
 						{section.title}
 					</h3>
 				</div>

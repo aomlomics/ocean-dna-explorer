@@ -93,6 +93,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	}
 	const colorsArr = randomColors(Object.keys(taxaCountByAnalysis).length);
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
+	const hasCoverImage = Boolean(project.imageFileUrl_ODE);
 
 	// Get top 2 taxonomies per assay
 	const topTaxaByAssay = Object.entries(taxaCountByAssay).reduce(
@@ -111,6 +112,65 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			return acc;
 		},
 		{} as Record<string, Array<{ displayName: string; count: number; percentage: string }>>
+	);
+
+	const assaysAndTaxa = (
+		<div className="h-full flex flex-col gap-6">
+			<div id="assays-section">
+				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
+					Assays in this Project ({Object.keys(uniqueAssays).length})
+				</h2>
+				<div className="space-y-2">
+					{Object.keys(uniqueAssays).map((assay) => (
+						<AssayCard
+							key={assay}
+							assay_name={assay}
+							target_gene={uniqueAssays[assay].target_gene}
+							className="bg-base-200 hover:bg-base-300/50 rounded-xl"
+						/>
+					))}
+				</div>
+			</div>
+
+			{/* Top 2 Taxonomies per Assay */}
+			<div>
+				<h2 className="text-2xl font-semibold text-base-content/90 mb-3">Top 2 Taxonomies per Assay</h2>
+				<div className="space-y-3">
+					{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
+						<a
+							key={assay}
+							href="#taxonomy-chart"
+							className="block rounded-xl bg-base-200 hover:bg-base-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer"
+						>
+							<div className="px-4 py-3 space-y-2">
+								<div className="flex flex-col gap-0.5">
+									<h3 className="font-medium text-base-content text-sm leading-snug">
+										{uniqueAssays[assay].target_gene}
+									</h3>
+									<p className="text-xs text-base-content/60 truncate">{assay}</p>
+								</div>
+								<div className="space-y-1">
+									{taxa.map((taxon, idx) => (
+										<div key={idx} className="relative h-7 rounded-full bg-base-100 overflow-hidden">
+											<div
+												className="absolute inset-y-0 left-0 bg-primary"
+												style={{ width: `${taxon.percentage}%` }}
+											/>
+											<div className="relative flex h-full items-center justify-between px-2 text-[0.7rem]">
+												<span className="text-base-content/80 truncate">{taxon.displayName}</span>
+												<span className="text-base-content/60 whitespace-nowrap">
+													{taxon.percentage}% ({taxon.count})
+												</span>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						</a>
+					))}
+				</div>
+			</div>
+		</div>
 	);
 
 	return (
@@ -199,119 +259,93 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 			{/* Map + stats + below-map content grouped so spacing between map and metadata is consistent */}
 			<section className="mt-2 space-y-8">
-				{/* Top layout: Map and Cover image */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-					{/* Left: Map */}
-					<div className="lg:col-span-2 h-full">
-						<Map
-							query={() => prisma.sample.findMany({ where: { project_id } })}
-							where={{ project_id }}
-							cluster
-							legend
-							draw
-							legendOmit={["project_id"]}
-							className="h-full w-full min-h-80"
-							defaultLegendField="expedition_id"
-						/>
-					</div>
-
-					{/*
-					 * Right column: optional half-height cover image stacked
-					 * over the project's depth-coverage card. When there's no
-					 * cover image, the depth card stands in for it. This keeps
-					 * the right column always populated so the layout below
-					 * (project metadata + assays grid) lines up consistently.
-					 */}
-					<div className="flex flex-col gap-4 h-full min-h-80">
-						{project.imageFileUrl_ODE && (
-							<div className="relative w-full aspect-2/1 rounded-md overflow-hidden bg-base-300/40 shrink-0">
-								<Image
-									src={project.imageFileUrl_ODE}
-									alt={`Cover image for the ${project.project_id} project.`}
-									fill
-									className="object-cover"
-									sizes="(max-width: 1024px) 100vw, 33vw"
+				{hasCoverImage ? (
+					<>
+						{/* Top layout: Map and Cover image */}
+						<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+							{/* Left: Map */}
+							<div className="lg:col-span-2">
+								<Map
+									query={() => prisma.sample.findMany({ where: { project_id } })}
+									where={{ project_id }}
+									cluster
+									legend
+									draw
+									legendOmit={["project_id"]}
+									className="h-105 w-full min-h-80"
+									defaultLegendField="expedition_id"
 								/>
 							</div>
-						)}
-						<div className="flex-1 flex flex-col">
+
+							{/* Right column: half-height cover image stacked over depth card */}
+							<div className="flex flex-col gap-4">
+								{project.imageFileUrl_ODE && (
+									<div className="relative w-full aspect-2/1 rounded-md overflow-hidden bg-base-300/40 shrink-0">
+										<Image
+											src={project.imageFileUrl_ODE}
+											alt={`Cover image for the ${project.project_id} project.`}
+											fill
+											className="object-cover"
+											sizes="(max-width: 1024px) 100vw, 33vw"
+										/>
+									</div>
+								)}
+								<Suspense fallback={<DepthCoverageCardSkeleton />}>
+									<DepthCoverageCard projectId={project_id} />
+								</Suspense>
+							</div>
+						</div>
+
+						{/* Below-map layout: Project metadata on the left, Assays + Top Taxonomies on the right */}
+						<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+							<div className="lg:col-span-2">
+								<div className="bg-base-200 rounded-xl p-6 flex flex-col">
+									<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
+									<div className="max-h-124 overflow-y-auto">
+										<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
+									</div>
+								</div>
+							</div>
+							{assaysAndTaxa}
+						</div>
+					</>
+				) : (
+					/*
+					 * No cover image: allow the right column to extend below the map
+					 * without forcing the map taller. We do that by making a 2-row
+					 * grid where the right column spans both rows.
+					 */
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+						<div className="lg:col-span-2">
+							<Map
+								query={() => prisma.sample.findMany({ where: { project_id } })}
+								where={{ project_id }}
+								cluster
+								legend
+								draw
+								legendOmit={["project_id"]}
+								className="h-105 w-full min-h-80"
+								defaultLegendField="expedition_id"
+							/>
+						</div>
+
+						<div className="flex flex-col gap-6 lg:row-span-2">
 							<Suspense fallback={<DepthCoverageCardSkeleton />}>
 								<DepthCoverageCard projectId={project_id} />
 							</Suspense>
+							{assaysAndTaxa}
 						</div>
-					</div>
-				</div>
 
-				{/* Below-map layout: Project metadata on the left, Assays + Top Taxonomies on the right */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-					{/* Project Metadata Table (aligned with map width) */}
-					<div className="lg:col-span-2">
-						<div className="bg-base-200 rounded-xl p-6 flex flex-col">
-							<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
-							<div className="max-h-124 overflow-y-auto">
-								<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
+						<div className="lg:col-span-2">
+							<div className="bg-base-200 rounded-xl p-6 flex flex-col">
+								<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
+								<div className="max-h-124 overflow-y-auto">
+									<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
+								</div>
 							</div>
 						</div>
 					</div>
-
-					{/* Assays and Top Taxonomies (right half) */}
-					<div className="h-full flex flex-col gap-6">
-						{/* Assays Section (kept visually the same, just above Top Taxonomies) */}
-						<div id="assays-section">
-							<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-								Assays in this Project ({Object.keys(uniqueAssays).length})
-							</h2>
-							<div className="space-y-2">
-							{Object.keys(uniqueAssays).map((assay) => (
-								<AssayCard
-									key={assay}
-									assay_name={assay}
-									target_gene={uniqueAssays[assay].target_gene}
-								/>
-							))}
-							</div>
-						</div>
-
-						{/* Top 2 Taxonomies per Assay */}
-						<div className="flex-1">
-							<h2 className="text-2xl font-semibold text-base-content/90 mb-3">Top 2 Taxonomies per Assay</h2>
-							<div className="space-y-3">
-								{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
-									<a
-										key={assay}
-										href="#taxonomy-chart"
-										className="block rounded-xl bg-base-200 hover:bg-base-200/80 hover:border-primary/60 shadow-sm hover:shadow-md transition-all cursor-pointer"
-									>
-										<div className="px-4 py-3 space-y-2">
-											<div className="flex flex-col gap-0.5">
-												<h3 className="font-medium text-base-content text-sm leading-snug">
-													{uniqueAssays[assay].target_gene}
-												</h3>
-												<p className="text-xs text-base-content/60 truncate">{assay}</p>
-											</div>
-											<div className="space-y-1">
-												{taxa.map((taxon, idx) => (
-													<div key={idx} className="relative h-7 rounded-full bg-base-300/80 overflow-hidden">
-														<div
-															className="absolute inset-y-0 left-0 bg-primary/15"
-															style={{ width: `${taxon.percentage}%` }}
-														/>
-														<div className="relative flex h-full items-center justify-between px-2 text-[0.7rem]">
-															<span className="text-base-content/80 truncate">{taxon.displayName}</span>
-															<span className="text-base-content/60 whitespace-nowrap">
-																{taxon.percentage}% ({taxon.count})
-															</span>
-														</div>
-													</div>
-												))}
-											</div>
-										</div>
-									</a>
-								))}
-							</div>
-						</div>
-					</div>
-				</div>
+				)}
 			</section>
 		</div>
 	);

@@ -39,17 +39,35 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 	const totalWithDate = agg._count.eventDate;
 
 	const fmt = (d: Date | null) =>
-		d ? new Date(d).toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "—";
+		d ? new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
 
 	let yearsSpan: number | null = null;
+	let spanLabel: string | null = null;
 	if (min && max) {
-		const msPerYear = 1000 * 60 * 60 * 24 * 365.25;
+		const msPerDay = 1000 * 60 * 60 * 24;
+		const msPerYear = msPerDay * 365.25;
 		yearsSpan = Math.max(0, (max.getTime() - min.getTime()) / msPerYear);
+
+		// Friendly, glanceable span label. We approximate months as 30 days
+		// to avoid expensive calendar math while keeping the unit breakdown
+		// intuitive.
+		const totalDays = Math.max(0, Math.round((max.getTime() - min.getTime()) / msPerDay));
+		const years = Math.floor(totalDays / 365);
+		const daysAfterYears = totalDays % 365;
+		const months = Math.floor(daysAfterYears / 30);
+		const days = daysAfterYears % 30;
+
+		const parts: string[] = [];
+		if (years > 0) parts.push(`${years} year${years === 1 ? "" : "s"}`);
+		if (months > 0) parts.push(`${months} month${months === 1 ? "" : "s"}`);
+		if (days > 0 || parts.length === 0) parts.push(`${days} day${days === 1 ? "" : "s"}`);
+		spanLabel = parts.join(", ");
 	}
 
 	return (
 		<DashCard
 			title="Temporal coverage"
+			titleClassName="text-base-content/75"
 			info={{
 				title: "Temporal coverage",
 				description:
@@ -63,10 +81,9 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 			}}
 		>
 			<div className="flex items-baseline gap-2 mb-4">
-				<span className="text-3xl font-bold text-base-content tabular-nums leading-none">
-					{yearsSpan !== null ? yearsSpan.toFixed(1) : "—"}
+				<span className="text-3xl font-normal text-base-content tabular-nums leading-none">
+					{spanLabel ?? "—"}
 				</span>
-				<span className="text-sm text-base-content/60 font-medium">years of coverage</span>
 			</div>
 
 			<div className="relative mb-3">
@@ -81,19 +98,19 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">
 						Earliest
 					</div>
-					<div className="text-base-content tabular-nums font-semibold">{fmt(min)}</div>
+					<div className="text-base-content tabular-nums font-semibold text-base sm:text-lg leading-tight">
+						{fmt(min)}
+					</div>
 				</div>
 				<div className="text-right">
 					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">
 						Latest
 					</div>
-					<div className="text-base-content tabular-nums font-semibold">{fmt(max)}</div>
+					<div className="text-base-content tabular-nums font-semibold text-base sm:text-lg leading-tight">
+						{fmt(max)}
+					</div>
 				</div>
 			</div>
-
-			<p className="text-xs text-base-content/55 mt-4">
-				Across {totalWithDate.toLocaleString()} samples with valid dates.
-			</p>
 		</DashCard>
 	);
 }

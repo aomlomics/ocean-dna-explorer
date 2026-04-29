@@ -86,7 +86,7 @@ export default function Home() {
 
 			<div
 				id="dataSummary"
-				className="z-1000 scroll-mt-20 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8 pb-12"
+				className="z-1000 scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 pb-12"
 			>
 				<div className="max-w-7xl mx-auto space-y-14">
 
@@ -105,52 +105,96 @@ export default function Home() {
 					 * Contributors). The map fills its column edge-to-edge, no
 					 * decorative wrapper.
 					 */}
-					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-						<div className="lg:col-span-8">
-							<div className="h-[420px] sm:h-[520px] w-full">
-								<ClientMap
-									url={"/api/sample"}
-									legend
-									titleTable="project"
-									cluster
-									clusterRadius={20}
-								/>
+					<div className="space-y-5">
+						{/* Row 2a — Map + Target genes at matching height */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+							<div className="lg:col-span-8">
+								<div className="h-[420px] sm:h-[520px] w-full">
+									<Suspense fallback={<div className="w-full h-full skeleton rounded-2xl" />}>
+										<ClientMap
+											url={"/api/sample"}
+											legend
+											titleTable="project"
+											cluster
+											clusterRadius={20}
+											className="w-full h-full aspect-auto rounded-2xl"
+										/>
+									</Suspense>
+								</div>
+							</div>
+
+							<div className="lg:col-span-4">
+								<div className="h-[420px] sm:h-[520px] w-full">
+									<DashCard
+										title="Target genes"
+										titleClassName="text-base-content/75"
+										className="h-full"
+										padding="none"
+										bodyClassName="flex flex-col h-full px-5 sm:px-6 pb-5 sm:pb-6"
+									info={{
+										title: "Target genes",
+										description:
+											"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
+										links: [
+											{ label: "Browse assays", href: "/explore/assay" },
+											{ label: "View analyses", href: "/explore/analysis" },
+											{
+												label: "About this chart",
+												href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays",
+												target: "_blank"
+											},
+											{
+												label: "Request an assay",
+												href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues",
+												target: "_blank"
+											}
+										]
+									}}
+									>
+										<div className="flex-1 min-h-0 w-full">
+											<Suspense fallback={<div className="h-full w-full skeleton rounded-lg" />}>
+												<AssayStats compact />
+											</Suspense>
+										</div>
+									</DashCard>
+								</div>
 							</div>
 						</div>
 
-						<div className="lg:col-span-4 flex flex-col gap-5">
-							<DashCard
-								title="Target genes"
-								info={{
-									title: "Target genes",
-									description:
-										"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
-									links: [
-										{ label: "Browse assays", href: "/explore/assay" },
-										{ label: "View analyses", href: "/explore/analysis" },
-										{
-											label: "About this chart",
-											href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays",
-											target: "_blank"
-										},
-										{
-											label: "Request an assay",
-											href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues",
-											target: "_blank"
-										}
-									]
-								}}
-							>
-								<Suspense fallback={<div className="h-64 skeleton rounded-lg" />}>
-									<AssayStats compact />
+						{/* Row 2b — Dashboard body laid out by placement priority:
+						    left column = depth/context cards, right column = trend and
+						    contributor/explore cards. */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+							<div className="lg:col-span-4 flex flex-col gap-5">
+								<Suspense fallback={<WidgetCardSkeleton className="h-88" />}>
+									<DepthCoverageCard />
 								</Suspense>
-							</DashCard>
-							<Suspense fallback={<WidgetCardSkeleton className="h-56" />}>
-								<TemporalCoverageCard />
-							</Suspense>
-							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
-								<TopInstitutionsCard />
-							</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
+									<SamplingEnvironmentsCard />
+								</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-112" />}>
+									<MetadataCompletenessCard />
+								</Suspense>
+							</div>
+
+							<div className="lg:col-span-8 flex flex-col gap-5">
+								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
+									<TableCountsCard />
+								</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
+									<SamplesOverTimeCard />
+								</Suspense>
+								<div className="w-full lg:w-[70%] lg:mr-auto">
+									<Suspense fallback={<WidgetCardSkeleton className="h-56" />}>
+										<TemporalCoverageCard />
+									</Suspense>
+								</div>
+								<div className="w-full lg:w-[70%] lg:mr-auto">
+									<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
+										<TopInstitutionsCard />
+									</Suspense>
+								</div>
+							</div>
 						</div>
 					</div>
 
@@ -158,26 +202,6 @@ export default function Home() {
 					<Suspense>
 						<DataSummaryHighlights />
 					</Suspense>
-
-					{/*
-					 * Row 4 — Samples over time line chart paired with the
-					 * env_local_scale donut (formerly Sampling Environments,
-					 * formerly under the map). 7/5 split keeps the line chart
-					 * the feature while giving the donut + legend room to
-					 * breathe.
-					 */}
-					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-						<div className="lg:col-span-7">
-							<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
-								<SamplesOverTimeCard />
-							</Suspense>
-						</div>
-						<div className="lg:col-span-5">
-							<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
-								<SamplingEnvironmentsCard />
-							</Suspense>
-						</div>
-					</div>
 
 					{/* Row 5 — Featured Organisms carousel */}
 					<FeaturedOrganismsSection />
@@ -187,29 +211,6 @@ export default function Home() {
 						<TopTaxonomiesSummary />
 					</Suspense>
 
-					{/*
-					 * Row 7 — Three equal-width stat cards: Metadata richness
-					 * (tall radials), Depth Coverage (the ocean-floor art card),
-					 * and Explore-the-data "by the numbers" tiles. Each card is
-					 * one quarter-width tile so none feels overgrown.
-					 */}
-					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-						<div className="lg:col-span-3">
-							<Suspense fallback={<WidgetCardSkeleton className="h-112" />}>
-								<MetadataCompletenessCard />
-							</Suspense>
-						</div>
-						<div className="lg:col-span-6">
-							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
-								<DepthCoverageCard />
-							</Suspense>
-						</div>
-						<div className="lg:col-span-3">
-							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
-								<TableCountsCard />
-							</Suspense>
-						</div>
-					</div>
 				</div>
 
 				{/* Funding Institutes Section */}

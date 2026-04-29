@@ -5,13 +5,17 @@ import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 interface AssayCardProps {
 	assay_name: string;
 	target_gene: string;
+	className?: string;
 }
 
-export default function AssayCard({ assay_name, target_gene }: AssayCardProps) {
+export default function AssayCard({ assay_name, target_gene, className = "" }: AssayCardProps) {
 	return (
 		<Link
 			href={`/explore/assay/${encodeURIComponent(assay_name)}`}
-			className="flex items-center gap-4 p-4 rounded-lg hover:bg-base-200 transition-colors duration-150 group"
+			className={[
+				"flex items-center gap-4 p-4 rounded-lg hover:bg-base-200 transition-colors duration-150 group",
+				className
+			].join(" ")}
 		>
 			<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">
 				<div className="relative w-12 h-12 flex items-center justify-center">

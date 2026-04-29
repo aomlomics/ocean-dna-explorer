@@ -20,7 +20,9 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 	});
 	if (!assignments.length) {
 		return (
-			<div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>
+			<div className="h-full w-full flex items-center justify-center text-center text-base-content/60 font-bold text-sm leading-none">
+				?
+			</div>
 		);
 	}
 
@@ -122,6 +124,8 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 	}
 
 	return (
-		<div className="h-full w-full flex items-center justify-center text-center text-base-content/80">No Image</div>
+		<div className="h-full w-full flex items-center justify-center text-center text-base-content/60 font-bold text-sm leading-none">
+			?
+		</div>
 	);
 }

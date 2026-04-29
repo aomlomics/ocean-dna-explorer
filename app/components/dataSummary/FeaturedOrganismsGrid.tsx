@@ -299,7 +299,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 			<div className="p-5 sm:p-6 flex flex-col gap-2.5">
 				<div className="flex items-start justify-between gap-3">
 					<div className="min-w-0">
-						<h4 className="text-lg sm:text-xl font-semibold text-base-content leading-tight italic line-clamp-2">
+						<h4 className="text-lg sm:text-xl font-semibold text-base-content leading-tight italic line-clamp-2 px-0.5 -mx-0.5">
 							{organism.taxonomyName}
 						</h4>
 						<p className="text-sm text-base-content/75 leading-snug">
@@ -315,7 +315,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 						</p>
 					</div>
 
-					{iucnLabel ? (
+					{iucn ? (
 						<span
 							className={[
 								"shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border",

@@ -46,14 +46,14 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 	return (
 		<DashCard
 			title="Depth coverage"
-			className="h-64"
+			titleClassName="text-base-content/75"
+			className="h-88"
 			bodyClassName="relative p-0"
-			headerClassName="relative z-10 bg-base-200"
+			headerClassName="relative z-10 bg-base-200 pb-4"
 			padding="none"
 			info={{
-				title: "Depth coverage",
 				description:
-					"Shallowest, average minimum, and deepest valid sample depths. Sentinel values like -9999 are excluded.",
+					"The shallowest sampling depth (minimumDepthInMeters), average minimumDepthInMeters, and the deepest maximumDepthInMeters across all samples.",
 				links: [
 					{
 						label: projectId ? "Browse this project's samples" : "Browse samples",
@@ -82,60 +82,92 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 	const allMissing = stats.min === null && stats.avg === null && stats.max === null;
 	if (allMissing) {
 		return (
-			<div className="h-72 sm:h-80 flex items-center justify-center text-sm text-base-content/60 italic">
+			<div className="h-88 flex items-center justify-center text-sm text-base-content/60 italic">
 				No valid depth data yet.
 			</div>
 		);
 	}
 
-	// Internal viewBox dimensions — both the background SVG and the overlay
-	// annotations share this coordinate system.
 	const W = 720;
-	const H = 420;
+	const H = 520;
 
-	// Vertical band the depth labels can occupy. Top reserves room for the
-	// "Surface" reference; bottom keeps labels off the abyss floor / mound.
-	const labelTop = 108;
-	const labelBottom = H - 78;
-	// Labels live to the right of the steep shelf so they never collide
-	// with the silhouette.
+	// Single-line labels: big number + smaller "m minimum/maximum/avg minimum".
+	// We treat the computed Y as the typographic baseline of the label.
+	const GROUP_GAP = 14;
+	const STEP = 56 + GROUP_GAP;
+	// When min and avg-min are *close in depth*, we intentionally stack them
+	// tightly so the visual spacing doesn't imply a large depth gap.
+	const CLOSE_DEPTH_M = 600;
+	const CLOSE_STACK_STEP = 44;
+
+	// Depth scale runs linearly from the surface reference all the way down.
+	// (We intentionally extend the surface/tick band past the visible edges
+	// so strokes never look clipped by the card rounding.)
+	const surfaceY = 84;
+	// Keep surface fixed; allow a bit more room so shallow labels don't get
+	// pushed down into deeper tick bands.
+	const scaleBottom = H - 18;
+	// Label anchors are clamped inside the same depth band.
+	// Only keep labels just under the surface line — don't force them down
+	// or shallow values (e.g. 307m) will look much deeper than they are.
+	//
+	// Special-case the minimum: it should sit as close to the surface line
+	// as possible (but still below it) when the data is extremely shallow.
+	const minTop = surfaceY + 6;
+	const labelTop = surfaceY + 10;
+	const labelBottom = scaleBottom - 8;
 	const labelX = 326;
 	const ticksLabelX = 710;
-	const surfaceY = 94;
 
-	// Scale each depth proportionally to a rounded "axis max" so tick
-	// labels don't collapse at the bottom (e.g. 6000 and 7000).
 	const ref = Math.max(1, stats.max ?? stats.avg ?? stats.min ?? 1);
 	const tickStep = 1000;
-	const axisMax = Math.max(tickStep, Math.ceil(ref / tickStep) * tickStep);
-	const depthToY = (d: number) => {
+	// Give the scale one extra tick below the deepest point so labels/ticks
+	// breathe and the bottom isn't "hard-clipped" at the max.
+	const axisMax = Math.max(tickStep, Math.ceil((ref + tickStep) / tickStep) * tickStep);
+	const depthToScaleY = (d: number) => {
 		const t = Math.max(0, Math.min(1, d / axisMax));
-		return labelTop + t * (labelBottom - labelTop);
+		return surfaceY + t * (scaleBottom - surfaceY);
 	};
 
-	const minYRaw = stats.min !== null ? depthToY(stats.min) : null;
-	const avgYRaw = stats.avg !== null ? depthToY(stats.avg) : null;
-	const maxY = stats.max !== null ? depthToY(stats.max) : null;
+	// Raw anchor positions (label baseline). Null when stat is absent.
+	let minA = stats.min !== null ? depthToScaleY(stats.min) : null;
+	let avgA = stats.avg !== null ? depthToScaleY(stats.avg) : null;
+	let maxA = stats.max !== null ? depthToScaleY(stats.max) : null;
 
-	// When the project's min and avg-min are nearly identical (very-shallow
-	// data) their labels would overlap. Spread them symmetrically around
-	// their midpoint rather than pinning either one.
-	let minY = minYRaw;
-	let avgY = avgYRaw;
-	const MIN_SEP = 44;
-	if (minY !== null && avgY !== null && Math.abs(minY - avgY) < MIN_SEP) {
-		const mid = (minY + avgY) / 2;
-		minY = Math.max(labelTop, mid - MIN_SEP / 2);
-		avgY = Math.min(labelBottom, mid + MIN_SEP / 2);
+	// Keep every label below the surface line and inside the drawable band.
+	const clampY = (y: number, top: number) => Math.max(top, Math.min(labelBottom, y));
+	if (minA !== null) minA = clampY(minA, minTop);
+	if (avgA !== null) avgA = clampY(avgA, labelTop);
+	if (maxA !== null) maxA = clampY(maxA, labelTop);
+
+	// Push each group down if it collides with the one above it.
+	// If avg would overlap min, put it as close to min as possible.
+	if (
+		minA !== null &&
+		avgA !== null &&
+		stats.min !== null &&
+		stats.avg !== null &&
+		stats.avg - stats.min <= CLOSE_DEPTH_M
+	) {
+		avgA = minA + CLOSE_STACK_STEP;
+	} else if (minA !== null && avgA !== null && avgA - minA < STEP) {
+		avgA = minA + STEP;
 	}
+	if (avgA !== null && maxA !== null && maxA - avgA < STEP) maxA = avgA + STEP;
+	// If only min and max (no avg), check those too.
+	if (avgA === null && minA !== null && maxA !== null && maxA - minA < STEP) maxA = minA + STEP;
+	// Clamp to bottom so nothing falls off.
+	if (maxA !== null) maxA = Math.min(maxA, labelBottom);
+	if (avgA !== null) avgA = Math.min(avgA, labelBottom);
+	if (minA !== null) minA = Math.min(minA, labelBottom);
 
 	const tickDepths = Array.from({ length: Math.floor(axisMax / tickStep) + 1 }, (_, i) => i * tickStep);
 
 	return (
 		<div className="relative w-full h-full">
 			<ThemeAwareSvg
-				lightSrc="/images/depth_cov_data_card.svg"
-				darkSrc="/images/depth_cov_data_card.svg"
+				lightSrc="/images/depth_cov_data_card_light.svg"
+				darkSrc="/images/depth_cov_data_card_dark.svg"
 				alt="Ocean depth profile background"
 				fill
 				sizes="(max-width: 1024px) 100vw, 50vw"
@@ -145,42 +177,41 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 
 			<svg
 				viewBox={`0 0 ${W} ${H}`}
-				className="absolute inset-0 w-full h-full block font-sans"
+				className="absolute inset-0 w-full h-full block"
 				role="img"
 				aria-label="Depth coverage profile"
 			>
-				{/* Surface reference — dotted line + small label. */}
-				<line
-					x1={0}
-					y1={surfaceY}
-					x2={W}
-					y2={surfaceY}
-					stroke="currentColor"
-					className="text-base-content/25"
-					strokeWidth={1}
-					strokeDasharray="3 7"
-				/>
+				{/* Surface label (no line). */}
 				<text
 					x={ticksLabelX}
-					y={surfaceY - 10}
+					y={surfaceY + 2}
 					textAnchor="end"
-					className="fill-base-content/60 text-[11px] uppercase tracking-[0.18em] font-semibold"
+					className="fill-base-content/55 text-[16px] uppercase tracking-[0.2em] font-semibold"
 				>
 					Surface
 				</text>
 
-				{/* Depth scale ticks every 1000m on the right edge. */}
+				{/* Depth scale ticks every 1000 m on the right edge */}
 				{tickDepths.map((d) => {
 					if (d === 0) return null;
-					const y = depthToY(d);
+					const y = depthToScaleY(d);
 					return (
 						<g key={d}>
+							<line
+								x1={ticksLabelX - 26}
+								y1={y}
+								x2={ticksLabelX - 4}
+								y2={y}
+								stroke="currentColor"
+								className="text-base-content/25"
+								strokeWidth={1}
+							/>
 							<text
 								x={ticksLabelX}
 								y={y}
 								dominantBaseline="middle"
 								textAnchor="end"
-								className="fill-base-content/45 text-[11px] font-medium tabular-nums"
+								className="fill-base-content/50 text-[17px] font-semibold tabular-nums"
 							>
 								{d.toLocaleString()}
 							</text>
@@ -188,51 +219,63 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 					);
 				})}
 
-				{/* Depth labels (match dash-card typography; only the number is bold). */}
-				{minY !== null && stats.min !== null && (
-					<text
-						x={labelX}
-						y={minY}
-						dominantBaseline="middle"
-						className="fill-base-content/85 text-[28px] font-medium tracking-tight"
-					>
-						<tspan className="font-semibold tabular-nums">{formatDepth(stats.min)}</tspan>
-						<tspan className="font-medium"> minimum</tspan>
-					</text>
+				{/* All three labels are one line: big number + small descriptor. */}
+				{minA !== null && stats.min !== null && (
+					<g transform={`translate(${labelX}, ${minA})`}>
+						<text
+							y={0}
+							dominantBaseline="alphabetic"
+							className="fill-base-content/90 text-[34px] font-semibold tracking-tight"
+						>
+							<tspan className="font-bold tabular-nums text-[42px]">{formatDepthValue(stats.min)}</tspan>
+							<tspan className="fill-base-content/90 text-[28px]"> m</tspan>
+							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
+								minimum
+							</tspan>
+						</text>
+					</g>
 				)}
 
-				{avgY !== null && stats.avg !== null && (
-					<text
-						x={labelX}
-						y={avgY}
-						dominantBaseline="middle"
-						className="fill-base-content/85 text-[28px] font-medium tracking-tight"
-					>
-						<tspan className="font-semibold tabular-nums">{formatDepth(stats.avg)}</tspan>
-						<tspan className="font-medium"> average min</tspan>
-					</text>
+				{avgA !== null && stats.avg !== null && (
+					<g transform={`translate(${labelX}, ${avgA})`}>
+						<text
+							y={0}
+							dominantBaseline="alphabetic"
+							className="fill-base-content/90 text-[34px] font-semibold tracking-tight"
+						>
+							<tspan className="font-bold tabular-nums text-[46px]">{formatDepthValue(stats.avg)}</tspan>
+							<tspan className="fill-base-content/90 text-[28px]"> m</tspan>
+							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
+								avg minimum
+							</tspan>
+						</text>
+					</g>
 				)}
 
-				{maxY !== null && stats.max !== null && (
-					<text
-						x={labelX}
-						y={maxY}
-						dominantBaseline="middle"
-						className="fill-base-content/90 text-[30px] font-medium tracking-tight"
-					>
-						<tspan className="font-semibold tabular-nums">{formatDepth(stats.max)}</tspan>
-						<tspan className="font-medium"> maximum</tspan>
-					</text>
+				{maxA !== null && stats.max !== null && (
+					<g transform={`translate(${labelX}, ${maxA})`}>
+						<text
+							y={0}
+							dominantBaseline="alphabetic"
+							className="fill-base-content/90 text-[34px] font-semibold tracking-tight"
+						>
+							<tspan className="font-bold tabular-nums text-[42px]">{formatDepthValue(stats.max)}</tspan>
+							<tspan className="fill-base-content/90 text-[28px]"> m</tspan>
+							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
+								maximum
+							</tspan>
+						</text>
+					</g>
 				)}
 			</svg>
 		</div>
 	);
 }
 
-function formatDepth(n: number) {
-	return `${Math.round(n).toLocaleString()} m`;
+function formatDepthValue(n: number) {
+	return Math.round(n).toLocaleString();
 }
 
 export function DepthCoverageCardSkeleton() {
-	return <div className="skeleton rounded-2xl h-64" aria-hidden="true" />;
+	return <div className="skeleton rounded-2xl h-88" aria-hidden="true" />;
 }

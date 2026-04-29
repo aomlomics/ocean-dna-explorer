@@ -15,15 +15,18 @@ function formatSubmitted(date: Date) {
 	});
 }
 
-/** Small, label-less date display. Date is the hero, not the word "Submitted". */
-function BigSubmittedDate({ date }: { date: Date }) {
+function LatestStamp({ label, date }: { label: string; date: Date }) {
 	return (
 		<time
 			dateTime={new Date(date).toISOString()}
-			className="text-lg sm:text-xl font-semibold text-base-content/85 tabular-nums whitespace-nowrap"
 			title={`Submitted ${formatSubmitted(date)}`}
+			className="text-lg sm:text-xl font-semibold text-base-content/85 tabular-nums whitespace-nowrap"
 		>
-			{formatSubmitted(date)}
+			<span className="text-primary font-normal">{label}</span>
+			<span className="mx-2 text-base-content/35 font-semibold" aria-hidden="true">
+				·
+			</span>
+			<span className="text-base-content/85">{formatSubmitted(date)}</span>
 		</time>
 	);
 }
@@ -201,29 +204,26 @@ function LatestProjectCard({ project }: ProjectProps) {
 
 	return (
 		<DashCard padding="none" className="overflow-hidden h-full">
-			<div className="p-5 sm:p-6 flex flex-col gap-4 grow relative">
-				{/* Header row — "Latest project" pill + info button */}
+			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
+				{/* Header row — glyph + "Latest project" pill + info button */}
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/15">
-						<span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-						Latest project
-					</span>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-3 min-w-0 flex-nowrap">
 						{/* Boat icon (≈2.5:1) — give it width so it doesn't
 						    squish into a square. */}
-						<ProjectGlyph className="w-12 h-5 text-primary/40" />
-						<DashCardInfoButton
-							info={{
-								title: "Most recent public project",
-								description:
-									"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
-								links: [
-									{ label: "View project", href: `/explore/project/${project.project_id}` },
-									{ label: "Browse all projects", href: "/explore/project" }
-								]
-							}}
-						/>
+						<ProjectGlyph className="w-14 h-6 text-primary" />
+						<LatestStamp label="Project" date={project.dateSubmitted} />
 					</div>
+					<DashCardInfoButton
+						info={{
+							title: "Most recent public project",
+							description:
+								"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
+							links: [
+								{ label: "View project", href: `/explore/project/${project.project_id}` },
+								{ label: "Browse all projects", href: "/explore/project" }
+							]
+						}}
+					/>
 				</div>
 
 				{/*
@@ -248,15 +248,14 @@ function LatestProjectCard({ project }: ProjectProps) {
 				{/* Row 1 — project_id (big, serves as name) + submitted date next to it */}
 				<div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
 					<h3
-						className="text-2xl sm:text-3xl font-semibold text-base-content font-mono leading-tight tracking-tight break-all"
+						className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight tracking-tight break-all"
 						title={project.project_id}
 					>
 						{project.project_id}
 					</h3>
-					<BigSubmittedDate date={project.dateSubmitted} />
 				</div>
 
-				<p className="text-lg sm:text-xl font-medium text-base-content/85 leading-snug line-clamp-2">
+				<p className="text-lg sm:text-xl font-medium text-base-content leading-snug line-clamp-2">
 					{project.project_name}
 				</p>
 
@@ -344,25 +343,14 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 	return (
 		<DashCard padding="none" className="overflow-hidden">
 			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
-				{/* Laptop / analysis glyph in the top-right corner — same icon
-				    used on the /submit page. */}
-				<AnalysisGlyph className="absolute top-5 right-5 w-7 h-7 text-accent/40" />
-
-				<div className="flex items-center gap-2 pr-10">
-					<span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent-focus border border-accent/20">
-						<span className="w-1.5 h-1.5 rounded-full bg-accent-focus animate-pulse" />
-						Latest analysis
-					</span>
-					<span
-						className={[
-							"inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold",
-							analysis.trusted
-								? "bg-emerald-500/10 text-emerald-500"
-								: "bg-base-300/70 text-base-content/70"
-						].join(" ")}
-					>
-						{analysis.trusted ? (
-							<>
+				<div className="flex items-start justify-between gap-3">
+					<div className="flex items-center gap-3 min-w-0">
+						{/* Laptop / analysis glyph — same icon used on the /submit page. */}
+						<AnalysisGlyph className="w-8 h-8 text-primary" />
+						<LatestStamp label="Analysis" date={analysis.dateSubmitted} />
+						{/* Keep "Trusted" only when applicable; remove noisy "Unverified". */}
+						{analysis.trusted && (
+							<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 whitespace-nowrap">
 								<svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
 									<path
 										fillRule="evenodd"
@@ -371,36 +359,30 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 									/>
 								</svg>
 								Trusted
-							</>
-						) : (
-							"Unverified"
+							</span>
 						)}
-					</span>
-					<span className="ml-auto">
-						<DashCardInfoButton
-							info={{
-								title: "Most recent public analysis",
-								description:
-									"The newest analysis run to be publicly submitted. Trusted runs have been reviewed by the ODE team.",
-								links: [
-									{
-										label: "View analysis",
-										href: `/explore/analysis/${analysis.analysis_run_name}`
-									},
-									{
-										label: "View parent project",
-										href: `/explore/project/${analysis.project_id}`
-									},
-									{ label: "Browse all analyses", href: "/explore/analysis" }
-								]
-							}}
-						/>
-					</span>
+					</div>
+					<DashCardInfoButton
+						info={{
+							title: "Most recent public analysis",
+							description:
+								"The newest analysis run to be publicly submitted. Trusted runs have been reviewed by the ODE team.",
+							links: [
+								{
+									label: "View analysis",
+									href: `/explore/analysis/${analysis.analysis_run_name}`
+								},
+								{
+									label: "View parent project",
+									href: `/explore/project/${analysis.project_id}`
+								},
+								{ label: "Browse all analyses", href: "/explore/analysis" }
+							]
+						}}
+					/>
 				</div>
 
-				<BigSubmittedDate date={analysis.dateSubmitted} />
-
-				<h3 className="text-base sm:text-lg font-semibold text-base-content leading-snug break-all line-clamp-2 font-mono">
+				<h3 className="text-base sm:text-lg font-semibold text-base-content leading-snug break-all line-clamp-2">
 					{analysis.analysis_run_name}
 				</h3>
 
@@ -449,7 +431,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 				</dl>
 
 				{/* No divider line above the button. Tucked bottom-right. */}
-				<div className="mt-auto flex justify-end">
+				<div className="mt-auto flex justify-start">
 					<Link
 						href={`/explore/analysis/${analysis.analysis_run_name}`}
 						className="btn btn-sm btn-primary"
