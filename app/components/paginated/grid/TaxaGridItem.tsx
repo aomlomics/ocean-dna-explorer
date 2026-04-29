@@ -1,8 +1,11 @@
 import Link from "next/link";
 import PhyloPicClient from "../../images/PhyloPicClient";
 import { Taxonomy } from "@/app/generated/prisma/client";
+import { TaxonomicRanks } from "@/types/objects";
 
 export default function TaxaGridItem({ item }: { item: Taxonomy }) {
+	const mostSpecificRank = TaxonomicRanks.toReversed().find((rank) => item[rank]);
+
 	return (
 		<Link
 			href={`/explore/taxonomy/${encodeURIComponent(item.taxonomy)}`}
@@ -14,33 +17,10 @@ export default function TaxaGridItem({ item }: { item: Taxonomy }) {
 					className="tooltip tooltip-primary w-full wrap-break-word before:w-full! before:bg-base-100 before:text-base-content before:border before:border-base-300 mb-1"
 					data-tip={item.taxonomy}
 				>
-					{item.species ? (
+					{mostSpecificRank ? (
 						<>
-							<p className="text-primary">Species:</p> <p className="wrap-break-word">{item.species}</p>
-						</>
-					) : item.genus ? (
-						<>
-							<p className="text-primary">Genus:</p> <p className="wrap-break-word">{item.genus}</p>
-						</>
-					) : item.family ? (
-						<>
-							<p className="text-primary">Family:</p> <p className="wrap-break-word">{item.family}</p>
-						</>
-					) : item.order ? (
-						<>
-							<p className="text-primary">Order:</p> <p className="wrap-break-word">{item.order}</p>
-						</>
-					) : item.class ? (
-						<>
-							<p className="text-primary">Class:</p> <p className="wrap-break-word">{item.class}</p>
-						</>
-					) : item.phylum ? (
-						<>
-							<p className="text-primary">Phylum:</p> <p className="wrap-break-word">{item.phylum}</p>
-						</>
-					) : item.kingdom ? (
-						<>
-							<p className="text-primary">Kingdom:</p> <p className="wrap-break-word">{item.kingdom}</p>
+							<p className="text-primary">{mostSpecificRank.slice(0, 1).toUpperCase() + mostSpecificRank.slice(1)}:</p>{" "}
+							<p className="wrap-break-word">{item[mostSpecificRank]}</p>
 						</>
 					) : (
 						"Error: no taxonomy rank found"

@@ -67,7 +67,7 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name',
 
 export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
-export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','kingdom','phylum','class','order','family','genus','species']);
+export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
@@ -79,7 +79,7 @@ export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds',
 
 export const SampleScalarFieldEnumSchema = z.enum(['id','samp_name','biosample_accession','userDefined','project_id','deleted_ODE','samp_category','neg_cont_type','pos_cont_type','decimalLatitude','decimalLongitude','verbatimLatitude','verbatimLongitude','verbatimCoordinateSystem','verbatimSRS','geo_loc_name','eventDate','eventDate_Midpoint_ODE','eventDate_End_ODE','eventDurationValue','eventDurationUnit','verbatimEventDate','verbatimEventTime','verbatimDateEnd','verbatimTimeEnd','env_broad_scale','env_local_scale','env_medium','habitat_natural_artificial_0_1','samp_collect_method','samp_collect_device','samp_size','samp_size_unit','serial_number','line_id','station_id','ctd_cast_number','ctd_bottle_number','replicate_number','samp_collect_notes','samp_store_temp','samp_store_sol','samp_store_dur','samp_store_method_additional','dna_store_loc','samp_store_loc','samp_mat_process','filter_passive_active_0_1','filter_onsite_dur','size_frac_low','size_frac','filter_diameter','filter_surface_area','filter_material','filter_name','precip_chem_prep','precip_force_prep','precip_time_prep','precip_temp_prep','prepped_samp_store_temp','prepped_samp_store_sol','prepped_samp_store_dur','prep_method_additional','prefilter_material','pump_flow_rate','pump_flow_rate_unit','stationed_sample_dur','extract_id','extract_plate','extract_well_number','extract_well_position','materialSampleID','sample_derived_from','sample_composed_of','rel_cont_id','biological_rep_relation','samp_vol_we_dna_ext','samp_vol_we_dna_ext_unit','nucl_acid_ext_lysis','nucl_acid_ext_sep','nucl_acid_ext','nucl_acid_ext_kit','nucl_acid_ext_modify','dna_cleanup_0_1','dna_cleanup_method','concentration','concentration_method','ratioOfAbsorbance260_280','pool_dna_num','nucl_acid_ext_method_additional','concentration_unit','date_ext','dna_yield','dna_yield_unit','samp_weather','minimumDepthInMeters','maximumDepthInMeters','tot_depth_water_col','elev','temp','chlorophyll','light_intensity','misc_param','ph','ph_meth','salinity','suspend_part_matter','tidal_stage','turbidity','water_current','solar_irradiance','wind_direction','wind_speed','diss_inorg_carb','diss_inorg_nitro','diss_org_carb','diss_org_nitro','diss_oxygen','tot_diss_nitro','tot_inorg_nitro','tot_nitro','tot_part_carb','tot_org_carb','tot_org_c_meth','tot_nitro_content','tot_nitro_cont_meth','tot_carb','part_org_carb','part_org_nitro','nitrate','nitrite','nitro','org_carb','org_matter','org_nitro','diss_inorg_carb_unit','diss_inorg_nitro_unit','diss_org_carb_unit','diss_org_nitro_unit','diss_oxygen_unit','nitrate_unit','nitrite_unit','nitro_unit','org_carb_unit','org_matter_unit','org_nitro_unit','part_org_carb_unit','part_org_nitro_unit','tot_carb_unit','tot_diss_nitro_unit','tot_inorg_nitro_unit','tot_nitro_content_unit','tot_nitro_unit','tot_org_carb_unit','tot_part_carb_unit','ammonium','ammonium_unit','carbonate','carbonate_unit','hydrogen_ion','nitrate_plus_nitrite','nitrate_plus_nitrite_unit','omega_arag','pco2','pco2_unit','phosphate','phosphate_unit','pressure','pressure_unit','silicate','silicate_unit','tot_alkalinity','tot_alkalinity_unit','transmittance','transmittance_unit','organism','sterilise_method','short_name','expedition_id','ship_crs_expocode','woce_sect','bioproject_accession']);
 
-export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','deleted_ODE','assay_name_alternate','targetTaxonomicAssay','targetTaxonomicScope','target','target_gene','target_subfragment','pcr_primer_name_published_forward','pcr_primer_name_published_reverse','pcr_primer_reference_forward','pcr_primer_reference_reverse','assay_reference']);
+export const AssayScalarFieldEnumSchema = z.enum(['id','assay_name','pcr_primer_forward','pcr_primer_reverse','pcr_primer_name_forward','pcr_primer_name_reverse','assay_name_alternate','targetTaxonomicAssay','targetTaxonomicScope','target','target_gene','target_subfragment','pcr_primer_name_published_forward','pcr_primer_name_published_reverse','pcr_primer_reference_forward','pcr_primer_reference_reverse','assay_reference']);
 
 export const AssayPrepScalarFieldEnumSchema = z.enum(['id','project_id','assay_name','thermocycler','commercial_mm','custom_mm','pcr_cond','nucl_acid_amp','pcr_0_1','amplificationReactionVolume','assay_validation','pcr_primer_vol_forward','pcr_primer_vol_reverse','pcr_primer_conc_forward','pcr_primer_conc_reverse','probeReporter','probeQuencher','probe_seq','probe_ref','probe_conc','pcr_dna_vol','pcr_rep','annealingTemp','pcr_cycles','pcr_analysis_software','pcr_method_additional','assay_type','ampliconSize','ampliconSize_Midpoint_ODE','ampliconSize_End_ODE']);
 
@@ -103,7 +103,7 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_n
 
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
-export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','kingdom','phylum','class','order','family','genus','species']);
+export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
@@ -668,6 +668,9 @@ export const TaxonomySchema = z.object({
   taxonomy: z.string(),
   verbatimIdentification: z.string(),
   higherClassification: z.string().nullish(),
+  domain: z.string().nullish(),
+  supergroup: z.string().nullish(),
+  division: z.string().nullish(),
   kingdom: z.string().nullish(),
   phylum: z.string().nullish(),
   class: z.string().nullish(),
@@ -1473,7 +1476,6 @@ export const AssaySchema = z.object({
   pcr_primer_reverse: z.string(),
   pcr_primer_name_forward: z.string(),
   pcr_primer_name_reverse: z.string(),
-  deleted_ODE: z.boolean().nullish(),
   assay_name_alternate: z.string().nullish(),
   targetTaxonomicAssay: z.string(),
   targetTaxonomicScope: z.string().nullish(),

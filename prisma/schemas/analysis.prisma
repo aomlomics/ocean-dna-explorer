@@ -163,6 +163,9 @@ model Taxonomy {
     // Data
     verbatimIdentification String
     higherClassification   String?
+    domain                 String?
+    supergroup             String?
+    division               String?
     kingdom                String?
     phylum                 String?
     class                  String?
