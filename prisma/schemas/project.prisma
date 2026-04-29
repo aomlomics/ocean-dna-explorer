@@ -283,8 +283,6 @@ model Assay {
     Libraries  Library[]
     Analyses   Analysis[]
 
-    deleted_ODE Boolean?
-
     assay_name_alternate              String?
     targetTaxonomicAssay              String //[]
     targetTaxonomicScope              String? //[]    @default([])
