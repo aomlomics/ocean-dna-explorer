@@ -972,9 +972,8 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 					(dbA) => dbA.pcr_primer_forward === a.pcr_primer_forward && dbA.pcr_primer_reverse === a.pcr_primer_reverse
 				)
 		);
-		console.log(assaysToUpdate);
 		if (assaysToUpdate.length) {
-			await updateManyRaw(tx, "Assay", assaysToUpdate, "assay_name");
+			await updateManyRaw(tx, "Assay", assaysToUpdate, ["pcr_primer_forward", "pcr_primer_reverse"]);
 		}
 
 		//delete any removed assays that are unused
