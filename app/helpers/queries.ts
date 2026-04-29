@@ -960,14 +960,20 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 			data: assays,
 			skipDuplicates: true,
 			select: {
-				assay_name: true
+				pcr_primer_forward: true,
+				pcr_primer_reverse: true
 			}
 		});
 
 		//update existing assays
-		const assaysToUpdate = assays.filter((a) => !newAssays.some((dbA) => dbA.assay_name === a.assay_name));
+		const assaysToUpdate = assays.filter(
+			(a) =>
+				!newAssays.some(
+					(dbA) => dbA.pcr_primer_forward === a.pcr_primer_forward && dbA.pcr_primer_reverse === a.pcr_primer_reverse
+				)
+		);
 		if (assaysToUpdate.length) {
-			await updateManyRaw(tx, "Assay", assaysToUpdate, "assay_name");
+			await updateManyRaw(tx, "Assay", assaysToUpdate, ["pcr_primer_forward", "pcr_primer_reverse"]);
 		}
 
 		//delete any removed assays that are unused
@@ -982,30 +988,6 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 				Analyses: {
 					none: {}
 				}
-			}
-		});
-
-		//flag any removed assays that are still in use as deleted
-		await tx.assay.updateMany({
-			where: {
-				assay_name: {
-					notIn: assayNames
-				},
-				OR: [
-					{
-						Libraries: {
-							some: {}
-						}
-					},
-					{
-						Analyses: {
-							some: {}
-						}
-					}
-				]
-			},
-			data: {
-				deleted_ODE: true
 			}
 		});
 	});
