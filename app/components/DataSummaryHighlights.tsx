@@ -3,71 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { publicPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
-import DataSummaryCreatureCarousel, { type FeaturedCreature } from "./DataSummaryCreatureCarousel";
+import FeaturedOrganismsGrid from "./dataSummary/FeaturedOrganismsGrid";
 import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
 import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
-
-const featuredCreatures: FeaturedCreature[] = [
-	{
-		id: "mobula-birostris",
-		rank: "Species",
-		taxonomyName: "Mobula birostris",
-		commonName: "Giant Oceanic Manta Ray",
-		description:
-			"A wide-ranging plankton filter feeder often linked to productive ocean fronts and aggregation events.",
-		taxonomyHref: "/explore/taxonomy/Mobula%20birostris",
-		iucnStatus: "EN"
-	},
-	{
-		id: "physeter-macrocephalus",
-		rank: "Species",
-		taxonomyName: "Physeter macrocephalus",
-		commonName: "Sperm Whale",
-		description: "A deep-diving apex predator whose eDNA signatures help indicate offshore ecosystem structure.",
-		taxonomyHref: "/explore/taxonomy/Physeter%20macrocephalus",
-		iucnStatus: "VU"
-	},
-	{
-		id: "scomber-scombrus",
-		rank: "Species",
-		taxonomyName: "Scomber scombrus",
-		commonName: "Atlantic Mackerel",
-		description:
-			"A schooling pelagic fish frequently observed in broad transects with strong seasonal movement patterns.",
-		taxonomyHref: "/explore/taxonomy/Scomber%20scombrus",
-		iucnStatus: "LC"
-	},
-	{
-		id: "euphausiacea",
-		rank: "Order",
-		taxonomyName: "Euphausiacea",
-		commonName: "Krill",
-		description:
-			"Key zooplankton grazers that transfer energy from phytoplankton to fish, seabirds, and marine mammals.",
-		taxonomyHref: "/explore/taxonomy/Euphausiacea",
-		iucnStatus: "NE"
-	},
-	{
-		id: "thunnus-albacares",
-		rank: "Species",
-		taxonomyName: "Thunnus albacares",
-		commonName: "Yellowfin Tuna",
-		description:
-			"A highly migratory predator often used as an indicator taxon for dynamic open-ocean food webs.",
-		taxonomyHref: "/explore/taxonomy/Thunnus%20albacares",
-		iucnStatus: "NT"
-	},
-	{
-		id: "octopoda",
-		rank: "Order",
-		taxonomyName: "Octopoda",
-		commonName: "Octopuses",
-		description:
-			"Cryptic benthic and pelagic cephalopods whose DNA traces can reveal hidden biodiversity hot spots.",
-		taxonomyHref: "/explore/taxonomy/Octopoda",
-		iucnStatus: "NE"
-	}
-];
 
 function formatSubmitted(date: Date) {
 	return new Date(date).toLocaleDateString(undefined, {
@@ -232,7 +170,7 @@ export function FeaturedOrganismsSection() {
 					</svg>
 				</span>
 			</div>
-			<DataSummaryCreatureCarousel creatures={featuredCreatures} />
+			<FeaturedOrganismsGrid />
 		</section>
 	);
 }

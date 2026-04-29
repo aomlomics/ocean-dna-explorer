@@ -1,5 +1,6 @@
 import { publicPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
+import ThemeAwareSvg from "@/app/components/help/ThemeAwareSvg";
 
 type DepthCoverageCardProps = {
 	/**
@@ -45,8 +46,9 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 	return (
 		<DashCard
 			title="Depth coverage"
-			className="h-full"
+			className="h-64"
 			bodyClassName="relative p-0"
+			headerClassName="relative z-10 bg-base-200"
 			padding="none"
 			info={{
 				title: "Depth coverage",
@@ -86,26 +88,28 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 		);
 	}
 
-	// Internal viewBox dimensions — the SVG itself scales to its parent
-	// width via w-full and keeps this aspect ratio.
+	// Internal viewBox dimensions — both the background SVG and the overlay
+	// annotations share this coordinate system.
 	const W = 720;
 	const H = 420;
 
 	// Vertical band the depth labels can occupy. Top reserves room for the
-	// "Surface" reference; bottom keeps labels off the abyss floor.
-	const labelTop = 98;
-	const labelBottom = H - 70;
+	// "Surface" reference; bottom keeps labels off the abyss floor / mound.
+	const labelTop = 108;
+	const labelBottom = H - 78;
 	// Labels live to the right of the steep shelf so they never collide
 	// with the silhouette.
-	const labelX = 332;
+	const labelX = 326;
+	const ticksLabelX = 710;
+	const surfaceY = 94;
 
-	// Scale each depth proportionally to the deepest known value. The
-	// 1.05 ceiling adds a small water cushion so the deepest label never
-	// sits on top of the seamount.
+	// Scale each depth proportionally to a rounded "axis max" so tick
+	// labels don't collapse at the bottom (e.g. 6000 and 7000).
 	const ref = Math.max(1, stats.max ?? stats.avg ?? stats.min ?? 1);
-	const ceiling = ref * 1.05;
+	const tickStep = 1000;
+	const axisMax = Math.max(tickStep, Math.ceil(ref / tickStep) * tickStep);
 	const depthToY = (d: number) => {
-		const t = Math.max(0, Math.min(1, d / ceiling));
+		const t = Math.max(0, Math.min(1, d / axisMax));
 		return labelTop + t * (labelBottom - labelTop);
 	};
 
@@ -125,103 +129,103 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 		avgY = Math.min(labelBottom, mid + MIN_SEP / 2);
 	}
 
+	const tickDepths = Array.from({ length: Math.floor(axisMax / tickStep) + 1 }, (_, i) => i * tickStep);
+
 	return (
-		<svg
-			viewBox={`0 0 ${W} ${H}`}
-			className="w-full h-72 sm:h-80 block font-[inherit]"
-			role="img"
-			aria-label="Depth coverage profile"
-		>
-			<defs>
-				<linearGradient id="depth-water" x1="0" y1="0" x2="0" y2="1">
-					<stop offset="0%" stopColor="currentColor" stopOpacity="0.6" />
-					<stop offset="100%" stopColor="currentColor" stopOpacity="0.9" />
-				</linearGradient>
-				<filter id="depth-label-shadow">
-					<feDropShadow dx="0" dy="1.5" stdDeviation="1.75" floodColor="#000000" floodOpacity="0.6" />
-				</filter>
-			</defs>
-
-			{/* Ocean water background fills the whole card body. */}
-			<rect x={0} y={0} width={W} height={H} fill="url(#depth-water)" className="text-base-300" />
-
-			{/* Surface line / label for orientation, matching sketch language. */}
-			<line x1={0} y1={78} x2={126} y2={78} stroke="currentColor" className="text-base-content/20" strokeWidth={1} />
-			<text
-				x={20}
-				y={68}
-				className="fill-base-content/55 text-[12px] uppercase tracking-[0.18em] font-semibold"
-			>
-				Surface
-			</text>
-
-			{/* Ocean floor silhouette: shelf -> dropoff -> abyssal plain -> small seamount. */}
-			<path
-				d={`
-					M 0,130
-					L 46,138
-					L 78,146
-					L 106,164
-					L 124,186
-					L 140,220
-					L 150,254
-					L 160,294
-					L 170,336
-					L 192,374
-					L 232,404
-					L 570,404
-					L 598,398
-					L 616,384
-					L 630,372
-					L 646,388
-					L 666,408
-					L 690,410
-					L 720,404
-					L 720,${H}
-					L 0,${H}
-					Z
-				`}
-				fill="currentColor"
-				className="text-base-content/25"
+		<div className="relative w-full h-full">
+			<ThemeAwareSvg
+				lightSrc="/images/depth_cov_data_card.svg"
+				darkSrc="/images/depth_cov_data_card.svg"
+				alt="Ocean depth profile background"
+				fill
+				sizes="(max-width: 1024px) 100vw, 50vw"
+				priority={false}
+				className="object-cover"
 			/>
 
-			{/* Depth labels are intentionally large and central to this card. */}
-			{minY !== null && stats.min !== null && (
+			<svg
+				viewBox={`0 0 ${W} ${H}`}
+				className="absolute inset-0 w-full h-full block font-sans"
+				role="img"
+				aria-label="Depth coverage profile"
+			>
+				{/* Surface reference — dotted line + small label. */}
+				<line
+					x1={0}
+					y1={surfaceY}
+					x2={W}
+					y2={surfaceY}
+					stroke="currentColor"
+					className="text-base-content/25"
+					strokeWidth={1}
+					strokeDasharray="3 7"
+				/>
 				<text
-					x={labelX}
-					y={minY}
-					dominantBaseline="middle"
-					filter="url(#depth-label-shadow)"
-					className="fill-base-content text-[34px] font-extrabold tabular-nums tracking-tight"
+					x={ticksLabelX}
+					y={surfaceY - 10}
+					textAnchor="end"
+					className="fill-base-content/60 text-[11px] uppercase tracking-[0.18em] font-semibold"
 				>
-					{`− ${formatDepth(stats.min)} minimum`}
+					Surface
 				</text>
-			)}
 
-			{avgY !== null && stats.avg !== null && (
-				<text
-					x={labelX}
-					y={avgY}
-					dominantBaseline="middle"
-					filter="url(#depth-label-shadow)"
-					className="fill-base-content text-[34px] font-extrabold tabular-nums tracking-tight"
-				>
-					{`− ${formatDepth(stats.avg)} average min`}
-				</text>
-			)}
+				{/* Depth scale ticks every 1000m on the right edge. */}
+				{tickDepths.map((d) => {
+					if (d === 0) return null;
+					const y = depthToY(d);
+					return (
+						<g key={d}>
+							<text
+								x={ticksLabelX}
+								y={y}
+								dominantBaseline="middle"
+								textAnchor="end"
+								className="fill-base-content/45 text-[11px] font-medium tabular-nums"
+							>
+								{d.toLocaleString()}
+							</text>
+						</g>
+					);
+				})}
 
-			{maxY !== null && stats.max !== null && (
-				<text
-					x={labelX}
-					y={maxY}
-					dominantBaseline="middle"
-					filter="url(#depth-label-shadow)"
-					className="fill-base-content text-[36px] font-extrabold tabular-nums tracking-tight"
-				>
-					{`− ${formatDepth(stats.max)} maximum`}
-				</text>
-			)}
-		</svg>
+				{/* Depth labels (match dash-card typography; only the number is bold). */}
+				{minY !== null && stats.min !== null && (
+					<text
+						x={labelX}
+						y={minY}
+						dominantBaseline="middle"
+						className="fill-base-content/85 text-[28px] font-medium tracking-tight"
+					>
+						<tspan className="font-semibold tabular-nums">{formatDepth(stats.min)}</tspan>
+						<tspan className="font-medium"> minimum</tspan>
+					</text>
+				)}
+
+				{avgY !== null && stats.avg !== null && (
+					<text
+						x={labelX}
+						y={avgY}
+						dominantBaseline="middle"
+						className="fill-base-content/85 text-[28px] font-medium tracking-tight"
+					>
+						<tspan className="font-semibold tabular-nums">{formatDepth(stats.avg)}</tspan>
+						<tspan className="font-medium"> average min</tspan>
+					</text>
+				)}
+
+				{maxY !== null && stats.max !== null && (
+					<text
+						x={labelX}
+						y={maxY}
+						dominantBaseline="middle"
+						className="fill-base-content/90 text-[30px] font-medium tracking-tight"
+					>
+						<tspan className="font-semibold tabular-nums">{formatDepth(stats.max)}</tspan>
+						<tspan className="font-medium"> maximum</tspan>
+					</text>
+				)}
+			</svg>
+		</div>
 	);
 }
 
@@ -230,5 +234,5 @@ function formatDepth(n: number) {
 }
 
 export function DepthCoverageCardSkeleton() {
-	return <div className="skeleton rounded-2xl h-72" aria-hidden="true" />;
+	return <div className="skeleton rounded-2xl h-64" aria-hidden="true" />;
 }

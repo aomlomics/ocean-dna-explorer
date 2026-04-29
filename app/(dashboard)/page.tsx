@@ -194,17 +194,17 @@ export default function Home() {
 					 * one quarter-width tile so none feels overgrown.
 					 */}
 					<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-						<div className="lg:col-span-4">
+						<div className="lg:col-span-3">
 							<Suspense fallback={<WidgetCardSkeleton className="h-112" />}>
 								<MetadataCompletenessCard />
 							</Suspense>
 						</div>
-						<div className="lg:col-span-4">
+						<div className="lg:col-span-6">
 							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
 								<DepthCoverageCard />
 							</Suspense>
 						</div>
-						<div className="lg:col-span-4">
+						<div className="lg:col-span-3">
 							<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
 								<TableCountsCard />
 							</Suspense>
