@@ -47,3 +47,9 @@ model Attribution {
     attributionUrl         String?
     attributionInstitution String?
 }
+
+model BlobFile {
+    id     Int    @id @default(autoincrement())
+    url    String @unique
+    userId String
+}

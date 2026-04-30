@@ -29,9 +29,6 @@ export default function ProjectSubmit() {
 	//state variable that will have any error passed to it
 	const [errorMessage, setErrorMessage] = useState("");
 
-	//file urls to delete if an error occurs
-	const [fileUrls, setFileUrls] = useState([] as string[]);
-
 	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
@@ -67,13 +64,6 @@ export default function ProjectSubmit() {
 	}, [globalResponse]);
 
 	async function doError(err: string) {
-		//delete files from blob storage
-		for (const url of fileUrls) {
-			await fetch(`/api/file/delete?url=${url}`, {
-				method: "DELETE"
-			});
-		}
-
 		setLoading(false);
 		setErrorMessage(err);
 		modalRef.current?.showModal();
@@ -119,7 +109,6 @@ export default function ProjectSubmit() {
 				})
 			).url;
 			setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-			setFileUrls([projectFileUrl]);
 
 			//samples
 			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
@@ -131,7 +120,6 @@ export default function ProjectSubmit() {
 				})
 			).url;
 			setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-			setFileUrls([projectFileUrl, sampleFileUrl]);
 
 			//libraries
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
@@ -143,7 +131,6 @@ export default function ProjectSubmit() {
 				})
 			).url;
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-			setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl]);
 
 			let imageFileUrl;
 			if (imageFile) {
@@ -153,7 +140,6 @@ export default function ProjectSubmit() {
 						handleUploadUrl: "/api/file/upload"
 					})
 				).url;
-				setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl, imageFileUrl]);
 			}
 
 			//trigger streamed action

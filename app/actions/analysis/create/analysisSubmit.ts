@@ -3,11 +3,13 @@
 import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
+import { prismaImages } from "@/app/helpers/prismaImages";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError } from "@/app/helpers/queries";
-import { NetworkPacket } from "@/types/globals";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 async function doSubmit(
 	analysisChannel: Channel,
@@ -288,6 +290,8 @@ async function doSubmit(
 				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
 			}
 		});
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -315,18 +319,15 @@ export default async function analysisSubmitAction(
 	const assignmentsStream = createProgressStream();
 	const occurrencesStream = createProgressStream();
 
-	if (
-		typeof analysisFileUrl !== "string" ||
-		typeof assignmentsFileUrl !== "string" ||
-		typeof occurrencesFileUrl !== "string"
-	) {
-		await analysisStream.error("Arguments are not of correct type");
-		await assignmentsStream.error("Arguments are not of correct type");
-		await occurrencesStream.error("Arguments are not of correct type");
+	const validBlobs = await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+	if (!validBlobs) {
+		analysisStream.error("Files are not valid");
+		assignmentsStream.error("Files are not valid");
+		occurrencesStream.error("Files are not valid");
 
-		await analysisStream.close();
-		await assignmentsStream.close();
-		await occurrencesStream.close();
+		analysisStream.close();
+		assignmentsStream.close();
+		occurrencesStream.close();
 
 		return [analysisStream.readable, assignmentsStream.readable, occurrencesStream.readable];
 	}
@@ -338,10 +339,14 @@ export default async function analysisSubmitAction(
 		isPrivate,
 		trusted,
 		tagNames
-	).then(() => {
+	).then((success) => {
 		analysisStream.close();
 		assignmentsStream.close();
 		occurrencesStream.close();
+
+		if (!success) {
+			del([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+		}
 	});
 
 	return [analysisStream.readable, assignmentsStream.readable, occurrencesStream.readable];

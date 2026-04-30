@@ -16,6 +16,8 @@ export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','u
 
 export const AttributionScalarFieldEnumSchema = z.enum(['id','attributionTitle','attributionNames','attributionUrl','attributionInstitution']);
 
+export const BlobFileScalarFieldEnumSchema = z.enum(['id','url','userId']);
+
 export const SortOrderSchema = z.enum(['asc','desc']);
 
 export const QueryModeSchema = z.enum(['default','insensitive']);
@@ -193,3 +195,32 @@ export type AttributionWithPartialRelations = z.infer<typeof AttributionSchema> 
 export const AttributionWithPartialRelationsSchema: z.ZodType<AttributionWithPartialRelations> = AttributionSchema.merge(z.object({
   Image: z.lazy(() => ImagePartialWithRelationsSchema).array(),
 }).partial())
+
+/////////////////////////////////////////
+// BLOB FILE SCHEMA
+/////////////////////////////////////////
+
+export const BlobFileSchema = z.object({
+  id: z.number().int(),
+  url: z.string(),
+  userId: z.string(),
+})
+
+export type BlobFile = z.infer<typeof BlobFileSchema>
+
+/////////////////////////////////////////
+// BLOB FILE PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const BlobFilePartialSchema = BlobFileSchema.partial()
+
+export type BlobFilePartial = z.infer<typeof BlobFilePartialSchema>
+
+// BLOB FILE OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const BlobFileOptionalDefaultsSchema = BlobFileSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type BlobFileOptionalDefaults = z.infer<typeof BlobFileOptionalDefaultsSchema>

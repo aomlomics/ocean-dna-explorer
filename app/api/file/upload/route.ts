@@ -2,6 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { NextResponse } from "next/server";
+import { prismaImages } from "@/app/helpers/prismaImages";
 
 export async function POST(request: Request) {
 	const body = (await request.json()) as HandleUploadBody;
@@ -28,7 +29,10 @@ export async function POST(request: Request) {
 
 				return {
 					allowedContentTypes: ["text/tab-separated-values", "image/*"],
-					addRandomSuffix: true
+					addRandomSuffix: true,
+					tokenPayload: JSON.stringify({
+						userId
+					})
 				};
 			},
 			onUploadCompleted: async ({ blob, tokenPayload }) => {
@@ -38,10 +42,19 @@ export async function POST(request: Request) {
 
 				console.log("blob upload completed", blob, tokenPayload);
 
+				if (!tokenPayload) {
+					throw new Error("Missing token payload");
+				}
+
 				try {
 					// Run any logic after the file upload completed
-					// const { userId } = JSON.parse(tokenPayload);
-					// await db.update({ avatar: blob.url, userId });
+					const { userId } = JSON.parse(tokenPayload);
+					await prismaImages.blobFile.create({
+						data: {
+							url: blob.url,
+							userId: userId as string
+						}
+					});
 				} catch (error) {
 					throw new Error("Error");
 				}
