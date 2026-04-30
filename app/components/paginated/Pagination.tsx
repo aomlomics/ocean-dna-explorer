@@ -78,7 +78,7 @@ export default function Pagination({
 		}
 	);
 	if (isLoading) return <LoadingPagination />;
-	if (error) return <div>failed to load: {error}</div>;
+	if (error) return <div>failed to load: {error.toString()}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
 
 	return (

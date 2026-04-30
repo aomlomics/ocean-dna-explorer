@@ -194,12 +194,12 @@ export default async function projectSubmitAction(
 
 	const validBlobs = await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl]);
 	if (!validBlobs) {
-		await globalStream.error("Files are not valid");
+		globalStream.error("Files are not valid");
 
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
 
 		return {
 			global: globalStream.readable,

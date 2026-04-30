@@ -79,7 +79,7 @@ export default function Grid({
 		}
 	);
 	if (isLoading || !data) return <>Loading...</>;
-	if (error) return <div>failed to load: {error}</div>;
+	if (error) return <div>failed to load: {error.toString()}</div>;
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result) || !data.count) {
 		return <div>failed to load: {data.error || "no result found"}</div>;
 	}

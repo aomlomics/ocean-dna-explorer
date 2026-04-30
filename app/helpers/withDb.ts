@@ -3,6 +3,11 @@ import { BlobFile, Prisma } from "../generated/prismaImages/client";
 import { prismaImages } from "./prismaImages";
 
 export async function validateBlobs(urls: BlobFile["url"][]) {
+	//skip check in development only, because onUploadCompleted does not trigger
+	if (process.env.NODE_ENV === "development") {
+		return true;
+	}
+
 	const { userId } = await auth();
 	if (!userId) {
 		return false;

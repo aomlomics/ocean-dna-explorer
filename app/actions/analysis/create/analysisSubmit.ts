@@ -284,7 +284,7 @@ async function doSubmit(
 		await assignmentsChannel.stream.success("Features, Taxonomies, and Assignments successfully uploaded to database.");
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
 
-		await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
 			method: "POST",
 			headers: {
 				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
@@ -321,13 +321,13 @@ export default async function analysisSubmitAction(
 
 	const validBlobs = await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
 	if (!validBlobs) {
-		await analysisStream.error("Files are not valid");
-		await assignmentsStream.error("Files are not valid");
-		await occurrencesStream.error("Files are not valid");
+		analysisStream.error("Files are not valid");
+		assignmentsStream.error("Files are not valid");
+		occurrencesStream.error("Files are not valid");
 
-		await analysisStream.close();
-		await assignmentsStream.close();
-		await occurrencesStream.close();
+		analysisStream.close();
+		assignmentsStream.close();
+		occurrencesStream.close();
 
 		return [analysisStream.readable, assignmentsStream.readable, occurrencesStream.readable];
 	}

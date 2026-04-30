@@ -523,12 +523,12 @@ export default async function projectEditAction({
 		errorMsg = "Files are not valid";
 	}
 	if (errorMsg) {
-		await globalStream.error(errorMsg);
+		globalStream.error(errorMsg);
 
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
 
 		return {
 			global: globalStream.readable,

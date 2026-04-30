@@ -53,7 +53,6 @@ export default function ProjectSubmit() {
 
 	//detect when entire submission was successful
 	useEffect(() => {
-		console.log("GLOBAL");
 		if (globalResponse?.statusMessage === "success") {
 			setLoading(false);
 			modalXRef.current!.disabled = true;
