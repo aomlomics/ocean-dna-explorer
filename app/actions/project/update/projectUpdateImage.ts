@@ -3,6 +3,7 @@
 import { Project } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { auth } from "@clerk/nextjs/server";
@@ -10,16 +11,29 @@ import { del } from "@vercel/blob";
 
 export default async function projectUpdateImageAction(
 	target: Project["project_id"],
-	imageFileUrl_ODE: Project["imageFileUrl_ODE"] | null
+	imageFileUrl_ODE: Project["imageFileUrl_ODE"]
 ): Promise<NetworkPacket> {
+	if (imageFileUrl_ODE) {
+		const validBlob = await validateBlobs([imageFileUrl_ODE]);
+		if (!validBlob) {
+			return { statusMessage: "error", error: "File is invalid" };
+		}
+	}
+
 	const { userId } = await auth();
 
 	if (!userId) {
+		if (imageFileUrl_ODE) {
+			await del(imageFileUrl_ODE);
+		}
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
 	const parsed = ProjectSchema.shape.project_id.safeParse(target);
 	if (!parsed.success) {
+		if (imageFileUrl_ODE) {
+			await del(imageFileUrl_ODE);
+		}
 		//TODO: make more specific, since the schema is only a string, and not an object
 		return {
 			statusMessage: "error",
@@ -46,10 +60,6 @@ export default async function projectUpdateImageAction(
 				throw new Error("Unauthorized action.");
 			}
 
-			if (dbProject.imageFileUrl_ODE) {
-				del(dbProject.imageFileUrl_ODE);
-			}
-
 			await tx.project.update({
 				where: {
 					project_id
@@ -58,10 +68,18 @@ export default async function projectUpdateImageAction(
 					imageFileUrl_ODE
 				}
 			});
+
+			if (dbProject.imageFileUrl_ODE) {
+				await del(dbProject.imageFileUrl_ODE);
+			}
 		});
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
+		if (imageFileUrl_ODE) {
+			await del(imageFileUrl_ODE);
+		}
+
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return prismaErr;

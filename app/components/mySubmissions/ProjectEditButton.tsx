@@ -61,23 +61,6 @@ export default function ProjectEditButton({
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 
-	//detect when there's an error
-	useEffect(() => {
-		if (projectResponse?.statusMessage === "error") {
-			doError(projectResponse.error);
-		}
-	}, [projectResponse]);
-	useEffect(() => {
-		if (sampleResponse?.statusMessage === "error") {
-			doError(sampleResponse.error);
-		}
-	}, [sampleResponse]);
-	useEffect(() => {
-		if (libraryResponse?.statusMessage === "error") {
-			doError(libraryResponse.error);
-		}
-	}, [libraryResponse]);
-
 	//detect when entire submission was successful
 	useEffect(() => {
 		if (globalResponse?.statusMessage === "success") {
@@ -92,23 +75,10 @@ export default function ProjectEditButton({
 
 			modalXRef.current!.disabled = false;
 			modalClickOffRef.current!.disabled = false;
-			setLoading(false);
 			router.refresh();
-		} else if (globalResponse?.statusMessage === "error") {
-			doError(globalResponse.error);
 		}
-	}, [globalResponse]);
-
-	async function doError(err: string) {
-		//delete files from blob storage
-		for (const url of fileUrls) {
-			await fetch(`/api/file/delete?url=${url}`, {
-				method: "DELETE"
-			});
-		}
-
 		setLoading(false);
-	}
+	}, [globalResponse]);
 
 	async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -145,16 +115,10 @@ export default function ProjectEditButton({
 
 		if (!projectFile && !sampleFile && !libraryFile) {
 			if (args.imageFileUrl) {
-				try {
-					setGlobalResponse(await projectUpdateImageAction(project_id, args.imageFileUrl));
-					if (imageRef.current) {
-						imageRef.current.value = "";
-						setImageFile(undefined);
-					}
-				} catch {
-					await fetch(`/api/file/delete?url=${args.imageFileUrl}`, {
-						method: "DELETE"
-					});
+				setGlobalResponse(await projectUpdateImageAction(project_id, args.imageFileUrl));
+				if (imageRef.current) {
+					imageRef.current.value = "";
+					setImageFile(undefined);
 				}
 			} else if (isPrivateToggle !== isPrivate) {
 				setGlobalResponse(await projectUpdateIsPrivateAction(project_id, isPrivateToggle));
@@ -229,8 +193,7 @@ export default function ProjectEditButton({
 			//trigger streamed action
 			await doProgressActionManyGlobal(projectEditAction, setters, setGlobalResponse, args);
 		} catch (err) {
-			const error = err as Error;
-			doError(error.message);
+			setLoading(false);
 		}
 	}
 

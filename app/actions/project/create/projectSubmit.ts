@@ -7,14 +7,17 @@ import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { UserMetadata } from "@/types/globals";
 import { handlePrismaError } from "@/app/helpers/queries";
+import { del } from "@vercel/blob";
+import { Project } from "@/app/generated/prisma/client";
+import { validateBlobs } from "@/app/helpers/withDb";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	userIds: string[],
-	isPrivate: boolean,
+	userIds: Project["userIds"],
+	isPrivate: Project["isPrivate"],
 	imageFileUrl?: string
 ) {
 	const client = await clerkClient();
@@ -163,6 +166,8 @@ async function doSubmit(
 					.join("\n\n");
 		}
 		await globalStream.success(successMsg);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -175,11 +180,11 @@ async function doSubmit(
 }
 
 export default async function projectSubmitAction(
-	projectFileUrl: string,
-	sampleFileUrl: string,
-	libraryFileUrl: string,
-	userIds: string[],
-	isPrivate: boolean,
+	projectFileUrl: Project["projectMetadataFileUrl_ODE"],
+	sampleFileUrl: Project["sampleMetadataFileUrl_ODE"],
+	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
+	userIds: Project["userIds"],
+	isPrivate: Project["isPrivate"],
 	imageFileUrl?: string
 ) {
 	const globalStream = createProgressStream();
@@ -187,15 +192,9 @@ export default async function projectSubmitAction(
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	if (
-		typeof projectFileUrl !== "string" ||
-		typeof sampleFileUrl !== "string" ||
-		typeof libraryFileUrl !== "string" ||
-		userIds.some((id) => typeof id !== "string") ||
-		typeof isPrivate !== "boolean" ||
-		(imageFileUrl && typeof imageFileUrl !== "string")
-	) {
-		await globalStream.error("Arguments are not of correct type");
+	const validBlobs = await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+	if (!validBlobs) {
+		await globalStream.error("Files are not valid");
 
 		await globalStream.close();
 		await projectStream.close();
@@ -216,11 +215,15 @@ export default async function projectSubmitAction(
 		userIds,
 		isPrivate,
 		imageFileUrl
-	).then(() => {
+	).then((success) => {
 		globalStream.close();
 		projectStream.close();
 		sampleStream.close();
 		libraryStream.close();
+
+		if (!success) {
+			del([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+		}
 	});
 
 	return {

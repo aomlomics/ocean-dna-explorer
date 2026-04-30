@@ -9,8 +9,18 @@ import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
+import { del } from "@vercel/blob";
+import { validateBlobs } from "@/app/helpers/withDb";
 
 export default async function addImageAction(formData: FormData, newAttribution: boolean): Promise<NetworkPacket> {
+	const url = formData.get("url");
+	if (url && typeof url === "string") {
+		const validBlob = await validateBlobs([url]);
+		if (!validBlob) {
+			return { statusMessage: "error", error: "File is not valid" };
+		}
+	}
+
 	try {
 		const { userId, sessionClaims } = await auth();
 		const role = sessionClaims?.metadata?.role;
@@ -49,6 +59,10 @@ export default async function addImageAction(formData: FormData, newAttribution:
 
 		return { statusMessage: "success" };
 	} catch (err) {
+		if (url && typeof url === "string") {
+			await del(url);
+		}
+
 		const error = err as Error;
 		return { statusMessage: "error", error: error.message };
 	}

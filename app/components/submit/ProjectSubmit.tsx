@@ -67,13 +67,6 @@ export default function ProjectSubmit() {
 	}, [globalResponse]);
 
 	async function doError(err: string) {
-		//delete files from blob storage
-		for (const url of fileUrls) {
-			await fetch(`/api/file/delete?url=${url}`, {
-				method: "DELETE"
-			});
-		}
-
 		setLoading(false);
 		setErrorMessage(err);
 		modalRef.current?.showModal();

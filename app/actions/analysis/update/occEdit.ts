@@ -6,9 +6,11 @@ import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 async function doEdit(
 	stream: ProgressStream,
@@ -211,7 +213,7 @@ async function doEdit(
 
 		await stream.success("Success");
 
-		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
+		await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
 			method: "POST",
 			headers: {
 				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
@@ -220,6 +222,8 @@ async function doEdit(
 				delete: true
 			})
 		});
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -238,7 +242,22 @@ export default async function occEditAction(
 ) {
 	const stream = createProgressStream();
 
-	doEdit(stream, url, editId, analysis_run_name).then(stream.close);
+	if (url) {
+		const validBlob = await validateBlobs([url]);
+		if (!validBlob) {
+			stream.error("File is not valid");
+			stream.close();
+			return stream.readable;
+		}
+	}
+
+	doEdit(stream, url, editId, analysis_run_name).then((success) => {
+		stream.close();
+
+		if (url && !success) {
+			del(url);
+		}
+	});
 
 	return stream.readable;
 }

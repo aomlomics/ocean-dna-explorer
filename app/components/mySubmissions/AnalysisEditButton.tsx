@@ -143,11 +143,6 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (analysisError) {
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${analysisUrl}`, {
-						method: "DELETE"
-					});
-
 					setErrorMessage(analysisError);
 					finishSubmit();
 
@@ -217,11 +212,6 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (assignmentsError) {
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
-						method: "DELETE"
-					});
-
 					setErrorMessage(assignmentsError);
 					finishSubmit();
 
@@ -265,11 +255,6 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (occurrencesError) {
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
-						method: "DELETE"
-					});
-
 					setErrorMessage(occurrencesError);
 					finishSubmit();
 

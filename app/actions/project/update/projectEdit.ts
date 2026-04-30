@@ -9,6 +9,8 @@ import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { v4 as uuidv4 } from "uuid";
 import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import { del } from "@vercel/blob";
+import { validateBlobs } from "@/app/helpers/withDb";
 
 async function doEdit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -16,7 +18,8 @@ async function doEdit(
 	sampleChannel: Channel,
 	libraryChannel: Channel,
 	project_id: Project["project_id"],
-	isPrivate?: boolean
+	isPrivate?: Project["isPrivate"],
+	imageFileUrl?: Project["imageFileUrl_ODE"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -89,8 +92,9 @@ async function doEdit(
 			sampleChannel,
 			libraryChannel,
 			userIds: dbProject.userIds,
-			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate
-			// oldChecksums
+			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate,
+			imageFileUrl,
+			oldChecksums
 		});
 		if (!parseResult) {
 			return;
@@ -477,6 +481,8 @@ async function doEdit(
 			},
 			{ timeout: 3 * 60 * 1000 } //3 minutes
 		);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -508,26 +514,16 @@ export default async function projectEditAction({
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	if (!projectFileUrl && !sampleFileUrl && !libraryFileUrl) {
-		await globalStream.error("Must provide at least one new file.");
-
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
-
-		return {
-			global: globalStream.readable,
-			readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
-		};
+	let errorMsg;
+	const urls = [projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[];
+	const validBlobs = await validateBlobs(urls);
+	if (!urls.length) {
+		errorMsg = "Must provide at least one new file.";
+	} else if (!validBlobs) {
+		errorMsg = "Files are not valid";
 	}
-
-	if (
-		(projectFileUrl && typeof projectFileUrl !== "string") ||
-		(sampleFileUrl && typeof sampleFileUrl !== "string") ||
-		(libraryFileUrl && typeof libraryFileUrl !== "string")
-	) {
-		await globalStream.error("Arguments are not of correct type.");
+	if (errorMsg) {
+		await globalStream.error(errorMsg);
 
 		await globalStream.close();
 		await projectStream.close();
@@ -546,12 +542,30 @@ export default async function projectEditAction({
 		{ url: sampleFileUrl || "", stream: sampleStream },
 		{ url: libraryFileUrl || "", stream: libraryStream },
 		project_id,
-		isPrivate
-	).then(() => {
+		isPrivate,
+		imageFileUrl
+	).then((success) => {
 		globalStream.close();
 		projectStream.close();
 		sampleStream.close();
 		libraryStream.close();
+
+		if (!success) {
+			const toDelete = [];
+			if (projectFileUrl) {
+				toDelete.push(projectFileUrl);
+			}
+			if (sampleFileUrl) {
+				toDelete.push(sampleFileUrl);
+			}
+			if (libraryFileUrl) {
+				toDelete.push(libraryFileUrl);
+			}
+			if (imageFileUrl) {
+				toDelete.push(imageFileUrl);
+			}
+			del(toDelete);
+		}
 	});
 
 	return {

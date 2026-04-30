@@ -53,9 +53,6 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 				reset();
 				modalRef.current?.close();
 			} else if (result.statusMessage === "error") {
-				await fetch(`/api/file/delete?url=${url}`, {
-					method: "DELETE"
-				});
 				setError(result.error);
 			}
 		} catch (err) {
