@@ -29,9 +29,6 @@ export default function ProjectSubmit() {
 	//state variable that will have any error passed to it
 	const [errorMessage, setErrorMessage] = useState("");
 
-	//file urls to delete if an error occurs
-	const [fileUrls, setFileUrls] = useState([] as string[]);
-
 	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
@@ -56,6 +53,7 @@ export default function ProjectSubmit() {
 
 	//detect when entire submission was successful
 	useEffect(() => {
+		console.log("GLOBAL");
 		if (globalResponse?.statusMessage === "success") {
 			setLoading(false);
 			modalXRef.current!.disabled = true;
@@ -112,7 +110,6 @@ export default function ProjectSubmit() {
 				})
 			).url;
 			setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-			setFileUrls([projectFileUrl]);
 
 			//samples
 			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
@@ -124,7 +121,6 @@ export default function ProjectSubmit() {
 				})
 			).url;
 			setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-			setFileUrls([projectFileUrl, sampleFileUrl]);
 
 			//libraries
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
@@ -136,7 +132,6 @@ export default function ProjectSubmit() {
 				})
 			).url;
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-			setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl]);
 
 			let imageFileUrl;
 			if (imageFile) {
@@ -146,7 +141,6 @@ export default function ProjectSubmit() {
 						handleUploadUrl: "/api/file/upload"
 					})
 				).url;
-				setFileUrls([projectFileUrl, sampleFileUrl, libraryFileUrl, imageFileUrl]);
 			}
 
 			//trigger streamed action
