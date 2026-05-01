@@ -339,49 +339,35 @@ async function doEdit(
 
 				//delete unused
 				//samples
-				await tx.sample.deleteMany({
+				//get samples to flag as deleted
+				const occsWithDeletedSamps = await tx.occurrence.findMany({
 					where: {
-						project_id,
-						samp_name: {
-							notIn: sampNames
+						Analysis: {
+							project_id
 						},
-						Libraries: {
-							every: {
-								Occurrences: {
-									none: {}
-								}
-							}
-						}
-					}
-				});
-
-				//check if any samples need to be flagged as deleted
-				const samplesToDelete = await tx.sample.findMany({
-					where: {
-						project_id,
-						samp_name: {
-							notIn: sampNames
-						},
-						Libraries: {
-							every: {
-								Occurrences: {
-									none: {}
-								}
+						Library: {
+							samp_name: {
+								notIn: sampNames
 							}
 						}
 					},
 					select: {
-						id: true,
-						samp_name: true,
-						Libraries: {
+						analysis_run_name: true,
+						Library: {
 							select: {
-								Occurrences: {
-									distinct: ["analysis_run_name"],
-									select: {
-										analysis_run_name: true
-									}
-								}
+								samp_name: true
 							}
+						}
+					}
+				});
+				const samplesToDelete = Array.from(new Set(occsWithDeletedSamps.map((occ) => occ.Library.samp_name)));
+
+				//delete samples that were removed and don't need to be flagged
+				await tx.sample.deleteMany({
+					where: {
+						project_id,
+						samp_name: {
+							notIn: [...sampNames, ...samplesToDelete]
 						}
 					}
 				});
@@ -391,8 +377,8 @@ async function doEdit(
 					//update samples to be marked as deleted
 					await tx.sample.updateMany({
 						where: {
-							id: {
-								in: samplesToDelete.map((samp) => samp.id)
+							samp_name: {
+								in: samplesToDelete
 							}
 						},
 						data: {
@@ -401,46 +387,36 @@ async function doEdit(
 					});
 
 					//retrieve all unique analyses
-					const analysesToUpdate = Array.from(
-						samplesToDelete.reduce((acc, samp) => {
-							for (const occ of samp.Libraries.reduce(
-								(occs, lib) => [...occs, ...lib.Occurrences],
-								[] as { analysis_run_name: string }[]
-							)) {
-								acc.add(occ.analysis_run_name);
-							}
-							return acc;
-						}, new Set())
-					) as string[];
+					const analysesToUpdate = Array.from(new Set(occsWithDeletedSamps.map((occ) => occ.analysis_run_name)));
 
+					//TODO: sort the samples by analysis in response
 					//notify user of analyses that need to be fixed
 					if (analysesToUpdate.length) {
-						const sampNames = samplesToDelete.map((samp) => samp.samp_name);
-						const lastSample = sampNames.pop();
+						const lastSample = samplesToDelete.pop();
 						const lastAnalysis = analysesToUpdate.pop();
 
 						sampleSuccessMsg += ` ${
 							//plural Sample
-							sampNames.length ? "Samples" : "Sample"
+							samplesToDelete.length ? "Samples" : "Sample"
 						} to delete with the ${
 							//plural samp_name
-							sampNames.length ? "samp_names" : "samp_name"
+							samplesToDelete.length ? "samp_names" : "samp_name"
 						} of${
 							//list of samp_names
-							sampNames.length > 1
+							samplesToDelete.length > 1
 								? //at least 3
-									' "' + sampNames.join('", "') + '", and'
-								: sampNames.length === 1
+									' "' + samplesToDelete.join('", "') + '", and'
+								: samplesToDelete.length === 1
 									? //exactly 2
-										' "' + sampNames[0] + '" and'
+										' "' + samplesToDelete[0] + '" and'
 									: //exactly 1
 										""
 						} "${lastSample}" ${
 							//plural
-							sampNames.length ? "have" : "has"
+							samplesToDelete.length ? "have" : "has"
 						} Occurrences and can't be deleted. Please remove ${
 							//plural Sample
-							sampNames.length ? "these Samples" : "this Sample"
+							samplesToDelete.length ? "these Samples" : "this Sample"
 						} from the ${
 							//plural Analysis
 							analysesToUpdate.length ? "Analyses" : "Analysis"
@@ -466,11 +442,11 @@ async function doEdit(
 				//libraries
 				await tx.library.deleteMany({
 					where: {
-						Sample: {
-							project_id
-						},
 						lib_id: {
 							notIn: libraries.map((lib) => lib.lib_id)
+						},
+						Sample: {
+							project_id
 						}
 					}
 				});
