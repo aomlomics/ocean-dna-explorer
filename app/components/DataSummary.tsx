@@ -70,12 +70,19 @@ export async function AssayStats() {
 }
 
 export async function MainStats() {
-	const [projectCount, sampleCount, taxaCount, occurrenceCount] = await publicPrisma.$transaction([
-		publicPrisma.project.count(),
-		publicPrisma.sample.count(),
-		publicPrisma.taxonomy.count(),
-		publicPrisma.occurrence.count()
-	]);
+	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await publicPrisma.$transaction(
+		async (tx) => {
+			const projectCount = await publicPrisma.project.count();
+			const sampleCount = await publicPrisma.sample.count();
+			const taxaCount = await publicPrisma.taxonomy.count();
+			const occurrenceCount = await publicPrisma.occurrence.count();
+
+			return { projectCount, sampleCount, taxaCount, occurrenceCount };
+		},
+		{
+			timeout: 1 * 60
+		}
+	);
 
 	const summaryItems = [
 		{
