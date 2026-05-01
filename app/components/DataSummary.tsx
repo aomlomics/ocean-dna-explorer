@@ -80,7 +80,7 @@ export async function MainStats() {
 			return { projectCount, sampleCount, taxaCount, occurrenceCount };
 		},
 		{
-			timeout: 1 * 60
+			timeout: 1 * 60 * 1000
 		}
 	);
 
