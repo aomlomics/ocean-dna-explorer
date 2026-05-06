@@ -101,27 +101,29 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
 		const imageFile = event.currentTarget.image.files[0] as File | undefined;
-		if (imageFile && !imageFile.type.startsWith("image")) {
-			doError("Image file must have type image/*");
-		}
 		let imageInfo;
 		if (imageFile) {
+			if (!imageFile.type.startsWith("image")) {
+				doError("Image file must have type image/*");
+				return;
+			}
+
 			imageInfo = {
 				image: {
 					name: event.currentTarget.imageName.value,
 					attributionTitle:
 						!newAttribution && currAttribution
 							? currAttribution.attributionTitle
-							: event.currentTarget.attributionTitle.value || undefined,
-					description: event.currentTarget.imageDescription.value || undefined,
-					location: event.currentTarget.imageLocation.value || undefined,
-					dateTaken: event.currentTarget.imageDateTaken.value || undefined
+							: event.currentTarget.attributionTitle.value,
+					description: event.currentTarget.imageDescription.value,
+					location: event.currentTarget.imageLocation.value,
+					dateTaken: event.currentTarget.imageDateTaken.value
 				} as ImagePartial,
 				attribution: newAttribution
 					? ({
 							attributionTitle: event.currentTarget.attributionTitle.value,
-							attributionUrl: event.currentTarget.attributionUrl.value || undefined,
-							attributionInstitution: event.currentTarget.attributionInstitution.value || undefined
+							attributionUrl: event.currentTarget.attributionUrl.value,
+							attributionInstitution: event.currentTarget.attributionInstitution.value
 						} as AttributionOptionalDefaults)
 					: undefined
 			};
@@ -201,17 +203,21 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 						info="This image will be displayed on the page for this project."
 					>
 						<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
-							<input type="checkbox" onClick={(e) => setShowCoverImage(e.currentTarget.checked)} />
+							<input
+								type="checkbox"
+								checked={showCoverImage}
+								onChange={(e) => setShowCoverImage(e.currentTarget.checked)}
+							/>
 							<div className="collapse-title">{showCoverImage ? "Hide" : "Show"}</div>
 							<div className="collapse-content">
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Image name</legend>
-									<input name="imageName" type="text" className="input" placeholder="Image name" required />
+									<input name="imageName" type="text" className="input" placeholder="Image name" />
 								</fieldset>
 
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Image file</legend>
-									<input name="image" type="file" className="file-input" required accept="image/*" />
+									<input name="image" type="file" className="file-input" accept="image/*" />
 								</fieldset>
 
 								<div className="border border-primary rounded-sm p-2 my-2">

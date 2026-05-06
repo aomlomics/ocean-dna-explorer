@@ -6,6 +6,7 @@ export default async function AdminImages() {
 	const [attributions, images] = await prismaImages.$transaction([
 		prismaImages.attribution.findMany(),
 		prismaImages.image.findMany({
+			where: { homePage: true },
 			include: { Attribution: true },
 			orderBy: { dateSubmitted: "desc" }
 		})
@@ -13,7 +14,7 @@ export default async function AdminImages() {
 
 	return (
 		<div className="space-y-6">
-			<AddImageButton attributions={attributions} />
+			<AddImageButton attributions={attributions} homePage />
 
 			<div className="space-y-2">
 				<h2 className="text-xl font-semibold">Carousel images</h2>

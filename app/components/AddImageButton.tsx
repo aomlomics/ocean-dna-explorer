@@ -6,7 +6,7 @@ import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
 
-export default function AddImageButton({ attributions }: { attributions: Attribution[] }) {
+export default function AddImageButton({ attributions, homePage }: { attributions: Attribution[]; homePage?: true }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
@@ -46,6 +46,12 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 		).url;
 		formData.set("url", url);
 		formData.delete("imageFile");
+
+		if (homePage) {
+			formData.set("homePage", "true");
+		} else {
+			formData.set("homePage", "false");
+		}
 
 		try {
 			const result = await addImageAction(formData, newAttribution);

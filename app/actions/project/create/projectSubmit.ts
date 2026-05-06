@@ -52,7 +52,20 @@ async function doSubmit(
 
 	try {
 		if (imageInfo) {
+			for (const k in imageInfo.image) {
+				const key = k as keyof typeof imageInfo.image;
+				if (imageInfo.image[key] === "") {
+					delete imageInfo.image[key];
+				}
+			}
+			if (imageInfo.image.homePage) {
+				await globalStream.error("Not allowed to submit home page images.");
+				return;
+			} else {
+				imageInfo.image.homePage = false;
+			}
 			const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
+
 			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
 
 			await prismaImages.$transaction(async (tx) => {

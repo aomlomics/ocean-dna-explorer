@@ -33,11 +33,16 @@ export default async function addImageAction(formData: FormData, newAttribution:
 			throw new Error("Invalid role.");
 		}
 
-		const formObj = Object.fromEntries(formData.entries());
+		const formObj = Object.fromEntries(formData) as Record<string, any>;
 		for (const key in formObj) {
 			if (formObj[key] === "") {
 				delete formObj[key];
 			}
+		}
+		if (formObj.homePage && formObj.homePage === "true") {
+			formObj.homePage = true;
+		} else {
+			formObj.homePage = false;
 		}
 		const image = ImageOptionalDefaultsSchema.parse(formObj);
 		let attribution = undefined as undefined | AttributionOptionalDefaults;
