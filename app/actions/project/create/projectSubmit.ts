@@ -10,6 +10,13 @@ import { handlePrismaError } from "@/app/helpers/queries";
 import { del } from "@vercel/blob";
 import { Project } from "@/app/generated/prisma/client";
 import { validateBlobs } from "@/app/helpers/withDb";
+import {
+	AttributionOptionalDefaults,
+	AttributionOptionalDefaultsSchema,
+	ImageOptionalDefaults,
+	ImageOptionalDefaultsSchema
+} from "@/prismaImages/generated/zod";
+import { prismaImages } from "@/app/helpers/prismaImages";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -18,7 +25,7 @@ async function doSubmit(
 	libraryChannel: Channel,
 	userIds: Project["userIds"],
 	isPrivate: Project["isPrivate"],
-	imageFileUrl?: string
+	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const client = await clerkClient();
 	const { userId, sessionClaims } = await auth();
@@ -44,13 +51,36 @@ async function doSubmit(
 	}
 
 	try {
+		if (imageInfo) {
+			const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
+			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
+
+			await prismaImages.$transaction(async (tx) => {
+				if (parsedAttribution) {
+					await tx.attribution.create({
+						data: parsedAttribution
+					});
+				}
+
+				await tx.image.create({
+					data: parsedImage
+				});
+			});
+		}
+	} catch (err: any) {
+		const error = err as Error;
+		await globalStream.error(error.message);
+		return;
+	}
+
+	try {
 		const parseResult = await parseProjectFiles({
 			projectChannel,
 			sampleChannel,
 			libraryChannel,
 			userIds,
 			isPrivate,
-			imageFileUrl
+			imageFileUrl: imageInfo?.image.url
 		});
 		if (!parseResult) {
 			return;
@@ -176,6 +206,24 @@ async function doSubmit(
 			const error = err as Error;
 			await globalStream.error(error.message);
 		}
+
+		if (imageInfo) {
+			await prismaImages.$transaction(async (tx) => {
+				if (imageInfo.attribution) {
+					await tx.attribution.delete({
+						where: {
+							attributionTitle: imageInfo.attribution.attributionTitle
+						}
+					});
+				}
+
+				await tx.image.delete({
+					where: {
+						url: imageInfo.image.url
+					}
+				});
+			});
+		}
 	}
 }
 
@@ -185,7 +233,7 @@ export default async function projectSubmitAction(
 	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
 	userIds: Project["userIds"],
 	isPrivate: Project["isPrivate"],
-	imageFileUrl?: string
+	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
@@ -214,7 +262,7 @@ export default async function projectSubmitAction(
 		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
 		isPrivate,
-		imageFileUrl
+		imageInfo
 	).then((success) => {
 		globalStream.close();
 		projectStream.close();
@@ -222,7 +270,11 @@ export default async function projectSubmitAction(
 		libraryStream.close();
 
 		if (!success) {
-			del([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+			const urlsToDelete = [projectFileUrl, sampleFileUrl, libraryFileUrl];
+			if (imageInfo) {
+				urlsToDelete.push(imageInfo.image.url);
+			}
+			del(urlsToDelete);
 		}
 	});
 

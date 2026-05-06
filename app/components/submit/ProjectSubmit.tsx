@@ -12,13 +12,20 @@ import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
+import { Attribution, Image } from "@/app/generated/prismaImages/client";
+import { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
 
-export default function ProjectSubmit() {
+export default function ProjectSubmit({ attributions }: { attributions: Attribution[] }) {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);
 
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
+
+	//state variables for image submission
+	const [newAttribution, setNewAttribution] = useState(false);
+	const [currAttribution, setCurrAttribution] = useState(undefined as Attribution | undefined);
+	const [showCoverImage, setShowCoverImage] = useState(false);
 
 	//response state variables that will have information streamed to them
 	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
@@ -92,9 +99,32 @@ export default function ProjectSubmit() {
 		const projectFile = event.currentTarget.project.files[0] as File;
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
+
 		const imageFile = event.currentTarget.image.files[0] as File | undefined;
 		if (imageFile && !imageFile.type.startsWith("image")) {
 			doError("Image file must have type image/*");
+		}
+		let imageInfo;
+		if (imageFile) {
+			imageInfo = {
+				image: {
+					name: event.currentTarget.imageName.value,
+					attributionTitle:
+						!newAttribution && currAttribution
+							? currAttribution.attributionTitle
+							: event.currentTarget.attributionTitle.value || undefined,
+					description: event.currentTarget.imageDescription.value || undefined,
+					location: event.currentTarget.imageLocation.value || undefined,
+					dateTaken: event.currentTarget.imageDateTaken.value || undefined
+				} as ImagePartial,
+				attribution: newAttribution
+					? ({
+							attributionTitle: event.currentTarget.attributionTitle.value,
+							attributionUrl: event.currentTarget.attributionUrl.value || undefined,
+							attributionInstitution: event.currentTarget.attributionInstitution.value || undefined
+						} as AttributionOptionalDefaults)
+					: undefined
+			};
 		}
 
 		try {
@@ -132,14 +162,14 @@ export default function ProjectSubmit() {
 			).url;
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 
-			let imageFileUrl;
 			if (imageFile) {
-				imageFileUrl = (
+				const imageUrl = (
 					await upload(`submissions/${imageFile.name}`, imageFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload"
 					})
 				).url;
+				imageInfo!.image.url = imageUrl;
 			}
 
 			//trigger streamed action
@@ -152,11 +182,12 @@ export default function ProjectSubmit() {
 				libraryFileUrl,
 				userIds,
 				isPrivate,
-				imageFileUrl
+				imageInfo
 			);
 		} catch (err) {
 			const error = err as Error;
 			doError(error.message);
+			//TODO: delete images when something goes wrong on frontend
 		}
 	}
 
@@ -169,17 +200,120 @@ export default function ProjectSubmit() {
 						title="Add a cover image"
 						info="This image will be displayed on the page for this project."
 					>
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend text-sm text-base-content/80 font-normal">Cover image:</legend>
-							<input
-								type="file"
-								className="file-input file-input-primary"
-								name="image"
-								disabled={loading}
-								accept="image/*"
-							/>
-							<label className="label">Optional</label>
-						</fieldset>
+						<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
+							<input type="checkbox" onClick={(e) => setShowCoverImage(e.currentTarget.checked)} />
+							<div className="collapse-title">{showCoverImage ? "Hide" : "Show"}</div>
+							<div className="collapse-content">
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Image name</legend>
+									<input name="imageName" type="text" className="input" placeholder="Image name" required />
+								</fieldset>
+
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Image file</legend>
+									<input name="image" type="file" className="file-input" required accept="image/*" />
+								</fieldset>
+
+								<div className="border border-primary rounded-sm p-2 my-2">
+									<div className="grid grid-cols-2 gap-5">
+										<fieldset className="fieldset">
+											<legend className="fieldset-legend">Attribution</legend>
+											<select
+												className="select"
+												disabled={newAttribution}
+												value={currAttribution?.attributionTitle}
+												onChange={(e) =>
+													setCurrAttribution(attributions.find((attr) => attr.attributionTitle === e.target.value))
+												}
+											>
+												<option value="">No attribution</option>
+												{attributions.map((attr) => (
+													<option key={attr.id}>{attr.attributionTitle}</option>
+												))}
+											</select>
+											<span className="label">Optional</span>
+										</fieldset>
+
+										<label className="label">
+											<input
+												type="checkbox"
+												className="toggle"
+												checked={newAttribution}
+												onChange={(e) => setNewAttribution(e.target.checked)}
+											/>
+											New attribution
+										</label>
+									</div>
+
+									<fieldset className="fieldset">
+										<legend className="fieldset-legend">Attribution title</legend>
+										<input
+											name="attributionTitle"
+											type="text"
+											className="input"
+											placeholder="Attribution title"
+											disabled={!newAttribution}
+											required={!!currAttribution || newAttribution}
+											defaultValue={currAttribution && !newAttribution ? currAttribution.attributionTitle : undefined}
+										/>
+									</fieldset>
+
+									{/* TODO: add names inputs with add button */}
+
+									<fieldset className="fieldset">
+										<legend className="fieldset-legend">Attribution URL</legend>
+										<input
+											name="attributionUrl"
+											type="text"
+											className="input"
+											placeholder="Attribution URL"
+											disabled={!newAttribution}
+											defaultValue={
+												currAttribution && !newAttribution && currAttribution.attributionUrl
+													? currAttribution.attributionUrl
+													: undefined
+											}
+										/>
+										<p className="label">Optional</p>
+									</fieldset>
+
+									<fieldset className="fieldset">
+										<legend className="fieldset-legend">Attribution Institution</legend>
+										<input
+											name="attributionInstitution"
+											type="text"
+											className="input"
+											placeholder="Attribution Institution"
+											disabled={!newAttribution}
+											defaultValue={
+												currAttribution && !newAttribution && currAttribution.attributionInstitution
+													? currAttribution.attributionInstitution
+													: undefined
+											}
+										/>
+										<p className="label">Optional</p>
+									</fieldset>
+								</div>
+
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Description</legend>
+									<input type="text" className="input" placeholder="Description" name="imageDescription" />
+									<p className="label">Optional</p>
+								</fieldset>
+
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Location</legend>
+									<input type="text" className="input" placeholder="Location" name="imageLocation" />
+									<p className="label">Optional</p>
+								</fieldset>
+
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Date taken</legend>
+									<input type="date" className="input" placeholder="Date taken" name="imageDateTaken" />
+									<p className="label">Optional</p>
+								</fieldset>
+							</div>
+						</div>
 					</SubmitFormSection>
 
 					<SubmitFormSection

@@ -102,7 +102,7 @@ export default async function MySubmissions() {
 
 			{/* Content Section */}
 			{/* Projects Section */}
-			<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
+			<div className="card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
 				<div className="card-body">
 					<div className="w-full h-full flex flex-col relative">
 						<>
