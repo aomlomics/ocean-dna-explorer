@@ -127,6 +127,8 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 	? R
 	: any;
 
+declare module "wordcloud";
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

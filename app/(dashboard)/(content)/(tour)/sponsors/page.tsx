@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
 
@@ -30,7 +32,7 @@ export default function SponsorsPage() {
 					Thank You to Our Supporting Institutes
 				</h1>
 				<p className="sponsors-subtitle max-w-2xl text-base text-base-content/75 sm:text-lg">
-					The Ocean DNA Explorer is made possible by the partnerships that sustain it.
+					The Ocean DNA Explorer is made possible by these institutes.
 				</p>
 
 				{/* Logo row: each logo gets its own float animation delay so they

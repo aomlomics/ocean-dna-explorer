@@ -1,9 +1,7 @@
-import ShowcaseClient from "./ShowcaseClient";
-import { getTourShowcaseProjects } from "./data";
+import TourController from "./TourController";
+import { getTourShowcaseProjects } from "./showcase/data";
 
-// Tour pages are meant to display fresh data each load but don't need
-// per-request dynamic rendering. revalidate=0 keeps this fully dynamic,
-// which is fine for an admin-driven tour that runs occasionally.
+// The TV tour should reflect newly public project data whenever it is loaded.
 export const revalidate = 0;
 
 const DEFAULT_PROJECT_DURATION_SECONDS = 30;
@@ -14,23 +12,23 @@ function parseProjectDuration(value: string | string[] | undefined) {
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PROJECT_DURATION_SECONDS;
 }
 
-export default async function ShowcasePage({
+export default async function TourPage({
 	searchParams
 }: {
 	searchParams?: { projectSeconds?: string | string[]; projectDurationSeconds?: string | string[] };
 }) {
-	const tourable = await getTourShowcaseProjects();
+	const projects = await getTourShowcaseProjects();
 	const projectDurationSeconds = parseProjectDuration(
 		searchParams?.projectSeconds ?? searchParams?.projectDurationSeconds
 	);
 
-	if (!tourable.length) {
+	if (!projects.length) {
 		return (
-			<div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-base-100 text-base-content/60">
+			<div className="flex min-h-screen items-center justify-center bg-base-100 text-base-content/60">
 				No public projects available to showcase.
 			</div>
 		);
 	}
 
-	return <ShowcaseClient projects={tourable} projectDurationMs={projectDurationSeconds * 1000} />;
+	return <TourController projects={projects} projectDurationMs={projectDurationSeconds * 1000} />;
 }

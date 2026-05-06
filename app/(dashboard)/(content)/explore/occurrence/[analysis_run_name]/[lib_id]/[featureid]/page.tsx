@@ -5,7 +5,7 @@ import { Occurrence, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import StatCard from "@/app/components/explore/StatCard";
-import { AnalysisIcon, DnaIcon, LocationIcon } from "@/app/components/icons";
+import { LocationIcon } from "@/app/components/icons";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -101,6 +101,8 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 	if (!occurrence) return <>Occurrence not found</>;
 
 	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Library.Sample.Project.isPrivate;
+	const samp_name = occurrence.Library.Sample.samp_name;
+	const sampleHref = `/explore/sample/${encodeURIComponent(samp_name)}`;
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 
@@ -149,11 +151,15 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					<Link href={`/explore/feature/${featureid}`} className="link link-primary link-hover">
 						{featureid}
 					</Link>{" "}
-					to the library{" "}
+					from sample{" "}
+					<Link href={sampleHref} className="link link-primary link-hover">
+						{samp_name}
+					</Link>{" "}
+					(via library{" "}
 					<Link href={`/explore/library/${lib_id}`} className="link link-primary link-hover">
 						{lib_id}
-					</Link>{" "}
-					in the analysis{" "}
+					</Link>
+					) in the analysis{" "}
 					<Link href={`/explore/analysis/${analysis_run_name}`} className="link link-primary link-hover">
 						{analysis_run_name}
 					</Link>{" "}
@@ -166,7 +172,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			</header>
 
 			<section className="mt-2 space-y-8">
-				{/* Top layout: map and occurrence details */}
+				{/* Top layout: map and occurrence details — gap-8 matches space-y-8 below */}
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 					{/* Left: Single-sample map */}
 					<div className="h-full">
@@ -177,7 +183,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					<div className="lg:col-span-2 h-full">
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-stretch">
-								{/* Left: taxonomic image, name, and organism quantity */}
+								{/* Left: taxonomic image, name, and sequence quantity */}
 								<div className="flex flex-col items-center justify-center gap-6 h-full text-center">
 									{occurrence.Assignment.Taxonomy && (
 										<div className="w-32 h-32 md:w-40 md:h-40 relative">
@@ -197,7 +203,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 										)}
 										<div className="space-y-1">
 											<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-												Organism quantity
+												Sequence quantity
 											</p>
 											<p className="text-4xl md:text-5xl font-bold text-primary leading-tight">
 												{occurrence.organismQuantity.toLocaleString()}
@@ -230,31 +236,16 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 
-				{/* Context: library, feature, analysis, assay */}
-				<div className="pt-6">
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<StatCard
-							title="Library"
-							icon={<LocationIcon />}
-							value={lib_id}
-							link={`/explore/library/${lib_id}`}
-							layout="horizontal"
-						/>
-						<StatCard
-							title="Feature"
-							icon={<DnaIcon />}
-							value={featureid}
-							link={`/explore/feature/${featureid}`}
-							layout="horizontal"
-						/>
-						<StatCard
-							title="Analysis"
-							icon={<AnalysisIcon />}
-							value={analysis_run_name}
-							link={`/explore/analysis/${analysis_run_name}`}
-							layout="horizontal"
-						/>
-					</div>
+				{/* Same vertical gap as gap-8 between map and detail card; width ≈ one map column (1/3) on lg */}
+				<div className="w-full lg:w-1/3 min-w-0">
+					<StatCard
+						title="Sample"
+						icon={<LocationIcon />}
+						value={samp_name}
+						link={sampleHref}
+						layout="horizontal"
+						className="block w-full"
+					/>
 				</div>
 			</section>
 		</div>

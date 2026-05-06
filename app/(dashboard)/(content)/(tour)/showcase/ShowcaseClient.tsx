@@ -1,53 +1,61 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Taxonomy } from "@/app/generated/prisma/client";
-import PhyloPicClient from "@/app/components/images/PhyloPicClient";
 import { ProjectIcon } from "@/app/components/icons";
-import type { ProjectBundle } from "./page";
+import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
+import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
+import DynamicMap from "@/app/components/map/DynamicMap";
+import { RanksBySpecificity } from "@/types/objects";
+import { AnimatePresence, motion, type Transition } from "framer-motion";
+import type { ProjectBundle } from "./data";
 
-const SLIDE_DURATION_MS = 22000;
-const TAXON_STREAM_MS = 1200;
-const TAXON_LIFETIME_MS = 9400;
-
-const TAXON_SLOTS = [
-	{ top: "10%", left: "52%" },
-	{ top: "14%", left: "66%" },
-	{ top: "8%", left: "80%" },
-	{ top: "24%", left: "90%" },
-	{ top: "36%", left: "74%" },
-	{ top: "42%", left: "92%" },
-	{ top: "56%", left: "84%" },
-	{ top: "66%", left: "92%" },
-	{ top: "74%", left: "76%" },
-	{ top: "84%", left: "88%" },
-	{ top: "78%", left: "60%" },
-	{ top: "60%", left: "52%" }
-];
-
-// Maps GBIF-style threat status strings to display info. GBIF returns both
-// short codes (LC, EN) and longer forms (LEAST_CONCERN). We normalize both.
-const IUCN_INFO: Record<string, { label: string; className: string }> = {
-	LC: { label: "Least Concern", className: "border-emerald-500/30 text-emerald-500 bg-emerald-500/10" },
-	LEAST_CONCERN: { label: "Least Concern", className: "border-emerald-500/30 text-emerald-500 bg-emerald-500/10" },
-	NT: { label: "Near Threatened", className: "border-lime-500/30 text-lime-600 bg-lime-500/10" },
-	NEAR_THREATENED: { label: "Near Threatened", className: "border-lime-500/30 text-lime-600 bg-lime-500/10" },
-	VU: { label: "Vulnerable", className: "border-amber-500/30 text-amber-500 bg-amber-500/10" },
-	VULNERABLE: { label: "Vulnerable", className: "border-amber-500/30 text-amber-500 bg-amber-500/10" },
-	EN: { label: "Endangered", className: "border-orange-500/30 text-orange-500 bg-orange-500/10" },
-	ENDANGERED: { label: "Endangered", className: "border-orange-500/30 text-orange-500 bg-orange-500/10" },
-	CR: { label: "Critically Endangered", className: "border-rose-500/30 text-rose-500 bg-rose-500/10" },
-	CRITICALLY_ENDANGERED: {
-		label: "Critically Endangered",
-		className: "border-rose-500/30 text-rose-500 bg-rose-500/10"
-	},
-	EW: { label: "Extinct in the Wild", className: "border-rose-500/30 text-rose-500 bg-rose-500/10" },
-	EXTINCT_IN_THE_WILD: { label: "Extinct in the Wild", className: "border-rose-500/30 text-rose-500 bg-rose-500/10" },
-	EX: { label: "Extinct", className: "border-base-content/30 text-base-content/70 bg-base-content/10" },
-	EXTINCT: { label: "Extinct", className: "border-base-content/30 text-base-content/70 bg-base-content/10" },
-	DD: { label: "Data Deficient", className: "border-base-content/20 text-base-content/60 bg-base-content/10" },
-	DATA_DEFICIENT: { label: "Data Deficient", className: "border-base-content/20 text-base-content/60 bg-base-content/10" }
+const DEFAULT_PROJECT_DURATION_MS = 30_000;
+const GRID_CELL_COUNT = 10;
+const PREMIUM_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const REVEAL_TRANSITION: Transition = { duration: 0.9, ease: PREMIUM_EASE };
+type ActiveGridTaxonomy = {
+	id: number;
+	taxonomy: Taxonomy;
+	phylopic: {
+		imageUrl: string;
+		imageDetails: string;
+	};
 };
+
+type ShowcaseMapLocation = {
+	samp_name: string;
+	decimalLatitude: number;
+	decimalLongitude: number;
+};
+
+function hasCoordinates(sample: ProjectBundle["samples"][number]): sample is ShowcaseMapLocation {
+	return typeof sample.decimalLatitude === "number" && typeof sample.decimalLongitude === "number";
+}
+
+async function fetchPhyloPicPreview(taxonomy: Taxonomy): Promise<{ imageUrl: string; imageDetails: string } | null> {
+	try {
+		const match = await matchGbifForPhylopic(taxonomy);
+		if (!match?.objectIDs) return null;
+		const response = await fetch(
+			`https://api.phylopic.org/resolve/gbif.org/species?embed_primaryImage=true&objectIDs=${match.objectIDs}`,
+			{ signal: AbortSignal.timeout(4000) }
+		);
+		if (!response.ok) return null;
+		const phyloPic = await response.json();
+		const imageUrl = phyloPic?._embedded?.primaryImage?._links?.vectorFile?.href as string | undefined;
+		if (!imageUrl) return null;
+		const imageDetails =
+			phyloPic?._embedded?.primaryImage?._links?.nodes
+				?.map((node: { title?: string }) => node.title)
+				?.filter((title: string | undefined): title is string => !!title)
+				?.join(" | ") ?? "";
+		return { imageUrl, imageDetails };
+	} catch {
+		return null;
+	}
+}
 
 // Builds a semicolon-free breadcrumb from the individual rank columns.
 // The raw `taxonomy` string in the DB is semicolon delimited, but the
@@ -60,207 +68,289 @@ function formatTaxonomyPath(t: Taxonomy): string {
 }
 
 // Picks the most specific known name for GBIF lookups (species > genus > …).
-function leastCommonName(t: Taxonomy): string {
-	return t.species || t.genus || t.family || t.order || t.class || t.phylum || t.kingdom || "";
-}
-
-type Enrichment = { commonName: string | null; threatStatus: string | null };
-type ActiveTaxon = { token: string; taxonomy: Taxonomy; slot: number; startedAt: number };
-
-// Single GBIF fetch that returns both common name and threat status.
-// Mirrors the approach already used in TaxaGridItem for consistency.
-async function fetchGbifEnrichment(name: string): Promise<Enrichment> {
-	try {
-		const suggestRes = await fetch(
-			`https://api.gbif.org/v1/species/suggest?q=${encodeURIComponent(name)}&limit=1`,
-			{ signal: AbortSignal.timeout(5000) }
-		);
-		const suggest = await suggestRes.json();
-		const key = Array.isArray(suggest) && suggest.length > 0 ? suggest[0]?.key : null;
-		if (!key) return { commonName: null, threatStatus: null };
-
-		const [vnRes, speciesRes] = await Promise.all([
-			fetch(`https://api.gbif.org/v1/species/${key}/vernacularNames?limit=50`, {
-				signal: AbortSignal.timeout(5000)
-			}),
-			fetch(`https://api.gbif.org/v1/species/${key}`, { signal: AbortSignal.timeout(5000) })
-		]);
-
-		let commonName: string | null = null;
-		if (vnRes.ok) {
-			const vnJson = (await vnRes.json()) as {
-				results?: { vernacularName?: string; language?: string; country?: string; preferred?: boolean }[];
-			};
-			// Prefer English + preferred + US (matches existing TaxaGridItem heuristic).
-			const englishRows = (vnJson.results ?? []).filter(
-				(r) => (r.language?.toLowerCase() === "en" || r.language?.toLowerCase() === "eng") && r.vernacularName
-			);
-			englishRows.sort((a, b) => {
-				const aScore = (a.preferred ? 10 : 0) + (a.country === "US" ? 3 : 0);
-				const bScore = (b.preferred ? 10 : 0) + (b.country === "US" ? 3 : 0);
-				return bScore - aScore;
-			});
-			commonName = englishRows[0]?.vernacularName?.trim() ?? null;
-		}
-
-		let threatStatus: string | null = null;
-		if (speciesRes.ok) {
-			const speciesJson = (await speciesRes.json()) as { threatStatuses?: string[] };
-			if (Array.isArray(speciesJson.threatStatuses) && speciesJson.threatStatuses.length) {
-				threatStatus = speciesJson.threatStatuses[0];
-			}
-		}
-
-		return { commonName, threatStatus };
-	} catch {
-		return { commonName: null, threatStatus: null };
+function mostSpecificName(t: Taxonomy): string {
+	for (const rank of RanksBySpecificity) {
+		const value = t[rank]?.toString().trim();
+		if (value) return value.replace(/_/g, " ");
 	}
+	return t.taxonomy.split(";").pop()?.replace(/_/g, " ") ?? t.taxonomy;
 }
 
-export default function ShowcaseClient({ projects }: { projects: ProjectBundle[] }) {
-	const [idx, setIdx] = useState(0);
-	const [activeTaxa, setActiveTaxa] = useState<ActiveTaxon[]>([]);
+export default function ShowcaseClient({
+	projects,
+	projectDurationMs = DEFAULT_PROJECT_DURATION_MS
+}: {
+	projects: ProjectBundle[];
+	projectDurationMs?: number;
+}) {
+	const [projectIdx, setProjectIdx] = useState(0);
+	const [gridTaxa, setGridTaxa] = useState<Array<ActiveGridTaxonomy | null>>(() =>
+		Array.from({ length: GRID_CELL_COUNT }, () => null)
+	);
+	const firstProjectPaint = useRef(true);
+	const spawnIndex = useRef(0);
+
+	const project = projects[projectIdx];
+	const mapLocations = useMemo(
+		() => (project?.samples ?? []).filter(hasCoordinates),
+		[project?.project_id]
+	);
 
 	useEffect(() => {
 		if (projects.length <= 1) return;
 		const id = window.setInterval(() => {
-			setIdx((i) => (i + 1) % projects.length);
-		}, SLIDE_DURATION_MS);
+			firstProjectPaint.current = false;
+			setProjectIdx((i) => (i + 1) % projects.length);
+		}, projectDurationMs);
 		return () => window.clearInterval(id);
-	}, [projects.length]);
+	}, [projectDurationMs, projects.length]);
 
-	const project = projects[idx];
+	useEffect(() => {
+		const list = project?.taxonomies ?? [];
+		spawnIndex.current = 0;
+		setGridTaxa(Array.from({ length: GRID_CELL_COUNT }, () => null));
+		if (!list.length) return;
+
+		let cancelled = false;
+		let timeoutId: number | null = null;
+		const tick = () => {
+			const slot = Math.floor(Math.random() * GRID_CELL_COUNT);
+			const shouldClear = Math.random() < 0.2;
+
+			if (shouldClear) {
+				setGridTaxa((current) => {
+					if (!current[slot]) return current;
+					const next = [...current];
+					next[slot] = null;
+					return next;
+				});
+			} else {
+				const taxonomy = list[spawnIndex.current % list.length];
+				spawnIndex.current += 1;
+				const nextId = Date.now() + spawnIndex.current;
+				void fetchPhyloPicPreview(taxonomy).then((phylopic) => {
+					if (cancelled || !phylopic?.imageUrl) return;
+					setGridTaxa((current) => {
+						const next = [...current];
+						next[slot] = {
+							id: nextId,
+							taxonomy,
+							phylopic
+						};
+						return next;
+					});
+				});
+			}
+
+			timeoutId = window.setTimeout(tick, 2200 + Math.random() * 2200);
+		};
+		timeoutId = window.setTimeout(tick, 900);
+		return () => {
+			cancelled = true;
+			if (timeoutId) window.clearTimeout(timeoutId);
+		};
+	}, [project?.project_id, project?.taxonomies]);
+
 	if (!project) return null;
 
-	useEffect(() => {
-		setActiveTaxa([]);
-	}, [project.project_id]);
-
-	useEffect(() => {
-		const id = window.setInterval(() => {
-			setActiveTaxa((prev) => {
-				const now = Date.now();
-				const alive = prev.filter((p) => now - p.startedAt < TAXON_LIFETIME_MS);
-				const occupied = new Set(alive.map((p) => p.slot));
-				const freeSlots = TAXON_SLOTS.map((_, i) => i).filter((i) => !occupied.has(i));
-				if (!freeSlots.length || !project.taxonomies.length) return alive;
-
-				const slot = freeSlots[Math.floor(Math.random() * freeSlots.length)];
-				const taxonomy = project.taxonomies[Math.floor(Math.random() * project.taxonomies.length)];
-				const token = `${project.project_id}-${taxonomy.taxonomy}-${now}-${slot}`;
-				return [...alive, { token, taxonomy, slot, startedAt: now }];
-			});
-		}, TAXON_STREAM_MS);
-
-		return () => window.clearInterval(id);
-	}, [project.project_id, project.taxonomies]);
+	const fromLeft = projectIdx % 2 === 0;
+	const swapIn = !firstProjectPaint.current;
+	const circleDuration = swapIn ? 1.35 : 0.9;
 
 	return (
-		<div className="tour-motion-bg relative isolate min-h-screen w-full overflow-hidden bg-base-200 [html[data-theme='dark']_&]:bg-base-300/50">
+		<div className="tour-motion-bg relative isolate min-h-screen w-full overflow-hidden bg-linear-to-b from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
+			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_18%,oklch(var(--p)/0.16),transparent_46%),radial-gradient(ellipse_at_82%_48%,oklch(var(--s)/0.13),transparent_48%)]" />
 
-			<div
-				key={`details-${idx}`}
-				className="showcase-details relative z-10 max-w-xl p-8 md:max-w-[41%] md:p-12"
-			>
-				<div className="flex items-center gap-3 text-primary">
-					<ProjectIcon className="h-11 w-11 opacity-80" />
-					<span className="text-[11px] font-semibold uppercase tracking-widest">
-						Project · {project.project_id}
-					</span>
-				</div>
+			<AnimatePresence mode="wait">
+				<motion.section
+					key={project.project_id}
+					role="group"
+					aria-label={project.project_name}
+					className="relative z-10 grid h-screen grid-cols-1 gap-6 px-[5vw] py-[5vh] lg:grid-cols-[minmax(0,0.88fr)_minmax(34rem,1.12fr)]"
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					exit={{ opacity: 0, transition: { duration: 0.45, ease: PREMIUM_EASE } }}
+					transition={{ duration: 0.5, ease: PREMIUM_EASE }}
+				>
+					<div className="flex min-h-0 min-w-0 flex-col justify-center">
+						<div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start">
+							<motion.div
+								className="relative w-fit"
+								initial={
+									swapIn
+										? {
+												x: fromLeft ? "-50vw" : "50vw",
+												rotate: fromLeft ? -52 : 52,
+												scale: 0.68,
+												opacity: 0
+											}
+										: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
+								}
+								animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
+								transition={{ duration: circleDuration, ease: PREMIUM_EASE }}
+							>
+								<div className="relative aspect-square h-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 xl:h-64">
+									{project.imageFileUrl_ODE ? (
+										// eslint-disable-next-line @next/next/no-img-element -- ODE image URLs are dynamic user uploads.
+										<img
+											src={project.imageFileUrl_ODE}
+											alt=""
+											className="h-full w-full rounded-full object-cover"
+										/>
+									) : (
+										<div className="flex h-full w-full items-center justify-center rounded-full bg-linear-to-br from-primary/25 via-cyan-400/15 to-base-content/10">
+											<ProjectIcon className="h-[46%] w-[46%] text-primary/90" />
+										</div>
+									)}
+								</div>
+							</motion.div>
 
-				<h1 className="mt-3 text-3xl font-semibold leading-tight text-primary md:text-4xl">
-					{project.project_name}
-				</h1>
+							<div className="h-44 w-full overflow-hidden rounded-3xl border-[6px] border-primary/70 bg-base-300/40 shadow-xl sm:h-56 md:max-w-[26rem] xl:h-64">
+								<ProjectSamplesMap projectId={project.project_id} locations={mapLocations} />
+							</div>
+						</div>
 
-				<dl className="mt-6 grid grid-cols-1 gap-4 text-sm">
-					{project.institution && <DetailRow label="Institute" value={project.institution} />}
-					<DetailRow label="Project Contact" value={project.project_contact} />
-					<DetailRow label="Assay Type" value={project.assay_type} />
-				</dl>
+						<MaskedReveal delay={0.06}>
+							<div className="text-2xl font-semibold leading-tight text-primary sm:text-3xl xl:text-4xl">
+								{project.project_id}
+							</div>
+						</MaskedReveal>
 
-				{project.projectDescription && (
-					<p className="mt-6 max-w-xl text-base-content/80 leading-relaxed line-clamp-6">
-						{project.projectDescription}
-					</p>
-				)}
+						<MaskedReveal delay={0.14}>
+							<h1 className="mt-3 max-w-4xl wrap-break-word text-4xl font-semibold leading-[1.02] tracking-[-0.05em] text-white drop-shadow-md sm:text-6xl xl:text-7xl">
+								{project.project_name}
+							</h1>
+						</MaskedReveal>
 
-				<div className="mt-8 flex items-center gap-2 text-xs text-base-content/50">
-					<span className="inline-block h-1 w-8 rounded-full bg-primary/40" />
-					<span>
-						Showcasing {idx + 1} of {projects.length}
-					</span>
-				</div>
-			</div>
+						{project.projectDescription ? (
+							<MaskedReveal delay={0.22}>
+								<p className="mt-4 max-w-3xl line-clamp-4 text-base leading-relaxed text-base-content/80 sm:text-lg xl:text-xl">
+									{project.projectDescription}
+								</p>
+							</MaskedReveal>
+						) : null}
 
-			<div className="absolute inset-0 pointer-events-none">
-				{activeTaxa.map((taxon) => (
-					<div
-						key={taxon.token}
-						className="showcase-taxon-stream absolute"
-						style={{
-							top: TAXON_SLOTS[taxon.slot].top,
-							left: TAXON_SLOTS[taxon.slot].left,
-							animationDuration: `${TAXON_LIFETIME_MS}ms`
-						}}
-					>
-						<TaxonCard taxonomy={taxon.taxonomy} />
+						<motion.dl
+							className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-base-content/75"
+							initial="hidden"
+							animate="show"
+							variants={{
+								hidden: {},
+								show: { transition: { staggerChildren: 0.06, delayChildren: 0.32 } }
+							}}
+						>
+							{project.institution ? <DetailRow label="Institute" value={project.institution} /> : null}
+							<DetailRow label="Contact" value={project.project_contact} />
+							<DetailRow label="Assay" value={project.assay_type} />
+						</motion.dl>
+
+						<div className="mt-6 flex items-center gap-3">
+							<Image
+								src="/images/ode_logo_clean.svg"
+								alt="Ocean DNA Explorer logo"
+								width={48}
+								height={48}
+								className="h-12 w-12 shrink-0"
+							/>
+							<p className="text-sm font-semibold tracking-tight text-base-content/90">Ocean DNA Explorer</p>
+						</div>
+
+						<div className="mt-6 text-sm font-medium text-base-content/70">
+							Showing Project {projectIdx + 1} of {projects.length}
+						</div>
 					</div>
-				))}
-			</div>
+
+					<div className="relative min-h-[48vh] lg:min-h-0">
+						<div className="grid h-full min-h-[48vh] grid-cols-2 content-start gap-x-8 gap-y-5 lg:min-h-0">
+							{Array.from({ length: GRID_CELL_COUNT }, (_, slot) => (
+								<TaxonomyGridCell key={slot} cell={gridTaxa[slot]} />
+							))}
+						</div>
+					</div>
+				</motion.section>
+			</AnimatePresence>
 		</div>
 	);
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
 	return (
-		<div>
-			<dt className="text-[10px] font-semibold uppercase tracking-widest text-base-content/55">{label}</dt>
-			<dd className="mt-0.5 text-base-content/90">{value}</dd>
-		</div>
+		<motion.div
+			variants={{
+				hidden: { opacity: 0, y: 14 },
+				show: { opacity: 1, y: 0, transition: REVEAL_TRANSITION }
+			}}
+			className="min-w-0"
+		>
+			<dt className="text-[10px] font-semibold uppercase tracking-widest text-base-content/50">{label}</dt>
+			<dd className="mt-0.5 wrap-break-word text-base-content/90">{value}</dd>
+		</motion.div>
 	);
 }
 
-function TaxonCard({ taxonomy }: { taxonomy: Taxonomy }) {
-	const [enrichment, setEnrichment] = useState<Enrichment | null>(null);
-	const lookupName = useMemo(() => leastCommonName(taxonomy), [taxonomy]);
-	const formattedPath = useMemo(() => formatTaxonomyPath(taxonomy), [taxonomy]);
+function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
+	const taxonomy = cell?.taxonomy ?? null;
+	const formattedPath = taxonomy ? formatTaxonomyPath(taxonomy) : "";
+	const fallbackName = taxonomy ? mostSpecificName(taxonomy) : "";
 
-	useEffect(() => {
-		if (!lookupName) return;
-		let cancelled = false;
-		fetchGbifEnrichment(lookupName).then((e) => {
-			if (!cancelled) setEnrichment(e);
-		});
-		return () => {
-			cancelled = true;
-		};
-	}, [lookupName]);
-
-	const iucn = enrichment?.threatStatus ? IUCN_INFO[enrichment.threatStatus.toUpperCase()] ?? null : null;
+	if (!cell || !taxonomy) {
+		return <div className="min-h-20" />;
+	}
 
 	return (
-		<div className="pointer-events-none flex items-center gap-2">
-			<div className="relative h-16 w-16 shrink-0 sm:h-20 sm:w-20">
-				<PhyloPicClient taxonomy={taxonomy} />
-			</div>
-			<div className="max-w-[245px] text-left text-primary/95 [text-shadow:0_0_14px_rgba(0,0,0,0.35)]">
-				<div className="mt-0.5 text-xs leading-snug line-clamp-2">{formattedPath}</div>
-				{enrichment?.commonName && (
-					<div className="mt-1 text-sm font-semibold leading-tight first-letter:uppercase">
-						{enrichment.commonName}
-					</div>
-				)}
-				{iucn && (
-					<span className={`mt-1.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${iucn.className}`}>
-						<span className="opacity-70">IUCN</span>
-						<span aria-hidden="true" className="opacity-40">
-							·
-						</span>
-						<span>{iucn.label}</span>
-					</span>
-				)}
-			</div>
-		</div>
+		<AnimatePresence mode="popLayout">
+			<motion.div
+				key={cell.id}
+				initial={{ opacity: 0, y: 10 }}
+				animate={{ opacity: 1, y: 0 }}
+				exit={{ opacity: 0, y: -8 }}
+				transition={{ duration: 0.62, ease: PREMIUM_EASE }}
+				className="flex min-h-20 items-center gap-3"
+			>
+				<div
+					className="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16"
+					title={cell.phylopic.imageDetails ? `PhyloPic nodes: ${cell.phylopic.imageDetails}` : undefined}
+				>
+					<ThemeAwarePhyloPic
+						src={cell.phylopic.imageUrl}
+						alt="Taxonomy image"
+						fill
+						className="object-contain"
+					/>
+				</div>
+				<div className="min-w-0">
+					<h2 className="line-clamp-2 text-balance text-sm font-semibold leading-tight tracking-tight text-primary drop-shadow-md">
+						{fallbackName}
+					</h2>
+					<p className="mt-1 line-clamp-2 wrap-anywhere text-[10px] leading-snug text-base-content/62">{formattedPath}</p>
+				</div>
+			</motion.div>
+		</AnimatePresence>
+	);
+}
+
+const ProjectSamplesMap = memo(
+	function ProjectSamplesMap({ locations }: { projectId: string; locations: ShowcaseMapLocation[] }) {
+		if (!locations.length) {
+			return <div className="flex h-full items-center justify-center px-3 text-sm text-base-content/55">No sample coordinates.</div>;
+		}
+		return <DynamicMap locations={locations} table="sample" id="samp_name" cluster clusterRadius={42} />;
+	},
+	(prev, next) => prev.projectId === next.projectId
+);
+
+function MaskedReveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+	return (
+		<span className="block overflow-hidden">
+			<motion.span
+				className="block"
+				initial={{ y: "100%" }}
+				animate={{ y: "0%" }}
+				exit={{ y: "-25%" }}
+				transition={{ ...REVEAL_TRANSITION, delay }}
+			>
+				{children}
+			</motion.span>
+		</span>
 	);
 }

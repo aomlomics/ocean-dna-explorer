@@ -192,9 +192,8 @@ type ProjectProps = {
 };
 
 /**
- * Latest Project Card — card-first design. The image is a small optional
- * thumbnail at the top of the card body; the card looks good whether or not
- * an image was submitted. No gradient scrim on the image.
+ * Latest Project Card — optional full-width image band at the top with the same
+ * gradient into base-200 as Life Across ODE; body follows below in padded layout.
  */
 function LatestProjectCard({ project }: ProjectProps) {
 	const hasImage = Boolean(project.imageFileUrl_ODE);
@@ -204,120 +203,131 @@ function LatestProjectCard({ project }: ProjectProps) {
 
 	return (
 		<DashCard padding="none" className="overflow-hidden h-full">
-			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
-				{/* Header row — glyph + "Latest project" pill + info button */}
-				<div className="flex items-center justify-between gap-3">
-					<div className="flex items-center gap-3 min-w-0 flex-nowrap">
-						{/* Boat icon (≈2.5:1) — give it width so it doesn't
-						    squish into a square. */}
-						<ProjectGlyph className="w-14 h-6 text-primary" />
-						<LatestStamp label="Project" date={project.dateSubmitted} />
-					</div>
-					<DashCardInfoButton
-						info={{
-							title: "Most recent public project",
-							description:
-								"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
-							links: [
-								{ label: "View project", href: `/explore/project/${project.project_id}` },
-								{ label: "Browse all projects", href: "/explore/project" }
-							]
-						}}
-					/>
-				</div>
-
-				{/*
-				 * Optional thumbnail. Contained inside the card padding (not
-				 * flush to card edges) and modestly sized — the card should
-				 * read as a "project card with an image" not as an "image
-				 * with a card below it". If there's no image, we show
-				 * nothing here and the title takes the lead instead.
-				 */}
+			<>
 				{hasImage && (
-					<div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-base-300/40">
+					<div className="relative h-48 w-full overflow-hidden shrink-0 sm:h-52">
 						<Image
 							src={project.imageFileUrl_ODE as string}
 							alt={project.project_name}
 							fill
 							className="object-cover"
-							sizes="(max-width: 1024px) 100vw, 60vw"
+							sizes="(max-width: 1024px) 100vw, 58vw"
+						/>
+						{/*
+						 * Faded gradient so the image softly bleeds into the card
+						 * body rather than ending on a hard horizontal line.
+						 * Fade target is base-200 (the card color) so the fade blends
+						 * with the DashCard body below — same language as kingdom cards.
+						 */}
+						<div
+							className="absolute inset-0 pointer-events-none bg-linear-to-b from-transparent to-base-200"
+							aria-hidden
 						/>
 					</div>
 				)}
+				<div
+					className={[
+						"flex flex-col grow relative",
+						hasImage
+							? "-mt-7 sm:-mt-8 z-10 rounded-t-2xl bg-base-200 px-5 sm:px-6 pt-3 sm:pt-3.5 pb-5 sm:pb-6 gap-2"
+							: "p-5 sm:p-6 gap-3"
+					].join(" ")}
+				>
+					{/* Header row — glyph + submission stamp; info button right */}
+					<div className="flex items-center justify-between gap-3">
+						<div className="flex items-center gap-3 min-w-0">
+							{/* Boat icon (≈2.5:1) — give it width so it doesn't
+							    squish into a square. */}
+							<ProjectGlyph className="w-14 h-6 text-primary" />
+							<LatestStamp label="Project" date={project.dateSubmitted} />
+						</div>
+						<DashCardInfoButton
+							info={{
+								title: "Most recent public project",
+								description:
+									"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
+								links: [
+									{ label: "View project", href: `/explore/project/${project.project_id}` },
+									{ label: "Browse all projects", href: "/explore/project" }
+								]
+							}}
+						/>
+					</div>
 
-				{/* Row 1 — project_id (big, serves as name) + submitted date next to it */}
-				<div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-					<h3
-						className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight tracking-tight break-all"
-						title={project.project_id}
-					>
-						{project.project_id}
-					</h3>
+					{/* Row 1 — project_id (big, serves as name) + submitted date next to it */}
+					<div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+						<h3
+							className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight tracking-tight break-all"
+							title={project.project_id}
+						>
+							{project.project_id}
+						</h3>
+					</div>
+
+					<p className="text-lg sm:text-xl font-medium text-base-content leading-snug line-clamp-2">
+						{project.project_name}
+					</p>
+
+					<p className="text-sm text-base-content/65 leading-relaxed line-clamp-3">
+						{project.projectDescription ?? "No project description was provided in this submission."}
+					</p>
+
+					<dl className="grid grid-cols-2 gap-3 text-xs">
+						{project.institution && (
+							<div>
+								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
+									Institution
+								</dt>
+								<dd className="text-base-content/85 truncate" title={project.institution}>
+									{project.institution}
+								</dd>
+							</div>
+						)}
+						{project.assay_type && (
+							<div>
+								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
+									Assay type
+								</dt>
+								<dd className="text-base-content/85 truncate">{project.assay_type}</dd>
+							</div>
+						)}
+					</dl>
+
+					{assays.length > 0 ? (
+						<div className="mt-auto flex flex-wrap items-end justify-between gap-3">
+							<div className="flex flex-wrap gap-1.5 min-w-0">
+								{assays.map((a) => (
+									<CompactAssayChip
+										key={a.assay_name}
+										assay_name={a.assay_name}
+										target_gene={a.target_gene}
+									/>
+								))}
+								{project.AssayPreps.length > assays.length && (
+									<span className="self-center text-xs text-base-content/55">
+										+{project.AssayPreps.length - assays.length} more
+									</span>
+								)}
+							</div>
+							<Link
+								href={`/explore/project/${project.project_id}`}
+								className="btn btn-sm btn-primary self-end"
+							>
+								View project
+							</Link>
+						</div>
+					) : (
+						<div className="mt-auto flex justify-end">
+							<Link
+								href={`/explore/project/${project.project_id}`}
+								className="btn btn-sm btn-primary"
+							>
+								View project
+							</Link>
+						</div>
+					)}
 				</div>
-
-				<p className="text-lg sm:text-xl font-medium text-base-content leading-snug line-clamp-2">
-					{project.project_name}
-				</p>
-
-				<p className="text-sm text-base-content/65 leading-relaxed line-clamp-3">
-					{project.projectDescription ?? "No project description was provided in this submission."}
-				</p>
-
-				<dl className="grid grid-cols-2 gap-3 text-xs">
-					{project.institution && (
-						<div>
-							<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
-								Institution
-							</dt>
-							<dd className="text-base-content/85 truncate" title={project.institution}>
-								{project.institution}
-							</dd>
-						</div>
-					)}
-					{project.assay_type && (
-						<div>
-							<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
-								Assay type
-							</dt>
-							<dd className="text-base-content/85 truncate">{project.assay_type}</dd>
-						</div>
-					)}
-				</dl>
-
-				{assays.length > 0 ? (
-					<div className="mt-auto flex flex-wrap items-end justify-between gap-3">
-						<div className="flex flex-wrap gap-1.5 min-w-0">
-							{assays.map((a) => (
-								<CompactAssayChip
-									key={a.assay_name}
-									assay_name={a.assay_name}
-									target_gene={a.target_gene}
-								/>
-							))}
-							{project.AssayPreps.length > assays.length && (
-								<span className="self-center text-xs text-base-content/55">
-									+{project.AssayPreps.length - assays.length} more
-								</span>
-							)}
-						</div>
-						<Link
-							href={`/explore/project/${project.project_id}`}
-							className="btn btn-sm btn-primary self-end"
-						>
-							View project
-						</Link>
-					</div>
-				) : (
-					<div className="mt-auto flex justify-end">
-						<Link
-							href={`/explore/project/${project.project_id}`}
-							className="btn btn-sm btn-primary"
-						>
-							View project
-						</Link>
-					</div>
-				)}
-			</div>
+			</>
 		</DashCard>
 	);
 }

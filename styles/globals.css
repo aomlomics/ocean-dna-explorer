@@ -264,25 +264,62 @@ body:has(.tour-layout-root) {
 	animation: ambientLogoFloat 8s ease-in-out infinite;
 }
 
-.ambient-random-wrap {
+.ambient-cloud {
 	position: relative;
 	width: 100%;
-	height: 100%;
+	/* Avoid height:100% here — it overrides Tailwind `h-[…]` and breaks flex sizing. */
 }
 
-.ambient-random-word {
+/* Softer in the middle, fades toward edges (mask alpha). */
+.ambient-wordcloud-vignette {
+	-webkit-mask-image: radial-gradient(
+		ellipse 78% 72% at 50% 50%,
+		#000 0%,
+		#000 32%,
+		rgba(0, 0, 0, 0.55) 62%,
+		rgba(0, 0, 0, 0.14) 86%,
+		transparent 100%
+	);
+	mask-image: radial-gradient(
+		ellipse 78% 72% at 50% 50%,
+		#000 0%,
+		#000 32%,
+		rgba(0, 0, 0, 0.55) 62%,
+		rgba(0, 0, 0, 0.14) 86%,
+		transparent 100%
+	);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+}
+
+.ambient-wordcloud-word {
+	/* Per-phrase --ambient-op-low / --ambient-op-base from JS. Opacity-only (no motion) to avoid wordcloud2 layout issues. */
+	--ambient-op-base: 1;
+	--ambient-op-low: 0.82;
+	will-change: opacity;
+	text-shadow: 0 14px 42px rgba(0, 0, 0, 0.24);
+	font-weight: 700;
+	letter-spacing: -0.035em;
+	animation-name: ambientWordBreatheSubtle;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
+
+.ambient-cloud-word {
 	position: absolute;
 	transform: translate(-50%, -50%);
-	width: clamp(120px, 13vw, 190px);
+	width: max-content;
+	max-width: 18rem;
 	text-align: center;
 	line-height: 1.15;
 	white-space: normal;
-	color: var(--color-primary);
-	font-weight: 600;
-	letter-spacing: 0.01em;
-	text-shadow: 0 0 14px rgba(100, 171, 220, 0.24);
-	opacity: 0;
-	animation: ambientRandomBlink ease-in-out infinite;
+	font-weight: 700;
+	letter-spacing: -0.035em;
+	text-shadow: 0 14px 42px rgba(0, 0, 0, 0.24);
+	animation: ambientCloudFloat ease-in-out infinite;
 }
 
 /* ---------- /sponsors ---------- */
@@ -356,20 +393,35 @@ body:has(.tour-layout-root) {
 	}
 }
 
-@keyframes ambientRandomBlink {
-	0%,
-	100% {
-		opacity: 0;
-		transform: translate(-50%, -50%) scale(0.95);
+@keyframes ambientCloudFloat {
+	0% {
+		opacity: 0.78;
+		transform: translate(-50%, -50%) scale(0.96) rotate(-1deg);
 	}
-	20%,
-	58% {
+	24% {
+		opacity: 0.92;
+		transform: translate(calc(-50% + 9px), calc(-50% - 8px)) scale(1) rotate(0.45deg);
+	}
+	45% {
+		opacity: 1;
+		transform: translate(calc(-50% - 7px), calc(-50% - 14px)) scale(1.04) rotate(1deg);
+	}
+	70% {
 		opacity: 0.9;
-		transform: translate(-50%, -50%) scale(1);
+		transform: translate(calc(-50% + 5px), calc(-50% - 4px)) scale(1.01) rotate(-0.35deg);
 	}
-	76% {
-		opacity: 0.22;
-		transform: translate(-50%, -50%) scale(1.03);
+	100% {
+		opacity: 0.78;
+		transform: translate(-50%, -50%) scale(0.96) rotate(-1deg);
+	}
+}
+
+@keyframes ambientWordBreatheSubtle {
+	from {
+		opacity: var(--ambient-op-low, 0.82);
+	}
+	to {
+		opacity: var(--ambient-op-base, 1);
 	}
 }
 

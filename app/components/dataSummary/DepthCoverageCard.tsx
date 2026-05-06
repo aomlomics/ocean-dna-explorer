@@ -225,10 +225,10 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 						<text
 							y={0}
 							dominantBaseline="alphabetic"
-							className="fill-base-content/90 text-[34px] font-semibold tracking-tight"
+							className="text-[34px] font-semibold tracking-tight"
 						>
-							<tspan className="font-bold tabular-nums text-[42px]">{formatDepthValue(stats.min)}</tspan>
-							<tspan className="fill-base-content/90 text-[28px]"> m</tspan>
+							<tspan className="fill-primary font-bold tabular-nums text-[42px]">{formatDepthValue(stats.min)}</tspan>
+							<tspan className="fill-primary text-[28px]"> m</tspan>
 							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
 								minimum
 							</tspan>
@@ -241,10 +241,10 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 						<text
 							y={0}
 							dominantBaseline="alphabetic"
-							className="fill-base-content/90 text-[34px] font-semibold tracking-tight"
+							className="text-[34px] font-semibold tracking-tight"
 						>
-							<tspan className="font-bold tabular-nums text-[46px]">{formatDepthValue(stats.avg)}</tspan>
-							<tspan className="fill-base-content/90 text-[28px]"> m</tspan>
+							<tspan className="fill-primary font-bold tabular-nums text-[46px]">{formatDepthValue(stats.avg)}</tspan>
+							<tspan className="fill-primary text-[28px]"> m</tspan>
 							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
 								avg minimum
 							</tspan>
@@ -257,10 +257,10 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 						<text
 							y={0}
 							dominantBaseline="alphabetic"
-							className="fill-base-content/90 text-[34px] font-semibold tracking-tight"
+							className="text-[34px] font-semibold tracking-tight"
 						>
-							<tspan className="font-bold tabular-nums text-[42px]">{formatDepthValue(stats.max)}</tspan>
-							<tspan className="fill-base-content/90 text-[28px]"> m</tspan>
+							<tspan className="fill-primary font-bold tabular-nums text-[42px]">{formatDepthValue(stats.max)}</tspan>
+							<tspan className="fill-primary text-[28px]"> m</tspan>
 							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
 								maximum
 							</tspan>

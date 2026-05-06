@@ -132,7 +132,7 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 			<div className="relative h-44 w-full overflow-hidden">
 				{section.kingdom === "Bacteria" ? (
 					<ThemeAwareSvg
-						lightSrc="/images/bacteria_image_dark.png"
+						lightSrc="/images/bacteria_image.jpeg"
 						darkSrc="/images/bacteria_image_dark.png"
 						alt={section.kingdom}
 						fill
@@ -155,7 +155,11 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 				 * Fade target is base-200 (the card color) so the fade blends
 				 * perfectly with the body below.
 				 */}
-				<div className="absolute bottom-3 left-4 right-4">
+				<div
+					className="absolute inset-0 pointer-events-none bg-linear-to-b from-transparent to-base-200"
+					aria-hidden
+				/>
+				<div className="absolute bottom-3 left-4 right-4 z-1">
 					<h3 className="text-2xl font-semibold leading-tight drop-shadow-sm text-white [html[data-theme='dark']_&]:text-base-content">
 						{section.title}
 					</h3>

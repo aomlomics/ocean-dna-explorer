@@ -18,6 +18,8 @@ export default function Tour() {
 	const [loading, setLoading] = useState(true);
 
 	const [stepTime, setStepTime] = useState(DEFAULT_TOUR_STEP_TIME as number | undefined);
+	const [cycleTourPages, setCycleTourPages] = useState(false);
+	const [projectDurationSeconds, setProjectDurationSeconds] = useState(30 as number | undefined);
 
 	const [currProject, setCurrProject] = useState("");
 	const [projects, setProjects] = useState([] as string[]);
@@ -216,6 +218,8 @@ export default function Tour() {
 
 		setTourSteps([
 			{ url: "/ambient" },
+			{ url: "/sponsors" },
+			{ url: "/showcase" },
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
@@ -283,6 +287,36 @@ export default function Tour() {
 	return (
 		<>
 			<h1>Tour Destinations:</h1>
+			<div className="mb-3 flex flex-wrap items-end gap-4 border-b border-primary pb-3">
+				<label className="label cursor-pointer gap-3">
+					<input
+						type="checkbox"
+						className="checkbox checkbox-primary"
+						checked={cycleTourPages}
+						onChange={(e) => setCycleTourPages(e.target.checked)}
+						disabled={loading}
+					/>
+					<span className="label-text">Cycle through the 3 tour pages automatically</span>
+				</label>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Project showcase time</legend>
+					<div className="flex items-center gap-2">
+						<input
+							className="input input-sm w-24"
+							type="number"
+							min={1}
+							value={projectDurationSeconds !== undefined ? projectDurationSeconds : ""}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								setProjectDurationSeconds(isNaN(parsed) ? undefined : parsed);
+							}}
+							disabled={loading}
+						/>
+						<span className="text-primary text-xs">Seconds per project</span>
+					</div>
+				</fieldset>
+			</div>
 			<div className="grid grid-cols-5 gap-2 border-b border-primary pb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Project</legend>
@@ -591,11 +625,17 @@ export default function Tour() {
 					className="btn btn-primary"
 					onClick={async () => {
 						await signOut();
-						startTour(tourSteps, stepTime);
+						if (cycleTourPages) {
+							startTour([{ url: `/tour?projectSeconds=${projectDurationSeconds ?? 30}` }], stepTime);
+						} else {
+							startTour(tourSteps, stepTime);
+						}
 					}}
 					disabled={
 						loading ||
-						tourSteps.some((step) => !step.url || step.invalid || (step.stepTime && step.stepTime <= 0)) ||
+						(projectDurationSeconds !== undefined && projectDurationSeconds <= 0) ||
+						(!cycleTourPages &&
+							tourSteps.some((step) => !step.url || step.invalid || (step.stepTime && step.stepTime <= 0))) ||
 						(stepTime !== undefined && stepTime <= 0)
 					}
 				>

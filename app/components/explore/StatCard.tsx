@@ -12,6 +12,8 @@ export default function StatCard({
 	link,
 	tooltip,
 	layout = "vertical",
+	/** Horizontal layout only: hug contents (narrow card). Default stretches in grid/flex parents. */
+	horizontalCardWidth = "fill",
 	className
 }: {
 	title: string;
@@ -19,6 +21,7 @@ export default function StatCard({
 	link?: string;
 	tooltip?: string;
 	layout?: "vertical" | "horizontal";
+	horizontalCardWidth?: "fill" | "hug";
 	className?: string;
 } & (
 	| { value: number | string; query?: undefined; latitude?: undefined; longitude?: undefined }
@@ -26,7 +29,18 @@ export default function StatCard({
 	| { value?: undefined; query?: undefined; latitude: number | null; longitude: number | null }
 )) {
 	return (
-		<Suspense fallback={<SuspenseStatCard title={title} value="..." icon={icon} link={link} layout={layout} />}>
+		<Suspense
+			fallback={
+				<SuspenseStatCard
+					title={title}
+					value="..."
+					icon={icon}
+					link={link}
+					layout={layout}
+					horizontalCardWidth={horizontalCardWidth}
+				/>
+			}
+		>
 			<SuspenseStatCard
 				title={title}
 				value={value}
@@ -37,6 +51,7 @@ export default function StatCard({
 				link={link}
 				tooltip={tooltip}
 				layout={layout}
+				horizontalCardWidth={horizontalCardWidth}
 				className={className}
 			/>
 		</Suspense>
@@ -53,6 +68,7 @@ async function SuspenseStatCard({
 	link,
 	tooltip,
 	layout = "vertical",
+	horizontalCardWidth = "fill",
 	className
 }: {
 	title: string;
@@ -64,6 +80,7 @@ async function SuspenseStatCard({
 	link?: string;
 	tooltip?: string;
 	layout?: "vertical" | "horizontal";
+	horizontalCardWidth?: "fill" | "hug";
 	className?: string;
 }) {
 	let queryVal = value;
@@ -74,13 +91,26 @@ async function SuspenseStatCard({
 	let content;
 	let innerClassName;
 	if (layout === "horizontal" && queryVal !== undefined) {
-		innerClassName = " items-center gap-4";
+		const hug = horizontalCardWidth === "hug";
+		innerClassName = hug ? " items-center gap-4" : " w-full items-center gap-4";
 		content = (
 			<>
 				<div className="w-16 h-16 shrink-0 flex items-center justify-center text-primary">{icon}</div>
-				<div className="flex flex-col overflow-hidden">
-					<div className={`font-bold text-primary ${typeof queryVal === "string" ? "" : "text-3xl"}`}>{queryVal}</div>
-					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">{title}</div>
+				<div
+					className={
+						hug
+							? "flex min-w-min flex-col gap-0.5 overflow-visible"
+							: "flex min-w-min flex-1 flex-col gap-0.5 overflow-visible"
+					}
+				>
+					<div
+						className={`font-bold text-primary tabular-nums leading-none whitespace-nowrap ${typeof queryVal === "string" ? "" : "text-3xl"}`}
+					>
+						{queryVal}
+					</div>
+					<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
+						{title}
+					</div>
 				</div>
 			</>
 		);
@@ -117,10 +147,14 @@ async function SuspenseStatCard({
 	}
 
 	if (link) {
+		const hug = layout === "horizontal" && horizontalCardWidth === "hug";
 		return (
-			<Link href={link} className={className}>
+			<Link
+				href={link}
+				className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}
+			>
 				<div
-					className={`bg-base-200 p-4 h-full rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""}`}
+					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""}`}
 					data-tip={tooltip}
 				>
 					{content}

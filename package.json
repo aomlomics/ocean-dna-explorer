@@ -50,6 +50,7 @@
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.7",
     "formidable": "^3.5.4",
+    "framer-motion": "^12.38.0",
     "js-md5": "^0.8.3",
     "json5": "^2.2.3",
     "leaflet": "^1.9.4",
@@ -73,6 +74,7 @@
     "typescript": "5.9.3",
     "use-debounce": "^10.0.6",
     "uuid": "^13.0.0",
+    "wordcloud": "^1.2.3",
     "zod": "^4.1.13",
     "zod-prisma-types": "^3.3.10"
   },
