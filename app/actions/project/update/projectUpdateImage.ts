@@ -107,6 +107,22 @@ export default async function projectUpdateImageAction(
 					data: parsedImage as Image
 				});
 			});
+		} else {
+			await prismaImages.$transaction(async (tx) => {
+				if (dbProject.imageFileUrl_ODE) {
+					deletedImage = (await tx.image.findUnique({
+						where: {
+							url: dbProject.imageFileUrl_ODE
+						}
+					})) as Image;
+
+					await tx.image.delete({
+						where: {
+							url: dbProject.imageFileUrl_ODE
+						}
+					});
+				}
+			});
 		}
 	} catch (err: any) {
 		const error = err as Error;
