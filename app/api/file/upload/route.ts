@@ -49,12 +49,13 @@ export async function POST(request: Request) {
 				try {
 					// Run any logic after the file upload completed
 					const { userId } = JSON.parse(tokenPayload);
-					await prismaImages.blobFile.create({
+					const res = await prismaImages.blobFile.create({
 						data: {
 							url: blob.url,
 							userId: userId as string
 						}
 					});
+					console.log("RESULT:", res);
 				} catch (error) {
 					throw new Error("Error");
 				}
