@@ -17,12 +17,12 @@ function parseProjectDuration(value: string | string[] | undefined) {
 export default async function ShowcasePage({
 	searchParams
 }: {
-	searchParams?: { projectSeconds?: string | string[]; projectDurationSeconds?: string | string[] };
+	searchParams?: Promise<{ projectSeconds?: string | string[]; projectDurationSeconds?: string | string[] }>;
 }) {
+	const sp = await searchParams;
+
 	const tourable = await getTourShowcaseProjects();
-	const projectDurationSeconds = parseProjectDuration(
-		searchParams?.projectSeconds ?? searchParams?.projectDurationSeconds
-	);
+	const projectDurationSeconds = parseProjectDuration(sp?.projectSeconds ?? sp?.projectDurationSeconds);
 
 	if (!tourable.length) {
 		return (
