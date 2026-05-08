@@ -64,6 +64,7 @@ async function doSubmit(
 			} else {
 				imageInfo.image.homePage = false;
 			}
+			imageInfo.image.userId = userId;
 			const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
 
 			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);

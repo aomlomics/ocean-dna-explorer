@@ -77,6 +77,7 @@ export default async function projectUpdateImageAction(
 			} else {
 				imageInfo.image.homePage = false;
 			}
+			imageInfo.image.userId = userId;
 			parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image) as Image;
 
 			parsedAttribution =
