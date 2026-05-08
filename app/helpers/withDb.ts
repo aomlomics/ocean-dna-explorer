@@ -3,32 +3,17 @@ import { BlobFile, Prisma } from "../generated/prismaImages/client";
 import { prismaImages } from "./prismaImages";
 
 export async function validateBlobs(urls: BlobFile["url"][]) {
-	console.log("urls:", urls);
 	//skip check in development only, because onUploadCompleted does not trigger
 	if (process.env.NODE_ENV === "development") {
 		return true;
 	}
 
 	const { userId } = await auth();
-	console.log(userId);
 	if (!userId) {
-		console.log("?????????");
 		return false;
 	}
 
-	console.log("all:", await prismaImages.blobFile.findMany());
-	for (const url of urls) {
-		console.log(
-			url,
-			await prismaImages.blobFile.findUnique({
-				where: {
-					url,
-					userId
-				}
-			})
-		);
-	}
-
+	console.log(1);
 	try {
 		await prismaImages.$transaction(
 			urls.map((url) =>

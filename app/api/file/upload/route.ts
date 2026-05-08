@@ -36,6 +36,7 @@ export async function POST(request: Request) {
 				};
 			},
 			onUploadCompleted: async ({ blob, tokenPayload }) => {
+				console.log("uploadcomplete", 1);
 				// Get notified of client upload completion
 				// ⚠️ This will not work on `localhost` websites,
 				// Use ngrok or similar to get the full upload flow
@@ -47,12 +48,13 @@ export async function POST(request: Request) {
 				try {
 					// Run any logic after the file upload completed
 					const { userId } = JSON.parse(tokenPayload);
-					const res = await prismaImages.blobFile.create({
+					await prismaImages.blobFile.create({
 						data: {
 							url: blob.url,
 							userId: userId as string
 						}
 					});
+					console.log("uploadcomplete", 2);
 				} catch (error) {
 					throw new Error("Error");
 				}
