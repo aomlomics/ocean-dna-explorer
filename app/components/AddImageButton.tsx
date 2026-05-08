@@ -6,7 +6,15 @@ import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
 
-export default function AddImageButton({ attributions, homePage }: { attributions: Attribution[]; homePage?: true }) {
+export default function AddImageButton({
+	attributions,
+	title,
+	homePage
+}: {
+	attributions: Attribution[];
+	title: string;
+	homePage?: true;
+}) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
@@ -72,7 +80,7 @@ export default function AddImageButton({ attributions, homePage }: { attribution
 	return (
 		<>
 			<button type="submit" className="btn" onClick={() => modalRef.current?.showModal()}>
-				Add Carousel Image
+				{title}
 			</button>
 
 			<Modal

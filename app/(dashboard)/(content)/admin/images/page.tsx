@@ -2,6 +2,7 @@ import AddImageButton from "@/app/components/AddImageButton";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import ImageDeleteButton from "@/app/components/images/ImageDeleteButton";
 
+//TODO: add way to manage attributions
 export default async function AdminImages() {
 	const [attributions, images] = await prismaImages.$transaction([
 		prismaImages.attribution.findMany(),
@@ -14,7 +15,7 @@ export default async function AdminImages() {
 
 	return (
 		<div className="space-y-6">
-			<AddImageButton attributions={attributions} homePage />
+			<AddImageButton attributions={attributions} title={"Add Carousel Image"} homePage />
 
 			<div className="space-y-2">
 				<h2 className="text-xl font-semibold">Carousel images</h2>

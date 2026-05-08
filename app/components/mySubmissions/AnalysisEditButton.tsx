@@ -276,8 +276,6 @@ export default function AnalysisEditButton({
 
 			setErrorMessage(error.message);
 			finishSubmit();
-
-			return;
 		}
 	}
 

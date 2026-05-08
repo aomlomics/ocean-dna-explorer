@@ -68,17 +68,18 @@ async function doSubmit(
 
 			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
 
-			await prismaImages.$transaction(async (tx) => {
-				if (parsedAttribution) {
-					await tx.attribution.create({
-						data: parsedAttribution
-					});
-				}
-
-				await tx.image.create({
+			await prismaImages.$transaction([
+				...(parsedAttribution
+					? [
+							prismaImages.attribution.create({
+								data: parsedAttribution
+							})
+						]
+					: []),
+				prismaImages.image.create({
 					data: parsedImage
-				});
-			});
+				})
+			]);
 		}
 	} catch (err: any) {
 		const error = err as Error;
@@ -283,11 +284,7 @@ export default async function projectSubmitAction(
 		libraryStream.close();
 
 		if (!success) {
-			const urlsToDelete = [projectFileUrl, sampleFileUrl, libraryFileUrl];
-			if (imageInfo) {
-				urlsToDelete.push(imageInfo.image.url);
-			}
-			del(urlsToDelete);
+			del([projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]);
 		}
 	});
 

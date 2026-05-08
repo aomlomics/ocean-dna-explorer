@@ -189,13 +189,20 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 		} catch (err) {
 			const error = err as Error;
 			doError(error.message);
-			//TODO: delete images when something goes wrong on frontend
 		}
 	}
 
 	return (
 		<>
-			<form className="grid grid-cols-12 gap-12 w-full" onSubmit={handleSubmit}>
+			<form
+				className="grid grid-cols-12 gap-12 w-full"
+				onSubmit={(e) => {
+					if (e.currentTarget.image.files.length) {
+						setShowCoverImage(true);
+					}
+					handleSubmit(e);
+				}}
+			>
 				{/* Left column: give more space to users */}
 				<div className="col-span-6 space-y-6">
 					<SubmitFormSection
@@ -205,6 +212,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 						<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
 							<input
 								type="checkbox"
+								disabled={loading}
 								checked={showCoverImage}
 								onChange={(e) => setShowCoverImage(e.currentTarget.checked)}
 							/>
@@ -212,12 +220,12 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 							<div className="collapse-content">
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Image name</legend>
-									<input name="imageName" type="text" className="input" placeholder="Image name" />
+									<input name="imageName" type="text" className="input" placeholder="Image name" disabled={loading} />
 								</fieldset>
 
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Image file</legend>
-									<input name="image" type="file" className="file-input" accept="image/*" />
+									<input name="image" type="file" className="file-input" accept="image/*" disabled={loading} />
 								</fieldset>
 
 								<div className="border border-primary rounded-sm p-2 my-2">
@@ -226,7 +234,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 											<legend className="fieldset-legend">Attribution</legend>
 											<select
 												className="select"
-												disabled={newAttribution}
+												disabled={loading || newAttribution}
 												value={currAttribution?.attributionTitle}
 												onChange={(e) =>
 													setCurrAttribution(attributions.find((attr) => attr.attributionTitle === e.target.value))
@@ -244,6 +252,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 											<input
 												type="checkbox"
 												className="toggle"
+												disabled={loading}
 												checked={newAttribution}
 												onChange={(e) => setNewAttribution(e.target.checked)}
 											/>
@@ -258,7 +267,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 											type="text"
 											className="input"
 											placeholder="Attribution title"
-											disabled={!newAttribution}
+											disabled={loading || !newAttribution}
 											required={!!currAttribution || newAttribution}
 											defaultValue={currAttribution && !newAttribution ? currAttribution.attributionTitle : undefined}
 										/>
@@ -273,7 +282,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 											type="text"
 											className="input"
 											placeholder="Attribution URL"
-											disabled={!newAttribution}
+											disabled={loading || !newAttribution}
 											defaultValue={
 												currAttribution && !newAttribution && currAttribution.attributionUrl
 													? currAttribution.attributionUrl
@@ -290,7 +299,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 											type="text"
 											className="input"
 											placeholder="Attribution Institution"
-											disabled={!newAttribution}
+											disabled={loading || !newAttribution}
 											defaultValue={
 												currAttribution && !newAttribution && currAttribution.attributionInstitution
 													? currAttribution.attributionInstitution
@@ -303,19 +312,31 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Description</legend>
-									<input type="text" className="input" placeholder="Description" name="imageDescription" />
+									<input
+										type="text"
+										className="input"
+										placeholder="Description"
+										name="imageDescription"
+										disabled={loading}
+									/>
 									<p className="label">Optional</p>
 								</fieldset>
 
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Location</legend>
-									<input type="text" className="input" placeholder="Location" name="imageLocation" />
+									<input type="text" className="input" placeholder="Location" name="imageLocation" disabled={loading} />
 									<p className="label">Optional</p>
 								</fieldset>
 
 								<fieldset className="fieldset">
 									<legend className="fieldset-legend">Date taken</legend>
-									<input type="date" className="input" placeholder="Date taken" name="imageDateTaken" />
+									<input
+										type="date"
+										className="input"
+										placeholder="Date taken"
+										name="imageDateTaken"
+										disabled={loading}
+									/>
 									<p className="label">Optional</p>
 								</fieldset>
 							</div>
