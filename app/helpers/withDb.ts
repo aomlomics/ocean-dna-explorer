@@ -13,7 +13,6 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 		return false;
 	}
 
-	console.log(1);
 	try {
 		await prismaImages.$transaction(
 			urls.map((url) =>

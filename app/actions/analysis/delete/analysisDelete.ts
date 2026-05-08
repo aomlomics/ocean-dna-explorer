@@ -13,7 +13,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

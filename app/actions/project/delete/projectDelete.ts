@@ -14,12 +14,8 @@ export default async function projectDeleteAction(target: Project["project_id"])
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
-	}
-
-	if (!role || !RolePermissions[role].includes("manageUsers")) {
-		throw new Error("Unauthorized action.");
 	}
 
 	const parsed = ProjectSchema.shape.project_id.safeParse(target);

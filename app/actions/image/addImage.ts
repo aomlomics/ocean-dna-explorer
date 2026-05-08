@@ -13,7 +13,6 @@ import { del } from "@vercel/blob";
 import { validateBlobs } from "@/app/helpers/withDb";
 
 export default async function addImageAction(formData: FormData, newAttribution: boolean): Promise<NetworkPacket> {
-	console.log(0);
 	const url = formData.get("url");
 	if (url && typeof url === "string") {
 		const validBlob = await validateBlobs([url]);
