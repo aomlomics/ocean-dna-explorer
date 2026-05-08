@@ -208,7 +208,14 @@ export default function Home() {
 }
 
 async function SuspenseCarousel() {
-	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+	const carouselImages = await prismaImages.image.findMany({
+		where: {
+			homePage: true
+		},
+		include: {
+			Attribution: true
+		}
+	});
 
 	let currentIndex = carouselImages.length;
 
