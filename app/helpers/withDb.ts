@@ -3,6 +3,7 @@ import { BlobFile, Prisma } from "../generated/prismaImages/client";
 import { prismaImages } from "./prismaImages";
 
 export async function validateBlobs(urls: BlobFile["url"][]) {
+	console.log("urls:", urls);
 	//skip check in development only, because onUploadCompleted does not trigger
 	if (process.env.NODE_ENV === "development") {
 		return true;
@@ -12,7 +13,7 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 	if (!userId) {
 		return false;
 	}
-	console.log("urls:", urls);
+
 	console.log("all:", await prismaImages.blobFile.findMany());
 	for (const url of urls) {
 		console.log(
