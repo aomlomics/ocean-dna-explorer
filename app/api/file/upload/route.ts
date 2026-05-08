@@ -29,7 +29,10 @@ export async function POST(request: Request) {
 
 				return {
 					allowedContentTypes: ["text/tab-separated-values", "image/*"],
-					addRandomSuffix: true
+					addRandomSuffix: true,
+					tokenPayload: JSON.stringify({
+						userId
+					})
 				};
 			},
 			onUploadCompleted: async ({ blob, tokenPayload }) => {
