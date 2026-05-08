@@ -7,31 +7,10 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useThrottledCallback } from "use-debounce";
 import Link from "next/link";
 import distinctColors from "distinct-colors";
+import { TaxonomicRanks } from "@/types/objects";
+import { TaxonomyPartial } from "@/prisma/generated/zod";
 
 ChartJS.register(ArcElement, Tooltip);
-
-interface TaxonomyRecord {
-	taxonomy: string;
-	domain: string | null;
-	kingdom: string | null;
-	supergroup: string | null;
-	division: string | null;
-	subdivision: string | null;
-	phylum: string | null;
-	class: string | null;
-	order: string | null;
-	family: string | null;
-	genus: string | null;
-	species: string | null;
-}
-
-// Derived from TaxonomyRecord keys
-type TaxRankField = Exclude<keyof TaxonomyRecord, "taxonomy">;
-
-interface TaxonomyDonutChartProps {
-	taxonomies: TaxonomyRecord[];
-	sampName: string;
-}
 
 function generateDistinctColors(count: number): string[] {
 	if (count === 0) return [];
@@ -55,23 +34,19 @@ function CustomLegend({
 	data,
 	colors,
 	textColor,
-	sampName,
 	otherThreshold,
 	setOtherThreshold,
 	taxLevel,
-	setTaxLevel,
-	taxLevels
+	setTaxLevel
 }: {
 	labels: string[];
 	data: number[];
 	colors: string[];
 	textColor: string;
-	sampName: string;
 	otherThreshold: number;
 	setOtherThreshold: (value: number) => void;
-	taxLevel: TaxRankField;
-	setTaxLevel: (level: TaxRankField) => void;
-	taxLevels: TaxRankField[];
+	taxLevel: (typeof TaxonomicRanks)[0];
+	setTaxLevel: (level: (typeof TaxonomicRanks)[0]) => void;
 }) {
 	const total = data.reduce((sum, value) => sum + value, 0);
 
@@ -129,17 +104,30 @@ function CustomLegend({
 						className="flex items-center justify-between w-full px-3 py-2 rounded border cursor-pointer bg-base-200 border-base-300"
 						style={{ color: textColor }}
 					>
-						<span className="text-base font-medium">
-							{taxLevel.charAt(0).toUpperCase() + taxLevel.slice(1)}
-						</span>
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+						<span className="text-base font-medium">{taxLevel.charAt(0).toUpperCase() + taxLevel.slice(1)}</span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
+							<path d="m6 9 6 6 6-6" />
+						</svg>
 					</div>
 					<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-box z-50 w-full shadow-lg p-1 mt-1">
-						{taxLevels.map((level) => (
+						{TaxonomicRanks.map((level) => (
 							<li key={level}>
 								<button
 									className={`text-base w-full text-left px-3 py-1.5 rounded ${taxLevel === level ? "font-semibold text-primary" : ""}`}
-									onClick={() => { setTaxLevel(level); (document.activeElement as HTMLElement)?.blur(); }}
+									onClick={() => {
+										setTaxLevel(level);
+										(document.activeElement as HTMLElement)?.blur();
+									}}
 								>
 									{level.charAt(0).toUpperCase() + level.slice(1)}
 								</button>
@@ -159,7 +147,9 @@ function CustomLegend({
 						type="text"
 						inputMode="decimal"
 						value={inputValue}
-						onFocus={() => { inputFocused.current = true; }}
+						onFocus={() => {
+							inputFocused.current = true;
+						}}
 						onBlur={() => {
 							inputFocused.current = false;
 							// On blur, reformat: add .0 if the value is a whole number
@@ -257,18 +247,12 @@ function CustomLegend({
 	);
 }
 
-export default function TaxonomyDonutChart({ taxonomies, sampName }: TaxonomyDonutChartProps) {
+export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: TaxonomyPartial[] }) {
 	const { theme } = useTheme();
 	const [otherThreshold, setOtherThreshold] = useState(0.5);
-	const [taxLevel, setTaxLevel] = useState<TaxRankField>("family");
+	const [taxLevel, setTaxLevel] = useState<(typeof TaxonomicRanks)[0]>("family");
 	const [isLoading, setIsLoading] = useState(true);
 	const textColor = theme === "dark" ? "#E2E8F0" : "#2D3748";
-
-	// Derive available rank levels from the actual record keys - no hardcoded list
-	const taxLevels = useMemo<TaxRankField[]>(() => {
-		if (!taxonomies.length) return [];
-		return Object.keys(taxonomies[0]).filter((k) => k !== "taxonomy") as TaxRankField[];
-	}, [taxonomies]);
 
 	// Simulate chart loading - fade in after component mounts
 	useEffect(() => {
@@ -387,10 +371,10 @@ export default function TaxonomyDonutChart({ taxonomies, sampName }: TaxonomyDon
 
 	return (
 		<div className="w-full h-full flex flex-col">
-			<div className="flex flex-col lg:flex-row items-start gap-8 min-h-[450px] bg-base-200 rounded-lg p-6 w-fit">
+			<div className="flex flex-col lg:flex-row items-start gap-8 min-h-112.5 bg-base-200 rounded-lg p-6 w-fit">
 				{/* Chart Container with Loading State */}
 				<div
-					className={`relative h-[450px] w-[300px] shrink-0 mx-auto lg:mx-0 z-10 transition-opacity duration-300 ${
+					className={`relative h-112.5 w-75 shrink-0 mx-auto lg:mx-0 z-10 transition-opacity duration-300 ${
 						isLoading ? "opacity-0" : "opacity-100"
 					}`}
 				>
@@ -407,18 +391,16 @@ export default function TaxonomyDonutChart({ taxonomies, sampName }: TaxonomyDon
 				)}
 
 				{/* Custom Legend - Bounded Container */}
-				<div className="flex-1 min-w-0 lg:min-w-[500px] lg:max-w-2xl h-[450px] rounded-lg p-4 bg-base-100">
+				<div className="flex-1 min-w-0 lg:min-w-125 lg:max-w-2xl h-112.5 rounded-lg p-4 bg-base-100">
 					<CustomLegend
 						labels={labels}
 						data={data}
 						colors={colors}
 						textColor={textColor}
-						sampName={sampName}
 						otherThreshold={otherThreshold}
 						setOtherThreshold={setOtherThreshold}
 						taxLevel={taxLevel}
 						setTaxLevel={setTaxLevel}
-						taxLevels={taxLevels}
 					/>
 				</div>
 			</div>

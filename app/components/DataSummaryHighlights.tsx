@@ -35,24 +35,14 @@ function LatestStamp({ label, date }: { label: string; date: Date }) {
  * Compact assay chip — shrinks to the assay name so it doesn't stretch
  * across the whole card. Used in both project + analysis cards.
  */
-function CompactAssayChip({
-	assay_name,
-	target_gene
-}: {
-	assay_name: string;
-	target_gene: string;
-}) {
+function CompactAssayChip({ assay_name, target_gene }: { assay_name: string; target_gene: string }) {
 	return (
 		<Link
 			href={`/explore/assay/${encodeURIComponent(assay_name)}`}
 			className="group inline-flex items-center gap-2 rounded-lg bg-base-300/60 hover:bg-base-300 px-2 py-1.5 transition-colors max-w-full"
 		>
 			<div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
-				<Suspense
-					fallback={
-						<span className="loading loading-spinner loading-xs text-primary/60" aria-hidden="true" />
-					}
-				>
+				<Suspense fallback={<span className="loading loading-spinner loading-xs text-primary/60" aria-hidden="true" />}>
 					<AssayPhyloPic assay_name={assay_name} />
 				</Suspense>
 			</div>
@@ -80,10 +70,9 @@ function AnalysisGlyph({ className = "" }: { className?: string }) {
 }
 
 export default async function DataSummaryHighlights() {
-	const [latestProject, latestAnalysis] = await Promise.all([
+	const [latestProject, latestAnalysis] = await publicPrisma.$transaction([
 		publicPrisma.project.findFirst({
 			orderBy: { dateSubmitted: "desc" },
-			where: { isPrivate: false },
 			select: {
 				project_id: true,
 				project_name: true,
@@ -102,7 +91,6 @@ export default async function DataSummaryHighlights() {
 		}),
 		publicPrisma.analysis.findFirst({
 			orderBy: { dateSubmitted: "desc" },
-			where: { isPrivate: false },
 			select: {
 				analysis_run_name: true,
 				project_id: true,
@@ -118,9 +106,7 @@ export default async function DataSummaryHighlights() {
 	return (
 		<section className="space-y-6">
 			<div>
-				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">
-					Latest submissions
-				</h2>
+				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Latest submissions</h2>
 			</div>
 
 			{/*
@@ -133,18 +119,10 @@ export default async function DataSummaryHighlights() {
 			 */}
 			<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 				<div className="lg:col-span-7">
-					{latestProject ? (
-						<LatestProjectCard project={latestProject} />
-					) : (
-						<EmptySubmissionCard label="project" />
-					)}
+					{latestProject ? <LatestProjectCard project={latestProject} /> : <EmptySubmissionCard label="project" />}
 				</div>
 				<div className="lg:col-span-5 flex flex-col">
-					{latestAnalysis ? (
-						<LatestAnalysisCard analysis={latestAnalysis} />
-					) : (
-						<EmptySubmissionCard label="analysis" />
-					)}
+					{latestAnalysis ? <LatestAnalysisCard analysis={latestAnalysis} /> : <EmptySubmissionCard label="analysis" />}
 				</div>
 			</div>
 		</section>
@@ -159,9 +137,7 @@ export function FeaturedOrganismsSection() {
 	return (
 		<section className="space-y-6">
 			<div className="flex items-center gap-2">
-				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">
-					Featured Organisms
-				</h2>
+				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Featured Organisms</h2>
 				<span
 					className="tooltip tooltip-right text-base-content/50 hover:text-base-content transition-colors cursor-help"
 					data-tip="Hand-picked by the ODE team"
@@ -297,11 +273,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 						<div className="mt-auto flex flex-wrap items-end justify-between gap-3">
 							<div className="flex flex-wrap gap-1.5 min-w-0">
 								{assays.map((a) => (
-									<CompactAssayChip
-										key={a.assay_name}
-										assay_name={a.assay_name}
-										target_gene={a.target_gene}
-									/>
+									<CompactAssayChip key={a.assay_name} assay_name={a.assay_name} target_gene={a.target_gene} />
 								))}
 								{project.AssayPreps.length > assays.length && (
 									<span className="self-center text-xs text-base-content/55">
@@ -309,19 +281,13 @@ function LatestProjectCard({ project }: ProjectProps) {
 									</span>
 								)}
 							</div>
-							<Link
-								href={`/explore/project/${project.project_id}`}
-								className="btn btn-sm btn-primary self-end"
-							>
+							<Link href={`/explore/project/${project.project_id}`} className="btn btn-sm btn-primary self-end">
 								View project
 							</Link>
 						</div>
 					) : (
 						<div className="mt-auto flex justify-end">
-							<Link
-								href={`/explore/project/${project.project_id}`}
-								className="btn btn-sm btn-primary"
-							>
+							<Link href={`/explore/project/${project.project_id}`} className="btn btn-sm btn-primary">
 								View project
 							</Link>
 						</div>
@@ -398,9 +364,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 
 				<dl className="text-xs space-y-2 grow">
 					<div>
-						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
-							Project
-						</dt>
+						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">Project</dt>
 						<dd>
 							<Link
 								href={`/explore/project/${analysis.project_id}`}
@@ -410,9 +374,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 								<span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-base-300/70">
 									{analysis.project_id}
 								</span>
-								{analysis.Project?.project_name && (
-									<span className="truncate">{analysis.Project.project_name}</span>
-								)}
+								{analysis.Project?.project_name && <span className="truncate">{analysis.Project.project_name}</span>}
 							</Link>
 						</dd>
 					</div>
@@ -427,25 +389,17 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 						</div>
 					)}
 					<div>
-						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-1">
-							Assay
-						</dt>
+						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-1">Assay</dt>
 						{/* Inline — chip does NOT stretch to full width */}
 						<div className="flex">
-							<CompactAssayChip
-								assay_name={analysis.assay_name}
-								target_gene={analysis.Assay.target_gene}
-							/>
+							<CompactAssayChip assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} />
 						</div>
 					</div>
 				</dl>
 
 				{/* No divider line above the button. Tucked bottom-right. */}
 				<div className="mt-auto flex justify-start">
-					<Link
-						href={`/explore/analysis/${analysis.analysis_run_name}`}
-						className="btn btn-sm btn-primary"
-					>
+					<Link href={`/explore/analysis/${analysis.analysis_run_name}`} className="btn btn-sm btn-primary">
 						View analysis
 					</Link>
 				</div>

@@ -91,13 +91,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							Assays used on this Sample ({sample.Assays.length})
 						</h2>
 						<div className="space-y-2">
-						{sample.Assays.map((assay) => (
-							<AssayCard
-								key={assay.assay_name}
-								assay_name={assay.assay_name}
-								target_gene={assay.target_gene}
-							/>
-						))}
+							{sample.Assays.map((assay) => (
+								<AssayCard key={assay.assay_name} assay_name={assay.assay_name} target_gene={assay.target_gene} />
+							))}
 						</div>
 					</div>
 				</div>
@@ -240,7 +236,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 				</span>
 			</h2>
 			<div className="w-full">
-				<TaxonomyDonutChart taxonomies={taxonomies} sampName={samp_name} />
+				<TaxonomyDonutChart taxonomies={taxonomies} />
 			</div>
 		</div>
 	);

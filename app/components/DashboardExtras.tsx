@@ -47,11 +47,13 @@ const METADATA_RICHNESS_ENTITIES: RichnessEntityConfig[] = [
 ];
 
 function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"]): string[] {
-	const runtimeDataModel = (unsafePrisma as unknown as {
-		_runtimeDataModel?: {
-			models?: Record<string, { fields?: { name: string; kind: string; isRequired: boolean; isList: boolean }[] }>;
-		};
-	})._runtimeDataModel;
+	const runtimeDataModel = (
+		unsafePrisma as unknown as {
+			_runtimeDataModel?: {
+				models?: Record<string, { fields?: { name: string; kind: string; isRequired: boolean; isList: boolean }[] }>;
+			};
+		}
+	)._runtimeDataModel;
 
 	const model = runtimeDataModel?.models?.[modelName];
 	if (!model?.fields) return [];
@@ -155,11 +157,7 @@ export async function SamplingEnvironmentsCard() {
 			{slices.length === 0 ? (
 				<div className="text-sm text-base-content/60 italic py-2">No environment data yet.</div>
 			) : (
-				<DoughnutChart
-					labels={slices.map((s) => s.label)}
-					data={slices.map((s) => s.count)}
-					compact
-				/>
+				<DoughnutChart labels={slices.map((s) => s.label)} data={slices.map((s) => s.count)} compact />
 			)}
 		</DashCard>
 	);
@@ -169,10 +167,7 @@ export async function SamplingEnvironmentsCard() {
 // Moved to ./dataSummary/TemporalCoverageCard.tsx so it can be reused on
 // the project detail page. Re-export here to keep this module the single
 // import site for dashboard widgets.
-export {
-	TemporalCoverageCard,
-	TemporalCoverageCardSkeleton
-} from "./dataSummary/TemporalCoverageCard";
+export { TemporalCoverageCard, TemporalCoverageCardSkeleton } from "./dataSummary/TemporalCoverageCard";
 
 // ======================== Samples Collected Over Time ======================
 /**
@@ -272,7 +267,9 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 	const x = (year: number) => padding.left + ((year - minYear) / yearRange) * innerW;
 	const y = (count: number) => padding.top + innerH - (count / maxCount) * innerH;
 
-	const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.year).toFixed(2)},${y(p.count).toFixed(2)}`).join(" ");
+	const linePath = points
+		.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.year).toFixed(2)},${y(p.count).toFixed(2)}`)
+		.join(" ");
 
 	const areaPath = [
 		`M${x(points[0].year).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
@@ -424,29 +421,19 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
  *   available in the tile's tooltip.
  */
 export async function TableCountsCard() {
-	const [
-		projects,
-		samples,
-		assays,
-		assayPreps,
-		libraries,
-		analyses,
-		occurrences,
-		features,
-		taxa,
-		assignments
-	] = await Promise.all([
-		publicPrisma.project.count(),
-		publicPrisma.sample.count(),
-		publicPrisma.assay.count(),
-		publicPrisma.assayPrep.count(),
-		publicPrisma.library.count(),
-		publicPrisma.analysis.count(),
-		publicPrisma.occurrence.count(),
-		publicPrisma.feature.count(),
-		publicPrisma.taxonomy.count(),
-		publicPrisma.assignment.count()
-	]);
+	const [projects, samples, assays, assayPreps, libraries, analyses, occurrences, features, taxa, assignments] =
+		await publicPrisma.$transaction([
+			publicPrisma.project.count(),
+			publicPrisma.sample.count(),
+			publicPrisma.assay.count(),
+			publicPrisma.assayPrep.count(),
+			publicPrisma.library.count(),
+			publicPrisma.analysis.count(),
+			publicPrisma.occurrence.count(),
+			publicPrisma.feature.count(),
+			publicPrisma.taxonomy.count(),
+			publicPrisma.assignment.count()
+		]);
 
 	const tables: { label: string; count: number; href: string }[] = [
 		{ label: "Projects", count: projects, href: "/explore/project" },
@@ -538,6 +525,7 @@ export async function MetadataCompletenessCard() {
 	const rate = (n: number, total: number) => (total === 0 ? 0 : (n / total) * 100);
 	const mean = (nums: number[]) => (nums.length === 0 ? 0 : nums.reduce((a, b) => a + b, 0) / nums.length);
 
+	//TODO: rework to not use promise.all
 	const entities = await Promise.all(
 		METADATA_RICHNESS_ENTITIES.map(async (entity) => {
 			const delegate = (publicPrisma as unknown as Record<string, { count: (args?: unknown) => Promise<number> }>)[
@@ -598,17 +586,14 @@ export async function MetadataCompletenessCard() {
 										{e.total.toLocaleString()} records
 									</span>
 								</div>
-								<div className="text-[11px] text-base-content/55 mt-0.5">
-									{e.fieldCount} optional fields tracked
-								</div>
+								<div className="text-[11px] text-base-content/55 mt-0.5">{e.fieldCount} optional fields tracked</div>
 							</div>
 						</Link>
 					</li>
 				))}
 			</ul>
 			<p className="text-[11px] text-base-content/50 mt-5 leading-relaxed">
-				Higher scores mean submitters went beyond the minimum and filled in richer,
-				more reusable metadata.
+				Higher scores mean submitters went beyond the minimum and filled in richer, more reusable metadata.
 			</p>
 		</DashCard>
 	);

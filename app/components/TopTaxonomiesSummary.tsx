@@ -52,6 +52,7 @@ async function getPhylaByKingdom(kingdom: string, take: number = 8): Promise<Phy
 }
 
 export default async function TopTaxonomiesSummary() {
+	//TODO: rework this to not use promise.all
 	const [eukaryotaPhyla, bacteriaPhyla, archaeaPhyla] = await Promise.all([
 		getPhylaByKingdom("Eukaryota"),
 		getPhylaByKingdom("Bacteria"),
@@ -103,9 +104,7 @@ export default async function TopTaxonomiesSummary() {
 
 	return (
 		<section className="space-y-6">
-			<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">
-				Life Across ODE
-			</h2>
+			<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Life Across ODE</h2>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 				{kingdomSections.map((section) => (
@@ -155,10 +154,7 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 				 * Fade target is base-200 (the card color) so the fade blends
 				 * perfectly with the body below.
 				 */}
-				<div
-					className="absolute inset-0 pointer-events-none bg-linear-to-b from-transparent to-base-200"
-					aria-hidden
-				/>
+				<div className="absolute inset-0 pointer-events-none bg-linear-to-b from-transparent to-base-200" aria-hidden />
 				<div className="absolute bottom-3 left-4 right-4 z-1">
 					<h3 className="text-2xl font-semibold leading-tight drop-shadow-sm text-white [html[data-theme='dark']_&]:text-base-content">
 						{section.title}
@@ -171,9 +167,7 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 
 				<div>
 					<div className="flex items-center justify-between mb-2.5">
-						<p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/55">
-							Top phyla
-						</p>
+						<p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/55">Top phyla</p>
 						<span className="text-[11px] text-base-content/50">Count</span>
 					</div>
 					<ul className="divide-y divide-base-content/5">

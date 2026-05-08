@@ -42,7 +42,7 @@ export default function Home() {
 				</p>
 			</div>
 
-			<div className="relative w-full h-screen max-h-[68vh] min-h-[320px] sm:max-h-[64vh] bg-black overflow-hidden z-content-overlay">
+			<div className="relative w-full h-screen max-h-[68vh] min-h-80 sm:max-h-[64vh] bg-black overflow-hidden z-content-overlay">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
 				</Suspense>
@@ -84,12 +84,8 @@ export default function Home() {
 				</div>
 			</div>
 
-			<div
-				id="dataSummary"
-				className="z-1000 scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 pb-12"
-			>
+			<div id="dataSummary" className="z-1000 scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 pb-12">
 				<div className="max-w-7xl mx-auto space-y-14">
-
 					{/*
 					 * Row 1 — The 4 headline stat cards at the top. This row is
 					 * untouched on purpose — the user likes its current look,
@@ -109,7 +105,7 @@ export default function Home() {
 						{/* Row 2a — Map + Target genes at matching height */}
 						<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 							<div className="lg:col-span-8">
-								<div className="h-[420px] sm:h-[520px] w-full">
+								<div className="h-105 sm:h-130 w-full">
 									<Suspense fallback={<div className="w-full h-full skeleton rounded-2xl" />}>
 										<ClientMap
 											url={"/api/sample"}
@@ -124,32 +120,32 @@ export default function Home() {
 							</div>
 
 							<div className="lg:col-span-4">
-								<div className="h-[420px] sm:h-[520px] w-full">
+								<div className="h-105 sm:h-130 w-full">
 									<DashCard
 										title="Target genes"
 										titleClassName="text-base-content/75"
 										className="h-full"
 										padding="none"
 										bodyClassName="flex flex-col h-full px-5 sm:px-6 pb-5 sm:pb-6"
-									info={{
-										title: "Target genes",
-										description:
-											"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
-										links: [
-											{ label: "Browse assays", href: "/explore/assay" },
-											{ label: "View analyses", href: "/explore/analysis" },
-											{
-												label: "About this chart",
-												href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays",
-												target: "_blank"
-											},
-											{
-												label: "Request an assay",
-												href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues",
-												target: "_blank"
-											}
-										]
-									}}
+										info={{
+											title: "Target genes",
+											description:
+												"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
+											links: [
+												{ label: "Browse assays", href: "/explore/assay" },
+												{ label: "View analyses", href: "/explore/analysis" },
+												{
+													label: "About this chart",
+													href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays",
+													target: "_blank"
+												},
+												{
+													label: "Request an assay",
+													href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues",
+													target: "_blank"
+												}
+											]
+										}}
 									>
 										<div className="flex-1 min-h-0 w-full">
 											<Suspense fallback={<div className="h-full w-full skeleton rounded-lg" />}>
@@ -173,14 +169,13 @@ export default function Home() {
 									<SamplingEnvironmentsCard />
 								</Suspense>
 								<Suspense fallback={<WidgetCardSkeleton className="h-112" />}>
-									<MetadataCompletenessCard />
+									{/* TODO: uncomment out once fixed */}
+									{/* <MetadataCompletenessCard /> */}
 								</Suspense>
 							</div>
 
 							<div className="lg:col-span-8 flex flex-col gap-5">
-								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
-									<TableCountsCard />
-								</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>{/* <TableCountsCard /> */}</Suspense>
 								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
 									<SamplesOverTimeCard />
 								</Suspense>
@@ -208,9 +203,9 @@ export default function Home() {
 
 					{/* Row 6 — Life Across ODE */}
 					<Suspense>
-						<TopTaxonomiesSummary />
+						{/* TODO: uncomment out once fixed */}
+						{/* <TopTaxonomiesSummary /> */}
 					</Suspense>
-
 				</div>
 
 				{/* Funding Institutes Section */}

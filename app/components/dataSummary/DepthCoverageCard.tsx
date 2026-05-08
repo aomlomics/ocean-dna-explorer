@@ -22,7 +22,7 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 
 	// -9999 is the project sentinel for "not applicable". Filtering depths
 	// to >= 0 strips both that sentinel and any other negative noise.
-	const [minAgg, maxAgg, avgAgg] = await Promise.all([
+	const [minAgg, maxAgg, avgAgg] = await publicPrisma.$transaction([
 		publicPrisma.sample.aggregate({
 			where: { ...whereBase, minimumDepthInMeters: { gte: 0 } },
 			_min: { minimumDepthInMeters: true }
@@ -222,11 +222,7 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 				{/* All three labels are one line: big number + small descriptor. */}
 				{minA !== null && stats.min !== null && (
 					<g transform={`translate(${labelX}, ${minA})`}>
-						<text
-							y={0}
-							dominantBaseline="alphabetic"
-							className="text-[34px] font-semibold tracking-tight"
-						>
+						<text y={0} dominantBaseline="alphabetic" className="text-[34px] font-semibold tracking-tight">
 							<tspan className="fill-primary font-bold tabular-nums text-[42px]">{formatDepthValue(stats.min)}</tspan>
 							<tspan className="fill-primary text-[28px]"> m</tspan>
 							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
@@ -238,11 +234,7 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 
 				{avgA !== null && stats.avg !== null && (
 					<g transform={`translate(${labelX}, ${avgA})`}>
-						<text
-							y={0}
-							dominantBaseline="alphabetic"
-							className="text-[34px] font-semibold tracking-tight"
-						>
+						<text y={0} dominantBaseline="alphabetic" className="text-[34px] font-semibold tracking-tight">
 							<tspan className="fill-primary font-bold tabular-nums text-[46px]">{formatDepthValue(stats.avg)}</tspan>
 							<tspan className="fill-primary text-[28px]"> m</tspan>
 							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
@@ -254,11 +246,7 @@ function DepthProfile({ stats }: { stats: DepthStats }) {
 
 				{maxA !== null && stats.max !== null && (
 					<g transform={`translate(${labelX}, ${maxA})`}>
-						<text
-							y={0}
-							dominantBaseline="alphabetic"
-							className="text-[34px] font-semibold tracking-tight"
-						>
+						<text y={0} dominantBaseline="alphabetic" className="text-[34px] font-semibold tracking-tight">
 							<tspan className="fill-primary font-bold tabular-nums text-[42px]">{formatDepthValue(stats.max)}</tspan>
 							<tspan className="fill-primary text-[28px]"> m</tspan>
 							<tspan dx="8" className="fill-base-content/80 text-[20px] font-semibold">
