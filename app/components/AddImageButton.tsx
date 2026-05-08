@@ -52,8 +52,6 @@ export default function AddImageButton({
 				multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 			})
 		).url;
-		// wait for onUploadCompleted to resolve
-		await new Promise((resolve) => setTimeout(resolve, 300));
 		formData.set("url", url);
 		formData.delete("imageFile");
 
