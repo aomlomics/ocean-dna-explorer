@@ -12,7 +12,7 @@ import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
-import { Attribution, Image } from "@/app/generated/prismaImages/client";
+import { Attribution } from "@/app/generated/prismaImages/client";
 import { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
 
 export default function ProjectSubmit({ attributions }: { attributions: Attribution[] }) {

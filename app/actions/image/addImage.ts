@@ -61,6 +61,7 @@ export default async function addImageAction(
 		} else {
 			formObj.homePage = false;
 		}
+		formObj.userId = userId;
 
 		image = ImageOptionalDefaultsSchema.parse(formObj);
 		if (newAttribution) {
