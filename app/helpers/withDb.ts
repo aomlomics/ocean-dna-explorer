@@ -12,17 +12,19 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 	if (!userId) {
 		return false;
 	}
-	console.log(
-		urls.map(
-			async (url) =>
-				await prismaImages.blobFile.delete({
-					where: {
-						url,
-						userId
-					}
-				})
-		)
-	);
+	console.log("urls:", urls);
+	console.log("all:", await prismaImages.blobFile.findMany());
+	for (const url of urls) {
+		console.log(
+			url,
+			await prismaImages.blobFile.findUnique({
+				where: {
+					url,
+					userId
+				}
+			})
+		);
+	}
 
 	try {
 		await prismaImages.$transaction(
