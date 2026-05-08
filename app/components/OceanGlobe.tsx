@@ -338,11 +338,23 @@ function interleaveMarkers(
 ): { markers: [number, number][]; indianIndices: Set<number> } {
 	const markers: [number, number][] = [];
 	const indianIndices = new Set<number>();
-	let bi = 0, ii = 0, ji = 0;
+	let bi = 0,
+		ii = 0,
+		ji = 0;
 	while (bi < base.length || ii < indian.length || ji < japan.length) {
-		if (bi < base.length) { markers.push(base[bi]); bi++; }
-		if (ii < indian.length) { markers.push(indian[ii]); indianIndices.add(markers.length - 1); ii++; }
-		if (ji < japan.length) { markers.push(japan[ji]); ji++; }
+		if (bi < base.length) {
+			markers.push(base[bi]);
+			bi++;
+		}
+		if (ii < indian.length) {
+			markers.push(indian[ii]);
+			indianIndices.add(markers.length - 1);
+			ii++;
+		}
+		if (ji < japan.length) {
+			markers.push(japan[ji]);
+			ji++;
+		}
 	}
 	return { markers, indianIndices };
 }
@@ -421,33 +433,33 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 				markers: allOceanMarkers.map((location) => ({
 					location,
 					size: 0.07
-				})),
-				onRender: (state) => {
-					frameRef.current++;
+				}))
+				// onRender: (state) => {
+				// 	frameRef.current++;
 
-					// Slow auto-rotate when not interacting
-					if (pointerInteracting.current === null) {
-						phiRef.current += 0.001;
-					}
-					state.phi = phiRef.current + pointerInteractionMovement.current / 200;
-					state.width = width * 2;
-					state.height = width * 2;
+				// 	// Slow auto-rotate when not interacting
+				// 	if (pointerInteracting.current === null) {
+				// 		phiRef.current += 0.001;
+				// 	}
+				// 	state.phi = phiRef.current + pointerInteractionMovement.current / 200;
+				// 	state.width = width * 2;
+				// 	state.height = width * 2;
 
-					// Staggered breathing animation - each marker pulses out of sync
-					// Dark: smaller size/amplitude so overlapping markers don't show black blend artifact
-					state.markers = allOceanMarkers.map((location, i) => {
-						const phase = i * 0.5; // offset each marker's phase
-						const isIndianOceanMarker = indianOceanIndices.has(i);
-						const baseSize = isDark
-							? 0.054 + (isIndianOceanMarker ? 0.005 : 0)
-							: 0.066 + (isIndianOceanMarker ? 0.006 : 0);
-						const amplitude = isDark
-							? 0.006 + (isIndianOceanMarker ? 0.001 : 0)
-							: 0.01 + (isIndianOceanMarker ? 0.002 : 0);
-						const breathe = baseSize + Math.sin(frameRef.current * 0.025 + phase) * amplitude;
-						return { location, size: breathe };
-					});
-				}
+				// 	// Staggered breathing animation - each marker pulses out of sync
+				// 	// Dark: smaller size/amplitude so overlapping markers don't show black blend artifact
+				// 	state.markers = allOceanMarkers.map((location, i) => {
+				// 		const phase = i * 0.5; // offset each marker's phase
+				// 		const isIndianOceanMarker = indianOceanIndices.has(i);
+				// 		const baseSize = isDark
+				// 			? 0.054 + (isIndianOceanMarker ? 0.005 : 0)
+				// 			: 0.066 + (isIndianOceanMarker ? 0.006 : 0);
+				// 		const amplitude = isDark
+				// 			? 0.006 + (isIndianOceanMarker ? 0.001 : 0)
+				// 			: 0.01 + (isIndianOceanMarker ? 0.002 : 0);
+				// 		const breathe = baseSize + Math.sin(frameRef.current * 0.025 + phase) * amplitude;
+				// 		return { location, size: breathe };
+				// 	});
+				// }
 			});
 		}
 

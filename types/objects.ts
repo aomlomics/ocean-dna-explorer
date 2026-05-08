@@ -51,24 +51,24 @@ export const ZodBooleanSchema = z
 
 export const TaxonomicRanks = [
 	"domain",
-	"kingdom",
 	"supergroup",
 	"division",
-	"subdivision",
+	"kingdom",
 	"phylum",
 	"class",
 	"order",
 	"family",
 	"genus",
 	"species"
-] as Array<keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">>;
+] as Array<
+	keyof Omit<Taxonomy, "id" | "taxonomy" | "imageFileUrl_ODE" | "verbatimIdentification" | "higherClassification">
+>;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
 	domain: "Domains",
-	kingdom: "Kingdoms",
 	supergroup: "Supergroups",
 	division: "Divisions",
-	subdivision: "Subdivisions",
+	kingdom: "Kingdoms",
 	phylum: "Phyla",
 	class: "Classes",
 	order: "Orders",

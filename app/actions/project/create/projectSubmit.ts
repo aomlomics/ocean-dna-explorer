@@ -1,20 +1,31 @@
 "use server";
 
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
-import { Role } from "@/types/globals";
+import { UserMetadata } from "@/types/globals";
+import { handlePrismaError } from "@/app/helpers/queries";
+import { del } from "@vercel/blob";
+import { Project } from "@/app/generated/prisma/client";
+import { validateBlobs } from "@/app/helpers/withDb";
+import {
+	AttributionOptionalDefaults,
+	AttributionOptionalDefaultsSchema,
+	ImageOptionalDefaults,
+	ImageOptionalDefaultsSchema
+} from "@/prismaImages/generated/zod";
+import { prismaImages } from "@/app/helpers/prismaImages";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	userIds: string[],
-	isPrivate: boolean,
-	imageFileUrl?: string
+	userIds: Project["userIds"],
+	isPrivate: Project["isPrivate"],
+	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const client = await clerkClient();
 	const { userId, sessionClaims } = await auth();
@@ -32,8 +43,52 @@ async function doSubmit(
 
 	const users = (await client.users.getUserList({ userId: userIds })).data;
 	for (const u of users) {
-		if (!RolePermissions[u.publicMetadata.role as Role].includes("contribute")) {
+		const uRole = (u.publicMetadata as UserMetadata).role;
+		if (!uRole || !RolePermissions[uRole].includes("contribute")) {
 			await globalStream.error(`${u.fullName} does not have permission to contribute.`);
+			return;
+		}
+	}
+
+	if (imageInfo) {
+		try {
+			for (const k in imageInfo.image) {
+				const key = k as keyof typeof imageInfo.image;
+				if (imageInfo.image[key] === "") {
+					delete imageInfo.image[key];
+				}
+			}
+			if (imageInfo.image.homePage) {
+				await globalStream.error("Not allowed to submit home page images.");
+				return;
+			} else {
+				imageInfo.image.homePage = false;
+			}
+			const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
+
+			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
+
+			await prismaImages.$transaction([
+				...(parsedAttribution
+					? [
+							prismaImages.attribution.create({
+								data: parsedAttribution
+							})
+						]
+					: []),
+				prismaImages.image.create({
+					data: parsedImage
+				})
+			]);
+		} catch (err: any) {
+			const prismaErr = handlePrismaError(err);
+			if (prismaErr) {
+				await globalStream.error(prismaErr.error);
+			} else {
+				const error = err as Error;
+				await globalStream.error(error.message);
+			}
+
 			return;
 		}
 	}
@@ -45,7 +100,7 @@ async function doSubmit(
 			libraryChannel,
 			userIds,
 			isPrivate,
-			imageFileUrl
+			imageFileUrl: imageInfo?.image.url
 		});
 		if (!parseResult) {
 			return;
@@ -161,6 +216,8 @@ async function doSubmit(
 					.join("\n\n");
 		}
 		await globalStream.success(successMsg);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -169,36 +226,48 @@ async function doSubmit(
 			const error = err as Error;
 			await globalStream.error(error.message);
 		}
+
+		if (imageInfo) {
+			await prismaImages.$transaction(async (tx) => {
+				if (imageInfo.attribution) {
+					await tx.attribution.delete({
+						where: {
+							attributionTitle: imageInfo.attribution.attributionTitle
+						}
+					});
+				}
+
+				await tx.image.delete({
+					where: {
+						url: imageInfo.image.url
+					}
+				});
+			});
+		}
 	}
 }
 
 export default async function projectSubmitAction(
-	projectFileUrl: string,
-	sampleFileUrl: string,
-	libraryFileUrl: string,
-	userIds: string[],
-	isPrivate: boolean,
-	imageFileUrl?: string
+	projectFileUrl: Project["projectMetadataFileUrl_ODE"],
+	sampleFileUrl: Project["sampleMetadataFileUrl_ODE"],
+	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
+	userIds: Project["userIds"],
+	isPrivate: Project["isPrivate"],
+	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	if (
-		typeof projectFileUrl !== "string" ||
-		typeof sampleFileUrl !== "string" ||
-		typeof libraryFileUrl !== "string" ||
-		userIds.some((id) => typeof id !== "string") ||
-		typeof isPrivate !== "boolean" ||
-		(imageFileUrl && typeof imageFileUrl !== "string")
-	) {
-		await globalStream.error("Arguments are not of correct type");
+	const validBlobs = await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+	if (!validBlobs) {
+		globalStream.error("Files are not valid");
 
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
 
 		return {
 			global: globalStream.readable,
@@ -213,12 +282,16 @@ export default async function projectSubmitAction(
 		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
 		isPrivate,
-		imageFileUrl
-	).then(() => {
+		imageInfo
+	).then((success) => {
 		globalStream.close();
 		projectStream.close();
 		sampleStream.close();
 		libraryStream.close();
+
+		if (!success) {
+			del([projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]);
+		}
 	});
 
 	return {

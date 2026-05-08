@@ -85,7 +85,7 @@ export default function AnalysisEditButton({
 		setLoading(false);
 	}
 
-	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+	async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		modalXRef.current!.disabled = true;
@@ -143,11 +143,6 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (analysisError) {
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${analysisUrl}`, {
-						method: "DELETE"
-					});
-
 					setErrorMessage(analysisError);
 					finishSubmit();
 
@@ -217,11 +212,6 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (assignmentsError) {
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${assignmentsUrl}`, {
-						method: "DELETE"
-					});
-
 					setErrorMessage(assignmentsError);
 					finishSubmit();
 
@@ -265,11 +255,6 @@ export default function AnalysisEditButton({
 
 				//handle errors
 				if (occurrencesError) {
-					//delete file from blob storage
-					await fetch(`/api/file/delete?url=${occurrencesUrl}`, {
-						method: "DELETE"
-					});
-
 					setErrorMessage(occurrencesError);
 					finishSubmit();
 
@@ -291,8 +276,6 @@ export default function AnalysisEditButton({
 
 			setErrorMessage(error.message);
 			finishSubmit();
-
-			return;
 		}
 	}
 

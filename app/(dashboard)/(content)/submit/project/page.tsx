@@ -1,8 +1,11 @@
 import ProjectSubmit from "@/app/components/submit/ProjectSubmit";
 import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
+import { prismaImages } from "@/app/helpers/prismaImages";
 import Link from "next/link";
 
-export default function Project() {
+export default async function Project() {
+	const attributions = await prismaImages.attribution.findMany();
+
 	return (
 		<>
 			<SubmitMobileGate />
@@ -62,7 +65,8 @@ export default function Project() {
 					</div>
 				</header>
 
-				<ProjectSubmit />
+				{/* Form (handles left: people/privacy, right: files/progress) */}
+				<ProjectSubmit attributions={attributions} />
 			</main>
 		</>
 	);

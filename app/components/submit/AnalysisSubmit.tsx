@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -44,10 +44,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	//list of tags to be added to submitted analyses
 	const [selectedTags, setSelectedTags] = useState([] as Tag[]);
 
-	//file urls to delete if an error occurs
-	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
-	const [triggerDeleteFiles, setTriggerDeleteFiles] = useState(false); //using trigger because useReducer can't accept an async function
-
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
 	//	to set value of single response: setResponses({ id: <analysisId>, key: <fileName>, res: <response> })
@@ -69,7 +65,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						setErrorMessage(update.res.error);
 						modalRef.current?.showModal();
 						//use trigger to call the delete once, instead of for every error
-						setTriggerDeleteFiles(true);
 					} else if (update.res?.statusMessage === "success") {
 						//check if current analysis was completed successfully
 						if (
@@ -78,11 +73,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								([key, res]) => key === update.key || res?.statusMessage === "success"
 							)
 						) {
-							//clear successful files so they don't get deleted
-							const temp = { ...fileUrls };
-							delete temp[update.id];
-							setFileUrls(temp);
-
 							//check if all analyses were completed successfully
 							if (
 								Object.entries(state).every(
@@ -127,22 +117,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			setPrevAnalysisIdsLength(analysisIds.length);
 		}
 	}, [analysisIds]);
-
-	useEffect(() => {
-		if (triggerDeleteFiles) {
-			async function doFetch() {
-				for (const url of Object.values(fileUrls).reduce((acc, urls) => [...acc, ...urls])) {
-					await fetch(`/api/file/delete?url=${url}`, {
-						method: "DELETE"
-					});
-				}
-
-				setTriggerDeleteFiles(false);
-			}
-
-			doFetch();
-		}
-	}, [triggerDeleteFiles]);
 
 	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
@@ -241,7 +215,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		}
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		if (!project) {
@@ -272,7 +246,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							assignmentsFile: target[`assignments_${id}`].files[0],
 							occurrencesFile: target[`occurrences_${id}`].files[0]
 						};
-						setFileUrls({ ...fileUrls, [id]: [] });
 
 						//set status of uploads to pending
 						setResponses({
@@ -364,9 +337,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
 					});
 
-					//add file urls in case of error
-					setFileUrls({ ...fileUrls, [id]: [analysisUrl, assignmentsUrl, occurrencesUrl] });
-
 					//trigger streamed action
 					doProgressActionMany(
 						analysisSubmitAction,
@@ -390,7 +360,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			setLoading(false);
 			setErrorMessage(error.message);
 			modalRef.current?.showModal();
-			setTriggerDeleteFiles(true);
 		}
 	}
 

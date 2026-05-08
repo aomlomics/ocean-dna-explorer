@@ -1,13 +1,16 @@
 "use server";
 
 import { Project } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { v4 as uuidv4 } from "uuid";
+import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import { del } from "@vercel/blob";
+import { validateBlobs } from "@/app/helpers/withDb";
 
 async function doEdit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -15,7 +18,7 @@ async function doEdit(
 	sampleChannel: Channel,
 	libraryChannel: Channel,
 	project_id: Project["project_id"],
-	isPrivate?: boolean
+	isPrivate?: Project["isPrivate"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -35,6 +38,7 @@ async function doEdit(
 				project_id
 			},
 			select: {
+				imageFileUrl_ODE: true,
 				userIds: true,
 				editHistory: true,
 				isPrivate: true,
@@ -88,8 +92,8 @@ async function doEdit(
 			sampleChannel,
 			libraryChannel,
 			userIds: dbProject.userIds,
-			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate
-			// oldChecksums
+			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate,
+			oldChecksums
 		});
 		if (!parseResult) {
 			return;
@@ -476,6 +480,8 @@ async function doEdit(
 			},
 			{ timeout: 3 * 60 * 1000 } //3 minutes
 		);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -492,46 +498,34 @@ export default async function projectEditAction({
 	projectFileUrl,
 	sampleFileUrl,
 	libraryFileUrl,
-	isPrivate,
-	imageFileUrl
+	isPrivate
 }: {
 	project_id: Project["project_id"];
 	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
 	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
 	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
 	isPrivate?: Project["isPrivate"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
 }) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	if (!projectFileUrl && !sampleFileUrl && !libraryFileUrl) {
-		await globalStream.error("Must provide at least one new file.");
-
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
-
-		return {
-			global: globalStream.readable,
-			readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
-		};
+	let errorMsg;
+	const urls = [projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[];
+	const validBlobs = await validateBlobs(urls);
+	if (!urls.length) {
+		errorMsg = "Must provide at least one new file.";
+	} else if (!validBlobs) {
+		errorMsg = "Files are not valid";
 	}
+	if (errorMsg) {
+		globalStream.error(errorMsg);
 
-	if (
-		(projectFileUrl && typeof projectFileUrl !== "string") ||
-		(sampleFileUrl && typeof sampleFileUrl !== "string") ||
-		(libraryFileUrl && typeof libraryFileUrl !== "string")
-	) {
-		await globalStream.error("Arguments are not of correct type.");
-
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
 
 		return {
 			global: globalStream.readable,
@@ -546,11 +540,15 @@ export default async function projectEditAction({
 		{ url: libraryFileUrl || "", stream: libraryStream },
 		project_id,
 		isPrivate
-	).then(() => {
+	).then((success) => {
 		globalStream.close();
 		projectStream.close();
 		sampleStream.close();
 		libraryStream.close();
+
+		if (!success) {
+			del([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
+		}
 	});
 
 	return {

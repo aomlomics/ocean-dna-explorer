@@ -110,7 +110,7 @@ export default function Grid({
 		}
 		return <>Loading...</>;
 	}
-	if (error) return <div>failed to load: {error instanceof Error ? error.message : String(error)}</div>;
+	if (error) return <div>failed to load: {error.toString() instanceof Error ? error.message : String(error)}</div>;
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result) || !data.count) {
 		return <div>failed to load: {String(data.error ?? "no result found")}</div>;
 	}

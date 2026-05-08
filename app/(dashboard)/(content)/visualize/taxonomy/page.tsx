@@ -44,44 +44,54 @@ export default async function VisualizeTaxonomy({
 		swapToTable: true
 	});
 
-	const [occurrences, assignments, taxonomies, samples] = await prisma.$transaction([
-		prisma.occurrence.findMany({
-			...(occQuery as Prisma.OccurrenceFindManyArgs),
-			select: {
-				lib_id: true,
-				featureid: true,
-				organismQuantity: true
-			}
-		}),
-		prisma.assignment.findMany({
-			...(assignQuery as Prisma.AssignmentFindManyArgs),
-			select: {
-				featureid: true,
-				Taxonomy: {
-					select: {
-						id: true
+	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
+		async (tx) => {
+			const occurrences = await prisma.occurrence.findMany({
+				...(occQuery as Prisma.OccurrenceFindManyArgs),
+				select: {
+					lib_id: true,
+					featureid: true,
+					organismQuantity: true
+				}
+			});
+
+			const assignments = await prisma.assignment.findMany({
+				...(assignQuery as Prisma.AssignmentFindManyArgs),
+				select: {
+					featureid: true,
+					Taxonomy: {
+						select: {
+							id: true
+						}
 					}
 				}
-			}
-		}),
-		prisma.taxonomy.findMany({
-			...(taxaQuery as Prisma.TaxonomyFindManyArgs),
-			omit: {
-				taxonomy: true,
-				verbatimIdentification: true
-			}
-		}),
-		prisma.sample.findMany({
-			...(sampleQuery as Prisma.SampleFindManyArgs),
-			include: {
-				Libraries: {
-					select: {
-						lib_id: true
+			});
+
+			const taxonomies = await prisma.taxonomy.findMany({
+				...(taxaQuery as Prisma.TaxonomyFindManyArgs),
+				omit: {
+					taxonomy: true,
+					verbatimIdentification: true
+				}
+			});
+
+			const samples = await prisma.sample.findMany({
+				...(sampleQuery as Prisma.SampleFindManyArgs),
+				include: {
+					Libraries: {
+						select: {
+							lib_id: true
+						}
 					}
 				}
-			}
-		})
-	]);
+			});
+
+			return { occurrences, assignments, taxonomies, samples };
+		},
+		{
+			timeout: 3 * 60 * 1000
+		}
+	);
 
 	//sort occurrences by featureid
 	const occsByFeatureid = {} as Record<Occurrence["featureid"], typeof occurrences>;

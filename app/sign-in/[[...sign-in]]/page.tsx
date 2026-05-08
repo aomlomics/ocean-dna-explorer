@@ -1,7 +1,7 @@
 "use client";
+
 import { SignIn } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
-import { dark } from "@clerk/themes";
 import { useSearchParams } from "next/navigation";
 
 export default function Page() {
@@ -14,16 +14,13 @@ export default function Page() {
 	const searchParams = useSearchParams();
 	const redirectUrl = searchParams?.get("redirect_url");
 	const decodedRedirectUrl = redirectUrl ? decodeURIComponent(redirectUrl) : null;
-	const isSubmissionFlow =
-		decodedRedirectUrl?.includes("/submit") || decodedRedirectUrl?.includes("/contribute");
+	const isSubmissionFlow = decodedRedirectUrl?.includes("/submit") || decodedRedirectUrl?.includes("/contribute");
 	const helperText = isSubmissionFlow
 		? "Sign in to submit data. Contributor access can be requested on the Submit page."
 		: "Need contributor access? Visit the Submit page after signing in.";
 {/* 1st case: Shown when you try to go to submit without being signed in */}
 {/* 2nd case: If they click the Sign In button */}
-	const cardVariantClass = isSubmissionFlow
-		? "ode-signin-card ode-signin-card--submission"
-		: "ode-signin-card";
+	const cardVariantClass = isSubmissionFlow ? "ode-signin-card ode-signin-card--submission" : "ode-signin-card";
 
 	return (
 		<div className="ode-signin-page relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-base-200 [html[data-theme='dark']_&]:bg-base-300/50 px-4 py-16">
@@ -43,23 +40,22 @@ export default function Page() {
 			<div className="relative z-10 flex w-full max-w-xl flex-col items-center">
 				<SignIn
 					appearance={{
-						baseTheme: isDark ? dark : undefined,
-						variables: isDark
+							variables: isDark
 							? {
 									colorPrimary: "#64ABDC",
 									colorBackground: "#121A2E",
 									colorText: "#E2E8F0",
 									colorInputBackground: "#1E2A45",
 									colorInputText: "#E2E8F0"
-							  }
+								}
 							: {
 									colorPrimary: "#233D7F",
 									colorBackground: "#F7FAFC",
 									colorText: "#1F2F57",
 									colorInputBackground: "#FFFFFF",
 									colorInputText: "#233D7F"
-							  },
-					layout: {
+								},
+					options: {
 						logoPlacement: "inside",
 						logoImageUrl,
 						socialButtonsVariant: "blockButton"

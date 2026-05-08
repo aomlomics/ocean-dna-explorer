@@ -3,11 +3,14 @@
 import { Analysis, Occurrence, Project, Tag } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError } from "@/app/helpers/queries";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { AsyncReturnType, ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 async function doEdit(
 	stream: ProgressStream,
@@ -270,6 +273,8 @@ async function doEdit(
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -294,7 +299,22 @@ export default async function analysisEditAction(
 ) {
 	const stream = createProgressStream();
 
-	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, trusted, tagNames }).then(stream.close);
+	if (url) {
+		const validBlob = await validateBlobs([url]);
+		if (!validBlob) {
+			stream.error("File is not valid");
+			stream.close();
+			return stream.readable;
+		}
+	}
+
+	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, trusted, tagNames }).then((success) => {
+		stream.close();
+
+		if (url && !success) {
+			del(url);
+		}
+	});
 
 	return stream.readable;
 }

@@ -20,8 +20,9 @@ export async function generateSitemaps() {
 	}
 }
 
-export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
-	const skip = id * 50000;
+export default async function sitemap({ id }: { id: Promise<number> }): Promise<MetadataRoute.Sitemap> {
+	const i = await id;
+	const skip = i * 50000;
 
 	const assays = await publicPrisma.assay.findMany({
 		select: {

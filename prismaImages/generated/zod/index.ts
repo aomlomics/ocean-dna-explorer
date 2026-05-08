@@ -12,9 +12,11 @@ import type { Prisma } from '@/app/generated/prismaImages/client';
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','url','attributionTitle','description','location','dateTaken']);
+export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','url','homePage','attributionTitle','description','location','dateTaken']);
 
 export const AttributionScalarFieldEnumSchema = z.enum(['id','attributionTitle','attributionNames','attributionUrl','attributionInstitution']);
+
+export const BlobFileScalarFieldEnumSchema = z.enum(['id','url','userId']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -34,6 +36,7 @@ export const ImageSchema = z.object({
   dateSubmitted: z.coerce.date(),
   name: z.string(),
   url: z.string(),
+  homePage: z.boolean(),
   attributionTitle: z.string().nullish(),
   description: z.string().nullish(),
   location: z.string().nullish(),
@@ -193,3 +196,32 @@ export type AttributionWithPartialRelations = z.infer<typeof AttributionSchema> 
 export const AttributionWithPartialRelationsSchema: z.ZodType<AttributionWithPartialRelations> = AttributionSchema.merge(z.object({
   Image: z.lazy(() => ImagePartialWithRelationsSchema).array(),
 }).partial())
+
+/////////////////////////////////////////
+// BLOB FILE SCHEMA
+/////////////////////////////////////////
+
+export const BlobFileSchema = z.object({
+  id: z.number().int(),
+  url: z.string(),
+  userId: z.string(),
+})
+
+export type BlobFile = z.infer<typeof BlobFileSchema>
+
+/////////////////////////////////////////
+// BLOB FILE PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const BlobFilePartialSchema = BlobFileSchema.partial()
+
+export type BlobFilePartial = z.infer<typeof BlobFilePartialSchema>
+
+// BLOB FILE OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const BlobFileOptionalDefaultsSchema = BlobFileSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type BlobFileOptionalDefaults = z.infer<typeof BlobFileOptionalDefaultsSchema>

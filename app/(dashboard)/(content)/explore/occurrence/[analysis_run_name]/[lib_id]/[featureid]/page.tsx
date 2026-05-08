@@ -6,25 +6,12 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon } from "@/app/components/icons";
+import { TaxonomicRanks } from "@/types/objects";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
-			return (
-				[
-					"domain",
-					"kingdom",
-					"supergroup",
-					"division",
-					"subdivision",
-					"phylum",
-					"class",
-					"order",
-					"family",
-					"genus",
-					"species"
-				].includes(key) && value
-			);
+			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
 		})
 		.map(([key, value]) => ({
 			rank: key.charAt(0).toUpperCase() + key.slice(1),

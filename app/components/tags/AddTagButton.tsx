@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { SubmitEvent, useRef, useState } from "react";
 import Modal from "../Modal";
 import AnalysisTag from "./AnalysisTag";
 import addTagAction from "../../actions/tag/addTag";
@@ -26,7 +26,7 @@ export default function AddTagButton() {
 		setColor("#233D7F");
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		modalXRef.current!.disabled = true;

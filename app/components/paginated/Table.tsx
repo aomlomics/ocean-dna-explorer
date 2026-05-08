@@ -4,7 +4,7 @@ import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { Prisma, Tag } from "@/app/generated/prisma/client";
-import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
@@ -317,11 +317,11 @@ export default function Table({
 	}, [data]);
 
 	if (isLoading) return <LoadingTable take={take} page={page} />;
-	if (error) return <div>failed to load: {error instanceof Error ? error.message : String(error)}</div>;
+	if (error) return <div>failed to load: {error.toString() instanceof Error ? error.message : String(error)}</div>;
 	if (data.statusMessage === "error") return <div>failed to load: {String(data.error ?? "")}</div>;
 
 	//filters in the column header
-	function applyFilters(e: FormEvent<HTMLFormElement>) {
+	function applyFilters(e: SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		const formData = new FormData(e.currentTarget);
@@ -957,9 +957,9 @@ export default function Table({
 														element = DeadValueEnum[row[head]];
 													} else if (URL.canParse(row[head]) && row[head].startsWith("https://")) {
 														element = (
-															<Link href={row[head]} className="link link-primary link-hover">
+															<a href={row[head]} className="link link-primary link-hover">
 																{row[head]}
-															</Link>
+															</a>
 														);
 													} else if (typeof row[head] === "boolean") {
 														if (row[head]) {

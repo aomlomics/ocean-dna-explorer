@@ -1,8 +1,8 @@
-import { PrismaPromise } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
+import { PrismaPromise } from "@prisma/client/runtime/client";
 import { NextResponse } from "next/server";
 
 export async function GET(

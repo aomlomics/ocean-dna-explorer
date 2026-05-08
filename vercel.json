@@ -1,9 +1,9 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "crons": [
-    {
-      "path": "/api/crons/cleanEmptyTables",
-      "schedule": "0 4 * * *"
-    }
-  ]
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"crons": [
+		{
+			"path": "/api/crons/seedDatabase",
+			"schedule": "0 4 1 * *"
+		}
+	]
 }

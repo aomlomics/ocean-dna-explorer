@@ -13,6 +13,8 @@ import Link from "next/link";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import { useRouter } from "next/navigation";
 import projectUpdateImageAction from "@/app/actions/project/update/projectUpdateImage";
+import AddImageButton from "../AddImageButton";
+import { Attribution } from "@/app/generated/prismaImages/client";
 
 export default function ProjectEditButton({
 	project_id,
@@ -20,7 +22,8 @@ export default function ProjectEditButton({
 	imageFileUrl_ODE,
 	projectMetadataFileUrl_ODE,
 	sampleMetadataFileUrl_ODE,
-	libraryMetadataFileUrl_ODE
+	libraryMetadataFileUrl_ODE,
+	attributions
 }: {
 	project_id: Project["project_id"];
 	isPrivate: Project["isPrivate"];
@@ -28,20 +31,19 @@ export default function ProjectEditButton({
 	projectMetadataFileUrl_ODE: Project["projectMetadataFileUrl_ODE"];
 	sampleMetadataFileUrl_ODE: Project["sampleMetadataFileUrl_ODE"];
 	libraryMetadataFileUrl_ODE: Project["libraryMetadataFileUrl_ODE"];
+	attributions: Attribution[];
 }) {
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
 
 	//file input refs to clear inputs after submission
-	const imageRef = useRef<HTMLInputElement>(null);
 	const projectRef = useRef<HTMLInputElement>(null);
 	const sampleRef = useRef<HTMLInputElement>(null);
 	const libraryRef = useRef<HTMLInputElement>(null);
 
 	//state variables to hold contents of form for disabling submit button
 	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
-	const [imageFile, setImageFile] = useState(undefined as File | undefined);
 	const [projectFile, setProjectFile] = useState(undefined as File | undefined);
 	const [sampleFile, setSampleFile] = useState(undefined as File | undefined);
 	const [libraryFile, setLibraryFile] = useState(undefined as File | undefined);
@@ -53,30 +55,10 @@ export default function ProjectEditButton({
 	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket);
 	const [_, setFillerResponse] = useState(undefined as NetworkProgressPacket);
 
-	//file urls to delete if an error occurs
-	const [fileUrls, setFileUrls] = useState([] as string[]);
-
 	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
-
-	//detect when there's an error
-	useEffect(() => {
-		if (projectResponse?.statusMessage === "error") {
-			doError(projectResponse.error);
-		}
-	}, [projectResponse]);
-	useEffect(() => {
-		if (sampleResponse?.statusMessage === "error") {
-			doError(sampleResponse.error);
-		}
-	}, [sampleResponse]);
-	useEffect(() => {
-		if (libraryResponse?.statusMessage === "error") {
-			doError(libraryResponse.error);
-		}
-	}, [libraryResponse]);
 
 	//detect when entire submission was successful
 	useEffect(() => {
@@ -92,25 +74,12 @@ export default function ProjectEditButton({
 
 			modalXRef.current!.disabled = false;
 			modalClickOffRef.current!.disabled = false;
-			setLoading(false);
 			router.refresh();
-		} else if (globalResponse?.statusMessage === "error") {
-			doError(globalResponse.error);
 		}
+		setLoading(false);
 	}, [globalResponse]);
 
-	async function doError(err: string) {
-		//delete files from blob storage
-		for (const url of fileUrls) {
-			await fetch(`/api/file/delete?url=${url}`, {
-				method: "DELETE"
-			});
-		}
-
-		setLoading(false);
-	}
-
-	async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+	async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		modalXRef.current!.disabled = true;
@@ -119,7 +88,6 @@ export default function ProjectEditButton({
 		setLoading(true);
 
 		//reset page state
-		setFileUrls([]);
 		setGlobalResponse(undefined);
 		setProjectResponse(undefined);
 		setSampleResponse(undefined);
@@ -134,29 +102,8 @@ export default function ProjectEditButton({
 			imageFileUrl?: Project["imageFileUrl_ODE"];
 		};
 
-		if (imageFile) {
-			args.imageFileUrl = (
-				await upload(`submissions/${imageFile.name}`, imageFile, {
-					access: "public",
-					handleUploadUrl: "/api/file/upload"
-				})
-			).url;
-		}
-
 		if (!projectFile && !sampleFile && !libraryFile) {
-			if (args.imageFileUrl) {
-				try {
-					setGlobalResponse(await projectUpdateImageAction(project_id, args.imageFileUrl));
-					if (imageRef.current) {
-						imageRef.current.value = "";
-						setImageFile(undefined);
-					}
-				} catch {
-					await fetch(`/api/file/delete?url=${args.imageFileUrl}`, {
-						method: "DELETE"
-					});
-				}
-			} else if (isPrivateToggle !== isPrivate) {
+			if (isPrivateToggle !== isPrivate) {
 				setGlobalResponse(await projectUpdateIsPrivateAction(project_id, isPrivateToggle));
 			} else {
 				setGlobalResponse({ statusMessage: "error", error: "Must provide at least one file." });
@@ -182,8 +129,6 @@ export default function ProjectEditButton({
 				).url;
 
 				setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-
-				setFileUrls([...fileUrls, args.projectFileUrl]);
 			} else {
 				setters.push(setFillerResponse);
 			}
@@ -201,8 +146,6 @@ export default function ProjectEditButton({
 				).url;
 
 				setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-
-				setFileUrls([...fileUrls, args.sampleFileUrl]);
 			} else {
 				setters.push(setFillerResponse);
 			}
@@ -220,8 +163,6 @@ export default function ProjectEditButton({
 				).url;
 
 				setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
-
-				setFileUrls([...fileUrls, args.libraryFileUrl]);
 			} else {
 				setters.push(setFillerResponse);
 			}
@@ -229,8 +170,7 @@ export default function ProjectEditButton({
 			//trigger streamed action
 			await doProgressActionManyGlobal(projectEditAction, setters, setGlobalResponse, args);
 		} catch (err) {
-			const error = err as Error;
-			doError(error.message);
+			setLoading(false);
 		}
 	}
 
@@ -243,8 +183,36 @@ export default function ProjectEditButton({
 				Edit
 			</button>
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
+				<h2 className="mb-3">Edit Project: {project_id}</h2>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend flex-col items-start gap-0">
+						Cover Image:
+						{imageFileUrl_ODE ? (
+							<Link href={imageFileUrl_ODE} className="link link-primary link-hover">
+								{getSubmissionFileName(imageFileUrl_ODE)}
+							</Link>
+						) : (
+							<></>
+						)}
+					</legend>
+					<div className="grid grid-cols-2 gap-4">
+						<AddImageButton
+							title={"Replace with New Image"}
+							attributions={attributions}
+							target={{ table: "project", value: project_id }}
+						/>
+						<button
+							className="btn btn-error"
+							onClick={async () => setGlobalResponse(await projectUpdateImageAction(project_id, null))}
+							disabled={loading || !imageFileUrl_ODE}
+						>
+							DELETE IMAGE
+						</button>
+					</div>
+				</fieldset>
+
 				<form onSubmit={onSubmit} className="flex flex-col gap-3">
-					<h2>Edit Project: {project_id}</h2>
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend flex gap-2">
 							<h2>isPrivate</h2>
@@ -256,36 +224,6 @@ export default function ProjectEditButton({
 							checked={isPrivateToggle}
 							onChange={(e) => setIsPrivateToggle(e.currentTarget.checked)}
 						/>
-					</fieldset>
-
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend flex-col items-start gap-0">
-							Cover Image:
-							{imageFileUrl_ODE ? (
-								<Link href={imageFileUrl_ODE} className="link link-primary link-hover">
-									{getSubmissionFileName(imageFileUrl_ODE)}
-								</Link>
-							) : (
-								<></>
-							)}
-						</legend>
-						<div className="grid grid-cols-2 gap-4">
-							<input
-								type="file"
-								className="file-input file-input-primary"
-								disabled={loading}
-								accept="image/*"
-								onChange={(e) => setImageFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
-								ref={imageRef}
-							/>
-							<button
-								className="btn btn-error"
-								onClick={async () => setGlobalResponse(await projectUpdateImageAction(project_id, null))}
-								disabled={loading || !imageFileUrl_ODE}
-							>
-								DELETE IMAGE
-							</button>
-						</div>
 					</fieldset>
 
 					<h1 className="text-2xl text-primary border-b border-primary">Metadata Files:</h1>
@@ -352,9 +290,7 @@ export default function ProjectEditButton({
 					<button
 						type="submit"
 						className="btn"
-						disabled={
-							loading || (!projectFile && !sampleFile && !libraryFile && isPrivateToggle === isPrivate && !imageFile)
-						}
+						disabled={loading || (!projectFile && !sampleFile && !libraryFile && isPrivateToggle === isPrivate)}
 					>
 						Submit
 					</button>

@@ -5,7 +5,7 @@ import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
-import { User } from "@clerk/nextjs/dist/types/server";
+import { User } from "@clerk/nextjs/server";
 
 export default function UserList() {
 	const { userId } = useAuth();

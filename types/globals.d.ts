@@ -19,11 +19,11 @@ export type NetworkPacket = ErrorPacket | SuccessPacket;
 export type NetworkProgressPacket = ErrorPacket | SuccessPacket | ProgressPacket | undefined;
 
 export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
-export type TargetAction = (target: string, ...args) => Promise<NetworkPacket>;
-export type ProgressAction = (...args) => Promise<ReadableStream<any>>;
-export type ProgressActionMany = (...args) => Promise<ReadableStream<any>[]>;
+export type TargetAction = (target: string, ...args: any[]) => Promise<NetworkPacket>;
+export type ProgressAction = (...args: any[]) => Promise<ReadableStream<any>>;
+export type ProgressActionMany = (...args: any[]) => Promise<ReadableStream<any>[]>;
 export type ProgressActionManyGlobal = (
-	...args
+	...args: any[]
 ) => Promise<{ global: ReadableStream<any>; readables: ReadableStream<any>[] }>;
 
 export type ProgressStream = {
@@ -85,8 +85,7 @@ export type ParamsArrayRelation = [string, ...ParamsArrayField];
 export type ParamsLogicalOperator = "AND" | "OR";
 export type ParamsArrayGroup = [ParamsLogicalOperator, ...ParamsArrayElement[]];
 export type ParamsArrayElement = ParamsArrayRelation | ParamsArrayField | ParamsArray | ParamsArrayGroup;
-export type ParamsArray = Array<ParamsArrayElement>;
-export type ParamsArray = Array<ParamsArrayRelation | ParamsArrayField | ParamsArray>;
+export type ParamsArray = ParamsArrayElement[];
 
 export type Point = { lat: number; lng: number };
 export type Polygon = {
@@ -127,22 +126,23 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 	? R
 	: any;
 
+export type UserMetadata = {
+	role?: Role;
+	roleApplication?: {
+		role: Role;
+		description?: string;
+	};
+};
 declare module "wordcloud";
 
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;
 		type ChangesType = { field: string; oldValue: string; newValue: string }[];
-		type EditHistoryType = { id: string; dateEdited: string; changes: ChangesType }[];
+		type EditHistoryType = { id: string; dateEdited: Date; changes: ChangesType }[];
 	}
 
 	interface CustomJwtSessionClaims {
-		metadata: {
-			role?: Role;
-			roleApplication?: {
-				role: Role;
-				description?: string;
-			};
-		};
+		metadata: UserMetadata;
 	}
 }

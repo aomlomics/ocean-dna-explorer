@@ -1,14 +1,12 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export function ThemedUserButton() {
-	const { theme, resolvedTheme } = useTheme();
+	const { theme } = useTheme();
 	const [mounted, setMounted] = useState(false);
-	const isDark = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
 	useEffect(() => {
 		setMounted(true);
@@ -22,7 +20,6 @@ export function ThemedUserButton() {
 		<UserButton
 			key={`${theme}-${mounted}`}
 			appearance={{
-				baseTheme: isDark ? dark : undefined,
 				elements: {
 					// Real portal wrapper (see @clerk/shared Elements); old userButtonPopover* keys are ignored
 					userButtonPopoverRootBox: {

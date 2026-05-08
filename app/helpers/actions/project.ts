@@ -14,7 +14,7 @@ import {
 import { parseSchemaToObject } from "../schema";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
-import { Library, Prisma, Sample } from "@/app/generated/prisma/client";
+import { Library, Prisma, Project, Sample } from "@/app/generated/prisma/client";
 import { Channel } from "../progress";
 
 async function parseProjectFile({
@@ -27,12 +27,12 @@ async function parseProjectFile({
 	oldChecksum
 }: {
 	channel: Channel;
-	userIds: string[];
-	sampleUrl: string;
-	libraryUrl: string;
-	isPrivate?: boolean;
-	imageFileUrl?: string;
-	oldChecksum?: string;
+	userIds: Project["userIds"];
+	sampleUrl: Project["sampleMetadataFileUrl_ODE"];
+	libraryUrl: Project["libraryMetadataFileUrl_ODE"];
+	isPrivate?: Project["isPrivate"];
+	imageFileUrl?: Project["imageFileUrl_ODE"];
+	oldChecksum?: Project["projectMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const projectCol = {} as Record<string, string>;
@@ -247,7 +247,7 @@ async function parseLibraryFile({
 	channel: Channel;
 	projectCol: Record<string, string>;
 	assayCols: Record<string, Record<string, string>>;
-	oldChecksum?: string;
+	oldChecksum?: Project["libraryMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const libraries = [] as Prisma.LibraryCreateManyInput[];
@@ -372,7 +372,7 @@ async function parseSampleFile({
 	channel: Channel;
 	projectCol: Record<string, string>;
 	sampNamesByAssay: Record<string, string[]>;
-	oldChecksum?: string;
+	oldChecksum?: Project["sampleMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const samplesByName = {} as Record<string, Prisma.SampleCreateManyInput>;
@@ -459,8 +459,9 @@ async function parseSampleFile({
 					}
 				}
 
-				//@ts-ignore issue with Json database type
-				samplesByName[parsedSample.data.samp_name] = parsedSample.data;
+				samplesByName[parsedSample.data.samp_name] = parsedSample.data as typeof parsedSample.data & {
+					userDefined: PrismaJson.UserDefinedType;
+				};
 
 				//add to progress bar every 10 percent
 				if (i % (sampleParser.info.records / 10) === 0) {
@@ -492,6 +493,7 @@ async function parseSampleFile({
 	}
 }
 
+//TODO: allow empty rows in submission files
 export async function parseProjectFiles({
 	projectChannel,
 	sampleChannel,
@@ -504,10 +506,14 @@ export async function parseProjectFiles({
 	projectChannel: Channel;
 	sampleChannel: Channel;
 	libraryChannel: Channel;
-	userIds: string[];
-	isPrivate?: boolean;
-	imageFileUrl?: string;
-	oldChecksums?: { projectMd5?: string; sampleMd5?: string; libraryMd5?: string };
+	userIds: Project["userIds"];
+	isPrivate?: Project["isPrivate"];
+	imageFileUrl?: Project["imageFileUrl_ODE"];
+	oldChecksums?: {
+		projectMd5?: Project["projectMetadataFileChecksum_ODE"];
+		sampleMd5?: Project["sampleMetadataFileChecksum_ODE"];
+		libraryMd5?: Project["libraryMetadataFileChecksum_ODE"];
+	};
 }) {
 	const projectParseResult = await parseProjectFile({
 		channel: projectChannel,

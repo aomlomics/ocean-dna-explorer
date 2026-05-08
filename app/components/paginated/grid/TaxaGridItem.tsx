@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PhyloPicClient from "../../images/PhyloPicClient";
 import { Taxonomy } from "@/app/generated/prisma/client";
+import { TaxonomicRanks } from "@/types/objects";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 
@@ -125,6 +126,8 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 			cancelled = true;
 		};
 	}, [cacheKey, item, showCommonName]);
+
+	const mostSpecificRank = TaxonomicRanks.toReversed().find((rank) => item[rank]);
 
 	return (
 		<Link
