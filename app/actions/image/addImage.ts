@@ -3,6 +3,7 @@
 import {
 	AttributionOptionalDefaults,
 	AttributionOptionalDefaultsSchema,
+	ImageOptionalDefaults,
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -11,8 +12,16 @@ import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
 import { validateBlobs } from "@/app/helpers/withDb";
+import { Project, Taxonomy } from "@/app/generated/prisma/client";
+import { prisma } from "@/app/helpers/prisma";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import { handlePrismaError } from "@/app/helpers/queries";
 
-export default async function addImageAction(formData: FormData, newAttribution: boolean): Promise<NetworkPacket> {
+export default async function addImageAction(
+	formData: FormData,
+	newAttribution: boolean,
+	target?: { table: "project"; value: Project["project_id"] } | { table: "taxonomy"; value: Taxonomy["taxonomy"] }
+): Promise<NetworkPacket> {
 	const url = formData.get("url");
 	if (url && typeof url === "string") {
 		const validBlob = await validateBlobs([url]);
@@ -21,18 +30,26 @@ export default async function addImageAction(formData: FormData, newAttribution:
 		}
 	}
 
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
+
+	if (!userId) {
+		return { statusMessage: "error", error: "Must be logged in." };
+	}
+
+	if (!role || !RolePermissions[role].includes("manageDatabase")) {
+		return { statusMessage: "error", error: "Invalid role." };
+	}
+
+	if (target) {
+		if (!DataTableNames.includes(target.table)) {
+			return { statusMessage: "error", error: `Table with name of "${target.table}" does not exist.` };
+		}
+	}
+
+	let attribution = undefined as undefined | AttributionOptionalDefaults;
+	let image = undefined as undefined | ImageOptionalDefaults;
 	try {
-		const { userId, sessionClaims } = await auth();
-		const role = sessionClaims?.metadata?.role;
-
-		if (!userId) {
-			throw new Error("Must be logged in.");
-		}
-
-		if (!role || !RolePermissions[role].includes("manageDatabase")) {
-			throw new Error("Invalid role.");
-		}
-
 		const formObj = Object.fromEntries(formData) as Record<string, any>;
 		for (const key in formObj) {
 			if (formObj[key] === "") {
@@ -44,8 +61,8 @@ export default async function addImageAction(formData: FormData, newAttribution:
 		} else {
 			formObj.homePage = false;
 		}
-		const image = ImageOptionalDefaultsSchema.parse(formObj);
-		let attribution = undefined as undefined | AttributionOptionalDefaults;
+
+		image = ImageOptionalDefaultsSchema.parse(formObj);
 		if (newAttribution) {
 			attribution = AttributionOptionalDefaultsSchema.parse(formObj);
 		}
@@ -58,17 +75,60 @@ export default async function addImageAction(formData: FormData, newAttribution:
 			}
 
 			await tx.image.create({
-				data: image
+				data: image as ImageOptionalDefaults
 			});
 		});
-
-		return { statusMessage: "success" };
-	} catch (err) {
+	} catch (err: any) {
 		if (url && typeof url === "string") {
 			await del(url);
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		const prismaErr = handlePrismaError(err);
+		if (prismaErr) {
+			return { statusMessage: "error", error: prismaErr.error };
+		} else {
+			const error = err as Error;
+			return { statusMessage: "error", error: error.message };
+		}
 	}
+
+	if (target) {
+		try {
+			//@ts-ignore
+			await prisma[target.table].update({
+				where: {
+					[TableMetadata[target.table].titleField as string]: target.value
+				},
+				data: {
+					imageFileUrl_ODE: url
+				}
+			});
+		} catch (err: any) {
+			await prismaImages.$transaction(async (tx) => {
+				if (attribution) {
+					await tx.attribution.delete({
+						where: {
+							attributionTitle: attribution.attributionTitle
+						}
+					});
+				}
+
+				await tx.image.delete({
+					where: {
+						url: image.url
+					}
+				});
+			});
+
+			const prismaErr = handlePrismaError(err);
+			if (prismaErr) {
+				return { statusMessage: "error", error: prismaErr.error };
+			} else {
+				const error = err as Error;
+				return { statusMessage: "error", error: error.message };
+			}
+		}
+	}
+
+	return { statusMessage: "success" };
 }

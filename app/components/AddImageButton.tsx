@@ -5,15 +5,18 @@ import { Attribution } from "../generated/prismaImages/client";
 import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
+import { Project, Taxonomy } from "../generated/prisma/client";
 
 export default function AddImageButton({
 	attributions,
 	title,
-	homePage
+	homePage,
+	target
 }: {
 	attributions: Attribution[];
 	title: string;
 	homePage?: true;
+	target?: { table: "project"; value: Project["project_id"] } | { table: "taxonomy"; value: Taxonomy["taxonomy"] };
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +65,7 @@ export default function AddImageButton({
 		}
 
 		try {
-			const result = await addImageAction(formData, newAttribution);
+			const result = await addImageAction(formData, newAttribution, target);
 			if (result.statusMessage === "success") {
 				reset();
 				modalRef.current?.close();

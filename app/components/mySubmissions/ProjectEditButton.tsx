@@ -197,7 +197,11 @@ export default function ProjectEditButton({
 						)}
 					</legend>
 					<div className="grid grid-cols-2 gap-4">
-						<AddImageButton title={"Replace with New Image"} attributions={attributions} />
+						<AddImageButton
+							title={"Replace with New Image"}
+							attributions={attributions}
+							target={{ table: "project", value: project_id }}
+						/>
 						<button
 							className="btn btn-error"
 							onClick={async () => setGlobalResponse(await projectUpdateImageAction(project_id, null))}

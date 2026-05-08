@@ -50,8 +50,8 @@ async function doSubmit(
 		}
 	}
 
-	try {
-		if (imageInfo) {
+	if (imageInfo) {
+		try {
 			for (const k in imageInfo.image) {
 				const key = k as keyof typeof imageInfo.image;
 				if (imageInfo.image[key] === "") {
@@ -80,11 +80,17 @@ async function doSubmit(
 					data: parsedImage
 				})
 			]);
+		} catch (err: any) {
+			const prismaErr = handlePrismaError(err);
+			if (prismaErr) {
+				await globalStream.error(prismaErr.error);
+			} else {
+				const error = err as Error;
+				await globalStream.error(error.message);
+			}
+
+			return;
 		}
-	} catch (err: any) {
-		const error = err as Error;
-		await globalStream.error(error.message);
-		return;
 	}
 
 	try {

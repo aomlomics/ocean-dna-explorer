@@ -19,8 +19,7 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 			let found = false;
 			let attempts = 0;
 			while (!found) {
-				if (++attempts > 5) {
-					console.log(url, "not found");
+				if (++attempts > 10) {
 					return false;
 				}
 
@@ -30,10 +29,9 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 					}
 				}));
 
-				//retry after 1/10 of a second
+				//retry after 1/5 of a second
 				if (!found) {
-					console.log("retrying", url);
-					await new Promise((resolve) => setTimeout(resolve, 100));
+					await new Promise((resolve) => setTimeout(resolve, 200));
 				}
 			}
 		}
