@@ -13,10 +13,13 @@ import { del } from "@vercel/blob";
 import { validateBlobs } from "@/app/helpers/withDb";
 
 export default async function addImageAction(formData: FormData, newAttribution: boolean): Promise<NetworkPacket> {
+	console.log(1);
 	const url = formData.get("url");
 	if (url && typeof url === "string") {
+		console.log(2);
 		const validBlob = await validateBlobs([url]);
 		if (!validBlob) {
+			console.log(3);
 			return { statusMessage: "error", error: "File is not valid" };
 		}
 	}

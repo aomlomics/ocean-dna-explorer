@@ -10,7 +10,9 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 	}
 
 	const { userId } = await auth();
+	console.log(userId);
 	if (!userId) {
+		console.log("?????????");
 		return false;
 	}
 
