@@ -13,7 +13,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -35,6 +35,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 				analysis_run_name
 			},
 			select: {
+				editHistory: true,
 				analysisMetadataFileUrl_ODE: true,
 				asvFileUrl_ODE: true,
 				occurrenceFileUrl_ODE: true,
@@ -61,6 +62,7 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 			}
 		});
 
+		//TODO: delete files from edit history
 		await del([analysis.analysisMetadataFileUrl_ODE, analysis.asvFileUrl_ODE, analysis.occurrenceFileUrl_ODE]);
 
 		return { statusMessage: "success" };

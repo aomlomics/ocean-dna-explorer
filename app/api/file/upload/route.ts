@@ -40,8 +40,6 @@ export async function POST(request: Request) {
 				// ⚠️ This will not work on `localhost` websites,
 				// Use ngrok or similar to get the full upload flow
 
-				console.log("blob upload completed", blob, tokenPayload);
-
 				if (!tokenPayload) {
 					throw new Error("Missing token payload");
 				}

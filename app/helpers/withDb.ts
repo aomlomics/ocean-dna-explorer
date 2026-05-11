@@ -14,6 +14,28 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 	}
 
 	try {
+		//retry finding blob files
+		for (const url of urls) {
+			let found = false;
+			let attempts = 0;
+			while (!found) {
+				if (++attempts > 10) {
+					return false;
+				}
+
+				found = !!(await prismaImages.blobFile.findUnique({
+					where: {
+						url
+					}
+				}));
+
+				//retry after 1/5 of a second
+				if (!found) {
+					await new Promise((resolve) => setTimeout(resolve, 200));
+				}
+			}
+		}
+
 		await prismaImages.$transaction(
 			urls.map((url) =>
 				prismaImages.blobFile.delete({

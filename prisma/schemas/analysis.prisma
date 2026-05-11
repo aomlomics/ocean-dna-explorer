@@ -135,7 +135,9 @@ model Assignment {
     Occurrences       Occurrence[]
 
     // Data
-    Confidence Float
+    Confidence Float?
+    percent_id Float?
+    consensus  Float?
 
     @@unique([analysis_run_name, featureid])
 }
@@ -159,6 +161,8 @@ model Taxonomy {
 
     // Relations
     Assignments Assignment[]
+
+    imageFileUrl_ODE String?
 
     // Data
     verbatimIdentification String

@@ -18,8 +18,7 @@ async function doEdit(
 	sampleChannel: Channel,
 	libraryChannel: Channel,
 	project_id: Project["project_id"],
-	isPrivate?: Project["isPrivate"],
-	imageFileUrl?: Project["imageFileUrl_ODE"]
+	isPrivate?: Project["isPrivate"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -39,6 +38,7 @@ async function doEdit(
 				project_id
 			},
 			select: {
+				imageFileUrl_ODE: true,
 				userIds: true,
 				editHistory: true,
 				isPrivate: true,
@@ -93,7 +93,6 @@ async function doEdit(
 			libraryChannel,
 			userIds: dbProject.userIds,
 			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate,
-			imageFileUrl,
 			oldChecksums
 		});
 		if (!parseResult) {
@@ -475,15 +474,13 @@ export default async function projectEditAction({
 	projectFileUrl,
 	sampleFileUrl,
 	libraryFileUrl,
-	isPrivate,
-	imageFileUrl
+	isPrivate
 }: {
 	project_id: Project["project_id"];
 	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
 	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
 	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
 	isPrivate?: Project["isPrivate"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
 }) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
@@ -518,8 +515,7 @@ export default async function projectEditAction({
 		{ url: sampleFileUrl || "", stream: sampleStream },
 		{ url: libraryFileUrl || "", stream: libraryStream },
 		project_id,
-		isPrivate,
-		imageFileUrl
+		isPrivate
 	).then((success) => {
 		globalStream.close();
 		projectStream.close();
@@ -527,20 +523,7 @@ export default async function projectEditAction({
 		libraryStream.close();
 
 		if (!success) {
-			const toDelete = [];
-			if (projectFileUrl) {
-				toDelete.push(projectFileUrl);
-			}
-			if (sampleFileUrl) {
-				toDelete.push(sampleFileUrl);
-			}
-			if (libraryFileUrl) {
-				toDelete.push(libraryFileUrl);
-			}
-			if (imageFileUrl) {
-				toDelete.push(imageFileUrl);
-			}
-			del(toDelete);
+			del([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
 		}
 	});
 

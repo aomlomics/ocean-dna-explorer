@@ -12,7 +12,7 @@ import type { Prisma } from '@/app/generated/prismaImages/client';
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','url','attributionTitle','description','location','dateTaken']);
+export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','url','userId','homePage','attributionTitle','description','location','dateTaken']);
 
 export const AttributionScalarFieldEnumSchema = z.enum(['id','attributionTitle','attributionNames','attributionUrl','attributionInstitution']);
 
@@ -36,6 +36,8 @@ export const ImageSchema = z.object({
   dateSubmitted: z.coerce.date(),
   name: z.string(),
   url: z.string(),
+  userId: z.string(),
+  homePage: z.boolean(),
   attributionTitle: z.string().nullish(),
   description: z.string().nullish(),
   location: z.string().nullish(),
@@ -58,6 +60,7 @@ export type ImagePartial = z.infer<typeof ImagePartialSchema>
 export const ImageOptionalDefaultsSchema = ImageSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
+  userId: z.string().optional(),
 }))
 
 export type ImageOptionalDefaults = z.infer<typeof ImageOptionalDefaultsSchema>

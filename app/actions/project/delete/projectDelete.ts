@@ -2,6 +2,7 @@
 
 import { Project } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
+import { prismaImages } from "@/app/helpers/prismaImages";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import { NetworkPacket } from "@/types/globals";
@@ -13,12 +14,8 @@ export default async function projectDeleteAction(target: Project["project_id"])
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		return { statusMessage: "error", error: "Unauthorized" };
-	}
-
-	if (!role || !RolePermissions[role].includes("manageUsers")) {
-		throw new Error("Unauthorized action.");
 	}
 
 	const parsed = ProjectSchema.shape.project_id.safeParse(target);
@@ -36,6 +33,7 @@ export default async function projectDeleteAction(target: Project["project_id"])
 				project_id
 			},
 			select: {
+				editHistory: true,
 				userIds: true,
 				imageFileUrl_ODE: true,
 				projectMetadataFileUrl_ODE: true,
@@ -63,19 +61,25 @@ export default async function projectDeleteAction(target: Project["project_id"])
 			}
 		});
 
-		//delete files
-		const delArr = [
-			dbProject.projectMetadataFileUrl_ODE,
-			dbProject.sampleMetadataFileUrl_ODE,
-			dbProject.libraryMetadataFileUrl_ODE
-		];
 		if (dbProject.imageFileUrl_ODE) {
-			delArr.push(dbProject.imageFileUrl_ODE);
+			await prismaImages.image.delete({
+				where: {
+					url: dbProject.imageFileUrl_ODE
+				}
+			});
 		}
-		for (const a of dbProject.Analyses) {
-			delArr.push(a.analysisMetadataFileUrl_ODE, a.asvFileUrl_ODE, a.occurrenceFileUrl_ODE);
-		}
-		await del(delArr);
+
+		//delete files
+		//TODO: delete files from edit history
+		await del(
+			[
+				dbProject.projectMetadataFileUrl_ODE,
+				dbProject.sampleMetadataFileUrl_ODE,
+				dbProject.libraryMetadataFileUrl_ODE,
+				dbProject.imageFileUrl_ODE,
+				...dbProject.Analyses.flatMap((a) => [a.analysisMetadataFileUrl_ODE, a.asvFileUrl_ODE, a.occurrenceFileUrl_ODE])
+			].filter(Boolean) as string[]
+		);
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
