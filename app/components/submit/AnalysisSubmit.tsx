@@ -61,6 +61,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					return temp;
 				} else {
 					if (update.res?.statusMessage === "error") {
+						//TODO: don't stop loading until ALL submissions complete
 						setLoading(false);
 						setErrorMessage(update.res.error);
 						modalRef.current?.showModal();
