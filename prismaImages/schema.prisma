@@ -27,7 +27,7 @@ model Image {
     name          String   @unique
     url           String   @unique
     userId        String   @default("")
-    homePage      Boolean
+    homePage      Boolean  @default(true)
 
     //relations
     attributionTitle String?
