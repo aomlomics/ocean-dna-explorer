@@ -26,8 +26,8 @@ model Image {
     dateSubmitted DateTime @default(now())
     name          String   @unique
     url           String   @unique
-    userId        String   @default("")
-    homePage      Boolean  @default(true)
+    userId        String
+    homePage      Boolean
 
     //relations
     attributionTitle String?

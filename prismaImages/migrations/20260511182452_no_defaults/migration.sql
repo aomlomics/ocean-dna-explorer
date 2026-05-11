@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Image" ALTER COLUMN "homePage" DROP DEFAULT,
+ALTER COLUMN "userId" DROP DEFAULT;
