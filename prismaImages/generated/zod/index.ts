@@ -60,7 +60,6 @@ export type ImagePartial = z.infer<typeof ImagePartialSchema>
 export const ImageOptionalDefaultsSchema = ImageSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
-  userId: z.string().optional(),
 }))
 
 export type ImageOptionalDefaults = z.infer<typeof ImageOptionalDefaultsSchema>
