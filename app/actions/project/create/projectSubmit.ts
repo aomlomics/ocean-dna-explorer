@@ -261,7 +261,9 @@ export default async function projectSubmitAction(
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	const validBlobs = await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+	const validBlobs = await validateBlobs(
+		[projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]
+	);
 	if (!validBlobs) {
 		globalStream.error("Files are not valid");
 
