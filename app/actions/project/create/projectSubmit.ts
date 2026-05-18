@@ -106,7 +106,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, assays, assayPreps, libraries } = parseResult;
+		const { project, samples, assays, assayPreps, libraries } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -176,6 +176,9 @@ async function doSubmit(
 		await prisma.$transaction([
 			prisma.project.create({
 				data: project
+			}),
+			prisma.sample.createMany({
+				data: samples
 			}),
 			prisma.assayPrep.createMany({
 				data: assayPreps
