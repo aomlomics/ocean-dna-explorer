@@ -1,121 +1,74 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-const AMBIENT_PHRASES = [
-	"Query the API",
-	"Build complex Searches",
-	"Build custom figures",
-	"Programmatic data access",
-	"Taxonomies unlocked",
-	"Learn about eDNA",
-	"Use custom map tools",
-	"FAIR eDNA Data",
-	"Explore projects",
-	"Browse samples on the map",
-	"Drill into detections",
-	"Trace a detection to its feature",
-	"See taxonomic assignments instantly",
-	"Navigate the taxonomy tree",
-	"Explore analyses and pipelines",
-	"Compare target genes",
-	"Find assays by primers + targets",
-	"Filter and sort any data table",
-	"Search within columns",
-	"Open any record for full details",
-	"Visualize metadata patterns",
-	"Visualize taxonomy distributions",
-	"Compare projects side-by-side",
-	"Compare analyses across datasets",
-	"Explore sampling environments",
-	"Check temporal coverage",
-	"Explore depth coverage",
-	"Spot metadata gaps fast",
-	"Meet featured organisms",
-	"Discover Life Across ODE",
-	"Submit a new project",
-	"Submit a new analysis",
-	"Tag datasets for discovery",
-	"Choose dataset visibility",
-	"Edit metadata later",
-	"Use the API endpoints",
-	"Search and filter via API",
-	"Explore the database schema",
-	"Learn eDNA 101",
-	"Explore eDNA's impact",
-	"Make your own discoveries"
+// [phrase, weight] — larger weight = bigger text in the cloud
+const WORD_LIST: [string, number][] = [
+	["Query the API", 90],
+	["FAIR eDNA Data", 80],
+	["Build complex Searches", 70],
+	["Learn about eDNA", 65],
+	["Build custom figures", 60],
+	["Programmatic data access", 50],
+	["Explore projects", 48],
+	["Browse samples on the map", 46],
+	["Drill into detections", 44],
+	["Trace a detection to its feature", 42],
+	["See taxonomic assignments instantly", 40],
+	["Navigate the taxonomy tree", 40],
+	["Explore analyses and pipelines", 38],
+	["Compare target genes", 36],
+	["Find assays by primers + targets", 36],
+	["Filter and sort any data table", 34],
+	["Search within columns", 32],
+	["Open any record for full details", 32],
+	["Visualize metadata patterns", 30],
+	["Visualize taxonomy distributions", 30],
+	["Compare projects side-by-side", 28],
+	["Compare analyses across datasets", 28],
+	["Explore sampling environments", 28],
+	["Check temporal coverage", 26],
+	["Explore depth coverage", 26],
+	["Spot metadata gaps fast", 24],
+	["Meet featured organisms", 24],
+	["Discover Life Across ODE", 24],
+	["Submit a new project", 22],
+	["Submit a new analysis", 22],
+	["Tag datasets for discovery", 22],
+	["Choose dataset visibility", 20],
+	["Edit metadata later", 20],
+	["Use the API endpoints", 20],
+	["Search and filter via API", 20],
+	["Explore the database schema", 18],
+	["Learn eDNA 101", 18],
+	["Explore eDNA's impact", 18],
+	["Use custom map tools", 18],
+	["Taxonomies unlocked", 16],
+	["Make your own discoveries", 16],
 ];
 
-type WordCloudRenderer = (
-	element: HTMLCanvasElement | HTMLElement,
-	options: {
-		list: [string, number][];
-		weightFactor: (size: number) => number;
-		gridSize: number;
-		backgroundColor: string;
-		clearCanvas: boolean;
-		rotateRatio: number;
-		minRotation: number;
-		maxRotation: number;
-		rotationSteps: number;
-		shrinkToFit: boolean;
-		drawOutOfBound: boolean;
-		origin: [number, number];
-		color: () => string;
-		fontFamily: string;
-		shape?: string;
-		abortThreshold?: number;
-		minSize?: number;
-	}
-) => void;
+// Time (ms) spent revealing words in each cycle.
+const REVEAL_DURATION_MS = 24_000;
+// Keep the full cloud visible after reveal completes.
+const HOLD_FULL_CLOUD_MS = 12_000;
+// Words revealed per tick.
+const BATCH_SIZE = 1;
 
-type WordCloudModule = WordCloudRenderer & { stop?: () => void };
+const PALETTE = [
+	"rgba(255,255,255,0.92)",
+	"rgba(207,250,254,0.9)",
+	"rgba(125,211,252,0.88)",
+	"rgba(147,197,253,0.9)",
+];
+
+type WordCloudFn = ((el: HTMLElement, opts: object) => void) & {
+	stop?: () => void;
+};
 
 export default function AmbientPage() {
 	const cloudHostRef = useRef<HTMLDivElement | null>(null);
 	const cloudWordsRef = useRef<HTMLDivElement | null>(null);
-
-	const weightedWords = useMemo<[string, number][]>(() => {
-		// Wide weight gaps → visible size tiers; hero lines stay much larger than the long tail.
-		const FEATURE_WEIGHTS: Record<string, number> = {
-			"Query the API": 120,
-			"FAIR eDNA Data": 98,
-			"Build complex Searches": 82,
-			"Learn about eDNA": 64,
-			"Build custom figures": 62,
-		};
-
-		const n = AMBIENT_PHRASES.length;
-		const seen = new Set<string>();
-		const uniqueOnly: [string, number][] = [];
-
-		for (let index = 0; index < n; index++) {
-			const phrase = AMBIENT_PHRASES[index];
-			const key = phrase.trim();
-			if (!key || seen.has(key)) continue;
-			seen.add(key);
-
-			const featured = FEATURE_WEIGHTS[key];
-			if (featured != null) {
-				uniqueOnly.push([phrase, featured]);
-				continue;
-			}
-
-			const t = index / Math.max(1, n - 1);
-			const rankBias = Math.pow(1 - t, 0.62);
-			const base = 5 + rankBias * 36;
-			const jitter =
-				((index * 47) % 14) * 1.35 +
-				((index * 29) % 9) * 1.2 +
-				((index * 13) % 7) * 0.85 +
-				((index * 59) % 6);
-			const weight = Math.min(52, base + jitter);
-			uniqueOnly.push([phrase, Math.max(4, Math.round(weight * 10) / 10)]);
-		}
-
-		return uniqueOnly;
-	}, []);
 
 	useEffect(() => {
 		const host = cloudHostRef.current;
@@ -123,42 +76,88 @@ export default function AmbientPage() {
 		if (!host || !wordsEl) return;
 
 		let cancelled = false;
+		let wordCloud: WordCloudFn | null = null;
+		let revealTimer: number | null = null;
+		let cycleTimer: number | null = null;
 		let resizeTimer: number | null = null;
-		let wordCloud: WordCloudModule | null = null;
+		let initTimer: number | null = null;
 
-		const loadWordCloud = async () => {
-			if (wordCloud) return wordCloud;
-			// wordcloud2.js does not ship TypeScript types in this project.
-			// @ts-expect-error runtime import is valid in the browser.
-			const module = await import("wordcloud");
-			wordCloud = (module.default ?? module) as unknown as WordCloudModule;
-			return wordCloud;
+		const clearReveal = () => {
+			if (revealTimer != null) {
+				window.clearInterval(revealTimer);
+				revealTimer = null;
+			}
+			if (cycleTimer != null) {
+				window.clearTimeout(cycleTimer);
+				cycleTimer = null;
+			}
+		};
+
+		const startRevealCycle = (wordEls: HTMLElement[]) => {
+			clearReveal();
+
+			// Shuffle so the pop-in order varies each cycle.
+			const shuffled = [...wordEls].sort(() => Math.random() - 0.5);
+			let idx = 0;
+			const steps = Math.ceil(shuffled.length / BATCH_SIZE);
+			const stepMs = Math.max(240, Math.floor(REVEAL_DURATION_MS / steps));
+
+			// Hide all words instantly (no transition so there's no visible flash).
+			shuffled.forEach((el) => {
+				el.style.transition = "none";
+				el.style.opacity = "0";
+			});
+
+			// After the browser commits the hide, add the fade-in transition and begin revealing.
+			window.requestAnimationFrame(() => {
+				if (cancelled) return;
+				shuffled.forEach((el) => {
+					el.style.transition = "opacity 1.4s ease";
+				});
+
+				revealTimer = window.setInterval(() => {
+					if (cancelled) return;
+					for (let i = 0; i < BATCH_SIZE && idx < shuffled.length; i++, idx++) {
+						shuffled[idx].style.opacity = "1";
+					}
+					if (idx >= shuffled.length && revealTimer != null) {
+						// All words are visible — let the cycle timer handle the next reset.
+						window.clearInterval(revealTimer);
+						revealTimer = null;
+					}
+				}, stepMs);
+			});
+
+			// Restart after reveal window + full-cloud hold window.
+			cycleTimer = window.setTimeout(() => {
+				if (cancelled) return;
+				startRevealCycle(wordEls);
+			}, REVEAL_DURATION_MS + HOLD_FULL_CLOUD_MS);
 		};
 
 		const renderCloud = async () => {
 			if (cancelled) return;
-			const WordCloud = await loadWordCloud();
-			if (cancelled) return;
 
-			const width = Math.max(400, Math.floor(host.clientWidth));
-			const availHeight = Math.max(
-				320,
-				Math.floor(host.clientHeight || host.offsetHeight || 0)
-			);
-			// Use the full host height so the cloud fills the right column (width-based caps made it feel tiny).
-			const height = availHeight;
+			// @ts-expect-error wordcloud2 has no bundled TS types.
+			const module = await import("wordcloud");
+			if (cancelled) return;
+			wordCloud = (module.default ?? module) as WordCloudFn;
+
+			clearReveal();
+			wordCloud.stop?.();
+
+			const width = Math.max(400, host.clientWidth);
+			const height = Math.max(320, host.clientHeight || host.offsetHeight || 0);
 
 			wordsEl.style.width = `${width}px`;
 			wordsEl.style.height = `${height}px`;
 			wordsEl.innerHTML = "";
 
-			WordCloud.stop?.();
-
-			WordCloud(wordsEl, {
-				list: weightedWords,
-				weightFactor: (size) => Math.max(11, Math.round(size * (width / 900))),
+			wordCloud(wordsEl, {
+				list: WORD_LIST,
+				weightFactor: (size: number) => Math.max(11, Math.round(size * (width / 900))),
 				gridSize: Math.max(8, Math.round(width / 125)),
-				backgroundColor: "rgba(0, 0, 0, 0)",
+				backgroundColor: "rgba(0,0,0,0)",
 				clearCanvas: true,
 				rotateRatio: 0.2,
 				minRotation: -Math.PI / 16,
@@ -167,105 +166,52 @@ export default function AmbientPage() {
 				shrinkToFit: true,
 				drawOutOfBound: false,
 				origin: [width / 2, height / 2],
-				color: () => {
-					const palette = [
-						"rgba(255,255,255,0.92)",
-						"rgba(207,250,254,0.9)",
-						"rgba(125,211,252,0.88)",
-						"rgba(147,197,253,0.9)"
-					];
-					return palette[Math.floor(Math.random() * palette.length)];
-				},
+				color: () => PALETTE[Math.floor(Math.random() * PALETTE.length)],
 				fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-				// Circle keeps visual mass centered; cardioid skews toward one side inside the canvas.
 				shape: "circle",
 				abortThreshold: 1500,
-				minSize: 8
+				minSize: 8,
 			});
 
-			const applyWordStyles = () => {
+			// wordcloud2 renders asynchronously via internal setTimeout loops.
+			// Wait long enough for all spans to be added to the DOM before we touch them.
+			if (initTimer != null) window.clearTimeout(initTimer);
+			initTimer = window.setTimeout(() => {
 				if (cancelled) return;
-				// wordcloud2 puts each phrase in a positioned span; nested spans can exist for wrapping.
-				// Animating only `position: absolute` roots (or top-level spans as fallback) ensures every word gets one breath, not skipped inner/outer nodes.
-				const candidates = Array.from(wordsEl.querySelectorAll("span")).filter(
-					(n): n is HTMLElement => n instanceof HTMLElement
+				const wordEls = Array.from(wordsEl.querySelectorAll("span")).filter(
+					(el): el is HTMLElement =>
+						el instanceof HTMLElement && el.style.position === "absolute"
 				);
-				let wordEls = candidates.filter((n) => n.style.position === "absolute");
-				if (wordEls.length === 0) {
-					wordEls = Array.from(wordsEl.querySelectorAll(":scope > span")).filter(
-						(n): n is HTMLElement => n instanceof HTMLElement
-					);
-				}
-				if (wordEls.length === 0) {
-					wordEls = candidates;
-				}
-
-				const wr = wordsEl.getBoundingClientRect();
-				const cx = wr.width / 2;
-				const cy = wr.height / 2;
-				const maxR = Math.hypot(cx, cy) * 0.94;
-
-				wordEls.forEach((el, index) => {
-					el.classList.add("ambient-wordcloud-word");
-					el.style.removeProperty("opacity");
-
-					const duration = 2.35 + (((index * 19 + (index % 11) * 23) % 56) / 10); // ~2.35s–7.95s
-					const delay =
-						(((index * 0.618033988749895) % 1) +
-							(index % 13) * 0.37 +
-							((index * 7) % 5) * 0.21) %
-						8.2;
-					el.style.animationDuration = `${duration.toFixed(2)}s`;
-					el.style.animationDelay = `-${delay.toFixed(2)}s`;
-
-					const br = el.getBoundingClientRect();
-					const sx = br.left - wr.left + br.width / 2;
-					const sy = br.top - wr.top + br.height / 2;
-					const d = Math.hypot(sx - cx, sy - cy);
-					const t = Math.min(1, d / maxR);
-					const radial = Math.max(0.3, 1 - t * 0.62);
-					const baseNum = 0.45 + 0.55 * radial;
-					const minBreath = 0.24;
-					const lowNum = Math.max(0.14, baseNum - minBreath);
-
-					el.style.setProperty("--ambient-op-base", baseNum.toFixed(3));
-					el.style.setProperty("--ambient-op-low", lowNum.toFixed(3));
-				});
-			};
-
-			window.requestAnimationFrame(() => {
-				if (cancelled) return;
-				window.requestAnimationFrame(applyWordStyles);
-			});
+				if (wordEls.length === 0) return;
+				startRevealCycle(wordEls);
+			}, 500);
 		};
 
 		const scheduleRender = () => {
-			if (resizeTimer) window.clearTimeout(resizeTimer);
-			resizeTimer = window.setTimeout(() => {
-				void renderCloud();
-			}, 220);
+			if (resizeTimer != null) window.clearTimeout(resizeTimer);
+			clearReveal();
+			resizeTimer = window.setTimeout(() => void renderCloud(), 220);
 		};
 
 		void renderCloud();
 
 		const resizeObserver =
 			typeof ResizeObserver !== "undefined"
-				? new ResizeObserver(() => {
-						scheduleRender();
-				  })
+				? new ResizeObserver(scheduleRender)
 				: null;
 		resizeObserver?.observe(host);
-
 		window.addEventListener("resize", scheduleRender);
 
 		return () => {
 			cancelled = true;
-			if (resizeTimer) window.clearTimeout(resizeTimer);
+			if (resizeTimer != null) window.clearTimeout(resizeTimer);
+			if (initTimer != null) window.clearTimeout(initTimer);
+			clearReveal();
 			resizeObserver?.disconnect();
 			wordCloud?.stop?.();
 			window.removeEventListener("resize", scheduleRender);
 		};
-	}, [weightedWords]);
+	}, []);
 
 	return (
 		<div className="tour-motion-bg relative isolate flex min-h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
@@ -283,7 +229,7 @@ export default function AmbientPage() {
 								priority
 								className="h-24 w-24 shrink-0 sm:h-28 sm:w-28"
 							/>
-							<h1 className="max-w-[16ch] text-[clamp(2rem,5.2vw,3.85rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-primary drop-shadow-[0_2px_24px_oklch(var(--p)/0.25)]">
+							<h1 className="max-w-[16ch] text-[clamp(2rem,5.2vw,3.85rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-white drop-shadow-[0_2px_24px_oklch(var(--p)/0.25)]">
 								Ocean DNA Explorer
 							</h1>
 						</div>

@@ -294,33 +294,6 @@ body:has(.tour-layout-root) {
 	mask-size: 100% 100%;
 }
 
-.ambient-wordcloud-word {
-	/* Per-phrase --ambient-op-low / --ambient-op-base from JS. Opacity-only (no motion) to avoid wordcloud2 layout issues. */
-	--ambient-op-base: 1;
-	--ambient-op-low: 0.82;
-	will-change: opacity;
-	text-shadow: 0 14px 42px rgba(0, 0, 0, 0.24);
-	font-weight: 700;
-	letter-spacing: -0.035em;
-	animation-name: ambientWordBreatheSubtle;
-	animation-timing-function: ease-in-out;
-	animation-iteration-count: infinite;
-	animation-direction: alternate;
-}
-
-.ambient-cloud-word {
-	position: absolute;
-	transform: translate(-50%, -50%);
-	width: max-content;
-	max-width: 18rem;
-	text-align: center;
-	line-height: 1.15;
-	white-space: normal;
-	font-weight: 700;
-	letter-spacing: -0.035em;
-	text-shadow: 0 14px 42px rgba(0, 0, 0, 0.24);
-	animation: ambientCloudFloat ease-in-out infinite;
-}
 
 /* ---------- /sponsors ---------- */
 .sponsors-title {
@@ -393,37 +366,6 @@ body:has(.tour-layout-root) {
 	}
 }
 
-@keyframes ambientCloudFloat {
-	0% {
-		opacity: 0.78;
-		transform: translate(-50%, -50%) scale(0.96) rotate(-1deg);
-	}
-	24% {
-		opacity: 0.92;
-		transform: translate(calc(-50% + 9px), calc(-50% - 8px)) scale(1) rotate(0.45deg);
-	}
-	45% {
-		opacity: 1;
-		transform: translate(calc(-50% - 7px), calc(-50% - 14px)) scale(1.04) rotate(1deg);
-	}
-	70% {
-		opacity: 0.9;
-		transform: translate(calc(-50% + 5px), calc(-50% - 4px)) scale(1.01) rotate(-0.35deg);
-	}
-	100% {
-		opacity: 0.78;
-		transform: translate(-50%, -50%) scale(0.96) rotate(-1deg);
-	}
-}
-
-@keyframes ambientWordBreatheSubtle {
-	from {
-		opacity: var(--ambient-op-low, 0.82);
-	}
-	to {
-		opacity: var(--ambient-op-base, 1);
-	}
-}
 
 @keyframes sponsorsTitleIn {
 	from {
