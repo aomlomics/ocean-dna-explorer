@@ -122,13 +122,13 @@ export default function Home() {
 							<div className="lg:col-span-4">
 								<div className="h-105 sm:h-130 w-full">
 									<DashCard
-										title="Target genes"
+										title="Target Genes"
 										titleClassName="text-base-content/75"
 										className="h-full"
 										padding="none"
 										bodyClassName="flex flex-col h-full px-5 sm:px-6 pb-5 sm:pb-6"
 										info={{
-											title: "Target genes",
+											title: "Target Genes",
 											description:
 												"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
 											links: [

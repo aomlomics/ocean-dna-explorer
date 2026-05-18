@@ -4,7 +4,7 @@ import DataDisplay from "@/app/components/DataDisplay";
 import { AssayPrep } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";
-import AssayCard from "@/app/components/assay/AssayCard";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 
 export default async function Project_id_Assay_name({
 	params
@@ -113,7 +113,10 @@ export default async function Project_id_Assay_name({
 					{/* Context cards */}
 					<div className="space-y-4">
 						{assay && (
-							<AssayCard assay_name={assay.assay_name} target_gene={assay.target_gene ?? assay.assay_name} />
+							<AssaysCard
+								title="Assay used:"
+								assays={[{ assay_name: assay.assay_name, target_gene: assay.target_gene ?? assay.assay_name }]}
+							/>
 						)}
 
 						{project && (

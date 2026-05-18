@@ -214,11 +214,11 @@ export async function SamplesOverTimeCard() {
 
 	return (
 		<DashCard
-			title="Samples collected over time"
+			title="Samples Collected Over Time"
 			titleClassName="text-base-content/75"
 			subtitle="Yearly sample collection volume"
 			info={{
-				title: "Samples collected over time",
+				title: "Samples Collected Over Time",
 				description:
 					"Count of public samples grouped by the year they were collected (eventDate). Samples with placeholder dates are excluded.",
 				links: [{ label: "Browse samples", href: "/explore/sample" }]

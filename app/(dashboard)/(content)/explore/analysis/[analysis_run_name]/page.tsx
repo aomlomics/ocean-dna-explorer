@@ -5,7 +5,7 @@ import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
-import AssayCard from "@/app/components/assay/AssayCard";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 import { Analysis } from "@/app/generated/prisma/client";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
@@ -175,10 +175,10 @@ export default async function Analysis_run_name({
 					</div>
 
 				{/* Assay Card */}
-				<div>
-					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
-					<AssayCard assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} />
-				</div>
+				<AssaysCard
+					title="Assays used in this Analysis"
+					assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
+				/>
 				</div>
 			</div>
 

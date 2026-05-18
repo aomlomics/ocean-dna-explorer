@@ -13,7 +13,7 @@ export default function AssayCard({ assay_name, target_gene, className = "" }: A
 		<Link
 			href={`/explore/assay/${encodeURIComponent(assay_name)}`}
 			className={[
-				"flex items-center gap-4 p-4 rounded-lg hover:bg-base-200 transition-colors duration-150 group",
+				"flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group",
 				className
 			].join(" ")}
 		>
@@ -30,7 +30,7 @@ export default function AssayCard({ assay_name, target_gene, className = "" }: A
 			</div>
 			{/* Chevron indicates the card is a navigation link */}
 			<svg
-				className="w-4 h-4 text-base-content/30 group-hover:text-base-content/60 transition-colors duration-150 shrink-0"
+				className="w-4 h-4 text-base-content/45 group-hover:text-base-content/75 transition-colors duration-150 shrink-0"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"

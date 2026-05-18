@@ -66,10 +66,10 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 
 	return (
 		<DashCard
-			title="Temporal coverage"
+			title="Temporal Coverage"
 			titleClassName="text-base-content/75"
 			info={{
-				title: "Temporal coverage",
+				title: "Temporal Coverage",
 				description:
 					"The earliest and latest real eventDate across public samples. Samples whose eventDate encodes a 'not applicable' sentinel (e.g. -9999) or an epoch-parse ghost (≈1969–1970) are excluded.",
 				links: [

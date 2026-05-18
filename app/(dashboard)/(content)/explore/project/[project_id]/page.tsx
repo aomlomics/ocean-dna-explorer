@@ -4,7 +4,7 @@ import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
-import AssayCard from "@/app/components/assay/AssayCard";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 import DataDisplay from "@/app/components/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
 import { Project } from "@/app/generated/prisma/client";
@@ -171,6 +171,10 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}),
 		{}
 	);
+	const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
+		assay_name,
+		target_gene: assay.target_gene
+	}));
 
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
 	const taxaCount = {} as Record<string, number>;
@@ -228,21 +232,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 	const assaysAndTaxa = (
 		<div className="h-full flex flex-col gap-6">
-			<div id="assays-section">
-				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-					Assays in this Project ({Object.keys(uniqueAssays).length})
-				</h2>
-				<div className="space-y-2">
-					{Object.keys(uniqueAssays).map((assay) => (
-						<AssayCard
-							key={assay}
-							assay_name={assay}
-							target_gene={uniqueAssays[assay].target_gene}
-							className="bg-base-200 hover:bg-base-300/50 rounded-xl"
-						/>
-					))}
-				</div>
-			</div>
+			<AssaysCard id="assays-section" title="Assays in this Project" assays={assaySummaries} />
 
 			{/* Top 2 Taxonomies per Assay */}
 			<div>

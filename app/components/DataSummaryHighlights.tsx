@@ -106,7 +106,7 @@ export default async function DataSummaryHighlights() {
 	return (
 		<section className="space-y-6">
 			<div>
-				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Latest submissions</h2>
+				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Latest Submissions</h2>
 			</div>
 
 			{/*

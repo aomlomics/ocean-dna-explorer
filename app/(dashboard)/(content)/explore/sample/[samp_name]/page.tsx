@@ -4,7 +4,7 @@ import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
 import { Sample } from "@/app/generated/prisma/client";
-import AssayCard from "@/app/components/assay/AssayCard";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
@@ -86,16 +86,12 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					<MapComponent locations={[sample]} className="aspect-square" />
 
 					{/* Assays Section */}
-					<div id="assays-section" className="target:animate-flash">
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-							Assays used on this Sample ({sample.Assays.length})
-						</h2>
-						<div className="space-y-2">
-							{sample.Assays.map((assay) => (
-								<AssayCard key={assay.assay_name} assay_name={assay.assay_name} target_gene={assay.target_gene} />
-							))}
-						</div>
-					</div>
+					<AssaysCard
+						id="assays-section"
+						title="Assays used on this Sample"
+						assays={sample.Assays}
+						className="target:animate-flash"
+					/>
 				</div>
 
 				{/* Right column - Stats and Information */}

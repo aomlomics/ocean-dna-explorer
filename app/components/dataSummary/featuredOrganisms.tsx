@@ -29,7 +29,7 @@ export type FeaturedOrganism = {
 
 	/**
 	 * Optional future hook: a canonical taxonomy string that matches your DB taxonomy row.
-	 * Not used for routing yet (for now, "View taxonomy" always goes to `/explore/taxonomy` list).
+	 * Must be a single taxonomy path (never a list of taxonomy strings).
 	 */
 	taxonomyString?: string;
 	commonName?: string;
@@ -378,6 +378,8 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = [
 type FeaturedFilterGroup = "All" | "Fish" | "Invertebrates" | "Protists" | "Fungi" | "Other";
 
 const FEATURED_FILTER_GROUPS: FeaturedFilterGroup[] = ["All", "Fish", "Invertebrates", "Protists", "Fungi", "Other"];
+const FILTER_TAB_BASE =
+	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
 
 const DEFAULT_IMAGE_SRC = "/images/featured_organisms/lanternfish.webp";
 
@@ -401,6 +403,7 @@ export default function FeaturedOrganisms() {
 		return FEATURED_ORGANISMS.filter((organism) => toFilterGroup(organism.group) === activeGroup);
 	}, [activeGroup]);
 	const honeycombRows = useMemo(() => createHoneycombRows(filteredOrganisms), [filteredOrganisms]);
+	const shouldCenterDock = honeycombRows.length <= 3;
 
 	useEffect(() => {
 		bubbleNodesRef.current = bubbleNodesRef.current.slice(0, filteredOrganisms.length);
@@ -415,8 +418,51 @@ export default function FeaturedOrganisms() {
 		}
 	}, [filteredOrganisms, selectedOrganism.id]);
 
+	useEffect(() => {
+		resetBubbleScales();
+	}, [filteredOrganisms]);
+
+	function handleOrganismSelect(organism: FeaturedOrganism, node: HTMLButtonElement | null) {
+		if (node) {
+			const currentScale = readNodeScale(node);
+			const pressScale = Math.max(0.96, currentScale * 0.97);
+			const reboundScale = currentScale * 1.012;
+			node.animate(
+				[
+					{ transform: `scale(${pressScale.toFixed(3)})` },
+					{ transform: `scale(${reboundScale.toFixed(3)})` },
+					{ transform: `scale(${currentScale.toFixed(3)})` }
+				],
+				{
+					duration: 140,
+					easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+				}
+			);
+		}
+		setSelectedOrganism(organism);
+	}
+
 	function handleBubbleFieldMouseMove(event: React.MouseEvent<HTMLDivElement>) {
 		const { clientX, clientY } = event;
+		let hoveredNode: HTMLButtonElement | null = null;
+		let hoveredDistance = Number.POSITIVE_INFINITY;
+		for (const node of bubbleNodesRef.current) {
+			if (!node) continue;
+			const rect = node.getBoundingClientRect();
+			const isInsideRect =
+				clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+			if (!isInsideRect) continue;
+			const centerX = rect.left + rect.width / 2;
+			const centerY = rect.top + rect.height / 2;
+			const dx = clientX - centerX;
+			const dy = clientY - centerY;
+			const distance = Math.hypot(dx, dy);
+			if (distance < hoveredDistance) {
+				hoveredDistance = distance;
+				hoveredNode = node;
+			}
+		}
+
 		for (const node of bubbleNodesRef.current) {
 			if (!node) continue;
 			const rect = node.getBoundingClientRect();
@@ -426,19 +472,25 @@ export default function FeaturedOrganisms() {
 			const dy = clientY - centerY;
 			const distance = Math.hypot(dx, dy);
 
-			let scale = 1;
-			if (distance < 90) {
-				scale = 1.22;
-			} else if (distance < 190) {
-				const t = (distance - 90) / 100;
-				scale = 1.22 - t * 0.16;
+			const baseScale = node.dataset.selected === "true" ? 1.04 : 1;
+			let scale = baseScale;
+			if (node === hoveredNode) {
+				scale = 1.17;
+			} else if (distance < 112) {
+				scale = 1.1;
+			} else if (distance < 220) {
+				const t = (distance - 112) / 108;
+				scale = 1.1 - t * 0.06;
+				scale = Math.max(scale, baseScale);
 			}
 
 			node.style.transform = `scale(${scale.toFixed(3)})`;
-			if (scale > 1.2) {
-				node.style.zIndex = "30";
+			if (scale > 1.14) {
+				node.style.zIndex = "18";
+			} else if (scale > 1.07) {
+				node.style.zIndex = "15";
 			} else if (scale > 1) {
-				node.style.zIndex = "20";
+				node.style.zIndex = "12";
 			} else {
 				node.style.zIndex = "10";
 			}
@@ -446,10 +498,15 @@ export default function FeaturedOrganisms() {
 	}
 
 	function handleBubbleFieldMouseLeave() {
+		resetBubbleScales();
+	}
+
+	function resetBubbleScales() {
 		for (const node of bubbleNodesRef.current) {
 			if (!node) continue;
-			node.style.transform = "scale(1)";
-			node.style.zIndex = "10";
+			const isSelected = node.dataset.selected === "true";
+			node.style.transform = isSelected ? "scale(1.04)" : "scale(1)";
+			node.style.zIndex = isSelected ? "12" : "10";
 		}
 	}
 
@@ -463,13 +520,11 @@ export default function FeaturedOrganisms() {
 							key={group}
 							type="button"
 							onClick={() => setActiveGroup(group)}
-							className={[
-								"rounded-full border px-4 py-2 text-sm font-medium will-change-transform",
-								"transition-transform duration-200 ease-out hover:-translate-y-0.5",
+							className={`${FILTER_TAB_BASE} ${
 								isActive
-									? "border-primary/60 bg-primary/15 text-primary"
-									: "border-base-content/15 bg-base-200/70 text-base-content/80"
-							].join(" ")}
+									? "bg-primary text-primary-content shadow-md"
+									: "bg-base-200/90 text-base-content hover:bg-base-300 active:brightness-95"
+							}`}
 							aria-pressed={isActive}
 						>
 							{group}
@@ -478,43 +533,48 @@ export default function FeaturedOrganisms() {
 				})}
 			</div>
 
-			<div className="flex items-center gap-4 md:gap-6">
-				<div className="self-center">
-					<SelectedOrganismCard organism={selectedOrganism} />
-				</div>
+			<div className="overflow-hidden rounded-2xl border border-base-content/10 bg-base-200 shadow-sm">
+				<div className="flex h-[620px] md:h-[680px] items-stretch">
+					<div className="relative z-40 w-[340px] md:w-[390px] shrink-0 border-r border-base-content/10 bg-base-100/70">
+						<SelectedOrganismCard organism={selectedOrganism} />
+					</div>
 
-				<div
-					onMouseMove={handleBubbleFieldMouseMove}
-					onMouseLeave={handleBubbleFieldMouseLeave}
-					className="min-w-0 flex-1 py-4 md:py-6"
-				>
-					<div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 md:gap-3">
-						{honeycombRows.map((row, rowIndex) => (
-							<div
-								key={`honeycomb-row-${rowIndex}`}
-								className={[
-									"flex items-center justify-center gap-5 md:gap-7",
-									rowIndex === 0 ? "" : "-mt-2 md:-mt-3"
-								].join(" ")}
-							>
-								{row.map(({ organism, index }) => (
-									<OrganismDockCircle
-										key={organism.id}
-										organism={organism}
-										onSelect={() => setSelectedOrganism(organism)}
-										isSelected={selectedOrganism.id === organism.id}
-										bubbleRef={(node) => {
-											bubbleNodesRef.current[index] = node;
-										}}
-									/>
-								))}
-							</div>
-						))}
-						{filteredOrganisms.length === 0 ? (
-							<div className="rounded-xl border border-base-content/10 bg-base-200/60 px-4 py-3 text-sm text-base-content/70">
-								No featured organisms in this group yet.
-							</div>
-						) : null}
+					<div
+						onMouseMove={handleBubbleFieldMouseMove}
+						onMouseLeave={handleBubbleFieldMouseLeave}
+						className={[
+							"relative z-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-base-200 py-4 md:py-6",
+							shouldCenterDock ? "content-center" : ""
+						].join(" ")}
+					>
+						<div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-2 px-3 pb-10 md:gap-2 md:px-4 md:pb-12">
+							{honeycombRows.map((row, rowIndex) => (
+								<div
+									key={`honeycomb-row-${rowIndex}`}
+									className={[
+										"flex items-center justify-center gap-2 md:gap-2",
+										rowIndex === 0 ? "" : "-mt-2 md:-mt-3"
+									].join(" ")}
+								>
+									{row.map(({ organism, index }) => (
+										<OrganismDockCircle
+											key={organism.id}
+											organism={organism}
+											onSelect={(node) => handleOrganismSelect(organism, node)}
+											isSelected={selectedOrganism.id === organism.id}
+											bubbleRef={(node) => {
+												bubbleNodesRef.current[index] = node;
+											}}
+										/>
+									))}
+								</div>
+							))}
+							{filteredOrganisms.length === 0 ? (
+								<div className="rounded-xl border border-base-content/10 bg-base-200/60 px-4 py-3 text-sm text-base-content/70">
+									No featured organisms in this group yet.
+								</div>
+							) : null}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -529,7 +589,7 @@ function OrganismDockCircle({
 	bubbleRef
 }: {
 	organism: FeaturedOrganism;
-	onSelect: () => void;
+	onSelect: (node: HTMLButtonElement | null) => void;
 	isSelected: boolean;
 	bubbleRef: (node: HTMLButtonElement | null) => void;
 }) {
@@ -541,14 +601,16 @@ function OrganismDockCircle({
 		<button
 			ref={bubbleRef}
 			type="button"
-			onClick={onSelect}
+			onClick={(event) => onSelect(event.currentTarget)}
+			data-selected={isSelected ? "true" : "false"}
 			className={[
 				"organism-node group relative isolate overflow-hidden rounded-full",
-				"w-20 h-20 md:w-24 md:h-24 shrink-0 border-2 bg-base-200/80 shadow-sm",
-				"transition-all duration-200 ease-out will-change-transform",
-				isSelected ? "border-primary/60" : "border-base-content/10"
+				"w-24 h-24 md:w-29 md:h-29 shrink-0 bg-base-200/80 shadow-sm",
+				"transition-transform duration-200 ease-out will-change-transform",
+				isSelected
+					? "scale-105 border-4 border-primary/80 shadow-md shadow-primary/25"
+					: "border-2 border-base-content/10"
 			].join(" ")}
-			style={{ zIndex: 10 }}
 			aria-label={`Open details for ${commonName}`}
 		>
 			{imageFailed ? (
@@ -560,7 +622,7 @@ function OrganismDockCircle({
 					src={imageSrc}
 					alt={commonName}
 					fill
-					sizes="(max-width: 768px) 5rem, 6rem"
+					sizes="(max-width: 768px) 5.5rem, 7rem"
 					className="object-cover object-center"
 					onError={() => setImageFailed(true)}
 				/>
@@ -578,38 +640,47 @@ function OrganismDockCircle({
 	);
 }
 
+function readNodeScale(node: HTMLElement): number {
+	const match = /scale\(([\d.]+)\)/.exec(node.style.transform);
+	if (!match) return 1;
+	const parsed = Number.parseFloat(match[1] ?? "1");
+	return Number.isFinite(parsed) ? parsed : 1;
+}
+
 function SelectedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 	const [imageFailed, setImageFailed] = useState(false);
 	const commonName = organism.commonName ?? createFallbackCommonName(organism);
 	const imageSrc = organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC;
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
-	const taxonomyHref = organism.taxonomyString
-		? `/explore/taxonomy/${encodeURIComponent(organism.taxonomyString)}`
+	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
+	const taxonomyHref = taxonomyString
+		? `/explore/taxonomy/${encodeURIComponent(taxonomyString)}`
 		: "/explore/taxonomy";
 
 	return (
-		<article className="w-[320px] md:w-[360px] shrink-0 overflow-hidden rounded-2xl border border-base-content/10 bg-base-100/95 shadow-sm">
+		<article className="h-full overflow-hidden bg-transparent">
 			<div className="translate-y-0 opacity-100 transition-[transform,opacity] duration-250 ease-out will-change-transform">
-				<div className="relative aspect-video w-full bg-base-200">
-					{imageFailed ? (
-						<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
-							{commonName.charAt(0).toUpperCase()}
-						</div>
-					) : (
-						<Image
-							src={imageSrc}
-							alt={commonName}
-							fill
-							sizes="(max-width: 1024px) 100vw, 760px"
-							className="object-cover object-center"
-							onError={() => setImageFailed(true)}
-						/>
-					)}
+				<div className="h-[270px] md:h-[320px] p-3 md:p-4">
+					<div className="relative h-full w-full overflow-hidden rounded-2xl bg-base-300">
+						{imageFailed ? (
+							<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
+								{commonName.charAt(0).toUpperCase()}
+							</div>
+						) : (
+							<Image
+								src={imageSrc}
+								alt={commonName}
+								fill
+								sizes="(max-width: 1024px) 100vw, 760px"
+								className="object-cover object-center"
+								onError={() => setImageFailed(true)}
+							/>
+						)}
+					</div>
 				</div>
 
-				<div className="space-y-4 p-4 sm:p-5">
+				<div className="flex h-[350px] md:h-[360px] flex-col gap-4 p-4 sm:p-5">
 					<div>
-						<p className="text-xs uppercase tracking-wide text-base-content/55">Featured organism</p>
 						<h3 className="text-2xl font-semibold text-base-content">{commonName}</h3>
 					</div>
 
@@ -626,7 +697,9 @@ function SelectedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 						</span>
 					</div>
 
-					<p className="text-sm leading-relaxed text-base-content/80">{organism.description}</p>
+					<p className="min-h-[140px] max-h-[220px] overflow-y-auto pr-1 text-sm leading-relaxed text-base-content/80">
+						{organism.description}
+					</p>
 
 					<div className="flex flex-wrap items-center gap-3 pt-1">
 						<Link href={taxonomyHref} className="btn btn-primary btn-sm">
@@ -640,6 +713,16 @@ function SelectedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 			</div>
 		</article>
 	);
+}
+
+function toSingleTaxonomyString(taxonomyString: string | undefined): string | undefined {
+	if (!taxonomyString) return undefined;
+	const normalized = taxonomyString.trim();
+	// Guard against accidentally passing a list of taxonomy paths.
+	if (normalized.includes(",") || normalized.includes("|") || normalized.includes("\n")) {
+		return undefined;
+	}
+	return normalized;
 }
 
 function toFilterGroup(group: FeaturedOrganismGroup): FeaturedFilterGroup {
@@ -673,7 +756,8 @@ function createHoneycombRows(
 	const total = organisms.length;
 	if (total === 0) return [];
 
-	const longRowSize = clamp(Math.ceil(Math.sqrt(total)), 3, 7);
+	// Keep rows dense enough to fill the right panel without clipping.
+	const longRowSize = clamp(Math.ceil(Math.sqrt(total)), 4, 6);
 	const shortRowSize = Math.max(2, longRowSize - 1);
 	const rowSizes: number[] = [];
 
