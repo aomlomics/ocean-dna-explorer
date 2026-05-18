@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { publicPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
-import FeaturedOrganismsGrid from "./dataSummary/FeaturedOrganismsGrid";
+import FeaturedOrganisms from "./dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
 import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
 
@@ -149,7 +149,7 @@ export function FeaturedOrganismsSection() {
 					</svg>
 				</span>
 			</div>
-			<FeaturedOrganismsGrid />
+			<FeaturedOrganisms />
 		</section>
 	);
 }

@@ -7,7 +7,7 @@ import Carousel from "../components/images/Carousel";
 import { Suspense } from "react";
 import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 import ClientMap from "../components/map/ClientMap";
-import DataSummaryHighlights from "../components/DataSummaryHighlights";
+import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
 import DashCard from "../components/dataSummary/DashCard";
 import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
 import {
@@ -199,7 +199,7 @@ export default function Home() {
 					</Suspense>
 
 					{/* Row 5 — Featured Organisms carousel */}
-					{/* <FeaturedOrganismsSection /> */}
+					<FeaturedOrganismsSection />
 
 					{/* Row 6 — Life Across ODE */}
 					<Suspense>
