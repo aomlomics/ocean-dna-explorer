@@ -81,6 +81,12 @@ export default function AmbientPage() {
 		let cycleTimer: number | null = null;
 		let resizeTimer: number | null = null;
 		let initTimer: number | null = null;
+		const typingTimers = new Set<number>();
+
+		const clearTypingTimers = () => {
+			typingTimers.forEach((id) => window.clearInterval(id));
+			typingTimers.clear();
+		};
 
 		const clearReveal = () => {
 			if (revealTimer != null) {
@@ -91,6 +97,30 @@ export default function AmbientPage() {
 				window.clearTimeout(cycleTimer);
 				cycleTimer = null;
 			}
+			clearTypingTimers();
+		};
+
+		const typeInWord = (el: HTMLElement) => {
+			const fullText = el.dataset.ambientFullText ?? (el.textContent ?? "");
+			el.dataset.ambientFullText = fullText;
+			el.textContent = "";
+			el.style.transition = "none";
+			el.style.opacity = "1";
+			if (!fullText) return;
+
+			const chars = Array.from(fullText);
+			let charIdx = 0;
+			const charMs = 14;
+			const timer = window.setInterval(() => {
+				if (cancelled) return;
+				charIdx += 1;
+				el.textContent = chars.slice(0, charIdx).join("");
+				if (charIdx >= chars.length) {
+					window.clearInterval(timer);
+					typingTimers.delete(timer);
+				}
+			}, charMs);
+			typingTimers.add(timer);
 		};
 
 		const startRevealCycle = (wordEls: HTMLElement[]) => {
@@ -104,21 +134,21 @@ export default function AmbientPage() {
 
 			// Hide all words instantly (no transition so there's no visible flash).
 			shuffled.forEach((el) => {
+				const fullText = el.dataset.ambientFullText ?? (el.textContent ?? "");
+				el.dataset.ambientFullText = fullText;
+				el.textContent = fullText;
 				el.style.transition = "none";
 				el.style.opacity = "0";
 			});
 
-			// After the browser commits the hide, add the fade-in transition and begin revealing.
+			// After the browser commits the hide, begin typed reveals (no fade transition).
 			window.requestAnimationFrame(() => {
 				if (cancelled) return;
-				shuffled.forEach((el) => {
-					el.style.transition = "opacity 1.4s ease";
-				});
 
 				revealTimer = window.setInterval(() => {
 					if (cancelled) return;
 					for (let i = 0; i < BATCH_SIZE && idx < shuffled.length; i++, idx++) {
-						shuffled[idx].style.opacity = "1";
+						typeInWord(shuffled[idx]);
 					}
 					if (idx >= shuffled.length && revealTimer != null) {
 						// All words are visible — let the cycle timer handle the next reset.

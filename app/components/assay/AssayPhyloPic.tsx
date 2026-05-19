@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
+import AssayPhyloPicImage from "@/app/components/assay/AssayPhyloPicImage";
 
 export default async function AssayPhyloPic({ assay_name }: { assay_name: string }) {
 	// Sum organismQuantity per (analysis_run_name, featureid)
@@ -116,11 +116,7 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 		if (phyloPic.errors || !phyloPic._embedded?.primaryImage?._links?.vectorFile?.href) continue;
 
 		const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href as string;
-		return (
-			<div className="w-full h-full relative">
-				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
-			</div>
-		);
+		return <AssayPhyloPicImage src={imageUrl} />;
 	}
 
 	return (
