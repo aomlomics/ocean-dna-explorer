@@ -96,8 +96,8 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							Assays used on this Sample ({assayNames.length})
 						</h2>
 						<div className="space-y-2">
-							{sample.Libraries.map((lib) => (
-								<div key={lib.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
+							{sample.Libraries.map((lib, i) => (
+								<div key={i} className="flex items-center gap-4 p-4 rounded-lg">
 									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 										<div className="relative w-12 h-12">
 											<Suspense>

@@ -721,7 +721,6 @@ export default function Table({
 														}
 													>
 														{head}
-														{userDefinedHeaders.includes(head) && <sup>UD</sup>}
 														{orderBy.field === head ? (
 															orderBy.order === "asc" ? (
 																<svg
@@ -916,16 +915,27 @@ export default function Table({
 														);
 													}
 												} else if (userDefinedHeaders.includes(head)) {
-													acc.push(
-														<td
-															className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
-																i ? "border-t-2" : ""
-															} ${row.userDefined[head] === null ? "bg-base-200" : ""}`}
-															key={row.userDefined[head] + "child" + j}
-														>
-															{row.userDefined[head]}
-														</td>
-													);
+													if (row.userDefined && row.userDefined[head]) {
+														acc.push(
+															<td
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2 ${
+																	i ? "border-t-2" : ""
+																}`}
+																key={row.userDefined[head] + "child" + j}
+															>
+																{row.userDefined[head]}
+															</td>
+														);
+													} else {
+														acc.push(
+															<td
+																className={`whitespace-nowrap text-sm border-base-300 border-l-2 bg-base-200 ${
+																	i ? "border-t-2" : ""
+																}`}
+																key={"nullchild" + j}
+															></td>
+														);
+													}
 												} else {
 													let element;
 													if (oneRelations.includes(head as Prisma.ModelName)) {

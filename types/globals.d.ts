@@ -114,11 +114,12 @@ export type Location = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	[key: string]: any;
-} & { values?: never };
+} & { values?: never; polylines?: never };
 export type LocationWithValues = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	values?: Location[];
+	polylines?: [number, number][];
 	[key: string]: any;
 };
 

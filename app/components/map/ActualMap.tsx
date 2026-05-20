@@ -1,6 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, FeatureGroup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, FeatureGroup, Polyline } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import {
 	divIcon,
@@ -19,7 +19,7 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import Link from "next/link";
-import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, Fragment, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
@@ -55,10 +55,22 @@ type MapProps =
 type Bounds = [[number, number], [number, number]];
 
 type LegendInfo =
-	| ({ field: string | string[] } & (
-			| { mode: "discreet"; colorMap: Record<string, Color>; hidden?: string[] }
-			| { mode: "gradient"; range: [number, number] | [Date, Date]; palette: string; someNoValue?: boolean }
-	  ))
+	| (
+			| {
+					field: string | string[];
+					mode: "discreet";
+					colorMap: Record<string, Color>;
+					hidden?: string[];
+					tooManyOptions?: boolean;
+			  }
+			| {
+					field: string;
+					mode: "gradient";
+					range: [number, number] | [Date, Date];
+					palette: string;
+					someNoValue?: boolean;
+			  }
+	  )
 	| undefined;
 
 const DEFAULT_COLOR = chroma("red");
@@ -96,9 +108,9 @@ function getLegendValue(
 ) {
 	if (typeof field === "string") {
 		if (userDefinedOptions.has(field)) {
-			return loc.userDefined[field];
+			return loc.userDefined[field] || "";
 		} else {
-			return loc[field];
+			return loc[field] || "";
 		}
 	} else {
 		let joined = "";
@@ -115,12 +127,16 @@ function getLegendValue(
 function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Location, userDefinedOptions: Set<string>) {
 	if (legendInfo) {
 		if (legendInfo.mode === "discreet") {
+			if (legendInfo.tooManyOptions) {
+				return { color: DEFAULT_COLOR };
+			}
+
 			const titleIdVal = getLegendValue(legendInfo.field, loc, userDefinedOptions);
 			if (titleIdVal) {
 				return { color: legendInfo.colorMap[titleIdVal] };
 			}
 		} else if (legendInfo.mode === "gradient") {
-			const val = getLegendValue(legendInfo.field, loc, userDefinedOptions) as number | Date | null;
+			const val = getLegendValue(legendInfo.field, loc, userDefinedOptions) as number | string | Date | null;
 			if (val) {
 				let percent;
 				if (typeof val === "number") {
@@ -128,7 +144,9 @@ function getLegendColor(legendInfo: LegendInfo, loc: LocationWithValues | Locati
 					percent = (val - range[0]) / (range[1] - range[0]);
 				} else {
 					const range = legendInfo.range as [Date, Date];
-					percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
+					percent =
+						((typeof val === "string" ? new Date(val).getTime() : val.getTime()) - range[0].getTime()) /
+						(range[1].getTime() - range[0].getTime());
 				}
 
 				if (percent >= 0 && percent <= 100) {
@@ -195,6 +213,63 @@ function getWhereAdvancedHref(where: Record<string, string>, table: Prisma.Model
 		.join(",");
 }
 
+function ddmToDec(deg: string) {
+	const trimmed = deg.trim();
+	const dir = trimmed.slice(-1).toUpperCase();
+	let dirFactor;
+	if (dir === "N" || dir === "E") {
+		dirFactor = 1;
+	} else if (dir === "S" || dir === "W") {
+		dirFactor = -1;
+	} else {
+		return;
+	}
+
+	const degArray = trimmed.slice(0, -1).trim().split(" ");
+	if (degArray.length !== 2) {
+		return;
+	}
+
+	const secondNum = parseFloat(degArray[1]);
+	if (secondNum >= 60) {
+		return;
+	}
+
+	return (parseInt(degArray[0]) + secondNum / 60) * dirFactor;
+}
+
+function verbatimToArray(verbatim: string | undefined | null) {
+	if (!verbatim) {
+		return;
+	}
+
+	const split = verbatim.split("|");
+	if (split.length < 2) {
+		return;
+	}
+
+	const first = ddmToDec(split.shift()!);
+	if (first == null || isNaN(first)) {
+		return;
+	}
+
+	const last = ddmToDec(split.pop()!);
+	if (last == null || isNaN(last)) {
+		return;
+	}
+
+	const arr = [first];
+	for (const s of split) {
+		const dec = ddmToDec(s);
+		if (dec != null && !isNaN(dec)) {
+			arr.push(dec);
+		}
+	}
+	arr.push(last);
+
+	return arr;
+}
+
 //TODO: taxonomy heatmap toggle
 export default function ActualMap({
 	locations,
@@ -256,12 +331,41 @@ export default function ActualMap({
 			!(locations[0].decimalLatitude! in DeadValueEnum) &&
 			!(locations[0].decimalLongitude! in DeadValueEnum)
 		) {
-			mapProps = {
-				center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as unknown as LatLng,
-				zoom: 5
-			};
+			const verbatimLatitudeArray = verbatimToArray(locations[0].verbatimLatitude);
+			const verbatimLongitudeArray = verbatimToArray(locations[0].verbatimLongitude);
+			if (
+				verbatimLatitudeArray &&
+				verbatimLongitudeArray &&
+				verbatimLatitudeArray.length === verbatimLongitudeArray.length &&
+				//make sure the array goes somewhere
+				(verbatimLatitudeArray.length !== 2 ||
+					verbatimLatitudeArray[0] !== verbatimLatitudeArray[verbatimLatitudeArray.length - 1] ||
+					verbatimLongitudeArray[0] !== verbatimLongitudeArray[verbatimLongitudeArray.length - 1])
+			) {
+				let bounds = DEFAULT_BOUNDS;
+				const polylines = [] as [number, number][];
+				for (let i = 0; i < verbatimLatitudeArray.length; i++) {
+					bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
+					bounds[0][1] = Math.max(verbatimLongitudeArray[i], bounds[0][1]);
+					bounds[1][0] = Math.min(verbatimLatitudeArray[i], bounds[1][0]);
+					bounds[1][1] = Math.min(verbatimLongitudeArray[i], bounds[1][1]);
 
-			filteredLocations.push(locations[0] as Location);
+					polylines.push([verbatimLatitudeArray[i], verbatimLongitudeArray[i]]);
+				}
+				mapProps = { bounds };
+
+				filteredLocations.push({
+					...(locations[0] as Location),
+					polylines
+				});
+			} else {
+				mapProps = {
+					center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as unknown as LatLng,
+					zoom: 5
+				};
+
+				filteredLocations.push(locations[0] as Location);
+			}
 		} else {
 			noLocationPoints.push(locations[0]);
 			mapProps = { bounds: DEFAULT_BOUNDS };
@@ -314,7 +418,30 @@ export default function ActualMap({
 						defaultOptions.add(getLegendValue(TableMetadata[titleTable].titleField, loc, userDefinedOptions));
 					}
 
-					filteredLocations.push(loc);
+					const verbatimLatitudeArray = verbatimToArray(loc.verbatimLatitude);
+					const verbatimLongitudeArray = verbatimToArray(loc.verbatimLongitude);
+					let polylines = undefined as undefined | [number, number][];
+					if (
+						verbatimLatitudeArray &&
+						verbatimLongitudeArray &&
+						verbatimLatitudeArray.length === verbatimLongitudeArray.length &&
+						//make sure the array goes somewhere
+						(verbatimLatitudeArray.length !== 2 ||
+							verbatimLatitudeArray[0] !== verbatimLatitudeArray[verbatimLatitudeArray.length - 1] ||
+							verbatimLongitudeArray[0] !== verbatimLongitudeArray[verbatimLongitudeArray.length - 1])
+					) {
+						polylines = [];
+						for (let i = 0; i < verbatimLatitudeArray.length; i++) {
+							bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
+							bounds[0][1] = Math.max(verbatimLongitudeArray[i], bounds[0][1]);
+							bounds[1][0] = Math.min(verbatimLatitudeArray[i], bounds[1][0]);
+							bounds[1][1] = Math.min(verbatimLongitudeArray[i], bounds[1][1]);
+
+							polylines.push([verbatimLatitudeArray[i], verbatimLongitudeArray[i]]);
+						}
+					}
+
+					filteredLocations.push({ ...loc, polylines });
 				}
 			} else {
 				noLocationPoints.push(nullLoc);
@@ -391,6 +518,7 @@ export default function ActualMap({
 					someNoData = true;
 				}
 			}
+
 			const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
 
 			//check if invalid number of options
@@ -398,6 +526,8 @@ export default function ActualMap({
 				return { field, mode: "discreet", colorMap: {} };
 			} else if (optionsArray.length === 1) {
 				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+			} else if (optionsArray.length > 100) {
+				return { field, mode: "discreet", colorMap: {}, tooManyOptions: true };
 			} else {
 				//valid
 				const colors = distinctColors({ count: optionsArray.length, chromaMin });
@@ -443,6 +573,8 @@ export default function ActualMap({
 					return { field, mode: "discreet", colorMap: {} };
 				} else if (optionsArray.length === 1) {
 					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+				} else if (optionsArray.length > 100) {
+					return { field, mode: "discreet", colorMap: {}, tooManyOptions: true };
 				} else {
 					//valid
 					const colors = distinctColors({ count: optionsArray.length, chromaMin });
@@ -506,7 +638,7 @@ export default function ActualMap({
 					if (loc.values) {
 						for (const val of loc.values) {
 							if (val[field]) {
-								const time = val[field].getTime();
+								const time = typeof val[field] === "string" ? new Date(val[field]).getTime() : val[field].getTime();
 								if (!DeadValueNumbers.includes(time)) {
 									options.add(time);
 								} else {
@@ -518,7 +650,7 @@ export default function ActualMap({
 						}
 					} else {
 						if (loc[field]) {
-							const time = loc[field].getTime();
+							const time = typeof loc[field] === "string" ? new Date(loc[field]).getTime() : loc[field].getTime();
 							if (!DeadValueNumbers.includes(time)) {
 								options.add(time);
 							} else {
@@ -967,10 +1099,30 @@ export default function ActualMap({
 											legendInfo={legendInfo}
 											userDefinedOptions={userDefinedOptions}
 											disableSearch={disableSearch}
-											maxWidth={mapRef.current ? mapRef.current.getContainer().clientWidth * 0.5 : undefined}
 										/>
 									</Marker>
 								);
+
+								if (loc.polylines) {
+									acc.push(
+										<Polyline
+											key={i + "polyline"}
+											positions={loc.polylines}
+											pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
+										>
+											<PopupWithSearch
+												table={table}
+												titleTable={titleTable}
+												where={where}
+												loc={loc}
+												id={id}
+												legendInfo={legendInfo}
+												userDefinedOptions={userDefinedOptions}
+												disableSearch={disableSearch}
+											/>
+										</Polyline>
+									);
+								}
 							}
 
 							return acc;
@@ -1002,6 +1154,26 @@ export default function ActualMap({
 												/>
 											</Marker>
 										);
+
+										if (loc.polylines) {
+											acc.push(
+												<Polyline
+													key={j + "polyline"}
+													positions={loc.polylines}
+													pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
+												>
+													<PopupWithSearch
+														table={table}
+														titleTable={titleTable}
+														where={where}
+														loc={loc}
+														id={id}
+														legendInfo={legendInfo}
+														userDefinedOptions={userDefinedOptions}
+													/>
+												</Polyline>
+											);
+										}
 									}
 
 									return acc;
@@ -1018,6 +1190,8 @@ export default function ActualMap({
 					}
 					.leaflet-popup-content {
 						margin: 0;
+						width: auto !important;
+						min-width: 300px;
 					}
 					.leaflet-popup-tip {
 						background: let(--fallback-b1, oklch(let(--b1))) !important;
@@ -1060,10 +1234,29 @@ function PopupWithSearchBody({
 				}
 			}
 
+			if (legendInfo) {
+				if (legendInfo.mode === "discreet") {
+					tempFilteredValues.sort((a, b) =>
+						getLegendValue(legendInfo.field, a, userDefinedOptions)
+							.toString()
+							.localeCompare(getLegendValue(legendInfo.field, b, userDefinedOptions).toString())
+					);
+				} else {
+					tempFilteredValues.sort((a, b) => {
+						if (getZodType(table, legendInfo.field).type === "date") {
+							return new Date(a[legendInfo.field]).getTime() - new Date(b[legendInfo.field]).getTime();
+						} else {
+							return a[legendInfo.field] - b[legendInfo.field];
+						}
+					});
+				}
+			}
+
 			setFilteredValues(tempFilteredValues);
 		}
 	}, [filter, loc.values]);
 
+	let legendValueHeader = undefined as any;
 	return (
 		<>
 			{titleTable && (
@@ -1095,7 +1288,7 @@ function PopupWithSearchBody({
 				{filteredValues ? (
 					<>
 						<div className="flex justify-between gap-2 items-center">
-							<h2 className="text-primary text-lg">
+							<h2 className="text-primary text-lg text-nowrap">
 								{filteredValues.length === 1 ? capitalizeTable(table) : TableMetadata[table].plural} (
 								{filteredValues.length})
 							</h2>
@@ -1116,24 +1309,34 @@ function PopupWithSearchBody({
 								</Link>
 							)}
 						</div>
-						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
+						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-2">
 							{filteredValues.map((l) => {
 								if (legendInfo) {
+									const lvh = getLegendValue(legendInfo.field, l, userDefinedOptions).toString();
+									let show = false;
+									if (legendValueHeader !== lvh) {
+										legendValueHeader = lvh;
+										show = true;
+									}
+
 									const { color } = getLegendColor(legendInfo, l, userDefinedOptions);
 
 									return (
-										<div key={l[id]} className="flex gap-2 items-center">
-											<div
-												className="aspect-square w-[1em] h-[1em]"
-												style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
-											></div>
-											<Link
-												href={`/explore/${table}/${encodeURIComponent(l[id])}`}
-												className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs"
-											>
-												{l[id]}
-											</Link>
-										</div>
+										<Fragment key={l[id]}>
+											{show ? <h3 className="text-base-content text-md text-nowrap">{lvh}</h3> : <></>}
+											<div className="flex gap-2 items-center">
+												<div
+													className="aspect-square w-[1em] h-[1em]"
+													style={{ backgroundColor: color ? color.hex() : DEFAULT_COLOR.hex() }}
+												></div>
+												<Link
+													href={`/explore/${table}/${encodeURIComponent(l[id])}`}
+													className="cursor-pointer! link-primary! link-hover!  leading-[1.3]! text-xs"
+												>
+													{l[id]}
+												</Link>
+											</div>
+										</Fragment>
 									);
 								} else {
 									return (
@@ -1154,22 +1357,27 @@ function PopupWithSearchBody({
 					<>
 						<h2 className="text-primary text-lg">{capitalizeTable(table)}</h2>
 						{legendInfo ? (
-							<div className="flex gap-2 items-center">
-								<div
-									className="aspect-square w-[1em] h-[1em]"
-									style={{
-										backgroundColor: legendInfo
-											? getLegendColor(legendInfo, loc, userDefinedOptions).color.hex()
-											: DEFAULT_COLOR.hex()
-									}}
-								></div>
-								<Link
-									href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
-									className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
-								>
-									{loc[id]}
-								</Link>
-							</div>
+							<>
+								<h3 className="text-base-content text-md text-nowrap">
+									{getLegendValue(legendInfo.field, loc, userDefinedOptions).toString()}
+								</h3>
+								<div className="flex gap-2 items-center">
+									<div
+										className="aspect-square w-[1em] h-[1em]"
+										style={{
+											backgroundColor: legendInfo
+												? getLegendColor(legendInfo, loc, userDefinedOptions).color.hex()
+												: DEFAULT_COLOR.hex()
+										}}
+									></div>
+									<Link
+										href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
+										className="cursor-pointer! link-primary! link-hover! border-none! leading-[1.3]! text-xs"
+									>
+										{loc[id]}
+									</Link>
+								</div>
+							</>
 						) : (
 							<Link
 								href={`/explore/${table}/${encodeURIComponent(loc[id])}`}
@@ -1193,7 +1401,6 @@ function PopupWithSearch({
 	id,
 	legendInfo,
 	userDefinedOptions,
-	maxWidth,
 	disableSearch
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -1203,12 +1410,11 @@ function PopupWithSearch({
 	id: string;
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;
-	maxWidth?: number;
 	disableSearch?: true;
 }) {
 	return (
-		<Popup className="map-popup" maxWidth={maxWidth}>
-			<div className="card card-xs card-body justify-center min-h-11.25 min-w-11.25 max-h-50 bg-base-100 shadow-sm p-4 gap-0">
+		<Popup className="map-popup">
+			<div className="card card-xs card-body justify-center min-h-11.25 min-w-11.25 max-h-60 bg-base-100 shadow-sm p-4 gap-0">
 				<PopupWithSearchBody
 					table={table}
 					titleTable={titleTable}
@@ -1682,7 +1888,7 @@ function LegendControl({
 							/>
 
 							<select
-								className="select select-xs select-primary select-ghost text-sm mr-3 grow min-w-max"
+								className="select select-xs select-primary text-sm mr-3 grow min-w-max"
 								value={legendInfo?.field ?? ""}
 								onChange={async (e) => {
 									const field = e.target.value;
@@ -1793,7 +1999,7 @@ function LegendControl({
 												className="aspect-square w-[1em] h-[1em]"
 												style={{ backgroundColor: DEFAULT_COLOR.hex() }}
 											></div>
-											<div className="text-xs">No value</div>
+											<div className="text-xs">{legendInfo.tooManyOptions ? "Too many values (>100)" : "No value"}</div>
 										</div>
 									) : Object.keys(legendInfo.colorMap).length === 1 ? (
 										<div className="flex gap-2 items-center">
