@@ -12,6 +12,7 @@ import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
+import AlphaDiversityDisplay from "@/app/components/AlphaDiversityDisplay";
 
 export default async function Analysis_run_name({
 	params
@@ -37,11 +38,29 @@ export default async function Analysis_run_name({
 					target_gene: true
 				}
 			},
-			Tags: true
+			Tags: true,
+			AlphaDiversities: {
+				select: {
+					id: true,
+					finished: true,
+					indexType: true,
+					depth: true,
+					AlphaDiversityIndexes: {
+						select: {
+							index: true,
+							Library: {
+								select: {
+									Sample: true
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	});
 	if (!analysis) return <>Analysis not found</>;
-	const { _count: _, editHistory: __, Assay: ___, Tags: ____, ...justAnalysis } = analysis;
+	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
 
 	return (
 		<div id="analysis" className="space-y-8">
@@ -210,6 +229,11 @@ export default async function Analysis_run_name({
 					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
 					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
+					</div>
+
+					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Alpha Diversity" />
+					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
+						<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} />
 					</div>
 				</div>
 			</div>
