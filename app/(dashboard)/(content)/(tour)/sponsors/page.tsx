@@ -28,6 +28,14 @@ export default function SponsorsPage() {
 		<div className="tour-motion-bg relative isolate flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-base-200 [html[data-theme='dark']_&]:bg-base-300/50 px-6">
 
 			<div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-6 text-center">
+				<Image
+					src="/images/ode_logo_clean.svg"
+					alt="Ocean DNA Explorer logo"
+					width={104}
+					height={104}
+					priority
+					className="h-20 w-20 shrink-0 sm:h-24 sm:w-24"
+				/>
 				<h1 className="sponsors-title text-3xl font-semibold text-primary sm:text-4xl md:text-5xl">
 					Thank You to Our Supporting Institutes
 				</h1>
@@ -42,7 +50,11 @@ export default function SponsorsPage() {
 					{SPONSORS.map((sponsor) => (
 						<div
 							key={sponsor.name}
-							className={`${sponsor.wrapperClass} relative flex h-28 w-64 items-center justify-center sm:h-36 sm:w-96`}
+							className={`${sponsor.wrapperClass} relative flex items-center justify-center ${
+								sponsor.name.includes("Northern Gulf Institute")
+									? "h-40 w-96 sm:h-48 sm:w-xl"
+									: "h-28 w-64 sm:h-36 sm:w-96"
+							}`}
 						>
 							{sponsor.name.includes("Northern Gulf Institute") ? (
 								<ThemeAwareLogo
