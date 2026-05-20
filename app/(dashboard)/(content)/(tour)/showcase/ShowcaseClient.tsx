@@ -11,13 +11,19 @@ import { RanksBySpecificity } from "@/types/objects";
 import { AnimatePresence, motion, type Transition } from "framer-motion";
 import type { ProjectBundle } from "./data";
 
-const DEFAULT_PROJECT_DURATION_MS = 30_000;
+const DEFAULT_PROJECT_DURATION_MS = 40_000;
 const GRID_CELL_COUNT = 10;
-const WARMUP_TICK_MS = 350;
-const STEADY_TICK_MIN_MS = 1200;
-const STEADY_TICK_MAX_MS = 1600;
+const FAST_START_CELL_COUNT = 6;
+const FAST_START_TICK_MS = 55;
+const WARMUP_TICK_MS = 220;
+const STEADY_TICK_MIN_MS = 1800;
+const STEADY_TICK_MAX_MS = 2400;
 const STEADY_CLEAR_CHANCE = 0.12;
-const INITIAL_TAXONOMY_DELAY_MS = 1100;
+const INITIAL_TAXONOMY_DELAY_MS = 120;
+const INITIAL_PROJECT_INTRO_DELAY_MS = 950;
+const PROJECT_SWAP_INTRO_DELAY_MS = 420;
+const RECENT_SWAP_MEMORY = 3;
+const MAX_NEW_ENRICHES_PER_PROJECT = 24;
 const PREMIUM_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const REVEAL_TRANSITION: Transition = { duration: 0.9, ease: PREMIUM_EASE };
 
@@ -273,6 +279,18 @@ async function fetchTaxonomyMeta(taxonomy: Taxonomy): Promise<TaxonomyCardMeta |
 	return resolved;
 }
 
+function buildFallbackTaxonomyMeta(taxonomy: Taxonomy): TaxonomyCardMeta {
+	const scientificName = mostSpecificName(taxonomy);
+	return {
+		taxonomy,
+		scientificName,
+		taxonomyPath: formatTaxonomyPath(taxonomy),
+		commonName: null,
+		iucn: null,
+		phylopic: null
+	};
+}
+
 export default function ShowcaseClient({
 	projects,
 	projectDurationMs = DEFAULT_PROJECT_DURATION_MS
@@ -288,6 +306,8 @@ export default function ShowcaseClient({
 	const firstProjectPaint = useRef(true);
 	const nextTaxonomyIndex = useRef(0);
 	const gridItemIdCounter = useRef(0);
+	const recentSwapSlotsRef = useRef<number[]>([]);
+	const projectEnrichBudgetUsedRef = useRef(0);
 
 	const project = projects[projectIdx];
 	const mapLocations = useMemo(
@@ -310,6 +330,8 @@ export default function ShowcaseClient({
 		setGridTaxa(gridRef.current);
 		nextTaxonomyIndex.current = 0;
 		gridItemIdCounter.current = 0;
+		recentSwapSlotsRef.current = [];
+		projectEnrichBudgetUsedRef.current = 0;
 		if (!list.length) return;
 
 		let cancelled = false;
@@ -324,13 +346,18 @@ export default function ShowcaseClient({
 		const scheduleNextTick = () => {
 			if (cancelled) return;
 			const hasEmptySlot = gridRef.current.some((cell) => !cell);
+			const filledCount = gridRef.current.reduce((count, cell) => count + (cell ? 1 : 0), 0);
 			timeoutId = window.setTimeout(
 				() => void tick(),
-				hasEmptySlot ? WARMUP_TICK_MS : randomSteadyTickMs()
+				hasEmptySlot
+					? filledCount < FAST_START_CELL_COUNT
+						? FAST_START_TICK_MS
+						: WARMUP_TICK_MS
+					: randomSteadyTickMs()
 			);
 		};
 
-		const tick = async () => {
+		const tick = () => {
 			if (cancelled) return;
 
 			let current = gridRef.current;
@@ -349,26 +376,66 @@ export default function ShowcaseClient({
 			const taxonomy = list[nextTaxonomyIndex.current % list.length];
 			nextTaxonomyIndex.current += 1;
 
-			const meta = await fetchTaxonomyMeta(taxonomy);
-			if (cancelled || !meta) return;
-
 			const emptySlot = current.findIndex((cell) => !cell);
-			const slot = emptySlot !== -1 ? emptySlot : Math.floor(Math.random() * GRID_CELL_COUNT);
+			let slot = emptySlot;
+			if (slot === -1) {
+				const recentSlots = recentSwapSlotsRef.current;
+				const allowedSlots: number[] = [];
+				for (let i = 0; i < GRID_CELL_COUNT; i += 1) {
+					if (!recentSlots.includes(i)) allowedSlots.push(i);
+				}
+				if (allowedSlots.length) {
+					slot = allowedSlots[Math.floor(Math.random() * allowedSlots.length)];
+				} else {
+					slot = Math.floor(Math.random() * GRID_CELL_COUNT);
+				}
+			}
 			gridItemIdCounter.current += 1;
+			const insertedId = gridItemIdCounter.current;
+			const fallbackMeta = buildFallbackTaxonomyMeta(taxonomy);
 
 			const next = [...gridRef.current];
 			next[slot] = {
-				id: gridItemIdCounter.current,
-				...meta
+				id: insertedId,
+				...fallbackMeta
 			};
 			applyGrid(next);
+			const recentSlots = recentSwapSlotsRef.current;
+			recentSlots.push(slot);
+			if (recentSlots.length > RECENT_SWAP_MEMORY) {
+				recentSlots.splice(0, recentSlots.length - RECENT_SWAP_MEMORY);
+			}
+
+			const cacheKey = taxonomy.taxonomy;
+			const hasCachedMeta = taxonomyMetaCache.has(cacheKey);
+			const hasInFlightMeta = taxonomyMetaInFlight.has(cacheKey);
+			const canStartNewEnrichment =
+				hasCachedMeta || hasInFlightMeta || projectEnrichBudgetUsedRef.current < MAX_NEW_ENRICHES_PER_PROJECT;
+			if (canStartNewEnrichment) {
+				if (!hasCachedMeta && !hasInFlightMeta) {
+					projectEnrichBudgetUsedRef.current += 1;
+				}
+				void fetchTaxonomyMeta(taxonomy).then((meta) => {
+					if (!meta || cancelled) return;
+					const latest = gridRef.current[slot];
+					if (!latest || latest.id !== insertedId) return;
+					const enriched = [...gridRef.current];
+					enriched[slot] = {
+						id: insertedId,
+						...meta
+					};
+					applyGrid(enriched);
+				});
+			}
 			scheduleNextTick();
 		};
 
+		const introDelayMs = firstProjectPaint.current ? INITIAL_PROJECT_INTRO_DELAY_MS : PROJECT_SWAP_INTRO_DELAY_MS;
+		const taxonomyStartDelayMs = Math.max(INITIAL_TAXONOMY_DELAY_MS, introDelayMs);
 		startDelayId = window.setTimeout(() => {
 			if (cancelled) return;
 			scheduleNextTick();
-		}, INITIAL_TAXONOMY_DELAY_MS);
+		}, taxonomyStartDelayMs);
 		return () => {
 			cancelled = true;
 			if (timeoutId != null) window.clearTimeout(timeoutId);
@@ -530,67 +597,70 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 	}
 
 	return (
-		<motion.div
-			key={cell.id}
-			initial={{ opacity: 0, y: 8 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.45, ease: PREMIUM_EASE }}
-			className="flex min-h-32 items-center gap-4 px-2 py-1"
-		>
+		<AnimatePresence mode="wait" initial={false}>
 			<motion.div
-				className="relative h-20 w-20 shrink-0 sm:h-22 sm:w-22"
-				title={cell.phylopic?.imageDetails ? `PhyloPic nodes: ${cell.phylopic.imageDetails}` : undefined}
-				initial={{ opacity: 0, scale: 0.88 }}
-				animate={{ opacity: 1, scale: 1 }}
-				transition={{ duration: 0.28, ease: PREMIUM_EASE }}
+				key={cell.id}
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				exit={{ opacity: 0, transition: { duration: 0.14, ease: PREMIUM_EASE } }}
+				transition={{ duration: 0.22, ease: PREMIUM_EASE }}
+				className="flex min-h-32 items-center gap-4 px-2 py-1"
 			>
-				{cell.phylopic?.imageUrl ? (
-					<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" fill className="object-contain" />
-				) : (
-					<div className="flex h-full w-full items-center justify-center text-4xl font-semibold leading-none text-primary/95">
-						?
+				<motion.div
+					className="relative h-20 w-20 shrink-0 sm:h-22 sm:w-22"
+					title={cell.phylopic?.imageDetails ? `PhyloPic nodes: ${cell.phylopic.imageDetails}` : undefined}
+					initial={{ opacity: 0, scale: 0.9 }}
+					animate={{ opacity: 1, scale: 1 }}
+					transition={{ duration: 0.22, ease: PREMIUM_EASE }}
+				>
+					{cell.phylopic?.imageUrl ? (
+						<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" fill className="object-contain" />
+					) : (
+						<div className="flex h-full w-full items-center justify-center text-4xl font-semibold leading-none text-primary/95">
+							?
+						</div>
+					)}
+				</motion.div>
+
+				<div className="min-w-0 pt-0.5">
+					<div className="flex items-start gap-2">
+						<TypewriterText
+							key={`${cell.id}-scientific`}
+							text={cell.scientificName}
+							className="line-clamp-2 text-balance text-[22px] font-semibold leading-tight tracking-tight text-primary drop-shadow-md"
+							delay={0.12}
+							charMs={24}
+						/>
+						{cell.iucn ? (
+							<span
+								className={[
+									"shrink-0 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[12px] font-semibold",
+									IUCN_CLASS[cell.iucn]
+								].join(" ")}
+								title={`IUCN Red List status (via GBIF): ${IUCN_LABEL[cell.iucn]}`}
+							>
+								IUCN {cell.iucn}
+							</span>
+						) : null}
 					</div>
-				)}
-			</motion.div>
 
-			<div className="min-w-0 pt-0.5">
-				<div className="flex items-start gap-2">
 					<TypewriterText
-						key={`${cell.id}-scientific`}
-						text={cell.scientificName}
-						className="line-clamp-2 text-balance text-[22px] font-semibold leading-tight tracking-tight text-primary drop-shadow-md"
-						delay={0.12}
-						charMs={11}
+						key={`${cell.id}-common`}
+						text={cell.commonName ?? "No common name found"}
+						className="mt-0.5 line-clamp-1 text-[16px] font-medium text-base-content/72"
+						delay={0.42}
+						charMs={36}
 					/>
-					{cell.iucn ? (
-						<span
-							className={[
-								"shrink-0 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[12px] font-semibold",
-								IUCN_CLASS[cell.iucn]
-							].join(" ")}
-							title={`IUCN Red List status (via GBIF): ${IUCN_LABEL[cell.iucn]}`}
-						>
-							IUCN {cell.iucn}
-						</span>
-					) : null}
+					<TypewriterText
+						key={`${cell.id}-taxonomy`}
+						text={cell.taxonomyPath}
+						className="mt-1 line-clamp-2 wrap-anywhere text-[12px] leading-snug text-base-content/58"
+						delay={0.62}
+						charMs={30}
+					/>
 				</div>
-
-				<TypewriterText
-					key={`${cell.id}-common`}
-					text={cell.commonName ?? "No common name found"}
-					className="mt-0.5 line-clamp-1 text-[16px] font-medium text-base-content/72"
-					delay={0.42}
-					charMs={18}
-				/>
-				<TypewriterText
-					key={`${cell.id}-taxonomy`}
-					text={cell.taxonomyPath}
-					className="mt-1 line-clamp-2 wrap-anywhere text-[12px] leading-snug text-base-content/58"
-					delay={0.62}
-					charMs={14}
-				/>
-			</div>
-		</motion.div>
+			</motion.div>
+		</AnimatePresence>
 	);
 }
 

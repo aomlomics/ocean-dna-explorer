@@ -12,12 +12,41 @@ function parseProjectDuration(value: string | string[] | undefined) {
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_PROJECT_DURATION_SECONDS;
 }
 
+function parseProjectIds(value: string | string[] | undefined) {
+	const raw = Array.isArray(value) ? value[0] : value;
+	if (!raw) return [];
+	return Array.from(
+		new Set(
+			raw
+				.split(",")
+				.map((id) => id.trim())
+				.filter((id) => id.length > 0)
+		)
+	);
+}
+
+function parseTaxaPerProject(value: string | string[] | undefined) {
+	const raw = Array.isArray(value) ? value[0] : value;
+	const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+	return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export default async function TourPage({
 	searchParams
 }: {
-	searchParams?: { projectSeconds?: string | string[]; projectDurationSeconds?: string | string[] };
+	searchParams?: {
+		projectSeconds?: string | string[];
+		projectDurationSeconds?: string | string[];
+		projectIds?: string | string[];
+		taxaPerProject?: string | string[];
+	};
 }) {
-	const projects = await getTourShowcaseProjects();
+	const selectedProjectIds = parseProjectIds(searchParams?.projectIds);
+	const taxaPerProject = parseTaxaPerProject(searchParams?.taxaPerProject);
+	const projects = await getTourShowcaseProjects({
+		selectedProjectIds,
+		taxaPerProject
+	});
 	const projectDurationSeconds = parseProjectDuration(
 		searchParams?.projectSeconds ?? searchParams?.projectDurationSeconds
 	);
