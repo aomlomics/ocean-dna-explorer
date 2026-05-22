@@ -30,13 +30,12 @@ export default function AlphaDiversityDisplay({
 	const { primaryColor } = useDaisyTheme();
 
 	const chartRef = useRef<ChartJS>(null);
+	//state variable to trigger plot re-render
+	const [chartKey, setChartKey] = useState("0");
 
 	const [currAlphaDiversity, setCurrAlphaDiversity] = useState(alphaDiversities[0]);
 	const [currField, setCurrField] = useState("env_local_scale" as string);
 	const [data, setData] = useState(undefined as ChartData | undefined);
-
-	//state variable to trigger plot re-render
-	const [plotKey, setPlotKey] = useState("0");
 
 	const userDefinedFields = new Set() as Set<string>;
 	for (const ad of alphaDiversities) {
@@ -127,7 +126,7 @@ export default function AlphaDiversityDisplay({
 				}
 			]
 		});
-		setPlotKey((Math.random() + 1).toString(36).substring(7));
+		setChartKey((Math.random() + 1).toString(36).substring(7));
 	}, [currAlphaDiversity, currField]);
 
 	useEffect(() => {
@@ -140,7 +139,7 @@ export default function AlphaDiversityDisplay({
 					backgroundColor: chroma(primaryColor).alpha(0.5).hex()
 				}))
 			});
-			setPlotKey((Math.random() + 1).toString(36).substring(7));
+			setChartKey((Math.random() + 1).toString(36).substring(7));
 		}
 	}, [primaryColor]);
 
@@ -192,7 +191,7 @@ export default function AlphaDiversityDisplay({
 
 			{data ? (
 				<BoxWhiskerPlot
-					key={plotKey}
+					key={chartKey}
 					ref={chartRef}
 					alphaDiversity={currAlphaDiversity}
 					field={currField}
