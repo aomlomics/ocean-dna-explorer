@@ -113,6 +113,9 @@ export default async function Analysis_run_name({
 						cluster
 						draw
 						className="w-full h-110"
+						legend
+						legendOmit={["project_id"]}
+						defaultLegendField="expedition_id"
 					/>
 
 					{/* Analysis Information */}

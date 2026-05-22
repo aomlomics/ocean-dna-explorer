@@ -64,17 +64,12 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						}
 					}
 				}
-			},
-			_count: {
-				select: {
-					Samples: true
-				}
 			}
 		}
 	});
 
 	if (!assay) return <>Assay not found</>;
-	const { Libraries: _, Analyses: __, _count: ___, ...justAssay } = assay;
+	const { Libraries: _, Analyses: __, ...justAssay } = assay;
 	const isPrivate = assay.Analyses.some((a) => {
 		return a.Project.isPrivate;
 	});
@@ -112,7 +107,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 							query={() =>
 								prisma.sample.findMany({
 									where: {
-										Assays: {
+										Libraries: {
 											some: {
 												assay_name
 											}
@@ -261,8 +256,8 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 								<StatCard
 									title="Samples"
 									icon={<LocationIcon />}
-									value={assay._count.Samples}
-									link={`/search?table=occurrence&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
+									value={new Set(assay.Libraries.map((lib) => lib.samp_name)).size}
+									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard

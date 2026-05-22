@@ -31,7 +31,7 @@ export async function validateBlobs(urls: BlobFile["url"][]) {
 
 				//retry after 1/5 of a second
 				if (!found) {
-					await new Promise((resolve) => setTimeout(resolve, 200));
+					await new Promise((resolve) => setTimeout(resolve, 500));
 				}
 			}
 		}

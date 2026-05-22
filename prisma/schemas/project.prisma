@@ -68,7 +68,6 @@ model Sample {
     // Relations
     project_id String
     Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    Assays     Assay[]
     Libraries  Library[]
 
     deleted_ODE Boolean?
@@ -278,7 +277,6 @@ model Assay {
     pcr_primer_name_reverse String
 
     // Relations
-    Samples    Sample[]
     AssayPreps AssayPrep[]
     Libraries  Library[]
     Analyses   Analysis[]

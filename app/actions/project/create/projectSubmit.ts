@@ -106,7 +106,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, assays, assayPreps, samplesByAssay, libraries } = parseResult;
+		const { project, samples, assays, assayPreps, libraries } = parseResult;
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -177,21 +177,12 @@ async function doSubmit(
 			prisma.project.create({
 				data: project
 			}),
+			prisma.sample.createMany({
+				data: samples
+			}),
 			prisma.assayPrep.createMany({
 				data: assayPreps
 			}),
-			...assays.map((a) =>
-				prisma.assay.update({
-					where: {
-						assay_name: a.assay_name
-					},
-					data: {
-						Samples: {
-							connectOrCreate: samplesByAssay[a.assay_name]
-						}
-					}
-				})
-			),
 			prisma.library.createMany({
 				data: libraries
 			})
@@ -261,7 +252,9 @@ export default async function projectSubmitAction(
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	const validBlobs = await validateBlobs([projectFileUrl, sampleFileUrl, libraryFileUrl]);
+	const validBlobs = await validateBlobs(
+		[projectFileUrl, sampleFileUrl, libraryFileUrl, imageInfo?.image.url].filter(Boolean) as string[]
+	);
 	if (!validBlobs) {
 		globalStream.error("Files are not valid");
 

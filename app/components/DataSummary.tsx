@@ -11,35 +11,40 @@ export type SummaryItemData = {
 };
 
 export async function AssayStats({ compact = false }: { compact?: boolean } = {}) {
-	const [uniqueAssays, analyses] = await publicPrisma.$transaction([
-		publicPrisma.assay.findMany({
-			distinct: ["target_gene"],
-			where: {
-				Analyses: {
-					some: {
-						isPrivate: false
-					}
-				}
-			},
-			select: {
-				target_gene: true
-			}
-		}),
-		publicPrisma.analysis.findMany({
-			select: {
-				_count: {
-					select: {
-						Assignments: true
+	const { uniqueAssays, analyses } = await publicPrisma.$transaction(
+		async (tx) => {
+			const uniqueAssays = await publicPrisma.assay.findMany({
+				distinct: ["target_gene"],
+				where: {
+					Analyses: {
+						some: {
+							isPrivate: false
+						}
 					}
 				},
-				Assay: {
-					select: {
-						target_gene: true
+				select: {
+					target_gene: true
+				}
+			});
+			const analyses = await publicPrisma.analysis.findMany({
+				select: {
+					_count: {
+						select: {
+							Assignments: true
+						}
+					},
+					Assay: {
+						select: {
+							target_gene: true
+						}
 					}
 				}
-			}
-		})
-	]);
+			});
+
+			return { uniqueAssays, analyses };
+		},
+		{ timeout: 0.5 * 60 * 1000 }
+	);
 
 	const analysesByTargetGene = {} as Record<string, typeof analyses>;
 	for (const a of analyses) {

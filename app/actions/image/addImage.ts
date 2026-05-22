@@ -1,11 +1,6 @@
 "use server";
 
-import {
-	AttributionOptionalDefaults,
-	AttributionOptionalDefaultsSchema,
-	ImageOptionalDefaults,
-	ImageOptionalDefaultsSchema
-} from "@/prismaImages/generated/zod";
+import { AttributionOptionalDefaultsSchema, ImageOptionalDefaultsSchema } from "@/prismaImages/generated/zod";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -16,6 +11,7 @@ import { Project, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { handlePrismaError } from "@/app/helpers/queries";
+import { AttributionCreateInput, ImageCreateInput } from "@/app/generated/prismaImages/models";
 
 export default async function addImageAction(
 	formData: FormData,
@@ -47,8 +43,8 @@ export default async function addImageAction(
 		}
 	}
 
-	let attribution = undefined as undefined | AttributionOptionalDefaults;
-	let image = undefined as undefined | ImageOptionalDefaults;
+	let attribution = undefined as undefined | AttributionCreateInput;
+	let image = undefined as undefined | ImageCreateInput;
 	try {
 		const formObj = Object.fromEntries(formData) as Record<string, any>;
 		for (const key in formObj) {
@@ -76,7 +72,7 @@ export default async function addImageAction(
 			}
 
 			await tx.image.create({
-				data: image as ImageOptionalDefaults
+				data: image as ImageCreateInput
 			});
 		});
 	} catch (err: any) {

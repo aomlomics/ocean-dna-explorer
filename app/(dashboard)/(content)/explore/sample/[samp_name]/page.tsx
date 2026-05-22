@@ -20,10 +20,14 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			samp_name
 		},
 		include: {
-			Assays: {
+			Libraries: {
 				select: {
-					assay_name: true,
-					target_gene: true
+					Assay: {
+						select: {
+							assay_name: true,
+							target_gene: true
+						}
+					}
 				}
 			},
 			Project: {
@@ -35,7 +39,16 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Assays: _, Project: __, ...justSample } = sample;
+	const { Libraries: _, Project: __, ...justSample } = sample;
+
+	const assayNames = new Set() as Set<string>;
+	const uniqueAssays = [] as (typeof sample.Libraries)[number]["Assay"][];
+	for (const lib of sample.Libraries) {
+		if (!assayNames.has(lib.Assay.assay_name)) {
+			assayNames.add(lib.Assay.assay_name);
+			uniqueAssays.push(lib.Assay);
+		}
+	}
 
 	return (
 		<div id="sample" className="space-y-8 pb-8">
@@ -89,7 +102,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					<AssaysCard
 						id="assays-section"
 						title="Assays used on this Sample"
-						assays={sample.Assays}
+						assays={uniqueAssays}
 						className="target:animate-flash"
 					/>
 				</div>
@@ -141,7 +154,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							}
 						/>
 
-						<DropdownCard table="assay" items={sample.Assays} icon={<AssayIcon />} />
+						<DropdownCard table="assay" items={Array.from(assayNames)} icon={<AssayIcon />} />
 
 						<StatCard
 							title="Taxonomies"
