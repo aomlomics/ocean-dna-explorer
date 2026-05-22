@@ -162,7 +162,10 @@ model Taxonomy {
     // Relations
     Assignments Assignment[]
 
-    imageFileUrl_ODE String?
+    // Featured Organism
+    imageFileUrl_ODE        String?
+    commonName_ODE          String?
+    organismDescription_ODE String?
 
     // Data
     verbatimIdentification String
