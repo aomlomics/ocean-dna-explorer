@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { AlphaDiversity, AlphaDiversityIndex, Sample } from "../generated/prisma/client";
 import BoxWhiskerPlot from "./charts/BoxWhiskerPlot";
 import { Chart as ChartJS, ChartData } from "chart.js";
@@ -10,12 +10,14 @@ import ChartCopyButton from "./charts/ChartCopyButton";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import useDaisyTheme from "../hooks/useDaisyTheme";
 import chroma from "chroma-js";
+import Link from "next/link";
 
 export default function AlphaDiversityDisplay({
 	alphaDiversities
 }: {
 	alphaDiversities: {
 		id: AlphaDiversity["id"];
+		dateCalculated: AlphaDiversity["dateCalculated"];
 		finished: AlphaDiversity["finished"];
 		indexType: AlphaDiversity["indexType"];
 		depth: AlphaDiversity["depth"];
@@ -33,9 +35,13 @@ export default function AlphaDiversityDisplay({
 	//state variable to trigger plot re-render
 	const [chartKey, setChartKey] = useState("0");
 
-	const [currAlphaDiversity, setCurrAlphaDiversity] = useState(alphaDiversities[0]);
+	const [currAlphaDiversity, setCurrAlphaDiversity] = useState(
+		alphaDiversities[0] as (typeof alphaDiversities)[0] | undefined
+	);
 	const [currField, setCurrField] = useState("env_local_scale" as string);
 	const [data, setData] = useState(undefined as ChartData | undefined);
+
+	const [timeSinceStarted, setTimeSinceStarted] = useState(undefined as undefined | number);
 
 	const userDefinedFields = new Set() as Set<string>;
 	for (const ad of alphaDiversities) {
@@ -47,87 +53,103 @@ export default function AlphaDiversityDisplay({
 	}
 
 	useEffect(() => {
-		const type = getZodType("sample", currField).type;
+		if (currAlphaDiversity && currAlphaDiversity.finished) {
+			const type = getZodType("sample", currField).type;
 
-		const indexesByLabel = {} as Record<string, number[]>;
-		const badIndexesByLabel = {} as Record<string, number[]>;
-		for (const i of currAlphaDiversity.AlphaDiversityIndexes) {
-			//get string representation of value
-			let key;
-			let obj = indexesByLabel;
-			if (i.Library.Sample[currField as keyof Sample] != null) {
-				const keyField = currField as keyof Sample;
-				//value exists
-				if ((i.Library.Sample[keyField] as string | number) in DeadValueEnum) {
-					//dead value
-					obj = badIndexesByLabel;
+			const indexesByLabel = {} as Record<string, number[]>;
+			const badIndexesByLabel = {} as Record<string, number[]>;
+			for (const i of currAlphaDiversity.AlphaDiversityIndexes) {
+				//get string representation of value
+				let key;
+				let obj = indexesByLabel;
+				if (i.Library.Sample[currField as keyof Sample] != null) {
+					const keyField = currField as keyof Sample;
+					//value exists
+					if ((i.Library.Sample[keyField] as string | number) in DeadValueEnum) {
+						//dead value
+						obj = badIndexesByLabel;
 
-					if (DeadValueNumbers.includes(i.Library.Sample[keyField] as number)) {
-						key = DeadValueEnum[i.Library.Sample[keyField] as number];
+						if (DeadValueNumbers.includes(i.Library.Sample[keyField] as number)) {
+							key = DeadValueEnum[i.Library.Sample[keyField] as number];
+						} else {
+							key = i.Library.Sample[keyField]!.toString();
+						}
+					} else if (!userDefinedFields.has(currField) && type === "date") {
+						//date
+						key = new Date(i.Library.Sample[keyField] as string | Date).toLocaleDateString();
 					} else {
+						//default
 						key = i.Library.Sample[keyField]!.toString();
 					}
-				} else if (!userDefinedFields.has(currField) && type === "date") {
-					//date
-					key = new Date(i.Library.Sample[keyField] as string | Date).toLocaleDateString();
 				} else {
-					//default
-					key = i.Library.Sample[keyField]!.toString();
+					//value does not exist or is user defined
+					if (
+						userDefinedFields.has(currField) &&
+						i.Library.Sample.userDefined &&
+						i.Library.Sample.userDefined[currField] != null
+					) {
+						//user defined and exists
+						key = i.Library.Sample.userDefined[currField];
+					} else {
+						//default
+						obj = badIndexesByLabel;
+						key = "no value";
+					}
 				}
-			} else {
-				//value does not exist or is user defined
-				if (
-					userDefinedFields.has(currField) &&
-					i.Library.Sample.userDefined &&
-					i.Library.Sample.userDefined[currField] != null
-				) {
-					//user defined and exists
-					key = i.Library.Sample.userDefined[currField];
+
+				if (!obj[key]) {
+					obj[key] = [i.index];
 				} else {
-					//default
-					obj = badIndexesByLabel;
-					key = "no value";
+					obj[key].push(i.index);
 				}
 			}
 
-			if (!obj[key]) {
-				obj[key] = [i.index];
+			let sortedLabels;
+			if (type === "float" || type === "integer") {
+				sortedLabels = Object.keys(indexesByLabel).sort((a, b) => parseFloat(a) - parseFloat(b));
+			} else if (type === "date") {
+				sortedLabels = Object.keys(indexesByLabel).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 			} else {
-				obj[key].push(i.index);
+				sortedLabels = Object.keys(indexesByLabel).sort();
 			}
-		}
+			const sortedData = [];
+			for (const label of sortedLabels) {
+				sortedData.push(indexesByLabel[label]);
+			}
+			//put "no value" and dead values at the end
+			const sortedBadLabels = Object.keys(badIndexesByLabel).sort();
+			sortedLabels.push(...sortedBadLabels);
+			for (const label of sortedBadLabels) {
+				sortedData.push(badIndexesByLabel[label]);
+			}
 
-		let sortedLabels;
-		if (type === "float" || type === "integer") {
-			sortedLabels = Object.keys(indexesByLabel).sort((a, b) => parseFloat(a) - parseFloat(b));
-		} else if (type === "date") {
-			sortedLabels = Object.keys(indexesByLabel).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-		} else {
-			sortedLabels = Object.keys(indexesByLabel).sort();
+			setData({
+				labels: sortedLabels,
+				datasets: [
+					{
+						data: sortedData,
+						borderColor: primaryColor,
+						backgroundColor: chroma(primaryColor).alpha(0.5).hex()
+					}
+				]
+			});
+			setChartKey((Math.random() + 1).toString(36).substring(7));
 		}
-		const sortedData = [];
-		for (const label of sortedLabels) {
-			sortedData.push(indexesByLabel[label]);
-		}
-		//put "no value" and dead values at the end
-		const sortedBadLabels = Object.keys(badIndexesByLabel).sort();
-		sortedLabels.push(...sortedBadLabels);
-		for (const label of sortedBadLabels) {
-			sortedData.push(badIndexesByLabel[label]);
-		}
-
-		setData({
-			labels: sortedLabels,
-			datasets: [
-				{
-					data: sortedData,
-					borderColor: primaryColor,
-					backgroundColor: chroma(primaryColor).alpha(0.5).hex()
-				}
-			]
-		});
-		setChartKey((Math.random() + 1).toString(36).substring(7));
 	}, [currAlphaDiversity, currField]);
+
+	useEffect(() => {
+		if (currAlphaDiversity && !currAlphaDiversity.finished) {
+			const interval = setInterval(
+				() =>
+					setTimeSinceStarted((prev) =>
+						prev ? prev + 1000 : new Date().getTime() - currAlphaDiversity.dateCalculated.getTime() + 1000
+					),
+				1000
+			);
+
+			return () => clearInterval(interval);
+		}
+	}, [currAlphaDiversity]);
 
 	useEffect(() => {
 		if (data) {
@@ -146,59 +168,139 @@ export default function AlphaDiversityDisplay({
 	const omit = ["id", "userDefined", "deleted_ODE", "project_id"];
 	return (
 		<div className="p-6">
-			<div className="w-full flex justify-center items-center gap-5">
-				<fieldset className="fieldset">
-					<legend className="fieldset-legend">Alpha Diversity:</legend>
-					<select
-						value={currAlphaDiversity.id}
-						onChange={(e) =>
-							setCurrAlphaDiversity(alphaDiversities.find((ad) => ad.id === parseInt(e.currentTarget.value))!)
-						}
-						className="select"
-					>
-						{alphaDiversities.map((ad) => (
-							<option key={ad.id} value={ad.id}>
-								{`${ad.indexType}${ad.depth ? ` (${ad.depth})` : ""}`}
-							</option>
-						))}
-					</select>
-				</fieldset>
+			{currAlphaDiversity ? (
+				<>
+					<div className="w-full flex justify-center items-center gap-5">
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend">Alpha Diversity:</legend>
+							<select
+								value={currAlphaDiversity.id}
+								onChange={(e) =>
+									setCurrAlphaDiversity(alphaDiversities.find((ad) => ad.id === parseInt(e.currentTarget.value))!)
+								}
+								className="select"
+							>
+								{alphaDiversities.map((ad) => (
+									<option key={ad.id} value={ad.id}>
+										{`${ad.indexType}${ad.depth ? ` (${ad.depth})` : ""}`}
+									</option>
+								))}
+							</select>
+						</fieldset>
 
-				<fieldset className="fieldset">
-					<legend className="fieldset-legend">Field:</legend>
-					<select
-						value={currField}
-						onChange={(e) => setCurrField(e.currentTarget.value as typeof currField)}
-						className="select"
-					>
-						{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
-							if (!omit.includes(f)) {
-								acc.push(<option key={f}>{f}</option>);
-							}
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend">Field:</legend>
+							<select
+								value={currField}
+								onChange={(e) => setCurrField(e.currentTarget.value as typeof currField)}
+								className="select"
+								disabled={!currAlphaDiversity.finished}
+							>
+								{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
+									if (!omit.includes(f)) {
+										acc.push(<option key={f}>{f}</option>);
+									}
 
-							return acc;
-						}, [] as ReactNode[])}
-						{Array.from(userDefinedFields).map((f) => (
-							<option key={f} value={f}>
-								{f} (UD)
-							</option>
-						))}
-					</select>
-				</fieldset>
+									return acc;
+								}, [] as ReactNode[])}
+								{Array.from(userDefinedFields).map((f) => (
+									<option key={f} value={f}>
+										{f} (UD)
+									</option>
+								))}
+							</select>
+						</fieldset>
 
-				<ChartCopyButton ref={chartRef} />
-			</div>
+						<ChartCopyButton ref={chartRef} disabled={!currAlphaDiversity.finished} />
+					</div>
 
-			{data ? (
-				<BoxWhiskerPlot
-					key={chartKey}
-					ref={chartRef}
-					alphaDiversity={currAlphaDiversity}
-					field={currField}
-					data={data}
-				/>
+					{currAlphaDiversity.finished ? (
+						data ? (
+							<BoxWhiskerPlot
+								key={chartKey}
+								ref={chartRef}
+								alphaDiversity={currAlphaDiversity}
+								field={currField}
+								data={data}
+							/>
+						) : (
+							<>loading...</>
+						)
+					) : (
+						<div className="flex flex-col justify-center items-center pt-4">
+							Calculating...
+							{timeSinceStarted && timeSinceStarted >= 1000 ? (
+								<div className="grid grid-flow-col gap-5 text-center auto-cols-max">
+									{timeSinceStarted >= 86400000 ? (
+										<div className="flex flex-col">
+											<span className="countdown font-mono text-5xl">
+												<span
+													style={{ "--value": Math.floor(timeSinceStarted / 86400000) } as CSSProperties}
+													aria-live="polite"
+												></span>
+											</span>
+											days
+										</div>
+									) : (
+										<></>
+									)}
+
+									{timeSinceStarted >= 3600000 ? (
+										<div className="flex flex-col">
+											<span className="countdown font-mono text-5xl">
+												<span
+													style={{ "--value": Math.floor((timeSinceStarted / 3600000) % 24) } as CSSProperties}
+													aria-live="polite"
+												></span>
+											</span>
+											hours
+										</div>
+									) : (
+										<></>
+									)}
+
+									{timeSinceStarted >= 60000 ? (
+										<div className="flex flex-col">
+											<span className="countdown font-mono text-5xl">
+												<span
+													style={
+														{ "--value": Math.floor((timeSinceStarted / 60000) % 60), "--digits": 2 } as CSSProperties
+													}
+													aria-live="polite"
+												></span>
+											</span>
+											min
+										</div>
+									) : (
+										<></>
+									)}
+
+									<div className="flex flex-col">
+										<span className="countdown font-mono text-5xl">
+											<span
+												style={
+													{ "--value": Math.floor((timeSinceStarted / 1000) % 60), "--digits": 2 } as CSSProperties
+												}
+												aria-live="polite"
+											></span>
+										</span>
+										sec
+									</div>
+								</div>
+							) : (
+								<></>
+							)}
+						</div>
+					)}
+				</>
 			) : (
-				<>loading...</>
+				<>
+					No Alpha Diversities available for this analysis. Please raise an issue on our{" "}
+					<Link className="link link-primary link-hover" href="https://github.com/aomlomics/ocean-dna-explorer/issues">
+						Github
+					</Link>{" "}
+					about this error.
+				</>
 			)}
 		</div>
 	);

@@ -42,6 +42,7 @@ export default async function Analysis_run_name({
 			AlphaDiversities: {
 				select: {
 					id: true,
+					dateCalculated: true,
 					finished: true,
 					indexType: true,
 					depth: true,
