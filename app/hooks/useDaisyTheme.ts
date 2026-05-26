@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
 
 function getColor() {
-	return getComputedStyle(document.documentElement).getPropertyValue("color") || getComputedStyle(document.body).color;
+	const computedElement = getComputedStyle(document.documentElement);
+	const computedBody = getComputedStyle(document.body);
+
+	return {
+		textColor: computedElement.getPropertyValue("color") || computedBody.color,
+		backgroundColor: computedElement.getPropertyValue("backgroundColor") || computedBody.backgroundColor,
+		primaryColor: computedElement.getPropertyValue("--color-primary")
+	};
 }
 
 export default function useDaisyTheme() {
-	const [textColor, setTextColor] = useState(getColor());
+	const [colors, setColors] = useState(getColor());
 
 	useEffect(() => {
 		// Listen for theme changes
-		const observer = new MutationObserver(() => setTextColor(getColor()));
+		const observer = new MutationObserver(() => setColors(getColor()));
 		observer.observe(document.documentElement, {
 			attributes: true,
 			attributeFilter: ["data-theme"]
@@ -18,5 +25,5 @@ export default function useDaisyTheme() {
 		return () => observer.disconnect();
 	}, []);
 
-	return { textColor };
+	return colors;
 }

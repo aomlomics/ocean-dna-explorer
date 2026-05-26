@@ -31,6 +31,7 @@
 		"@hookform/resolvers": "^5.2.2",
 		"@prisma/adapter-pg": "^7.8.0",
 		"@prisma/client": "^7.8.0",
+		"@sgratzl/chartjs-chart-boxplot": "^4.4.5",
 		"@types/react": "19.2.14",
 		"@types/react-dom": "19.2.3",
 		"@types/react-syntax-highlighter": "^15.5.13",
