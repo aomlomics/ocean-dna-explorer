@@ -61,7 +61,16 @@ export const TaxonomicRanks = [
 	"genus",
 	"species"
 ] as Array<
-	keyof Omit<Taxonomy, "id" | "taxonomy" | "imageFileUrl_ODE" | "verbatimIdentification" | "higherClassification">
+	keyof Omit<
+		Taxonomy,
+		| "id"
+		| "taxonomy"
+		| "imageFileUrl_ODE"
+		| "commonName_ODE"
+		| "organismDescription_ODE"
+		| "verbatimIdentification"
+		| "higherClassification"
+	>
 >;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
