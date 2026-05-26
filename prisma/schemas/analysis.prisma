@@ -201,7 +201,6 @@ model AlphaDiversity {
     AlphaDiversityIndexes AlphaDiversityIndex[]
 
     indexType String
-    rarefied  Boolean
     depth     Int?
 }
 
