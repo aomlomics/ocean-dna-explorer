@@ -54,7 +54,7 @@ export default function AlphaDiversityDisplay({
 
 	useEffect(() => {
 		if (currAlphaDiversity && currAlphaDiversity.finished) {
-			const type = getZodType("sample", currField).type;
+			const type = userDefinedFields.has(currField) ? "string" : getZodType("sample", currField).type;
 
 			const indexesByLabel = {} as Record<string, number[]>;
 			const badIndexesByLabel = {} as Record<string, number[]>;
@@ -224,7 +224,7 @@ export default function AlphaDiversityDisplay({
 								data={data}
 							/>
 						) : (
-							<>loading...</>
+							<div className="aspect-5/2">loading...</div>
 						)
 					) : (
 						<div className="flex flex-col justify-center items-center pt-4">
@@ -294,13 +294,13 @@ export default function AlphaDiversityDisplay({
 					)}
 				</>
 			) : (
-				<>
+				<div className="aspect-5/2">
 					No Alpha Diversities available for this analysis. Please raise an issue on our{" "}
 					<Link className="link link-primary link-hover" href="https://github.com/aomlomics/ocean-dna-explorer/issues">
 						Github
 					</Link>{" "}
 					about this error.
-				</>
+				</div>
 			)}
 		</div>
 	);

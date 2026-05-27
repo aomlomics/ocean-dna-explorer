@@ -232,21 +232,21 @@ export default async function Analysis_run_name({
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Assignments" />
-					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
+					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab pl-6 pr-2" aria-label="Visualize:" disabled />
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Taxonomy" />
-					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
+					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
 						<Suspense fallback={<>Loading...</>}>
 							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Alpha Diversity" />
-					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
+					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
 						<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} />
 					</div>
 				</div>
