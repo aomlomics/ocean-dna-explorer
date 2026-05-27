@@ -1,14 +1,14 @@
 "use client";
 
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
-import { AlphaDiversity, AlphaDiversityIndex, Sample } from "../generated/prisma/client";
-import BoxWhiskerPlot from "./charts/BoxWhiskerPlot";
+import { AlphaDiversity, AlphaDiversityIndex, Sample } from "../../../generated/prisma/client";
+import BoxWhiskerPlot from "../BoxWhiskerPlot";
 import { Chart as ChartJS, ChartData } from "chart.js";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { getZodType } from "../helpers/schema";
-import ChartCopyButton from "./charts/ChartCopyButton";
+import { getZodType } from "../../../helpers/schema";
+import ChartCopyButton from "../ChartCopyButton";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
-import useDaisyTheme from "../hooks/useDaisyTheme";
+import useDaisyTheme from "../../../hooks/useDaisyTheme";
 import chroma from "chroma-js";
 import Link from "next/link";
 
