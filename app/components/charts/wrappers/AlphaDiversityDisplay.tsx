@@ -1,14 +1,14 @@
 "use client";
 
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
-import { AlphaDiversity, AlphaDiversityIndex, Sample } from "../generated/prisma/client";
-import BoxWhiskerPlot from "./charts/BoxWhiskerPlot";
+import { AlphaDiversity, AlphaDiversityIndex, Sample } from "../../../generated/prisma/client";
+import BoxWhiskerPlot from "../BoxWhiskerPlot";
 import { Chart as ChartJS, ChartData } from "chart.js";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { getZodType } from "../helpers/schema";
-import ChartCopyButton from "./charts/ChartCopyButton";
+import { getZodType } from "../../../helpers/schema";
+import ChartCopyButton from "../ChartCopyButton";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
-import useDaisyTheme from "../hooks/useDaisyTheme";
+import useDaisyTheme from "../../../hooks/useDaisyTheme";
 import chroma from "chroma-js";
 import Link from "next/link";
 
@@ -54,7 +54,7 @@ export default function AlphaDiversityDisplay({
 
 	useEffect(() => {
 		if (currAlphaDiversity && currAlphaDiversity.finished) {
-			const type = getZodType("sample", currField).type;
+			const type = userDefinedFields.has(currField) ? "string" : getZodType("sample", currField).type;
 
 			const indexesByLabel = {} as Record<string, number[]>;
 			const badIndexesByLabel = {} as Record<string, number[]>;
@@ -172,7 +172,7 @@ export default function AlphaDiversityDisplay({
 				<>
 					<div className="w-full flex justify-center items-center gap-5">
 						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Alpha Diversity:</legend>
+							<legend className="fieldset-legend">Metric:</legend>
 							<select
 								value={currAlphaDiversity.id}
 								onChange={(e) =>
@@ -224,7 +224,7 @@ export default function AlphaDiversityDisplay({
 								data={data}
 							/>
 						) : (
-							<>loading...</>
+							<div className="aspect-5/2">loading...</div>
 						)
 					) : (
 						<div className="flex flex-col justify-center items-center pt-4">
@@ -294,13 +294,13 @@ export default function AlphaDiversityDisplay({
 					)}
 				</>
 			) : (
-				<>
+				<div className="aspect-5/2">
 					No Alpha Diversities available for this analysis. Please raise an issue on our{" "}
 					<Link className="link link-primary link-hover" href="https://github.com/aomlomics/ocean-dna-explorer/issues">
 						Github
 					</Link>{" "}
 					about this error.
-				</>
+				</div>
 			)}
 		</div>
 	);
