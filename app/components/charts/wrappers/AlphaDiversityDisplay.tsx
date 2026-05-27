@@ -172,7 +172,7 @@ export default function AlphaDiversityDisplay({
 				<>
 					<div className="w-full flex justify-center items-center gap-5">
 						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Alpha Diversity:</legend>
+							<legend className="fieldset-legend">Metric:</legend>
 							<select
 								value={currAlphaDiversity.id}
 								onChange={(e) =>
