@@ -41,7 +41,7 @@ export default function TaxaBarChart({
 			id: number;
 		};
 	}[];
-	taxonomiesById: Record<Taxonomy["id"], Omit<Taxonomy, "taxonomy" | "verbatimIdentification">>;
+	taxonomiesById: Record<Taxonomy["id"], Record<(typeof TaxonomicRanks)[number], string | null>>;
 	samplesById: Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
 	sampleIdsByLibId: Record<Library["lib_id"], Sample["id"]>;
 	sampFields: string[];
@@ -234,7 +234,7 @@ export default function TaxaBarChart({
 	}, [rank, metricType, averageBy, taxonomiesFilter, xLabelsFilter]);
 
 	return (
-		<div className="relative">
+		<div className="relative p-6">
 			<div className="w-full flex justify-center items-center gap-5 mb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
