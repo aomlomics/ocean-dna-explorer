@@ -9,6 +9,7 @@ import { useDebouncedCallback } from "use-debounce";
 
 type TourStepWithInvalid = TourStep & { invalid?: boolean };
 const TAXA_PER_PROJECT_OPTIONS = [24, 36, 48, 72, 96, 120] as const;
+const SHOWCASE_PATH = "/showcase";
 
 export default function Tour() {
 	const startTour = useContext(TourContext);
@@ -34,6 +35,40 @@ export default function Tour() {
 	const [featuresEnabled, setFeaturesEnabled] = useState(false);
 	const [currFeature, setCurrFeature] = useState("");
 	const [features, setFeatures] = useState([] as string[]);
+
+	const getShowcaseQueryParams = () => {
+		const params = new URLSearchParams({
+			projectSeconds: `${projectDurationSeconds ?? 30}`,
+			taxaPerProject: `${taxaPerProject}`
+		});
+		if (selectedTourProjects.length && selectedTourProjects.length < projects.length) {
+			params.set("projectIds", selectedTourProjects.join(","));
+		}
+		return params;
+	};
+
+	const getShowcaseStepUrl = () => {
+		return `${SHOWCASE_PATH}?${getShowcaseQueryParams().toString()}`;
+	};
+
+	const updateShowcaseUrlParams = (url: string) => {
+		if (!url) return url;
+		if (!url.startsWith(SHOWCASE_PATH)) return url;
+		const hashIndex = url.indexOf("#");
+		const hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
+		return `${SHOWCASE_PATH}?${getShowcaseQueryParams().toString()}${hash}`;
+	};
+
+	const syncShowcaseStepUrls = (steps: TourStepWithInvalid[]) => {
+		let changed = false;
+		const next = steps.map((step) => {
+			const nextUrl = updateShowcaseUrlParams(step.url);
+			if (nextUrl === step.url) return step;
+			changed = true;
+			return { ...step, url: nextUrl };
+		});
+		return changed ? next : steps;
+	};
 
 	const [tourSteps, setTourSteps] = useReducer(
 		(
@@ -221,7 +256,7 @@ export default function Tour() {
 		setTourSteps([
 			{ url: "/ambient" },
 			{ url: "/sponsors" },
-			{ url: "/showcase" },
+			{ url: getShowcaseStepUrl() },
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
@@ -313,16 +348,12 @@ export default function Tour() {
 		});
 	}, [projects]);
 
-	const getShowcaseStepUrl = () => {
-		const params = new URLSearchParams({
-			projectSeconds: `${projectDurationSeconds ?? 30}`,
-			taxaPerProject: `${taxaPerProject}`
-		});
-		if (selectedTourProjects.length && selectedTourProjects.length < projects.length) {
-			params.set("projectIds", selectedTourProjects.join(","));
+	useEffect(() => {
+		const syncedSteps = syncShowcaseStepUrls(tourSteps);
+		if (syncedSteps !== tourSteps) {
+			setTourSteps(syncedSteps);
 		}
-		return `/showcase?${params.toString()}`;
-	};
+	}, [projectDurationSeconds, taxaPerProject, selectedTourProjects, projects.length, tourSteps]);
 
 	return (
 		<>
@@ -720,10 +751,7 @@ export default function Tour() {
 					className="btn btn-primary"
 					onClick={async () => {
 						await signOut();
-						const runTourSteps = tourSteps.map((step) =>
-							step.url.startsWith("/showcase") ? { ...step, url: getShowcaseStepUrl() } : step
-						);
-						startTour(runTourSteps, stepTime);
+						startTour(tourSteps, stepTime);
 					}}
 					disabled={
 						loading ||
