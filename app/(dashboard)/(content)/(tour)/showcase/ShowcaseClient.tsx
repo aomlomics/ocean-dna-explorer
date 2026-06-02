@@ -148,6 +148,13 @@ function randomSteadyTickMs() {
 	return STEADY_TICK_MIN_MS + Math.floor(Math.random() * (STEADY_TICK_MAX_MS - STEADY_TICK_MIN_MS + 1));
 }
 
+function getProjectTitleSizeClass(projectName: string): string {
+	const length = projectName.trim().length;
+	if (length >= 120) return "text-3xl sm:text-4xl xl:text-5xl";
+	if (length >= 90) return "text-3xl sm:text-5xl xl:text-6xl";
+	return "text-4xl sm:text-6xl xl:text-7xl";
+}
+
 function trimCommonName(commonName: string | null, scientificName: string) {
 	if (!commonName) return null;
 	const cleaned = commonName.trim();
@@ -448,6 +455,7 @@ export default function ShowcaseClient({
 	const fromLeft = projectIdx % 2 === 0;
 	const swapIn = !firstProjectPaint.current;
 	const circleDuration = swapIn ? 1.35 : 0.9;
+	const projectTitleSizeClass = getProjectTitleSizeClass(project.project_name);
 
 	return (
 		<div className="tour-motion-bg relative isolate min-h-screen w-full overflow-hidden bg-linear-to-b from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
@@ -525,7 +533,9 @@ export default function ShowcaseClient({
 						</MaskedReveal>
 
 						<MaskedReveal delay={0.14}>
-							<h1 className="mt-3 max-w-4xl wrap-break-word text-4xl font-semibold leading-[1.02] tracking-[-0.05em] text-white drop-shadow-md sm:text-6xl xl:text-7xl">
+							<h1
+								className={`mt-3 max-w-4xl wrap-break-word pb-[0.08em] font-semibold leading-[1.08] tracking-[-0.03em] text-white drop-shadow-md ${projectTitleSizeClass}`}
+							>
 								{project.project_name}
 							</h1>
 						</MaskedReveal>

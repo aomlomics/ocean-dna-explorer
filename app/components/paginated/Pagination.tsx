@@ -10,6 +10,7 @@ import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
+import TableStatusState from "./TableStatusState";
 
 export default function Pagination({
 	table,
@@ -77,9 +78,35 @@ export default function Pagination({
 			keepPreviousData: true
 		}
 	);
-	if (isLoading) return <LoadingPagination />;
-	if (error) return <div>failed to load: {error.toString() instanceof Error ? error.message : String(error)}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {String(data.error ?? "")}</div>;
+	if (isLoading) {
+		return (
+			<div className="space-y-4">
+				<TableStatusState kind="loading" title="Loading results..." detail="Applying filters and fetching table rows." />
+				<LoadingPagination />
+			</div>
+		);
+	}
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
+	if (data.statusMessage === "error") {
+		return <TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />;
+	}
+	if (!Array.isArray(data.result) || data.result.length === 0 || data.count === 0) {
+		return (
+			<TableStatusState
+				kind="empty"
+				title="No results found"
+				detail="Try broadening your search or removing one or more filters."
+			/>
+		);
+	}
 
 	return (
 		<div className="space-y-6 p-6">

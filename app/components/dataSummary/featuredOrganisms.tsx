@@ -38,11 +38,598 @@ export type FeaturedOrganism = {
 	/** Local public asset under `/public/images/featured_organisms/`. */
 	imageSrc?: string;
 	imageUrl?: string;
+
+	/** Optional image display/credit metadata mirroring the Image table fields. */
+	imageName?: string;
+	imageSourceUrl?: string;
+	attributionTitle?: string;
+	attributionNames?: string;
+	attributionInstitution?: string;
+	attributionUrl?: string;
+	licenseName?: string;
+	licenseUrl?: string;
+	location?: string;
 	/** Optional credit line for the image (shown via a small photo icon). */
 	imageAttribution?: string;
 
 	description: string;
 };
+
+type FeaturedImageAttribution = {
+	commonName?: string;
+	imageName?: string;
+	imageSourceUrl?: string;
+	attributionTitle?: string;
+	attributionNames?: string;
+	attributionInstitution?: string;
+	attributionUrl?: string;
+	licenseName?: string;
+	licenseUrl?: string;
+	location?: string;
+};
+
+const FEATURED_IMAGE_ATTRIBUTIONS: Record<string, FeaturedImageAttribution> = {
+	"mola_mola.png": {
+		commonName: "Ocean sunfish",
+		attributionTitle: "iNaturalist - Brandon Huelga",
+		attributionNames: "Brandon Heulga",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/bahuelga",
+		imageName: "Mola mola",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6147292914",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"pacific_viperfish.jpg": {
+		commonName: "Pacific viperfish",
+		attributionTitle: "iNaturalist - Alex Bairstow",
+		attributionNames: "Alex Bairstow",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/alex_bairstow",
+		imageName: "Pacific Viperfish",
+		imageSourceUrl: "https://www.gbif.org/occurrence/2013692220",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"barreleye_fish.jpg": {
+		commonName: "Barreleye fish",
+		attributionTitle: "Flickr - GreenAnswers",
+		attributionNames: "GreenAnswers",
+		attributionInstitution: "GreenAnswers",
+		attributionUrl: "https://www.flickr.com/photos/40199468@N07/",
+		imageName: "Barreleye Fish",
+		imageSourceUrl:
+			"https://www.flickr.com/photos/40199468@N07/4046660963/in/photolist-63yA5q-ptvw1n-655adh-7aAcjB-aNd4Ut-63zmuc-2j23GA3-p2JXXs-2j23GE6-7eu8Zy-7U3aa5-23FtZeK-63pAMv-dik8jQ-2rrx62D-ppg1ie-p7CN2K-2ok1KYc-qBQxaV-2eYsGEc-fk4s7H-cBoD5C-oH5LqU-2jNorTJ-f5ixPd-26MRxJV-fkiytQ-fk4pve-63bnen-6ehzAC-6SgfJL-dy4Jzt-63fCDC-7pRDQK-9hmExY-2opGdVo",
+		licenseName: "CC BY-NC-SA 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc-sa/2.0/deed.en"
+	},
+	"snailfish.jpg": {
+		commonName: "Blacktail snailfish",
+		attributionTitle: "WHERE DID WE GET THIS PHOTO?"
+	},
+	"lanternfish.jpg": {
+		commonName: "Lanternfish",
+		attributionTitle: "NOAA Fisheries - Mike Jech",
+		attributionNames: "Mike Jech",
+		attributionInstitution: "NOAA Fisheries",
+		attributionUrl: "https://www.fisheries.noaa.gov/science-blog/deep-see-cruise-explores-ocean-twilight-zone",
+		imageName: "Lanternfish",
+		imageSourceUrl: "https://www.fisheries.noaa.gov/science-blog/deep-see-cruise-explores-ocean-twilight-zone"
+	},
+	"ghost_shark.png": {
+		commonName: "Ghost shark",
+		attributionTitle: "iNaturalist - Nick Horniblow",
+		attributionNames: "Nick Horniblow",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/nickhorniblow",
+		imageName: "Ghost Shark",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5076978201",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/",
+		location: "Tasman Sea, Blackmans Bay, TAS, AU"
+	},
+	"longicauda.jpg": {
+		commonName: "Deep Sea Cucumber",
+		attributionTitle: "NOAA Ocean Exploration",
+		attributionInstitution: "NOAA Ocean Exploration",
+		attributionUrl: "https://oceanexplorer.noaa.gov/multimedia/",
+		imageName: "Deep Sea Cucumber",
+		imageSourceUrl: "https://oceanexplorer.noaa.gov/multimedia/daily-image-media-20210201/"
+	},
+	"atolla.jpg": {
+		commonName: "Coronate jellyfish",
+		attributionTitle: "Flickr - NOAA Photo Library",
+		attributionInstitution: "NOAA",
+		attributionUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		imageName: "expn3533",
+		imageSourceUrl: "https://www.flickr.com/photos/noaaphotolib/27907473986/in/photolist-Jw66JA",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	},
+	"spirobranchus.png": {
+		commonName: "Christmas Tree Worms",
+		attributionTitle: "iNaturalist - tallomd",
+		attributionNames: "tallomd",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/tallomd",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5908873905",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"nereis.png": {
+		commonName: "Marine polychaete worm",
+		attributionTitle: "iNaturalist - interstitial_human",
+		attributionNames: "interstitial_human",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/interstitial_human",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5166998946",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"strongylocentrotus_sea_urchin.png": {
+		commonName: "Purple Sea Urchin",
+		attributionTitle: "iNaturalist - Orenda Randuch",
+		attributionNames: "Orenda Randuch",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/orenda3",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5938357558",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"ptychogastria_polaris.png": {
+		commonName: "Benthic hydrozoan jelly",
+		attributionTitle: "iNaturalist - Justin Hofman",
+		attributionNames: "Justin Hofman",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/justinhofman13",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5237738684",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"green_bomber_worm.png": {
+		commonName: "Bombardier Worm",
+		attributionTitle: "iNaturalist - Warren R. Francis",
+		attributionNames: "Warren R. Francis",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/wrfbiolum",
+		imageSourceUrl: "https://www.gbif.org/occurrence/4909263464",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"cystisoma.jpg": {
+		commonName: "Crystal amphipod",
+		attributionTitle: "NOAA Ocean Exploration - David Shale",
+		attributionNames: "David Shale",
+		attributionInstitution: "NOAA Ocean Exploration",
+		attributionUrl: "https://oceanexplorer.noaa.gov/multimedia/",
+		imageSourceUrl:
+			"https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-22voyage-to-the-ridge-features-cg-fracture-zone-media-cystisoma/"
+	},
+	"actinoptychus_splendens.png": {
+		commonName: "Marine diatom",
+		attributionTitle: "iNaturalist - Peter Kamen",
+		attributionNames: "Peter Kamen",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/peterkamen",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6147209171",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"dysidea_sponge.png": {
+		commonName: "Lavender-grey web sponge",
+		attributionTitle: "iNaturalist - uwkwaj",
+		attributionNames: "Jeanette Johnson, Scott Johnson",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/uwkwaj",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5237731357",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"capitella.png": {
+		commonName: "Gallery worm",
+		attributionTitle: "iNaturalist - Chris Isaacs",
+		attributionNames: "Chris Isaacs",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/sacisaacs",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5007921585",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"calanus.jpg": {
+		commonName: "Calanus copepod",
+		attributionTitle: "Flickr - Frost Museum",
+		attributionInstitution: "Frost Museum",
+		attributionUrl: "https://flickr.com/photos/93467196@N02/",
+		imageName: "Copepod",
+		imageSourceUrl: "https://flickr.com/photos/93467196@N02/14086012413",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	},
+	"acartia.png": {
+		commonName: "Acartia copepod",
+		attributionTitle: "iNaturalist - scienceco_fn",
+		attributionNames: "scienceco_fn",
+		attributionUrl: "https://www.inaturalist.org/people/scienceco_fn",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5139927686",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"daphnia.png": {
+		commonName: "Water flea",
+		attributionTitle: "iNaturalist - rdegeer",
+		attributionNames: "rdegeer",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/rdegeer",
+		imageSourceUrl: "https://www.gbif.org/occurrence/4599871558",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"mytilus_blue_mussel.png": {
+		commonName: "Mussel",
+		attributionTitle: "iNaturalist - Alexander Summers",
+		attributionNames: "Alexander Summers",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/alexander4615",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5938121031",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"crassostrea.png": {
+		commonName: "True oyster",
+		attributionTitle: "iNaturalist - thesnailwhisperer",
+		attributionNames: "thesnailwhisperer",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/thesnailwhisperer",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6131617266",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"aplysia.png": {
+		commonName: "California sea hare",
+		attributionTitle: "iNaturalist - phelsumas4life",
+		attributionNames: "phelsumas4life",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/phelsumas4life",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6130572876",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"aurelia.jpg": {
+		commonName: "Moon jellyfish",
+		attributionTitle: "Flickr - NOAA Photo Library",
+		attributionInstitution: "NOAA",
+		attributionUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		imageName: "reef2547",
+		imageSourceUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	},
+	"strombidium.png": {
+		commonName: "Oligotrich ciliates",
+		attributionTitle: "GBIF Occurrence - Collections of Bioclass, School #179, Moscow",
+		attributionInstitution: "Collections of Bioclass, School #179, Moscow",
+		attributionUrl: "https://www.gbif.org/occurrence/2573691766",
+		imageSourceUrl: "https://www.gbif.org/occurrence/2573691766",
+		licenseName: "CC0 1.0",
+		licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/legalcode"
+	},
+	"tintinnopsis.png": {
+		commonName: "Tintinnids",
+		attributionTitle: "iNaturalist - kristobal22",
+		attributionNames: "kristobal22",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/kristobal22",
+		imageSourceUrl: "https://www.gbif.org/occurrence/4607168833",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"mesodinium.png": {
+		commonName: "Red water ciliate",
+		attributionTitle: "iNaturalist - Vicente Franch Meneu",
+		attributionNames: "Vicente Franch Meneu",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/vicentefranch",
+		imageSourceUrl: "https://www.gbif.org/occurrence/3039391269",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"cercomonas.png": {
+		commonName: "Bacterivorous flagellates",
+		attributionTitle: "iNaturalist - peptolab",
+		attributionNames: "peptolab",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/peptolab",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6185869897",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"chaetoceros.png": {
+		commonName: "Chaetoceros diatoms",
+		attributionTitle: "iNaturalist - Ken Koll",
+		attributionNames: "Ken Koll",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/kenk",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6133487928",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"emiliania.jpg": {
+		commonName: "Coccolithophore",
+		attributionTitle: "Wikimedia Commons - Dr. Jeremy Young",
+		attributionNames: "Dr. Jeremy Young",
+		attributionInstitution: "University College London",
+		attributionUrl: "https://commons.wikimedia.org/wiki/File:Emiliania_huxleyi.jpg",
+		imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Emiliania_huxleyi.jpg",
+		licenseName: "CC BY-SA 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0/deed.en"
+	},
+	"karlodinium.jpg": {
+		commonName: "Karlodinium dinoflagellate",
+		attributionTitle: "Flickr - FWC Fish and Wildlife Research Institute",
+		attributionInstitution: "FWC Fish and Wildlife Research Institute",
+		attributionUrl: "https://www.flickr.com/photos/myfwc/",
+		imageName: "Karlodinium veneficum (light micrograph)",
+		imageSourceUrl: "https://www.flickr.com/photos/myfwc/5808219516/in/photolist-edV2z1-9RfDiN-9RcKf8-DqXhKE-neK57e",
+		licenseName: "CC BY-NC-ND 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc-nd/2.0/deed.en"
+	},
+	"tripos.png": {
+		commonName: "Horned dinoflagellate",
+		attributionTitle: "iNaturalist - Ken Koll",
+		attributionNames: "Ken Koll",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/kenk",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6188131004",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"noctiluca.png": {
+		commonName: "Sea sparkle",
+		attributionTitle: "iNaturalist - jsoria",
+		attributionNames: "jsoria",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/jsoria",
+		imageSourceUrl: "https://www.gbif.org/occurrence/4976554350",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"karenia.png": {
+		commonName: "Florida red tide",
+		attributionTitle: "iNaturalist - Faith Colemon (Cook)",
+		attributionNames: "Faith Colemon (Cook)",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/faithcoleman",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5187626596",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"thalassiosira.png": {
+		commonName: "Centric diatom",
+		attributionTitle: "GBIF Occurrence - Princess Maha Chakri Sirindhorn Natural History Museum",
+		attributionInstitution: "Princess Maha Chakri Sirindhorn Natural History Museum",
+		attributionUrl: "https://www.gbif.org/occurrence/5106151977",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5106151977",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/legalcode"
+	},
+	"phaeocystis.png": {
+		commonName: "Foam Algae",
+		attributionTitle: "GBIF Occurrence - Ben Delbaere",
+		attributionNames: "Ben Delbaere",
+		attributionUrl: "https://observation.org/photos/88323182.jpg",
+		imageSourceUrl: "https://www.gbif.org/occurrence/4888728219",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"baleen_whales.jpg": {
+		commonName: "Baleen whales",
+		attributionTitle: "Flickr - NOAA Photo Library",
+		attributionInstitution: "NOAA",
+		attributionUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		imageName: "anim1754 Blue whale",
+		imageSourceUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	},
+	"toothed_whales.png": {
+		commonName: "Toothed whales",
+		attributionTitle: "iNaturalist - lmk96",
+		attributionNames: "lmk96",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/lmk96",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6133146298",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"small_cetaceans.png": {
+		commonName: "Small ceteceans",
+		attributionTitle: "iNaturalist - Travis Nolan",
+		attributionNames: "Travis Nolan",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/tankoda",
+		imageName: "Dall's Porpoise",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5291789416",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"aspergillus.png": {
+		commonName: "Aspergillus mold",
+		attributionTitle: "iNaturalist - Hernan Perales Herrera",
+		attributionNames: "Hernan Perales Herrera",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/crispychris28",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5938631776",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"rhizopus.jpeg": {
+		commonName: "Rhizopus mold",
+		attributionTitle: "Adobe Stock - ggw",
+		attributionNames: "ggw",
+		attributionUrl:
+			"https://stock.adobe.com/contributor/200465992/ggw?load_type=author&prev_url=detail",
+		imageSourceUrl:
+			"https://stock.adobe.com/contributor/200465992/ggw?load_type=author&prev_url=detail",
+		licenseName: "Adobe Stock Education License",
+		licenseUrl: "https://stock.adobe.com/license-terms"
+	},
+	"saprolegnia.png": {
+		commonName: "Saprolegnia water mold",
+		attributionTitle: "iNaturalist - Sean Cozart",
+		attributionNames: "Sean Cozart",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/birdwhisperer",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5086985651",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"trichodesmium.png": {
+		commonName: "Sea sawdust",
+		attributionTitle: "iNaturalist - Thomas Gyselinck",
+		attributionNames: "Thomas Gyselinck",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/thomas-",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6185848546",
+		licenseName: "CC BY 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/4.0/"
+	},
+	"salpa.png": {
+		commonName: "Sea Salps",
+		attributionTitle: "iNaturalist - Sylvain Le Bris",
+		attributionNames: "Sylvain Le Bris",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/sylvain_le_bris",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6273938514",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"branchiostoma.png": {
+		commonName: "Lancelet",
+		attributionTitle: "iNaturalist - squidpastry",
+		attributionNames: "squidpastry",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/squidpastry",
+		imageSourceUrl: "https://www.gbif.org/occurrence/4946190312",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"beroe.png": {
+		commonName: "Cigar comb jelly",
+		attributionTitle: "iNaturalist - JA Fields",
+		attributionNames: "JA Fields",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/ja_fields",
+		imageSourceUrl: "https://www.gbif.org/occurrence/6234257056",
+		licenseName: "CC BY-NC 4.0",
+		licenseUrl: "https://creativecommons.org/licenses/by-nc/4.0/"
+	},
+	"monosiga.jpg": {
+		commonName: "Choanoflagellate",
+		attributionTitle: "Wikimedia Commons - Stephen Fairclough",
+		attributionNames: "Stephen Fairclough",
+		attributionUrl:
+			"https://commons.wikimedia.org/w/index.php?search=Monosiga+brevicollis&title=Special%3AMediaSearch&type=image",
+		imageSourceUrl:
+			"https://commons.wikimedia.org/w/index.php?search=Monosiga+brevicollis&title=Special%3AMediaSearch&type=image",
+		licenseName: "CC BY-SA 2.5",
+		licenseUrl: "https://creativecommons.org/licenses/by-sa/2.5/"
+	},
+	"paulinella.png": {
+		commonName: "Shelled amoeba",
+		attributionTitle: "iNaturalist - onotole",
+		attributionNames: "onotole",
+		attributionInstitution: "iNaturalist",
+		attributionUrl: "https://www.inaturalist.org/people/onotole",
+		imageSourceUrl: "https://www.gbif.org/occurrence/5903769752",
+		licenseName: "CC0 1.0",
+		licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/"
+	},
+	"red_snapper.jpg": {
+		commonName: "Red snapper",
+		attributionTitle: "Flickr - NOAA Photo Library",
+		attributionInstitution: "NOAA",
+		attributionUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		imageSourceUrl:
+			"https://www.flickr.com/photos/noaaphotolib/9714428833/in/photolist-JbHScj-JMbHbs-JSkkvW-fNqZfi-8Usn6h-fUTZxz-23YKdpZ-fNJ12N",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	},
+	"silverrag_driftfish.jpg": {
+		commonName: "Silver-rag driftfish",
+		attributionTitle: "Flickr - NOAA Photo Library",
+		attributionInstitution: "NOAA",
+		attributionUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		imageName: "fish4100, Brandi Noble",
+		imageSourceUrl: "https://www.flickr.com/photos/noaaphotolib/5188070068/in/photolist-8UsdtW",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	},
+	"american_sackfish.jpg": {
+		commonName: "American sackfish",
+		attributionTitle: "Flickr - NOAA Photo Library",
+		attributionInstitution: "NOAA",
+		attributionUrl: "https://www.flickr.com/photos/noaaphotolib/",
+		imageName: "fish4347, Brandi Noble",
+		imageSourceUrl: "https://www.flickr.com/photos/noaaphotolib/5188100894/in/photolist-8UsnDq",
+		licenseName: "CC BY 2.0",
+		licenseUrl: "https://creativecommons.org/licenses/by/2.0/deed.en"
+	}
+};
+
+function cleanAttributionValue(value: string | undefined): string | undefined {
+	const normalized = value?.trim();
+	return normalized ? normalized : undefined;
+}
+
+function getFeaturedImageFilename(imagePath: string | undefined): string | undefined {
+	if (!imagePath) return undefined;
+	const withoutHash = imagePath.split("#")[0] ?? imagePath;
+	const withoutQuery = withoutHash.split("?")[0] ?? withoutHash;
+	const parts = withoutQuery.split("/");
+	const fileName = parts[parts.length - 1];
+	return fileName && fileName.trim() ? fileName.trim() : undefined;
+}
+
+function buildLegacyAttributionText(data: FeaturedImageAttribution): string | undefined {
+	const title = cleanAttributionValue(data.attributionTitle);
+	if (!title) return undefined;
+	const institution = cleanAttributionValue(data.attributionInstitution);
+	const names = cleanAttributionValue(data.attributionNames);
+	const source = cleanAttributionValue(data.imageSourceUrl);
+	const license = cleanAttributionValue(data.licenseName);
+	const parts = [title, names, institution, source, license].filter(Boolean);
+	return parts.length ? parts.join(" | ") : undefined;
+}
+
+function applyFeaturedOrganismMetadata(organisms: FeaturedOrganism[]): FeaturedOrganism[] {
+	return organisms.map((organism) => {
+		const fileName = getFeaturedImageFilename(organism.imageSrc ?? organism.imageUrl);
+		if (!fileName) return organism;
+
+		const metadata = FEATURED_IMAGE_ATTRIBUTIONS[fileName];
+		if (!metadata) return organism;
+
+		const merged: FeaturedOrganism = {
+			...organism,
+			commonName: cleanAttributionValue(metadata.commonName) ?? organism.commonName,
+			imageName: cleanAttributionValue(metadata.imageName) ?? organism.imageName,
+			imageSourceUrl: cleanAttributionValue(metadata.imageSourceUrl) ?? organism.imageSourceUrl,
+			attributionTitle: cleanAttributionValue(metadata.attributionTitle) ?? organism.attributionTitle,
+			attributionNames: cleanAttributionValue(metadata.attributionNames) ?? organism.attributionNames,
+			attributionInstitution:
+				cleanAttributionValue(metadata.attributionInstitution) ?? organism.attributionInstitution,
+			attributionUrl: cleanAttributionValue(metadata.attributionUrl) ?? organism.attributionUrl,
+			licenseName: cleanAttributionValue(metadata.licenseName) ?? organism.licenseName,
+			licenseUrl: cleanAttributionValue(metadata.licenseUrl) ?? organism.licenseUrl,
+			location: cleanAttributionValue(metadata.location) ?? organism.location
+		};
+
+		return {
+			...merged,
+			imageAttribution: merged.imageAttribution ?? buildLegacyAttributionText(metadata)
+		};
+	});
+}
 
 export const FEATURED_ORGANISM_GROUPS: { id: FeaturedOrganismGroup; label: string }[] = [
 	{ id: "Fish", label: "Fish" },
@@ -57,7 +644,7 @@ export const FEATURED_ORGANISM_GROUPS: { id: FeaturedOrganismGroup; label: strin
  * Bones-only data registry.
  * Next step: fill each group with up to 6 organisms (≈30 total).
  */
-export const FEATURED_ORGANISMS: FeaturedOrganism[] = [
+export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetadata([
 	{
 		id: "chauliodus-macouni",
 		group: "Fish",
@@ -631,7 +1218,7 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = [
 		description:
 			"Lutjanus campechanus is an incredibly iconic and valuable reef fish found heavily throughout the Gulf of Mexico. They are easily identified by their sloped profiles and bright rosy red coloration. They prefer to live around structured deep-water habitats like natural coral reefs, shipwrecks, and offshore oil platforms. As one of the most sought-after fish in the culinary world, their populations are carefully monitored to protect against massive historical overfishing."
 	}
-];
+]);
 
 type FeaturedFilterGroup = "All" | "Fish" | "Invertebrates" | "Protists" | "Fungi" | "Other";
 
@@ -1218,7 +1805,7 @@ function SelectedOrganismCard({
 	const [imageFailed, setImageFailed] = useState(false);
 	const commonName = resolvedCommonName;
 	const imageSrc = organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC;
-	const imageAttribution = normalizeImageAttribution(organism.imageAttribution);
+	const imageAttribution = getImageAttributionDetails(organism);
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
 	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
 	const taxonomyHref = taxonomyString
@@ -1248,7 +1835,7 @@ function SelectedOrganismCard({
 								onError={() => setImageFailed(true)}
 							/>
 						)}
-						{imageAttribution ? <ImageAttributionIcon attribution={imageAttribution} /> : null}
+						<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
 					</div>
 				</div>
 
@@ -1285,15 +1872,63 @@ function SelectedOrganismCard({
 	);
 }
 
-function normalizeImageAttribution(attribution: string | undefined): string | null {
+type ImageAttributionDetails = {
+	title?: string;
+	names?: string;
+	institution?: string;
+	attributionUrl?: string;
+	imageSourceUrl?: string;
+	licenseName?: string;
+	licenseUrl?: string;
+	location?: string;
+	imageName?: string;
+	legacyText?: string;
+	isMissing?: boolean;
+};
+
+function normalizeImageAttribution(attribution: string | undefined): string | undefined {
 	const value = attribution?.trim();
-	if (!value) return null;
-	if (/to be updated|pending|coming soon/i.test(value)) return null;
+	if (!value) return undefined;
+	if (/to be updated|pending|coming soon/i.test(value)) return undefined;
 	return value;
 }
 
-function ImageAttributionIcon({ attribution }: { attribution: string }) {
+function getImageAttributionDetails(organism: FeaturedOrganism): ImageAttributionDetails {
+	const details: ImageAttributionDetails = {
+		title: cleanAttributionValue(organism.attributionTitle),
+		names: cleanAttributionValue(organism.attributionNames),
+		institution: cleanAttributionValue(organism.attributionInstitution),
+		attributionUrl: cleanAttributionValue(organism.attributionUrl),
+		imageSourceUrl: cleanAttributionValue(organism.imageSourceUrl),
+		licenseName: cleanAttributionValue(organism.licenseName),
+		licenseUrl: cleanAttributionValue(organism.licenseUrl),
+		location: cleanAttributionValue(organism.location),
+		imageName: cleanAttributionValue(organism.imageName)
+	};
+	const hasStructuredValues = Object.values(details).some(Boolean);
+	if (hasStructuredValues) {
+		return details;
+	}
+	const legacyText = normalizeImageAttribution(organism.imageAttribution);
+	if (legacyText) return { legacyText };
+	return {
+		legacyText: "Attribution details coming soon.",
+		isMissing: true
+	};
+}
+
+function ImageAttributionIcon({
+	attribution,
+	fallbackTitle
+}: {
+	attribution: ImageAttributionDetails;
+	fallbackTitle: string;
+}) {
 	const [hover, setHover] = useState(false);
+	const combinedCredit = [attribution.names, attribution.institution].filter(Boolean).join(" - ");
+	const licenseText = attribution.licenseName ?? attribution.licenseUrl;
+	const headline = attribution.imageName ?? attribution.title ?? fallbackTitle;
+
 	return (
 		<div
 			className="absolute bottom-2 right-2 z-20"
@@ -1301,12 +1936,62 @@ function ImageAttributionIcon({ attribution }: { attribution: string }) {
 			onMouseLeave={() => setHover(false)}
 		>
 			<div className="relative">
-				<div className="h-8 w-8 rounded-full bg-base-100/75 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
-					<span className="block h-4.5 w-4.5 bg-primary mask-[url('/images/icons/photo_icon.svg')] mask-contain mask-no-repeat mask-center [-webkit-mask-image:url('/images/icons/photo_icon.svg')] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]" />
+				<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-base-100/70 border border-base-200 backdrop-blur flex items-center justify-center shadow-sm">
+					<span className="block w-5 h-5 bg-primary mask-[url('/images/icons/photo_icon.svg')] mask-contain mask-no-repeat mask-center [-webkit-mask-image:url('/images/icons/photo_icon.svg')] [-webkit-mask-size:contain] [-webkit-mask-repeat:no-repeat] [-webkit-mask-position:center]" />
 				</div>
 				{hover ? (
-					<div className="absolute bottom-full right-0 mb-2 w-64 max-w-[80vw] rounded-lg border border-base-200 bg-base-100/95 p-2.5 text-xs text-base-content shadow-lg backdrop-blur">
-						<span className="text-base-content/70">Attribution:</span> {attribution}
+					<div className="absolute bottom-full right-0 w-72 max-w-[86vw] rounded-lg border border-base-200 bg-base-100/95 p-2.5 text-xs text-base-content shadow-lg backdrop-blur">
+						<div className="space-y-1.5 wrap-break-word">
+							<p className="font-semibold">{headline}</p>
+							{attribution.title ? <p>{attribution.title}</p> : null}
+							{combinedCredit ? <p>{combinedCredit}</p> : null}
+							{attribution.location ? <p>{attribution.location}</p> : null}
+							{attribution.attributionUrl ? (
+								<p>
+									<a
+										className="link link-primary break-all"
+										href={attribution.attributionUrl}
+										target="_blank"
+										rel="noreferrer"
+									>
+										{attribution.attributionUrl}
+									</a>
+								</p>
+							) : null}
+							{attribution.imageSourceUrl ? (
+								<p>
+									<a
+										className="link link-primary break-all"
+										href={attribution.imageSourceUrl}
+										target="_blank"
+										rel="noreferrer"
+									>
+										{attribution.imageSourceUrl}
+									</a>
+								</p>
+							) : null}
+							{licenseText ? (
+								<p>
+									{attribution.licenseUrl ? (
+										<a
+											className="link link-primary break-all"
+											href={attribution.licenseUrl}
+											target="_blank"
+											rel="noreferrer"
+										>
+											{licenseText}
+										</a>
+									) : (
+										licenseText
+									)}
+								</p>
+							) : null}
+							{attribution.legacyText ? (
+								<p className={attribution.isMissing ? "text-base-content/70 italic" : undefined}>
+									{attribution.legacyText}
+								</p>
+							) : null}
+						</div>
 					</div>
 				) : null}
 			</div>

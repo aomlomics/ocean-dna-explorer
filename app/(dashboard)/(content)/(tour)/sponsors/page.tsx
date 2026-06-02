@@ -37,10 +37,10 @@ export default function SponsorsPage() {
 					className="h-20 w-20 shrink-0 sm:h-24 sm:w-24"
 				/>
 				<h1 className="sponsors-title text-3xl font-semibold text-primary sm:text-4xl md:text-5xl">
-					Thank You to Our Supporting Institutes
+					Thank you to our supporters.
 				</h1>
 				<p className="sponsors-subtitle max-w-2xl text-base text-base-content/75 sm:text-lg">
-					The Ocean DNA Explorer is made possible by these institutes.
+					Made possible by these organizations.
 				</p>
 
 				{/* Logo row: each logo gets its own float animation delay so they

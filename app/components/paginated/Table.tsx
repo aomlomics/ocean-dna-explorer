@@ -16,6 +16,7 @@ import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@
 import AnalysisTag from "../tags/AnalysisTag";
 import Checklist from "../Checklist";
 import InfoButton from "../InfoButton";
+import TableStatusState from "./TableStatusState";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
 
@@ -317,8 +318,27 @@ export default function Table({
 	}, [data]);
 
 	if (isLoading) return <LoadingTable take={take} page={page} />;
-	if (error) return <div>failed to load: {error.toString() instanceof Error ? error.message : String(error)}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {String(data.error ?? "")}</div>;
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
+	if (data.statusMessage === "error") {
+		return <TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />;
+	}
+	if (!Array.isArray(data.result) || data.result.length === 0 || data.count === 0) {
+		return (
+			<TableStatusState
+				kind="empty"
+				title="No results found"
+				detail="Try broadening your search or removing one or more filters."
+			/>
+		);
+	}
 
 	//filters in the column header
 	function applyFilters(e: SubmitEvent<HTMLFormElement>) {

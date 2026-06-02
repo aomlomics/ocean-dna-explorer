@@ -9,6 +9,7 @@ import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
 import LoadingTaxaGrid from "../LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
+import TableStatusState from "../TableStatusState";
 
 const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
 
@@ -105,14 +106,35 @@ export default function Grid({
 		}
 	);
 	if (isLoading || !data) {
-		if (table === "taxonomy") {
-			return <LoadingTaxaGrid cols={5} />;
-		}
-		return <>Loading...</>;
+		return table === "taxonomy" ? (
+			<div className="space-y-4">
+				<TableStatusState kind="loading" title="Loading results..." detail="Applying filters and fetching taxonomy rows." />
+				<LoadingTaxaGrid cols={5} />
+			</div>
+		) : (
+			<TableStatusState kind="loading" title="Loading results..." detail="Applying filters and fetching table rows." />
+		);
 	}
-	if (error) return <div>failed to load: {error.toString() instanceof Error ? error.message : String(error)}</div>;
-	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result) || !data.count) {
-		return <div>failed to load: {String(data.error ?? "no result found")}</div>;
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
+	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result)) {
+		return <TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />;
+	}
+	if (!data.result.length || data.count === 0) {
+		return (
+			<TableStatusState
+				kind="empty"
+				title="No results found"
+				detail="Try broadening your search or removing one or more filters."
+			/>
+		);
 	}
 
 	function handlePageHover(dir = 1 as 1 | -1) {
