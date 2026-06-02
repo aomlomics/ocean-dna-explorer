@@ -35,7 +35,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 	}
 
 	const targetRole = (target.publicMetadata as UserMetadata).role;
-	const uneditable = !targetRole || !RoleHeirarchy[role!].includes(targetRole);
+	const uneditable = !RoleHeirarchy[role!].includes(targetRole);
 
 	const projects = await prisma.project.findMany({
 		where: {
