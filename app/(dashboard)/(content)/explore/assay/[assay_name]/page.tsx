@@ -7,7 +7,7 @@ import Link from "next/link";
 import PrimerDiagram from "@/app/components/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
-import { AnalysisIcon, LocationIcon } from "@/app/components/icons";
+import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 
 // Simple GC% calculator for summary cards
@@ -267,11 +267,42 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
+								<StatCard
+									title="Taxonomies"
+									query={async () =>
+										await prisma.taxonomy.count({
+											where: {
+												Assignments: {
+													some: {
+														Analysis: {
+															assay_name
+														},
+														Occurrences: {
+															some: {
+																Library: {
+																	assay_name
+																}
+															}
+														}
+													}
+												}
+											}
+										})
+									}
+									icon={<FishIcon />}
+									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
+									tooltip="View as Search"
+								/>
+								<StatCard
+									title="Target Gene"
+									value={assay.target_gene || "No target_gene provided"}
+									icon={<DnaIcon className="w-10 h-10" />}
+								/>
 								<DropdownCard
 									table="analysis"
 									items={assay.Analyses}
 									icon={<AnalysisIcon />}
-									className="sm:col-span-2"
+									className="sm:col-span-2 w-full sm:w-2/3"
 								/>
 							</div>
 						</div>
