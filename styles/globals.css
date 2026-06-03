@@ -273,19 +273,19 @@ body:has(.tour-layout-root) {
 /* Softer in the middle, fades toward edges (mask alpha). */
 .ambient-wordcloud-vignette {
 	-webkit-mask-image: radial-gradient(
-		ellipse 78% 72% at 50% 50%,
+		ellipse 84% 80% at 50% 50%,
 		#000 0%,
-		#000 32%,
-		rgba(0, 0, 0, 0.55) 62%,
-		rgba(0, 0, 0, 0.14) 86%,
+		#000 45%,
+		rgba(0, 0, 0, 0.6) 74%,
+		rgba(0, 0, 0, 0.18) 92%,
 		transparent 100%
 	);
 	mask-image: radial-gradient(
-		ellipse 78% 72% at 50% 50%,
+		ellipse 84% 80% at 50% 50%,
 		#000 0%,
-		#000 32%,
-		rgba(0, 0, 0, 0.55) 62%,
-		rgba(0, 0, 0, 0.14) 86%,
+		#000 45%,
+		rgba(0, 0, 0, 0.6) 74%,
+		rgba(0, 0, 0, 0.18) 92%,
 		transparent 100%
 	);
 	-webkit-mask-repeat: no-repeat;
@@ -294,14 +294,46 @@ body:has(.tour-layout-root) {
 	mask-size: 100% 100%;
 }
 
+/* Gentle, out-of-phase drift applied to each word-cloud word after it finishes
+   typing in. We animate the independent `translate`/`scale` properties (set
+   here) rather than `transform`, so this composes with the `transform: rotate()`
+   wordcloud2 puts on rotated words instead of clobbering it. Per-word
+   animation-delay / animation-duration are set inline in ambient/page.tsx. */
+.ambient-word-breathe {
+	animation-name: ambientWordBreathe;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+	will-change: translate;
+}
+
+@keyframes ambientWordBreathe {
+	from {
+		translate: 0 0;
+		scale: 1;
+		opacity: 0.94;
+	}
+	to {
+		translate: 0 -4px;
+		scale: 1.02;
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ambient-word-breathe {
+		animation: none;
+	}
+}
+
 
 /* ---------- /sponsors ---------- */
 .sponsors-title {
-	animation: sponsorsTitleIn 1.2s ease-out both;
+	animation: sponsorsTitleIn 2s ease-out both;
 }
 
 .sponsors-subtitle {
-	animation: sponsorsTitleIn 1.2s ease-out 0.2s both;
+	animation: sponsorsTitleIn 2s ease-out 0.35s both;
 }
 
 .sponsors-logo {

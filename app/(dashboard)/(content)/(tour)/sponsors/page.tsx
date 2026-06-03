@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
+import { motion } from "framer-motion";
 
 // Static list for now; add more sponsors here later.
 // Only logos and labels live in this file — all animation is in globals.css.
@@ -27,7 +28,12 @@ export default function SponsorsPage() {
 	return (
 		<div className="tour-motion-bg relative isolate flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-base-200 [html[data-theme='dark']_&]:bg-base-300/50 px-6">
 
-			<div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-6 text-center">
+			<motion.div
+				className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-6 text-center"
+				initial={{ opacity: 0, x: 120, y: 16 }}
+				animate={{ opacity: 1, x: 0, y: 0 }}
+				transition={{ duration: 2.1, ease: [0.16, 1, 0.3, 1], delay: 0.12 }}
+			>
 				<Image
 					src="/images/ode_logo_clean.svg"
 					alt="Ocean DNA Explorer logo"
@@ -85,7 +91,7 @@ export default function SponsorsPage() {
 						</div>
 					))}
 				</div>
-			</div>
+			</motion.div>
 		</div>
 	);
 }

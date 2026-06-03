@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Taxonomy } from "@/app/generated/prisma/client";
 import { ProjectIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
@@ -298,6 +298,63 @@ function buildFallbackTaxonomyMeta(taxonomy: Taxonomy): TaxonomyCardMeta {
 	};
 }
 
+// useLayoutEffect warns when it runs during server rendering. This is a client
+// component, but Next still server-renders it for the initial HTML, so we fall
+// back to useEffect on the server to silence that warning while keeping the
+// flicker-free, pre-paint measurement on the client.
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// Shrinks the left-hand info column just enough to fit the available height, so
+// the project id / title / description / details are never clipped no matter how
+// long the project name is. We scale the whole content block with a transform
+// (cheap, and keeps text + logo + map proportional) instead of juggling
+// per-element font sizes. A transform doesn't change layout, so reading
+// scrollHeight still reports the natural, unscaled height we measure against —
+// which also means our own scaling can't trigger a ResizeObserver feedback loop.
+function useFitColumnScale(dependency: string | undefined) {
+	const availableRef = useRef<HTMLDivElement>(null);
+	const contentRef = useRef<HTMLDivElement>(null);
+	const [scale, setScale] = useState(1);
+
+	useIsomorphicLayoutEffect(() => {
+		const available = availableRef.current;
+		const content = contentRef.current;
+		if (!available || !content) return;
+
+		const measure = () => {
+			const availableHeight = available.clientHeight;
+			const naturalHeight = content.scrollHeight;
+			if (!availableHeight || !naturalHeight) return;
+			// Leave a little breathing room so text descenders / borders never kiss
+			// the crop edge when viewport math lands on fractional pixels.
+			const usableHeight = Math.max(1, availableHeight - 36);
+			// The 0.35 floor keeps even a pathological title readable rather than
+			// shrinking to nothing; curated tour projects never get close to it.
+			const next = naturalHeight > usableHeight ? Math.max(0.35, usableHeight / naturalHeight) : 1;
+			setScale((prev) => (Math.abs(prev - next) > 0.005 ? next : prev));
+		};
+
+		measure();
+		// Font loading, image decode, and map layout can change the measured block
+		// after first paint. Re-check shortly after mount/swap to keep the bottom
+		// metadata rows from clipping.
+		const recheck1 = window.setTimeout(measure, 50);
+		const recheck2 = window.setTimeout(measure, 220);
+		const recheck3 = window.setTimeout(measure, 600);
+		const observer = new ResizeObserver(measure);
+		observer.observe(available);
+		observer.observe(content);
+		return () => {
+			window.clearTimeout(recheck1);
+			window.clearTimeout(recheck2);
+			window.clearTimeout(recheck3);
+			observer.disconnect();
+		};
+	}, [dependency]);
+
+	return { availableRef, contentRef, scale };
+}
+
 export default function ShowcaseClient({
 	projects,
 	projectDurationMs = DEFAULT_PROJECT_DURATION_MS
@@ -450,11 +507,14 @@ export default function ShowcaseClient({
 		};
 	}, [project?.project_id, project?.taxonomies]);
 
+	// Auto-fit the left info column so the project id / name are never cut off.
+	const { availableRef, contentRef, scale: fitScale } = useFitColumnScale(project?.project_id);
+
 	if (!project) return null;
 
 	const fromLeft = projectIdx % 2 === 0;
 	const swapIn = !firstProjectPaint.current;
-	const circleDuration = swapIn ? 1.35 : 0.9;
+	const circleDuration = swapIn ? 2.1 : 1.45;
 	const projectTitleSizeClass = getProjectTitleSizeClass(project.project_name);
 
 	return (
@@ -469,10 +529,15 @@ export default function ShowcaseClient({
 					className="relative z-10 grid h-screen grid-cols-1 gap-6 px-[5vw] py-[5vh] lg:grid-cols-[minmax(0,0.88fr)_minmax(34rem,1.12fr)]"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
-					exit={{ opacity: 0, transition: { duration: 0.45, ease: PREMIUM_EASE } }}
-					transition={{ duration: 0.5, ease: PREMIUM_EASE }}
+					exit={{ opacity: 0, scale: 0.992, transition: { duration: 0.55, ease: PREMIUM_EASE } }}
+					transition={{ duration: 0.92, ease: PREMIUM_EASE }}
 				>
-					<div className="flex min-h-0 min-w-0 flex-col justify-center">
+					<div ref={availableRef} className="flex min-h-0 min-w-0 flex-col justify-start overflow-hidden py-2">
+						<div
+							ref={contentRef}
+							className="flex min-w-0 flex-col"
+							style={{ transform: `scale(${fitScale})`, transformOrigin: "left top" }}
+						>
 						<div className="mb-9 ml-3 flex items-center gap-5">
 							<Image
 								src="/images/ode_logo_clean.svg"
@@ -559,9 +624,8 @@ export default function ShowcaseClient({
 						>
 							{project.institution ? <DetailRow label="Institute" value={project.institution} /> : null}
 							<DetailRow label="Contact" value={project.project_contact} />
-							<DetailRow label="Assay" value={project.assay_type} />
 						</motion.dl>
-
+						</div>
 					</div>
 
 					<div className="relative flex min-h-[56vh] items-center justify-center lg:min-h-0">
