@@ -46,6 +46,7 @@ export default async function Analysis_run_name({
 					id: true,
 					dateCalculated: true,
 					finished: true,
+					analysis_run_name: true,
 					indexType: true,
 					depth: true,
 					AlphaDiversityIndexes: {
@@ -240,14 +241,14 @@ export default async function Analysis_run_name({
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Taxonomy" />
 					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
-						<Suspense fallback={<>Loading...</>}>
+						<Suspense fallback={<div className="p-6">Loading...</div>}>
 							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Alpha Diversity" />
 					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
-						<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} />
+						<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
 					</div>
 				</div>
 			</div>

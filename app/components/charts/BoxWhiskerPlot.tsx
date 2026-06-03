@@ -1,40 +1,57 @@
 "use client";
 
-import { RefObject, useEffect, useRef } from "react";
-import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, ChartData } from "chart.js";
+import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
+import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, Legend, ChartData } from "chart.js";
 import { BoxPlotController, BoxAndWiskers } from "@sgratzl/chartjs-chart-boxplot";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
-import { AlphaDiversity } from "@/app/generated/prisma/client";
 
-ChartJS.register(CategoryScale, LinearScale, BoxPlotController, BoxAndWiskers, Title, Tooltip);
+ChartJS.register(CategoryScale, LinearScale, BoxPlotController, BoxAndWiskers, Title, Tooltip, Legend);
 
 export default function BoxWhiskerPlot({
+	data,
 	ref,
-	alphaDiversity,
-	field,
-	data
+	title,
+	xField,
+	yField,
+	legend = false,
+	onLegendHover
 }: {
-	ref: RefObject<ChartJS<any> | null>;
-	alphaDiversity: { indexType: AlphaDiversity["indexType"]; depth: AlphaDiversity["depth"] };
-	field: string;
 	data: ChartData;
+	ref?: RefObject<ChartJS<any> | null>;
+	title?: string;
+	xField?: string;
+	yField?: string;
+	legend?: boolean;
+	onLegendHover?: Dispatch<SetStateAction<string | undefined>>;
 }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	//used if ref is not provided
+	const chartRef = useRef<ChartJS<any> | null>(null);
 
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
 
 	useEffect(() => {
-		ref.current = new ChartJS(canvasRef.current as ChartItem, {
+		const currRef = ref === undefined ? chartRef : ref;
+
+		currRef.current = new ChartJS(canvasRef.current as ChartItem, {
 			type: "boxplot",
 			data,
 			options: {
 				plugins: {
 					title: {
 						display: true,
-						text: `${alphaDiversity.indexType.slice(0, 1).toUpperCase() + alphaDiversity.indexType.slice(1)} Alpha Diversity${alphaDiversity.depth ? " at " + alphaDiversity.depth + " depth" : ""} by ${field}`,
+						text: title,
 						color: textColor
+					},
+					legend: {
+						display: legend,
+						labels: {
+							color: textColor
+						},
+						onHover: (event, item) => onLegendHover && onLegendHover(item.text),
+						onLeave: () => onLegendHover && onLegendHover(undefined)
 					}
 				},
 				elements: {
@@ -48,6 +65,7 @@ export default function BoxWhiskerPlot({
 					x: {
 						title: {
 							display: true,
+							text: xField,
 							color: textColor
 						},
 						ticks: {
@@ -60,6 +78,7 @@ export default function BoxWhiskerPlot({
 					y: {
 						title: {
 							display: true,
+							text: yField,
 							color: textColor
 						},
 						ticks: {
@@ -74,8 +93,8 @@ export default function BoxWhiskerPlot({
 		});
 
 		return () => {
-			if (ref.current) {
-				ref.current.destroy();
+			if (currRef.current) {
+				currRef.current.destroy();
 			}
 		};
 	}, [textColor]);
