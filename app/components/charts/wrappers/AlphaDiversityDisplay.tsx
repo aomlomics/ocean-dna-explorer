@@ -46,7 +46,6 @@ function getChartKey() {
 	return (Math.random() + 1).toString(36).substring(7);
 }
 
-//TODO: merge alphaDiversities from different analyses together
 export default function AlphaDiversityDisplay({
 	alphaDiversities,
 	sameAnalysis
