@@ -533,9 +533,13 @@ export function VisualizeMegaMenu() {
 						<MenuItemWithSubtitle
 							href="/visualize/taxonomy"
 							title="Taxonomy"
-							subtitle="Explore taxa distributions across projects and analyses."
+							subtitle="Explore taxa distributions from all of our data."
 						/>
-						<MenuItemWithSubtitle href="/visualize/alphaDiversity" title="Alpha Diversity" subtitle="TODO: FILL IN" />
+						<MenuItemWithSubtitle
+							href="/visualize/alphaDiversity"
+							title="Alpha Diversity"
+							subtitle="See Alpha Diversity metrics across analyses."
+						/>
 					</div>
 				</div>
 
