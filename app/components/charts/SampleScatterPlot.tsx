@@ -62,11 +62,13 @@ export default function SampleScatterPlot({
 	const [xType, setXType] = useState("date" as "date" | "number");
 	const [xMin, setXMin] = useState(undefined as number | undefined);
 	const [xMax, setXMax] = useState(undefined as number | undefined);
+	const [xReverse, setXReverse] = useState(false);
 
 	const [yField, setYField] = useState("minimumDepthInMeters" as keyof Sample);
 	const [yType, setYType] = useState("number" as "date" | "number");
 	const [yMin, setYMin] = useState(undefined as number | undefined);
 	const [yMax, setYMax] = useState(undefined as number | undefined);
+	const [yReverse, setYReverse] = useState(false);
 
 	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
 	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
@@ -191,11 +193,11 @@ export default function SampleScatterPlot({
 								tempYMax = numYVal;
 							}
 
-							const setIndex = acc.findIndex((s) => s.label === val);
+							const label = val.toString();
+							const setIndex = acc.findIndex((s) => s.label === label);
 							if (setIndex !== -1) {
 								acc[setIndex].data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
 							} else {
-								const label = val.toString();
 								labels.add(label);
 								acc.push({
 									label,
@@ -226,25 +228,60 @@ export default function SampleScatterPlot({
 
 		//assign colors
 		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35 }).forEach((color, i) => {
-			if (hoveredLegend && tempDatasets[i].label !== hoveredLegend) {
-				tempDatasets[i].borderColor = color.alpha(0.1).hex();
-				tempDatasets[i].backgroundColor = "#00000000";
-			} else {
-				tempDatasets[i].borderColor = color.hex();
-				tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
-			}
+			tempDatasets[i].borderColor = color.hex();
+			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
 		});
 
 		setChartData({ labels: Array.from(labels).sort(), datasets: tempDatasets as DataPoint[] });
 		setLoading(false);
-	}, [xField, yField, legendField, hoveredLegend]);
+	}, [xField, yField, legendField]);
+
+	useEffect(() => {
+		if (chartData.datasets.length > 1) {
+			if (hoveredLegend) {
+				//dim every color except hovered legend color
+				setChartData({
+					labels: chartData.labels,
+					datasets: chartData.datasets.map((ds) => ({
+						...ds,
+						borderColor:
+							ds.label === hoveredLegend
+								? chroma(ds.borderColor).alpha(1).hex()
+								: chroma(ds.borderColor).alpha(0.1).hex(),
+						backgroundColor: ds.label === hoveredLegend ? chroma(ds.borderColor).alpha(0.5).hex() : "#00000000"
+					}))
+				});
+			} else if (chartData.datasets.some((set) => set.backgroundColor === "#00000000")) {
+				//return all colors to normal
+				setChartData({
+					labels: chartData.labels,
+					datasets: chartData.datasets.map((ds) => ({
+						...ds,
+						borderColor: chroma(ds.borderColor).alpha(1).hex(),
+						backgroundColor: chroma(ds.borderColor).alpha(0.5).hex()
+					}))
+				});
+			}
+		}
+	}, [hoveredLegend]);
 
 	return (
 		<div className="relative">
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex justify-center items-center gap-2">
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend">X-Axis:</legend>
+						<legend className="fieldset-legend w-full flex justify-between">
+							<span>X-Axis:</span>
+							<label className="label">
+								Reverse
+								<input
+									className="checkbox checkbox-sm"
+									type="checkbox"
+									checked={xReverse}
+									onChange={(e) => setXReverse(e.currentTarget.checked)}
+								/>
+							</label>
+						</legend>
 						<select
 							value={xField}
 							onChange={(e) => {
@@ -288,7 +325,18 @@ export default function SampleScatterPlot({
 					</svg>
 
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Y-Axis:</legend>
+						<legend className="fieldset-legend w-full flex justify-between">
+							<span>Y-Axis:</span>
+							<label className="label">
+								Reverse
+								<input
+									className="checkbox checkbox-sm"
+									type="checkbox"
+									checked={yReverse}
+									onChange={(e) => setYReverse(e.currentTarget.checked)}
+								/>
+							</label>
+						</legend>
 						<select
 							value={yField}
 							onChange={(e) => {
@@ -423,7 +471,8 @@ export default function SampleScatterPlot({
 								color: gridColor
 							},
 							min: xMin,
-							max: xMax
+							max: xMax,
+							reverse: xReverse
 						},
 						y: {
 							...(yType === "date"
@@ -450,7 +499,8 @@ export default function SampleScatterPlot({
 								color: gridColor
 							},
 							min: yMin,
-							max: yMax
+							max: yMax,
+							reverse: yReverse
 						}
 					}
 				}}

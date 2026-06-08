@@ -25,6 +25,14 @@ export default function VisualizeTabs() {
 			>
 				Taxonomy
 			</Link>
+			<Link
+				href={`/visualize/alphaDiversity?${searchParams.toString()}`}
+				className={`btn px-6 py-3 transition-colors rounded-none ${
+					pathname === "/visualize/alphaDiversity" ? "rounded-t-lg btn-primary" : ""
+				}`}
+			>
+				Alpha Diversity
+			</Link>
 		</nav>
 	);
 }
