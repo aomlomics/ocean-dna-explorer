@@ -1,5 +1,10 @@
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
-import { Prisma } from "@/app/generated/prisma/client";
+import {
+	AssignmentFindManyArgs,
+	OccurrenceFindManyArgs,
+	SampleFindManyArgs,
+	TaxonomyFindManyArgs
+} from "@/app/generated/prisma/models";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { TaxonomicRanks } from "@/types/objects";
@@ -10,7 +15,6 @@ export default async function VisualizeTaxonomy({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const params = new URLSearchParams();
-
 	for (const [key, val] of Object.entries(await searchParams)) {
 		if (val != null) {
 			if (Array.isArray(val)) {
@@ -43,7 +47,7 @@ export default async function VisualizeTaxonomy({
 	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
 		async (tx) => {
 			const occurrences = await prisma.occurrence.findMany({
-				...(occQuery as Prisma.OccurrenceFindManyArgs),
+				...(occQuery as OccurrenceFindManyArgs),
 				select: {
 					lib_id: true,
 					featureid: true,
@@ -52,7 +56,7 @@ export default async function VisualizeTaxonomy({
 			});
 
 			const assignments = await prisma.assignment.findMany({
-				...(assignQuery as Prisma.AssignmentFindManyArgs),
+				...(assignQuery as AssignmentFindManyArgs),
 				select: {
 					featureid: true,
 					Taxonomy: {
@@ -64,7 +68,7 @@ export default async function VisualizeTaxonomy({
 			});
 
 			const taxonomies = await prisma.taxonomy.findMany({
-				...(taxaQuery as Prisma.TaxonomyFindManyArgs),
+				...(taxaQuery as TaxonomyFindManyArgs),
 				select: TaxonomicRanks.reduce((acc, rank) => ({ ...acc, [rank]: true }), { id: true } as Record<
 					(typeof TaxonomicRanks)[number],
 					true
@@ -72,7 +76,7 @@ export default async function VisualizeTaxonomy({
 			});
 
 			const samples = await prisma.sample.findMany({
-				...(sampleQuery as Prisma.SampleFindManyArgs),
+				...(sampleQuery as SampleFindManyArgs),
 				include: {
 					Libraries: {
 						select: {

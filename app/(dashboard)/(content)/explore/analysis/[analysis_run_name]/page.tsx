@@ -42,13 +42,7 @@ export default async function Analysis_run_name({
 			},
 			Tags: true,
 			AlphaDiversities: {
-				select: {
-					id: true,
-					dateCalculated: true,
-					finished: true,
-					analysis_run_name: true,
-					indexType: true,
-					depth: true,
+				include: {
 					AlphaDiversityIndexes: {
 						select: {
 							index: true,

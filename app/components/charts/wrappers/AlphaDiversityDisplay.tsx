@@ -14,6 +14,8 @@ import Link from "next/link";
 import { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
 
+const METRIC_SEP = " | ";
+
 function getSortedValues(labels: string[], type: DbType) {
 	let func;
 	if (type === "float" || type === "integer") {
@@ -49,20 +51,14 @@ export default function AlphaDiversityDisplay({
 	alphaDiversities,
 	sameAnalysis
 }: {
-	alphaDiversities: {
-		id: AlphaDiversity["id"];
-		dateCalculated: AlphaDiversity["dateCalculated"];
-		finished: AlphaDiversity["finished"];
-		analysis_run_name: AlphaDiversity["analysis_run_name"];
-		indexType: AlphaDiversity["indexType"];
-		depth: AlphaDiversity["depth"];
+	alphaDiversities: (AlphaDiversity & {
 		AlphaDiversityIndexes: {
 			index: AlphaDiversityIndex["index"];
 			Library: {
 				Sample: Sample;
 			};
 		}[];
-	}[];
+	})[];
 	sameAnalysis?: boolean;
 }) {
 	const { primaryColor } = useDaisyTheme();
@@ -71,27 +67,36 @@ export default function AlphaDiversityDisplay({
 	//state variable to trigger plot re-render
 	const [chartKey, setChartKey] = useState("0");
 
-	const [currAlphaDiversity, setCurrAlphaDiversity] = useState(
-		alphaDiversities[0] as (typeof alphaDiversities)[0] | undefined
-	);
-	const [xField, setXField] = useState("env_local_scale");
-	const [hueField, setHueField] = useState("");
-	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
-	const [data, setData] = useState(undefined as ChartData | undefined);
-
-	const [timeSinceStarted, setTimeSinceStarted] = useState(undefined as undefined | number);
-
+	const diversitiesByMetric = {} as Record<string, typeof alphaDiversities>;
 	const userDefinedFields = new Set() as Set<string>;
 	for (const ad of alphaDiversities) {
+		//index type
+		const metric = ad.indexType + (ad.depth ? METRIC_SEP + ad.depth : "");
+		if (metric in diversitiesByMetric) {
+			diversitiesByMetric[metric].push(ad);
+		} else {
+			diversitiesByMetric[metric] = [ad];
+		}
+
+		//user defined
 		for (const index of ad.AlphaDiversityIndexes) {
 			if (index.Library.Sample.userDefined) {
 				Object.keys(index.Library.Sample.userDefined).forEach(userDefinedFields.add, userDefinedFields);
 			}
 		}
 	}
+	const [currMetric, setCurrMetric] = useState(
+		Object.keys(diversitiesByMetric)[0] as AlphaDiversity["indexType"] | undefined
+	);
+	const [xField, setXField] = useState("env_local_scale");
+	const [hueField, setHueField] = useState("");
+	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
+	const [data, setData] = useState(undefined as ChartData | undefined);
+
+	const [currTime, setCurrTime] = useState(new Date().getTime());
 
 	function getSampleFieldValue(sample: Sample, field: string, type: string) {
-		if (!currAlphaDiversity) {
+		if (!currMetric) {
 			throw new Error("Current Alpha Diversity must exist");
 		}
 
@@ -113,11 +118,8 @@ export default function AlphaDiversityDisplay({
 				return sample[keyField]!.toString();
 			}
 		} else {
-			//value is analysis_run_name, is user defined, or does not exist
-			if (field === "analysis_run_name") {
-				//analysis_run_name
-				return currAlphaDiversity.analysis_run_name;
-			} else if (userDefinedFields.has(field) && sample.userDefined && sample.userDefined[field] != null) {
+			//value is user defined, or does not exist
+			if (userDefinedFields.has(field) && sample.userDefined && sample.userDefined[field] != null) {
 				//user defined and exists
 				return sample.userDefined[field];
 			} else {
@@ -128,97 +130,104 @@ export default function AlphaDiversityDisplay({
 	}
 
 	useEffect(() => {
-		if (currAlphaDiversity && currAlphaDiversity.finished) {
-			const xType =
-				xField === "analysis_run_name" || userDefinedFields.has(xField) ? "string" : getZodType("sample", xField).type;
-
-			let hueType;
-			let hues;
-			let datasetsObj;
-			if (hueField) {
-				hueType =
-					hueField === "analysis_run_name" || userDefinedFields.has(hueField)
+		if (currMetric) {
+			const finishedDiversities = diversitiesByMetric[currMetric].filter((ad) => ad.finished);
+			if (finishedDiversities.length) {
+				const xType =
+					xField === "analysis_run_name" || userDefinedFields.has(xField)
 						? "string"
-						: getZodType("sample", hueField).type;
-				hues = new Set() as Set<string>;
-				datasetsObj = {} as Record<string, Record<string, number[]>>;
-			} else {
-				datasetsObj = {} as Record<string, number[]>;
-			}
+						: getZodType("sample", xField).type;
 
-			for (const i of currAlphaDiversity.AlphaDiversityIndexes) {
-				//get string representation of values
-				const xValue = getSampleFieldValue(i.Library.Sample, xField, xType);
-				let hueValue;
+				let hueType;
+				let hues;
+				let datasetsObj;
 				if (hueField) {
-					hueValue = getSampleFieldValue(i.Library.Sample, hueField, hueType!);
-				}
-
-				if (datasetsObj[xValue]) {
-					if (hueValue) {
-						hues!.add(hueValue);
-
-						const obj = datasetsObj[xValue] as Record<string, number[]>;
-						if (obj[hueValue]) {
-							obj[hueValue].push(i.index);
-						} else {
-							obj[hueValue] = [i.index];
-						}
-					} else {
-						(datasetsObj[xValue] as number[]).push(i.index);
-					}
+					hueType =
+						hueField === "analysis_run_name" || userDefinedFields.has(hueField)
+							? "string"
+							: getZodType("sample", hueField).type;
+					hues = new Set() as Set<string>;
+					datasetsObj = {} as Record<string, Record<string, number[]>>;
 				} else {
-					if (hueValue) {
-						hues!.add(hueValue);
-						datasetsObj[xValue] = { [hueValue]: [i.index] };
-					} else {
-						datasetsObj[xValue] = [i.index];
+					datasetsObj = {} as Record<string, number[]>;
+				}
+
+				for (const ad of finishedDiversities) {
+					for (const i of ad.AlphaDiversityIndexes) {
+						//get string representation of values
+						const xValue =
+							xField === "analysis_run_name"
+								? ad.analysis_run_name
+								: getSampleFieldValue(i.Library.Sample, xField, xType);
+						let hueValue;
+						if (hueField) {
+							hueValue =
+								hueField === "analysis_run_name"
+									? ad.analysis_run_name
+									: getSampleFieldValue(i.Library.Sample, hueField, hueType!);
+						}
+
+						if (datasetsObj[xValue]) {
+							if (hueValue) {
+								hues!.add(hueValue);
+
+								const obj = datasetsObj[xValue] as Record<string, number[]>;
+								if (obj[hueValue]) {
+									obj[hueValue].push(i.index);
+								} else {
+									obj[hueValue] = [i.index];
+								}
+							} else {
+								(datasetsObj[xValue] as number[]).push(i.index);
+							}
+						} else {
+							if (hueValue) {
+								hues!.add(hueValue);
+								datasetsObj[xValue] = { [hueValue]: [i.index] };
+							} else {
+								datasetsObj[xValue] = [i.index];
+							}
+						}
 					}
 				}
-			}
 
-			//sort data by label and hue
-			const sortedLabels = getSortedValues(Object.keys(datasetsObj), xType);
-			let sortedDatasets;
-			if (hueField) {
-				const colors = distinctColors({ count: hues!.size, chromaMin: 35 });
-				sortedDatasets = getSortedValues(Array.from(hues!), hueType!).map((h, i) => ({
-					label: h,
-					data: sortedLabels.map((l) => (datasetsObj[l] as Record<string, number[]>)[h]),
-					borderColor: colors[i].hex(),
-					backgroundColor: colors[i].alpha(0.5).hex()
-				}));
-			} else {
-				sortedDatasets = [
-					{
-						data: sortedLabels.map((l) => datasetsObj[l] as number[]),
-						borderColor: primaryColor,
-						backgroundColor: chroma(primaryColor).alpha(0.5).hex()
-					}
-				];
-			}
+				//sort data by label and hue
+				const sortedLabels = getSortedValues(Object.keys(datasetsObj), xType);
+				let sortedDatasets;
+				if (hueField) {
+					const colors = distinctColors({ count: hues!.size, chromaMin: 35 });
+					sortedDatasets = getSortedValues(Array.from(hues!), hueType!).map((h, i) => ({
+						label: h,
+						data: sortedLabels.map((l) => (datasetsObj[l] as Record<string, number[]>)[h]),
+						borderColor: colors[i].hex(),
+						backgroundColor: colors[i].alpha(0.5).hex()
+					}));
+				} else {
+					sortedDatasets = [
+						{
+							data: sortedLabels.map((l) => datasetsObj[l] as number[]),
+							borderColor: primaryColor,
+							backgroundColor: chroma(primaryColor).alpha(0.5).hex()
+						}
+					];
+				}
 
-			setData({
-				labels: sortedLabels,
-				datasets: sortedDatasets
-			});
-			setChartKey(getChartKey());
+				setData({
+					labels: sortedLabels,
+					datasets: sortedDatasets
+				});
+				setChartKey(getChartKey());
+			}
 		}
-	}, [currAlphaDiversity, xField, hueField]);
+	}, [currMetric, xField, hueField]);
 
 	useEffect(() => {
-		if (currAlphaDiversity && !currAlphaDiversity.finished) {
-			const interval = setInterval(
-				() =>
-					setTimeSinceStarted((prev) =>
-						prev ? prev + 1000 : new Date().getTime() - currAlphaDiversity.dateCalculated.getTime() + 1000
-					),
-				1000
-			);
+		if (alphaDiversities.some((ad) => !ad.finished)) {
+			const interval = setInterval(() => setCurrTime((prev) => prev + 1000), 1000);
 
 			return () => clearInterval(interval);
 		}
-	}, [currAlphaDiversity]);
+	}, []);
 
 	useEffect(() => {
 		if (data && data.datasets.length > 1) {
@@ -280,119 +289,130 @@ export default function AlphaDiversityDisplay({
 		}
 	}, [primaryColor]);
 
+	const unfinishedAnalyses = currMetric
+		? diversitiesByMetric[currMetric].reduce(
+				(acc, ad) => {
+					if (!ad.finished && !(ad.analysis_run_name in acc)) {
+						acc[ad.analysis_run_name] = ad.dateCalculated.getTime();
+					}
+
+					return acc;
+				},
+				{} as Record<AlphaDiversity["analysis_run_name"], number>
+			)
+		: undefined;
 	const omit = ["id", "userDefined", "deleted_ODE", "project_id"];
 	return (
 		<div className="p-6">
-			{currAlphaDiversity ? (
+			{currMetric ? (
 				<>
-					<div className="w-full flex justify-center items-center gap-5">
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Metric:</legend>
-							<select
-								value={currAlphaDiversity.id}
-								onChange={(e) =>
-									setCurrAlphaDiversity(alphaDiversities.find((ad) => ad.id === parseInt(e.currentTarget.value))!)
-								}
-								className="select"
-							>
-								{alphaDiversities.map((ad) => (
-									<option key={ad.id} value={ad.id}>
-										{`${ad.indexType}${ad.depth ? ` (${ad.depth})` : ""}`}
-									</option>
-								))}
-							</select>
-						</fieldset>
+					{alphaDiversities.some((ad) => ad.finished) ? (
+						<>
+							<div className="w-full flex justify-center items-center gap-5">
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Metric:</legend>
+									<select value={currMetric} onChange={(e) => setCurrMetric(e.currentTarget.value)} className="select">
+										{Object.keys(diversitiesByMetric).map((metric) => (
+											<option key={metric} value={metric}>
+												{`${metric.split(METRIC_SEP)[0]}${metric.split(METRIC_SEP)[1] ? ` (${metric.split(METRIC_SEP)[1]})` : ""}`}
+											</option>
+										))}
+									</select>
+								</fieldset>
 
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">X Field:</legend>
-							<select
-								value={xField}
-								onChange={(e) => setXField(e.currentTarget.value)}
-								className="select"
-								disabled={!currAlphaDiversity.finished}
-							>
-								{sameAnalysis || hueField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
-								{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
-									if (!omit.includes(f) && f !== hueField) {
-										acc.push(<option key={f}>{f}</option>);
-									}
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">X Field:</legend>
+									<select value={xField} onChange={(e) => setXField(e.currentTarget.value)} className="select">
+										{sameAnalysis || hueField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
+										{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
+											if (!omit.includes(f) && f !== hueField) {
+												acc.push(<option key={f}>{f}</option>);
+											}
 
-									return acc;
-								}, [] as ReactNode[])}
-								{Array.from(userDefinedFields).map((f) => (
-									<option key={f} value={f}>
-										{f} (UD)
-									</option>
-								))}
-							</select>
-						</fieldset>
+											return acc;
+										}, [] as ReactNode[])}
+										{Array.from(userDefinedFields).map((f) => (
+											<option key={f} value={f}>
+												{f} (UD)
+											</option>
+										))}
+									</select>
+								</fieldset>
 
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							xmlns="http://www.w3.org/2000/svg"
-							className={`w-8 h-8 mt-7${hueField ? " text-primary cursor-pointer" : " text-primary/40"}`}
-							onClick={() => {
-								if (hueField) {
-									setXField(hueField);
-									setHueField(xField);
-								}
-							}}
-						>
-							<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
-							<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
-						</svg>
+								<svg
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									xmlns="http://www.w3.org/2000/svg"
+									className={`w-8 h-8 mt-7${hueField ? " text-primary cursor-pointer" : " text-primary/40"}`}
+									onClick={() => {
+										if (hueField) {
+											setXField(hueField);
+											setHueField(xField);
+										}
+									}}
+								>
+									<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
+									<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
+								</svg>
 
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Hue Field:</legend>
-							<select
-								value={hueField}
-								onChange={(e) => setHueField(e.currentTarget.value)}
-								className="select"
-								disabled={!currAlphaDiversity.finished}
-							>
-								<option value={""}>No hue</option>
-								{sameAnalysis || xField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
-								{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
-									if (!omit.includes(f) && f !== xField) {
-										acc.push(<option key={f}>{f}</option>);
-									}
+								<fieldset className="fieldset">
+									<legend className="fieldset-legend">Hue Field:</legend>
+									<select value={hueField} onChange={(e) => setHueField(e.currentTarget.value)} className="select">
+										<option value={""}>No hue</option>
+										{sameAnalysis || xField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
+										{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
+											if (!omit.includes(f) && f !== xField) {
+												acc.push(<option key={f}>{f}</option>);
+											}
 
-									return acc;
-								}, [] as ReactNode[])}
-								{Array.from(userDefinedFields).map((f) => (
-									<option key={f} value={f}>
-										{f} (UD)
-									</option>
-								))}
-							</select>
-						</fieldset>
+											return acc;
+										}, [] as ReactNode[])}
+										{Array.from(userDefinedFields).map((f) => (
+											<option key={f} value={f}>
+												{f} (UD)
+											</option>
+										))}
+									</select>
+								</fieldset>
 
-						<ChartCopyButton ref={chartRef} disabled={!currAlphaDiversity.finished} />
-					</div>
+								<ChartCopyButton ref={chartRef} />
+							</div>
 
-					{currAlphaDiversity.finished ? (
-						data ? (
-							<BoxWhiskerPlot
-								key={chartKey}
-								data={data}
-								ref={chartRef}
-								title={`${currAlphaDiversity.indexType.slice(0, 1).toUpperCase() + currAlphaDiversity.indexType.slice(1)} Alpha Diversity${currAlphaDiversity.depth ? " at " + currAlphaDiversity.depth + " depth" : ""}${hueField ? " by " + hueField : ""}`}
-								xField={xField}
-								yField={"Index"}
-								legend={!!hueField}
-								onLegendHover={setHoveredLegend}
-							/>
-						) : (
-							<div className="aspect-5/2">loading...</div>
-						)
+							{data ? (
+								<BoxWhiskerPlot
+									key={chartKey}
+									data={data}
+									ref={chartRef}
+									title={`${currMetric.split(METRIC_SEP)[0].slice(0, 1).toUpperCase() + currMetric.split(METRIC_SEP)[0].slice(1)} Alpha Diversity${currMetric.split(METRIC_SEP)[1] ? " at " + currMetric.split(METRIC_SEP)[1] + " depth" : ""}${hueField ? " by " + hueField : ""}`}
+									xField={xField}
+									yField={"Index"}
+									legend={!!hueField}
+									onLegendHover={setHoveredLegend}
+								/>
+							) : (
+								<div className="aspect-5/2">loading...</div>
+							)}
+						</>
 					) : (
-						<div className="flex flex-col justify-center items-center pt-4">
-							Calculating...
-							{timeSinceStarted && timeSinceStarted >= 1000 ? (
+						<></>
+					)}
+
+					{Object.entries(unfinishedAnalyses!).map(([analysis_run_name, time]) => {
+						const timeSinceStarted = currTime - time;
+
+						return (
+							<div className="flex flex-col justify-center items-center pt-4">
+								<span>
+									Calculating for{" "}
+									<Link className="link link-primary link-hover" href={`/explore/analysis/${analysis_run_name}`}>
+										{analysis_run_name}
+									</Link>
+									...
+								</span>
+
 								<div className="grid grid-flow-col gap-5 text-center auto-cols-max">
 									{timeSinceStarted >= 86400000 ? (
 										<div className="flex flex-col">
@@ -450,11 +470,9 @@ export default function AlphaDiversityDisplay({
 										sec
 									</div>
 								</div>
-							) : (
-								<></>
-							)}
-						</div>
-					)}
+							</div>
+						);
+					}, [] as ReactNode[])}
 				</>
 			) : (
 				<div className="aspect-5/2">
