@@ -14,7 +14,7 @@ export default function BoxWhiskerPlot({
 	title,
 	xField,
 	yField,
-	legend = false,
+	legend,
 	onLegendHover
 }: {
 	data: ChartData;
@@ -22,7 +22,7 @@ export default function BoxWhiskerPlot({
 	title?: string;
 	xField?: string;
 	yField?: string;
-	legend?: boolean;
+	legend?: string;
 	onLegendHover?: Dispatch<SetStateAction<string | undefined>>;
 }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,7 +46,12 @@ export default function BoxWhiskerPlot({
 						color: textColor
 					},
 					legend: {
-						display: legend,
+						display: !!legend,
+						title: {
+							display: !!legend,
+							text: legend,
+							color: textColor
+						},
 						labels: {
 							color: textColor
 						},

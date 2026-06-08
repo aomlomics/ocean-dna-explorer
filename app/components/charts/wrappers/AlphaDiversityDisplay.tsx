@@ -236,8 +236,7 @@ export default function AlphaDiversityDisplay({
 				setData({
 					labels: data.labels,
 					datasets: data.datasets.map((ds) => ({
-						label: ds.label,
-						data: ds.data,
+						...ds,
 						borderColor:
 							ds.label === hoveredLegend
 								? chroma(ds.borderColor as string)
@@ -259,8 +258,7 @@ export default function AlphaDiversityDisplay({
 				setData({
 					labels: data.labels,
 					datasets: data.datasets.map((ds) => ({
-						label: ds.label,
-						data: ds.data,
+						...ds,
 						borderColor: chroma(ds.borderColor as string)
 							.alpha(1)
 							.hex(),
@@ -386,10 +384,10 @@ export default function AlphaDiversityDisplay({
 									key={chartKey}
 									data={data}
 									ref={chartRef}
-									title={`${currMetric.split(METRIC_SEP)[0].slice(0, 1).toUpperCase() + currMetric.split(METRIC_SEP)[0].slice(1)} Alpha Diversity${currMetric.split(METRIC_SEP)[1] ? " at " + currMetric.split(METRIC_SEP)[1] + " depth" : ""}${hueField ? " by " + hueField : ""}`}
+									title={`${currMetric.split(METRIC_SEP)[0].slice(0, 1).toUpperCase() + currMetric.split(METRIC_SEP)[0].slice(1)} Alpha Diversity${currMetric.split(METRIC_SEP)[1] ? " at " + currMetric.split(METRIC_SEP)[1] + " depth" : ""}`}
 									xField={xField}
 									yField={"Index"}
-									legend={!!hueField}
+									legend={hueField}
 									onLegendHover={setHoveredLegend}
 								/>
 							) : (
