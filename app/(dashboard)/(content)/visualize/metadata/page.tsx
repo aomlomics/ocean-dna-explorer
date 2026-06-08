@@ -1,5 +1,6 @@
 import SampleScatterPlot from "@/app/components/charts/SampleScatterPlot";
-import { Prisma, Sample } from "@/app/generated/prisma/client";
+import { Sample } from "@/app/generated/prisma/client";
+import { SampleFindManyArgs } from "@/app/generated/prisma/models";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { getZodType } from "@/app/helpers/schema";
@@ -14,7 +15,6 @@ export default async function VisualizeMetadata({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const params = new URLSearchParams();
-
 	for (const [key, val] of Object.entries(await searchParams)) {
 		if (val != null) {
 			if (Array.isArray(val)) {
@@ -33,7 +33,7 @@ export default async function VisualizeMetadata({
 	});
 
 	const samples = await prisma.sample.findMany({
-		...(query as Prisma.SampleFindManyArgs)
+		...(query as SampleFindManyArgs)
 	});
 
 	const fields = new Set(["project_id"]) as Set<string>;
