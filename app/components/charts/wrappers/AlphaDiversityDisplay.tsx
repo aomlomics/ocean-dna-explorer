@@ -97,7 +97,7 @@ export default function AlphaDiversityDisplay({
 
 	const [currTime, setCurrTime] = useState(new Date().getTime());
 
-	const [showPoints, setShowPoints] = useState(true);
+	const [showPoints, setShowPoints] = useState(false);
 
 	function getSampleFieldValue(sample: Sample, field: string, type: string) {
 		if (!currMetric) {
