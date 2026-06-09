@@ -61,15 +61,18 @@ export default function BoxWhiskerPlot({
 						onLeave: () => onLegendHover && onLegendHover(undefined)
 					}
 				},
-				elements: showPoints
-					? {
-							boxandwhiskers: {
-								itemRadius: 2,
-								itemHitRadius: 4,
-								itemBackgroundColor: textColor
-							}
-						}
-					: {},
+				elements: {
+					boxandwhiskers: {
+						outlierBackgroundColor: chroma(textColor).alpha(0.5).hex(),
+						...(showPoints
+							? {
+									itemBackgroundColor: textColor,
+									itemRadius: 2,
+									itemHitRadius: 4
+								}
+							: {})
+					}
+				},
 				scales: {
 					x: {
 						title: {
