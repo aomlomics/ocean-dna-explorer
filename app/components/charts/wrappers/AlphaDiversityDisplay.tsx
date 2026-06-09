@@ -243,6 +243,8 @@ export default function AlphaDiversityDisplay({
 						);
 					} else {
 						setHueValues([]);
+						setHueFilter({});
+						setHueFilterGate(true);
 
 						sortedDatasets = [
 							{
