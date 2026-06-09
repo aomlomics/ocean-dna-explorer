@@ -13,8 +13,11 @@ import chroma from "chroma-js";
 import Link from "next/link";
 import { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
+import Checklist from "../../Checklist";
+import InfoButton from "../../InfoButton";
 
 const METRIC_SEP = " | ";
+const DEFAULT_MAX_HUES = 20;
 
 function getSortedValues(labels: string[], type: DbType) {
 	let func;
@@ -39,11 +42,6 @@ function getSortedValues(labels: string[], type: DbType) {
 
 		return func(a, b);
 	});
-}
-
-function getChartKey() {
-	//random value to trigger plot re-render
-	return (Math.random() + 1).toString(36).substring(7);
 }
 
 export default function AlphaDiversityDisplay({
@@ -87,12 +85,19 @@ export default function AlphaDiversityDisplay({
 	const [currMetric, setCurrMetric] = useState(
 		Object.keys(diversitiesByMetric)[0] as AlphaDiversity["indexType"] | undefined
 	);
+
 	const [xField, setXField] = useState("env_local_scale");
 	const [hueField, setHueField] = useState("");
-	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
+	const [hueValues, setHueValues] = useState([] as string[]);
+	const [hueColors, setHueColors] = useState([] as chroma.Color[]);
+	const [hueFilter, setHueFilter] = useState({} as Record<string, true>);
+	const [hueFilterGate, setHueFilterGate] = useState(false); //used to set default filter without retriggering effect
+
 	const [data, setData] = useState(undefined as ChartData | undefined);
 
 	const [currTime, setCurrTime] = useState(new Date().getTime());
+
+	const [showPoints, setShowPoints] = useState(true);
 
 	function getSampleFieldValue(sample: Sample, field: string, type: string) {
 		if (!currMetric) {
@@ -128,97 +133,135 @@ export default function AlphaDiversityDisplay({
 		}
 	}
 
+	function rerenderChart() {
+		//random value to trigger plot re-render
+		setChartKey((Math.random() + 1).toString(36).substring(7));
+	}
+
 	useEffect(() => {
 		if (currMetric) {
-			const finishedDiversities = diversitiesByMetric[currMetric].filter((ad) => ad.finished);
-			if (finishedDiversities.length) {
-				const xType =
-					xField === "analysis_run_name" || userDefinedFields.has(xField)
-						? "string"
-						: getZodType("sample", xField).type;
-
-				let hueType;
-				let hues;
-				let datasetsObj;
-				if (hueField) {
-					hueType =
-						hueField === "analysis_run_name" || userDefinedFields.has(hueField)
+			if (hueFilterGate) {
+				setHueFilterGate(false);
+			} else {
+				const finishedDiversities = diversitiesByMetric[currMetric].filter((ad) => ad.finished);
+				if (finishedDiversities.length) {
+					const xType =
+						xField === "analysis_run_name" || userDefinedFields.has(xField)
 							? "string"
-							: getZodType("sample", hueField).type;
-					hues = new Set() as Set<string>;
-					datasetsObj = {} as Record<string, Record<string, number[]>>;
-				} else {
-					datasetsObj = {} as Record<string, number[]>;
-				}
+							: getZodType("sample", xField).type;
 
-				for (const ad of finishedDiversities) {
-					for (const i of ad.AlphaDiversityIndexes) {
-						//get string representation of values
-						const xValue =
-							xField === "analysis_run_name"
-								? ad.analysis_run_name
-								: getSampleFieldValue(i.Library.Sample, xField, xType);
-						let hueValue;
-						if (hueField) {
-							hueValue =
-								hueField === "analysis_run_name"
+					let hueType;
+					let hues;
+					let datasetsObj;
+					if (hueField) {
+						hueType =
+							hueField === "analysis_run_name" || userDefinedFields.has(hueField)
+								? "string"
+								: getZodType("sample", hueField).type;
+						hues = new Set() as Set<string>;
+						datasetsObj = {} as Record<string, Record<string, number[]>>;
+					} else {
+						datasetsObj = {} as Record<string, number[]>;
+					}
+
+					for (const ad of finishedDiversities) {
+						for (const i of ad.AlphaDiversityIndexes) {
+							//get string representation of values
+							const xValue =
+								xField === "analysis_run_name"
 									? ad.analysis_run_name
-									: getSampleFieldValue(i.Library.Sample, hueField, hueType!);
-						}
+									: getSampleFieldValue(i.Library.Sample, xField, xType);
+							let hueValue;
+							if (hueField) {
+								hueValue =
+									hueField === "analysis_run_name"
+										? ad.analysis_run_name
+										: getSampleFieldValue(i.Library.Sample, hueField, hueType!);
+							}
 
-						if (datasetsObj[xValue]) {
-							if (hueValue) {
-								hues!.add(hueValue);
+							if (datasetsObj[xValue]) {
+								if (hueValue) {
+									hues!.add(hueValue);
 
-								const obj = datasetsObj[xValue] as Record<string, number[]>;
-								if (obj[hueValue]) {
-									obj[hueValue].push(i.index);
+									const obj = datasetsObj[xValue] as Record<string, number[]>;
+									if (obj[hueValue]) {
+										obj[hueValue].push(i.index);
+									} else {
+										obj[hueValue] = [i.index];
+									}
 								} else {
-									obj[hueValue] = [i.index];
+									(datasetsObj[xValue] as number[]).push(i.index);
 								}
 							} else {
-								(datasetsObj[xValue] as number[]).push(i.index);
-							}
-						} else {
-							if (hueValue) {
-								hues!.add(hueValue);
-								datasetsObj[xValue] = { [hueValue]: [i.index] };
-							} else {
-								datasetsObj[xValue] = [i.index];
+								if (hueValue) {
+									hues!.add(hueValue);
+									datasetsObj[xValue] = { [hueValue]: [i.index] };
+								} else {
+									datasetsObj[xValue] = [i.index];
+								}
 							}
 						}
 					}
-				}
 
-				//sort data by label and hue
-				const sortedLabels = getSortedValues(Object.keys(datasetsObj), xType);
-				let sortedDatasets;
-				if (hueField) {
-					const colors = distinctColors({ count: hues!.size, chromaMin: 35 });
-					sortedDatasets = getSortedValues(Array.from(hues!), hueType!).map((h, i) => ({
-						label: h,
-						data: sortedLabels.map((l) => (datasetsObj[l] as Record<string, number[]>)[h]),
-						borderColor: colors[i].hex(),
-						backgroundColor: colors[i].alpha(0.5).hex()
-					}));
-				} else {
-					sortedDatasets = [
-						{
-							data: sortedLabels.map((l) => datasetsObj[l] as number[]),
-							borderColor: primaryColor,
-							backgroundColor: chroma(primaryColor).alpha(0.5).hex()
+					//sort data by label and hue
+					const sortedLabels = getSortedValues(Object.keys(datasetsObj), xType);
+					let sortedDatasets;
+					if (hueField) {
+						const sortedHues = getSortedValues(Array.from(hues!), hueType!);
+						const colors = distinctColors({ count: sortedHues.length, chromaMin: 35 });
+						setHueValues(sortedHues);
+						setHueColors(colors);
+
+						let currFilter = hueFilter;
+						if (sortedHues.length !== hueValues.length || sortedHues.some((h) => !hueValues.includes(h))) {
+							//new list of hues
+							if (sortedHues.length > DEFAULT_MAX_HUES) {
+								currFilter = sortedHues
+									.slice(DEFAULT_MAX_HUES)
+									.reduce((acc, r) => ({ ...acc, [r]: true }), {} as typeof hueFilter);
+								setHueFilter(currFilter);
+							} else {
+								setHueFilter({});
+							}
+							setHueFilterGate(true);
 						}
-					];
-				}
 
-				setData({
-					labels: sortedLabels,
-					datasets: sortedDatasets
-				});
-				setChartKey(getChartKey());
+						sortedDatasets = sortedHues.reduce(
+							(acc, h, i) => {
+								if (!(h in currFilter)) {
+									acc.push({
+										label: h,
+										data: sortedLabels.map((l) => (datasetsObj[l] as Record<string, number[]>)[h]),
+										borderColor: colors[i].hex(),
+										backgroundColor: colors[i].alpha(0.5).hex()
+									});
+								}
+
+								return acc;
+							},
+							[] as { label: string; data: number[][]; borderColor: string; backgroundColor: string }[]
+						);
+					} else {
+						setHueValues([]);
+
+						sortedDatasets = [
+							{
+								data: sortedLabels.map((l) => datasetsObj[l] as number[]),
+								borderColor: primaryColor,
+								backgroundColor: chroma(primaryColor).alpha(0.5).hex()
+							}
+						];
+					}
+
+					setData({
+						labels: sortedLabels,
+						datasets: sortedDatasets
+					});
+					rerenderChart();
+				}
 			}
 		}
-	}, [currMetric, xField, hueField]);
+	}, [currMetric, xField, hueField, hueFilter]);
 
 	useEffect(() => {
 		if (alphaDiversities.some((ad) => !ad.finished)) {
@@ -227,49 +270,6 @@ export default function AlphaDiversityDisplay({
 			return () => clearInterval(interval);
 		}
 	}, []);
-
-	useEffect(() => {
-		if (data && data.datasets.length > 1) {
-			if (hoveredLegend) {
-				//dim every color except hovered legend color
-				setData({
-					labels: data.labels,
-					datasets: data.datasets.map((ds) => ({
-						...ds,
-						borderColor:
-							ds.label === hoveredLegend
-								? chroma(ds.borderColor as string)
-										.alpha(1)
-										.hex()
-								: chroma(ds.borderColor as string)
-										.alpha(0.1)
-										.hex(),
-						backgroundColor:
-							ds.label === hoveredLegend
-								? chroma(ds.borderColor as string)
-										.alpha(0.5)
-										.hex()
-								: "#00000000"
-					}))
-				});
-			} else if (data.datasets.some((set) => set.backgroundColor === "#00000000")) {
-				//return all colors to normal
-				setData({
-					labels: data.labels,
-					datasets: data.datasets.map((ds) => ({
-						...ds,
-						borderColor: chroma(ds.borderColor as string)
-							.alpha(1)
-							.hex(),
-						backgroundColor: chroma(ds.borderColor as string)
-							.alpha(0.5)
-							.hex()
-					}))
-				});
-			}
-			setChartKey(getChartKey());
-		}
-	}, [hoveredLegend]);
 
 	useEffect(() => {
 		if (data && !hueField) {
@@ -282,7 +282,7 @@ export default function AlphaDiversityDisplay({
 					backgroundColor: chroma(primaryColor).alpha(0.5).hex()
 				}))
 			});
-			setChartKey(getChartKey());
+			rerenderChart();
 		}
 	}, [primaryColor]);
 
@@ -300,7 +300,7 @@ export default function AlphaDiversityDisplay({
 		: undefined;
 	const omit = ["id", "userDefined", "deleted_ODE", "project_id"];
 	return (
-		<div className="p-6">
+		<div className="p-6 flex flex-col gap-2">
 			{currMetric ? (
 				<>
 					{alphaDiversities.some((ad) => ad.finished) ? (
@@ -378,6 +378,39 @@ export default function AlphaDiversityDisplay({
 								<ChartCopyButton ref={chartRef} />
 							</div>
 
+							<div className="w-full flex justify-center items-center gap-5">
+								<fieldset className="fieldset">
+									<label className="label select-none">
+										<input
+											type="checkbox"
+											checked={showPoints}
+											onChange={(e) => {
+												setShowPoints(e.currentTarget.checked);
+												rerenderChart();
+											}}
+											className="checkbox"
+										/>
+										Show Points
+									</label>
+								</fieldset>
+
+								<div className="flex gap-1">
+									<InfoButton
+										infoText={`Selecting many ${hueField ? hueField + " " : ""}values may cause lag. When changing hue field, if more than ${DEFAULT_MAX_HUES} values exist, only the first ${DEFAULT_MAX_HUES} will default to selected.`}
+										type="warning"
+									/>
+
+									<Checklist
+										label={`${hueField || "No hue"} values`}
+										list={hueValues}
+										colorList={hueColors}
+										listFilter={hueFilter}
+										setListFilter={setHueFilter}
+										disabled={!hueField}
+									/>
+								</div>
+							</div>
+
 							{data ? (
 								<BoxWhiskerPlot
 									key={chartKey}
@@ -387,7 +420,7 @@ export default function AlphaDiversityDisplay({
 									xField={xField}
 									yField={"Index"}
 									legend={hueField}
-									onLegendHover={setHoveredLegend}
+									showPoints={showPoints}
 								/>
 							) : (
 								<div className="aspect-5/2">loading...</div>

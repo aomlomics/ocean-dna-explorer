@@ -12,7 +12,8 @@ export default function Checklist({
 	sideEffect,
 	extraLists,
 	className,
-	buttonClassName
+	buttonClassName,
+	disabled
 }: {
 	label: string;
 	list: string[];
@@ -23,14 +24,15 @@ export default function Checklist({
 	extraLists?: { list: string[]; label: string }[];
 	className?: string;
 	buttonClassName?: string;
+	disabled?: boolean;
 }) {
 	const [search, setSearch] = useState("");
 
 	return (
 		<div className={`dropdown dropdown-end ${className ?? ""}`}>
-			<div tabIndex={0} role="button" className={`btn ${buttonClassName}`}>
+			<button tabIndex={0} className={`btn ${buttonClassName}`} disabled={disabled}>
 				{list.length - Object.keys(listFilter).length}/{list.length} {label}
-			</div>
+			</button>
 
 			<div tabIndex={0} className="dropdown-content z-50 w-64 shadow-lg overflow-x-hidden">
 				<div className="bg-base-100 border border-base-300 rounded-box overflow-hidden">

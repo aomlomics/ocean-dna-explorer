@@ -272,7 +272,7 @@ export default function SampleScatterPlot({
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend w-full flex justify-between">
 							<span>X-Axis:</span>
-							<label className="label">
+							<label className="label select-none">
 								Reverse
 								<input
 									className="checkbox checkbox-sm"
@@ -327,7 +327,7 @@ export default function SampleScatterPlot({
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend w-full flex justify-between">
 							<span>Y-Axis:</span>
-							<label className="label">
+							<label className="label select-none">
 								Reverse
 								<input
 									className="checkbox checkbox-sm"

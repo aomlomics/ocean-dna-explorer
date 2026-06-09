@@ -303,7 +303,7 @@ export default function TaxaBarChart({
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex gap-1">
 					<InfoButton
-						infoText={`Selecting many ${RankPlurals[rank]} may cause lag. When changing ranks, if more than 20 values exist, only the first 20 will default to selected.`}
+						infoText={`Selecting many ${RankPlurals[rank]} may cause lag. When changing ranks, if more than ${DEFAULT_MAX_TAXONOMIES} values exist, only the first ${DEFAULT_MAX_TAXONOMIES} will default to selected.`}
 						type="warning"
 					/>
 

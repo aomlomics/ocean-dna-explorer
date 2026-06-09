@@ -15,7 +15,8 @@ export default function BoxWhiskerPlot({
 	xField,
 	yField,
 	legend,
-	onLegendHover
+	onLegendHover,
+	showPoints = true
 }: {
 	data: ChartData;
 	ref?: RefObject<ChartJS<any> | null>;
@@ -24,6 +25,7 @@ export default function BoxWhiskerPlot({
 	yField?: string;
 	legend?: string;
 	onLegendHover?: Dispatch<SetStateAction<string | undefined>>;
+	showPoints?: boolean;
 }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	//used if ref is not provided
@@ -59,13 +61,15 @@ export default function BoxWhiskerPlot({
 						onLeave: () => onLegendHover && onLegendHover(undefined)
 					}
 				},
-				elements: {
-					boxandwhiskers: {
-						itemRadius: 2,
-						itemHitRadius: 4,
-						itemBackgroundColor: textColor
-					}
-				},
+				elements: showPoints
+					? {
+							boxandwhiskers: {
+								itemRadius: 2,
+								itemHitRadius: 4,
+								itemBackgroundColor: textColor
+							}
+						}
+					: {},
 				scales: {
 					x: {
 						title: {
