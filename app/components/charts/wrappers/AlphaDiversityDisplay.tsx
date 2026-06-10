@@ -18,6 +18,8 @@ import InfoButton from "../../InfoButton";
 
 const METRIC_SEP = " | ";
 const DEFAULT_MAX_HUES = 20;
+export const DEFAULT_X_FIELD = "env_local_scale";
+export const DEFAULT_HUE_FIELD = "";
 
 function getSortedValues(labels: string[], type: DbType) {
 	let func;
@@ -86,8 +88,8 @@ export default function AlphaDiversityDisplay({
 		Object.keys(diversitiesByMetric)[0] as AlphaDiversity["indexType"] | undefined
 	);
 
-	const [xField, setXField] = useState("env_local_scale");
-	const [hueField, setHueField] = useState("");
+	const [xField, setXField] = useState(DEFAULT_X_FIELD);
+	const [hueField, setHueField] = useState(DEFAULT_HUE_FIELD);
 	const [hueValues, setHueValues] = useState([] as string[]);
 	const [hueColors, setHueColors] = useState([] as chroma.Color[]);
 	const [hueFilter, setHueFilter] = useState({} as Record<string, true>);
@@ -307,8 +309,8 @@ export default function AlphaDiversityDisplay({
 				<>
 					{alphaDiversities.some((ad) => ad.finished) ? (
 						<>
-							<div className="w-full flex justify-center items-center gap-5">
-								<fieldset className="fieldset">
+							<div className="w-full grid grid-cols-3 gap-5 items-center">
+								<fieldset className="fieldset justify-self-end">
 									<legend className="fieldset-legend">Metric:</legend>
 									<select value={currMetric} onChange={(e) => setCurrMetric(e.currentTarget.value)} className="select">
 										{Object.keys(diversitiesByMetric).map((metric) => (
@@ -319,65 +321,67 @@ export default function AlphaDiversityDisplay({
 									</select>
 								</fieldset>
 
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">X Field:</legend>
-									<select value={xField} onChange={(e) => setXField(e.currentTarget.value)} className="select">
-										{sameAnalysis || hueField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
-										{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
-											if (!omit.includes(f) && f !== hueField) {
-												acc.push(<option key={f}>{f}</option>);
+								<div className="grid grid-cols-[1fr_auto_1fr] gap-3 justify-self-center items-center">
+									<fieldset className="fieldset justify-self-end">
+										<legend className="fieldset-legend">X Field:</legend>
+										<select value={xField} onChange={(e) => setXField(e.currentTarget.value)} className="select">
+											{sameAnalysis || hueField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
+											{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
+												if (!omit.includes(f) && f !== hueField) {
+													acc.push(<option key={f}>{f}</option>);
+												}
+
+												return acc;
+											}, [] as ReactNode[])}
+											{Array.from(userDefinedFields).map((f) => (
+												<option key={f} value={f}>
+													{f} (UD)
+												</option>
+											))}
+										</select>
+									</fieldset>
+
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										xmlns="http://www.w3.org/2000/svg"
+										className={`w-8 h-8 mt-7 justify-self-center${hueField ? " text-primary cursor-pointer" : " text-primary/40"}`}
+										onClick={() => {
+											if (hueField) {
+												setXField(hueField);
+												setHueField(xField);
 											}
+										}}
+									>
+										<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
+										<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
+									</svg>
 
-											return acc;
-										}, [] as ReactNode[])}
-										{Array.from(userDefinedFields).map((f) => (
-											<option key={f} value={f}>
-												{f} (UD)
-											</option>
-										))}
-									</select>
-								</fieldset>
+									<fieldset className="fieldset justify-self-start">
+										<legend className="fieldset-legend">Hue Field:</legend>
+										<select value={hueField} onChange={(e) => setHueField(e.currentTarget.value)} className="select">
+											<option value={""}>No hue</option>
+											{sameAnalysis || xField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
+											{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
+												if (!omit.includes(f) && f !== xField) {
+													acc.push(<option key={f}>{f}</option>);
+												}
 
-								<svg
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									xmlns="http://www.w3.org/2000/svg"
-									className={`w-8 h-8 mt-7${hueField ? " text-primary cursor-pointer" : " text-primary/40"}`}
-									onClick={() => {
-										if (hueField) {
-											setXField(hueField);
-											setHueField(xField);
-										}
-									}}
-								>
-									<path fill="currentColor" d="M21 7.5L8 7.5M21 7.5L16.6667 3M21 7.5L16.6667 12" />
-									<path fill="currentColor" d="M4 16.5L17 16.5M4 16.5L8.33333 21M4 16.5L8.33333 12" />
-								</svg>
+												return acc;
+											}, [] as ReactNode[])}
+											{Array.from(userDefinedFields).map((f) => (
+												<option key={f} value={f}>
+													{f} (UD)
+												</option>
+											))}
+										</select>
+									</fieldset>
+								</div>
 
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Hue Field:</legend>
-									<select value={hueField} onChange={(e) => setHueField(e.currentTarget.value)} className="select">
-										<option value={""}>No hue</option>
-										{sameAnalysis || xField === "analysis_run_name" ? <></> : <option>analysis_run_name</option>}
-										{SampleScalarFieldEnumSchema.options.reduce((acc, f) => {
-											if (!omit.includes(f) && f !== xField) {
-												acc.push(<option key={f}>{f}</option>);
-											}
-
-											return acc;
-										}, [] as ReactNode[])}
-										{Array.from(userDefinedFields).map((f) => (
-											<option key={f} value={f}>
-												{f} (UD)
-											</option>
-										))}
-									</select>
-								</fieldset>
-
-								<ChartCopyButton ref={chartRef} />
+								<ChartCopyButton ref={chartRef} className="justify-self-start" />
 							</div>
 
 							<div className="w-full flex justify-center items-center gap-5">

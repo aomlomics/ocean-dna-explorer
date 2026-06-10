@@ -6,17 +6,19 @@ import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 export default function ChartCopyButton({
 	ref,
-	disabled
+	disabled,
+	className
 }: {
 	ref: RefObject<ChartJS<any> | null>;
 	disabled?: boolean;
+	className?: string;
 }) {
 	const { backgroundColor } = useDaisyTheme();
 	const [copied, setCopied] = useState(false);
 
 	return (
 		<button
-			className={`btn mt-7 relative flex justify-center ${copied ? "btn-success" : ""}`}
+			className={`btn mt-7 relative flex justify-center ${copied ? "btn-success" : ""}${className ? " " + className : ""}`}
 			onClick={() => {
 				if (ref.current) {
 					try {

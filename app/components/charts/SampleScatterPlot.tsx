@@ -26,6 +26,10 @@ ChartJS.register(TimeScale, LinearScale, PointElement, ScatterController, Title,
 
 type SamplePoint = { x: number | Date; y: number | Date; samp_name: Sample["samp_name"] };
 
+export const DEFAULT_X_FIELD = "eventDate" as keyof Sample;
+export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof Sample;
+export const DEFAULT_LEGEND_FIELD = "project_id" as keyof Sample;
+
 const POINT_STYLES = {
 	borderWidth: 1,
 	pointRadius: 5,
@@ -58,19 +62,19 @@ export default function SampleScatterPlot({
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
 
-	const [xField, setXField] = useState("eventDate" as keyof Sample);
+	const [xField, setXField] = useState(DEFAULT_X_FIELD);
 	const [xType, setXType] = useState("date" as "date" | "number");
 	const [xMin, setXMin] = useState(undefined as number | undefined);
 	const [xMax, setXMax] = useState(undefined as number | undefined);
 	const [xReverse, setXReverse] = useState(false);
 
-	const [yField, setYField] = useState("minimumDepthInMeters" as keyof Sample);
+	const [yField, setYField] = useState(DEFAULT_Y_FIELD);
 	const [yType, setYType] = useState("number" as "date" | "number");
 	const [yMin, setYMin] = useState(undefined as number | undefined);
 	const [yMax, setYMax] = useState(undefined as number | undefined);
 	const [yReverse, setYReverse] = useState(false);
 
-	const [legendField, setLegendField] = useState("project_id" as keyof Sample);
+	const [legendField, setLegendField] = useState(DEFAULT_LEGEND_FIELD);
 	const [hoveredLegend, setHoveredLegend] = useState(undefined as string | undefined);
 
 	const [loading, setLoading] = useState(true);
@@ -266,11 +270,11 @@ export default function SampleScatterPlot({
 	}, [hoveredLegend]);
 
 	return (
-		<div className="relative">
+		<div className="relative p-6">
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex justify-center items-center gap-2">
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend w-full flex justify-between">
+						<legend className="fieldset-legend w-full flex justify-between gap-2">
 							<span>X-Axis:</span>
 							<label className="label select-none">
 								Reverse
@@ -279,6 +283,7 @@ export default function SampleScatterPlot({
 									type="checkbox"
 									checked={xReverse}
 									onChange={(e) => setXReverse(e.currentTarget.checked)}
+									disabled={loading}
 								/>
 							</label>
 						</legend>
@@ -313,7 +318,7 @@ export default function SampleScatterPlot({
 						strokeLinecap="round"
 						strokeLinejoin="round"
 						xmlns="http://www.w3.org/2000/svg"
-						className="w-8 h-8 text-primary mt-7 cursor-pointer"
+						className={`w-8 h-8 mt-7 justify-self-center${loading ? " text-primary/40" : " text-primary cursor-pointer"}`}
 						onClick={() => {
 							setLoading(true);
 							setXField(yField);
@@ -325,7 +330,7 @@ export default function SampleScatterPlot({
 					</svg>
 
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend w-full flex justify-between">
+						<legend className="fieldset-legend w-full flex justify-between gap-2">
 							<span>Y-Axis:</span>
 							<label className="label select-none">
 								Reverse
@@ -334,6 +339,7 @@ export default function SampleScatterPlot({
 									type="checkbox"
 									checked={yReverse}
 									onChange={(e) => setYReverse(e.currentTarget.checked)}
+									disabled={loading}
 								/>
 							</label>
 						</legend>

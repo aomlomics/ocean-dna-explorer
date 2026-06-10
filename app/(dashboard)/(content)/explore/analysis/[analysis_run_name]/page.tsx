@@ -15,6 +15,8 @@ import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
 import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversityDisplay";
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
 import { TaxonomicRanks } from "@/types/objects";
+import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
+import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 
 export default async function Analysis_run_name({
 	params
@@ -235,14 +237,16 @@ export default async function Analysis_run_name({
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Taxonomy" />
 					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
-						<Suspense fallback={<div className="p-6">Loading...</div>}>
+						<Suspense fallback={<LoadingTaxonomyVisualize />}>
 							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
 
 					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Alpha Diversity" />
 					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
-						<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
+						<Suspense fallback={<LoadingAlphaDiversityDisplay />}>
+							<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
+						</Suspense>
 					</div>
 				</div>
 			</div>

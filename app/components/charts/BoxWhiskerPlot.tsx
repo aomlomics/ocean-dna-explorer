@@ -43,7 +43,7 @@ export default function BoxWhiskerPlot({
 			options: {
 				plugins: {
 					title: {
-						display: true,
+						display: !!title,
 						text: title,
 						color: textColor
 					},

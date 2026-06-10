@@ -16,6 +16,7 @@ import chroma from "chroma-js";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
 const DEFAULT_MAX_TAXONOMIES = 20;
+export const DEFAULT_RANK = "kingdom" as (typeof TaxonomicRanks)[0];
 
 //TODO: paginate on averageBy
 export default function TaxaBarChart({
@@ -52,7 +53,7 @@ export default function TaxaBarChart({
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
 
-	const [rank, setRank] = useState("kingdom" as (typeof TaxonomicRanks)[0]);
+	const [rank, setRank] = useState(DEFAULT_RANK);
 	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
 	const [averageBy, setAverageBy] = useState("lib_id");
 
