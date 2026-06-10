@@ -89,7 +89,7 @@ export default async function VisualizeTaxonomy({
 			return { occurrences, assignments, taxonomies, samples };
 		},
 		{
-			timeout: 3 * 60 * 1000
+			timeout: 5 * 60 * 1000
 		}
 	);
 
