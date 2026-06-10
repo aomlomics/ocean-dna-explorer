@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
 import { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import {
@@ -17,29 +18,35 @@ export default function VisualizeTaxonomy() {
 	const searchParams = useSearchParams();
 
 	const [occurrences, setOccurrences] = useState(
-		[] as {
-			lib_id: Occurrence["lib_id"];
-			featureid: Occurrence["featureid"];
-			organismQuantity: Occurrence["organismQuantity"];
-		}[]
+		undefined as
+			| {
+					lib_id: Occurrence["lib_id"];
+					featureid: Occurrence["featureid"];
+					organismQuantity: Occurrence["organismQuantity"];
+			  }[]
+			| undefined
 	);
 	const [assignments, setAssignments] = useState(
-		[] as {
-			featureid: Assignment["featureid"];
-			Taxonomy: {
-				id: Taxonomy["id"];
-			};
-		}[]
+		undefined as
+			| {
+					featureid: Assignment["featureid"];
+					Taxonomy: {
+						id: Taxonomy["id"];
+					};
+			  }[]
+			| undefined
 	);
 	const [taxonomies, setTaxonomies] = useState(
-		[] as (Record<(typeof TaxonomicRanks)[number], string | null> & { id: Taxonomy["id"] })[]
+		undefined as (Record<(typeof TaxonomicRanks)[number], string | null> & { id: Taxonomy["id"] })[] | undefined
 	);
 	const [samples, setSamples] = useState(
-		[] as (Sample & {
-			Libraries: {
-				lib_id: Library["lib_id"];
-			}[];
-		})[]
+		undefined as
+			| (Sample & {
+					Libraries: {
+						lib_id: Library["lib_id"];
+					}[];
+			  })[]
+			| undefined
 	);
 
 	const [key, setKey] = useState("0");
@@ -103,8 +110,8 @@ export default function VisualizeTaxonomy() {
 		doFetch();
 	}, [searchParams]);
 
-	if (!occurrences.length || !assignments.length || !taxonomies.length || !samples.length) {
-		return <>oop</>;
+	if (!occurrences || !assignments || !taxonomies || !samples) {
+		return <LoadingTaxonomyVisualize />;
 	}
 
 	return (
