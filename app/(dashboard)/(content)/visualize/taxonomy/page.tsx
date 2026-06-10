@@ -44,8 +44,10 @@ export default async function VisualizeTaxonomy({
 		swapToTable: true
 	});
 
+	console.log(0);
 	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
 		async (tx) => {
+			console.log(1);
 			const occurrences = await prisma.occurrence.findMany({
 				...(occQuery as OccurrenceFindManyArgs),
 				select: {
@@ -55,6 +57,7 @@ export default async function VisualizeTaxonomy({
 				}
 			});
 
+			console.log(2);
 			const assignments = await prisma.assignment.findMany({
 				...(assignQuery as AssignmentFindManyArgs),
 				select: {
@@ -67,6 +70,7 @@ export default async function VisualizeTaxonomy({
 				}
 			});
 
+			console.log(3);
 			const taxonomies = await prisma.taxonomy.findMany({
 				...(taxaQuery as TaxonomyFindManyArgs),
 				select: TaxonomicRanks.reduce((acc, rank) => ({ ...acc, [rank]: true }), { id: true } as Record<
@@ -75,6 +79,7 @@ export default async function VisualizeTaxonomy({
 				> & { id: true })
 			});
 
+			console.log(4);
 			const samples = await prisma.sample.findMany({
 				...(sampleQuery as SampleFindManyArgs),
 				include: {
@@ -86,12 +91,15 @@ export default async function VisualizeTaxonomy({
 				}
 			});
 
+			console.log(5);
 			return { occurrences, assignments, taxonomies, samples };
 		},
 		{
 			timeout: 5 * 60 * 1000
 		}
 	);
+
+	console.log(6);
 
 	return (
 		<TaxonomyVisualize
