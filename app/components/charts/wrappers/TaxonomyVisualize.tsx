@@ -6,7 +6,7 @@ import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 
-export default async function TaxonomyVisualize({
+export default function TaxonomyVisualize({
 	occurrences,
 	assignments,
 	taxonomies,
