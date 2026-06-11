@@ -248,13 +248,17 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 		path.push(curr);
 
 		if (curr === capsTarget) {
+			if (!path.length) {
+				return;
+			}
+
 			//convert to path of relation metadata
 			const pathRelations = [] as RelationMetadata[];
 			path.reduce((prev, t) => {
 				pathRelations.push(TableMetadata[prev].relations.find((rel) => rel.table === t)!);
 				return t;
 			});
-			return pathRelations;
+			return pathRelations as [RelationMetadata, ...RelationMetadata[]];
 		}
 
 		if (

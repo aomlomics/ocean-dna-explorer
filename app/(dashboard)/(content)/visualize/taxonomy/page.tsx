@@ -50,10 +50,6 @@ export default function VisualizeTaxonomy() {
 	);
 
 	const [loading, setLoading] = useState(true);
-	const [key, setKey] = useState("0");
-	function rerender() {
-		setKey((Math.random() + 1).toString(36).substring(7));
-	}
 
 	useEffect(() => {
 		setLoading(true);
@@ -107,7 +103,6 @@ export default function VisualizeTaxonomy() {
 			}
 			setSamples(sampleResponse.result.map((r: any) => SamplePartialWithRelationsSchema.parse(r)));
 
-			rerender();
 			setLoading(false);
 		}
 
@@ -119,12 +114,6 @@ export default function VisualizeTaxonomy() {
 	}
 
 	return (
-		<TaxonomyVisualize
-			key={key}
-			occurrences={occurrences}
-			assignments={assignments}
-			taxonomies={taxonomies}
-			samples={samples}
-		/>
+		<TaxonomyVisualize occurrences={occurrences} assignments={assignments} taxonomies={taxonomies} samples={samples} />
 	);
 }
