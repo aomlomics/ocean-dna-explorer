@@ -49,12 +49,15 @@ export default function VisualizeTaxonomy() {
 			| undefined
 	);
 
+	const [loading, setLoading] = useState(true);
 	const [key, setKey] = useState("0");
 	function rerender() {
 		setKey((Math.random() + 1).toString(36).substring(7));
 	}
 
 	useEffect(() => {
+		setLoading(true);
+
 		async function doFetch() {
 			//occurrences
 			const occRes = await fetch(
@@ -105,12 +108,13 @@ export default function VisualizeTaxonomy() {
 			setSamples(sampleResponse.result.map((r: any) => SamplePartialWithRelationsSchema.parse(r)));
 
 			rerender();
+			setLoading(false);
 		}
 
 		doFetch();
 	}, [searchParams]);
 
-	if (!occurrences || !assignments || !taxonomies || !samples) {
+	if (loading || !occurrences || !assignments || !taxonomies || !samples) {
 		return <LoadingTaxonomyVisualize />;
 	}
 
