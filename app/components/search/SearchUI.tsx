@@ -466,7 +466,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		router.push(pathname);
 	}
 
-	function search() {
+	async function search() {
 		const params = new URLSearchParams();
 		if (!noTable) {
 			params.set("table", searchTable!);
@@ -488,6 +488,8 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 
 		router.push(`${pathname}?${params.toString()}`);
+		//give control back to browser to display loading
+		await new Promise((resolve) => setTimeout(resolve, 1));
 
 		// Scroll to results after a brief delay to allow data to load
 		setTimeout(() => {
