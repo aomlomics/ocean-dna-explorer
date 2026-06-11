@@ -4,10 +4,12 @@ import { ReactNode } from "react";
 
 export default function VisualizeLayout({ children }: { children: ReactNode }) {
 	return (
-		<div id="search-results" className="flex flex-col gap-2 pt-6">
+		<div className="flex flex-col gap-2 pt-6">
 			<SearchUI noTable />
-			<VisualizeTabs />
-			{children}
+			<div id="search-results flex flex-col gap-2">
+				<VisualizeTabs />
+				{children}
+			</div>
 		</div>
 	);
 }
