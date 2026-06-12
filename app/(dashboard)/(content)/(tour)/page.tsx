@@ -1,4 +1,4 @@
-import TourController from "./TourController";
+import ShowcaseClient from "./showcase/ShowcaseClient";
 import { getTourShowcaseProjects } from "./showcase/data";
 
 // The TV tour should reflect newly public project data whenever it is loaded.
@@ -59,5 +59,5 @@ export default async function TourPage({
 		);
 	}
 
-	return <TourController projects={projects} projectDurationMs={projectDurationSeconds * 1000} />;
+	return <ShowcaseClient projects={projects} projectDurationMs={projectDurationSeconds * 1000} />;
 }
