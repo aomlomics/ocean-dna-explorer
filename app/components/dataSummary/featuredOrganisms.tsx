@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
+import "react-photo-album/masonry.css";
 
 export type FeaturedOrganismGroup =
 	| "Fish"
@@ -1314,84 +1316,64 @@ async function fetchGbifCommonName(taxonKey: number): Promise<string | null> {
 	}
 }
 
+/**
+ * react-photo-album photo shape, extended with the full organism so a click
+ * handler can recover the original data object from the clicked photo.
+ */
+type OrganismPhoto = Photo & { organism: FeaturedOrganism };
+
+/**
+ * Map organism data into the photo format the library accepts. The dummy dataset
+ * has no intrinsic image dimensions, so we assign a safe dummy 800x800 to every
+ * photo on the fly. The masonry layout only needs an aspect ratio to lay out
+ * columns; 800x800 makes every tile square until real dimensions exist.
+ */
+function toOrganismPhotos(organisms: FeaturedOrganism[]): OrganismPhoto[] {
+	return organisms.map((organism) => ({
+		key: organism.id,
+		src: organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC,
+		width: 800,
+		height: 800,
+		alt: organism.commonName?.trim() || organism.taxonomyName,
+		organism
+	}));
+}
+
+// Responsive masonry column count, driven by the library's measured container width.
+// The grid now lives in a 2/3-width column, so we lean toward more, smaller tiles.
+function masonryColumns(containerWidth: number): number {
+	if (containerWidth < 400) return 2;
+	if (containerWidth < 600) return 3;
+	if (containerWidth < 900) return 4;
+	return 5;
+}
+
 export default function FeaturedOrganisms() {
 	const [activeGroup, setActiveGroup] = useState<FeaturedFilterGroup>("All");
-	const [selectedOrganism, setSelectedOrganism] = useState<FeaturedOrganism>(FEATURED_ORGANISMS[0]);
+	// `null` until the user picks a tile; the detail panel falls back to `activeOrganism` below.
+	const [selectedOrganism, setSelectedOrganism] = useState<FeaturedOrganism | null>(null);
 	const [gbifCommonNamesById, setGbifCommonNamesById] = useState<Record<string, string>>({});
-	const bubbleNodesRef = useRef<(HTMLButtonElement | null)[]>([]);
-	const scrollFieldRef = useRef<HTMLDivElement | null>(null);
-	const dockInnerRef = useRef<HTMLDivElement | null>(null);
-	const pointerRef = useRef<{ x: number; y: number; isInside: boolean }>({ x: 0, y: 0, isInside: false });
-	const autoScrollFrameRef = useRef<number | null>(null);
-	const dockTiltXRef = useRef(0);
-	const dockTiltYRef = useRef(0);
-	const hasInitializedSelectionRef = useRef(false);
 
 	const filteredOrganisms = useMemo(() => {
 		if (activeGroup === "All") return FEATURED_ORGANISMS;
 		return FEATURED_ORGANISMS.filter((organism) => toFilterGroup(organism.group) === activeGroup);
 	}, [activeGroup]);
-	const honeycombRows = useMemo(() => createHoneycombRows(filteredOrganisms), [filteredOrganisms]);
-	const shouldCenterDock = filteredOrganisms.length > 0 && honeycombRows.length <= 3;
 
+	// Map the (currently visible) organism data into react-photo-album's photo shape.
+	const photos = useMemo(() => toOrganismPhotos(filteredOrganisms), [filteredOrganisms]);
+
+	// Pick a random default once on the client so the detail panel is never empty.
+	// Done in an effect (not during render) so the server and client produce identical
+	// first-paint markup and we avoid a hydration mismatch from Math.random().
 	useEffect(() => {
-		if (filteredOrganisms.length === 0) return;
-		const preferredCenterOrganism = getCenterOrganism(honeycombRows) ?? filteredOrganisms[0];
-		if (!hasInitializedSelectionRef.current) {
-			hasInitializedSelectionRef.current = true;
-			setSelectedOrganism(preferredCenterOrganism);
-			return;
-		}
-		const stillVisible = filteredOrganisms.some((organism) => organism.id === selectedOrganism.id);
-		if (!stillVisible) {
-			setSelectedOrganism(preferredCenterOrganism);
-		}
-	}, [filteredOrganisms, honeycombRows, selectedOrganism.id]);
-
-	useEffect(() => {
-		bubbleNodesRef.current = Array.from({ length: filteredOrganisms.length }, () => null);
-	}, [filteredOrganisms]);
-
-	useEffect(() => {
-		const scrollNode = scrollFieldRef.current;
-		if (!scrollNode || filteredOrganisms.length === 0) return;
-
-		const handleScroll = () => {
-			updateBubbleScales();
-		};
-		const handleResize = () => {
-			updateBubbleScales();
-		};
-
-		scrollNode.addEventListener("scroll", handleScroll, { passive: true });
-		window.addEventListener("resize", handleResize);
-		const raf = window.requestAnimationFrame(() => {
-			updateBubbleScales();
-		});
-		return () => {
-			window.cancelAnimationFrame(raf);
-			scrollNode.removeEventListener("scroll", handleScroll);
-			window.removeEventListener("resize", handleResize);
-		};
-	}, [filteredOrganisms.length, selectedOrganism.id]);
-
-	useEffect(() => {
-		const scrollNode = scrollFieldRef.current;
-		if (!scrollNode) return;
-		const raf = window.requestAnimationFrame(() => {
-			const maxX = Math.max(0, scrollNode.scrollWidth - scrollNode.clientWidth);
-			const maxY = Math.max(0, scrollNode.scrollHeight - scrollNode.clientHeight);
-			scrollNode.scrollLeft = maxX / 2;
-			scrollNode.scrollTop = maxY / 2;
-		});
-		return () => window.cancelAnimationFrame(raf);
-	}, [filteredOrganisms.length, honeycombRows.length, activeGroup]);
-
-	useEffect(() => {
-		return () => {
-			stopAutoScrollLoop();
-		};
+		setSelectedOrganism(
+			(current) => current ?? FEATURED_ORGANISMS[Math.floor(Math.random() * FEATURED_ORGANISMS.length)]
+		);
 	}, []);
+
+	// The organism shown in the detail panel. Falls back to the first entry during the
+	// brief pre-mount window before the random default is applied.
+	const activeOrganism = selectedOrganism ?? FEATURED_ORGANISMS[0];
 
 	useEffect(() => {
 		let cancelled = false;
@@ -1448,197 +1430,36 @@ export default function FeaturedOrganisms() {
 		return createFallbackCommonName(organism);
 	}
 
-	function handleOrganismSelect(organism: FeaturedOrganism, node: HTMLButtonElement | null) {
-		if (node) {
-			const currentScale = readNodeScale(node);
-			const pressScale = Math.max(0.96, currentScale * 0.97);
-			const reboundScale = currentScale * 1.012;
-			node.animate(
-				[
-					{ transform: `scale(${pressScale.toFixed(3)})` },
-					{ transform: `scale(${reboundScale.toFixed(3)})` },
-					{ transform: `scale(${currentScale.toFixed(3)})` }
-				],
-				{
-					duration: 140,
-					easing: "cubic-bezier(0.22, 1, 0.36, 1)"
-				}
-			);
-		}
-		setSelectedOrganism(organism);
-	}
-
-	function handleBubbleFieldMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-		pointerRef.current = { x: event.clientX, y: event.clientY, isInside: true };
-		if (autoScrollFrameRef.current == null) {
-			startAutoScrollLoop();
-		}
-		updateBubbleScales();
-	}
-
-	function handleBubbleFieldMouseLeave() {
-		pointerRef.current = { ...pointerRef.current, isInside: false };
-		updateBubbleScales();
-	}
-
-	function startAutoScrollLoop() {
-		if (autoScrollFrameRef.current != null) return;
-
-		const step = () => {
-			const fieldNode = scrollFieldRef.current;
-			if (!fieldNode) {
-				stopAutoScrollLoop();
-				return;
-			}
-
-			const pointer = pointerRef.current;
-			const rect = fieldNode.getBoundingClientRect();
-			let targetScrollTop = fieldNode.scrollTop;
-			let targetScrollLeft = fieldNode.scrollLeft;
-			let targetTiltX = 0;
-			let targetTiltY = 0;
-
-			if (pointer.isInside) {
-				const halfWidth = Math.max(1, rect.width / 2);
-				const halfHeight = Math.max(1, rect.height / 2);
-				const normX = clamp((pointer.x - (rect.left + halfWidth)) / halfWidth, -1, 1);
-				const normY = clamp((pointer.y - (rect.top + halfHeight)) / halfHeight, -1, 1);
-
-				const maxScrollX = Math.max(0, fieldNode.scrollWidth - fieldNode.clientWidth);
-				const maxScrollY = Math.max(0, fieldNode.scrollHeight - fieldNode.clientHeight);
-				targetScrollLeft = ((normX + 1) / 2) * maxScrollX;
-				targetScrollTop = ((normY + 1) / 2) * maxScrollY;
-
-				const curvedX = Math.sign(normX) * Math.pow(Math.abs(normX), 1.15);
-				const curvedY = Math.sign(normY) * Math.pow(Math.abs(normY), 1.15);
-				// Subtle "watch-like" tilt when cursor approaches far edges.
-				targetTiltY = -curvedX * 2.4;
-				targetTiltX = curvedY * 2;
-			}
-
-			fieldNode.scrollTop = mix(fieldNode.scrollTop, targetScrollTop, pointer.isInside ? 0.11 : 0.08);
-			fieldNode.scrollLeft = mix(fieldNode.scrollLeft, targetScrollLeft, pointer.isInside ? 0.11 : 0.08);
-
-			dockTiltXRef.current = dockTiltXRef.current * 0.9 + targetTiltX * 0.1;
-			dockTiltYRef.current = dockTiltYRef.current * 0.9 + targetTiltY * 0.1;
-			const dockNode = dockInnerRef.current;
-			if (dockNode) {
-				dockNode.style.transform = `perspective(1100px) rotateX(${dockTiltXRef.current.toFixed(
-					2
-				)}deg) rotateY(${dockTiltYRef.current.toFixed(2)}deg)`;
-			}
-
-			updateBubbleScales();
-			const scrollDelta =
-				Math.abs(targetScrollLeft - fieldNode.scrollLeft) + Math.abs(targetScrollTop - fieldNode.scrollTop);
-			const shouldContinue =
-				pointerRef.current.isInside ||
-				scrollDelta > 0.12 ||
-				Math.abs(dockTiltXRef.current) > 0.04 ||
-				Math.abs(dockTiltYRef.current) > 0.04;
-			if (!shouldContinue) {
-				stopAutoScrollLoop();
-				return;
-			}
-
-			autoScrollFrameRef.current = window.requestAnimationFrame(step);
-		};
-
-		autoScrollFrameRef.current = window.requestAnimationFrame(step);
-	}
-
-	function stopAutoScrollLoop() {
-		if (autoScrollFrameRef.current != null) {
-			window.cancelAnimationFrame(autoScrollFrameRef.current);
-			autoScrollFrameRef.current = null;
-		}
-		dockTiltXRef.current = 0;
-		dockTiltYRef.current = 0;
-		const dockNode = dockInnerRef.current;
-		if (dockNode) {
-			dockNode.style.transform = "perspective(1100px) rotateX(0deg) rotateY(0deg)";
-		}
-	}
-
-	function updateBubbleScales() {
-		const fieldNode = scrollFieldRef.current;
-		if (!fieldNode) return;
-		const pointer = pointerRef.current;
-		const fieldRect = fieldNode.getBoundingClientRect();
-		const viewportCenterX = fieldRect.left + fieldRect.width / 2;
-		const viewportCenterY = fieldRect.top + fieldRect.height / 2;
-		const focusX = pointer.isInside ? mix(viewportCenterX, pointer.x, 0.34) : viewportCenterX;
-		const focusY = pointer.isInside ? mix(viewportCenterY, pointer.y, 0.4) : viewportCenterY;
-		const xRadius = Math.max(210, fieldRect.width * 0.48);
-		const yRadius = Math.max(230, fieldRect.height * 0.45);
-		const edgeRadius = Math.max(100, fieldRect.height * 0.24);
-		let hoveredNode: HTMLButtonElement | null = null;
-		let hoveredDistance = Number.POSITIVE_INFINITY;
-
-		if (pointer.isInside) {
-			for (const node of bubbleNodesRef.current) {
-				if (!node) continue;
-				const rect = node.getBoundingClientRect();
-				const nodeCenterX = rect.left + rect.width / 2;
-				const nodeCenterY = rect.top + rect.height / 2;
-				const distance = Math.hypot(pointer.x - nodeCenterX, pointer.y - nodeCenterY);
-				const candidateRadius = Math.max(rect.width, rect.height) * 0.86;
-				if (distance < candidateRadius && distance < hoveredDistance) {
-					hoveredDistance = distance;
-					hoveredNode = node;
-				}
-			}
-		}
-
-		for (const node of bubbleNodesRef.current) {
-			if (!node) continue;
-			const isSelected = node.dataset.selected === "true";
-			const rect = node.getBoundingClientRect();
-			const nodeCenterX = rect.left + rect.width / 2;
-			const nodeCenterY = rect.top + rect.height / 2;
-			const pointerDistance = pointer.isInside ? Math.hypot(pointer.x - nodeCenterX, pointer.y - nodeCenterY) : Infinity;
-			const focusDistance = Math.hypot((nodeCenterX - focusX) / xRadius, (nodeCenterY - focusY) / yRadius);
-			const focusStrength = clamp(1 - focusDistance, 0, 1);
-			const viewportDistance = Math.hypot(
-				(nodeCenterX - viewportCenterX) / xRadius,
-				(nodeCenterY - viewportCenterY) / yRadius
-			);
-			const viewportStrength = clamp(1 - viewportDistance, 0, 1);
-			const centerStrength = pointer.isInside
-				? clamp(viewportStrength * 0.45 + focusStrength * 0.92, 0, 1)
-				: viewportStrength;
-			const distanceToNearestEdge = Math.min(nodeCenterY - fieldRect.top, fieldRect.bottom - nodeCenterY);
-			const edgeStrength = clamp(distanceToNearestEdge / edgeRadius, 0, 1);
-			const centerScale = 0.58 + centerStrength * 0.64;
-			const edgeScale = 0.82 + edgeStrength * 0.18;
-			const selectedBoost = isSelected ? 0.09 : 0;
-			const proximityStrength = clamp(1 - pointerDistance / 54, 0, 1);
-			const localProximity = proximityStrength * proximityStrength * proximityStrength;
-			const hoverBoost = node === hoveredNode ? 0.05 : localProximity * 0.0035;
-			let scale = clamp(centerScale * edgeScale + selectedBoost + hoverBoost, 0.55, 1.04);
-			if (isSelected) {
-				// Keep the selected organism prominent even near the outer fringe.
-				scale = Math.max(scale, 0.9);
-			}
-			const opacity = clamp(0.42 + centerStrength * 0.46 + edgeStrength * 0.1 + proximityStrength * 0.08, 0.42, 1);
-			const driftX = ((nodeCenterX - viewportCenterX) / xRadius) * (1 - centerStrength) * 3.5;
-
-			node.style.transform = `translate3d(${driftX.toFixed(2)}px, 0px, 0) scale(${scale.toFixed(3)})`;
-			node.style.opacity = opacity.toFixed(3);
-			if (node === hoveredNode) {
-				node.style.zIndex = "36";
-			} else if (isSelected) {
-				node.style.zIndex = "30";
-			} else if (scale >= 1.1) {
-				node.style.zIndex = "18";
-			} else if (scale >= 0.88) {
-				node.style.zIndex = "14";
-			} else if (scale >= 0.62) {
-				node.style.zIndex = "11";
-			} else {
-				node.style.zIndex = "8";
-			}
-		}
+	// Custom image renderer: inject the native Next.js Image into each masonry slot.
+	// react-photo-album measures and sizes every tile for us, so we render the Image
+	// with `fill` inside a relative, aspect-ratio box and let it cover the slot.
+	function renderOrganismImage(
+		{ alt, sizes }: RenderImageProps,
+		{ photo, width, height }: RenderImageContext<OrganismPhoto>
+	) {
+		const isSelected = photo.organism.id === activeOrganism.id;
+		const label = getDisplayCommonName(photo.organism);
+		return (
+			<div
+				className={[
+					"relative overflow-hidden rounded-xl bg-base-100/80",
+					isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-base-200" : ""
+				].join(" ")}
+				style={{ width: "100%", aspectRatio: `${width} / ${height}` }}
+			>
+				<Image
+					src={photo.src}
+					alt={alt ?? ""}
+					fill
+					sizes={sizes}
+					className="object-cover object-center"
+				/>
+				{/* Always-visible common name across the bottom of every grid tile. */}
+				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-2 pb-1.5 pt-6">
+					<p className="truncate text-center text-xs font-semibold text-white">{label}</p>
+				</div>
+			</div>
+		);
 	}
 
 	return (
@@ -1664,135 +1485,44 @@ export default function FeaturedOrganisms() {
 				})}
 			</div>
 
-			<div className="rounded-2xl bg-base-200 p-3 shadow-sm md:p-4">
-				<div className="grid items-start gap-4 lg:grid-cols-[minmax(320px,390px)_minmax(0,1fr)]">
-					<div className="lg:sticky lg:top-24">
+			<div className="flex flex-col gap-6 lg:flex-row">
+				{/* Left: the detail panel (master-detail), sticky so it stays in view while the grid scrolls. */}
+				<div className="lg:w-1/3">
+					<div className="sticky top-0 h-fit">
 						<SelectedOrganismCard
-							organism={selectedOrganism}
-							resolvedCommonName={getDisplayCommonName(selectedOrganism)}
+							organism={activeOrganism}
+							resolvedCommonName={getDisplayCommonName(activeOrganism)}
 						/>
 					</div>
+				</div>
 
-					<div className="relative min-w-0">
-						<div
-							ref={scrollFieldRef}
-							onMouseMove={handleBubbleFieldMouseMove}
-							onMouseLeave={handleBubbleFieldMouseLeave}
-							className={[
-								"relative h-[620px] overflow-x-auto overflow-y-auto px-6 py-6 md:h-[690px] md:px-10 md:py-8",
-								"[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-								shouldCenterDock ? "flex items-center justify-center" : ""
-							].join(" ")}
-						>
-							<div
-								ref={dockInnerRef}
-								className="mx-auto flex min-w-full w-max max-w-none px-10 transform-gpu flex-col items-center gap-0.75 pb-8 transition-transform duration-150 ease-out will-change-transform md:px-16 md:gap-1.25 md:pb-10"
-							>
-								{honeycombRows.map((row, rowIndex) => (
-									<div
-										key={`honeycomb-row-${rowIndex}`}
-										className={[
-											"flex items-center justify-center gap-0.75 md:gap-1.25",
-											rowIndex === 0 ? "" : "-mt-4.5 md:-mt-5.5"
-										].join(" ")}
-										style={{
-											marginInlineStart: `${computeWatchRowShift(rowIndex)}px`
-										}}
-									>
-										{row.map(({ organism, index }) => (
-											<OrganismDockCircle
-												key={organism.id}
-												organism={organism}
-												resolvedCommonName={getDisplayCommonName(organism)}
-												onSelect={(node) => handleOrganismSelect(organism, node)}
-												isSelected={selectedOrganism.id === organism.id}
-												bubbleRef={(node) => {
-													bubbleNodesRef.current[index] = node;
-												}}
-											/>
-										))}
-									</div>
-								))}
-								{filteredOrganisms.length === 0 ? (
-									<div className="rounded-xl bg-base-100/40 px-4 py-3 text-sm text-base-content/70">
-										No featured organisms in this group yet.
-									</div>
-								) : null}
+				{/* Right: the masonry grid (master list). */}
+				<div className="lg:w-2/3">
+					<div className="rounded-2xl bg-base-200 p-3 shadow-sm md:p-4">
+						{filteredOrganisms.length === 0 ? (
+							<div className="rounded-xl bg-base-100/40 px-4 py-3 text-sm text-base-content/70">
+								No featured organisms in this group yet.
 							</div>
-						</div>
+						) : (
+							<div className="h-[75vh] overflow-y-auto pr-1">
+								<MasonryPhotoAlbum
+									photos={photos}
+									columns={masonryColumns}
+									spacing={12}
+									sizes={{
+										size: "calc(100vw - 2rem)",
+										sizes: [{ viewport: "(min-width: 1024px)", size: "60vw" }]
+									}}
+									render={{ image: renderOrganismImage }}
+									onClick={({ photo }) => setSelectedOrganism(photo.organism)}
+								/>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
 		</section>
 	);
-}
-
-function OrganismDockCircle({
-	organism,
-	resolvedCommonName,
-	onSelect,
-	isSelected,
-	bubbleRef
-}: {
-	organism: FeaturedOrganism;
-	resolvedCommonName: string;
-	onSelect: (node: HTMLButtonElement | null) => void;
-	isSelected: boolean;
-	bubbleRef: (node: HTMLButtonElement | null) => void;
-}) {
-	const [imageFailed, setImageFailed] = useState(false);
-	const imageSrc = organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC;
-	const commonName = resolvedCommonName;
-
-	return (
-		<button
-			ref={bubbleRef}
-			type="button"
-			onClick={(event) => onSelect(event.currentTarget)}
-			data-selected={isSelected ? "true" : "false"}
-			className={[
-				"organism-node group relative isolate overflow-hidden rounded-full",
-				"h-22 w-22 shrink-0 bg-base-100/90 md:h-27 md:w-27",
-				"transition-[transform,opacity] duration-200 ease-out will-change-transform",
-				isSelected
-					? "border-[3px] border-primary/85 shadow-md shadow-primary/25"
-					: "border-2 border-base-content/15"
-			].join(" ")}
-			aria-label={`Open details for ${commonName}`}
-		>
-			{imageFailed ? (
-				<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-xl font-semibold text-white/85">
-					{commonName.charAt(0).toUpperCase()}
-				</div>
-			) : (
-				<Image
-					src={imageSrc}
-					alt={commonName}
-					fill
-					sizes="(max-width: 768px) 8rem, 10rem"
-					quality={95}
-					className="object-cover object-center"
-					onError={() => setImageFailed(true)}
-				/>
-			)}
-			<div
-				className={[
-					"pointer-events-none absolute inset-x-2 bottom-1.5 rounded-lg border border-white/20 bg-black/75 px-2 py-1",
-					"text-center text-[12px] font-semibold leading-tight text-white",
-					"opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100"
-				].join(" ")}
-			>
-				{commonName}
-			</div>
-		</button>
-	);
-}
-
-function readNodeScale(node: HTMLElement): number {
-	const match = /scale\(([\d.]+)\)/.exec(node.style.transform);
-	if (!match) return 1;
-	const parsed = Number.parseFloat(match[1] ?? "1");
-	return Number.isFinite(parsed) ? parsed : 1;
 }
 
 function SelectedOrganismCard({
@@ -1820,7 +1550,7 @@ function SelectedOrganismCard({
 		<article className="overflow-hidden rounded-2xl bg-transparent">
 			<div className="translate-y-0 opacity-100 transition-[transform,opacity] duration-250 ease-out will-change-transform">
 				<div className="p-3 md:p-4">
-					<div className="relative aspect-6/5 w-full overflow-hidden rounded-2xl bg-transparent">
+					<div className="relative h-72 w-full overflow-hidden rounded-2xl bg-transparent sm:h-80">
 						{imageFailed ? (
 							<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
 								{commonName.charAt(0).toUpperCase()}
@@ -1830,7 +1560,7 @@ function SelectedOrganismCard({
 								src={imageSrc}
 								alt={commonName}
 								fill
-								sizes="(max-width: 1024px) 100vw, 760px"
+								sizes="(max-width: 1024px) 100vw, 420px"
 								className="object-cover object-center"
 								onError={() => setImageFailed(true)}
 							/>
@@ -2034,85 +1764,3 @@ function createFallbackCommonName(organism: FeaturedOrganism): string {
 	return fromId || organism.taxonomyName;
 }
 
-function getCenterOrganism(
-	rows: Array<Array<{ organism: FeaturedOrganism; index: number }>>
-): FeaturedOrganism | undefined {
-	if (rows.length === 0) return undefined;
-	const centerRow = rows[Math.floor(rows.length / 2)];
-	if (!centerRow || centerRow.length === 0) return undefined;
-	return centerRow[Math.floor(centerRow.length / 2)]?.organism;
-}
-
-function createHoneycombRows(
-	organisms: FeaturedOrganism[]
-): Array<Array<{ organism: FeaturedOrganism; index: number }>> {
-	const total = organisms.length;
-	if (total === 0) return [];
-
-	// Build a true radial cluster on a hex grid (closest cells to center first),
-	// which keeps a single rounded shape for any entry count.
-	let hexRadius = 0;
-	while (1 + 3 * hexRadius * (hexRadius + 1) < total) {
-		hexRadius += 1;
-	}
-
-	type HexCell = {
-		q: number;
-		r: number;
-		distance: number;
-		angle: number;
-	};
-	const cells: HexCell[] = [];
-	for (let q = -hexRadius; q <= hexRadius; q += 1) {
-		const minR = Math.max(-hexRadius, -q - hexRadius);
-		const maxR = Math.min(hexRadius, -q + hexRadius);
-		for (let r = minR; r <= maxR; r += 1) {
-			const s = -q - r;
-			const distance = (Math.abs(q) + Math.abs(r) + Math.abs(s)) / 2;
-			const angle = Math.atan2(r * Math.sqrt(3) * 0.5, q + r * 0.5);
-			cells.push({ q, r, distance, angle });
-		}
-	}
-
-	cells.sort((a, b) => {
-		if (a.distance !== b.distance) return a.distance - b.distance;
-		return a.angle - b.angle;
-	});
-
-	const selected = cells.slice(0, total);
-	selected.sort((a, b) => {
-		if (a.r !== b.r) return a.r - b.r;
-		return a.q - b.q;
-	});
-
-	const rows: Array<Array<{ organism: FeaturedOrganism; index: number }>> = [];
-	let organismCursor = 0;
-	let currentRow = Number.NaN;
-	for (const cell of selected) {
-		if (cell.r !== currentRow) {
-			rows.push([]);
-			currentRow = cell.r;
-		}
-		const organism = organisms[organismCursor];
-		if (!organism) break;
-		rows[rows.length - 1].push({
-			organism,
-			index: organismCursor
-		});
-		organismCursor += 1;
-	}
-
-	return rows.filter((row) => row.length > 0);
-}
-
-function computeWatchRowShift(rowIndex: number): number {
-	return rowIndex % 2 === 0 ? -6 : 6;
-}
-
-function mix(start: number, end: number, t: number): number {
-	return start + (end - start) * t;
-}
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.min(max, Math.max(min, value));
-}
