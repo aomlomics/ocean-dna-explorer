@@ -8,7 +8,7 @@ import { NetworkPacket } from "@/types/globals";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function VisualizeMetadata() {
+export default function VisualizeAlphaDiversity() {
 	const searchParams = useSearchParams();
 
 	const [diversities, setDiversities] = useState(

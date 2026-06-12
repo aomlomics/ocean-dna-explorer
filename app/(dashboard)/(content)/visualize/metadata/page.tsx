@@ -8,7 +8,7 @@ import { NetworkPacket } from "@/types/globals";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default async function VisualizeMetadata() {
+export default function VisualizeMetadata() {
 	const searchParams = useSearchParams();
 
 	const [samples, setSamples] = useState(undefined as Sample[] | undefined);
