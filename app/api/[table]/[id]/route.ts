@@ -1,4 +1,3 @@
-import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { getTableName } from "@/app/helpers/schema";
 import { NetworkPacket } from "@/types/globals";
@@ -20,7 +19,7 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const { query } = parseApiQuery(model, searchParams, {
+		const { query, client } = parseApiQuery(model, searchParams, {
 			features: {
 				fields: true,
 				relations: true,
@@ -32,7 +31,7 @@ export async function GET(
 		});
 
 		//@ts-ignore
-		const result = await prisma[model].findUnique(query);
+		const result = await client[model].findUnique(query);
 
 		if (result) {
 			return NextResponse.json({ statusMessage: "success", result });

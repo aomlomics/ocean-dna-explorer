@@ -231,7 +231,7 @@ export default function SampleScatterPlot({
 		}
 
 		//assign colors
-		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35 }).forEach((color, i) => {
+		distinctColors({ count: Object.keys(tempDatasets).length, chromaMin: 35, lightMin: 35 }).forEach((color, i) => {
 			tempDatasets[i].borderColor = color.hex();
 			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
 		});

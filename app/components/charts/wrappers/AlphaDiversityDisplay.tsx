@@ -210,7 +210,7 @@ export default function AlphaDiversityDisplay({
 					let sortedDatasets;
 					if (hueField) {
 						const sortedHues = getSortedValues(Array.from(hues!), hueType!);
-						const colors = distinctColors({ count: sortedHues.length, chromaMin: 35 });
+						const colors = distinctColors({ count: sortedHues.length, chromaMin: 35, lightMin: 35 });
 						setHueValues(sortedHues);
 						setHueColors(colors);
 
@@ -511,13 +511,7 @@ export default function AlphaDiversityDisplay({
 					}, [] as ReactNode[])}
 				</>
 			) : (
-				<div className="aspect-5/2">
-					No Alpha Diversities available for this analysis. Please raise an issue on our{" "}
-					<Link className="link link-primary link-hover" href="https://github.com/aomlomics/ocean-dna-explorer/issues">
-						Github
-					</Link>{" "}
-					about this error.
-				</div>
+				<div className="aspect-5/2">No Alpha Diversities available.</div>
 			)}
 		</div>
 	);

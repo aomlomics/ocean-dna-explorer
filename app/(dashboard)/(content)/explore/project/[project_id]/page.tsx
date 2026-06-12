@@ -1,7 +1,6 @@
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import DataDisplay from "@/app/components/DataDisplay";
@@ -87,7 +86,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			}
 		}
 	}
-	const colorsArr = randomColors(Object.keys(taxaCountByAnalysis).length);
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
 
 	// Get top 2 taxonomies per assay

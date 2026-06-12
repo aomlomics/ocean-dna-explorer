@@ -112,7 +112,7 @@ export default function TaxaBarChart({
 						}
 					}
 
-					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35 });
+					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35, lightMin: 35 });
 					setTaxaColors(uniqueColors);
 					const sortedRanks = Array.from(rankValues).sort();
 					setTaxonomies(sortedRanks);

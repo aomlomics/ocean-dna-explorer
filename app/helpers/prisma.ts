@@ -1,10 +1,11 @@
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
-import { deepMerge } from "./utils";
+import { deepMerge, uncapitalizeTable } from "./utils";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/client";
 import { Prisma, PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { getRelationPath } from "./schema";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -35,6 +36,18 @@ const readOperations = [
 	"aggregate",
 	"groupBy"
 ];
+const publicTables = ["Assay", "Tag"] as Prisma.ModelName[];
+const projectTables = ["Sample", "AssayPrep", "Library"] as Prisma.ModelName[];
+const analysisTables = [
+	"Occurrence",
+	"Assignment",
+	"Feature",
+	"Taxonomy",
+	"AlphaDiversity",
+	"AlphaDiversityIndex",
+	"Assay",
+	"Tag"
+] as Prisma.ModelName[];
 
 //database initialization
 const globalForPrisma = global as unknown as {
@@ -53,136 +66,21 @@ const publicPrisma =
 	globalForPrisma.publicPrisma ||
 	unsafePrisma.$extends({
 		query: {
-			project: {
+			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
+					//TODO: handle assays and tags smarter (assays show private data on /explore/assay)
 					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.ProjectWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								isPrivate: false
-							}
-						});
-					}
+						const { signedOutQuery } = buildNestedQueries(model);
 
-					return await query(args);
-				}
-			},
-			sample: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.SampleWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Project: { isPrivate: false }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			assayPrep: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.AssayPrepWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Project: { isPrivate: false }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			library: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.LibraryWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Project: { isPrivate: false }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			analysis: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.AnalysisWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								isPrivate: false
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			occurrence: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.OccurrenceWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Analysis: { isPrivate: false }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			assignment: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.AssignmentWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Analysis: { isPrivate: false }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			feature: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.FeatureWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Assignments: { some: { Analysis: { isPrivate: false } } }
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			taxonomy: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						args = args as { where?: Prisma.TaxonomyWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							signedOutQuery: {
-								Assignments: { some: { Analysis: { isPrivate: false } } }
-							}
-						});
+						if (publicTables.includes(model)) {
+							//find all instances of the key "analysis" or "analyses" and inject the queries into it
+						} else {
+							args = args as { where?: any; [key: string]: any };
+							args.where = getWhere({
+								where: args.where,
+								signedOutQuery
+							});
+						}
 					}
 
 					return await query(args);
@@ -196,273 +94,29 @@ const prisma =
 	globalForPrisma.prisma ||
 	unsafePrisma.$extends({
 		query: {
-			project: {
+			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
+					//TODO: handle assays and tags smarter (assays show private data on /explore/assay)
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 
-						args = args as { where?: Prisma.ProjectWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								isPrivate: false
-							},
-							noPermQuery: {
-								OR: [
-									{
-										isPrivate: false
-									},
-									{
-										userIds: {
-											has: userId
-										}
-									}
-								]
-							}
-						});
-					}
+						const { signedOutQuery, userIdsQuery } = buildNestedQueries(model, userId);
 
-					return await query(args);
-				}
-			},
-			sample: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.SampleWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Project: { isPrivate: false }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Project: { isPrivate: false }
-									},
-									{
-										Project: { userIds: { has: userId } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			assayPrep: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.AssayPrepWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Project: { isPrivate: false }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Project: { isPrivate: false }
-									},
-									{
-										Project: { userIds: { has: userId } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			library: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.LibraryWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Project: { isPrivate: false }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Project: { isPrivate: false }
-									},
-									{
-										Project: { userIds: { has: userId } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			analysis: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.AnalysisWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								isPrivate: false
-							},
-							noPermQuery: {
-								OR: [
-									{
-										isPrivate: false
-									},
-									{
-										Project: { userIds: { has: userId } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			occurrence: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.OccurrenceWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Analysis: { isPrivate: false }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Analysis: { isPrivate: false }
-									},
-									{
-										Analysis: { Project: { userIds: { has: userId } } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			assignment: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.AssignmentWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Analysis: { isPrivate: false }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Analysis: { isPrivate: false }
-									},
-									{
-										Analysis: { Project: { userIds: { has: userId } } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			feature: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.FeatureWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Assignments: { some: { Analysis: { isPrivate: false } } }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Assignments: { some: { Analysis: { isPrivate: false } } }
-									},
-									{
-										Assignments: { some: { Analysis: { Project: { userIds: { has: userId } } } } }
-									}
-								]
-							}
-						});
-					}
-
-					return await query(args);
-				}
-			},
-			taxonomy: {
-				async $allOperations({ model, operation, args, query }) {
-					if (readOperations.includes(operation)) {
-						const { userId, sessionClaims } = await auth();
-						const role = sessionClaims?.metadata?.role;
-
-						args = args as { where?: Prisma.TaxonomyWhereInput; [key: string]: any };
-						args.where = await getWhere({
-							where: args.where,
-							userId,
-							role,
-							signedOutQuery: {
-								Assignments: { some: { Analysis: { isPrivate: false } } }
-							},
-							noPermQuery: {
-								OR: [
-									{
-										Assignments: { some: { Analysis: { isPrivate: false } } }
-									},
-									{
-										Assignments: { some: { Analysis: { Project: { userIds: { has: userId } } } } }
-									}
-								]
-							}
-						});
+						if (publicTables.includes(model)) {
+							//find all instances of the key "analysis" or "analyses" and inject the queries into it
+						} else {
+							args = args as { where?: any; [key: string]: any };
+							args.where = getWhere({
+								where: args.where,
+								userId,
+								role,
+								signedOutQuery,
+								noPermQuery: {
+									OR: [signedOutQuery, userIdsQuery!]
+								}
+							});
+						}
 					}
 
 					return await query(args);
@@ -479,7 +133,65 @@ if (process.env.NODE_ENV !== "production") {
 
 export { unsafePrisma, publicPrisma, prisma };
 
-async function getWhere({
+type NestedSignedOutQuery =
+	| {
+			isPrivate: false;
+	  }
+	| { [key: string]: NestedSignedOutQuery | { some: NestedSignedOutQuery } };
+type NestedUserIdsQuery =
+	| {
+			userIds: {
+				has: string | null;
+			};
+	  }
+	| { [key: string]: NestedUserIdsQuery | { some: NestedUserIdsQuery } };
+
+function buildNestedQueries(model: Prisma.ModelName, userId?: string | null) {
+	let signedOutQuery = {
+		isPrivate: false
+	} as NestedSignedOutQuery;
+	let userIdsQuery = undefined as NestedUserIdsQuery | undefined;
+	if (userId) {
+		userIdsQuery = {
+			userIds: {
+				has: userId
+			}
+		};
+
+		//only projects have userIds
+		if (model === "Analysis" || analysisTables.includes(model)) {
+			userIdsQuery = { Project: userIdsQuery };
+		}
+	}
+
+	if (model !== "Project" && model !== "Analysis") {
+		let path;
+		if (projectTables.includes(model)) {
+			path = getRelationPath(uncapitalizeTable(model), "project");
+		} else if (analysisTables.includes(model)) {
+			path = getRelationPath(uncapitalizeTable(model), "analysis");
+		}
+
+		for (const rel of path!.toReversed()) {
+			if (rel.type.endsWith("many")) {
+				//if relation is a -to-many, add a some to the query
+				signedOutQuery = { [rel.field]: { some: signedOutQuery } };
+				if (userIdsQuery) {
+					userIdsQuery = { [rel.field]: { some: userIdsQuery } };
+				}
+			} else {
+				signedOutQuery = { [rel.field]: signedOutQuery };
+				if (userIdsQuery) {
+					userIdsQuery = { [rel.field]: userIdsQuery };
+				}
+			}
+		}
+	}
+
+	return { signedOutQuery, userIdsQuery };
+}
+
+function getWhere({
 	where,
 	userId,
 	role,
@@ -489,8 +201,8 @@ async function getWhere({
 	where: any;
 	userId?: string | null;
 	role?: Role | undefined;
-	signedOutQuery: Record<string, any>;
-	noPermQuery?: Record<string, any>;
+	signedOutQuery: NestedSignedOutQuery;
+	noPermQuery?: { OR: [NestedSignedOutQuery, NestedUserIdsQuery] };
 }) {
 	if (!userId) {
 		if (where) {

@@ -14,6 +14,7 @@ import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { prisma, publicPrisma } from "./prisma";
 
 export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
@@ -451,6 +452,15 @@ export function parseApiQuery(
 		distinct?: string[];
 	};
 
+	let client = prisma;
+	const publicSubmissions = params.get("public");
+	if (publicSubmissions) {
+		params.delete("public");
+		if (publicSubmissions === "true") {
+			client = publicPrisma;
+		}
+	}
+
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
@@ -525,14 +535,11 @@ export function parseApiQuery(
 
 			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
 			for (const r of relations.split(",")) {
-				const trimmed = r.trim().toLowerCase();
-				const relTableArr = Object.entries(TableMetadata).find(
-					([t, metadata]) => trimmed === t.toLowerCase() || trimmed === metadata.plural.toLowerCase()
-				);
+				const relTableArr = getTableName(r.trim().toLowerCase());
 				if (!relTableArr) {
 					throw new Error(`Relation with name "${r}" does not exist in database.`);
 				}
-				relTables.add(relTableArr[0] as Uncapitalize<Prisma.ModelName>);
+				relTables.add(relTableArr);
 			}
 
 			//relations limit
@@ -668,9 +675,7 @@ export function parseApiQuery(
 		if (take) {
 			params.delete("limit");
 			query.take = parseInt(take);
-			if (Number.isNaN(query.take)) {
-				throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
-			} else if (query.take < 1) {
+			if (Number.isNaN(query.take) || query.take < 1) {
 				throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
 			}
 		}
@@ -809,7 +814,7 @@ export function parseApiQuery(
 		}
 	}
 
-	return { query, shapes, sampleWhere };
+	return { query, shapes, sampleWhere, client };
 }
 
 const secureFields = ["userIds"];

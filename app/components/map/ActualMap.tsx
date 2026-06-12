@@ -68,6 +68,7 @@ const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 5;
 const DEFAULT_CLUSTER_RADIUS = 0;
 const chromaMin = 35;
+const lightMin = 35;
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -346,7 +347,7 @@ export default function ActualMap({
 
 		//assign color to each option
 		const optionsArray = Array.from(defaultOptions);
-		const colors = distinctColors({ count: optionsArray.length, chromaMin });
+		const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 		const colorMap = {} as Record<string, Color>;
 		for (let i = 0; i < optionsArray.length; i++) {
 			colorMap[optionsArray[i]] = colors[i];
@@ -400,7 +401,7 @@ export default function ActualMap({
 				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
 			} else {
 				//valid
-				const colors = distinctColors({ count: optionsArray.length, chromaMin });
+				const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 				const colorMap = {} as Record<string, Color>;
 				for (let i = 0; i < optionsArray.length; i++) {
 					colorMap[optionsArray[i]] = colors[i];
@@ -445,7 +446,7 @@ export default function ActualMap({
 					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
 				} else {
 					//valid
-					const colors = distinctColors({ count: optionsArray.length, chromaMin });
+					const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 					const colorMap = {} as Record<string, Color>;
 					for (let i = 0; i < optionsArray.length; i++) {
 						colorMap[optionsArray[i]] = colors[i];

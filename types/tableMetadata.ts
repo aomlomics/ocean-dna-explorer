@@ -1,7 +1,7 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum, ZodObject } from "zod";
 import { Prisma } from "@/app/generated/prisma/client";
-import { uncapitalizeTable } from "@/app/helpers/utils";
+import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { TaxonomicRanks } from "./objects";
 
 export type RelationMetadata = {
@@ -260,7 +260,7 @@ for (let e in TableMetadata) {
 			const lowercaseRelation = Object.entries(TableMetadata).find(
 				(e) => e[1].plural === rel
 			)![0] as Uncapitalize<Prisma.ModelName>;
-			relationTable = (lowercaseRelation.slice(0, 1).toUpperCase() + lowercaseRelation.slice(1)) as Prisma.ModelName;
+			relationTable = capitalizeTable(lowercaseRelation);
 
 			//other
 			if (relations[lowercaseRelation].some((t) => t.slice(0, 1).toLowerCase() + t.slice(1) === table)) {
