@@ -22,17 +22,17 @@ export default function Page() {
 					variables: isDark
 						? {
 								colorPrimary: "#7DBAE5",
-								colorBackground: "#192136",
-								colorText: "#E2E8F0",
-								colorInputBackground: "#232942",
-								colorInputText: "#E2E8F0"
+								colorBackground: "#192136"
+								// colorText: "#E2E8F0",
+								// colorInputBackground: "#232942",
+								// colorInputText: "#E2E8F0",
 							}
 						: {
 								colorPrimary: "#233D7F",
-								colorBackground: "#eef2f6",
-								colorText: "#233D7F",
-								colorInputBackground: "#F4F3F2",
-								colorInputText: "#233D7F"
+								colorBackground: "#eef2f6"
+								// colorText: "#233D7F",
+								// colorInputBackground: "#F4F3F2",
+								// colorInputText: "#233D7F"
 							},
 					options: {
 						logoPlacement: "inside",

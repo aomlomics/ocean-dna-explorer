@@ -1,11 +1,12 @@
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { Role } from "@/types/globals";
-import { deepMerge, uncapitalizeTable } from "./utils";
+import { deepMerge, isObject, uncapitalizeTable } from "./utils";
 import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/client";
 import { Prisma, PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { getRelationPath } from "./schema";
+import TableMetadata from "@/types/tableMetadata";
 
 type PrismaExtension = DynamicClientExtensionThis<
 	Prisma.TypeMap<
@@ -36,7 +37,7 @@ const readOperations = [
 	"aggregate",
 	"groupBy"
 ];
-const publicTables = ["Assay", "Tag"] as Prisma.ModelName[];
+
 const projectTables = ["Sample", "AssayPrep", "Library"] as Prisma.ModelName[];
 const analysisTables = [
 	"Occurrence",
@@ -48,6 +49,9 @@ const analysisTables = [
 	"Assay",
 	"Tag"
 ] as Prisma.ModelName[];
+const privatableTables = ["Project", "Analysis"] as Prisma.ModelName[];
+//these must be one step away from a project or analysis, otherwise a where clause can't be nested deep enough
+const publicTables = ["Assay", "Tag"] as Prisma.ModelName[];
 
 //database initialization
 const globalForPrisma = global as unknown as {
@@ -68,22 +72,39 @@ const publicPrisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					//TODO: handle assays and tags smarter (assays show private data on /explore/assay)
-					if (readOperations.includes(operation)) {
-						const { signedOutQuery } = buildNestedQueries(model);
+					let typedArgs = args as { where?: any; [key: string]: any };
 
-						if (publicTables.includes(model)) {
-							//find all instances of the key "analysis" or "analyses" and inject the queries into it
+					if (readOperations.includes(operation)) {
+						let { signedOutQuery } = buildNestedQueries(model);
+
+						const newWhere = getWhere({
+							where: typedArgs.where,
+							signedOutQuery
+						});
+
+						if (publicTables.includes(model) || model === "Project") {
+							//show correct analyses for projects (select, include, _count, etc.)
+							if (model === "Project") {
+								signedOutQuery = { Analyses: signedOutQuery };
+							}
+
+							const { where, ...rest } = typedArgs;
+							typedArgs = {
+								where:
+									isObject(where) && privatableTables.some((t) => t in where || TableMetadata[t].plural in where)
+										? newWhere
+										: where,
+								...mergePublicQuery({
+									args: rest as Record<string, Record<string, any>>,
+									signedOutQuery
+								})
+							};
 						} else {
-							args = args as { where?: any; [key: string]: any };
-							args.where = getWhere({
-								where: args.where,
-								signedOutQuery
-							});
+							typedArgs.where = newWhere;
 						}
 					}
 
-					return await query(args);
+					return await query(typedArgs);
 				}
 			}
 		}
@@ -96,30 +117,53 @@ const prisma =
 		query: {
 			$allModels: {
 				async $allOperations({ model, operation, args, query }) {
-					//TODO: handle assays and tags smarter (assays show private data on /explore/assay)
+					let typedArgs = args as { where?: any; [key: string]: any };
+
 					if (readOperations.includes(operation)) {
 						const { userId, sessionClaims } = await auth();
 						const role = sessionClaims?.metadata?.role;
 
-						const { signedOutQuery, userIdsQuery } = buildNestedQueries(model, userId);
+						let { signedOutQuery, userIdsQuery } = buildNestedQueries(model, userId);
 
-						if (publicTables.includes(model)) {
-							//find all instances of the key "analysis" or "analyses" and inject the queries into it
+						const newWhere = getWhere({
+							where: typedArgs.where,
+							userId,
+							role,
+							signedOutQuery,
+							noPermQuery: {
+								OR: [signedOutQuery, userIdsQuery!]
+							}
+						});
+
+						if (publicTables.includes(model) || model === "Project") {
+							//show correct analyses for projects (select, include, _count, etc.)
+							if (model === "Project") {
+								signedOutQuery = { Analyses: signedOutQuery };
+								userIdsQuery = { Analyses: userIdsQuery! };
+							}
+
+							const { where, ...rest } = typedArgs;
+							typedArgs = {
+								where:
+									isObject(where) && privatableTables.some((t) => t in where || TableMetadata[t].plural in where)
+										? newWhere
+										: where,
+								...mergePublicQuery({
+									args: rest as Record<string, Record<string, any>>,
+									userId,
+									role,
+									signedOutQuery,
+									noPermQuery: {
+										OR: [signedOutQuery, userIdsQuery!]
+									}
+								})
+							};
 						} else {
-							args = args as { where?: any; [key: string]: any };
-							args.where = getWhere({
-								where: args.where,
-								userId,
-								role,
-								signedOutQuery,
-								noPermQuery: {
-									OR: [signedOutQuery, userIdsQuery!]
-								}
-							});
+							typedArgs.where = newWhere;
 						}
 					}
 
-					return await query(args);
+					return await query(typedArgs);
 				}
 			}
 		}
@@ -191,6 +235,49 @@ function buildNestedQueries(model: Prisma.ModelName, userId?: string | null) {
 	return { signedOutQuery, userIdsQuery };
 }
 
+function mergePublicQuery({
+	args,
+	userId,
+	role,
+	signedOutQuery,
+	noPermQuery
+}: {
+	args: Record<string, Record<string, any>>;
+	userId?: string | null;
+	role?: Role | undefined;
+	signedOutQuery: NestedSignedOutQuery;
+	noPermQuery?: { OR: [NestedSignedOutQuery, NestedUserIdsQuery] };
+}) {
+	const results = {} as Record<string, any>;
+	for (const key in args) {
+		results[key] = args[key];
+
+		if (privatableTables.some((t) => key === t || key === TableMetadata[t].plural)) {
+			//inject where into query if it doesn't exist (select, include, _count, etc.)
+			const obj = isObject(args[key]) ? args[key] : {};
+			let where = getWhere({
+				where: obj.where || {},
+				userId,
+				role,
+				signedOutQuery,
+				noPermQuery
+			});
+
+			if (Object.keys(where).length) {
+				where = where[key];
+				results[key] = {
+					...obj,
+					where: "some" in where ? where.some : where
+				};
+			}
+		} else if (isObject(args[key])) {
+			results[key] = mergePublicQuery({ args: args[key], userId, role, signedOutQuery, noPermQuery });
+		}
+	}
+
+	return results;
+}
+
 function getWhere({
 	where,
 	userId,
@@ -206,14 +293,14 @@ function getWhere({
 }) {
 	if (!userId) {
 		if (where) {
-			return deepMerge(where, signedOutQuery);
+			return deepMerge({ ...where }, signedOutQuery);
 		} else {
 			return signedOutQuery;
 		}
 	} else if (!role || !RolePermissions[role].includes("manageUsers")) {
 		if (where) {
 			if (noPermQuery) {
-				return deepMerge(where, noPermQuery);
+				return deepMerge({ ...where }, noPermQuery);
 			} else {
 				return where;
 			}
