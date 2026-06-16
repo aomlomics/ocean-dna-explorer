@@ -2,67 +2,109 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { animate, motion } from "framer-motion";
 
 // [phrase, weight] — larger weight = bigger text in the cloud
 const WORD_LIST: [string, number][] = [
-	["Query the API", 90],
-	["FAIR eDNA Data", 80],
-	["Build complex Searches", 70],
-	["Learn about eDNA", 65],
-	["Build custom figures", 60],
-	["Programmatic data access", 50],
-	["Explore projects", 48],
-	["Browse samples on the map", 46],
-	["Drill into detections", 44],
-	["Trace a detection to its feature", 42],
-	["See taxonomic assignments instantly", 40],
-	["Navigate the taxonomy tree", 40],
-	["Explore analyses and pipelines", 38],
-	["Compare target genes", 36],
-	["Find assays by primers + targets", 36],
-	["Filter and sort any data table", 34],
-	["Search within columns", 32],
-	["Open any record for full details", 32],
-	["Visualize metadata patterns", 30],
-	["Visualize taxonomy distributions", 30],
-	["Compare projects side-by-side", 28],
-	["Compare analyses across datasets", 28],
-	["Explore sampling environments", 28],
-	["Check temporal coverage", 26],
-	["Explore depth coverage", 26],
-	["Spot metadata gaps fast", 24],
-	["Meet featured organisms", 24],
-	["Discover Life Across ODE", 24],
-	["Submit a new project", 22],
-	["Submit a new analysis", 22],
-	["Tag datasets for discovery", 22],
-	["Choose dataset visibility", 20],
-	["Edit metadata later", 20],
-	["Use the API endpoints", 20],
-	["Search and filter via API", 20],
-	["Explore the database schema", 18],
-	["Learn eDNA 101", 18],
-	["Explore eDNA's impact", 18],
-	["Use custom map tools", 18],
-	["Taxonomies unlocked", 16],
-	["Make your own discoveries", 16],
+	["Ocean eDNA exploration", 90],
+	["Query the API", 84],
+	["Complex search made easy", 80],
+	["Visualization and analysis tools", 76],
+	["Cross dataset analysis", 74],
+	["Programmatic data access", 72],
+	["Copy search as API query", 70],
+	["FAIRe eDNA data standard", 68],
+	["Darwin Core and MIxS aligned", 66],
+	["Taxonomy sequence metadata connected", 64],
+	["Search engine for ocean eDNA data", 62],
+	["Build queries in the browser", 60],
+	["Explore projects", 58],
+	["Draw map shapes to filter eDNA data", 56],
+	["Search results on the map", 54],
+	["Compare fields across datasets", 52],
+	["Alpha diversity plots", 51],
+	["Taxonomy distribution plots", 50],
+	["Metadata pattern plots", 49],
+	["Featured organisms with real photos", 48],
+	["Taxonomies with photos and profiles", 47],
+	["IUCN status linked to taxonomy", 46],
+	["Find assays by primers and targets", 45],
+	["Filter and sort any data table", 44],
+	["Search across related tables", 43],
+	["Trace detections across linked data", 42],
+	["Browse samples on the map", 41],
+	["Compare projects", 40],
+	["Compare analyses", 39],
+	["Explore sampling environments", 38],
+	["Environmental and sampling context", 37],
+	["Taxonomic assignments in context", 36],
+	["Metadata driven exploration", 34],
+	["Multi table search engine", 33],
+	["Advanced filtering workflows", 32],
+	["API power without API friction", 30],
+	["Direct API access in browser", 29],
+	["No API key required", 28],
+	["Query table relations", 27],
+	["Explore database schema", 26],
+	["Discover unique field values", 25],
+	["Find values before querying", 25],
+	["Project sample library and analysis linked", 24],
+	["One project many analyses", 24],
+	["Map filters converted to API", 24],
+	["Complex OR and AND logic", 24],
+	["Relation aware query building", 23],
+	["From visual filter to JSON", 23],
+	["Edit metadata later", 23],
+	["Choose dataset visibility", 22],
+	["Private first public when ready", 22],
+	["Findable reusable metadata", 22],
+	["Submit a new project", 21],
+	["Submit a new analysis", 20],
+	["Upload project sample metadata", 20],
+	["Attach analyses to one project", 20],
+	["Compare parameter choices", 20],
+	["eDNA metabarcoding ready", 19],
+	["ASV and taxonomy aware", 19],
+	["Sample collection to bioinformatics", 19],
+	["Control vocabularies supported", 19],
+	["Upload explore transform eDNA data", 18],
+	["Field level metadata guidance", 18],
+	["User defined terms supported", 18],
+	["TSV templates for submission", 18],
+	["Explore data without sign in", 18],
+	["Test API URLs in browser", 18],
+	["Use Python and R examples", 18],
+	["Open source support tooling", 17],
+	["edna2obis workflow support", 17],
+	["OBIS and GBIF compatible outputs", 16],
+	["Shared structure across tools", 16],
+	["Marine biodiversity data connections", 16],
+	["Ocean data made easier to read", 16],
+	["Supports faster eDNA research", 16],
+	["Stakeholder friendly data views", 16],
+	["Thoughtful UI for complex data", 16],
+	["Explore detections by place and time", 16],
+	["From field data to insight", 16],
 ];
 
 // Time (ms) spent revealing words in each cycle.
 const REVEAL_DURATION_MS = 23_000;
 // Keep the full cloud visible (gently breathing) after reveal completes.
-const HOLD_FULL_CLOUD_MS = 13_000;
+const HOLD_FULL_CLOUD_MS = 17_000;
 // Words revealed per tick.
 const BATCH_SIZE = 1;
+// Keep typed reveal intentionally slow.
+const TYPE_CHAR_MS = 85;
+const MIN_REVEAL_STEP_MS = 1_100;
+const CLOUD_FADE_OUT_MS = 900;
 
 // Capping the font size keeps every getImageData() call small.
 // potential memory leak if too large
 const MAX_WORD_FONT_PX = 72;
 // Hard ceiling on the canvas we hand to wordcloud2...same reasoning, this bounds
 // the getImageData() allocation regardless of how large the screen gets.
-const MAX_CLOUD_WIDTH_PX = 1480;
-const MAX_CLOUD_HEIGHT_PX = 1050;
+const MAX_CLOUD_WIDTH_PX = 1240;
+const MAX_CLOUD_HEIGHT_PX = 900;
 
 // The raw weights in WORD_LIST span a wide range (16–90). Feeding raw, unbounded
 // weights straight into wordcloud2 is what provokes the crash above, so we first
@@ -108,6 +150,7 @@ export default function AmbientPage() {
 		let cycleTimer: number | null = null;
 		let resizeTimer: number | null = null;
 		let initTimer: number | null = null;
+		let initPollTimer: number | null = null;
 		let introTimer: number | null = null;
 		const typingTimers = new Set<number>();
 
@@ -125,6 +168,10 @@ export default function AmbientPage() {
 				window.clearTimeout(cycleTimer);
 				cycleTimer = null;
 			}
+			if (initPollTimer != null) {
+				window.clearInterval(initPollTimer);
+				initPollTimer = null;
+			}
 			clearTypingTimers();
 		};
 
@@ -138,7 +185,6 @@ export default function AmbientPage() {
 
 			const chars = Array.from(fullText);
 			let charIdx = 0;
-			const charMs = 55;
 			const timer = window.setInterval(() => {
 				if (cancelled) return;
 				charIdx += 1;
@@ -156,18 +202,28 @@ export default function AmbientPage() {
 					el.style.animationDuration = `${(5.5 + Math.random() * 3).toFixed(2)}s`;
 					el.classList.add("ambient-word-breathe");
 				}
-			}, charMs);
+			}, TYPE_CHAR_MS);
 			typingTimers.add(timer);
+		};
+
+		const fadeOutCloud = async () => {
+			if (cancelled) return;
+			try {
+				await animate(wordsEl, { opacity: [1, 0] }, { duration: CLOUD_FADE_OUT_MS / 1000, ease: [0.22, 1, 0.36, 1] }).finished;
+			} catch {
+				// Ignore animation cancellation during teardown.
+			}
 		};
 
 		const startRevealCycle = (wordEls: HTMLElement[]) => {
 			clearReveal();
+			wordsEl.style.opacity = "1";
 
 			// Shuffle so the pop-in order varies each cycle.
 			const shuffled = [...wordEls].sort(() => Math.random() - 0.5);
 			let idx = 0;
 			const steps = Math.ceil(shuffled.length / BATCH_SIZE);
-			const stepMs = Math.max(1600, Math.floor(REVEAL_DURATION_MS / steps));
+			const stepMs = Math.max(MIN_REVEAL_STEP_MS, Math.floor(REVEAL_DURATION_MS / steps));
 
 			// Hide all words instantly (no transition so there's no visible flash).
 			shuffled.forEach((el) => {
@@ -204,11 +260,21 @@ export default function AmbientPage() {
 				}, stepMs);
 			});
 
-			// Restart after reveal window + full-cloud hold window.
+			const longestWordChars = shuffled.reduce((maxChars, el) => {
+				const fullText = el.dataset.ambientFullText ?? (el.textContent ?? "");
+				return Math.max(maxChars, Array.from(fullText).length);
+			}, 0);
+			const revealDoneMs = stepMs * Math.max(1, steps) + longestWordChars * TYPE_CHAR_MS + 250;
+
+			// Restart only after reveal has fully completed, then hold the full cloud.
 			cycleTimer = window.setTimeout(() => {
-				if (cancelled) return;
-				startRevealCycle(wordEls);
-			}, REVEAL_DURATION_MS + HOLD_FULL_CLOUD_MS);
+				void (async () => {
+					if (cancelled) return;
+					await fadeOutCloud();
+					if (cancelled) return;
+					startRevealCycle(wordEls);
+				})();
+			}, revealDoneMs + HOLD_FULL_CLOUD_MS);
 		};
 
 		const renderCloud = async () => {
@@ -255,17 +321,44 @@ export default function AmbientPage() {
 			});
 
 			// wordcloud2 renders asynchronously via internal setTimeout loops.
-			// Wait long enough for all spans to be added to the DOM before we touch them.
+			// Wait for span count to stabilize so we do not start revealing before all
+			// words are laid out.
 			if (initTimer != null) window.clearTimeout(initTimer);
+			if (initPollTimer != null) window.clearInterval(initPollTimer);
 			initTimer = window.setTimeout(() => {
 				if (cancelled) return;
-				const wordEls = Array.from(wordsEl.querySelectorAll("span")).filter(
-					(el): el is HTMLElement =>
-						el instanceof HTMLElement && el.style.position === "absolute"
-				);
-				if (wordEls.length === 0) return;
-				startRevealCycle(wordEls);
-			}, 500);
+				let previousCount = -1;
+				let stableChecks = 0;
+				const settleChecks = 5;
+				const maxPollMs = 5_000;
+				const pollStart = window.performance.now();
+
+				initPollTimer = window.setInterval(() => {
+					if (cancelled) return;
+					const wordEls = Array.from(wordsEl.querySelectorAll("span")).filter(
+						(el): el is HTMLElement =>
+							el instanceof HTMLElement && el.style.position === "absolute"
+					);
+					const currentCount = wordEls.length;
+					if (currentCount === 0) return;
+
+					if (currentCount === previousCount) {
+						stableChecks += 1;
+					} else {
+						previousCount = currentCount;
+						stableChecks = 0;
+					}
+
+					const waitedMs = window.performance.now() - pollStart;
+					if (stableChecks >= settleChecks || waitedMs >= maxPollMs) {
+						if (initPollTimer != null) {
+							window.clearInterval(initPollTimer);
+							initPollTimer = null;
+						}
+						startRevealCycle(wordEls);
+					}
+				}, 140);
+			}, 300);
 		};
 
 		const scheduleRender = () => {
@@ -276,7 +369,7 @@ export default function AmbientPage() {
 
 		// Let the foreground intro motion complete before starting the word cloud
 		// typing cycle so the sequence reads as: content slides in, then cloud animates.
-		introTimer = window.setTimeout(() => void renderCloud(), 1700);
+		introTimer = window.setTimeout(() => void renderCloud(), 12_200);
 
 		const resizeObserver =
 			typeof ResizeObserver !== "undefined"
@@ -289,6 +382,7 @@ export default function AmbientPage() {
 			cancelled = true;
 			if (resizeTimer != null) window.clearTimeout(resizeTimer);
 			if (initTimer != null) window.clearTimeout(initTimer);
+			if (initPollTimer != null) window.clearInterval(initPollTimer);
 			if (introTimer != null) window.clearTimeout(introTimer);
 			clearReveal();
 			resizeObserver?.disconnect();
@@ -301,40 +395,75 @@ export default function AmbientPage() {
 		<div className="tour-motion-bg relative isolate flex min-h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_38%,oklch(var(--p)/0.2),transparent_45%),radial-gradient(ellipse_at_78%_44%,oklch(var(--s)/0.15),transparent_48%)]" />
 
-			<motion.section
+			<section
 				className="relative z-10 mx-auto flex w-full max-w-[1800px] flex-1 flex-col items-center justify-center gap-12 px-[6vw] py-6 sm:gap-14 sm:py-8 lg:min-h-0 lg:flex-row lg:items-stretch lg:justify-center lg:gap-x-[clamp(2rem,4vw,4rem)]"
-				initial={{ opacity: 0, x: 120, y: 20 }}
-				animate={{ opacity: 1, x: 0, y: 0 }}
-				transition={{ duration: 2.1, ease: [0.16, 1, 0.3, 1], delay: 0.12 }}
 			>
-				<div className="ambient-logo flex w-full max-w-xl shrink-0 flex-col justify-center lg:max-w-[560px] lg:basis-[min(34%,560px)]">
+				<motion.div
+					className="ambient-logo flex w-full max-w-xl shrink-0 flex-col justify-center lg:max-w-[560px] lg:basis-[min(34%,560px)]"
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+				>
 					<div className="flex flex-col gap-5 sm:gap-6">
-						<div className="flex flex-wrap items-center gap-x-5 gap-y-4 sm:gap-x-6">
-							<Image
-								src="/images/ode_logo_clean.svg"
-								alt=""
-								width={120}
-								height={120}
-								priority
-								className="h-24 w-24 shrink-0 sm:h-28 sm:w-28"
-							/>
-							<h1 className="max-w-[16ch] text-[clamp(2rem,5.2vw,3.85rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-white drop-shadow-[0_2px_24px_oklch(var(--p)/0.25)]">
+						<motion.div
+							className="flex flex-wrap items-center gap-x-5 gap-y-4 sm:gap-x-6"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ duration: 0.8, delay: 0.1 }}
+						>
+							<motion.div
+								initial={{ opacity: 0, x: -260, y: 42 }}
+								animate={{ opacity: 1, x: 0, y: 0 }}
+								transition={{ duration: 10.8, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+							>
+								<Image
+									src="/images/ode_logo_clean.svg"
+									alt=""
+									width={120}
+									height={120}
+									priority
+									className="h-24 w-24 shrink-0 sm:h-28 sm:w-28"
+								/>
+							</motion.div>
+							<motion.h1
+								className="max-w-[16ch] text-[clamp(2rem,5.2vw,3.85rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-white drop-shadow-[0_2px_24px_oklch(var(--p)/0.25)]"
+								initial={{ opacity: 0, x: 250, y: -26 }}
+								animate={{ opacity: 1, x: 0, y: 0 }}
+								transition={{ duration: 12.2, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
+							>
 								Ocean DNA Explorer
-							</h1>
-						</div>
-						<p className="max-w-xl text-xl font-semibold leading-snug tracking-[-0.025em] text-base-content/92 sm:text-2xl xl:text-3xl">
-							Unlock the potential of your eDNA data.
-						</p>
-						<p className="max-w-xl text-base leading-relaxed text-base-content/68 sm:text-lg xl:text-lg">
-							Explore ocean biodiversity through projects, samples, taxonomies, metadata, and interactive visualizations.
-						</p>
+							</motion.h1>
+						</motion.div>
+						<motion.div
+							className="flex flex-col gap-5 sm:gap-6"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ duration: 1.2, delay: 0.2 }}
+						>
+							<motion.p
+								className="max-w-xl text-xl font-semibold leading-snug tracking-[-0.025em] text-base-content/92 sm:text-2xl xl:text-3xl"
+								initial={{ opacity: 0, x: -200, y: 56 }}
+								animate={{ opacity: 1, x: 0, y: 0 }}
+								transition={{ duration: 11.6, ease: [0.22, 1, 0.36, 1], delay: 0.72 }}
+							>
+								Unlock the potential of your eDNA data.
+							</motion.p>
+							<motion.p
+								className="max-w-xl text-base leading-relaxed text-base-content/68 sm:text-lg xl:text-lg"
+								initial={{ opacity: 0, x: 290, y: 38 }}
+								animate={{ opacity: 1, x: 0, y: 0 }}
+								transition={{ duration: 13.0, ease: [0.22, 1, 0.36, 1], delay: 1.05 }}
+							>
+								Explore ocean biodiversity through projects, samples, taxonomies, metadata, and interactive visualizations.
+							</motion.p>
+						</motion.div>
 					</div>
-				</div>
+				</motion.div>
 
-				<div className="ambient-cloud flex min-h-[min(82dvh,860px)] w-full min-w-0 flex-1 flex-col justify-center px-1 sm:min-h-[min(88dvh,980px)] lg:min-h-0">
+				<div className="ambient-cloud flex min-h-[min(74dvh,760px)] w-full min-w-0 flex-1 flex-col justify-center px-1 sm:min-h-[min(80dvh,860px)] lg:min-h-0">
 					<div
 						ref={cloudHostRef}
-						className="flex h-[min(93dvh,1080px)] w-full max-w-[min(100%,1480px)] items-center justify-center self-center lg:mx-auto"
+						className="flex h-[min(84dvh,920px)] w-full max-w-[min(100%,1240px)] items-center justify-center self-center lg:mx-auto"
 					>
 						<div
 							ref={cloudWordsRef}
@@ -344,7 +473,7 @@ export default function AmbientPage() {
 						/>
 					</div>
 				</div>
-			</motion.section>
+			</section>
 		</div>
 	);
 }
