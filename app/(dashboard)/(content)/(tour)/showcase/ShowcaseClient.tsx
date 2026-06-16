@@ -25,7 +25,9 @@ const PROJECT_SWAP_INTRO_DELAY_MS = 420;
 const RECENT_SWAP_MEMORY = 3;
 const MAX_NEW_ENRICHES_PER_PROJECT = 24;
 const PREMIUM_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const REVEAL_TRANSITION: Transition = { duration: 0.9, ease: PREMIUM_EASE };
+const REVEAL_TRANSITION: Transition = { duration: 1.8, ease: PREMIUM_EASE };
+const FIRST_PROJECT_CIRCLE_DURATION_S = 6.2;
+const SWAP_PROJECT_CIRCLE_DURATION_S = 4.8;
 
 type IucnCategoryId = "NE" | "DD" | "LC" | "NT" | "VU" | "EN" | "CR" | "EW" | "EX";
 
@@ -421,7 +423,7 @@ export default function ShowcaseClient({
 			);
 		};
 
-		const tick = () => {
+		const tick = async () => {
 			if (cancelled) return;
 
 			let current = gridRef.current;
@@ -457,11 +459,29 @@ export default function ShowcaseClient({
 			gridItemIdCounter.current += 1;
 			const insertedId = gridItemIdCounter.current;
 			const fallbackMeta = buildFallbackTaxonomyMeta(taxonomy);
+			const cacheKey = taxonomy.taxonomy;
+			const cachedMeta = taxonomyMetaCache.get(cacheKey) ?? null;
+			const inFlightMeta = taxonomyMetaInFlight.get(cacheKey);
+			const canStartNewEnrichment = projectEnrichBudgetUsedRef.current < MAX_NEW_ENRICHES_PER_PROJECT;
+			let insertMeta: TaxonomyCardMeta = fallbackMeta;
+
+			if (cachedMeta) {
+				insertMeta = cachedMeta;
+			} else if (inFlightMeta) {
+				const resolved = await inFlightMeta;
+				if (cancelled) return;
+				insertMeta = resolved ?? fallbackMeta;
+			} else if (canStartNewEnrichment) {
+				projectEnrichBudgetUsedRef.current += 1;
+				const resolved = await fetchTaxonomyMeta(taxonomy);
+				if (cancelled) return;
+				insertMeta = resolved ?? fallbackMeta;
+			}
 
 			const next = [...gridRef.current];
 			next[slot] = {
 				id: insertedId,
-				...fallbackMeta
+				...insertMeta
 			};
 			applyGrid(next);
 			const recentSlots = recentSwapSlotsRef.current;
@@ -470,27 +490,6 @@ export default function ShowcaseClient({
 				recentSlots.splice(0, recentSlots.length - RECENT_SWAP_MEMORY);
 			}
 
-			const cacheKey = taxonomy.taxonomy;
-			const hasCachedMeta = taxonomyMetaCache.has(cacheKey);
-			const hasInFlightMeta = taxonomyMetaInFlight.has(cacheKey);
-			const canStartNewEnrichment =
-				hasCachedMeta || hasInFlightMeta || projectEnrichBudgetUsedRef.current < MAX_NEW_ENRICHES_PER_PROJECT;
-			if (canStartNewEnrichment) {
-				if (!hasCachedMeta && !hasInFlightMeta) {
-					projectEnrichBudgetUsedRef.current += 1;
-				}
-				void fetchTaxonomyMeta(taxonomy).then((meta) => {
-					if (!meta || cancelled) return;
-					const latest = gridRef.current[slot];
-					if (!latest || latest.id !== insertedId) return;
-					const enriched = [...gridRef.current];
-					enriched[slot] = {
-						id: insertedId,
-						...meta
-					};
-					applyGrid(enriched);
-				});
-			}
 			scheduleNextTick();
 		};
 
@@ -514,7 +513,7 @@ export default function ShowcaseClient({
 
 	const fromLeft = projectIdx % 2 === 0;
 	const swapIn = !firstProjectPaint.current;
-	const circleDuration = swapIn ? 2.1 : 1.45;
+	const circleDuration = swapIn ? SWAP_PROJECT_CIRCLE_DURATION_S : FIRST_PROJECT_CIRCLE_DURATION_S;
 	const projectTitleSizeClass = getProjectTitleSizeClass(project.project_name);
 
 	return (
@@ -530,7 +529,7 @@ export default function ShowcaseClient({
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0, scale: 0.992, transition: { duration: 0.55, ease: PREMIUM_EASE } }}
-					transition={{ duration: 0.92, ease: PREMIUM_EASE }}
+					transition={{ duration: 1.6, ease: PREMIUM_EASE }}
 				>
 					<div ref={availableRef} className="flex min-h-0 min-w-0 flex-col justify-start overflow-hidden py-2">
 						<div
@@ -619,7 +618,7 @@ export default function ShowcaseClient({
 							animate="show"
 							variants={{
 								hidden: {},
-								show: { transition: { staggerChildren: 0.06, delayChildren: 0.32 } }
+								show: { transition: { staggerChildren: 0.12, delayChildren: 0.7 } }
 							}}
 						>
 							{project.institution ? <DetailRow label="Institute" value={project.institution} /> : null}
@@ -676,16 +675,16 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 				key={cell.id}
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
-				exit={{ opacity: 0, transition: { duration: 0.14, ease: PREMIUM_EASE } }}
-				transition={{ duration: 0.22, ease: PREMIUM_EASE }}
+				exit={{ opacity: 0, transition: { duration: 0.24, ease: PREMIUM_EASE } }}
+				transition={{ duration: 0.55, ease: PREMIUM_EASE }}
 				className="flex min-h-32 items-center gap-4 px-2 py-1"
 			>
 				<motion.div
 					className="relative h-20 w-20 shrink-0 sm:h-22 sm:w-22"
 					title={cell.phylopic?.imageDetails ? `PhyloPic nodes: ${cell.phylopic.imageDetails}` : undefined}
-					initial={{ opacity: 0, scale: 0.9 }}
+					initial={{ opacity: 0, scale: 0.94 }}
 					animate={{ opacity: 1, scale: 1 }}
-					transition={{ duration: 0.22, ease: PREMIUM_EASE }}
+					transition={{ duration: 0.65, ease: PREMIUM_EASE }}
 				>
 					{cell.phylopic?.imageUrl ? (
 						<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" fill className="object-contain" />
@@ -702,8 +701,8 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 							key={`${cell.id}-scientific`}
 							text={cell.scientificName}
 							className="line-clamp-2 text-balance text-[22px] font-semibold leading-tight tracking-tight text-primary drop-shadow-md"
-							delay={0.12}
-							charMs={24}
+							delay={0.25}
+							charMs={86}
 						/>
 						{cell.iucn ? (
 							<span
@@ -722,15 +721,15 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 						key={`${cell.id}-common`}
 						text={cell.commonName ?? "No common name found"}
 						className="mt-0.5 line-clamp-1 text-[16px] font-medium text-base-content/72"
-						delay={0.42}
-						charMs={36}
+						delay={0.9}
+						charMs={104}
 					/>
 					<TypewriterText
 						key={`${cell.id}-taxonomy`}
 						text={cell.taxonomyPath}
 						className="mt-1 line-clamp-2 wrap-anywhere text-[12px] leading-snug text-base-content/58"
-						delay={0.62}
-						charMs={30}
+						delay={1.45}
+						charMs={92}
 					/>
 				</div>
 			</motion.div>
