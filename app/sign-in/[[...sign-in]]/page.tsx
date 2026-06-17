@@ -44,16 +44,16 @@ export default function Page() {
 							? {
 									colorPrimary: "#64ABDC",
 									colorBackground: "#121A2E",
-									colorText: "#E2E8F0",
-									colorInputBackground: "#1E2A45",
-									colorInputText: "#E2E8F0"
+									colorForeground: "#E2E8F0",
+									colorInput: "#1E2A45",
+									colorInputForeground: "#E2E8F0"
 								}
 							: {
 									colorPrimary: "#233D7F",
 									colorBackground: "#F7FAFC",
-									colorText: "#1F2F57",
-									colorInputBackground: "#FFFFFF",
-									colorInputText: "#233D7F"
+									colorForeground: "#1F2F57",
+									colorInput: "#FFFFFF",
+									colorInputForeground: "#233D7F"
 								},
 					options: {
 						logoPlacement: "inside",
@@ -61,22 +61,24 @@ export default function Page() {
 						socialButtonsVariant: "blockButton"
 					},
 						elements: {
-							card: `w-full border shadow-2xl rounded-3xl px-8 py-9 sm:px-10 ${cardVariantClass} ${isDark ? "border-[#4B95C3]/40 bg-[#111A2D]/90 backdrop-blur-md" : "border-[#233D7F]/25 bg-white/95 backdrop-blur-md"}`,
-							logoImage: "mx-auto h-auto w-[330px] max-w-full",
-							headerTitle: `text-center font-normal ${isDark ? "text-[#E2E8F0]" : "text-[#1F2F57]"}`,
+							rootBox: "w-full",
+							cardBox: "w-full max-w-[560px]",
+							card: `w-full border shadow-2xl rounded-3xl px-10 py-10 sm:px-12 ${cardVariantClass} ${isDark ? "border-[#4B95C3]/40 bg-[#111A2D]/90 backdrop-blur-md" : "border-[#233D7F]/25 bg-white/95 backdrop-blur-md"}`,
+							logoImage: "mx-auto h-auto w-[360px] max-w-full",
+							headerTitle: `text-center font-semibold text-[1.35rem] ${isDark ? "text-[#E2E8F0]" : "text-[#1F2F57]"}`,
 						headerSubtitle: "hidden",
 						formButtonPrimary: isDark
-								? "bg-[#64ABDC] text-white hover:bg-[#4B95C3] font-semibold rounded-lg"
-								: "bg-[#233D7F] text-white hover:bg-[#1E346B] font-semibold rounded-lg",
+								? "bg-[#64ABDC] text-white hover:bg-[#4B95C3] font-semibold rounded-lg min-h-11"
+								: "bg-[#233D7F] text-white hover:bg-[#1E346B] font-semibold rounded-lg min-h-11",
 							socialButtonsRoot: "w-full",
 						socialButtons: "flex flex-row justify-center gap-2 w-full",
 						socialButtonsBlockButton: isDark
-								? "flex-1 bg-[#181f32] text-[#E2E8F0] font-normal hover:bg-[#233D7F]/50 rounded-lg border border-[#4B95C3]/40"
-								: "flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20",
+								? "flex-1 bg-[#181f32] text-[#E2E8F0] font-normal hover:bg-[#233D7F]/50 rounded-lg border border-[#4B95C3]/40 min-h-11"
+								: "flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20 min-h-11",
 						socialButtonsBlockButtonText: isDark ? "text-[#E2E8F0]" : "text-[#233D7F]",
 							formFieldInput: isDark
-								? "bg-[#1E2A45] text-[#E2E8F0] border border-[#4B95C3]/60 rounded-lg"
-								: "bg-[#FFFFFF] text-[#233D7F] border border-[#233D7F]/35 rounded-lg",
+								? "bg-[#1E2A45] text-[#E2E8F0] border border-[#4B95C3]/60 rounded-lg min-h-11"
+								: "bg-[#FFFFFF] text-[#233D7F] border border-[#233D7F]/35 rounded-lg min-h-11",
 							dividerLine: isDark ? "bg-[#4B95C3]/75" : "bg-[#233D7F]/35"
 						}
 					}}
