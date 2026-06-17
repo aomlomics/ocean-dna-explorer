@@ -10,6 +10,7 @@ import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
+import InfoButton from "@/app/components/InfoButton";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -171,12 +172,10 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
 			<header>
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
-					<h1
-						className="mb-0 text-4xl font-semibold leading-[1.05] text-primary tooltip tooltip-right before:bg-base-100 before:text-base-content before:border before:border-base-300"
-						data-tip={TableMetadata.taxonomy.description}
-					>
+					<h1 className="mb-0 text-4xl font-semibold leading-[1.05] text-primary">
 						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 					</h1>
+					<InfoButton infoText={TableMetadata.taxonomy.description} dir="tooltip-right" />
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
 						{databaseRankLabel}
 					</span>

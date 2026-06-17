@@ -6,6 +6,7 @@ import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import FeaturedOrganisms from "./dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
 import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
+import InfoButton from "@/app/components/InfoButton";
 
 function formatSubmitted(date: Date) {
 	return new Date(date).toLocaleDateString(undefined, {
@@ -138,16 +139,7 @@ export function FeaturedOrganismsSection() {
 		<section className="space-y-6">
 			<div className="flex items-center gap-2">
 				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Featured Organisms</h2>
-				<span
-					className="tooltip tooltip-right text-base-content/50 hover:text-base-content transition-colors cursor-help"
-					data-tip="Hand-picked by the ODE team"
-					aria-label="Featured organisms are hand-picked by the ODE team"
-				>
-					<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-						<circle cx="12" cy="12" r="9" />
-						<path strokeLinecap="round" d="M12 8h.01M11 12h1v5h1" />
-					</svg>
-				</span>
+				<InfoButton infoText="Hand-picked by the ODE team" dir="tooltip-right" />
 			</div>
 			<FeaturedOrganisms />
 		</section>

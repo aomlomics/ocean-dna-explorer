@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { TaxonomicRanks } from "@/types/objects";
 import { createPortal } from "react-dom";
+import InfoButton from "@/app/components/InfoButton";
 import type { GbifImagePayload } from "./GbifClient";
 import { formatGbifAttributionDisplay } from "./GbifClient";
 import GbifImage from "./GbifImage";
@@ -211,22 +212,9 @@ export default function TaxonomyVisualToggle({
 									tabIndex={0}
 									role="button"
 									aria-label="Taxonomic image attribution"
-									className="btn btn-xs btn-circle btn-ghost tooltip tooltip-top before:bg-base-200 before:text-base-content before:border before:border-base-300"
-									data-tip="Taxonomic outline image provided by PhyloPic, resolved on the GBIF backbone."
+									className="shrink-0"
 								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 24 24"
-										fill="none"
-										className="stroke-current text-primary h-5 w-5 shrink-0"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth="2"
-											d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-										></path>
-									</svg>
+									<InfoButton infoText="Taxonomic outline image provided by PhyloPic, resolved on the GBIF backbone." />
 								</div>
 								<div tabIndex={0} className="dropdown-content z-50 w-80 rounded-box border border-base-300 bg-base-200 p-3 shadow-sm">
 									<h4 className="mb-1 text-sm font-semibold text-base-content/80">
@@ -262,20 +250,9 @@ export default function TaxonomyVisualToggle({
 								<div className="wrap-break-word text-lg font-semibold leading-snug text-base-content first-letter:uppercase sm:text-xl">
 									{commonName}
 								</div>
-								<span
-									className="tooltip tooltip-top before:bg-base-200 before:text-base-content before:border before:border-base-300"
-									data-tip="Not stored in the database. Approximated from GBIF vernacularNames for the matched GBIF backbone taxon."
-								>
-									<button
-										type="button"
-										aria-label="About common name"
-										className="btn btn-xs btn-circle btn-ghost"
-									>
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="stroke-current text-primary h-5 w-5 shrink-0">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-										</svg>
-									</button>
-								</span>
+								<InfoButton
+									infoText="Not stored in the database. Approximated from GBIF vernacularNames for the matched GBIF backbone taxon."
+								/>
 							</div>
 						</div>
 					) : (

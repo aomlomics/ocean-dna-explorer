@@ -9,6 +9,7 @@ import TaxaGridItem from "./grid/TaxaGridItem";
 import ProjectGridItem from "./grid/ProjectGridItem";
 import { useViewMode } from "../explore/ViewModeContext";
 import ViewModeToggle from "../explore/ViewModeToggle";
+import InfoButton from "../InfoButton";
 
 export default function TableDisplay({
 	table,
@@ -124,17 +125,10 @@ export default function TableDisplay({
 									onChange={(e) => setShowCommonNames(e.target.checked)}
 								/>
 								<span>Show common names</span>
-								<div
-									className="tooltip tooltip-left before:max-w-xs before:bg-base-100 before:text-base-content before:border before:border-base-300"
-									data-tip="GBIF common names are approximations and are not stored in our database."
-								>
-									<span
-										aria-label="Common-name disclaimer"
-										className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-primary/50 bg-primary/10 text-[10px] font-semibold leading-none text-primary"
-									>
-										i
-									</span>
-								</div>
+								<InfoButton
+									infoText="GBIF common names are approximations and are not stored in our database."
+									dir="tooltip-left"
+								/>
 							</label>
 						) : null}
 					</div>
