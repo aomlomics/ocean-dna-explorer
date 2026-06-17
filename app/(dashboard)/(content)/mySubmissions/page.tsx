@@ -29,7 +29,6 @@ export default async function MySubmissions() {
 			select: {
 				project_id: true,
 				userIds: true,
-				isPrivate: true,
 				imageFileUrl_ODE: true,
 				projectMetadataFileUrl_ODE: true,
 				sampleMetadataFileUrl_ODE: true,
@@ -37,7 +36,6 @@ export default async function MySubmissions() {
 				Analyses: {
 					select: {
 						analysis_run_name: true,
-						isPrivate: true,
 						trusted: true,
 						analysisMetadataFileUrl_ODE: true,
 						asvFileUrl_ODE: true,
@@ -151,7 +149,6 @@ export default async function MySubmissions() {
 
 													<ProjectEditButton
 														project_id={proj.project_id}
-														isPrivate={proj.isPrivate}
 														imageFileUrl_ODE={proj.imageFileUrl_ODE}
 														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
 														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
@@ -187,12 +184,7 @@ export default async function MySubmissions() {
 																</Link>
 
 																<div className="flex gap-3">
-																	<AnalysisEditButton
-																		analysis={analysis}
-																		project_id={proj.project_id}
-																		isPrivateDisabled={proj.isPrivate}
-																		tags={tags}
-																	/>
+																	<AnalysisEditButton analysis={analysis} project_id={proj.project_id} tags={tags} />
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
 																		value={analysis.analysis_run_name}

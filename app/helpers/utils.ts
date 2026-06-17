@@ -63,8 +63,8 @@ export function getOptions(arr: Record<string, any>[]) {
 	return filterOptions;
 }
 
-export function isObject(item: any) {
-	return item && typeof item === "object" && item !== null && !Array.isArray(item);
+function isObject(item: any) {
+	return item != null && typeof item === "object" && !Array.isArray(item);
 }
 
 export function deepMerge(target: Record<string, any>, ...sources: Record<string, any>[]) {

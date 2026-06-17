@@ -17,8 +17,7 @@ async function doEdit(
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	project_id: Project["project_id"],
-	isPrivate?: Project["isPrivate"]
+	project_id: Project["project_id"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -41,7 +40,6 @@ async function doEdit(
 				imageFileUrl_ODE: true,
 				userIds: true,
 				editHistory: true,
-				isPrivate: true,
 				projectMetadataFileUrl_ODE: true,
 				projectMetadataFileChecksum_ODE: true,
 				sampleMetadataFileUrl_ODE: true,
@@ -92,7 +90,6 @@ async function doEdit(
 			sampleChannel,
 			libraryChannel,
 			userIds: dbProject.userIds,
-			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate,
 			oldChecksums
 		});
 		if (!parseResult) {
@@ -473,14 +470,12 @@ export default async function projectEditAction({
 	project_id,
 	projectFileUrl,
 	sampleFileUrl,
-	libraryFileUrl,
-	isPrivate
+	libraryFileUrl
 }: {
 	project_id: Project["project_id"];
 	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
 	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
 	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
-	isPrivate?: Project["isPrivate"];
 }) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
@@ -514,8 +509,7 @@ export default async function projectEditAction({
 		{ url: projectFileUrl || "", stream: projectStream },
 		{ url: sampleFileUrl || "", stream: sampleStream },
 		{ url: libraryFileUrl || "", stream: libraryStream },
-		project_id,
-		isPrivate
+		project_id
 	).then((success) => {
 		globalStream.close();
 		projectStream.close();

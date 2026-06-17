@@ -30,16 +30,6 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 					select: {
 						Assignments: true
 					}
-				},
-				Occurrences: {
-					where: {
-						Analysis: {
-							isPrivate: true
-						}
-					},
-					select: {
-						id: true
-					}
 				}
 			}
 		});
@@ -91,7 +81,6 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 		null;
 	const totalAssignments = feature._count.Assignments || 0;
 	const assignmentLabel = totalAssignments === 1 ? "assignment" : "assignments";
-	const isPrivate = !!feature.Occurrences.length;
 
 	return (
 		<div id="feature" className="space-y-8 pb-8">
@@ -115,7 +104,6 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 					>
 						{feature.featureid}
 					</h1>
-					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					DNA sequence feature with {totalAssignments.toLocaleString()} {assignmentLabel}.

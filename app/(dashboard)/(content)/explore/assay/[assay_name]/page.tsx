@@ -57,12 +57,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			Libraries: true,
 			Analyses: {
 				select: {
-					analysis_run_name: true,
-					Project: {
-						select: {
-							isPrivate: true
-						}
-					}
+					analysis_run_name: true
 				}
 			}
 		}
@@ -70,9 +65,6 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 	if (!assay) return <>Assay not found</>;
 	const { Libraries: _, Analyses: __, ...justAssay } = assay;
-	const isPrivate = assay.Analyses.some((a) => {
-		return a.Project.isPrivate;
-	});
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
@@ -94,7 +86,6 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			<header>
 				<div className="flex gap-2 items-center">
 					<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
-					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 			</header>
 

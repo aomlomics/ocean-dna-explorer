@@ -25,8 +25,7 @@ export default async function Project_id_Assay_name({
 			Project: {
 				select: {
 					project_id: true,
-					project_name: true,
-					isPrivate: true
+					project_name: true
 				}
 			},
 			Assay: {

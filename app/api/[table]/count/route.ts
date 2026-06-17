@@ -1,3 +1,4 @@
+import { prisma } from "@/app/helpers/prisma";
 import { deepWhere, parseApiQuery } from "@/app/helpers/queries";
 import { getTableName } from "@/app/helpers/schema";
 import { getLocationsInsideShapes } from "@/app/helpers/utils";
@@ -15,7 +16,7 @@ export async function GET(
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const { query, shapes, sampleWhere, client } = parseApiQuery(model, searchParams, {
+		const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
 			features: {
 				filters: true,
 				advanced: true,
@@ -27,7 +28,7 @@ export async function GET(
 
 		//replace the where with samp_names that match the query and are inside the shapes
 		if (shapes && sampleWhere) {
-			const samples = await client.sample.findMany({
+			const samples = await prisma.sample.findMany({
 				where: sampleWhere,
 				select: {
 					samp_name: true,
@@ -42,7 +43,7 @@ export async function GET(
 		}
 
 		//@ts-ignore
-		let result = await client[model].count(query);
+		let result = await prisma[model].count(query);
 
 		if (result) {
 			//don't do this if already done

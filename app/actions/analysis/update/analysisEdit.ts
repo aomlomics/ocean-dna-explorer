@@ -19,10 +19,13 @@ async function doEdit(
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
-		isPrivate,
 		trusted,
 		tagNames
-	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
+	}: {
+		url?: string;
+		trusted?: boolean;
+		tagNames?: Tag["tagName"][];
+	}
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -59,7 +62,6 @@ async function doEdit(
 				channel: { stream, url },
 				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
 				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
-				isPrivate,
 				trusted,
 				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 			});
@@ -72,13 +74,11 @@ async function doEdit(
 
 		await prisma.$transaction(
 			async (tx) => {
-				//check if the associated project is private, and throw an error if it is private but the submission is public
 				const project = await tx.project.findUnique({
 					where: {
 						project_id
 					},
 					select: {
-						isPrivate: true,
 						userIds: true
 					}
 				});
@@ -87,10 +87,6 @@ async function doEdit(
 				} else if (!project.userIds.includes(userId)) {
 					throw new Error(
 						`Permission denied for editing analysis with Project with project_id of ${project_id}. Please contact submission owner with a request to be added to the Project.`
-					);
-				} else if (project.isPrivate && !isPrivate) {
-					throw new Error(
-						`Project with project_id of ${project_id} is private. Analyses can't be public if the associated project is private.`
 					);
 				}
 
@@ -101,7 +97,6 @@ async function doEdit(
 					select: {
 						analysisMetadataFileUrl_ODE: true,
 						analysisMetadataFileChecksum_ODE: true,
-						isPrivate: true,
 						trusted: true,
 						editHistory: true,
 						Tags: {
@@ -136,7 +131,6 @@ async function doEdit(
 							: false
 					}
 				})) as unknown as {
-					isPrivate: Analysis["isPrivate"];
 					trusted: Analysis["trusted"];
 					editHistory: PrismaJson.EditHistoryType | null;
 					analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
@@ -234,7 +228,6 @@ async function doEdit(
 									])
 								}
 							: {
-									isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate,
 									trusted: trusted === undefined ? dbAnalysis.trusted : trusted
 								}),
 						Tags: {
@@ -292,10 +285,13 @@ export default async function analysisEditAction(
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
-		isPrivate,
 		trusted,
 		tagNames
-	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
+	}: {
+		url?: string;
+		trusted?: boolean;
+		tagNames?: Tag["tagName"][];
+	}
 ) {
 	const stream = createProgressStream();
 
@@ -308,7 +304,7 @@ export default async function analysisEditAction(
 		}
 	}
 
-	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, trusted, tagNames }).then((success) => {
+	doEdit(stream, editId, project_id, analysis_run_name, { url, trusted, tagNames }).then((success) => {
 		stream.close();
 
 		if (url && !success) {

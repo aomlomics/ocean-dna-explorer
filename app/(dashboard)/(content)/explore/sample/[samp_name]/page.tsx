@@ -29,17 +29,12 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 						}
 					}
 				}
-			},
-			Project: {
-				select: {
-					isPrivate: true
-				}
 			}
 		}
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Libraries: _, Project: __, ...justSample } = sample;
+	const { Libraries: _, ...justSample } = sample;
 	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
 	for (const lib of sample.Libraries) {
 		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
@@ -79,7 +74,6 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					>
 						{samp_name}
 					</h1>
-					{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}

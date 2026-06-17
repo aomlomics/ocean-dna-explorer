@@ -97,22 +97,18 @@ export const helpSections: Section[] = [
 							to submit data, and the other roles are mostly for internal use by the Ocean DNA Explorer team:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
-							<li>
-								Admin: Full access to the platform, including managing other user's roles, and can view both public and
-								private data
-							</li>
+							<li>Admin: Full access to the platform, including managing other user's roles</li>
 							<li>Moderator: Similar to admin, except they cannot manage Admin's roles</li>
 							<li>
-								Contributor: Allows you to submit data to the platform, privately or publically, and to access the
-								Submissions Manager to view, delete, or edit your own submissions. Click{" "}
+								Contributor: Allows you to submit data to the platform, and to access the Submissions Manager to view,
+								delete, or edit your own submissions. Click{" "}
 								<Link className="link link-primary font-bold" href="/contribute">
 									HERE
 								</Link>{" "}
 								to request to be a Contributor.
 							</li>
 							<li>
-								Non-signed in User: View public datasets, query the API, browse the Explore pages, and use the Search
-								page{" "}
+								Non-signed in User: View datasets, query the API, browse the Explore pages, and use the Search page{" "}
 							</li>
 						</ul>
 					</>
@@ -134,7 +130,6 @@ export const helpSections: Section[] = [
 						<ul className="list-disc ml-6 mb-4">
 							<li>View all of your project and analyses submitted to the platform</li>
 							<li>Delete any of your submissions</li>
-							<li>Make any Private data Publically visible (does NOT work vice versa)</li>
 							<li>Edit your submissions (change certain field's values without a full re-upload)</li>
 						</ul>
 					</>
@@ -225,8 +220,8 @@ export const helpSections: Section[] = [
 								<div className="collapse-title font-medium">Can I download the entire database?</div>
 								<div className="collapse-content">
 									<p>
-										While individual datasets can be downloaded, we currently don't provide a bulk download of the entire
-										database. For large-scale data access, please contact us to discuss your needs.
+										While individual datasets can be downloaded, we currently don't provide a bulk download of the
+										entire database. For large-scale data access, please contact us to discuss your needs.
 									</p>
 								</div>
 							</div>
@@ -247,8 +242,9 @@ export const helpSections: Section[] = [
 								<div className="collapse-title font-medium">How do you protect our personal data?</div>
 								<div className="collapse-content">
 									<p>
-										There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by
-										the platform's reputable authentication provider, Clerk, and all data is stored in a secure database.
+										There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled
+										by the platform's reputable authentication provider, Clerk, and all data is stored in a secure
+										database.
 									</p>
 								</div>
 							</div>
@@ -609,30 +605,13 @@ export const helpSections: Section[] = [
 					<Link className="link link-primary font-semibold" href="/submit">
 						Submit
 					</Link>{" "}
-					tab in the website header to upload your files. Your data can then be shared with the scientific community on the Ocean DNA Explorer, OBIS (Ocean
-					Biodiversity Information System), and GBIF (Global Biodiversity Information Facility).
+					tab in the website header to upload your files. Your data can then be shared with the scientific community on
+					the Ocean DNA Explorer, OBIS (Ocean Biodiversity Information System), and GBIF (Global Biodiversity
+					Information Facility).
 				</p>
 			</>
 		),
 		subsections: [
-			{
-				id: "public-vs-private-data",
-				title: "Public vs Private Data",
-				content: (
-					<>
-						<p className="mb-4">
-							Data can be submitted privately or publicly. Private submissions are only visible to you, and to
-							moderators and admins of the Ocean DNA Explorer. You can make a private submission public at any time, but
-							you cannot make a public submission private.
-						</p>
-						<p className="mb-4">
-							{" "}
-							We encourage users to eventually make their data public. The purpose of private submissions is in case you
-							are unsure of your data quality or if you are new to the submission process.{" "}
-						</p>
-					</>
-				)
-			},
 			{
 				id: "data-format-rationale",
 				title: "Data Format Rationale",
@@ -806,12 +785,12 @@ export const helpSections: Section[] = [
 													{deadValue.startsWith("not applicable")
 														? "Field does not apply to this column"
 														: deadValue.startsWith("missing: not collected")
-														? "Data was not collected for X reason"
-														: deadValue.startsWith("missing: not provided")
-														? "Data exists but was not provided"
-														: deadValue.startsWith("missing: restricted access")
-														? "Data cannot be shared due to restrictions"
-														: "Data should exist but is unavailable"}
+															? "Data was not collected for X reason"
+															: deadValue.startsWith("missing: not provided")
+																? "Data exists but was not provided"
+																: deadValue.startsWith("missing: restricted access")
+																	? "Data cannot be shared due to restrictions"
+																	: "Data should exist but is unavailable"}
 												</td>
 											</tr>
 										))}

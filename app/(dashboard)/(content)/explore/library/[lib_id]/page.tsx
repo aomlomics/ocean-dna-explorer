@@ -18,8 +18,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 			Project: {
 				select: {
 					project_id: true,
-					project_name: true,
-					isPrivate: true
+					project_name: true
 				}
 			},
 			Sample: {

@@ -86,7 +86,7 @@ export default function Home() {
 							<span>Showing all </span>
 							<span className="text-primary">Projects</span>
 						</div>
-						<ClientMap url={"/api/sample?public=true"} legend titleTable="project" cluster />
+						<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
 					</div>
 
 					{/* Assay Stats Section */}

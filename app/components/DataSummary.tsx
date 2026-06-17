@@ -1,4 +1,4 @@
-import { publicPrisma } from "../helpers/prisma";
+import { prisma } from "../helpers/prisma";
 import Link from "next/link";
 import DoughnutChart from "./charts/DoughnutChart";
 
@@ -10,22 +10,15 @@ export type SummaryItemData = {
 };
 
 export async function AssayStats() {
-	const { uniqueAssays, analyses } = await publicPrisma.$transaction(
+	const { uniqueAssays, analyses } = await prisma.$transaction(
 		async (tx) => {
-			const uniqueAssays = await publicPrisma.assay.findMany({
+			const uniqueAssays = await tx.assay.findMany({
 				distinct: ["target_gene"],
-				where: {
-					Analyses: {
-						some: {
-							isPrivate: false
-						}
-					}
-				},
 				select: {
 					target_gene: true
 				}
 			});
-			const analyses = await publicPrisma.analysis.findMany({
+			const analyses = await tx.analysis.findMany({
 				select: {
 					_count: {
 						select: {
@@ -75,12 +68,12 @@ export async function AssayStats() {
 }
 
 export async function MainStats() {
-	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await publicPrisma.$transaction(
+	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await prisma.$transaction(
 		async (tx) => {
-			const projectCount = await publicPrisma.project.count();
-			const sampleCount = await publicPrisma.sample.count();
-			const taxaCount = await publicPrisma.taxonomy.count();
-			const occurrenceCount = await publicPrisma.occurrence.count();
+			const projectCount = await prisma.project.count();
+			const sampleCount = await prisma.sample.count();
+			const taxaCount = await prisma.taxonomy.count();
+			const occurrenceCount = await prisma.occurrence.count();
 
 			return { projectCount, sampleCount, taxaCount, occurrenceCount };
 		},

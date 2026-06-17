@@ -55,22 +55,13 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		include: {
 			Library: {
 				select: {
-					Sample: {
-						include: {
-							Project: {
-								select: {
-									isPrivate: true
-								}
-							}
-						}
-					}
+					Sample: true
 				}
 			},
 			Analysis: {
 				select: {
 					assay_name: true,
-					project_id: true,
-					isPrivate: true
+					project_id: true
 				}
 			},
 			Feature: {
@@ -86,8 +77,6 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		}
 	});
 	if (!occurrence) return <>Occurrence not found</>;
-
-	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Library.Sample.Project.isPrivate;
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 
@@ -129,7 +118,6 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					>
 						{occurrenceTitle}
 					</h1>
-					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					This occurrence links the feature{" "}
