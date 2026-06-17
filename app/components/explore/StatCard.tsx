@@ -1,6 +1,7 @@
 import { DeadValueEnum } from "@/types/enums";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";
+import { SHARED_TOOLTIP_THEME_CLASS, VIEW_AS_SEARCH_TOOLTIP_CLASS } from "../viewAsSearchTooltip";
 
 export default function StatCard({
 	title,
@@ -88,6 +89,15 @@ async function SuspenseStatCard({
 		queryVal = await query();
 	}
 
+	const shouldDefaultToSearchTooltip = typeof link === "string" && link.startsWith("/search?");
+	const resolvedTooltip = tooltip ?? (shouldDefaultToSearchTooltip ? "View as Search" : undefined);
+	const isViewAsSearchTooltip = resolvedTooltip === "View as Search";
+	const tooltipClassName = resolvedTooltip
+		? isViewAsSearchTooltip
+			? VIEW_AS_SEARCH_TOOLTIP_CLASS
+			: `tooltip tooltip-secondary before:text-primary-content ${SHARED_TOOLTIP_THEME_CLASS}`
+		: "";
+
 	let content;
 	let innerClassName;
 	if (layout === "horizontal" && queryVal !== undefined) {
@@ -154,8 +164,8 @@ async function SuspenseStatCard({
 				className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}
 			>
 				<div
-					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""}`}
-					data-tip={tooltip}
+					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName}`}
+					data-tip={resolvedTooltip}
 				>
 					{content}
 				</div>
@@ -164,8 +174,8 @@ async function SuspenseStatCard({
 	} else {
 		return (
 			<div
-				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltip ? "tooltip tooltip-secondary before:text-primary-content" : ""} ${className ?? ""}`}
-				data-tip={tooltip}
+				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltipClassName} ${className ?? ""}`}
+				data-tip={resolvedTooltip}
 			>
 				{content}
 			</div>

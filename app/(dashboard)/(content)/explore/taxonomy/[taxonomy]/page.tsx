@@ -11,6 +11,7 @@ import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 import InfoButton from "@/app/components/InfoButton";
+import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
 
 function formatTaxonomyDisplay(dbTaxonomy: any) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -257,7 +258,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className={`w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<AnalysisIcon />
 								</div>
@@ -269,7 +270,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						</Link>
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className={`w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<ProjectIcon />
 								</div>
@@ -284,7 +285,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}
 							className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors"
 						>
-							<div className="w-full h-full tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className={`w-full h-full ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<LocationIcon />
 								</div>
@@ -304,7 +305,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								}
 							}}
 						>
-							<div className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors tooltip tooltip-top before:bg-base-100 before:text-base-content before:border before:border-base-300" data-tip="View as Search">
+							<div className={`w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
 									<StaticActgBackdrop className="opacity-60" />
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">

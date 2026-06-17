@@ -1,4 +1,5 @@
 import React from "react";
+import { SHARED_TOOLTIP_THEME_CLASS } from "./viewAsSearchTooltip";
 
 export default function InfoButton({
 	infoText,
@@ -26,7 +27,7 @@ export default function InfoButton({
 
 	return (
 		<div
-			className={`tooltip ${dir} inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px [--tt-bg:#0f172a] [--tt-text:#f1f5f9] [--tt-border:#334155] before:max-w-[min(90vw,24rem)] before:whitespace-pre-wrap before:rounded-md before:border before:border-(--tt-border) before:bg-(--tt-bg) before:px-3 before:py-2 before:text-sm before:leading-relaxed before:text-(--tt-text) before:shadow-xl ${className ?? ""}`}
+			className={`tooltip ${dir} inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px ${SHARED_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
 			data-tip={infoText}
 		>
 			<div
