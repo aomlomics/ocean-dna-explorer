@@ -1,6 +1,7 @@
 import { prisma } from "../helpers/prisma";
 import Link from "next/link";
 import DoughnutChart from "./charts/DoughnutChart";
+import { Assay } from "../generated/prisma/client";
 
 export type SummaryItemData = {
 	title: string;
@@ -10,62 +11,34 @@ export type SummaryItemData = {
 };
 
 export async function AssayStats() {
-	const { uniqueAssays, analyses } = await prisma.$transaction(
-		async (tx) => {
-			const uniqueAssays = await tx.assay.findMany({
-				distinct: ["target_gene"],
+	const analyses = await prisma.analysis.findMany({
+		select: {
+			_count: {
+				select: {
+					Assignments: true
+				}
+			},
+			Assay: {
 				select: {
 					target_gene: true
 				}
-			});
-			const analyses = await tx.analysis.findMany({
-				select: {
-					_count: {
-						select: {
-							Assignments: true
-						}
-					},
-					Assay: {
-						select: {
-							target_gene: true
-						}
-					}
-				}
-			});
-
-			return { uniqueAssays, analyses };
-		},
-		{ timeout: 0.5 * 60 * 1000 }
-	);
-
-	const analysesByTargetGene = {} as Record<string, typeof analyses>;
-	for (const a of analyses) {
-		if (analysesByTargetGene[a.Assay.target_gene]) {
-			analysesByTargetGene[a.Assay.target_gene].push(a);
-		} else {
-			analysesByTargetGene[a.Assay.target_gene] = [a];
+			}
 		}
-	}
+	});
 
-	const targetGeneCounts = [] as { target_gene: (typeof uniqueAssays)[0]["target_gene"]; count: number }[];
-	console.log(analysesByTargetGene);
-	for (const a of uniqueAssays) {
-		console.log(a.target_gene, analysesByTargetGene[a.target_gene]);
-		if (analysesByTargetGene[a.target_gene]) {
-			targetGeneCounts.push({
-				...a,
-				count: analysesByTargetGene[a.target_gene].reduce((sum, current) => sum + current._count.Assignments, 0)
-			});
+	const countsByGene = {} as Record<Assay["target_gene"], number>;
+	for (const a of analyses) {
+		if (a.Assay.target_gene in countsByGene) {
+			countsByGene[a.Assay.target_gene] += a._count.Assignments;
+		} else {
+			countsByGene[a.Assay.target_gene] = 0;
 		}
 	}
 
 	return (
 		<div className="w-full flex justify-center mt-4">
 			<div className="w-full max-w-4xl">
-				<DoughnutChart
-					labels={targetGeneCounts.map((a) => a.target_gene)}
-					data={targetGeneCounts.map((a) => a.count || 0)}
-				/>
+				<DoughnutChart labels={Object.keys(countsByGene)} data={Object.values(countsByGene)} />
 			</div>
 		</div>
 	);
