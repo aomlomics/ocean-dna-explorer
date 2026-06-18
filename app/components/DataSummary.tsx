@@ -48,11 +48,15 @@ export async function AssayStats() {
 	}
 
 	const targetGeneCounts = [] as { target_gene: (typeof uniqueAssays)[0]["target_gene"]; count: number }[];
+	console.log(analysesByTargetGene);
 	for (const a of uniqueAssays) {
-		targetGeneCounts.push({
-			...a,
-			count: analysesByTargetGene[a.target_gene].reduce((sum, current) => sum + current._count.Assignments, 0)
-		});
+		console.log(a.target_gene, analysesByTargetGene[a.target_gene]);
+		if (analysesByTargetGene[a.target_gene]) {
+			targetGeneCounts.push({
+				...a,
+				count: analysesByTargetGene[a.target_gene].reduce((sum, current) => sum + current._count.Assignments, 0)
+			});
+		}
 	}
 
 	return (
