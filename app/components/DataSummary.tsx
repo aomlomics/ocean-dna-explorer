@@ -28,11 +28,13 @@ export async function AssayStats() {
 
 	const countsByGene = {} as Record<Assay["target_gene"], number>;
 	for (const a of analyses) {
+		console.log(a.Assay.target_gene, a._count.Assignments, countsByGene[a.Assay.target_gene]);
 		if (a.Assay.target_gene in countsByGene) {
 			countsByGene[a.Assay.target_gene] += a._count.Assignments;
 		} else {
 			countsByGene[a.Assay.target_gene] = 0;
 		}
+		console.log(countsByGene[a.Assay.target_gene]);
 	}
 
 	return (
