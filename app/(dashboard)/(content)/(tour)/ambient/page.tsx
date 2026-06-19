@@ -106,6 +106,12 @@ const MAX_WORD_FONT_PX = 72;
 const MAX_CLOUD_WIDTH_PX = 1240;
 const MAX_CLOUD_HEIGHT_PX = 900;
 
+// Minimum size change (px) required before a resize actually re-renders the
+// cloud. ResizeObserver fires an immediate callback on observe() with the
+// current size, and browsers emit tiny sub-pixel jitters; without this guard
+// those no-op callbacks wipe and restart the cloud mid-reveal on first load.
+const RESIZE_RERENDER_THRESHOLD_PX = 24;
+
 // The raw weights in WORD_LIST span a wide range (16–90). Feeding raw, unbounded
 // weights straight into wordcloud2 is what provokes the crash above, so we first
 // squash them into a narrow, predictable band. This is the "normalize the
@@ -152,8 +158,21 @@ export default function AmbientPage() {
 		let initTimer: number | null = null;
 		let initPollTimer: number | null = null;
 		let introTimer: number | null = null;
-		let didRetryInitialCloudRender = false;
+		let responsiveEnableTimer: number | null = null;
+		let responsiveRerenderEnabled = false;
+		let resizeObserver: ResizeObserver | null = null;
+		let lastRenderedWidth = 0;
+		let lastRenderedHeight = 0;
 		const typingTimers = new Set<number>();
+
+		const computeCloudSize = () => {
+			const width = Math.min(MAX_CLOUD_WIDTH_PX, Math.max(400, host.clientWidth));
+			const height = Math.min(
+				MAX_CLOUD_HEIGHT_PX,
+				Math.max(320, host.clientHeight || host.offsetHeight || 0)
+			);
+			return { width, height };
+		};
 
 		const clearTypingTimers = () => {
 			typingTimers.forEach((id) => window.clearInterval(id));
@@ -174,6 +193,16 @@ export default function AmbientPage() {
 				initPollTimer = null;
 			}
 			clearTypingTimers();
+		};
+
+		const enableResponsiveRerender = () => {
+			if (responsiveRerenderEnabled || cancelled) return;
+			responsiveRerenderEnabled = true;
+			if (typeof ResizeObserver !== "undefined") {
+				resizeObserver = new ResizeObserver(scheduleRender);
+				resizeObserver.observe(host);
+			}
+			window.addEventListener("resize", scheduleRender);
 		};
 
 		const typeInWord = (el: HTMLElement) => {
@@ -223,6 +252,15 @@ export default function AmbientPage() {
 		const startRevealCycle = (wordEls: HTMLElement[]) => {
 			clearReveal();
 			wordsEl.style.opacity = "1";
+			if (!responsiveRerenderEnabled && responsiveEnableTimer == null) {
+				// Delay responsive rerenders until startup animations are settled.
+				// This prevents a first-load ResizeObserver callback from wiping
+				// the cloud mid-reveal and restarting it.
+				responsiveEnableTimer = window.setTimeout(() => {
+					responsiveEnableTimer = null;
+					enableResponsiveRerender();
+				}, 4_000);
+			}
 
 			// Shuffle so the pop-in order varies each cycle.
 			const shuffled = [...wordEls].sort(() => Math.random() - 0.5);
@@ -293,8 +331,11 @@ export default function AmbientPage() {
 			clearReveal();
 			wordCloud.stop?.();
 
-			const width = Math.min(MAX_CLOUD_WIDTH_PX, Math.max(400, host.clientWidth));
-			const height = Math.min(MAX_CLOUD_HEIGHT_PX, Math.max(320, host.clientHeight || host.offsetHeight || 0));
+			const { width, height } = computeCloudSize();
+			// Remember what we actually laid out so scheduleRender can ignore
+			// resize callbacks that don't meaningfully change the size.
+			lastRenderedWidth = width;
+			lastRenderedHeight = height;
 
 			wordsEl.style.width = `${width}px`;
 			wordsEl.style.height = `${height}px`;
@@ -321,7 +362,7 @@ export default function AmbientPage() {
 				color: () => PALETTE[Math.floor(Math.random() * PALETTE.length)],
 				fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
 				shape: "circle",
-				abortThreshold: didRetryInitialCloudRender ? 3200 : 1500,
+				abortThreshold: 1500,
 				minSize: 8,
 			});
 
@@ -360,16 +401,6 @@ export default function AmbientPage() {
 							window.clearInterval(initPollTimer);
 							initPollTimer = null;
 						}
-						// On first page load, wordcloud2 can occasionally abort early while
-						// the page is still settling. If we got a partial cloud, rerender once.
-						if (
-							!didRetryInitialCloudRender &&
-							currentCount < NORMALIZED_WORD_LIST.length
-						) {
-							didRetryInitialCloudRender = true;
-							void renderCloud();
-							return;
-						}
 						startRevealCycle(wordEls);
 					}
 				}, 140);
@@ -377,6 +408,17 @@ export default function AmbientPage() {
 		};
 
 		const scheduleRender = () => {
+			// ResizeObserver fires immediately on observe() (and on tiny layout
+			// jitters) with no real size change. Re-rendering on those wipes and
+			// restarts the cloud mid-reveal, which is the first-load glitch. Only
+			// re-render when the size actually changed by a meaningful amount.
+			const { width, height } = computeCloudSize();
+			if (
+				Math.abs(width - lastRenderedWidth) < RESIZE_RERENDER_THRESHOLD_PX &&
+				Math.abs(height - lastRenderedHeight) < RESIZE_RERENDER_THRESHOLD_PX
+			) {
+				return;
+			}
 			if (resizeTimer != null) window.clearTimeout(resizeTimer);
 			clearReveal();
 			resizeTimer = window.setTimeout(() => void renderCloud(), 220);
@@ -386,19 +428,13 @@ export default function AmbientPage() {
 		// typing cycle so the sequence reads as: content slides in, then cloud animates.
 		introTimer = window.setTimeout(() => void renderCloud(), 12_200);
 
-		const resizeObserver =
-			typeof ResizeObserver !== "undefined"
-				? new ResizeObserver(scheduleRender)
-				: null;
-		resizeObserver?.observe(host);
-		window.addEventListener("resize", scheduleRender);
-
 		return () => {
 			cancelled = true;
 			if (resizeTimer != null) window.clearTimeout(resizeTimer);
 			if (initTimer != null) window.clearTimeout(initTimer);
 			if (initPollTimer != null) window.clearInterval(initPollTimer);
 			if (introTimer != null) window.clearTimeout(introTimer);
+			if (responsiveEnableTimer != null) window.clearTimeout(responsiveEnableTimer);
 			clearReveal();
 			resizeObserver?.disconnect();
 			wordCloud?.stop?.();

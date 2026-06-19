@@ -11,6 +11,7 @@ import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { capitalizeTable } from "@/app/helpers/utils";
 import { ViewModeProvider } from "./ViewModeContext";
 import ExploreTabButtons from "./ExploreTabButtons";
+import ViewModeToggle from "./ViewModeToggle";
 
 function ControlsBody({
 	table,
@@ -95,18 +96,21 @@ function ControlsBody({
 	const canUseClear = canClearBar || activePanel !== null;
 
 	return (
-		<div className="flex flex-col gap-8">
+		<div className="flex flex-col gap-6">
 			<div className="flex flex-col gap-4">
 				<ExploreTabButtons activeTable={capitalizeTable(table)} tables={DataTableNames} />
 
 				<div className="flex w-full max-w-full flex-col items-start gap-4">
-					<ActionBar
-						activePanel={activePanel}
-						onPanelChange={(panel) => setActivePanel((prev) => (prev === panel ? null : panel))}
-						activeFilterCount={activeFilterCount}
-						canClear={canUseClear}
-						onClear={clearSearchAndFilters}
-					/>
+					<div className="flex w-full max-w-full flex-wrap items-center gap-3">
+						<ActionBar
+							activePanel={activePanel}
+							onPanelChange={(panel) => setActivePanel((prev) => (prev === panel ? null : panel))}
+							activeFilterCount={activeFilterCount}
+							canClear={canUseClear}
+							onClear={clearSearchAndFilters}
+						/>
+						<ViewModeToggle displayMode={displayMode} toggle={toggle} />
+					</div>
 
 					{activePanel === "search" ? (
 						<div className="w-full max-w-full flex justify-center px-0">

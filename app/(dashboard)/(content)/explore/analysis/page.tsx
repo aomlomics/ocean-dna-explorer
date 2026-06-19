@@ -1,10 +1,8 @@
 import { asv_method, target_gene } from "@/app/generated/prisma/client";
-import Link from "next/link";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
-import TableMetadata from "@/types/tableMetadata";
 
 export default async function Analysis() {
 	const analyses = await prisma.analysis.findMany({
@@ -58,20 +56,5 @@ export default async function Analysis() {
 		}
 	];
 
-	return (
-		<ExplorePage table="analysis" tableConfig={tableConfig}>
-			<div className="w-full space-y-4">
-				<div className="text-base-content/80 space-y-2">
-					<p>{TableMetadata.analysis.description}</p>
-					<p className="text-sm">
-						For more detailed information, visit our{" "}
-						<Link href="/help" className="link link-primary link-hover">
-							Help page
-						</Link>
-						.
-					</p>
-				</div>
-			</div>
-		</ExplorePage>
-	);
+	return <ExplorePage table="analysis" tableConfig={tableConfig} />;
 }

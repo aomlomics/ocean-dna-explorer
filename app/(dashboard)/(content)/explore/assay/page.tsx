@@ -2,10 +2,8 @@ import { target_gene } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
-import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import TableMetadata from "@/types/tableMetadata";
 
 export default async function Assay() {
 	const assays = await prisma.assay.findMany({
@@ -60,20 +58,5 @@ export default async function Assay() {
 		}
 	];
 
-	return (
-		<ExplorePage table="assay" tableConfig={tableConfig} tableWhere={{ Analyses: { some: {} } }}>
-			<div className="w-full space-y-4">
-				<div className="text-base-content/80 space-y-2">
-					<p>{TableMetadata.assay.description}</p>
-					<p className="text-sm">
-						For more detailed information, visit our{" "}
-						<Link href="/help" className="link link-primary link-hover">
-							Help page
-						</Link>
-						.
-					</p>
-				</div>
-			</div>
-		</ExplorePage>
-	);
+	return <ExplorePage table="assay" tableConfig={tableConfig} tableWhere={{ Analyses: { some: {} } }} />;
 }

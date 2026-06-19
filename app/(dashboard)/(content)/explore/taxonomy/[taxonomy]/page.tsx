@@ -168,6 +168,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		const raw = (dbTaxonomy as any)[rank]?.toString().trim();
 		return Boolean(raw);
 	});
+	const taxonomyInfoText = `Unique Key: ${TableMetadata.taxonomy.titleField}\n${TableMetadata.taxonomy.description}`;
 
 	return (
 		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
@@ -176,7 +177,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<h1 className="mb-0 text-4xl font-semibold leading-[1.05] text-primary">
 						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 					</h1>
-					<InfoButton infoText={TableMetadata.taxonomy.description} dir="tooltip-right" />
+					<InfoButton infoText={taxonomyInfoText} dir="tooltip-right" />
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
 						{databaseRankLabel}
 					</span>

@@ -8,7 +8,6 @@ import Grid from "./grid/Grid";
 import TaxaGridItem from "./grid/TaxaGridItem";
 import ProjectGridItem from "./grid/ProjectGridItem";
 import { useViewMode } from "../explore/ViewModeContext";
-import ViewModeToggle from "../explore/ViewModeToggle";
 import InfoButton from "../InfoButton";
 
 export default function TableDisplay({
@@ -114,9 +113,8 @@ export default function TableDisplay({
 
 			{viewModeCtx ? (
 				<div className="flex w-full flex-col items-center gap-3">
-					<div className="flex w-full flex-wrap items-center justify-center gap-3">
-						<ViewModeToggle displayMode={displayMode} toggle={toggle} />
-						{table === "taxonomy" ? (
+					{table === "taxonomy" ? (
+						<div className="flex w-full flex-wrap items-center justify-center gap-3">
 							<label className="inline-flex items-center justify-center gap-2 text-sm">
 								<input
 									type="checkbox"
@@ -130,8 +128,8 @@ export default function TableDisplay({
 									dir="tooltip-left"
 								/>
 							</label>
-						) : null}
-					</div>
+						</div>
+					) : null}
 					<div className={`w-full ${dataShellClass}`}>{dataContent}</div>
 				</div>
 			) : (

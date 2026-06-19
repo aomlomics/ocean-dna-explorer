@@ -102,32 +102,22 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
 					<div className="flex flex-wrap gap-x-6 gap-y-1">
 						<div>
-							<span className="font-medium text-base-content/70">Target Gene: </span>
-							<span>{assay.target_gene || "N/A"}</span>
-						</div>
-						<div>
-							<span className="font-medium text-base-content/70">Target Subfragment: </span>
-							<span>{assay.target_subfragment || "N/A"}</span>
-						</div>
-					</div>
-					<div className="flex flex-wrap gap-x-6 gap-y-1">
-						<div>
-							<span className="font-medium text-base-content/70">Target Taxonomic Scope: </span>
-							<span>{assay.targetTaxonomicScope || "N/A"}</span>
-						</div>
-						<div>
 							<span className="font-medium text-base-content/70">Target: </span>
 							<span>{assay.target || "N/A"}</span>
 						</div>
 						<div>
-							<span className="font-medium text-base-content/70">Master List: </span>
+							<span className="font-medium text-base-content/70">Target Gene: </span>
+							<span>{assay.target_gene || "N/A"}</span>
+						</div>
+						<div>
+							<span className="font-medium text-base-content/70">AOML Omics Master Assay </span>
 							<Link
 								href={ASSAY_MASTER_TSV_URL}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="link link-primary"
 							>
-								assays.tsv
+								list
 							</Link>
 						</div>
 					</div>
