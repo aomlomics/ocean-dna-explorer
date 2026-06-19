@@ -26,15 +26,15 @@ export default function SelectFilter({
 			<div className="collapse-title">
 				<span className="font-medium text-base-content">{fieldName}</span>
 			</div>
-			<div className="collapse-content bg-base-200/30 pt-0 !pb-0">
+			<div className="collapse-content bg-base-200/30 pt-0 pb-0!">
 				<select
 					className="select select-bordered w-full my-3"
 					value={
 						typeof config.field === "string"
 							? activeFilters[config.field] || ""
 							: searchParams.get(config.field.rel)
-							? JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f]
-							: ""
+								? JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f]
+								: ""
 					}
 					onChange={(e) => handleFilterChange(config.field, e.target.value || undefined, searchParams, router)}
 				>
@@ -44,13 +44,13 @@ export default function SelectFilter({
 								<option key={option} value={option}>
 									{option}
 								</option>
-						  ))
+							))
 						: config.options &&
-						  config.options.map((option, i) => (
+							config.options.map((option, i) => (
 								<option key={option} value={option}>
 									{config.optionsLabels ? config.optionsLabels[i] : option}
 								</option>
-						  ))}
+							))}
 				</select>
 			</div>
 		</div>

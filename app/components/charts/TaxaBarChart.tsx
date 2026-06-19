@@ -16,6 +16,7 @@ import chroma from "chroma-js";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
 const DEFAULT_MAX_TAXONOMIES = 20;
+export const DEFAULT_RANK = "kingdom" as (typeof TaxonomicRanks)[0];
 
 //TODO: paginate on averageBy
 export default function TaxaBarChart({
@@ -41,7 +42,7 @@ export default function TaxaBarChart({
 			id: number;
 		};
 	}[];
-	taxonomiesById: Record<Taxonomy["id"], Omit<Taxonomy, "taxonomy" | "verbatimIdentification">>;
+	taxonomiesById: Record<Taxonomy["id"], Record<(typeof TaxonomicRanks)[number], string | null>>;
 	samplesById: Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
 	sampleIdsByLibId: Record<Library["lib_id"], Sample["id"]>;
 	sampFields: string[];
@@ -52,7 +53,7 @@ export default function TaxaBarChart({
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
 
-	const [rank, setRank] = useState("kingdom" as (typeof TaxonomicRanks)[0]);
+	const [rank, setRank] = useState(DEFAULT_RANK);
 	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
 	const [averageBy, setAverageBy] = useState("lib_id");
 
@@ -111,7 +112,7 @@ export default function TaxaBarChart({
 						}
 					}
 
-					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35 });
+					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35, lightMin: 35 });
 					setTaxaColors(uniqueColors);
 					const sortedRanks = Array.from(rankValues).sort();
 					setTaxonomies(sortedRanks);
@@ -234,7 +235,7 @@ export default function TaxaBarChart({
 	}, [rank, metricType, averageBy, taxonomiesFilter, xLabelsFilter]);
 
 	return (
-		<div className="relative">
+		<div className="relative p-6">
 			<div className="w-full flex justify-center items-center gap-5 mb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
@@ -303,7 +304,7 @@ export default function TaxaBarChart({
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex gap-1">
 					<InfoButton
-						infoText={`Selecting many ${RankPlurals[rank]} may cause lag. When changing ranks, if more than 20 values exist, only the first 20 will default to selected.`}
+						infoText={`Selecting many ${RankPlurals[rank]} may cause lag. When changing ranks, if more than ${DEFAULT_MAX_TAXONOMIES} values exist, only the first ${DEFAULT_MAX_TAXONOMIES} will default to selected.`}
 						type="warning"
 					/>
 

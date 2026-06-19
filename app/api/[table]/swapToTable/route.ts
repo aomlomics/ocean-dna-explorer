@@ -5,36 +5,22 @@ import { NextResponse } from "next/server";
 
 export async function GET(
 	request: Request,
-	{ params }: { params: Promise<{ table: string; distinctField: string }> }
+	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
-	const { table, distinctField } = await params;
+	const table = (await params).table;
 
 	const model = getTableName(table);
 
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const { query, client } = parseApiQuery(model, searchParams, {
-			features: {
-				relationsLimit: true,
-				filters: true,
-				advanced: true,
-				search: true
-			},
-			defaults: {
-				fields: { [distinctField]: true },
-				distinct: [distinctField]
-			}
-		});
+		const { query, client } = parseApiQuery(model, searchParams, { swapToTable: true });
 
 		//@ts-ignore
-		const result = await client[model].findMany(query);
+		let result = await client[model].findMany(query);
 
 		if (result) {
-			return NextResponse.json({
-				statusMessage: "success",
-				result: result.map((e: { [distinctField]: string }) => e[distinctField])
-			});
+			return NextResponse.json({ statusMessage: "success", result });
 		} else {
 			return NextResponse.json({
 				statusMessage: "error",

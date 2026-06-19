@@ -2,23 +2,36 @@
 
 import { RefObject, useState } from "react";
 import { Chart as ChartJS } from "chart.js";
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 export default function ChartCopyButton({
 	ref,
-	disabled
+	disabled,
+	className
 }: {
 	ref: RefObject<ChartJS<any> | null>;
 	disabled?: boolean;
+	className?: string;
 }) {
+	const { backgroundColor } = useDaisyTheme();
 	const [copied, setCopied] = useState(false);
 
 	return (
 		<button
-			className={`btn mt-7 relative flex justify-center ${copied ? "btn-success" : ""}`}
+			className={`btn mt-7 relative flex justify-center ${copied ? "btn-success" : ""}${className ? " " + className : ""}`}
 			onClick={() => {
 				if (ref.current) {
 					try {
-						ref.current.canvas.toBlob(async (blob) => {
+						const canvasWithBackground = document.createElement("canvas");
+						canvasWithBackground.width = ref.current.canvas.width;
+						canvasWithBackground.height = ref.current.canvas.height;
+
+						const ctx = canvasWithBackground.getContext("2d")!;
+						ctx.fillStyle = backgroundColor;
+						ctx.fillRect(0, 0, ref.current.canvas.width, ref.current.canvas.height);
+						ctx.drawImage(ref.current.canvas, 0, 0);
+
+						canvasWithBackground.toBlob(async (blob) => {
 							if (blob) {
 								const item = new ClipboardItem({ "image/png": blob });
 								await navigator.clipboard.write([item]);

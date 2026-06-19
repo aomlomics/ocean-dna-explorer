@@ -6,7 +6,7 @@ import { unsafePrisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
-import { uncapitalizeTable } from "../helpers/utils";
+import { capitalizeTable, uncapitalizeTable } from "../helpers/utils";
 import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
@@ -72,7 +72,7 @@ export default async function migrationCopyStepAction() {
 						Object.entries(row).some(([field, value]) => field !== "id" && value)
 					);
 					if (filteredResult.length) {
-						const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
+						const modelName = capitalizeTable(table);
 						await updateManyRaw(tx, modelName, filteredResult);
 					}
 				}

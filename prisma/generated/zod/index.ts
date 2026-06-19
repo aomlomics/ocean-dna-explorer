@@ -71,7 +71,7 @@ export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimId
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
-export const AlphaDiversityScalarFieldEnumSchema = z.enum(['id','dateCalculated','finished','analysis_run_name','indexType','rarefied','depth']);
+export const AlphaDiversityScalarFieldEnumSchema = z.enum(['id','dateCalculated','finished','analysis_run_name','indexType','depth']);
 
 export const AlphaDiversityIndexScalarFieldEnumSchema = z.enum(['id','lib_id','parentId','index']);
 
@@ -843,7 +843,6 @@ export const AlphaDiversitySchema = z.object({
   finished: z.boolean(),
   analysis_run_name: z.string(),
   indexType: z.string(),
-  rarefied: z.boolean(),
   depth: z.number().int().nullish(),
 })
 

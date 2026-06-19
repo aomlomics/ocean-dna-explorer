@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { SHARED_TOOLTIP_THEME_CLASS } from "./viewAsSearchTooltip";
 
 export default function InfoButton({
@@ -21,11 +21,7 @@ export default function InfoButton({
 				? "text-rose-500/85 hover:text-rose-500"
 				: "text-primary/85 hover:text-primary";
 	const hoverAccentClass =
-		type === "warning"
-			? "hover:-translate-y-px"
-			: type === "error"
-				? "hover:-translate-y-px"
-				: "hover:-translate-y-px";
+		type === "warning" ? "hover:-translate-y-px" : type === "error" ? "hover:-translate-y-px" : "hover:-translate-y-px";
 
 	const richPanelPositionClass =
 		dir === "tooltip-right"

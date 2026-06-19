@@ -1,4 +1,4 @@
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 import { getRelationPath, getTableName, getZodType, parseSchemaToObject } from "./schema";
 import {
 	ErrorPacket,
@@ -9,11 +9,12 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
-import { getShapesFromUrl } from "./utils";
+import { deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { prisma, publicPrisma } from "./prisma";
 
 export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
@@ -451,6 +452,15 @@ export function parseApiQuery(
 		distinct?: string[];
 	};
 
+	let client = prisma;
+	const publicSubmissions = params.get("public");
+	if (publicSubmissions) {
+		params.delete("public");
+		if (publicSubmissions === "true") {
+			client = publicPrisma;
+		}
+	}
+
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
@@ -523,6 +533,100 @@ export function parseApiQuery(
 		if (relations) {
 			params.delete("relations");
 
+			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
+			for (const r of relations.split(",")) {
+				const relTableArr = getTableName(r.trim().toLowerCase());
+				if (!relTableArr) {
+					throw new Error(`Relation with name "${r}" does not exist in database.`);
+				}
+				relTables.add(relTableArr);
+			}
+
+			//relations limit
+			let take;
+			if (!options?.features || options.features.relationsLimit) {
+				const relationsLimit = params.get("relationsLimit");
+				if (relationsLimit) {
+					params.delete("relationsLimit");
+					take = parseInt(relationsLimit);
+					if (Number.isNaN(take) || take < 1) {
+						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be a positive integer.`);
+					}
+				}
+			}
+
+			//include all fields in relations
+			let allFields = undefined as undefined | boolean | Set<Uncapitalize<Prisma.ModelName>>;
+			const relationsAllFields = params.get("relationsAllFields");
+			if (relationsAllFields) {
+				params.delete("relationsAllFields");
+				if (!relationsAllFields || relationsAllFields.toLowerCase() === "false") {
+					allFields = false;
+				} else if (relationsAllFields.toLowerCase() === "true") {
+					allFields = true;
+				} else {
+					allFields = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
+					for (const r of relationsAllFields.split(",")) {
+						const trimmed = r.trim().toLowerCase();
+						const allFieldsArr = Object.entries(TableMetadata).find(
+							([t, metadata]) => trimmed === t.toLowerCase() || trimmed === metadata.plural.toLowerCase()
+						);
+						if (!allFieldsArr) {
+							throw new Error(
+								`Invalid value for relationsAllFields: "${relationsAllFields}". Value must be "true", "false", or a relation provided in the "relations" field. Value was "${r}".`
+							);
+						}
+						allFields.add(allFieldsArr[0] as Uncapitalize<Prisma.ModelName>);
+					}
+				}
+			}
+
+			const relPaths = [] as RelationMetadata[][];
+			const includeSteps = new Set() as Set<string>;
+			for (const rt of relTables) {
+				const path = getRelationPath(table, rt);
+				if (!path) {
+					throw new Error(`No path exists from ${table} to ${rt}.`);
+				}
+
+				let add = true;
+				for (let i = 0; i < relPaths.length; i++) {
+					if (allFields) {
+						if (
+							path.length < relPaths[i].length &&
+							relPaths[i].some((step) => path[path.length - 1].field === step.field)
+						) {
+							//already a part of another path
+							if (allFields === true || allFields.has(uncapitalizeTable(path[path.length - 1].table))) {
+								includeSteps.add(path[path.length - 1].field);
+							}
+
+							if (!take) {
+								add = false;
+							}
+						} else {
+							if (
+								path.length > relPaths[i].length &&
+								path.some((step) => relPaths[i][relPaths[i].length - 1].field === step.field)
+							) {
+								//existing path is a part of new path
+								if (allFields === true || allFields.has(uncapitalizeTable(relPaths[i][relPaths[i].length - 1].table))) {
+									includeSteps.add(relPaths[i][relPaths[i].length - 1].field);
+								}
+
+								relPaths.splice(i, 1);
+								i--;
+							}
+						}
+					}
+				}
+
+				if (add) {
+					relPaths.push(path);
+				}
+			}
+
+			//assemble final query step before checking allFields
 			let relationVal = true as
 				| true
 				| { take: number }
@@ -530,44 +634,37 @@ export function parseApiQuery(
 						take?: number;
 						select: { id: true };
 				  };
+			if (take) {
+				relationVal = { take };
+			}
 
-			//relations limit
-			//TODO: (bug) breaks when relations isn't an array
-			if (!options?.features || options.features.relationsLimit) {
-				const relationsLimit = params.get("relationsLimit");
-				if (relationsLimit) {
-					params.delete("relationsLimit");
-					const take = parseInt(relationsLimit);
-					if (Number.isNaN(take)) {
-						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be an integer.`);
-					} else if (take < 1) {
-						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be a positive integer.`);
+			type FinalVal = typeof relationVal | { [key: string]: FinalVal };
+			const relObjs = relPaths.map((rp) => {
+				let currVal = relationVal as FinalVal;
+				if (!allFields || (allFields !== true && !allFields.has(uncapitalizeTable(rp[rp.length - 1].table)))) {
+					if (typeof relationVal === "object") {
+						currVal = { ...relationVal, select: { id: true } };
+					} else {
+						currVal = { select: { id: true } };
 					}
-
-					relationVal = { take };
 				}
-			}
 
-			//include all fields in relations
-			const allFields = params.get("relationsAllFields");
-			params.delete("relationsAllFields");
-			if (!allFields || allFields.toLowerCase() === "false") {
-				if (typeof relationVal === "boolean") {
-					relationVal = { select: { id: true } };
-				} else {
-					relationVal = { take: relationVal.take, select: { id: true } };
+				const last = rp.pop()!;
+				currVal = { [last.field]: currVal };
+
+				for (const rel of rp.toReversed()) {
+					currVal = {
+						[rel.field]: includeSteps.has(rel.field) ? { include: currVal } : { select: { id: true, ...currVal } }
+					};
 				}
-			} else if (allFields.toLowerCase() !== "true") {
-				throw new Error(`Invalid value for relationsAllFields: "${allFields}". Value must be "true" or "false".`);
-			}
 
-			const relsObj = relations
-				.split(",")
-				.reduce((acc, incl) => ({ ...acc, [incl[0].toUpperCase() + incl.slice(1)]: relationVal }), {});
+				return currVal as { [key: string]: FinalVal };
+			});
+
 			if (query.select) {
-				query.select = { ...query.select, ...relsObj };
+				query.select = deepMerge(query.select, ...relObjs);
 			} else {
-				query.include = relsObj;
+				query.include = deepMerge({}, ...relObjs);
 			}
 		}
 	}
@@ -578,9 +675,7 @@ export function parseApiQuery(
 		if (take) {
 			params.delete("limit");
 			query.take = parseInt(take);
-			if (Number.isNaN(query.take)) {
-				throw new Error(`Invalid limit: "${take}". Limit must be an integer.`);
-			} else if (query.take < 1) {
+			if (Number.isNaN(query.take) || query.take < 1) {
 				throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
 			}
 		}
@@ -719,7 +814,7 @@ export function parseApiQuery(
 		}
 	}
 
-	return { query, shapes, sampleWhere };
+	return { query, shapes, sampleWhere, client };
 }
 
 const secureFields = ["userIds"];

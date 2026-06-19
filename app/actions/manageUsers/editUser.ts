@@ -30,7 +30,7 @@ async function editUser(
 
 	//TODO: fix potential race condition
 	const targetRole = ((await client.users.getUser(targetUserId)).publicMetadata as UserMetadata).role;
-	if (!role || (targetRole && !RoleHeirarchy[role].includes(targetRole))) {
+	if (!role || !RoleHeirarchy[role].includes(targetRole)) {
 		throw new Error("Not authorized");
 	}
 

@@ -10,7 +10,7 @@ export const RoleHeirarchy = {
 	admin: ["moderator", "contributor", undefined],
 	moderator: ["contributor", undefined],
 	contributor: []
-} as Record<Role, Array<Role>>;
+} as Record<Role, Array<Role | undefined>>;
 
 export const RolePermissions = {
 	admin: ["contribute", "manageUsers", "manageDatabase"],

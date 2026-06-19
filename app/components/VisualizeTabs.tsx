@@ -11,19 +11,27 @@ export default function VisualizeTabs() {
 		<nav id="visualizations" className="flex pt-2">
 			<Link
 				href={`/visualize/metadata?${searchParams.toString()}`}
-				className={`btn px-6 py-3 transition-colors rounded-none ${
-					pathname === "/visualize/metadata" ? "rounded-t-lg btn-primary" : ""
+				className={`btn px-6 py-3 transition-colors rounded-none${
+					pathname === "/visualize/metadata" ? " rounded-t-lg btn-primary" : ""
 				}`}
 			>
 				Metadata
 			</Link>
 			<Link
 				href={`/visualize/taxonomy?${searchParams.toString()}`}
-				className={`btn px-6 py-3 transition-colors rounded-none ${
-					pathname === "/visualize/taxonomy" ? "rounded-t-lg btn-primary" : ""
+				className={`btn px-6 py-3 transition-colors rounded-none${
+					pathname === "/visualize/taxonomy" ? " rounded-t-lg btn-primary" : ""
 				}`}
 			>
 				Taxonomy
+			</Link>
+			<Link
+				href={`/visualize/alphaDiversity?${searchParams.toString()}`}
+				className={`btn px-6 py-3 transition-colors rounded-none${
+					pathname === "/visualize/alphaDiversity" ? " rounded-t-lg btn-primary" : ""
+				}`}
+			>
+				Alpha Diversity
 			</Link>
 		</nav>
 	);

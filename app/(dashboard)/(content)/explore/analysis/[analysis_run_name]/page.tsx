@@ -11,6 +11,11 @@ import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import TaxaGrid from "@/app/components/paginated/grid/TaxaGrid";
+import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversityDisplay";
+import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
+import { TaxonomicRanks } from "@/types/objects";
+import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
+import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 
 export default async function Analysis_run_name({
 	params
@@ -36,11 +41,25 @@ export default async function Analysis_run_name({
 					target_gene: true
 				}
 			},
-			Tags: true
+			Tags: true,
+			AlphaDiversities: {
+				include: {
+					AlphaDiversityIndexes: {
+						select: {
+							index: true,
+							Library: {
+								select: {
+									Sample: true
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	});
 	if (!analysis) return <>Analysis not found</>;
-	const { _count: _, editHistory: __, Assay: ___, Tags: ____, ...justAnalysis } = analysis;
+	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
 
 	return (
 		<div id="analysis" className="space-y-6">
@@ -189,17 +208,110 @@ export default async function Analysis_run_name({
 			<div id="dataExplorer" className="mt-8">
 				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
 				<div role="tablist" className="tabs tabs-lifted">
-					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab" aria-label="Taxa" />
+					<input type="radio" name="dataTabs" role="tab" className="tab pr-2" aria-label="Tables:" disabled />
+
+					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab px-2" aria-label="Taxa" />
 					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box">
 						<TaxaGrid analysis_run_name={analysis_run_name} />
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab" aria-label="Assignments" />
-					<div role="tabpanel" className="tab-content aspect-5/2 w-full border-base-300 rounded-lg">
+					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Assignments" />
+					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
+					</div>
+
+					<input type="radio" name="dataTabs" role="tab" className="tab pl-6 pr-2" aria-label="Visualize:" disabled />
+
+					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Taxonomy" />
+					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+						<Suspense fallback={<LoadingTaxonomyVisualize />}>
+							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
+						</Suspense>
+					</div>
+
+					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Alpha Diversity" />
+					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+						<Suspense fallback={<LoadingAlphaDiversityDisplay />}>
+							<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
+						</Suspense>
 					</div>
 				</div>
 			</div>
 		</div>
+	);
+}
+
+async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_name: Analysis["analysis_run_name"] }) {
+	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
+		async (tx) => {
+			const occurrences = await prisma.occurrence.findMany({
+				where: {
+					analysis_run_name
+				},
+				select: {
+					lib_id: true,
+					featureid: true,
+					organismQuantity: true
+				}
+			});
+
+			const assignments = await prisma.assignment.findMany({
+				where: {
+					analysis_run_name
+				},
+				select: {
+					featureid: true,
+					Taxonomy: {
+						select: {
+							id: true
+						}
+					}
+				}
+			});
+
+			const taxonomies = await prisma.taxonomy.findMany({
+				where: {
+					Assignments: {
+						some: {
+							analysis_run_name
+						}
+					}
+				},
+				select: TaxonomicRanks.reduce((acc, rank) => ({ ...acc, [rank]: true }), { id: true } as Record<
+					(typeof TaxonomicRanks)[number],
+					true
+				> & { id: true })
+			});
+
+			const samples = await prisma.sample.findMany({
+				where: {
+					Libraries: {
+						some: {
+							Occurrences: {
+								some: {
+									analysis_run_name
+								}
+							}
+						}
+					}
+				},
+				include: {
+					Libraries: {
+						select: {
+							lib_id: true
+						}
+					}
+				}
+			});
+
+			return { occurrences, assignments, taxonomies, samples };
+		},
+		{
+			timeout: 3 * 60 * 1000
+		}
+	);
+
+	return (
+		<TaxonomyVisualize occurrences={occurrences} assignments={assignments} taxonomies={taxonomies} samples={samples} />
 	);
 }

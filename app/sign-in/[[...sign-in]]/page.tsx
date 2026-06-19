@@ -7,9 +7,7 @@ import { useSearchParams } from "next/navigation";
 export default function Page() {
 	const { resolvedTheme } = useTheme();
 	const isDark = resolvedTheme === "dark";
-	const logoImageUrl = isDark
-		? "/images/node_logo_dark_mode.svg"
-		: "/images/node_logo_light_mode.svg";
+	const logoImageUrl = isDark ? "/images/node_logo_dark_mode.svg" : "/images/node_logo_light_mode.svg";
 
 	const searchParams = useSearchParams();
 	const redirectUrl = searchParams?.get("redirect_url");
@@ -18,8 +16,12 @@ export default function Page() {
 	const helperText = isSubmissionFlow
 		? "Sign in to submit data. Contributor access can be requested on the Submit page."
 		: "Need contributor access? Visit the Submit page after signing in.";
-{/* 1st case: Shown when you try to go to submit without being signed in */}
-{/* 2nd case: If they click the Sign In button */}
+	{
+		/* 1st case: Shown when you try to go to submit without being signed in */
+	}
+	{
+		/* 2nd case: If they click the Sign In button */
+	}
 	const cardVariantClass = isSubmissionFlow ? "ode-signin-card ode-signin-card--submission" : "ode-signin-card";
 
 	return (
@@ -40,7 +42,7 @@ export default function Page() {
 			<div className="relative z-10 flex w-full max-w-xl flex-col items-center">
 				<SignIn
 					appearance={{
-							variables: isDark
+						variables: isDark
 							? {
 									colorPrimary: "#64ABDC",
 									colorBackground: "#121A2E",
@@ -55,27 +57,27 @@ export default function Page() {
 									colorInput: "#FFFFFF",
 									colorInputForeground: "#233D7F"
 								},
-					options: {
-						logoPlacement: "inside",
-						logoImageUrl,
-						socialButtonsVariant: "blockButton"
-					},
+						options: {
+							logoPlacement: "inside",
+							logoImageUrl,
+							socialButtonsVariant: "blockButton"
+						},
 						elements: {
 							rootBox: "w-full",
 							cardBox: "w-full max-w-[560px]",
 							card: `w-full border shadow-2xl rounded-3xl px-10 py-10 sm:px-12 ${cardVariantClass} ${isDark ? "border-[#4B95C3]/40 bg-[#111A2D]/90 backdrop-blur-md" : "border-[#233D7F]/25 bg-white/95 backdrop-blur-md"}`,
 							logoImage: "mx-auto h-auto w-[360px] max-w-full",
 							headerTitle: `text-center font-semibold text-[1.35rem] ${isDark ? "text-[#E2E8F0]" : "text-[#1F2F57]"}`,
-						headerSubtitle: "hidden",
-						formButtonPrimary: isDark
+							headerSubtitle: "hidden",
+							formButtonPrimary: isDark
 								? "bg-[#64ABDC] text-white hover:bg-[#4B95C3] font-semibold rounded-lg min-h-11"
 								: "bg-[#233D7F] text-white hover:bg-[#1E346B] font-semibold rounded-lg min-h-11",
 							socialButtonsRoot: "w-full",
-						socialButtons: "flex flex-row justify-center gap-2 w-full",
-						socialButtonsBlockButton: isDark
+							socialButtons: "flex flex-row justify-center gap-2 w-full",
+							socialButtonsBlockButton: isDark
 								? "flex-1 bg-[#181f32] text-[#E2E8F0] font-normal hover:bg-[#233D7F]/50 rounded-lg border border-[#4B95C3]/40 min-h-11"
 								: "flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20 min-h-11",
-						socialButtonsBlockButtonText: isDark ? "text-[#E2E8F0]" : "text-[#233D7F]",
+							socialButtonsBlockButtonText: isDark ? "text-[#E2E8F0]" : "text-[#233D7F]",
 							formFieldInput: isDark
 								? "bg-[#1E2A45] text-[#E2E8F0] border border-[#4B95C3]/60 rounded-lg min-h-11"
 								: "bg-[#FFFFFF] text-[#233D7F] border border-[#233D7F]/35 rounded-lg min-h-11",

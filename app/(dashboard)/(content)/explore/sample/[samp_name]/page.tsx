@@ -3,13 +3,13 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
-import { Sample } from "@/app/generated/prisma/client";
-import AssaysCard from "@/app/components/assay/AssaysCard";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { Assay, Sample } from "@/app/generated/prisma/client";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 
 export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
 	let { samp_name } = await params;
@@ -29,23 +29,15 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 						}
 					}
 				}
-			},
-			Project: {
-				select: {
-					isPrivate: true
-				}
 			}
 		}
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Libraries: _, Project: __, ...justSample } = sample;
-
-	const assayNames = new Set() as Set<string>;
-	const uniqueAssays = [] as (typeof sample.Libraries)[number]["Assay"][];
+	const { Libraries: _, ...justSample } = sample;
+	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
 	for (const lib of sample.Libraries) {
-		if (!assayNames.has(lib.Assay.assay_name)) {
-			assayNames.add(lib.Assay.assay_name);
+		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
 			uniqueAssays.push(lib.Assay);
 		}
 	}
@@ -82,7 +74,6 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					>
 						{samp_name}
 					</h1>
-					{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
@@ -154,7 +145,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							}
 						/>
 
-						<DropdownCard table="assay" items={Array.from(assayNames)} icon={<AssayIcon />} />
+						<DropdownCard table="assay" items={uniqueAssays.map((a) => a.assay_name)} icon={<AssayIcon />} />
 
 						<StatCard
 							title="Taxonomies"

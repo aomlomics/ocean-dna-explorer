@@ -2,7 +2,6 @@ import { Suspense, type ReactNode } from "react";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import { randomColors } from "@/app/helpers/utils";
 import EditHistory from "@/app/components/EditHistory";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import DataDisplay from "@/app/components/DataDisplay";
@@ -207,7 +206,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			}
 		}
 	}
-	const colorsArr = randomColors(Object.keys(taxaCountByAnalysis).length);
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
 	const hasCoverImage = Boolean(project.imageFileUrl_ODE);
 
