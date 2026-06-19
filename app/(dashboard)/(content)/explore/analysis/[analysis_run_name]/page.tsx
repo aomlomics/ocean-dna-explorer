@@ -16,6 +16,7 @@ import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualiz
 import { TaxonomicRanks } from "@/types/objects";
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
+import { Suspense } from "react";
 
 export default async function Analysis_run_name({
 	params
@@ -195,11 +196,11 @@ export default async function Analysis_run_name({
 						</div>
 					</div>
 
-				{/* Assay Card */}
-				<AssaysCard
-					title="Assays used in this Analysis"
-					assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
-				/>
+					{/* Assay Card */}
+					<AssaysCard
+						title="Assays used in this Analysis"
+						assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
+					/>
 				</div>
 			</div>
 

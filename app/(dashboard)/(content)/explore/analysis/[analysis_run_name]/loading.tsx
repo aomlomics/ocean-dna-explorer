@@ -3,10 +3,18 @@ export default function Loading() {
 		<div className="space-y-8">
 			<div className="breadcrumbs text-base">
 				<ul>
-					<li><div className="skeleton h-4 w-20" /></li>
-					<li><div className="skeleton h-4 w-24" /></li>
-					<li><div className="skeleton h-4 w-24" /></li>
-					<li><div className="skeleton h-4 w-40" /></li>
+					<li>
+						<div className="skeleton h-4 w-20" />
+					</li>
+					<li>
+						<div className="skeleton h-4 w-24" />
+					</li>
+					<li>
+						<div className="skeleton h-4 w-24" />
+					</li>
+					<li>
+						<div className="skeleton h-4 w-40" />
+					</li>
 				</ul>
 			</div>
 			<header className="space-y-3">
@@ -19,7 +27,7 @@ export default function Loading() {
 			</header>
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				<div className="lg:col-span-2 space-y-6">
-					<div className="skeleton h-[440px] rounded-xl" />
+					<div className="skeleton h-110 rounded-xl" />
 					<div className="bg-base-200 rounded-xl p-6 space-y-3">
 						<div className="skeleton h-7 w-56" />
 						<div className="skeleton h-4 w-full" />
