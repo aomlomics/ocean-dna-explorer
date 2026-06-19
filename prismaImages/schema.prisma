@@ -36,6 +36,7 @@ model Image {
     description String?
     location    String?
     dateTaken   DateTime?
+    license     String?
 }
 
 model Attribution {
