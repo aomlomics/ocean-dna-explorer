@@ -49,21 +49,7 @@ export default async function Search({
 			<div className="collapse collapse-arrow mt-8 rounded-xl border border-base-300 bg-base-200/30 shadow-sm overflow-hidden">
 				<input key={model} type="checkbox" />
 				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content overflow-hidden">
-					<svg
-						aria-hidden="true"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 200 40"
-						className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 h-7 w-full text-primary/18"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="1"
-					>
-						<path d="M-4 9c20 0 18-5 36-5s16 4 33 4 17-4 35-4 16 5 34 5 18-4 36-4" />
-						<path d="M-6 15c16 0 15-3 30-3s14 3 29 3 16-3 31-3 14 3 30 3 15-3 31-3 14 3 29 3" />
-						<path d="M-2 23c18 0 17-4 34-4s16 4 33 4 15-4 32-4 15 4 31 4 16-4 33-4" />
-						<path d="M-5 30c22 0 20-5 40-5s18 5 37 5 17-5 36-5 17 5 36 5 19-5 38-5" />
-					</svg>
-					<div className="relative z-10 flex items-center gap-2">
+					<div className="z-10 flex items-center gap-2">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
@@ -81,8 +67,8 @@ export default async function Search({
 						<span>Show on Map</span>
 					</div>
 				</div>
-				<div className="collapse-content text-sm px-4 pb-3 bg-base-100">
-					<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">
+				<div className="collapse-content text-sm px-4 bg-base-100">
+					<div className="overflow-hidden bg-base-200 aspect-video rounded-lg pb-3">
 						<Map
 							key={model}
 							query={async () => {

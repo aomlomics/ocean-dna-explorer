@@ -47,14 +47,19 @@ export async function getApiSections() {
 							<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-base-200/80 hover:bg-base-300/80 transition-colors text-sm">
 								<span className="w-4 h-4 shrink-0 text-primary">
 									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-										<path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+										/>
 									</svg>
 								</span>
 								<span className="text-base-content">Search Page</span>
 							</div>
 						</Link>
 						<p className="text-base-content/90 mt-2">
-							You can build complex queries using the Search page user interface, then copy the URL to use as an API call in your code. This is a great way to get started quickly.
+							You can build complex queries using the Search page user interface, then copy the URL to use as an API
+							call in your code. This is a great way to get started quickly.
 						</p>
 					</div>
 					<p>
@@ -158,16 +163,6 @@ export async function getApiSections() {
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
 										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
-									</p>
-									<p className="mt-2 text-sm bg-info/10 p-2 rounded border-l-2 border-info">
-										<strong>Note:</strong> Notice that the endpoint uses{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), but the relation
-										parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural).
-										See{" "}
-										<Link href="#essential-information" className="link link-primary font-semibold">
-											Essential API Information
-										</Link>{" "}
-										for more about this important distinction.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -333,16 +328,6 @@ if (http_status(response)$category == "Success") {
 								</div>
 
 								<div>
-									<div className="p-4 bg-warning/20 border-l-4 border-warning rounded-md">
-										<h4 className="mb-2 text-lg font-medium">
-											2. Table Names vs. Relation Names: Understanding Plurality
-										</h4>
-										<p>
-											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference
-											those same tables as relations in queries, the relation names are PLURAL.
-										</p>
-									</div>
-
 									<div className="mt-4 space-y-6">
 										<p>Here are some examples:</p>
 
@@ -354,12 +339,11 @@ if (http_status(response)$category == "Success") {
 											<div className="ml-4 space-y-2">
 												<div>
 													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code>
 												</div>
 												<div>
 													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code>{" "}
-													(plural)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code>
 												</div>
 											</div>
 										</div>
@@ -370,11 +354,11 @@ if (http_status(response)$category == "Success") {
 											<div className="ml-4 space-y-2">
 												<div>
 													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code>
 												</div>
 												<div>
 													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code>
 												</div>
 											</div>
 										</div>
@@ -387,12 +371,11 @@ if (http_status(response)$category == "Success") {
 											<div className="ml-4 space-y-2">
 												<div>
 													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code>
 												</div>
 												<div>
 													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code>{" "}
-													(plural, spelled differently!)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code>
 												</div>
 											</div>
 										</div>
@@ -473,7 +456,7 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">The following diagram shows the relationships between tables in the database:</p>
 
 							<div className="p-4 rounded-md mb-4 bg-base-200">
-								<div className="relative w-full h-[800px]">
+								<div className="relative w-full h-200">
 									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
 									<Image
 										src="/images/ERD-Notation.PNG"
@@ -999,28 +982,6 @@ if (http_status(response)$category == "Success") {
 							<p>
 								Includes related data from other tables in the response. Relation names can be lowercase or capitalized.
 							</p>
-
-							<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
-								<h4 className="font-bold mb-2">Critical: Relation Names Are Plural</h4>
-								<p className="mb-2">
-									While table names in API endpoints are <strong>singular</strong> (e.g.,{" "}
-									<InlineCode code="/api/sample" />
-									), relation names must be <strong>plural</strong> (e.g., <InlineCode code="relations=Samples" />
-									).
-								</p>
-								<p className="mb-2">
-									<strong>Example:</strong> To get a project with all its related samples:
-								</p>
-								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=Samples`} />
-								<p className="mt-2 text-sm">
-									Not sure what the relation name is? Use <InlineCode code="/api/[table]/relations" /> to see all
-									available relation names for any table. See the{" "}
-									<Link href="#essential-information" className="link link-primary font-semibold">
-										Essential API Information
-									</Link>{" "}
-									section for more examples.
-								</p>
-							</div>
 
 							<div className="my-8 p-4 bg-base-200/50 border-l-4 border-accent shadow-sm">
 								<h5 className="font-semibold mb-2 text-accent">Why Use Relations?</h5>

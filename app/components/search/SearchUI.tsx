@@ -691,9 +691,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				<button
 					type="button"
 					className={`btn btn-md gap-2 ${
-						hasActiveConditions
-							? "btn-error"
-							: "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
+						hasActiveConditions ? "btn-error" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
 					}`}
 					onClick={reset}
 				>
@@ -712,9 +710,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				<button
 					type="submit"
 					className={`btn btn-md gap-2 ${
-						hasActiveConditions
-							? "btn-primary"
-							: "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
+						hasActiveConditions ? "btn-primary" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
 					}`}
 				>
 					<svg
@@ -762,10 +758,10 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 						<span>Query Builder</span>
 					</div>
 				</div>
-				<div className="collapse-content px-4 pb-4">
+				<div className="collapse-content px-4">
 					<form
 						ref={formRef}
-						className="bg-transparent"
+						className="bg-transparent pb-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							search();
@@ -1132,11 +1128,7 @@ function SearchGroupComponent({
 							<p className="text-sm text-base-content/65 italic mb-4">
 								No criteria yet. Start by adding your first filter.
 							</p>
-							<button
-								type="button"
-								className="btn btn-sm btn-primary"
-								onClick={handleAddRule}
-							>
+							<button type="button" className="btn btn-sm btn-primary" onClick={handleAddRule}>
 								+ Add Filter
 							</button>
 						</div>
@@ -1186,19 +1178,13 @@ function SearchGroupComponent({
 					}, [])}
 				</div>
 
-				<div className={`flex flex-wrap items-center gap-3 pt-1 mt-1 ${isRoot && group.children.length === 0 ? "hidden" : ""}`}>
-					<button
-						type="button"
-						className="btn btn-sm btn-primary"
-						onClick={handleAddRule}
-					>
+				<div
+					className={`flex flex-wrap items-center gap-3 pt-1 mt-1 ${isRoot && group.children.length === 0 ? "hidden" : ""}`}
+				>
+					<button type="button" className="btn btn-sm btn-primary" onClick={handleAddRule}>
 						+ Add Filter
 					</button>
-					<button
-						type="button"
-						className="btn btn-sm btn-primary"
-						onClick={handleAddGroup}
-					>
+					<button type="button" className="btn btn-sm btn-primary" onClick={handleAddGroup}>
 						+ Add Nested Group
 					</button>
 				</div>

@@ -212,12 +212,12 @@ function MegaMenu({
 				].join(" ")}
 				onClick={handleTabLinkClick}
 			>
-			<div className="select-none">{tabName}</div>
-			<span
-				aria-hidden="true"
-				className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
-					isActive ? "text-primary-content" : "text-base-content"
-				}`}
+				<div className="select-none">{tabName}</div>
+				<span
+					aria-hidden="true"
+					className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
+						isActive ? "text-primary-content" : "text-base-content"
+					}`}
 				>
 					<svg
 						className={`w-3.5 h-3.5 opacity-80 transition-transform duration-200 ${
@@ -259,9 +259,7 @@ function MegaMenu({
 								: undefined
 					}
 				>
-					<div
-						className="-mt-[4px] bg-base-100 rounded-t-none rounded-b-xl shadow-lg shadow-black/10 border-4 border-primary"
-					>
+					<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl shadow-lg shadow-black/10 border-4 border-primary">
 						<div className="overflow-hidden rounded-t-none rounded-b-xl">{children}</div>
 					</div>
 				</div>
@@ -327,19 +325,11 @@ function MenuItemWithSubtitle({
 	icon?: React.ReactNode;
 }) {
 	return (
-		<Link
-			href={href}
-			prefetch={MENU_LINK_PREFETCH}
-			className="group block rounded-lg px-2 py-2 hover:bg-base-200/60"
-		>
+		<Link href={href} prefetch={MENU_LINK_PREFETCH} className="group block rounded-lg px-2 py-2 hover:bg-base-200/60">
 			<div className="flex items-start gap-2">
-				{icon ? (
-					<span className="mt-0.5 text-base-content/70 group-hover:text-primary">{icon}</span>
-				) : null}
+				{icon ? <span className="mt-0.5 text-base-content/70 group-hover:text-primary">{icon}</span> : null}
 				<span>
-					<div className="text-base font-semibold text-base-content group-hover:text-primary">
-						{title}
-					</div>
+					<div className="text-base font-semibold text-base-content group-hover:text-primary">{title}</div>
 					<div className="text-sm text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
 				</span>
 			</div>
@@ -362,8 +352,8 @@ function MiniFeatureCard({
 		<div className="p-5 bg-base-200/35 border-l border-base-200 flex flex-col justify-between">
 			<div>
 				{media ? <div className="mb-4">{media}</div> : null}
-		{title ? <div className="text-base font-semibold text-base-content">{title}</div> : null}
-			<div className="text-sm text-base-content/60 mt-2 leading-relaxed">{description}</div>
+				{title ? <div className="text-base font-semibold text-base-content">{title}</div> : null}
+				<div className="text-sm text-base-content/60 mt-2 leading-relaxed">{description}</div>
 			</div>
 			{stats?.length ? (
 				<div className="mt-4">
@@ -388,8 +378,8 @@ export function ExploreMegaMenu() {
 		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[51.25rem]">
 			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
 				<div className="p-5 border-r border-base-200">
-				<div className="text-base font-semibold text-base-content">Explore</div>
-				<div className="text-sm text-base-content/60 mt-1">Filter and sort data in each database table</div>
+					<div className="text-base font-semibold text-base-content">Explore</div>
+					<div className="text-sm text-base-content/60 mt-1">Filter and sort data in each database table</div>
 
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
@@ -525,12 +515,7 @@ export function LearnMegaMenu() {
 
 					<div className="mt-4 space-y-1">
 						{LEARN_MEGA_MENU_ITEMS.map((i) => (
-							<MenuItemWithSubtitle
-								key={i.href}
-								href={i.href}
-								title={i.title}
-								subtitle={i.subtitle}
-							/>
+							<MenuItemWithSubtitle key={i.href} href={i.href} title={i.title} subtitle={i.subtitle} />
 						))}
 					</div>
 				</div>

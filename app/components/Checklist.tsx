@@ -30,7 +30,7 @@ export default function Checklist({
 
 	return (
 		<div className={`dropdown dropdown-end ${className ?? ""}`}>
-			<button tabIndex={0} className={`btn ${buttonClassName}`} disabled={disabled}>
+			<button tabIndex={0} className={`btn text-nowrap ${buttonClassName}`} disabled={disabled}>
 				{list.length - Object.keys(listFilter).length}/{list.length} {label}
 			</button>
 
