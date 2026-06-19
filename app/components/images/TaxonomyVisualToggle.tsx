@@ -99,6 +99,7 @@ export default function TaxonomyVisualToggle({
 		: phyloTitle;
 
 	const showGbifToggle = mediaTaxonKey != null && gbifPhotoAllowed;
+	const displayCommonName = commonName?.trim() ? commonName.trim() : "No common name found";
 
 	const phylopicLayerClass =
 		mode === "phylopic" || !showGbifToggle
@@ -197,12 +198,12 @@ export default function TaxonomyVisualToggle({
 			</div>
 
 			<div className="mt-4 w-full max-w-2xl px-2">
-				<div className="mx-auto grid w-full min-w-0 grid-cols-1 gap-y-4 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-2">
-					<div className="min-w-0 text-center sm:text-left">
+				<div className="mx-auto grid w-full min-w-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
+					<div className="min-w-0 rounded-lg p-3 text-center sm:text-left">
 						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">Scientific name</div>
 						<div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
 							<div
-								className="min-w-0 flex-1 truncate text-left text-xl font-semibold italic leading-tight text-base-content sm:text-2xl"
+								className="min-w-0 flex-1 whitespace-normal wrap-break-word text-left text-xl font-semibold italic leading-tight text-base-content sm:text-2xl"
 								title={databaseScientificName}
 							>
 								{databaseScientificName}
@@ -241,25 +242,21 @@ export default function TaxonomyVisualToggle({
 						<div className="mt-1.5 text-xs text-base-content/50">Assigned to: {databaseRankLabel}</div>
 					</div>
 
-					{commonName ? (
-						<div className="min-w-0 text-center sm:text-left">
-							<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">
-								Common name <span className="text-base-content/40">(GBIF, approximate)</span>
+					<div className="min-w-0 rounded-lg p-3 text-center sm:text-left">
+						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">Common name</div>
+						<div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
+							<div
+								className="min-w-0 flex-1 whitespace-normal wrap-break-word text-left text-xl font-semibold leading-tight text-base-content first-letter:uppercase sm:text-2xl"
+								title={displayCommonName}
+							>
+								{displayCommonName}
 							</div>
-							<div className="mt-1 flex items-start justify-center gap-2 sm:justify-start">
-								<div className="wrap-break-word text-lg font-semibold leading-snug text-base-content first-letter:uppercase sm:text-xl">
-									{commonName}
-								</div>
-								<InfoButton
-									infoText="Not stored in the database. Approximated from GBIF vernacularNames for the matched GBIF backbone taxon."
-								/>
-							</div>
+							<InfoButton
+								infoText="Not stored in the database. Approximated from GBIF vernacularNames for the matched GBIF backbone taxon."
+							/>
 						</div>
-					) : (
-						<div className="text-center text-sm text-base-content/45 sm:text-left">
-							No GBIF vernacular name returned for this taxon.
-						</div>
-					)}
+						<div className="mt-1.5 text-xs text-base-content/50">(GBIF, approximate)</div>
+					</div>
 				</div>
 			</div>
 

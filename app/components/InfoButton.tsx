@@ -27,7 +27,7 @@ export default function InfoButton({
 
 	return (
 		<div
-			className={`tooltip ${dir} inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px ${SHARED_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
+			className={`tooltip ${dir} relative z-5000 inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px before:z-5001 after:z-5001 ${SHARED_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
 			data-tip={infoText}
 		>
 			<div
