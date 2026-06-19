@@ -27,10 +27,10 @@ generator zod {
     createPartialTypes               = true
 }
 
-generator erd {
-    provider      = "prisma-erd-generator"
-    output        = "../public/images/ERD.svg"
-    tableOnly     = true
-    theme         = "neutral"
-    ignorePattern = "Tag,AlphaDiversity*"
-}
+// generator erd {
+//     provider      = "prisma-erd-generator"
+//     output        = "../public/images/ERD.svg"
+//     tableOnly     = true
+//     theme         = "neutral"
+//     ignorePattern = "Tag,AlphaDiversity*"
+// }
