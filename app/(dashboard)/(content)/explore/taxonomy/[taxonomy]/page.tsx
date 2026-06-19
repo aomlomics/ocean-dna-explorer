@@ -258,7 +258,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
+							<div className={`relative z-0 hover:z-10001 overflow-visible w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Analyses as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<AnalysisIcon />
 								</div>
@@ -270,7 +270,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						</Link>
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
+							<div className={`relative z-0 hover:z-10001 overflow-visible w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Projects as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<ProjectIcon />
 								</div>
@@ -285,7 +285,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}
 							className="w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors"
 						>
-							<div className={`w-full h-full ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
+							<div className={`relative z-0 hover:z-10001 overflow-visible w-full h-full ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Samples as Search">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<LocationIcon />
 								</div>
@@ -305,7 +305,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								}
 							}}
 						>
-							<div className={`w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View as Search">
+							<div className={`relative z-0 hover:z-10001 overflow-visible w-full bg-base-200 hover:bg-base-200 p-2 rounded-lg transition-colors ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="Find other Features with this Taxonomy">
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
 									<StaticActgBackdrop className="opacity-60" />
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">

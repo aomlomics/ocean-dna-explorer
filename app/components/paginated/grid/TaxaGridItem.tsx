@@ -4,6 +4,7 @@ import { Taxonomy } from "@/app/generated/prisma/client";
 import { TaxonomicRanks } from "@/types/objects";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
+import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";
 
 const commonNameCache = new Map<string, string | null>();
 const COMMON_NAME_CACHE_VERSION = "en-v2";
@@ -133,13 +134,10 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 		<Link
 			href={`/explore/taxonomy/${encodeURIComponent(item.taxonomy)}`}
 			key={item.taxonomy}
-			className="card bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square overflow-hidden"
+			className="card relative z-0 hover:z-50 bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square overflow-visible"
 		>
 			<div className="card-body p-2 lg:p-3 gap-0">
-				<div
-					className="tooltip tooltip-primary w-full wrap-break-word before:w-full! before:bg-base-100 before:text-base-content before:border before:border-base-300 mb-2"
-					data-tip={item.taxonomy}
-				>
+				<TaxonomyGridTooltip tip={item.taxonomy} className="w-full mb-2">
 					{bestRank ? (
 						<div className="flex flex-col gap-0.5">
 							<p className="text-primary text-xs font-medium leading-4 h-4">{bestRank.label}:</p>
@@ -153,10 +151,10 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 					) : (
 						<p className="text-sm text-error">Error: no taxonomy rank found</p>
 					)}
-				</div>
+				</TaxonomyGridTooltip>
 
 				<div className="grow min-h-0 border-t pt-2">
-					<PhyloPicClient taxonomy={item} />
+					<PhyloPicClient taxonomy={item} tooltipClassName={TAXONOMY_GRID_TOOLTIP_CLASS} />
 				</div>
 			</div>
 		</Link>

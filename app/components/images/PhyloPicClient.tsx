@@ -4,8 +4,15 @@ import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
+import { TAXONOMY_GRID_TOOLTIP_CLASS } from "../paginated/grid/TaxonomyGridTooltip";
 
-export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
+export default function PhyloPicClient({
+	taxonomy,
+	tooltipClassName
+}: {
+	taxonomy: Taxonomy;
+	tooltipClassName?: string;
+}) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState("");
@@ -57,7 +64,7 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 		<>
 			{!!imageUrl ? (
 				<div
-					className="w-full h-full relative flex flex-col justify-center tooltip tooltip-primary wrap-break-word before:w-full! before:bg-base-100 before:text-base-content before:border before:border-base-300"
+					className={`w-full h-full relative flex flex-col justify-center wrap-break-word ${tooltipClassName ?? TAXONOMY_GRID_TOOLTIP_CLASS}`}
 					data-tip={"PhyloPic nodes: " + imageDetails}
 				>
 					<div className="relative h-full w-full">
