@@ -24,7 +24,6 @@ async function doSubmit(
 	sampleChannel: Channel,
 	libraryChannel: Channel,
 	userIds: Project["userIds"],
-	isPrivate: Project["isPrivate"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const client = await clerkClient();
@@ -100,7 +99,6 @@ async function doSubmit(
 			sampleChannel,
 			libraryChannel,
 			userIds,
-			isPrivate,
 			imageFileUrl: imageInfo?.image.url
 		});
 		if (!parseResult) {
@@ -244,7 +242,6 @@ export default async function projectSubmitAction(
 	sampleFileUrl: Project["sampleMetadataFileUrl_ODE"],
 	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
 	userIds: Project["userIds"],
-	isPrivate: Project["isPrivate"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const globalStream = createProgressStream();
@@ -275,7 +272,6 @@ export default async function projectSubmitAction(
 		{ url: sampleFileUrl, stream: sampleStream },
 		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
-		isPrivate,
 		imageInfo
 	).then((success) => {
 		globalStream.close();

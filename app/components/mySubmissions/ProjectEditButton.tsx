@@ -8,7 +8,6 @@ import { NetworkProgressPacket } from "@/types/globals";
 import projectEditAction from "@/app/actions/project/update/projectEdit";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
-import projectUpdateIsPrivateAction from "@/app/actions/project/update/projectUpdateIsPrivate";
 import Link from "next/link";
 import { getSubmissionFileName } from "@/app/helpers/utils";
 import { useRouter } from "next/navigation";
@@ -18,7 +17,6 @@ import { Attribution } from "@/app/generated/prismaImages/client";
 
 export default function ProjectEditButton({
 	project_id,
-	isPrivate,
 	imageFileUrl_ODE,
 	projectMetadataFileUrl_ODE,
 	sampleMetadataFileUrl_ODE,
@@ -26,7 +24,6 @@ export default function ProjectEditButton({
 	attributions
 }: {
 	project_id: Project["project_id"];
-	isPrivate: Project["isPrivate"];
 	imageFileUrl_ODE: Project["imageFileUrl_ODE"];
 	projectMetadataFileUrl_ODE: Project["projectMetadataFileUrl_ODE"];
 	sampleMetadataFileUrl_ODE: Project["sampleMetadataFileUrl_ODE"];
@@ -43,7 +40,6 @@ export default function ProjectEditButton({
 	const libraryRef = useRef<HTMLInputElement>(null);
 
 	//state variables to hold contents of form for disabling submit button
-	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
 	const [projectFile, setProjectFile] = useState(undefined as File | undefined);
 	const [sampleFile, setSampleFile] = useState(undefined as File | undefined);
 	const [libraryFile, setLibraryFile] = useState(undefined as File | undefined);
@@ -93,21 +89,16 @@ export default function ProjectEditButton({
 		setSampleResponse(undefined);
 		setLibraryResponse(undefined);
 
-		const args = { project_id, isPrivate: isPrivateToggle } as {
+		const args = { project_id } as {
 			project_id: Project["project_id"];
 			projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
 			sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
 			libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
-			isPrivate?: Project["isPrivate"];
 			imageFileUrl?: Project["imageFileUrl_ODE"];
 		};
 
 		if (!projectFile && !sampleFile && !libraryFile) {
-			if (isPrivateToggle !== isPrivate) {
-				setGlobalResponse(await projectUpdateIsPrivateAction(project_id, isPrivateToggle));
-			} else {
-				setGlobalResponse({ statusMessage: "error", error: "Must provide at least one file." });
-			}
+			setGlobalResponse({ statusMessage: "error", error: "Must provide at least one file." });
 
 			setLoading(false);
 			return;
@@ -213,19 +204,6 @@ export default function ProjectEditButton({
 				</fieldset>
 
 				<form onSubmit={onSubmit} className="flex flex-col gap-3">
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend flex gap-2">
-							<h2>isPrivate</h2>
-						</legend>
-						<input
-							type="checkbox"
-							className="checkbox checkbox-primary"
-							disabled={loading}
-							checked={isPrivateToggle}
-							onChange={(e) => setIsPrivateToggle(e.currentTarget.checked)}
-						/>
-					</fieldset>
-
 					<h1 className="text-2xl text-primary border-b border-primary">Metadata Files:</h1>
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend flex-col items-start gap-0">
@@ -287,11 +265,7 @@ export default function ProjectEditButton({
 						</div>
 					</fieldset>
 
-					<button
-						type="submit"
-						className="btn"
-						disabled={loading || (!projectFile && !sampleFile && !libraryFile && isPrivateToggle === isPrivate)}
-					>
+					<button type="submit" className="btn" disabled={loading || (!projectFile && !sampleFile && !libraryFile)}>
 						Submit
 					</button>
 

@@ -14,7 +14,6 @@ async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
-	isPrivate: Analysis["isPrivate"],
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
@@ -31,7 +30,6 @@ async function doSubmit(
 			analysisChannel,
 			assignmentsChannel,
 			occurrencesChannel,
-			isPrivate,
 			trusted
 		});
 		if (!parseResult) {
@@ -65,7 +63,6 @@ async function doSubmit(
 					project_id: analysis.project_id
 				},
 				select: {
-					isPrivate: true,
 					userIds: true
 				}
 			}),
@@ -114,16 +111,11 @@ async function doSubmit(
 			})
 		]);
 
-		//check if the associated project is private, and throw an error if it is private but the submission is public
 		if (!dbProject) {
 			throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
 		} else if (!dbProject.userIds.includes(userId)) {
 			throw new Error(
 				`Permission denied for adding analysis to Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
-			);
-		} else if (dbProject.isPrivate && !isPrivate) {
-			throw new Error(
-				`Project with project_id of ${analysis.project_id} is private. Analyses can't be public if the associated project is private.`
 			);
 		}
 
@@ -310,7 +302,6 @@ export default async function analysisSubmitAction(
 	analysisFileUrl: Analysis["analysisMetadataFileUrl_ODE"],
 	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
 	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
-	isPrivate: Analysis["isPrivate"],
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
@@ -335,7 +326,6 @@ export default async function analysisSubmitAction(
 		{ url: analysisFileUrl, stream: analysisStream },
 		{ url: assignmentsFileUrl, stream: assignmentsStream },
 		{ url: occurrencesFileUrl, stream: occurrencesStream },
-		isPrivate,
 		trusted,
 		tagNames
 	).then((success) => {

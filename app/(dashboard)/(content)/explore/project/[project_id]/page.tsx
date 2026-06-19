@@ -340,7 +340,6 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						{project.project_id}
 					</h1>
 					<EditHistory editHistory={project.editHistory} />
-					{project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				{hasCoverImage && project.imageFileUrl_ODE ? (
 					<ProjectCoverPhotoPreview

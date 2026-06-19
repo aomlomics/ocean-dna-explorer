@@ -126,22 +126,18 @@ export const helpSections: Section[] = [
 							to submit data, and the other roles are mostly for internal use by the Ocean DNA Explorer team:
 						</p>
 						<ul className="list-disc ml-6 mb-4">
-							<li>
-								Admin: Full access to the platform, including managing other user's roles, and can view both public and
-								private data
-							</li>
+							<li>Admin: Full access to the platform, including managing other user's roles</li>
 							<li>Moderator: Similar to admin, except they cannot manage Admin's roles</li>
 							<li>
-								Contributor: Allows you to submit data to the platform, privately or publically, and to access the
-								Submissions Manager to view, delete, or edit your own submissions. Click{" "}
+								Contributor: Allows you to submit data to the platform, and to access the Submissions Manager to view,
+								delete, or edit your own submissions. Click{" "}
 								<Link className="link link-primary font-bold" href="/contribute">
 									HERE
 								</Link>{" "}
 								to request to be a Contributor.
 							</li>
 							<li>
-								Non-signed in User: View public datasets, query the API, browse the Explore pages, and use the Search
-								page{" "}
+								Non-signed in User: View datasets, query the API, browse the Explore pages, and use the Search page{" "}
 							</li>
 						</ul>
 					</>
@@ -163,7 +159,6 @@ export const helpSections: Section[] = [
 						<ul className="list-disc ml-6 mb-4">
 							<li>View all of your project and analyses submitted to the platform</li>
 							<li>Delete any of your submissions</li>
-							<li>Make any Private data Publically visible (does NOT work vice versa)</li>
 							<li>Edit your submissions (change certain field's values without a full re-upload)</li>
 						</ul>
 					</>
@@ -254,8 +249,8 @@ export const helpSections: Section[] = [
 								<div className="collapse-title font-medium">Can I download the entire database?</div>
 								<div className="collapse-content">
 									<p>
-										While individual datasets can be downloaded, we currently don't provide a bulk download of the entire
-										database. For large-scale data access, please contact us to discuss your needs.
+										While individual datasets can be downloaded, we currently don't provide a bulk download of the
+										entire database. For large-scale data access, please contact us to discuss your needs.
 									</p>
 								</div>
 							</div>
@@ -276,8 +271,9 @@ export const helpSections: Section[] = [
 								<div className="collapse-title font-medium">How do you protect our personal data?</div>
 								<div className="collapse-content">
 									<p>
-										There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled by
-										the platform's reputable authentication provider, Clerk, and all data is stored in a secure database.
+										There is no personal data stored in the Ocean DNA Explorer database. User authentication is handled
+										by the platform's reputable authentication provider, Clerk, and all data is stored in a secure
+										database.
 									</p>
 								</div>
 							</div>
@@ -659,12 +655,13 @@ export const helpSections: Section[] = [
 						</p>
 						<ul className="mb-4 list-disc pl-6">
 							<li>
-								<strong>Project step:</strong> three FAIRe metadata TSVs (project, sample, library). The project form only
-								uploads these three.
+								<strong>Project step:</strong> three FAIRe metadata TSVs (project, sample, library). The project form
+								only uploads these three.
 							</li>
 							<li>
-								<strong>Analysis step:</strong> three TSVs per run (FAIRe analysis metadata, ASV or feature table, occurrence
-								table). Submit at least one analysis per project so ASVs and counts load into Explore and Search.
+								<strong>Analysis step:</strong> three TSVs per run (FAIRe analysis metadata, ASV or feature table,
+								occurrence table). Submit at least one analysis per project so ASVs and counts load into Explore and
+								Search.
 							</li>
 							<li>
 								<strong>Order:</strong> create the project first, then add analyses. The two forms are separate pages in
@@ -699,23 +696,23 @@ export const helpSections: Section[] = [
 						</div>
 						<p className="mb-2">
 							<strong>projectMetadata.tsv</strong> uses the wide project layout: each row is one FAIRe field. You need
-							columns <code className="text-sm">term_name</code> and <code className="text-sm">project_level</code>, then
-							one column per assay. The header names after <code className="text-sm">project_level</code> are your assay
-							identifiers (for example <code className="text-sm">ssu16sv4v5-emp</code>). Those names must match the assay
-							columns you use in the sample and library files.
+							columns <code className="text-sm">term_name</code> and <code className="text-sm">project_level</code>,
+							then one column per assay. The header names after <code className="text-sm">project_level</code> are your
+							assay identifiers (for example <code className="text-sm">ssu16sv4v5-emp</code>). Those names must match
+							the assay columns you use in the sample and library files.
 						</p>
 						<p className="mb-2">
 							<strong>sampleMetadata.tsv</strong> is one row per sample. Column names are FAIRe field names.
 						</p>
 						<p className="mb-4">
-							<strong>libraryMetadata.tsv</strong> is one row per library (experiment run in FAIRe terms). Lines may start
-							with <code className="text-sm">#</code> as comments; the parser ignores them.{" "}
+							<strong>libraryMetadata.tsv</strong> is one row per library (experiment run in FAIRe terms). Lines may
+							start with <code className="text-sm">#</code> as comments; the parser ignores them.{" "}
 							<code className="text-sm">lib_id</code> values here must match the column headers in your occurrence table
 							for each analysis.
 						</p>
 						<p className="mb-2">
-							<code className="text-sm">project_id</code> must be identical across all three files. Assay headers must line
-							up everywhere you reference an assay.
+							<code className="text-sm">project_id</code> must be identical across all three files. Assay headers must
+							line up everywhere you reference an assay.
 						</p>
 						<p className="mb-2">Required fields in the project metadata file include:</p>
 						<ul className="mb-0 list-disc pl-6">
@@ -757,17 +754,18 @@ export const helpSections: Section[] = [
 							</div>
 						</div>
 						<p className="mb-2">
-							<strong>analysisMetadata.tsv</strong> is long format: each row has <code className="text-sm">term_name</code>{" "}
-							and <code className="text-sm">values</code>. It must include <code className="text-sm">project_id</code>,{" "}
-							<code className="text-sm">assay_name</code>, and a unique <code className="text-sm">analysis_run_name</code>{" "}
-							for every run you upload.
+							<strong>analysisMetadata.tsv</strong> is long format: each row has{" "}
+							<code className="text-sm">term_name</code> and <code className="text-sm">values</code>. It must include{" "}
+							<code className="text-sm">project_id</code>, <code className="text-sm">assay_name</code>, and a unique{" "}
+							<code className="text-sm">analysis_run_name</code> for every run you upload.
 						</p>
 						<p className="mb-2">
-							<strong>ASV table (TSV)</strong> has one row per ASV. The importer maps columns into Feature, Assignment, and
-							Taxonomy rows. The first column is <code className="text-sm">featureid</code>. You also need{" "}
-							<code className="text-sm">dna_sequence</code>, taxonomy fields such as <code className="text-sm">taxonomy</code>{" "}
-							and <code className="text-sm">verbatimIdentification</code>, rank columns, and{" "}
-							<code className="text-sm">Confidence</code>, using the same names as FAIRe or Tourmaline exports.
+							<strong>ASV table (TSV)</strong> has one row per ASV. The importer maps columns into Feature, Assignment,
+							and Taxonomy rows. The first column is <code className="text-sm">featureid</code>. You also need{" "}
+							<code className="text-sm">dna_sequence</code>, taxonomy fields such as{" "}
+							<code className="text-sm">taxonomy</code> and <code className="text-sm">verbatimIdentification</code>,
+							rank columns, and <code className="text-sm">Confidence</code>, using the same names as FAIRe or Tourmaline
+							exports.
 						</p>
 						<p className="mb-4">
 							If you use{" "}
@@ -779,38 +777,38 @@ export const helpSections: Section[] = [
 							>
 								Tourmaline
 							</a>{" "}
-							for amplicon processing, it writes these two data files in the same general shape as the examples below: wide
-							ASV taxa features table with taxonomy columns, and a wide occurrence table keyed by{" "}
+							for amplicon processing, it writes these two data files in the same general shape as the examples below:
+							wide ASV taxa features table with taxonomy columns, and a wide occurrence table keyed by{" "}
 							<code className="text-sm">featureid</code> with one column per library. You still need the separate FAIRe{" "}
 							<code className="text-sm">analysisMetadata.tsv</code> for run metadata.
 						</p>
 						<p className="mb-4">
 							<strong>Not using Tourmaline:</strong> match the column headers and types from the examples (or from a
-							Tourmaline run on your checklist version). For <code className="text-sm">featureid</code>, Tourmaline uses the
-							MD5 hash (hex) of the ASV DNA sequence. You can check a sequence with:
+							Tourmaline run on your checklist version). For <code className="text-sm">featureid</code>, Tourmaline uses
+							the MD5 hash (hex) of the ASV DNA sequence. You can check a sequence with:
 						</p>
 						<pre className="mb-4 overflow-x-auto rounded-lg bg-base-300 p-4 font-mono text-sm leading-relaxed">
 							{`$ echo -n "YOUR_DNA_SEQUENCE_HERE" | md5sum
 abc12d6cd12a574f2183f003593d3940  -`}
 						</pre>
 						<p className="mb-4">
-							Replace the string with your full sequence (no newline inside the quotes). The left column of the output is the{" "}
-							<code className="text-sm">featureid</code> value to use for that ASV. The sample hash above is only an
-							illustration; your result depends on the sequence you pass in.
+							Replace the string with your full sequence (no newline inside the quotes). The left column of the output
+							is the <code className="text-sm">featureid</code> value to use for that ASV. The sample hash above is only
+							an illustration; your result depends on the sequence you pass in.
 						</p>
 						<AnalysisAsvTablePreview />
 						<p className="mb-3 mt-10">
-							<strong>Occurrence Table</strong> (Tourmaline export) is a wide table: first row is the header. The first column
-							is feature IDs (usually under the header <code className="text-sm">featureid</code>). Every other column is one{" "}
-							<code className="text-sm">lib_id</code> from your library metadata, in the same spelling. Each later row is one
-							ASV and the cells are non-negative integers. Use <code className="text-sm">0</code> where a feature is absent
-							in a library. Empty or non-numeric cells fail validation. Only counts greater than zero are stored as
-							occurrence records in the database.
+							<strong>Occurrence Table</strong> (Tourmaline export) is a wide table: first row is the header. The first
+							column is feature IDs (usually under the header <code className="text-sm">featureid</code>). Every other
+							column is one <code className="text-sm">lib_id</code> from your library metadata, in the same spelling.
+							Each later row is one ASV and the cells are non-negative integers. Use <code className="text-sm">0</code>{" "}
+							where a feature is absent in a library. Empty or non-numeric cells fail validation. Only counts greater
+							than zero are stored as occurrence records in the database.
 						</p>
 						<AnalysisOccurrenceTablePreview />
 						<p className="mb-3">
-							Other pipelines (DADA2, QIIME 2, and so on) can work if you export the same layout and column names. Compare
-							your headers to the{" "}
+							Other pipelines (DADA2, QIIME 2, and so on) can work if you export the same layout and column names.
+							Compare your headers to the{" "}
 							<a
 								className="link link-primary"
 								href="https://github.com/aomlomics/ODE_testdata/tree/main/noaa-sefsc-gu1901"
@@ -820,23 +818,6 @@ abc12d6cd12a574f2183f003593d3940  -`}
 								ODE_testdata
 							</a>{" "}
 							example or a Tourmaline export when you are unsure.
-						</p>
-					</>
-				)
-			},
-			{
-				id: "public-vs-private-data",
-				title: "Public vs Private Data",
-				content: (
-					<>
-						<p className="mb-4">
-							You can submit privately or publicly. Private data are visible to you and to Ocean DNA Explorer moderators
-							and admins. Public data can be seen by everyone using the site.
-						</p>
-						<p className="mb-4">
-							You can change a private submission to public later. You cannot change a public submission back to private.
-							Private submission is there if you are still checking quality or learning the workflow; we still encourage
-							moving to public when you are ready.
 						</p>
 					</>
 				)
@@ -855,9 +836,9 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							datasets stay findable and reusable.
 						</p>
 						<p className="mb-2">
-							The checklist has 337 terms (mandatory, recommended, and optional) across steps like sample collection, PCR,
-							and bioinformatics. Ocean DNA Explorer uses the same term set with minor additions or omissions. Fields draw
-							on standards such as:
+							The checklist has 337 terms (mandatory, recommended, and optional) across steps like sample collection,
+							PCR, and bioinformatics. Ocean DNA Explorer uses the same term set with minor additions or omissions.
+							Fields draw on standards such as:
 						</p>
 						<ul className="mb-4 list-disc pl-6">
 							<li>MIxS (Minimum Information about any Sequence) and extensions</li>
@@ -879,7 +860,11 @@ abc12d6cd12a574f2183f003593d3940  -`}
 				content: (
 					<>
 						<p className="mb-4">
-							<Link className="link link-primary" href="https://github.com/aomlomics/tourmaline/tree/develop" target="_blank">
+							<Link
+								className="link link-primary"
+								href="https://github.com/aomlomics/tourmaline/tree/develop"
+								target="_blank"
+							>
 								Tourmaline 2
 							</Link>{" "}
 							from{" "}
@@ -910,13 +895,13 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							<Link className="link link-primary" href="https://github.com/aomlomics/FAIReSheets" target="_blank">
 								FAIReSheets
 							</Link>{" "}
-							builds Google Sheets from the NOAA FAIRe checklist. You can add your own terms to the checklist first; those
-							show up as extra columns when you generate sheets. The checklist is the data dictionary and includes
+							builds Google Sheets from the NOAA FAIRe checklist. You can add your own terms to the checklist first;
+							those show up as extra columns when you generate sheets. The checklist is the data dictionary and includes
 							controlled vocabularies for many fields.
 						</p>
 						<p className="mb-4">
-							Generated sheets cover project, sample, experiment run (library), and analysis metadata with field names the
-							portal expects. The same filled templates can feed{" "}
+							Generated sheets cover project, sample, experiment run (library), and analysis metadata with field names
+							the portal expects. The same filled templates can feed{" "}
 							<Link className="link link-primary" href="#obis-gbif-submission">
 								edna2obis
 							</Link>{" "}
@@ -945,7 +930,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							>
 								NOAA Omics Data Management Guide
 							</a>{" "}
-							for field-level detail. Below is how to record missing values and how to keep IDs consistent across sheets.
+							for field-level detail. Below is how to record missing values and how to keep IDs consistent across
+							sheets.
 						</p>
 
 						<h4>Handling missing data (dead values)</h4>
@@ -961,16 +947,16 @@ abc12d6cd12a574f2183f003593d3940  -`}
 								INSDC missing-value reporting
 							</a>{" "}
 							keeps templates aligned with what those systems expect at submission time. Data can be missing for many
-							reasons; some locations are generalized on purpose to protect species or culturally sensitive places. For any
-							required field you cannot fill, use that vocabulary; optional fields should use the same pattern when
+							reasons; some locations are generalized on purpose to protect species or culturally sensitive places. For
+							any required field you cannot fill, use that vocabulary; optional fields should use the same pattern when
 							missing.
 						</p>
 
 						<h4>Recommended dead values</h4>
 						<p className="mb-4">
 							The table below lists the recommended sentinels for new metadata. Ocean DNA Explorer still accepts every
-							legacy or more specific form the templates and database allow—open <strong>All accepted dead values</strong>{" "}
-							below for the complete list, including older options.
+							legacy or more specific form the templates and database allow—open{" "}
+							<strong>All accepted dead values</strong> below for the complete list, including older options.
 						</p>
 						<div className="mb-4 overflow-x-auto">
 							<table className="table table-zebra w-full">
@@ -1007,8 +993,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 											<code>not collected</code>
 										</td>
 										<td>
-											The value was not collected intentionally; the decision was made not to measure or record it,
-											and it cannot be retrieved retrospectively.
+											The value was not collected intentionally; the decision was made not to measure or record it, and
+											it cannot be retrieved retrospectively.
 										</td>
 										<td>All fields</td>
 									</tr>
@@ -1017,9 +1003,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 											<code>not provided</code>
 										</td>
 										<td>
-											The value may exist and may have been collected, but was not included in the submission.
-											Distinct from not collected in that the information could potentially still be obtained from the
-											submitter.
+											The value may exist and may have been collected, but was not included in the submission. Distinct
+											from not collected in that the information could potentially still be obtained from the submitter.
 										</td>
 										<td>All fields</td>
 									</tr>
@@ -1050,7 +1035,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 										</td>
 										<td>
 											The metadata value has been intentionally aggregated or suppressed at the group level rather than
-											reported per-sample, to avoid identifying individual samples within a pooled or grouped submission.
+											reported per-sample, to avoid identifying individual samples within a pooled or grouped
+											submission.
 										</td>
 										<td>eventDate, geo_loc_name</td>
 									</tr>
@@ -1059,8 +1045,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 											<code>missing: synthetic construct</code>
 										</td>
 										<td>
-											The sample is a synthetic or artificial construct (e.g., a plasmid, spike-in standard, or synthetic
-											community); the field doesn&apos;t apply in the same way as for environmental samples.
+											The sample is a synthetic or artificial construct (e.g., a plasmid, spike-in standard, or
+											synthetic community); the field doesn&apos;t apply in the same way as for environmental samples.
 										</td>
 										<td>eventDate, geo_loc_name</td>
 									</tr>
@@ -1100,8 +1086,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 											<code>missing: endangered species</code>
 										</td>
 										<td>
-											Precise metadata (typically locality coordinates) are withheld to protect an endangered or sensitive
-											species from poaching, disturbance, or exploitation.
+											Precise metadata (typically locality coordinates) are withheld to protect an endangered or
+											sensitive species from poaching, disturbance, or exploitation.
 										</td>
 										<td>eventDate, geo_loc_name</td>
 									</tr>
@@ -1131,39 +1117,39 @@ abc12d6cd12a574f2183f003593d3940  -`}
 								</p>
 								<div className="overflow-x-auto">
 									<table className="table table-zebra w-full">
-									<thead>
-										<tr>
-											<th>Value to enter in the data templates</th>
-											<th>When to Use</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td>true</td>
-											<td>Boolean field is true</td>
-										</tr>
-										<tr>
-											<td>1</td>
-											<td>Boolean field is true</td>
-										</tr>
-										<tr>
-											<td>false</td>
-											<td>Boolean field is false</td>
-										</tr>
-										<tr>
-											<td>0</td>
-											<td>Boolean field is false</td>
-										</tr>
-										{Object.keys(DeadBooleanToEnum)
-											.filter((key) => !["true", "false", "0", "1"].includes(key))
-											.map((deadValue) => (
-												<tr key={deadValue}>
-													<td>{deadValue}</td>
-													<td>{deadBooleanHelpDescription(deadValue)}</td>
-												</tr>
-											))}
-									</tbody>
-								</table>
+										<thead>
+											<tr>
+												<th>Value to enter in the data templates</th>
+												<th>When to Use</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<td>true</td>
+												<td>Boolean field is true</td>
+											</tr>
+											<tr>
+												<td>1</td>
+												<td>Boolean field is true</td>
+											</tr>
+											<tr>
+												<td>false</td>
+												<td>Boolean field is false</td>
+											</tr>
+											<tr>
+												<td>0</td>
+												<td>Boolean field is false</td>
+											</tr>
+											{Object.keys(DeadBooleanToEnum)
+												.filter((key) => !["true", "false", "0", "1"].includes(key))
+												.map((deadValue) => (
+													<tr key={deadValue}>
+														<td>{deadValue}</td>
+														<td>{deadBooleanHelpDescription(deadValue)}</td>
+													</tr>
+												))}
+										</tbody>
+									</table>
 								</div>
 							</div>
 						</details>
@@ -1189,9 +1175,9 @@ abc12d6cd12a574f2183f003593d3940  -`}
 								you put in the analysisMetadata TSV.
 							</li>
 							<li>
-								In project metadata, use <code className="text-sm">project_level</code> for values that apply to the whole
-								project, and the per-assay columns (for example <code className="text-sm">ssu16sv4v5-emp</code>) when values
-								differ by assay.
+								In project metadata, use <code className="text-sm">project_level</code> for values that apply to the
+								whole project, and the per-assay columns (for example <code className="text-sm">ssu16sv4v5-emp</code>)
+								when values differ by assay.
 							</li>
 						</ul>
 						<p className="mb-0">Download each sheet as TSV before you upload.</p>

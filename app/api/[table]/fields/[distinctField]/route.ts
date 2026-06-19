@@ -1,3 +1,4 @@
+import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { getTableName } from "@/app/helpers/schema";
 import { NetworkPacket } from "@/types/globals";
@@ -14,7 +15,7 @@ export async function GET(
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const { query, client } = parseApiQuery(model, searchParams, {
+		const { query } = parseApiQuery(model, searchParams, {
 			features: {
 				relationsLimit: true,
 				filters: true,
@@ -28,7 +29,7 @@ export async function GET(
 		});
 
 		//@ts-ignore
-		const result = await client[model].findMany(query);
+		const result = await prisma[model].findMany(query);
 
 		if (result) {
 			return NextResponse.json({

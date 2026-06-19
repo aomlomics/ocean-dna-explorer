@@ -14,7 +14,6 @@ import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { prisma, publicPrisma } from "./prisma";
 
 export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
@@ -452,15 +451,6 @@ export function parseApiQuery(
 		distinct?: string[];
 	};
 
-	let client = prisma;
-	const publicSubmissions = params.get("public");
-	if (publicSubmissions) {
-		params.delete("public");
-		if (publicSubmissions === "true") {
-			client = publicPrisma;
-		}
-	}
-
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
@@ -814,7 +804,7 @@ export function parseApiQuery(
 		}
 	}
 
-	return { query, shapes, sampleWhere, client };
+	return { query, shapes, sampleWhere };
 }
 
 const secureFields = ["userIds"];

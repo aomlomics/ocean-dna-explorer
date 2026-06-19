@@ -5,7 +5,6 @@ import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import { Suspense } from "react";
-import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 import ClientMap from "../components/map/ClientMap";
 import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
 import DashCard from "../components/dataSummary/DashCard";
@@ -15,8 +14,6 @@ import {
 	SamplingEnvironmentsCard,
 	SamplesOverTimeCard,
 	TemporalCoverageCard,
-	MetadataCompletenessCard,
-	TableCountsCard,
 	WidgetCardSkeleton
 } from "../components/DashboardExtras";
 
@@ -106,16 +103,7 @@ export default function Home() {
 						<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 							<div className="lg:col-span-8">
 								<div className="h-105 sm:h-130 w-full">
-									<Suspense fallback={<div className="w-full h-full skeleton rounded-2xl" />}>
-										<ClientMap
-											url={"/api/sample"}
-											legend
-											titleTable="project"
-											cluster
-											clusterRadius={20}
-											className="w-full h-full aspect-auto rounded-2xl"
-										/>
-									</Suspense>
+									<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
 								</div>
 							</div>
 

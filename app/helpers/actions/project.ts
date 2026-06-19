@@ -29,7 +29,6 @@ async function parseProjectFile({
 	userIds,
 	sampleUrl,
 	libraryUrl,
-	isPrivate,
 	imageFileUrl,
 	oldChecksum
 }: {
@@ -37,7 +36,6 @@ async function parseProjectFile({
 	userIds: Project["userIds"];
 	sampleUrl: Project["sampleMetadataFileUrl_ODE"];
 	libraryUrl: Project["libraryMetadataFileUrl_ODE"];
-	isPrivate?: Project["isPrivate"];
 	imageFileUrl?: Project["imageFileUrl_ODE"];
 	oldChecksum?: Project["projectMetadataFileChecksum_ODE"];
 }) {
@@ -155,7 +153,6 @@ async function parseProjectFile({
 			{
 				...projectCol,
 				userIds: userIds,
-				isPrivate: isPrivate === undefined ? false : isPrivate,
 				userDefined: Object.keys(projectUserDefined).length ? projectUserDefined : "JsonNull",
 				editHistory: "JsonNull",
 				projectMetadataFileUrl_ODE: channel.url,
@@ -484,7 +481,6 @@ export async function parseProjectFiles({
 	sampleChannel,
 	libraryChannel,
 	userIds,
-	isPrivate,
 	imageFileUrl,
 	oldChecksums
 }: {
@@ -492,7 +488,6 @@ export async function parseProjectFiles({
 	sampleChannel: Channel;
 	libraryChannel: Channel;
 	userIds: Project["userIds"];
-	isPrivate?: Project["isPrivate"];
 	imageFileUrl?: Project["imageFileUrl_ODE"];
 	oldChecksums?: {
 		projectMd5?: Project["projectMetadataFileChecksum_ODE"];
@@ -505,7 +500,6 @@ export async function parseProjectFiles({
 		userIds,
 		sampleUrl: sampleChannel.url,
 		libraryUrl: libraryChannel.url,
-		isPrivate,
 		imageFileUrl,
 		oldChecksum: oldChecksums?.projectMd5
 	});

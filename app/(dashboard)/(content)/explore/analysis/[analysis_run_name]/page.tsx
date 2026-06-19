@@ -94,7 +94,6 @@ export default async function Analysis_run_name({
 						{analysis_run_name}
 					</h1>
 					<EditHistory editHistory={analysis.editHistory} />
-					{analysis.isPrivate && <div className="badge badge-ghost p-3 select-none">Private</div>}
 					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
 					{analysis.Tags.map((t) => (
 						<AnalysisTag key={t.tagName} tag={t} />

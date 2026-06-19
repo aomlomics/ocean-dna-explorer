@@ -17,14 +17,12 @@ export async function parseAnalysisFile({
 	channel,
 	assignmentsUrl,
 	occurrencesUrl,
-	isPrivate,
 	trusted,
 	oldChecksum
 }: {
 	channel: Channel;
 	assignmentsUrl: string;
 	occurrencesUrl: string;
-	isPrivate?: Analysis["isPrivate"];
 	trusted?: Analysis["trusted"];
 	oldChecksum?: string;
 }) {
@@ -81,7 +79,6 @@ export async function parseAnalysisFile({
 	const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
 		{
 			...analysisCol,
-			isPrivate: isPrivate === undefined ? false : isPrivate,
 			trusted: trusted === undefined ? false : trusted,
 			editHistory: "JsonNull",
 			analysisMetadataFileUrl_ODE: channel.url,
@@ -397,14 +394,12 @@ export async function parseAnalysisFiles({
 	analysisChannel,
 	assignmentsChannel,
 	occurrencesChannel,
-	isPrivate,
 	trusted,
 	oldChecksums
 }: {
 	analysisChannel: Channel;
 	assignmentsChannel: Channel;
 	occurrencesChannel: Channel;
-	isPrivate: Analysis["isPrivate"];
 	trusted: Analysis["trusted"];
 	oldChecksums?: { analysisMd5?: string; assignmentsMd5?: string; occurrencesMd5?: string };
 }) {
@@ -412,7 +407,6 @@ export async function parseAnalysisFiles({
 		channel: analysisChannel,
 		assignmentsUrl: assignmentsChannel.url,
 		occurrencesUrl: occurrencesChannel.url,
-		isPrivate,
 		trusted,
 		oldChecksum: oldChecksums?.analysisMd5
 	});

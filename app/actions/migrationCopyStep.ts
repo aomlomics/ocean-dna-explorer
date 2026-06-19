@@ -2,7 +2,7 @@
 
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "../generated/prisma/client";
-import { unsafePrisma } from "../helpers/prisma";
+import { prisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
@@ -39,7 +39,7 @@ export default async function migrationCopyStepAction() {
 			{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
 		);
 
-		await unsafePrisma.$transaction(async (tx) => {
+		await prisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
 				const table = t as Uncapitalize<Prisma.ModelName>;
 

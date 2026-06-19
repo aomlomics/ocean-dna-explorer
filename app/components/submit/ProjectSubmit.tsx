@@ -93,8 +93,6 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			behavior: "smooth"
 		});
 
-		const isPrivate = event.currentTarget.isPrivate.checked;
-
 		//get all files from event beforehand
 		const projectFile = event.currentTarget.project.files[0] as File;
 		const sampleFile = event.currentTarget.sample.files[0] as File;
@@ -183,7 +181,6 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 				sampleFileUrl,
 				libraryFileUrl,
 				userIds,
-				isPrivate,
 				imageInfo
 			);
 		} catch (err) {
@@ -341,18 +338,6 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 								</fieldset>
 							</div>
 						</div>
-					</SubmitFormSection>
-
-					<SubmitFormSection
-						title="Make submission private"
-						info="Only users added to this Project will be able to see private submissions."
-					>
-						<fieldset className="fieldset">
-							<label className="fieldset-label flex gap-2">
-								<input name="isPrivate" type="checkbox" className="checkbox" disabled={loading} />
-								<p>Private submission</p>
-							</label>
-						</fieldset>
 					</SubmitFormSection>
 
 					<SubmitFormSection

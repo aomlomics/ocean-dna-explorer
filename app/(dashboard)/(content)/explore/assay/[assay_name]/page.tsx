@@ -60,12 +60,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 			Libraries: true,
 			Analyses: {
 				select: {
-					analysis_run_name: true,
-					Project: {
-						select: {
-							isPrivate: true
-						}
-					}
+					analysis_run_name: true
 				}
 			}
 		}
@@ -73,9 +68,6 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 	if (!assay) return <>Assay not found</>;
 	const { Libraries: _, Analyses: __, ...justAssay } = assay;
-	const isPrivate = assay.Analyses.some((a) => {
-		return a.Project.isPrivate;
-	});
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
@@ -96,8 +88,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary">{assay_name}</h1>
-					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+					<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
 				</div>
 				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
 					<div className="flex flex-wrap gap-x-6 gap-y-1">
@@ -111,12 +102,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 						</div>
 						<div>
 							<span className="font-medium text-base-content/70">AOML Omics Master Assay </span>
-							<Link
-								href={ASSAY_MASTER_TSV_URL}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="link link-primary"
-							>
+							<Link href={ASSAY_MASTER_TSV_URL} target="_blank" rel="noopener noreferrer" className="link link-primary">
 								list
 							</Link>
 						</div>
@@ -174,7 +160,9 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 										<div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 											{/* Left: label + primer name */}
 											<div className="lg:col-span-4 min-w-0 space-y-3">
-												<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">Forward Primer</p>
+												<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">
+													Forward Primer
+												</p>
 												<h3 className="text-2xl font-semibold text-base-content break-all">
 													{assay.pcr_primer_name_forward}
 												</h3>
@@ -229,7 +217,9 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 										<div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 											{/* Left: label + primer name */}
 											<div className="lg:col-span-4 min-w-0 space-y-3">
-												<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">Reverse Primer</p>
+												<p className="text-xs font-medium text-base-content/70 uppercase tracking-wide">
+													Reverse Primer
+												</p>
 												<h3 className="text-2xl font-semibold text-base-content break-all">
 													{assay.pcr_primer_name_reverse}
 												</h3>
@@ -293,8 +283,8 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 											</div>
 										</div>
 										<p className="text-sm text-base-content/80 mt-2">
-											Straight parallel lines show the DNA strands, read from 5&apos; to 3&apos;. Letters above/below the
-											highlighted segment show the actual primer sequence.
+											Straight parallel lines show the DNA strands, read from 5&apos; to 3&apos;. Letters above/below
+											the highlighted segment show the actual primer sequence.
 										</p>
 									</div>
 								</div>

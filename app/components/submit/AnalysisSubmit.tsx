@@ -36,9 +36,8 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	const [analysisIds, setAnalysisIds] = useState([-2] as Array<string | -1 | -2>);
 	const [prevAnalysisIdsLength, setPrevAnalysisIdsLength] = useState(1);
 
-	//detecting what project the analyses are associated with, and whether the project is private
+	//detecting what project the analyses are associated with and whether it's trusted or not
 	const [project, setProject] = useState<Project | null>(null);
-	const [isPrivate, setIsPrivate] = useState(false);
 	const [trusted, setTrusted] = useState(false);
 
 	//list of tags to be added to submitted analyses
@@ -121,7 +120,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 
 	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
-	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
+	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project
 	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
 		try {
 			if (event.target.files?.length) {
@@ -164,7 +163,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								}
 							} else {
 								//get project from database
-								const response = await fetch(`/api/project?project_id=${value}&fields=project_id,isPrivate`);
+								const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
 								const json = (await response.json()) as NetworkPacket;
 
 								//handle errors
@@ -190,7 +189,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						//replace -2 (not selected yet) id with analysis_run_name from file in analysisId list
 						if (currAnalysis_run_name && currProject) {
 							setAnalysisIds(analysisIds.toSpliced(i, 1, currAnalysis_run_name));
-							setIsPrivate(currProject.isPrivate);
 							setProject(currProject);
 							return;
 						}
@@ -349,7 +347,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						analysisUrl,
 						assignmentsUrl,
 						occurrencesUrl,
-						isPrivate,
 						trusted,
 						selectedTags.map((t) => t.tagName)
 					);
@@ -379,23 +376,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								"No Analysis selected yet"
 							)}
 						</div>
-					</SubmitFormSection>
-					<SubmitFormSection
-						title="Make Analyses private"
-						info="Only users added to the Project for these Analyses will be able to see private submissions."
-					>
-						<fieldset className="fieldset">
-							<label className="fieldset-label flex gap-2">
-								<input
-									type="checkbox"
-									className="checkbox"
-									checked={isPrivate}
-									onChange={(e) => setIsPrivate(e.target.checked)}
-									disabled={project?.isPrivate || false}
-								/>
-								<p>Private submission</p>
-							</label>
-						</fieldset>
 					</SubmitFormSection>
 					<SubmitFormSection
 						title="Make Analyses trusted"
@@ -482,7 +462,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 									setAnalysisIds(temp);
 									if (temp.filter((id) => typeof id === "string").length === 0) {
 										setProject(null);
-										setIsPrivate(false);
 									}
 								}}
 							/>

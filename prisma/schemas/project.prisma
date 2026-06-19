@@ -3,7 +3,6 @@ model Project {
     project_id    String   @unique
     userIds       String[]
     dateSubmitted DateTime @default(now())
-    isPrivate     Boolean
     /// [UserDefinedType]
     userDefined   Json?
     /// [EditHistoryType]

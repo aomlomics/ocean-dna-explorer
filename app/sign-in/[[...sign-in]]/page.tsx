@@ -16,12 +16,9 @@ export default function Page() {
 	const helperText = isSubmissionFlow
 		? "Sign in to submit data. Contributor access can be requested on the Submit page."
 		: "Need contributor access? Visit the Submit page after signing in.";
-	{
-		/* 1st case: Shown when you try to go to submit without being signed in */
-	}
-	{
-		/* 2nd case: If they click the Sign In button */
-	}
+
+	// 1st case: Shown when you try to go to submit without being signed in
+	// 2nd case: If they click the Sign In button
 	const cardVariantClass = isSubmissionFlow ? "ode-signin-card ode-signin-card--submission" : "ode-signin-card";
 
 	return (
@@ -29,10 +26,10 @@ export default function Page() {
 			{/* Radial gradient colour wash */}
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(100,171,220,0.18)_0%,transparent_42%),radial-gradient(circle_at_right,rgba(35,61,127,0.16)_0%,transparent_40%)]" />
 
-			{/* Top wave — 300px tall SVG; proportionally scaled from 480px baseline.
-			<svg className="pointer-events-none absolute inset-x-0 top-0 w-full rotate-180 text-base-100" height="300" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+			{/* Top wave — 300px tall SVG; proportionally scaled from 480px baseline. */}
+			{/* <svg className="pointer-events-none absolute inset-x-0 top-0 w-full rotate-180 text-base-100" height="300" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
 				<path fill="currentColor" d="M0,278 C240,300 480,300 720,285 C960,255 1200,255 1440,278 L1440,300 L0,300 Z" />
-			</svg>
+			</svg> */}
 
 			{/* Bottom wave */}
 			{/* <svg className="pointer-events-none absolute inset-x-0 bottom-0 w-full text-base-100" height="300" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
