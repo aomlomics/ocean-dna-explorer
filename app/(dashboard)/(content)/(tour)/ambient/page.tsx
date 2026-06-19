@@ -6,13 +6,13 @@ import { animate, motion } from "framer-motion";
 
 // [phrase, weight] — larger weight = bigger text in the cloud
 const WORD_LIST: [string, number][] = [
-	["Ocean eDNA exploration", 90],
+	["eDNA data exploration", 90],
 	["Query the API", 84],
 	["Complex search made easy", 80],
 	["Visualization and analysis tools", 76],
 	["Cross dataset analysis", 74],
 	["Programmatic data access", 72],
-	["Copy search as API query", 70],
+	["Copy searches as API queries", 70],
 	["FAIRe eDNA data standard", 68],
 	["Darwin Core and MIxS aligned", 66],
 	["Taxonomy sequence metadata connected", 64],
@@ -90,12 +90,12 @@ const WORD_LIST: [string, number][] = [
 // Time (ms) spent revealing words in each cycle.
 const REVEAL_DURATION_MS = 23_000;
 // Keep the full cloud visible (gently breathing) after reveal completes.
-const HOLD_FULL_CLOUD_MS = 17_000;
+const HOLD_FULL_CLOUD_MS = 15_000;
 // Words revealed per tick.
 const BATCH_SIZE = 1;
 // Keep typed reveal intentionally slow.
 const TYPE_CHAR_MS = 85;
-const MIN_REVEAL_STEP_MS = 1_100;
+const MIN_REVEAL_STEP_MS = 220;
 const CLOUD_FADE_OUT_MS = 900;
 
 // Capping the font size keeps every getImageData() call small.
@@ -152,6 +152,7 @@ export default function AmbientPage() {
 		let initTimer: number | null = null;
 		let initPollTimer: number | null = null;
 		let introTimer: number | null = null;
+		let didRetryInitialCloudRender = false;
 		const typingTimers = new Set<number>();
 
 		const clearTypingTimers = () => {
@@ -209,7 +210,11 @@ export default function AmbientPage() {
 		const fadeOutCloud = async () => {
 			if (cancelled) return;
 			try {
-				await animate(wordsEl, { opacity: [1, 0] }, { duration: CLOUD_FADE_OUT_MS / 1000, ease: [0.22, 1, 0.36, 1] }).finished;
+				await animate(
+					wordsEl,
+					{ opacity: [1, 0], scale: [1, 0.985], y: [0, -8] },
+					{ duration: CLOUD_FADE_OUT_MS / 1000, ease: [0.22, 1, 0.36, 1] }
+				).finished;
 			} catch {
 				// Ignore animation cancellation during teardown.
 			}
@@ -316,7 +321,7 @@ export default function AmbientPage() {
 				color: () => PALETTE[Math.floor(Math.random() * PALETTE.length)],
 				fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
 				shape: "circle",
-				abortThreshold: 1500,
+				abortThreshold: didRetryInitialCloudRender ? 3200 : 1500,
 				minSize: 8,
 			});
 
@@ -354,6 +359,16 @@ export default function AmbientPage() {
 						if (initPollTimer != null) {
 							window.clearInterval(initPollTimer);
 							initPollTimer = null;
+						}
+						// On first page load, wordcloud2 can occasionally abort early while
+						// the page is still settling. If we got a partial cloud, rerender once.
+						if (
+							!didRetryInitialCloudRender &&
+							currentCount < NORMALIZED_WORD_LIST.length
+						) {
+							didRetryInitialCloudRender = true;
+							void renderCloud();
+							return;
 						}
 						startRevealCycle(wordEls);
 					}

@@ -51,7 +51,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	}
 
 	return (
-		<div id="sample" className="space-y-8 pb-8">
+		<div id="sample" className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>

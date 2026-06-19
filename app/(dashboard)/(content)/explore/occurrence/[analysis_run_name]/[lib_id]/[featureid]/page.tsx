@@ -100,7 +100,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		"Unknown taxonomy";
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import ImagePreviewModal from "../ImagePreviewModal";
 import {
 	FEATURED_ORGANISM_GROUPS,
 	FEATURED_ORGANISMS,
@@ -220,9 +221,11 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 	const [commonName, setCommonName] = useState<string | null>(null);
 	const [iucn, setIucn] = useState<IucnCategoryId | null>(null);
 	const [loadingMeta, setLoadingMeta] = useState(false);
+	const [previewOpen, setPreviewOpen] = useState(false);
 
 	const iucnLabel = iucn ? IUCN_LABEL[iucn] : null;
 	const viewHref = organism.taxonomyString ? `/explore/taxonomy/${encodeURIComponent(organism.taxonomyString)}` : "/explore/taxonomy";
+	const imageSrc = organism.imageSrc ?? "";
 
 	useEffect(() => {
 		let cancelled = false;
@@ -275,14 +278,21 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 	return (
 		<div className="relative bg-base-200 rounded-2xl overflow-visible shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]">
 			<div className="relative w-full overflow-hidden rounded-t-2xl bg-base-300/40 aspect-16/10">
-				{organism.imageSrc ? (
-					<Image
-						src={organism.imageSrc}
-						alt={organism.taxonomyName}
-						fill
-						className="object-cover object-center"
-						sizes="(max-width: 1024px) 100vw, 33vw"
-					/>
+				{imageSrc ? (
+					<button
+						type="button"
+						className="absolute inset-0 z-10 block cursor-zoom-in"
+						onClick={() => setPreviewOpen(true)}
+						aria-label={`Open full-size image for ${organism.taxonomyName}`}
+					>
+						<Image
+							src={imageSrc}
+							alt={organism.taxonomyName}
+							fill
+							className="object-cover object-center"
+							sizes="(max-width: 1024px) 100vw, 33vw"
+						/>
+					</button>
 				) : (
 					<div
 						className="absolute inset-0"
@@ -295,6 +305,14 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 
 				{organism.imageAttribution ? <InlineAttributionBadge attribution={organism.imageAttribution} /> : null}
 			</div>
+			{imageSrc ? (
+				<ImagePreviewModal
+					isOpen={previewOpen}
+					onClose={() => setPreviewOpen(false)}
+					src={imageSrc}
+					alt={organism.taxonomyName}
+				/>
+			) : null}
 
 			<div className="p-5 sm:p-6 flex flex-col gap-2.5">
 				<div className="flex items-start justify-between gap-3">

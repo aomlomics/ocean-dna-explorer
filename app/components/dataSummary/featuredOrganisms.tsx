@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
+import ImagePreviewModal from "../ImagePreviewModal";
 
 export type FeaturedOrganismGroup =
 	| "Fish"
@@ -1533,6 +1534,7 @@ function SelectedOrganismCard({
 	resolvedCommonName: string;
 }) {
 	const [imageFailed, setImageFailed] = useState(false);
+	const [previewOpen, setPreviewOpen] = useState(false);
 	const commonName = resolvedCommonName;
 	const imageSrc = organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC;
 	const imageAttribution = getImageAttributionDetails(organism);
@@ -1546,6 +1548,10 @@ function SelectedOrganismCard({
 		setImageFailed(false);
 	}, [imageSrc]);
 
+	useEffect(() => {
+		setPreviewOpen(false);
+	}, [imageSrc]);
+
 	return (
 		<article className="overflow-hidden rounded-2xl bg-transparent">
 			<div className="translate-y-0 opacity-100 transition-[transform,opacity] duration-250 ease-out will-change-transform">
@@ -1556,17 +1562,25 @@ function SelectedOrganismCard({
 								{commonName.charAt(0).toUpperCase()}
 							</div>
 						) : (
-							<Image
-								src={imageSrc}
-								alt={commonName}
-								fill
-								sizes="(max-width: 1024px) 100vw, 420px"
-								className="object-cover object-center"
-								onError={() => setImageFailed(true)}
-							/>
+							<button
+								type="button"
+								className="absolute inset-0 z-10 block cursor-zoom-in"
+								onClick={() => setPreviewOpen(true)}
+								aria-label={`Open full-size image for ${commonName}`}
+							>
+								<Image
+									src={imageSrc}
+									alt={commonName}
+									fill
+									sizes="(max-width: 1024px) 100vw, 420px"
+									className="object-cover object-center"
+									onError={() => setImageFailed(true)}
+								/>
+							</button>
 						)}
 						<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
 					</div>
+					<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={imageSrc} alt={commonName} />
 				</div>
 
 				<div className="flex flex-col gap-4 p-4 pt-2 sm:p-5 sm:pt-2">

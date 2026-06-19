@@ -43,7 +43,7 @@ export default async function Analysis_run_name({
 	const { _count: _, editHistory: __, Assay: ___, Tags: ____, ...justAnalysis } = analysis;
 
 	return (
-		<div id="analysis" className="space-y-8">
+		<div id="analysis" className="space-y-6">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>

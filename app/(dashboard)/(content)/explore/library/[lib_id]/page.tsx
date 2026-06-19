@@ -49,7 +49,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 	const { Project: project, Sample: sample, Assay: assay, AssayPrep: assayPrep, ...justLibrary } = library;
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>

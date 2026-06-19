@@ -10,6 +10,9 @@ import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 
+const ASSAY_MASTER_TSV_URL =
+	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
+
 // Simple GC% calculator for summary cards
 const calculateGcContent = (seq: string) => {
 	if (!seq || seq.length === 0) return 0;
@@ -78,7 +81,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
 
 	return (
-		<div id="assay" className="space-y-8 pb-8">
+		<div id="assay" className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -93,8 +96,41 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1 className="text-4xl font-semibold text-primary mb-2">{assay_name}</h1>
+					<h1 className="text-4xl font-semibold text-primary">{assay_name}</h1>
 					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
+				</div>
+				<div className="mt-1 w-full min-w-0 max-w-full text-sm text-base-content/80 space-y-1">
+					<div className="flex flex-wrap gap-x-6 gap-y-1">
+						<div>
+							<span className="font-medium text-base-content/70">Target Gene: </span>
+							<span>{assay.target_gene || "N/A"}</span>
+						</div>
+						<div>
+							<span className="font-medium text-base-content/70">Target Subfragment: </span>
+							<span>{assay.target_subfragment || "N/A"}</span>
+						</div>
+					</div>
+					<div className="flex flex-wrap gap-x-6 gap-y-1">
+						<div>
+							<span className="font-medium text-base-content/70">Target Taxonomic Scope: </span>
+							<span>{assay.targetTaxonomicScope || "N/A"}</span>
+						</div>
+						<div>
+							<span className="font-medium text-base-content/70">Target: </span>
+							<span>{assay.target || "N/A"}</span>
+						</div>
+						<div>
+							<span className="font-medium text-base-content/70">Master List: </span>
+							<Link
+								href={ASSAY_MASTER_TSV_URL}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="link link-primary"
+							>
+								assays.tsv
+							</Link>
+						</div>
+					</div>
 				</div>
 			</header>
 
@@ -330,7 +366,7 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 									table="analysis"
 									items={assay.Analyses}
 									icon={<AnalysisIcon />}
-									className="sm:col-span-2 w-full sm:w-2/3"
+									className="sm:col-span-2 w-full"
 								/>
 							</div>
 						</div>

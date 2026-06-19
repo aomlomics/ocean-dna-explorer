@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { GbifImagePayload } from "./GbifClient";
 import { formatGbifAttributionDisplay, getGbifStillImagePayload } from "./GbifClient";
 import PhyloPicClient from "./PhyloPicClient";
+import ImagePreviewModal from "../ImagePreviewModal";
 
 type GbifImageProps = {
 	taxonKey: number | string;
@@ -36,6 +37,7 @@ export default function GbifImage({
 	const [activeSrc, setActiveSrc] = useState<string | null>(null);
 	const [loadFailed, setLoadFailed] = useState(false);
 	const [imageLoaded, setImageLoaded] = useState(false);
+	const [previewOpen, setPreviewOpen] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -75,6 +77,10 @@ export default function GbifImage({
 
 	useEffect(() => {
 		setImageLoaded(false);
+	}, [activeSrc]);
+
+	useEffect(() => {
+		setPreviewOpen(false);
 	}, [activeSrc]);
 
 	function handleImgError() {
@@ -146,16 +152,44 @@ export default function GbifImage({
 		</div>
 	);
 
+	const clickToPreviewImage = (
+		<button
+			type="button"
+			className="block h-full w-full cursor-zoom-in"
+			onClick={() => setPreviewOpen(true)}
+			aria-label="Open full-size image"
+		>
+			{imageArea}
+		</button>
+	);
+
 	if (showAttribution && attributionLine) {
 		return (
-			<div className={`flex h-full w-full flex-col overflow-hidden ${className}`}>
-				<div className="min-h-0 flex-1 overflow-hidden">{imageArea}</div>
-				<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/50">
-					{attributionLine}
-				</p>
-			</div>
+			<>
+				<div className={`flex h-full w-full flex-col overflow-hidden ${className}`}>
+					<div className="min-h-0 flex-1 overflow-hidden">{clickToPreviewImage}</div>
+					<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/50">
+						{attributionLine}
+					</p>
+				</div>
+				{activeSrc ? (
+					<ImagePreviewModal
+						isOpen={previewOpen}
+						onClose={() => setPreviewOpen(false)}
+						src={activeSrc}
+						alt={altText}
+					/>
+				) : null}
+			</>
 		);
 	}
 
-	return <div className={`relative h-full w-full overflow-hidden ${className}`}>{imageArea}</div>;
+	return (
+		<>
+			<div className={`relative h-full w-full overflow-hidden ${className}`}>{clickToPreviewImage}</div>
+			{activeSrc ? (
+				<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={activeSrc} alt={altText} />
+			) : null}
+		</>
+	);
 }

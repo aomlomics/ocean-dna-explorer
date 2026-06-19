@@ -49,7 +49,7 @@ export default async function Project_id_Assay_name({
 	const { Project: project, Assay: assay, Libraries: libraries, ...justAssayPrep } = assayPrep;
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>

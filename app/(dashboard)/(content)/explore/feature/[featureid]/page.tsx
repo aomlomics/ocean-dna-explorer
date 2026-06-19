@@ -94,7 +94,7 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 	const isPrivate = !!feature.Occurrences.length;
 
 	return (
-		<div id="feature" className="space-y-8 pb-8">
+		<div id="feature" className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>

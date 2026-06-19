@@ -2,9 +2,8 @@
 
 import type { Taxonomy } from "@/app/generated/prisma/client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TaxonomicRanks } from "@/types/objects";
-import { createPortal } from "react-dom";
 import InfoButton from "@/app/components/InfoButton";
 import type { GbifImagePayload } from "./GbifClient";
 import { formatGbifAttributionDisplay } from "./GbifClient";
@@ -52,15 +51,10 @@ export default function TaxonomyVisualToggle({
 	commonName = null
 }: TaxonomyVisualToggleProps) {
 	const [mode, setMode] = useState<Mode>("phylopic");
-	const [modalOpen, setModalOpen] = useState(false);
 	const [skipWarn, setSkipWarn] = useState(true);
 	const [gbifLayerMounted, setGbifLayerMounted] = useState(false);
-	const [portalReady, setPortalReady] = useState(false);
 	const [gbifPayload, setGbifPayload] = useState<GbifImagePayload | null>(null);
-
-	useEffect(() => {
-		setPortalReady(true);
-	}, []);
+	const gbifWarningModalRef = useRef<HTMLDialogElement>(null);
 
 	const gbifPhotoAllowed = rankAllowsGbifPhoto(databaseRankKey);
 
@@ -83,14 +77,14 @@ export default function TaxonomyVisualToggle({
 			activateGbifMode();
 			return;
 		}
-		setModalOpen(true);
+		gbifWarningModalRef.current?.showModal();
 	}, [activateGbifMode, gbifPhotoAllowed]);
 
 	const confirmGbif = useCallback(() => {
 		if (skipWarn && typeof window !== "undefined") {
 			sessionStorage.setItem(SESSION_CONSENT_KEY, "1");
 		}
-		setModalOpen(false);
+		gbifWarningModalRef.current?.close();
 		activateGbifMode();
 	}, [skipWarn, activateGbifMode]);
 
@@ -260,50 +254,48 @@ export default function TaxonomyVisualToggle({
 				</div>
 			</div>
 
-			{portalReady && modalOpen
-				? createPortal(
-						<div
-							className="fixed inset-0 z-10050 flex items-center justify-center bg-black/60 p-4"
-							role="dialog"
-							aria-modal="true"
-							aria-labelledby="gbif-photo-warn-title"
+			<dialog ref={gbifWarningModalRef} className="modal">
+				<div className="modal-box max-w-md">
+					<form method="dialog">
+						<button
+							type="submit"
+							className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+							aria-label="Close dialog"
 						>
-							<button
-								type="button"
-								className="absolute inset-0 z-0 cursor-default"
-								aria-label="Close dialog"
-								onClick={() => setModalOpen(false)}
-							/>
-							<div className="relative z-10 w-full max-w-md rounded-box border border-base-300 bg-base-200 p-5 shadow-xl">
-								<h3 id="gbif-photo-warn-title" className="text-lg font-semibold text-base-content">
-									GBIF Occurrence Photos
-								</h3>
-								<p className="py-3 text-sm text-base-content/80">
-									These images come from GBIF occurrence records and checklist media. They may show{" "}
-									dead animals, strandings, museum specimens, dissections, or other sensitive content.
-								</p>
-								<label className="label cursor-pointer justify-start gap-2 py-1">
-									<input
-										type="checkbox"
-										className="checkbox checkbox-sm checkbox-primary"
-										checked={skipWarn}
-										onChange={(e) => setSkipWarn(e.target.checked)}
-									/>
-									<span className="label-text text-xs">Don&apos;t show this again this session</span>
-								</label>
-								<div className="mt-2 flex justify-end gap-2">
-									<button type="button" className="btn btn-ghost btn-sm" onClick={() => setModalOpen(false)}>
-										Cancel
-									</button>
-									<button type="button" className="btn btn-primary btn-sm" onClick={confirmGbif}>
-										Show GBIF photo
-									</button>
-								</div>
-							</div>
-						</div>,
-						document.body
-					)
-				: null}
+							✕
+						</button>
+					</form>
+					<h3 id="gbif-photo-warn-title" className="text-lg font-semibold text-base-content">
+						GBIF Occurrence Photos
+					</h3>
+					<p className="py-3 text-sm text-base-content/80">
+						These images come from GBIF occurrence records and checklist media. They may show dead animals,
+						strandings, museum specimens, dissections, or other sensitive content.
+					</p>
+					<label className="label cursor-pointer justify-start gap-2 py-1">
+						<input
+							type="checkbox"
+							className="checkbox checkbox-sm checkbox-primary"
+							checked={skipWarn}
+							onChange={(e) => setSkipWarn(e.target.checked)}
+						/>
+						<span className="label-text text-xs">Don&apos;t show this again this session</span>
+					</label>
+					<div className="modal-action mt-2">
+						<form method="dialog">
+							<button type="submit" className="btn btn-ghost btn-sm">
+								Cancel
+							</button>
+						</form>
+						<button type="button" className="btn btn-primary btn-sm" onClick={confirmGbif}>
+							Show GBIF photo
+						</button>
+					</div>
+				</div>
+				<form method="dialog" className="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
 		</div>
 	);
 }
