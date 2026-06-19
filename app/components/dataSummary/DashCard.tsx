@@ -33,6 +33,8 @@ type Props = {
 	children: ReactNode;
 	/** Controls both the header's and the body's inside padding. */
 	padding?: "none" | "tight" | "sm" | "md" | "lg";
+	/** Allows popovers/menus to escape the card bounds. */
+	allowOverflow?: boolean;
 };
 
 const padMap: Record<NonNullable<Props["padding"]>, { body: string; header: string }> = {
@@ -65,15 +67,20 @@ export default function DashCard({
 	bodyClassName = "",
 	headerClassName = "",
 	children,
-	padding = "md"
+	padding = "md",
+	allowOverflow = false
 }: Props) {
 	const hasHeader = Boolean(eyebrow || title || subtitle || action || info);
 	const pad = padMap[padding];
+	const shouldAllowOverflow = allowOverflow || Boolean(info);
+	const shouldRaiseOnFocus = Boolean(info);
 
 	return (
 		<div
 			className={[
-				"relative flex flex-col overflow-hidden rounded-2xl",
+				"relative isolate flex flex-col rounded-2xl",
+				shouldAllowOverflow ? "overflow-visible" : "overflow-hidden",
+				shouldRaiseOnFocus ? "focus-within:z-2200" : "",
 				"bg-base-200",
 				"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]",
 				"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_10px_24px_-14px_rgba(0,0,0,0.5),0_2px_5px_-1px_rgba(0,0,0,0.22)]",
@@ -128,7 +135,7 @@ export default function DashCard({
  */
 export function DashCardInfoButton({ info }: { info: DashCardInfo }) {
 	return (
-		<div className="dropdown dropdown-end">
+		<div className="dropdown dropdown-end relative z-2200">
 			<button
 				tabIndex={0}
 				type="button"
@@ -143,7 +150,7 @@ export function DashCardInfoButton({ info }: { info: DashCardInfo }) {
 			</button>
 			<div
 				tabIndex={0}
-				className="dropdown-content bg-base-100 rounded-xl shadow-2xl z-50 w-72 p-4 mt-2"
+				className="dropdown-content z-2201 mt-2 w-[min(90vw,24rem)] max-h-[min(75vh,26rem)] overflow-y-auto rounded-md border border-base-300 bg-base-300 p-3 text-base-content shadow-xl"
 			>
 				{info.title && (
 					<div className="text-sm font-semibold text-base-content mb-1">{info.title}</div>

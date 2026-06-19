@@ -170,10 +170,10 @@ function LatestProjectCard({ project }: ProjectProps) {
 	).slice(0, 4);
 
 	return (
-		<DashCard padding="none" className="overflow-hidden h-full">
+		<DashCard padding="none" className="h-full" allowOverflow>
 			<>
 				{hasImage && (
-					<div className="relative h-48 w-full overflow-hidden shrink-0 sm:h-52">
+					<div className="relative h-48 w-full overflow-hidden rounded-t-2xl shrink-0 sm:h-52">
 						<Image
 							src={project.imageFileUrl_ODE as string}
 							alt={project.project_name}
@@ -309,7 +309,7 @@ type AnalysisProps = {
  */
 function LatestAnalysisCard({ analysis }: AnalysisProps) {
 	return (
-		<DashCard padding="none" className="overflow-hidden">
+		<DashCard padding="none" allowOverflow>
 			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex items-center gap-3 min-w-0">
