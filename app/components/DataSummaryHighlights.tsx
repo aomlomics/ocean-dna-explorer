@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { publicPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import FeaturedOrganisms from "./dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
@@ -71,8 +71,8 @@ function AnalysisGlyph({ className = "" }: { className?: string }) {
 }
 
 export default async function DataSummaryHighlights() {
-	const [latestProject, latestAnalysis] = await publicPrisma.$transaction([
-		publicPrisma.project.findFirst({
+	const [latestProject, latestAnalysis] = await prisma.$transaction([
+		prisma.project.findFirst({
 			orderBy: { dateSubmitted: "desc" },
 			select: {
 				project_id: true,
@@ -90,7 +90,7 @@ export default async function DataSummaryHighlights() {
 				}
 			}
 		}),
-		publicPrisma.analysis.findFirst({
+		prisma.analysis.findFirst({
 			orderBy: { dateSubmitted: "desc" },
 			select: {
 				analysis_run_name: true,
@@ -211,9 +211,9 @@ function LatestProjectCard({ project }: ProjectProps) {
 						</div>
 						<DashCardInfoButton
 							info={{
-								title: "Most recent public project",
+								title: "Most recent project",
 								description:
-									"The newest project that has been publicly submitted to ODE. New submissions appear here within minutes.",
+									"The newest project that has been submitted to ODE. New submissions appear here within minutes.",
 								links: [
 									{ label: "View project", href: `/explore/project/${project.project_id}` },
 									{ label: "Browse all projects", href: "/explore/project" }
@@ -332,9 +332,8 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 					</div>
 					<DashCardInfoButton
 						info={{
-							title: "Most recent public analysis",
-							description:
-								"The newest analysis run to be publicly submitted. Trusted runs have been reviewed by the ODE team.",
+							title: "Most recent analysis",
+							description: "The newest analysis run to be submitted. Trusted runs have been reviewed by the ODE team.",
 							links: [
 								{
 									label: "View analysis",
@@ -404,7 +403,7 @@ function EmptySubmissionCard({ label }: { label: string }) {
 	return (
 		<DashCard>
 			<div className="h-44 sm:h-52 flex items-center justify-center text-sm text-base-content/60">
-				No public {label} submissions yet.
+				No {label} submissions yet.
 			</div>
 		</DashCard>
 	);

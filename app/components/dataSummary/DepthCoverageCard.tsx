@@ -1,4 +1,4 @@
-import { publicPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 
 type DepthCoverageCardProps = {
@@ -21,20 +21,20 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 
 	// -9999 is the project sentinel for "not applicable". Filtering depths
 	// to >= 0 strips both that sentinel and any other negative noise.
-	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await publicPrisma.$transaction([
-		publicPrisma.sample.aggregate({
+	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await prisma.$transaction([
+		prisma.sample.aggregate({
 			where: { ...whereBase, minimumDepthInMeters: { gte: 0 } },
 			_min: { minimumDepthInMeters: true }
 		}),
-		publicPrisma.sample.aggregate({
+		prisma.sample.aggregate({
 			where: { ...whereBase, maximumDepthInMeters: { gte: 0 } },
 			_max: { maximumDepthInMeters: true }
 		}),
-		publicPrisma.sample.aggregate({
+		prisma.sample.aggregate({
 			where: { ...whereBase, minimumDepthInMeters: { gte: 0 } },
 			_avg: { minimumDepthInMeters: true }
 		}),
-		publicPrisma.sample.aggregate({
+		prisma.sample.aggregate({
 			where: { ...whereBase, maximumDepthInMeters: { gte: 0 } },
 			_avg: { maximumDepthInMeters: true }
 		})
@@ -129,9 +129,7 @@ function DepthMetric({
 					</>
 				)}
 			</dd>
-			<dt className="text-xs sm:text-sm font-semibold text-base-content/60 mt-2 leading-tight">
-				{label}
-			</dt>
+			<dt className="text-xs sm:text-sm font-semibold text-base-content/60 mt-2 leading-tight">{label}</dt>
 		</div>
 	);
 }

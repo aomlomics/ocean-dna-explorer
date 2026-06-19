@@ -73,7 +73,9 @@ function buildDiverseMapSamples<T extends { decimalLatitude: number | null; deci
 		}
 	}
 
-	const bucketEntries = sample(Array.from(buckets.entries()), buckets.size).map(([_, rows]) => sample(rows, rows.length));
+	const bucketEntries = sample(Array.from(buckets.entries()), buckets.size).map(([_, rows]) =>
+		sample(rows, rows.length)
+	);
 	const picked: T[] = [];
 	let cursor = 0;
 	while (picked.length < maxCount) {
@@ -106,15 +108,13 @@ export async function getTourShowcaseProjects(options?: {
 		new Set((selectedProjectIds ?? []).map((id) => id.trim()).filter((id) => id.length > 0))
 	);
 
-	// Only public projects — tour is visible without auth.
 	const projects = await prisma.project.findMany({
 		where:
 			sanitizedProjectIds.length > 0
 				? {
-						isPrivate: false,
 						project_id: { in: sanitizedProjectIds }
 					}
-				: { isPrivate: false },
+				: undefined,
 		...(sanitizedProjectIds.length > 0 ? {} : { take: PROJECTS_PER_TOUR }),
 		select: {
 			project_id: true,
@@ -134,7 +134,6 @@ export async function getTourShowcaseProjects(options?: {
 			},
 			Analyses: {
 				take: ANALYSES_PER_PROJECT,
-				where: { isPrivate: false },
 				select: {
 					Assignments: {
 						take: ASSIGNMENTS_PER_ANALYSIS,

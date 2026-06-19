@@ -1,4 +1,4 @@
-import { publicPrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 
 /**
@@ -24,8 +24,8 @@ type TemporalCoverageCardProps = {
 export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardProps) {
 	// Only consider samples whose eventDate is *actually* a usable date —
 	// filter out sentinel values (e.g. -9999) encoded as absurdly-early
-	// dates in the DB. publicPrisma handles the isPrivate=false filter.
-	const agg = await publicPrisma.sample.aggregate({
+	// dates in the DB.
+	const agg = await prisma.sample.aggregate({
 		where: {
 			eventDate: { gte: EARLIEST_VALID_SAMPLE_DATE },
 			...(projectId ? { project_id: projectId } : {})
@@ -71,7 +71,7 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 			info={{
 				title: "Temporal Coverage",
 				description:
-					"The earliest and latest real eventDate across public samples. Samples whose eventDate encodes a 'not applicable' sentinel (e.g. -9999) or an epoch-parse ghost (≈1969–1970) are excluded.",
+					"The earliest and latest real eventDate across samples. Samples whose eventDate encodes a 'not applicable' sentinel (e.g. -9999) or an epoch-parse ghost (≈1969-1970) are excluded.",
 				links: [
 					{
 						label: projectId ? "Browse this project's samples" : "Browse samples",
@@ -81,9 +81,7 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 			}}
 		>
 			<div className="flex items-baseline gap-2 mb-4">
-				<span className="text-3xl font-normal text-base-content tabular-nums leading-none">
-					{spanLabel ?? "—"}
-				</span>
+				<span className="text-3xl font-normal text-base-content tabular-nums leading-none">{spanLabel ?? "—"}</span>
 			</div>
 
 			<div className="relative mb-3">
@@ -95,17 +93,13 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 			</div>
 			<div className="flex items-center justify-between text-xs">
 				<div>
-					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">
-						Earliest
-					</div>
+					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">Earliest</div>
 					<div className="text-base-content tabular-nums font-semibold text-base sm:text-lg leading-tight">
 						{fmt(min)}
 					</div>
 				</div>
 				<div className="text-right">
-					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">
-						Latest
-					</div>
+					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">Latest</div>
 					<div className="text-base-content tabular-nums font-semibold text-base sm:text-lg leading-tight">
 						{fmt(max)}
 					</div>

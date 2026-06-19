@@ -1,7 +1,7 @@
 import ShowcaseClient from "./showcase/ShowcaseClient";
 import { getTourShowcaseProjects } from "./showcase/data";
 
-// The TV tour should reflect newly public project data whenever it is loaded.
+// The TV tour should reflect newly project data whenever it is loaded.
 export const revalidate = 0;
 
 const DEFAULT_PROJECT_DURATION_SECONDS = 30;
@@ -54,7 +54,7 @@ export default async function TourPage({
 	if (!projects.length) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-base-100 text-base-content/60">
-				No public projects available to showcase.
+				No projects available to showcase.
 			</div>
 		);
 	}

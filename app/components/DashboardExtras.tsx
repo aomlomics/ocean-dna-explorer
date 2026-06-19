@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { publicPrisma, unsafePrisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import DashCard from "./dataSummary/DashCard";
 import DoughnutChart from "./charts/DoughnutChart";
 import { EARLIEST_VALID_SAMPLE_DATE } from "./dataSummary/TemporalCoverageCard";
@@ -13,17 +13,12 @@ import { EARLIEST_VALID_SAMPLE_DATE } from "./dataSummary/TemporalCoverageCard";
  * rows, etc. — without one giant "widget row" dictating the layout.
  *
  * A few cross-cutting notes:
- *   - All Prisma reads go through publicPrisma, which already filters
- *     isPrivate=false automatically, so counts/aggregates only include
- *     public data.
  *   - Some fields use -9999 as a "not applicable" sentinel. For dates this
  *     can surface as a very-early DateTime (e.g. year <1900) or — more
  *     subtly — as a Unix-epoch ghost (≈1969-12-31). For depths it surfaces
  *     as a large negative number. Every widget that aggregates these
  *     fields filters sentinels out BEFORE the min/max/avg is taken so the
  *     dashboard never shows "9999 BCE" or "-9999 m".
- *   - Raw SQL uses unsafePrisma + an explicit isPrivate=false JOIN, because
- *     $queryRaw bypasses the publicPrisma $extends wrapper.
  *   - Each card uses the shared DashCard shell so they all read as part of
  *     the same dashboard family.
  * ---------------------------------------------------------------------------
@@ -48,7 +43,7 @@ const METADATA_RICHNESS_ENTITIES: RichnessEntityConfig[] = [
 
 function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"]): string[] {
 	const runtimeDataModel = (
-		unsafePrisma as unknown as {
+		prisma as unknown as {
 			_runtimeDataModel?: {
 				models?: Record<string, { fields?: { name: string; kind: string; isRequired: boolean; isList: boolean }[] }>;
 			};
@@ -66,13 +61,13 @@ function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"
 
 // ============================ Data Contributors ============================
 /**
- * Renamed from "Top institutions". Same data (group public projects by
+ * Renamed from "Top institutions". Same data (group projects by
  * the institution field), but presented as the data contributors of the
  * platform. Long institution names are allowed to wrap across multiple
  * lines instead of truncating, since these are a small, high-value list.
  */
 export async function TopInstitutionsCard() {
-	const rows = await publicPrisma.project.groupBy({
+	const rows = await prisma.project.groupBy({
 		by: ["institution"],
 		where: { institution: { not: null } },
 		_count: { project_id: true },
@@ -91,7 +86,7 @@ export async function TopInstitutionsCard() {
 			info={{
 				title: "Data Contributors",
 				description:
-					"Institutions contributing the most public projects to ODE. The institution name is whatever was entered in each project's `institution` field — same string is treated as the same contributor.",
+					"Institutions contributing the most projects to ODE. The institution name is whatever was entered in each project's `institution` field — same string is treated as the same contributor.",
 				links: [{ label: "Browse all projects", href: "/explore/project" }]
 			}}
 		>
@@ -120,7 +115,7 @@ export async function TopInstitutionsCard() {
 
 // ========================= Sampling Environments ===========================
 /**
- * Donut chart of env_local_scale values across all public samples. Reuses
+ * Donut chart of env_local_scale values across all samples. Reuses
  * the shared DoughnutChart so the visual language matches Target Genes
  * and the previous Sample Categories donut. We pull the top N values and
  * stuff the long tail into a single "Other" slice so the legend doesn't
@@ -128,7 +123,7 @@ export async function TopInstitutionsCard() {
  */
 const ENV_SCALE_TOP_N = 8;
 export async function SamplingEnvironmentsCard() {
-	const rows = await publicPrisma.sample.groupBy({
+	const rows = await prisma.sample.groupBy({
 		by: ["env_local_scale"],
 		where: { env_local_scale: { not: null } },
 		_count: { samp_name: true },
@@ -150,7 +145,7 @@ export async function SamplingEnvironmentsCard() {
 			info={{
 				title: "env_local_scale",
 				description:
-					"Distribution of public samples grouped by env_local_scale (ENVO local environment). Long tail is collapsed into “Other”.",
+					"Distribution of samples grouped by env_local_scale (ENVO local environment). Long tail is collapsed into “Other”.",
 				links: [{ label: "Browse samples", href: "/explore/sample" }]
 			}}
 		>
@@ -184,10 +179,6 @@ export { TemporalCoverageCard, TemporalCoverageCardSkeleton } from "./dataSummar
  *   are (a) findMany all eventDates and bucket in JS, which doesn't scale,
  *   or (b) 100 parallel count() queries per-year, which is wasteful. A single
  *   GROUP BY date_trunc('year', ...) is both cheapest and simplest.
- *
- * Why unsafePrisma here?
- *   $queryRaw bypasses the publicPrisma $extends wrapper, so the isPrivate
- *   filter has to be applied manually via the Project JOIN.
  */
 export async function SamplesOverTimeCard() {
 	type Row = { bucket: Date; count: bigint };
@@ -195,14 +186,13 @@ export async function SamplesOverTimeCard() {
 	// Temporal Coverage card. This excludes both the -9999 sentinel and
 	// Unix-epoch ghost rows around 1969-12-31 / 1970-01-01 that previously
 	// pulled the chart's left edge way back and squashed everything.
-	const rows = await unsafePrisma.$queryRaw<Row[]>`
+	const rows = await prisma.$queryRaw<Row[]>`
 		SELECT
 			date_trunc('year', s."eventDate") AS bucket,
 			COUNT(*)::bigint AS count
 		FROM "Sample" s
 		JOIN "Project" p ON s."project_id" = p."project_id"
-		WHERE p."isPrivate" = false
-		  AND s."eventDate" >= ${EARLIEST_VALID_DATE}
+		WHERE s."eventDate" >= ${EARLIEST_VALID_DATE}
 		GROUP BY bucket
 		ORDER BY bucket ASC
 	`;
@@ -220,7 +210,7 @@ export async function SamplesOverTimeCard() {
 			info={{
 				title: "Samples Collected Over Time",
 				description:
-					"Count of public samples grouped by the year they were collected (eventDate). Samples with placeholder dates are excluded.",
+					"Count of samples grouped by the year they were collected (eventDate). Samples with placeholder dates are excluded.",
 				links: [{ label: "Browse samples", href: "/explore/sample" }]
 			}}
 		>
@@ -422,17 +412,17 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
  */
 export async function TableCountsCard() {
 	const [projects, samples, assays, assayPreps, libraries, analyses, occurrences, features, taxa, assignments] =
-		await publicPrisma.$transaction([
-			publicPrisma.project.count(),
-			publicPrisma.sample.count(),
-			publicPrisma.assay.count(),
-			publicPrisma.assayPrep.count(),
-			publicPrisma.library.count(),
-			publicPrisma.analysis.count(),
-			publicPrisma.occurrence.count(),
-			publicPrisma.feature.count(),
-			publicPrisma.taxonomy.count(),
-			publicPrisma.assignment.count()
+		await prisma.$transaction([
+			prisma.project.count(),
+			prisma.sample.count(),
+			prisma.assay.count(),
+			prisma.assayPrep.count(),
+			prisma.library.count(),
+			prisma.analysis.count(),
+			prisma.occurrence.count(),
+			prisma.feature.count(),
+			prisma.taxonomy.count(),
+			prisma.assignment.count()
 		]);
 
 	const tables: { label: string; count: number; href: string }[] = [
@@ -457,7 +447,7 @@ export async function TableCountsCard() {
 			info={{
 				title: "Explore the data",
 				description:
-					"Live row counts for every public table in ODE, abbreviated for quick scanning. Click any tile to open that table's explore page.",
+					"Live row counts for every table in ODE, abbreviated for quick scanning. Click any tile to open that table's explore page.",
 				links: [{ label: "Explore hub", href: "/explore" }]
 			}}
 		>
@@ -528,7 +518,7 @@ export async function MetadataCompletenessCard() {
 	//TODO: rework to not use promise.all
 	const entities = await Promise.all(
 		METADATA_RICHNESS_ENTITIES.map(async (entity) => {
-			const delegate = (publicPrisma as unknown as Record<string, { count: (args?: unknown) => Promise<number> }>)[
+			const delegate = (prisma as unknown as Record<string, { count: (args?: unknown) => Promise<number> }>)[
 				entity.delegate
 			];
 

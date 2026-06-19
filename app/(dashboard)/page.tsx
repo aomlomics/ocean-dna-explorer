@@ -118,7 +118,7 @@ export default function Home() {
 										info={{
 											title: "Target Genes",
 											description:
-												"Share of public assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
+												"Share of assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
 											links: [
 												{ label: "Browse assays", href: "/explore/assay" },
 												{ label: "View analyses", href: "/explore/analysis" },

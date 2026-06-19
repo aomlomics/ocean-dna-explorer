@@ -56,7 +56,6 @@ const WORD_LIST: [string, number][] = [
 	["From visual filter to JSON", 23],
 	["Edit metadata later", 23],
 	["Choose dataset visibility", 22],
-	["Private first public when ready", 22],
 	["Findable reusable metadata", 22],
 	["Submit a new project", 21],
 	["Submit a new analysis", 20],
@@ -84,7 +83,7 @@ const WORD_LIST: [string, number][] = [
 	["Stakeholder friendly data views", 16],
 	["Thoughtful UI for complex data", 16],
 	["Explore detections by place and time", 16],
-	["From field data to insight", 16],
+	["From field data to insight", 16]
 ];
 
 // Time (ms) spent revealing words in each cycle.
@@ -130,12 +129,7 @@ function normalizeWeight(raw: number): number {
 
 const NORMALIZED_WORD_LIST: [string, number][] = WORD_LIST.map(([word, weight]) => [word, normalizeWeight(weight)]);
 
-const PALETTE = [
-	"rgba(255,255,255,0.92)",
-	"rgba(207,250,254,0.9)",
-	"rgba(125,211,252,0.88)",
-	"rgba(147,197,253,0.9)",
-];
+const PALETTE = ["rgba(255,255,255,0.92)", "rgba(207,250,254,0.9)", "rgba(125,211,252,0.88)", "rgba(147,197,253,0.9)"];
 
 type WordCloudFn = ((el: HTMLElement, opts: object) => void) & {
 	stop?: () => void;
@@ -167,10 +161,7 @@ export default function AmbientPage() {
 
 		const computeCloudSize = () => {
 			const width = Math.min(MAX_CLOUD_WIDTH_PX, Math.max(400, host.clientWidth));
-			const height = Math.min(
-				MAX_CLOUD_HEIGHT_PX,
-				Math.max(320, host.clientHeight || host.offsetHeight || 0)
-			);
+			const height = Math.min(MAX_CLOUD_HEIGHT_PX, Math.max(320, host.clientHeight || host.offsetHeight || 0));
 			return { width, height };
 		};
 
@@ -206,7 +197,7 @@ export default function AmbientPage() {
 		};
 
 		const typeInWord = (el: HTMLElement) => {
-			const fullText = el.dataset.ambientFullText ?? (el.textContent ?? "");
+			const fullText = el.dataset.ambientFullText ?? el.textContent ?? "";
 			el.dataset.ambientFullText = fullText;
 			el.textContent = "";
 			el.style.transition = "none";
@@ -270,7 +261,7 @@ export default function AmbientPage() {
 
 			// Hide all words instantly (no transition so there's no visible flash).
 			shuffled.forEach((el) => {
-				const fullText = el.dataset.ambientFullText ?? (el.textContent ?? "");
+				const fullText = el.dataset.ambientFullText ?? el.textContent ?? "";
 				el.dataset.ambientFullText = fullText;
 				el.textContent = fullText;
 				el.style.transition = "none";
@@ -304,7 +295,7 @@ export default function AmbientPage() {
 			});
 
 			const longestWordChars = shuffled.reduce((maxChars, el) => {
-				const fullText = el.dataset.ambientFullText ?? (el.textContent ?? "");
+				const fullText = el.dataset.ambientFullText ?? el.textContent ?? "";
 				return Math.max(maxChars, Array.from(fullText).length);
 			}, 0);
 			const revealDoneMs = stepMs * Math.max(1, steps) + longestWordChars * TYPE_CHAR_MS + 250;
@@ -347,8 +338,7 @@ export default function AmbientPage() {
 
 			wordCloud(wordsEl, {
 				list: NORMALIZED_WORD_LIST,
-				weightFactor: (size: number) =>
-					Math.max(11, Math.min(MAX_WORD_FONT_PX, Math.round(size * (width / 900)))),
+				weightFactor: (size: number) => Math.max(11, Math.min(MAX_WORD_FONT_PX, Math.round(size * (width / 900)))),
 				gridSize: Math.max(8, Math.round(width / 125)),
 				backgroundColor: "rgba(0,0,0,0)",
 				clearCanvas: true,
@@ -363,7 +353,7 @@ export default function AmbientPage() {
 				fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
 				shape: "circle",
 				abortThreshold: 1500,
-				minSize: 8,
+				minSize: 8
 			});
 
 			// wordcloud2 renders asynchronously via internal setTimeout loops.
@@ -382,8 +372,7 @@ export default function AmbientPage() {
 				initPollTimer = window.setInterval(() => {
 					if (cancelled) return;
 					const wordEls = Array.from(wordsEl.querySelectorAll("span")).filter(
-						(el): el is HTMLElement =>
-							el instanceof HTMLElement && el.style.position === "absolute"
+						(el): el is HTMLElement => el instanceof HTMLElement && el.style.position === "absolute"
 					);
 					const currentCount = wordEls.length;
 					if (currentCount === 0) return;
@@ -446,11 +435,9 @@ export default function AmbientPage() {
 		<div className="tour-motion-bg relative isolate flex min-h-dvh w-full flex-col overflow-hidden bg-linear-to-br from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_38%,oklch(var(--p)/0.2),transparent_45%),radial-gradient(ellipse_at_78%_44%,oklch(var(--s)/0.15),transparent_48%)]" />
 
-			<section
-				className="relative z-10 mx-auto flex w-full max-w-[1800px] flex-1 flex-col items-center justify-center gap-12 px-[6vw] py-6 sm:gap-14 sm:py-8 lg:min-h-0 lg:flex-row lg:items-stretch lg:justify-center lg:gap-x-[clamp(2rem,4vw,4rem)]"
-			>
+			<section className="relative z-10 mx-auto flex w-full max-w-[1800px] flex-1 flex-col items-center justify-center gap-12 px-[6vw] py-6 sm:gap-14 sm:py-8 lg:min-h-0 lg:flex-row lg:items-stretch lg:justify-center lg:gap-x-[clamp(2rem,4vw,4rem)]">
 				<motion.div
-					className="ambient-logo flex w-full max-w-xl shrink-0 flex-col justify-center lg:max-w-[560px] lg:basis-[min(34%,560px)]"
+					className="ambient-logo flex w-full max-w-xl shrink-0 flex-col justify-center lg:max-w-140 lg:basis-[min(34%,560px)]"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
@@ -492,7 +479,7 @@ export default function AmbientPage() {
 							transition={{ duration: 1.2, delay: 0.2 }}
 						>
 							<motion.p
-								className="max-w-xl text-xl font-semibold leading-snug tracking-[-0.025em] text-base-content/92 sm:text-2xl xl:text-3xl"
+								className="max-w-xl text-xl font-semibold leading-snug tracking-tight text-base-content/92 sm:text-2xl xl:text-3xl"
 								initial={{ opacity: 0, x: -200, y: 56 }}
 								animate={{ opacity: 1, x: 0, y: 0 }}
 								transition={{ duration: 11.6, ease: [0.22, 1, 0.36, 1], delay: 0.72 }}
@@ -505,7 +492,8 @@ export default function AmbientPage() {
 								animate={{ opacity: 1, x: 0, y: 0 }}
 								transition={{ duration: 13.0, ease: [0.22, 1, 0.36, 1], delay: 1.05 }}
 							>
-								Explore ocean biodiversity through projects, samples, taxonomies, metadata, and interactive visualizations.
+								Explore ocean biodiversity through projects, samples, taxonomies, metadata, and interactive
+								visualizations.
 							</motion.p>
 						</motion.div>
 					</div>

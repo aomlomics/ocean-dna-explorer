@@ -56,7 +56,7 @@ export default async function ShowcasePage({
 	if (!tourable.length) {
 		return (
 			<div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-base-100 text-base-content/60">
-				No public projects available to showcase.
+				No projects available to showcase.
 			</div>
 		);
 	}
