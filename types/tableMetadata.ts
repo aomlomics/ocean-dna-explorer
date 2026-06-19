@@ -157,6 +157,13 @@ const TableMetadata = {
 		titleField: "taxonomy",
 		subFields: TaxonomicRanks
 	},
+	taxonomySpotlight: {
+		plural: "TaxonomySpotlights",
+		description: "",
+		schema: PrismaZodTypes.TaxonomySpotlightSchema,
+		enumSchema: PrismaZodTypes.TaxonomySpotlightScalarFieldEnumSchema,
+		titleField: ["project_id", "imageFileUrl_ODE"]
+	},
 	tag: {
 		plural: "Tags",
 		description: "",
@@ -223,6 +230,10 @@ const relations = {
 		PrismaZodTypes.TaxonomyScalarFieldEnumSchema.options,
 		PrismaZodTypes.TaxonomyWithRelationsSchema
 	),
+	taxonomySpotlight: getRelations(
+		PrismaZodTypes.TaxonomySpotlightScalarFieldEnumSchema.options,
+		PrismaZodTypes.TaxonomySpotlightWithRelationsSchema
+	),
 	tag: getRelations(PrismaZodTypes.TagScalarFieldEnumSchema.options, PrismaZodTypes.TagWithRelationsSchema),
 	alphaDiversity: getRelations(
 		PrismaZodTypes.AlphaDiversityScalarFieldEnumSchema.options,
@@ -278,8 +289,8 @@ for (let e in TableMetadata) {
 
 export const TableNames = Object.keys(TableMetadata) as Uncapitalize<Prisma.ModelName>[];
 export const DataTableNames = TableNames.filter(
-	(t) => t !== "tag" && t !== "alphaDiversity" && t !== "alphaDiversityIndex"
-) as Exclude<Uncapitalize<Prisma.ModelName>, "tag" | "alphaDiversity" | "alphaDiversityIndex">[];
+	(t) => t !== "taxonomySpotlight" && t !== "tag" && t !== "alphaDiversity" && t !== "alphaDiversityIndex"
+) as Exclude<Uncapitalize<Prisma.ModelName>, "taxonomySpotlight" | "tag" | "alphaDiversity" | "alphaDiversityIndex">[];
 
 //duplicates keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value

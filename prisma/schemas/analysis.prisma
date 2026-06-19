@@ -159,7 +159,8 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
-    Assignments Assignment[]
+    Assignments        Assignment[]
+    TaxonomySpotlights TaxonomySpotlight[]
 
     // Data
     verbatimIdentification String
@@ -174,6 +175,22 @@ model Taxonomy {
     family                 String?
     genus                  String?
     species                String?
+}
+
+model TaxonomySpotlight {
+    id               Int    @id @default(autoincrement())
+    imageFileUrl_ODE String
+    description      String
+
+    // Relations
+    project_id String
+    Project    Project  @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    taxonomy   String
+    Taxonomy   Taxonomy @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+
+    commonName String?
+
+    @@unique([project_id, imageFileUrl_ODE])
 }
 
 model Tag {

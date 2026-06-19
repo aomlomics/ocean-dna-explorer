@@ -69,6 +69,8 @@ export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequen
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
+export const TaxonomySpotlightScalarFieldEnumSchema = z.enum(['id','imageFileUrl_ODE','description','project_id','taxonomy','commonName']);
+
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
 export const AlphaDiversityScalarFieldEnumSchema = z.enum(['id','dateCalculated','finished','analysis_run_name','indexType','depth']);
@@ -104,6 +106,8 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_n
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
 export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
+
+export const TaxonomySpotlightOrderByRelevanceFieldEnumSchema = z.enum(['imageFileUrl_ODE','description','project_id','taxonomy','commonName']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
@@ -705,12 +709,14 @@ export type TaxonomyOptionalDefaults = z.infer<typeof TaxonomyOptionalDefaultsSc
 
 export type TaxonomyRelations = {
   Assignments: AssignmentWithRelations[];
+  TaxonomySpotlights: TaxonomySpotlightWithRelations[];
 };
 
 export type TaxonomyWithRelations = z.infer<typeof TaxonomySchema> & TaxonomyRelations
 
 export const TaxonomyWithRelationsSchema: z.ZodType<TaxonomyWithRelations> = TaxonomySchema.merge(z.object({
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightWithRelationsSchema).array(),
 }))
 
 // TAXONOMY OPTIONAL DEFAULTS RELATION SCHEMA
@@ -718,12 +724,14 @@ export const TaxonomyWithRelationsSchema: z.ZodType<TaxonomyWithRelations> = Tax
 
 export type TaxonomyOptionalDefaultsRelations = {
   Assignments: AssignmentOptionalDefaultsWithRelations[];
+  TaxonomySpotlights: TaxonomySpotlightOptionalDefaultsWithRelations[];
 };
 
 export type TaxonomyOptionalDefaultsWithRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyOptionalDefaultsRelations
 
 export const TaxonomyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // TAXONOMY PARTIAL RELATION SCHEMA
@@ -731,24 +739,119 @@ export const TaxonomyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomyOpti
 
 export type TaxonomyPartialRelations = {
   Assignments?: AssignmentPartialWithRelations[];
+  TaxonomySpotlights?: TaxonomySpotlightPartialWithRelations[];
 };
 
 export type TaxonomyPartialWithRelations = z.infer<typeof TaxonomyPartialSchema> & TaxonomyPartialRelations
 
 export const TaxonomyPartialWithRelationsSchema: z.ZodType<TaxonomyPartialWithRelations> = TaxonomyPartialSchema.merge(z.object({
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 })).partial()
 
 export type TaxonomyOptionalDefaultsWithPartialRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyPartialRelations
 
 export const TaxonomyOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithPartialRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 }).partial())
 
 export type TaxonomyWithPartialRelations = z.infer<typeof TaxonomySchema> & TaxonomyPartialRelations
 
 export const TaxonomyWithPartialRelationsSchema: z.ZodType<TaxonomyWithPartialRelations> = TaxonomySchema.merge(z.object({
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
+}).partial())
+
+/////////////////////////////////////////
+// TAXONOMY SPOTLIGHT SCHEMA
+/////////////////////////////////////////
+
+export const TaxonomySpotlightSchema = z.object({
+  id: z.number().int(),
+  imageFileUrl_ODE: z.string(),
+  description: z.string(),
+  project_id: z.string(),
+  taxonomy: z.string(),
+  commonName: z.string().nullish(),
+})
+
+export type TaxonomySpotlight = z.infer<typeof TaxonomySpotlightSchema>
+
+/////////////////////////////////////////
+// TAXONOMY SPOTLIGHT PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const TaxonomySpotlightPartialSchema = TaxonomySpotlightSchema.partial()
+
+export type TaxonomySpotlightPartial = z.infer<typeof TaxonomySpotlightPartialSchema>
+
+// TAXONOMY SPOTLIGHT OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const TaxonomySpotlightOptionalDefaultsSchema = TaxonomySpotlightSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type TaxonomySpotlightOptionalDefaults = z.infer<typeof TaxonomySpotlightOptionalDefaultsSchema>
+
+// TAXONOMY SPOTLIGHT RELATION SCHEMA
+//------------------------------------------------------
+
+export type TaxonomySpotlightRelations = {
+  Project: ProjectWithRelations;
+  Taxonomy: TaxonomyWithRelations;
+};
+
+export type TaxonomySpotlightWithRelations = z.infer<typeof TaxonomySpotlightSchema> & TaxonomySpotlightRelations
+
+export const TaxonomySpotlightWithRelationsSchema: z.ZodType<TaxonomySpotlightWithRelations> = TaxonomySpotlightSchema.merge(z.object({
+  Project: z.lazy(() => ProjectWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyWithRelationsSchema),
+}))
+
+// TAXONOMY SPOTLIGHT OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type TaxonomySpotlightOptionalDefaultsRelations = {
+  Project: ProjectOptionalDefaultsWithRelations;
+  Taxonomy: TaxonomyOptionalDefaultsWithRelations;
+};
+
+export type TaxonomySpotlightOptionalDefaultsWithRelations = z.infer<typeof TaxonomySpotlightOptionalDefaultsSchema> & TaxonomySpotlightOptionalDefaultsRelations
+
+export const TaxonomySpotlightOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomySpotlightOptionalDefaultsWithRelations> = TaxonomySpotlightOptionalDefaultsSchema.merge(z.object({
+  Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema),
+}))
+
+// TAXONOMY SPOTLIGHT PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type TaxonomySpotlightPartialRelations = {
+  Project?: ProjectPartialWithRelations;
+  Taxonomy?: TaxonomyPartialWithRelations;
+};
+
+export type TaxonomySpotlightPartialWithRelations = z.infer<typeof TaxonomySpotlightPartialSchema> & TaxonomySpotlightPartialRelations
+
+export const TaxonomySpotlightPartialWithRelationsSchema: z.ZodType<TaxonomySpotlightPartialWithRelations> = TaxonomySpotlightPartialSchema.merge(z.object({
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+})).partial()
+
+export type TaxonomySpotlightOptionalDefaultsWithPartialRelations = z.infer<typeof TaxonomySpotlightOptionalDefaultsSchema> & TaxonomySpotlightPartialRelations
+
+export const TaxonomySpotlightOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TaxonomySpotlightOptionalDefaultsWithPartialRelations> = TaxonomySpotlightOptionalDefaultsSchema.merge(z.object({
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
+}).partial())
+
+export type TaxonomySpotlightWithPartialRelations = z.infer<typeof TaxonomySpotlightSchema> & TaxonomySpotlightPartialRelations
+
+export const TaxonomySpotlightWithPartialRelationsSchema: z.ZodType<TaxonomySpotlightWithPartialRelations> = TaxonomySpotlightSchema.merge(z.object({
+  Project: z.lazy(() => ProjectPartialWithRelationsSchema),
+  Taxonomy: z.lazy(() => TaxonomyPartialWithRelationsSchema),
 }).partial())
 
 /////////////////////////////////////////
@@ -1094,6 +1197,7 @@ export type ProjectRelations = {
   AssayPreps: AssayPrepWithRelations[];
   Libraries: LibraryWithRelations[];
   Analyses: AnalysisWithRelations[];
+  TaxonomySpotlights: TaxonomySpotlightWithRelations[];
 };
 
 export type ProjectWithRelations = Omit<z.infer<typeof ProjectSchema>, "userDefined" | "editHistory"> & {
@@ -1106,6 +1210,7 @@ export const ProjectWithRelationsSchema: z.ZodType<ProjectWithRelations> = Proje
   AssayPreps: z.lazy(() => AssayPrepWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightWithRelationsSchema).array(),
 }))
 
 // PROJECT OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1116,6 +1221,7 @@ export type ProjectOptionalDefaultsRelations = {
   AssayPreps: AssayPrepOptionalDefaultsWithRelations[];
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Analyses: AnalysisOptionalDefaultsWithRelations[];
+  TaxonomySpotlights: TaxonomySpotlightOptionalDefaultsWithRelations[];
 };
 
 export type ProjectOptionalDefaultsWithRelations = Omit<z.infer<typeof ProjectOptionalDefaultsSchema>, "userDefined" | "editHistory"> & {
@@ -1128,6 +1234,7 @@ export const ProjectOptionalDefaultsWithRelationsSchema: z.ZodType<ProjectOption
   AssayPreps: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // PROJECT PARTIAL RELATION SCHEMA
@@ -1138,6 +1245,7 @@ export type ProjectPartialRelations = {
   AssayPreps?: AssayPrepPartialWithRelations[];
   Libraries?: LibraryPartialWithRelations[];
   Analyses?: AnalysisPartialWithRelations[];
+  TaxonomySpotlights?: TaxonomySpotlightPartialWithRelations[];
 };
 
 export type ProjectPartialWithRelations = Omit<z.infer<typeof ProjectPartialSchema>, "userDefined" | "editHistory"> & {
@@ -1150,6 +1258,7 @@ export const ProjectPartialWithRelationsSchema: z.ZodType<ProjectPartialWithRela
   AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 })).partial()
 
 export type ProjectOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof ProjectOptionalDefaultsSchema>, "userDefined" | "editHistory"> & {
@@ -1162,6 +1271,7 @@ export const ProjectOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Projec
   AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 }).partial())
 
 export type ProjectWithPartialRelations = Omit<z.infer<typeof ProjectSchema>, "userDefined" | "editHistory"> & {
@@ -1174,6 +1284,7 @@ export const ProjectWithPartialRelationsSchema: z.ZodType<ProjectWithPartialRela
   AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  TaxonomySpotlights: z.lazy(() => TaxonomySpotlightPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
