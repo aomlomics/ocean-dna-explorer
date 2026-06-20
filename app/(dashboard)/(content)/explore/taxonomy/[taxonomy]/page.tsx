@@ -4,7 +4,7 @@ import Link from "next/link";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 import CopyButton from "@/app/components/CopyButton";
 import TableMetadata from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import { Project, Taxonomy } from "@/app/generated/prisma/client";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
@@ -12,20 +12,7 @@ import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylop
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 import InfoButton from "@/app/components/InfoButton";
 import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
-
-function formatTaxonomyDisplay(dbTaxonomy: any) {
-	const taxonomicData = Object.entries(dbTaxonomy)
-		.filter(([key, value]) => {
-			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
-		})
-		.map(([key, value]) => ({
-			rank: key.charAt(0).toUpperCase() + key.slice(1),
-			name: String(value).replace("_", " "),
-			rankKey: key
-		}));
-
-	return taxonomicData;
-}
+import { auth } from "@clerk/nextjs/server";
 
 function finestDisplayedRank(db: Taxonomy): {
 	rankKey: (typeof TaxonomicRanks)[number];
@@ -117,6 +104,8 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	let { taxonomy } = await params;
 	taxonomy = decodeURIComponent(taxonomy);
 
+	const { userId } = await auth();
+
 	const [dbTaxonomy, samples] = await prisma.$transaction([
 		prisma.taxonomy.findUnique({
 			where: {
@@ -129,11 +118,17 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						analysis_run_name: true,
 						Analysis: {
 							select: {
-								project_id: true
+								project_id: true,
+								Project: {
+									select: {
+										userIds: true
+									}
+								}
 							}
 						}
 					}
-				}
+				},
+				TaxonomySpotlights: true
 			}
 		}),
 		prisma.sample.findMany({
@@ -154,18 +149,18 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	]);
 
 	if (!dbTaxonomy) return <>Taxonomy not found</>;
+	const { Assignments, TaxonomySpotlights, ...justTaxonomy } = dbTaxonomy;
 
 	// Get unique project IDs for display
-	const uniqueProjects = [...new Set(dbTaxonomy.Assignments.map((a) => a.Analysis.project_id))];
-	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as Taxonomy);
+	const uniqueProjects = [...new Set(Assignments.map((a) => a.Analysis.project_id))];
+	const pageGbif = await resolveTaxonomyPageGbif(justTaxonomy);
 	const phyloPic = pageGbif?.phyloPic ?? null;
-	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as Taxonomy);
-	const databaseScientificName =
-		finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
+	const finestRank = finestDisplayedRank(justTaxonomy);
+	const databaseScientificName = finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
 	const databaseRankKey = finestRank?.rankKey ?? null;
 	const breadcrumbRanks = [...RanksBySpecificity].reverse().filter((rank) => {
-		const raw = (dbTaxonomy as any)[rank]?.toString().trim();
+		const raw = justTaxonomy[rank]?.toString().trim();
 		return Boolean(raw);
 	});
 	const taxonomyInfoText = `Unique Key: ${TableMetadata.taxonomy.titleField}\n${TableMetadata.taxonomy.description}`;
@@ -175,7 +170,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			<header>
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
 					<h1 className="mb-0 text-4xl font-semibold leading-[1.05] text-primary">
-						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
+						{justTaxonomy.species || justTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 					</h1>
 					<InfoButton infoText={taxonomyInfoText} dir="tooltip-right" />
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
@@ -187,16 +182,14 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						<div className="breadcrumbs text-sm text-base-content/70">
 							<ul>
 								{breadcrumbRanks.map((rank, idx) => {
-									const raw = (dbTaxonomy as any)[rank]?.toString().trim() ?? "";
+									const raw = justTaxonomy[rank]?.toString().trim() ?? "";
 									const name = raw.replace(/_/g, " ");
 									const isLast = idx === breadcrumbRanks.length - 1;
 									const rankSearchUrl = `/explore/taxonomy?${rank}=${encodeURIComponent(name.replace(" ", "_"))}`;
 									return (
 										<li key={rank}>
 											{isLast ? (
-												<span className="font-medium text-base-content/70">
-													{name}
-												</span>
+												<span className="font-medium text-base-content/70">{name}</span>
 											) : (
 												<Link href={rankSearchUrl} className="link link-hover text-primary">
 													{name}
@@ -227,21 +220,35 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				{/* Left: taxonomy, image, hierarchy, Red List */}
 				<div className="lg:col-span-2 grid grid-cols-1 gap-4 items-stretch">
 					<div className="bg-base-200 rounded-lg p-4 shadow-sm flex flex-col gap-2">
-						<div className="grid grid-cols-1 gap-3 items-start min-h-0">
-							<div className="flex min-w-0 w-full max-w-full flex-col items-center">
-								<TaxonomyVisualToggle
-									taxonomy={dbTaxonomy as unknown as Taxonomy}
-									mediaTaxonKey={pageGbif?.mediaTaxonKey ?? null}
-									databaseRankKey={databaseRankKey}
-									phyloPicUrl={phyloPic?.imageUrl ?? null}
-									phyloRank={phyloPic?.rank ?? ""}
-									phyloTitle={phyloPic?.title ?? ""}
-									altScientificName={databaseScientificName}
-									databaseRankLabel={databaseRankLabel}
-									databaseScientificName={databaseScientificName}
-									commonName={pageGbif?.commonName ?? null}
-								/>
-							</div>
+						<div className="grid grid-cols-1 gap-3 items-start min-h-0 h-full">
+							<TaxonomyVisualToggle
+								taxonomy={justTaxonomy}
+								mediaTaxonKey={pageGbif?.mediaTaxonKey ?? null}
+								databaseRankKey={databaseRankKey}
+								phyloPicUrl={phyloPic?.imageUrl ?? null}
+								phyloRank={phyloPic?.rank ?? ""}
+								phyloTitle={phyloPic?.title ?? ""}
+								altScientificName={databaseScientificName}
+								databaseRankLabel={databaseRankLabel}
+								databaseScientificName={databaseScientificName}
+								commonName={pageGbif?.commonName ?? null}
+								allowedToSpotlight={!!userId && Assignments.some((a) => a.Analysis.Project.userIds.includes(userId))}
+								taxonomySpotlights={TaxonomySpotlights}
+								availableProjects={
+									userId
+										? Assignments.reduce(
+												(acc, a) => {
+													if (a.Analysis.Project.userIds.includes(userId)) {
+														acc.push(a.Analysis.project_id);
+													}
+
+													return acc;
+												},
+												[] as Project["project_id"][]
+											)
+										: []
+								}
+							/>
 						</div>
 					</div>
 
@@ -250,7 +257,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							<GbifIucnStatus taxonKey={pageGbif.mediaTaxonKey} />
 						</div>
 					) : null}
-
 				</div>
 
 				{/* Right: map + summary cards */}
@@ -259,19 +265,25 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Analyses as Search">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="View Analyses as Search"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<AnalysisIcon />
 								</div>
 								<div className="text-center mb-1">
-									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Assignments.length}</div>
+									<div className="text-3xl font-bold text-primary">{Assignments.length}</div>
 									<div className="text-sm font-medium text-base-content/70 uppercase">Analyses</div>
 								</div>
 							</div>
 						</Link>
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Projects as Search">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="View Projects as Search"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<ProjectIcon />
 								</div>
@@ -283,7 +295,10 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						</Link>
 
 						<Link href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Samples as Search">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="View Samples as Search"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<LocationIcon />
 								</div>
@@ -303,18 +318,21 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								}
 							}}
 						>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="Find other Features with this Taxonomy">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="Find other Features with this Taxonomy"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
 									<StaticActgBackdrop className="opacity-60" />
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 										{phyloPic?.imageUrl ? (
 											<div className="relative w-12 h-12 opacity-95">
 												<ThemeAwarePhyloPic
-												src={phyloPic.imageUrl}
-												alt="Taxonomic outline"
-												fill
-												className="object-contain"
-											/>
+													src={phyloPic.imageUrl}
+													alt="Taxonomic outline"
+													fill
+													className="object-contain"
+												/>
 											</div>
 										) : (
 											<div className="text-primary text-3xl font-semibold leading-none">?</div>

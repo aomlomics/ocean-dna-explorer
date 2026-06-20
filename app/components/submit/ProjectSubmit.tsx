@@ -14,8 +14,9 @@ import { upload } from "@vercel/blob/client";
 import Link from "next/link";
 import { Attribution } from "@/app/generated/prismaImages/client";
 import { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
+import ImageSubmitForm, { getAttributionFromForm, getImageFromForm } from "../ImageSubmitForm";
 
-export default function ProjectSubmit({ attributions }: { attributions: Attribution[] }) {
+export default function ProjectSubmit() {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);
 
@@ -98,7 +99,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
-		const imageFile = event.currentTarget.image.files[0] as File | undefined;
+		const imageFile = event.currentTarget.imageFile.files[0] as File | undefined;
 		let imageInfo;
 		if (imageFile) {
 			if (!imageFile.type.startsWith("image")) {
@@ -107,23 +108,8 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			}
 
 			imageInfo = {
-				image: {
-					name: event.currentTarget.imageName.value,
-					attributionTitle:
-						!newAttribution && currAttribution
-							? currAttribution.attributionTitle
-							: event.currentTarget.attributionTitle.value,
-					description: event.currentTarget.imageDescription.value,
-					location: event.currentTarget.imageLocation.value,
-					dateTaken: event.currentTarget.imageDateTaken.value
-				} as ImagePartial,
-				attribution: newAttribution
-					? ({
-							attributionTitle: event.currentTarget.attributionTitle.value,
-							attributionUrl: event.currentTarget.attributionUrl.value,
-							attributionInstitution: event.currentTarget.attributionInstitution.value
-						} as AttributionOptionalDefaults)
-					: undefined
+				image: getImageFromForm(event.currentTarget, newAttribution, currAttribution),
+				attribution: newAttribution ? getAttributionFromForm(event.currentTarget) : undefined
 			};
 		}
 
@@ -194,7 +180,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			<form
 				className="grid grid-cols-12 gap-12 w-full"
 				onSubmit={(e) => {
-					if (e.currentTarget.image.files.length) {
+					if (e.currentTarget.imageFile.files.length) {
 						setShowCoverImage(true);
 					}
 					handleSubmit(e);
@@ -215,127 +201,13 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 							/>
 							<div className="collapse-title">{showCoverImage ? "Hide" : "Show"}</div>
 							<div className="collapse-content">
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Image name</legend>
-									<input name="imageName" type="text" className="input" placeholder="Image name" disabled={loading} />
-								</fieldset>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Image file</legend>
-									<input name="image" type="file" className="file-input" accept="image/*" disabled={loading} />
-								</fieldset>
-
-								<div className="border border-primary rounded-sm p-2 my-2">
-									<div className="grid grid-cols-2 gap-5">
-										<fieldset className="fieldset">
-											<legend className="fieldset-legend">Attribution</legend>
-											<select
-												className="select"
-												disabled={loading || newAttribution}
-												value={currAttribution?.attributionTitle}
-												onChange={(e) =>
-													setCurrAttribution(attributions.find((attr) => attr.attributionTitle === e.target.value))
-												}
-											>
-												<option value="">No attribution</option>
-												{attributions.map((attr) => (
-													<option key={attr.id}>{attr.attributionTitle}</option>
-												))}
-											</select>
-											<span className="label">Optional</span>
-										</fieldset>
-
-										<label className="label">
-											<input
-												type="checkbox"
-												className="toggle"
-												disabled={loading}
-												checked={newAttribution}
-												onChange={(e) => setNewAttribution(e.target.checked)}
-											/>
-											New attribution
-										</label>
-									</div>
-
-									<fieldset className="fieldset">
-										<legend className="fieldset-legend">Attribution title</legend>
-										<input
-											name="attributionTitle"
-											type="text"
-											className="input"
-											placeholder="Attribution title"
-											disabled={loading || !newAttribution}
-											required={!!currAttribution || newAttribution}
-											defaultValue={currAttribution && !newAttribution ? currAttribution.attributionTitle : undefined}
-										/>
-									</fieldset>
-
-									{/* TODO: add names inputs with add button */}
-
-									<fieldset className="fieldset">
-										<legend className="fieldset-legend">Attribution URL</legend>
-										<input
-											name="attributionUrl"
-											type="text"
-											className="input"
-											placeholder="Attribution URL"
-											disabled={loading || !newAttribution}
-											defaultValue={
-												currAttribution && !newAttribution && currAttribution.attributionUrl
-													? currAttribution.attributionUrl
-													: undefined
-											}
-										/>
-										<p className="label">Optional</p>
-									</fieldset>
-
-									<fieldset className="fieldset">
-										<legend className="fieldset-legend">Attribution Institution</legend>
-										<input
-											name="attributionInstitution"
-											type="text"
-											className="input"
-											placeholder="Attribution Institution"
-											disabled={loading || !newAttribution}
-											defaultValue={
-												currAttribution && !newAttribution && currAttribution.attributionInstitution
-													? currAttribution.attributionInstitution
-													: undefined
-											}
-										/>
-										<p className="label">Optional</p>
-									</fieldset>
-								</div>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Description</legend>
-									<input
-										type="text"
-										className="input"
-										placeholder="Description"
-										name="imageDescription"
-										disabled={loading}
-									/>
-									<p className="label">Optional</p>
-								</fieldset>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Location</legend>
-									<input type="text" className="input" placeholder="Location" name="imageLocation" disabled={loading} />
-									<p className="label">Optional</p>
-								</fieldset>
-
-								<fieldset className="fieldset">
-									<legend className="fieldset-legend">Date taken</legend>
-									<input
-										type="date"
-										className="input"
-										placeholder="Date taken"
-										name="imageDateTaken"
-										disabled={loading}
-									/>
-									<p className="label">Optional</p>
-								</fieldset>
+								<ImageSubmitForm
+									newAttribution={newAttribution}
+									setNewAttribution={setNewAttribution}
+									currAttribution={currAttribution}
+									setCurrAttribution={setCurrAttribution}
+									loading={loading}
+								/>
 							</div>
 						</div>
 					</SubmitFormSection>

@@ -408,7 +408,7 @@ export function ExploreMegaMenu() {
 								sizes="280px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 							<Image
 								src="/images/taxonomy_explore_mega_menu_dark.webp"
@@ -417,7 +417,7 @@ export function ExploreMegaMenu() {
 								sizes="280px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 						</div>
 					}
@@ -477,7 +477,7 @@ export function DocsMegaMenu() {
 								sizes="280px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 							<Image
 								src="/images/docs_mega_menu_dark.webp"
@@ -486,7 +486,7 @@ export function DocsMegaMenu() {
 								sizes="280px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 						</div>
 					}
@@ -532,7 +532,7 @@ export function LearnMegaMenu() {
 								sizes="280px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 							<Image
 								src="/images/learn_page_mega_menu_dark.webp"
@@ -541,7 +541,7 @@ export function LearnMegaMenu() {
 								sizes="280px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 						</div>
 					}
@@ -673,7 +673,7 @@ export function VisualizeMegaMenu() {
 								sizes="220px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 							<Image
 								src="/images/visualize_mega_menu_dark.webp"
@@ -682,7 +682,7 @@ export function VisualizeMegaMenu() {
 								sizes="220px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
-								quality={80}
+								quality={75}
 							/>
 						</div>
 					}

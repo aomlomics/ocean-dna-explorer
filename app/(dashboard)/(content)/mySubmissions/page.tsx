@@ -71,8 +71,6 @@ export default async function MySubmissions() {
 	]);
 	const badAnalyses = dbBadAnalyses.map((ba) => ba.analysis_run_name);
 
-	const attributions = await prismaImages.attribution.findMany();
-
 	return (
 		<div className="container mx-auto px-4 py-8">
 			{/* Breadcrumbs */}
@@ -153,7 +151,6 @@ export default async function MySubmissions() {
 														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
 														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
 														libraryMetadataFileUrl_ODE={proj.libraryMetadataFileUrl_ODE}
-														attributions={attributions}
 													/>
 
 													<SubmissionDeleteButton
