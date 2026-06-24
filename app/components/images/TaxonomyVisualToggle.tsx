@@ -204,9 +204,8 @@ export default function TaxonomyVisualToggle({
 								</button>
 							</div>
 						) : (
-							<div>
-								<SpotlightSubmitButton taxonomy={taxonomy.taxonomy} availableProjects={availableProjects} />
-							</div>
+							// TODO: Add button even when spotlights exist for this taxonomy
+							<SpotlightSubmitButton taxonomy={taxonomy.taxonomy} availableProjects={availableProjects} />
 						)}
 					</div>
 				</div>

@@ -178,9 +178,7 @@ model Taxonomy {
 }
 
 model TaxonomySpotlight {
-    id               Int    @id @default(autoincrement())
-    imageFileUrl_ODE String
-    description      String
+    id Int @id @default(autoincrement())
 
     // Relations
     project_id String
@@ -188,9 +186,11 @@ model TaxonomySpotlight {
     taxonomy   String
     Taxonomy   Taxonomy @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
 
-    commonName String?
+    commonName       String?
+    imageFileUrl_ODE String
+    description      String
 
-    @@unique([project_id, imageFileUrl_ODE])
+    @@unique([project_id, taxonomy])
 }
 
 model Tag {

@@ -13,7 +13,6 @@ import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
 import { Attribution } from "@/app/generated/prismaImages/client";
-import { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
 import ImageSubmitForm, { getAttributionFromForm, getImageFromForm } from "../ImageSubmitForm";
 
 export default function ProjectSubmit() {
@@ -303,6 +302,7 @@ export default function ProjectSubmit() {
 					</SubmitFormSection>
 				</div>
 			</form>
+
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
 				<h3 className={`text-lg font-bold mb-2 ${errorMessage ? "text-error" : "text-success"}`}>
 					{errorMessage ? "Submission Failed" : "Project Submitted Successfully"}

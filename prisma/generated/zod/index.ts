@@ -69,7 +69,7 @@ export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequen
 
 export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
-export const TaxonomySpotlightScalarFieldEnumSchema = z.enum(['id','imageFileUrl_ODE','description','project_id','taxonomy','commonName']);
+export const TaxonomySpotlightScalarFieldEnumSchema = z.enum(['id','project_id','taxonomy','commonName','imageFileUrl_ODE','description']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
@@ -107,7 +107,7 @@ export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_s
 
 export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
-export const TaxonomySpotlightOrderByRelevanceFieldEnumSchema = z.enum(['imageFileUrl_ODE','description','project_id','taxonomy','commonName']);
+export const TaxonomySpotlightOrderByRelevanceFieldEnumSchema = z.enum(['project_id','taxonomy','commonName','imageFileUrl_ODE','description']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
@@ -769,11 +769,11 @@ export const TaxonomyWithPartialRelationsSchema: z.ZodType<TaxonomyWithPartialRe
 
 export const TaxonomySpotlightSchema = z.object({
   id: z.number().int(),
-  imageFileUrl_ODE: z.string(),
-  description: z.string(),
   project_id: z.string(),
   taxonomy: z.string(),
   commonName: z.string().nullish(),
+  imageFileUrl_ODE: z.string(),
+  description: z.string(),
 })
 
 export type TaxonomySpotlight = z.infer<typeof TaxonomySpotlightSchema>

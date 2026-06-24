@@ -11,7 +11,7 @@ import { auth } from "@clerk/nextjs/server";
 export default async function submitSpotlightAction(
 	spotlight: TaxonomySpotlightPartial,
 	image: ImagePartial,
-	Attribution: AttributionPartial | undefined
+	Attribution?: AttributionPartial
 ): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata?.role;

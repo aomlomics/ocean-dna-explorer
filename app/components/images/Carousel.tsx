@@ -7,6 +7,17 @@ import AttributionBadge from "./AttributionBadge";
 import { useEffect, useState } from "react";
 
 export default function Carousel({ images }: { images: (DbImage & { Attribution?: Attribution | null })[] }) {
+	let currentIndex = images.length;
+	// While there remain elements to shuffle...
+	while (currentIndex != 0) {
+		// Pick a remaining element...
+		let randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+
+		// And swap it with the current element.
+		[images[currentIndex], images[randomIndex]] = [images[randomIndex], images[currentIndex]];
+	}
+
 	const [currIndex, setCurrIndex] = useState(0);
 
 	useEffect(() => {

@@ -162,7 +162,7 @@ const TableMetadata = {
 		description: "",
 		schema: PrismaZodTypes.TaxonomySpotlightSchema,
 		enumSchema: PrismaZodTypes.TaxonomySpotlightScalarFieldEnumSchema,
-		titleField: ["project_id", "imageFileUrl_ODE"]
+		titleField: ["project_id", "taxonomy"]
 	},
 	tag: {
 		plural: "Tags",
