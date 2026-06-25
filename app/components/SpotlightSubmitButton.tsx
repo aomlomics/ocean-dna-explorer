@@ -48,7 +48,6 @@ export default function SpotlightSubmitButton({
 		let image;
 		if (newSpotlight) {
 			const imageFile = getImageFile(form)!;
-			console.log(imageFile.type);
 			if (!imageFile.type.startsWith("image")) {
 				//TODO: handle error better
 				throw new Error("Image file must have type image/*");
