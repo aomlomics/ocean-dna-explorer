@@ -188,7 +188,6 @@ export default function TaxonomyVisualToggle({
 						className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 flex justify-center items-center ${mode === "spotlight" ? "opacity-100 z-3" : "pointer-events-none opacity-0 z-0"}`}
 					>
 						{taxonomySpotlights?.length ? (
-							//TODO: display taxonomy spotlight
 							<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 								<button
 									className="btn btn-secondary rounded-full"

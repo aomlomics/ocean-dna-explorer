@@ -32,6 +32,8 @@ export default function SpotlightSubmitButton({
 	const [currAttribution, setCurrAttribution] = useState(undefined as Attribution | undefined);
 
 	function reset() {
+		setNewSpotlight(false);
+		setCurrSpotlight(undefined);
 		setNewAttribution(false);
 		setCurrAttribution(undefined);
 		formRef.current?.reset();
@@ -76,6 +78,7 @@ export default function SpotlightSubmitButton({
 		if (response.statusMessage === "success") {
 			//TODO: show success
 			modalRef.current?.close();
+			reset();
 		} else if (response.statusMessage === "error") {
 			//TODO: show error
 			throw new Error(response.error);
