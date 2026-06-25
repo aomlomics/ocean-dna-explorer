@@ -1,10 +1,10 @@
 "use client";
 
-import { SubmitEvent, useRef, useState } from "react";
+import { ReactNode, SubmitEvent, useRef, useState } from "react";
 import Modal from "./Modal";
-import ImageSubmitForm, { getAttributionFromForm, getImageFromForm } from "./ImageSubmitForm";
+import ImageSubmitForm, { getAttributionFromForm, getImageFile, getImageFromForm } from "./ImageSubmitForm";
 import { Attribution } from "../generated/prismaImages/client";
-import { Project, Taxonomy } from "../generated/prisma/client";
+import { Project, Taxonomy, TaxonomySpotlight } from "../generated/prisma/client";
 import { upload } from "@vercel/blob/client";
 import submitSpotlightAction from "../actions/taxonomySpotlight/submitSpotlight";
 import { TaxonomySpotlightOptionalDefaults } from "@/prisma/generated/zod";
@@ -12,9 +12,11 @@ import { TaxonomySpotlightOptionalDefaults } from "@/prisma/generated/zod";
 //TODO: allow selecting pre-existing spotlight
 export default function SpotlightSubmitButton({
 	taxonomy,
+	spotlights,
 	availableProjects
 }: {
 	taxonomy: Taxonomy["taxonomy"];
+	spotlights: TaxonomySpotlight[];
 	availableProjects: Project["project_id"][];
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
@@ -32,7 +34,7 @@ export default function SpotlightSubmitButton({
 	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
-		const imageFile = event.currentTarget.imageFile.files[0] as File;
+		const imageFile = getImageFile(event.currentTarget)!;
 		if (!imageFile.type.startsWith("imageFile")) {
 			//TODO: handle error better
 			throw new Error("Image file must have type image/*");
@@ -62,7 +64,13 @@ export default function SpotlightSubmitButton({
 			attribution = getAttributionFromForm(event.currentTarget);
 		}
 
-		await submitSpotlightAction(spotlight, image, attribution);
+		const response = await submitSpotlightAction(spotlight, image, attribution);
+		if (response.statusMessage === "success") {
+			//TODO: show success
+			modalRef.current?.close();
+		} else if (response.statusMessage === "error") {
+			//TODO: show error
+		}
 	}
 
 	return (
@@ -87,9 +95,14 @@ export default function SpotlightSubmitButton({
 							<option value="" disabled>
 								Select Project
 							</option>
-							{availableProjects.map((project_id) => (
-								<option key={project_id}>{project_id}</option>
-							))}
+							{availableProjects.reduce((acc, project_id) => {
+								//only show projects that don't have a spotlight for this taxonomy
+								if (!spotlights.some((sl) => sl.project_id === project_id)) {
+									acc.push(<option key={project_id}>{project_id}</option>);
+								}
+
+								return acc;
+							}, [] as ReactNode[])}
 						</select>
 					</fieldset>
 

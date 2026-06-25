@@ -170,6 +170,10 @@ export default function ImageSubmitForm({
 	);
 }
 
+export function getImageFile(form: HTMLFormElement) {
+	return form.imageFile.files[0] as File | undefined;
+}
+
 export function getImageFromForm(
 	form: HTMLFormElement,
 	newAttribution: boolean,

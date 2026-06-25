@@ -13,7 +13,7 @@ import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
 import { Attribution } from "@/app/generated/prismaImages/client";
-import ImageSubmitForm, { getAttributionFromForm, getImageFromForm } from "../ImageSubmitForm";
+import ImageSubmitForm, { getAttributionFromForm, getImageFile, getImageFromForm } from "../ImageSubmitForm";
 
 export default function ProjectSubmit() {
 	const { userId } = useAuth();
@@ -98,7 +98,7 @@ export default function ProjectSubmit() {
 		const sampleFile = event.currentTarget.sample.files[0] as File;
 		const libraryFile = event.currentTarget.library.files[0] as File;
 
-		const imageFile = event.currentTarget.imageFile.files[0] as File | undefined;
+		const imageFile = getImageFile(event.currentTarget);
 		let imageInfo;
 		if (imageFile) {
 			if (!imageFile.type.startsWith("image")) {

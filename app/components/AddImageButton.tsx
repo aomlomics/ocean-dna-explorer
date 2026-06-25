@@ -6,7 +6,7 @@ import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
 import { Project } from "../generated/prisma/client";
-import ImageSubmitForm, { getAttributionFromForm, getImageFromForm } from "./ImageSubmitForm";
+import ImageSubmitForm, { getAttributionFromForm, getImageFile, getImageFromForm } from "./ImageSubmitForm";
 
 export default function AddImageButton({
 	title,
@@ -41,7 +41,7 @@ export default function AddImageButton({
 
 		setLoading(true);
 
-		const imageFile = event.currentTarget.imageFile.files[0] as File;
+		const imageFile = getImageFile(event.currentTarget)!;
 		if (!imageFile.type.startsWith("imageFile")) {
 			setError("Image file must have type image/*");
 		}
