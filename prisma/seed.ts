@@ -1,20 +1,18 @@
 import { PrismaClient } from "@/app/generated/prisma/client";
-import { seedAssays } from "@/app/helpers/prisma";
+import { seedAssays } from "@/app/helpers/queries";
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
-const ASSAY_SEED_URL =
-	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.POSTGRES_PRISMA_URL }) });
 
 async function load() {
-	try {
-		await seedAssays(prisma, ASSAY_SEED_URL);
-	} catch (err) {
-		console.error(err);
-		await prisma.$disconnect();
-		process.exit(1);
-	} finally {
-		await prisma.$disconnect();
-	}
+	await seedAssays(prisma);
 }
 
-load();
+load()
+	.then(prisma.$disconnect)
+	.catch(async (e) => {
+		console.error(e);
+		await prisma.$disconnect();
+		process.exit(1);
+	});

@@ -1,8 +1,9 @@
 "use server";
 
-import { seedAssays } from "../helpers/prisma";
+import { seedAssays } from "../helpers/queries";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
+import { prisma } from "../helpers/prisma";
 
 export default async function seedDatabaseAction() {
 	const { userId, sessionClaims } = await auth();
@@ -17,7 +18,7 @@ export default async function seedDatabaseAction() {
 			throw new Error("Invalid role.");
 		}
 
-		await seedAssays();
+		await seedAssays(prisma);
 	} catch (err) {
 		console.error(err);
 	}

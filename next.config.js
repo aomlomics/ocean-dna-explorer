@@ -18,10 +18,10 @@ const remotePatterns = [
 module.exports = {
 	experimental: {
 		serverActions: {
-			bodySizeLimit: "3mb",
-		},
+			bodySizeLimit: "3mb"
+		}
 	},
 	images: {
 		remotePatterns
 	}
-}
+};

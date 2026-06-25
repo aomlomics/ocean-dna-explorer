@@ -1,6 +1,6 @@
 "use server";
 
-import { Role } from "@/types/globals";
+import { Role, UserMetadata } from "@/types/globals";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RoleHeirarchy, RolePermissions, Roles } from "@/types/objects";
 import { z } from "zod";
@@ -29,8 +29,8 @@ async function editUser(
 	}
 
 	//TODO: fix potential race condition
-	const user = await client.users.getUser(targetUserId);
-	if (!role || !RoleHeirarchy[role].includes(user.publicMetadata.role as Role)) {
+	const targetRole = ((await client.users.getUser(targetUserId)).publicMetadata as UserMetadata).role;
+	if (!role || !RoleHeirarchy[role].includes(targetRole)) {
 		throw new Error("Not authorized");
 	}
 

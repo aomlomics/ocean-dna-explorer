@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -36,17 +36,12 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	const [analysisIds, setAnalysisIds] = useState([-2] as Array<string | -1 | -2>);
 	const [prevAnalysisIdsLength, setPrevAnalysisIdsLength] = useState(1);
 
-	//detecting what project the analyses are associated with, and whether the project is private
+	//detecting what project the analyses are associated with and whether it's trusted or not
 	const [project, setProject] = useState<Project | null>(null);
-	const [isPrivate, setIsPrivate] = useState(false);
 	const [trusted, setTrusted] = useState(false);
 
 	//list of tags to be added to submitted analyses
 	const [selectedTags, setSelectedTags] = useState([] as Tag[]);
-
-	//file urls to delete if an error occurs
-	const [fileUrls, setFileUrls] = useState({} as Record<string, string[]>);
-	const [triggerDeleteFiles, setTriggerDeleteFiles] = useState(false); //using trigger because useReducer can't accept an async function
 
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
@@ -65,11 +60,11 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					return temp;
 				} else {
 					if (update.res?.statusMessage === "error") {
+						//TODO: don't stop loading until ALL submissions complete
 						setLoading(false);
 						setErrorMessage(update.res.error);
 						modalRef.current?.showModal();
 						//use trigger to call the delete once, instead of for every error
-						setTriggerDeleteFiles(true);
 					} else if (update.res?.statusMessage === "success") {
 						//check if current analysis was completed successfully
 						if (
@@ -78,11 +73,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								([key, res]) => key === update.key || res?.statusMessage === "success"
 							)
 						) {
-							//clear successful files so they don't get deleted
-							const temp = { ...fileUrls };
-							delete temp[update.id];
-							setFileUrls(temp);
-
 							//check if all analyses were completed successfully
 							if (
 								Object.entries(state).every(
@@ -128,25 +118,9 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		}
 	}, [analysisIds]);
 
-	useEffect(() => {
-		if (triggerDeleteFiles) {
-			async function doFetch() {
-				for (const url of Object.values(fileUrls).reduce((acc, urls) => [...acc, ...urls])) {
-					await fetch(`/api/file/delete?url=${url}`, {
-						method: "DELETE"
-					});
-				}
-
-				setTriggerDeleteFiles(false);
-			}
-
-			doFetch();
-		}
-	}, [triggerDeleteFiles]);
-
 	//TODO: add loading overlay when this is called
 	//read analysis file to get the analysis_run_name
-	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project, and detect if the project is private or not
+	//also get the project this analysis is associated with, verify all analyses on this page are associated with the same project
 	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
 		try {
 			if (event.target.files?.length) {
@@ -189,7 +163,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								}
 							} else {
 								//get project from database
-								const response = await fetch(`/api/project?project_id=${value}&fields=project_id,isPrivate`);
+								const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
 								const json = (await response.json()) as NetworkPacket;
 
 								//handle errors
@@ -215,7 +189,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						//replace -2 (not selected yet) id with analysis_run_name from file in analysisId list
 						if (currAnalysis_run_name && currProject) {
 							setAnalysisIds(analysisIds.toSpliced(i, 1, currAnalysis_run_name));
-							setIsPrivate(currProject.isPrivate);
 							setProject(currProject);
 							return;
 						}
@@ -241,7 +214,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		}
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		if (!project) {
@@ -272,7 +245,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							assignmentsFile: target[`assignments_${id}`].files[0],
 							occurrencesFile: target[`occurrences_${id}`].files[0]
 						};
-						setFileUrls({ ...fileUrls, [id]: [] });
 
 						//set status of uploads to pending
 						setResponses({
@@ -364,9 +336,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
 					});
 
-					//add file urls in case of error
-					setFileUrls({ ...fileUrls, [id]: [analysisUrl, assignmentsUrl, occurrencesUrl] });
-
 					//trigger streamed action
 					doProgressActionMany(
 						analysisSubmitAction,
@@ -378,7 +347,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						analysisUrl,
 						assignmentsUrl,
 						occurrencesUrl,
-						isPrivate,
 						trusted,
 						selectedTags.map((t) => t.tagName)
 					);
@@ -390,7 +358,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			setLoading(false);
 			setErrorMessage(error.message);
 			modalRef.current?.showModal();
-			setTriggerDeleteFiles(true);
 		}
 	}
 
@@ -409,23 +376,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								"No Analysis selected yet"
 							)}
 						</div>
-					</SubmitFormSection>
-					<SubmitFormSection
-						title="Make Analyses private"
-						info="Only users added to the Project for these Analyses will be able to see private submissions."
-					>
-						<fieldset className="fieldset">
-							<label className="fieldset-label flex gap-2">
-								<input
-									type="checkbox"
-									className="checkbox"
-									checked={isPrivate}
-									onChange={(e) => setIsPrivate(e.target.checked)}
-									disabled={project?.isPrivate || false}
-								/>
-								<p>Private submission</p>
-							</label>
-						</fieldset>
 					</SubmitFormSection>
 					<SubmitFormSection
 						title="Make Analyses trusted"
@@ -512,7 +462,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 									setAnalysisIds(temp);
 									if (temp.filter((id) => typeof id === "string").length === 0) {
 										setProject(null);
-										setIsPrivate(false);
 									}
 								}}
 							/>

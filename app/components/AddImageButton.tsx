@@ -1,12 +1,23 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { SubmitEvent, useRef, useState } from "react";
 import { Attribution } from "../generated/prismaImages/client";
 import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
+import { Project, Taxonomy } from "../generated/prisma/client";
 
-export default function AddImageButton({ attributions }: { attributions: Attribution[] }) {
+export default function AddImageButton({
+	attributions,
+	title,
+	homePage,
+	target
+}: {
+	attributions: Attribution[];
+	title: string;
+	homePage?: true;
+	target?: { table: "project"; value: Project["project_id"] } | { table: "taxonomy"; value: Taxonomy["taxonomy"] };
+}) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
@@ -26,7 +37,7 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 		formRef.current?.reset();
 	}
 
-	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		setLoading(true);
@@ -38,7 +49,7 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 
 		const imageFile = formData.get("imageFile") as File;
 		const url = (
-			await upload("carousel/" + imageFile.name, imageFile, {
+			await upload(`${homePage ? "carousel" : "images"}/${imageFile.name}`, imageFile, {
 				access: "public",
 				handleUploadUrl: "/api/file/upload",
 				multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -47,15 +58,18 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 		formData.set("url", url);
 		formData.delete("imageFile");
 
+		if (homePage) {
+			formData.set("homePage", "true");
+		} else {
+			formData.set("homePage", "false");
+		}
+
 		try {
-			const result = await addImageAction(formData, newAttribution);
+			const result = await addImageAction(formData, newAttribution, target);
 			if (result.statusMessage === "success") {
 				reset();
 				modalRef.current?.close();
 			} else if (result.statusMessage === "error") {
-				await fetch(`/api/file/delete?url=${url}`, {
-					method: "DELETE"
-				});
 				setError(result.error);
 			}
 		} catch (err) {
@@ -69,7 +83,7 @@ export default function AddImageButton({ attributions }: { attributions: Attribu
 	return (
 		<>
 			<button type="submit" className="btn" onClick={() => modalRef.current?.showModal()}>
-				Add Carousel Image
+				{title}
 			</button>
 
 			<Modal

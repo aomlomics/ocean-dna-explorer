@@ -10,7 +10,7 @@ import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
-import { Role } from "@/types/globals";
+import { Role, UserMetadata } from "@/types/globals";
 import { RoleHeirarchy } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import Link from "next/link";
@@ -24,17 +24,18 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 	if (userId === targetUserId) {
 		redirect("/admin");
 	}
-	const role = sessionClaims?.metadata.role as Role;
+	const role = sessionClaims?.metadata.role;
 
 	const client = await clerkClient();
-	let user;
+	let target;
 	try {
-		user = await client.users.getUser(targetUserId);
+		target = await client.users.getUser(targetUserId);
 	} catch {
 		return <>Error: User not found</>;
 	}
 
-	const uneditable = !RoleHeirarchy[role].includes(user.publicMetadata.role as Role);
+	const targetRole = (target.publicMetadata as UserMetadata).role;
+	const uneditable = !RoleHeirarchy[role!].includes(targetRole);
 
 	const projects = await prisma.project.findMany({
 		where: {
@@ -52,19 +53,19 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 			<header className="flex gap-5 items-center justify-between">
 				<div>
 					<p className="text-2xl text-primary">
-						{user.firstName} {user.lastName}
+						{target.firstName} {target.lastName}
 					</p>
 					<p className="text-lg text-base-content/70">
-						{user.emailAddresses.find((email: any) => email.id === user.primaryEmailAddressId)?.emailAddress}
+						{target.emailAddresses.find((email: any) => email.id === target.primaryEmailAddressId)?.emailAddress}
 					</p>
 				</div>
 
-				{user.banned && <div className="text-error/90 italic text-4xl">User is Banned</div>}
+				{target.banned && <div className="text-error/90 italic text-4xl">User is Banned</div>}
 
 				<div className="flex gap-5">
-					{user.banned ? (
+					{target.banned ? (
 						<WarningButton
-							value={user.id}
+							value={target.id}
 							valueName="targetUserId"
 							buttonText="Unban User"
 							warningText="This will allow the banned user to log in again. All submissions previously made will remain."
@@ -74,7 +75,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 						/>
 					) : (
 						<WarningButton
-							value={user.id}
+							value={target.id}
 							valueName="targetUserId"
 							buttonText="Ban User"
 							warningText="This will prevent the user from being able to log in. They may be unbanned in the future, and their submissions will remain."
@@ -85,7 +86,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 					)}
 
 					<WarningButton
-						value={user.id}
+						value={target.id}
 						valueName="targetUserId"
 						buttonText="Delete User"
 						warningText="This will permanently delete the user and all of their submissions."
@@ -99,47 +100,47 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 
 			<div>
 				<div>
-					<span className="text-primary">Role:</span> {(user.publicMetadata.role as Role) || "No Role"}{" "}
+					<span className="text-primary">Role:</span> {(target.publicMetadata.role as Role | undefined) || "No Role"}{" "}
 					{uneditable && <span className="pl-5 text-base-content/50 italic">You may not edit users of this role</span>}
 				</div>
 
 				<div className="flex gap-3">
 					{role === "admin" && (
 						<form action={setRoleAction}>
-							<input type="hidden" value={user.id} name="targetUserId" />
+							<input type="hidden" value={target.id} name="targetUserId" />
 							<input type="hidden" value="moderator" name="role" />
-							<button type="submit" className="btn" disabled={uneditable || user.publicMetadata.role === "moderator"}>
+							<button type="submit" className="btn" disabled={uneditable || target.publicMetadata.role === "moderator"}>
 								Make Moderator
 							</button>
 						</form>
 					)}
 
 					<form action={setRoleAction}>
-						<input type="hidden" value={user.id} name="targetUserId" />
+						<input type="hidden" value={target.id} name="targetUserId" />
 						<input type="hidden" value="contributor" name="role" />
-						<button type="submit" className="btn" disabled={uneditable || user.publicMetadata.role === "contributor"}>
+						<button type="submit" className="btn" disabled={uneditable || target.publicMetadata.role === "contributor"}>
 							Make Contributor
 						</button>
 					</form>
 
 					<form action={removeRoleAction}>
-						<input type="hidden" value={user.id} name="targetUserId" />
+						<input type="hidden" value={target.id} name="targetUserId" />
 						<button type="submit" className="btn" disabled={uneditable}>
 							Remove Role
 						</button>
 					</form>
 				</div>
 
-				{!!user.publicMetadata.roleApplication && (
+				{!!target.publicMetadata.roleApplication && (
 					<div>
-						{/* @ts-ignore */}
-						<span className="text-primary">Role Application:</span> {user.publicMetadata.roleApplication.role}
+						<span className="text-primary">Role Application:</span>{" "}
+						{(target.publicMetadata as UserMetadata).roleApplication!.role}
 					</div>
 				)}
 			</div>
 
 			<div className="grid grid-cols-2 gap-5">
-				<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col relative">
 							<h2 className="text-2xl text-primary font-medium mb-4">Projects:</h2>

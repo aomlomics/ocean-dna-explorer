@@ -2,20 +2,22 @@
 
 import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError } from "@/app/helpers/queries";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
-	isPrivate: Analysis["isPrivate"],
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
-	const { userId, sessionClaims } = await auth();
+	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
@@ -28,7 +30,6 @@ async function doSubmit(
 			analysisChannel,
 			assignmentsChannel,
 			occurrencesChannel,
-			isPrivate,
 			trusted
 		});
 		if (!parseResult) {
@@ -62,7 +63,6 @@ async function doSubmit(
 					project_id: analysis.project_id
 				},
 				select: {
-					isPrivate: true,
 					userIds: true
 				}
 			}),
@@ -111,16 +111,11 @@ async function doSubmit(
 			})
 		]);
 
-		//check if the associated project is private, and throw an error if it is private but the submission is public
 		if (!dbProject) {
 			throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
 		} else if (!dbProject.userIds.includes(userId)) {
 			throw new Error(
 				`Permission denied for adding analysis to Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
-			);
-		} else if (dbProject.isPrivate && !isPrivate) {
-			throw new Error(
-				`Project with project_id of ${analysis.project_id} is private. Analyses can't be public if the associated project is private.`
 			);
 		}
 
@@ -188,49 +183,106 @@ async function doSubmit(
 		}
 
 		//submission
-		await prisma.$transaction([
-			prisma.analysis.create({
-				//@ts-ignore issue with Json database type
-				data: {
-					...analysis,
-					Tags: {
-						connect: dbTags
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.analysis.create({
+					//@ts-ignore issue with Json database type
+					data: {
+						...analysis,
+						Tags: {
+							connect: dbTags
+						}
 					}
-				}
-			}),
-			prisma.feature.createMany({
-				data: features,
-				skipDuplicates: true
-			}),
-			prisma.taxonomy.createMany({
-				data: taxonomies,
-				skipDuplicates: true
-			}),
-			prisma.assignment.createMany({
-				data: assignments
-			}),
-			prisma.occurrence.createMany({
-				data: occurrences
-			}),
-			...(otherTrusted.length
-				? [
-						prisma.analysis.updateMany({
-							where: {
-								analysis_run_name: {
-									in: otherTrusted
-								}
-							},
-							data: {
-								trusted: false
+				});
+
+				await tx.feature.createMany({
+					data: features,
+					skipDuplicates: true
+				});
+
+				await tx.taxonomy.createMany({
+					data: taxonomies,
+					skipDuplicates: true
+				});
+
+				await tx.assignment.createMany({
+					data: assignments
+				});
+
+				await tx.occurrence.createMany({
+					data: occurrences
+				});
+
+				if (otherTrusted.length) {
+					await tx.analysis.updateMany({
+						where: {
+							analysis_run_name: {
+								in: otherTrusted
 							}
-						})
-					]
-				: [])
-		]);
+						},
+						data: {
+							trusted: false
+						}
+					});
+				}
+			},
+			{
+				timeout: 3 * 60 * 1000
+			}
+		);
+
+		// await prisma.$transaction([
+		// 	prisma.analysis.create({
+		// 		//@ts-ignore issue with Json database type
+		// 		data: {
+		// 			...analysis,
+		// 			Tags: {
+		// 				connect: dbTags
+		// 			}
+		// 		}
+		// 	}),
+		// 	prisma.feature.createMany({
+		// 		data: features,
+		// 		skipDuplicates: true
+		// 	}),
+		// 	prisma.taxonomy.createMany({
+		// 		data: taxonomies,
+		// 		skipDuplicates: true
+		// 	}),
+		// 	prisma.assignment.createMany({
+		// 		data: assignments
+		// 	}),
+		// 	prisma.occurrence.createMany({
+		// 		data: occurrences
+		// 	}),
+		// 	...(otherTrusted.length
+		// 		? [
+		// 				prisma.analysis.updateMany({
+		// 					where: {
+		// 						analysis_run_name: {
+		// 							in: otherTrusted
+		// 						}
+		// 					},
+		// 					data: {
+		// 						trusted: false
+		// 					}
+		// 				})
+		// 			]
+		// 		: [])
+		// ]);
 
 		await analysisChannel.stream.success("Analysis sucessfully uploaded to database.");
 		await assignmentsChannel.stream.success("Features, Taxonomies, and Assignments successfully uploaded to database.");
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
+
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
+			method: "POST",
+			headers: {
+				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+			}
+		});
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -250,7 +302,6 @@ export default async function analysisSubmitAction(
 	analysisFileUrl: Analysis["analysisMetadataFileUrl_ODE"],
 	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
 	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
-	isPrivate: Analysis["isPrivate"],
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
@@ -258,18 +309,15 @@ export default async function analysisSubmitAction(
 	const assignmentsStream = createProgressStream();
 	const occurrencesStream = createProgressStream();
 
-	if (
-		typeof analysisFileUrl !== "string" ||
-		typeof assignmentsFileUrl !== "string" ||
-		typeof occurrencesFileUrl !== "string"
-	) {
-		await analysisStream.error("Arguments are not of correct type");
-		await assignmentsStream.error("Arguments are not of correct type");
-		await occurrencesStream.error("Arguments are not of correct type");
+	const validBlobs = await validateBlobs([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+	if (!validBlobs) {
+		analysisStream.error("Files are not valid");
+		assignmentsStream.error("Files are not valid");
+		occurrencesStream.error("Files are not valid");
 
-		await analysisStream.close();
-		await assignmentsStream.close();
-		await occurrencesStream.close();
+		analysisStream.close();
+		assignmentsStream.close();
+		occurrencesStream.close();
 
 		return [analysisStream.readable, assignmentsStream.readable, occurrencesStream.readable];
 	}
@@ -278,13 +326,16 @@ export default async function analysisSubmitAction(
 		{ url: analysisFileUrl, stream: analysisStream },
 		{ url: assignmentsFileUrl, stream: assignmentsStream },
 		{ url: occurrencesFileUrl, stream: occurrencesStream },
-		isPrivate,
 		trusted,
 		tagNames
-	).then(() => {
+	).then((success) => {
 		analysisStream.close();
 		assignmentsStream.close();
 		occurrencesStream.close();
+
+		if (!success) {
+			del([analysisFileUrl, assignmentsFileUrl, occurrencesFileUrl]);
+		}
 	});
 
 	return [analysisStream.readable, assignmentsStream.readable, occurrencesStream.readable];

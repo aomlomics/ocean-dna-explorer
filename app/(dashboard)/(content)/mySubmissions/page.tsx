@@ -11,6 +11,7 @@ import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButto
 import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
 import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 import { ProjectIcon } from "@/app/components/icons";
+import { prismaImages } from "@/app/helpers/prismaImages";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();
@@ -28,7 +29,6 @@ export default async function MySubmissions() {
 			select: {
 				project_id: true,
 				userIds: true,
-				isPrivate: true,
 				imageFileUrl_ODE: true,
 				projectMetadataFileUrl_ODE: true,
 				sampleMetadataFileUrl_ODE: true,
@@ -36,7 +36,6 @@ export default async function MySubmissions() {
 				Analyses: {
 					select: {
 						analysis_run_name: true,
-						isPrivate: true,
 						trusted: true,
 						analysisMetadataFileUrl_ODE: true,
 						asvFileUrl_ODE: true,
@@ -72,6 +71,8 @@ export default async function MySubmissions() {
 	]);
 	const badAnalyses = dbBadAnalyses.map((ba) => ba.analysis_run_name);
 
+	const attributions = await prismaImages.attribution.findMany();
+
 	return (
 		<div className="container mx-auto px-4 py-8">
 			{/* Breadcrumbs */}
@@ -102,7 +103,7 @@ export default async function MySubmissions() {
 
 			{/* Content Section */}
 			{/* Projects Section */}
-			<div className="card bg-base-200 shadow-sm min-h-[260px] h-fit hover:shadow-sm transition-shadow overflow-hidden">
+			<div className="card bg-base-200 shadow-sm min-h-65 h-fit hover:shadow-sm transition-shadow overflow-hidden">
 				<div className="card-body">
 					<div className="w-full h-full flex flex-col relative">
 						<>
@@ -148,11 +149,11 @@ export default async function MySubmissions() {
 
 													<ProjectEditButton
 														project_id={proj.project_id}
-														isPrivate={proj.isPrivate}
 														imageFileUrl_ODE={proj.imageFileUrl_ODE}
 														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
 														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
 														libraryMetadataFileUrl_ODE={proj.libraryMetadataFileUrl_ODE}
+														attributions={attributions}
 													/>
 
 													<SubmissionDeleteButton
@@ -183,12 +184,7 @@ export default async function MySubmissions() {
 																</Link>
 
 																<div className="flex gap-3">
-																	<AnalysisEditButton
-																		analysis={analysis}
-																		project_id={proj.project_id}
-																		isPrivateDisabled={proj.isPrivate}
-																		tags={tags}
-																	/>
+																	<AnalysisEditButton analysis={analysis} project_id={proj.project_id} tags={tags} />
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
 																		value={analysis.analysis_run_name}

@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
-import { unsafePrisma } from "../helpers/prisma";
+import { prisma } from "../helpers/prisma";
 import JSON5 from "json5";
 import { getTableName } from "../helpers/schema";
 
@@ -30,7 +30,7 @@ export default async function unsafeConsoleAction(
 			return { statusMessage: "error", error: "Model query must be string." };
 		}
 
-		if (!Object.keys(unsafePrisma[model]).includes(modelQuery)) {
+		if (!Object.keys(prisma[model]).includes(modelQuery)) {
 			return { statusMessage: "error", error: "Invalid model query." };
 		}
 
@@ -38,9 +38,8 @@ export default async function unsafeConsoleAction(
 			return { statusMessage: "error", error: "Query must be string." };
 		}
 
-		//@ts-ignore
 		JSON5.parse(query);
-		// await unsafePrisma[model][modelQuery](JSON.parse(query));
+		// await prisma[model][modelQuery](JSON.parse(query));
 
 		return { statusMessage: "success" };
 	} catch (err) {

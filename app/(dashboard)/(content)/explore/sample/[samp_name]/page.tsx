@@ -3,7 +3,7 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
-import { Sample } from "@/app/generated/prisma/client";
+import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import { Suspense } from "react";
@@ -20,22 +20,27 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 			samp_name
 		},
 		include: {
-			Assays: {
+			Libraries: {
 				select: {
-					assay_name: true,
-					target_gene: true
-				}
-			},
-			Project: {
-				select: {
-					isPrivate: true
+					Assay: {
+						select: {
+							assay_name: true,
+							target_gene: true
+						}
+					}
 				}
 			}
 		}
 	});
 
 	if (!sample) return <>Sample not found</>;
-	const { Assays: _, Project: __, ...justSample } = sample;
+	const { Libraries: _, ...justSample } = sample;
+	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
+	for (const lib of sample.Libraries) {
+		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
+			uniqueAssays.push(lib.Assay);
+		}
+	}
 
 	return (
 		<div id="sample" className="space-y-8 pb-8">
@@ -69,7 +74,6 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					>
 						{samp_name}
 					</h1>
-					{sample.Project.isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
@@ -88,21 +92,21 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					{/* Assays Section */}
 					<div id="assays-section" className="target:animate-flash">
 						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-							Assays used on this Sample ({sample.Assays.length})
+							Assays used on this Sample ({uniqueAssays.length})
 						</h2>
 						<div className="space-y-2">
-							{sample.Assays.map((assay) => (
-								<div key={assay.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
+							{uniqueAssays.map((a) => (
+								<div key={a.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
 									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
 										<div className="relative w-12 h-12">
 											<Suspense>
-												<AssayPhyloPic assay_name={assay.assay_name} />
+												<AssayPhyloPic assay_name={a.assay_name} />
 											</Suspense>
 										</div>
 									</div>
 									<div>
-										<h3 className="font-bold text-lg text-base-content">{assay.target_gene}</h3>
-										<p className="text-base-content/70">{assay.assay_name}</p>
+										<h3 className="font-bold text-lg text-base-content">{a.target_gene}</h3>
+										<p className="text-base-content/70">{a.assay_name}</p>
 									</div>
 								</div>
 							))}
@@ -157,7 +161,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 							}
 						/>
 
-						<DropdownCard table="assay" items={sample.Assays} icon={<AssayIcon />} />
+						<DropdownCard table="assay" items={uniqueAssays.map((a) => a.assay_name)} icon={<AssayIcon />} />
 
 						<StatCard
 							title="Taxonomies"

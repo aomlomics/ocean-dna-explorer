@@ -3,11 +3,14 @@
 import { Analysis, Occurrence, Project, Tag } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError } from "@/app/helpers/queries";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { AsyncReturnType, ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 async function doEdit(
 	stream: ProgressStream,
@@ -16,10 +19,13 @@ async function doEdit(
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
-		isPrivate,
 		trusted,
 		tagNames
-	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
+	}: {
+		url?: string;
+		trusted?: boolean;
+		tagNames?: Tag["tagName"][];
+	}
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -56,7 +62,6 @@ async function doEdit(
 				channel: { stream, url },
 				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
 				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
-				isPrivate,
 				trusted,
 				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 			});
@@ -69,13 +74,11 @@ async function doEdit(
 
 		await prisma.$transaction(
 			async (tx) => {
-				//check if the associated project is private, and throw an error if it is private but the submission is public
 				const project = await tx.project.findUnique({
 					where: {
 						project_id
 					},
 					select: {
-						isPrivate: true,
 						userIds: true
 					}
 				});
@@ -84,10 +87,6 @@ async function doEdit(
 				} else if (!project.userIds.includes(userId)) {
 					throw new Error(
 						`Permission denied for editing analysis with Project with project_id of ${project_id}. Please contact submission owner with a request to be added to the Project.`
-					);
-				} else if (project.isPrivate && !isPrivate) {
-					throw new Error(
-						`Project with project_id of ${project_id} is private. Analyses can't be public if the associated project is private.`
 					);
 				}
 
@@ -98,7 +97,6 @@ async function doEdit(
 					select: {
 						analysisMetadataFileUrl_ODE: true,
 						analysisMetadataFileChecksum_ODE: true,
-						isPrivate: true,
 						trusted: true,
 						editHistory: true,
 						Tags: {
@@ -133,7 +131,6 @@ async function doEdit(
 							: false
 					}
 				})) as unknown as {
-					isPrivate: Analysis["isPrivate"];
 					trusted: Analysis["trusted"];
 					editHistory: PrismaJson.EditHistoryType | null;
 					analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
@@ -231,7 +228,6 @@ async function doEdit(
 									])
 								}
 							: {
-									isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate,
 									trusted: trusted === undefined ? dbAnalysis.trusted : trusted
 								}),
 						Tags: {
@@ -270,6 +266,8 @@ async function doEdit(
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -287,14 +285,32 @@ export default async function analysisEditAction(
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
-		isPrivate,
 		trusted,
 		tagNames
-	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
+	}: {
+		url?: string;
+		trusted?: boolean;
+		tagNames?: Tag["tagName"][];
+	}
 ) {
 	const stream = createProgressStream();
 
-	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, trusted, tagNames }).then(stream.close);
+	if (url) {
+		const validBlob = await validateBlobs([url]);
+		if (!validBlob) {
+			stream.error("File is not valid");
+			stream.close();
+			return stream.readable;
+		}
+	}
+
+	doEdit(stream, editId, project_id, analysis_run_name, { url, trusted, tagNames }).then((success) => {
+		stream.close();
+
+		if (url && !success) {
+			del(url);
+		}
+	});
 
 	return stream.readable;
 }

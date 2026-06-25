@@ -1,21 +1,23 @@
 "use server";
 
 import { Project } from "@/app/generated/prisma/client";
-import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { v4 as uuidv4 } from "uuid";
+import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import { del } from "@vercel/blob";
+import { validateBlobs } from "@/app/helpers/withDb";
 
 async function doEdit(
 	globalStream: ReturnType<typeof createProgressStream>,
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	project_id: Project["project_id"],
-	isPrivate?: boolean
+	project_id: Project["project_id"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -35,9 +37,9 @@ async function doEdit(
 				project_id
 			},
 			select: {
+				imageFileUrl_ODE: true,
 				userIds: true,
 				editHistory: true,
-				isPrivate: true,
 				projectMetadataFileUrl_ODE: true,
 				projectMetadataFileChecksum_ODE: true,
 				sampleMetadataFileUrl_ODE: true,
@@ -88,8 +90,7 @@ async function doEdit(
 			sampleChannel,
 			libraryChannel,
 			userIds: dbProject.userIds,
-			isPrivate: isPrivate === undefined ? dbProject.isPrivate : isPrivate
-			// oldChecksums
+			oldChecksums
 		});
 		if (!parseResult) {
 			return;
@@ -334,49 +335,35 @@ async function doEdit(
 
 				//delete unused
 				//samples
-				await tx.sample.deleteMany({
+				//get samples to flag as deleted
+				const occsWithDeletedSamps = await tx.occurrence.findMany({
 					where: {
-						project_id,
-						samp_name: {
-							notIn: sampNames
+						Analysis: {
+							project_id
 						},
-						Libraries: {
-							every: {
-								Occurrences: {
-									none: {}
-								}
-							}
-						}
-					}
-				});
-
-				//check if any samples need to be flagged as deleted
-				const samplesToDelete = await tx.sample.findMany({
-					where: {
-						project_id,
-						samp_name: {
-							notIn: sampNames
-						},
-						Libraries: {
-							every: {
-								Occurrences: {
-									none: {}
-								}
+						Library: {
+							samp_name: {
+								notIn: sampNames
 							}
 						}
 					},
 					select: {
-						id: true,
-						samp_name: true,
-						Libraries: {
+						analysis_run_name: true,
+						Library: {
 							select: {
-								Occurrences: {
-									distinct: ["analysis_run_name"],
-									select: {
-										analysis_run_name: true
-									}
-								}
+								samp_name: true
 							}
+						}
+					}
+				});
+				const samplesToDelete = Array.from(new Set(occsWithDeletedSamps.map((occ) => occ.Library.samp_name)));
+
+				//delete samples that were removed and don't need to be flagged
+				await tx.sample.deleteMany({
+					where: {
+						project_id,
+						samp_name: {
+							notIn: [...sampNames, ...samplesToDelete]
 						}
 					}
 				});
@@ -386,8 +373,8 @@ async function doEdit(
 					//update samples to be marked as deleted
 					await tx.sample.updateMany({
 						where: {
-							id: {
-								in: samplesToDelete.map((samp) => samp.id)
+							samp_name: {
+								in: samplesToDelete
 							}
 						},
 						data: {
@@ -396,46 +383,36 @@ async function doEdit(
 					});
 
 					//retrieve all unique analyses
-					const analysesToUpdate = Array.from(
-						samplesToDelete.reduce((acc, samp) => {
-							for (const occ of samp.Libraries.reduce(
-								(occs, lib) => [...occs, ...lib.Occurrences],
-								[] as { analysis_run_name: string }[]
-							)) {
-								acc.add(occ.analysis_run_name);
-							}
-							return acc;
-						}, new Set())
-					) as string[];
+					const analysesToUpdate = Array.from(new Set(occsWithDeletedSamps.map((occ) => occ.analysis_run_name)));
 
+					//TODO: sort the samples by analysis in response
 					//notify user of analyses that need to be fixed
 					if (analysesToUpdate.length) {
-						const sampNames = samplesToDelete.map((samp) => samp.samp_name);
-						const lastSample = sampNames.pop();
+						const lastSample = samplesToDelete.pop();
 						const lastAnalysis = analysesToUpdate.pop();
 
 						sampleSuccessMsg += ` ${
 							//plural Sample
-							sampNames.length ? "Samples" : "Sample"
+							samplesToDelete.length ? "Samples" : "Sample"
 						} to delete with the ${
 							//plural samp_name
-							sampNames.length ? "samp_names" : "samp_name"
+							samplesToDelete.length ? "samp_names" : "samp_name"
 						} of${
 							//list of samp_names
-							sampNames.length > 1
+							samplesToDelete.length > 1
 								? //at least 3
-									' "' + sampNames.join('", "') + '", and'
-								: sampNames.length === 1
+									' "' + samplesToDelete.join('", "') + '", and'
+								: samplesToDelete.length === 1
 									? //exactly 2
-										' "' + sampNames[0] + '" and'
+										' "' + samplesToDelete[0] + '" and'
 									: //exactly 1
 										""
 						} "${lastSample}" ${
 							//plural
-							sampNames.length ? "have" : "has"
+							samplesToDelete.length ? "have" : "has"
 						} Occurrences and can't be deleted. Please remove ${
 							//plural Sample
-							sampNames.length ? "these Samples" : "this Sample"
+							samplesToDelete.length ? "these Samples" : "this Sample"
 						} from the ${
 							//plural Analysis
 							analysesToUpdate.length ? "Analyses" : "Analysis"
@@ -461,11 +438,11 @@ async function doEdit(
 				//libraries
 				await tx.library.deleteMany({
 					where: {
-						Sample: {
-							project_id
-						},
 						lib_id: {
 							notIn: libraries.map((lib) => lib.lib_id)
+						},
+						Sample: {
+							project_id
 						}
 					}
 				});
@@ -476,6 +453,8 @@ async function doEdit(
 			},
 			{ timeout: 3 * 60 * 1000 } //3 minutes
 		);
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -491,47 +470,33 @@ export default async function projectEditAction({
 	project_id,
 	projectFileUrl,
 	sampleFileUrl,
-	libraryFileUrl,
-	isPrivate,
-	imageFileUrl
+	libraryFileUrl
 }: {
 	project_id: Project["project_id"];
 	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
 	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
 	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
-	isPrivate?: Project["isPrivate"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
 }) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();
 	const sampleStream = createProgressStream();
 	const libraryStream = createProgressStream();
 
-	if (!projectFileUrl && !sampleFileUrl && !libraryFileUrl) {
-		await globalStream.error("Must provide at least one new file.");
-
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
-
-		return {
-			global: globalStream.readable,
-			readables: [projectStream.readable, sampleStream.readable, libraryStream.readable]
-		};
+	let errorMsg;
+	const urls = [projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[];
+	const validBlobs = await validateBlobs(urls);
+	if (!urls.length) {
+		errorMsg = "Must provide at least one new file.";
+	} else if (!validBlobs) {
+		errorMsg = "Files are not valid";
 	}
+	if (errorMsg) {
+		globalStream.error(errorMsg);
 
-	if (
-		(projectFileUrl && typeof projectFileUrl !== "string") ||
-		(sampleFileUrl && typeof sampleFileUrl !== "string") ||
-		(libraryFileUrl && typeof libraryFileUrl !== "string")
-	) {
-		await globalStream.error("Arguments are not of correct type.");
-
-		await globalStream.close();
-		await projectStream.close();
-		await sampleStream.close();
-		await libraryStream.close();
+		globalStream.close();
+		projectStream.close();
+		sampleStream.close();
+		libraryStream.close();
 
 		return {
 			global: globalStream.readable,
@@ -544,13 +509,16 @@ export default async function projectEditAction({
 		{ url: projectFileUrl || "", stream: projectStream },
 		{ url: sampleFileUrl || "", stream: sampleStream },
 		{ url: libraryFileUrl || "", stream: libraryStream },
-		project_id,
-		isPrivate
-	).then(() => {
+		project_id
+	).then((success) => {
 		globalStream.close();
 		projectStream.close();
 		sampleStream.close();
 		libraryStream.close();
+
+		if (!success) {
+			del([projectFileUrl, sampleFileUrl, libraryFileUrl].filter(Boolean) as string[]);
+		}
 	});
 
 	return {

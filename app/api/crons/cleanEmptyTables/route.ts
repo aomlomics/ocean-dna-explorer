@@ -1,4 +1,4 @@
-import { handlePrismaError } from "@/app/helpers/prisma";
+import { handlePrismaError } from "@/app/helpers/queries";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
@@ -10,7 +10,7 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 
 	try {
 		// console.log("empty features delete");
-		// await unsafePrisma.feature.deleteMany({
+		// await prisma.feature.deleteMany({
 		// 	where: {
 		// 		Occurrences: {
 		// 			none: {}
@@ -19,7 +19,7 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 		// });
 
 		// console.log("empty taxonomies delete");
-		// await unsafePrisma.taxonomy.deleteMany({
+		// await prisma.taxonomy.deleteMany({
 		// 	where: {
 		// 		Assignments: {
 		// 			none: {}

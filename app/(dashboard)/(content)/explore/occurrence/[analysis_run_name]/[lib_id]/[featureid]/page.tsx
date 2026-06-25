@@ -6,25 +6,12 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, LocationIcon } from "@/app/components/icons";
+import { TaxonomicRanks } from "@/types/objects";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
-			return (
-				[
-					"domain",
-					"kingdom",
-					"supergroup",
-					"division",
-					"subdivision",
-					"phylum",
-					"class",
-					"order",
-					"family",
-					"genus",
-					"species"
-				].includes(key) && value
-			);
+			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
 		})
 		.map(([key, value]) => ({
 			rank: key.charAt(0).toUpperCase() + key.slice(1),
@@ -68,22 +55,13 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		include: {
 			Library: {
 				select: {
-					Sample: {
-						include: {
-							Project: {
-								select: {
-									isPrivate: true
-								}
-							}
-						}
-					}
+					Sample: true
 				}
 			},
 			Analysis: {
 				select: {
 					assay_name: true,
-					project_id: true,
-					isPrivate: true
+					project_id: true
 				}
 			},
 			Feature: {
@@ -99,8 +77,6 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		}
 	});
 	if (!occurrence) return <>Occurrence not found</>;
-
-	const isPrivate = occurrence.Analysis.isPrivate || occurrence.Library.Sample.Project.isPrivate;
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 
@@ -142,7 +118,6 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					>
 						{occurrenceTitle}
 					</h1>
-					{isPrivate && <div className="badge badge-ghost p-3">Private</div>}
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					This occurrence links the feature{" "}

@@ -2,8 +2,8 @@ import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "../helpers/schema";
 import Link from "next/link";
-import { stripSecureFields } from "../helpers/prisma";
 import { capitalizeTable } from "../helpers/utils";
+import { stripSecureFields } from "../helpers/queries";
 
 export default function SchemaDisplay() {
 	const tables = TableNames.map((t) => {

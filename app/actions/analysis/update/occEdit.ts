@@ -1,13 +1,16 @@
 "use server";
 
-import { Feature, Occurrence, Taxonomy } from "@/app/generated/prisma/client";
+import { Occurrence } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
-import { handlePrismaError, prisma, updateManyRaw } from "@/app/helpers/prisma";
+import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
+import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import { validateBlobs } from "@/app/helpers/withDb";
 import { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
+import { del } from "@vercel/blob";
 
 async function doEdit(
 	stream: ProgressStream,
@@ -15,7 +18,7 @@ async function doEdit(
 	editId: string,
 	analysis_run_name: Occurrence["analysis_run_name"]
 ) {
-	const { userId, sessionClaims } = await auth();
+	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
@@ -24,26 +27,15 @@ async function doEdit(
 	}
 
 	try {
-		const [dbAnalysis, assignments] = await prisma.$transaction([
-			prisma.analysis.findUnique({
-				where: {
-					analysis_run_name
-				},
-				select: {
-					occurrenceFileChecksum_ODE: true,
-					Project: { select: { userIds: true } }
-				}
-			}),
-			prisma.assignment.findMany({
-				where: {
-					analysis_run_name
-				},
-				select: {
-					featureid: true,
-					taxonomy: true
-				}
-			})
-		]);
+		const dbAnalysis = await prisma.analysis.findUnique({
+			where: {
+				analysis_run_name
+			},
+			select: {
+				occurrenceFileChecksum_ODE: true,
+				Project: { select: { userIds: true } }
+			}
+		});
 
 		if (!dbAnalysis) {
 			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
@@ -220,6 +212,18 @@ async function doEdit(
 		);
 
 		await stream.success("Success");
+
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
+			method: "POST",
+			headers: {
+				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+			},
+			body: JSON.stringify({
+				delete: true
+			})
+		});
+
+		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -238,7 +242,22 @@ export default async function occEditAction(
 ) {
 	const stream = createProgressStream();
 
-	doEdit(stream, url, editId, analysis_run_name).then(stream.close);
+	if (url) {
+		const validBlob = await validateBlobs([url]);
+		if (!validBlob) {
+			stream.error("File is not valid");
+			stream.close();
+			return stream.readable;
+		}
+	}
+
+	doEdit(stream, url, editId, analysis_run_name).then((success) => {
+		stream.close();
+
+		if (url && !success) {
+			del(url);
+		}
+	});
 
 	return stream.readable;
 }

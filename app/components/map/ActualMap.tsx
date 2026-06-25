@@ -18,7 +18,6 @@ import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
-import "react-leaflet-markercluster/styles";
 import Link from "next/link";
 import { Dispatch, ReactNode, RefObject, SetStateAction, useEffect, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -67,8 +66,9 @@ const DEFAULT_OUTSIDE_COLOR = chroma("black");
 const DEFAULT_PALETTE = "YlGnBu";
 const DEFAULT_POINT_SIZE = 15;
 const DEFAULT_POINT_SIZE_STEP = 5;
-const DEFAULT_CLUSTER_RADIUS = 50;
+const DEFAULT_CLUSTER_RADIUS = 0;
 const chromaMin = 35;
+const lightMin = 35;
 
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
@@ -328,7 +328,15 @@ export default function ActualMap({
 			}
 		}
 
-		mapProps = { bounds };
+		//check if all points are in the same spot
+		if (bounds[0][0] === bounds[1][0] && bounds[0][1] === bounds[1][1]) {
+			mapProps = {
+				center: [bounds[0][0], bounds[0][1]] as unknown as LatLng,
+				zoom: 5
+			};
+		} else {
+			mapProps = { bounds };
+		}
 	}
 	const defaultMapProps = { ...mapProps };
 
@@ -339,7 +347,7 @@ export default function ActualMap({
 
 		//assign color to each option
 		const optionsArray = Array.from(defaultOptions);
-		const colors = distinctColors({ count: optionsArray.length, chromaMin });
+		const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 		const colorMap = {} as Record<string, Color>;
 		for (let i = 0; i < optionsArray.length; i++) {
 			colorMap[optionsArray[i]] = colors[i];
@@ -393,7 +401,7 @@ export default function ActualMap({
 				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
 			} else {
 				//valid
-				const colors = distinctColors({ count: optionsArray.length, chromaMin });
+				const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 				const colorMap = {} as Record<string, Color>;
 				for (let i = 0; i < optionsArray.length; i++) {
 					colorMap[optionsArray[i]] = colors[i];
@@ -438,7 +446,7 @@ export default function ActualMap({
 					return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
 				} else {
 					//valid
-					const colors = distinctColors({ count: optionsArray.length, chromaMin });
+					const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 					const colorMap = {} as Record<string, Color>;
 					for (let i = 0; i < optionsArray.length; i++) {
 						colorMap[optionsArray[i]] = colors[i];
@@ -813,12 +821,10 @@ export default function ActualMap({
 			<MapContainer
 				ref={mapRef}
 				preferCanvas={false}
-				maxBounds={
-					[
-						[-180, -180],
-						[180, 180]
-					] as LatLngBoundsExpression
-				}
+				maxBounds={[
+					[-90, -180],
+					[90, 180]
+				]}
 				className="w-full h-full grow"
 				{...mapProps}
 			>
@@ -1203,7 +1209,7 @@ function PopupWithSearch({
 }) {
 	return (
 		<Popup className="map-popup" maxWidth={maxWidth}>
-			<div className="card card-xs card-body justify-center min-h-[45px] min-w-[45px] max-h-[200px] bg-base-100 shadow-sm p-4 gap-0">
+			<div className="card card-xs card-body justify-center min-h-11.25 min-w-11.25 max-h-50 bg-base-100 shadow-sm p-4 gap-0">
 				<PopupWithSearchBody
 					table={table}
 					titleTable={titleTable}
@@ -1497,7 +1503,7 @@ function Collapsible({
 
 	let panel = (
 		<div
-			className={`card card-xs card-body justify-center min-h-[45px] min-w-[45px] gap-0 bg-base-100 shadow-sm p-0 ${
+			className={`card card-xs card-body justify-center min-h-11.25 min-w-11.25 gap-0 bg-base-100 shadow-sm p-0 ${
 				collapse ? "hidden" : ""
 			}`}
 		>

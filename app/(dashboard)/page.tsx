@@ -2,7 +2,6 @@ import { MainStats, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
-import { publicPrisma } from "../helpers/prisma";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import { Suspense } from "react";
@@ -87,7 +86,7 @@ export default function Home() {
 							<span>Showing all </span>
 							<span className="text-primary">Projects</span>
 						</div>
-						<ClientMap url={"/api/sample"} legend titleTable="project" cluster clusterRadius={20} />
+						<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
 					</div>
 
 					{/* Assay Stats Section */}
@@ -165,34 +164,41 @@ export default function Home() {
 
 					<div className="p-8 rounded-lg justify-center mx-auto max-w-fit mt-8 lg:-mt-4">
 						<div className="flex flex-col lg:flex-row justify-center items-center gap-10 lg:gap-20">
-							<div className="relative h-16 w-48 lg:h-24 lg:w-64">
-								<Link href="https://oceanexplorer.noaa.gov/welcome.html" target="_blank" rel="noreferrer">
-									<Image
-										src="/images/noaa_oar_logo.svg"
-										alt="NOAA Oceanic and Atmospheric Research logo"
-										fill
-										sizes="(max-width: 1024px) 12rem, 16rem"
-										className="object-contain noaa-oar-logo [html[data-theme='dark']_&]:hidden"
-									/>
-									<Image
-										src="/images/noaa_oar_logo_dark.svg"
-										alt="NOAA Oceanic and Atmospheric Research logo"
-										fill
-										sizes="(max-width: 1024px) 12rem, 16rem"
-										className="object-contain noaa-oar-logo hidden [html[data-theme='dark']_&]:block"
-									/>
-								</Link>
-							</div>
-							<div className="relative h-16 w-80 lg:h-24 lg:w-104">
-								<Link href="https://www.northerngulfinstitute.org/" target="_blank" rel="noreferrer">
-									<ThemeAwareLogo
-										src="/images/ngi_msu_logo_FINAL.svg"
-										alt="Mississippi State University, Northern Gulf Institute Logo"
-										fill={true}
-										className="object-contain"
-									/>
-								</Link>
-							</div>
+							<Link
+								href="https://oceanexplorer.noaa.gov/welcome.html"
+								target="_blank"
+								rel="noreferrer"
+								className="relative h-16 w-48 lg:h-24 lg:w-64"
+							>
+								<Image
+									src="/images/noaa_oar_logo.svg"
+									alt="NOAA Oceanic and Atmospheric Research logo"
+									fill
+									sizes="(max-width: 1024px) 12rem, 16rem"
+									className="object-contain noaa-oar-logo [html[data-theme='dark']_&]:hidden"
+								/>
+								<Image
+									src="/images/noaa_oar_logo_dark.svg"
+									alt="NOAA Oceanic and Atmospheric Research logo"
+									fill
+									sizes="(max-width: 1024px) 12rem, 16rem"
+									className="object-contain noaa-oar-logo hidden [html[data-theme='dark']_&]:block"
+								/>
+							</Link>
+
+							<Link
+								href="https://www.northerngulfinstitute.org/"
+								target="_blank"
+								rel="noreferrer"
+								className="relative h-16 w-80 lg:h-24 lg:w-104"
+							>
+								<ThemeAwareLogo
+									src="/images/ngi_msu_logo_FINAL.svg"
+									alt="Mississippi State University, Northern Gulf Institute Logo"
+									fill={true}
+									className="object-contain"
+								/>
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -202,7 +208,14 @@ export default function Home() {
 }
 
 async function SuspenseCarousel() {
-	const carouselImages = await prismaImages.image.findMany({ include: { Attribution: true } });
+	const carouselImages = await prismaImages.image.findMany({
+		where: {
+			homePage: true
+		},
+		include: {
+			Attribution: true
+		}
+	});
 
 	let currentIndex = carouselImages.length;
 

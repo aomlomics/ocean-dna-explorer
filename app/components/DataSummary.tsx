@@ -1,6 +1,7 @@
-import { publicPrisma } from "../helpers/prisma";
+import { prisma } from "../helpers/prisma";
 import Link from "next/link";
 import DoughnutChart from "./charts/DoughnutChart";
+import { Assay } from "../generated/prisma/client";
 
 export type SummaryItemData = {
 	title: string;
@@ -10,72 +11,53 @@ export type SummaryItemData = {
 };
 
 export async function AssayStats() {
-	const [uniqueAssays, analyses] = await publicPrisma.$transaction([
-		publicPrisma.assay.findMany({
-			distinct: ["target_gene"],
-			where: {
-				Analyses: {
-					some: {
-						isPrivate: false
-					}
+	const analyses = await prisma.analysis.findMany({
+		select: {
+			_count: {
+				select: {
+					Assignments: true
 				}
 			},
-			select: {
-				target_gene: true
-			}
-		}),
-		publicPrisma.analysis.findMany({
-			select: {
-				_count: {
-					select: {
-						Assignments: true
-					}
-				},
-				Assay: {
-					select: {
-						target_gene: true
-					}
+			Assay: {
+				select: {
+					target_gene: true
 				}
 			}
-		})
-	]);
-
-	const analysesByTargetGene = {} as Record<string, typeof analyses>;
-	for (const a of analyses) {
-		if (analysesByTargetGene[a.Assay.target_gene]) {
-			analysesByTargetGene[a.Assay.target_gene].push(a);
-		} else {
-			analysesByTargetGene[a.Assay.target_gene] = [a];
 		}
-	}
+	});
 
-	const targetGeneCounts = [] as { target_gene: (typeof uniqueAssays)[0]["target_gene"]; count: number }[];
-	for (const a of uniqueAssays) {
-		targetGeneCounts.push({
-			...a,
-			count: analysesByTargetGene[a.target_gene].reduce((sum, current) => sum + current._count.Assignments, 0)
-		});
+	const countsByGene = {} as Record<Assay["target_gene"], number>;
+	for (const a of analyses) {
+		if (a.Assay.target_gene in countsByGene) {
+			countsByGene[a.Assay.target_gene] += a._count.Assignments;
+		} else {
+			countsByGene[a.Assay.target_gene] = a._count.Assignments;
+		}
 	}
 
 	return (
 		<div className="w-full flex justify-center mt-4">
 			<div className="w-full max-w-4xl">
-				<DoughnutChart
-					labels={targetGeneCounts.map((a) => a.target_gene)}
-					data={targetGeneCounts.map((a) => a.count || 0)}
-				/>
+				<DoughnutChart labels={Object.keys(countsByGene)} data={Object.values(countsByGene)} />
 			</div>
 		</div>
 	);
 }
 
 export async function MainStats() {
-	const [projectCount, sampleCount, taxaCount, occurrenceCount] = await publicPrisma.$transaction([
-		publicPrisma.project.count(),
-		publicPrisma.sample.count(),
-		publicPrisma.taxonomy.count(),
-		publicPrisma.occurrence.count()
-	]);
+	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await prisma.$transaction(
+		async (tx) => {
+			const projectCount = await prisma.project.count();
+			const sampleCount = await prisma.sample.count();
+			const taxaCount = await prisma.taxonomy.count();
+			const occurrenceCount = await prisma.occurrence.count();
+
+			return { projectCount, sampleCount, taxaCount, occurrenceCount };
+		},
+		{
+			timeout: 1 * 60 * 1000
+		}
+	);
 
 	const summaryItems = [
 		{

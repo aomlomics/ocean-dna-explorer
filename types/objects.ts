@@ -10,7 +10,7 @@ export const RoleHeirarchy = {
 	admin: ["moderator", "contributor", undefined],
 	moderator: ["contributor", undefined],
 	contributor: []
-} as Record<Role, Array<Role>>;
+} as Record<Role, Array<Role | undefined>>;
 
 export const RolePermissions = {
 	admin: ["contribute", "manageUsers", "manageDatabase"],
@@ -51,24 +51,24 @@ export const ZodBooleanSchema = z
 
 export const TaxonomicRanks = [
 	"domain",
-	"kingdom",
 	"supergroup",
 	"division",
-	"subdivision",
+	"kingdom",
 	"phylum",
 	"class",
 	"order",
 	"family",
 	"genus",
 	"species"
-] as Array<keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification">>;
+] as Array<
+	keyof Omit<Taxonomy, "id" | "taxonomy" | "imageFileUrl_ODE" | "verbatimIdentification" | "higherClassification">
+>;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
 	domain: "Domains",
-	kingdom: "Kingdoms",
 	supergroup: "Supergroups",
 	division: "Divisions",
-	subdivision: "Subdivisions",
+	kingdom: "Kingdoms",
 	phylum: "Phyla",
 	class: "Classes",
 	order: "Orders",
@@ -77,7 +77,7 @@ export const RankPlurals = {
 	species: "Species"
 };
 
-export const GlobalOmit = ["userIds", "isPrivate", "editHistory", "deleted_ODE"];
+export const GlobalOmit = ["userIds", "editHistory", "deleted_ODE"];
 
 export const TypeSeparators = {
 	string: "|",
