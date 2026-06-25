@@ -197,14 +197,17 @@ export default function TaxonomyVisualToggle({
 								>
 									❮
 								</button>
-								<div>
+
+								<div className="relative w-full h-full">
 									<Image
 										src={taxonomySpotlights[spotlightIndex].imageFileUrl_ODE}
 										alt={taxonomySpotlights[spotlightIndex].Image.name || `Taxonomy Spotlight for ${taxonomy.taxonomy}`}
 										fill
 										style={{ objectFit: "contain" }}
+										sizes="33vw"
 									/>
 								</div>
+
 								<button
 									className="btn btn-secondary rounded-full"
 									onClick={() =>
