@@ -31,10 +31,10 @@ export default function ImageDeleteButton({ imageId, imageName }: { imageId: num
 				isOpen={open}
 				onClose={() => setOpen(false)}
 				onConfirm={confirm}
-				projectId={imageName}
+				title={imageName}
 				associatedAnalyses={[]}
 				entityLabel="image"
 			/>
 		</div>
 	);
-} 
+}

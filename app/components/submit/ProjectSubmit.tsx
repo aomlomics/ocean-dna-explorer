@@ -93,12 +93,13 @@ export default function ProjectSubmit() {
 			behavior: "smooth"
 		});
 
+		const form = event.currentTarget;
 		//get all files from event beforehand
-		const projectFile = event.currentTarget.project.files[0] as File;
-		const sampleFile = event.currentTarget.sample.files[0] as File;
-		const libraryFile = event.currentTarget.library.files[0] as File;
+		const projectFile = form.project.files[0] as File;
+		const sampleFile = form.sample.files[0] as File;
+		const libraryFile = form.library.files[0] as File;
 
-		const imageFile = getImageFile(event.currentTarget);
+		const imageFile = getImageFile(form);
 		let imageInfo;
 		if (imageFile) {
 			if (!imageFile.type.startsWith("image")) {
@@ -107,8 +108,8 @@ export default function ProjectSubmit() {
 			}
 
 			imageInfo = {
-				image: getImageFromForm(event.currentTarget, newAttribution, currAttribution),
-				attribution: newAttribution ? getAttributionFromForm(event.currentTarget) : undefined
+				image: getImageFromForm(form, newAttribution, currAttribution),
+				attribution: getAttributionFromForm(form, newAttribution)
 			};
 		}
 

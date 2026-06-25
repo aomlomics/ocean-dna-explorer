@@ -8,15 +8,16 @@ import { Project, Taxonomy, TaxonomySpotlight } from "../generated/prisma/client
 import { upload } from "@vercel/blob/client";
 import submitSpotlightAction from "../actions/taxonomySpotlight/submitSpotlight";
 import { TaxonomySpotlightOptionalDefaults } from "@/prisma/generated/zod";
+import { ImageWithRelations } from "@/prismaImages/generated/zod";
 
-//TODO: allow selecting pre-existing spotlight
+//TODO: show current spotlight image
 export default function SpotlightSubmitButton({
 	taxonomy,
 	spotlights,
 	availableProjects
 }: {
 	taxonomy: Taxonomy["taxonomy"];
-	spotlights: TaxonomySpotlight[];
+	spotlights: (TaxonomySpotlight & { Image: ImageWithRelations })[];
 	availableProjects: Project["project_id"][];
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
@@ -24,52 +25,60 @@ export default function SpotlightSubmitButton({
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 
+	const [newSpotlight, setNewSpotlight] = useState(false);
+	const [currSpotlight, setCurrSpotlight] = useState(undefined as (typeof spotlights)[number] | undefined);
+
 	const [newAttribution, setNewAttribution] = useState(false);
 	const [currAttribution, setCurrAttribution] = useState(undefined as Attribution | undefined);
 
 	function reset() {
+		setNewAttribution(false);
+		setCurrAttribution(undefined);
 		formRef.current?.reset();
 	}
 
 	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
-		const imageFile = getImageFile(event.currentTarget)!;
-		if (!imageFile.type.startsWith("imageFile")) {
-			//TODO: handle error better
-			throw new Error("Image file must have type image/*");
+		const form = event.currentTarget;
+
+		let spotlight = currSpotlight as TaxonomySpotlightOptionalDefaults;
+		let image;
+		if (newSpotlight) {
+			const imageFile = getImageFile(form)!;
+			console.log(imageFile.type);
+			if (!imageFile.type.startsWith("image")) {
+				//TODO: handle error better
+				throw new Error("Image file must have type image/*");
+			}
+			const imageUrl = (
+				await upload(`submissions/${imageFile.name}`, imageFile, {
+					access: "public",
+					handleUploadUrl: "/api/file/upload"
+				})
+			).url;
+
+			spotlight = {
+				imageFileUrl_ODE: imageUrl,
+				description: form.description.value,
+				project_id: form.project_id.value,
+				taxonomy,
+				commonName: form.commonName.value
+			};
+
+			image = {
+				...getImageFromForm(form, newAttribution, currAttribution),
+				url: imageUrl
+			};
 		}
-		const imageUrl = (
-			await upload(`submissions/${imageFile.name}`, imageFile, {
-				access: "public",
-				handleUploadUrl: "/api/file/upload"
-			})
-		).url;
 
-		const spotlight = {
-			imageFileUrl_ODE: imageUrl,
-			description: event.currentTarget.description,
-			project_id: event.currentTarget.project_id,
-			taxonomy,
-			commonName: event.currentTarget.commonName
-		} as TaxonomySpotlightOptionalDefaults;
-
-		const image = {
-			...getImageFromForm(event.currentTarget, newAttribution, currAttribution),
-			url: imageUrl
-		};
-
-		let attribution;
-		if (newAttribution) {
-			attribution = getAttributionFromForm(event.currentTarget);
-		}
-
-		const response = await submitSpotlightAction(spotlight, image, attribution);
+		const response = await submitSpotlightAction(spotlight, image, getAttributionFromForm(form, newAttribution));
 		if (response.statusMessage === "success") {
 			//TODO: show success
 			modalRef.current?.close();
 		} else if (response.statusMessage === "error") {
 			//TODO: show error
+			throw new Error(response.error);
 		}
 	}
 
@@ -106,14 +115,63 @@ export default function SpotlightSubmitButton({
 						</select>
 					</fieldset>
 
+					<div className="grid grid-cols-2 gap-5">
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend">Use Existing Spotlight</legend>
+							<select
+								className="select"
+								disabled={newSpotlight}
+								value={currSpotlight?.project_id}
+								onChange={(e) => setCurrSpotlight(spotlights.find((sl) => sl.project_id === e.target.value))}
+							>
+								<option value="">Select Spotlight</option>
+								{spotlights.map((sl) => (
+									<option key={sl.id}>{sl.project_id}</option>
+								))}
+							</select>
+						</fieldset>
+
+						<div className="grid grid-rows-[auto_1fr]">
+							<span className="select-none">{"\u200b"}</span>
+							<label className="label select-none">
+								<input
+									type="checkbox"
+									className="toggle"
+									checked={newSpotlight}
+									onChange={(e) => setNewSpotlight(e.target.checked)}
+								/>
+								New spotlight
+							</label>
+						</div>
+					</div>
+
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend">Description</legend>
-						<textarea name="description" className="textarea h-24" placeholder="Description" required></textarea>
+
+						<textarea
+							name="description"
+							className={`textarea h-24${newSpotlight ? "" : " hidden"}`}
+							placeholder="Description"
+							disabled={!newSpotlight}
+							required={newSpotlight}
+						/>
+
+						<textarea className={`textarea h-24${newSpotlight ? " hidden" : ""}`} placeholder="Description" disabled />
 					</fieldset>
 
 					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Common name</legend>
-						<input name="commonName" type="text" className="input" placeholder="Common name" />
+						<legend className="fieldset-legend">Common Name</legend>
+
+						<input
+							name="commonName"
+							type="text"
+							className={`input${newSpotlight ? "" : " hidden"}`}
+							placeholder="Common Name"
+							disabled={!newSpotlight}
+						/>
+
+						<input type="text" className={`input${newSpotlight ? " hidden" : ""}`} placeholder="Common Name" disabled />
+
 						<p className="label">Optional</p>
 					</fieldset>
 
@@ -123,9 +181,12 @@ export default function SpotlightSubmitButton({
 						currAttribution={currAttribution}
 						setCurrAttribution={setCurrAttribution}
 						required
+						disabled={!newSpotlight}
 					/>
 
-					<button className="btn btn-primary">Submit</button>
+					<button className="btn btn-primary" disabled={!newSpotlight && !currSpotlight}>
+						Submit
+					</button>
 				</form>
 			</Modal>
 		</>

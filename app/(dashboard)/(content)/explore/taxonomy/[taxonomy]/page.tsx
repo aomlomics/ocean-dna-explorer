@@ -4,7 +4,7 @@ import Link from "next/link";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 import CopyButton from "@/app/components/CopyButton";
 import TableMetadata from "@/types/tableMetadata";
-import { Project, Taxonomy } from "@/app/generated/prisma/client";
+import { Project, Taxonomy, TaxonomySpotlight } from "@/app/generated/prisma/client";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
@@ -13,6 +13,8 @@ import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 import InfoButton from "@/app/components/InfoButton";
 import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
 import { auth } from "@clerk/nextjs/server";
+import { prismaImages } from "@/app/helpers/prismaImages";
+import { ImageWithRelations } from "@/prismaImages/generated/zod";
 
 function finestDisplayedRank(db: Taxonomy): {
 	rankKey: (typeof TaxonomicRanks)[number];
@@ -151,6 +153,22 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	if (!dbTaxonomy) return <>Taxonomy not found</>;
 	const { Assignments, TaxonomySpotlights, ...justTaxonomy } = dbTaxonomy;
 
+	//get images and attributions for spotlights
+	const images = await prismaImages.image.findMany({
+		where: {
+			url: {
+				in: TaxonomySpotlights.map((sl) => sl.imageFileUrl_ODE)
+			}
+		},
+		include: {
+			Attribution: true
+		}
+	});
+	const spotlightsWithImages = TaxonomySpotlights.map((sl) => ({
+		...sl,
+		Image: images.find((i) => sl.imageFileUrl_ODE === i.url)
+	})) as (TaxonomySpotlight & { Image: ImageWithRelations })[];
+
 	// Get unique project IDs for display
 	const uniqueProjects = [...new Set(Assignments.map((a) => a.Analysis.project_id))];
 	const pageGbif = await resolveTaxonomyPageGbif(justTaxonomy);
@@ -233,7 +251,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								databaseScientificName={databaseScientificName}
 								commonName={pageGbif?.commonName ?? null}
 								allowedToSpotlight={!!userId && Assignments.some((a) => a.Analysis.Project.userIds.includes(userId))}
-								taxonomySpotlights={TaxonomySpotlights}
+								taxonomySpotlights={spotlightsWithImages}
 								availableProjects={
 									userId
 										? Assignments.reduce(

@@ -11,6 +11,8 @@ import GbifImage from "./GbifImage";
 import PhyloPicClient from "./PhyloPicClient";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import SpotlightSubmitButton from "../SpotlightSubmitButton";
+import Image from "next/image";
+import { ImageWithRelations } from "@/prismaImages/generated/zod";
 
 const SESSION_CONSENT_KEY = "opal-gbif-photo-warning-ok";
 
@@ -38,7 +40,7 @@ type TaxonomyVisualToggleProps = {
 	databaseScientificName: string;
 	commonName?: string | null;
 	allowedToSpotlight?: boolean;
-	taxonomySpotlights: TaxonomySpotlight[];
+	taxonomySpotlights: (TaxonomySpotlight & { Image: ImageWithRelations })[];
 	availableProjects: Project["project_id"][];
 };
 
@@ -191,15 +193,24 @@ export default function TaxonomyVisualToggle({
 								<button
 									className="btn btn-secondary rounded-full"
 									onClick={() => setSpotlightIndex(spotlightIndex ? spotlightIndex - 1 : taxonomySpotlights.length - 1)}
+									disabled={taxonomySpotlights.length < 2}
 								>
 									❮
 								</button>
-								<div>content {spotlightIndex}</div>
+								<div>
+									<Image
+										src={taxonomySpotlights[spotlightIndex].imageFileUrl_ODE}
+										alt={taxonomySpotlights[spotlightIndex].Image.name || `Taxonomy Spotlight for ${taxonomy.taxonomy}`}
+										fill
+										style={{ objectFit: "contain" }}
+									/>
+								</div>
 								<button
 									className="btn btn-secondary rounded-full"
 									onClick={() =>
 										setSpotlightIndex(spotlightIndex === taxonomySpotlights.length - 1 ? 0 : spotlightIndex + 1)
 									}
+									disabled={taxonomySpotlights.length < 2}
 								>
 									❯
 								</button>

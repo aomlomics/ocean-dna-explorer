@@ -41,12 +41,13 @@ export default function AddImageButton({
 
 		setLoading(true);
 
-		const imageFile = getImageFile(event.currentTarget)!;
-		if (!imageFile.type.startsWith("imageFile")) {
+		const form = event.currentTarget;
+		const imageFile = getImageFile(form)!;
+		if (!imageFile.type.startsWith("image")) {
 			setError("Image file must have type image/*");
 		}
 		const image = {
-			...getImageFromForm(event.currentTarget, newAttribution, currAttribution),
+			...getImageFromForm(form, newAttribution, currAttribution),
 			homePage,
 			url: (
 				await upload(`${homePage ? "carousel" : "images"}/${imageFile.name}`, imageFile, {
@@ -56,11 +57,7 @@ export default function AddImageButton({
 				})
 			).url
 		};
-
-		let attribution;
-		if (newAttribution) {
-			attribution = getAttributionFromForm(event.currentTarget);
-		}
+		const attribution = getAttributionFromForm(form, newAttribution);
 
 		try {
 			const result = await addImageAction({ image, attribution, project_id });

@@ -10,7 +10,8 @@ export default function ImageSubmitForm({
 	currAttribution,
 	setCurrAttribution,
 	loading,
-	required
+	required,
+	disabled
 }: {
 	newAttribution: boolean;
 	setNewAttribution: Dispatch<SetStateAction<boolean>>;
@@ -18,6 +19,7 @@ export default function ImageSubmitForm({
 	setCurrAttribution: Dispatch<SetStateAction<Attribution | undefined>>;
 	loading?: boolean;
 	required?: boolean;
+	disabled?: boolean;
 }) {
 	const [attributions, setAttributions] = useState([] as Attribution[]);
 
@@ -38,25 +40,13 @@ export default function ImageSubmitForm({
 	return (
 		<>
 			<fieldset className="fieldset">
-				<legend className="fieldset-legend">Image Name</legend>
-				<input
-					name="imageName"
-					type="text"
-					className="input"
-					placeholder="Image name"
-					disabled={loading}
-					required={required}
-				/>
-			</fieldset>
-
-			<fieldset className="fieldset">
 				<legend className="fieldset-legend">Image File</legend>
 				<input
 					name="imageFile"
 					type="file"
 					className="file-input"
 					accept="image/*"
-					disabled={loading}
+					disabled={loading || disabled}
 					required={required}
 				/>
 			</fieldset>
@@ -67,13 +57,13 @@ export default function ImageSubmitForm({
 						<legend className="fieldset-legend">Attribution</legend>
 						<select
 							className="select"
-							disabled={loading || newAttribution}
+							disabled={loading || newAttribution || disabled}
 							value={currAttribution?.attributionTitle}
 							onChange={(e) =>
 								setCurrAttribution(attributions.find((attr) => attr.attributionTitle === e.target.value))
 							}
 						>
-							<option value="">No attribution</option>
+							<option value="">No Attribution</option>
 							{attributions.map((attr) => (
 								<option key={attr.id}>{attr.attributionTitle}</option>
 							))}
@@ -81,28 +71,36 @@ export default function ImageSubmitForm({
 						<span className="label">Optional</span>
 					</fieldset>
 
-					<label className="label">
+					<label className={`label select-none${loading || disabled ? " cursor-not-allowed" : ""}`}>
 						<input
 							type="checkbox"
 							className="toggle"
-							disabled={loading}
+							disabled={loading || disabled}
 							checked={newAttribution}
 							onChange={(e) => setNewAttribution(e.target.checked)}
 						/>
-						New attribution
+						New Attribution
 					</label>
 				</div>
 
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Attribution Title</legend>
+
 					<input
 						name="attributionTitle"
 						type="text"
-						className="input"
-						placeholder="Attribution title"
-						disabled={loading || !newAttribution}
-						required={!!currAttribution || newAttribution}
-						defaultValue={currAttribution && !newAttribution ? currAttribution.attributionTitle : undefined}
+						className={`input${newAttribution ? "" : " hidden"}`}
+						placeholder="Attribution Title"
+						disabled={loading || !newAttribution || disabled}
+						required={newAttribution}
+					/>
+
+					<input
+						type="text"
+						className={`input${newAttribution ? " hidden" : ""}`}
+						placeholder="Attribution Title"
+						disabled
+						defaultValue={currAttribution?.attributionTitle || undefined}
 					/>
 				</fieldset>
 
@@ -110,60 +108,94 @@ export default function ImageSubmitForm({
 
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Attribution URL</legend>
+
 					<input
 						name="attributionUrl"
 						type="text"
-						className="input"
+						className={`input${newAttribution ? "" : " hidden"}`}
 						placeholder="Attribution URL"
-						disabled={loading || !newAttribution}
-						defaultValue={
-							currAttribution && !newAttribution && currAttribution.attributionUrl
-								? currAttribution.attributionUrl
-								: undefined
-						}
+						disabled={loading || !newAttribution || disabled}
 					/>
+
+					<input
+						type="text"
+						className={`input${newAttribution ? " hidden" : ""}`}
+						placeholder="Attribution URL"
+						disabled
+						defaultValue={currAttribution?.attributionUrl || undefined}
+					/>
+
 					<p className="label">Optional</p>
 				</fieldset>
 
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Attribution Institution</legend>
+
 					<input
 						name="attributionInstitution"
 						type="text"
-						className="input"
+						className={`input${newAttribution ? "" : " hidden"}`}
 						placeholder="Attribution Institution"
-						disabled={loading || !newAttribution}
-						defaultValue={
-							currAttribution && !newAttribution && currAttribution.attributionInstitution
-								? currAttribution.attributionInstitution
-								: undefined
-						}
+						disabled={loading || !newAttribution || disabled}
 					/>
+
+					<input
+						type="text"
+						className={`input${newAttribution ? " hidden" : ""}`}
+						placeholder="Attribution Institution"
+						disabled
+						defaultValue={currAttribution?.attributionInstitution || undefined}
+					/>
+
 					<p className="label">Optional</p>
 				</fieldset>
 			</div>
 
 			<fieldset className="fieldset">
+				<legend className="fieldset-legend">Image Name</legend>
+				<input name="imageName" type="text" className="input" placeholder="Image name" disabled={loading || disabled} />
+				<p className="label">Optional</p>
+			</fieldset>
+
+			<fieldset className="fieldset">
 				<legend className="fieldset-legend">Description</legend>
-				<input type="text" className="input" placeholder="Description" name="imageDescription" disabled={loading} />
+				<input
+					type="text"
+					className="input"
+					placeholder="Description"
+					name="imageDescription"
+					disabled={loading || disabled}
+				/>
 				<p className="label">Optional</p>
 			</fieldset>
 
 			<fieldset className="fieldset">
 				<legend className="fieldset-legend">Location</legend>
-				<input type="text" className="input" placeholder="Location" name="imageLocation" disabled={loading} />
+				<input
+					type="text"
+					className="input"
+					placeholder="Location"
+					name="imageLocation"
+					disabled={loading || disabled}
+				/>
 				<p className="label">Optional</p>
 			</fieldset>
 
 			<fieldset className="fieldset">
 				<legend className="fieldset-legend">Date Taken</legend>
-				<input type="date" className="input" placeholder="Date taken" name="imageDateTaken" disabled={loading} />
+				<input
+					type="date"
+					className="input"
+					placeholder="Date taken"
+					name="imageDateTaken"
+					disabled={loading || disabled}
+				/>
 				<p className="label">Optional</p>
 			</fieldset>
 
 			<fieldset className="fieldset">
 				<legend className="fieldset-legend">License</legend>
-				<input type="text" className="input" placeholder="License" name="imageLicense" disabled={loading} />
+				<input type="text" className="input" placeholder="License" name="imageLicense" disabled={loading || disabled} />
 				<p className="label">Optional</p>
 			</fieldset>
 		</>
@@ -180,22 +212,24 @@ export function getImageFromForm(
 	currAttribution: Attribution | undefined
 ) {
 	return {
-		name: form.imageName,
-		attributionTitle: newAttribution ? form.attributionTitle : currAttribution?.attributionTitle,
-		description: form.imageDescription || undefined,
-		location: form.imageLocation || undefined,
-		dateTaken: form.imageDateTaken || undefined,
-		license: form.imageLicense || undefined
+		attributionTitle: newAttribution ? form.attributionTitle.value : currAttribution?.attributionTitle,
+		name: form.imageName.value,
+		description: form.imageDescription.value || undefined,
+		location: form.imageLocation.value || undefined,
+		dateTaken: form.imageDateTaken.value || undefined,
+		license: form.imageLicense.value || undefined
 	} as Omit<Image, "id" | "dateSubmitted" | "url" | "userId" | "homePage"> & {
 		url?: Image["url"];
 		homePage?: Image["homePage"];
 	};
 }
 
-export function getAttributionFromForm(form: HTMLFormElement) {
-	return {
-		attributionTitle: form.attributionTitle,
-		attributionUrl: form.attributionUrl || undefined,
-		attributionInstitution: form.attributionInstitution || undefined
-	} as Omit<Attribution, "id">;
+export function getAttributionFromForm(form: HTMLFormElement, newAttribution: boolean) {
+	if (newAttribution) {
+		return {
+			attributionTitle: form.attributionTitle.value,
+			attributionUrl: form.attributionUrl.value || undefined,
+			attributionInstitution: form.attributionInstitution.value || undefined
+		} as Omit<Attribution, "id">;
+	}
 }

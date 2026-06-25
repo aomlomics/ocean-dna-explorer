@@ -9,11 +9,14 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
+import { Prisma as PrismaImage } from "../generated/prismaImages/client";
 import { deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { decompressFromEncodedURIComponent } from "lz-string";
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { $ZodIssue, ParseContext } from "zod/v4/core";
+import { ZodError } from "zod";
 
 export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
@@ -1078,4 +1081,18 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 	});
 
 	console.log("Seed successful");
+}
+
+export function schemaParseErrorFunction(iss: Parameters<NonNullable<ParseContext<$ZodIssue>["error"]>>[0]) {
+	return {
+		message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+	};
+}
+
+export function getSchemaParseError(error: ZodError, table: Prisma.ModelName | PrismaImage.ModelName, keys: string[]) {
+	return (
+		`Table: ${table}\n` +
+		keys?.map((k) => `Key: ${k}`).join("\n") +
+		`\n${error.issues.map((e) => e.message).join("\n\n")}`
+	);
 }

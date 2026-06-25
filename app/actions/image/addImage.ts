@@ -15,7 +15,8 @@ import { validateBlobs } from "@/app/helpers/withDb";
 import { Project } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
-import { AttributionCreateInput, ImageCreateInput } from "@/app/generated/prismaImages/models";
+import { PrismaPromise } from "@prisma/client/runtime/client";
+import { Attribution, Image } from "@/app/generated/prismaImages/client";
 
 export default async function addImageAction({
 	image,
@@ -45,27 +46,50 @@ export default async function addImageAction({
 		return { statusMessage: "error", error: "File is not valid." };
 	}
 
-	let parsedAttribution = undefined as undefined | AttributionCreateInput;
-	let parsedImage = undefined as undefined | ImageCreateInput;
+	let deleteDbImageOnError = false;
 	try {
-		parsedImage = ImageOptionalDefaultsSchema.parse({ ...image, userId });
+		const parsedImage = ImageOptionalDefaultsSchema.parse({ ...image, userId });
+		let parsedAttribution;
 		if (attribution) {
 			parsedAttribution = AttributionOptionalDefaultsSchema.parse(attribution);
 		}
 
-		await prismaImages.$transaction(async (tx) => {
-			if (parsedAttribution) {
-				await tx.attribution.create({
-					data: parsedAttribution
-				});
-			}
+		//create image and new attribution (if provided)
+		const queries = [prismaImages.image.create({ data: parsedImage! })] as PrismaPromise<Image | Attribution>[];
+		if (parsedAttribution) {
+			queries.unshift(prismaImages.attribution.create({ data: parsedAttribution }));
+			await prismaImages.$transaction(queries);
+		} else {
+			await queries[0];
+		}
+		deleteDbImageOnError = true;
 
-			await tx.image.create({
-				data: parsedImage!
+		if (project_id) {
+			await prisma.project.update({
+				where: {
+					project_id
+				},
+				data: {
+					imageFileUrl_ODE: image.url
+				}
 			});
-		});
+		}
+
+		return { statusMessage: "success" };
 	} catch (err: any) {
 		await del(image.url);
+
+		if (deleteDbImageOnError) {
+			const queries = [prismaImages.image.delete({ where: { url: image.url } })] as PrismaPromise<
+				Image | Attribution
+			>[];
+			if (attribution) {
+				queries.push(prismaImages.attribution.delete({ where: { attributionTitle: attribution.attributionTitle } }));
+				await prismaImages.$transaction(queries);
+			} else {
+				await queries[0];
+			}
+		}
 
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
@@ -75,43 +99,4 @@ export default async function addImageAction({
 			return { statusMessage: "error", error: error.message };
 		}
 	}
-
-	if (project_id) {
-		try {
-			await prisma.project.update({
-				where: {
-					project_id
-				},
-				data: {
-					imageFileUrl_ODE: image.url
-				}
-			});
-		} catch (err: any) {
-			await prismaImages.$transaction(async (tx) => {
-				if (attribution) {
-					await tx.attribution.delete({
-						where: {
-							attributionTitle: attribution.attributionTitle
-						}
-					});
-				}
-
-				await tx.image.delete({
-					where: {
-						url: image.url
-					}
-				});
-			});
-
-			const prismaErr = handlePrismaError(err);
-			if (prismaErr) {
-				return { statusMessage: "error", error: prismaErr.error };
-			} else {
-				const error = err as Error;
-				return { statusMessage: "error", error: error.message };
-			}
-		}
-	}
-
-	return { statusMessage: "success" };
 }

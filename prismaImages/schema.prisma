@@ -24,7 +24,6 @@ generator images_zod {
 model Image {
     id            Int      @id @default(autoincrement())
     dateSubmitted DateTime @default(now())
-    name          String   @unique
     url           String   @unique
     userId        String
     homePage      Boolean
@@ -33,6 +32,7 @@ model Image {
     attributionTitle String?
     Attribution      Attribution? @relation(fields: [attributionTitle], references: [attributionTitle])
 
+    name        String?
     description String?
     location    String?
     dateTaken   DateTime?

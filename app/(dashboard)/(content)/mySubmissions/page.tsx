@@ -11,7 +11,6 @@ import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButto
 import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
 import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 import { ProjectIcon } from "@/app/components/icons";
-import { prismaImages } from "@/app/helpers/prismaImages";
 
 export default async function MySubmissions() {
 	const { userId } = await auth();

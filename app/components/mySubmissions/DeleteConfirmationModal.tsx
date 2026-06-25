@@ -4,7 +4,7 @@ type DeleteConfirmModalProps = {
 	isOpen: boolean;
 	onClose: () => void;
 	onConfirm: () => void;
-	projectId: string;
+	title: string;
 	associatedAnalyses: { analysis_run_name: string }[];
 	entityLabel?: string;
 };
@@ -13,7 +13,7 @@ export default function DeleteConfirmModal({
 	isOpen,
 	onClose,
 	onConfirm,
-	projectId,
+	title,
 	associatedAnalyses,
 	entityLabel
 }: DeleteConfirmModalProps) {
@@ -26,7 +26,7 @@ export default function DeleteConfirmModal({
 			<div className="bg-base-100 p-6 rounded-lg shadow-sm max-w-md w-full mx-4 text-center text-md text-base-content">
 				<h3 className="text-2xl font-bold text-primary mb-2">Confirm Deletion</h3>
 				<p className="mb-2 text-md text-base-content">
-					Are you sure you want to delete {label} <span className="text-md text-base-content">{projectId}</span>?
+					Are you sure you want to delete {label} <span className="text-md text-base-content">{title}</span>?
 				</p>
 				{associatedAnalyses.length > 0 && (
 					<div className="mb-2">

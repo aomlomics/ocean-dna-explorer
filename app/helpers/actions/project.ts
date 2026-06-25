@@ -23,6 +23,7 @@ import {
 	ProjectCreateInput,
 	SampleCreateManyInput
 } from "@/app/generated/prisma/models";
+import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
 
 async function parseProjectFile({
 	channel,
@@ -165,20 +166,12 @@ async function parseProjectFile({
 				libraryMetadataFileChecksum_ODE: ""
 			},
 			{
-				error: (iss) => {
-					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-					};
-				}
+				error: schemaParseErrorFunction
 			}
 		);
 
 		if (!parsedProject.success) {
-			await channel.stream.error(
-				`Table: Project\n` +
-					`Key: ${projectCol.project_id}\n\n` +
-					`${parsedProject.error.issues.map((e) => e.message).join("\n\n")}`
-			);
+			await channel.stream.error(getSchemaParseError(parsedProject.error, "Project", [projectCol.project_id]));
 			return;
 		}
 
@@ -194,32 +187,36 @@ async function parseProjectFile({
 		const assayPreps = [] as AssayPrepCreateManyInput[];
 		for (const assay_name of assayNames) {
 			//assay
-			const parsedAssay = AssayOptionalDefaultsSchema.safeParse({
-				...projectCol,
-				...assayCols[assay_name],
-				assay_name
-			});
+			const parsedAssay = AssayOptionalDefaultsSchema.safeParse(
+				{
+					...projectCol,
+					...assayCols[assay_name],
+					assay_name
+				},
+				{
+					error: schemaParseErrorFunction
+				}
+			);
 			if (!parsedAssay.success) {
-				await channel.stream.error(
-					`Table: Assay\n` + `Key: ${assay_name}\n\n` + `${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
-				);
+				await channel.stream.error(getSchemaParseError(parsedAssay.error, "Assay", [assay_name]));
 				return;
 			}
 			assays.push(parsedAssay.data);
 
 			//assayPrep
-			const parsedAssayPrep = AssayPrepOptionalDefaultsSchema.safeParse({
-				...projectCol,
-				...assayCols[assay_name],
-				assay_name,
-				project_id: projectCol.project_id
-			});
+			const parsedAssayPrep = AssayPrepOptionalDefaultsSchema.safeParse(
+				{
+					...projectCol,
+					...assayCols[assay_name],
+					assay_name,
+					project_id: projectCol.project_id
+				},
+				{
+					error: schemaParseErrorFunction
+				}
+			);
 			if (!parsedAssayPrep.success) {
-				await channel.stream.error(
-					`Table: AssayPrep\n` +
-						`Key: ${assay_name}\n\n` +
-						`${parsedAssayPrep.error.issues.map((e) => e.message).join("\n\n")}`
-				);
+				await channel.stream.error(getSchemaParseError(parsedAssayPrep.error, "AssayPrep", [assay_name]));
 				return;
 			}
 			assayPreps.push(parsedAssayPrep.data);
@@ -314,20 +311,12 @@ async function parseLibraryFile({
 						userDefined: Object.keys(libraryUserDefined).length ? libraryUserDefined : "JsonNull"
 					},
 					{
-						error: (iss) => {
-							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-							};
-						}
+						error: schemaParseErrorFunction
 					}
 				);
 
 				if (!parsedLibrary.success) {
-					await channel.stream.error(
-						`Table: Library\n` +
-							`Key: ${libraryRow.lib_id}\n\n` +
-							`${parsedLibrary.error.issues.map((e) => e.message).join("\n\n")}`
-					);
+					await channel.stream.error(getSchemaParseError(parsedLibrary.error, "Library", [libraryRow.lib_id]));
 					return;
 				}
 
@@ -429,20 +418,12 @@ async function parseSampleFile({
 						userDefined: Object.keys(sampleUserDefined).length ? sampleUserDefined : "JsonNull"
 					},
 					{
-						error: (iss) => {
-							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-							};
-						}
+						error: schemaParseErrorFunction
 					}
 				);
 
 				if (!parsedSample.success) {
-					await channel.stream.error(
-						`Table: Sample\n` +
-							`Key: ${sampleRow.samp_name}\n\n` +
-							`${parsedSample.error.issues.map((e) => e.message).join("\n\n")}`
-					);
+					await channel.stream.error(getSchemaParseError(parsedSample.error, "Sample", [sampleRow.samp_name]));
 					return;
 				}
 
