@@ -12,14 +12,27 @@ import { ImageWithRelations } from "@/prismaImages/generated/zod";
 
 //TODO: show current spotlight image
 export default function SpotlightSubmitButton({
-	taxonomy,
 	spotlights,
-	availableProjects
+	taxonomy,
+	availableProjects,
+	project_id,
+	availableTaxonomies
 }: {
-	taxonomy: Taxonomy["taxonomy"];
 	spotlights: (TaxonomySpotlight & { Image: ImageWithRelations })[];
-	availableProjects: Project["project_id"][];
-}) {
+} & (
+	| {
+			taxonomy: Taxonomy["taxonomy"];
+			availableProjects: Project["project_id"][];
+			project_id?: undefined;
+			availableTaxonomies?: undefined;
+	  }
+	| {
+			project_id: Project["project_id"];
+			availableTaxonomies: Taxonomy["taxonomy"][];
+			taxonomy?: undefined;
+			availableProjects?: undefined;
+	  }
+)) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
@@ -59,13 +72,23 @@ export default function SpotlightSubmitButton({
 				})
 			).url;
 
-			spotlight = {
-				imageFileUrl_ODE: imageUrl,
-				description: form.description.value,
-				project_id: form.project_id.value,
-				taxonomy,
-				commonName: form.commonName.value
-			};
+			if (taxonomy) {
+				spotlight = {
+					imageFileUrl_ODE: imageUrl,
+					description: form.description.value,
+					project_id: form.project_id.value,
+					taxonomy,
+					commonName: form.commonName.value
+				};
+			} else if (project_id) {
+				spotlight = {
+					imageFileUrl_ODE: imageUrl,
+					description: form.description.value,
+					project_id,
+					taxonomy: form.taxonomy.value,
+					commonName: form.commonName.value
+				};
+			}
 
 			image = {
 				...getImageFromForm(form, newAttribution, currAttribution),
@@ -100,22 +123,43 @@ export default function SpotlightSubmitButton({
 				<form ref={formRef} onSubmit={handleSubmit}>
 					<h1>Taxonomy Spotlight</h1>
 
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Project</legend>
-						<select name="project_id" defaultValue="" className="select" required>
-							<option value="" disabled>
-								Select Project
-							</option>
-							{availableProjects.reduce((acc, project_id) => {
-								//only show projects that don't have a spotlight for this taxonomy
-								if (!spotlights.some((sl) => sl.project_id === project_id)) {
-									acc.push(<option key={project_id}>{project_id}</option>);
-								}
+					{taxonomy ? (
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend">Project</legend>
+							<select name="project_id" defaultValue="" className="select" required>
+								<option value="" disabled>
+									Select Project
+								</option>
+								{availableProjects.reduce((acc, pid) => {
+									//only show projects that don't have a spotlight for this taxonomy
+									if (!spotlights.some((sl) => sl.project_id === pid)) {
+										acc.push(<option key={pid}>{pid}</option>);
+									}
 
-								return acc;
-							}, [] as ReactNode[])}
-						</select>
-					</fieldset>
+									return acc;
+								}, [] as ReactNode[])}
+							</select>
+						</fieldset>
+					) : project_id ? (
+						<fieldset className="fieldset">
+							<legend className="fieldset-legend">Taxonomy</legend>
+							<select name="taxonomy" defaultValue="" className="select" required>
+								<option value="" disabled>
+									Select Taxonomy
+								</option>
+								{availableTaxonomies.reduce((acc, t) => {
+									//only show taxonomies that don't have a spotlight for this taxonomy
+									if (!spotlights.some((sl) => sl.taxonomy === t)) {
+										acc.push(<option key={t}>{t}</option>);
+									}
+
+									return acc;
+								}, [] as ReactNode[])}
+							</select>
+						</fieldset>
+					) : (
+						<></>
+					)}
 
 					<div className="grid grid-cols-2 gap-5">
 						<fieldset className="fieldset">
@@ -158,7 +202,12 @@ export default function SpotlightSubmitButton({
 							required={newSpotlight}
 						/>
 
-						<textarea className={`textarea h-24${newSpotlight ? " hidden" : ""}`} placeholder="Description" disabled />
+						<textarea
+							className={`textarea h-24${newSpotlight ? " hidden" : ""}`}
+							placeholder="Description"
+							disabled
+							defaultValue={currSpotlight?.description}
+						/>
 					</fieldset>
 
 					<fieldset className="fieldset">
@@ -172,7 +221,13 @@ export default function SpotlightSubmitButton({
 							disabled={!newSpotlight}
 						/>
 
-						<input type="text" className={`input${newSpotlight ? " hidden" : ""}`} placeholder="Common Name" disabled />
+						<input
+							type="text"
+							className={`input${newSpotlight ? " hidden" : ""}`}
+							placeholder="Common Name"
+							disabled
+							defaultValue={currSpotlight?.commonName || ""}
+						/>
 
 						<p className="label">Optional</p>
 					</fieldset>
