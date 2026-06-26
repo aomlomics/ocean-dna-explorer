@@ -7,7 +7,7 @@ import { Attribution } from "../generated/prismaImages/client";
 import { Project, Taxonomy, TaxonomySpotlight } from "../generated/prisma/client";
 import { upload } from "@vercel/blob/client";
 import submitSpotlightAction from "../actions/taxonomySpotlight/submitSpotlight";
-import { TaxonomySpotlightOptionalDefaults } from "@/prisma/generated/zod";
+import { TaxonomySpotlightPartial } from "@/prisma/generated/zod";
 import { ImageWithRelations } from "@/prismaImages/generated/zod";
 
 //TODO: show current spotlight image
@@ -57,9 +57,12 @@ export default function SpotlightSubmitButton({
 
 		const form = event.currentTarget;
 
-		let spotlight = currSpotlight as TaxonomySpotlightOptionalDefaults;
+		let spotlight = currSpotlight as
+			| (TaxonomySpotlightPartial & { Image?: NonNullable<typeof currSpotlight>["Image"] })
+			| undefined;
 		let image;
-		if (newSpotlight) {
+		if (!spotlight) {
+			//new spotlight
 			const imageFile = getImageFile(form)!;
 			if (!imageFile.type.startsWith("image")) {
 				//TODO: handle error better
@@ -72,31 +75,30 @@ export default function SpotlightSubmitButton({
 				})
 			).url;
 
-			if (taxonomy) {
-				spotlight = {
-					imageFileUrl_ODE: imageUrl,
-					description: form.description.value,
-					project_id: form.project_id.value,
-					taxonomy,
-					commonName: form.commonName.value
-				};
-			} else if (project_id) {
-				spotlight = {
-					imageFileUrl_ODE: imageUrl,
-					description: form.description.value,
-					project_id,
-					taxonomy: form.taxonomy.value,
-					commonName: form.commonName.value
-				};
-			}
+			spotlight = {
+				imageFileUrl_ODE: imageUrl,
+				description: form.description.value,
+				commonName: form.commonName.value,
+				taxonomy: taxonomy || form.taxonomy.value
+			};
 
 			image = {
 				...getImageFromForm(form, newAttribution, currAttribution),
 				url: imageUrl
 			};
+		} else {
+			//existing image should not be sent to server action
+			delete spotlight.Image;
 		}
 
-		const response = await submitSpotlightAction(spotlight, image, getAttributionFromForm(form, newAttribution));
+		//adjust project_id regardless of new or existing spotlight
+		spotlight.project_id = project_id || form.project_id.value;
+
+		const response = await submitSpotlightAction(
+			spotlight as TaxonomySpotlightPartial,
+			image,
+			getAttributionFromForm(form, newAttribution)
+		);
 		if (response.statusMessage === "success") {
 			//TODO: show success
 			modalRef.current?.close();
