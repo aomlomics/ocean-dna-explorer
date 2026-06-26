@@ -11,6 +11,7 @@ import { TaxonomySpotlightPartial } from "@/prisma/generated/zod";
 import { ImageWithRelations } from "@/prismaImages/generated/zod";
 
 //TODO: show current spotlight image
+//TODO: show loading
 export default function SpotlightSubmitButton({
 	spotlights,
 	taxonomy,
@@ -61,7 +62,7 @@ export default function SpotlightSubmitButton({
 			| (TaxonomySpotlightPartial & { Image?: NonNullable<typeof currSpotlight>["Image"] })
 			| undefined;
 		let image;
-		if (!spotlight) {
+		if (newSpotlight) {
 			//new spotlight
 			const imageFile = getImageFile(form)!;
 			if (!imageFile.type.startsWith("image")) {
@@ -86,13 +87,13 @@ export default function SpotlightSubmitButton({
 				...getImageFromForm(form, newAttribution, currAttribution),
 				url: imageUrl
 			};
-		} else {
+		} else if (spotlight) {
 			//existing image should not be sent to server action
 			delete spotlight.Image;
 		}
 
 		//adjust project_id regardless of new or existing spotlight
-		spotlight.project_id = project_id || form.project_id.value;
+		spotlight!.project_id = project_id || form.project_id.value;
 
 		const response = await submitSpotlightAction(
 			spotlight as TaxonomySpotlightPartial,
@@ -239,7 +240,7 @@ export default function SpotlightSubmitButton({
 						setNewAttribution={setNewAttribution}
 						currAttribution={currAttribution}
 						setCurrAttribution={setCurrAttribution}
-						required
+						required={newSpotlight}
 						disabled={!newSpotlight}
 					/>
 
