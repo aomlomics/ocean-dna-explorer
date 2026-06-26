@@ -311,6 +311,13 @@ export function parseSchemaToObject(
 	}
 }
 
+//TODO: see below
+// starting at project, assay, assayPrep, tag should be able to go through analysis to anywhere
+// any table should be able to go through analysis to tag
+// prioritize analysis over library in pathing
+// prioritize occurrence over assignment in pathing
+// should not be allowed to leave assayPrep unless starting there
+// should be allowed to leave analysis if coming from tag
 export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
 	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
 	const visited = new Set() as Set<Prisma.ModelName>;
@@ -338,7 +345,10 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 			!visited.has(curr) && //skip visited tables
 			//Project restrictions
 			(curr !== "Project" || //base case
-				path.length === 1) //starting at Project
+				path.length === 1) && //starting at Project
+			//TaxonomySpotlight restrictions
+			(curr !== "TaxonomySpotlight" || //base case
+				path.length === 1) //starting at TaxonomySpotlight
 		) {
 			for (const rel of TableMetadata[curr].relations) {
 				if (
