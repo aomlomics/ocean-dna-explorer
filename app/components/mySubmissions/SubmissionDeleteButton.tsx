@@ -82,7 +82,7 @@ export default function SubmissionDeleteButton({
 				isOpen={showModal}
 				onClose={() => setShowModal(false)}
 				onConfirm={executeDelete}
-				projectId={value}
+				title={value}
 				associatedAnalyses={associatedAnalyses}
 			/>
 		</div>
