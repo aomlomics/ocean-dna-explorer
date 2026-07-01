@@ -383,18 +383,6 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 	}
 }
 
-for (const t1 of TableNames) {
-	for (const t2 of TableNames) {
-		if (t1 !== t2) {
-			console.log(
-				t1,
-				t2,
-				getRelationPath(t1, t2)?.map((p) => p.field)
-			);
-		}
-	}
-}
-
 export function getTableName(table: string, err?: string) {
 	const found = TableNames.find(
 		(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
