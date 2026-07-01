@@ -191,23 +191,14 @@ function MegaMenu({
 				/>
 			) : null}
 
-			{/* Trigger — folder tab: top/L/R border only; ::after masks header border-b under this tab (rest of bar stays visible) */}
+			{/* Trigger — keep hover/open styling subtle and separate from the dropdown panel */}
 			<Link
 				ref={triggerRef}
 				tabIndex={0}
 				href={route}
 				prefetch={MENU_LINK_PREFETCH}
 				className={[
-					"flex items-center gap-1 px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none",
-					// border-4 always (swap transparent → primary on open) so no hover jump; -m-1 offsets border so size matches TabButton
-					"-m-1 border-4",
-					open
-						? [
-								"relative z-20 rounded-t-xl rounded-b-none border-t-primary border-l-primary border-r-primary border-b-transparent shadow-none",
-								"after:pointer-events-none after:absolute after:-left-px after:-right-px after:top-full after:z-30 after:h-1 after:content-['']",
-								isActive ? "after:bg-primary" : "after:bg-base-300"
-							].join(" ")
-						: "rounded-t-lg border-transparent",
+					"relative z-20 flex items-center gap-1 px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none rounded-t-xl",
 					isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
 				].join(" ")}
 				onClick={handleTabLinkClick}
@@ -259,7 +250,7 @@ function MegaMenu({
 								: undefined
 					}
 				>
-					<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl shadow-lg shadow-black/10 border-4 border-primary">
+					<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl border border-base-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.12)] [html[data-theme='dark']_&]:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
 						<div className="overflow-hidden rounded-t-none rounded-b-xl">{children}</div>
 					</div>
 				</div>
