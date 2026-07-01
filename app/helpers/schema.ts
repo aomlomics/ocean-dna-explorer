@@ -311,27 +311,32 @@ export function parseSchemaToObject(
 	}
 }
 
-//TODO: see below
-// starting at project, assay, assayPrep, tag should be able to go through analysis to anywhere
-// any table should be able to go through analysis to tag
-// prioritize analysis over library in pathing
-// prioritize occurrence over assignment in pathing
-// should not be allowed to leave assayPrep unless starting there
-// should be allowed to leave analysis if coming from tag
+//Analysis before Library
+//Occurrence before Assignment
+const pathPriority = {
+	Analysis: { Library: -1 },
+	Library: { Analysis: 1 },
+	Occurrence: { Assignment: -1 },
+	Assignment: { Occurrence: 1 }
+} as Record<Prisma.ModelName, Record<Prisma.ModelName, 1 | -1>>;
+
+//bfs
 export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
+	if (start === target) {
+		return;
+	}
+
+	const capsTarget = capitalizeTable(target);
+
 	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
 	const visited = new Set() as Set<Prisma.ModelName>;
 
-	const capsTarget = capitalizeTable(target);
 	while (queue.length) {
 		let [curr, [...path]] = queue.shift()!;
 		path.push(curr);
 
+		//found target
 		if (curr === capsTarget) {
-			if (!path.length) {
-				return;
-			}
-
 			//convert to path of relation metadata
 			const pathRelations = [] as RelationMetadata[];
 			path.reduce((prev, t) => {
@@ -341,34 +346,52 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 			return pathRelations as [RelationMetadata, ...RelationMetadata[]];
 		}
 
+		//search with restrictions
 		if (
 			!visited.has(curr) && //skip visited tables
-			//Project restrictions
+			//allowed cases without rel
+			//Project
 			(curr !== "Project" || //base case
 				path.length === 1) && //starting at Project
-			//TaxonomySpotlight restrictions
+			//Assay
+			(curr !== "Assay" || //base case
+				path.length === 1) && //starting at Assay
+			//TaxonomySpotlight
 			(curr !== "TaxonomySpotlight" || //base case
 				path.length === 1) //starting at TaxonomySpotlight
 		) {
-			for (const rel of TableMetadata[curr].relations) {
+			//sort relations for prioritization
+			for (const rel of TableMetadata[curr].relations.sort((a, b) => pathPriority[a.table]?.[b.table] || 0)) {
+				//allowed cases
 				if (
-					//Analysis restrictions
-					(curr !== "Analysis" || //base case
-						rel.table === "Project" || //Analysis to Project
-						rel.table === "Assay" || //Analysis to Assay
-						path.includes("Project") || //Project to Analysis
-						path.length === 1) && //starting at Analysis
-					//Assay restrictions
-					(curr !== "Assay" || //base case
-						rel.table === "AssayPrep" || //Assay to AssayPrep
-						(path.includes("AssayPrep") && path.length === 2) || //starting at AssayPrep to Assay
-						path.length === 1) //starting at Assay
+					//Analysis
+					curr !== "Analysis" || //base case
+					path.length === 1 || //starting at Analysis
+					rel.table === "Project" || //Analysis to Project
+					rel.table === "Assay" || //Analysis to Assay
+					rel.table === "Tag" || //Analysis to Tag
+					(path[0] === "Project" && path.length === 2) || //starting at Project to Analysis
+					(path[0] === "Assay" && path.length === 2) || //starting at Assay to Analysis
+					(path[0] === "Tag" && path.length === 2) //starting at Tag to Analysis
 				) {
 					queue.push([rel.table, path]);
 				}
 			}
 		}
+
 		visited.add(curr);
+	}
+}
+
+for (const t1 of TableNames) {
+	for (const t2 of TableNames) {
+		if (t1 !== t2) {
+			console.log(
+				t1,
+				t2,
+				getRelationPath(t1, t2)?.map((p) => p.field)
+			);
+		}
 	}
 }
 

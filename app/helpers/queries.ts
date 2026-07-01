@@ -528,10 +528,10 @@ export function parseApiQuery(
 
 			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
 			for (const r of relations.split(",")) {
-				const relTableArr = getTableName(r.trim().toLowerCase());
-				if (!relTableArr) {
-					throw new Error(`Relation with name "${r}" does not exist in database.`);
-				}
+				const relTableArr = getTableName(
+					r.trim().toLowerCase(),
+					`Relation with name "${r}" does not exist in database.`
+				);
 				relTables.add(relTableArr);
 			}
 
