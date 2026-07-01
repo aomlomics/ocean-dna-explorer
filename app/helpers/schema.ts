@@ -311,11 +311,11 @@ export function parseSchemaToObject(
 	}
 }
 
-//Analysis before Library
-//Occurrence before Assignment
 const pathPriority = {
+	//Analysis before Library
 	Analysis: { Library: -1 },
 	Library: { Analysis: 1 },
+	//Occurrence before Assignment
 	Occurrence: { Assignment: -1 },
 	Assignment: { Occurrence: 1 }
 } as Record<Prisma.ModelName, Record<Prisma.ModelName, 1 | -1>>;
