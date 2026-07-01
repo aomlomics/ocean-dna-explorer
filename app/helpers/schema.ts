@@ -370,9 +370,9 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 					rel.table === "Project" || //Analysis to Project
 					rel.table === "Assay" || //Analysis to Assay
 					rel.table === "Tag" || //Analysis to Tag
-					path[0] === "Project" || //from Project to Analysis
-					path[0] === "Assay" || //from Assay to Analysis
-					path[0] === "Tag" //from Tag to Analysis
+					path[0] === "Project" || //starting at Project to Analysis
+					path[0] === "Assay" || //starting at Assay to Analysis
+					path[0] === "Tag" //starting at Tag to Analysis
 				) {
 					queue.push([rel.table, path]);
 				}
