@@ -47,7 +47,7 @@ export default function ExplorePage({
 						<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
 						<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
 					</h1>
-					<InfoButton infoText={infoText} infoContent={infoContent} dir="tooltip-right" className="z-110000" />
+					<InfoButton infoText={infoText} infoContent={infoContent} dir="tooltip-right" />
 				</div>
 			</header>
 

@@ -60,6 +60,80 @@
 	--color-map-colors: #ff6b6b;
 }
 
+/*
+  MASTER Z INDEX SYSTEM
+  this is the central z index scale for shared ui layers
+  it keeps unrelated parts of the app from overlapping each other in random ways... this 
+  should avoid having to fix one-off errors regarding z index
+  use semantic classes like z-header z-menu z-modal and z-tooltip instead of raw numbers
+  use this scale for cross app layers like header menus dialogs backdrops and toasts
+  for ordering inside one component use small local values and keep that logic local
+  TAILWIND got rid of the tailwind.config file a while ago. our previous z index values were ignored
+*/
+@theme {
+	--z-behind: -1; /* background visuals that should sit under everything */
+	--z-base: 0; /* normal page content with no special layering */
+	--z-raised: 10; /* regular ui pieces like cards breadcrumbs and info icons */
+	--z-sticky: 20; /* sticky stuff like pinned headers and frozen table columns */
+	--z-fixed: 30; /* fixed page controls like floating buttons */
+	--z-popover: 1200; /* popup panels that should stay under header and menus */
+	--z-tooltip: 1300; /* tooltip text that should stay under header and menus */
+	--z-scrim: 1400; /* dark page dimmer used behind nav related overlays */
+	--z-header: 2000; /* the main header bar above normal page content */
+	--z-menu: 2100; /* mega menu and other header menus */
+	--z-backdrop: 3000; /* dark backdrop used behind modals */
+	--z-modal: 3100; /* modal windows and dialog panels */
+	--z-toast: 3200; /* toast messages and transient alerts */
+	--z-loading: 3300; /* full screen loading state on top of app ui */
+	--z-max: 9999; /* emergency top layer only when absolutely needed */
+}
+
+@utility z-behind {
+	z-index: var(--z-behind);
+}
+@utility z-base {
+	z-index: var(--z-base);
+}
+@utility z-raised {
+	z-index: var(--z-raised);
+}
+@utility z-sticky {
+	z-index: var(--z-sticky);
+}
+@utility z-fixed {
+	z-index: var(--z-fixed);
+}
+@utility z-popover {
+	z-index: var(--z-popover);
+}
+@utility z-tooltip {
+	z-index: var(--z-tooltip);
+}
+@utility z-scrim {
+	z-index: var(--z-scrim);
+}
+@utility z-header {
+	z-index: var(--z-header);
+}
+@utility z-menu {
+	z-index: var(--z-menu);
+}
+@utility z-backdrop {
+	z-index: var(--z-backdrop);
+}
+@utility z-modal {
+	z-index: var(--z-modal);
+}
+@utility z-toast {
+	z-index: var(--z-toast);
+}
+@utility z-loading {
+	z-index: var(--z-loading);
+}
+@utility z-max {
+	z-index: var(--z-max);
+}
+
 @keyframes gradient-organic {
 	0% {
 		transform: translate(0, 0) scale(1);
@@ -152,9 +226,22 @@
 	font-size: 1.1rem;
 }
 
-/* Global modal backdrop styling - make darker */
-.modal-backdrop {
-	background-color: rgba(0, 0, 0, 0.7) !important; /* Darker than default */
+/* Global modal layering behavior:
+   Keep dimming consistent across the page by removing backdrop blur/fade animations
+   that can produce "bright flash" desync when closing dialogs. */
+.modal,
+.modal-box,
+.modal-backdrop,
+.modal::backdrop {
+	animation: none !important;
+	transition: none !important;
+}
+
+.modal-backdrop,
+.modal::backdrop {
+	background-color: rgba(0, 0, 0, 0.7) !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 
 /* Clerk: Style 'Connect account' button text in profile/account */

@@ -323,9 +323,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 	const headerBlock = (
 		<header
-			className={
-				hasCoverImage ? "relative z-modal w-full min-w-0 max-w-full" : "w-full min-w-0 max-w-full"
-			}
+			className={hasCoverImage ? "relative z-raised w-full min-w-0 max-w-full" : "w-full min-w-0 max-w-full"}
 		>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex flex-wrap gap-2 items-center min-w-0">

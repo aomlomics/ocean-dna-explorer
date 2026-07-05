@@ -182,12 +182,12 @@ function MegaMenu({
 			onClick={unfocusWithoutScrollJump}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className="relative z-100000 group/menu"
+			className="relative z-menu group/menu"
 		>
 			{open ? (
 				<div
 					aria-hidden="true"
-					className="fixed inset-0 top-20 xl:top-24 z-1 pointer-events-none bg-base-100/10 backdrop-blur-[2px]"
+					className="fixed inset-x-0 bottom-0 top-20 xl:top-24 z-1 pointer-events-none bg-black/30"
 				/>
 			) : null}
 

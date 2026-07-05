@@ -54,7 +54,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 	useEffect(() => setMounted(true), []);
 
 	return (
-		<div className={`lg:hidden mb-6 relative ${isOpen ? "z-40" : ""}`} ref={menuRef}>
+		<div className={`lg:hidden mb-6 relative ${isOpen ? "z-scrim" : ""}`} ref={menuRef}>
 			{/* The trigger button */}
 			<div role="button" className="btn btn-outline w-full justify-between" onClick={handleToggle}>
 				<span className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-[51] w-full p-2 shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
+				<ul className="absolute top-full left-0 mt-2 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-raised w-full p-2 shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
 					{sections.map((section, index) => {
 						const hasSubs = Boolean(section.subsections?.length);
 						return (
@@ -118,7 +118,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 				isOpen &&
 				createPortal(
 					<div
-						className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-30"
+						className="fixed inset-0 bg-black/30 z-scrim"
 						onClick={handleClose}
 					></div>,
 					document.body

@@ -1,4 +1,7 @@
-import { ReactNode } from "react";
+"use client";
+
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { SHARED_TOOLTIP_THEME_CLASS } from "./viewAsSearchTooltip";
 
 export default function InfoButton({
@@ -14,6 +17,82 @@ export default function InfoButton({
 	className?: string;
 	type?: "warning" | "error";
 }) {
+	const wrapperRef = useRef<HTMLDivElement | null>(null);
+	const [open, setOpen] = useState(false);
+	const [mounted, setMounted] = useState(false);
+	const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	const computePanelStyle = useCallback((): CSSProperties | null => {
+		if (!wrapperRef.current) return null;
+		const rect = wrapperRef.current.getBoundingClientRect();
+		const gap = 8;
+		const headerBottom = document.querySelector("header.navbar")?.getBoundingClientRect().bottom ?? 0;
+		const minTop = headerBottom + gap;
+
+		if (dir === "tooltip-right") {
+			return {
+				position: "fixed",
+				top: Math.max(rect.top, minTop),
+				left: rect.right + gap,
+				transform: "none"
+			};
+		}
+		if (dir === "tooltip-left") {
+			return {
+				position: "fixed",
+				top: Math.max(rect.top, minTop),
+				left: rect.left - gap,
+				transform: "translateX(-100%)"
+			};
+		}
+		if (dir === "tooltip-bottom") {
+			return {
+				position: "fixed",
+				top: Math.max(rect.bottom + gap, minTop),
+				left: rect.left + rect.width / 2,
+				transform: "translateX(-50%)"
+			};
+		}
+		if (rect.top - gap < minTop) {
+			return {
+				position: "fixed",
+				top: Math.max(rect.bottom + gap, minTop),
+				left: rect.left + rect.width / 2,
+				transform: "translateX(-50%)"
+			};
+		}
+		return {
+			position: "fixed",
+			top: rect.top - gap,
+			left: rect.left + rect.width / 2,
+			transform: "translate(-50%, -100%)"
+		};
+	}, [dir]);
+
+	const openPanel = useCallback(() => {
+		setPanelStyle(computePanelStyle());
+		setOpen(true);
+	}, [computePanelStyle]);
+
+	const closePanel = useCallback(() => {
+		setOpen(false);
+	}, []);
+
+	useEffect(() => {
+		if (!open) return;
+		const update = () => setPanelStyle(computePanelStyle());
+		window.addEventListener("resize", update);
+		window.addEventListener("scroll", update, true);
+		return () => {
+			window.removeEventListener("resize", update);
+			window.removeEventListener("scroll", update, true);
+		};
+	}, [computePanelStyle, open]);
+
 	const iconColorClass =
 		type === "warning"
 			? "text-amber-500/85 hover:text-amber-500"
@@ -23,19 +102,28 @@ export default function InfoButton({
 	const hoverAccentClass =
 		type === "warning" ? "hover:-translate-y-px" : type === "error" ? "hover:-translate-y-px" : "hover:-translate-y-px";
 
-	const richPanelPositionClass =
-		dir === "tooltip-right"
-			? "left-full top-1/2 ml-2 -translate-y-1/2"
-			: dir === "tooltip-left"
-				? "right-full top-1/2 mr-2 -translate-y-1/2"
-				: dir === "tooltip-bottom"
-					? "left-1/2 top-full mt-2 -translate-x-1/2"
-					: "bottom-full left-1/2 mb-2 -translate-x-1/2";
+	const richPanel = useMemo(() => {
+		if (!mounted || !open || !panelStyle || !infoContent) return null;
+		return createPortal(
+			<div
+				className="pointer-events-none z-tooltip w-max max-w-[min(90vw,24rem)] rounded-md bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content opacity-100 shadow-xl"
+				style={panelStyle}
+			>
+				{infoContent}
+			</div>,
+			document.body
+		);
+	}, [infoContent, mounted, open, panelStyle]);
 
 	if (infoContent) {
 		return (
 			<div
-				className={`group relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px ${className ?? ""}`}
+				ref={wrapperRef}
+				className={`relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px ${className ?? ""}`}
+				onMouseEnter={openPanel}
+				onMouseLeave={closePanel}
+				onFocus={openPanel}
+				onBlur={closePanel}
 			>
 				<div
 					className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-out ${hoverAccentClass}`}
@@ -54,18 +142,14 @@ export default function InfoButton({
 						></path>
 					</svg>
 				</div>
-				<div
-					className={`pointer-events-none invisible absolute z-110001 w-max max-w-[min(90vw,24rem)] rounded-md bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content opacity-0 shadow-xl transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${richPanelPositionClass}`}
-				>
-					{infoContent}
-				</div>
+				{richPanel}
 			</div>
 		);
 	}
 
 	return (
 		<div
-			className={`tooltip ${dir} relative z-5200 inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px before:z-5201 after:z-5201 ${SHARED_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
+			className={`tooltip ${dir} relative z-tooltip inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px before:z-tooltip after:z-tooltip ${SHARED_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
 			data-tip={infoText}
 		>
 			<div

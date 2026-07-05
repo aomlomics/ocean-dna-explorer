@@ -8,6 +8,7 @@ import MobileMenu from "./MobileMenu";
 import AdminButton from "./AdminButton";
 
 export default async function Header() {
+	// z-header + relative: navbar is a stacking context above page content, so its menus render over the page below
 	return (
 		<header className="navbar bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
@@ -39,7 +40,7 @@ export default async function Header() {
 
 			{/* Desktop tabs - lg shows compact labels; xl is full size. Below lg, use the mobile menu. */}
 			<div className="navbar-center hidden lg:flex flex-1 min-w-0 justify-center self-end px-2 xl:px-4">
-				<div className="flex w-full max-w-4xl items-end justify-center gap-1.5 xl:gap-3 z-dropdown -mb-2">
+				<div className="flex w-full max-w-4xl items-end justify-center gap-1.5 xl:gap-3 z-menu -mb-2">
 					<TabButton tabName="Home" route="/" />
 					<ExploreMegaMenu />
 					<TabButton tabName="Search" route="/search" />

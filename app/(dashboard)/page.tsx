@@ -23,7 +23,7 @@ const heroPrimaryBtnClass =
 export default function Home() {
 	return (
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
-			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
+			<div className="absolute top-0 left-0 right-0 z-sticky bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
 					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report
 					bugs and feature requests on our{" "}
@@ -39,12 +39,12 @@ export default function Home() {
 				</p>
 			</div>
 
-			<div className="relative w-full h-screen max-h-[68vh] min-h-80 sm:max-h-[64vh] bg-black overflow-hidden z-content-overlay">
+			<div className="relative w-full h-screen max-h-[68vh] min-h-80 sm:max-h-[64vh] bg-black overflow-hidden">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
 				</Suspense>
 
-				<div className="absolute inset-0 flex items-center z-content">
+				<div className="absolute inset-0 flex items-center z-raised">
 					<div className="w-full px-4 xl:px-8 max-w-[95%] xl:max-w-[85%] mx-auto">
 						<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
 							<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl xl:text-7xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
@@ -81,7 +81,7 @@ export default function Home() {
 				</div>
 			</div>
 
-			<div id="dataSummary" className="z-1000 scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 pb-12">
+			<div id="dataSummary" className="z-raised scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 pb-12">
 				<div className="max-w-7xl mx-auto space-y-14">
 					{/*
 					 * Row 1 — The 4 headline stat cards at the top. This row is

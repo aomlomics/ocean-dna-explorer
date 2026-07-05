@@ -4,8 +4,8 @@ import Image from "next/image";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-/** Sit above headers, modals/tooltips, and page stacking contexts so the preview is never clipped. */
-const PREVIEW_Z_INDEX = 2_147_483_646;
+/** Portaled to <body> to avoid clipping; sits at the popover layer (see z-index scale in globals.css). */
+const PREVIEW_Z_INDEX = "var(--z-popover)";
 
 /**
  * Project-header photo button; hover/focus opens a full-image preview portaled to document.body.

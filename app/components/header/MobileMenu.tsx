@@ -63,7 +63,7 @@ export default function MobileMenu() {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-51 w-60 p-3 shadow-lg">
+				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-menu w-60 p-3 shadow-lg">
 					<li className="text-base py-1">
 						<Link href="/" onClick={handleClose}>
 							Home
@@ -179,7 +179,7 @@ export default function MobileMenu() {
 				isOpen &&
 				createPortal(
 					<div
-						className="fixed inset-x-0 bottom-0 top-20 lg:top-24 bg-black/10 backdrop-blur-[2px] z-40"
+						className="fixed inset-0 bg-black/30 z-scrim"
 						onClick={handleClose}
 					></div>,
 					document.body
