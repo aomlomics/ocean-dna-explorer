@@ -184,7 +184,7 @@ export default async function MySubmissions() {
 																</Link>
 
 																<div className="flex gap-3">
-																	<AnalysisEditButton analysis={analysis} project_id={proj.project_id} tags={tags} />
+																	<AnalysisEditButton analysis={analysis} tags={tags} />
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
 																		value={analysis.analysis_run_name}

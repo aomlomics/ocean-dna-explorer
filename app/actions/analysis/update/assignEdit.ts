@@ -18,7 +18,7 @@ async function doEdit(
 	editId: string,
 	analysis_run_name: Assignment["analysis_run_name"]
 ) {
-	const { userId, sessionClaims } = await auth();
+	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
@@ -207,6 +207,17 @@ async function doEdit(
 		);
 
 		await stream.success("Success");
+
+		//update BLAST databases
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission?skipDiversities=true`, {
+			method: "POST",
+			headers: {
+				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+			},
+			body: JSON.stringify({
+				delete: true
+			})
+		});
 
 		return true;
 	} catch (err: any) {

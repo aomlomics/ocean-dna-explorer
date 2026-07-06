@@ -25,7 +25,6 @@ export default function AnalysisEditButton({
 		occurrenceFileUrl_ODE,
 		Tags: currentTags
 	},
-	project_id,
 	tags
 }: {
 	analysis: {
@@ -36,7 +35,6 @@ export default function AnalysisEditButton({
 		occurrenceFileUrl_ODE: Analysis["occurrenceFileUrl_ODE"];
 		Tags: Tag[];
 	};
-	project_id: Project["project_id"];
 	tags: Tag[];
 }) {
 	const router = useRouter();
@@ -129,7 +127,7 @@ export default function AnalysisEditButton({
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: setAnalysisResponse,
-					args: [editId, project_id, analysis_run_name, argsObj]
+					args: [editId, analysis_run_name, argsObj]
 				});
 
 				//handle errors
@@ -163,7 +161,7 @@ export default function AnalysisEditButton({
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: undefined,
-					args: [editId, project_id, analysis_run_name, argsObj]
+					args: [editId, analysis_run_name, argsObj]
 				});
 
 				//handle errors
