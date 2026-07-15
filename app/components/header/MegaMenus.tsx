@@ -4,12 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 // -----------------------------
 // Shared mega-menu primitives
 // -----------------------------
 
 const MENU_LINK_PREFETCH = false;
+const MEGA_MENU_OPEN_DELAY_MS = 120; //adjust these for debounce. these seem to be a good sweet spot -blw 
+const MEGA_MENU_CLOSE_DELAY_MS = 140;
 
 const EXPLORE_LEFT_ITEMS = [
 	{ label: "Projects", href: "/explore/project" },
@@ -109,32 +112,48 @@ function MegaMenu({
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const triggerRef = useRef<HTMLAnchorElement | null>(null);
 	const [panelRightStyle, setPanelRightStyle] = useState<{ right: number } | null>(null);
-	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const anchorPanelToTrigger =
 		typeof panelRightBeyondTriggerPx === "number" && !Number.isNaN(panelRightBeyondTriggerPx);
 
+	const debouncedOpen = useDebouncedCallback(() => {
+		setOpen(true);
+	}, MEGA_MENU_OPEN_DELAY_MS);
+
+	const debouncedClose = useDebouncedCallback(() => {
+		// Guard against ultra-fast cursor movement where enter/leave events can race.
+		if (containerRef.current?.matches(":hover")) return;
+		setOpen(false);
+	}, MEGA_MENU_CLOSE_DELAY_MS);
+
 	useEffect(() => {
 		return () => {
-			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+			debouncedOpen.cancel();
+			debouncedClose.cancel();
 		};
-	}, []);
+	}, [debouncedOpen, debouncedClose]);
 
 	useEffect(() => {
 		// Ensure dropdown/backdrop always closes after route transitions.
+		debouncedOpen.cancel();
+		debouncedClose.cancel();
 		setOpen(false);
-	}, [pathname]);
+	}, [debouncedOpen, debouncedClose, pathname]);
 
 	useEffect(() => {
 		if (!open) return;
 		let prevY = window.scrollY;
 		const onScroll = () => {
 			const y = window.scrollY;
-			if (y > prevY) setOpen(false);
+			if (y > prevY) {
+				debouncedOpen.cancel();
+				debouncedClose.cancel();
+				setOpen(false);
+			}
 			prevY = y;
 		};
 		window.addEventListener("scroll", onScroll, { passive: true });
 		return () => window.removeEventListener("scroll", onScroll);
-	}, [open]);
+	}, [debouncedOpen, debouncedClose, open]);
 
 	const updatePanelRightFromTrigger = useCallback(() => {
 		if (!anchorPanelToTrigger || !triggerRef.current) return;
@@ -156,25 +175,23 @@ function MegaMenu({
 
 	const handleTabLinkClick = useCallback(() => {
 		// Close immediately for a clean transition when navigating via the tab label.
+		debouncedOpen.cancel();
+		debouncedClose.cancel();
 		setOpen(false);
 		unfocusWithoutScrollJump();
-	}, []);
+	}, [debouncedOpen, debouncedClose]);
 
 	const handleMouseEnter = useCallback(() => {
-		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		setOpen(true);
-	}, []);
+		debouncedClose.cancel();
+		debouncedOpen();
+	}, [debouncedClose, debouncedOpen]);
 
 	const handleMouseLeave = useCallback(() => {
 		// Small delay so slow mouse movement doesn't collapse the menu.
 		// We also add a "hover bridge" in the panel container so there isn't a dead-zone.
-		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		closeTimerRef.current = setTimeout(() => {
-			// Guard against ultra-fast cursor movement where enter/leave events can race.
-			if (containerRef.current?.matches(":hover")) return;
-			setOpen(false);
-		}, 120);
-	}, []);
+		debouncedOpen.cancel();
+		debouncedClose();
+	}, [debouncedClose, debouncedOpen]);
 
 	return (
 		<div
