@@ -98,17 +98,22 @@ export default function Home() {
 					 * Contributors). The map fills its column edge-to-edge, no
 					 * decorative wrapper.
 					 */}
-					<div className="space-y-5">
+					<div className="space-y-6">
 						{/* Row 2a — Map + Target genes at matching height */}
-						<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 							<div className="lg:col-span-8">
-								<div className="h-105 sm:h-130 w-full">
-									<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
+								<div className="w-full">
+									<ClientMap
+										url={"/api/sample"}
+										legend
+										titleTable="project"
+										cluster
+									/>
 								</div>
 							</div>
 
 							<div className="lg:col-span-4">
-								<div className="h-105 sm:h-130 w-full">
+								<div className="w-full h-full">
 									<DashCard
 										title="Target Genes"
 										titleClassName="text-base-content/75"
@@ -148,8 +153,8 @@ export default function Home() {
 						{/* Row 2b — Dashboard body laid out by placement priority:
 						    left column = depth/context cards, right column = trend and
 						    contributor/explore cards. */}
-						<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-							<div className="lg:col-span-4 flex flex-col gap-5">
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+							<div className="lg:col-span-4 flex flex-col gap-6">
 								<Suspense fallback={<WidgetCardSkeleton className="h-88" />}>
 									<DepthCoverageCard />
 								</Suspense>
@@ -162,7 +167,7 @@ export default function Home() {
 								</Suspense>
 							</div>
 
-							<div className="lg:col-span-8 flex flex-col gap-5">
+							<div className="lg:col-span-8 flex flex-col gap-6">
 								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>{/* <TableCountsCard /> */}</Suspense>
 								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
 									<SamplesOverTimeCard />

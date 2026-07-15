@@ -48,7 +48,7 @@ export async function AssayStats({ compact = false }: { compact?: boolean } = {}
 export function MainStatsSkeleton() {
 	return (
 		<div className="w-full max-w-4xl mx-auto" aria-busy="true" aria-label="Loading summary statistics">
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 lg:gap-y-5">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 				{[0, 1, 2, 3].map((index) => (
 					<div key={index} className={`${index >= 2 ? "hidden lg:block" : ""}`}>
 						<div className="flex flex-col items-center text-center p-1.5">
@@ -107,7 +107,7 @@ export async function MainStats() {
 
 	return (
 		<div className="w-full max-w-4xl mx-auto">
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 lg:gap-y-5">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 				{summaryItems.map((item, index) => (
 					<div key={item.title} className={`${index >= 2 ? "hidden lg:block" : ""}`}>
 						<DataSummaryItem {...item} />

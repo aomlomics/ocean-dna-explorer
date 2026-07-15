@@ -111,18 +111,18 @@ export default async function DataSummaryHighlights() {
 			</div>
 
 			{/*
-			 * 12-col split: project card is the wider "hero" (col-span-7);
-			 * analysis card is narrower (col-span-5) AND shorter since it has
+			 * 12-col split: project card is the wider "hero" (col-span-8);
+			 * analysis card is narrower (col-span-4) AND shorter since it has
 			 * less content. The analysis-side column is a flex-col so another
 			 * card could be stacked below it by the page layout if desired —
 			 * but we keep it simple here and just let the grid row end where
 			 * the project card ends.
 			 */}
-			<div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-				<div className="lg:col-span-7">
+			<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+				<div className="lg:col-span-8">
 					{latestProject ? <LatestProjectCard project={latestProject} /> : <EmptySubmissionCard label="project" />}
 				</div>
-				<div className="lg:col-span-5 flex flex-col">
+				<div className="lg:col-span-4 flex flex-col">
 					{latestAnalysis ? <LatestAnalysisCard analysis={latestAnalysis} /> : <EmptySubmissionCard label="analysis" />}
 				</div>
 			</div>
