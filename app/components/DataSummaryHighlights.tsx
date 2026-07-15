@@ -170,7 +170,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 	).slice(0, 4);
 
 	return (
-		<DashCard padding="none" className="h-full" allowOverflow>
+		<DashCard padding="none" className="h-full">
 			<>
 				{hasImage && (
 					<div className="relative h-48 w-full overflow-hidden rounded-t-2xl shrink-0 sm:h-52">
@@ -197,7 +197,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 					className={[
 						"flex flex-col grow relative",
 						hasImage
-							? "-mt-7 sm:-mt-8 z-10 rounded-t-2xl bg-base-200 px-5 sm:px-6 pt-3 sm:pt-3.5 pb-5 sm:pb-6 gap-2"
+							? "-mt-7 sm:-mt-8 z-10 rounded-t-2xl rounded-b-2xl bg-base-200 px-5 sm:px-6 pt-3 sm:pt-3.5 pb-5 sm:pb-6 gap-2"
 							: "p-5 sm:p-6 gap-3"
 					].join(" ")}
 				>
@@ -309,7 +309,7 @@ type AnalysisProps = {
  */
 function LatestAnalysisCard({ analysis }: AnalysisProps) {
 	return (
-		<DashCard padding="none" allowOverflow>
+		<DashCard padding="none">
 			<div className="p-5 sm:p-6 flex flex-col gap-3 grow relative">
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex items-center gap-3 min-w-0">

@@ -15,6 +15,7 @@ import {
 	DepthCoverageCardSkeleton
 } from "@/app/components/dataSummary/DepthCoverageCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -327,16 +328,17 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex flex-wrap gap-2 items-center min-w-0">
-					<h1
-						className={
-							hasCoverImage
-								? "text-4xl font-semibold text-primary mb-0 tooltip tooltip-right drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md"
-								: "text-4xl font-semibold text-primary mb-0 tooltip tooltip-right"
-						}
-						data-tip={TableMetadata.project.description}
-					>
-						{project.project_id}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
+						<h1
+							className={
+								hasCoverImage
+									? "text-4xl font-semibold text-primary mb-0 drop-shadow-sm [html[data-theme='light']_&]:drop-shadow-md"
+									: "text-4xl font-semibold text-primary mb-0"
+							}
+						>
+							{project.project_id}
+						</h1>
+					</TitleHoverTooltip>
 					<EditHistory editHistory={project.editHistory} />
 				</div>
 				{hasCoverImage && project.imageFileUrl_ODE ? (

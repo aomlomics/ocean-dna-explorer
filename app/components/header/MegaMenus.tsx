@@ -11,8 +11,8 @@ import { useDebouncedCallback } from "use-debounce";
 // -----------------------------
 
 const MENU_LINK_PREFETCH = false;
-const MEGA_MENU_OPEN_DELAY_MS = 120; //adjust these for debounce. these seem to be a good sweet spot -blw 
-const MEGA_MENU_CLOSE_DELAY_MS = 140;
+const MEGA_MENU_OPEN_DELAY_MS = 100; //adjust these for debounce. these seem to be a good sweet spot -blw 
+const MEGA_MENU_CLOSE_DELAY_MS = 120;
 
 const EXPLORE_LEFT_ITEMS = [
 	{ label: "Projects", href: "/explore/project" },

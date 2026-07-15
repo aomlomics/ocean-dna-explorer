@@ -50,7 +50,7 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 	};
 
 	return (
-		<div className="w-full max-w-96 mr-auto">
+		<div className="w-full">
 			<DashCard
 				title="Sampling Depth"
 				titleClassName="text-2xl sm:text-3xl font-semibold text-base-content/80"
@@ -59,6 +59,7 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 				headerClassName="relative z-10 bg-base-200 pb-3"
 				padding="none"
 				info={{
+					title: "Sampling Depth",
 					description:
 						"Displays minimumDepthInMeters and maximumDepthInMeters in meters. Average depth is computed as the mean of average minimumDepthInMeters and average maximumDepthInMeters.",
 					links: [
@@ -139,5 +140,5 @@ function formatDepthValue(n: number) {
 }
 
 export function DepthCoverageCardSkeleton() {
-	return <div className="skeleton rounded-2xl h-64 w-full max-w-96 mr-auto" aria-hidden="true" />;
+	return <div className="skeleton rounded-2xl h-64 w-full" aria-hidden="true" />;
 }

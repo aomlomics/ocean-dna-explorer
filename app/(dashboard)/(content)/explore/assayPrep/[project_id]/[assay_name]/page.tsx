@@ -5,6 +5,7 @@ import { AssayPrep } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Project_id_Assay_name({
 	params
@@ -63,12 +64,9 @@ export default async function Project_id_Assay_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.assayPrep.description}
-					>
-						{assayPrep.assay_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.assayPrep.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{assayPrep.assay_name}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					Assay preparation for{" "}

@@ -2,7 +2,9 @@
 
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { SHARED_TOOLTIP_THEME_CLASS } from "./viewAsSearchTooltip";
+
+const INFO_TOOLTIP_THEME_CLASS =
+	"[--tt-bg:var(--color-base-200)] [--tt-color:var(--color-base-content)] before:max-w-[min(90vw,24rem)] before:whitespace-pre-wrap before:rounded-md before:border before:border-base-content/20 before:bg-[var(--tt-bg)] before:px-3 before:py-2 before:text-sm before:leading-relaxed before:text-[var(--tt-color)] before:shadow-xl after:outline after:outline-1 after:outline-base-content/20";
 
 export default function InfoButton({
 	infoText,
@@ -18,6 +20,8 @@ export default function InfoButton({
 	type?: "warning" | "error";
 }) {
 	const wrapperRef = useRef<HTMLDivElement | null>(null);
+	const panelRef = useRef<HTMLDivElement | null>(null);
+	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [open, setOpen] = useState(false);
 	const [mounted, setMounted] = useState(false);
 	const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null);
@@ -74,12 +78,29 @@ export default function InfoButton({
 	}, [dir]);
 
 	const openPanel = useCallback(() => {
+		if (closeTimerRef.current) {
+			clearTimeout(closeTimerRef.current);
+			closeTimerRef.current = null;
+		}
 		setPanelStyle(computePanelStyle());
 		setOpen(true);
 	}, [computePanelStyle]);
 
 	const closePanel = useCallback(() => {
 		setOpen(false);
+	}, []);
+
+	const scheduleClosePanel = useCallback(() => {
+		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+		closeTimerRef.current = setTimeout(() => {
+			setOpen(false);
+		}, 90);
+	}, []);
+
+	useEffect(() => {
+		return () => {
+			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+		};
 	}, []);
 
 	useEffect(() => {
@@ -101,19 +122,34 @@ export default function InfoButton({
 				: "text-primary/85 hover:text-primary";
 	const hoverAccentClass =
 		type === "warning" ? "hover:-translate-y-px" : type === "error" ? "hover:-translate-y-px" : "hover:-translate-y-px";
+	const richCaretClass =
+		dir === "tooltip-right"
+			? "left-0 top-3 -translate-x-1/2 rotate-45 border-l border-b"
+			: dir === "tooltip-left"
+				? "right-0 top-3 translate-x-1/2 rotate-45 border-r border-t"
+				: dir === "tooltip-bottom"
+					? "left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rotate-45 border-l border-t"
+					: "left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 rotate-45 border-r border-b";
 
 	const richPanel = useMemo(() => {
 		if (!mounted || !open || !panelStyle || !infoContent) return null;
 		return createPortal(
 			<div
-				className="pointer-events-none z-tooltip w-max max-w-[min(90vw,24rem)] rounded-md bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content opacity-100 shadow-xl"
+				ref={panelRef}
+				className="pointer-events-auto z-tooltip relative w-max max-w-[min(90vw,24rem)] rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content opacity-100 shadow-xl"
 				style={panelStyle}
+				onMouseEnter={openPanel}
+				onMouseLeave={scheduleClosePanel}
 			>
+				<span
+					aria-hidden="true"
+					className={`pointer-events-none absolute h-3 w-3 border-base-content/20 bg-base-200 ${richCaretClass}`}
+				/>
 				{infoContent}
 			</div>,
 			document.body
 		);
-	}, [infoContent, mounted, open, panelStyle]);
+	}, [dir, infoContent, mounted, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
 
 	if (infoContent) {
 		return (
@@ -121,9 +157,13 @@ export default function InfoButton({
 				ref={wrapperRef}
 				className={`relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px ${className ?? ""}`}
 				onMouseEnter={openPanel}
-				onMouseLeave={closePanel}
+				onMouseLeave={scheduleClosePanel}
 				onFocus={openPanel}
-				onBlur={closePanel}
+				onBlur={(event) => {
+					const nextFocused = event.relatedTarget as Node | null;
+					if (nextFocused && panelRef.current?.contains(nextFocused)) return;
+					scheduleClosePanel();
+				}}
 			>
 				<div
 					className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-out ${hoverAccentClass}`}
@@ -149,7 +189,7 @@ export default function InfoButton({
 
 	return (
 		<div
-			className={`tooltip ${dir} relative z-tooltip inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px before:z-tooltip after:z-tooltip ${SHARED_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
+			className={`tooltip ${dir} relative z-tooltip inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px before:z-tooltip after:z-tooltip ${INFO_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
 			data-tip={infoText}
 		>
 			<div

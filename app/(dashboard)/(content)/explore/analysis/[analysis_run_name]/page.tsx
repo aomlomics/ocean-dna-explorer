@@ -17,6 +17,7 @@ import { TaxonomicRanks } from "@/types/objects";
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 import { Suspense } from "react";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Analysis_run_name({
 	params
@@ -88,12 +89,9 @@ export default async function Analysis_run_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-secondary tooltip-right before:text-primary-content"
-						data-tip={TableMetadata.analysis.description}
-					>
-						{analysis_run_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+					</TitleHoverTooltip>
 					<EditHistory editHistory={analysis.editHistory} />
 					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
 					{analysis.Tags.map((t) => (

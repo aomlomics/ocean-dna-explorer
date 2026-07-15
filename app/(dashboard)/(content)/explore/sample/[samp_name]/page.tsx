@@ -10,6 +10,7 @@ import DropdownCard from "@/app/components/explore/DropdownCard";
 import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
 	let { samp_name } = await params;
@@ -68,12 +69,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.sample.description}
-					>
-						{samp_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.sample.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{samp_name}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}

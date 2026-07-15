@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import InfoButton from "@/app/components/InfoButton";
 
 export type DashCardMenuItem = {
 	label: string;
@@ -72,13 +73,13 @@ export default function DashCard({
 }: Props) {
 	const hasHeader = Boolean(eyebrow || title || subtitle || action || info);
 	const pad = padMap[padding];
-	const shouldAllowOverflow = allowOverflow || Boolean(info);
+	const shouldAllowOverflow = allowOverflow;
 	const shouldRaiseOnFocus = Boolean(info);
 
 	return (
 		<div
 			className={[
-				"relative isolate flex flex-col rounded-2xl",
+				"relative isolate flex flex-col rounded-2xl group",
 				shouldAllowOverflow ? "overflow-visible" : "overflow-hidden",
 				shouldRaiseOnFocus ? "focus-within:z-2200" : "",
 				"bg-base-200",
@@ -99,7 +100,13 @@ export default function DashCard({
 							</div>
 						)}
 						{title && (
-							<h3 className={["text-base sm:text-lg font-semibold leading-tight", titleClassName].join(" ")}>
+							<h3
+								className={[
+									"text-base sm:text-lg font-semibold leading-tight",
+									titleClassName,
+									"transition-colors group-hover:text-white"
+								].join(" ")}
+							>
 								{title}
 							</h3>
 						)}
@@ -134,66 +141,47 @@ export default function DashCard({
  * server components.
  */
 export function DashCardInfoButton({ info }: { info: DashCardInfo }) {
+	const fallbackInfoText =
+		typeof info.description === "string" && info.description.trim().length > 0
+			? info.description
+			: "More information about this card";
+
 	return (
-		<div className="dropdown dropdown-end relative z-2200">
-			<button
-				tabIndex={0}
-				type="button"
-				className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-base-content focus:text-base-content"
-				aria-label="More info about this card"
-			>
-				<svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
-					<circle cx="5" cy="12" r="1.75" />
-					<circle cx="12" cy="12" r="1.75" />
-					<circle cx="19" cy="12" r="1.75" />
-				</svg>
-			</button>
-			<div
-				tabIndex={0}
-				className="dropdown-content z-2201 mt-2 w-[min(90vw,24rem)] max-h-[min(75vh,26rem)] overflow-y-auto rounded-md border border-base-300 bg-base-300 p-3 text-base-content shadow-xl"
-			>
-				{info.title && (
-					<div className="text-sm font-semibold text-base-content mb-1">{info.title}</div>
-				)}
-				{info.description && (
-					<p className="text-xs text-base-content/75 leading-relaxed">{info.description}</p>
-				)}
-				{info.links && info.links.length > 0 && (
-					<>
-						{(info.title || info.description) && (
-							<div className="h-px bg-base-content/10 my-3" />
-						)}
-						<ul className="flex flex-col gap-0.5">
-							{info.links.map((item) => (
-								<li key={item.label}>
-									{item.href ? (
-										<a
-											href={item.href}
-											target={item.target}
-											rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-											className="flex items-center justify-between gap-2 text-xs text-primary hover:text-primary/80 rounded-md px-2 py-1.5 hover:bg-base-200/60 transition-colors"
-										>
-											<span className="truncate">{item.label}</span>
-											<svg
-												className="w-3 h-3 shrink-0 opacity-70"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-												aria-hidden="true"
+		<InfoButton
+			infoText={fallbackInfoText}
+			dir="tooltip-bottom"
+			className="z-2200 self-start translate-y-[-2px]"
+			infoContent={
+				<div className="space-y-2">
+					{info.title ? <div className="text-sm font-semibold text-base-content">{info.title}</div> : null}
+					{info.description ? (
+						<div className="text-xs text-base-content/75 leading-relaxed">{info.description}</div>
+					) : null}
+					{info.links && info.links.length > 0 ? (
+						<div className="space-y-1.5">
+							{info.title || info.description ? <div className="h-px bg-base-content/10" /> : null}
+							<ul className="space-y-1 text-xs text-base-content/80">
+								{info.links.map((item) => (
+									<li key={item.label} className="leading-relaxed">
+										{item.href ? (
+											<a
+												href={item.href}
+												target={item.target}
+												rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+												className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
 											>
-												<path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
-											</svg>
-										</a>
-									) : (
-										<span className="text-xs text-base-content/70 px-2 py-1.5">{item.label}</span>
-									)}
-								</li>
-							))}
-						</ul>
-					</>
-				)}
-			</div>
-		</div>
+												{item.label}
+											</a>
+										) : (
+											<span className="font-medium">{item.label}</span>
+										)}
+									</li>
+								))}
+							</ul>
+						</div>
+					) : null}
+				</div>
+			}
+		/>
 	);
 }

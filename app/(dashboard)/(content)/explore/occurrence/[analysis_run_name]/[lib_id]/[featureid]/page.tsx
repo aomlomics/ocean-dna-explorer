@@ -7,6 +7,7 @@ import Link from "next/link";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon } from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -112,12 +113,9 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.occurrence.description}
-					>
-						{occurrenceTitle}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.occurrence.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{occurrenceTitle}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					This occurrence links the feature{" "}

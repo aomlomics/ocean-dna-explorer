@@ -5,6 +5,7 @@ import { Library } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Lib_id({ params }: { params: Promise<{ lib_id: Library["lib_id"] }> }) {
 	let { lib_id } = await params;
@@ -63,12 +64,9 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.library.description}
-					>
-						{library.lib_id}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.library.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{library.lib_id}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This library connects{" "}

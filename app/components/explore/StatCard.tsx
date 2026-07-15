@@ -1,7 +1,7 @@
 import { DeadValueEnum } from "@/types/enums";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";
-import { SHARED_TOOLTIP_THEME_CLASS, VIEW_AS_SEARCH_TOOLTIP_CLASS } from "../viewAsSearchTooltip";
+import { SHARED_TOOLTIP_THEME_CLASS } from "../viewAsSearchTooltip";
 
 export default function StatCard({
 	title,
@@ -94,9 +94,21 @@ async function SuspenseStatCard({
 	const isViewAsSearchTooltip = resolvedTooltip === "View as Search";
 	const tooltipClassName = resolvedTooltip
 		? isViewAsSearchTooltip
-			? VIEW_AS_SEARCH_TOOLTIP_CLASS
+			? ""
 			: `tooltip tooltip-secondary before:text-primary-content ${SHARED_TOOLTIP_THEME_CLASS}`
 		: "";
+	const showCustomViewAsSearchTooltip = Boolean(resolvedTooltip) && isViewAsSearchTooltip;
+	const customViewAsSearchTooltip = showCustomViewAsSearchTooltip ? (
+		<div className="pointer-events-none absolute bottom-full left-1/2 z-tooltip mb-2 hidden -translate-x-1/2 group-hover/vas:block group-focus-within/vas:block">
+			<div className="relative rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content shadow-xl whitespace-nowrap">
+				<span
+					aria-hidden="true"
+					className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-r border-b border-base-content/20 bg-base-200"
+				/>
+				{resolvedTooltip}
+			</div>
+		</div>
+	) : null;
 
 	let content;
 	let innerClassName;
@@ -164,20 +176,22 @@ async function SuspenseStatCard({
 				className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}
 			>
 				<div
-					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName}`}
-					data-tip={resolvedTooltip}
+					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName} ${showCustomViewAsSearchTooltip ? "group/vas relative" : ""}`}
+					data-tip={showCustomViewAsSearchTooltip ? undefined : resolvedTooltip}
 				>
 					{content}
+					{customViewAsSearchTooltip}
 				</div>
 			</Link>
 		);
 	} else {
 		return (
 			<div
-				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltipClassName} ${className ?? ""}`}
-				data-tip={resolvedTooltip}
+				className={`bg-base-200 p-4 rounded-lg flex ${innerClassName} ${tooltipClassName} ${className ?? ""} ${showCustomViewAsSearchTooltip ? "group/vas relative" : ""}`}
+				data-tip={showCustomViewAsSearchTooltip ? undefined : resolvedTooltip}
 			>
 				{content}
+				{customViewAsSearchTooltip}
 			</div>
 		);
 	}
