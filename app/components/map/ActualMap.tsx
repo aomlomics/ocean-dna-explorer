@@ -26,8 +26,10 @@ import { EditControl } from "react-leaflet-draw-next";
 import {
 	capitalizeTable,
 	circleToString,
+	compressURIComponent,
 	getLocationsInsideShapes,
 	getShapesFromUrl,
+	MAX_UNCOMPRESSED_LENGTH,
 	polygonToString
 } from "@/app/helpers/utils";
 import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
@@ -38,7 +40,6 @@ import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import { getZodType } from "@/app/helpers/schema";
 import { usePathname, useSearchParams } from "next/navigation";
-import { compressToEncodedURIComponent } from "lz-string";
 
 type MapProps =
 	| {
@@ -55,7 +56,7 @@ type MapProps =
 type Bounds = [[number, number], [number, number]];
 
 type LegendInfo =
-	| ({ field: string | string[] } & (
+	| ({ field: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"] } & (
 			| { mode: "discreet"; colorMap: Record<string, Color>; hidden?: string[] }
 			| { mode: "gradient"; range: [number, number] | [Date, Date]; palette: string; someNoValue?: boolean }
 	  ))
@@ -90,7 +91,7 @@ function getShape(shape: any) {
 }
 
 function getLegendValue(
-	field: string | string[],
+	field: NonNullable<LegendInfo>["field"],
 	loc: LocationWithValues | Location,
 	userDefinedOptions: Set<string>,
 	sep = "/"
@@ -173,8 +174,8 @@ function getMarkerHtml(count: number, valuesCount: number, combined: number, sty
 }
 
 function compressIfNeeded(str: string) {
-	if (str.length > 500) {
-		return "compressed/lz-string:" + compressToEncodedURIComponent(str);
+	if (str.length > MAX_UNCOMPRESSED_LENGTH) {
+		return compressURIComponent(str);
 	} else {
 		return str;
 	}
@@ -624,19 +625,19 @@ export default function ActualMap({
 			checkShapes();
 
 			if (shapesToUrl) {
-				const params = new URLSearchParams(searchParams.toString());
-				params.delete("polygon");
-				params.delete("circle");
+				const newParams = new URLSearchParams(searchParams);
+				newParams.delete("polygon");
+				newParams.delete("circle");
 
 				for (const s of Object.values(shapes)) {
 					if (s.type === "polygon") {
-						params.append("polygon", polygonToString(s));
+						newParams.append("polygon", polygonToString(s));
 					} else if (s.type === "circle") {
-						params.append("circle", circleToString(s));
+						newParams.append("circle", circleToString(s));
 					}
 				}
 
-				window.history.replaceState(null, "", `${pathname}?${params}`);
+				window.history.replaceState(null, "", `${pathname}?${newParams}`);
 			}
 		}
 	}, [shapes]);

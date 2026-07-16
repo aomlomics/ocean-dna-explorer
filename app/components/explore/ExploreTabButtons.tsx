@@ -7,11 +7,9 @@ import { uncapitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 
 export default function ExploreTabButtons({
-	activeTable,
-	tables = DataTableNames
+	activeTable
 }: {
 	activeTable?: Prisma.ModelName;
-	tables?: string[];
 } = {}) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -37,7 +35,7 @@ export default function ExploreTabButtons({
 
 	return (
 		<nav className="flex flex-wrap gap-2">
-			{tables.map((t) => {
+			{DataTableNames.map((t) => {
 				const modelName = t as Prisma.ModelName;
 				const uncapitalizedTableName = uncapitalizeTable(modelName);
 				const href = pathname.split("/").includes("explore")

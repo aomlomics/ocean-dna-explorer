@@ -9,7 +9,6 @@ import Link from "next/link";
 export default function AdminLayout({ children }: { children: ReactNode }) {
 	const pathname = usePathname();
 	const { userId, sessionClaims } = useAuth();
-
 	const role = sessionClaims?.metadata?.role;
 
 	return (
@@ -52,12 +51,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 							Home Carousel Images
 						</Link>
 						<Link
-							href="/admin/seed"
+							href="/admin/tools"
 							className={`btn px-6 py-3 transition-colors rounded-none ${
-								pathname === "/admin/seed" ? "rounded-t-lg btn-primary" : ""
+								pathname === "/admin/tools" ? "rounded-t-lg btn-primary" : ""
 							}`}
 						>
-							Seed Database
+							Database Tools
 						</Link>
 						<Link
 							href="/admin/console"
@@ -66,14 +65,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 							}`}
 						>
 							Prisma Console
-						</Link>
-						<Link
-							href="/admin/migration"
-							className={`btn px-6 py-3 transition-colors rounded-none ${
-								pathname === "/admin/migration" ? "rounded-t-lg btn-primary" : ""
-							}`}
-						>
-							Migration Copy Step
 						</Link>
 					</>
 				)}

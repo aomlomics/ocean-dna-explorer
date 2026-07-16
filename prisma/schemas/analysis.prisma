@@ -146,8 +146,9 @@ model Feature {
     featureid String @unique
 
     // Relations
-    Occurrences Occurrence[]
-    Assignments Assignment[]
+    Occurrences       Occurrence[]
+    Assignments       Assignment[]
+    BlastQueryResults BlastQueryResult[]
 
     // Data
     dna_sequence       String
@@ -213,4 +214,38 @@ model AlphaDiversityIndex {
     AlphaDiversity AlphaDiversity @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
     index Float
+}
+
+model BlastQuery {
+    id             Int      @id @default(autoincrement())
+    userId         String
+    dateCalculated DateTime @default(now())
+    sequence       String
+
+    // Relations
+    query             String?
+    database          String?
+    Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Cascade)
+    BlastQueryResults BlastQueryResult[]
+}
+
+model BlastQueryResult {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    featureid  String
+    Feature    Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+    queryId    Int
+    BlastQuery BlastQuery @relation(fields: [queryId], references: [id], onDelete: Cascade)
+
+    percentIdentity Float
+    alignmentLength Int
+    mismatches      Int
+    gapOpens        Int
+    queryStart      Int
+    queryEnd        Int
+    subjectStart    Int
+    subjectEnd      Int
+    eValue          Float
+    bitScore        Float
 }

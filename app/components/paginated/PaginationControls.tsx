@@ -17,11 +17,11 @@ export default function PaginationControls({
 }) {
 	return (
 		<div className="w-full flex justify-center flex-1">
-			<div className="grid grid-cols-3 items-center grow max-w-[600px]">
+			<div className="grid grid-cols-3 items-center grow max-w-150">
 				<div className="justify-self-end">
 					<button
 						className="btn btn-ghost"
-						disabled={page <= 1}
+						disabled={page === 1}
 						onClick={() => {
 							if (sideEffect) {
 								sideEffect();
@@ -50,7 +50,7 @@ export default function PaginationControls({
 					</button>
 					<button
 						className="btn btn-ghost"
-						disabled={page <= 1}
+						disabled={page === 1}
 						onClick={() => {
 							if (sideEffect) {
 								sideEffect();
@@ -85,7 +85,7 @@ export default function PaginationControls({
 				<div className="justify-self-start">
 					<button
 						className="btn btn-ghost"
-						disabled={page * take > count}
+						disabled={page * take >= count}
 						onClick={() => {
 							if (sideEffect) {
 								sideEffect();
@@ -106,20 +106,20 @@ export default function PaginationControls({
 							strokeWidth="3"
 							strokeLinecap="round"
 							strokeLinejoin="round"
-							className={page * take > count ? "text-base-content/30" : "text-base-content"}
+							className={page * take >= count ? "text-base-content/30" : "text-base-content"}
 						>
 							<path d="m9 18 6-6-6-6" />
 						</svg>
 					</button>
 					<button
 						className="btn btn-ghost"
-						disabled={page * take > count}
+						disabled={page * take >= count}
 						onClick={() => {
 							if (sideEffect) {
 								sideEffect();
 							}
 
-							setPage(Math.floor(count / take) + 1);
+							setPage(Math.ceil(count / take));
 						}}
 						onMouseEnter={handlePageHover ? () => handlePageHover() : undefined}
 						type="button"
@@ -134,7 +134,7 @@ export default function PaginationControls({
 							strokeWidth="3"
 							strokeLinecap="round"
 							strokeLinejoin="round"
-							className={page * take > count ? "text-base-content/30" : "text-base-content"}
+							className={page * take >= count ? "text-base-content/30" : "text-base-content"}
 						>
 							<path d="M5.5 5L11.7929 11.2929C12.1834 11.6834 12.1834 12.3166 11.7929 12.7071L5.5 19" />
 							<path d="M13.5 5L19.7929 11.2929C20.1834 11.6834 20.1834 12.3166 19.7929 12.7071L13.5 19" />

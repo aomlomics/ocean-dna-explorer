@@ -27,8 +27,7 @@ export default async function migrationCopyStepAction() {
 		}
 
 		const oldFieldsByTable = TableNames.reduce(
-			(acc, t) => {
-				const table = uncapitalizeTable(t as Prisma.ModelName);
+			(acc, table) => {
 				const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
 				if (tempFields.length) {
 					acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));

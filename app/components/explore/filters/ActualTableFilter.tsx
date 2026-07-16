@@ -189,17 +189,17 @@ export default function ActualTableFilter({
 						<button
 							onClick={(e) => {
 								e.stopPropagation();
-								const params = new URLSearchParams(searchParams);
+								const newParams = new URLSearchParams(searchParams);
 								tableConfig.forEach((config) => {
 									if (config.type === "selectGroup") {
 										for (let field of config.group) {
-											params.delete(typeof field === "string" ? field : field.rel);
+											newParams.delete(typeof field === "string" ? field : field.rel);
 										}
 									} else {
-										params.delete(typeof config.field === "string" ? config.field : config.field.rel);
+										newParams.delete(typeof config.field === "string" ? config.field : config.field.rel);
 									}
 								});
-								router.push(`?${params.toString()}`);
+								router.push(`?${newParams.toString()}`);
 							}}
 							className="btn btn-primary btn-sm normal-case"
 						>

@@ -276,9 +276,10 @@ model Assay {
     pcr_primer_name_reverse String
 
     // Relations
-    AssayPreps AssayPrep[]
-    Libraries  Library[]
-    Analyses   Analysis[]
+    AssayPreps   AssayPrep[]
+    Libraries    Library[]
+    Analyses     Analysis[]
+    BlastQueries BlastQuery[]
 
     assay_name_alternate              String?
     targetTaxonomicAssay              String //[]

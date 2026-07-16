@@ -1,12 +1,13 @@
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import Map from "@/app/components/map/Map";
 import TableDisplay from "@/app/components/paginated/TableDisplay";
+import BlastSearch from "@/app/components/search/BlastSearch";
 import SearchUI from "@/app/components/search/SearchUI";
 import { prisma } from "@/app/helpers/prisma";
 import { parseApiQuery } from "@/app/helpers/queries";
 import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable } from "@/app/helpers/utils";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
 import { redirect } from "next/navigation";
 
 export default async function Search({
@@ -38,34 +39,42 @@ export default async function Search({
 				)}
 				<div className="w-full space-y-4 text-base-content/80 py-4">
 					<p>{TableMetadata[model].description}</p>
-					<ExploreTabButtons activeTable={capitalizeTable(model)} tables={DataTableNames} />
+					<ExploreTabButtons activeTable={capitalizeTable(model)} />
 				</div>
 
 				<SearchUI />
 			</div>
 
+			<div className="collapse collapse-arrow bg-base-100 border-base-300 border mb-4">
+				<input key={model + "blastInput"} defaultChecked={!!params.blastQuery} type="checkbox" />
+				<div className="collapse-title font-semibold">BLAST</div>
+				<div className="collapse-content">
+					<BlastSearch key={model + "blast"} />
+				</div>
+			</div>
+
 			<div className="collapse collapse-arrow bg-base-100 border-base-300 border">
-				<input key={model} defaultChecked={!!(params.circle || params.polygon)} type="checkbox" />
+				<input key={model + "mapInput"} defaultChecked={!!(params.circle || params.polygon)} type="checkbox" />
 				<div className="collapse-title font-semibold">Show on Map</div>
 				<div className="collapse-content text-sm px-50">
-					<div className="overflow-hidden bg-base-200 aspect-video rounded-lg">
+					<div className="overflow-hidden bg-base-200 rounded-lg">
 						<Map
-							key={model}
+							key={model + "map"}
 							query={async () => {
-								const urlParams = new URLSearchParams();
+								const newParams = new URLSearchParams();
 								for (const [key, val] of Object.entries(params)) {
 									if (val != null && key !== "table") {
 										if (Array.isArray(val)) {
 											for (const v of val) {
-												urlParams.append(key, v);
+												newParams.append(key, v);
 											}
 										} else {
-											urlParams.set(key, val);
+											newParams.set(key, val);
 										}
 									}
 								}
 
-								const { query, sampleWhere } = parseApiQuery(model, urlParams, { sampleWhere: true });
+								const { query, sampleWhere } = parseApiQuery(model, newParams, { sampleWhere: true });
 								return await prisma.sample.findMany({
 									where: model === "sample" ? query.where : sampleWhere
 								});

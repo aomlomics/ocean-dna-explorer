@@ -2,7 +2,7 @@
 
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
 import { Prisma, Tag } from "@/app/generated/prisma/client";
 import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
@@ -16,8 +16,10 @@ import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@
 import AnalysisTag from "../tags/AnalysisTag";
 import Checklist from "../Checklist";
 import InfoButton from "../InfoButton";
+import { buildWhereParams } from "@/app/helpers/queries";
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
+const EXCLUDE_TABLES = NonDataTableNames.filter((t) => t !== "tag") as Uncapitalize<Prisma.ModelName>[];
 
 //TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
@@ -46,17 +48,17 @@ export default function Table({
 
 	const manyRelations = [] as string[];
 	const oneRelations = [] as string[];
-	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, string[]>;
+	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, readonly string[]>;
 	for (const rel of TableMetadata[table].relations) {
-		if (rel.table !== "AlphaDiversity" && rel.table !== "AlphaDiversityIndex")
+		if (!EXCLUDE_TABLES.includes(uncapitalizeTable(rel.table)))
 			if (rel.type.endsWith("many")) {
 				manyRelations.push(rel.field);
 			} else if (rel.type.endsWith("one")) {
-				const relTable = rel.field as Prisma.ModelName;
-				if (typeof TableMetadata[relTable].titleField === "string") {
-					oneRelations.push(TableMetadata[relTable].titleField);
+				const meta = TableMetadata[rel.table];
+				if (typeof meta.titleField === "string") {
+					oneRelations.push(meta.titleField);
 				} else {
-					oneRelationsArrayTitle[relTable] = TableMetadata[relTable].titleField;
+					oneRelationsArrayTitle[rel.table] = meta.titleField;
 				}
 			}
 	}
@@ -181,30 +183,7 @@ export default function Table({
 			whereQuery = { ...whereQuery, ...whereFilter };
 		}
 		if (searchParams && searchParams.size) {
-			const tempParms = new URLSearchParams(searchParams);
-			//specifically pull out shapes from searchParams
-			const polygons = tempParms.getAll("polygon");
-			if (polygons.length) {
-				tempParms.delete("polygon");
-				for (const p of polygons) {
-					query.set("polygon", p);
-				}
-			}
-			const circles = tempParms.getAll("circle");
-			if (circles.length) {
-				tempParms.delete("circle");
-				for (const c of circles) {
-					query.set("circle", c);
-				}
-			}
-
-			//get rest of queries
-			whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
-			if (ignoreParams) {
-				for (const param of ignoreParams) {
-					delete whereQuery[param];
-				}
-			}
+			buildWhereParams(searchParams, query, whereQuery);
 		}
 
 		if (Object.keys(whereQuery).length) {
@@ -362,9 +341,9 @@ export default function Table({
 		setWhereFilter({});
 		setPendingFilters(0);
 
-		const params = new URLSearchParams(searchParams.toString());
-		params.delete("search");
-		router.push(`${pathname}?${params.toString()}`);
+		const newParams = new URLSearchParams(searchParams.toString());
+		newParams.delete("search");
+		router.push(`${pathname}?${newParams.toString()}`);
 	}
 
 	function handleFormChange(form: HTMLFormElement) {
@@ -794,7 +773,7 @@ export default function Table({
 													{rel.label}
 													{rel.type === "table"
 														? " (" +
-															(TableMetadata[rel.label as Prisma.ModelName].titleField as string[]).join(" / ") +
+															(TableMetadata[rel.table as Prisma.ModelName].titleField as string[]).join(" / ") +
 															")"
 														: ""}
 												</div>

@@ -46,19 +46,19 @@ export function handleFilterChange(
 	searchParams: ReadonlyURLSearchParams,
 	router: AppRouterInstance
 ) {
-	const params = new URLSearchParams(searchParams);
+	const newParams = new URLSearchParams(searchParams);
 
 	if (value === undefined || value === "") {
 		if (typeof field === "string") {
-			params.delete(field);
+			newParams.delete(field);
 		} else {
-			params.delete(field.rel);
+			newParams.delete(field.rel);
 		}
 	} else if (typeof value === "string") {
 		if (typeof field === "string") {
-			params.set(field, value);
+			newParams.set(field, value);
 		} else {
-			params.set(field.rel, JSON.stringify({ [field.f]: value }));
+			newParams.set(field.rel, JSON.stringify({ [field.f]: value }));
 		}
 	} else if (typeof value === "object") {
 		//range
@@ -69,9 +69,9 @@ export function handleFilterChange(
 
 		let valObj;
 		if (typeof field === "string") {
-			valObj = params.get(field);
+			valObj = newParams.get(field);
 		} else {
-			valObj = params.get(field.rel);
+			valObj = newParams.get(field.rel);
 		}
 
 		if (valObj) {
@@ -93,13 +93,13 @@ export function handleFilterChange(
 		}
 
 		if (typeof field === "string") {
-			params.set(field, JSON.stringify(temp));
+			newParams.set(field, JSON.stringify(temp));
 		} else {
-			params.set(field.rel, JSON.stringify(temp));
+			newParams.set(field.rel, JSON.stringify(temp));
 		}
 	}
 
-	router.push(`?${params.toString()}`, { scroll: false });
+	router.push(`?${newParams.toString()}`, { scroll: false });
 }
 
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {

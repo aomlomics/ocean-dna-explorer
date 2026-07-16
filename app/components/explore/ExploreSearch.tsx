@@ -28,15 +28,15 @@ export default function ExploreSearch({
 	}, []);
 
 	function handleSearch(search: string) {
-		const params = new URLSearchParams(searchParams);
+		const newParams = new URLSearchParams(searchParams);
 
 		if (search === "") {
-			params.delete("search");
+			newParams.delete("search");
 		} else {
-			params.set("search", `${field},${search}`);
+			newParams.set("search", `${field},${search}`);
 		}
 
-		router.push(`?${params.toString()}`);
+		router.push(`?${newParams.toString()}`);
 	}
 
 	const combinedOmit = [...omit, ...GlobalOmit, "id", "userDefined"];

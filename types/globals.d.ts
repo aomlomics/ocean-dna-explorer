@@ -1,3 +1,6 @@
+import { Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
+import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
+
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
 
@@ -125,6 +128,10 @@ export type LocationWithValues = {
 export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R>
 	? R
 	: any;
+
+export type BlastResult = (Omit<BlastQuery, "id" | "userId" | "dateCalculated"> & {
+	BlastQueryResults: Omit<BlastQueryResult, "id" | "queryId">[];
+})[];
 
 export type UserMetadata = {
 	role?: Role;

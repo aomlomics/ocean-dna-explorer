@@ -207,9 +207,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	useEffect(() => {
 		// Set default table parameter without creating a new history entry
 		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
-			const params = new URLSearchParams(searchParams.toString());
-			params.set("table", searchTable);
-			router.replace(`${pathname}?${params.toString()}`);
+			const newParams = new URLSearchParams(searchParams.toString());
+			newParams.set("table", searchTable);
+			router.replace(`${pathname}?${newParams.toString()}`);
 		}
 	}, [searchTable, searchParams, pathname, router]);
 
@@ -260,7 +260,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 	}
 
-	//TODO: add shapes to description
+	//TODO: add BLAST and shapes to description
 	function handleQueryDescription() {
 		if (!formRef.current || !searchTree || searchTree.children.length === 0) return "";
 
@@ -467,27 +467,32 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	}
 
 	function search() {
-		const params = new URLSearchParams();
+		const newParams = new URLSearchParams();
 		if (!noTable) {
-			params.set("table", searchTable!);
+			newParams.set("table", searchTable!);
+		}
+
+		//maintain BLAST
+		searchParams.getAll("blastQuery").forEach((q) => newParams.set("blastQuery", q));
+		const blastDatabase = searchParams.get("blastDatabase");
+		if (blastDatabase) {
+			newParams.set("blastDatabase", blastDatabase);
+		}
+		const saveBlast = searchParams.get("saveBlast");
+		if (saveBlast) {
+			newParams.set("saveBlast", saveBlast);
 		}
 
 		//maintain shapes
-		const polygons = searchParams.getAll("polygon");
-		if (polygons.length) {
-			polygons.forEach((poly) => params.set("polygon", poly));
-		}
-		const circles = searchParams.getAll("circle");
-		if (circles.length) {
-			circles.forEach((cir) => params.set("circle", cir));
-		}
+		searchParams.getAll("polygon").forEach((poly) => newParams.set("polygon", poly));
+		searchParams.getAll("circle").forEach((cir) => newParams.set("circle", cir));
 
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
-			params.set("advanced", JSON.stringify(advanced));
+			newParams.set("advanced", JSON.stringify(advanced));
 		}
 
-		router.push(`${pathname}?${params.toString()}`);
+		router.push(`${pathname}?${newParams.toString()}`);
 
 		// Scroll to results after a brief delay to allow data to load
 		setTimeout(() => {
@@ -520,20 +525,25 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 			}
 		}
 
-		const params = new URLSearchParams();
+		const newParams = new URLSearchParams();
 		if (advancedStr) {
-			params.set("advanced", advancedStr);
+			newParams.set("advanced", advancedStr);
+		}
+
+		//maintain BLAST
+		searchParams.getAll("blastQuery").forEach((q) => newParams.set("blastQuery", q));
+		const blastDatabase = searchParams.get("blastDatabase");
+		if (blastDatabase) {
+			newParams.set("blastDatabase", blastDatabase);
+		}
+		const saveBlast = searchParams.get("saveBlast");
+		if (saveBlast) {
+			newParams.set("saveBlast", saveBlast);
 		}
 
 		//maintain shapes
-		const polygons = paramsFromUrl.getAll("polygon");
-		if (polygons.length) {
-			polygons.forEach((poly) => params.set("polygon", poly));
-		}
-		const circles = paramsFromUrl.getAll("circle");
-		if (circles.length) {
-			circles.forEach((cir) => params.set("circle", cir));
-		}
+		searchParams.getAll("polygon").forEach((poly) => newParams.set("polygon", poly));
+		searchParams.getAll("circle").forEach((cir) => newParams.set("circle", cir));
 
 		let fieldsForTable = undefined as string[] | undefined;
 		if (customFields === null) {
@@ -548,10 +558,10 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 
 		if (fieldsForTable && fieldsForTable.length) {
-			params.set("fields", fieldsForTable.join(","));
+			newParams.set("fields", fieldsForTable.join(","));
 		}
 
-		const queryString = params.toString();
+		const queryString = newParams.toString();
 
 		await navigator.clipboard.writeText(`${baseUrl}/api/${searchTable}${queryString ? "?" + queryString : ""}`);
 		setApiCopied(true);

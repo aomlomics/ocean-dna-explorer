@@ -8,17 +8,22 @@ import {
 } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
-import { NetworkPacket, ParamsArray } from "@/types/globals";
+import { BlastResult, NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Location } from "@/types/globals";
 import { getDataTableName, getRelationPath, getTableName } from "@/app/helpers/schema";
+import { auth } from "@clerk/nextjs/server";
+import { RolePermissions } from "@/types/objects";
 
 export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
+
+	const { sessionClaims, getToken } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
 	const model = getDataTableName(table);
 
@@ -36,13 +41,9 @@ export async function GET(
 			};
 		};
 
-		const polygons = searchParams.getAll("polygon");
-		const circles = searchParams.getAll("circle");
-		let shapes;
-		// Only process shapes if at least one polygon or circle was provided
-		if (polygons.length || circles.length) {
-			//skip database pagination
-			shapes = getShapesFromUrl(searchParams);
+		let shapes = getShapesFromUrl(searchParams);
+		if (shapes) {
+			//skips database pagination
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
 		}
@@ -112,6 +113,69 @@ export async function GET(
 
 			const sampsNamesInside = getLocationsInsideShapes(samples, shapes!).map((samp) => samp.samp_name);
 			query.where = deepWhere(model, "sample", { samp_name: { in: sampsNamesInside } });
+		}
+
+		const blastDatabase = searchParams.get("blastDatabase");
+		const saveBlast = searchParams.get("saveBlast");
+		const blastQueries = searchParams.getAll("blastQuery");
+		if (blastDatabase) {
+			if (!blastQueries.length) {
+				throw new Error("Must provide a blast query with blastDatabase option.");
+			}
+
+			searchParams.delete("blastDatabase");
+		}
+		if (saveBlast) {
+			if (!role || !RolePermissions[role].includes("contribute")) {
+				throw new Error("You must be signed in with the contributor role to save BLAST queries.");
+			}
+
+			if (!blastQueries.length) {
+				throw new Error("Must provide a blast query with saveBlast option.");
+			}
+
+			searchParams.delete("saveBlast");
+		}
+
+		let blastResult;
+		if (blastQueries.length) {
+			searchParams.delete("blastQuery");
+
+			let res;
+			try {
+				res = await fetch(
+					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/blastn?${blastDatabase ? `assay_name=${blastDatabase}&` : ""}${blastQueries.map((q) => `query=${q}`).join("&")}`,
+					saveBlast?.toLowerCase() === "true"
+						? {
+								headers: {
+									Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+								}
+							}
+						: undefined
+				);
+			} catch (err) {
+				throw new Error("Could not reach BLAST server.");
+			}
+			if (res.ok) {
+				const response = (await res.json()) as NetworkPacket;
+				if (response.statusMessage === "success") {
+					blastResult = response.result as BlastResult;
+					const featureWhere = deepWhere(model, "feature", {
+						featureid: {
+							in: blastResult.reduce(
+								(acc, r) => [...acc, ...r.BlastQueryResults.map((bqr) => bqr.featureid)],
+								[] as string[]
+							)
+						}
+					});
+
+					query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
+				} else if (response.statusMessage === "error") {
+					throw new Error("Response from BLAST server: " + response.error);
+				}
+			} else {
+				throw new Error("Could not reach BLAST server.");
+			}
 		}
 
 		//@ts-ignore
@@ -243,11 +307,11 @@ export async function GET(
 			if (isNaN(parsedPage) || parsedPage < 1) {
 				throw new Error(`Page must be a positive integer, but is "${page}".`);
 			}
-		}
 
-		//give last page if page is too large
-		if (parsedPage && (parsedPage - 1) * parsedTake > count) {
-			parsedPage = Math.floor(count / parsedTake) + 1;
+			//give last page if page is too large
+			if ((parsedPage - 1) * parsedTake > count) {
+				parsedPage = Math.floor(count / parsedTake) + 1;
+			}
 		}
 
 		//skip pagination if doing it after the database call
@@ -266,10 +330,6 @@ export async function GET(
 		if (shapes && !shapesSampleWhere) {
 			result = getLocationsInsideShapes(result as Location[], shapes);
 			count = result.length;
-			//give last page if page is too large
-			if (parsedPage && (parsedPage - 1) * parsedTake > count) {
-				parsedPage = Math.floor(count / parsedTake) + 1;
-			}
 			//manually paginate
 			const start = parsedPage ? (parsedPage - 1) * parsedTake : 0;
 			result = result.slice(start, start + parsedTake);

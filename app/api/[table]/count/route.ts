@@ -1,8 +1,10 @@
 import { prisma } from "@/app/helpers/prisma";
 import { deepWhere, parseApiQuery } from "@/app/helpers/queries";
 import { getTableName } from "@/app/helpers/schema";
-import { getLocationsInsideShapes } from "@/app/helpers/utils";
-import { NetworkPacket } from "@/types/globals";
+import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
+import { BlastResult, NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -11,12 +13,15 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
+	const { sessionClaims, getToken } = await auth();
+	const role = sessionClaims?.metadata?.role;
+
 	const model = getTableName(table);
 
 	try {
 		const { searchParams } = new URL(request.url);
 
-		const { query, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
+		let { query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
 			features: {
 				filters: true,
 				advanced: true,
@@ -27,7 +32,7 @@ export async function GET(
 		});
 
 		//replace the where with samp_names that match the query and are inside the shapes
-		if (shapes && sampleWhere) {
+		if (sampleWhere) {
 			const samples = await prisma.sample.findMany({
 				where: sampleWhere,
 				select: {
@@ -38,8 +43,55 @@ export async function GET(
 			});
 
 			query.where = deepWhere(model, "sample", {
-				samp_name: { in: getLocationsInsideShapes(samples, shapes).map((samp) => samp.samp_name) }
+				samp_name: { in: getLocationsInsideShapes(samples, shapes!).map((samp) => samp.samp_name) }
 			});
+		}
+
+		//inject blast results into queries
+		let blastResult;
+		if (blast) {
+			if (blast.save && (!role || !RolePermissions[role].includes("contribute"))) {
+				return NextResponse.json({
+					statusMessage: "error",
+					error: "You must be signed in with the contributor role to save BLAST queries."
+				});
+			}
+
+			try {
+				const res = await fetch(
+					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/blastn?${blast.assay_name ? `assay_name=${blast.assay_name}&` : ""}${blast.queries.map((q) => `query=${q}`).join("&")}`,
+					blast.save
+						? {
+								headers: {
+									Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+								}
+							}
+						: undefined
+				);
+				if (res.ok) {
+					const response = (await res.json()) as NetworkPacket;
+					if (response.statusMessage === "success") {
+						blastResult = response.result as BlastResult;
+						const featureWhere = deepWhere(model, "feature", {
+							featureid: {
+								in: blastResult.reduce(
+									(acc, r) => [...acc, ...r.BlastQueryResults.map((bqr) => bqr.featureid)],
+									[] as string[]
+								)
+							}
+						});
+
+						query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
+					} else if (response.statusMessage === "error") {
+						response.error = "Response from BLAST server: " + response.error;
+						return NextResponse.json(response);
+					}
+				} else {
+					return NextResponse.json({ statusMessage: "error", error: "Could not reach BLAST server." });
+				}
+			} catch {
+				return NextResponse.json({ statusMessage: "error", error: "Could not reach BLAST server." });
+			}
 		}
 
 		//@ts-ignore
@@ -51,7 +103,7 @@ export async function GET(
 				result = getLocationsInsideShapes(result, shapes);
 			}
 
-			return NextResponse.json({ statusMessage: "success", result });
+			return NextResponse.json({ statusMessage: "success", result, blastResult });
 		} else {
 			return NextResponse.json({
 				statusMessage: "error",

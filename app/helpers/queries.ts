@@ -9,8 +9,7 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
-import { deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
-import { decompressFromEncodedURIComponent } from "lz-string";
+import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
@@ -137,10 +136,10 @@ export function parseToQuery(
 		}
 	} else if (mode === "in" || mode === "notIn") {
 		//uncompress if necessary
-		if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
-			value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
+		if (typeof value === "string" && value.startsWith(COMPRESSION_FORMAT)) {
+			value = JSON.parse(decompressURIComponent(value));
 			if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
-				throw new Error("Value must be an array of primitives compressed with lz-string.");
+				throw new Error(`If value is string, it must be an array of primitives in ${COMPRESSION_FORMAT} format.`);
 			}
 		}
 
@@ -417,6 +416,7 @@ export function parseApiQuery(
 			advanced?: true;
 			search?: true;
 			shapes?: true;
+			blast?: true;
 		};
 		defaults?: {
 			fields?: Record<string, true>;
@@ -440,7 +440,7 @@ export function parseApiQuery(
 	}
 ) {
 	//copy search params
-	const params = new URLSearchParams(searchParams);
+	const newParams = new URLSearchParams(searchParams);
 
 	const query = {} as {
 		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
@@ -451,23 +451,58 @@ export function parseApiQuery(
 		distinct?: string[];
 	};
 
+	//blast query
+	let blast;
+	if (!options?.features || options.features.blast) {
+		const tempQueries = newParams.getAll("blastQuery");
+		if (tempQueries.length) {
+			blast = { queries: tempQueries } as { queries: string[]; assay_name?: Assay["assay_name"]; save?: boolean };
+			newParams.delete("blastQuery");
+		}
+
+		const blastDatabase = newParams.get("blastDatabase");
+		if (blastDatabase) {
+			if (!blast) {
+				throw new Error("Must provide a blast query with blastDatabase option.");
+			}
+
+			blast.assay_name = blastDatabase;
+			newParams.delete("blastDatabase");
+		}
+
+		const saveBlast = newParams.get("saveBlast");
+		if (saveBlast) {
+			if (!blast) {
+				throw new Error("Must provide a blast query with saveBlast option.");
+			}
+
+			if (saveBlast.toLowerCase() === "true") {
+				blast.save = true;
+			} else if (saveBlast.toLowerCase() === "false") {
+				blast.save = false;
+			} else {
+				throw new Error('The saveBlast option must be "true" or "false"');
+			}
+
+			newParams.delete("saveBlast");
+		}
+	}
+
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		const tempShapes = getShapesFromUrl(params);
-
-		if (tempShapes) {
-			shapes = tempShapes;
-			params.delete("polygon");
-			params.delete("circle");
+		shapes = getShapesFromUrl(newParams);
+		if (shapes) {
+			newParams.delete("polygon");
+			newParams.delete("circle");
 		}
 	}
 
 	//ordering results
 	if (!options?.features || options.features.orderBy) {
-		const orderByStr = params.get("orderBy");
+		const orderByStr = newParams.get("orderBy");
 		if (orderByStr) {
-			params.delete("orderBy");
+			newParams.delete("orderBy");
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
 				if (TableMetadata[table].enumSchema.options.includes(split[0])) {
@@ -495,9 +530,9 @@ export function parseApiQuery(
 	}
 
 	if (!options?.features || options.features.fields) {
-		const fields = params.get("fields");
+		const fields = newParams.get("fields");
 		if (fields) {
-			params.delete("fields");
+			newParams.delete("fields");
 			const split = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
 			query.select = query.select ? { ...query.select, ...split } : split;
 		}
@@ -509,9 +544,9 @@ export function parseApiQuery(
 	}
 
 	if (!options?.features || options.features.distinct) {
-		const distinct = params.get("distinct");
+		const distinct = newParams.get("distinct");
 		if (distinct) {
-			params.delete("distinct");
+			newParams.delete("distinct");
 			const split = distinct.split(",");
 			query.distinct = query.distinct ? [...query.distinct, ...split] : split;
 		}
@@ -519,9 +554,9 @@ export function parseApiQuery(
 
 	//relations
 	if (!options?.features || options.features.relations) {
-		const relations = params.get("relations");
+		const relations = newParams.get("relations");
 		if (relations) {
-			params.delete("relations");
+			newParams.delete("relations");
 
 			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
 			for (const r of relations.split(",")) {
@@ -535,9 +570,9 @@ export function parseApiQuery(
 			//relations limit
 			let take;
 			if (!options?.features || options.features.relationsLimit) {
-				const relationsLimit = params.get("relationsLimit");
+				const relationsLimit = newParams.get("relationsLimit");
 				if (relationsLimit) {
-					params.delete("relationsLimit");
+					newParams.delete("relationsLimit");
 					take = parseInt(relationsLimit);
 					if (Number.isNaN(take) || take < 1) {
 						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be a positive integer.`);
@@ -547,9 +582,9 @@ export function parseApiQuery(
 
 			//include all fields in relations
 			let allFields = undefined as undefined | boolean | Set<Uncapitalize<Prisma.ModelName>>;
-			const relationsAllFields = params.get("relationsAllFields");
+			const relationsAllFields = newParams.get("relationsAllFields");
 			if (relationsAllFields) {
-				params.delete("relationsAllFields");
+				newParams.delete("relationsAllFields");
 				if (!relationsAllFields || relationsAllFields.toLowerCase() === "false") {
 					allFields = false;
 				} else if (relationsAllFields.toLowerCase() === "true") {
@@ -661,9 +696,9 @@ export function parseApiQuery(
 
 	//limit
 	if (!options?.features || options.features.limit) {
-		const take = params.get("limit");
+		const take = newParams.get("limit");
 		if (take) {
-			params.delete("limit");
+			newParams.delete("limit");
 			query.take = parseInt(take);
 			if (Number.isNaN(query.take) || query.take < 1) {
 				throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
@@ -673,12 +708,12 @@ export function parseApiQuery(
 
 	let sampleWhere;
 
-	const advanced = params.get("advanced");
+	const advanced = newParams.get("advanced");
 	if ((!options?.features || options.features.advanced) && advanced) {
 		//advanced search
-		params.delete("advanced");
+		newParams.delete("advanced");
 
-		if (Array.from(params).length) {
+		if (Array.from(newParams).length) {
 			throw new Error("Advanced search may not include other filter parameters.");
 		}
 
@@ -689,7 +724,7 @@ export function parseApiQuery(
 
 		//assemble secondary query if table doesn't have location data
 		if (
-			sampleWhere &&
+			shapes &&
 			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
 				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
 		) {
@@ -700,14 +735,14 @@ export function parseApiQuery(
 			}
 		}
 	} else {
-		const ids = params.get("ids");
-		const search = params.get("search");
+		const ids = newParams.get("ids");
+		const search = newParams.get("search");
 
 		if ((!options?.features || options.features.ids) && ids) {
 			//list of ids
-			params.delete("ids");
+			newParams.delete("ids");
 
-			if (Array.from(params).length) {
+			if (Array.from(newParams).length) {
 				throw new Error("Filtering with a list of ids may not include other filter parameters.");
 			}
 
@@ -729,9 +764,9 @@ export function parseApiQuery(
 			};
 		} else if ((!options?.features || options.features.search) && search) {
 			//string search
-			params.delete("search");
+			newParams.delete("search");
 
-			if (Array.from(params).length) {
+			if (Array.from(newParams).length) {
 				throw new Error("Search may not include other filter parameters.");
 			}
 
@@ -747,7 +782,7 @@ export function parseApiQuery(
 					query.where = {} as Record<string, any>;
 				}
 
-				params.forEach((value, key) => {
+				newParams.forEach((value, key) => {
 					const type = getZodType(table, key).type;
 
 					const arr = value.split(",");
@@ -792,7 +827,7 @@ export function parseApiQuery(
 
 		//assemble secondary query if table doesn't have location data
 		if (
-			sampleWhere &&
+			shapes &&
 			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
 				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
 		) {
@@ -804,7 +839,7 @@ export function parseApiQuery(
 		}
 	}
 
-	return { query, shapes, sampleWhere };
+	return { query, blast, shapes, sampleWhere };
 }
 
 const secureFields = ["userIds"];
@@ -1078,4 +1113,41 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 	});
 
 	console.log("Seed successful");
+}
+
+export function buildWhereParams(
+	searchParams: URLSearchParams,
+	query: URLSearchParams,
+	whereQuery: Record<string, string | number>,
+	ignoreParams?: string[]
+) {
+	const tempParams = new URLSearchParams(searchParams);
+
+	//pull out blast query
+	tempParams.getAll("blastQuery").forEach((q) => query.set("blastQuery", q));
+	tempParams.delete("blastQuery");
+	const blastDatabase = tempParams.get("blastDatabase");
+	if (blastDatabase) {
+		tempParams.delete("blastDatabase");
+		query.set("blastDatabase", blastDatabase);
+	}
+	const saveBlast = tempParams.get("saveBlast");
+	if (saveBlast) {
+		tempParams.delete("saveBlast");
+		query.set("saveBlast", saveBlast);
+	}
+
+	//pull out shapes
+	tempParams.getAll("polygon").forEach((poly) => query.set("polygon", poly));
+	tempParams.delete("polygon");
+	tempParams.getAll("circle").forEach((cir) => query.set("circle", cir));
+	tempParams.delete("circle");
+
+	//get rest of queries
+	whereQuery = { ...whereQuery, ...Object.fromEntries(tempParams) };
+	if (ignoreParams) {
+		for (const param of ignoreParams) {
+			delete whereQuery[param];
+		}
+	}
 }

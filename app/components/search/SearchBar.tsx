@@ -5,11 +5,7 @@ import { useEffect, useRef } from "react";
 import TableMetadata from "@/types/tableMetadata";
 import { Prisma } from "@/app/generated/prisma/client";
 
-type SearchBarProps = {
-	table: string;
-};
-
-export default function SearchBar({ table }: SearchBarProps) {
+export default function SearchBar({ table }: { table: Uncapitalize<Prisma.ModelName> }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const searchRef = useRef<HTMLInputElement>(null);
@@ -27,14 +23,14 @@ export default function SearchBar({ table }: SearchBarProps) {
 			const formData = new FormData(formRef.current);
 			const searchValue = formData.get("searchInput") as string;
 
-			const params = new URLSearchParams(searchParams.toString());
+			const newParams = new URLSearchParams(searchParams.toString());
 			if (searchValue) {
-				params.set("search", searchValue);
+				newParams.set("search", searchValue);
 			} else {
-				params.delete("search");
+				newParams.delete("search");
 			}
 
-			window.history.pushState(null, "", `${pathname}?${params.toString()}`);
+			window.history.pushState(null, "", `${pathname}?${newParams.toString()}`);
 		}
 	}
 
@@ -56,7 +52,7 @@ export default function SearchBar({ table }: SearchBarProps) {
 							id="searchInput"
 							name="searchInput"
 							ref={searchRef}
-							placeholder={`Search ${TableMetadata[table as Prisma.ModelName]?.plural || table}...`}
+							placeholder={`Search ${TableMetadata[table].plural || table}...`}
 							defaultValue={searchParams.get("search")?.toString() || ""}
 						/>
 						<svg

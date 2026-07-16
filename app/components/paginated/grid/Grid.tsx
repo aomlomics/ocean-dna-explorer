@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { FunctionComponent, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
+import { buildWhereParams } from "@/app/helpers/queries";
 
 export default function Grid({
 	Child,
@@ -36,30 +37,7 @@ export default function Grid({
 		}
 
 		if (searchParams && searchParams.size) {
-			const tempParms = new URLSearchParams(searchParams);
-			//specifically pull out shapes from searchParams
-
-			const polygons = tempParms.getAll("polygon");
-			if (polygons.length) {
-				tempParms.delete("polygon");
-				for (const p of polygons) {
-					query.set("polygon", p);
-				}
-			}
-			const circles = tempParms.getAll("circle");
-			if (circles.length) {
-				tempParms.delete("circle");
-				for (const c of circles) {
-					query.set("circle", c);
-				}
-			}
-
-			whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
-			if (ignoreParams) {
-				for (const param of ignoreParams) {
-					delete whereQuery[param];
-				}
-			}
+			buildWhereParams(searchParams, query, whereQuery);
 		}
 
 		query.set("where", JSON.stringify(whereQuery));

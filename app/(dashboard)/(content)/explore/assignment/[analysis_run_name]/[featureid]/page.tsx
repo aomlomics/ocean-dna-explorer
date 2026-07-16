@@ -25,10 +25,7 @@ export default async function Analysis_run_name_Featureid({
 	if (!assignment) return <>Assignment not found</>;
 
 	const rawConfidence = assignment.Confidence ?? 0;
-	const confidencePercent = Math.max(
-		0,
-		Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence)
-	);
+	const confidencePercent = Math.max(0, Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence));
 
 	return (
 		<div className="space-y-8 pb-8">
@@ -55,12 +52,8 @@ export default async function Analysis_run_name_Featureid({
 				</div>
 				<div className="mt-3 mb-4 inline-flex items-center gap-5 bg-base-200 rounded-xl px-5 py-4">
 					<div className="flex flex-col">
-						<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-							Assignment confidence
-						</p>
-						<p className="text-3xl md:text-4xl font-bold text-primary mt-1">
-							{confidencePercent.toFixed(1)}%
-						</p>
+						<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Assignment confidence</p>
+						<p className="text-3xl md:text-4xl font-bold text-primary mt-1">{confidencePercent.toFixed(1)}%</p>
 					</div>
 					<GcDonut percentage={confidencePercent} size={72} strokeWidth={8} />
 				</div>
@@ -99,4 +92,3 @@ export default async function Analysis_run_name_Featureid({
 		</div>
 	);
 }
-
