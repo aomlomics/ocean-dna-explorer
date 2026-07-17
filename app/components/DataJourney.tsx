@@ -461,7 +461,7 @@ export default function DataJourney() {
 
 						{/* Occurrence with Globe - centered */}
 						<div id="step11" className="flex flex-col items-center">
-							<div className="w-full max-w-100 sm:max-w-120 lg:max-w-140 mb-2">
+							<div className="w-full max-w-100 sm:max-w-120 lg:max-w-140 mb-0">
 								<OceanGlobe className="w-full" />
 							</div>
 

@@ -404,6 +404,7 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 	useEffect(() => {
 		let width = 0;
 		let globe: ReturnType<typeof createGlobe> | null = null;
+		let animationFrameId = 0;
 
 		const onResize = () => {
 			if (canvasRef.current) {
@@ -424,46 +425,62 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 				diffuse: isDark ? 2.5 : 2,
 				mapSamples: 16000,
 				mapBrightness: isDark ? 12 : 2.5,
-				// Light: clean white globe, Dark: rich navy blue
-				baseColor: isDark ? [0.1, 0.14, 0.22] : [1, 1, 1],
-				// Primary blue markers (kept blue in both modes; brighter in dark for contrast)
-				markerColor: isDark ? [0.2, 0.45, 0.95] : [0.14, 0.24, 0.5],
+				// Controls non-map surface brightness; prevents dark mode globe from reading as black.
+				mapBaseBrightness: isDark ? 0.3 : 0.12,
+				scale: 0.91,
+				// Lower elevation tightens edge occlusion so dots hide/show closer to the globe edge.
+				markerElevation: 0.006,
+				// Light: clean white. Dark: closer to theme base-200 (#192136) so it doesn't read as black.
+				baseColor: isDark ? [0.098, 0.129, 0.212] : [1, 1, 1],
+				// Theme primary blue per mode (light: #233d7f, dark: #64abdc)
+				markerColor: isDark ? [0.392, 0.671, 0.863] : [0.137, 0.239, 0.498],
 				// Light: unchanged. Dark: dimmer glow in theme primary blue (#64abdc → dimmed)
 				glowColor: isDark ? [0.1, 0.28, 0.36] : [0.9, 0.92, 0.95],
 				markers: allOceanMarkers.map((location) => ({
 					location,
-					size: 0.07
+					size: 0.056
 				}))
-				// onRender: (state) => {
-				// 	frameRef.current++;
-
-				// 	// Slow auto-rotate when not interacting
-				// 	if (pointerInteracting.current === null) {
-				// 		phiRef.current += 0.001;
-				// 	}
-				// 	state.phi = phiRef.current + pointerInteractionMovement.current / 200;
-				// 	state.width = width * 2;
-				// 	state.height = width * 2;
-
-				// 	// Staggered breathing animation - each marker pulses out of sync
-				// 	// Dark: smaller size/amplitude so overlapping markers don't show black blend artifact
-				// 	state.markers = allOceanMarkers.map((location, i) => {
-				// 		const phase = i * 0.5; // offset each marker's phase
-				// 		const isIndianOceanMarker = indianOceanIndices.has(i);
-				// 		const baseSize = isDark
-				// 			? 0.054 + (isIndianOceanMarker ? 0.005 : 0)
-				// 			: 0.066 + (isIndianOceanMarker ? 0.006 : 0);
-				// 		const amplitude = isDark
-				// 			? 0.006 + (isIndianOceanMarker ? 0.001 : 0)
-				// 			: 0.01 + (isIndianOceanMarker ? 0.002 : 0);
-				// 		const breathe = baseSize + Math.sin(frameRef.current * 0.025 + phase) * amplitude;
-				// 		return { location, size: breathe };
-				// 	});
-				// }
 			});
+
+			const animate = () => {
+				if (!globe) return;
+				frameRef.current++;
+
+				// Slow auto-rotate when not interacting
+				if (pointerInteracting.current === null) {
+					phiRef.current += 0.001;
+				}
+
+				// Staggered breathing animation - each marker pulses out of sync
+				// Dark: smaller size/amplitude so overlapping markers don't show black blend artifact
+				const animatedMarkers = allOceanMarkers.map((location, i) => {
+					const phase = i * 0.5; // offset each marker's phase
+					const isIndianOceanMarker = indianOceanIndices.has(i);
+					const baseSize = isDark
+						? 0.043 + (isIndianOceanMarker ? 0.004 : 0)
+						: 0.055 + (isIndianOceanMarker ? 0.005 : 0);
+					const amplitude = isDark
+						? 0.006 + (isIndianOceanMarker ? 0.001 : 0)
+						: 0.01 + (isIndianOceanMarker ? 0.002 : 0);
+					const breathe = baseSize + Math.sin(frameRef.current * 0.025 + phase) * amplitude;
+					return { location, size: breathe };
+				});
+
+				globe.update({
+					phi: phiRef.current + pointerInteractionMovement.current / 200,
+					width: width * 2,
+					height: width * 2,
+					markers: animatedMarkers
+				});
+
+				animationFrameId = window.requestAnimationFrame(animate);
+			};
+
+			animationFrameId = window.requestAnimationFrame(animate);
 		}
 
 		return () => {
+			window.cancelAnimationFrame(animationFrameId);
 			window.removeEventListener("resize", onResize);
 			if (globe) {
 				globe.destroy();
