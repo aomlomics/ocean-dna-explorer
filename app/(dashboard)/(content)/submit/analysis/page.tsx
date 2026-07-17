@@ -1,5 +1,6 @@
 import AnalysisSubmit from "@/app/components/submit/AnalysisSubmit";
 import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
+import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 
@@ -34,16 +35,7 @@ export default async function Analysis() {
 							you.
 						</p>
 						<p>
-							See example datasets compatible with ODE submission in{" "}
-							<a
-								href="https://github.com/aomlomics/ODE_testdata"
-								className="text-primary hover:text-primary-focus"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								ODE_testdata
-							</a>
-							.{" "}
+							Build your FAIR eDNA metadata templates with{" "}
 							<a
 								href="https://github.com/aomlomics/FAIReSheets"
 								className="text-primary hover:text-primary-focus"
@@ -52,11 +44,33 @@ export default async function Analysis() {
 							>
 								FAIReSheets
 							</a>{" "}
-							helps generate FAIRe-compatible metadata in Google Sheets.{" "}
+							and compare against the{" "}
+							<a
+								href="https://github.com/aomlomics/ODE_testdata"
+								className="text-primary hover:text-primary-focus"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								example datasets
+							</a>{" "}
+							there. The{" "}
 							<Link href="/help#submit" className="text-primary hover:text-primary-focus">
-								Visit the help page
+								help page
 							</Link>{" "}
-							for more submission details.
+							and the{" "}
+							<a
+								href={WORKSHOP_PLAYLIST_HREF}
+								className="text-primary hover:text-primary-focus"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								FAIR eDNA Workshop
+							</a>{" "}
+							video series from{" "}
+							<a href={OBON_HREF} className="text-primary hover:text-primary-focus" target="_blank" rel="noopener noreferrer">
+								OBON
+							</a>{" "}
+							cover the standard and filling in these templates.
 						</p>
 					</div>
 				</header>

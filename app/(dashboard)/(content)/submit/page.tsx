@@ -1,4 +1,5 @@
 import { AnalysisIcon, ProjectIcon } from "@/app/components/icons";
+import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import Link from "next/link";
 
 const ODE_TESTDATA_HREF = "https://github.com/aomlomics/ODE_testdata";
@@ -22,16 +23,7 @@ export default function Submit() {
 				<h1 className="text-4xl font-normal text-primary">Submit to the Ocean DNA Explorer</h1>
 				<p className="text-base text-base-content/80">Choose a submission type below to contribute your data.</p>
 				<p className="text-base text-base-content/80">
-					See example datasets compatible for ODE submission here:{" "}
-					<a
-						href={ODE_TESTDATA_HREF}
-						className="text-primary hover:text-primary-focus"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						ODE_testdata
-					</a>
-					.{" "}
+					Use{" "}
 					<a
 						href={FAIRESHEETS_HREF}
 						className="text-primary hover:text-primary-focus"
@@ -39,12 +31,34 @@ export default function Submit() {
 						rel="noopener noreferrer"
 					>
 						FAIReSheets
+					</a>
+					{" "}to build your FAIR eDNA metadata templates, compare with{" "}
+					<a
+						href={ODE_TESTDATA_HREF}
+						className="text-primary hover:text-primary-focus"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						example datasets
 					</a>{" "}
-					helps with FAIRe metadata.{" "}
+					and review the{" "}
 					<Link href="/help#submit" className="text-primary hover:text-primary-focus">
-						Visit the help page
+						help page
 					</Link>{" "}
-					for more data submission information.
+					for submission details. You can also watch the{" "}
+					<a
+						href={WORKSHOP_PLAYLIST_HREF}
+						className="text-primary hover:text-primary-focus"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						FAIR eDNA Workshop
+					</a>{" "}
+					video series from{" "}
+					<a href={OBON_HREF} className="text-primary hover:text-primary-focus" target="_blank" rel="noopener noreferrer">
+						OBON
+					</a>{" "}
+					for the standard, templates, and software tools.
 				</p>
 			</header>
 

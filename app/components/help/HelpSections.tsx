@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { DeadBooleanToEnum } from "../../../types/enums";
 import { AnalysisAsvTablePreview, AnalysisOccurrenceTablePreview } from "./DocExampleTables";
+import WorkshopVideoCallout from "../WorkshopVideoCallout";
 
 // Define types for our content structure
 export type Subsection = {
@@ -626,13 +627,14 @@ export const helpSections: Section[] = [
 					<Link className="link link-primary" href="/submit">
 						Submit
 					</Link>{" "}
-					tab in the header. Start from the example dataset below, then follow the project and analysis file layouts.
+					tab in the header. 					Start from the example dataset below, then follow the project and analysis file layouts.
 					For OBIS and GBIF publishing, see{" "}
 					<Link className="link link-primary" href="#obis-gbif-submission">
 						edna2obis
 					</Link>
 					.
 				</p>
+				<WorkshopVideoCallout className="mb-4 max-w-2xl mx-0" />
 			</>
 		),
 		subsections: [
@@ -642,16 +644,16 @@ export const helpSections: Section[] = [
 				content: (
 					<>
 						<p className="mb-4">
-							A full example bundle lives in{" "}
+							Browse the{" "}
 							<Link
 								className="link link-primary"
-								href="https://github.com/aomlomics/ODE_testdata/tree/main/noaa-sefsc-gu1901"
+								href="https://github.com/aomlomics/ODE_testdata"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								ODE_testdata (noaa-sefsc-gu1901)
+								ODE_testdata example datasets
 							</Link>
-							. It shows real file names and TSV shapes you can copy before building your own submission.
+							. The repository includes multiple example projects with file names and TSV layouts you can copy for your own submission.
 						</p>
 						<ul className="mb-4 list-disc pl-6">
 							<li>
@@ -847,10 +849,11 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							<li>MIEM for eDNA and eRNA metabarcoding</li>
 							<li>Terms written specifically for eDNA workflows</li>
 						</ul>
-						<p className="mb-0">
+						<p className="mb-4">
 							That shared structure helps your data work here, in downstream tools, and alongside other environmental
 							datasets.
 						</p>
+						<WorkshopVideoCallout compact />
 					</>
 				)
 			},
@@ -883,6 +886,7 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							</Link>
 							.
 						</p>
+						<WorkshopVideoCallout compact />
 					</>
 				)
 			},
@@ -907,13 +911,14 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							</Link>{" "}
 							for OBIS and GBIF.
 						</p>
-						<p className="mb-0">
+						<p className="mb-4">
 							FAIReSheets runs as a Python script on your computer. Request access by emailing{" "}
 							<a className="link link-primary" href="mailto:bayden.willms@noaa.gov">
 								bayden.willms@noaa.gov
 							</a>
 							.
 						</p>
+						<WorkshopVideoCallout compact />
 					</>
 				)
 			},
@@ -1196,6 +1201,7 @@ abc12d6cd12a574f2183f003593d3940  -`}
 							reads the same file layout you use for Ocean DNA Explorer and converts it to Darwin Core for submission to
 							OBIS (Ocean Biodiversity Information System) and GBIF (Global Biodiversity Information Facility).
 						</p>
+						<WorkshopVideoCallout compact className="mt-4" />
 					</>
 				)
 			}

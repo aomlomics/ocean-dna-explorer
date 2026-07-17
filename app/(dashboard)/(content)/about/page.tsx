@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
+import WorkshopVideoCallout, { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 
 const teamMembers = [
 	{
@@ -195,10 +196,23 @@ export default function AboutPage() {
 							FAIR eDNA metadata standard
 						</Link>
 						, an international, community driven environmental DNA data standard built on existing standards like Darwin
-						Core and MIxS that helps eDNA data become Findable, Accessible, Interoperable, and Reusable. Our team has
-						developed a suite of open source tools to help you format your data to the FAIR eDNA standard, including
-						metadata template generation, amplicon sequence processing workflows, and data publishing tools. For more
-						detailed information on our software packages and workflows, see the{" "}
+						Core and MIxS that helps eDNA data become Findable, Accessible, Interoperable, and Reusable. Our team, along
+						with collaborators across the FAIR eDNA community, has built a suite of open source tools to help you format
+						your data to the FAIR eDNA standard, including metadata template generation, amplicon sequence processing
+						workflows, and data publishing tools. The{" "}
+						<Link
+							href={WORKSHOP_PLAYLIST_HREF}
+							className="text-primary hover:underline font-medium"
+							target="_blank"
+							rel="noreferrer"
+						>
+							FAIR eDNA Workshop
+						</Link>{" "}
+						video series from{" "}
+						<Link href={OBON_HREF} className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
+							OBON
+						</Link>{" "}
+						demonstrates many of these tools, and the{" "}
 						<Link
 							href="https://noaa-omics-dmg.readthedocs.io/"
 							className="text-primary hover:underline font-medium"
@@ -206,12 +220,14 @@ export default function AboutPage() {
 							rel="noreferrer"
 						>
 							NOAA Omics Data Management Guide
-						</Link>
-						.
+						</Link>{" "}
+						has detailed documentation on the software packages and workflows.
 					</p>
 				</div>
 
-				{/* Software tools - soft cards, no borders */}
+				<WorkshopVideoCallout className="mx-auto mb-8 max-w-2xl" />
+
+				{/* Software tools */}
 				<div className="max-w-5xl mx-auto px-6">
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 						<Link
