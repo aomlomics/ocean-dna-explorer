@@ -155,7 +155,7 @@ export default function InfoButton({
 		return (
 			<div
 				ref={wrapperRef}
-				className={`relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px ${className ?? ""}`}
+				className={`relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none ${className ?? ""}`}
 				onMouseEnter={openPanel}
 				onMouseLeave={scheduleClosePanel}
 				onFocus={openPanel}
@@ -189,7 +189,7 @@ export default function InfoButton({
 
 	return (
 		<div
-			className={`tooltip ${dir} relative z-tooltip inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none translate-y-px before:z-tooltip after:z-tooltip ${INFO_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
+			className={`tooltip ${dir} relative z-tooltip inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none before:z-tooltip after:z-tooltip ${INFO_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
 			data-tip={infoText}
 		>
 			<div
