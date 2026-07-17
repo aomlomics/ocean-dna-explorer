@@ -50,17 +50,48 @@ const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[]
 	{
 		href: "/learn?section=edna101",
 		title: "eDNA 101",
-		subtitle: "Discover how eDNA data is created and stored."
+		subtitle: "Take the data journey from a sample to an eDNA dataset"
 	},
 	{
 		href: "/learn?section=impact",
 		title: "Impact",
-		subtitle: "How eDNA advances biodiversity science and informs conservation."
+		subtitle: "See how eDNA helps biodiversity research and conservation"
 	},
 	{
 		href: "/learn?section=discoveries",
 		title: "Make your own Discoveries",
-		subtitle: "Tech to match the science, using ODE to make discoveries."
+		subtitle: "Leverage ODE's custom exploration features"
+	}
+];
+
+const SUBMIT_ITEMS = [
+	{
+		label: "Project",
+		href: "/submit/project",
+		subtitle: "Attach FAIR eDNA metadata sheets and add other users to your project"
+	},
+	{
+		label: "Analysis",
+		href: "/submit/analysis",
+		subtitle: "Attach analysis details and raw data for an existing project"
+	}
+];
+
+const VISUALIZE_ITEMS = [
+	{
+		label: "Metadata",
+		href: "/visualize/metadata",
+		subtitle: "Compare metadata values on charts"
+	},
+	{
+		label: "Taxonomy",
+		href: "/visualize/taxonomy",
+		subtitle: "Explore taxonomic distributions across datasets"
+	},
+	{
+		label: "Alpha Diversity",
+		href: "/visualize/alphaDiversity",
+		subtitle: "Calculate alpha diversity metrics on the server"
 	}
 ];
 
@@ -321,26 +352,11 @@ function MenuItem({ href, label }: { href: string; label: string }) {
 	);
 }
 
-function MenuItemWithSubtitle({
-	href,
-	title,
-	subtitle,
-	icon
-}: {
-	href: string;
-	title: string;
-	subtitle: string;
-	icon?: React.ReactNode;
-}) {
+function MenuItemWithTinySubtitle({ href, title, subtitle }: { href: string; title: string; subtitle: string }) {
 	return (
-		<Link href={href} prefetch={MENU_LINK_PREFETCH} className="group block rounded-lg px-2 py-2 hover:bg-base-200/60">
-			<div className="flex items-start gap-2">
-				{icon ? <span className="mt-0.5 text-base-content/70 group-hover:text-primary">{icon}</span> : null}
-				<span>
-					<div className="text-base font-semibold text-base-content group-hover:text-primary">{title}</div>
-					<div className="text-sm text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
-				</span>
-			</div>
+		<Link href={href} prefetch={MENU_LINK_PREFETCH} className="group block rounded-md px-2 py-1.5 hover:bg-base-200/60">
+			<div className="text-base text-base-content/80 transition-colors group-hover:text-primary">{title}</div>
+			<div className="mt-0.5 text-xs leading-snug text-base-content/55">{subtitle}</div>
 		</Link>
 	);
 }
@@ -349,30 +365,54 @@ function MiniFeatureCard({
 	title,
 	description,
 	stats,
-	media
+	media,
+	statsInline
 }: {
 	title: string;
 	description: string;
 	stats?: { value: string; label: string }[];
 	media?: React.ReactNode;
+	statsInline?: boolean;
 }) {
+	const hasMedia = Boolean(media);
+	const hasStats = Boolean(stats?.length);
+
 	return (
-		<div className="p-5 bg-base-200/35 border-l border-base-200 flex flex-col justify-between">
-			<div>
-				{media ? <div className="mb-4">{media}</div> : null}
+		<div
+			className={[
+				"p-5 bg-base-200/35 border-l border-base-200 flex flex-col",
+				hasStats ? "justify-between" : "justify-center",
+				hasMedia ? "items-center" : ""
+			].join(" ")}
+		>
+			<div className={hasMedia ? "w-full max-w-56 text-left" : ""}>
+				{media ? <div className={hasStats ? "mb-2" : "mb-3"}>{media}</div> : null}
 				{title ? <div className="text-base font-semibold text-base-content">{title}</div> : null}
-				<div className="text-sm text-base-content/60 mt-2 leading-relaxed">{description}</div>
+				<div className={["text-sm text-base-content/60 leading-relaxed", hasStats ? "mt-1" : "mt-2"].join(" ")}>
+					{description}
+				</div>
 			</div>
 			{stats?.length ? (
-				<div className="mt-4">
-					<div className="space-y-1">
-						{stats.map((s) => (
-							<div key={s.label} className="flex items-baseline gap-2">
-								<div className="text-xl font-semibold text-primary">{s.value}</div>
-								<div className="text-xs text-base-content/60">{s.label}</div>
-							</div>
-						))}
-					</div>
+				<div className="mt-3 w-full">
+					{statsInline ? (
+						<div className="grid grid-cols-2 gap-4">
+							{stats.map((s) => (
+								<div key={s.label}>
+									<div className="text-xl font-semibold text-primary leading-none">{s.value}</div>
+									<div className="text-xs text-base-content/60 mt-1">{s.label}</div>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className="space-y-1">
+							{stats.map((s) => (
+								<div key={s.label} className="flex items-baseline gap-2">
+									<div className="text-xl font-semibold text-primary">{s.value}</div>
+									<div className="text-xs text-base-content/60">{s.label}</div>
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 			) : null}
 		</div>
@@ -383,11 +423,15 @@ export function ExploreMegaMenu() {
 	const totalTables = EXPLORE_LEFT_ITEMS.length + EXPLORE_RIGHT_ITEMS.length;
 
 	return (
-		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[51.25rem]">
-			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
+		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[45.5rem]">
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
-					<div className="text-base font-semibold text-base-content">Explore</div>
-					<div className="text-sm text-base-content/60 mt-1">Filter and sort data in each database table</div>
+					<MenuSectionHeader
+						href="/explore"
+						title="Explore"
+						subtitle="Browse the data with filtering and sorting"
+						titleClassName="text-base-content group-hover:text-primary"
+					/>
 
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
@@ -405,15 +449,15 @@ export function ExploreMegaMenu() {
 
 				<MiniFeatureCard
 					title=""
-					description="View the data in each table of the database separately with filters, sorting, and column searches. Click on a row to view more details."
+					description="Explore table records with filters, sorting, and detailed row views"
 					stats={[{ value: `${totalTables}`, label: "tables" }]}
 					media={
-						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
 								src="/images/taxonomy_explore_mega_menu_light.webp"
 								alt="Taxonomy explore preview (light mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
@@ -421,7 +465,7 @@ export function ExploreMegaMenu() {
 								src="/images/taxonomy_explore_mega_menu_dark.webp"
 								alt="Taxonomy explore preview (dark mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>
@@ -441,8 +485,8 @@ export function DocsMegaMenu() {
 	// NOTE: There is no `help#visualize` section in HelpSections currently.
 	// Using `/explore` as the closest existing “visualize-like” UI.
 	return (
-		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/api"]} widthClass="max-w-[48rem]">
-			<div className="grid grid-cols-[1fr_1fr_17.5rem] gap-0">
+		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/api"]} widthClass="max-w-[45.5rem]">
+			<div className="grid grid-cols-[1fr_1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/help"
@@ -472,15 +516,15 @@ export function DocsMegaMenu() {
 				</div>
 
 				<MiniFeatureCard
-					title="Become an ODE pro"
-					description="Walk through the basics, learn the workflows and data formats, and get comfortable exploring datasets and using the API."
+					title=""
+					description="Thorough documentation written with care"
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
 								src="/images/docs_mega_menu_light.webp"
 								alt="Docs mega menu preview (light mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
@@ -488,7 +532,7 @@ export function DocsMegaMenu() {
 								src="/images/docs_mega_menu_dark.webp"
 								alt="Docs mega menu preview (dark mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>
@@ -502,38 +546,33 @@ export function DocsMegaMenu() {
 
 export function LearnMegaMenu() {
 	return (
-		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[48rem]" panelRightBeyondTriggerPx={28}>
-			<div className="grid grid-cols-[1fr_17.5rem] gap-0">
+		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[43rem]" panelRightBeyondTriggerPx={28}>
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/learn"
 						title="Learn"
-						subtitle={
-							<>
-								<span className="text-primary font-normal">Start here</span>
-								<span>, or open a section below</span>
-							</>
-						}
+						subtitle="Discover how eDNA data is created, stored, and analyzed"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 
 					<div className="mt-4 space-y-1">
 						{LEARN_MEGA_MENU_ITEMS.map((i) => (
-							<MenuItemWithSubtitle key={i.href} href={i.href} title={i.title} subtitle={i.subtitle} />
+							<MenuItemWithTinySubtitle key={i.href} href={i.href} title={i.title} subtitle={i.subtitle} />
 						))}
 					</div>
 				</div>
 
 				<MiniFeatureCard
 					title=""
-					description="Learn about the data stored on ODE, about eDNA and its impact, and how to make discoveries with the data."
+					description="Learn about how eDNA data is created, why eDNA matters, and how it can be analyzed"
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
 								src="/images/learn_page_mega_menu_light.webp"
 								alt="Learn mega menu preview (light mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
@@ -541,7 +580,7 @@ export function LearnMegaMenu() {
 								src="/images/learn_page_mega_menu_dark.webp"
 								alt="Learn mega menu preview (dark mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>
@@ -585,42 +624,51 @@ export function SubmitMegaMenu() {
 	}, []);
 
 	return (
-		<MegaMenu tabName="Submit" route="/submit" widthClass="max-w-[48rem]">
-			<div className="grid grid-cols-[1fr_16rem] gap-0">
+		<MegaMenu tabName="Submit" route="/submit" widthClass="max-w-[41.5rem]">
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/submit"
 						title="Submit"
-						subtitle={
-							<>
-								<span className="text-primary font-normal">Start here</span>
-								<span>, or choose a submission type below</span>
-							</>
-						}
+						subtitle="Upload your data"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 
 					<div className="mt-4 space-y-1">
-						<MenuItemWithSubtitle
-							href="/submit/project"
-							title="Project"
-							subtitle="Create a project first: metadata, samples, and study design."
-						/>
-						<MenuItemWithSubtitle
-							href="/submit/analysis"
-							title="Analysis"
-							subtitle="Analyses must be attached to an existing project."
-						/>
+						{SUBMIT_ITEMS.map((i) => (
+							<MenuItemWithTinySubtitle key={i.label} href={i.href} title={i.label} subtitle={i.subtitle} />
+						))}
 					</div>
 				</div>
 
 				<MiniFeatureCard
-					title="Submission tips"
-					description="Contributor role required. Choose visibility, tag datasets, and edit metadata later."
+					title=""
+					description="Contributor role required. Submit projects or individual analyses"
 					stats={[
 						{ value: projectCount, label: "projects" },
 						{ value: analysisCount, label: "analyses" }
 					]}
+					statsInline
+					media={
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
+							<Image
+								src="/images/submit_mega_menu_light.webp"
+								alt="Submit mega menu preview (light mode)"
+								fill
+								sizes="240px"
+								className="object-cover object-top-left origin-top-left scale-[1.3] [html[data-theme='dark']_&]:hidden"
+								priority={false}
+							/>
+							<Image
+								src="/images/submit_mega_menu_dark.webp"
+								alt="Submit mega menu preview (dark mode)"
+								fill
+								sizes="240px"
+								className="object-cover object-top-left origin-top-left scale-[1.3] hidden [html[data-theme='dark']_&]:block"
+								priority={false}
+							/>
+						</div>
+					}
 				/>
 			</div>
 		</MegaMenu>
@@ -629,50 +677,33 @@ export function SubmitMegaMenu() {
 
 export function VisualizeMegaMenu() {
 	return (
-		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[48rem]">
-			<div className="grid grid-cols-[1fr_16rem] gap-0">
+		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[41.5rem]">
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/visualize"
 						title="Visualize"
-						subtitle={
-							<>
-								<span className="text-primary font-normal">Start here</span>
-								<span>, or choose a visualization type below</span>
-							</>
-						}
+						subtitle="Build charts directly in your browser"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 
 					<div className="mt-4 space-y-1">
-						<MenuItemWithSubtitle
-							href="/visualize/metadata"
-							title="Metadata"
-							subtitle="Chart and compare sample and analysis metadata."
-						/>
-						<MenuItemWithSubtitle
-							href="/visualize/taxonomy"
-							title="Taxonomy"
-							subtitle="Explore taxa distributions from all of our data."
-						/>
-						<MenuItemWithSubtitle
-							href="/visualize/alphaDiversity"
-							title="Alpha Diversity"
-							subtitle="See Alpha Diversity metrics across analyses."
-						/>
+						{VISUALIZE_ITEMS.map((i) => (
+							<MenuItemWithTinySubtitle key={i.label} href={i.href} title={i.label} subtitle={i.subtitle} />
+						))}
 					</div>
 				</div>
 
 				<MiniFeatureCard
 					title=""
-					description="Switch between metadata and taxonomy charts to compare patterns across the dataset."
+					description="Switch between chart views to compare sample and taxonomy patterns"
 					media={
-						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
 								src="/images/visualize_mega_menu_light.webp"
 								alt="Visualize mega menu preview (light mode)"
 								fill
-								sizes="220px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
@@ -680,7 +711,7 @@ export function VisualizeMegaMenu() {
 								src="/images/visualize_mega_menu_dark.webp"
 								alt="Visualize mega menu preview (dark mode)"
 								fill
-								sizes="220px"
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>
