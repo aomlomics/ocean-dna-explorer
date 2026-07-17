@@ -243,7 +243,7 @@ export default function AboutPage() {
 								Build standardized metadata templates in Google Sheets, aligned with the FAIR eDNA standard and ready
 								for Ocean DNA Explorer submission.
 							</p>
-							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+							<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 						</Link>
 						<Link
 							href="https://github.com/aomlomics/tourmaline"
@@ -257,7 +257,7 @@ export default function AboutPage() {
 							<p className="text-base text-base-content/75 leading-relaxed flex-1">
 								Amplicon sequence processing workflow using QIIME 2 and Snakemake.
 							</p>
-							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+							<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 						</Link>
 						<Link
 							href="https://github.com/aomlomics/faire2ncbi"
@@ -271,7 +271,7 @@ export default function AboutPage() {
 							<p className="text-base text-base-content/75 leading-relaxed flex-1">
 								Convert NOAA FAIRe Excel metadata files to NCBI BioSample and SRA submission templates.
 							</p>
-							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+							<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 						</Link>
 						<div className="flex flex-col sm:flex-row justify-center gap-6 lg:col-span-3">
 							<Link
@@ -287,7 +287,7 @@ export default function AboutPage() {
 									A Python CLI tool that converts NOAA FAIRe Excel metadata files into QIIME2-compatible metadata and
 									manifest files for streamlined microbiome sequencing data analysis.
 								</p>
-								<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+								<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 							</Link>
 							<Link
 								href="https://github.com/aomlomics/edna2obis"
@@ -302,7 +302,7 @@ export default function AboutPage() {
 									Convert occurrence outputs and NOAA FAIRe metadata files to Darwin Core for publishing to biodiversity
 									aggregators OBIS and GBIF.
 								</p>
-								<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+								<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 							</Link>
 						</div>
 					</div>
