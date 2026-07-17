@@ -2,10 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
+import Tilt from "react-parallax-tilt";
+import { toPng } from "html-to-image";
 import ImagePreviewModal from "../ImagePreviewModal";
+import LogoIcon from "../LogoIcon";
 
 export type FeaturedOrganismGroup =
 	| "Fish"
@@ -1535,6 +1538,10 @@ function SelectedOrganismCard({
 }) {
 	const [imageFailed, setImageFailed] = useState(false);
 	const [previewOpen, setPreviewOpen] = useState(false);
+	const [downloading, setDownloading] = useState(false);
+	// Ref points at the card face only (the tilt wrapper + controls sit outside),
+	// so the exported PNG is a clean, un-skewed trading card with no buttons/glare.
+	const cardRef = useRef<HTMLDivElement>(null);
 	const commonName = resolvedCommonName;
 	const imageSrc = organism.imageUrl ?? organism.imageSrc ?? DEFAULT_IMAGE_SRC;
 	const imageAttribution = getImageAttributionDetails(organism);
@@ -1552,67 +1559,149 @@ function SelectedOrganismCard({
 		setPreviewOpen(false);
 	}, [imageSrc]);
 
+	async function handleDownload() {
+		const node = cardRef.current;
+		if (!node) return;
+		setDownloading(true);
+		try {
+			// pixelRatio 2 => retina-crisp export; cacheBust avoids stale image reads.
+			const dataUrl = await toPng(node, { pixelRatio: 2, cacheBust: true });
+			const slug =
+				(commonName || organism.taxonomyName || "ocean-dna")
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, "-")
+					.replace(/^-+|-+$/g, "") || "ocean-dna";
+			const link = document.createElement("a");
+			link.download = `${slug}-ode-card.png`;
+			link.href = dataUrl;
+			link.click();
+		} catch (error) {
+			console.error("Failed to export card as PNG:", error);
+		} finally {
+			setDownloading(false);
+		}
+	}
+
 	return (
-		<article className="overflow-hidden rounded-2xl bg-transparent">
-			<div className="translate-y-0 opacity-100 transition-[transform,opacity] duration-250 ease-out will-change-transform">
-				<div className="p-3 md:p-4">
-					<div className="relative h-72 w-full overflow-hidden rounded-2xl bg-transparent sm:h-80">
-						{imageFailed ? (
-							<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
-								{commonName.charAt(0).toUpperCase()}
+		<div className="flex flex-col items-center">
+			<Tilt
+				className="w-full"
+				tiltMaxAngleX={6}
+				tiltMaxAngleY={6}
+				scale={1.015}
+				transitionSpeed={1500}
+				glareEnable
+				glareMaxOpacity={0.22}
+				glarePosition="all"
+				glareBorderRadius="1rem"
+			>
+				{/*
+				 * Card face — this exact node is exported to PNG (the tilt wrapper's glare
+				 * and the buttons below both sit OUTSIDE this ref, so the export stays clean).
+				 * The trading-card look is built from stacked frames: outer stock border ->
+				 * inner frame -> art frame -> text-box frame, plus gradient "gloss" overlays.
+				 */}
+				<div
+					ref={cardRef}
+					className="relative overflow-hidden rounded-2xl border-[5px] border-primary/75 bg-linear-to-br from-base-200/82 via-base-100/92 to-base-200/80 p-2 shadow-[0_14px_45px_-12px_rgba(0,0,0,0.6)] sm:p-2.5"
+				>
+					{/* Holo-like shading in ODE blues only (no white), kept subtle. */}
+					<div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(125%_76%_at_50%_-4%,rgba(100,171,220,0.14),transparent_52%),radial-gradient(120%_70%_at_8%_0%,rgba(35,61,127,0.11),transparent_55%),radial-gradient(95%_70%_at_92%_8%,rgba(14,165,233,0.09),transparent_58%),radial-gradient(78%_60%_at_85%_96%,rgba(100,171,220,0.1),transparent_60%)]" />
+					<div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(135deg,transparent_0%,rgba(35,61,127,0.05)_30%,transparent_52%,rgba(100,171,220,0.08)_78%,rgba(56,189,248,0.08)_92%,transparent_100%)] opacity-55" />
+
+					{/* Centered top notch tab, connected to top border. */}
+					<div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-px">
+						<div className="bg-primary/75 p-0.5 [clip-path:polygon(0_0,100%_0,100%_76%,92%_100%,8%_100%,0_76%)]">
+							<div className="bg-base-200/92 px-5 py-px [clip-path:polygon(0_0,100%_0,100%_76%,92%_100%,8%_100%,0_76%)]">
+								<span className="text-[11px] font-semibold text-primary/90">oceandnaexplorer.org</span>
 							</div>
-						) : (
-							<button
-								type="button"
-								className="absolute inset-0 z-10 block cursor-zoom-in"
-								onClick={() => setPreviewOpen(true)}
-								aria-label={`Open full-size image for ${commonName}`}
+						</div>
+					</div>
+
+					{/* Inner frame (the card's second line). */}
+					<div className="relative z-10 flex flex-col gap-2.5 rounded-xl p-3 pt-6 sm:p-3.5 sm:pt-6">
+						{/* Header: name + scientific name (left), ODE logo emblem (right). */}
+						<div className="flex items-start justify-between gap-2">
+							<div className="min-w-0 flex-1">
+								<h3 className="text-xl font-extrabold leading-tight text-base-content wrap-break-word sm:text-2xl">
+									{commonName}
+								</h3>
+								<p className="mt-0.5 text-sm italic leading-snug text-base-content/60 wrap-break-word">
+									{organism.taxonomyName}
+								</p>
+							</div>
+							<span className="flex h-12 w-12 shrink-0 items-center justify-center text-primary/90 sm:h-13 sm:w-13">
+								<LogoIcon className="h-9 w-9 sm:h-10 sm:w-10" />
+							</span>
+						</div>
+
+						{/* Card art window (framed + beveled; kept short so the text box breathes). */}
+						<div className="relative aspect-3/2 w-full overflow-hidden rounded-lg border-2 border-primary/75 bg-base-300/40 shadow-[inset_0_2px_12px_rgba(0,0,0,0.35)]">
+							{imageFailed ? (
+								<div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-sky-900/70 to-indigo-900/70 text-5xl font-semibold text-white/85">
+									{commonName.charAt(0).toUpperCase()}
+								</div>
+							) : (
+								<button
+									type="button"
+									className="absolute inset-0 z-10 block cursor-zoom-in"
+									onClick={() => setPreviewOpen(true)}
+									aria-label={`Open full-size image for ${commonName}`}
+								>
+									<Image
+										src={imageSrc}
+										alt={commonName}
+										fill
+										sizes="(max-width: 1024px) 100vw, 420px"
+										className="object-cover object-center"
+										onError={() => setImageFailed(true)}
+									/>
+								</button>
+							)}
+							<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
+						</div>
+
+						{/* IUCN status strip. */}
+						<div className="flex items-center gap-2 px-3 py-1.5">
+							<span className="text-xs font-semibold text-base-content/60">IUCN status</span>
+							<span
+								className={[
+									"inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
+									IUCN_BADGE_CLASS[iucnStatus] ?? IUCN_BADGE_CLASS["Not Evaluated"]
+								].join(" ")}
 							>
-								<Image
-									src={imageSrc}
-									alt={commonName}
-									fill
-									sizes="(max-width: 1024px) 100vw, 420px"
-									className="object-cover object-center"
-									onError={() => setImageFailed(true)}
-								/>
-							</button>
-						)}
-						<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
-					</div>
-					<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={imageSrc} alt={commonName} />
-				</div>
+								{iucnStatus}
+							</span>
+						</div>
 
-				<div className="flex flex-col gap-4 p-4 pt-2 sm:p-5 sm:pt-2">
-					<div>
-						<h3 className="text-2xl font-semibold text-base-content">{commonName}</h3>
-					</div>
+						{/* Description box (the "attack text" area) with room to breathe. */}
+						<div className="rounded-lg bg-base-200/45 p-3">
+							<p className="max-h-44 overflow-y-auto pr-1 text-sm leading-relaxed text-base-content/85">
+								{organism.description}
+							</p>
+						</div>
 
-					<div className="flex flex-wrap items-center gap-2">
-						<p className="text-base italic text-base-content/70">{organism.taxonomyName}</p>
-						<span className="text-base-content/30">•</span>
-						<span
-							className={[
-								"inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold",
-								IUCN_BADGE_CLASS[iucnStatus] ?? IUCN_BADGE_CLASS["Not Evaluated"]
-							].join(" ")}
-						>
-							IUCN: {iucnStatus}
-						</span>
-					</div>
-
-					<p className="max-h-[240px] overflow-y-auto pr-1 text-[0.95rem] leading-relaxed text-base-content/85">
-						{organism.description}
-					</p>
-
-					<div className="flex flex-wrap items-center gap-3 pt-1">
-						<Link href={taxonomyHref} className="btn btn-primary btn-sm">
-							View taxonomy
-						</Link>
+						{/* Footer: "View on ODE" + reserved QR spot. */}
+						<div className="flex items-center justify-between pt-1.5">
+							<span className="text-[11px] font-medium text-base-content/55">View on ODE</span>
+							{/* QR code placeholder: taxonomy-page QR link will render here later. */}
+						</div>
 					</div>
 				</div>
+			</Tilt>
+
+			<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={imageSrc} alt={commonName} />
+
+			{/* Controls live outside the card face so they never appear in the PNG export. */}
+			<div className="mt-4 flex w-full flex-wrap items-center justify-center gap-3">
+				<Link href={taxonomyHref} className="btn btn-primary btn-sm">
+					View taxonomy
+				</Link>
+				<button type="button" className="btn btn-sm" onClick={handleDownload} disabled={downloading}>
+					{downloading ? "Exporting..." : "Download PNG"}
+				</button>
 			</div>
-		</article>
+		</div>
 	);
 }
 
