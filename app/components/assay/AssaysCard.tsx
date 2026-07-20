@@ -32,9 +32,11 @@ const assayInfo = {
 
 export default function AssaysCard({ title, assays, id, className = "" }: AssaysCardProps) {
 	return (
-		<div id={id} className={["bg-base-200 rounded-xl p-5", className].join(" ")}>
+		<div id={id} className={["group bg-base-200 rounded-xl p-5", className].join(" ")}>
 			<div className="flex items-start justify-between gap-4 mb-4">
-				<h2 className="text-2xl font-semibold text-base-content/90">{title}</h2>
+				<h2 className="text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
+					{title}
+				</h2>
 				<DashCardInfoButton info={assayInfo} />
 			</div>
 			{assays.length > 0 ? (

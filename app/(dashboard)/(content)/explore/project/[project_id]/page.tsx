@@ -14,6 +14,7 @@ import {
 	DepthCoverageCard,
 	DepthCoverageCardSkeleton
 } from "@/app/components/dataSummary/DepthCoverageCard";
+import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
@@ -228,38 +229,51 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		},
 		{} as Record<string, Array<{ displayName: string; count: number; percentage: string }>>
 	);
+	const topTaxaInfo = {
+		description:
+			"Shows the two most frequently observed taxonomy assignments for each assay in this project. Percentages are calculated within each assay.",
+		links: [{ label: "Jump to taxonomy chart", href: "#taxonomy-chart" }]
+	};
 
 	const assaysAndTaxa = (
 		<div className="h-full flex flex-col gap-6">
 			<AssaysCard id="assays-section" title="Assays in this Project" assays={assaySummaries} />
 
 			{/* Top 2 Taxonomies per Assay */}
-			<div>
-				<h2 className="text-2xl font-semibold text-base-content/90 mb-3">Top 2 Taxonomies per Assay</h2>
+			<div className="group rounded-xl bg-base-200 p-5">
+				<div className="mb-4 flex items-start justify-between gap-4">
+					<h2 className="text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
+						Top 2 Taxonomies per Assay
+					</h2>
+					<DashCardInfoButton info={topTaxaInfo} />
+				</div>
 				<div className="space-y-3">
 					{Object.entries(topTaxaByAssay).map(([assay, taxa]) => (
 						<a
 							key={assay}
 							href="#taxonomy-chart"
-							className="block rounded-xl bg-base-200 hover:bg-base-200/80 shadow-sm hover:shadow-md transition-all cursor-pointer"
+							className={[
+								"group block cursor-pointer rounded-xl bg-base-100/20 px-4 py-3 transition-colors duration-150",
+								"hover:bg-base-300/30"
+							].join(" ")}
 						>
-							<div className="px-4 py-3 space-y-2">
-								<div className="flex flex-col gap-0.5">
-									<h3 className="font-medium text-base-content text-sm leading-snug">
+							<div className="space-y-2.5">
+								<div className="flex flex-col gap-1">
+									<h3 className="text-base font-medium leading-snug text-base-content">
 										{uniqueAssays[assay].target_gene}
 									</h3>
-									<p className="text-xs text-base-content/60 truncate">{assay}</p>
+									<p className="truncate text-sm text-base-content/70">{assay}</p>
 								</div>
-								<div className="space-y-1">
+								<div className="space-y-1.5">
 									{taxa.map((taxon, idx) => (
-										<div key={idx} className="relative h-7 rounded-full bg-base-100 overflow-hidden">
+										<div key={idx} className="relative h-7 overflow-hidden rounded-full bg-base-100/70">
 											<div
-												className="absolute inset-y-0 left-0 bg-primary"
+												className="absolute inset-y-0 left-0 bg-primary/75"
 												style={{ width: `${taxon.percentage}%` }}
 											/>
 											<div className="relative flex h-full items-center justify-between px-2 text-[0.7rem]">
-												<span className="text-base-content/80 truncate">{taxon.displayName}</span>
-												<span className="text-base-content/60 whitespace-nowrap">
+												<span className="truncate text-base-content/85">{taxon.displayName}</span>
+												<span className="whitespace-nowrap text-base-content/65">
 													{taxon.percentage}% ({taxon.count})
 												</span>
 											</div>
@@ -295,8 +309,10 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				{assaysAndTaxa}
 			</div>
 			<div className="lg:col-span-2">
-				<div className="bg-base-200 rounded-xl p-6 flex flex-col">
-					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
+				<div className="group bg-base-200 rounded-xl p-6 flex flex-col">
+					<h2 className="mb-4 text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
+						Project Metadata
+					</h2>
 					<div className="max-h-124 overflow-y-auto">
 						<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
 					</div>
@@ -527,8 +543,10 @@ export default async function Project_id({ params }: { params: Promise<{ project
 						</div>
 
 						<div className="lg:col-span-2">
-							<div className="bg-base-200 rounded-xl p-6 flex flex-col">
-								<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Project Metadata</h2>
+							<div className="group bg-base-200 rounded-xl p-6 flex flex-col">
+								<h2 className="mb-4 text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
+									Project Metadata
+								</h2>
 								<div className="max-h-124 overflow-y-auto">
 									<DataDisplay table="project" data={justProject} omit={["project_id", "imageFileUrl_ODE"]} />
 								</div>

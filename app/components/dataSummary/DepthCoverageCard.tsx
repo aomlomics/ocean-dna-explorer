@@ -53,7 +53,7 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 		<div className="w-full">
 			<DashCard
 				title="Sampling Depth"
-				titleClassName="text-2xl sm:text-3xl font-semibold text-base-content/80"
+				titleClassName="text-base sm:text-lg font-semibold text-base-content/80"
 				className="h-64 w-full"
 				bodyClassName="p-0"
 				headerClassName="relative z-10 bg-base-200 pb-3"
