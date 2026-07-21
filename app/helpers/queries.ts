@@ -875,14 +875,19 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 						.slice(1, -1)
 						.join("_")}.`
 				};
+			} else {
+				return {
+					statusMessage: "error",
+					error: err.message
+				};
 			}
 		}
-	} catch {}
-
-	return {
-		statusMessage: "error",
-		error: err.message
-	};
+	} catch {
+		return {
+			statusMessage: "error",
+			error: err.message
+		};
+	}
 }
 
 //TODO: make it work with arrays
