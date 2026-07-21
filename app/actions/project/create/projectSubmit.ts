@@ -8,7 +8,7 @@ import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { UserMetadata } from "@/types/globals";
 import { handlePrismaError, toPrismaError } from "@/app/helpers/queries";
 import { del } from "@vercel/blob";
-import { Prisma, Project } from "@/app/generated/prisma/client";
+import { Library, Prisma, Project, Sample } from "@/app/generated/prisma/client";
 import { validateBlobs } from "@/app/helpers/withDb";
 import {
 	AttributionOptionalDefaults,
@@ -235,8 +235,24 @@ async function doSubmit(
 							project_id: true
 						}
 					});
+					const byProject = existingSamples.reduce(
+						(acc, samp) => {
+							if (acc[samp.project_id]) {
+								acc[samp.project_id].push(samp.samp_name);
+							} else {
+								acc[samp.project_id] = [samp.samp_name];
+							}
+
+							return acc;
+						},
+						{} as Record<Project["project_id"], Sample["samp_name"][]>
+					);
 					await globalStream.error(
-						`The following samp_name${existingSamples.length === 1 ? " is" : "s are"} already in use: ${existingSamples.map((samp) => `${samp.samp_name} (${samp.project_id})`).join(", ")}`
+						`The following samp_name${existingSamples.length === 1 ? " is" : "s are"} already in use:\n\n${Object.entries(
+							byProject
+						)
+							.map(([project_id, sampNames]) => `Project: ${project_id}\n${sampNames.join("\n")}`)
+							.join("\n")}`
 					);
 				} else if (table === "library") {
 					const existingLibraries = await prisma.library.findMany({
@@ -250,8 +266,24 @@ async function doSubmit(
 							project_id: true
 						}
 					});
+					const byProject = existingLibraries.reduce(
+						(acc, lib) => {
+							if (acc[lib.project_id]) {
+								acc[lib.project_id].push(lib.lib_id);
+							} else {
+								acc[lib.project_id] = [lib.lib_id];
+							}
+
+							return acc;
+						},
+						{} as Record<Project["project_id"], Library["lib_id"][]>
+					);
 					await globalStream.error(
-						`The following lib_id(s) are already in use: ${existingLibraries.map((lib) => `${lib.lib_id} (${lib.project_id})`).join(", ")}`
+						`The following lib_id${existingLibraries.length === 1 ? " is" : "s are"} already in use:\n\n${Object.entries(
+							byProject
+						)
+							.map(([project_id, libIds]) => `${project_id}:\n\t${libIds.join("\n\t")}`)
+							.join("\n")}`
 					);
 				} else {
 					const error = err as Error;
