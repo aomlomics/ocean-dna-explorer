@@ -22,6 +22,8 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 const INSTITUTION_MAX_CH = 98;
 const INSTITUTION_PIPE_GAP_CH = 3;
 
+export const dynamic = "force-dynamic";
+
 function packInstitutionParts(parts: string[]): string[][] {
 	const lines: string[][] = [];
 	let cur: string[] = [];
@@ -129,11 +131,22 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 	);
 }
 
-export default async function Project_id({ params }: { params: Promise<{ project_id: Project["project_id"] }> }) {
-	let { project_id } = await params;
-	project_id = decodeURIComponent(project_id);
+export default async function Project_id({
+	params
+}: {
+	params: { project_id: Project["project_id"] } | Promise<{ project_id: Project["project_id"] }>;
+}) {
+	const resolvedParams = await Promise.resolve(params);
+	let project_id = resolvedParams.project_id;
+	try {
+		project_id = decodeURIComponent(project_id);
+	} catch {
+		// Keep the original segment when decodeURIComponent gets malformed input.
+		project_id = resolvedParams.project_id;
+	}
 
-	const project = await prisma.project.findUnique({
+	try {
+		let project = await prisma.project.findUnique({
 		where: {
 			project_id
 		},
@@ -161,8 +174,43 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				}
 			}
 		}
-	});
-	if (!project) return <>Project not found</>;
+		});
+		if (!project) {
+			// Fallback to case-insensitive lookup for links or copied URLs that differ by case.
+			project = await prisma.project.findFirst({
+				where: {
+					project_id: {
+						equals: project_id,
+						mode: "insensitive"
+					}
+				},
+				include: {
+					_count: {
+						select: {
+							Samples: true,
+							Analyses: true
+						}
+					},
+					Analyses: {
+						select: {
+							analysis_run_name: true,
+							assay_name: true,
+							Assay: {
+								select: {
+									target_gene: true
+								}
+							},
+							Assignments: {
+								select: {
+									taxonomy: true
+								}
+							}
+						}
+					}
+				}
+			});
+		}
+		if (!project) return <>Project not found</>;
 	const { _count: _, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(
@@ -433,7 +481,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		</div>
 	);
 
-	return (
+		return (
 		<div id="project" className="space-y-8">
 			{hasCoverImage && project.imageFileUrl_ODE ? (
 				<div
@@ -556,5 +604,19 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				) : null}
 			</section>
 		</div>
-	);
+		);
+	} catch (error) {
+		console.error("Failed to render project page", { project_id, error });
+		return (
+			<div id="project" className="space-y-4">
+				<h1 className="text-3xl font-semibold text-base-content">Project page unavailable</h1>
+				<p className="text-base-content/75">
+					We hit an unexpected error while loading this project. Please refresh and try again.
+				</p>
+				<Link href="/explore/project" className="link link-primary">
+					Back to project list
+				</Link>
+			</div>
+		);
+	}
 }

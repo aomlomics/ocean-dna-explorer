@@ -96,12 +96,16 @@ function ControlsBody({
 	const canUseClear = canClearBar || activePanel !== null;
 
 	return (
-		<div className="flex flex-col gap-6">
-			<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-4">
+			<div className="flex flex-col gap-3">
 				<ExploreTabButtons activeTable={capitalizeTable(table)} tables={DataTableNames} />
 
 				<div className="flex w-full max-w-full flex-col items-start gap-4">
-					<div className="flex w-full max-w-full flex-wrap items-center gap-3">
+					<div
+						className="inline-flex max-w-full flex-wrap items-center gap-1"
+						role="toolbar"
+						aria-label="Explore actions and view mode"
+					>
 						<ActionBar
 							activePanel={activePanel}
 							onPanelChange={(panel) => setActivePanel((prev) => (prev === panel ? null : panel))}

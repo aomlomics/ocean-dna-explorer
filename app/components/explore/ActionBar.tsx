@@ -6,7 +6,7 @@ const sw = 1.75;
 const stroke = "currentColor";
 
 const segBase =
-	"inline-flex min-h-9 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem] active:brightness-95";
+	"inline-flex min-h-9 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem] active:brightness-95";
 
 const segOn = "bg-primary text-primary-content shadow-md";
 const segOff = "bg-base-200/90 text-base-content hover:bg-base-300";
@@ -41,7 +41,11 @@ export default function ActionBar({
 	);
 
 	return (
-		<div className="inline-flex max-w-full flex-wrap items-stretch gap-2" role="toolbar" aria-label="Search and filters">
+		<div
+			className="inline-flex max-w-full flex-wrap items-stretch gap-1"
+			role="toolbar"
+			aria-label="Search and filters"
+		>
 			<button
 				type="button"
 				onClick={() => onPanelChange("search")}

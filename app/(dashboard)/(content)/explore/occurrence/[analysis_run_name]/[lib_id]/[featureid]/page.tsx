@@ -130,9 +130,9 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 						<h1 className="mb-2 text-2xl sm:text-3xl font-semibold text-primary wrap-anywhere">
 							<span className="text-primary">{featureid}</span>
 							<span className="text-base-content/55"> in </span>
-							<span className="text-emerald-300">{lib_id}</span>
+							<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span>
 							<span className="text-base-content/55"> (</span>
-							<span className="text-amber-300">{analysis_run_name}</span>
+							<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span>
 							<span className="text-base-content/55">)</span>
 						</h1>
 					</TitleHoverTooltip>
@@ -142,8 +142,8 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 				</p>
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">
 					Color key: <span className="font-medium text-primary">feature ID</span>,{" "}
-					<span className="font-medium text-emerald-300">library ID</span>,{" "}
-					<span className="font-medium text-amber-300">analysis ID</span>.
+					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">library ID</span>,{" "}
+					<span className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700">analysis ID</span>.
 				</p>
 				<div className="max-w-5xl flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/70">
 					<div className="min-w-0">
