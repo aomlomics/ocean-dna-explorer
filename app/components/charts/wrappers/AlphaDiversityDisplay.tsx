@@ -15,6 +15,7 @@ import { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
 import Checklist from "../../Checklist";
 import InfoButton from "../../InfoButton";
+import { getRandomKey } from "@/app/helpers/utils";
 
 const METRIC_SEP = " | ";
 const DEFAULT_MAX_HUES = 20;
@@ -137,7 +138,7 @@ export default function AlphaDiversityDisplay({
 
 	function rerenderChart() {
 		//random value to trigger plot re-render
-		setChartKey((Math.random() + 1).toString(36).substring(7));
+		setChartKey(getRandomKey());
 	}
 
 	useEffect(() => {

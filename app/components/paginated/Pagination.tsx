@@ -40,7 +40,7 @@ export default function Pagination({
 		}
 
 		if (searchParams && searchParams.size) {
-			buildWhereParams(searchParams, query, whereQuery);
+			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
 		}
 
 		query.set("where", JSON.stringify(whereQuery));

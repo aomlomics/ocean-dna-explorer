@@ -47,10 +47,14 @@ export async function GET(
 			searchParams.delete("polygon");
 			searchParams.delete("circle");
 		}
+		const hasLocationData =
+			TableMetadata[model].enumSchema.options.includes("decimalLatitude") &&
+			TableMetadata[model].enumSchema.options.includes("decimalLongitude");
 
-		let shapesSampleWhere;
+		let sampleWhere;
+		const getSamples = searchParams.get("getSamples")?.toLowerCase() === "true";
 		const whereStr = searchParams.get("where");
-		if (whereStr) {
+		if (whereStr != null) {
 			const parsed = parseNestedJson(whereStr) as { advanced?: any; search?: any; [key: string]: string };
 
 			if (parsed.advanced) {
@@ -63,12 +67,8 @@ export async function GET(
 				query.where = parseAdvancedQuery(model, advanced);
 
 				//assemble secondary query if table doesn't have location data
-				if (
-					shapes &&
-					(!TableMetadata[model].enumSchema.options.includes("decimalLatitude") ||
-						!TableMetadata[model].enumSchema.options.includes("decimalLongitude"))
-				) {
-					shapesSampleWhere = parseAdvancedQuery(model, advanced, "sample");
+				if (getSamples || (shapes && !hasLocationData)) {
+					sampleWhere = parseAdvancedQuery(model, advanced, "sample");
 				}
 			} else {
 				if (parsed.search) {
@@ -88,44 +88,26 @@ export async function GET(
 				}
 
 				//assemble secondary query if table doesn't have location data
-				if (
-					shapes &&
-					(!TableMetadata[model].enumSchema.options.includes("decimalLatitude") ||
-						!TableMetadata[model].enumSchema.options.includes("decimalLongitude"))
-				) {
-					shapesSampleWhere = deepWhere("sample", model, query.where);
+				if (getSamples || (shapes && !hasLocationData)) {
+					sampleWhere = deepWhere("sample", model, query.where);
 				}
 			}
-		} else if (shapes) {
-			shapesSampleWhere = {};
-		}
-
-		//replace the where with samp_names that match the query and are inside the shapes
-		if (shapesSampleWhere) {
-			const samples = await prisma.sample.findMany({
-				where: shapesSampleWhere,
-				select: {
-					samp_name: true,
-					decimalLatitude: true,
-					decimalLongitude: true
-				}
-			});
-
-			const sampsNamesInside = getLocationsInsideShapes(samples, shapes!).map((samp) => samp.samp_name);
-			query.where = deepWhere(model, "sample", { samp_name: { in: sampsNamesInside } });
+		} else if (getSamples || (shapes && !hasLocationData)) {
+			//still get samples
+			sampleWhere = {};
 		}
 
 		const blastDatabase = searchParams.get("blastDatabase");
 		const saveBlast = searchParams.get("saveBlast");
 		const blastQueries = searchParams.getAll("blastQuery");
-		if (blastDatabase) {
+		if (blastDatabase != null) {
 			if (!blastQueries.length) {
 				throw new Error("Must provide a blast query with blastDatabase option.");
 			}
 
 			searchParams.delete("blastDatabase");
 		}
-		if (saveBlast) {
+		if (saveBlast != null) {
 			if (!role || !RolePermissions[role].includes("contribute")) {
 				throw new Error("You must be signed in with the contributor role to save BLAST queries.");
 			}
@@ -138,6 +120,7 @@ export async function GET(
 		}
 
 		let blastResult;
+		let featureidWhere;
 		if (blastQueries.length) {
 			searchParams.delete("blastQuery");
 
@@ -160,16 +143,20 @@ export async function GET(
 				const response = (await res.json()) as NetworkPacket;
 				if (response.statusMessage === "success") {
 					blastResult = response.result as BlastResult;
-					const featureWhere = deepWhere(model, "feature", {
+					const baseFeatureWhere = {
 						featureid: {
 							in: blastResult.reduce(
 								(acc, r) => [...acc, ...r.BlastQueryResults.map((bqr) => bqr.featureid)],
 								[] as string[]
 							)
 						}
-					});
+					};
+					featureidWhere = deepWhere(model, "feature", baseFeatureWhere);
 
-					query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
+					if (sampleWhere) {
+						sampleWhere = deepMerge(sampleWhere, deepWhere("sample", "feature", baseFeatureWhere));
+					}
+					query.where = query.where ? deepMerge(query.where, featureidWhere) : featureidWhere;
 				} else if (response.statusMessage === "error") {
 					throw new Error("Response from BLAST server: " + response.error);
 				}
@@ -178,11 +165,8 @@ export async function GET(
 			}
 		}
 
-		//@ts-ignore
-		let count = await prisma[model].count({ where: query.where });
-
 		const orderByStr = searchParams.get("orderBy");
-		if (orderByStr) {
+		if (orderByStr != null) {
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
 				if (TableMetadata[model].enumSchema.options.includes(split[0])) {
@@ -204,7 +188,7 @@ export async function GET(
 		}
 
 		const relCounts = searchParams.get("relCounts");
-		if (relCounts) {
+		if (relCounts != null) {
 			query.include = {
 				_count: {
 					select: relCounts
@@ -215,14 +199,14 @@ export async function GET(
 		}
 
 		const relations = searchParams.get("relations");
-		if (relations) {
+		if (relations != null) {
 			if (!query.include) {
 				query.include = {};
 			}
 
 			const relationsAllFields = searchParams.get("relationsAllFields");
 			const relationsArr = relations.split(",");
-			if (relationsAllFields) {
+			if (relationsAllFields != null) {
 				for (const rel of relationsArr) {
 					query.include[rel] = true;
 				}
@@ -238,7 +222,7 @@ export async function GET(
 		const deepRelations = searchParams.get("deepRelations");
 		if (deepRelations) {
 			//get relation tables
-			if (deepRelations === "true") {
+			if (deepRelations.toLowerCase() === "true") {
 				//all relations
 				deepRelsArray = TableNames.filter(
 					(name) =>
@@ -291,46 +275,95 @@ export async function GET(
 			}
 		}
 
-		let take = searchParams.get("take");
-		if (!take) {
+		const tempTake = searchParams.get("take");
+		if (tempTake == null) {
 			throw new Error("Take is required");
 		}
-		const parsedTake = parseInt(take);
+		const parsedTake = parseInt(tempTake);
 		if (isNaN(parsedTake) || parsedTake < 1) {
-			throw new Error(`Take must be a positive integer, but is "${take}".`);
+			throw new Error(`Take must be a positive integer, but is "${tempTake}".`);
 		}
 
 		const page = searchParams.get("page");
-		let parsedPage;
-		if (page) {
+		let parsedPage = undefined as number | undefined;
+		if (page != null) {
 			parsedPage = parseInt(page);
 			if (isNaN(parsedPage) || parsedPage < 1) {
 				throw new Error(`Page must be a positive integer, but is "${page}".`);
 			}
+		}
+
+		let samples;
+		let result;
+		let count;
+		if (hasLocationData && sampleWhere) {
+			//skip extra database call on sample table
+			samples = await prisma.sample.findMany(query);
+			result = [...samples];
+			count = result.length;
 
 			//give last page if page is too large
-			if ((parsedPage - 1) * parsedTake > count) {
+			if (parsedPage && (parsedPage - 1) * parsedTake > count) {
 				parsedPage = Math.floor(count / parsedTake) + 1;
 			}
-		}
+		} else {
+			if (sampleWhere) {
+				//replace the where with samp_names that match the query and are inside the shapes
+				samples = await prisma.sample.findMany({
+					where: sampleWhere,
+					select: getSamples
+						? undefined
+						: {
+								samp_name: true,
+								decimalLatitude: true,
+								decimalLongitude: true
+							}
+				});
 
-		//skip pagination if doing it after the database call
-		if (!(shapes && !shapesSampleWhere)) {
-			query.take = parsedTake;
-
-			if (parsedPage) {
-				//offset pagination
-				query.skip = (parsedPage - 1) * query.take;
+				if (shapes) {
+					const sampNamesWhere = deepWhere(model, "sample", {
+						samp_name: { in: getLocationsInsideShapes(samples, shapes).map((samp) => samp.samp_name) }
+					});
+					//inject blast results if queried for
+					query.where = featureidWhere ? deepMerge(sampNamesWhere, featureidWhere) : sampNamesWhere;
+				}
 			}
+
+			const res = await prisma.$transaction(async (tx) => {
+				//@ts-ignore
+				const count = await tx[model].count({ where: query.where });
+
+				//give last page if page is too large
+				if (parsedPage && (parsedPage - 1) * parsedTake > count) {
+					parsedPage = Math.floor(count / parsedTake) + 1;
+				}
+
+				//skip database pagination if doing later
+				if (!(shapes && hasLocationData)) {
+					if (parsedPage) {
+						//offset pagination
+						query.skip = (parsedPage - 1) * parsedTake;
+					}
+					query.take = parsedTake;
+				}
+
+				//@ts-ignore
+				const result = await tx[model].findMany(query);
+
+				return { count, result };
+			});
+			count = res.count;
+			result = res.result;
 		}
 
-		//@ts-ignore
-		let result = await prisma[model].findMany(query);
-
-		if (shapes && !shapesSampleWhere) {
+		//paginate using shapes and location data
+		if (shapes && hasLocationData) {
 			result = getLocationsInsideShapes(result as Location[], shapes);
 			count = result.length;
-			//manually paginate
+		}
+
+		//manually paginate
+		if (result.length > parsedTake) {
 			const start = parsedPage ? (parsedPage - 1) * parsedTake : 0;
 			result = result.slice(start, start + parsedTake);
 		}
@@ -387,7 +420,13 @@ export async function GET(
 			}
 		}
 
-		return NextResponse.json({ statusMessage: "success", result, count });
+		return NextResponse.json({
+			statusMessage: "success",
+			result,
+			count,
+			blastResult,
+			samples: getSamples ? samples : undefined
+		});
 	} catch (err) {
 		const error = err as Error;
 

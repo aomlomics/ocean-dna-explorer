@@ -355,3 +355,7 @@ export function compressURIComponent(str: string) {
 export function decompressURIComponent(str: string) {
 	return decompressFromEncodedURIComponent(str.substring(COMPRESSION_FORMAT.length + 1));
 }
+
+export function getRandomKey() {
+	return (Math.random() + 1).toString(36).substring(7);
+}

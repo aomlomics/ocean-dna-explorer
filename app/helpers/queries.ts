@@ -19,6 +19,10 @@ export function deepWhere(
 	target: Uncapitalize<Prisma.ModelName>,
 	query: { [k: string]: any }
 ) {
+	if (start === target) {
+		return query;
+	}
+
 	//find all paths to target from start
 	const path = getRelationPath(start, target);
 
@@ -461,7 +465,7 @@ export function parseApiQuery(
 		}
 
 		const blastDatabase = newParams.get("blastDatabase");
-		if (blastDatabase) {
+		if (blastDatabase != null) {
 			if (!blast) {
 				throw new Error("Must provide a blast query with blastDatabase option.");
 			}
@@ -471,7 +475,7 @@ export function parseApiQuery(
 		}
 
 		const saveBlast = newParams.get("saveBlast");
-		if (saveBlast) {
+		if (saveBlast != null) {
 			if (!blast) {
 				throw new Error("Must provide a blast query with saveBlast option.");
 			}
@@ -497,11 +501,14 @@ export function parseApiQuery(
 			newParams.delete("circle");
 		}
 	}
+	const hasLocationData =
+		TableMetadata[table].enumSchema.options.includes("decimalLatitude") &&
+		TableMetadata[table].enumSchema.options.includes("decimalLongitude");
 
 	//ordering results
 	if (!options?.features || options.features.orderBy) {
 		const orderByStr = newParams.get("orderBy");
-		if (orderByStr) {
+		if (orderByStr != null) {
 			newParams.delete("orderBy");
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
@@ -531,7 +538,7 @@ export function parseApiQuery(
 
 	if (!options?.features || options.features.fields) {
 		const fields = newParams.get("fields");
-		if (fields) {
+		if (fields != null) {
 			newParams.delete("fields");
 			const split = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
 			query.select = query.select ? { ...query.select, ...split } : split;
@@ -545,7 +552,7 @@ export function parseApiQuery(
 
 	if (!options?.features || options.features.distinct) {
 		const distinct = newParams.get("distinct");
-		if (distinct) {
+		if (distinct != null) {
 			newParams.delete("distinct");
 			const split = distinct.split(",");
 			query.distinct = query.distinct ? [...query.distinct, ...split] : split;
@@ -555,7 +562,7 @@ export function parseApiQuery(
 	//relations
 	if (!options?.features || options.features.relations) {
 		const relations = newParams.get("relations");
-		if (relations) {
+		if (relations != null) {
 			newParams.delete("relations");
 
 			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
@@ -571,7 +578,7 @@ export function parseApiQuery(
 			let take;
 			if (!options?.features || options.features.relationsLimit) {
 				const relationsLimit = newParams.get("relationsLimit");
-				if (relationsLimit) {
+				if (relationsLimit != null) {
 					newParams.delete("relationsLimit");
 					take = parseInt(relationsLimit);
 					if (Number.isNaN(take) || take < 1) {
@@ -583,7 +590,7 @@ export function parseApiQuery(
 			//include all fields in relations
 			let allFields = undefined as undefined | boolean | Set<Uncapitalize<Prisma.ModelName>>;
 			const relationsAllFields = newParams.get("relationsAllFields");
-			if (relationsAllFields) {
+			if (relationsAllFields != null) {
 				newParams.delete("relationsAllFields");
 				if (!relationsAllFields || relationsAllFields.toLowerCase() === "false") {
 					allFields = false;
@@ -697,7 +704,7 @@ export function parseApiQuery(
 	//limit
 	if (!options?.features || options.features.limit) {
 		const take = newParams.get("limit");
-		if (take) {
+		if (take != null) {
 			newParams.delete("limit");
 			query.take = parseInt(take);
 			if (Number.isNaN(query.take) || query.take < 1) {
@@ -709,7 +716,7 @@ export function parseApiQuery(
 	let sampleWhere;
 
 	const advanced = newParams.get("advanced");
-	if ((!options?.features || options.features.advanced) && advanced) {
+	if ((!options?.features || options.features.advanced) && advanced != null) {
 		//advanced search
 		newParams.delete("advanced");
 
@@ -723,11 +730,7 @@ export function parseApiQuery(
 		}
 
 		//assemble secondary query if table doesn't have location data
-		if (
-			shapes &&
-			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
-		) {
+		if (shapes && !hasLocationData) {
 			if (parsed.length) {
 				sampleWhere = parseAdvancedQuery(table, parsed, "sample");
 			} else {
@@ -738,7 +741,7 @@ export function parseApiQuery(
 		const ids = newParams.get("ids");
 		const search = newParams.get("search");
 
-		if ((!options?.features || options.features.ids) && ids) {
+		if ((!options?.features || options.features.ids) && ids != null) {
 			//list of ids
 			newParams.delete("ids");
 
@@ -762,7 +765,7 @@ export function parseApiQuery(
 					in: parsedIds
 				}
 			};
-		} else if ((!options?.features || options.features.search) && search) {
+		} else if ((!options?.features || options.features.search) && search != null) {
 			//string search
 			newParams.delete("search");
 
@@ -826,11 +829,7 @@ export function parseApiQuery(
 		}
 
 		//assemble secondary query if table doesn't have location data
-		if (
-			shapes &&
-			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
-		) {
+		if (shapes && !hasLocationData) {
 			if (query.where && Object.keys(query.where).length) {
 				sampleWhere = deepWhere("sample", table, query.where);
 			} else {
@@ -861,6 +860,7 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 	try {
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
 			if (err.code === "P2002") {
+				console.log(err);
 				return {
 					statusMessage: "error",
 					error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
@@ -875,21 +875,14 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 						.slice(1, -1)
 						.join("_")}.`
 				};
-			} else {
-				return {
-					statusMessage: "error",
-					error: err.message
-				};
 			}
 		}
-	} catch (newErr) {
-		const error = newErr as Error;
+	} catch {}
 
-		return {
-			statusMessage: "error",
-			error: err.message + "\n" + error.message
-		};
-	}
+	return {
+		statusMessage: "error",
+		error: err.message
+	};
 }
 
 //TODO: make it work with arrays
@@ -1127,12 +1120,12 @@ export function buildWhereParams(
 	tempParams.getAll("blastQuery").forEach((q) => query.set("blastQuery", q));
 	tempParams.delete("blastQuery");
 	const blastDatabase = tempParams.get("blastDatabase");
-	if (blastDatabase) {
+	if (blastDatabase != null) {
 		tempParams.delete("blastDatabase");
 		query.set("blastDatabase", blastDatabase);
 	}
 	const saveBlast = tempParams.get("saveBlast");
-	if (saveBlast) {
+	if (saveBlast != null) {
 		tempParams.delete("saveBlast");
 		query.set("saveBlast", saveBlast);
 	}
@@ -1144,7 +1137,7 @@ export function buildWhereParams(
 	tempParams.delete("circle");
 
 	//get rest of queries
-	whereQuery = { ...whereQuery, ...Object.fromEntries(tempParams) };
+	tempParams.forEach((value, key) => (whereQuery[key] = value));
 	if (ignoreParams) {
 		for (const param of ignoreParams) {
 			delete whereQuery[param];

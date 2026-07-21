@@ -463,7 +463,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	function reset() {
 		setSearchTree(createEmptyGroup(0));
 		setQueryDescription("");
-		router.push(pathname);
+		router.push(pathname + "?table=" + searchTable);
 	}
 
 	function search() {

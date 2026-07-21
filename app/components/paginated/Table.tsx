@@ -3,13 +3,13 @@
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
-import { Prisma, Tag } from "@/app/generated/prisma/client";
+import { Prisma, Sample, Tag } from "@/app/generated/prisma/client";
 import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
-import { NetworkPacket } from "@/types/globals";
+import { BlastResult, NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
@@ -17,6 +17,11 @@ import AnalysisTag from "../tags/AnalysisTag";
 import Checklist from "../Checklist";
 import InfoButton from "../InfoButton";
 import { buildWhereParams } from "@/app/helpers/queries";
+
+type ExtraResults = {
+	blastResult: BlastResult;
+	samples: Sample[];
+};
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
 const EXCLUDE_TABLES = NonDataTableNames.filter((t) => t !== "tag") as Uncapitalize<Prisma.ModelName>[];
@@ -32,6 +37,8 @@ export default function Table({
 	filterHeadersAtStart,
 	defaultTake = 50,
 	ignoreParams,
+	extraParams,
+	setExtraResults,
 	className
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -42,6 +49,8 @@ export default function Table({
 	filterHeadersAtStart?: boolean;
 	defaultTake?: number;
 	ignoreParams?: string[];
+	extraParams?: Record<string, string>;
+	setExtraResults?: (args: ExtraResults) => void;
 	className?: string;
 }) {
 	const title = TableMetadata[table].titleField;
@@ -183,12 +192,14 @@ export default function Table({
 			whereQuery = { ...whereQuery, ...whereFilter };
 		}
 		if (searchParams && searchParams.size) {
-			buildWhereParams(searchParams, query, whereQuery);
+			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
 		}
 
 		if (Object.keys(whereQuery).length) {
 			query.set("where", JSON.stringify(whereQuery));
 		}
+
+		Object.entries(extraParams || {}).forEach(([k, v]) => query.set(k, v));
 
 		if (manyRelations.length) {
 			if (manyRelations.includes("Tags")) {
@@ -262,6 +273,14 @@ export default function Table({
 
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
+			//pass up extra results from query
+			if (setExtraResults) {
+				setExtraResults({
+					samples: (data.samples as Sample[]) || [],
+					blastResult: (data.blastResult as BlastResult) || []
+				});
+			}
+
 			//set to last page if page is too large
 			if ((page - 1) * take > data.count) {
 				setPage(Math.floor(data.count / take) + 1);
@@ -463,53 +482,14 @@ export default function Table({
 											}
 										>
 											<span>{title}</span>
-											{orderBy.field === title ? (
-												orderBy.order === "asc" ? (
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="24"
-														height="20"
-														className="text-primary mr-2"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-													>
-														<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-													</svg>
-												) : (
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="24"
-														height="20"
-														className="text-primary mr-2"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-													>
-														<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-													</svg>
-												)
-											) : (
-												<></>
-											)}
+											{orderBy.field === title ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
 										</div>
 
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
 											{!hideFilters && (
 												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														className="h-4 w-4 opacity-70"
-													>
-														<path
-															fillRule="evenodd"
-															d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-															clipRule="evenodd"
-														/>
-													</svg>
+													<SearchIcon />
 													<input
 														name={title}
 														defaultValue={whereFilter[title] || ""}
@@ -533,18 +513,7 @@ export default function Table({
 											{/* Value Filter */}
 											{!hideFilters && (
 												<label className="input input-bordered input-sm flex items-center gap-2 w-full">
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														className="h-4 w-4 opacity-70"
-													>
-														<path
-															fillRule="evenodd"
-															d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-															clipRule="evenodd"
-														/>
-													</svg>
+													<SearchIcon />
 													<input disabled type="text" className="grow" />
 												</label>
 											)}
@@ -567,18 +536,7 @@ export default function Table({
 														{/* Value Filter */}
 														{!hideFilters && (
 															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+																<SearchIcon />
 																<input type="text" className="grow" disabled />
 															</label>
 														)}
@@ -599,52 +557,13 @@ export default function Table({
 														}
 													>
 														{head}
-														{orderBy.field === head ? (
-															orderBy.order === "asc" ? (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-																</svg>
-															) : (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-																</svg>
-															)
-														) : (
-															<></>
-														)}
+														{orderBy.field === head ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
 													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
 															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+																<SearchIcon />
 																<input type="text" className="grow" disabled />
 															</label>
 														)}
@@ -662,18 +581,7 @@ export default function Table({
 														{/* Value Filter */}
 														{!hideFilters && (
 															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+																<SearchIcon />
 																<input
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
@@ -701,52 +609,13 @@ export default function Table({
 													>
 														{head}
 														{userDefinedHeaders.includes(head) && <sup>UD</sup>}
-														{orderBy.field === head ? (
-															orderBy.order === "asc" ? (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-																</svg>
-															) : (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-																</svg>
-															)
-														) : (
-															<></>
-														)}
+														{orderBy.field === head ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
 													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
 															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+																<SearchIcon />
 																<input
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
@@ -781,18 +650,7 @@ export default function Table({
 													{/* Value Filter */}
 													{!hideFilters && (
 														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																viewBox="0 0 16 16"
-																fill="currentColor"
-																className="h-4 w-4 opacity-70"
-															>
-																<path
-																	fillRule="evenodd"
-																	d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																	clipRule="evenodd"
-																/>
-															</svg>
+															<SearchIcon />
 															<input type="text" className="grow" disabled />
 														</label>
 													)}
@@ -873,19 +731,7 @@ export default function Table({
 																				: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																		}]`}
 																	>
-																		<svg
-																			width="20px"
-																			height="20px"
-																			viewBox="0 0 32 32"
-																			version="1.1"
-																			xmlns="http://www.w3.org/2000/svg"
-																			className="text-primary"
-																			stroke="currentColor"
-																			fill="currentColor"
-																		>
-																			<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
-																		</svg>{" "}
-																		{row._count[head]}{" "}
+																		<LinkIcon /> {row._count[head]}{" "}
 																		{row._count[head] === 1
 																			? capitalizeTable(depluralizeTable(head as Prisma.ModelName))
 																			: head}
@@ -1009,19 +855,7 @@ export default function Table({
 																			: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																	}]`}
 																>
-																	<svg
-																		width="20px"
-																		height="20px"
-																		viewBox="0 0 32 32"
-																		version="1.1"
-																		xmlns="http://www.w3.org/2000/svg"
-																		className="text-primary"
-																		stroke="currentColor"
-																		fill="currentColor"
-																	>
-																		<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
-																	</svg>{" "}
-																	{row._count[rel.label]}{" "}
+																	<LinkIcon /> {row._count[rel.label]}{" "}
 																	{row._count[rel.label] === 1 ? capitalizeTable(rel.table) : rel.label}
 																</Link>
 															</div>
@@ -1099,5 +933,66 @@ export default function Table({
 				</div>
 			</form>
 		</div>
+	);
+}
+
+function UpArrow() {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="20"
+			className="text-primary mr-2"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+		>
+			<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+		</svg>
+	);
+}
+
+function DownArrow() {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="20"
+			className="text-primary mr-2"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+		>
+			<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+		</svg>
+	);
+}
+
+function SearchIcon() {
+	return (
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4 opacity-70">
+			<path
+				fillRule="evenodd"
+				d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+				clipRule="evenodd"
+			/>
+		</svg>
+	);
+}
+
+function LinkIcon() {
+	return (
+		<svg
+			width="20px"
+			height="20px"
+			viewBox="0 0 32 32"
+			version="1.1"
+			xmlns="http://www.w3.org/2000/svg"
+			className="text-primary"
+			stroke="currentColor"
+			fill="currentColor"
+		>
+			<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
+		</svg>
 	);
 }

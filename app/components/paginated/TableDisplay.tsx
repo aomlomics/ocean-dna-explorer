@@ -1,25 +1,30 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, Sample } from "@/app/generated/prisma/client";
 import Table from "../paginated/Table";
 import Pagination from "../paginated/Pagination";
 import { useEffect, useState } from "react";
 import Grid from "./grid/Grid";
 import TaxaGridItem from "./grid/TaxaGridItem";
 import ProjectGridItem from "./grid/ProjectGridItem";
+import { BlastResult } from "@/types/globals";
 
 export default function TableDisplay({
 	table,
 	tableWhere,
 	displayMode = "table",
 	toggle,
-	ignoreParams
+	ignoreParams,
+	extraParams,
+	setExtraResults
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
 	tableWhere?: Record<string, any> | undefined;
 	displayMode?: "table" | "grid";
 	toggle?: true;
 	ignoreParams?: string[];
+	extraParams?: Record<string, string>;
+	setExtraResults?: (args: { blastResult: BlastResult; samples: Sample[] }) => void;
 }) {
 	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
 	const [mode, setMode] = useState(displayMode);
@@ -66,6 +71,8 @@ export default function TableDisplay({
 							filterHeadersAtStart
 							where={tableWhere}
 							ignoreParams={ignoreParams}
+							extraParams={extraParams}
+							setExtraResults={setExtraResults}
 							hideEmptyAtStart={table === "taxonomy"}
 						/>
 					) : (
