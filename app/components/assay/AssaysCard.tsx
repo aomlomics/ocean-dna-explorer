@@ -34,7 +34,7 @@ export default function AssaysCard({ title, assays, id, className = "" }: Assays
 	return (
 		<div id={id} className={["group bg-base-200 rounded-xl p-5", className].join(" ")}>
 			<div className="flex items-start justify-between gap-4 mb-4">
-				<h2 className="text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-white">
+				<h2 className="text-base sm:text-lg font-semibold text-base-content/80 transition-colors group-hover:text-base-content">
 					{title}
 				</h2>
 				<DashCardInfoButton info={assayInfo} />

@@ -3,9 +3,6 @@
 import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-const INFO_TOOLTIP_THEME_CLASS =
-	"[--tt-bg:var(--color-base-200)] [--tt-color:var(--color-base-content)] before:max-w-[min(90vw,24rem)] before:whitespace-pre-wrap before:rounded-md before:border before:border-base-content/20 before:bg-[var(--tt-bg)] before:px-3 before:py-2 before:text-sm before:leading-relaxed before:text-[var(--tt-color)] before:shadow-xl after:outline after:outline-1 after:outline-base-content/20";
-
 export default function InfoButton({
 	infoText,
 	infoContent,
@@ -132,7 +129,8 @@ export default function InfoButton({
 					: "left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 rotate-45 border-r border-b";
 
 	const richPanel = useMemo(() => {
-		if (!mounted || !open || !panelStyle || !infoContent) return null;
+		if (!mounted || !open || !panelStyle) return null;
+		const tooltipBody = infoContent ?? <span>{infoText}</span>;
 		return createPortal(
 			<div
 				ref={panelRef}
@@ -145,52 +143,24 @@ export default function InfoButton({
 					aria-hidden="true"
 					className={`pointer-events-none absolute h-3 w-3 border-base-content/20 bg-base-200 ${richCaretClass}`}
 				/>
-				{infoContent}
+				{tooltipBody}
 			</div>,
 			document.body
 		);
-	}, [dir, infoContent, mounted, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
-
-	if (infoContent) {
-		return (
-			<div
-				ref={wrapperRef}
-				className={`relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none ${className ?? ""}`}
-				onMouseEnter={openPanel}
-				onMouseLeave={scheduleClosePanel}
-				onFocus={openPanel}
-				onBlur={(event) => {
-					const nextFocused = event.relatedTarget as Node | null;
-					if (nextFocused && panelRef.current?.contains(nextFocused)) return;
-					scheduleClosePanel();
-				}}
-			>
-				<div
-					className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-out ${hoverAccentClass}`}
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						fill="none"
-						className={`h-[1.35rem] w-[1.35rem] shrink-0 stroke-current transition-colors duration-150 ${iconColorClass}`}
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						></path>
-					</svg>
-				</div>
-				{richPanel}
-			</div>
-		);
-	}
+	}, [infoContent, infoText, mounted, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
 
 	return (
 		<div
-			className={`tooltip ${dir} relative z-tooltip inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none before:z-tooltip after:z-tooltip ${INFO_TOOLTIP_THEME_CLASS} ${className ?? ""}`}
-			data-tip={infoText}
+			ref={wrapperRef}
+			className={`relative inline-flex shrink-0 cursor-help items-center self-center align-middle leading-none ${className ?? ""}`}
+			onMouseEnter={openPanel}
+			onMouseLeave={scheduleClosePanel}
+			onFocus={openPanel}
+			onBlur={(event) => {
+				const nextFocused = event.relatedTarget as Node | null;
+				if (nextFocused && panelRef.current?.contains(nextFocused)) return;
+				scheduleClosePanel();
+			}}
 		>
 			<div
 				className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all duration-150 ease-out ${hoverAccentClass}`}
@@ -209,6 +179,7 @@ export default function InfoButton({
 					></path>
 				</svg>
 			</div>
+			{richPanel}
 		</div>
 	);
 }

@@ -200,6 +200,76 @@
 	}
 }
 
+/* ============================================================
+   STANDARDIZED TOOLTIP CARET (single source of truth)
+   ------------------------------------------------------------
+   DaisyUI 5 draws the tooltip caret (::after) as a rectangle that
+   is filled with `background-color` and then shaped with a
+   `mask-image` SVG. A CSS mask only reveals the fill, so it is
+   impossible to add a visible border/outline to that caret with
+   `border`/`outline`/`after:*` utilities — the mask clips them.
+
+   To guarantee EVERY text tooltip caret ([data-tip]) has a
+   consistent outline no matter where it appears, we drop the mask
+   and rebuild the caret as a rotated, bordered square (the same
+   technique used by our hand-built carets). Do NOT re-add caret
+   styling per component — this block owns it globally.
+   ============================================================ */
+.tooltip[data-tip]::after {
+	/* remove DaisyUI's mask so the box becomes a real square we can outline */
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
+	width: 0.5rem !important;
+	height: 0.5rem !important;
+	background-color: var(--tt-bg);
+	/*
+	  Keep the original "base-content at 20%" look, but layer in fallbacks:
+	  1) static fallback for older parsers
+	  2) rgb(from ...) for modern parsers without color-mix
+	  3) color-mix for environments that support it
+	*/
+	border: 0 solid color-mix(in oklab, var(--color-base-content) 20%, transparent);
+}
+
+/* Top (default) — caret points down: outline on lower-right + lower-left edges */
+.tooltip[data-tip]::after,
+.tooltip-top[data-tip]::after {
+	inset: auto auto var(--tt-off) 50%;
+	transform: translate(-50%, 50%) rotate(45deg);
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+}
+
+/* Bottom — caret points up */
+.tooltip-bottom[data-tip]::after {
+	inset: var(--tt-off) auto auto 50%;
+	transform: translate(-50%, -50%) rotate(45deg);
+	border-top-width: 1px;
+	border-left-width: 1px;
+	border-right-width: 0;
+	border-bottom-width: 0;
+}
+
+/* Left — caret points right */
+.tooltip-left[data-tip]::after {
+	inset: 50% var(--tt-off) auto auto;
+	transform: translate(50%, -50%) rotate(45deg);
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 0;
+	border-left-width: 0;
+}
+
+/* Right — caret points left */
+.tooltip-right[data-tip]::after {
+	inset: 50% auto auto var(--tt-off);
+	transform: translate(-50%, -50%) rotate(45deg);
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-width: 0;
+	border-right-width: 0;
+}
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
