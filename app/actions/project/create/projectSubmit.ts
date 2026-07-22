@@ -6,9 +6,9 @@ import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
 import { Channel, createProgressStream } from "@/app/helpers/progress";
 import { UserMetadata } from "@/types/globals";
-import { handlePrismaError } from "@/app/helpers/queries";
+import { handlePrismaError, toPrismaError } from "@/app/helpers/queries";
 import { del } from "@vercel/blob";
-import { Project } from "@/app/generated/prisma/client";
+import { Library, Prisma, Project, Sample } from "@/app/generated/prisma/client";
 import { validateBlobs } from "@/app/helpers/withDb";
 import {
 	AttributionOptionalDefaults,
@@ -17,6 +17,7 @@ import {
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import { prismaImages } from "@/app/helpers/prismaImages";
+import { uncapitalizeTable } from "@/app/helpers/utils";
 
 async function doSubmit(
 	globalStream: ReturnType<typeof createProgressStream>,
@@ -93,7 +94,13 @@ async function doSubmit(
 		}
 	}
 
+	let project;
+	let samples;
+	let libraries;
 	try {
+		let assays;
+		let assayPreps;
+
 		const parseResult = await parseProjectFiles({
 			projectChannel,
 			sampleChannel,
@@ -104,7 +111,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { project, samples, assays, assayPreps, libraries } = parseResult;
+		({ project, samples, assays, assayPreps, libraries } = parseResult);
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -209,9 +216,80 @@ async function doSubmit(
 
 		return true;
 	} catch (err: any) {
-		const prismaErr = handlePrismaError(err);
-		if (prismaErr) {
-			await globalStream.error(prismaErr.error);
+		const prismaErr = toPrismaError(err);
+		if (prismaErr && prismaErr.code === "P2002") {
+			//foreign key constraint
+			if (prismaErr.meta) {
+				const table = uncapitalizeTable(prismaErr.meta.modelName as Prisma.ModelName);
+				if (table === "project") {
+					await globalStream.error(`Project with project_id of "${project!.project_id}" already exists.`);
+				} else if (table === "sample") {
+					const existingSamples = await prisma.sample.findMany({
+						where: {
+							samp_name: {
+								in: samples!.map((samp) => samp.samp_name)
+							}
+						},
+						select: {
+							samp_name: true,
+							project_id: true
+						}
+					});
+					const byProject = existingSamples.reduce(
+						(acc, samp) => {
+							if (acc[samp.project_id]) {
+								acc[samp.project_id].push(samp.samp_name);
+							} else {
+								acc[samp.project_id] = [samp.samp_name];
+							}
+
+							return acc;
+						},
+						{} as Record<Project["project_id"], Sample["samp_name"][]>
+					);
+					await globalStream.error(
+						`The following samp_name${existingSamples.length === 1 ? " is" : "s are"} already in use:\n\n${Object.entries(
+							byProject
+						)
+							.map(([project_id, sampNames]) => `Project: ${project_id}\n${sampNames.join("\n")}`)
+							.join("\n")}`
+					);
+				} else if (table === "library") {
+					const existingLibraries = await prisma.library.findMany({
+						where: {
+							lib_id: {
+								in: libraries!.map((lib) => lib.lib_id)
+							}
+						},
+						select: {
+							lib_id: true,
+							project_id: true
+						}
+					});
+					const byProject = existingLibraries.reduce(
+						(acc, lib) => {
+							if (acc[lib.project_id]) {
+								acc[lib.project_id].push(lib.lib_id);
+							} else {
+								acc[lib.project_id] = [lib.lib_id];
+							}
+
+							return acc;
+						},
+						{} as Record<Project["project_id"], Library["lib_id"][]>
+					);
+					await globalStream.error(
+						`The following lib_id${existingLibraries.length === 1 ? " is" : "s are"} already in use:\n\n${Object.entries(
+							byProject
+						)
+							.map(([project_id, libIds]) => `${project_id}:\n\t${libIds.join("\n\t")}`)
+							.join("\n")}`
+					);
+				} else {
+					const error = err as Error;
+					await globalStream.error(error.message);
+				}
+			}
 		} else {
 			const error = err as Error;
 			await globalStream.error(error.message);
