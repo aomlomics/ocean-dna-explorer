@@ -498,7 +498,14 @@ export function parseApiQuery(
 		const fields = params.get("fields");
 		if (fields) {
 			params.delete("fields");
-			const split = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
+			const split = fields.split(",").reduce(
+				(acc, f) => {
+					getZodType(table, f);
+					acc[f] = true;
+					return acc;
+				},
+				{} as Record<string, true>
+			);
 			query.select = query.select ? { ...query.select, ...split } : split;
 		}
 	}

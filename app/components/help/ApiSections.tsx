@@ -385,8 +385,8 @@ if (http_status(response)$category == "Success") {
 
 										<p className="mt-6">
 											Pro tip: Use the{" "}
-											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint
-											to see the exact relation names available for any table. Or check the{" "}
+											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/&lt;table&gt;/relations</code>{" "}
+											endpoint to see the exact relation names available for any table. Or check the{" "}
 											<Link href="#table-definitions" className="link link-primary">
 												Table Definitions
 											</Link>{" "}
@@ -573,7 +573,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Table Relations",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/relations</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/relations</div>
 
 							<p className="mb-4">Returns a list of all relations for a table in the database.</p>
 
@@ -591,7 +591,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Table Fields",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/fields</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/fields</div>
 
 							<div className="mb-4 mt-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/assay/fields`} />
@@ -607,7 +607,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Unique Field Values",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/fields/[fieldName]</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/fields/&lt;fieldName&gt;</div>
 
 							<p className="mb-4">
 								Returns all unique values for a specific field in a table. This is useful for discovering what values
@@ -632,14 +632,14 @@ if (http_status(response)$category == "Success") {
 					title: "Query Table Data",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;</div>
 
 							<p className="mb-4">
 								Returns multiple records from a specific table. This endpoint supports various query parameters for
 								filtering, selecting fields, including relations, and limiting results.
 							</p>
 							<p className="mb-2">
-								For <InlineCode code="[table]" />, you can use either singular or plural table names.
+								For <InlineCode code="&lt;table&gt;" />, you can use either singular or plural table names.
 							</p>
 							<div className="mb-2">
 								Singular table names: <InlineCode code={singularTableNames.join(", ")} />
@@ -650,7 +650,7 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">
 								These are interchangeable in API paths (for example, <InlineCode code="/api/project" /> and{" "}
 								<InlineCode code="/api/projects" /> both work). Use the same rule for related endpoints like{" "}
-								<InlineCode code="/api/[table]/fields" /> and <InlineCode code="/api/[table]/relations" />.
+								<InlineCode code="/api/&lt;table&gt;/fields" /> and <InlineCode code="/api/&lt;table&gt;/relations" />.
 							</p>
 							<p className="mb-4">
 								Table names are also case-insensitive in queries, so either spelling/casing is accepted.
@@ -674,7 +674,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Single Record",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/[id]</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/&lt;id&gt;</div>
 
 							<div className="mb-4 mt-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`} />
@@ -723,7 +723,7 @@ if (http_status(response)$category == "Success") {
 					title: "Standard Search Parameter",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `search=[query]`</div>
+							<div className="mb-4">Parameter: `search=&lt;query&gt;`</div>
 							<p className="mb-4">
 								This is the simplest way to search. It performs a case-insensitive search across all text-based fields
 								in a specified table for your query string.
@@ -749,7 +749,7 @@ if (http_status(response)$category == "Success") {
 					title: "Advanced Search Parameter",
 					content: (
 						<div className="space-y-4">
-							<p>Query Parameter: `advanced=[JSON_object]`</p>
+							<p>Query Parameter: `advanced=&lt;JSON_object&gt;`</p>
 							<p>
 								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table
 								queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
@@ -873,7 +873,7 @@ if (http_status(response)$category == "Success") {
 					title: "ID Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `ids=[id1],[id2],...`</div>
+							<div className="mb-4">Parameter: `ids=&lt;id1&gt;,&lt;id2&gt;,...`</div>
 							<p className="mb-4">
 								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of IDs.
 							</p>
@@ -906,7 +906,7 @@ if (http_status(response)$category == "Success") {
 					title: "Direct Field Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `[fieldName]=[value]`</div>
+							<div className="mb-4">Parameter: `&lt;fieldName&gt;=&lt;value&gt;`</div>
 							<p className="mb-4">
 								This method allows you to filter results based on the value of one or more specific fields. This cannot
 								be combined with `advanced`, `search`, or `ids` parameters.
@@ -948,7 +948,7 @@ if (http_status(response)$category == "Success") {
 					title: "Field Selection",
 					content: (
 						<>
-							<div className="mb-4">Parameter: fields=field1,field2,field3</div>
+							<div className="mb-4">Parameter: fields=&lt;field1&gt;,&lt;field2&gt;,&lt;field3&gt;</div>
 
 							<p className="mb-4">
 								Specifies which fields to include in the response. When omitted, all fields are returned.
@@ -971,7 +971,7 @@ if (http_status(response)$category == "Success") {
 					title: "Field Filtering (Legacy)",
 					content: (
 						<>
-							<div className="mb-4">Parameter: fieldName=value</div>
+							<div className="mb-4">Parameter: &lt;fieldName&gt;=&lt;value&gt;</div>
 
 							<p className="mb-4">
 								Filters results to return only records where the specified field contains the provided value. For more
@@ -998,7 +998,7 @@ if (http_status(response)$category == "Success") {
 					title: "Relations",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relations=relation1,relation2</p>
+							<p>Parameter: relations=&lt;relation1&gt;,&lt;relation2&gt;</p>
 							<p>
 								Includes related data from other tables in the response. Relation names can be lowercase or capitalized.
 							</p>
@@ -1027,7 +1027,7 @@ if (http_status(response)$category == "Success") {
 					title: "Relation Field Options",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relationsAllFields=true or relationsAllFields=false</p>
+							<p>Parameter: relationsAllFields=true</p>
 
 							<p>Controls whether to include all fields on related records (true) or just their ID (false, default).</p>
 
@@ -1064,7 +1064,7 @@ if (http_status(response)$category == "Success") {
 					title: "Result Limiting",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: limit=number</p>
+							<p>Parameter: limit=&lt;number&gt;</p>
 							<p>Limits the number of results returned. Must be a positive number.</p>
 							<div>
 								Example URL: <InlineCode code="/api/project?limit=20" />
@@ -1078,7 +1078,7 @@ if (http_status(response)$category == "Success") {
 					title: "Relations Result Limiting",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relationsLimit=number</p>
+							<p>Parameter: relationsLimit=&lt;number&gt;</p>
 							<p>
 								Limits the number of results returned when the{" "}
 								<Link className="link link-primary" href="#relations">
