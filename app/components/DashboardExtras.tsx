@@ -86,7 +86,7 @@ export async function TopInstitutionsCard() {
 			info={{
 				title: "Data Contributors",
 				description:
-					"Institutions contributing the most projects to ODE. The institution name is whatever was entered in each project's `institution` field — same string is treated as the same contributor.",
+					"Lists data submitters based on each project's `institution` field. Each row is one submitted institution value.",
 				links: [{ label: "Browse all projects", href: "/explore/project" }]
 			}}
 		>

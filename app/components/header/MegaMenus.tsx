@@ -11,8 +11,8 @@ import { useDebouncedCallback } from "use-debounce";
 // -----------------------------
 
 const MENU_LINK_PREFETCH = false;
-const MEGA_MENU_OPEN_DELAY_MS = 100; //adjust these for debounce. these seem to be a good sweet spot -blw 
-const MEGA_MENU_CLOSE_DELAY_MS = 120;
+const MEGA_MENU_OPEN_DELAY_MS = 60; // Faster open reduces tab-to-tab flicker.
+const MEGA_MENU_CLOSE_DELAY_MS = 180; // Slightly slower close smooths hover transitions.
 
 const EXPLORE_LEFT_ITEMS = [
 	{ label: "Projects", href: "/explore/project" },
@@ -232,12 +232,14 @@ function MegaMenu({
 			onMouseLeave={handleMouseLeave}
 			className="relative z-menu group/menu"
 		>
-			{open ? (
-				<div
-					aria-hidden="true"
-					className="fixed inset-x-0 bottom-0 top-20 xl:top-24 z-1 pointer-events-none bg-black/30"
-				/>
-			) : null}
+			<div
+				aria-hidden="true"
+				className={[
+					"fixed inset-x-0 bottom-0 top-20 xl:top-24 z-1 pointer-events-none bg-black/25",
+					"transition-opacity duration-200 ease-out",
+					open ? "opacity-100" : "opacity-0"
+				].join(" ")}
+			/>
 
 			{/* Trigger — keep hover/open styling subtle and separate from the dropdown panel */}
 			<Link
@@ -273,36 +275,36 @@ function MegaMenu({
 			</Link>
 
 			{/* Panel */}
-			{open ? (
-				<div
-					tabIndex={0}
-					onMouseEnter={handleMouseEnter}
-					onMouseLeave={handleMouseLeave}
-					// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
-					// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
-					className={[
-						"z-5",
-						"fixed",
-						anchorPanelToTrigger ? "left-auto" : "left-1/2",
-						anchorPanelToTrigger ? "" : panelShiftRight ? "" : "-translate-x-1/2",
-						panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
-						"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
-						"w-[calc(100vw-2rem)]",
-						widthClass
-					].join(" ")}
-					style={
-						anchorPanelToTrigger && panelRightStyle
-							? { right: panelRightStyle.right }
-							: panelShiftRight
-								? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
-								: undefined
-					}
-				>
-					<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl border border-base-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.12)] [html[data-theme='dark']_&]:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-						<div className="overflow-hidden rounded-t-none rounded-b-xl">{children}</div>
-					</div>
+			<div
+				tabIndex={open ? 0 : -1}
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
+				// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
+				className={[
+					"z-5",
+					"fixed",
+					anchorPanelToTrigger ? "left-auto" : "left-1/2",
+					anchorPanelToTrigger ? "" : panelShiftRight ? "" : "-translate-x-1/2",
+					panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
+					"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
+					"w-[calc(100vw-2rem)]",
+					"transition-[opacity,visibility] duration-200 ease-out",
+					open ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none",
+					widthClass
+				].join(" ")}
+				style={
+					anchorPanelToTrigger && panelRightStyle
+						? { right: panelRightStyle.right }
+						: panelShiftRight
+							? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
+							: undefined
+				}
+			>
+				<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl border border-base-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.12)] [html[data-theme='dark']_&]:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+					<div className="overflow-hidden rounded-t-none rounded-b-xl">{children}</div>
 				</div>
-			) : null}
+			</div>
 		</div>
 	);
 }
