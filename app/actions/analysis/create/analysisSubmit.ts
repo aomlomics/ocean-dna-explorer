@@ -227,7 +227,7 @@ async function doSubmit(
 				}
 			},
 			{
-				timeout: 3 * 60 * 1000
+				timeout: 10 * 60 * 1000
 			}
 		);
 
