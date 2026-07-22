@@ -660,7 +660,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 							</span>
 						</button>
 						{apiDropdownOpen && (
-							<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-9999">
+							<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-popover">
 								<ul className="menu p-2">
 									<li>
 										<button
@@ -737,7 +737,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 	return (
 		<>
-			<div className="collapse collapse-arrow rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
+			<div className="collapse collapse-arrow overflow-visible rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
 				<input defaultChecked type="checkbox" />
 				<div className="collapse-title py-2.5 px-4 text-base font-medium text-base-content">
 					<div className="flex items-center gap-2">
@@ -758,10 +758,10 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 						<span>Query Builder</span>
 					</div>
 				</div>
-				<div className="collapse-content px-4">
+				<div className="collapse-content overflow-visible px-4">
 					<form
 						ref={formRef}
-						className="bg-transparent pb-4"
+						className="relative overflow-visible bg-transparent pb-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							search();
