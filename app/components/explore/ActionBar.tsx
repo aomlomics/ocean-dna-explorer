@@ -42,7 +42,7 @@ export default function ActionBar({
 
 	return (
 		<div
-			className="inline-flex max-w-full flex-wrap items-stretch gap-1"
+			className="inline-flex max-w-full flex-wrap items-stretch gap-2"
 			role="toolbar"
 			aria-label="Search and filters"
 		>

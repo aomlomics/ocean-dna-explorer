@@ -1,29 +1,52 @@
 import { Project } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import Image from "next/image";
+import { ProjectIcon } from "@/app/components/icons";
 
-export default function ProjectGridItem({ item }: { item: Project }) {
+type ProjectWithAssays = Project & {
+	AssayPreps?: { assay_name: string }[];
+};
+
+function getAssayLabel(item: ProjectWithAssays) {
+	const assayNames = [...new Set((item.AssayPreps ?? []).map((ap) => ap.assay_name).filter(Boolean))];
+	if (!assayNames.length) return "No assay name listed";
+	const shownAssays = assayNames.slice(0, 4);
+	const moreCount = assayNames.length - shownAssays.length;
+	return moreCount > 0 ? `${shownAssays.join(", ")} +${moreCount} more` : shownAssays.join(", ");
+}
+
+export default function ProjectGridItem({ item }: { item: ProjectWithAssays }) {
+	const projectName = item.project_name || "No project name listed";
+	const assayLabel = getAssayLabel(item);
+
 	return (
 		<Link
 			href={`/explore/project/${encodeURIComponent(item.project_id)}`}
 			key={item.project_id}
-			className="card bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square"
+			className="card overflow-hidden bg-base-200 transition-colors duration-200 hover:bg-base-300"
 		>
-			<div className="card-body p-1 lg:p-2 gap-0">
-				<div className="w-full wrap-break-word mb-1 text-primary">{item.project_id}</div>
-
-				<div className="grow border-t pt-1 relative flex items-center justify-center">
+			<div className="card-body gap-0 p-0">
+				<div className="relative aspect-16/10 w-full shrink-0 overflow-hidden bg-base-300/40">
 					{item.imageFileUrl_ODE ? (
 						<Image
 							src={item.imageFileUrl_ODE}
 							alt={`Cover image for the ${item.project_id} project.`}
 							fill
-							objectFit="cover"
-							className="rounded-md pt-2"
+							sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+							className="object-cover"
 						/>
 					) : (
-						<>No Image</>
+						<div className="flex h-full w-full flex-col items-center justify-center gap-2 px-3 text-center text-xs text-base-content/60">
+							<ProjectIcon className="h-12 w-12 text-primary" />
+							<span>No image available</span>
+						</div>
 					)}
+				</div>
+
+				<div className="space-y-1.5 p-3 lg:p-4">
+					<p className="wrap-break-word text-lg font-semibold leading-tight text-primary">{item.project_id}</p>
+					<p className="wrap-break-word text-sm leading-snug text-base-content">{projectName}</p>
+					<p className="wrap-break-word text-xs text-base-content/75">{assayLabel}</p>
 				</div>
 			</div>
 		</Link>

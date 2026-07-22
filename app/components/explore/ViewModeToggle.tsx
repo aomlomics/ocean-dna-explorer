@@ -20,13 +20,13 @@ export default function ViewModeToggle({
 	if (!viewCtx) return null;
 
 	return (
-		<div className="join">
+		<div className="inline-flex items-center gap-2 rounded-xl bg-base-200/40 p-1">
 			<button
 				type="button"
-				className={`btn btn-sm join-item gap-2 rounded-xl border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
+				className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
 					currentView === "table"
 						? "btn-primary text-primary-content"
-						: "btn-ghost bg-base-200/90 text-base-content hover:bg-base-300"
+						: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
 				}`}
 				onClick={() => {
 					if (viewLocked) return;
@@ -47,10 +47,10 @@ export default function ViewModeToggle({
 			</button>
 			<button
 				type="button"
-				className={`btn btn-sm join-item gap-2 rounded-xl border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
+				className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
 					currentView === "grid"
 						? "btn-primary text-primary-content"
-						: "btn-ghost bg-base-200/90 text-base-content hover:bg-base-300"
+						: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
 				}`}
 				onClick={() => !viewLocked && setMode?.("grid")}
 				disabled={viewLocked || !setMode}

@@ -102,7 +102,7 @@ function ControlsBody({
 
 				<div className="flex w-full max-w-full flex-col items-start gap-4">
 					<div
-						className="inline-flex max-w-full flex-wrap items-center gap-1"
+						className="inline-flex max-w-full flex-wrap items-center gap-2"
 						role="toolbar"
 						aria-label="Explore actions and view mode"
 					>

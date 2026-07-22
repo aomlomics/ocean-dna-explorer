@@ -19,6 +19,7 @@ export default function Grid({
 	where,
 	orderBy,
 	ignoreParams,
+	extraQueryParams,
 	childProps,
 	itemsGridClassName = defaultItemsGridClass,
 	fillViewport = true,
@@ -29,6 +30,7 @@ export default function Grid({
 	where?: Record<string, any>;
 	orderBy?: { field: string; order: Prisma.SortOrder };
 	ignoreParams?: string[];
+	extraQueryParams?: Record<string, string>;
 	childProps?: Record<string, any>;
 	itemsGridClassName?: string;
 	/** When false, grid grows with the page (document scroll) instead of a fixed viewport + inner scroll. */
@@ -93,6 +95,11 @@ export default function Grid({
 
 		if (orderBy) {
 			query.set("orderBy", `${orderBy.field},${orderBy.order}`);
+		}
+		if (extraQueryParams) {
+			for (const [key, value] of Object.entries(extraQueryParams)) {
+				query.set(key, value);
+			}
 		}
 
 		return query;
