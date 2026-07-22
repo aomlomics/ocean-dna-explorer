@@ -10,9 +10,9 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table, id } = await params;
 
-	const model = getTableName(table);
-
 	try {
+		const model = getTableName(table);
+
 		const parsedId = parseInt(id);
 		if (Number.isNaN(parsedId)) {
 			return NextResponse.json({ statusMessage: "error", error: `Invalid ID: ${parsedId}.` });

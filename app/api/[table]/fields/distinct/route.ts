@@ -11,9 +11,9 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const table = (await params).table;
 
-	const model = getTableName(table);
-
 	try {
+		const model = getTableName(table);
+
 		const { searchParams } = new URL(request.url);
 
 		const extraFieldsParams = searchParams.get("extraFields");

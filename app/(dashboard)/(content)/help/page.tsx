@@ -1,10 +1,11 @@
 import { docContentProseClassName } from "@/app/components/help/docContentProse";
-import { helpSections } from "@/app/components/help/HelpSections";
+import { getHelpSections } from "@/app/components/help/HelpSections";
 import { ActiveSectionTracker } from "@/app/components/help/ActiveSectionTracker";
 import MobileTOC from "@/app/components/help/MobileTOC";
 import HelpQuickNav from "@/app/components/help/HelpQuickNav";
 
-export default function Help() {
+export default async function Help() {
+	const helpSections = await getHelpSections();
 	return (
 		<div className="flex min-h-screen min-w-0 items-start">
 			{/* Invisible component that handles scroll tracking */}
