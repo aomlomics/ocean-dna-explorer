@@ -856,6 +856,12 @@ export function stripSecureFields(queryResult: Record<string, any> | Record<stri
 	}
 }
 
+export function toPrismaError(err: any) {
+	if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+		return err as Prisma.PrismaClientKnownRequestError;
+	}
+}
+
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	try {
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
