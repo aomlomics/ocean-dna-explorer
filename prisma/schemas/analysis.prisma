@@ -225,6 +225,8 @@ model BlastQuery {
     database          String?
     Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Cascade)
     BlastQueryResults BlastQueryResult[]
+
+    @@unique(fields: [dateCalculated, sequence])
 }
 
 model BlastQueryResult {

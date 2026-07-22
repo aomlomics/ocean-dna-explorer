@@ -127,7 +127,7 @@ export async function GET(
 			let res;
 			try {
 				res = await fetch(
-					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/blastn?${blastDatabase ? `assay_name=${blastDatabase}&` : ""}${blastQueries.map((q) => `query=${q}`).join("&")}`,
+					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/?${blastDatabase ? `assay_name=${blastDatabase}&` : ""}${blastQueries.map((q) => `query=${q}`).join("&")}`,
 					saveBlast?.toLowerCase() === "true"
 						? {
 								headers: {

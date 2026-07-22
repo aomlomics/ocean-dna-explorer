@@ -105,7 +105,7 @@ export default function BlastSearch() {
 				return true;
 			}
 
-			if (!query[0].substring(1)) {
+			if (!query[0]) {
 				setError("Empty query found.");
 				return true;
 			}

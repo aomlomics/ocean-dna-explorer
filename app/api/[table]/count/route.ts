@@ -59,7 +59,7 @@ export async function GET(
 
 			try {
 				const res = await fetch(
-					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/blastn?${blast.assay_name ? `assay_name=${blast.assay_name}&` : ""}${blast.queries.map((q) => `query=${q}`).join("&")}`,
+					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/?${blast.assay_name ? `assay_name=${blast.assay_name}&` : ""}${blast.queries.map((q) => `query=${q}`).join("&")}`,
 					blast.save
 						? {
 								headers: {

@@ -21,7 +21,10 @@ export default function Search() {
 	const searchParams = useSearchParams();
 
 	const [table, setTable] = useState(undefined as Uncapitalize<Prisma.ModelName> | undefined);
-	const [extraResults, setExtraResults] = useState({ blastResult: [] as BlastResult, samples: [] as Sample[] });
+	const [extraResults, setExtraResults] = useState({
+		blastResult: undefined as BlastResult | undefined,
+		samples: undefined as Sample[] | undefined
+	});
 	const [mapKey, setMapKey] = useState("0");
 
 	useEffect(() => {
@@ -34,13 +37,18 @@ export default function Search() {
 	}, [searchParams]);
 
 	if (!table) return <></>;
-	const titleField = TableMetadata[model].titleField;
+	const titleField = TableMetadata[table].titleField;
 	const uniqueKey = typeof titleField === "string" ? titleField : titleField.join(" / ");
-	const infoText = `Unique Key: ${uniqueKey}\n${TableMetadata[model].description}`;
+	const infoText = `Unique Key: ${uniqueKey}\n${TableMetadata[table].description}`;
 	const infoContent = (
 		<div className="space-y-2">
 			<div className="flex items-start gap-2">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0 text-primary">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+					className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+				>
 					<path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
 				</svg>
 				<p>
@@ -48,7 +56,7 @@ export default function Search() {
 					<span className="font-medium text-base-content">{uniqueKey}</span>
 				</p>
 			</div>
-			<p>{TableMetadata[model].description}</p>
+			<p>{TableMetadata[table].description}</p>
 		</div>
 	);
 
@@ -63,14 +71,16 @@ export default function Search() {
 								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
 								<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
 							</h1>
-							<InfoButton infoText={infoText} infoContent={infoContent} dir="tooltip-right" className="translate-y-0.5" />
+							<InfoButton
+								infoText={infoText}
+								infoContent={infoContent}
+								dir="tooltip-right"
+								className="translate-y-0.5"
+							/>
 						</div>
 					</header>
 				)}
 				<div className="mt-5 w-full text-base-content/80">
-					<ExploreTabButtons activeTable={capitalizeTable(table)} />
-				<div className="w-full space-y-4 text-base-content/80 py-4">
-					<p>{TableMetadata[table].description}</p>
 					<ExploreTabButtons activeTable={capitalizeTable(table)} />
 				</div>
 
@@ -79,31 +89,22 @@ export default function Search() {
 				</div>
 			</div>
 
-			<div className="collapse collapse-arrow bg-base-100 border-base-300 border mb-4">
+			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm mb-4">
 				<input key={table + "blastInput"} defaultChecked={!!searchParams.get("blastQuery")} type="checkbox" />
-				<div className="collapse-title font-semibold">BLAST</div>
+				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">BLAST</div>
 				<div className="collapse-content grid grid-cols-2">
 					<BlastSearch key={table + "blast"} />
-					<BlastSearchResult blastResult={extraResults.blastResult} />
+					<BlastSearchResult blastResult={extraResults.blastResult || []} />
 				</div>
 			</div>
 
-			<div className="collapse collapse-arrow bg-base-100 border-base-300 border mb-4">
-				<input key={table + "blastInput"} defaultChecked={!!searchParams.get("blastQuery")} type="checkbox" />
-				<div className="collapse-title font-semibold">BLAST</div>
-				<div className="collapse-content grid grid-cols-2">
-					<BlastSearch key={table + "blast"} />
-					<BlastSearchResult blastResult={extraResults.blastResult} />
-				</div>
-			</div>
-
-			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm overflow-hidden">
+			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
 				<input
 					key={table + "mapInput"}
 					defaultChecked={!!(searchParams.get("circle") || searchParams.get("polygon"))}
 					type="checkbox"
 				/>
-				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content overflow-hidden">
+				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">
 					<div className="z-10 flex items-center gap-2">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -122,10 +123,18 @@ export default function Search() {
 						<span>Show on Map</span>
 					</div>
 				</div>
-				<div className="collapse-content text-sm px-4 bg-base-100">
-					<div className="overflow-hidden bg-base-200 rounded-lg pb-3">
-						<MapWrapper loading={!extraResults.samples.length}>
-							<DynamicMap key={mapKey} locations={extraResults.samples} legend draw shapesToUrl cluster disableSearch />
+				<div className="collapse-content text-sm p-0">
+					<div className="rounded-lg">
+						<MapWrapper loading={!extraResults.samples}>
+							<DynamicMap
+								key={mapKey}
+								locations={extraResults.samples || []}
+								legend
+								draw
+								shapesToUrl
+								cluster
+								disableSearch
+							/>
 						</MapWrapper>
 					</div>
 				</div>
