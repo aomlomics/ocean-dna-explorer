@@ -104,7 +104,7 @@ export default function DashCard({
 								className={[
 									"text-base sm:text-lg font-semibold leading-tight",
 									titleClassName,
-									"transition-colors group-hover:text-white"
+									"transition-colors"
 								].join(" ")}
 							>
 								{title}
