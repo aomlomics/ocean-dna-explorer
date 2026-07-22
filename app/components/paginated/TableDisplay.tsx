@@ -10,6 +10,9 @@ import ProjectGridItem from "./grid/ProjectGridItem";
 import { useViewMode } from "../explore/ViewModeContext";
 import InfoButton from "../InfoButton";
 
+const sw = 1.75;
+const stroke = "currentColor";
+
 export default function TableDisplay({
 	table,
 	tableWhere,
@@ -103,18 +106,52 @@ export default function TableDisplay({
 	return (
 		<div className="flex flex-col">
 			{showBuiltInToggle && (
-				<fieldset className="fieldset bg-base-100 border-base-300 rounded-box w-36 border self-center p-2 mb-6">
-					<legend className="fieldset-legend">Display Mode</legend>
-					<label className="label">
-						<input
-							type="checkbox"
-							className="toggle"
-							defaultChecked={mode === "grid"}
-							onChange={(e) => (e.target.checked ? setMode("grid") : setMode("table"))}
-						/>
-						{mode}
-					</label>
-				</fieldset>
+				<div className="mb-6 self-center">
+					<div className="inline-flex items-center gap-2 rounded-xl bg-base-200/40 p-1">
+						<button
+							type="button"
+							className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
+								mode === "table"
+									? "btn-primary text-primary-content"
+									: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
+							}`}
+							onClick={() => setMode("table")}
+							aria-pressed={mode === "table"}
+							title="List view"
+						>
+							<span className="flex h-4 w-4 shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4">
+								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
+									<path d="M9 6h12M9 12h12M9 18h12" strokeLinecap="round" />
+									<circle cx="5" cy="6" r="1.5" fill={stroke} />
+									<circle cx="5" cy="12" r="1.5" fill={stroke} />
+									<circle cx="5" cy="18" r="1.5" fill={stroke} />
+								</svg>
+							</span>
+							List
+						</button>
+						<button
+							type="button"
+							className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
+								mode === "grid"
+									? "btn-primary text-primary-content"
+									: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
+							}`}
+							onClick={() => setMode("grid")}
+							aria-pressed={mode === "grid"}
+							title="Grid view"
+						>
+							<span className="flex h-4 w-4 shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4">
+								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
+									<rect x="4" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+									<rect x="13" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+									<rect x="4" y="13" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+									<rect x="13" y="13" width="7" height="7" rx="1.5" strokeLinejoin="round" />
+								</svg>
+							</span>
+							Grid
+						</button>
+					</div>
+				</div>
 			)}
 
 			{viewModeCtx ? (

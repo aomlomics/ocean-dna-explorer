@@ -137,7 +137,7 @@ export default async function Search({
 						table={model}
 						displayMode={model === "taxonomy" ? "grid" : "table"}
 						ignoreParams={["table"]}
-						toggle={model === "taxonomy" || undefined}
+						toggle={model === "taxonomy" || model === "project" || undefined}
 					/>
 				</div>
 			</div>
