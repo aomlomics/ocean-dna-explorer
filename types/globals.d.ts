@@ -140,6 +140,8 @@ export type UserMetadata = {
 		description?: string;
 	};
 };
+declare module "wordcloud";
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

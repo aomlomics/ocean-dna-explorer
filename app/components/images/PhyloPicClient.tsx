@@ -2,10 +2,17 @@
 
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
-import { RanksBySpecificity } from "@/types/objects";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
+import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
+import { TAXONOMY_GRID_TOOLTIP_CLASS } from "../paginated/grid/TaxonomyGridTooltip";
 
-export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
+export default function PhyloPicClient({
+	taxonomy,
+	tooltipClassName
+}: {
+	taxonomy: Taxonomy;
+	tooltipClassName?: string;
+}) {
 	const [loading, setLoading] = useState(false);
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageDetails, setImageDetails] = useState("");
@@ -13,46 +20,13 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 	useEffect(() => {
 		async function fetchData() {
 			setLoading(true);
-			let gbifTaxonomy;
-			try {
-				for (const rank of RanksBySpecificity) {
-					if (taxonomy[rank] && /^[a-zA-Z]+$/.test(taxonomy[rank].toString())) {
-						//retrieve suggested taxonomies from GBIF
-						//TODO: split more logically
-						const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${taxonomy[rank]}`);
-						const gbifTaxa = await gbifTaxaRes.json();
-
-						//get only the taxonomies that match the specific rank
-						//TODO: check GBIF API docs to do this step in the previous fetch
-						const gbifTaxonomyArr = gbifTaxa.filter(
-							(taxa: Record<string, any>) => taxa.rank.toLowerCase() === rank && taxa.status === "ACCEPTED"
-						);
-						if (gbifTaxonomyArr.length) {
-							if (gbifTaxonomyArr.length === 1) {
-								gbifTaxonomy = gbifTaxonomyArr[0];
-								break;
-							}
-						}
-					}
-				}
-				if (!gbifTaxonomy) {
-					setLoading(false);
-					return;
-				}
-			} catch {
+			const match = await matchGbifForPhylopic(taxonomy);
+			if (!match) {
 				setLoading(false);
 				return;
 			}
 
-			//use result of GBIF API to query PhyloPics for the vector image
-			const objectIDs =
-				`${gbifTaxonomy.speciesKey ? gbifTaxonomy.speciesKey + "," : ""}` +
-				`${gbifTaxonomy.genusKey ? gbifTaxonomy.genusKey + "," : ""}` +
-				`${gbifTaxonomy.familyKey ? gbifTaxonomy.familyKey + "," : ""}` +
-				`${gbifTaxonomy.orderKey ? gbifTaxonomy.orderKey + "," : ""}` +
-				`${gbifTaxonomy.classKey ? gbifTaxonomy.classKey + "," : ""}` +
-				`${gbifTaxonomy.phylumKey ? gbifTaxonomy.phylumKey + "," : ""}` +
-				`${gbifTaxonomy.kingdomKey ? gbifTaxonomy.kingdomKey : ""}`;
+			const objectIDs = match.objectIDs;
 
 			//retry PhyloPic API call
 			for (let i = 0; i < 3; i++) {
@@ -64,7 +38,7 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 					const phyloPic = await phyloPicRes.json();
 
 					if (phyloPic.errors) {
-						return;
+						break;
 					}
 					setImageUrl(phyloPic._embedded.primaryImage._links.vectorFile.href);
 					setImageDetails(
@@ -84,13 +58,13 @@ export default function PhyloPicClient({ taxonomy }: { taxonomy: Taxonomy }) {
 		}
 
 		fetchData();
-	}, []);
+	}, [taxonomy]);
 
 	return (
 		<>
 			{!!imageUrl ? (
 				<div
-					className="w-full h-full relative flex flex-col justify-center tooltip tooltip-primary wrap-break-word before:w-full! before:bg-base-100 before:text-base-content before:border before:border-base-300"
+					className={`w-full h-full relative flex flex-col justify-center wrap-break-word ${tooltipClassName ?? TAXONOMY_GRID_TOOLTIP_CLASS}`}
 					data-tip={"PhyloPic nodes: " + imageDetails}
 				>
 					<div className="relative h-full w-full">

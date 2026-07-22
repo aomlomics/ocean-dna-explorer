@@ -16,9 +16,9 @@ export async function GET(
 	const { sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata?.role;
 
-	const model = getTableName(table);
-
 	try {
+		const model = getTableName(table);
+
 		const { searchParams } = new URL(request.url);
 
 		let { query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, { sampleWhere: true });

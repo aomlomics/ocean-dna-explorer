@@ -4,10 +4,14 @@ import { FilterConfig } from "./filterHelpers";
 
 export default function TableFilter({
 	tableConfig,
-	sticky = false
+	sticky = false,
+	defaultOpen = false,
+	embedded = false
 }: {
 	tableConfig: FilterConfig[];
 	sticky?: boolean;
+	defaultOpen?: boolean;
+	embedded?: boolean;
 }) {
 	return (
 		<Suspense
@@ -41,7 +45,7 @@ export default function TableFilter({
 				</div>
 			}
 		>
-			<ActualTableFilter tableConfig={tableConfig} sticky={sticky} />
+			<ActualTableFilter tableConfig={tableConfig} sticky={sticky} defaultOpen={defaultOpen} embedded={embedded} />
 		</Suspense>
 	);
 }

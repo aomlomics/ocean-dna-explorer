@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
 import { User } from "@clerk/nextjs/server";
+import InfoButton from "./InfoButton";
 
 export default function UserList() {
 	const { userId } = useAuth();
@@ -69,24 +70,10 @@ export default function UserList() {
 									<div className="flex items-center gap-2">
 										{(user.publicMetadata.role as Role) || "No role"}
 										{!!user.publicMetadata.roleApplication && (
-											<div
-												className="tooltip tooltip-warning flex items-center"
-												data-tip={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
-											>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													viewBox="0 0 24 24"
-													fill="none"
-													className="stroke-current text-warning shrink-0 w-4 h-4"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-													></path>
-												</svg>
-											</div>
+											<InfoButton
+												infoText={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
+												type="warning"
+											/>
 										)}
 									</div>
 								</div>

@@ -5,9 +5,8 @@ import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 import { Analysis } from "@/app/generated/prisma/client";
-import { Suspense } from "react";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
@@ -17,6 +16,8 @@ import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualiz
 import { TaxonomicRanks } from "@/types/objects";
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
+import { Suspense } from "react";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Analysis_run_name({
 	params
@@ -63,7 +64,7 @@ export default async function Analysis_run_name({
 	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
 
 	return (
-		<div id="analysis" className="space-y-8">
+		<div id="analysis" className="space-y-6">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -88,12 +89,9 @@ export default async function Analysis_run_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-secondary tooltip-right before:text-primary-content"
-						data-tip={TableMetadata.analysis.description}
-					>
-						{analysis_run_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+					</TitleHoverTooltip>
 					<EditHistory editHistory={analysis.editHistory} />
 					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
 					{analysis.Tags.map((t) => (
@@ -197,22 +195,10 @@ export default async function Analysis_run_name({
 					</div>
 
 					{/* Assay Card */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
-						<div className="flex items-center gap-4 p-4 rounded-lg">
-							<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-								<div className="relative w-12 h-12">
-									<Suspense>
-										<AssayPhyloPic assay_name={analysis.assay_name} />
-									</Suspense>
-								</div>
-							</div>
-							<div>
-								<h3 className="font-medium text-lg text-base-content">{analysis.Assay.target_gene}</h3>
-								<p className="text-base-content/70">{analysis.assay_name}</p>
-							</div>
-						</div>
-					</div>
+					<AssaysCard
+						title="Assays used in this Analysis"
+						assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
+					/>
 				</div>
 			</div>
 

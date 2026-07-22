@@ -17,6 +17,7 @@ import AnalysisTag from "../tags/AnalysisTag";
 import Checklist from "../Checklist";
 import InfoButton from "../InfoButton";
 import { buildWhereParams } from "@/app/helpers/queries";
+import TableStatusState from "./TableStatusState";
 
 type ExtraResults = {
 	blastResult: BlastResult;
@@ -315,8 +316,29 @@ export default function Table({
 	}, [data]);
 
 	if (isLoading) return <LoadingTable take={take} page={page} />;
-	if (error) return <div>failed to load: {error.toString()}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
+	if (data.statusMessage === "error") {
+		return (
+			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
+		);
+	}
+	if (!Array.isArray(data.result) || data.result.length === 0 || data.count === 0) {
+		return (
+			<TableStatusState
+				kind="empty"
+				title="No results found"
+				detail="Try broadening your search or removing one or more filters."
+			/>
+		);
+	}
 
 	//filters in the column header
 	function applyFilters(e: SubmitEvent<HTMLFormElement>) {
@@ -488,7 +510,7 @@ export default function Table({
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
 											{!hideFilters && (
-												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 													<SearchIcon />
 													<input
 														name={title}
@@ -535,7 +557,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<SearchIcon />
 																<input type="text" className="grow" disabled />
 															</label>
@@ -562,7 +584,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<SearchIcon />
 																<input type="text" className="grow" disabled />
 															</label>
@@ -580,7 +602,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<SearchIcon />
 																<input
 																	name={head}
@@ -614,7 +636,7 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 																<SearchIcon />
 																<input
 																	name={head}
@@ -649,7 +671,7 @@ export default function Table({
 												<label className="form-control w-full max-w-xs text-lg">
 													{/* Value Filter */}
 													{!hideFilters && (
-														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 															<SearchIcon />
 															<input type="text" className="grow" disabled />
 														</label>

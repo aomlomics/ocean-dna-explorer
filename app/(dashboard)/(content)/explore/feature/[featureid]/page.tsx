@@ -8,6 +8,7 @@ import GcDonut from "@/app/components/charts/GcDonut";
 import Table from "@/app/components/paginated/Table";
 import { AssayIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Featureid({ params }: { params: Promise<{ featureid: Feature["featureid"] }> }) {
 	let { featureid } = await params;
@@ -83,7 +84,7 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 	const assignmentLabel = totalAssignments === 1 ? "assignment" : "assignments";
 
 	return (
-		<div id="feature" className="space-y-8 pb-8">
+		<div id="feature" className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -98,12 +99,9 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.feature.description}
-					>
-						{feature.featureid}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.feature.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{feature.featureid}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-3xl">
 					DNA sequence feature with {totalAssignments.toLocaleString()} {assignmentLabel}.

@@ -10,9 +10,9 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table, distinctField } = await params;
 
-	const model = getTableName(table);
-
 	try {
+		const model = getTableName(table);
+
 		const { searchParams } = new URL(request.url);
 
 		const { query } = parseApiQuery(model, searchParams, {

@@ -102,6 +102,81 @@ export function handleFilterChange(
 	router.push(`?${newParams.toString()}`, { scroll: false });
 }
 
+export function formatLabelFromField(fieldKey: string): string {
+	const withSpaces = fieldKey.replace(/_/g, " ");
+	return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+}
+
+export function buildActiveSummaries(
+	tableConfig: FilterConfig[],
+	activeFilters: Record<string, string>
+): string[] {
+	const summaries: string[] = [];
+	for (const config of tableConfig) {
+		if (config.type === "select" || config.type === "enum") {
+			if (typeof config.field === "string") {
+				const raw = activeFilters[config.field];
+				if (raw !== undefined) {
+					let valueLabel = String(raw);
+					if (config.type === "select" && Array.isArray(config.options)) {
+						const idx = (config.options as string[]).indexOf(raw);
+						if (idx !== -1 && Array.isArray((config as SelectFilterConfig).optionsLabels)) {
+							valueLabel = (config as SelectFilterConfig).optionsLabels![idx] ?? valueLabel;
+						}
+					}
+					summaries.push(`${formatLabelFromField(config.field)}: ${valueLabel}`);
+				}
+			} else {
+				const rel = config.field.rel;
+				const f = config.field.f;
+				const rawRel = activeFilters[rel];
+				if (rawRel !== undefined) {
+					try {
+						const parsed = JSON.parse(rawRel);
+						if (parsed && parsed[f] !== undefined) {
+							summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
+						}
+					} catch {}
+				}
+			}
+		} else if (config.type === "range") {
+			if (typeof config.field === "string") {
+				const raw = activeFilters[config.field];
+				if (raw !== undefined) {
+					try {
+						const parsed = JSON.parse(raw);
+						const g = parsed.gte ?? (config as RangeFilterConfig).gte;
+						const l = parsed.lte ?? (config as RangeFilterConfig).lte;
+						summaries.push(`${formatLabelFromField(config.field)}: ${g}–${l}`);
+					} catch {}
+				}
+			}
+		} else if (config.type === "selectGroup") {
+			for (const field of config.group) {
+				if (typeof field === "string") {
+					const raw = activeFilters[field];
+					if (raw !== undefined) {
+						summaries.push(`${formatLabelFromField(field)}: ${raw}`);
+					}
+				} else {
+					const rel = field.rel;
+					const f = field.f;
+					const rawRel = activeFilters[rel];
+					if (rawRel !== undefined) {
+						try {
+							const parsed = JSON.parse(rawRel);
+							if (parsed && parsed[f] !== undefined) {
+								summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
+							}
+						} catch {}
+					}
+				}
+			}
+		}
+	}
+	return summaries;
+}
+
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {
 	const fields = [] as string[];
 

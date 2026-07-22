@@ -16,11 +16,11 @@ export default function InlineCode({ code }: InlineCodeProps) {
     }
     
     return (
-        <span className="inline-flex items-center bg-base-200 rounded-md px-3 py-1 text-sm font-mono min-w-[300px]">
-            {code}
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-base-200 px-2.5 py-1 text-sm font-mono align-middle">
+            <span className="break-all">{code}</span>
             <button 
                 onClick={handleCopy}
-                className="ml-2 p-1 rounded hover:bg-base-300 transition-colors"
+                className="shrink-0 rounded p-1 hover:bg-base-300 transition-colors"
                 aria-label="Copy code"
             >
                 {copied ? (

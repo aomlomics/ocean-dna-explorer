@@ -162,8 +162,6 @@ model Taxonomy {
     // Relations
     Assignments Assignment[]
 
-    imageFileUrl_ODE String?
-
     // Data
     verbatimIdentification String
     higherClassification   String?

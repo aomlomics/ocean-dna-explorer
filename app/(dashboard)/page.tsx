@@ -1,17 +1,31 @@
-import { MainStats, AssayStats } from "@/app/components/DataSummary";
+import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/DataSummary";
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
 import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import { Suspense } from "react";
-import TopTaxonomiesSummary from "@/app/components/TopTaxonomiesSummary";
 import ClientMap from "../components/map/ClientMap";
+// Temporarily disabled for merge to main until Featured Organisms is ready.
+// import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
+import DataSummaryHighlights from "../components/DataSummaryHighlights";
+import DashCard from "../components/dataSummary/DashCard";
+import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
+import {
+	TopInstitutionsCard,
+	SamplingEnvironmentsCard,
+	SamplesOverTimeCard,
+	TemporalCoverageCard,
+	WidgetCardSkeleton
+} from "../components/DashboardExtras";
+
+const heroPrimaryBtnClass =
+	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
 
 export default function Home() {
 	return (
 		<main className="relative flex flex-col grow bg-base-400 text-base-content">
-			<div className="absolute top-0 left-0 right-0 z-50 bg-orange-500 text-white p-2 sm:p-4 text-center">
+			<div className="absolute top-0 left-0 right-0 z-sticky bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
 					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report
 					bugs and feature requests on our{" "}
@@ -27,24 +41,24 @@ export default function Home() {
 				</p>
 			</div>
 
-			<div className="relative w-full h-screen max-h-[80vh] bg-black overflow-hidden z-content-overlay">
+			<div className="relative w-full h-screen max-h-[68vh] min-h-80 sm:max-h-[64vh] bg-black overflow-hidden">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
 					<SuspenseCarousel />
 				</Suspense>
 
-				<div className="absolute inset-0 flex items-center z-content">
-					<div className="w-full px-4 sm:px-4 md:px-6 lg:px-8 xl:px-8 max-w-[95%] sm:max-w-[90%] lg:max-w-[85%] xl:max-w-[85%] mx-auto">
+				<div className="absolute inset-0 flex items-center z-raised">
+					<div className="w-full px-4 xl:px-8 max-w-[95%] xl:max-w-[85%] mx-auto">
 						<div className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-3xl xl:max-w-4xl">
-							<h1 className="text-6xl sm:text-7xl md:text-7xl lg:text-7xl xl:text-8xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
-								<span className="block text-primary font-light">Welcome</span>
+							<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-6xl xl:text-7xl font-light leading-[0.9] sm:leading-[0.95] mb-2 sm:mb-2">
+								<span className="block text-primary font-normal">Welcome</span>
 							</h1>
 
 							<div className="text-base-content/90 font-normal -mt-1 sm:-mt-2">
-								<span className="block text-3xl text-shadow-2xl sm:text-4xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-2 sm:mb-3">
-									to the <span className="text-primary">Ocean DNA Explorer</span>
+								<span className="block text-4xl text-shadow-3xl sm:text-5xl md:text-5xl lg:text-5xl xl:text-6xl font-normal leading-tight mb-2 sm:mb-3">
+									to the <span className="text-primary font-normal">Ocean DNA Explorer</span>
 								</span>
 
-								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-6 sm:mb-8 lg:mb-10">
+								<div className="text-lg sm:text-xl md:text-xl lg:text-xl xl:text-2xl text-shadow-xl leading-relaxed sm:leading-snug text-base-content max-w-full sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mb-4 sm:mb-5">
 									<span className="block">
 										a data sharing platform, search engine, and visualization
 										<br />
@@ -54,17 +68,14 @@ export default function Home() {
 							</div>
 
 							<div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-								<Link
-									href="#dataSummary"
-									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
-								>
+								<Link href="#dataSummary" className={heroPrimaryBtnClass}>
 									Start Here
 								</Link>
-								<Link
-									href="/explore/project"
-									className="btn btn-md sm:btn-md lg:btn-lg btn-secondary bg-primary/90 backdrop-blur-sm outline-none text-white font-normal hover:bg-primary transition-all duration-300 text-base sm:text-base lg:text-lg px-6 sm:px-6 lg:px-8 py-4 sm:py-4 lg:py-4 min-h-12 sm:min-h-12 lg:min-h-14"
-								>
+								<Link href="/explore/project" className={heroPrimaryBtnClass}>
 									Explore the Data
+								</Link>
+								<Link href="/learn?section=edna101" className={heroPrimaryBtnClass}>
+									What is eDNA?
 								</Link>
 							</div>
 						</div>
@@ -72,39 +83,125 @@ export default function Home() {
 				</div>
 			</div>
 
-			<div id="dataSummary" className="z-1000 px-4 sm:px-6 lg:px-8 pb-12 -mt-16 sm:-mt-20 md:-mt-16">
-				<div className="mb-20">
-					<Suspense>
+			<div id="dataSummary" className="z-raised scroll-mt-20 px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 pb-12">
+				<div className="max-w-7xl mx-auto space-y-14">
+					{/*
+					 * Row 1 — The 4 headline stat cards at the top. This row is
+					 * untouched on purpose — the user likes its current look,
+					 * animation and skeleton.
+					 */}
+					<Suspense fallback={<MainStatsSkeleton />}>
 						<MainStats />
 					</Suspense>
-				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch mb-20">
-					{/* Map Section */}
-					<div className="lg:col-span-7">
-						<div className="mb-8 text-2xl text-base-content">
-							<span>Showing all </span>
-							<span className="text-primary">Projects</span>
+					{/*
+					 * Row 2 — Map on the left, three small stat cards stacked on
+					 * the right (Target Genes donut, Temporal Coverage, Data
+					 * Contributors). The map fills its column edge-to-edge, no
+					 * decorative wrapper.
+					 */}
+					<div className="space-y-6">
+						{/* Row 2a — Map + Target genes at matching height */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+							<div className="lg:col-span-8">
+								<div className="w-full">
+									<ClientMap
+										url={"/api/sample"}
+										legend
+										titleTable="project"
+										cluster
+									/>
+								</div>
+							</div>
+
+							<div className="lg:col-span-4">
+								<div className="w-full h-full">
+									<DashCard
+										title="Target Genes"
+										titleClassName="text-base-content/75"
+										className="h-full"
+										padding="none"
+										bodyClassName="flex flex-col h-full px-5 sm:px-6 pb-5 sm:pb-6"
+										info={{
+											title: "Target Genes",
+											description:
+												"Share of assays grouped by their target gene (e.g. COI, 18S, 12S). This tells you what barcodes the ODE record is biased toward.",
+											links: [
+												{ label: "Browse assays", href: "/explore/assay" },
+												{ label: "View analyses", href: "/explore/analysis" },
+												{
+													label: "About this chart",
+													href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays",
+													target: "_blank"
+												},
+												{
+													label: "Request an assay",
+													href: "https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues",
+													target: "_blank"
+												}
+											]
+										}}
+									>
+										<div className="flex-1 min-h-0 w-full">
+											<Suspense fallback={<div className="h-full w-full skeleton rounded-lg" />}>
+												<AssayStats compact />
+											</Suspense>
+										</div>
+									</DashCard>
+								</div>
+							</div>
 						</div>
-						<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
+
+						{/* Row 2b — Dashboard body laid out by placement priority:
+						    left column = depth/context cards, right column = trend and
+						    contributor/explore cards. */}
+						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+							<div className="lg:col-span-4 flex flex-col gap-6">
+								<Suspense fallback={<WidgetCardSkeleton className="h-88" />}>
+									<DepthCoverageCard />
+								</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
+									<SamplingEnvironmentsCard />
+								</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-112" />}>
+									{/* TODO: uncomment out once fixed */}
+									{/* <MetadataCompletenessCard /> */}
+								</Suspense>
+							</div>
+
+							<div className="lg:col-span-8 flex flex-col gap-6">
+								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>{/* <TableCountsCard /> */}</Suspense>
+								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
+									<SamplesOverTimeCard />
+								</Suspense>
+								<div className="w-full lg:w-[70%] lg:mr-auto">
+									<Suspense fallback={<WidgetCardSkeleton className="h-56" />}>
+										<TemporalCoverageCard />
+									</Suspense>
+								</div>
+								<div className="w-full lg:w-[70%] lg:mr-auto">
+									<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>
+										<TopInstitutionsCard />
+									</Suspense>
+								</div>
+							</div>
+						</div>
 					</div>
 
-					{/* Assay Stats Section */}
-					<div className="lg:col-span-5 flex flex-col">
-						<div className="mb-8 text-2xl text-base-content">
-							<span className="text-primary mr-1">Assays</span>
-							<span>used across the Ocean DNA Explorer</span>
-						</div>
-						<Suspense>
-							<AssayStats />
-						</Suspense>
-					</div>
-				</div>
+					{/* Row 3 — Latest submissions (project + analysis) */}
+					<Suspense>
+						<DataSummaryHighlights />
+					</Suspense>
 
-				<div id="dataTaxa" className="w-full mb-24 pt-4">
+					{/* Row 5 — Featured Organisms carousel (temporarily disabled for main merge) */}
+					{/* <FeaturedOrganismsSection /> */}
+
+					{/* Row 6 — Life Across ODE / taxonomy spotlight (temporarily disabled for main merge) */}
+					{/*
 					<Suspense>
 						<TopTaxonomiesSummary />
 					</Suspense>
+					*/}
 				</div>
 
 				{/* Funding Institutes Section */}

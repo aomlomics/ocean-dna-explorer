@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
+import WorkshopVideoCallout, { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 
 const teamMembers = [
 	{
@@ -195,10 +196,23 @@ export default function AboutPage() {
 							FAIR eDNA metadata standard
 						</Link>
 						, an international, community driven environmental DNA data standard built on existing standards like Darwin
-						Core and MIxS that helps eDNA data become Findable, Accessible, Interoperable, and Reusable. Our team has
-						developed a suite of open source tools to help you format your data to the FAIR eDNA standard, including
-						metadata template generation, amplicon sequence processing workflows, and data publishing tools. For more
-						detailed information on our software packages and workflows, see the{" "}
+						Core and MIxS that helps eDNA data become Findable, Accessible, Interoperable, and Reusable. Our team, along
+						with collaborators across the FAIR eDNA community, has built a suite of open source tools to help you format
+						your data to the FAIR eDNA standard, including metadata template generation, amplicon sequence processing
+						workflows, and data publishing tools. The{" "}
+						<Link
+							href={WORKSHOP_PLAYLIST_HREF}
+							className="text-primary hover:underline font-medium"
+							target="_blank"
+							rel="noreferrer"
+						>
+							FAIR eDNA Workshop
+						</Link>{" "}
+						video series from{" "}
+						<Link href={OBON_HREF} className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
+							OBON
+						</Link>{" "}
+						demonstrates many of these tools, and the{" "}
 						<Link
 							href="https://noaa-omics-dmg.readthedocs.io/"
 							className="text-primary hover:underline font-medium"
@@ -206,12 +220,14 @@ export default function AboutPage() {
 							rel="noreferrer"
 						>
 							NOAA Omics Data Management Guide
-						</Link>
-						.
+						</Link>{" "}
+						has detailed documentation on the software packages and workflows.
 					</p>
 				</div>
 
-				{/* Software tools - soft cards, no borders */}
+				<WorkshopVideoCallout className="mx-auto mb-8 max-w-2xl" />
+
+				{/* Software tools */}
 				<div className="max-w-5xl mx-auto px-6">
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 						<Link
@@ -227,7 +243,7 @@ export default function AboutPage() {
 								Build standardized metadata templates in Google Sheets, aligned with the FAIR eDNA standard and ready
 								for Ocean DNA Explorer submission.
 							</p>
-							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+							<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 						</Link>
 						<Link
 							href="https://github.com/aomlomics/tourmaline"
@@ -241,7 +257,7 @@ export default function AboutPage() {
 							<p className="text-base text-base-content/75 leading-relaxed flex-1">
 								Amplicon sequence processing workflow using QIIME 2 and Snakemake.
 							</p>
-							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+							<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 						</Link>
 						<Link
 							href="https://github.com/aomlomics/faire2ncbi"
@@ -255,7 +271,7 @@ export default function AboutPage() {
 							<p className="text-base text-base-content/75 leading-relaxed flex-1">
 								Convert NOAA FAIRe Excel metadata files to NCBI BioSample and SRA submission templates.
 							</p>
-							<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+							<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 						</Link>
 						<div className="flex flex-col sm:flex-row justify-center gap-6 lg:col-span-3">
 							<Link
@@ -271,7 +287,7 @@ export default function AboutPage() {
 									A Python CLI tool that converts NOAA FAIRe Excel metadata files into QIIME2-compatible metadata and
 									manifest files for streamlined microbiome sequencing data analysis.
 								</p>
-								<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+								<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 							</Link>
 							<Link
 								href="https://github.com/aomlomics/edna2obis"
@@ -286,7 +302,7 @@ export default function AboutPage() {
 									Convert occurrence outputs and NOAA FAIRe metadata files to Darwin Core for publishing to biodiversity
 									aggregators OBIS and GBIF.
 								</p>
-								<span className="mt-4 text-primary font-medium text-sm group-hover:underline">View on GitHub →</span>
+								<span className="btn btn-primary btn-sm mt-4 w-fit">View on GitHub</span>
 							</Link>
 						</div>
 					</div>

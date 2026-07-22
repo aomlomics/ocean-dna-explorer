@@ -3,18 +3,14 @@
 import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 import { useTheme } from "next-themes";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useThrottledCallback } from "use-debounce";
 import Link from "next/link";
 import distinctColors from "distinct-colors";
+import { TaxonomicRanks } from "@/types/objects";
+import { TaxonomyPartial } from "@/prisma/generated/zod";
 
 ChartJS.register(ArcElement, Tooltip);
-
-interface TaxonomyDonutChartProps {
-	labels: string[];
-	data: number[];
-	sampName: string;
-}
 
 function generateDistinctColors(count: number): string[] {
 	if (count === 0) return [];
@@ -38,21 +34,34 @@ function CustomLegend({
 	data,
 	colors,
 	textColor,
-	sampName,
 	otherThreshold,
-	setOtherThreshold
+	setOtherThreshold,
+	taxLevel,
+	setTaxLevel
 }: {
 	labels: string[];
 	data: number[];
 	colors: string[];
 	textColor: string;
-	sampName: string;
 	otherThreshold: number;
 	setOtherThreshold: (value: number) => void;
+	taxLevel: (typeof TaxonomicRanks)[0];
+	setTaxLevel: (level: (typeof TaxonomicRanks)[0]) => void;
 }) {
 	const total = data.reduce((sum, value) => sum + value, 0);
 
-	// Throttle the threshold changes for smooth slider experience
+	// Local string state for the text box so we can show "1.0" for whole numbers
+	// without the browser stripping the trailing zero (which type="number" always does)
+	const [inputValue, setInputValue] = useState(() => otherThreshold.toFixed(1));
+	const inputFocused = useRef(false);
+
+	// When the slider moves, sync the text box — but only if the user isn't typing in it
+	useEffect(() => {
+		if (!inputFocused.current) {
+			setInputValue(Number.isInteger(otherThreshold) ? otherThreshold.toFixed(1) : String(otherThreshold));
+		}
+	}, [otherThreshold]);
+
 	// Throttle fires at regular intervals while dragging, giving immediate feedback
 	const throttledSetOtherThreshold = useThrottledCallback((value: number) => {
 		setOtherThreshold(value);
@@ -83,6 +92,51 @@ function CustomLegend({
 
 	return (
 		<div className="flex flex-col gap-4 mt-0 h-full">
+			{/* Taxonomic Level Dropdown */}
+			<div className="flex flex-col gap-1.5">
+				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor + "99" }}>
+					Taxonomic Level
+				</label>
+				<div className="dropdown w-full">
+					<div
+						tabIndex={0}
+						role="button"
+						className="flex items-center justify-between w-full px-3 py-2 rounded border cursor-pointer bg-base-200 border-base-300"
+						style={{ color: textColor }}
+					>
+						<span className="text-base font-medium">{taxLevel.charAt(0).toUpperCase() + taxLevel.slice(1)}</span>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						>
+							<path d="m6 9 6 6 6-6" />
+						</svg>
+					</div>
+					<ul tabIndex={0} className="dropdown-content menu bg-base-300 rounded-box z-50 w-full shadow-lg p-1 mt-1">
+						{TaxonomicRanks.map((level) => (
+							<li key={level}>
+								<button
+									className={`text-base w-full text-left px-3 py-1.5 rounded ${taxLevel === level ? "font-semibold text-primary" : ""}`}
+									onClick={() => {
+										setTaxLevel(level);
+										(document.activeElement as HTMLElement)?.blur();
+									}}
+								>
+									{level.charAt(0).toUpperCase() + level.slice(1)}
+								</button>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+
 			{/* Threshold Control */}
 			<div className="flex flex-col gap-3 pb-3" style={{ borderColor: textColor + "20" }}>
 				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor + "99" }}>
@@ -90,33 +144,46 @@ function CustomLegend({
 				</label>
 				<div className="flex items-center gap-3">
 					<input
-						type="number"
-						min="0"
-						max="5"
-						step="0.1"
-						value={otherThreshold}
-						onChange={(e) => setOtherThreshold(parseFloat(e.target.value) || 0)}
+						type="text"
+						inputMode="decimal"
+						value={inputValue}
+						onFocus={() => {
+							inputFocused.current = true;
+						}}
+						onBlur={() => {
+							inputFocused.current = false;
+							// On blur, reformat: add .0 if the value is a whole number
+							const parsed = parseFloat(inputValue);
+							const clamped = isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
+							setOtherThreshold(clamped);
+							setInputValue(Number.isInteger(clamped) ? clamped.toFixed(1) : String(clamped));
+						}}
+						onChange={(e) => {
+							setInputValue(e.target.value);
+							const parsed = parseFloat(e.target.value);
+							if (!isNaN(parsed)) {
+								setOtherThreshold(Math.min(100, Math.max(0, parsed)));
+							}
+						}}
 						className="w-16 px-2 py-1.5 text-sm rounded border transition-colors"
 						style={{
-							borderColor: "#64ABDC",
+							borderColor: textColor + "30",
 							color: textColor,
-							backgroundColor: "#64ABDC" + "25"
+							backgroundColor: "transparent"
 						}}
 					/>
 					<input
 						type="range"
 						min="0"
-						max="5"
-						step="0.1"
+						max="100"
+						step="1"
 						value={otherThreshold}
 						onChange={(e) => throttledSetOtherThreshold(parseFloat(e.target.value))}
 						className="flex-1 h-2 rounded-lg appearance-none"
 						style={{
 							cursor: "pointer",
 							accentColor: "#64ABDC",
-							background: `linear-gradient(to right, #64ABDC 0%, #64ABDC ${(otherThreshold / 5) * 100}%, #64ABDC40 ${
-								(otherThreshold / 5) * 100
-							}%, #64ABDC40 100%)`
+							background: `linear-gradient(to right, #64ABDC 0%, #64ABDC ${otherThreshold}%, #64ABDC40 ${otherThreshold}%, #64ABDC40 100%)`
 						}}
 					/>
 				</div>
@@ -180,9 +247,10 @@ function CustomLegend({
 	);
 }
 
-export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyDonutChartProps) {
+export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: TaxonomyPartial[] }) {
 	const { theme } = useTheme();
 	const [otherThreshold, setOtherThreshold] = useState(0.5);
+	const [taxLevel, setTaxLevel] = useState<(typeof TaxonomicRanks)[0]>("family");
 	const [isLoading, setIsLoading] = useState(true);
 	const textColor = theme === "dark" ? "#E2E8F0" : "#2D3748";
 
@@ -191,6 +259,22 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 		const timer = setTimeout(() => setIsLoading(false), 300);
 		return () => clearTimeout(timer);
 	}, []);
+
+	// Group taxonomy records by the selected level, count occurrences per group
+	const { labels, data } = useMemo(() => {
+		const counts = new Map<string, number>();
+		for (const taxa of taxonomies) {
+			const key = taxa[taxLevel] ?? "Unknown";
+			counts.set(key, (counts.get(key) ?? 0) + 1);
+		}
+		const sorted = Array.from(counts.entries())
+			.map(([label, count]) => ({ label, count }))
+			.sort((a, b) => b.count - a.count);
+		return {
+			labels: sorted.map((t) => t.label),
+			data: sorted.map((t) => t.count)
+		};
+	}, [taxonomies, taxLevel]);
 
 	const colors = generateDistinctColors(labels.length);
 
@@ -287,10 +371,10 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 
 	return (
 		<div className="w-full h-full flex flex-col">
-			<div className="flex flex-col lg:flex-row items-start gap-8 min-h-[450px] bg-base-200 rounded-lg p-6 w-fit">
+			<div className="flex flex-col lg:flex-row items-start gap-8 min-h-112.5 bg-base-200 rounded-lg p-6 w-fit">
 				{/* Chart Container with Loading State */}
 				<div
-					className={`relative h-[450px] w-[300px] shrink-0 mx-auto lg:mx-0 z-10 transition-opacity duration-300 ${
+					className={`relative h-112.5 w-75 shrink-0 mx-auto lg:mx-0 z-10 transition-opacity duration-300 ${
 						isLoading ? "opacity-0" : "opacity-100"
 					}`}
 				>
@@ -307,15 +391,16 @@ export default function TaxonomyDonutChart({ labels, data, sampName }: TaxonomyD
 				)}
 
 				{/* Custom Legend - Bounded Container */}
-				<div className="flex-1 min-w-0 lg:min-w-[500px] lg:max-w-2xl h-[450px] rounded-lg p-4 bg-base-100">
+				<div className="flex-1 min-w-0 lg:min-w-125 lg:max-w-2xl h-112.5 rounded-lg p-4 bg-base-100">
 					<CustomLegend
 						labels={labels}
 						data={data}
 						colors={colors}
 						textColor={textColor}
-						sampName={sampName}
 						otherThreshold={otherThreshold}
 						setOtherThreshold={setOtherThreshold}
+						taxLevel={taxLevel}
+						setTaxLevel={setTaxLevel}
 					/>
 				</div>
 			</div>

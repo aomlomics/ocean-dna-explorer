@@ -49,7 +49,7 @@ export default function MobileMenu() {
 	return (
 		<div className="relative" ref={menuRef}>
 			{/* The trigger button */}
-			<div role="button" className="btn btn-ghost xl:hidden p-1 sm:p-2" onClick={handleToggle}>
+			<div role="button" className="btn btn-ghost lg:hidden p-1 sm:p-2" onClick={handleToggle}>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					className="h-5 w-5"
@@ -63,7 +63,7 @@ export default function MobileMenu() {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-51 w-60 p-3 shadow-lg">
+				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-menu w-60 p-3 shadow-lg">
 					<li className="text-base py-1">
 						<Link href="/" onClick={handleClose}>
 							Home
@@ -141,9 +141,26 @@ export default function MobileMenu() {
 										API
 									</Link>
 								</li>
+							</ul>
+						</details>
+					</li>
+					<li className="text-base py-1">
+						<details>
+							<summary className="text-base">Learn</summary>
+							<ul className="p-2">
 								<li className="py-1">
-									<Link href="/learn" onClick={handleClose}>
-										Learn
+									<Link href="/learn?section=edna101" onClick={handleClose}>
+										eDNA 101
+									</Link>
+								</li>
+								<li className="py-1">
+									<Link href="/learn?section=impact" onClick={handleClose}>
+										Impact
+									</Link>
+								</li>
+								<li className="py-1">
+									<Link href="/learn?section=discoveries" onClick={handleClose}>
+										Make your own Discoveries
 									</Link>
 								</li>
 							</ul>
@@ -162,7 +179,7 @@ export default function MobileMenu() {
 				isOpen &&
 				createPortal(
 					<div
-						className="fixed inset-x-0 bottom-0 top-20 lg:top-24 bg-black/10 backdrop-blur-[2px] z-40"
+						className="fixed inset-0 bg-black/30 z-scrim"
 						onClick={handleClose}
 					></div>,
 					document.body

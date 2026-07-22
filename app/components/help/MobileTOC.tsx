@@ -54,7 +54,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 	useEffect(() => setMounted(true), []);
 
 	return (
-		<div className={`lg:hidden mb-6 relative ${isOpen ? "z-40" : ""}`} ref={menuRef}>
+		<div className={`lg:hidden mb-6 relative ${isOpen ? "z-scrim" : ""}`} ref={menuRef}>
 			{/* The trigger button */}
 			<div role="button" className="btn btn-outline w-full justify-between" onClick={handleToggle}>
 				<span className="flex items-center gap-2">
@@ -76,36 +76,40 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu flex flex-col flex-nowrap bg-base-100 rounded-box z-[51] w-full p-2 shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
-					{sections.map((section, index) => (
-						<li key={section.id} className="w-full">
-							<a
-								href={`#${section.id}`}
-								className="block w-full py-1 px-2 hover:text-primary transition-colors font-medium whitespace-normal break-words"
-								data-section-index={index}
-								onClick={handleClose}
-							>
-								{section.title}
-							</a>
-
-							{/* Render subsection navigation if they exist */}
-							{section.subsections && section.subsections.length > 0 && (
-								<ul className="ml-4 border-l border-base-300 pl-2">
-									{section.subsections.map((subsection) => (
-										<li key={subsection.id} className="w-full">
-											<a
-												href={`#${subsection.id}`}
-												className="block w-full py-1 px-2 text-sm hover:text-primary transition-colors whitespace-normal break-words"
-												onClick={handleClose}
-											>
-												{subsection.title}
-											</a>
-										</li>
-									))}
-								</ul>
-							)}
-						</li>
-					))}
+				<ul className="absolute top-full left-0 mt-2 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-raised w-full p-2 shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
+					{sections.map((section, index) => {
+						const hasSubs = Boolean(section.subsections?.length);
+						return (
+							<li key={section.id} className="w-full">
+								<div className={`flex flex-col ${hasSubs ? "gap-2.5" : "gap-0"}`}>
+									<a
+										href={`#${section.id}`}
+										className="block w-full px-2 py-1 hover:text-primary transition-colors font-medium whitespace-normal break-words"
+										data-section-index={index}
+										onClick={handleClose}
+									>
+										{section.title}
+									</a>
+									{hasSubs && section.subsections && (
+										<ul className="ml-4 space-y-1 border-l border-base-300 pl-2">
+											{section.subsections.map((subsection) => (
+												<li key={subsection.id} className="w-full">
+													<a
+														href={`#${subsection.id}`}
+														data-toc-target={subsection.id}
+														className="block w-full py-1 px-2 text-sm hover:text-primary transition-colors whitespace-normal break-words"
+														onClick={handleClose}
+													>
+														{subsection.title}
+													</a>
+												</li>
+											))}
+										</ul>
+									)}
+								</div>
+							</li>
+						);
+					})}
 				</ul>
 			)}
 
@@ -114,7 +118,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 				isOpen &&
 				createPortal(
 					<div
-						className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-30"
+						className="fixed inset-0 bg-black/30 z-scrim"
 						onClick={handleClose}
 					></div>,
 					document.body
