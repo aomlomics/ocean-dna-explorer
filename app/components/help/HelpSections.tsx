@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import Link from "next/link";
-import { DeadBooleanToEnum } from "../../../types/enums";
 import { AnalysisAsvTablePreview, AnalysisOccurrenceTablePreview } from "./DocExampleTables";
 import WorkshopVideoCallout from "../WorkshopVideoCallout";
 
@@ -32,18 +31,6 @@ function ExampleFileGlyph({ className }: { className?: string }) {
 			<path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
 		</svg>
 	);
-}
-
-function deadBooleanHelpDescription(deadValue: string) {
-	return deadValue.startsWith("not applicable")
-		? "Field does not apply to this column"
-		: deadValue.startsWith("missing: not collected")
-			? "Data was not collected for X reason"
-			: deadValue.startsWith("missing: not provided")
-				? "Data exists but was not provided"
-				: deadValue.startsWith("missing: restricted access")
-					? "Data cannot be shared due to restrictions"
-					: "Data should exist but is unavailable";
 }
 
 export const helpSections: Section[] = [
@@ -941,7 +928,8 @@ abc12d6cd12a574f2183f003593d3940  -`}
 
 						<h4>Handling missing data (dead values)</h4>
 						<p className="mb-4">
-							For NCBI and other INSDC archives, use their controlled missing-value vocabulary—do not leave cells empty.
+							For NCBI and other INSDC archives, use their controlled missing-value vocabulary. Do not leave cells
+							empty.
 							Following{" "}
 							<a
 								className="link link-primary"
@@ -959,9 +947,19 @@ abc12d6cd12a574f2183f003593d3940  -`}
 
 						<h4>Recommended dead values</h4>
 						<p className="mb-4">
-							The table below lists the recommended sentinels for new metadata. Ocean DNA Explorer still accepts every
-							legacy or more specific form the templates and database allow—open{" "}
-							<strong>All accepted dead values</strong> below for the complete list, including older options.
+							Use only the following accepted dead values when filling metadata templates.
+						</p>
+						<p className="mb-4">
+							Our dead / missing values terminology maps to the INSDC missing value reporting standard:{" "}
+							<a
+								className="link link-primary"
+								href="https://www.insdc.org/technical-specifications/missing-value-reporting/"
+								target="_blank"
+								rel="noreferrer"
+							>
+								INSDC Missing Value Reporting
+							</a>
+							.
 						</p>
 						<div className="mb-4 overflow-x-auto">
 							<table className="table table-zebra w-full">
@@ -1024,140 +1022,9 @@ abc12d6cd12a574f2183f003593d3940  -`}
 										</td>
 										<td>All fields</td>
 									</tr>
-									<tr>
-										<td>
-											<code>missing: control sample</code>
-										</td>
-										<td>
-											The sample is a negative or positive control; the field is not meaningful in that context (e.g., a
-											blank extraction control has no meaningful geographic origin).
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: sample group</code>
-										</td>
-										<td>
-											The metadata value has been intentionally aggregated or suppressed at the group level rather than
-											reported per-sample, to avoid identifying individual samples within a pooled or grouped
-											submission.
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: synthetic construct</code>
-										</td>
-										<td>
-											The sample is a synthetic or artificial construct (e.g., a plasmid, spike-in standard, or
-											synthetic community); the field doesn&apos;t apply in the same way as for environmental samples.
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: lab stock</code>
-										</td>
-										<td>
-											The sample derives from a laboratory stock or culture collection where provenance metadata (e.g.,
-											original collection location/date) is unknown or was never recorded.
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: third party data</code>
-										</td>
-										<td>
-											The data originated with a third party and the submitter does not have access to the underlying
-											metadata; the value exists somewhere but is not in the submitter&apos;s possession.
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: data agreement established pre-2023</code>
-										</td>
-										<td>
-											The data were collected or shared under a prior agreement that predates current metadata
-											requirements; the submitter is contractually or procedurally unable to provide the value
-											retroactively.
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: endangered species</code>
-										</td>
-										<td>
-											Precise metadata (typically locality coordinates) are withheld to protect an endangered or
-											sensitive species from poaching, disturbance, or exploitation.
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
-									<tr>
-										<td>
-											<code>missing: human-identifiable</code>
-										</td>
-										<td>
-											The value is withheld because it could be used to identify a human subject, in compliance with
-											privacy regulations (GDPR, HIPAA, etc.).
-										</td>
-										<td>eventDate, geo_loc_name</td>
-									</tr>
 								</tbody>
 							</table>
 						</div>
-
-						<details className="border border-base-300 bg-base-200/40 rounded-lg mb-4">
-							<summary className="cursor-pointer py-4 px-4 text-base font-medium">
-								All accepted dead values (full list)
-							</summary>
-							<div className="border-t border-base-300 px-4 pb-4">
-								<p className="mb-4 pt-3">
-									This list matches every sentinel the upload pipeline and database accept—including older or longer
-									forms not shown in the recommended table above. Use them when your sheet or an existing project
-									already uses one of those strings; Ocean DNA Explorer still ingests and stores them.
-								</p>
-								<div className="overflow-x-auto">
-									<table className="table table-zebra w-full">
-										<thead>
-											<tr>
-												<th>Value to enter in the data templates</th>
-												<th>When to Use</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr>
-												<td>true</td>
-												<td>Boolean field is true</td>
-											</tr>
-											<tr>
-												<td>1</td>
-												<td>Boolean field is true</td>
-											</tr>
-											<tr>
-												<td>false</td>
-												<td>Boolean field is false</td>
-											</tr>
-											<tr>
-												<td>0</td>
-												<td>Boolean field is false</td>
-											</tr>
-											{Object.keys(DeadBooleanToEnum)
-												.filter((key) => !["true", "false", "0", "1"].includes(key))
-												.map((deadValue) => (
-													<tr key={deadValue}>
-														<td>{deadValue}</td>
-														<td>{deadBooleanHelpDescription(deadValue)}</td>
-													</tr>
-												))}
-										</tbody>
-									</table>
-								</div>
-							</div>
-						</details>
 
 						<h4>User defined terms</h4>
 						<p className="mb-4">

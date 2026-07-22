@@ -7,6 +7,7 @@ import ApiCodeBlock from "./ApiCodeBlock";
 import Link from "next/link";
 import Image from "next/image";
 import ApiQueryDiagram from "./ApiQueryDiagram";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 
 // Define types for our content structure
 export type Subsection = {
@@ -35,6 +36,8 @@ export async function getApiSections() {
 			}
 		})
 	]);
+	const singularTableNames = TableNames.map((table) => table.toLowerCase());
+	const pluralTableNames = TableNames.map((table) => TableMetadata[table].plural.toLowerCase());
 
 	return [
 		{
@@ -68,7 +71,7 @@ export async function getApiSections() {
 					</p>
 					<p>
 						Our API is designed to be straightforward. All you need is a web browser or a simple script to start
-						fetching data—no authentication is required.
+						fetching data. No authentication is required.
 					</p>
 				</div>
 			),
@@ -635,6 +638,23 @@ if (http_status(response)$category == "Success") {
 								Returns multiple records from a specific table. This endpoint supports various query parameters for
 								filtering, selecting fields, including relations, and limiting results.
 							</p>
+							<p className="mb-2">
+								For <InlineCode code="[table]" />, you can use either singular or plural table names.
+							</p>
+							<div className="mb-2">
+								Singular table names: <InlineCode code={singularTableNames.join(", ")} />
+							</div>
+							<div className="mb-4">
+								Plural table names: <InlineCode code={pluralTableNames.join(", ")} />
+							</div>
+							<p className="mb-4">
+								These are interchangeable in API paths (for example, <InlineCode code="/api/project" /> and{" "}
+								<InlineCode code="/api/projects" /> both work). Use the same rule for related endpoints like{" "}
+								<InlineCode code="/api/[table]/fields" /> and <InlineCode code="/api/[table]/relations" />.
+							</p>
+							<p className="mb-4">
+								Table names are also case-insensitive in queries, so either spelling/casing is accepted.
+							</p>
 
 							<div className="mb-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project`} />
@@ -689,8 +709,8 @@ if (http_status(response)$category == "Success") {
 					<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
 						<h4 className="font-bold mb-2">Important Rule of Exclusivity</h4>
 						<p>
-							The primary search methods—<strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
-							(`advanced`), and <strong>ID Filtering</strong> (`ids`)—are mutually exclusive. You can only use{" "}
+							The primary search methods, <strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
+							(`advanced`), and <strong>ID Filtering</strong> (`ids`), are mutually exclusive. You can only use{" "}
 							<strong>one</strong> of these parameters in a single API request. Additionally, when using any of these
 							three methods, you cannot add separate field filters (e.g., `project_name=Test`) to the same query.
 						</p>
