@@ -131,7 +131,7 @@ export function AnalysisOccurrenceTablePreview() {
 								return (
 								<tr key={row.id} className={rowBg}>
 									<td
-										className={`sticky left-0 z-1 ${rowBg} ${dataCell} max-w-44 truncate border-r border-base-content/10 font-mono text-[0.7rem] text-base-content/80 shadow-[2px_0_6px_-4px_rgba(0,0,0,0.25)]`}
+										className={`${dataCell} max-w-40 truncate font-mono text-xs text-base-content/80`}
 										title={row.id}
 									>
 										{row.id}
