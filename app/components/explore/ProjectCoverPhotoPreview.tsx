@@ -75,7 +75,6 @@ export default function ProjectCoverPhotoPreview({ src, title }: { src: string; 
 				onMouseEnter={clearCloseTimer}
 				onMouseLeave={scheduleClose}
 			>
-				<p className="mb-2 text-center text-sm font-medium text-base-content/80">Full project image</p>
 				<div className="relative flex justify-center">
 					<Image
 						src={src}
