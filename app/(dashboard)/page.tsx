@@ -6,7 +6,9 @@ import { prismaImages } from "../helpers/prismaImages";
 import Carousel from "../components/images/Carousel";
 import { Suspense } from "react";
 import ClientMap from "../components/map/ClientMap";
-import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
+// Temporarily disabled for merge to main until Featured Organisms is ready.
+// import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
+import DataSummaryHighlights from "../components/DataSummaryHighlights";
 import DashCard from "../components/dataSummary/DashCard";
 import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
 import {
@@ -191,14 +193,15 @@ export default function Home() {
 						<DataSummaryHighlights />
 					</Suspense>
 
-					{/* Row 5 — Featured Organisms carousel */}
-					<FeaturedOrganismsSection />
+					{/* Row 5 — Featured Organisms carousel (temporarily disabled for main merge) */}
+					{/* <FeaturedOrganismsSection /> */}
 
-					{/* Row 6 — Life Across ODE */}
+					{/* Row 6 — Life Across ODE / taxonomy spotlight (temporarily disabled for main merge) */}
+					{/*
 					<Suspense>
-						{/* TODO: uncomment out once fixed */}
-						{/* <TopTaxonomiesSummary /> */}
+						<TopTaxonomiesSummary />
 					</Suspense>
+					*/}
 				</div>
 
 				{/* Funding Institutes Section */}

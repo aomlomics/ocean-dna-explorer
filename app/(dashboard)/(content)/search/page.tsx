@@ -7,6 +7,7 @@ import { parseApiQuery } from "@/app/helpers/queries";
 import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import InfoButton from "@/app/components/InfoButton";
 import { redirect } from "next/navigation";
 
 export default async function Search({
@@ -23,30 +24,49 @@ export default async function Search({
 	if (!model) {
 		redirect("/search?table=project");
 	}
+	const titleField = TableMetadata[model].titleField;
+	const uniqueKey = typeof titleField === "string" ? titleField : titleField.join(" / ");
+	const infoText = `Unique Key: ${uniqueKey}\n${TableMetadata[model].description}`;
+	const infoContent = (
+		<div className="space-y-2">
+			<div className="flex items-start gap-2">
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0 text-primary">
+					<path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
+				</svg>
+				<p>
+					<span className="font-semibold text-primary">Unique Key:</span>{" "}
+					<span className="font-medium text-base-content">{uniqueKey}</span>
+				</p>
+			</div>
+			<p>{TableMetadata[model].description}</p>
+		</div>
+	);
 
 	return (
 		<>
 			<div className="py-4">
 				{table && (
 					<header className="flex items-start justify-between">
-						<h1 className="text-4xl font-normal text-base-content">
-							<span className="">Search</span>{" "}
-							<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
-							<span className="text-primary font-normal">{TableMetadata[model].plural}</span>
-						</h1>
+						<div className="flex flex-wrap items-center gap-2">
+							<h1 className="text-4xl font-normal text-base-content">
+								<span className="">Search</span>{" "}
+								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+								<span className="text-primary font-normal">{TableMetadata[model].plural}</span>
+							</h1>
+							<InfoButton infoText={infoText} infoContent={infoContent} dir="tooltip-right" className="translate-y-0.5" />
+						</div>
 					</header>
 				)}
-				<div className="w-full space-y-6 text-base-content/80">
-					<p>{TableMetadata[model].description}</p>
+				<div className="mt-5 w-full text-base-content/80">
 					<ExploreTabButtons activeTable={capitalizeTable(model)} tables={DataTableNames} />
 				</div>
 
-				<div className="mt-8">
+				<div className="mt-6">
 					<SearchUI />
 				</div>
 			</div>
 
-			<div className="collapse collapse-arrow mt-8 rounded-xl border border-base-300 bg-base-200/30 shadow-sm overflow-hidden">
+			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm overflow-hidden">
 				<input key={model} type="checkbox" />
 				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content overflow-hidden">
 					<div className="z-10 flex items-center gap-2">
@@ -100,7 +120,7 @@ export default async function Search({
 				</div>
 			</div>
 
-			<div className="mt-8" id="search-results">
+			<div className="mt-6" id="search-results">
 				<h2 className="text-xl mb-2">
 					Showing all{" "}
 					{table && TableMetadata[model] ? (
