@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 // -----------------------------
@@ -77,6 +77,12 @@ const SUBMIT_ITEMS = [
 	}
 ];
 
+const MegaMenuNavigationContext = createContext<(() => void) | null>(null);
+
+function useMegaMenuNavigate() {
+	return useContext(MegaMenuNavigationContext);
+}
+
 const VISUALIZE_ITEMS = [
 	{
 		label: "Metadata",
@@ -140,6 +146,7 @@ function MegaMenu({
 	const isActive = useIsActive(route, activePaths);
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
+	const [disableCloseAnimation, setDisableCloseAnimation] = useState(false);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const triggerRef = useRef<HTMLAnchorElement | null>(null);
 	const [panelRightStyle, setPanelRightStyle] = useState<{ right: number } | null>(null);
@@ -147,6 +154,7 @@ function MegaMenu({
 		typeof panelRightBeyondTriggerPx === "number" && !Number.isNaN(panelRightBeyondTriggerPx);
 
 	const debouncedOpen = useDebouncedCallback(() => {
+		setDisableCloseAnimation(false);
 		setOpen(true);
 	}, MEGA_MENU_OPEN_DELAY_MS);
 
@@ -167,6 +175,7 @@ function MegaMenu({
 		// Ensure dropdown/backdrop always closes after route transitions.
 		debouncedOpen.cancel();
 		debouncedClose.cancel();
+		setDisableCloseAnimation(false);
 		setOpen(false);
 	}, [debouncedOpen, debouncedClose, pathname]);
 
@@ -204,16 +213,22 @@ function MegaMenu({
 		return () => window.removeEventListener("resize", onResize);
 	}, [open, anchorPanelToTrigger, updatePanelRightFromTrigger]);
 
-	const handleTabLinkClick = useCallback(() => {
-		// Close immediately for a clean transition when navigating via the tab label.
+	const closeImmediatelyForNavigation = useCallback(() => {
 		debouncedOpen.cancel();
 		debouncedClose.cancel();
+		setDisableCloseAnimation(true);
 		setOpen(false);
 		unfocusWithoutScrollJump();
 	}, [debouncedOpen, debouncedClose]);
 
+	const handleTabLinkClick = useCallback(() => {
+		// Close immediately for a clean transition when navigating via the tab label.
+		closeImmediatelyForNavigation();
+	}, [closeImmediatelyForNavigation]);
+
 	const handleMouseEnter = useCallback(() => {
 		debouncedClose.cancel();
+		setDisableCloseAnimation(false);
 		debouncedOpen();
 	}, [debouncedClose, debouncedOpen]);
 
@@ -227,7 +242,6 @@ function MegaMenu({
 	return (
 		<div
 			ref={containerRef}
-			onClick={unfocusWithoutScrollJump}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 			className="relative z-menu group/menu"
@@ -236,7 +250,8 @@ function MegaMenu({
 				aria-hidden="true"
 				className={[
 					"fixed inset-x-0 bottom-0 top-20 xl:top-24 z-1 pointer-events-none bg-black/25",
-					"transition-opacity duration-200 ease-out",
+					"transition-opacity ease-out",
+					disableCloseAnimation ? "duration-0" : "duration-200",
 					open ? "opacity-100" : "opacity-0"
 				].join(" ")}
 			/>
@@ -289,7 +304,8 @@ function MegaMenu({
 					panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
 					"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
 					"w-[calc(100vw-2rem)]",
-					"transition-[opacity,visibility] duration-200 ease-out",
+					"transition-[opacity,visibility] ease-out",
+					disableCloseAnimation ? "duration-0" : "duration-200",
 					open ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none",
 					widthClass
 				].join(" ")}
@@ -302,7 +318,11 @@ function MegaMenu({
 				}
 			>
 				<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl border border-base-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.12)] [html[data-theme='dark']_&]:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-					<div className="overflow-hidden rounded-t-none rounded-b-xl">{children}</div>
+					<div className="overflow-hidden rounded-t-none rounded-b-xl">
+						<MegaMenuNavigationContext.Provider value={closeImmediatelyForNavigation}>
+							{children}
+						</MegaMenuNavigationContext.Provider>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -322,8 +342,14 @@ function MenuSectionHeader({
 	icon?: React.ReactNode;
 	titleClassName?: string;
 }) {
+	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
-		<Link href={href} prefetch={MENU_LINK_PREFETCH} className="flex items-start gap-2 group">
+		<Link
+			href={href}
+			prefetch={MENU_LINK_PREFETCH}
+			onClick={closeMegaMenuForNavigation ?? undefined}
+			className="flex items-start gap-2 group"
+		>
 			{icon ? (
 				<span className="mt-0.5 text-base-content/70 group-hover:text-primary transition-colors">{icon}</span>
 			) : null}
@@ -343,10 +369,12 @@ function MenuSectionHeader({
 }
 
 function MenuItem({ href, label }: { href: string; label: string }) {
+	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
 		<Link
 			href={href}
 			prefetch={MENU_LINK_PREFETCH}
+			onClick={closeMegaMenuForNavigation ?? undefined}
 			className="block py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
 		>
 			{label}
@@ -355,8 +383,14 @@ function MenuItem({ href, label }: { href: string; label: string }) {
 }
 
 function MenuItemWithTinySubtitle({ href, title, subtitle }: { href: string; title: string; subtitle: string }) {
+	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
-		<Link href={href} prefetch={MENU_LINK_PREFETCH} className="group block rounded-md px-2 py-1.5 hover:bg-base-200/60">
+		<Link
+			href={href}
+			prefetch={MENU_LINK_PREFETCH}
+			onClick={closeMegaMenuForNavigation ?? undefined}
+			className="group block rounded-md px-2 py-1.5 hover:bg-base-200/60"
+		>
 			<div className="text-base text-base-content/80 transition-colors group-hover:text-primary">{title}</div>
 			<div className="mt-0.5 text-xs leading-snug text-base-content/55">{subtitle}</div>
 		</Link>
