@@ -53,6 +53,10 @@ export default async function API() {
 
 			{/* Main content area - Full width on mobile */}
 			<main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-auto">
+				<header className="mb-8">
+					<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-primary">API Docs</h1>
+				</header>
+
 				{/* Mobile Table of Contents */}
 				<MobileTOC sections={apiSections} />
 

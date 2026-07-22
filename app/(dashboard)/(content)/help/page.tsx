@@ -52,6 +52,10 @@ export default function Help() {
 
 			{/* Main content area - Full width on mobile; min-w-0 lets wide tables scroll instead of squeezing the sidebar */}
 			<main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+				<header className="mb-8">
+					<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-primary">Help Docs</h1>
+				</header>
+
 				{/* Quick Navigation Icons */}
 				<HelpQuickNav />
 
