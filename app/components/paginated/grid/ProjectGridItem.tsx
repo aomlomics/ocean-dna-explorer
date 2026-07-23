@@ -9,10 +9,12 @@ type ProjectWithAssays = Project & {
 
 function getAssayLabel(item: ProjectWithAssays) {
 	const assayNames = [...new Set((item.AssayPreps ?? []).map((ap) => ap.assay_name).filter(Boolean))];
-	if (!assayNames.length) return "No assay name listed";
+	const labelPrefix = assayNames.length === 1 ? "Assay: " : "Assays: ";
+	if (!assayNames.length) return `${labelPrefix}No assay name listed`;
 	const shownAssays = assayNames.slice(0, 4);
 	const moreCount = assayNames.length - shownAssays.length;
-	return moreCount > 0 ? `${shownAssays.join(", ")} +${moreCount} more` : shownAssays.join(", ");
+	const assaysText = moreCount > 0 ? `${shownAssays.join(", ")} +${moreCount} more` : shownAssays.join(", ");
+	return `${labelPrefix}${assaysText}`;
 }
 
 export default function ProjectGridItem({ item }: { item: ProjectWithAssays }) {
@@ -45,7 +47,7 @@ export default function ProjectGridItem({ item }: { item: ProjectWithAssays }) {
 
 				<div className="space-y-1.5 p-3 lg:p-4">
 					<p className="wrap-break-word text-lg font-semibold leading-tight text-primary">{item.project_id}</p>
-					<p className="wrap-break-word text-sm leading-snug text-base-content">{projectName}</p>
+					<p className="wrap-break-word text-sm leading-snug text-base-content/75">{projectName}</p>
 					<p className="wrap-break-word text-xs text-base-content/75">{assayLabel}</p>
 				</div>
 			</div>
