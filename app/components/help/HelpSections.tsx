@@ -54,8 +54,8 @@ export async function getHelpSections() {
 			content: (
 				<>
 					<p className="mb-4">
-						The Ocean DNA Explorer is a data portal for uploading and finding ocean eDNA data. This help documentation
-						will guide you through the various features of the platform.
+						The Ocean DNA Explorer is a data portal and visualization platform for uploading and exploring marine eDNA data. This help documentation
+						will guide you through the features of the site.
 					</p>
 					<p className="mb-4">
 						Our goal is to make marine eDNA data more findable, accessible, interoperable, and reusable for researchers,
@@ -70,7 +70,7 @@ export async function getHelpSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								The Ocean DNA Explorer provides several key features to help you work with marine eDNA data:
+								ODE's custom features are built specifically for eDNA data:
 							</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
@@ -78,8 +78,7 @@ export async function getHelpSections() {
 									<Link className="link link-primary font-semibold" href="/explore">
 										Explore
 									</Link>{" "}
-									projects, samples, analyses, features, and taxonomies with filters and a graphical user interface via
-									the Explore page
+									projects, samples, analyses, features, and taxonomies with filters and a graphical user interface
 								</li>
 								<li>
 									Leverage the{" "}
@@ -93,14 +92,28 @@ export async function getHelpSections() {
 									<Link className="link link-primary font-semibold" href="/search">
 										Search
 									</Link>{" "}
-									across datasets using powerful query capabilities via the Search page
+									across datasets using powerful query capabilities
+								</li>
+								<li>
+									{" "}
+									<Link className="link link-primary font-semibold" href="/visualize">
+										Visualize
+									</Link>{" "}
+									data by making charts directly in your browser
+								</li>
+								<li>
+									{" "}
+									<Link className="link link-primary font-semibold" href="/learn">
+										Learn
+									</Link>{" "}
+									about the eDNA data journey
 								</li>
 								<li>
 									{" "}
 									<Link className="link link-primary font-semibold" href="/submit">
 										Submit
 									</Link>{" "}
-									your own data in standardized formats via the Submit page
+									your own data in standardized formats
 								</li>
 								<li>Download existing datasets via the API or individual Explore pages</li>
 							</ul>
@@ -113,19 +126,17 @@ export async function getHelpSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								The Ocean DNA Explorer requires you to login to access certain features of the platform, like submitting
+								ODE requires login to access certain features of the platform, like submitting
 								data.
 							</p>
 							<p className="mb-4">
-								You can login with several types of accounts using the Sign-In button in the top right corner of the
-								website. Rest assured, your personal data is not stored in our database. Authentication is handled by
-								Clerk, a user management platform. You can delete your account at any time by clicking your profile
-								picture in the top right corner of the website, then clicking "Manage Account" in the dropdown, and then
-								clicking "Security" and finally "Delete Account".
+								You can login using the Sign-In button in the top right corner of the
+								website. Your personal data is not stored in our database. Authentication is handled by
+								Clerk, a user management platform. You can delete your account by clicking your profile
+								picture in the top right corner of the website, then clicking Manage Account &gt; Security &gt; Delete Account.
 							</p>
 							<p className="mb-4">
-								The roles available on the Ocean DNA Explorer are listed below. Please note, Contributor is what you
-								need to submit data, and the other roles are mostly for internal use by the Ocean DNA Explorer team:
+								The roles available on ODE are listed below. Please note, Contributor is required to submit data. Other roles are mostly for internal use by the ODE team:
 							</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>Admin: Full access to the platform, including managing other user's roles</li>
@@ -155,14 +166,14 @@ export async function getHelpSections() {
 								If you have any role (Contributor or higher), you can access the Submissions Manager.
 							</p>
 							<p className="mb-4">
-								To find it, click your profile picture in the top right corner of the website, and then click "My
-								Submissions" in the dropdown.
+								To find it, click your profile picture in the top right corner of the website, and then click My
+								Submissions in the dropdown.
 							</p>
 							<p className="mb-4">The Submissions Manager lets you:</p>
 							<ul className="list-disc ml-6 mb-4">
-								<li>View all of your project and analyses submitted to the platform</li>
+								<li>View all of your submitted projects and analyses</li>
 								<li>Delete any of your submissions</li>
-								<li>Edit your submissions (change certain field's values without a full re-upload)</li>
+								<li>Edit your submissions (change values without a re-upload)</li>
 							</ul>
 						</>
 					)
@@ -294,13 +305,14 @@ export async function getHelpSections() {
 					<p className="mb-4">
 						The{" "}
 						<Link className="link link-primary font-semibold" href="/search">
-							Search page
+							Search
 						</Link>{" "}
-						allows you to query data across multiple tables in the Ocean DNA Explorer. This is different from the{" "}
+						page allows you to make complex queries across multiple tables using an intuitive search interface. This is different from the{" "}
 						<Link className="link link-primary font-semibold" href="#explore">
-							Explore pages
-						</Link>
-						, which let you filter and browse data within a single table at a time.
+							Explore
+						</Link>{" "}
+						pages, which only let you filter data within a single table.
+		
 					</p>
 					<p className="mb-4">
 						Use Search when you need to find data based on relationships between tables (e.g., "find all taxonomies in a
@@ -315,12 +327,17 @@ export async function getHelpSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								The Search page provides an advanced query builder that lets you construct complex filters across
+								The{" "}
+								<Link className="link link-primary font-semibold" href="/search">
+									Search
+								</Link>{" "}
+								page provides an intuitive query builder that lets you construct complex filters across
 								different data tables.
 							</p>
+		
 							<p className="mb-4">To use the Search page:</p>
 							<ol className="list-decimal ml-6 mb-4">
-								<li>Select which table you want to search (Projects, Samples, Analyses, Features, or Taxonomies)</li>
+								<li>Select which table you want to search</li>
 								<li>Add filters using the query builder to specify your search criteria</li>
 								<li>
 									Filters can include conditions based on fields from related tables (e.g., search for Samples where the
@@ -332,11 +349,11 @@ export async function getHelpSections() {
 									logic), and the OR block itself is combined with the other filters and/or relations with AND logic
 									(the same as any other filter or relation).
 								</li>
-								<li>View the results that match your query</li>
+								<li>Further filter those results by drawing on a map</li>
+								<li>Start exploring</li>
 							</ol>
 							<p className="mb-4">
-								The key advantage of the Search page is that it allows you to query across table relationships, which is
-								not possible on individual Explore pages.
+								Remember, you can always copy a search as an API query!
 							</p>
 						</>
 					)
@@ -346,33 +363,27 @@ export async function getHelpSections() {
 					title: "Search vs Explore",
 					content: (
 						<>
-							<p className="mb-4">Understanding when to use Search versus Explore:</p>
+							<p className="mb-4">What's the difference between the Search and Explore pages?</p>
 							<div className="mb-4">
 								<h4>
-									Use the{" "}
-									<Link className="link link-primary" href="/search">
-										Search Page
-									</Link>{" "}
-									when:
+									Use <Link className="link link-primary" href="/search">Search</Link> when:
 								</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>You need to query across multiple tables (e.g., find taxonomies from a specific project)</li>
 									<li>You want to filter based on relationships between different data types</li>
 									<li>You need complex query logic with multiple conditions</li>
+									<li>You want to view or filter search results on a map</li>
 								</ul>
 							</div>
 							<div className="mb-4">
 								<h4>
-									Use the{" "}
-									<Link className="link link-primary" href="/explore">
-										Explore Pages
-									</Link>{" "}
-									when:
+									Use <Link className="link link-primary" href="/explore">Explore</Link> when:
+				
 								</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>You want to browse all data in a single table</li>
 									<li>You only need to filter within one table's own fields</li>
-									<li>You want a quick overview of available data in a category</li>
+									<li>You want a quick overview and are not asking a specific question</li>
 								</ul>
 							</div>
 						</>
@@ -384,8 +395,7 @@ export async function getHelpSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								Here are some common query patterns. Click the cards below to open the Search page with these filters
-								pre-filled:
+								Unsure where to start? Click the cards below to open the Search page with a pre-filled query builder:
 							</p>
 
 							<div className="flex gap-8">
@@ -432,28 +442,33 @@ export async function getHelpSections() {
 					<p className="mb-4">
 						The{" "}
 						<Link className="link link-primary font-semibold" href="/explore">
-							Explore pages
+							Explore
 						</Link>{" "}
-						let you browse and filter data within individual tables in the Ocean DNA Explorer. Each table (Projects,
-						Samples, Analyses, Features, Taxonomies) has its own dedicated Explore page with specialized filters and
-						visualization options.
+						pages{" "}
+						let you browse and filter data within individual tables. Each table has its own dedicated Explore page with specialized filters and
+						visualization options. Make sure to{" "}
+						<Link className="link link-primary font-semibold" href={`/explore/project/${project?.project_id}`}>
+							check them out
+						</Link>
+						!
 					</p>
 					<p className="mb-4">
-						<strong>Key features of Explore pages:</strong>
+						Key features:
 					</p>
 					<ul className="list-disc ml-6 mb-4">
-						<li>Switch between different tables using the tab buttons at the top</li>
-						<li>Apply filters from the sidebar on the left to narrow down results</li>
-						<li>Use the search bar at the top to search across all columns</li>
+						<li>Quickly switch between different tables</li>
+						<li>Apply filters or searches across all columns</li>
+						<li>Explore results using a grid or list view</li>
 						<li>Search within specific columns using the column header search inputs</li>
-						<li>View detailed information by clicking on individual records</li>
+						<li>View individual Project, Sample, Taxonomy pages by clicking on individual records</li>
 					</ul>
 					<p className="mb-4">
 						<strong>Note:</strong> Explore pages only filter data within the selected table. To query across multiple
 						tables (e.g., find all taxonomies in a specific project), use the{" "}
 						<Link className="link link-primary font-semibold" href="#search">
-							Search page
+							Search
 						</Link>{" "}
+						page{" "}
 						instead.
 					</p>
 				</>
@@ -465,35 +480,21 @@ export async function getHelpSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								Each Explore page has its own built-in search capabilities for quick filtering within that specific
-								table.
+								The Explore page has two search methods, controlled by two sets of controls:
 							</p>
 							<div className="mb-4">
-								<h4>Features on Explore Pages:</h4>
+								<h4>Search methods:</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>
-										<strong>Global search bar:</strong> Located at the top of the table, this searches across all
-										columns simultaneously
+										Global search: Use the top search box to search across all columns in the
+										current table.
 									</li>
 									<li>
-										<strong>Column-specific search:</strong> Each column has its own search input in the header,
-										allowing you to filter by that specific field
-									</li>
-									<li>
-										<strong>Filter sidebar:</strong> Use the filters on the left side to narrow results by specific
-										criteria
+										Column-specific search: Use the column header search input boxes to search within
+										a specific field.
 									</li>
 								</ul>
 							</div>
-							<p className="mb-4">
-								<strong>Important limitation:</strong> Explore page searches only work within that table's own data. You
-								cannot filter Samples based on Project properties using the Sample Explore page. For cross-table
-								queries, use the{" "}
-								<Link className="link link-primary" href="#search">
-									Search page
-								</Link>{" "}
-								instead.
-							</p>
 						</>
 					)
 				},
@@ -613,6 +614,10 @@ export async function getHelpSections() {
 								<li>PhyloPic does not have an image for that taxonomy</li>
 								<li>GBIF Suggest API did not return a matching taxonomy</li>
 							</ul>
+							<p className="mb-4">
+								On taxonomy Explore pages, GBIF occurrence photos are also fetched when available. Some images may
+								include deceased strandings or museum specimens, and a warning is shown before the image appears.
+							</p>
 						</>
 					)
 				}
@@ -639,7 +644,6 @@ export async function getHelpSections() {
 						</Link>
 						.
 					</p>
-					<WorkshopVideoCallout className="mb-4 max-w-2xl mx-0" />
 				</>
 			),
 			subsections: [
@@ -676,6 +680,7 @@ export async function getHelpSections() {
 									in the app.
 								</li>
 							</ul>
+							<WorkshopVideoCallout className="mb-4 mt-6 max-w-2xl mx-0" />
 						</>
 					)
 				},
@@ -892,7 +897,6 @@ abc12d6cd12a574f2183f003593d3940  -`}
 								</Link>
 								.
 							</p>
-							<WorkshopVideoCallout compact />
 						</>
 					)
 				},
