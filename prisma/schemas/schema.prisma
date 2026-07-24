@@ -4,7 +4,7 @@ datasource db {
 
 generator client {
     provider            = "prisma-client"
-    output              = "../app/generated/prisma"
+    output              = "../../app/generated/prisma"
     runtime             = "edge-light"
     importFileExtension = ""
     previewFeatures     = ["relationJoins", "fullTextSearchPostgres"]
@@ -18,6 +18,7 @@ generator json {
 generator zod {
     provider                         = "zod-prisma-types"
     prismaClientPath                 = "@/app/generated/prisma"
+    output                           = "../generated/zod"
     createInputTypes                 = false
     addIncludeType                   = false
     addSelectType                    = false

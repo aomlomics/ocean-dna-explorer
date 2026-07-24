@@ -276,9 +276,10 @@ model Assay {
     pcr_primer_name_reverse String
 
     // Relations
-    AssayPreps AssayPrep[]
-    Libraries  Library[]
-    Analyses   Analysis[]
+    AssayPreps   AssayPrep[]
+    Libraries    Library[]
+    Analyses     Analysis[]
+    BlastQueries BlastQuery[]
 
     assay_name_alternate              String?
     targetTaxonomicAssay              String //[]
@@ -402,5 +403,5 @@ model Library {
     inhibition_check     String?
     inhibition_check_0_1 DeadBoolean?
 
-    @@index(fields: [project_id, assay_name])
+    @@index([project_id, assay_name])
 }

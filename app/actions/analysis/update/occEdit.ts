@@ -213,7 +213,8 @@ async function doEdit(
 
 		await stream.success("Success");
 
-		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
+		//update diversities
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission?skipBlast=true`, {
 			method: "POST",
 			headers: {
 				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token

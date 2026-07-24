@@ -3,13 +3,14 @@ import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata from "@/types/tableMetadata";
-import { Assay, Sample } from "@/app/generated/prisma/client";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
+import { Assay, Sample } from "@/app/generated/prisma/client";
+import AssaysCard from "@/app/components/assay/AssaysCard";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
 	let { samp_name } = await params;
@@ -43,7 +44,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 	}
 
 	return (
-		<div id="sample" className="space-y-8 pb-8">
+		<div id="sample" className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -68,12 +69,9 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.sample.description}
-					>
-						{samp_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.sample.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{samp_name}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
@@ -90,28 +88,12 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 					<MapComponent locations={[sample]} className="aspect-square" />
 
 					{/* Assays Section */}
-					<div id="assays-section" className="target:animate-flash">
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">
-							Assays used on this Sample ({uniqueAssays.length})
-						</h2>
-						<div className="space-y-2">
-							{uniqueAssays.map((a) => (
-								<div key={a.assay_name} className="flex items-center gap-4 p-4 rounded-lg">
-									<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-										<div className="relative w-12 h-12">
-											<Suspense>
-												<AssayPhyloPic assay_name={a.assay_name} />
-											</Suspense>
-										</div>
-									</div>
-									<div>
-										<h3 className="font-bold text-lg text-base-content">{a.target_gene}</h3>
-										<p className="text-base-content/70">{a.assay_name}</p>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
+					<AssaysCard
+						id="assays-section"
+						title="Assays used on this Sample"
+						assays={uniqueAssays}
+						className="target:animate-flash"
+					/>
 				</div>
 
 				{/* Right column - Stats and Information */}
@@ -240,16 +222,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 		}
 	});
 
-	const taxonomyCounts = new Map<string, number>();
-	for (const taxa of taxonomies) {
-		taxonomyCounts.set(taxa.taxonomy, (taxonomyCounts.get(taxa.taxonomy) ?? 0) + 1);
-	}
-
-	const taxonomyData = Array.from(taxonomyCounts.entries())
-		.map(([taxonomy, count]) => ({ taxonomy, count }))
-		.sort((a, b) => b.count - a.count);
-
-	if (!taxonomyData.length) {
+	if (!taxonomies.length) {
 		return <></>;
 	}
 
@@ -261,11 +234,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 				</span>
 			</h2>
 			<div className="w-full">
-				<TaxonomyDonutChart
-					labels={taxonomyData.map((t) => t.taxonomy)}
-					data={taxonomyData.map((t) => t.count)}
-					sampName={samp_name}
-				/>
+				<TaxonomyDonutChart taxonomies={taxonomies} />
 			</div>
 		</div>
 	);

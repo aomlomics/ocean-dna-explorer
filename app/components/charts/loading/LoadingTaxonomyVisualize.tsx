@@ -49,7 +49,7 @@ export default function LoadingTaxonomyVisualize() {
 
 			<div className="w-full flex justify-center items-center gap-5">
 				<div className="flex gap-1">
-					<InfoButton infoText="" type="warning" />
+					<InfoButton text="" type="warning" />
 
 					<div className="dropdown dropdown-end">
 						<button className="btn" disabled>

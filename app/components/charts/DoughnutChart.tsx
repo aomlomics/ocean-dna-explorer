@@ -12,6 +12,12 @@ ChartJS.register(ArcElement, Tooltip);
 interface DoughnutChartProps {
 	labels: string[];
 	data: number[];
+	/**
+	 * Compact mode: always stack chart + legend vertically and hide the
+	 * informational footer paragraph. Use when the chart is embedded inside
+	 * a narrow dashboard card.
+	 */
+	compact?: boolean;
 }
 
 // Generate distinct colors using the existing distinct-colors library
@@ -117,12 +123,14 @@ function CustomLegend({
 	labels,
 	data,
 	colors,
-	textColor
+	textColor,
+	hideHeading = false
 }: {
 	labels: string[];
 	data: number[];
 	colors: string[];
 	textColor: string;
+	hideHeading?: boolean;
 }) {
 	const [showAll, setShowAll] = useState(false);
 	const total = data.reduce((sum, value) => sum + value, 0);
@@ -130,10 +138,12 @@ function CustomLegend({
 	const displayedItems = shouldCollapse && !showAll ? 9 : labels.length;
 
 	return (
-		<div className="flex flex-col gap-3 mt-0 lg:max-h-[340px] lg:overflow-y-auto pr-2">
-			<h3 className="text-lg font-semibold mb-2" style={{ color: textColor }}>
-				Legend
-			</h3>
+		<div className="flex flex-col gap-3 mt-0 lg:max-h-85 lg:overflow-y-auto pr-2">
+			{!hideHeading && (
+				<h3 className="text-lg font-semibold mb-2" style={{ color: textColor }}>
+					Legend
+				</h3>
+			)}
 			{labels.slice(0, displayedItems).map((label, index) => {
 				const percentage = total > 0 ? ((data[index] / total) * 100).toFixed(1) : "0.0";
 				return (
@@ -168,7 +178,7 @@ function CustomLegend({
 	);
 }
 
-export default function DoughnutChart({ labels, data }: DoughnutChartProps) {
+export default function DoughnutChart({ labels, data, compact = false }: DoughnutChartProps) {
 	const { theme } = useTheme();
 	const textColor = theme === "dark" ? "#E2E8F0" : "#2D3748";
 	// Determine the index of the most abundant value
@@ -223,39 +233,57 @@ export default function DoughnutChart({ labels, data }: DoughnutChartProps) {
 
 	return (
 		<div className="w-full h-full flex flex-col">
-			<div className="flex flex-col lg:flex-row items-start gap-8">
+			<div
+				className={
+					compact ? "flex flex-col items-center gap-5" : "flex flex-col lg:flex-row items-start gap-8"
+				}
+			>
 				{/* Chart Container */}
-				<div className="relative h-[340px] w-[300px] shrink-0 mx-auto lg:mx-0">
+				<div
+					className={
+						compact
+							? "relative h-56 w-56 shrink-0 mx-auto"
+							: "relative h-85 w-75 shrink-0 mx-auto lg:mx-0"
+					}
+				>
 					<Doughnut data={chartData} options={options} />
 				</div>
 
 				{/* Custom Legend */}
-				<div className="flex-1 min-w-0 lg:max-w-xs">
-					<CustomLegend labels={labels} data={data} colors={colors} textColor={textColor} />
+				<div className={compact ? "w-full" : "flex-1 min-w-0 lg:max-w-xs"}>
+					<CustomLegend
+						labels={labels}
+						data={data}
+						colors={colors}
+						textColor={textColor}
+						hideHeading={compact}
+					/>
 				</div>
 			</div>
 
-			<p className="mt-6 text-md text-base-content max-w-xl mx-auto lg:mx-0">
-				Assays used on the Ocean DNA Explorer are stored in a GitHub{" "}
-				<Link
-					href="https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="underline text-primary"
-				>
-					repository
-				</Link>{" "}
-				that defines acceptable assay and target gene information for submissions. You can{" "}
-				<Link
-					href="https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="underline text-primary"
-				>
-					request an assay be added
-				</Link>{" "}
-				by making a GitHub issue.
-			</p>
+			{!compact && (
+				<p className="mt-6 text-md text-base-content max-w-xl mx-auto lg:mx-0">
+					Assays used on the Ocean DNA Explorer are stored in a GitHub{" "}
+					<Link
+						href="https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="underline text-primary"
+					>
+						repository
+					</Link>{" "}
+					that defines acceptable assay and target gene information for submissions. You can{" "}
+					<Link
+						href="https://github.com/NOAA-Omics/noaa-omics-metabarcoding-assays/issues"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="underline text-primary"
+					>
+						request an assay be added
+					</Link>{" "}
+					by making a GitHub issue.
+				</p>
+			)}
 		</div>
 	);
 }

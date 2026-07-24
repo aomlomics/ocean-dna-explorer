@@ -3,14 +3,103 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
-import { uncapitalizeTable } from "@/app/helpers/utils";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 // -----------------------------
 // Shared mega-menu primitives
 // -----------------------------
+
+const MENU_LINK_PREFETCH = false;
+const MEGA_MENU_OPEN_DELAY_MS = 60; // Faster open reduces tab-to-tab flicker.
+const MEGA_MENU_CLOSE_DELAY_MS = 180; // Slightly slower close smooths hover transitions.
+
+const EXPLORE_LEFT_ITEMS = [
+	{ label: "Projects", href: "/explore/project" },
+	{ label: "Samples", href: "/explore/sample" },
+	{ label: "Assays", href: "/explore/assay" },
+	{ label: "AssayPreps", href: "/explore/assayPrep" },
+	{ label: "Libraries", href: "/explore/library" }
+];
+
+const EXPLORE_RIGHT_ITEMS = [
+	{ label: "Analyses", href: "/explore/analysis" },
+	{ label: "Occurrences", href: "/explore/occurrence" },
+	{ label: "Assignments", href: "/explore/assignment" },
+	{ label: "Features", href: "/explore/feature" },
+	{ label: "Taxonomies", href: "/explore/taxonomy" }
+];
+
+const HELP_ITEMS = [
+	{ label: "Overview", href: "/help#node-overview" },
+	{ label: "Submit Data", href: "/help#submit" },
+	{ label: "Login and Roles", href: "/help#login-and-roles" },
+	{ label: "Search", href: "/help#search" },
+	{ label: "Visualize", href: "/explore" }
+];
+
+const API_ITEMS = [
+	{ label: "Introduction", href: "/api#introduction" },
+	{ label: "Database Schema", href: "/api#database-schema" },
+	{ label: "API Endpoints", href: "/api#api-endpoints" },
+	{ label: "Searching & Filtering", href: "/api#searching-and-filtering" },
+	{ label: "Query Parameters", href: "/api#query-parameters" }
+];
+
+const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[] = [
+	{
+		href: "/learn?section=edna101",
+		title: "eDNA 101",
+		subtitle: "Take the data journey from a sample to an eDNA dataset"
+	},
+	{
+		href: "/learn?section=impact",
+		title: "Impact",
+		subtitle: "See how eDNA helps biodiversity research and conservation"
+	},
+	{
+		href: "/learn?section=discoveries",
+		title: "Make your own Discoveries",
+		subtitle: "Leverage ODE's custom exploration features"
+	}
+];
+
+const SUBMIT_ITEMS = [
+	{
+		label: "Project",
+		href: "/submit/project",
+		subtitle: "Attach FAIR eDNA metadata sheets and add other users to your project"
+	},
+	{
+		label: "Analysis",
+		href: "/submit/analysis",
+		subtitle: "Attach analysis details and raw data for an existing project"
+	}
+];
+
+const MegaMenuNavigationContext = createContext<(() => void) | null>(null);
+
+function useMegaMenuNavigate() {
+	return useContext(MegaMenuNavigationContext);
+}
+
+const VISUALIZE_ITEMS = [
+	{
+		label: "Metadata",
+		href: "/visualize/metadata",
+		subtitle: "Compare metadata values on charts"
+	},
+	{
+		label: "Taxonomy",
+		href: "/visualize/taxonomy",
+		subtitle: "Explore taxonomic distributions across datasets"
+	},
+	{
+		label: "Alpha Diversity",
+		href: "/visualize/alphaDiversity",
+		subtitle: "Calculate alpha diversity metrics on the server"
+	}
+];
 
 function useIsActive(route: string, activePaths?: string[]) {
 	const pathname = usePathname();
@@ -39,7 +128,11 @@ function MegaMenu({
 	activePaths,
 	children,
 	widthClass,
-	panelTopClass
+	panelTopClass,
+	/** Nudge the centered panel right (CSS length, e.g. 0.75rem). */
+	panelShiftRight,
+	/** Place the panel so its right edge sits this many px past the trigger link's right edge (viewport-relative). */
+	panelRightBeyondTriggerPx
 }: {
 	tabName: string;
 	route: string;
@@ -47,72 +140,139 @@ function MegaMenu({
 	children: React.ReactNode;
 	widthClass: string;
 	panelTopClass?: string;
+	panelShiftRight?: string;
+	panelRightBeyondTriggerPx?: number;
 }) {
 	const isActive = useIsActive(route, activePaths);
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
-	const isHighlighted = open || isActive;
-	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [disableCloseAnimation, setDisableCloseAnimation] = useState(false);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const triggerRef = useRef<HTMLAnchorElement | null>(null);
+	const [panelRightStyle, setPanelRightStyle] = useState<{ right: number } | null>(null);
+	const anchorPanelToTrigger =
+		typeof panelRightBeyondTriggerPx === "number" && !Number.isNaN(panelRightBeyondTriggerPx);
+
+	const debouncedOpen = useDebouncedCallback(() => {
+		setDisableCloseAnimation(false);
+		setOpen(true);
+	}, MEGA_MENU_OPEN_DELAY_MS);
+
+	const debouncedClose = useDebouncedCallback(() => {
+		// Guard against ultra-fast cursor movement where enter/leave events can race.
+		if (containerRef.current?.matches(":hover")) return;
+		setOpen(false);
+	}, MEGA_MENU_CLOSE_DELAY_MS);
 
 	useEffect(() => {
 		return () => {
-			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+			debouncedOpen.cancel();
+			debouncedClose.cancel();
 		};
-	}, []);
+	}, [debouncedOpen, debouncedClose]);
 
 	useEffect(() => {
 		// Ensure dropdown/backdrop always closes after route transitions.
+		debouncedOpen.cancel();
+		debouncedClose.cancel();
+		setDisableCloseAnimation(false);
 		setOpen(false);
-	}, [pathname]);
+	}, [debouncedOpen, debouncedClose, pathname]);
+
+	useEffect(() => {
+		if (!open) return;
+		let prevY = window.scrollY;
+		const onScroll = () => {
+			const y = window.scrollY;
+			if (y > prevY) {
+				debouncedOpen.cancel();
+				debouncedClose.cancel();
+				setOpen(false);
+			}
+			prevY = y;
+		};
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, [debouncedOpen, debouncedClose, open]);
+
+	const updatePanelRightFromTrigger = useCallback(() => {
+		if (!anchorPanelToTrigger || !triggerRef.current) return;
+		const r = triggerRef.current.getBoundingClientRect();
+		const gap = panelRightBeyondTriggerPx ?? 0;
+		setPanelRightStyle({ right: Math.round(window.innerWidth - r.right - gap) });
+	}, [anchorPanelToTrigger, panelRightBeyondTriggerPx]);
+
+	useLayoutEffect(() => {
+		if (!open || !anchorPanelToTrigger) {
+			setPanelRightStyle(null);
+			return;
+		}
+		updatePanelRightFromTrigger();
+		const onResize = () => updatePanelRightFromTrigger();
+		window.addEventListener("resize", onResize);
+		return () => window.removeEventListener("resize", onResize);
+	}, [open, anchorPanelToTrigger, updatePanelRightFromTrigger]);
+
+	const closeImmediatelyForNavigation = useCallback(() => {
+		debouncedOpen.cancel();
+		debouncedClose.cancel();
+		setDisableCloseAnimation(true);
+		setOpen(false);
+		unfocusWithoutScrollJump();
+	}, [debouncedOpen, debouncedClose]);
 
 	const handleTabLinkClick = useCallback(() => {
 		// Close immediately for a clean transition when navigating via the tab label.
-		setOpen(false);
-		unfocusWithoutScrollJump();
-	}, []);
+		closeImmediatelyForNavigation();
+	}, [closeImmediatelyForNavigation]);
 
 	const handleMouseEnter = useCallback(() => {
-		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		setOpen(true);
-	}, []);
+		debouncedClose.cancel();
+		setDisableCloseAnimation(false);
+		debouncedOpen();
+	}, [debouncedClose, debouncedOpen]);
 
 	const handleMouseLeave = useCallback(() => {
 		// Small delay so slow mouse movement doesn't collapse the menu.
 		// We also add a "hover bridge" in the panel container so there isn't a dead-zone.
-		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		closeTimerRef.current = setTimeout(() => setOpen(false), 150);
-	}, []);
+		debouncedOpen.cancel();
+		debouncedClose();
+	}, [debouncedClose, debouncedOpen]);
 
 	return (
 		<div
-			onClick={unfocusWithoutScrollJump}
+			ref={containerRef}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
-			className={`dropdown group/menu ${open ? "dropdown-open" : ""}`}
+			className="relative z-menu group/menu"
 		>
-			{/* Subtle backdrop blur when open (below header) */}
-			{open ? (
-				<div
-					aria-hidden="true"
-					// NOTE: backdrop-blur is easiest to notice with a slight translucent fill.
-					className="fixed inset-0 top-20 lg:top-24 z-99998 pointer-events-none backdrop-blur-[2px] bg-base-100/10"
-				/>
-			) : null}
+			<div
+				aria-hidden="true"
+				className={[
+					"fixed inset-x-0 bottom-0 top-20 xl:top-24 z-1 pointer-events-none bg-black/25",
+					"transition-opacity ease-out",
+					disableCloseAnimation ? "duration-0" : "duration-200",
+					open ? "opacity-100" : "opacity-0"
+				].join(" ")}
+			/>
 
-			{/* Trigger */}
+			{/* Trigger — keep hover/open styling subtle and separate from the dropdown panel */}
 			<Link
+				ref={triggerRef}
 				tabIndex={0}
 				href={route}
-				className={`flex items-center gap-1 px-4 py-2 rounded-t-lg transition-colors ${
-					isHighlighted ? "bg-primary text-primary-content" : "hover:bg-base-300"
-				} select-none`}
+				prefetch={MENU_LINK_PREFETCH}
+				className={[
+					"relative z-20 flex items-center gap-1 px-2.5 min-[1400px]:px-4 py-2 transition-colors text-sm min-[1400px]:text-lg select-none rounded-t-xl",
+					isActive ? "bg-primary text-primary-content" : open ? "bg-base-300" : "hover:bg-base-300"
+				].join(" ")}
 				onClick={handleTabLinkClick}
 			>
-				<div className="leading-none select-none">{tabName}</div>
+				<div className="select-none">{tabName}</div>
 				<span
 					aria-hidden="true"
 					className={`p-1 -mr-1 rounded-md select-none pointer-events-none ${
-						isHighlighted ? "text-primary-content" : "text-base-content"
+						isActive ? "text-primary-content" : "text-base-content"
 					}`}
 				>
 					<svg
@@ -131,20 +291,38 @@ function MegaMenu({
 
 			{/* Panel */}
 			<div
-				tabIndex={0}
+				tabIndex={open ? 0 : -1}
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
 				// Fixed + centered so it never gets cut off. We keep the hover area contiguous by making this element
 				// include the "gap" using a negative margin + padding "hover bridge", while the actual visible panel sits below.
 				className={[
-					"dropdown-content z-99999",
-					"fixed left-1/2 -translate-x-1/2",
-					panelTopClass ?? "top-20 lg:top-24", // matches header heights (h-20 / lg:h-24)
+					"z-5",
+					"fixed",
+					anchorPanelToTrigger ? "left-auto" : "left-1/2",
+					anchorPanelToTrigger ? "" : panelShiftRight ? "" : "-translate-x-1/2",
+					panelTopClass ?? "top-20 xl:top-24", // matches header heights (h-20 / xl:h-24)
 					"-mt-3 pt-3", // hover bridge: extend hit area upward without visually moving panel
 					"w-[calc(100vw-2rem)]",
+					"transition-[opacity,visibility] ease-out",
+					disableCloseAnimation ? "duration-0" : "duration-200",
+					open ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none",
 					widthClass
 				].join(" ")}
+				style={
+					anchorPanelToTrigger && panelRightStyle
+						? { right: panelRightStyle.right }
+						: panelShiftRight
+							? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }
+							: undefined
+				}
 			>
-				<div className="bg-base-100 rounded-xl shadow-2xl shadow-black/25 border border-base-200 ring-1 ring-base-content/10 overflow-hidden">
-					{children}
+				<div className="-mt-1 bg-base-100 rounded-t-none rounded-b-xl border border-base-200/70 shadow-[0_10px_24px_rgba(15,23,42,0.12)] [html[data-theme='dark']_&]:shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+					<div className="overflow-hidden rounded-t-none rounded-b-xl">
+						<MegaMenuNavigationContext.Provider value={closeImmediatelyForNavigation}>
+							{children}
+						</MegaMenuNavigationContext.Provider>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -164,8 +342,14 @@ function MenuSectionHeader({
 	icon?: React.ReactNode;
 	titleClassName?: string;
 }) {
+	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
-		<Link href={href} className="flex items-start gap-2 group">
+		<Link
+			href={href}
+			prefetch={MENU_LINK_PREFETCH}
+			onClick={closeMegaMenuForNavigation ?? undefined}
+			className="flex items-start gap-2 group"
+		>
 			{icon ? (
 				<span className="mt-0.5 text-base-content/70 group-hover:text-primary transition-colors">{icon}</span>
 			) : null}
@@ -178,47 +362,37 @@ function MenuSectionHeader({
 				>
 					{title}
 				</span>
-				<span className="block text-xs text-base-content/55">{subtitle}</span>
+				<span className="block text-sm text-base-content/55">{subtitle}</span>
 			</span>
 		</Link>
 	);
 }
 
 function MenuItem({ href, label }: { href: string; label: string }) {
+	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
 		<Link
 			href={href}
-			className="block py-1 px-2 text-sm text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md transition-colors"
+			prefetch={MENU_LINK_PREFETCH}
+			onClick={closeMegaMenuForNavigation ?? undefined}
+			className="block py-1 px-2 text-base text-base-content/80 hover:text-primary hover:bg-base-200/60 rounded-md"
 		>
 			{label}
 		</Link>
 	);
 }
 
-function MenuItemWithSubtitle({
-	href,
-	title,
-	subtitle,
-	icon
-}: {
-	href: string;
-	title: string;
-	subtitle: string;
-	icon?: React.ReactNode;
-}) {
+function MenuItemWithTinySubtitle({ href, title, subtitle }: { href: string; title: string; subtitle: string }) {
+	const closeMegaMenuForNavigation = useMegaMenuNavigate();
 	return (
-		<Link href={href} className="group block rounded-lg px-2 py-2 hover:bg-base-200/60 transition-colors">
-			<div className="flex items-start gap-2">
-				{icon ? (
-					<span className="mt-0.5 text-base-content/70 group-hover:text-primary transition-colors">{icon}</span>
-				) : null}
-				<span>
-					<div className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors">
-						{title}
-					</div>
-					<div className="text-xs text-base-content/55 mt-0.5 leading-snug">{subtitle}</div>
-				</span>
-			</div>
+		<Link
+			href={href}
+			prefetch={MENU_LINK_PREFETCH}
+			onClick={closeMegaMenuForNavigation ?? undefined}
+			className="group block rounded-md px-2 py-1.5 hover:bg-base-200/60"
+		>
+			<div className="text-base text-base-content/80 transition-colors group-hover:text-primary">{title}</div>
+			<div className="mt-0.5 text-xs leading-snug text-base-content/55">{subtitle}</div>
 		</Link>
 	);
 }
@@ -227,30 +401,54 @@ function MiniFeatureCard({
 	title,
 	description,
 	stats,
-	media
+	media,
+	statsInline
 }: {
 	title: string;
 	description: string;
 	stats?: { value: string; label: string }[];
 	media?: React.ReactNode;
+	statsInline?: boolean;
 }) {
+	const hasMedia = Boolean(media);
+	const hasStats = Boolean(stats?.length);
+
 	return (
-		<div className="p-5 bg-base-200/35 border-l border-base-200 flex flex-col justify-between">
-			<div>
-				{media ? <div className="mb-4">{media}</div> : null}
-				{title ? <div className="text-sm font-semibold text-base-content">{title}</div> : null}
-				<div className="text-xs text-base-content/60 mt-2 leading-relaxed">{description}</div>
+		<div
+			className={[
+				"p-5 bg-base-200/35 border-l border-base-200 flex flex-col",
+				hasStats ? "justify-between" : "justify-center",
+				hasMedia ? "items-center" : ""
+			].join(" ")}
+		>
+			<div className={hasMedia ? "w-full max-w-56 text-left" : ""}>
+				{media ? <div className={hasStats ? "mb-2" : "mb-3"}>{media}</div> : null}
+				{title ? <div className="text-base font-semibold text-base-content">{title}</div> : null}
+				<div className={["text-sm text-base-content/60 leading-relaxed", hasStats ? "mt-1" : "mt-2"].join(" ")}>
+					{description}
+				</div>
 			</div>
 			{stats?.length ? (
-				<div className="mt-4">
-					<div className="space-y-1">
-						{stats.map((s) => (
-							<div key={s.label} className="flex items-baseline gap-2">
-								<div className="text-xl font-semibold text-primary">{s.value}</div>
-								<div className="text-xs text-base-content/60">{s.label}</div>
-							</div>
-						))}
-					</div>
+				<div className="mt-3 w-full">
+					{statsInline ? (
+						<div className="grid grid-cols-2 gap-4">
+							{stats.map((s) => (
+								<div key={s.label}>
+									<div className="text-xl font-semibold text-primary leading-none">{s.value}</div>
+									<div className="text-xs text-base-content/60 mt-1">{s.label}</div>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className="space-y-1">
+							{stats.map((s) => (
+								<div key={s.label} className="flex items-baseline gap-2">
+									<div className="text-xl font-semibold text-primary">{s.value}</div>
+									<div className="text-xs text-base-content/60">{s.label}</div>
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 			) : null}
 		</div>
@@ -258,42 +456,27 @@ function MiniFeatureCard({
 }
 
 export function ExploreMegaMenu() {
-	const leftModels = ["Project", "Sample", "Assay", "AssayPrep", "Library"] as const;
-	const rightModels = ["Analysis", "Occurrence", "Assignment", "Feature", "Taxonomy"] as const;
-
-	const leftItems = leftModels.map((m) => {
-		const model = m as Prisma.ModelName;
-		return {
-			label: TableMetadata[model].plural,
-			href: `/explore/${uncapitalizeTable(model)}`
-		};
-	});
-
-	const rightItems = rightModels.map((m) => {
-		const model = m as Prisma.ModelName;
-		return {
-			label: TableMetadata[model].plural,
-			href: `/explore/${uncapitalizeTable(model)}`
-		};
-	});
-
-	const totalTables = leftItems.length + rightItems.length;
+	const totalTables = EXPLORE_LEFT_ITEMS.length + EXPLORE_RIGHT_ITEMS.length;
 
 	return (
-		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[820px]">
-			<div className="grid grid-cols-[1fr_280px] gap-0">
+		<MegaMenu tabName="Explore" route="/explore" widthClass="max-w-[45.5rem]">
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
-					<div className="text-base font-semibold text-base-content">Explore</div>
-					<div className="text-xs text-base-content/60 mt-1">Filter and sort data in each database table</div>
+					<MenuSectionHeader
+						href="/explore"
+						title="Explore"
+						subtitle="Browse the data with filtering and sorting"
+						titleClassName="text-base-content group-hover:text-primary"
+					/>
 
 					<div className="mt-4 grid grid-cols-2 gap-4">
 						<div className="space-y-1">
-							{leftItems.map((i) => (
+							{EXPLORE_LEFT_ITEMS.map((i) => (
 								<MenuItem key={i.label} href={i.href} label={i.label} />
 							))}
 						</div>
 						<div className="space-y-1">
-							{rightItems.map((i) => (
+							{EXPLORE_RIGHT_ITEMS.map((i) => (
 								<MenuItem key={i.label} href={i.href} label={i.label} />
 							))}
 						</div>
@@ -302,23 +485,23 @@ export function ExploreMegaMenu() {
 
 				<MiniFeatureCard
 					title=""
-					description="View the data in each table of the database separately with filters, sorting, and column searches. Click on a row to view more details."
+					description="Explore table records with filters, sorting, and detailed row views"
 					stats={[{ value: `${totalTables}`, label: "tables" }]}
 					media={
-						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/taxonomy_explore_mega_menu_light.png"
+								src="/images/taxonomy_explore_mega_menu_light.webp"
 								alt="Taxonomy explore preview (light mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
 							<Image
-								src="/images/taxonomy_explore_mega_menu_dark.png"
+								src="/images/taxonomy_explore_mega_menu_dark.webp"
 								alt="Taxonomy explore preview (dark mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>
@@ -337,31 +520,9 @@ export function ExploreMegaMenu() {
 export function DocsMegaMenu() {
 	// NOTE: There is no `help#visualize` section in HelpSections currently.
 	// Using `/explore` as the closest existing “visualize-like” UI.
-	const helpItems = [
-		{ label: "Overview", href: "/help#node-overview" },
-		{ label: "Login and Roles", href: "/help#login-and-roles" },
-		{ label: "Search", href: "/help#search" },
-		{ label: "Explore", href: "/help#explore" },
-		{ label: "Visualize", href: "/explore" }
-	];
-
-	const apiItems = [
-		{ label: "Introduction", href: "/api#introduction" },
-		{ label: "Database Schema", href: "/api#database-schema" },
-		{ label: "API Endpoints", href: "/api#api-endpoints" },
-		{ label: "Searching & Filtering", href: "/api#searching-and-filtering" },
-		{ label: "Query Parameters", href: "/api#query-parameters" }
-	];
-
-	const learnItems = [
-		{ label: "What is eDNA?", href: "/learn?section=edna101" },
-		{ label: "Impact", href: "/learn?section=impact" },
-		{ label: "Make your own scientific discoveries", href: "/learn?section=discoveries" }
-	];
-
 	return (
-		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/learn", "/api"]} widthClass="max-w-[980px]">
-			<div className="grid grid-cols-[1fr_1fr_1fr_280px] gap-0">
+		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/api"]} widthClass="max-w-[45.5rem]">
+			<div className="grid grid-cols-[1fr_1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/help"
@@ -370,7 +531,7 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{helpItems.map((i) => (
+						{HELP_ITEMS.map((i) => (
 							<MenuItem key={i.label} href={i.href} label={i.label} />
 						))}
 					</div>
@@ -384,44 +545,78 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{apiItems.map((i) => (
-							<MenuItem key={i.label} href={i.href} label={i.label} />
-						))}
-					</div>
-				</div>
-
-				<div className="p-5 border-r border-base-200">
-					<MenuSectionHeader
-						href="/learn"
-						title="Learn"
-						subtitle="eDNA science & discovery"
-						titleClassName="text-base-content group-hover:text-primary"
-					/>
-					<div className="mt-4 space-y-1">
-						{learnItems.map((i) => (
+						{API_ITEMS.map((i) => (
 							<MenuItem key={i.label} href={i.href} label={i.label} />
 						))}
 					</div>
 				</div>
 
 				<MiniFeatureCard
-					title="Become an eDNA and ODE pro"
-					description="Walk through the basics, learn the workflow, and get comfortable exploring real datasets."
+					title=""
+					description="Thorough documentation written with care"
 					media={
 						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/docs_mega_menu_light.png"
+								src="/images/docs_mega_menu_light.webp"
 								alt="Docs mega menu preview (light mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
 							<Image
-								src="/images/docs_mega_menu_dark.png"
+								src="/images/docs_mega_menu_dark.webp"
 								alt="Docs mega menu preview (dark mode)"
 								fill
-								sizes="280px"
+								sizes="240px"
+								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
+								priority={false}
+							/>
+						</div>
+					}
+				/>
+			</div>
+		</MegaMenu>
+	);
+}
+
+export function LearnMegaMenu() {
+	return (
+		<MegaMenu tabName="Learn" route="/learn" widthClass="max-w-[43rem]" panelRightBeyondTriggerPx={28}>
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
+				<div className="p-5 border-r border-base-200">
+					<MenuSectionHeader
+						href="/learn"
+						title="Learn"
+						subtitle="Discover how eDNA data is created, stored, and analyzed"
+						titleClassName="text-base-content group-hover:text-primary"
+					/>
+
+					<div className="mt-4 space-y-1">
+						{LEARN_MEGA_MENU_ITEMS.map((i) => (
+							<MenuItemWithTinySubtitle key={i.href} href={i.href} title={i.title} subtitle={i.subtitle} />
+						))}
+					</div>
+				</div>
+
+				<MiniFeatureCard
+					title=""
+					description="Learn about how eDNA data is created, why eDNA matters, and how it can be analyzed"
+					media={
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
+							<Image
+								src="/images/learn_page_mega_menu_light.webp"
+								alt="Learn mega menu preview (light mode)"
+								fill
+								sizes="240px"
+								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
+								priority={false}
+							/>
+							<Image
+								src="/images/learn_page_mega_menu_dark.webp"
+								alt="Learn mega menu preview (dark mode)"
+								fill
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>
@@ -465,42 +660,51 @@ export function SubmitMegaMenu() {
 	}, []);
 
 	return (
-		<MegaMenu tabName="Submit" route="/submit" widthClass="max-w-[640px]">
-			<div className="grid grid-cols-[1fr_220px] gap-0">
+		<MegaMenu tabName="Submit" route="/submit" widthClass="max-w-[41.5rem]">
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/submit"
 						title="Submit"
-						subtitle={
-							<>
-								<span className="text-primary font-normal">Start here</span>
-								<span>, or choose a submission type below</span>
-							</>
-						}
+						subtitle="Upload your data"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 
 					<div className="mt-4 space-y-1">
-						<MenuItemWithSubtitle
-							href="/submit/project"
-							title="Project"
-							subtitle="Create a project first: metadata, samples, and study design."
-						/>
-						<MenuItemWithSubtitle
-							href="/submit/analysis"
-							title="Analysis"
-							subtitle="Analyses must be attached to an existing project."
-						/>
+						{SUBMIT_ITEMS.map((i) => (
+							<MenuItemWithTinySubtitle key={i.label} href={i.href} title={i.label} subtitle={i.subtitle} />
+						))}
 					</div>
 				</div>
 
 				<MiniFeatureCard
-					title="Submission tips"
-					description="Contributor role required. Choose visibility, tag datasets, and edit metadata later."
+					title=""
+					description="Contributor permission required. Submit projects or individual analyses"
 					stats={[
 						{ value: projectCount, label: "projects" },
 						{ value: analysisCount, label: "analyses" }
 					]}
+					statsInline
+					media={
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
+							<Image
+								src="/images/submit_mega_menu_light.webp"
+								alt="Submit mega menu preview (light mode)"
+								fill
+								sizes="240px"
+								className="object-cover object-top-left origin-top-left scale-[1.3] [html[data-theme='dark']_&]:hidden"
+								priority={false}
+							/>
+							<Image
+								src="/images/submit_mega_menu_dark.webp"
+								alt="Submit mega menu preview (dark mode)"
+								fill
+								sizes="240px"
+								className="object-cover object-top-left origin-top-left scale-[1.3] hidden [html[data-theme='dark']_&]:block"
+								priority={false}
+							/>
+						</div>
+					}
 				/>
 			</div>
 		</MegaMenu>
@@ -509,58 +713,41 @@ export function SubmitMegaMenu() {
 
 export function VisualizeMegaMenu() {
 	return (
-		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[640px]">
-			<div className="grid grid-cols-[1fr_220px] gap-0">
+		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[41.5rem]">
+			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
 						href="/visualize"
 						title="Visualize"
-						subtitle={
-							<>
-								<span className="text-primary font-normal">Start here</span>
-								<span>, or choose a visualization type below</span>
-							</>
-						}
+						subtitle="Build charts directly in your browser"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 
 					<div className="mt-4 space-y-1">
-						<MenuItemWithSubtitle
-							href="/visualize/metadata"
-							title="Metadata"
-							subtitle="Chart and compare sample and analysis metadata."
-						/>
-						<MenuItemWithSubtitle
-							href="/visualize/taxonomy"
-							title="Taxonomy"
-							subtitle="Explore taxa distributions from all of our data."
-						/>
-						<MenuItemWithSubtitle
-							href="/visualize/alphaDiversity"
-							title="Alpha Diversity"
-							subtitle="See Alpha Diversity metrics across analyses."
-						/>
+						{VISUALIZE_ITEMS.map((i) => (
+							<MenuItemWithTinySubtitle key={i.label} href={i.href} title={i.label} subtitle={i.subtitle} />
+						))}
 					</div>
 				</div>
 
 				<MiniFeatureCard
 					title=""
-					description="Switch between metadata and taxonomy charts to compare patterns across the dataset."
+					description="Switch between chart views to compare sample and taxonomy patterns"
 					media={
-						<div className="relative w-full h-28 rounded-lg overflow-hidden border border-base-200">
+						<div className="relative w-full aspect-16/10 rounded-lg overflow-hidden border border-base-200">
 							<Image
-								src="/images/visualize_mega_menu_light.png"
+								src="/images/visualize_mega_menu_light.webp"
 								alt="Visualize mega menu preview (light mode)"
 								fill
-								sizes="220px"
+								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
 							/>
 							<Image
-								src="/images/visualize_mega_menu_dark.png"
+								src="/images/visualize_mega_menu_dark.webp"
 								alt="Visualize mega menu preview (dark mode)"
 								fill
-								sizes="220px"
+								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
 							/>

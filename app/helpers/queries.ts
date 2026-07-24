@@ -9,17 +9,21 @@ import {
 	QueryMode
 } from "@/types/globals";
 import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
-import { deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
-import { decompressFromEncodedURIComponent } from "lz-string";
+import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { insertBlastIntoQuery, parseBlastRequest } from "./blast";
 
 export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
 	target: Uncapitalize<Prisma.ModelName>,
 	query: { [k: string]: any }
 ) {
+	if (start === target) {
+		return query;
+	}
+
 	//find all paths to target from start
 	const path = getRelationPath(start, target);
 
@@ -137,10 +141,10 @@ export function parseToQuery(
 		}
 	} else if (mode === "in" || mode === "notIn") {
 		//uncompress if necessary
-		if (typeof value === "string" && value.startsWith("compressed/lz-string:")) {
-			value = JSON.parse(decompressFromEncodedURIComponent(value.substring("compressed/lz-string:".length)));
+		if (typeof value === "string" && value.startsWith(COMPRESSION_FORMAT)) {
+			value = JSON.parse(decompressURIComponent(value));
 			if (!Array.isArray(value) || !value.every((v) => typeof v !== "object")) {
-				throw new Error("Value must be an array of primitives compressed with lz-string.");
+				throw new Error(`If value is string, it must be an array of primitives in ${COMPRESSION_FORMAT} format.`);
 			}
 		}
 
@@ -417,6 +421,7 @@ export function parseApiQuery(
 			advanced?: true;
 			search?: true;
 			shapes?: true;
+			blast?: true;
 		};
 		defaults?: {
 			fields?: Record<string, true>;
@@ -440,7 +445,7 @@ export function parseApiQuery(
 	}
 ) {
 	//copy search params
-	const params = new URLSearchParams(searchParams);
+	const newParams = new URLSearchParams(searchParams);
 
 	const query = {} as {
 		orderBy?: Record<string, Prisma.SortOrder | { _count: Prisma.SortOrder }>;
@@ -451,23 +456,30 @@ export function parseApiQuery(
 		distinct?: string[];
 	};
 
+	//blast query
+	let blast;
+	if (!options?.features || options.features.blast) {
+		blast = parseBlastRequest(newParams);
+	}
+
 	//construct shapes
 	let shapes;
 	if (!options?.features || options.features.shapes) {
-		const tempShapes = getShapesFromUrl(params);
-
-		if (tempShapes) {
-			shapes = tempShapes;
-			params.delete("polygon");
-			params.delete("circle");
+		shapes = getShapesFromUrl(newParams);
+		if (shapes) {
+			newParams.delete("polygon");
+			newParams.delete("circle");
 		}
 	}
+	const hasLocationData =
+		TableMetadata[table].enumSchema.options.includes("decimalLatitude") &&
+		TableMetadata[table].enumSchema.options.includes("decimalLongitude");
 
 	//ordering results
 	if (!options?.features || options.features.orderBy) {
-		const orderByStr = params.get("orderBy");
-		if (orderByStr) {
-			params.delete("orderBy");
+		const orderByStr = newParams.get("orderBy");
+		if (orderByStr != null) {
+			newParams.delete("orderBy");
 			const split = orderByStr?.split(",");
 			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
 				if (TableMetadata[table].enumSchema.options.includes(split[0])) {
@@ -495,10 +507,17 @@ export function parseApiQuery(
 	}
 
 	if (!options?.features || options.features.fields) {
-		const fields = params.get("fields");
-		if (fields) {
-			params.delete("fields");
-			const split = fields.split(",").reduce((acc, f) => ({ ...acc, [f]: true }), {});
+		const fields = newParams.get("fields");
+		if (fields != null) {
+			newParams.delete("fields");
+			const split = fields.split(",").reduce(
+				(acc, f) => {
+					getZodType(table, f);
+					acc[f] = true;
+					return acc;
+				},
+				{} as Record<string, true>
+			);
 			query.select = query.select ? { ...query.select, ...split } : split;
 		}
 	}
@@ -509,9 +528,9 @@ export function parseApiQuery(
 	}
 
 	if (!options?.features || options.features.distinct) {
-		const distinct = params.get("distinct");
-		if (distinct) {
-			params.delete("distinct");
+		const distinct = newParams.get("distinct");
+		if (distinct != null) {
+			newParams.delete("distinct");
 			const split = distinct.split(",");
 			query.distinct = query.distinct ? [...query.distinct, ...split] : split;
 		}
@@ -519,9 +538,9 @@ export function parseApiQuery(
 
 	//relations
 	if (!options?.features || options.features.relations) {
-		const relations = params.get("relations");
-		if (relations) {
-			params.delete("relations");
+		const relations = newParams.get("relations");
+		if (relations != null) {
+			newParams.delete("relations");
 
 			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
 			for (const r of relations.split(",")) {
@@ -535,9 +554,9 @@ export function parseApiQuery(
 			//relations limit
 			let take;
 			if (!options?.features || options.features.relationsLimit) {
-				const relationsLimit = params.get("relationsLimit");
-				if (relationsLimit) {
-					params.delete("relationsLimit");
+				const relationsLimit = newParams.get("relationsLimit");
+				if (relationsLimit != null) {
+					newParams.delete("relationsLimit");
 					take = parseInt(relationsLimit);
 					if (Number.isNaN(take) || take < 1) {
 						throw new Error(`Invalid relations limit: "${relationsLimit}". Limit must be a positive integer.`);
@@ -547,9 +566,9 @@ export function parseApiQuery(
 
 			//include all fields in relations
 			let allFields = undefined as undefined | boolean | Set<Uncapitalize<Prisma.ModelName>>;
-			const relationsAllFields = params.get("relationsAllFields");
-			if (relationsAllFields) {
-				params.delete("relationsAllFields");
+			const relationsAllFields = newParams.get("relationsAllFields");
+			if (relationsAllFields != null) {
+				newParams.delete("relationsAllFields");
 				if (!relationsAllFields || relationsAllFields.toLowerCase() === "false") {
 					allFields = false;
 				} else if (relationsAllFields.toLowerCase() === "true") {
@@ -661,9 +680,9 @@ export function parseApiQuery(
 
 	//limit
 	if (!options?.features || options.features.limit) {
-		const take = params.get("limit");
-		if (take) {
-			params.delete("limit");
+		const take = newParams.get("limit");
+		if (take != null) {
+			newParams.delete("limit");
 			query.take = parseInt(take);
 			if (Number.isNaN(query.take) || query.take < 1) {
 				throw new Error(`Invalid limit: "${take}". Limit must be a positive integer.`);
@@ -673,12 +692,12 @@ export function parseApiQuery(
 
 	let sampleWhere;
 
-	const advanced = params.get("advanced");
-	if ((!options?.features || options.features.advanced) && advanced) {
+	const advanced = newParams.get("advanced");
+	if ((!options?.features || options.features.advanced) && advanced != null) {
 		//advanced search
-		params.delete("advanced");
+		newParams.delete("advanced");
 
-		if (Array.from(params).length) {
+		if (Array.from(newParams).length) {
 			throw new Error("Advanced search may not include other filter parameters.");
 		}
 
@@ -688,11 +707,7 @@ export function parseApiQuery(
 		}
 
 		//assemble secondary query if table doesn't have location data
-		if (
-			sampleWhere &&
-			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
-		) {
+		if (shapes && !hasLocationData) {
 			if (parsed.length) {
 				sampleWhere = parseAdvancedQuery(table, parsed, "sample");
 			} else {
@@ -700,14 +715,14 @@ export function parseApiQuery(
 			}
 		}
 	} else {
-		const ids = params.get("ids");
-		const search = params.get("search");
+		const ids = newParams.get("ids");
+		const search = newParams.get("search");
 
-		if ((!options?.features || options.features.ids) && ids) {
+		if ((!options?.features || options.features.ids) && ids != null) {
 			//list of ids
-			params.delete("ids");
+			newParams.delete("ids");
 
-			if (Array.from(params).length) {
+			if (Array.from(newParams).length) {
 				throw new Error("Filtering with a list of ids may not include other filter parameters.");
 			}
 
@@ -727,11 +742,11 @@ export function parseApiQuery(
 					in: parsedIds
 				}
 			};
-		} else if ((!options?.features || options.features.search) && search) {
+		} else if ((!options?.features || options.features.search) && search != null) {
 			//string search
-			params.delete("search");
+			newParams.delete("search");
 
-			if (Array.from(params).length) {
+			if (Array.from(newParams).length) {
 				throw new Error("Search may not include other filter parameters.");
 			}
 
@@ -747,7 +762,7 @@ export function parseApiQuery(
 					query.where = {} as Record<string, any>;
 				}
 
-				params.forEach((value, key) => {
+				newParams.forEach((value, key) => {
 					const type = getZodType(table, key).type;
 
 					const arr = value.split(",");
@@ -791,11 +806,7 @@ export function parseApiQuery(
 		}
 
 		//assemble secondary query if table doesn't have location data
-		if (
-			sampleWhere &&
-			(!TableMetadata[table].enumSchema.options.includes("decimalLatitude") ||
-				!TableMetadata[table].enumSchema.options.includes("decimalLongitude"))
-		) {
+		if (shapes && !hasLocationData) {
 			if (query.where && Object.keys(query.where).length) {
 				sampleWhere = deepWhere("sample", table, query.where);
 			} else {
@@ -804,7 +815,7 @@ export function parseApiQuery(
 		}
 	}
 
-	return { query, shapes, sampleWhere };
+	return { query, blast, shapes, sampleWhere };
 }
 
 const secureFields = ["userIds"];
@@ -832,6 +843,7 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 	try {
 		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
 			if (err.code === "P2002") {
+				console.log(err);
 				return {
 					statusMessage: "error",
 					error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
@@ -853,12 +865,10 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 				};
 			}
 		}
-	} catch (newErr) {
-		const error = newErr as Error;
-
+	} catch {
 		return {
 			statusMessage: "error",
-			error: err.message + "\n" + error.message
+			error: err.message
 		};
 	}
 }
@@ -1084,4 +1094,31 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 	});
 
 	console.log("Seed successful");
+}
+
+export function buildWhereParams(
+	searchParams: URLSearchParams,
+	query: URLSearchParams,
+	whereQuery?: Record<string, string | number>,
+	ignoreParams?: string[]
+) {
+	const tempParams = new URLSearchParams(searchParams);
+
+	insertBlastIntoQuery(parseBlastRequest(tempParams), query);
+
+	//pull out shapes
+	tempParams.getAll("polygon").forEach((poly) => query.set("polygon", poly));
+	tempParams.delete("polygon");
+	tempParams.getAll("circle").forEach((cir) => query.set("circle", cir));
+	tempParams.delete("circle");
+
+	//get rest of queries
+	if (whereQuery) {
+		tempParams.forEach((value, key) => (whereQuery[key] = value));
+		if (ignoreParams) {
+			for (const param of ignoreParams) {
+				delete whereQuery[param];
+			}
+		}
+	}
 }

@@ -18,6 +18,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
 import { getRelationPath } from "@/app/helpers/schema";
+import { buildWhereParams } from "@/app/helpers/queries";
 
 type Operator = "AND" | "OR";
 
@@ -207,9 +208,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	useEffect(() => {
 		// Set default table parameter without creating a new history entry
 		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
-			const params = new URLSearchParams(searchParams.toString());
-			params.set("table", searchTable);
-			router.replace(`${pathname}?${params.toString()}`);
+			const newParams = new URLSearchParams(searchParams.toString());
+			newParams.set("table", searchTable);
+			router.replace(`${pathname}?${newParams.toString()}`);
 		}
 	}, [searchTable, searchParams, pathname, router]);
 
@@ -260,7 +261,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 	}
 
-	//TODO: add shapes to description
+	//TODO: add BLAST and shapes to description
 	function handleQueryDescription() {
 		if (!formRef.current || !searchTree || searchTree.children.length === 0) return "";
 
@@ -463,31 +464,23 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	function reset() {
 		setSearchTree(createEmptyGroup(0));
 		setQueryDescription("");
-		router.push(pathname);
+		router.push(pathname + "?table=" + searchTable);
 	}
 
 	function search() {
-		const params = new URLSearchParams();
+		const newParams = new URLSearchParams();
 		if (!noTable) {
-			params.set("table", searchTable!);
+			newParams.set("table", searchTable!);
 		}
 
-		//maintain shapes
-		const polygons = searchParams.getAll("polygon");
-		if (polygons.length) {
-			polygons.forEach((poly) => params.set("polygon", poly));
-		}
-		const circles = searchParams.getAll("circle");
-		if (circles.length) {
-			circles.forEach((cir) => params.set("circle", cir));
-		}
+		buildWhereParams(searchParams, newParams);
 
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
-			params.set("advanced", JSON.stringify(advanced));
+			newParams.set("advanced", JSON.stringify(advanced));
 		}
 
-		router.push(`${pathname}?${params.toString()}`);
+		router.push(`${pathname}?${newParams.toString()}`);
 
 		// Scroll to results after a brief delay to allow data to load
 		setTimeout(() => {
@@ -520,20 +513,25 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 			}
 		}
 
-		const params = new URLSearchParams();
+		const newParams = new URLSearchParams();
 		if (advancedStr) {
-			params.set("advanced", advancedStr);
+			newParams.set("advanced", advancedStr);
+		}
+
+		//maintain BLAST
+		searchParams.getAll("blastQuery").forEach((q) => newParams.set("blastQuery", q));
+		const blastDatabase = searchParams.get("blastDatabase");
+		if (blastDatabase) {
+			newParams.set("blastDatabase", blastDatabase);
+		}
+		const blastSave = searchParams.get("blastSave");
+		if (blastSave) {
+			newParams.set("blastSave", blastSave);
 		}
 
 		//maintain shapes
-		const polygons = paramsFromUrl.getAll("polygon");
-		if (polygons.length) {
-			polygons.forEach((poly) => params.set("polygon", poly));
-		}
-		const circles = paramsFromUrl.getAll("circle");
-		if (circles.length) {
-			circles.forEach((cir) => params.set("circle", cir));
-		}
+		searchParams.getAll("polygon").forEach((poly) => newParams.set("polygon", poly));
+		searchParams.getAll("circle").forEach((cir) => newParams.set("circle", cir));
 
 		let fieldsForTable = undefined as string[] | undefined;
 		if (customFields === null) {
@@ -548,10 +546,10 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 
 		if (fieldsForTable && fieldsForTable.length) {
-			params.set("fields", fieldsForTable.join(","));
+			newParams.set("fields", fieldsForTable.join(","));
 		}
 
-		const queryString = params.toString();
+		const queryString = newParams.toString();
 
 		await navigator.clipboard.writeText(`${baseUrl}/api/${searchTable}${queryString ? "?" + queryString : ""}`);
 		setApiCopied(true);
@@ -578,6 +576,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		field.toLowerCase().includes(fieldSearchText.toLowerCase())
 	);
 	const allFieldsSelected = availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
+	const hasActiveConditions = queryDescription.trim().length > 0;
 
 	const rootFooter = (
 		<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
@@ -659,7 +658,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 							</span>
 						</button>
 						{apiDropdownOpen && (
-							<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-9999">
+							<div className="absolute right-0 mt-0 w-full rounded-box rounded-t-none shadow bg-base-200 border border-t-0 border-base-300 z-popover">
 								<ul className="menu p-2">
 									<li>
 										<button
@@ -687,7 +686,13 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 						)}
 					</div>
 				)}
-				<button type="button" className="btn btn-error btn-md gap-2" onClick={reset}>
+				<button
+					type="button"
+					className={`btn btn-md gap-2 ${
+						hasActiveConditions ? "btn-error" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
+					}`}
+					onClick={reset}
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
@@ -700,7 +705,12 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 					</svg>
 					Clear
 				</button>
-				<button type="submit" className="btn btn-primary btn-md gap-2">
+				<button
+					type="submit"
+					className={`btn btn-md gap-2 ${
+						hasActiveConditions ? "btn-primary" : "bg-base-200 text-base-content hover:bg-base-300 border-base-300"
+					}`}
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
@@ -725,23 +735,47 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 	return (
 		<>
-			<form
-				ref={formRef}
-				className="bg-base-100 rounded-lg"
-				onSubmit={(e) => {
-					e.preventDefault();
-					search();
-				}}
-				onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
-			>
-				<SearchGroupComponent
-					group={searchTree}
-					onChange={setSearchTree}
-					onHelpClick={() => helpModalRef.current?.showModal()}
-					footer={rootFooter}
-					{...tableArgs}
-				/>
-			</form>
+			<div className="collapse collapse-arrow overflow-visible rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
+				<input defaultChecked type="checkbox" />
+				<div className="collapse-title py-2.5 px-4 text-base font-medium text-base-content">
+					<div className="flex items-center gap-2">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth={1.9}
+							stroke="currentColor"
+							className="size-5 text-primary"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								d="M10.5 3.75h3m-7.5 0h12a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.22.53l-4.56 4.56a.75.75 0 0 0-.22.53v5.65a.75.75 0 0 1-1.28.53l-2.44-2.44a.75.75 0 0 1-.22-.53v-3.21a.75.75 0 0 0-.22-.53L5.47 7.28a.75.75 0 0 1-.22-.53V4.5a.75.75 0 0 1 .75-.75Z"
+							/>
+						</svg>
+						<span>Query Builder</span>
+					</div>
+				</div>
+				<div className="collapse-content overflow-visible px-4">
+					<form
+						ref={formRef}
+						className="relative overflow-visible bg-transparent pb-4"
+						onSubmit={(e) => {
+							e.preventDefault();
+							search();
+						}}
+						onChange={() => setTriggerQueryDescription(!triggerQueryDescription)}
+					>
+						<SearchGroupComponent
+							group={searchTree}
+							onChange={setSearchTree}
+							onHelpClick={() => helpModalRef.current?.showModal()}
+							footer={rootFooter}
+							{...tableArgs}
+						/>
+					</form>
+				</div>
+			</div>
 
 			{searchTable ? (
 				<Modal ref={apiFieldsModalRef} className="max-h-[85vh] overflow-y-auto my-8 max-w-3xl">
@@ -1010,8 +1044,12 @@ function SearchGroupComponent({
 	const tableArgs = noTable ? { noTable } : { searchTable };
 
 	return (
-		<div className={`card bg-base-100 shadow-sm border border-base-300 w-full ${!isRoot ? "bg-base-200/60" : ""}`}>
-			<div className={`card-body p-4 space-y-2 relative ${!isRoot ? "pl-8" : ""}`}>
+		<div
+			className={`w-full ${
+				isRoot ? "" : "card bg-base-100 shadow-sm border border-base-300"
+			} ${!isRoot ? "bg-base-200/60" : ""}`}
+		>
+			<div className={`${isRoot ? "space-y-2" : "card-body p-4"} space-y-2 relative ${!isRoot ? "pl-8" : ""}`}>
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center text-sm text-base-content/70">
 						{isRoot && (
@@ -1069,7 +1107,32 @@ function SearchGroupComponent({
 				</div>
 
 				<div className="space-y-0.5">
-					{group.children.length === 0 && (
+					{group.children.length === 0 && isRoot && (
+						<div className="flex flex-col items-center justify-center text-center px-4 py-10">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								strokeWidth={1.9}
+								stroke="currentColor"
+								className="size-6 text-primary mb-3"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M10.5 3.75h3m-7.5 0h12a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.22.53l-4.56 4.56a.75.75 0 0 0-.22.53v5.65a.75.75 0 0 1-1.28.53l-2.44-2.44a.75.75 0 0 1-.22-.53v-3.21a.75.75 0 0 0-.22-.53L5.47 7.28a.75.75 0 0 1-.22-.53V4.5a.75.75 0 0 1 .75-.75Z"
+								/>
+							</svg>
+							<p className="text-sm text-base-content/65 italic mb-4">
+								No criteria yet. Start by adding your first filter.
+							</p>
+							<button type="button" className="btn btn-sm btn-primary" onClick={handleAddRule}>
+								+ Add Filter
+							</button>
+						</div>
+					)}
+
+					{group.children.length === 0 && !isRoot && (
 						<p className="text-sm text-base-content/60 italic">No criteria yet. Add a filter or nested group.</p>
 					)}
 
@@ -1113,7 +1176,9 @@ function SearchGroupComponent({
 					}, [])}
 				</div>
 
-				<div className="flex flex-wrap items-center gap-3 pt-1 mt-1">
+				<div
+					className={`flex flex-wrap items-center gap-3 pt-1 mt-1 ${isRoot && group.children.length === 0 ? "hidden" : ""}`}
+				>
 					<button type="button" className="btn btn-sm btn-primary" onClick={handleAddRule}>
 						+ Add Filter
 					</button>

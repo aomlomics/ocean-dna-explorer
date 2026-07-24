@@ -60,6 +60,80 @@
 	--color-map-colors: #ff6b6b;
 }
 
+/*
+  MASTER Z INDEX SYSTEM
+  this is the central z index scale for shared ui layers
+  it keeps unrelated parts of the app from overlapping each other in random ways... this 
+  should avoid having to fix one-off errors regarding z index
+  use semantic classes like z-header z-menu z-modal and z-tooltip instead of raw numbers
+  use this scale for cross app layers like header menus dialogs backdrops and toasts
+  for ordering inside one component use small local values and keep that logic local
+  TAILWIND got rid of the tailwind.config file a while ago. our previous z index values were ignored
+*/
+@theme {
+	--z-behind: -1; /* background visuals that should sit under everything */
+	--z-base: 0; /* normal page content with no special layering */
+	--z-raised: 10; /* regular ui pieces like cards breadcrumbs and info icons */
+	--z-sticky: 20; /* sticky stuff like pinned headers and frozen table columns */
+	--z-fixed: 30; /* fixed page controls like floating buttons */
+	--z-popover: 1200; /* popup panels that should stay under header and menus */
+	--z-tooltip: 1300; /* tooltip text that should stay under header and menus */
+	--z-scrim: 1400; /* dark page dimmer used behind nav related overlays */
+	--z-header: 2000; /* the main header bar above normal page content */
+	--z-menu: 2100; /* mega menu and other header menus */
+	--z-backdrop: 3000; /* dark backdrop used behind modals */
+	--z-modal: 3100; /* modal windows and dialog panels */
+	--z-toast: 3200; /* toast messages and transient alerts */
+	--z-loading: 3300; /* full screen loading state on top of app ui */
+	--z-max: 9999; /* emergency top layer only when absolutely needed */
+}
+
+@utility z-behind {
+	z-index: var(--z-behind);
+}
+@utility z-base {
+	z-index: var(--z-base);
+}
+@utility z-raised {
+	z-index: var(--z-raised);
+}
+@utility z-sticky {
+	z-index: var(--z-sticky);
+}
+@utility z-fixed {
+	z-index: var(--z-fixed);
+}
+@utility z-popover {
+	z-index: var(--z-popover);
+}
+@utility z-tooltip {
+	z-index: var(--z-tooltip);
+}
+@utility z-scrim {
+	z-index: var(--z-scrim);
+}
+@utility z-header {
+	z-index: var(--z-header);
+}
+@utility z-menu {
+	z-index: var(--z-menu);
+}
+@utility z-backdrop {
+	z-index: var(--z-backdrop);
+}
+@utility z-modal {
+	z-index: var(--z-modal);
+}
+@utility z-toast {
+	z-index: var(--z-toast);
+}
+@utility z-loading {
+	z-index: var(--z-loading);
+}
+@utility z-max {
+	z-index: var(--z-max);
+}
+
 @keyframes gradient-organic {
 	0% {
 		transform: translate(0, 0) scale(1);
@@ -126,6 +200,76 @@
 	}
 }
 
+/* ============================================================
+   STANDARDIZED TOOLTIP CARET (single source of truth)
+   ------------------------------------------------------------
+   DaisyUI 5 draws the tooltip caret (::after) as a rectangle that
+   is filled with `background-color` and then shaped with a
+   `mask-image` SVG. A CSS mask only reveals the fill, so it is
+   impossible to add a visible border/outline to that caret with
+   `border`/`outline`/`after:*` utilities — the mask clips them.
+
+   To guarantee EVERY text tooltip caret ([data-tip]) has a
+   consistent outline no matter where it appears, we drop the mask
+   and rebuild the caret as a rotated, bordered square (the same
+   technique used by our hand-built carets). Do NOT re-add caret
+   styling per component — this block owns it globally.
+   ============================================================ */
+.tooltip[data-tip]::after {
+	/* remove DaisyUI's mask so the box becomes a real square we can outline */
+	-webkit-mask-image: none !important;
+	mask-image: none !important;
+	width: 0.5rem !important;
+	height: 0.5rem !important;
+	background-color: var(--tt-bg);
+	/*
+	  Keep the original "base-content at 20%" look, but layer in fallbacks:
+	  1) static fallback for older parsers
+	  2) rgb(from ...) for modern parsers without color-mix
+	  3) color-mix for environments that support it
+	*/
+	border: 0 solid color-mix(in oklab, var(--color-base-content) 20%, transparent);
+}
+
+/* Top (default) — caret points down: outline on lower-right + lower-left edges */
+.tooltip[data-tip]::after,
+.tooltip-top[data-tip]::after {
+	inset: auto auto var(--tt-off) 50%;
+	transform: translate(-50%, 50%) rotate(45deg);
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+}
+
+/* Bottom — caret points up */
+.tooltip-bottom[data-tip]::after {
+	inset: var(--tt-off) auto auto 50%;
+	transform: translate(-50%, -50%) rotate(45deg);
+	border-top-width: 1px;
+	border-left-width: 1px;
+	border-right-width: 0;
+	border-bottom-width: 0;
+}
+
+/* Left — caret points right */
+.tooltip-left[data-tip]::after {
+	inset: 50% var(--tt-off) auto auto;
+	transform: translate(50%, -50%) rotate(45deg);
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 0;
+	border-left-width: 0;
+}
+
+/* Right — caret points left */
+.tooltip-right[data-tip]::after {
+	inset: 50% auto auto var(--tt-off);
+	transform: translate(-50%, -50%) rotate(45deg);
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-width: 0;
+	border-right-width: 0;
+}
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
@@ -149,12 +293,25 @@
 
 /* Global breadcrumb styling */
 .breadcrumbs {
-	font-size: 0.875rem; /* text-sm */
+	font-size: 1.1rem;
 }
 
-/* Global modal backdrop styling - make darker */
-.modal-backdrop {
-	background-color: rgba(0, 0, 0, 0.7) !important; /* Darker than default */
+/* Global modal layering behavior:
+   Keep dimming consistent across the page by removing backdrop blur/fade animations
+   that can produce "bright flash" desync when closing dialogs. */
+.modal,
+.modal-box,
+.modal-backdrop,
+.modal::backdrop {
+	animation: none !important;
+	transition: none !important;
+}
+
+.modal-backdrop,
+.modal::backdrop {
+	background-color: rgba(0, 0, 0, 0.7) !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 
 /* Clerk: Style 'Connect account' button text in profile/account */
@@ -199,3 +356,224 @@
 		opacity: 1;
 	}
 }
+
+/* Hide Microsoft social button */
+.ode-signin-page [class*="microsoft"] {
+	display: none !important;
+}
+
+/* cl-socialButtonsRoot is the outer wrapper; its direct child (cl-socialButtons) is
+   the actual flex container. Force row layout and centering here since Clerk's own
+   stylesheet overrides Tailwind utility classes passed via appearance.elements. */
+.ode-signin-page [class*="cl-socialButtonsRoot"] > div {
+	display: flex !important;
+	flex-direction: row !important;
+	justify-content: center !important;
+	gap: 0.5rem !important;
+	flex-wrap: wrap !important;
+}
+
+/* Clerk's own stylesheet applies font-weight: 600 to the header title — override it. */
+.ode-signin-page [class*="cl-headerTitle"] {
+	font-weight: 400 !important;
+}
+
+/* Clerk renders button text in a child span (cl-socialButtonsBlockButtonText) with its
+   own grey color that doesn't inherit from the parent button element. */
+[data-theme="dark"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
+	color: #E2E8F0 !important;
+}
+[data-theme="light"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"],
+.ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
+	color: #233D7F !important;
+}
+
+/* ============================================================
+   Tour pages: /ambient, /sponsors, /showcase
+   Full-screen pages with subtle moving blue ambiance.
+   ============================================================ */
+
+/* Hide global dashboard chrome while a tour page is active. */
+body:has(.tour-layout-root) header,
+body:has(.tour-layout-root) footer,
+body:has(.tour-layout-root) #unfocusButton {
+	display: none !important;
+}
+
+body:has(.tour-layout-root) {
+	overflow: hidden;
+}
+
+/* Shared motion background (login-page style, slightly more movement). */
+.tour-motion-bg::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background:
+		radial-gradient(circle at 10% 15%, rgba(100, 171, 220, 0.18) 0%, transparent 40%),
+		radial-gradient(circle at 90% 15%, rgba(35, 61, 127, 0.18) 0%, transparent 42%),
+		radial-gradient(circle at 50% 90%, rgba(125, 186, 229, 0.16) 0%, transparent 44%);
+}
+
+/* ---------- /ambient ---------- */
+.ambient-logo {
+	animation: ambientLogoFloat 8s ease-in-out infinite;
+}
+
+.ambient-cloud {
+	position: relative;
+	width: 100%;
+	/* Avoid height:100% here — it overrides Tailwind `h-[…]` and breaks flex sizing. */
+}
+
+/* Softer in the middle, fades toward edges (mask alpha). */
+.ambient-wordcloud-vignette {
+	-webkit-mask-image: radial-gradient(
+		ellipse 84% 80% at 50% 50%,
+		#000 0%,
+		#000 45%,
+		rgba(0, 0, 0, 0.6) 74%,
+		rgba(0, 0, 0, 0.18) 92%,
+		transparent 100%
+	);
+	mask-image: radial-gradient(
+		ellipse 84% 80% at 50% 50%,
+		#000 0%,
+		#000 45%,
+		rgba(0, 0, 0, 0.6) 74%,
+		rgba(0, 0, 0, 0.18) 92%,
+		transparent 100%
+	);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+}
+
+/* Gentle, out-of-phase drift applied to each word-cloud word after it finishes
+   typing in. We animate the independent `translate`/`scale` properties (set
+   here) rather than `transform`, so this composes with the `transform: rotate()`
+   wordcloud2 puts on rotated words instead of clobbering it. Per-word
+   animation-delay / animation-duration are set inline in ambient/page.tsx. */
+.ambient-word-breathe {
+	animation-name: ambientWordBreathe;
+	animation-timing-function: ease-in-out;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+	will-change: translate;
+}
+
+@keyframes ambientWordBreathe {
+	from {
+		translate: 0 0;
+		scale: 1;
+		opacity: 0.94;
+	}
+	to {
+		translate: 0 -4px;
+		scale: 1.02;
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ambient-word-breathe {
+		animation: none;
+	}
+}
+
+
+/* ---------- /sponsors ---------- */
+.sponsors-title {
+	animation: sponsorsTitleIn 2s ease-out both;
+}
+
+.sponsors-subtitle {
+	animation: sponsorsTitleIn 2s ease-out 0.35s both;
+}
+
+.sponsors-logo {
+	animation: sponsorsLogoFloat 6.4s ease-in-out infinite;
+}
+
+.sponsors-logo-delay-1 {
+	animation-delay: 0s;
+}
+
+.sponsors-logo-delay-2 {
+	animation-delay: 1.8s;
+}
+
+/* ---------- /showcase ---------- */
+.showcase-details {
+	animation: showcaseDetailsIn 0.9s ease-out both;
+}
+
+.showcase-taxon-stream {
+	transform: translate(-50%, -50%);
+	animation: showcaseTaxonStream ease-in-out forwards;
+}
+
+@keyframes showcaseDetailsIn {
+	from {
+		opacity: 0;
+		transform: translateX(-16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes showcaseTaxonStream {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.68);
+	}
+	12% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1.03);
+	}
+	74% {
+		opacity: 0.96;
+		transform: translate(-50%, -50%) scale(1);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(1.05);
+	}
+}
+
+@keyframes ambientLogoFloat {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-4px);
+	}
+}
+
+
+@keyframes sponsorsTitleIn {
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes sponsorsLogoFloat {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-9px);
+	}
+}
+

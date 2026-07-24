@@ -1,3 +1,7 @@
+import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
+import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
+import { BlastQueryPartial } from "@/prisma/generated/zod";
+
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
 
@@ -126,6 +130,13 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 	? R
 	: any;
 
+export type BlastRequest = {
+	queries: string[];
+	assay_name?: Assay["assay_name"];
+	save?: boolean;
+	options?: Omit<BlastQueryPartial, "id" | "userId" | "dateCalculated" | "sequences" | "database" | "databaseVersion">;
+};
+
 export type UserMetadata = {
 	role?: Role;
 	roleApplication?: {
@@ -133,6 +144,8 @@ export type UserMetadata = {
 		description?: string;
 	};
 };
+declare module "wordcloud";
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

@@ -26,7 +26,7 @@ export default function LoadingTable({
 							<button className="btn btn-sm" disabled>
 								Apply Filters
 							</button>
-							<label className="input input-sm input-bordered">
+							<label className="input input-sm input-bordered focus-within:outline-none">
 								Per Page:
 								<input name="take" defaultValue={take} type="number" disabled />
 							</label>
@@ -39,7 +39,7 @@ export default function LoadingTable({
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
 						<div className="flex gap-2">
 							<InfoButton
-								infoText="If many rows are displayed per page, selecting these options can cause long load times."
+								text="If many rows are displayed per page, selecting these options can cause long load times."
 								type="warning"
 								dir="tooltip-left"
 								className="z-60"
@@ -78,7 +78,7 @@ export default function LoadingTable({
 
 									<label className="form-control w-full max-w-xs text-lg">
 										{/* Value Filter */}
-										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 16 16"
@@ -103,7 +103,7 @@ export default function LoadingTable({
 										</div>
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
-											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													viewBox="0 0 16 16"

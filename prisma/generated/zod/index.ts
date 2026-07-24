@@ -67,13 +67,17 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','analysis_run_name',
 
 export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
-export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','imageFileUrl_ODE','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
+export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
 export const AlphaDiversityScalarFieldEnumSchema = z.enum(['id','dateCalculated','finished','analysis_run_name','indexType','depth']);
 
 export const AlphaDiversityIndexScalarFieldEnumSchema = z.enum(['id','lib_id','parentId','index']);
+
+export const BlastQueryScalarFieldEnumSchema = z.enum(['id','userId','dateCalculated','sequences','database','databaseVersion','task','max_target_seqs','evalue','perc_identity','qcov_hsp_perc']);
+
+export const BlastQueryResultScalarFieldEnumSchema = z.enum(['id','query','sequence','featureid','queryId','percentIdentity','alignmentLength','mismatches','gapOpens','queryStart','queryEnd','subjectStart','subjectEnd','eValue','bitScore']);
 
 export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds','dateSubmitted','userDefined','editHistory','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','imageFileUrl_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','neg_cont_0_1','pos_cont_0_1','projectDescription','dataDescription','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep','sample_type']);
 
@@ -103,13 +107,17 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_n
 
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
-export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','imageFileUrl_ODE','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
+export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
 export const AlphaDiversityOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_name','indexType']);
 
 export const AlphaDiversityIndexOrderByRelevanceFieldEnumSchema = z.enum(['lib_id']);
+
+export const BlastQueryOrderByRelevanceFieldEnumSchema = z.enum(['userId','sequences','database','task']);
+
+export const BlastQueryResultOrderByRelevanceFieldEnumSchema = z.enum(['query','sequence','featureid']);
 
 export const ProjectOrderByRelevanceFieldEnumSchema = z.enum(['project_id','userIds','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','imageFileUrl_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','projectDescription','dataDescription','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','checkls_ver','seq_archive','code_repo','sample_type']);
 
@@ -607,6 +615,7 @@ export type FeatureOptionalDefaults = z.infer<typeof FeatureOptionalDefaultsSche
 export type FeatureRelations = {
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
+  BlastQueryResults: BlastQueryResultWithRelations[];
 };
 
 export type FeatureWithRelations = z.infer<typeof FeatureSchema> & FeatureRelations
@@ -614,6 +623,7 @@ export type FeatureWithRelations = z.infer<typeof FeatureSchema> & FeatureRelati
 export const FeatureWithRelationsSchema: z.ZodType<FeatureWithRelations> = FeatureSchema.merge(z.object({
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultWithRelationsSchema).array(),
 }))
 
 // FEATURE OPTIONAL DEFAULTS RELATION SCHEMA
@@ -622,6 +632,7 @@ export const FeatureWithRelationsSchema: z.ZodType<FeatureWithRelations> = Featu
 export type FeatureOptionalDefaultsRelations = {
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
+  BlastQueryResults: BlastQueryResultOptionalDefaultsWithRelations[];
 };
 
 export type FeatureOptionalDefaultsWithRelations = z.infer<typeof FeatureOptionalDefaultsSchema> & FeatureOptionalDefaultsRelations
@@ -629,6 +640,7 @@ export type FeatureOptionalDefaultsWithRelations = z.infer<typeof FeatureOptiona
 export const FeatureOptionalDefaultsWithRelationsSchema: z.ZodType<FeatureOptionalDefaultsWithRelations> = FeatureOptionalDefaultsSchema.merge(z.object({
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // FEATURE PARTIAL RELATION SCHEMA
@@ -637,6 +649,7 @@ export const FeatureOptionalDefaultsWithRelationsSchema: z.ZodType<FeatureOption
 export type FeaturePartialRelations = {
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
+  BlastQueryResults?: BlastQueryResultPartialWithRelations[];
 };
 
 export type FeaturePartialWithRelations = z.infer<typeof FeaturePartialSchema> & FeaturePartialRelations
@@ -644,6 +657,7 @@ export type FeaturePartialWithRelations = z.infer<typeof FeaturePartialSchema> &
 export const FeaturePartialWithRelationsSchema: z.ZodType<FeaturePartialWithRelations> = FeaturePartialSchema.merge(z.object({
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
 })).partial()
 
 export type FeatureOptionalDefaultsWithPartialRelations = z.infer<typeof FeatureOptionalDefaultsSchema> & FeaturePartialRelations
@@ -651,6 +665,7 @@ export type FeatureOptionalDefaultsWithPartialRelations = z.infer<typeof Feature
 export const FeatureOptionalDefaultsWithPartialRelationsSchema: z.ZodType<FeatureOptionalDefaultsWithPartialRelations> = FeatureOptionalDefaultsSchema.merge(z.object({
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
 }).partial())
 
 export type FeatureWithPartialRelations = z.infer<typeof FeatureSchema> & FeaturePartialRelations
@@ -658,6 +673,7 @@ export type FeatureWithPartialRelations = z.infer<typeof FeatureSchema> & Featur
 export const FeatureWithPartialRelationsSchema: z.ZodType<FeatureWithPartialRelations> = FeatureSchema.merge(z.object({
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
@@ -667,7 +683,6 @@ export const FeatureWithPartialRelationsSchema: z.ZodType<FeatureWithPartialRela
 export const TaxonomySchema = z.object({
   id: z.number().int(),
   taxonomy: z.string(),
-  imageFileUrl_ODE: z.string().nullish(),
   verbatimIdentification: z.string(),
   higherClassification: z.string().nullish(),
   domain: z.string().nullish(),
@@ -1013,6 +1028,203 @@ export type AlphaDiversityIndexWithPartialRelations = z.infer<typeof AlphaDivers
 export const AlphaDiversityIndexWithPartialRelationsSchema: z.ZodType<AlphaDiversityIndexWithPartialRelations> = AlphaDiversityIndexSchema.merge(z.object({
   Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   AlphaDiversity: z.lazy(() => AlphaDiversityPartialWithRelationsSchema),
+}).partial())
+
+/////////////////////////////////////////
+// BLAST QUERY SCHEMA
+/////////////////////////////////////////
+
+export const BlastQuerySchema = z.object({
+  id: z.number().int(),
+  userId: z.string(),
+  dateCalculated: z.coerce.date(),
+  sequences: z.string().array(),
+  database: z.string().nullish(),
+  databaseVersion: z.number().int(),
+  task: z.string(),
+  max_target_seqs: z.number().int(),
+  evalue: z.number(),
+  perc_identity: z.number(),
+  qcov_hsp_perc: z.number(),
+})
+
+export type BlastQuery = z.infer<typeof BlastQuerySchema>
+
+/////////////////////////////////////////
+// BLAST QUERY PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const BlastQueryPartialSchema = BlastQuerySchema.partial()
+
+export type BlastQueryPartial = z.infer<typeof BlastQueryPartialSchema>
+
+// BLAST QUERY OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const BlastQueryOptionalDefaultsSchema = BlastQuerySchema.merge(z.object({
+  id: z.number().int().optional(),
+  dateCalculated: z.coerce.date().optional(),
+}))
+
+export type BlastQueryOptionalDefaults = z.infer<typeof BlastQueryOptionalDefaultsSchema>
+
+// BLAST QUERY RELATION SCHEMA
+//------------------------------------------------------
+
+export type BlastQueryRelations = {
+  Assay?: AssayWithRelations | null;
+  BlastQueryResults: BlastQueryResultWithRelations[];
+};
+
+export type BlastQueryWithRelations = z.infer<typeof BlastQuerySchema> & BlastQueryRelations
+
+export const BlastQueryWithRelationsSchema: z.ZodType<BlastQueryWithRelations> = BlastQuerySchema.merge(z.object({
+  Assay: z.lazy(() => AssayWithRelationsSchema).nullish(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultWithRelationsSchema).array(),
+}))
+
+// BLAST QUERY OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type BlastQueryOptionalDefaultsRelations = {
+  Assay?: AssayOptionalDefaultsWithRelations | null;
+  BlastQueryResults: BlastQueryResultOptionalDefaultsWithRelations[];
+};
+
+export type BlastQueryOptionalDefaultsWithRelations = z.infer<typeof BlastQueryOptionalDefaultsSchema> & BlastQueryOptionalDefaultsRelations
+
+export const BlastQueryOptionalDefaultsWithRelationsSchema: z.ZodType<BlastQueryOptionalDefaultsWithRelations> = BlastQueryOptionalDefaultsSchema.merge(z.object({
+  Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema).nullish(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultOptionalDefaultsWithRelationsSchema).array(),
+}))
+
+// BLAST QUERY PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type BlastQueryPartialRelations = {
+  Assay?: AssayPartialWithRelations | null;
+  BlastQueryResults?: BlastQueryResultPartialWithRelations[];
+};
+
+export type BlastQueryPartialWithRelations = z.infer<typeof BlastQueryPartialSchema> & BlastQueryPartialRelations
+
+export const BlastQueryPartialWithRelationsSchema: z.ZodType<BlastQueryPartialWithRelations> = BlastQueryPartialSchema.merge(z.object({
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema).nullish(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
+})).partial()
+
+export type BlastQueryOptionalDefaultsWithPartialRelations = z.infer<typeof BlastQueryOptionalDefaultsSchema> & BlastQueryPartialRelations
+
+export const BlastQueryOptionalDefaultsWithPartialRelationsSchema: z.ZodType<BlastQueryOptionalDefaultsWithPartialRelations> = BlastQueryOptionalDefaultsSchema.merge(z.object({
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema).nullish(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
+}).partial())
+
+export type BlastQueryWithPartialRelations = z.infer<typeof BlastQuerySchema> & BlastQueryPartialRelations
+
+export const BlastQueryWithPartialRelationsSchema: z.ZodType<BlastQueryWithPartialRelations> = BlastQuerySchema.merge(z.object({
+  Assay: z.lazy(() => AssayPartialWithRelationsSchema).nullish(),
+  BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
+}).partial())
+
+/////////////////////////////////////////
+// BLAST QUERY RESULT SCHEMA
+/////////////////////////////////////////
+
+export const BlastQueryResultSchema = z.object({
+  id: z.number().int(),
+  query: z.string().nullish(),
+  sequence: z.string(),
+  featureid: z.string(),
+  queryId: z.number().int(),
+  percentIdentity: z.number(),
+  alignmentLength: z.number().int(),
+  mismatches: z.number().int(),
+  gapOpens: z.number().int(),
+  queryStart: z.number().int(),
+  queryEnd: z.number().int(),
+  subjectStart: z.number().int(),
+  subjectEnd: z.number().int(),
+  eValue: z.number(),
+  bitScore: z.number(),
+})
+
+export type BlastQueryResult = z.infer<typeof BlastQueryResultSchema>
+
+/////////////////////////////////////////
+// BLAST QUERY RESULT PARTIAL SCHEMA
+/////////////////////////////////////////
+
+export const BlastQueryResultPartialSchema = BlastQueryResultSchema.partial()
+
+export type BlastQueryResultPartial = z.infer<typeof BlastQueryResultPartialSchema>
+
+// BLAST QUERY RESULT OPTIONAL DEFAULTS SCHEMA
+//------------------------------------------------------
+
+export const BlastQueryResultOptionalDefaultsSchema = BlastQueryResultSchema.merge(z.object({
+  id: z.number().int().optional(),
+}))
+
+export type BlastQueryResultOptionalDefaults = z.infer<typeof BlastQueryResultOptionalDefaultsSchema>
+
+// BLAST QUERY RESULT RELATION SCHEMA
+//------------------------------------------------------
+
+export type BlastQueryResultRelations = {
+  Feature: FeatureWithRelations;
+  BlastQuery: BlastQueryWithRelations;
+};
+
+export type BlastQueryResultWithRelations = z.infer<typeof BlastQueryResultSchema> & BlastQueryResultRelations
+
+export const BlastQueryResultWithRelationsSchema: z.ZodType<BlastQueryResultWithRelations> = BlastQueryResultSchema.merge(z.object({
+  Feature: z.lazy(() => FeatureWithRelationsSchema),
+  BlastQuery: z.lazy(() => BlastQueryWithRelationsSchema),
+}))
+
+// BLAST QUERY RESULT OPTIONAL DEFAULTS RELATION SCHEMA
+//------------------------------------------------------
+
+export type BlastQueryResultOptionalDefaultsRelations = {
+  Feature: FeatureOptionalDefaultsWithRelations;
+  BlastQuery: BlastQueryOptionalDefaultsWithRelations;
+};
+
+export type BlastQueryResultOptionalDefaultsWithRelations = z.infer<typeof BlastQueryResultOptionalDefaultsSchema> & BlastQueryResultOptionalDefaultsRelations
+
+export const BlastQueryResultOptionalDefaultsWithRelationsSchema: z.ZodType<BlastQueryResultOptionalDefaultsWithRelations> = BlastQueryResultOptionalDefaultsSchema.merge(z.object({
+  Feature: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema),
+  BlastQuery: z.lazy(() => BlastQueryOptionalDefaultsWithRelationsSchema),
+}))
+
+// BLAST QUERY RESULT PARTIAL RELATION SCHEMA
+//------------------------------------------------------
+
+export type BlastQueryResultPartialRelations = {
+  Feature?: FeaturePartialWithRelations;
+  BlastQuery?: BlastQueryPartialWithRelations;
+};
+
+export type BlastQueryResultPartialWithRelations = z.infer<typeof BlastQueryResultPartialSchema> & BlastQueryResultPartialRelations
+
+export const BlastQueryResultPartialWithRelationsSchema: z.ZodType<BlastQueryResultPartialWithRelations> = BlastQueryResultPartialSchema.merge(z.object({
+  Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
+  BlastQuery: z.lazy(() => BlastQueryPartialWithRelationsSchema),
+})).partial()
+
+export type BlastQueryResultOptionalDefaultsWithPartialRelations = z.infer<typeof BlastQueryResultOptionalDefaultsSchema> & BlastQueryResultPartialRelations
+
+export const BlastQueryResultOptionalDefaultsWithPartialRelationsSchema: z.ZodType<BlastQueryResultOptionalDefaultsWithPartialRelations> = BlastQueryResultOptionalDefaultsSchema.merge(z.object({
+  Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
+  BlastQuery: z.lazy(() => BlastQueryPartialWithRelationsSchema),
+}).partial())
+
+export type BlastQueryResultWithPartialRelations = z.infer<typeof BlastQueryResultSchema> & BlastQueryResultPartialRelations
+
+export const BlastQueryResultWithPartialRelationsSchema: z.ZodType<BlastQueryResultWithPartialRelations> = BlastQueryResultSchema.merge(z.object({
+  Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
+  BlastQuery: z.lazy(() => BlastQueryPartialWithRelationsSchema),
 }).partial())
 
 /////////////////////////////////////////
@@ -1507,6 +1719,7 @@ export type AssayRelations = {
   AssayPreps: AssayPrepWithRelations[];
   Libraries: LibraryWithRelations[];
   Analyses: AnalysisWithRelations[];
+  BlastQueries: BlastQueryWithRelations[];
 };
 
 export type AssayWithRelations = z.infer<typeof AssaySchema> & AssayRelations
@@ -1515,6 +1728,7 @@ export const AssayWithRelationsSchema: z.ZodType<AssayWithRelations> = AssaySche
   AssayPreps: z.lazy(() => AssayPrepWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
+  BlastQueries: z.lazy(() => BlastQueryWithRelationsSchema).array(),
 }))
 
 // ASSAY OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1524,6 +1738,7 @@ export type AssayOptionalDefaultsRelations = {
   AssayPreps: AssayPrepOptionalDefaultsWithRelations[];
   Libraries: LibraryOptionalDefaultsWithRelations[];
   Analyses: AnalysisOptionalDefaultsWithRelations[];
+  BlastQueries: BlastQueryOptionalDefaultsWithRelations[];
 };
 
 export type AssayOptionalDefaultsWithRelations = z.infer<typeof AssayOptionalDefaultsSchema> & AssayOptionalDefaultsRelations
@@ -1532,6 +1747,7 @@ export const AssayOptionalDefaultsWithRelationsSchema: z.ZodType<AssayOptionalDe
   AssayPreps: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
+  BlastQueries: z.lazy(() => BlastQueryOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // ASSAY PARTIAL RELATION SCHEMA
@@ -1541,6 +1757,7 @@ export type AssayPartialRelations = {
   AssayPreps?: AssayPrepPartialWithRelations[];
   Libraries?: LibraryPartialWithRelations[];
   Analyses?: AnalysisPartialWithRelations[];
+  BlastQueries?: BlastQueryPartialWithRelations[];
 };
 
 export type AssayPartialWithRelations = z.infer<typeof AssayPartialSchema> & AssayPartialRelations
@@ -1549,6 +1766,7 @@ export const AssayPartialWithRelationsSchema: z.ZodType<AssayPartialWithRelation
   AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  BlastQueries: z.lazy(() => BlastQueryPartialWithRelationsSchema).array(),
 })).partial()
 
 export type AssayOptionalDefaultsWithPartialRelations = z.infer<typeof AssayOptionalDefaultsSchema> & AssayPartialRelations
@@ -1557,6 +1775,7 @@ export const AssayOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AssayOpt
   AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  BlastQueries: z.lazy(() => BlastQueryPartialWithRelationsSchema).array(),
 }).partial())
 
 export type AssayWithPartialRelations = z.infer<typeof AssaySchema> & AssayPartialRelations
@@ -1565,6 +1784,7 @@ export const AssayWithPartialRelationsSchema: z.ZodType<AssayWithPartialRelation
   AssayPreps: z.lazy(() => AssayPrepPartialWithRelationsSchema).array(),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  BlastQueries: z.lazy(() => BlastQueryPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////

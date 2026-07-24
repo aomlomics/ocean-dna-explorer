@@ -2,8 +2,8 @@
 
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
-import { Prisma, Tag } from "@/app/generated/prisma/client";
+import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
+import { BlastQuery, BlastQueryResult, Prisma, Sample, Tag } from "@/app/generated/prisma/client";
 import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
@@ -16,8 +16,17 @@ import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@
 import AnalysisTag from "../tags/AnalysisTag";
 import Checklist from "../Checklist";
 import InfoButton from "../InfoButton";
+import { buildWhereParams } from "@/app/helpers/queries";
+import TableStatusState from "./TableStatusState";
+
+type ExtraResults = {
+	blastResult: BlastQueryResult[] | undefined;
+	existingBlastDate: BlastQuery["dateCalculated"] | undefined;
+	samples: Sample[] | undefined;
+};
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
+const EXCLUDE_TABLES = NonDataTableNames.filter((t) => t !== "tag") as Uncapitalize<Prisma.ModelName>[];
 
 //TODO: make where arg support relational queries
 //TODO: clamp table column width, add hover info to clamped columns
@@ -30,6 +39,8 @@ export default function Table({
 	filterHeadersAtStart,
 	defaultTake = 50,
 	ignoreParams,
+	extraParams,
+	setExtraResults,
 	className
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -40,23 +51,25 @@ export default function Table({
 	filterHeadersAtStart?: boolean;
 	defaultTake?: number;
 	ignoreParams?: string[];
+	extraParams?: Record<string, string>;
+	setExtraResults?: (args: ExtraResults) => void;
 	className?: string;
 }) {
 	const title = TableMetadata[table].titleField;
 
 	const manyRelations = [] as string[];
 	const oneRelations = [] as string[];
-	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, string[]>;
+	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, readonly string[]>;
 	for (const rel of TableMetadata[table].relations) {
-		if (rel.table !== "AlphaDiversity" && rel.table !== "AlphaDiversityIndex")
+		if (!EXCLUDE_TABLES.includes(uncapitalizeTable(rel.table)))
 			if (rel.type.endsWith("many")) {
 				manyRelations.push(rel.field);
 			} else if (rel.type.endsWith("one")) {
-				const relTable = rel.field as Prisma.ModelName;
-				if (typeof TableMetadata[relTable].titleField === "string") {
-					oneRelations.push(TableMetadata[relTable].titleField);
+				const meta = TableMetadata[rel.table];
+				if (typeof meta.titleField === "string") {
+					oneRelations.push(meta.titleField);
 				} else {
-					oneRelationsArrayTitle[relTable] = TableMetadata[relTable].titleField;
+					oneRelationsArrayTitle[rel.table] = meta.titleField;
 				}
 			}
 	}
@@ -181,35 +194,14 @@ export default function Table({
 			whereQuery = { ...whereQuery, ...whereFilter };
 		}
 		if (searchParams && searchParams.size) {
-			const tempParms = new URLSearchParams(searchParams);
-			//specifically pull out shapes from searchParams
-			const polygons = tempParms.getAll("polygon");
-			if (polygons.length) {
-				tempParms.delete("polygon");
-				for (const p of polygons) {
-					query.set("polygon", p);
-				}
-			}
-			const circles = tempParms.getAll("circle");
-			if (circles.length) {
-				tempParms.delete("circle");
-				for (const c of circles) {
-					query.set("circle", c);
-				}
-			}
-
-			//get rest of queries
-			whereQuery = { ...whereQuery, ...Object.fromEntries(tempParms) };
-			if (ignoreParams) {
-				for (const param of ignoreParams) {
-					delete whereQuery[param];
-				}
-			}
+			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
 		}
 
 		if (Object.keys(whereQuery).length) {
 			query.set("where", JSON.stringify(whereQuery));
 		}
+
+		Object.entries(extraParams || {}).forEach(([k, v]) => query.set(k, v));
 
 		if (manyRelations.length) {
 			if (manyRelations.includes("Tags")) {
@@ -283,6 +275,15 @@ export default function Table({
 
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
+			//pass up extra results from query
+			if (setExtraResults) {
+				setExtraResults({
+					samples: data.samples,
+					blastResult: data.BlastQueryResults,
+					existingBlastDate: data.existingBlastDate
+				} as ExtraResults);
+			}
+
 			//set to last page if page is too large
 			if ((page - 1) * take > data.count) {
 				setPage(Math.floor(data.count / take) + 1);
@@ -317,8 +318,29 @@ export default function Table({
 	}, [data]);
 
 	if (isLoading) return <LoadingTable take={take} page={page} />;
-	if (error) return <div>failed to load: {error.toString()}</div>;
-	if (data.statusMessage === "error") return <div>failed to load: {data.error}</div>;
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
+	if (data.statusMessage === "error") {
+		return (
+			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
+		);
+	}
+	if (!Array.isArray(data.result) || data.result.length === 0 || data.count === 0) {
+		return (
+			<TableStatusState
+				kind="empty"
+				title="No results found"
+				detail="Try broadening your search or removing one or more filters."
+			/>
+		);
+	}
 
 	//filters in the column header
 	function applyFilters(e: SubmitEvent<HTMLFormElement>) {
@@ -362,9 +384,9 @@ export default function Table({
 		setWhereFilter({});
 		setPendingFilters(0);
 
-		const params = new URLSearchParams(searchParams.toString());
-		params.delete("search");
-		router.push(`${pathname}?${params.toString()}`);
+		const newParams = new URLSearchParams(searchParams.toString());
+		newParams.delete("search");
+		router.push(`${pathname}?${newParams.toString()}`);
 	}
 
 	function handleFormChange(form: HTMLFormElement) {
@@ -425,7 +447,7 @@ export default function Table({
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
 						<div className="flex gap-2">
 							<InfoButton
-								infoText="If many rows are displayed per page, selecting these options can cause long load times."
+								text="If many rows are displayed per page, selecting these options can cause long load times."
 								type="warning"
 								dir="tooltip-left"
 								className="z-60"
@@ -484,53 +506,14 @@ export default function Table({
 											}
 										>
 											<span>{title}</span>
-											{orderBy.field === title ? (
-												orderBy.order === "asc" ? (
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="24"
-														height="20"
-														className="text-primary mr-2"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-													>
-														<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-													</svg>
-												) : (
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="24"
-														height="20"
-														className="text-primary mr-2"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-													>
-														<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-													</svg>
-												)
-											) : (
-												<></>
-											)}
+											{orderBy.field === title ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
 										</div>
 
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
 											{!hideFilters && (
-												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														className="h-4 w-4 opacity-70"
-													>
-														<path
-															fillRule="evenodd"
-															d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-															clipRule="evenodd"
-														/>
-													</svg>
+												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+													<SearchIcon />
 													<input
 														name={title}
 														defaultValue={whereFilter[title] || ""}
@@ -554,18 +537,7 @@ export default function Table({
 											{/* Value Filter */}
 											{!hideFilters && (
 												<label className="input input-bordered input-sm flex items-center gap-2 w-full">
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														className="h-4 w-4 opacity-70"
-													>
-														<path
-															fillRule="evenodd"
-															d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-															clipRule="evenodd"
-														/>
-													</svg>
+													<SearchIcon />
 													<input disabled type="text" className="grow" />
 												</label>
 											)}
@@ -587,19 +559,8 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+																<SearchIcon />
 																<input type="text" className="grow" disabled />
 															</label>
 														)}
@@ -620,52 +581,13 @@ export default function Table({
 														}
 													>
 														{head}
-														{orderBy.field === head ? (
-															orderBy.order === "asc" ? (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-																</svg>
-															) : (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-																</svg>
-															)
-														) : (
-															<></>
-														)}
+														{orderBy.field === head ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
 													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+																<SearchIcon />
 																<input type="text" className="grow" disabled />
 															</label>
 														)}
@@ -682,19 +604,8 @@ export default function Table({
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+																<SearchIcon />
 																<input
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
@@ -722,52 +633,13 @@ export default function Table({
 													>
 														{head}
 														{userDefinedHeaders.includes(head) && <sup>UD</sup>}
-														{orderBy.field === head ? (
-															orderBy.order === "asc" ? (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
-																</svg>
-															) : (
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	width="24"
-																	height="20"
-																	className="text-primary mr-2"
-																	fill="none"
-																	stroke="currentColor"
-																	strokeWidth="2"
-																>
-																	<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
-																</svg>
-															)
-														) : (
-															<></>
-														)}
+														{orderBy.field === head ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
 													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
-															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-																<svg
-																	xmlns="http://www.w3.org/2000/svg"
-																	viewBox="0 0 16 16"
-																	fill="currentColor"
-																	className="h-4 w-4 opacity-70"
-																>
-																	<path
-																		fillRule="evenodd"
-																		d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																		clipRule="evenodd"
-																	/>
-																</svg>
+															<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+																<SearchIcon />
 																<input
 																	name={head}
 																	defaultValue={whereFilter[head] || ""}
@@ -794,26 +666,15 @@ export default function Table({
 													{rel.label}
 													{rel.type === "table"
 														? " (" +
-															(TableMetadata[rel.label as Prisma.ModelName].titleField as string[]).join(" / ") +
+															(TableMetadata[rel.table as Prisma.ModelName].titleField as string[]).join(" / ") +
 															")"
 														: ""}
 												</div>
 												<label className="form-control w-full max-w-xs text-lg">
 													{/* Value Filter */}
 													{!hideFilters && (
-														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-															<svg
-																xmlns="http://www.w3.org/2000/svg"
-																viewBox="0 0 16 16"
-																fill="currentColor"
-																className="h-4 w-4 opacity-70"
-															>
-																<path
-																	fillRule="evenodd"
-																	d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-																	clipRule="evenodd"
-																/>
-															</svg>
+														<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+															<SearchIcon />
 															<input type="text" className="grow" disabled />
 														</label>
 													)}
@@ -894,19 +755,7 @@ export default function Table({
 																				: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																		}]`}
 																	>
-																		<svg
-																			width="20px"
-																			height="20px"
-																			viewBox="0 0 32 32"
-																			version="1.1"
-																			xmlns="http://www.w3.org/2000/svg"
-																			className="text-primary"
-																			stroke="currentColor"
-																			fill="currentColor"
-																		>
-																			<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
-																		</svg>{" "}
-																		{row._count[head]}{" "}
+																		<LinkIcon /> {row._count[head]}{" "}
 																		{row._count[head] === 1
 																			? capitalizeTable(depluralizeTable(head as Prisma.ModelName))
 																			: head}
@@ -1030,19 +879,7 @@ export default function Table({
 																			: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																	}]`}
 																>
-																	<svg
-																		width="20px"
-																		height="20px"
-																		viewBox="0 0 32 32"
-																		version="1.1"
-																		xmlns="http://www.w3.org/2000/svg"
-																		className="text-primary"
-																		stroke="currentColor"
-																		fill="currentColor"
-																	>
-																		<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
-																	</svg>{" "}
-																	{row._count[rel.label]}{" "}
+																	<LinkIcon /> {row._count[rel.label]}{" "}
 																	{row._count[rel.label] === 1 ? capitalizeTable(rel.table) : rel.label}
 																</Link>
 															</div>
@@ -1120,5 +957,66 @@ export default function Table({
 				</div>
 			</form>
 		</div>
+	);
+}
+
+function UpArrow() {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="20"
+			className="text-primary mr-2"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+		>
+			<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+		</svg>
+	);
+}
+
+function DownArrow() {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="20"
+			className="text-primary mr-2"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+		>
+			<path d="M12 17.414 3.293 8.707l1.414-1.414L12 14.586l7.293-7.293 1.414 1.414L12 17.414z" />
+		</svg>
+	);
+}
+
+function SearchIcon() {
+	return (
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4 opacity-70">
+			<path
+				fillRule="evenodd"
+				d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+				clipRule="evenodd"
+			/>
+		</svg>
+	);
+}
+
+function LinkIcon() {
+	return (
+		<svg
+			width="20px"
+			height="20px"
+			viewBox="0 0 32 32"
+			version="1.1"
+			xmlns="http://www.w3.org/2000/svg"
+			className="text-primary"
+			stroke="currentColor"
+			fill="currentColor"
+		>
+			<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
+		</svg>
 	);
 }

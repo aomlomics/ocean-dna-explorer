@@ -15,6 +15,7 @@ import { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
 import Checklist from "../../Checklist";
 import InfoButton from "../../InfoButton";
+import { getRandomKey } from "@/app/helpers/utils";
 
 const METRIC_SEP = " | ";
 const DEFAULT_MAX_HUES = 20;
@@ -53,9 +54,9 @@ export default function AlphaDiversityDisplay({
 	alphaDiversities: (AlphaDiversity & {
 		AlphaDiversityIndexes: {
 			index: AlphaDiversityIndex["index"];
-			Library: {
-				Sample: Sample;
-			};
+			Library?: {
+				Sample?: Sample | null;
+			} | null;
 		}[];
 	})[];
 	sameAnalysis?: boolean;
@@ -79,8 +80,9 @@ export default function AlphaDiversityDisplay({
 
 		//user defined
 		for (const index of ad.AlphaDiversityIndexes) {
-			if (index.Library.Sample.userDefined) {
-				Object.keys(index.Library.Sample.userDefined).forEach(userDefinedFields.add, userDefinedFields);
+			const sample = index.Library?.Sample;
+			if (sample?.userDefined) {
+				Object.keys(sample.userDefined).forEach(userDefinedFields.add, userDefinedFields);
 			}
 		}
 	}
@@ -137,7 +139,7 @@ export default function AlphaDiversityDisplay({
 
 	function rerenderChart() {
 		//random value to trigger plot re-render
-		setChartKey((Math.random() + 1).toString(36).substring(7));
+		setChartKey(getRandomKey());
 	}
 
 	useEffect(() => {
@@ -168,17 +170,22 @@ export default function AlphaDiversityDisplay({
 
 					for (const ad of finishedDiversities) {
 						for (const i of ad.AlphaDiversityIndexes) {
+							const sample = i.Library?.Sample;
+							if (!sample) {
+								continue;
+							}
+
 							//get string representation of values
 							const xValue =
 								xField === "analysis_run_name"
 									? ad.analysis_run_name
-									: getSampleFieldValue(i.Library.Sample, xField, xType);
+									: getSampleFieldValue(sample, xField, xType);
 							let hueValue;
 							if (hueField) {
 								hueValue =
 									hueField === "analysis_run_name"
 										? ad.analysis_run_name
-										: getSampleFieldValue(i.Library.Sample, hueField, hueType!);
+										: getSampleFieldValue(sample, hueField, hueType!);
 							}
 
 							if (datasetsObj[xValue]) {
@@ -402,7 +409,7 @@ export default function AlphaDiversityDisplay({
 
 								<div className="flex gap-1">
 									<InfoButton
-										infoText={`Selecting many ${hueField ? hueField + " " : ""}values may cause lag. When changing hue field, if more than ${DEFAULT_MAX_HUES} values exist, only the first ${DEFAULT_MAX_HUES} will default to selected.`}
+										text={`Selecting many ${hueField ? hueField + " " : ""}values may cause lag. When changing hue field, if more than ${DEFAULT_MAX_HUES} values exist, only the first ${DEFAULT_MAX_HUES} will default to selected.`}
 										type="warning"
 									/>
 

@@ -23,6 +23,7 @@ import {
 	ProjectCreateInput,
 	SampleCreateManyInput
 } from "@/app/generated/prisma/models";
+import { get } from "@vercel/blob";
 
 async function parseProjectFile({
 	channel,
@@ -49,17 +50,15 @@ async function parseProjectFile({
 
 		//fetch file from blob storage
 		await channel.stream.message("Downloading file", 10);
-		const projectFileResponse = await fetch(channel.url);
-		if (!projectFileResponse.ok) {
-			await channel.stream.error(
-				`Project file responded ${projectFileResponse.status}: ${projectFileResponse.statusText}.`
-			);
+		const fileResponse = await get(channel.url, { access: "public" });
+		if (!fileResponse || fileResponse.statusCode === 304) {
+			await channel.stream.error(`Project file does not exist at provided URL: ${channel.url}.`);
 			return;
 		}
 
 		await channel.stream.message("Reading file into memory", 15);
-		const projectText = await projectFileResponse.text();
-		const projectMd5 = md5(projectText);
+		const text = await new Response(fileResponse.stream).text();
+		const projectMd5 = md5(text);
 
 		if (oldChecksum === projectMd5) {
 			await channel.stream.error(
@@ -68,11 +67,11 @@ async function parseProjectFile({
 			return;
 		}
 
-		const projectParser = parse(projectText, { columns: true, delimiter: "\t", relax_quotes: true });
+		const parser = parse(text, { columns: true, delimiter: "\t", relax_quotes: true });
 		await channel.stream.message("File read into memory", 25);
 
 		let i = 0;
-		for await (const record of projectParser) {
+		for await (const record of parser) {
 			if (!assayNames.length) {
 				const fileHeaders = Object.keys(record);
 
@@ -140,10 +139,10 @@ async function parseProjectFile({
 				}
 
 				//add to progress bar every 10 percent
-				if (i % (projectParser.info.records / 10) === 0) {
+				if (i % (parser.info.records / 10) === 0) {
 					await channel.stream.message(
-						`Processed line ${i} of ${projectParser.info.records}.`,
-						(i / projectParser.info.records) * 50 + 25
+						`Processed line ${i} of ${parser.info.records}.`,
+						(i / parser.info.records) * 50 + 25
 					);
 				}
 			}
@@ -258,17 +257,17 @@ async function parseLibraryFile({
 
 		//fetch file from blob storage
 		await channel.stream.message("Downloading file", 10);
-		const libraryFileResponse = await fetch(channel.url);
-		if (!libraryFileResponse.ok) {
+		const fileResponse = await get(channel.url, { access: "public" });
+		if (!fileResponse || fileResponse.statusCode === 304) {
 			await channel.stream.error(
-				`Library file responded ${libraryFileResponse.status}: ${libraryFileResponse.statusText}.`
+				`Library file for ${projectCol.project_id} does not exist at provided URL: ${channel.url}.`
 			);
 			return;
 		}
 
 		await channel.stream.message("Reading file into memory", 15);
-		const libraryText = await libraryFileResponse.text();
-		const libraryMd5 = md5(libraryText);
+		const text = await new Response(fileResponse.stream).text();
+		const libraryMd5 = md5(text);
 
 		if (oldChecksum === libraryMd5) {
 			await channel.stream.error(
@@ -277,7 +276,7 @@ async function parseLibraryFile({
 			return;
 		}
 
-		const libraryParser = parse(libraryText, {
+		const parser = parse(text, {
 			columns: true,
 			delimiter: "\t",
 			comment: "#",
@@ -287,7 +286,7 @@ async function parseLibraryFile({
 		await channel.stream.message("File read into memory", 25);
 
 		let i = 0;
-		for await (const record of libraryParser) {
+		for await (const record of parser) {
 			if (record.lib_id) {
 				i++;
 
@@ -341,10 +340,10 @@ async function parseLibraryFile({
 				libraries.push(parsedLibrary.data as LibraryCreateManyInput);
 
 				//add to progress bar every 10 percent
-				if (i % (libraryParser.info.records / 10) === 0) {
+				if (i % (parser.info.records / 10) === 0) {
 					await channel.stream.message(
-						`Processed Library ${parsedLibrary.data.lib_id}, row ${i} of ${libraryParser.info.records}.`,
-						(i / libraryParser.info.records) * 50 + 25
+						`Processed Library ${parsedLibrary.data.lib_id}, row ${i} of ${parser.info.records}.`,
+						(i / parser.info.records) * 50 + 25
 					);
 				}
 			}
@@ -374,17 +373,17 @@ async function parseSampleFile({
 
 		//fetch file from blob storage
 		await channel.stream.message("Downloading file", 10);
-		const sampleFileResponse = await fetch(channel.url);
-		if (!sampleFileResponse.ok) {
+		const fileResponse = await get(channel.url, { access: "public" });
+		if (!fileResponse || fileResponse.statusCode === 304) {
 			await channel.stream.error(
-				`Sample file responded ${sampleFileResponse.status}: ${sampleFileResponse.statusText}.`
+				`Sample file for ${projectCol.project_id} does not exist at provided URL: ${channel.url}.`
 			);
 			return;
 		}
 
 		await channel.stream.message("Reading file into memory", 15);
-		const sampleText = await sampleFileResponse.text();
-		const sampleMd5 = md5(sampleText);
+		const text = await new Response(fileResponse.stream).text();
+		const sampleMd5 = md5(text);
 
 		if (oldChecksum === sampleMd5) {
 			await channel.stream.error(
@@ -393,7 +392,7 @@ async function parseSampleFile({
 			return;
 		}
 
-		const sampleParser = parse(sampleText, {
+		const parser = parse(text, {
 			columns: true,
 			delimiter: "\t",
 			comment: "#",
@@ -403,7 +402,7 @@ async function parseSampleFile({
 		await channel.stream.message("File read into memory", 25);
 
 		let i = 0;
-		for await (const record of sampleParser) {
+		for await (const record of parser) {
 			if (record.samp_name) {
 				i++;
 
@@ -456,10 +455,10 @@ async function parseSampleFile({
 				samples.push(parsedSample.data as SampleCreateManyInput);
 
 				//add to progress bar every 10 percent
-				if (i % (sampleParser.info.records / 10) === 0) {
+				if (i % (parser.info.records / 10) === 0) {
 					await channel.stream.message(
-						`Processed Sample ${parsedSample.data.samp_name}, row ${i} of ${sampleParser.info.records}.`,
-						(i / sampleParser.info.records) * 50 + 25
+						`Processed Sample ${parsedSample.data.samp_name}, row ${i} of ${parser.info.records}.`,
+						(i / parser.info.records) * 50 + 25
 					);
 				}
 			}

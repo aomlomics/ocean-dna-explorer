@@ -110,18 +110,6 @@ module.exports = {
 						backgroundColor: "rgb(var(--fallback-bc,oklch(var(--bc)/0.2)))"
 					}
 				}
-			},
-			zIndex: {
-				base: "1",
-				content: "10",
-				"content-overlay": "20",
-				header: "100",
-				footer: "90",
-				dropdown: "200",
-				modal: "1000",
-				"modal-overlay": "999",
-				toast: "2000",
-				alert: "2100"
 			}
 		}
 	},

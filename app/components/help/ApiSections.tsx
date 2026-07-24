@@ -7,6 +7,7 @@ import ApiCodeBlock from "./ApiCodeBlock";
 import Link from "next/link";
 import Image from "next/image";
 import ApiQueryDiagram from "./ApiQueryDiagram";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 
 // Define types for our content structure
 export type Subsection = {
@@ -35,6 +36,8 @@ export async function getApiSections() {
 			}
 		})
 	]);
+	const singularTableNames = TableNames.map((table) => table.toLowerCase());
+	const pluralTableNames = TableNames.map((table) => TableMetadata[table].plural.toLowerCase());
 
 	return [
 		{
@@ -42,28 +45,21 @@ export async function getApiSections() {
 			title: "Introduction",
 			content: (
 				<div className="space-y-4">
-					<div>
-						<Link href="/search">
-							<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-base-200/80 hover:bg-base-300/80 transition-colors text-sm">
-								<span className="w-4 h-4 shrink-0 text-primary">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-										<path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-									</svg>
-								</span>
-								<span className="text-base-content">Search Page</span>
-							</div>
-						</Link>
-						<p className="text-base-content/90 mt-2">
-							You can build complex queries using the Search page user interface, then copy the URL to use as an API call in your code. This is a great way to get started quickly.
-						</p>
-					</div>
+					<p className="text-base-content/90">
+						You can build complex queries using the{" "}
+						<Link href="/search" className="link link-primary">
+							Search
+						</Link>{" "}
+						page user interface, then copy the URL to use as an API call in your code. This is a great way to get
+						started quickly.
+					</p>
 					<p>
 						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help
 						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
-						Our API is designed to be straightforward. All you need is a web browser or a simple script to start
-						fetching data—no authentication is required.
+						All you need is a web browser or a simple script to start
+						fetching data. No authentication is required, and there are currently no usage limits, please be reasonable. Reach out to the ODE team for large data retrieval requests.
 					</p>
 				</div>
 			),
@@ -87,15 +83,15 @@ export async function getApiSections() {
 										<Link href="#database-schema" className="link link-primary">
 											Database Schema
 										</Link>
-										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows you
+										. The Entity Relationship Diagram (ERD) is a map of the database that shows you
 										what tables are available and how they are linked together.
 									</p>
 									<p className="mt-2">
-										Once you know which table you're interested in (e.g., `Project`), look at the{" "}
+										Once you know which table you're interested in (e.g., Project), look at the{" "}
 										<Link href="#table-definitions" className="link link-primary">
 											Table Definitions
 										</Link>{" "}
-										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in your
+										to find the exact names of the data columns, or fields, that you can use in your
 										queries.
 									</p>
 								</div>
@@ -158,16 +154,6 @@ export async function getApiSections() {
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
 										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
-									</p>
-									<p className="mt-2 text-sm bg-info/10 p-2 rounded border-l-2 border-info">
-										<strong>Note:</strong> Notice that the endpoint uses{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">/api/project</code> (singular), but the relation
-										parameter uses <code className="px-1 py-0.5 bg-base-300 rounded">relations=Samples</code> (plural).
-										See{" "}
-										<Link href="#essential-information" className="link link-primary font-semibold">
-											Essential API Information
-										</Link>{" "}
-										for more about this important distinction.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -300,19 +286,21 @@ if (http_status(response)$category == "Success") {
 							<div className="space-y-6">
 								<div>
 									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data</h4>
-									<p className="mb-3">There are multiple ways to access and explore data in the Ocean DNA Explorer:</p>
+									<p className="mb-3">There are multiple ways to access and explore data:</p>
 									<ul className="list-disc ml-6 space-y-3">
 										<li>
 											<Link href="/explore/project" className="link link-primary font-semibold">
-												Explore Pages
-											</Link>
+												Explore
+											</Link>{" "}
+											Pages
 											: View all data from each table with filters. You can only filter on fields within the table you
 											are looking at. Click on any blue data field to view the detail page for that specific record.
 										</li>
 										<li>
 											<Link href="/search" className="link link-primary font-semibold">
-												Search Page
-											</Link>
+												Search
+											</Link>{" "}
+											page
 											: Build complex queries using data from multiple tables, allowing you to filter on both fields{" "}
 											<em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button
 											to add OR conditions.
@@ -333,16 +321,6 @@ if (http_status(response)$category == "Success") {
 								</div>
 
 								<div>
-									<div className="p-4 bg-warning/20 border-l-4 border-warning rounded-md">
-										<h4 className="mb-2 text-lg font-medium">
-											2. Table Names vs. Relation Names: Understanding Plurality
-										</h4>
-										<p>
-											This is a critical distinction: Table names in API endpoints are SINGULAR, but when you reference
-											those same tables as relations in queries, the relation names are PLURAL.
-										</p>
-									</div>
-
 									<div className="mt-4 space-y-6">
 										<p>Here are some examples:</p>
 
@@ -354,12 +332,11 @@ if (http_status(response)$category == "Success") {
 											<div className="ml-4 space-y-2">
 												<div>
 													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code> (singular)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code>
 												</div>
 												<div>
 													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code>{" "}
-													(plural)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code>
 												</div>
 											</div>
 										</div>
@@ -370,11 +347,11 @@ if (http_status(response)$category == "Success") {
 											<div className="ml-4 space-y-2">
 												<div>
 													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code>
 												</div>
 												<div>
 													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code> (plural)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code>
 												</div>
 											</div>
 										</div>
@@ -387,20 +364,19 @@ if (http_status(response)$category == "Success") {
 											<div className="ml-4 space-y-2">
 												<div>
 													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code> (singular)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code>
 												</div>
 												<div>
 													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code>{" "}
-													(plural, spelled differently!)
+													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code>
 												</div>
 											</div>
 										</div>
 
 										<p className="mt-6">
 											Pro tip: Use the{" "}
-											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/[table]/relations</code> endpoint
-											to see the exact relation names available for any table. Or check the{" "}
+											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/&lt;table&gt;/relations</code>{" "}
+											endpoint to see the exact relation names available for any table. Or check the{" "}
 											<Link href="#table-definitions" className="link link-primary">
 												Table Definitions
 											</Link>{" "}
@@ -473,7 +449,7 @@ if (http_status(response)$category == "Success") {
 							<p className="mb-4">The following diagram shows the relationships between tables in the database:</p>
 
 							<div className="p-4 rounded-md mb-4 bg-base-200">
-								<div className="relative w-full h-[800px]">
+								<div className="relative w-full h-200">
 									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
 									<Image
 										src="/images/ERD-Notation.PNG"
@@ -501,7 +477,7 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table in the Ocean DNA Explorer. You can use
+								The dropdown menus below show the fields available for each table. You can use
 								this information in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
@@ -587,7 +563,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Table Relations",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/relations</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/relations</div>
 
 							<p className="mb-4">Returns a list of all relations for a table in the database.</p>
 
@@ -605,7 +581,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Table Fields",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/fields</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/fields</div>
 
 							<div className="mb-4 mt-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/assay/fields`} />
@@ -621,7 +597,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Unique Field Values",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/fields/[fieldName]</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/fields/&lt;fieldName&gt;</div>
 
 							<p className="mb-4">
 								Returns all unique values for a specific field in a table. This is useful for discovering what values
@@ -646,11 +622,28 @@ if (http_status(response)$category == "Success") {
 					title: "Query Table Data",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;</div>
 
 							<p className="mb-4">
 								Returns multiple records from a specific table. This endpoint supports various query parameters for
 								filtering, selecting fields, including relations, and limiting results.
+							</p>
+							<p className="mb-2">
+								For <InlineCode code="&lt;table&gt;" />, you can use either singular or plural table names.
+							</p>
+							<div className="mb-2">
+								Singular table names: <InlineCode code={singularTableNames.join(", ")} />
+							</div>
+							<div className="mb-4">
+								Plural table names: <InlineCode code={pluralTableNames.join(", ")} />
+							</div>
+							<p className="mb-4">
+								These are interchangeable in API paths (for example, <InlineCode code="/api/project" /> and{" "}
+								<InlineCode code="/api/projects" /> both work). Use the same rule for related endpoints like{" "}
+								<InlineCode code="/api/&lt;table&gt;/fields" /> and <InlineCode code="/api/&lt;table&gt;/relations" />.
+							</p>
+							<p className="mb-4">
+								Table names are also case-insensitive in queries, so either spelling/casing is accepted.
 							</p>
 
 							<div className="mb-4">
@@ -671,7 +664,7 @@ if (http_status(response)$category == "Success") {
 					title: "Get Single Record",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/[table]/[id]</div>
+							<div className="mb-4">Endpoint: /api/&lt;table&gt;/&lt;id&gt;</div>
 
 							<div className="mb-4 mt-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`} />
@@ -703,11 +696,11 @@ if (http_status(response)$category == "Success") {
 						searches, construct complex queries with multiple conditions, or filter records based on specific field
 						values.
 					</p>
-					<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
-						<h4 className="font-bold mb-2">Important Rule of Exclusivity</h4>
-						<p>
-							The primary search methods—<strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
-							(`advanced`), and <strong>ID Filtering</strong> (`ids`)—are mutually exclusive. You can only use{" "}
+					<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
+						<h5 className="font-semibold mb-2 text-accent">Important Rule of Exclusivity</h5>
+						<p className="text-sm">
+							The primary search methods, <strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
+							(`advanced`), and <strong>ID Filtering</strong> (`ids`), are mutually exclusive. You can only use{" "}
 							<strong>one</strong> of these parameters in a single API request. Additionally, when using any of these
 							three methods, you cannot add separate field filters (e.g., `project_name=Test`) to the same query.
 						</p>
@@ -720,7 +713,7 @@ if (http_status(response)$category == "Success") {
 					title: "Standard Search Parameter",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `search=[query]`</div>
+							<div className="mb-4">Parameter: `search=&lt;query&gt;`</div>
 							<p className="mb-4">
 								This is the simplest way to search. It performs a case-insensitive search across all text-based fields
 								in a specified table for your query string.
@@ -746,18 +739,19 @@ if (http_status(response)$category == "Success") {
 					title: "Advanced Search Parameter",
 					content: (
 						<div className="space-y-4">
-							<p>Query Parameter: `advanced=[JSON_object]`</p>
+							<p>Query Parameter: `advanced=&lt;JSON_object&gt;`</p>
 							<p>
 								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table
 								queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
 							</p>
-							<div className="p-4 my-4 bg-base-200 border-l-4 border-info rounded-md">
-								<h4 className="font-bold mb-2">Build Queries with the UI</h4>
-								<p>
+							<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
+								<h5 className="font-semibold mb-2 text-accent">Build Queries with the UI</h5>
+								<p className="text-sm">
 									Use the{" "}
 									<Link href="/search" className="link link-primary font-semibold">
-										Search page
+										Search
 									</Link>{" "}
+									page{" "}
 									to build filters through a user interface (no code necessary!), then copy the API query from the URL.
 								</p>
 							</div>
@@ -870,7 +864,7 @@ if (http_status(response)$category == "Success") {
 					title: "ID Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `ids=[id1],[id2],...`</div>
+							<div className="mb-4">Parameter: `ids=&lt;id1&gt;,&lt;id2&gt;,...`</div>
 							<p className="mb-4">
 								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of IDs.
 							</p>
@@ -903,7 +897,7 @@ if (http_status(response)$category == "Success") {
 					title: "Direct Field Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `[fieldName]=[value]`</div>
+							<div className="mb-4">Parameter: `&lt;fieldName&gt;=&lt;value&gt;`</div>
 							<p className="mb-4">
 								This method allows you to filter results based on the value of one or more specific fields. This cannot
 								be combined with `advanced`, `search`, or `ids` parameters.
@@ -945,7 +939,7 @@ if (http_status(response)$category == "Success") {
 					title: "Field Selection",
 					content: (
 						<>
-							<div className="mb-4">Parameter: fields=field1,field2,field3</div>
+							<div className="mb-4">Parameter: fields=&lt;field1&gt;,&lt;field2&gt;,&lt;field3&gt;</div>
 
 							<p className="mb-4">
 								Specifies which fields to include in the response. When omitted, all fields are returned.
@@ -968,7 +962,7 @@ if (http_status(response)$category == "Success") {
 					title: "Field Filtering (Legacy)",
 					content: (
 						<>
-							<div className="mb-4">Parameter: fieldName=value</div>
+							<div className="mb-4">Parameter: &lt;fieldName&gt;=&lt;value&gt;</div>
 
 							<p className="mb-4">
 								Filters results to return only records where the specified field contains the provided value. For more
@@ -995,34 +989,12 @@ if (http_status(response)$category == "Success") {
 					title: "Relations",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relations=relation1,relation2</p>
+							<p>Parameter: relations=&lt;relation1&gt;,&lt;relation2&gt;</p>
 							<p>
 								Includes related data from other tables in the response. Relation names can be lowercase or capitalized.
 							</p>
 
-							<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
-								<h4 className="font-bold mb-2">Critical: Relation Names Are Plural</h4>
-								<p className="mb-2">
-									While table names in API endpoints are <strong>singular</strong> (e.g.,{" "}
-									<InlineCode code="/api/sample" />
-									), relation names must be <strong>plural</strong> (e.g., <InlineCode code="relations=Samples" />
-									).
-								</p>
-								<p className="mb-2">
-									<strong>Example:</strong> To get a project with all its related samples:
-								</p>
-								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?relations=Samples`} />
-								<p className="mt-2 text-sm">
-									Not sure what the relation name is? Use <InlineCode code="/api/[table]/relations" /> to see all
-									available relation names for any table. See the{" "}
-									<Link href="#essential-information" className="link link-primary font-semibold">
-										Essential API Information
-									</Link>{" "}
-									section for more examples.
-								</p>
-							</div>
-
-							<div className="my-8 p-4 bg-base-200/50 border-l-4 border-accent shadow-sm">
+							<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
 								<h5 className="font-semibold mb-2 text-accent">Why Use Relations?</h5>
 								<p className="text-sm">
 									Relations are powerful because they let you fetch data from multiple connected tables in a single API
@@ -1046,7 +1018,7 @@ if (http_status(response)$category == "Success") {
 					title: "Relation Field Options",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relationsAllFields=true or relationsAllFields=false</p>
+							<p>Parameter: relationsAllFields=true</p>
 
 							<p>Controls whether to include all fields on related records (true) or just their ID (false, default).</p>
 
@@ -1083,7 +1055,7 @@ if (http_status(response)$category == "Success") {
 					title: "Result Limiting",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: limit=number</p>
+							<p>Parameter: limit=&lt;number&gt;</p>
 							<p>Limits the number of results returned. Must be a positive number.</p>
 							<div>
 								Example URL: <InlineCode code="/api/project?limit=20" />
@@ -1097,7 +1069,7 @@ if (http_status(response)$category == "Success") {
 					title: "Relations Result Limiting",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relationsLimit=number</p>
+							<p>Parameter: relationsLimit=&lt;number&gt;</p>
 							<p>
 								Limits the number of results returned when the{" "}
 								<Link className="link link-primary" href="#relations">

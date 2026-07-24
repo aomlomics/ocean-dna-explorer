@@ -2,6 +2,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { Circle, Location, LocationWithValues, MapShape, NullLocation, Point, Polygon } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -344,3 +345,30 @@ export function getTextColorHex(hex: string) {
 
 	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
 }
+
+export const MAX_UNCOMPRESSED_LENGTH = 500;
+export const COMPRESSION_FORMAT = "compressed/lz-string";
+export function compressURIComponent(str: string) {
+	return COMPRESSION_FORMAT + ":" + compressToEncodedURIComponent(str);
+}
+
+export function decompressURIComponent(str: string) {
+	return decompressFromEncodedURIComponent(str.substring(COMPRESSION_FORMAT.length + 1));
+}
+
+export function getRandomKey() {
+	return (Math.random() + 1).toString(36).substring(7);
+}
+
+export const getClientSideCookie = (name: string): string | undefined => {
+	if (typeof document === "undefined") {
+		throw new Error("Must be in client side.");
+	}
+
+	const cookieValue = document.cookie
+		.split("; ")
+		.find((row) => row.startsWith(`${name}=`))
+		?.split("=")[1];
+
+	return cookieValue;
+};

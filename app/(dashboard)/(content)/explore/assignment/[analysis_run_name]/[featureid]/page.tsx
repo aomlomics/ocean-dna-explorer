@@ -3,6 +3,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { Assignment } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
 export default async function Analysis_run_name_Featureid({
 	params
@@ -25,13 +26,10 @@ export default async function Analysis_run_name_Featureid({
 	if (!assignment) return <>Assignment not found</>;
 
 	const rawConfidence = assignment.Confidence ?? 0;
-	const confidencePercent = Math.max(
-		0,
-		Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence)
-	);
+	const confidencePercent = Math.max(0, Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence));
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -46,21 +44,14 @@ export default async function Analysis_run_name_Featureid({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.assignment.description}
-					>
-						Assignment
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.assignment.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">Assignment</h1>
+					</TitleHoverTooltip>
 				</div>
 				<div className="mt-3 mb-4 inline-flex items-center gap-5 bg-base-200 rounded-xl px-5 py-4">
 					<div className="flex flex-col">
-						<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-							Assignment confidence
-						</p>
-						<p className="text-3xl md:text-4xl font-bold text-primary mt-1">
-							{confidencePercent.toFixed(1)}%
-						</p>
+						<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Assignment confidence</p>
+						<p className="text-3xl md:text-4xl font-bold text-primary mt-1">{confidencePercent.toFixed(1)}%</p>
 					</div>
 					<GcDonut percentage={confidencePercent} size={72} strokeWidth={8} />
 				</div>
@@ -99,4 +90,3 @@ export default async function Analysis_run_name_Featureid({
 		</div>
 	);
 }
-

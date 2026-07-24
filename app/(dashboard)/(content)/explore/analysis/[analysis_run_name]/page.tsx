@@ -5,9 +5,8 @@ import Table from "@/app/components/paginated/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
-import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 import { Analysis } from "@/app/generated/prisma/client";
-import { Suspense } from "react";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
@@ -17,14 +16,26 @@ import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualiz
 import { TaxonomicRanks } from "@/types/objects";
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
+import { Suspense } from "react";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { redirect } from "next/navigation";
+
+const dataExplorerTabBase =
+	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
 
 export default async function Analysis_run_name({
-	params
+	params,
+	searchParams
 }: {
 	params: Promise<{ analysis_run_name: Analysis["analysis_run_name"] }>;
+	searchParams: Promise<{ view?: string | string[] }>;
 }) {
 	let { analysis_run_name } = await params;
 	analysis_run_name = decodeURIComponent(analysis_run_name);
+	const { view } = await searchParams;
+	if (view !== undefined) {
+		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
+	}
 
 	const analysis = await prisma.analysis.findUnique({
 		where: {
@@ -63,7 +74,7 @@ export default async function Analysis_run_name({
 	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
 
 	return (
-		<div id="analysis" className="space-y-8">
+		<div id="analysis" className="space-y-6">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -88,12 +99,9 @@ export default async function Analysis_run_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-secondary tooltip-right before:text-primary-content"
-						data-tip={TableMetadata.analysis.description}
-					>
-						{analysis_run_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
+					</TitleHoverTooltip>
 					<EditHistory editHistory={analysis.editHistory} />
 					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
 					{analysis.Tags.map((t) => (
@@ -197,52 +205,79 @@ export default async function Analysis_run_name({
 					</div>
 
 					{/* Assay Card */}
-					<div>
-						<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Assays used in this Analysis (1)</h2>
-						<div className="flex items-center gap-4 p-4 rounded-lg">
-							<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 flex items-center justify-center shadow-sm overflow-hidden">
-								<div className="relative w-12 h-12">
-									<Suspense>
-										<AssayPhyloPic assay_name={analysis.assay_name} />
-									</Suspense>
-								</div>
-							</div>
-							<div>
-								<h3 className="font-medium text-lg text-base-content">{analysis.Assay.target_gene}</h3>
-								<p className="text-base-content/70">{analysis.assay_name}</p>
-							</div>
-						</div>
-					</div>
+					<AssaysCard
+						title="Assays used in this Analysis"
+						assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
+					/>
 				</div>
 			</div>
 
 			{/* Data Explorer */}
-			<div id="dataExplorer" className="mt-8">
-				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
-				<div role="tablist" className="tabs tabs-lifted">
-					<input type="radio" name="dataTabs" role="tab" className="tab pr-2" aria-label="Tables:" disabled />
+			<div id="dataExplorer" className="mt-12">
+				<h2 className="text-2xl font-semibold text-base-content/90 mb-3 mt-1">Data Explorer</h2>
+				<div role="tablist" className="tabs bg-transparent gap-2 flex-wrap p-0">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className="tab tab-disabled border-none px-0 bg-transparent text-sm font-medium normal-case tracking-normal text-base-content cursor-default"
+						aria-label="Tables:"
+						disabled
+					/>
 
-					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab px-2" aria-label="Taxa" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box">
+					<input
+						type="radio"
+						defaultChecked
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Taxonomies"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<TaxaGrid analysis_run_name={analysis_run_name} />
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Assignments" />
-					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Assignments"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab pl-6 pr-2" aria-label="Visualize:" disabled />
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className="tab tab-disabled border-none pl-4 pr-0 bg-transparent text-sm font-medium normal-case tracking-normal text-base-content cursor-default"
+						aria-label="Charts:"
+						disabled
+					/>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Taxonomy" />
-					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Taxonomy"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingTaxonomyVisualize />}>
 							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Alpha Diversity" />
-					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Alpha Diversity"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingAlphaDiversityDisplay />}>
 							<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
 						</Suspense>

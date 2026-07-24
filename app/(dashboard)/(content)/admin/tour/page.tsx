@@ -8,6 +8,8 @@ import { Fragment, useContext, useEffect, useReducer, useRef, useState } from "r
 import { useDebouncedCallback } from "use-debounce";
 
 type TourStepWithInvalid = TourStep & { invalid?: boolean };
+const TAXA_PER_PROJECT_OPTIONS = [24, 36, 48, 72, 96, 120] as const;
+const SHOWCASE_PATH = "/showcase";
 
 export default function Tour() {
 	const startTour = useContext(TourContext);
@@ -18,6 +20,9 @@ export default function Tour() {
 	const [loading, setLoading] = useState(true);
 
 	const [stepTime, setStepTime] = useState(DEFAULT_TOUR_STEP_TIME as number | undefined);
+	const [projectDurationSeconds, setProjectDurationSeconds] = useState(30 as number | undefined);
+	const [taxaPerProject, setTaxaPerProject] = useState<(typeof TAXA_PER_PROJECT_OPTIONS)[number]>(48);
+	const [selectedTourProjects, setSelectedTourProjects] = useState<string[]>([]);
 
 	const [currProject, setCurrProject] = useState("");
 	const [projects, setProjects] = useState([] as string[]);
@@ -30,6 +35,40 @@ export default function Tour() {
 	const [featuresEnabled, setFeaturesEnabled] = useState(false);
 	const [currFeature, setCurrFeature] = useState("");
 	const [features, setFeatures] = useState([] as string[]);
+
+	const getShowcaseQueryParams = () => {
+		const params = new URLSearchParams({
+			projectSeconds: `${projectDurationSeconds ?? 30}`,
+			taxaPerProject: `${taxaPerProject}`
+		});
+		if (selectedTourProjects.length && selectedTourProjects.length < projects.length) {
+			params.set("projectIds", selectedTourProjects.join(","));
+		}
+		return params;
+	};
+
+	const getShowcaseStepUrl = () => {
+		return `${SHOWCASE_PATH}?${getShowcaseQueryParams().toString()}`;
+	};
+
+	const updateShowcaseUrlParams = (url: string) => {
+		if (!url) return url;
+		if (!url.startsWith(SHOWCASE_PATH)) return url;
+		const hashIndex = url.indexOf("#");
+		const hash = hashIndex >= 0 ? url.slice(hashIndex) : "";
+		return `${SHOWCASE_PATH}?${getShowcaseQueryParams().toString()}${hash}`;
+	};
+
+	const syncShowcaseStepUrls = (steps: TourStepWithInvalid[]) => {
+		let changed = false;
+		const next = steps.map((step) => {
+			const nextUrl = updateShowcaseUrlParams(step.url);
+			if (nextUrl === step.url) return step;
+			changed = true;
+			return { ...step, url: nextUrl };
+		});
+		return changed ? next : steps;
+	};
 
 	const [tourSteps, setTourSteps] = useReducer(
 		(
@@ -215,7 +254,9 @@ export default function Tour() {
 		setCurrFeature(featureid || "");
 
 		setTourSteps([
-			{ url: "/" },
+			{ url: "/ambient" },
+			{ url: "/sponsors" },
+			{ url: getShowcaseStepUrl() },
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
@@ -280,9 +321,130 @@ export default function Tour() {
 		setTourSteps({ i, value: { invalid: !res.ok } });
 	}, 300);
 
+	const allTourProjectsSelected = projects.length > 0 && selectedTourProjects.length === projects.length;
+	const noTourProjectsSelected = selectedTourProjects.length === 0;
+	const tourProjectSelectionLabel =
+		projects.length === 0
+			? "Loading projects..."
+			: noTourProjectsSelected
+				? "No projects selected"
+				: allTourProjectsSelected
+					? `All projects selected (${projects.length})`
+					: `${selectedTourProjects.length} project${selectedTourProjects.length === 1 ? "" : "s"} selected`;
+
+	const toggleTourProject = (projectId: string) => {
+		setSelectedTourProjects((current) =>
+			current.includes(projectId) ? current.filter((id) => id !== projectId) : [...current, projectId]
+		);
+	};
+
+	useEffect(() => {
+		setSelectedTourProjects((current) => {
+			if (!projects.length) return [];
+			if (!current.length) return projects;
+			const available = new Set(projects);
+			const retained = current.filter((id) => available.has(id));
+			return retained.length ? retained : projects;
+		});
+	}, [projects]);
+
+	useEffect(() => {
+		const syncedSteps = syncShowcaseStepUrls(tourSteps);
+		if (syncedSteps !== tourSteps) {
+			setTourSteps(syncedSteps);
+		}
+	}, [projectDurationSeconds, taxaPerProject, selectedTourProjects, projects.length, tourSteps]);
+
 	return (
 		<>
-			<h1>Tour Destinations:</h1>
+			<h1>Showcase Page Options</h1>
+			<div className="mb-3 flex flex-wrap items-end gap-4 border-b border-primary pb-3">
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Project showcase time</legend>
+					<div className="flex items-center gap-2">
+						<input
+							className="input input-sm w-24"
+							type="number"
+							min={1}
+							value={projectDurationSeconds !== undefined ? projectDurationSeconds : ""}
+							onChange={(e) => {
+								const parsed = parseInt(e.currentTarget.value);
+								setProjectDurationSeconds(isNaN(parsed) ? undefined : parsed);
+							}}
+							disabled={loading}
+						/>
+						<span className="text-primary text-xs">Seconds per project</span>
+					</div>
+				</fieldset>
+
+				<fieldset className="fieldset">
+					<legend className="fieldset-legend">Taxonomies per project</legend>
+					<div className="flex items-center gap-2">
+						<select
+							className="select select-sm min-w-32"
+							value={taxaPerProject}
+							onChange={(e) =>
+								setTaxaPerProject(Number(e.currentTarget.value) as (typeof TAXA_PER_PROJECT_OPTIONS)[number])
+							}
+							disabled={loading}
+						>
+							{TAXA_PER_PROJECT_OPTIONS.map((count) => (
+								<option key={count} value={count}>
+									{count}
+								</option>
+							))}
+						</select>
+						<span className="text-primary text-xs">Hard max is 120 to keep requests reasonable.</span>
+					</div>
+				</fieldset>
+
+				<fieldset className="fieldset min-w-80">
+					<legend className="fieldset-legend">Showcase projects</legend>
+					<div className="mb-2 flex items-center gap-2">
+						<button
+							type="button"
+							className="btn btn-xs"
+							onClick={() => setSelectedTourProjects(projects)}
+							disabled={loading || !projects.length || allTourProjectsSelected}
+						>
+							Select all
+						</button>
+						<button
+							type="button"
+							className="btn btn-xs"
+							onClick={() => setSelectedTourProjects([])}
+							disabled={loading || !projects.length || noTourProjectsSelected}
+						>
+							Deselect all
+						</button>
+					</div>
+					<details className="rounded-box border border-base-300 bg-base-100">
+						<summary className="cursor-pointer px-3 py-2 text-sm">{tourProjectSelectionLabel}</summary>
+						<div className="max-h-64 overflow-y-auto px-3 py-2">
+							{projects.length ? (
+								<div className="flex flex-col gap-1.5">
+									{projects.map((id) => (
+										<label key={id} className="label cursor-pointer justify-start gap-2 py-0.5">
+											<input
+												type="checkbox"
+												className="checkbox checkbox-xs checkbox-primary"
+												checked={selectedTourProjects.includes(id)}
+												onChange={() => toggleTourProject(id)}
+												disabled={loading}
+											/>
+											<span className="label-text text-xs">{id}</span>
+										</label>
+									))}
+								</div>
+							) : (
+								<p className="text-xs text-base-content/70">No projects available.</p>
+							)}
+						</div>
+					</details>
+				</fieldset>
+			</div>
+
+			<h1>Tour Destinations</h1>
 			<div className="grid grid-cols-5 gap-2 border-b border-primary pb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Project</legend>
@@ -360,7 +522,7 @@ export default function Tour() {
 					<legend className="fieldset-legend">
 						Feature{" "}
 						<InfoButton
-							infoText="Enabling this might cause slow load times when changing other options"
+							text="Enabling this might cause slow load times when changing other options"
 							type="warning"
 							className="h-4"
 						/>
@@ -595,6 +757,8 @@ export default function Tour() {
 					}}
 					disabled={
 						loading ||
+						(projectDurationSeconds !== undefined && projectDurationSeconds <= 0) ||
+						noTourProjectsSelected ||
 						tourSteps.some((step) => !step.url || step.invalid || (step.stepTime && step.stepTime <= 0)) ||
 						(stepTime !== undefined && stepTime <= 0)
 					}
@@ -602,7 +766,7 @@ export default function Tour() {
 					Start Tour
 				</button>
 
-				<InfoButton infoText="Starting a tour will sign you out." type="warning" />
+				<InfoButton text="Starting a tour will sign you out." type="warning" />
 			</div>
 		</>
 	);
