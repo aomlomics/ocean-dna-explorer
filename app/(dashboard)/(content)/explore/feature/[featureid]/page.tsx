@@ -3,6 +3,7 @@ import { Feature, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import GcDonut from "@/app/components/charts/GcDonut";
 import Table from "@/app/components/paginated/Table";
@@ -10,9 +11,22 @@ import { AssayIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
-export default async function Featureid({ params }: { params: Promise<{ featureid: Feature["featureid"] }> }) {
+const dataExplorerTabBase =
+	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
+
+export default async function Featureid({
+	params,
+	searchParams
+}: {
+	params: Promise<{ featureid: Feature["featureid"] }>;
+	searchParams: Promise<{ view?: string | string[] }>;
+}) {
 	let { featureid } = await params;
 	featureid = decodeURIComponent(featureid);
+	const { view } = await searchParams;
+	if (view !== undefined) {
+		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
+	}
 
 	const { feature, taxaCounts, assays } = await prisma.$transaction(async (tx) => {
 		const feature = await tx.feature.findUnique({
@@ -182,23 +196,40 @@ export default async function Featureid({ params }: { params: Promise<{ featurei
 				</div>
 
 				{/* Data tables with toggle */}
-				<section className="space-y-4">
-					<h2 className="text-2xl font-semibold text-base-content/90">Data Explorer</h2>
-					<div role="tablist" className="tabs tabs-lifted">
+				<section className="space-y-4 mt-6">
+					<h2 className="text-2xl font-semibold text-base-content/90 mb-3">Data Explorer</h2>
+					<div role="tablist" aria-label="Feature data views" className="tabs bg-transparent gap-2 flex-wrap p-0">
 						<input
 							type="radio"
 							name="featureDataTabs"
 							role="tab"
-							className="tab"
-							aria-label="Occurrences"
 							defaultChecked
+							className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+							aria-label="Analyses"
 						/>
-						<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						<div role="tabpanel" className="tab-content w-full mt-2">
+							<Table table="analysis" where={{ Assignments: { some: { featureid } } }} defaultTake={20} />
+						</div>
+
+						<input
+							type="radio"
+							name="featureDataTabs"
+							role="tab"
+							className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+							aria-label="Occurrences"
+						/>
+						<div role="tabpanel" className="tab-content w-full mt-2">
 							<Table table="occurrence" where={{ featureid }} defaultTake={20} />
 						</div>
 
-						<input type="radio" name="featureDataTabs" role="tab" className="tab" aria-label="Assignments" />
-						<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box p-6">
+						<input
+							type="radio"
+							name="featureDataTabs"
+							role="tab"
+							className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+							aria-label="Assignments"
+						/>
+						<div role="tabpanel" className="tab-content w-full mt-2">
 							<Table table="assignment" where={{ featureid }} defaultTake={20} />
 						</div>
 					</div>

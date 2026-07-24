@@ -4,6 +4,7 @@ import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
 import { Assay } from "@/app/generated/prisma/client";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import PrimerDiagram from "@/app/components/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
@@ -12,6 +13,8 @@ import DropdownCard from "@/app/components/explore/DropdownCard";
 
 const ASSAY_MASTER_TSV_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
+const dataExplorerTabBase =
+	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
 
 // Simple GC% calculator for summary cards
 const calculateGcContent = (seq: string) => {
@@ -48,9 +51,19 @@ const calculateGcContent = (seq: string) => {
 	return (gcCount / totalBases) * 100;
 };
 
-export default async function Assay_name({ params }: { params: Promise<{ assay_name: Assay["assay_name"] }> }) {
+export default async function Assay_name({
+	params,
+	searchParams
+}: {
+	params: Promise<{ assay_name: Assay["assay_name"] }>;
+	searchParams: Promise<{ view?: string | string[] }>;
+}) {
 	let { assay_name } = await params;
 	assay_name = decodeURIComponent(assay_name);
+	const { view } = await searchParams;
+	if (view !== undefined) {
+		redirect(`/explore/assay/${encodeURIComponent(assay_name)}`);
+	}
 
 	const assay = await prisma.assay.findUnique({
 		where: {
@@ -360,11 +373,32 @@ export default async function Assay_name({ params }: { params: Promise<{ assay_n
 					</div>
 				</div>
 
-				{/* Libraries table*/}
-				<div className="mt-8">
-					<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Libraries</h2>
-					<div className="bg-base-100 border border-base-300 rounded-lg p-6">
-						<Table table="library" defaultTake={20} where={{ assay_name }} />
+				{/* Data Explorer */}
+				<div className="mt-12">
+					<h2 className="text-2xl font-semibold text-base-content/90 mb-3 mt-1">Data Explorer</h2>
+					<div role="tablist" aria-label="Assay data views" className="tabs bg-transparent gap-2 flex-wrap p-0">
+						<input
+							type="radio"
+							name="assayDataTabs"
+							role="tab"
+							defaultChecked
+							className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+							aria-label="Libraries"
+						/>
+						<div role="tabpanel" className="tab-content w-full mt-2">
+							<Table table="library" defaultTake={20} where={{ assay_name }} />
+						</div>
+
+						<input
+							type="radio"
+							name="assayDataTabs"
+							role="tab"
+							className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+							aria-label="Analyses"
+						/>
+						<div role="tabpanel" className="tab-content w-full mt-2">
+							<Table table="analysis" defaultTake={20} where={{ assay_name }} />
+						</div>
 					</div>
 				</div>
 			</section>
