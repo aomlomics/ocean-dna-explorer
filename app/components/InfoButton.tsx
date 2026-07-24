@@ -1,6 +1,15 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	type CSSProperties,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState
+} from "react";
 import { createPortal } from "react-dom";
 
 export default function InfoButton({
@@ -110,6 +119,21 @@ export default function InfoButton({
 			window.removeEventListener("scroll", update, true);
 		};
 	}, [computePanelStyle, open]);
+
+	// Keep the panel inside the viewport horizontally after it has laid out.
+	useLayoutEffect(() => {
+		if (!open || !panelRef.current || !panelStyle) return;
+		const panel = panelRef.current.getBoundingClientRect();
+		const pad = 16;
+		const overflowLeft = pad - panel.left;
+		const overflowRight = panel.right - (window.innerWidth - pad);
+		const dx = overflowLeft > 0 ? overflowLeft : overflowRight > 0 ? -overflowRight : 0;
+		if (dx === 0) return;
+		setPanelStyle((prev) => {
+			if (!prev || typeof prev.left !== "number") return prev;
+			return { ...prev, left: prev.left + dx };
+		});
+	}, [open, panelStyle]);
 
 	const iconColorClass =
 		type === "warning"
