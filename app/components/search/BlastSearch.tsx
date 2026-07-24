@@ -79,7 +79,7 @@ export default function BlastSearch() {
 	}, []);
 
 	useEffect(() => {
-		if (blastQuery && parseBlast(blastQuery)) {
+		if (!blastQuery || parseBlast(blastQuery)) {
 			setError("");
 		}
 	}, [blastQuery]);
@@ -248,8 +248,7 @@ export default function BlastSearch() {
 
 	return (
 		<form onSubmit={handleSubmit} inert={!assayNames} className="flex flex-col items-start">
-			{error}
-			<fieldset className="fieldset" key={assayNames?.toString()}>
+			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
 				<legend className="fieldset-legend">Database</legend>
 				<select value={blastDatabase} onChange={(e) => setBlastDatabase(e.currentTarget.value)} className="select">
 					<option value="">All</option>
@@ -260,13 +259,16 @@ export default function BlastSearch() {
 			</fieldset>
 
 			<fieldset className="fieldset w-full">
-				<legend className="fieldset-legend">
-					<span>
-						BLAST query in{" "}
-						<Link className="link link-primary link-hover" href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">
-							FASTA format
-						</Link>
-					</span>
+				<legend className="fieldset-legend w-full">
+					<div className="flex justify-between w-full">
+						<span>
+							Enter a sequence or BLAST query in{" "}
+							<Link className="link link-primary link-hover" href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">
+								FASTA format
+							</Link>
+						</span>
+						<div className="text-warning">{error}</div>
+					</div>
 				</legend>
 				<textarea
 					className="textarea w-full aspect-4/1"
