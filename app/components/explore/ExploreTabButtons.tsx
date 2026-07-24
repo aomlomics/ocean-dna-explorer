@@ -14,7 +14,6 @@ export default function ExploreTabButtons({
 	className
 }: {
 	activeTable?: Prisma.ModelName;
-	tables?: string[];
 	className?: string;
 } = {}) {
 	const pathname = usePathname();
