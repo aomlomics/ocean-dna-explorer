@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 
 export default function MobileMenu() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -73,7 +73,7 @@ export default function MobileMenu() {
 						<details>
 							<summary className="text-base">Explore</summary>
 							<ul className="p-2">
-								{TableNames.map((table) => (
+								{DataTableNames.map((table) => (
 									<li key={table} className="py-1">
 										<Link href={`/explore/${table}`} onClick={handleClose}>
 											{TableMetadata[table].plural}
@@ -177,13 +177,7 @@ export default function MobileMenu() {
 			{/* The backdrop, rendered into the body via a portal */}
 			{mounted &&
 				isOpen &&
-				createPortal(
-					<div
-						className="fixed inset-0 bg-black/30 z-scrim"
-						onClick={handleClose}
-					></div>,
-					document.body
-				)}
+				createPortal(<div className="fixed inset-0 bg-black/30 z-scrim" onClick={handleClose}></div>, document.body)}
 		</div>
 	);
 }
