@@ -7,12 +7,60 @@ import { redirect } from "next/navigation";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import GcDonut from "@/app/components/charts/GcDonut";
 import Table from "@/app/components/paginated/Table";
-import { AssayIcon } from "@/app/components/icons";
-import DropdownCard from "@/app/components/explore/DropdownCard";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import Map from "@/app/components/map/Map";
+import CopyButton from "@/app/components/CopyButton";
+import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
+
+// Shared chrome so the sequence, taxonomy, assay and prevalence cards read as one family
+const cardBase = "bg-base-200 rounded-xl p-5";
+const cardHeading = "text-base sm:text-lg font-semibold text-base-content/80";
+const taxonomyCardInfo = {
+	description:
+		"Taxonomies are ranked by how many assignments for this feature match each taxonomy. The most frequently assigned taxonomy appears first."
+};
+const prevalenceCardInfo = {
+	description:
+		"Top project prevalence is the percent of samples in the project with the most feature-positive samples that contain this feature. Overall prevalence is across all samples."
+};
+
+const calculateGcContent = (seq: string) => {
+	if (!seq || seq.length === 0) return 0;
+	let gcCount = 0;
+	let totalBases = seq.length;
+	for (const base of seq.toUpperCase()) {
+		switch (base) {
+			case "G":
+			case "C":
+			case "S":
+				gcCount += 1;
+				break;
+			case "V":
+			case "B":
+				gcCount += 2 / 3;
+				break;
+			case "R":
+			case "Y":
+			case "M":
+			case "K":
+				gcCount += 0.5;
+				break;
+			case "D":
+			case "H":
+				gcCount += 1 / 3;
+				break;
+			case "N":
+				totalBases--;
+				break;
+		}
+	}
+	if (totalBases === 0) return 0;
+	return (gcCount / totalBases) * 100;
+};
 
 export default async function Featureid({
 	params,
@@ -28,7 +76,7 @@ export default async function Featureid({
 		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
 	}
 
-	const { feature, taxaCounts, assays } = await prisma.$transaction(async (tx) => {
+	const { feature, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
 		const feature = await tx.feature.findUnique({
 			where: {
 				featureid
@@ -71,29 +119,53 @@ export default async function Featureid({
 			select: {
 				Analysis: {
 					select: {
-						assay_name: true
+						assay_name: true,
+						Assay: {
+							select: {
+								target_gene: true
+							}
+						}
 					}
 				}
 			}
 		});
-		const assays = [...new Set(assignmentAssays.map((a) => a.Analysis.assay_name))];
+		const uniqueAssays = assignmentAssays.reduce(
+			(acc, a) => ({
+				...acc,
+				[a.Analysis.assay_name]: {
+					target_gene: a.Analysis.Assay.target_gene
+				}
+			}),
+			{} as Record<string, { target_gene: string }>
+		);
+		const assaySummaries = Object.entries(uniqueAssays).map(([assay_name, assay]) => ({
+			assay_name,
+			target_gene: assay.target_gene
+		}));
 
-		return { feature, taxaCounts, assays };
+		return { feature, taxaCounts, assaySummaries };
 	});
 
 	if (!feature) return <>Feature not found</>;
 
 	taxaCounts.sort((a, b) => b.count - a.count);
-	const primaryTaxonomy = taxaCounts[0]?.taxonomy ?? null;
-	const primaryTaxonomyDetails = primaryTaxonomy
-		? (feature.Assignments.find((a) => a.taxonomy === primaryTaxonomy)?.Taxonomy as Taxonomy | null)
-		: null;
-	const primaryTaxonomyName =
-		primaryTaxonomyDetails?.species ||
-		primaryTaxonomyDetails?.genus ||
-		primaryTaxonomyDetails?.taxonomy ||
-		primaryTaxonomy ||
-		null;
+	const taxonomyById = new globalThis.Map(
+		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as Taxonomy | null])
+	);
+	const topTaxonomies = taxaCounts.slice(0, 5).map(({ taxonomy, count }) => {
+		const details = taxonomyById.get(taxonomy) ?? null;
+		return {
+			taxonomy,
+			count,
+			details,
+			displayName: details?.species || details?.genus || details?.taxonomy || taxonomy,
+			hierarchy: details?.taxonomy || taxonomy
+		};
+	});
+	const gcPercent = calculateGcContent(feature.dna_sequence);
+	const sequenceMidpoint = Math.ceil(feature.dna_sequence.length / 2);
+	const sequenceLineTop = feature.dna_sequence.slice(0, sequenceMidpoint);
+	const sequenceLineBottom = feature.dna_sequence.slice(sequenceMidpoint);
 	const totalAssignments = feature._count.Assignments || 0;
 	const assignmentLabel = totalAssignments === 1 ? "assignment" : "assignments";
 
@@ -123,80 +195,152 @@ export default async function Featureid({
 			</header>
 
 			<section className="mt-4 space-y-6">
-				{/* DNA sequence on its own row */}
-				<div className="space-y-2">
-					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">DNA sequence</p>
-					<p className="font-mono text-2xl text-primary break-all">{feature.dna_sequence}</p>
-					<div className="flex flex-wrap gap-6 text-sm text-base-content/70 mt-1">
-						<span>
-							<span className="font-semibold text-base-content">{feature.sequenceLength_ODE}</span> bp
-						</span>
-						<span>
-							<span className="font-semibold text-base-content">{totalAssignments.toLocaleString()}</span>{" "}
-							{assignmentLabel}
-						</span>
-					</div>
-				</div>
-
-				{/* Three-column layout: taxonomy, prevalence, assays */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					{/* Taxonomy card */}
-					<div className="bg-base-200 rounded-xl p-4 flex flex-col items-center justify-center gap-3 h-full text-center">
-						{primaryTaxonomyDetails ? (
-							<>
-								<div className="flex flex-col items-center gap-3">
-									<div className="w-36 h-36 md:w-40 md:h-40 relative">
-										<PhyloPic taxonomy={primaryTaxonomyDetails} />
-									</div>
-									{primaryTaxonomyDetails.taxonomy ? (
-										<Link
-											href={`/explore/taxonomy/${encodeURIComponent(primaryTaxonomyDetails.taxonomy)}`}
-											className="text-lg font-semibold text-base-content hover:text-primary break-all"
-										>
-											{primaryTaxonomyName}
-										</Link>
-									) : (
-										<p className="text-lg font-semibold text-base-content break-all">{primaryTaxonomyName}</p>
-									)}
-								</div>
-								<div className="text-xs text-base-content/70 bg-base-200/70 rounded-md p-2 w-full">
-									<span className="font-semibold uppercase tracking-wide mr-1">Taxonomy</span>
-									<span className="break-all">{primaryTaxonomyDetails.taxonomy ?? primaryTaxonomy}</span>
-								</div>
-							</>
-						) : (
-							<p className="text-sm text-base-content/70 text-center">
-								No taxonomy assignments are available for this feature yet.
-							</p>
-						)}
-					</div>
-
-					{/* Prevalence graphs (middle column) */}
-					<div className="h-full">
-						<Suspense
-							fallback={
-								<div className="bg-base-200 rounded-xl p-4 flex items-center justify-center gap-3 h-full">
-									<span className="loading loading-spinner loading-md text-primary" />
-									<span className="text-sm text-base-content/70">Loading prevalence…</span>
-								</div>
+				<div className="grid grid-cols-1 lg:grid-cols-8 gap-6">
+					{/* Map and sequence share the wider 5/8 column; the map absorbs any leftover height */}
+					<div className="lg:col-span-5 flex flex-col gap-6">
+						<Map
+							query={() =>
+								prisma.sample.findMany({
+									where: {
+										Libraries: {
+											some: {
+												Occurrences: {
+													some: {
+														featureid
+													}
+												}
+											}
+										}
+									}
+								})
 							}
-						>
-							<div className="bg-base-200 rounded-xl p-4 h-full flex flex-col justify-center">
-								<FeaturePrevalenceSection featureid={feature.featureid} />
+							cluster
+							legend
+							className="w-full min-h-96 flex-1 rounded-xl"
+						/>
+
+						{/* DNA sequence card */}
+						<div className={cardBase}>
+							<div className="mb-4">
+								<h2 className={cardHeading}>DNA Sequence</h2>
 							</div>
-						</Suspense>
+							<div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-4">
+								<div>
+									<p className="text-xs font-semibold text-base-content/70">Length</p>
+									<p className="text-4xl leading-tight font-semibold text-base-content mt-1">
+										{feature.sequenceLength_ODE}
+										<span className="ml-1 text-base font-normal text-base-content/60">bp</span>
+									</p>
+								</div>
+								<div className="flex items-center gap-3">
+									<div>
+										<p className="text-xs font-semibold text-base-content/70">GC Content</p>
+										<p className="text-3xl leading-tight font-semibold text-base-content mt-1">
+											{gcPercent.toFixed(1)}%
+										</p>
+									</div>
+									<GcDonut percentage={gcPercent} size={74} strokeWidth={8} />
+								</div>
+							</div>
+							{/* Sequence is split at its midpoint so it reads as two balanced rows */}
+							<div className="rounded-lg bg-base-100/40 p-4">
+								<div className="flex items-center justify-between gap-4">
+									<div className="flex-1 min-w-0 space-y-1">
+										<p className="font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
+											{sequenceLineTop}
+										</p>
+										<p className="font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
+											{sequenceLineBottom}
+										</p>
+									</div>
+									<CopyButton
+										value={feature.dna_sequence}
+										variant="icon"
+										title="Copy DNA sequence"
+										ariaLabel="Copy DNA sequence"
+										className="self-center"
+									/>
+								</div>
+							</div>
+						</div>
 					</div>
 
-					{/* Assay dropdown (right column) */}
-					<div className="h-full flex items-start">
-						<div className="w-3/4">
-							<DropdownCard table="assay" items={assays} icon={<AssayIcon />} />
+					<div className="lg:col-span-3 flex flex-col gap-6">
+						{/* Taxonomy card */}
+						<div className={cardBase}>
+							<div className="flex items-start justify-between gap-4 mb-4">
+								<h2 className={cardHeading}>Top Taxonomy by Assignments</h2>
+								<DashCardInfoButton info={taxonomyCardInfo} />
+							</div>
+							{topTaxonomies.length > 0 ? (
+								<div className="divide-y divide-base-content/10">
+									{topTaxonomies.map((taxonomyItem) => (
+										<Link
+											key={taxonomyItem.taxonomy}
+											href={`/explore/taxonomy/${encodeURIComponent(taxonomyItem.taxonomy)}`}
+											className="flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group"
+										>
+											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">
+												<div className="relative w-12 h-12 flex items-center justify-center">
+													{taxonomyItem.details ? (
+														<PhyloPic taxonomy={taxonomyItem.details} />
+													) : (
+														<span className="text-xs text-base-content/55">No image</span>
+													)}
+												</div>
+											</div>
+											<div className="flex-1 min-w-0">
+												<h3 className="font-medium text-lg text-base-content leading-snug break-all">
+													{taxonomyItem.displayName}
+												</h3>
+												<p className="text-xs text-base-content/60 break-all leading-snug">
+													{taxonomyItem.hierarchy}
+												</p>
+											</div>
+											<svg
+												className="w-4 h-4 text-base-content/45 group-hover:text-base-content/75 transition-colors duration-150 shrink-0"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+												strokeWidth={2}
+											>
+												<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+											</svg>
+										</Link>
+									))}
+								</div>
+							) : (
+								<p className="text-sm text-base-content/70">
+									No taxonomy assignments are available for this feature yet.
+								</p>
+							)}
+						</div>
+
+						{/* Assay card */}
+						<AssaysCard title="Assays used by this Feature" assays={assaySummaries} />
+
+						{/* Prevalence graphs */}
+						<div className={`${cardBase} flex flex-1 flex-col`}>
+							<div className="flex items-start justify-between gap-4 mb-4">
+								<h2 className={cardHeading}>Feature Prevalence</h2>
+								<DashCardInfoButton info={prevalenceCardInfo} />
+							</div>
+							<Suspense
+								fallback={
+									<div className="flex flex-1 items-center justify-center gap-3 py-6">
+										<span className="loading loading-spinner loading-md text-primary" />
+										<span className="text-sm text-base-content/70">Loading prevalence…</span>
+									</div>
+								}
+							>
+								<FeaturePrevalenceSection featureid={feature.featureid} />
+							</Suspense>
 						</div>
 					</div>
 				</div>
 
 				{/* Data tables with toggle */}
-				<section className="space-y-4 mt-6">
+				<section className="space-y-4 mt-10">
 					<h2 className="text-2xl font-semibold text-base-content/90 mb-3">Data Explorer</h2>
 					<div role="tablist" aria-label="Feature data views" className="tabs bg-transparent gap-2 flex-wrap p-0">
 						<input
@@ -314,19 +458,8 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="bg-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
-				<div>
-					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Across all samples</p>
-					<p className="text-3xl font-bold text-primary mt-1">{globalPercent.toFixed(1)}%</p>
-					<p className="text-xs text-base-content/70 mt-1">
-						{globalFeatureSamples.toLocaleString()} of {totalSamplesCount.toLocaleString()} samples
-					</p>
-				</div>
-				<GcDonut percentage={globalPercent} size={72} strokeWidth={8} />
-			</div>
-
-			<div className="bg-base-200 rounded-lg p-4 flex items-center justify-between gap-4">
+		<div className="flex flex-1 flex-col justify-center divide-y divide-base-content/10">
+			<div className="flex items-center justify-between gap-4 pb-4">
 				<div>
 					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
 						Within top project
@@ -349,7 +482,18 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 						</p>
 					)}
 				</div>
-				<GcDonut percentage={projectPercent} size={72} strokeWidth={8} />
+				<GcDonut percentage={projectPercent} size={64} strokeWidth={8} />
+			</div>
+
+			<div className="flex items-center justify-between gap-4 pt-4">
+				<div>
+					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Across all samples</p>
+					<p className="text-3xl font-bold text-primary mt-1">{globalPercent.toFixed(1)}%</p>
+					<p className="text-xs text-base-content/70 mt-1">
+						{globalFeatureSamples.toLocaleString()} of {totalSamplesCount.toLocaleString()} samples
+					</p>
+				</div>
+				<GcDonut percentage={globalPercent} size={64} strokeWidth={8} />
 			</div>
 		</div>
 	);
