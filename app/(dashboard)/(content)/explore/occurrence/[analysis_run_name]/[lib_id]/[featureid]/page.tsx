@@ -235,19 +235,19 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			</header>
 
 			<section className="mt-2 space-y-8">
-				{/* Top layout: map and occurrence details — gap-8 matches space-y-8 below */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-					{/* Left: Single-sample map */}
-					<div className="space-y-8">
-						<Map locations={[occurrence.Library.Sample]} className="aspect-square" />
+				{/* Top layout: map/assay on left and occurrence detail on right */}
+				<div className="grid grid-cols-1 lg:grid-cols-8 gap-6 items-start">
+					{/* Left: single-sample map and assay */}
+					<div className="lg:col-span-3 flex flex-col gap-6">
+						<Map locations={[occurrence.Library.Sample]} className="w-full min-h-80 rounded-xl" />
 						<AssaysCard
 							title={assayCardTitle}
 							assays={[{ assay_name: occurrence.Analysis.assay_name, target_gene: occurrence.Analysis.Assay.target_gene }]}
 						/>
 					</div>
 
-					{/* Right: Featured data + sample card */}
-					<div className="lg:col-span-2 space-y-8">
+					{/* Right: occurrence detail and sample link */}
+					<div className="lg:col-span-5 flex flex-col gap-6">
 						<div
 							className={[
 								"group rounded-2xl bg-base-200 p-6 flex flex-col",
