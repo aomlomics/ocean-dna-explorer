@@ -54,9 +54,9 @@ export default function AlphaDiversityDisplay({
 	alphaDiversities: (AlphaDiversity & {
 		AlphaDiversityIndexes: {
 			index: AlphaDiversityIndex["index"];
-			Library: {
-				Sample: Sample;
-			};
+			Library?: {
+				Sample?: Sample | null;
+			} | null;
 		}[];
 	})[];
 	sameAnalysis?: boolean;
@@ -80,8 +80,9 @@ export default function AlphaDiversityDisplay({
 
 		//user defined
 		for (const index of ad.AlphaDiversityIndexes) {
-			if (index.Library.Sample.userDefined) {
-				Object.keys(index.Library.Sample.userDefined).forEach(userDefinedFields.add, userDefinedFields);
+			const sample = index.Library?.Sample;
+			if (sample?.userDefined) {
+				Object.keys(sample.userDefined).forEach(userDefinedFields.add, userDefinedFields);
 			}
 		}
 	}
@@ -169,17 +170,22 @@ export default function AlphaDiversityDisplay({
 
 					for (const ad of finishedDiversities) {
 						for (const i of ad.AlphaDiversityIndexes) {
+							const sample = i.Library?.Sample;
+							if (!sample) {
+								continue;
+							}
+
 							//get string representation of values
 							const xValue =
 								xField === "analysis_run_name"
 									? ad.analysis_run_name
-									: getSampleFieldValue(i.Library.Sample, xField, xType);
+									: getSampleFieldValue(sample, xField, xType);
 							let hueValue;
 							if (hueField) {
 								hueValue =
 									hueField === "analysis_run_name"
 										? ad.analysis_run_name
-										: getSampleFieldValue(i.Library.Sample, hueField, hueType!);
+										: getSampleFieldValue(sample, hueField, hueType!);
 							}
 
 							if (datasetsObj[xValue]) {

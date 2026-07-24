@@ -45,33 +45,21 @@ export async function getApiSections() {
 			title: "Introduction",
 			content: (
 				<div className="space-y-4">
-					<div>
-						<Link href="/search">
-							<div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-base-200/80 hover:bg-base-300/80 transition-colors text-sm">
-								<span className="w-4 h-4 shrink-0 text-primary">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-										/>
-									</svg>
-								</span>
-								<span className="text-base-content">Search Page</span>
-							</div>
-						</Link>
-						<p className="text-base-content/90 mt-2">
-							You can build complex queries using the Search page user interface, then copy the URL to use as an API
-							call in your code. This is a great way to get started quickly.
-						</p>
-					</div>
+					<p className="text-base-content/90">
+						You can build complex queries using the{" "}
+						<Link href="/search" className="link link-primary">
+							Search
+						</Link>{" "}
+						page user interface, then copy the URL to use as an API call in your code. This is a great way to get
+						started quickly.
+					</p>
 					<p>
 						The Ocean DNA Explorer API provides programmatic access to marine eDNA data. This documentation will help
 						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
-						Our API is designed to be straightforward. All you need is a web browser or a simple script to start
-						fetching data. No authentication is required.
+						All you need is a web browser or a simple script to start
+						fetching data. No authentication is required, and there are currently no usage limits, please be reasonable. Reach out to the ODE team for large data retrieval requests.
 					</p>
 				</div>
 			),
@@ -95,15 +83,15 @@ export async function getApiSections() {
 										<Link href="#database-schema" className="link link-primary">
 											Database Schema
 										</Link>
-										. The <strong>Entity Relationship Diagram (ERD)</strong> is a map of the database that shows you
+										. The Entity Relationship Diagram (ERD) is a map of the database that shows you
 										what tables are available and how they are linked together.
 									</p>
 									<p className="mt-2">
-										Once you know which table you're interested in (e.g., `Project`), look at the{" "}
+										Once you know which table you're interested in (e.g., Project), look at the{" "}
 										<Link href="#table-definitions" className="link link-primary">
 											Table Definitions
 										</Link>{" "}
-										to find the exact names of the data columns, or <strong>fields</strong>, that you can use in your
+										to find the exact names of the data columns, or fields, that you can use in your
 										queries.
 									</p>
 								</div>
@@ -298,19 +286,21 @@ if (http_status(response)$category == "Success") {
 							<div className="space-y-6">
 								<div>
 									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data</h4>
-									<p className="mb-3">There are multiple ways to access and explore data in the Ocean DNA Explorer:</p>
+									<p className="mb-3">There are multiple ways to access and explore data:</p>
 									<ul className="list-disc ml-6 space-y-3">
 										<li>
 											<Link href="/explore/project" className="link link-primary font-semibold">
-												Explore Pages
-											</Link>
+												Explore
+											</Link>{" "}
+											Pages
 											: View all data from each table with filters. You can only filter on fields within the table you
 											are looking at. Click on any blue data field to view the detail page for that specific record.
 										</li>
 										<li>
 											<Link href="/search" className="link link-primary font-semibold">
-												Search Page
-											</Link>
+												Search
+											</Link>{" "}
+											page
 											: Build complex queries using data from multiple tables, allowing you to filter on both fields{" "}
 											<em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button
 											to add OR conditions.
@@ -487,7 +477,7 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table in the Ocean DNA Explorer. You can use
+								The dropdown menus below show the fields available for each table. You can use
 								this information in your API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
@@ -706,9 +696,9 @@ if (http_status(response)$category == "Success") {
 						searches, construct complex queries with multiple conditions, or filter records based on specific field
 						values.
 					</p>
-					<div className="p-4 my-4 bg-warning/20 border-l-4 border-warning rounded-md">
-						<h4 className="font-bold mb-2">Important Rule of Exclusivity</h4>
-						<p>
+					<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
+						<h5 className="font-semibold mb-2 text-accent">Important Rule of Exclusivity</h5>
+						<p className="text-sm">
 							The primary search methods, <strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
 							(`advanced`), and <strong>ID Filtering</strong> (`ids`), are mutually exclusive. You can only use{" "}
 							<strong>one</strong> of these parameters in a single API request. Additionally, when using any of these
@@ -754,13 +744,14 @@ if (http_status(response)$category == "Success") {
 								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table
 								queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
 							</p>
-							<div className="p-4 my-4 bg-base-200 border-l-4 border-info rounded-md">
-								<h4 className="font-bold mb-2">Build Queries with the UI</h4>
-								<p>
+							<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
+								<h5 className="font-semibold mb-2 text-accent">Build Queries with the UI</h5>
+								<p className="text-sm">
 									Use the{" "}
 									<Link href="/search" className="link link-primary font-semibold">
-										Search page
+										Search
 									</Link>{" "}
+									page{" "}
 									to build filters through a user interface (no code necessary!), then copy the API query from the URL.
 								</p>
 							</div>
@@ -1003,7 +994,7 @@ if (http_status(response)$category == "Success") {
 								Includes related data from other tables in the response. Relation names can be lowercase or capitalized.
 							</p>
 
-							<div className="my-8 p-4 bg-base-200/50 border-l-4 border-accent shadow-sm">
+							<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
 								<h5 className="font-semibold mb-2 text-accent">Why Use Relations?</h5>
 								<p className="text-sm">
 									Relations are powerful because they let you fetch data from multiple connected tables in a single API

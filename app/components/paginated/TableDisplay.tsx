@@ -68,12 +68,13 @@ export default function TableDisplay({
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
 
+	const fixedViewportClass = size === "lg" ? "h-[90vh]" : "";
 	const dataShellClass =
 		mode !== "grid"
-			? "rounded-lg h-[90vh]"
+			? `rounded-lg ${fixedViewportClass}`
 			: table === "taxonomy"
 				? "rounded-lg"
-				: "rounded-lg h-[90vh] min-h-0 flex flex-col";
+				: `rounded-lg ${fixedViewportClass} min-h-0 flex flex-col`;
 
 	const dataContent =
 		mode === "table" ? (

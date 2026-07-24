@@ -4,10 +4,11 @@ import TableMetadata from "@/types/tableMetadata";
 import { Occurrence, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import { LocationIcon } from "@/app/components/icons";
+import { AnalysisIcon, LocationIcon } from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
+import AssaysCard from "@/app/components/assay/AssaysCard";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -28,6 +29,31 @@ function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 				</div>
 			))}
 		</div>
+	);
+}
+
+function MaskSvgIcon({
+	src,
+	className
+}: {
+	src: string;
+	className?: string;
+}) {
+	return (
+		<span
+			aria-hidden="true"
+			className={`inline-block h-10 w-10 bg-current ${className ?? ""}`}
+			style={{
+				WebkitMaskImage: `url('${src}')`,
+				maskImage: `url('${src}')`,
+				WebkitMaskRepeat: "no-repeat",
+				maskRepeat: "no-repeat",
+				WebkitMaskPosition: "center",
+				maskPosition: "center",
+				WebkitMaskSize: "contain",
+				maskSize: "contain"
+			}}
+		/>
 	);
 }
 
@@ -62,7 +88,12 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			Analysis: {
 				select: {
 					assay_name: true,
-					project_id: true
+					project_id: true,
+					Assay: {
+						select: {
+							target_gene: true
+						}
+					}
 				}
 			},
 			Feature: {
@@ -91,6 +122,62 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		occurrence.Assignment.Taxonomy.genus ||
 		occurrence.Assignment.Taxonomy.taxonomy ||
 		"Unknown taxonomy";
+	const assayCardTitle =
+		occurrence.Analysis.assay_name && occurrence.Analysis.Assay
+			? "Assay used in this Occurrence"
+			: "Assays used in this Occurrence";
+
+	const topStatCards = (
+		<div className="flex flex-wrap gap-4">
+			<Link href={`/explore/feature/${featureid}`} className="block w-max max-w-full">
+				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
+					<div className="text-primary">
+						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
+					</div>
+					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
+						<div className="font-medium text-primary tabular-nums leading-tight text-sm whitespace-nowrap">
+							{featureid}
+						</div>
+						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
+							Feature
+						</div>
+					</div>
+				</div>
+			</Link>
+			<Link href={`/explore/library/${lib_id}`} className="block w-max max-w-full">
+				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
+					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
+						<MaskSvgIcon src="/images/icons/library_icon.svg" />
+					</div>
+					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
+						<div className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+							{lib_id}
+						</div>
+						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
+							Library
+						</div>
+					</div>
+				</div>
+			</Link>
+			<Link href={`/explore/analysis/${analysis_run_name}`} className="block w-max max-w-full">
+				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
+					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
+						<AnalysisIcon className="h-10 w-10" />
+					</div>
+					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
+						<div
+							className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700 tabular-nums leading-tight text-sm whitespace-nowrap"
+						>
+							{analysis_run_name}
+						</div>
+						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
+							Analysis
+						</div>
+					</div>
+				</div>
+			</Link>
+		</div>
+	);
 
 	return (
 		<div className="space-y-8 pb-8">
@@ -138,66 +225,32 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</TitleHoverTooltip>
 				</div>
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">
-					This record links one feature detection to its sample, library, analysis, assay, and assigned taxonomy.
+					An occurrence links a feature (
+					<span className="font-medium text-primary">featureid</span>), library (
+					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">lib_id</span>), and
+					analysis (
+					<span className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700">analysis_run_name</span>).
 				</p>
-				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">
-					Color key: <span className="font-medium text-primary">feature ID</span>,{" "}
-					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">library ID</span>,{" "}
-					<span className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700">analysis ID</span>.
-				</p>
-				<div className="max-w-5xl flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/70">
-					<div className="min-w-0">
-						<span className="text-base-content/65">Feature:</span>{" "}
-						<Link href={`/explore/feature/${featureid}`} className="link link-primary link-hover wrap-anywhere">
-							{featureid}
-						</Link>
-					</div>
-					<div className="min-w-0">
-						<span className="text-base-content/65">Sample:</span>{" "}
-						<Link
-							href={`/explore/sample/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
-							className="link link-primary link-hover wrap-anywhere"
-						>
-							{occurrence.Library.Sample.samp_name}
-						</Link>
-					</div>
-					<div className="min-w-0">
-						<span className="text-base-content/65">Library:</span>{" "}
-						<Link href={`/explore/library/${lib_id}`} className="link link-primary link-hover wrap-anywhere">
-							{lib_id}
-						</Link>
-					</div>
-					<div className="min-w-0">
-						<span className="text-base-content/65">Analysis:</span>{" "}
-						<Link href={`/explore/analysis/${analysis_run_name}`} className="link link-primary link-hover wrap-anywhere">
-							{analysis_run_name}
-						</Link>
-					</div>
-					<div className="min-w-0">
-						<span className="text-base-content/65">Assay:</span>{" "}
-						<Link
-							href={`/explore/assay/${occurrence.Analysis.assay_name}`}
-							className="link link-primary link-hover wrap-anywhere"
-						>
-							{occurrence.Analysis.assay_name}
-						</Link>
-					</div>
-				</div>
+				<div className="mt-4">{topStatCards}</div>
 			</header>
 
 			<section className="mt-2 space-y-8">
-				{/* Top layout: map and occurrence details — gap-8 matches space-y-8 below */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-					{/* Left: Single-sample map */}
-					<div className="h-full">
-						<Map locations={[occurrence.Library.Sample]} className="aspect-square rounded-xl overflow-hidden" />
+				{/* Top layout: map/assay on left and occurrence detail on right */}
+				<div className="grid grid-cols-1 lg:grid-cols-8 gap-6 items-start">
+					{/* Left: single-sample map and assay */}
+					<div className="lg:col-span-3 flex flex-col gap-6">
+						<Map locations={[occurrence.Library.Sample]} className="w-full min-h-80 rounded-xl" />
+						<AssaysCard
+							title={assayCardTitle}
+							assays={[{ assay_name: occurrence.Analysis.assay_name, target_gene: occurrence.Analysis.Assay.target_gene }]}
+						/>
 					</div>
 
-					{/* Right: Featured data */}
-					<div className="lg:col-span-2 h-full">
+					{/* Right: occurrence detail and sample link */}
+					<div className="lg:col-span-5 flex flex-col gap-6">
 						<div
 							className={[
-								"group h-full rounded-2xl bg-base-200 p-6 flex flex-col",
+								"group rounded-2xl bg-base-200 p-6 flex flex-col",
 								"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]",
 								"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_10px_24px_-14px_rgba(0,0,0,0.5),0_2px_5px_-1px_rgba(0,0,0,0.22)]",
 								"transition-shadow duration-300"
@@ -209,7 +262,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 								</h2>
 								<DashCardInfoButton info={occurrenceInfo} />
 							</div>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 items-start">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 								{/* Left: taxonomic image, name, and sequence quantity */}
 								<div className="flex flex-col items-center justify-center gap-4 text-center">
 									{occurrence.Assignment.Taxonomy && (
@@ -260,33 +313,24 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 								</div>
 							</div>
 						</div>
-					</div>
-				</div>
-
-				{/* Same vertical gap as gap-8 between map and detail card; width ≈ one map column (1/3) on lg */}
-				<div className="w-full lg:w-1/3 min-w-0">
-					<div
-						className={[
-							"group rounded-xl bg-base-200 p-4",
-							"shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_6px_18px_-12px_rgba(0,0,0,0.45),0_1px_3px_-1px_rgba(0,0,0,0.18)]",
-							"hover:shadow-[0_1px_0_0_rgba(255,255,255,0.05)_inset,0_10px_24px_-14px_rgba(0,0,0,0.5),0_2px_5px_-1px_rgba(0,0,0,0.22)]",
-							"transition-shadow duration-300"
-						].join(" ")}
-					>
-						<Link
-							href={`/explore/sample/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
-							className="flex items-center gap-4 rounded-lg p-4 hover:bg-base-300/30 transition-colors"
-						>
-							<div className="h-12 w-12 shrink-0 rounded-lg bg-base-100/30 flex items-center justify-center text-primary">
-								<LocationIcon />
-							</div>
-							<div className="min-w-0">
-								<p className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Sample</p>
-								<p className="text-base font-medium text-base-content wrap-anywhere">
-									{occurrence.Library.Sample.samp_name}
-								</p>
-							</div>
-						</Link>
+						<div className="w-full lg:max-w-sm">
+							<Link
+								href={`/explore/sample/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
+								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
+							>
+								<div className="text-primary">
+									<LocationIcon className="h-10 w-10" />
+								</div>
+								<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
+									<div className="truncate font-medium text-base-content tabular-nums leading-tight text-sm">
+										{occurrence.Library.Sample.samp_name}
+									</div>
+									<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
+										Sample
+									</div>
+								</div>
+							</Link>
+						</div>
 					</div>
 				</div>
 			</section>

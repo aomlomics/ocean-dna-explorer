@@ -18,14 +18,24 @@ import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/Loadin
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 import { Suspense } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { redirect } from "next/navigation";
+
+const dataExplorerTabBase =
+	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
 
 export default async function Analysis_run_name({
-	params
+	params,
+	searchParams
 }: {
 	params: Promise<{ analysis_run_name: Analysis["analysis_run_name"] }>;
+	searchParams: Promise<{ view?: string | string[] }>;
 }) {
 	let { analysis_run_name } = await params;
 	analysis_run_name = decodeURIComponent(analysis_run_name);
+	const { view } = await searchParams;
+	if (view !== undefined) {
+		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
+	}
 
 	const analysis = await prisma.analysis.findUnique({
 		where: {
@@ -203,32 +213,71 @@ export default async function Analysis_run_name({
 			</div>
 
 			{/* Data Explorer */}
-			<div id="dataExplorer" className="mt-8">
-				<h2 className="text-2xl font-semibold text-base-content/90 mb-4">Data Explorer</h2>
-				<div role="tablist" className="tabs tabs-lifted">
-					<input type="radio" name="dataTabs" role="tab" className="tab pr-2" aria-label="Tables:" disabled />
+			<div id="dataExplorer" className="mt-12">
+				<h2 className="text-2xl font-semibold text-base-content/90 mb-3 mt-1">Data Explorer</h2>
+				<div role="tablist" className="tabs bg-transparent gap-2 flex-wrap p-0">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className="tab tab-disabled border-none px-0 bg-transparent text-sm font-medium normal-case tracking-normal text-base-content cursor-default"
+						aria-label="Tables:"
+						disabled
+					/>
 
-					<input type="radio" defaultChecked name="dataTabs" role="tab" className="tab px-2" aria-label="Taxa" />
-					<div role="tabpanel" className="tab-content bg-base-100 border-base-300 rounded-box">
+					<input
+						type="radio"
+						defaultChecked
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Taxonomies"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<TaxaGrid analysis_run_name={analysis_run_name} />
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Assignments" />
-					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Assignments"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Table table="assignment" where={{ analysis_run_name }} defaultTake={20} />
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab pl-6 pr-2" aria-label="Visualize:" disabled />
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className="tab tab-disabled border-none pl-4 pr-0 bg-transparent text-sm font-medium normal-case tracking-normal text-base-content cursor-default"
+						aria-label="Charts:"
+						disabled
+					/>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Taxonomy" />
-					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Taxonomy"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingTaxonomyVisualize />}>
 							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
 
-					<input type="radio" name="dataTabs" role="tab" className="tab px-2" aria-label="Alpha Diversity" />
-					<div role="tabpanel" className="tab-content w-full border-base-300 rounded-lg">
+					<input
+						type="radio"
+						name="dataTabs"
+						role="tab"
+						className={`tab border-none ${dataExplorerTabBase} bg-base-200/90 text-base-content hover:bg-base-300 checked:bg-primary checked:text-primary-content checked:shadow-md checked:hover:bg-primary checked:hover:brightness-95`}
+						aria-label="Alpha Diversity"
+					/>
+					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingAlphaDiversityDisplay />}>
 							<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
 						</Suspense>
