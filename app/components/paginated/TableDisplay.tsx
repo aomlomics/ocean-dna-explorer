@@ -1,13 +1,12 @@
 "use client";
 
-import { Prisma, Sample } from "@/app/generated/prisma/client";
+import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
 import Table from "../paginated/Table";
 import Pagination from "../paginated/Pagination";
 import { useEffect, useState } from "react";
 import Grid from "./grid/Grid";
 import TaxaGridItem from "./grid/TaxaGridItem";
 import ProjectGridItem from "./grid/ProjectGridItem";
-import { BlastResult } from "@/types/globals";
 import { useViewMode } from "../explore/ViewModeContext";
 import InfoButton from "../InfoButton";
 
@@ -29,7 +28,11 @@ export default function TableDisplay({
 	toggle?: true;
 	ignoreParams?: string[];
 	extraParams?: Record<string, string>;
-	setExtraResults?: (args: { blastResult: BlastResult; samples: Sample[] }) => void;
+	setExtraResults?: (args: {
+		blastResult: BlastQueryResult[] | undefined;
+		existingBlastDate: BlastQuery["dateCalculated"] | undefined;
+		samples: Sample[] | undefined;
+	}) => void;
 }) {
 	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
 	const [showCommonNames, setShowCommonNames] = useState(true);
@@ -174,7 +177,7 @@ export default function TableDisplay({
 								/>
 								<span>Show common names</span>
 								<InfoButton
-									infoText="GBIF common names are approximations and are not stored in our database."
+									text="GBIF common names are approximations and are not stored in our database."
 									dir="tooltip-left"
 								/>
 							</label>

@@ -383,7 +383,9 @@ export default function Tour() {
 						<select
 							className="select select-sm min-w-32"
 							value={taxaPerProject}
-							onChange={(e) => setTaxaPerProject(Number(e.currentTarget.value) as (typeof TAXA_PER_PROJECT_OPTIONS)[number])}
+							onChange={(e) =>
+								setTaxaPerProject(Number(e.currentTarget.value) as (typeof TAXA_PER_PROJECT_OPTIONS)[number])
+							}
 							disabled={loading}
 						>
 							{TAXA_PER_PROJECT_OPTIONS.map((count) => (
@@ -520,7 +522,7 @@ export default function Tour() {
 					<legend className="fieldset-legend">
 						Feature{" "}
 						<InfoButton
-							infoText="Enabling this might cause slow load times when changing other options"
+							text="Enabling this might cause slow load times when changing other options"
 							type="warning"
 							className="h-4"
 						/>
@@ -764,7 +766,7 @@ export default function Tour() {
 					Start Tour
 				</button>
 
-				<InfoButton infoText="Starting a tour will sign you out." type="warning" />
+				<InfoButton text="Starting a tour will sign you out." type="warning" />
 			</div>
 		</>
 	);

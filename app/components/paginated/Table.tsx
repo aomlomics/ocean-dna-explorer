@@ -3,13 +3,13 @@
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
-import { Prisma, Sample, Tag } from "@/app/generated/prisma/client";
+import { BlastQuery, BlastQueryResult, Prisma, Sample, Tag } from "@/app/generated/prisma/client";
 import { SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
-import { BlastResult, NetworkPacket } from "@/types/globals";
+import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
@@ -20,8 +20,9 @@ import { buildWhereParams } from "@/app/helpers/queries";
 import TableStatusState from "./TableStatusState";
 
 type ExtraResults = {
-	blastResult: BlastResult;
-	samples: Sample[];
+	blastResult: BlastQueryResult[] | undefined;
+	existingBlastDate: BlastQuery["dateCalculated"] | undefined;
+	samples: Sample[] | undefined;
 };
 
 const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
@@ -277,9 +278,10 @@ export default function Table({
 			//pass up extra results from query
 			if (setExtraResults) {
 				setExtraResults({
-					samples: (data.samples as Sample[]) || [],
-					blastResult: (data.blastResult as BlastResult) || []
-				});
+					samples: data.samples,
+					blastResult: data.BlastQueryResults,
+					existingBlastDate: data.existingBlastDate
+				} as ExtraResults);
 			}
 
 			//set to last page if page is too large
@@ -445,7 +447,7 @@ export default function Table({
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
 						<div className="flex gap-2">
 							<InfoButton
-								infoText="If many rows are displayed per page, selecting these options can cause long load times."
+								text="If many rows are displayed per page, selecting these options can cause long load times."
 								type="warning"
 								dir="tooltip-left"
 								className="z-60"

@@ -4,18 +4,16 @@ import { type CSSProperties, type ReactNode, useCallback, useEffect, useMemo, us
 import { createPortal } from "react-dom";
 
 export default function InfoButton({
-	infoText,
-	infoContent,
+	text,
+	children,
 	dir = "tooltip-top",
 	className,
 	type
 }: {
-	infoText: string;
-	infoContent?: ReactNode;
 	dir?: "tooltip-top" | "tooltip-bottom" | "tooltip-left" | "tooltip-right";
 	className?: string;
 	type?: "warning" | "error";
-}) {
+} & ({ text: string; children?: undefined } | { text?: undefined; children: ReactNode })) {
 	const wrapperRef = useRef<HTMLDivElement | null>(null);
 	const panelRef = useRef<HTMLDivElement | null>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +128,7 @@ export default function InfoButton({
 
 	const richPanel = useMemo(() => {
 		if (!mounted || !open || !panelStyle) return null;
-		const tooltipBody = infoContent ?? <span>{infoText}</span>;
+		const tooltipBody = children ?? <span>{text}</span>;
 		return createPortal(
 			<div
 				ref={panelRef}
@@ -147,7 +145,7 @@ export default function InfoButton({
 			</div>,
 			document.body
 		);
-	}, [infoContent, infoText, mounted, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
+	}, [children, text, mounted, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
 
 	return (
 		<div

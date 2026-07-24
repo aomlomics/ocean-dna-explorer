@@ -403,5 +403,5 @@ model Library {
     inhibition_check     String?
     inhibition_check_0_1 DeadBoolean?
 
-    @@index(fields: [project_id, assay_name])
+    @@index([project_id, assay_name])
 }

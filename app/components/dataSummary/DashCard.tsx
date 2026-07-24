@@ -90,9 +90,7 @@ export default function DashCard({
 			].join(" ")}
 		>
 			{hasHeader && (
-				<div
-					className={["flex items-start justify-between gap-4", pad.header, headerClassName].join(" ")}
-				>
+				<div className={["flex items-start justify-between gap-4", pad.header, headerClassName].join(" ")}>
 					<div className="min-w-0">
 						{eyebrow && (
 							<div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/55 mb-1">
@@ -119,12 +117,7 @@ export default function DashCard({
 				</div>
 			)}
 			<div
-				className={[
-					pad.body,
-					hasHeader && padding !== "none" ? "pt-3 sm:pt-4" : "",
-					"grow",
-					bodyClassName
-				]
+				className={[pad.body, hasHeader && padding !== "none" ? "pt-3 sm:pt-4" : "", "grow", bodyClassName]
 					.filter(Boolean)
 					.join(" ")}
 			>
@@ -141,47 +134,37 @@ export default function DashCard({
  * server components.
  */
 export function DashCardInfoButton({ info }: { info: DashCardInfo }) {
-	const fallbackInfoText =
-		typeof info.description === "string" && info.description.trim().length > 0
-			? info.description
-			: "More information about this card";
-
 	return (
-		<InfoButton
-			infoText={fallbackInfoText}
-			dir="tooltip-bottom"
-			className="z-2200 self-start translate-y-[-2px]"
-			infoContent={
-				<div className="space-y-2">
-					{info.title ? <div className="text-sm font-semibold text-base-content">{info.title}</div> : null}
-					{info.description ? (
-						<div className="text-xs text-base-content/75 leading-relaxed">{info.description}</div>
-					) : null}
-					{info.links && info.links.length > 0 ? (
-						<div className="space-y-1.5">
-							{info.title || info.description ? <div className="h-px bg-base-content/10" /> : null}
-							<ul className="space-y-1 text-xs text-base-content/80">
-								{info.links.map((item) => (
-									<li key={item.label} className="leading-relaxed">
-										{item.href ? (
-											<a
-												href={item.href}
-												target={item.target}
-												rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
-												className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
-											>
-												{item.label}
-											</a>
-										) : (
-											<span className="font-medium">{item.label}</span>
-										)}
-									</li>
-								))}
-							</ul>
-						</div>
-					) : null}
-				</div>
-			}
-		/>
+		<InfoButton dir="tooltip-bottom" className="z-2200 self-start -translate-y-0.5">
+			<div className="space-y-2">
+				{info.title ? <div className="text-sm font-semibold text-base-content">{info.title}</div> : null}
+				{info.description ? (
+					<div className="text-xs text-base-content/75 leading-relaxed">{info.description}</div>
+				) : null}
+				{info.links && info.links.length > 0 ? (
+					<div className="space-y-1.5">
+						{info.title || info.description ? <div className="h-px bg-base-content/10" /> : null}
+						<ul className="space-y-1 text-xs text-base-content/80">
+							{info.links.map((item) => (
+								<li key={item.label} className="leading-relaxed">
+									{item.href ? (
+										<a
+											href={item.href}
+											target={item.target}
+											rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+											className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+										>
+											{item.label}
+										</a>
+									) : (
+										<span className="font-medium">{item.label}</span>
+									)}
+								</li>
+							))}
+						</ul>
+					</div>
+				) : null}
+			</div>
+		</InfoButton>
 	);
 }

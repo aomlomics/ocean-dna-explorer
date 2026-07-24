@@ -3,29 +3,14 @@ import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 import CopyButton from "@/app/components/CopyButton";
-import TableMetadata from "@/types/tableMetadata";
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
-import InfoButton from "@/app/components/InfoButton";
 import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
-
-function formatTaxonomyDisplay(dbTaxonomy: any) {
-	const taxonomicData = Object.entries(dbTaxonomy)
-		.filter(([key, value]) => {
-			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
-		})
-		.map(([key, value]) => ({
-			rank: key.charAt(0).toUpperCase() + key.slice(1),
-			name: String(value).replace("_", " "),
-			rankKey: key
-		}));
-
-	return taxonomicData;
-}
+import TableInfo from "@/app/components/TableInfo";
 
 function finestDisplayedRank(db: Taxonomy): {
 	rankKey: (typeof TaxonomicRanks)[number];
@@ -160,29 +145,13 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as Taxonomy);
 	const phyloPic = pageGbif?.phyloPic ?? null;
 	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as Taxonomy);
-	const databaseScientificName =
-		finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
+	const databaseScientificName = finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
 	const databaseRankKey = finestRank?.rankKey ?? null;
 	const breadcrumbRanks = [...RanksBySpecificity].reverse().filter((rank) => {
 		const raw = (dbTaxonomy as any)[rank]?.toString().trim();
 		return Boolean(raw);
 	});
-	const taxonomyInfoText = `Unique Key: ${TableMetadata.taxonomy.titleField}\n${TableMetadata.taxonomy.description}`;
-	const taxonomyInfoContent = (
-		<div className="space-y-2">
-			<div className="flex items-start gap-2">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0 text-primary">
-					<path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-				</svg>
-				<p>
-					<span className="font-semibold text-primary">Unique Key:</span>{" "}
-					<span className="font-medium text-base-content">{TableMetadata.taxonomy.titleField}</span>
-				</p>
-			</div>
-			<p>{TableMetadata.taxonomy.description}</p>
-		</div>
-	);
 
 	return (
 		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
@@ -191,7 +160,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<h1 className="mb-0 text-4xl font-semibold leading-[1.05] text-primary">
 						{dbTaxonomy.species || dbTaxonomy.genus || taxonomy.split(";").pop()?.replace("_", " ")}
 					</h1>
-					<InfoButton infoText={taxonomyInfoText} infoContent={taxonomyInfoContent} dir="tooltip-right" />
+					<TableInfo table="taxonomy" />
 					<span className="-translate-y-2 shrink-0 rounded-md bg-base-300 px-2.5 py-1 text-sm font-medium leading-normal text-base-content">
 						{databaseRankLabel}
 					</span>
@@ -208,9 +177,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									return (
 										<li key={rank}>
 											{isLast ? (
-												<span className="font-medium text-base-content/70">
-													{name}
-												</span>
+												<span className="font-medium text-base-content/70">{name}</span>
 											) : (
 												<Link href={rankSearchUrl} className="link link-hover text-primary">
 													{name}
@@ -264,7 +231,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							<GbifIucnStatus taxonKey={pageGbif.mediaTaxonKey} />
 						</div>
 					) : null}
-
 				</div>
 
 				{/* Right: map + summary cards */}
@@ -273,7 +239,10 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Analyses as Search">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="View Analyses as Search"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<AnalysisIcon />
 								</div>
@@ -285,7 +254,10 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						</Link>
 
 						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Projects as Search">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="View Projects as Search"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<ProjectIcon />
 								</div>
@@ -297,7 +269,10 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						</Link>
 
 						<Link href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="View Samples as Search">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="View Samples as Search"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto">
 									<LocationIcon />
 								</div>
@@ -317,18 +292,21 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 								}
 							}}
 						>
-							<div className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`} data-tip="Find other Features with this Taxonomy">
+							<div
+								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
+								data-tip="Find other Features with this Taxonomy"
+							>
 								<div className="w-20 h-20 flex items-center justify-center text-primary mx-auto relative overflow-hidden">
 									<StaticActgBackdrop className="opacity-60" />
 									<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 										{phyloPic?.imageUrl ? (
 											<div className="relative w-12 h-12 opacity-95">
 												<ThemeAwarePhyloPic
-												src={phyloPic.imageUrl}
-												alt="Taxonomic outline"
-												fill
-												className="object-contain"
-											/>
+													src={phyloPic.imageUrl}
+													alt="Taxonomic outline"
+													fill
+													className="object-contain"
+												/>
 											</div>
 										) : (
 											<div className="text-primary text-3xl font-semibold leading-none">?</div>

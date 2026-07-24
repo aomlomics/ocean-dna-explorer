@@ -217,7 +217,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.BlastQueryResultScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.BlastQueryResultWithRelationsSchema,
 		titleField: "id",
-		fieldOrder: ["featureid", "evalue"]
+		fieldOrder: ["featureid", "eValue"]
 	}
 } as Record<
 	Uncapitalize<Prisma.ModelName>,

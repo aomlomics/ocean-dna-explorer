@@ -7,14 +7,13 @@ import TableDisplay from "@/app/components/paginated/TableDisplay";
 import BlastSearch from "@/app/components/search/BlastSearch";
 import BlastSearchResult from "@/app/components/search/BlastSearchResult";
 import SearchUI from "@/app/components/search/SearchUI";
-import { Prisma, Sample } from "@/app/generated/prisma/client";
+import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
 import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable, getRandomKey } from "@/app/helpers/utils";
-import { BlastResult } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
-import InfoButton from "@/app/components/InfoButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import TableInfo from "@/app/components/TableInfo";
 
 export default function Search() {
 	const router = useRouter();
@@ -22,7 +21,8 @@ export default function Search() {
 
 	const [table, setTable] = useState(undefined as Uncapitalize<Prisma.ModelName> | undefined);
 	const [extraResults, setExtraResults] = useState({
-		blastResult: undefined as BlastResult | undefined,
+		blastResult: undefined as BlastQueryResult[] | undefined,
+		existingBlastDate: undefined as BlastQuery["dateCalculated"] | undefined,
 		samples: undefined as Sample[] | undefined
 	});
 	const [mapKey, setMapKey] = useState("0");
@@ -37,28 +37,6 @@ export default function Search() {
 	}, [searchParams]);
 
 	if (!table) return <></>;
-	const titleField = TableMetadata[table].titleField;
-	const uniqueKey = typeof titleField === "string" ? titleField : titleField.join(" / ");
-	const infoText = `Unique Key: ${uniqueKey}\n${TableMetadata[table].description}`;
-	const infoContent = (
-		<div className="space-y-2">
-			<div className="flex items-start gap-2">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-					className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-				>
-					<path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-				</svg>
-				<p>
-					<span className="font-semibold text-primary">Unique Key:</span>{" "}
-					<span className="font-medium text-base-content">{uniqueKey}</span>
-				</p>
-			</div>
-			<p>{TableMetadata[table].description}</p>
-		</div>
-	);
 
 	return (
 		<>
@@ -71,12 +49,7 @@ export default function Search() {
 								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
 								<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
 							</h1>
-							<InfoButton
-								infoText={infoText}
-								infoContent={infoContent}
-								dir="tooltip-right"
-								className="translate-y-0.5"
-							/>
+							<TableInfo table={table} />
 						</div>
 					</header>
 				)}
@@ -92,9 +65,12 @@ export default function Search() {
 			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm mb-4">
 				<input key={table + "blastInput"} defaultChecked={!!searchParams.get("blastQuery")} type="checkbox" />
 				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">BLAST</div>
-				<div className="collapse-content grid grid-cols-2">
+				<div className="collapse-content grid grid-cols-2 gap-10">
 					<BlastSearch key={table + "blast"} />
-					<BlastSearchResult blastResult={extraResults.blastResult || []} />
+					<BlastSearchResult
+						blastResult={extraResults.blastResult}
+						existingBlastDate={extraResults.existingBlastDate}
+					/>
 				</div>
 			</div>
 

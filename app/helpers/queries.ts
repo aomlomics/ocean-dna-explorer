@@ -13,6 +13,7 @@ import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl
 import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import { insertBlastIntoQuery, parseBlastRequest } from "./blast";
 
 export function deepWhere(
 	start: Uncapitalize<Prisma.ModelName>,
@@ -458,38 +459,7 @@ export function parseApiQuery(
 	//blast query
 	let blast;
 	if (!options?.features || options.features.blast) {
-		const tempQueries = newParams.getAll("blastQuery");
-		if (tempQueries.length) {
-			blast = { queries: tempQueries } as { queries: string[]; assay_name?: Assay["assay_name"]; save?: boolean };
-			newParams.delete("blastQuery");
-		}
-
-		const blastDatabase = newParams.get("blastDatabase");
-		if (blastDatabase != null) {
-			if (!blast) {
-				throw new Error("Must provide a blast query with blastDatabase option.");
-			}
-
-			blast.assay_name = blastDatabase;
-			newParams.delete("blastDatabase");
-		}
-
-		const saveBlast = newParams.get("saveBlast");
-		if (saveBlast != null) {
-			if (!blast) {
-				throw new Error("Must provide a blast query with saveBlast option.");
-			}
-
-			if (saveBlast.toLowerCase() === "true") {
-				blast.save = true;
-			} else if (saveBlast.toLowerCase() === "false") {
-				blast.save = false;
-			} else {
-				throw new Error('The saveBlast option must be "true" or "false"');
-			}
-
-			newParams.delete("saveBlast");
-		}
+		blast = parseBlastRequest(newParams);
 	}
 
 	//construct shapes
@@ -1129,24 +1099,12 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 export function buildWhereParams(
 	searchParams: URLSearchParams,
 	query: URLSearchParams,
-	whereQuery: Record<string, string | number>,
+	whereQuery?: Record<string, string | number>,
 	ignoreParams?: string[]
 ) {
 	const tempParams = new URLSearchParams(searchParams);
 
-	//pull out blast query
-	tempParams.getAll("blastQuery").forEach((q) => query.set("blastQuery", q));
-	tempParams.delete("blastQuery");
-	const blastDatabase = tempParams.get("blastDatabase");
-	if (blastDatabase != null) {
-		tempParams.delete("blastDatabase");
-		query.set("blastDatabase", blastDatabase);
-	}
-	const saveBlast = tempParams.get("saveBlast");
-	if (saveBlast != null) {
-		tempParams.delete("saveBlast");
-		query.set("saveBlast", saveBlast);
-	}
+	insertBlastIntoQuery(parseBlastRequest(tempParams), query);
 
 	//pull out shapes
 	tempParams.getAll("polygon").forEach((poly) => query.set("polygon", poly));
@@ -1155,10 +1113,12 @@ export function buildWhereParams(
 	tempParams.delete("circle");
 
 	//get rest of queries
-	tempParams.forEach((value, key) => (whereQuery[key] = value));
-	if (ignoreParams) {
-		for (const param of ignoreParams) {
-			delete whereQuery[param];
+	if (whereQuery) {
+		tempParams.forEach((value, key) => (whereQuery[key] = value));
+		if (ignoreParams) {
+			for (const param of ignoreParams) {
+				delete whereQuery[param];
+			}
 		}
 	}
 }

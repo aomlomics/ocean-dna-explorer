@@ -679,7 +679,7 @@ export function SubmitMegaMenu() {
 
 				<MiniFeatureCard
 					title=""
-					description="Contributor role required. Submit projects or individual analyses"
+					description="Contributor permission required. Submit projects or individual analyses"
 					stats={[
 						{ value: projectCount, label: "projects" },
 						{ value: analysisCount, label: "analyses" }

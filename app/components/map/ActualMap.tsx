@@ -1673,7 +1673,7 @@ function LegendControl({
 					<div className="flex flex-col w-full">
 						<div className="text-lg flex justify-between items-center gap-2">
 							{titleTable ? (
-								<InfoButton infoText={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
+								<InfoButton text={`Clustering on ${TableMetadata[titleTable].titleField}.`} dir="tooltip-left" />
 							) : (
 								<></>
 							)}
@@ -1942,7 +1942,7 @@ function PointSizeControl({
 							<span className="text-sm">Point Size</span>
 						</div>
 						<InfoButton
-							infoText="The size, in pixels, that the smallest points will be. Every power of 10 increases point size by the step."
+							text="The size, in pixels, that the smallest points will be. Every power of 10 increases point size by the step."
 							dir="tooltip-right"
 							className="self-start"
 						/>
@@ -2023,7 +2023,7 @@ function ClusterControl({
 							<span className="text-sm">Cluster</span>
 						</div>
 						<InfoButton
-							infoText="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
+							text="The distance, in pixels, where points will begin clustering. Set to zero to disable clustering."
 							dir="tooltip-right"
 							className="self-start"
 						/>

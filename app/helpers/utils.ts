@@ -359,3 +359,16 @@ export function decompressURIComponent(str: string) {
 export function getRandomKey() {
 	return (Math.random() + 1).toString(36).substring(7);
 }
+
+export const getClientSideCookie = (name: string): string | undefined => {
+	if (typeof document === "undefined") {
+		throw new Error("Must be in client side.");
+	}
+
+	const cookieValue = document.cookie
+		.split("; ")
+		.find((row) => row.startsWith(`${name}=`))
+		?.split("=")[1];
+
+	return cookieValue;
+};

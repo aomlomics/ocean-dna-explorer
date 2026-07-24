@@ -75,9 +75,9 @@ export const AlphaDiversityScalarFieldEnumSchema = z.enum(['id','dateCalculated'
 
 export const AlphaDiversityIndexScalarFieldEnumSchema = z.enum(['id','lib_id','parentId','index']);
 
-export const BlastQueryScalarFieldEnumSchema = z.enum(['id','userId','dateCalculated','sequence','query','database']);
+export const BlastQueryScalarFieldEnumSchema = z.enum(['id','userId','dateCalculated','sequences','database','databaseVersion','task','max_target_seqs','evalue','perc_identity','qcov_hsp_perc']);
 
-export const BlastQueryResultScalarFieldEnumSchema = z.enum(['id','featureid','queryId','percentIdentity','alignmentLength','mismatches','gapOpens','queryStart','queryEnd','subjectStart','subjectEnd','eValue','bitScore']);
+export const BlastQueryResultScalarFieldEnumSchema = z.enum(['id','query','sequence','featureid','queryId','percentIdentity','alignmentLength','mismatches','gapOpens','queryStart','queryEnd','subjectStart','subjectEnd','eValue','bitScore']);
 
 export const ProjectScalarFieldEnumSchema = z.enum(['id','project_id','userIds','dateSubmitted','userDefined','editHistory','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','imageFileUrl_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','neg_cont_0_1','pos_cont_0_1','projectDescription','dataDescription','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','mod_date','checkls_ver','seq_archive','code_repo','biological_rep','sample_type']);
 
@@ -115,9 +115,9 @@ export const AlphaDiversityOrderByRelevanceFieldEnumSchema = z.enum(['analysis_r
 
 export const AlphaDiversityIndexOrderByRelevanceFieldEnumSchema = z.enum(['lib_id']);
 
-export const BlastQueryOrderByRelevanceFieldEnumSchema = z.enum(['userId','sequence','query','database']);
+export const BlastQueryOrderByRelevanceFieldEnumSchema = z.enum(['userId','sequences','database','task']);
 
-export const BlastQueryResultOrderByRelevanceFieldEnumSchema = z.enum(['featureid']);
+export const BlastQueryResultOrderByRelevanceFieldEnumSchema = z.enum(['query','sequence','featureid']);
 
 export const ProjectOrderByRelevanceFieldEnumSchema = z.enum(['project_id','userIds','projectMetadataFileUrl_ODE','projectMetadataFileChecksum_ODE','sampleMetadataFileUrl_ODE','sampleMetadataFileChecksum_ODE','libraryMetadataFileUrl_ODE','libraryMetadataFileChecksum_ODE','imageFileUrl_ODE','recordedBy','recordedByID','project_contact','institution','institutionID','project_name','parent_project_id','study_factor','assay_type','projectDescription','dataDescription','license','rightsHolder','accessRights','informationWithheld','dataGeneralizations','bibliographicCitation','associated_resource','checkls_ver','seq_archive','code_repo','sample_type']);
 
@@ -1038,9 +1038,14 @@ export const BlastQuerySchema = z.object({
   id: z.number().int(),
   userId: z.string(),
   dateCalculated: z.coerce.date(),
-  sequence: z.string(),
-  query: z.string().nullish(),
+  sequences: z.string().array(),
   database: z.string().nullish(),
+  databaseVersion: z.number().int(),
+  task: z.string(),
+  max_target_seqs: z.number().int(),
+  evalue: z.number(),
+  perc_identity: z.number(),
+  qcov_hsp_perc: z.number(),
 })
 
 export type BlastQuery = z.infer<typeof BlastQuerySchema>
@@ -1128,6 +1133,8 @@ export const BlastQueryWithPartialRelationsSchema: z.ZodType<BlastQueryWithParti
 
 export const BlastQueryResultSchema = z.object({
   id: z.number().int(),
+  query: z.string().nullish(),
+  sequence: z.string(),
   featureid: z.string(),
   queryId: z.number().int(),
   percentIdentity: z.number(),

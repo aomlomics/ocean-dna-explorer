@@ -8,13 +8,14 @@ import {
 } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
-import { BlastResult, NetworkPacket, ParamsArray } from "@/types/globals";
+import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Location } from "@/types/globals";
 import { getDataTableName, getRelationPath, getTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
-import { RolePermissions } from "@/types/objects";
+import { cookies } from "next/headers";
+import { fetchBlast, parseBlastRequest } from "@/app/helpers/blast";
 
 export async function GET(
 	request: Request,
@@ -25,9 +26,11 @@ export async function GET(
 	const { sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata?.role;
 
-	const model = getDataTableName(table);
+	const cookieStore = await cookies();
 
 	try {
+		const model = getDataTableName(table);
+
 		const { searchParams } = new URL(request.url);
 
 		const query = {} as {
@@ -97,72 +100,27 @@ export async function GET(
 			sampleWhere = {};
 		}
 
-		const blastDatabase = searchParams.get("blastDatabase");
-		const saveBlast = searchParams.get("saveBlast");
-		const blastQueries = searchParams.getAll("blastQuery");
-		if (blastDatabase != null) {
-			if (!blastQueries.length) {
-				throw new Error("Must provide a blast query with blastDatabase option.");
-			}
-
-			searchParams.delete("blastDatabase");
-		}
-		if (saveBlast != null) {
-			if (!role || !RolePermissions[role].includes("contribute")) {
-				throw new Error("You must be signed in with the contributor role to save BLAST queries.");
-			}
-
-			if (!blastQueries.length) {
-				throw new Error("Must provide a blast query with saveBlast option.");
-			}
-
-			searchParams.delete("saveBlast");
-		}
-
-		let blastResult;
+		let BlastQueryResults;
+		let existingBlastDate;
 		let featureidWhere;
-		if (blastQueries.length) {
-			searchParams.delete("blastQuery");
-
-			let res;
-			try {
-				res = await fetch(
-					`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/?${blastDatabase ? `assay_name=${blastDatabase}&` : ""}${blastQueries.map((q) => `query=${q}`).join("&")}`,
-					saveBlast?.toLowerCase() === "true"
-						? {
-								headers: {
-									Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
-								}
-							}
-						: undefined
-				);
-			} catch (err) {
-				throw new Error("Could not reach BLAST server.");
-			}
-			if (res.ok) {
-				const response = (await res.json()) as NetworkPacket;
-				if (response.statusMessage === "success") {
-					blastResult = response.result as BlastResult;
-					const baseFeatureWhere = {
-						featureid: {
-							in: blastResult.reduce(
-								(acc, r) => [...acc, ...r.BlastQueryResults.map((bqr) => bqr.featureid)],
-								[] as string[]
-							)
-						}
-					};
-					featureidWhere = deepWhere(model, "feature", baseFeatureWhere);
-
-					if (sampleWhere) {
-						sampleWhere = deepMerge(sampleWhere, deepWhere("sample", "feature", baseFeatureWhere));
-					}
-					query.where = query.where ? deepMerge(query.where, featureidWhere) : featureidWhere;
-				} else if (response.statusMessage === "error") {
-					throw new Error("Response from BLAST server: " + response.error);
+		const blast = parseBlastRequest(searchParams);
+		if (blast) {
+			({ BlastQueryResults, existingBlastDate } = await fetchBlast(
+				blast,
+				{ role, token: await getToken({ expiresInSeconds: 60 }) },
+				cookieStore
+			));
+			const baseFeatureWhere = {
+				featureid: {
+					in: BlastQueryResults.map((bqr) => bqr.featureid)
 				}
-			} else {
-				throw new Error("Could not reach BLAST server.");
+			};
+			featureidWhere = deepWhere(model, "feature", baseFeatureWhere);
+
+			if (sampleWhere) {
+				sampleWhere = deepMerge(sampleWhere, deepWhere("sample", "feature", baseFeatureWhere));
 			}
+			query.where = query.where ? deepMerge(query.where, featureidWhere) : featureidWhere;
 		}
 
 		const orderByStr = searchParams.get("orderBy");
@@ -424,7 +382,8 @@ export async function GET(
 			statusMessage: "success",
 			result,
 			count,
-			blastResult,
+			BlastQueryResults,
+			existingBlastDate,
 			samples: getSamples ? samples : undefined
 		});
 	} catch (err) {

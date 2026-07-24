@@ -57,7 +57,7 @@ export default function LoadingAlphaDiversityDisplay() {
 				</fieldset>
 
 				<div className="flex gap-1">
-					<InfoButton infoText="" type="warning" />
+					<InfoButton text="" type="warning" />
 
 					<div className="dropdown dropdown-end">
 						<button className="btn" disabled>

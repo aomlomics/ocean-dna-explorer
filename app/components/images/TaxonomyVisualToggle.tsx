@@ -88,20 +88,15 @@ export default function TaxonomyVisualToggle({
 		activateGbifMode();
 	}, [skipWarn, activateGbifMode]);
 
-	const rankTip = phyloRank
-		? `${phyloRank[0].toUpperCase() + phyloRank.slice(1)}: ${phyloTitle}`
-		: phyloTitle;
+	const rankTip = phyloRank ? `${phyloRank[0].toUpperCase() + phyloRank.slice(1)}: ${phyloTitle}` : phyloTitle;
 
 	const showGbifToggle = mediaTaxonKey != null && gbifPhotoAllowed;
 	const displayCommonName = commonName?.trim() ? commonName.trim() : "No common name found";
 
 	const phylopicLayerClass =
-		mode === "phylopic" || !showGbifToggle
-			? "opacity-100 z-[1]"
-			: "pointer-events-none opacity-0 z-0";
+		mode === "phylopic" || !showGbifToggle ? "opacity-100 z-[1]" : "pointer-events-none opacity-0 z-0";
 
-	const gbifLayerClass =
-		mode === "gbif" && showGbifToggle ? "opacity-100 z-[2]" : "pointer-events-none opacity-0 z-0";
+	const gbifLayerClass = mode === "gbif" && showGbifToggle ? "opacity-100 z-[2]" : "pointer-events-none opacity-0 z-0";
 
 	return (
 		<div className="flex w-full min-w-0 max-w-full flex-col items-center">
@@ -157,9 +152,7 @@ export default function TaxonomyVisualToggle({
 					</div>
 
 					{showGbifToggle && gbifLayerMounted ? (
-						<div
-							className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 ${gbifLayerClass}`}
-						>
+						<div className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 ${gbifLayerClass}`}>
 							<GbifImage
 								taxonKey={mediaTaxonKey!}
 								taxonomy={taxonomy}
@@ -183,8 +176,8 @@ export default function TaxonomyVisualToggle({
 					>
 						{mode === "gbif" && gbifLayerMounted
 							? gbifPayload
-								? formatGbifAttributionDisplay(gbifPayload) ??
-									"GBIF image shown (no attribution provided by GBIF for this record)."
+								? (formatGbifAttributionDisplay(gbifPayload) ??
+									"GBIF image shown (no attribution provided by GBIF for this record).")
 								: "\u00a0"
 							: "\u00a0"}
 					</p>
@@ -194,7 +187,9 @@ export default function TaxonomyVisualToggle({
 			<div className="mt-4 w-full max-w-2xl px-2">
 				<div className="mx-auto grid w-full min-w-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
 					<div className="min-w-0 rounded-lg p-3 text-center sm:text-left">
-						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">Scientific name</div>
+						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">
+							Scientific name
+						</div>
 						<div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
 							<div
 								className="min-w-0 flex-1 whitespace-normal wrap-break-word text-left text-xl font-semibold italic leading-tight text-base-content sm:text-2xl"
@@ -203,15 +198,13 @@ export default function TaxonomyVisualToggle({
 								{databaseScientificName}
 							</div>
 							<div className="dropdown dropdown-end shrink-0">
+								<div tabIndex={0} role="button" aria-label="Taxonomic image attribution" className="shrink-0">
+									<InfoButton text="Taxonomic outline image provided by PhyloPic, resolved on the GBIF backbone." />
+								</div>
 								<div
 									tabIndex={0}
-									role="button"
-									aria-label="Taxonomic image attribution"
-									className="shrink-0"
+									className="dropdown-content z-50 w-80 rounded-box border border-base-300 bg-base-200 p-3 shadow-sm"
 								>
-									<InfoButton infoText="Taxonomic outline image provided by PhyloPic, resolved on the GBIF backbone." />
-								</div>
-								<div tabIndex={0} className="dropdown-content z-50 w-80 rounded-box border border-base-300 bg-base-200 p-3 shadow-sm">
 									<h4 className="mb-1 text-sm font-semibold text-base-content/80">
 										Taxonomic outline image provided by PhyloPic
 									</h4>
@@ -224,11 +217,11 @@ export default function TaxonomyVisualToggle({
 										<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
 											GBIF
 										</Link>{" "}
-										backbone taxonomy — the same GBIF species-suggest step as PhyloPic on the explore grid (<span className="whitespace-nowrap">matchGbifForPhylopic</span>).
-										GBIF photo, English common name, and IUCN data on this page all use that match only. <strong>GBIF photo</strong> mode
-										prefers occurrence still images (e.g.
-										iNaturalist), then filtered checklist media, skipping obvious range maps when possible. Third‑party
-										licenses apply; see the credit line under the GBIF photo when shown.
+										backbone taxonomy — the same GBIF species-suggest step as PhyloPic on the explore grid (
+										<span className="whitespace-nowrap">matchGbifForPhylopic</span>). GBIF photo, English common name,
+										and IUCN data on this page all use that match only. <strong>GBIF photo</strong> mode prefers
+										occurrence still images (e.g. iNaturalist), then filtered checklist media, skipping obvious range
+										maps when possible. Third‑party licenses apply; see the credit line under the GBIF photo when shown.
 									</p>
 								</div>
 							</div>
@@ -245,9 +238,7 @@ export default function TaxonomyVisualToggle({
 							>
 								{displayCommonName}
 							</div>
-							<InfoButton
-								infoText="Not stored in the database. Approximated from GBIF vernacularNames for the matched GBIF backbone taxon."
-							/>
+							<InfoButton text="Not stored in the database. Approximated from GBIF vernacularNames for the matched GBIF backbone taxon." />
 						</div>
 						<div className="mt-1.5 text-xs text-base-content/50">(GBIF, approximate)</div>
 					</div>
@@ -269,8 +260,8 @@ export default function TaxonomyVisualToggle({
 						GBIF Occurrence Photos
 					</h3>
 					<p className="py-3 text-sm text-base-content/80">
-						These images come from GBIF occurrence records and checklist media. They may show dead animals,
-						strandings, museum specimens, dissections, or other sensitive content.
+						These images come from GBIF occurrence records and checklist media. They may show dead animals, strandings,
+						museum specimens, dissections, or other sensitive content.
 					</p>
 					<label className="label cursor-pointer justify-start gap-2 py-1">
 						<input

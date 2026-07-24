@@ -139,7 +139,7 @@ export function FeaturedOrganismsSection() {
 		<section className="space-y-6">
 			<div className="flex items-center gap-2">
 				<h2 className="text-2xl sm:text-3xl font-semibold text-base-content leading-tight">Featured Organisms</h2>
-				<InfoButton infoText="Hand-picked by the ODE team" dir="tooltip-right" />
+				<InfoButton text="Hand-picked by the ODE team" dir="tooltip-right" />
 			</div>
 			<FeaturedOrganisms />
 		</section>

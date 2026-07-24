@@ -71,7 +71,7 @@ export default function UserList() {
 										{(user.publicMetadata.role as Role) || "No role"}
 										{!!user.publicMetadata.roleApplication && (
 											<InfoButton
-												infoText={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
+												text={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
 												type="warning"
 											/>
 										)}

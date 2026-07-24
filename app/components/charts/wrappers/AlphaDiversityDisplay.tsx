@@ -403,7 +403,7 @@ export default function AlphaDiversityDisplay({
 
 								<div className="flex gap-1">
 									<InfoButton
-										infoText={`Selecting many ${hueField ? hueField + " " : ""}values may cause lag. When changing hue field, if more than ${DEFAULT_MAX_HUES} values exist, only the first ${DEFAULT_MAX_HUES} will default to selected.`}
+										text={`Selecting many ${hueField ? hueField + " " : ""}values may cause lag. When changing hue field, if more than ${DEFAULT_MAX_HUES} values exist, only the first ${DEFAULT_MAX_HUES} will default to selected.`}
 										type="warning"
 									/>
 

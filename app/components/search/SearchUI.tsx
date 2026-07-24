@@ -18,6 +18,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
 import { getRelationPath } from "@/app/helpers/schema";
+import { buildWhereParams } from "@/app/helpers/queries";
 
 type Operator = "AND" | "OR";
 
@@ -472,20 +473,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 			newParams.set("table", searchTable!);
 		}
 
-		//maintain BLAST
-		searchParams.getAll("blastQuery").forEach((q) => newParams.set("blastQuery", q));
-		const blastDatabase = searchParams.get("blastDatabase");
-		if (blastDatabase) {
-			newParams.set("blastDatabase", blastDatabase);
-		}
-		const saveBlast = searchParams.get("saveBlast");
-		if (saveBlast) {
-			newParams.set("saveBlast", saveBlast);
-		}
-
-		//maintain shapes
-		searchParams.getAll("polygon").forEach((poly) => newParams.set("polygon", poly));
-		searchParams.getAll("circle").forEach((cir) => newParams.set("circle", cir));
+		buildWhereParams(searchParams, newParams);
 
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
@@ -536,9 +524,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		if (blastDatabase) {
 			newParams.set("blastDatabase", blastDatabase);
 		}
-		const saveBlast = searchParams.get("saveBlast");
-		if (saveBlast) {
-			newParams.set("saveBlast", saveBlast);
+		const blastSave = searchParams.get("blastSave");
+		if (blastSave) {
+			newParams.set("blastSave", blastSave);
 		}
 
 		//maintain shapes

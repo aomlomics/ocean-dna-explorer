@@ -75,7 +75,7 @@ export const RankPlurals = {
 	species: "Species"
 };
 
-export const GlobalOmit = ["userIds", "editHistory", "deleted_ODE"];
+export const GlobalOmit = ["userId", "userIds", "editHistory", "deleted_ODE"];
 
 export const TypeSeparators = {
 	string: "|",

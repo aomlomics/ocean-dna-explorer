@@ -7,38 +7,39 @@ import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SubmitEvent, useEffect, useState } from "react";
+import InfoButton from "../InfoButton";
+import { BlastQueryWithRelations } from "@/prisma/generated/zod";
+import Link from "next/link";
+import { parseBlastRequest } from "@/app/helpers/blast";
 
-export const BLAST_QUERY_LIMIT = 1;
+const DEFAULT_NUM_RESULTS = 10;
+const DEFAULT_EVALUE = 1e-10;
+const DEFAULT_PERCENT_IDENTITY = 95;
+const DEFAULT_QCOV_HSP = 80;
 
-//TODO: expand options, style
+//TODO: style
 //TODO: add clear query button
+//TODO: add list of existing queries for current user
 export default function BlastSearch() {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const router = useRouter();
 
-	const { sessionClaims } = useAuth();
+	const { userId, sessionClaims } = useAuth();
 	const role = sessionClaims?.metadata?.role;
 
+	const [prevQueries, setPrevQueries] = useState(undefined as BlastQueryWithRelations[] | undefined);
 	const [assayNames, setAssayNames] = useState(undefined as Assay["assay_name"][] | undefined);
 
 	const [error, setError] = useState("");
 
 	const [blastDatabase, setBlastDatabase] = useState("");
-	const defaultQueries = [] as string[];
-	const paramQueries = searchParams.getAll("blastQuery");
-	if (paramQueries.length === 1 && paramQueries[0].split(",").length === 1) {
-		defaultQueries.push(paramQueries[0]);
-	} else {
-		for (const query of paramQueries) {
-			const split = query.split(",");
-			//ignore improperly formatted queries
-			if (split.length >= 2) {
-				defaultQueries.push(`>${split[0]}\n${split[1]}`);
-			}
-		}
-	}
-	const [blastQuery, setBlastQuery] = useState(defaultQueries.join("\n"));
+	const [blastQuery, setBlastQuery] = useState("");
+	const [task, setTask] = useState("blastn" as "blastn" | "megablast");
+	const [max_target_seqs, set_max_target_seqs] = useState(NaN);
+	const [evalue, set_evalue] = useState("");
+	const [perc_identity, set_perc_identity] = useState(NaN);
+	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(NaN);
 
 	useEffect(() => {
 		async function doFetch() {
@@ -84,8 +85,47 @@ export default function BlastSearch() {
 	}, [blastQuery]);
 
 	useEffect(() => {
-		setBlastDatabase(assayNames?.find((a) => a === searchParams.get("blastDatabase")) || "");
-		setBlastQuery(searchParams.get("blastQuery") || "");
+		const defaults = {
+			database: "" as typeof blastDatabase,
+			query: "" as typeof blastQuery,
+			task: "blastn" as typeof task,
+			max_target_seqs: NaN as typeof max_target_seqs,
+			evalue: "" as typeof evalue,
+			perc_identity: NaN as typeof perc_identity,
+			qcov_hsp_perc: NaN as typeof qcov_hsp_perc
+		};
+
+		const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
+		if (blast) {
+			defaults.database = assayNames?.find((a) => a === blast.assay_name) || "";
+			defaults.query = blast.queries
+				.reduce((acc, q) => {
+					//ignore improperly formatted queries
+					const split = q.split(",");
+					if (split.length >= 2) {
+						acc.push(`>${split[0]}\n${split[1]}`);
+					}
+
+					return acc;
+				}, [] as string[])
+				.join("\n");
+
+			if (blast.options) {
+				if (blast.options.task === "megablast") defaults.task = "megablast";
+				if (blast.options.max_target_seqs) defaults.max_target_seqs = blast.options.max_target_seqs;
+				if (blast.options.evalue) defaults.evalue = blast.options.evalue.toString();
+				if (blast.options.perc_identity) defaults.perc_identity = blast.options.perc_identity;
+				if (blast.options.qcov_hsp_perc) defaults.qcov_hsp_perc = blast.options.qcov_hsp_perc;
+			}
+		}
+
+		setBlastDatabase(defaults.database);
+		setBlastQuery(defaults.query);
+		setTask(defaults.task);
+		set_max_target_seqs(defaults.max_target_seqs);
+		set_evalue(defaults.evalue);
+		set_perc_identity(defaults.perc_identity);
+		set_qcov_hsp_perc(defaults.qcov_hsp_perc);
 	}, [searchParams]);
 
 	function parseBlast(text: string) {
@@ -100,11 +140,6 @@ export default function BlastSearch() {
 		const queries = [] as ([string] | [string, string])[];
 
 		function isBadQuery(query: [string, string]) {
-			if (queries.length > BLAST_QUERY_LIMIT) {
-				setError(`Only ${BLAST_QUERY_LIMIT} BLAST query is allowed.`);
-				return true;
-			}
-
 			if (!query[0]) {
 				setError("Empty query found.");
 				return true;
@@ -133,7 +168,7 @@ export default function BlastSearch() {
 		const split = text.split(/\r?\n|\r/);
 
 		if (text.startsWith(">")) {
-			//.fasta format (https://www.ncbi.nlm.nih.gov/genbank/fastaformat/)
+			//.fasta format
 			let curr = [split.shift()!.trim().substring(1), ""] as [string, string];
 			for (const line of split) {
 				const trimmed = line.trim();
@@ -175,15 +210,19 @@ export default function BlastSearch() {
 
 		const newParams = new URLSearchParams(searchParams);
 
-		const saveBlast = event.currentTarget.saveBlast.checked;
-		if (saveBlast) {
-			newParams.set("saveBlast", saveBlast);
-		}
+		newParams.delete("blastDatabase");
+		if (blastDatabase) newParams.set("blastDatabase", blastDatabase);
+		newParams.set("task", task);
+		newParams.delete("max_target_seqs");
+		if (!isNaN(max_target_seqs)) newParams.set("max_target_seqs", max_target_seqs.toString());
+		newParams.delete("evalue");
+		if (evalue) newParams.set("evalue", evalue);
+		newParams.delete("perc_identity");
+		if (!isNaN(perc_identity)) newParams.set("perc_identity", perc_identity.toString());
+		newParams.delete("qcov_hsp_perc");
+		if (!isNaN(qcov_hsp_perc)) newParams.set("qcov_hsp_perc", qcov_hsp_perc.toString());
 
-		if (blastDatabase) {
-			newParams.set("blastDatabase", blastDatabase);
-		}
-
+		const blastSave = event.currentTarget.blastSave.checked;
 		const queries = parseBlast(blastQuery);
 		if (queries) {
 			setError("");
@@ -198,12 +237,17 @@ export default function BlastSearch() {
 				}
 			}
 
+			newParams.delete("blastSave");
+			if (blastSave) {
+				newParams.set("blastSave", blastSave);
+			}
+
 			router.push(`${pathname}?${newParams.toString()}`);
 		}
 	}
 
 	return (
-		<form onSubmit={handleSubmit} inert={!assayNames}>
+		<form onSubmit={handleSubmit} inert={!assayNames} className="flex flex-col items-start">
 			{error}
 			<fieldset className="fieldset" key={assayNames?.toString()}>
 				<legend className="fieldset-legend">Database</legend>
@@ -215,33 +259,50 @@ export default function BlastSearch() {
 				</select>
 			</fieldset>
 
-			<textarea className="textarea" value={blastQuery} onChange={(e) => setBlastQuery(e.currentTarget.value)} />
+			<fieldset className="fieldset w-full">
+				<legend className="fieldset-legend">
+					<span>
+						BLAST query in{" "}
+						<Link className="link link-primary link-hover" href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">
+							FASTA format
+						</Link>
+					</span>
+				</legend>
+				<textarea
+					className="textarea w-full aspect-4/1"
+					value={blastQuery}
+					onChange={(e) => setBlastQuery(e.currentTarget.value)}
+				/>
+			</fieldset>
 
-			<label htmlFor="blastFile" className="btn btn-primary">
-				Browse...
-			</label>
-			<input
-				id="blastFile"
-				type="file"
-				className="hidden"
-				accept=".fasta"
-				onChange={async (e) => {
-					if (e.currentTarget.files) {
-						const file = e.currentTarget.files[0];
-						e.currentTarget.value = "";
-						if (file.name.endsWith(".fasta")) {
-							setBlastQuery(await file.text());
-						} else {
-							setError("File must be of type .fasta.");
+			<fieldset className="fieldset justify-items-start">
+				<legend className="fieldset-legend">Or submit a .fasta file</legend>
+				<label htmlFor="blastFile" className="btn btn-primary">
+					Browse...
+				</label>
+				<input
+					id="blastFile"
+					type="file"
+					className="hidden"
+					accept=".fasta"
+					onChange={async (e) => {
+						if (e.currentTarget.files) {
+							const file = e.currentTarget.files[0];
+							e.currentTarget.value = "";
+							if (file.name.endsWith(".fasta")) {
+								setBlastQuery(await file.text());
+							} else {
+								setError("File must be of type .fasta.");
+							}
 						}
-					}
-				}}
-			/>
+					}}
+				/>
+			</fieldset>
 
 			{role && RolePermissions[role].includes("contribute") ? (
-				<fieldset className="fieldset">
+				<fieldset className="fieldset mt-2">
 					<label className="label select-none">
-						<input name="saveBlast" type="checkbox" className="checkbox" />
+						<input name="blastSave" type="checkbox" className="checkbox" />
 						Save BLAST
 					</label>
 				</fieldset>
@@ -249,7 +310,107 @@ export default function BlastSearch() {
 				<></>
 			)}
 
-			<button className="btn btn-success" disabled={!blastQuery}>
+			<h1 className="text-primary text-2xl py-2 border-b border-primary w-full text-center">BLAST Options</h1>
+
+			<div className="flex flex-col items-center w-full">
+				<fieldset className="fieldset border-base-300 rounded-box border px-4 pt-2 pb-4">
+					<legend className="fieldset-legend">blastn or megablast</legend>
+					<label className="label select-none">
+						<input
+							type="checkbox"
+							className="toggle"
+							checked={task === "megablast"}
+							onChange={(e) => (e.target.checked ? setTask("megablast") : setTask("blastn"))}
+						/>
+						{task}
+					</label>
+				</fieldset>
+
+				<div className="grid grid-cols-2 gap-x-5">
+					<fieldset className="fieldset">
+						<div className="flex flex-between">
+							<legend className="fieldset-legend">Number of results</legend>
+							<InfoButton>
+								<div className="text-primary font-bold">
+									max_target_seqs <span className="text-base-content/50">(1 - 100)</span>
+								</div>
+								<span>The maximum number of aligned sequences to keep per query.</span>
+							</InfoButton>
+						</div>
+						<input
+							type="number"
+							min="1"
+							max="100"
+							className="input"
+							placeholder={`${DEFAULT_NUM_RESULTS}`}
+							value={max_target_seqs.toString()}
+							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value))}
+						/>
+					</fieldset>
+
+					<fieldset className="fieldset">
+						<div className="flex flex-between">
+							<legend className="fieldset-legend">Maximum evalue</legend>
+							<InfoButton>
+								<div className="text-primary font-bold">
+									evalue <span className="text-base-content/50">(0 - 1e6)</span>
+								</div>
+								<span>Maximum Expectation value threshold. Drops hits above this probability threshold.</span>
+							</InfoButton>
+						</div>
+						<input
+							className="input"
+							placeholder={`${DEFAULT_EVALUE}`}
+							value={evalue.toString()}
+							onChange={(e) => set_evalue(e.currentTarget.value)}
+						/>
+					</fieldset>
+
+					<fieldset className="fieldset">
+						<div className="flex flex-between">
+							<legend className="fieldset-legend">Minimum percent identity</legend>
+							<InfoButton>
+								<div className="text-primary font-bold">
+									perc_identity <span className="text-base-content/50">(0 - 100)</span>
+								</div>
+								<span>Minimum percent identity of the alignment.</span>
+							</InfoButton>
+						</div>
+						<input
+							type="number"
+							min="0"
+							max="100"
+							className="input"
+							placeholder={`${DEFAULT_PERCENT_IDENTITY}`}
+							value={perc_identity.toString()}
+							onChange={(e) => set_perc_identity(parseFloat(e.currentTarget.value))}
+						/>
+					</fieldset>
+
+					<fieldset className="fieldset">
+						<div className="flex flex-between gap-5">
+							<legend className="fieldset-legend">Minimum percent query coverage</legend>
+							<InfoButton>
+								<div className="text-primary font-bold">
+									qcov_hsp_perc <span className="text-base-content/50">(0 - 100)</span>
+								</div>
+								<span>Minimum percent query coverage per HSP (High Scoring Pair).</span>
+							</InfoButton>
+						</div>
+						<input
+							type="number"
+							min="0"
+							max="100"
+							className="input"
+							placeholder={`${DEFAULT_QCOV_HSP}`}
+							value={qcov_hsp_perc.toString()}
+							onChange={(e) => set_qcov_hsp_perc(parseFloat(e.currentTarget.value))}
+						/>
+					</fieldset>
+				</div>
+			</div>
+
+			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!blastQuery}>
 				BLAST
 			</button>
 		</form>
