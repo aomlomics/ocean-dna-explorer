@@ -244,15 +244,12 @@ async function doEdit(
 		//only update assay BLAST database if assay has changed
 		if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
 			fetch(
-				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?skipDiversities=true&skipAllBlast=True`,
+				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
 				{
 					method: "POST",
 					headers: {
 						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
-					},
-					body: JSON.stringify({
-						delete: true
-					})
+					}
 				}
 			);
 		}

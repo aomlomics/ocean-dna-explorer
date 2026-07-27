@@ -2,7 +2,6 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
-import { NetworkPacket } from "@/types/globals";
 
 export default async function remakeBlastDatabaseAction(formData?: FormData) {
 	const { userId, sessionClaims, getToken } = await auth();
@@ -18,29 +17,12 @@ export default async function remakeBlastDatabaseAction(formData?: FormData) {
 		}
 
 		const database = formData?.get("database");
-		console.log("remaking", database || "all", "blastdb");
-		const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/remakeDb`, {
+		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/blast/remakeDb${database ? "?database=" + database : ""}`, {
 			method: "POST",
 			headers: {
 				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
-			},
-			body:
-				database &&
-				JSON.stringify({
-					database
-				})
-		});
-
-		if (res.ok) {
-			const response = (await res.json()) as NetworkPacket;
-			if (response.statusMessage === "error") {
-				console.error(response.error);
 			}
-
-			console.log(response);
-		} else {
-			console.error(res.statusText);
-		}
+		});
 	} catch (err) {
 		console.error(err);
 	}

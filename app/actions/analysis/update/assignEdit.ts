@@ -209,15 +209,15 @@ async function doEdit(
 		await stream.success("Success");
 
 		//update BLAST databases
-		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission?skipDiversities=true`, {
-			method: "POST",
-			headers: {
-				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
-			},
-			body: JSON.stringify({
-				delete: true
-			})
-		});
+		fetch(
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+				}
+			}
+		);
 
 		return true;
 	} catch (err: any) {
