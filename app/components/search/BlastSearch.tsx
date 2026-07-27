@@ -251,16 +251,12 @@ export default function BlastSearch() {
 				newParams.set("blastSave", blastSave);
 			}
 
-			//TODO: re-enable
-			// router.push(`${pathname}?${newParams.toString()}`);
+			router.push(`${pathname}?${newParams.toString()}`);
 		}
 	}
 
 	return (
-		// <form onSubmit={handleSubmit} inert={!assayNames} className="flex flex-col items-start">
-		<form onSubmit={handleSubmit} inert className="flex flex-col items-start">
-			<div className="text-warning"> BLAST searches are temporarily disabled</div>
-
+		<form onSubmit={handleSubmit} inert={!assayNames} className="flex flex-col items-start">
 			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
 				<legend className="fieldset-legend">Database</legend>
 				<select value={blastDatabase} onChange={(e) => setBlastDatabase(e.currentTarget.value)} className="select">
@@ -425,7 +421,7 @@ export default function BlastSearch() {
 				</div>
 			</div>
 
-			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!blastQuery || true}>
+			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!blastQuery}>
 				BLAST
 			</button>
 		</form>
