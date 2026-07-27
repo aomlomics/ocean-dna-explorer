@@ -98,17 +98,26 @@ export default function BlastSearch() {
 		const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
 		if (blast) {
 			defaults.database = assayNames?.find((a) => a === blast.assay_name) || "";
-			defaults.query = blast.queries
-				.reduce((acc, q) => {
-					//ignore improperly formatted queries
-					const split = q.split(",");
-					if (split.length >= 2) {
-						acc.push(`>${split[0]}\n${split[1]}`);
-					}
+			if (blast.queries.length === 1) {
+				const split = blast.queries[0].split(",");
+				if (split[1]) {
+					defaults.query = `>${split[0]}\n${split[1]}`;
+				} else {
+					defaults.query = split[0];
+				}
+			} else {
+				defaults.query = blast.queries
+					.reduce((acc, q) => {
+						//ignore improperly formatted queries
+						const split = q.split(",");
+						if (split.length >= 2) {
+							acc.push(`>${split[0]}\n${split[1]}`);
+						}
 
-					return acc;
-				}, [] as string[])
-				.join("\n");
+						return acc;
+					}, [] as string[])
+					.join("\n");
+			}
 
 			if (blast.options) {
 				if (blast.options.task === "megablast") defaults.task = "megablast";
