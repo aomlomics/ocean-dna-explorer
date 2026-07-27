@@ -32,15 +32,15 @@ export default async function remakeBlastDatabaseAction(formData?: FormData) {
 		});
 
 		if (res.ok) {
+			const response = (await res.json()) as NetworkPacket;
+			if (response.statusMessage === "error") {
+				console.error(response.error);
+			}
+
+			console.log(response);
+		} else {
 			console.error(res.statusText);
 		}
-
-		const response = (await res.json()) as NetworkPacket;
-		if (response.statusMessage === "error") {
-			console.error(response.error);
-		}
-
-		console.log(response);
 	} catch (err) {
 		console.error(err);
 	}
