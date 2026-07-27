@@ -201,7 +201,7 @@ export default function ActualTableFilter({
 			) : null}
 
 			{showBody && (
-				<div className={`flex min-h-[220px] flex-col gap-5 ${embedded ? "p-5 pb-6 pt-4" : "p-5 pb-6 pt-3"}`}>
+				<div className={`flex min-h-55 flex-col gap-5 ${embedded ? "p-5 pb-6 pt-4" : "p-5 pb-6 pt-3"}`}>
 					{renderFilterFields()}
 				</div>
 			)}

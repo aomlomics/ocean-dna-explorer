@@ -102,7 +102,7 @@ export default function AnalysisEditButton({
 				setAnalysisResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				const analysisUrl = (
-					await upload(`submissions/${analysisFile.name}`, analysisFile, {
+					await upload(`submissions/${encodeURIComponent(analysisFile.name)}`, analysisFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -179,7 +179,7 @@ export default function AnalysisEditButton({
 				setAssignResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				const assignmentsUrl = (
-					await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
+					await upload(`submissions/${encodeURIComponent(assignmentsFile.name)}`, assignmentsFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -219,7 +219,7 @@ export default function AnalysisEditButton({
 				});
 
 				const occurrencesUrl = (
-					await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
+					await upload(`submissions/${encodeURIComponent(occurrencesFile.name)}`, occurrencesFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB

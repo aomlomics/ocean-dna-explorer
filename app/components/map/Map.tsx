@@ -2,6 +2,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
 import DynamicMap from "./DynamicMap";
 import { NullLocation } from "@/types/globals";
+import { TableMetadataValue } from "@/types/tableMetadata";
 
 export default function Map({
 	query,
@@ -21,7 +22,7 @@ export default function Map({
 	className = ""
 }: {
 	where?: Record<string, string>;
-	id?: string;
+	id?: TableMetadataValue["titleField"];
 	table?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
@@ -92,7 +93,7 @@ async function SuspenseMap({
 	query?: () => Promise<NullLocation[]>;
 	locations?: NullLocation[];
 	where?: Record<string, string>;
-	id?: string;
+	id?: TableMetadataValue["titleField"];
 	table?: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	defaultLegendField?: string;

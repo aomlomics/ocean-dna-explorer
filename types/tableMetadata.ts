@@ -10,7 +10,7 @@ export type RelationMetadata = Readonly<{
 	type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
 }>;
 
-type Metadata = Readonly<{
+export type TableMetadataValue = Readonly<{
 	plural: string;
 	description: string;
 	schema: Readonly<ZodObject<Record<string, any>>>;
@@ -49,9 +49,10 @@ const TableMetadata = {
 		schema: PrismaZodTypes.SampleSchema,
 		enumSchema: PrismaZodTypes.SampleScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.SampleWithRelationsSchema,
-		titleField: "samp_name",
-		subFields: ["project_id", "geo_loc_name"],
+		titleField: ["project_id", "samp_name"],
+		subFields: ["project_id", "samp_name", "geo_loc_name"],
 		fieldOrder: [
+			"samp_name",
 			"eventDate",
 			"decimalLatitude",
 			"decimalLongitude",
@@ -115,9 +116,11 @@ const TableMetadata = {
 		schema: PrismaZodTypes.LibrarySchema,
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.LibraryWithRelationsSchema,
-		titleField: "lib_id",
-		subFields: ["samp_name", "seq_run_id"],
+		titleField: ["project_id", "lib_id"],
+		subFields: ["lib_id", "samp_name", "seq_run_id"],
 		fieldOrder: [
+			"lib_id",
+			"samp_name",
 			"seq_run_id",
 			"platform",
 			"instrument",
@@ -147,7 +150,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.OccurrenceWithRelationsSchema,
 		titleField: ["analysis_run_name", "lib_id", "featureid"],
-		subFields: ["organismQuantity", "analysis_run_name", "featureid"]
+		subFields: ["analysis_run_name", "featureid", "organismQuantity"]
 	},
 	assignment: {
 		plural: "Assignments",
@@ -221,7 +224,10 @@ const TableMetadata = {
 	}
 } as Record<
 	Uncapitalize<Prisma.ModelName>,
-	Omit<Metadata, "relations"> & { relationsSchema?: ZodType<any>; relations?: Metadata["relations"] }
+	Omit<TableMetadataValue, "relations"> & {
+		relationsSchema?: ZodType<any>;
+		relations?: TableMetadataValue["relations"];
+	}
 >;
 
 //table name helpers
@@ -302,4 +308,4 @@ for (const model of Object.values(Prisma.ModelName)) {
 	)[model] = TableMetadata[uncapitalizeTable(model)];
 }
 
-export default TableMetadata as Readonly<Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, Metadata>>;
+export default TableMetadata as Readonly<Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, TableMetadataValue>>;

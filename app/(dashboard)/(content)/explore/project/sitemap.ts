@@ -33,7 +33,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	});
 
 	return projects.map((proj) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/project/${proj.project_id}`,
+		url: `${process.env.NEXT_PUBLIC_URL}/explore/project/${encodeURIComponent(proj.project_id)}`,
 		lastModified: new Date()
 	}));
 }

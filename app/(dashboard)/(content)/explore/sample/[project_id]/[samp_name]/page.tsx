@@ -12,13 +12,19 @@ import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
-export default async function Samp_name({ params }: { params: Promise<{ samp_name: Sample["samp_name"] }> }) {
-	let { samp_name } = await params;
-	samp_name = decodeURIComponent(samp_name);
+export default async function Samp_name({
+	params
+}: {
+	params: Promise<{ project_id: Sample["project_id"]; samp_name: Sample["samp_name"] }>;
+}) {
+	const { project_id, samp_name } = await params;
 
 	const sample = await prisma.sample.findUnique({
 		where: {
-			samp_name
+			project_id_samp_name: {
+				project_id,
+				samp_name
+			}
 		},
 		include: {
 			Libraries: {
@@ -54,12 +60,15 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/project/${sample.project_id}`} className="text-primary hover:text-primary-focus">
-							{sample.project_id}
+						<Link
+							href={`/explore/project/${encodeURIComponent(project_id)}`}
+							className="text-primary hover:text-primary-focus"
+						>
+							{project_id}
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/sample`} className="text-primary hover:text-primary-focus">
+						<Link href="/explore/sample" className="text-primary hover:text-primary-focus">
 							Samples
 						</Link>
 					</li>
@@ -75,8 +84,11 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
-					<Link href={`/explore/project/${sample.project_id}`} className="text-primary hover:text-primary-focus">
-						{sample.project_id}
+					<Link
+						href={`/explore/project/${encodeURIComponent(project_id)}`}
+						className="text-primary hover:text-primary-focus"
+					>
+						{project_id}
 					</Link>{" "}
 					project
 				</p>
@@ -117,7 +129,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 								).length
 							}
 							icon={<EyeIcon />}
-							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
+							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
 						/>
@@ -170,7 +182,7 @@ export default async function Samp_name({ params }: { params: Promise<{ samp_nam
 								).length
 							}
 							icon={<FishIcon />}
-							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
+							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
 						/>

@@ -36,7 +36,6 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 	});
 	const min = agg._min.eventDate;
 	const max = agg._max.eventDate;
-	const totalWithDate = agg._count.eventDate;
 
 	const fmt = (d: Date | null) =>
 		d ? new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
@@ -75,7 +74,7 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 				links: [
 					{
 						label: projectId ? "Browse this project's samples" : "Browse samples",
-						href: projectId ? `/explore/project/${projectId}` : "/explore/sample"
+						href: projectId ? `/explore/project/${encodeURIComponent(projectId)}` : "/explore/sample"
 					}
 				]
 			}}

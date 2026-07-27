@@ -280,10 +280,12 @@ export async function parseAssignmentsFile({
 
 export async function parseOccurrencesFile({
 	channel,
+	project_id,
 	analysis_run_name,
 	oldChecksum
 }: {
 	channel: Channel;
+	project_id: Occurrence["project_id"];
 	analysis_run_name: Occurrence["analysis_run_name"];
 	oldChecksum?: string;
 }) {
@@ -350,6 +352,7 @@ export async function parseOccurrencesFile({
 							lib_id,
 							featureid,
 							organismQuantity,
+							project_id,
 							analysis_run_name
 						},
 						{
@@ -428,6 +431,7 @@ export async function parseAnalysisFiles({
 
 	const occurrencesParseResult = await parseOccurrencesFile({
 		channel: occurrencesChannel,
+		project_id: analysis.project_id,
 		analysis_run_name: analysis.analysis_run_name,
 		oldChecksum: oldChecksums?.occurrencesMd5
 	});

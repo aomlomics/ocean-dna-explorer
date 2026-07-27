@@ -58,7 +58,13 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 			{/* The trigger button */}
 			<div role="button" className="btn btn-outline w-full justify-between" onClick={handleToggle}>
 				<span className="flex items-center gap-2">
-					<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
 					</svg>
 					Table of Contents
@@ -84,7 +90,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 								<div className={`flex flex-col ${hasSubs ? "gap-2.5" : "gap-0"}`}>
 									<a
 										href={`#${section.id}`}
-										className="block w-full px-2 py-1 hover:text-primary transition-colors font-medium whitespace-normal break-words"
+										className="block w-full px-2 py-1 hover:text-primary transition-colors font-medium whitespace-normal wrap-break-word"
 										data-section-index={index}
 										onClick={handleClose}
 									>
@@ -97,7 +103,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 													<a
 														href={`#${subsection.id}`}
 														data-toc-target={subsection.id}
-														className="block w-full py-1 px-2 text-sm hover:text-primary transition-colors whitespace-normal break-words"
+														className="block w-full py-1 px-2 text-sm hover:text-primary transition-colors whitespace-normal wrap-break-word"
 														onClick={handleClose}
 													>
 														{subsection.title}
@@ -116,13 +122,7 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 			{/* The backdrop, rendered into the body via a portal */}
 			{mounted &&
 				isOpen &&
-				createPortal(
-					<div
-						className="fixed inset-0 bg-black/30 z-scrim"
-						onClick={handleClose}
-					></div>,
-					document.body
-				)}
+				createPortal(<div className="fixed inset-0 bg-black/30 z-scrim" onClick={handleClose}></div>, document.body)}
 		</div>
 	);
-} 
+}

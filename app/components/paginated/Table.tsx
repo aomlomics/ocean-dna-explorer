@@ -236,7 +236,7 @@ export default function Table({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${getQuery().toString()}`,
+		`/api/${table}/pagination?${getQuery()}`,
 		fetcher
 	);
 
@@ -439,9 +439,7 @@ export default function Table({
 						take={take}
 						count={data.count}
 						setPage={setPage}
-						handlePageHover={(dir = 1 as 1 | -1) =>
-							preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher)
-						}
+						handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
 					/>
 					{/* Column Selection Button */}
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
@@ -700,7 +698,10 @@ export default function Table({
 													i ? "border-t-2" : ""
 												}`}
 											>
-												<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
+												<Link
+													href={`/explore/${table}/${encodeURIComponent(row[title])}`}
+													className="link link-primary link-hover"
+												>
 													{row[title]}
 												</Link>
 											</th>
@@ -711,7 +712,7 @@ export default function Table({
 												}`}
 											>
 												<Link
-													href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
+													href={`/explore/${table}/${title.map((f) => encodeURIComponent(row[f])).join("/")}`}
 													className="link link-primary link-hover"
 												>
 													{title.map((f) => (row[f].length > 15 ? row[f].slice(0, 10) + "..." : row[f])).join(" / ")}
@@ -751,8 +752,12 @@ export default function Table({
 																		className="btn text-nowrap"
 																		href={`/search?table=${depluralizeTable(head as Prisma.ModelName)}&advanced=[${
 																			typeof title === "string"
-																				? `["${table}", "${title}", "equals", "${row[title]}"]`
-																				: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
+																				? `["${table}", "${title}", "equals", "${encodeURIComponent(row[title])}"]`
+																				: title
+																						.map(
+																							(t) => `["${table}", "${t}", "equals", "${encodeURIComponent(row[t])}"]`
+																						)
+																						.join(",")
 																		}]`}
 																	>
 																		<LinkIcon /> {row._count[head]}{" "}
@@ -782,7 +787,7 @@ export default function Table({
 															<Link
 																href={`/explore/${
 																	Object.entries(TableMetadata).find(([_, meta]) => meta.titleField === head)![0]
-																}/${row[head]}`}
+																}/${encodeURIComponent(row[head])}`}
 																className="link link-primary link-hover font-bold"
 															>
 																{row[head]}
@@ -793,7 +798,7 @@ export default function Table({
 														element = (
 															<Link
 																href={`/explore/${uncapitalizeTable(typedHead)}/${oneRelationsArrayTitle[typedHead]
-																	.map((f) => row[f])
+																	.map((f) => encodeURIComponent(row[f]))
 																	.join("/")}`}
 																className="link link-primary link-hover font-bold"
 															>
@@ -875,8 +880,10 @@ export default function Table({
 																	className="btn text-nowrap"
 																	href={`/search?table=${rel.table}&advanced=[${
 																		typeof title === "string"
-																			? `["${table}", "${title}", "equals", "${row[title]}"]`
-																			: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
+																			? `["${table}", "${title}", "equals", "${encodeURIComponent(row[title])}"]`
+																			: title
+																					.map((t) => `["${table}", "${t}", "equals", "${encodeURIComponent(row[t])}"]`)
+																					.join(",")
 																	}]`}
 																>
 																	<LinkIcon /> {row._count[rel.label]}{" "}
@@ -898,7 +905,7 @@ export default function Table({
 																key={rel.label + "child" + j}
 															>
 																<Link
-																	href={`/explore/${rel.table}/${(TableMetadata[rel.table].titleField as string[]).map((f) => titleFieldObj[f])}`}
+																	href={`/explore/${rel.table}/${(TableMetadata[rel.table].titleField as string[]).map((f) => encodeURIComponent(titleFieldObj[f])).join("/")}`}
 																	className="link link-primary link-hover font-bold"
 																>
 																	{(TableMetadata[rel.table].titleField as string[])
@@ -920,7 +927,7 @@ export default function Table({
 																key={rel.label + "child" + j}
 															>
 																<Link
-																	href={`/explore/${rel.table}/${titleFieldObj[rel.label]}`}
+																	href={`/explore/${rel.table}/${encodeURIComponent(titleFieldObj[rel.label])}`}
 																	className="link link-primary link-hover font-bold"
 																>
 																	{titleFieldObj[rel.label]}
@@ -950,9 +957,7 @@ export default function Table({
 						take={take}
 						count={data.count}
 						setPage={setPage}
-						handlePageHover={(dir = 1 as 1 | -1) =>
-							preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher)
-						}
+						handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
 					/>
 				</div>
 			</form>

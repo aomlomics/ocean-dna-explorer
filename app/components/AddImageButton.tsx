@@ -49,7 +49,7 @@ export default function AddImageButton({
 
 		const imageFile = formData.get("imageFile") as File;
 		const url = (
-			await upload(`${homePage ? "carousel" : "images"}/${imageFile.name}`, imageFile, {
+			await upload(`${homePage ? "carousel" : "images"}/${encodeURIComponent(imageFile.name)}`, imageFile, {
 				access: "public",
 				handleUploadUrl: "/api/file/upload",
 				multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB

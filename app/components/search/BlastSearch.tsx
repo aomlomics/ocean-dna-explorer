@@ -43,7 +43,7 @@ export default function BlastSearch() {
 
 	useEffect(() => {
 		async function doFetch() {
-			const res = await fetch(`/api/assay?fields=assay_name&relations=analysis`);
+			const res = await fetch("/api/assay?fields=assay_name&relations=analysis");
 			if (res.ok) {
 				const response = (await res.json()) as NetworkPacket;
 				if (response.statusMessage === "success") {
@@ -129,12 +129,6 @@ export default function BlastSearch() {
 	}, [searchParams]);
 
 	function parseBlast(text: string) {
-		//commas ruin the searchParam format
-		if (text.includes(",")) {
-			setError("Commas are not allowed in .fasta format.");
-			return;
-		}
-
 		const names = new Set() as Set<string>;
 		const sequences = new Set() as Set<string>;
 		const queries = [] as ([string] | [string, string])[];
@@ -164,8 +158,8 @@ export default function BlastSearch() {
 			sequences.add(query[1]);
 		}
 
-		//split on \r\n, \n, and \r
-		const split = text.split(/\r?\n|\r/);
+		//URL encode commas, split on \r\n, \n, and \r
+		const split = text.replace(",", "%2C").split(/\r?\n|\r/);
 
 		if (text.startsWith(">")) {
 			//.fasta format
@@ -242,7 +236,7 @@ export default function BlastSearch() {
 				newParams.set("blastSave", blastSave);
 			}
 
-			router.push(`${pathname}?${newParams.toString()}`);
+			router.push(`${pathname}?${newParams}`);
 		}
 	}
 

@@ -177,9 +177,7 @@ export default function AlphaDiversityDisplay({
 
 							//get string representation of values
 							const xValue =
-								xField === "analysis_run_name"
-									? ad.analysis_run_name
-									: getSampleFieldValue(sample, xField, xType);
+								xField === "analysis_run_name" ? ad.analysis_run_name : getSampleFieldValue(sample, xField, xType);
 							let hueValue;
 							if (hueField) {
 								hueValue =
@@ -450,7 +448,10 @@ export default function AlphaDiversityDisplay({
 							<div className="flex flex-col justify-center items-center pt-4">
 								<span>
 									Calculating for{" "}
-									<Link className="link link-primary link-hover" href={`/explore/analysis/${analysis_run_name}`}>
+									<Link
+										className="link link-primary link-hover"
+										href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+									>
 										{analysis_run_name}
 									</Link>
 									...

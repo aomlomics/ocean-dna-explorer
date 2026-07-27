@@ -58,8 +58,9 @@ export async function getApiSections() {
 						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
-						All you need is a web browser or a simple script to start
-						fetching data. No authentication is required, and there are currently no usage limits, please be reasonable. Reach out to the ODE team for large data retrieval requests.
+						All you need is a web browser or a simple script to start fetching data. No authentication is required, and
+						there are currently no usage limits, please be reasonable. Reach out to the ODE team for large data
+						retrieval requests.
 					</p>
 				</div>
 			),
@@ -83,16 +84,15 @@ export async function getApiSections() {
 										<Link href="#database-schema" className="link link-primary">
 											Database Schema
 										</Link>
-										. The Entity Relationship Diagram (ERD) is a map of the database that shows you
-										what tables are available and how they are linked together.
+										. The Entity Relationship Diagram (ERD) is a map of the database that shows you what tables are
+										available and how they are linked together.
 									</p>
 									<p className="mt-2">
 										Once you know which table you're interested in (e.g., Project), look at the{" "}
 										<Link href="#table-definitions" className="link link-primary">
 											Table Definitions
 										</Link>{" "}
-										to find the exact names of the data columns, or fields, that you can use in your
-										queries.
+										to find the exact names of the data columns, or fields, that you can use in your queries.
 									</p>
 								</div>
 							</div>
@@ -157,7 +157,7 @@ export async function getApiSections() {
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-										endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
+										endpoint={{ value: "/api/project", label: "Endpoint", colorClass: "text-primary" }}
 										parameters={[
 											{
 												value: `ids=${project?.id || 1}`,
@@ -292,18 +292,16 @@ if (http_status(response)$category == "Success") {
 											<Link href="/explore/project" className="link link-primary font-semibold">
 												Explore
 											</Link>{" "}
-											Pages
-											: View all data from each table with filters. You can only filter on fields within the table you
-											are looking at. Click on any blue data field to view the detail page for that specific record.
+											Pages : View all data from each table with filters. You can only filter on fields within the table
+											you are looking at. Click on any blue data field to view the detail page for that specific record.
 										</li>
 										<li>
 											<Link href="/search" className="link link-primary font-semibold">
 												Search
 											</Link>{" "}
-											page
-											: Build complex queries using data from multiple tables, allowing you to filter on both fields{" "}
-											<em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR button
-											to add OR conditions.
+											page : Build complex queries using data from multiple tables, allowing you to filter on both
+											fields <em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR
+											button to add OR conditions.
 										</li>
 										<li>
 											<strong>Direct API Access</strong>: Paste API URLs directly in your browser (e.g.,{" "}
@@ -477,8 +475,8 @@ if (http_status(response)$category == "Success") {
 					content: (
 						<>
 							<p className="mb-4">
-								The dropdown menus below show the fields available for each table. You can use
-								this information in your API requests to query and filter on specific fields.
+								The dropdown menus below show the fields available for each table. You can use this information in your
+								API requests to query and filter on specific fields.
 							</p>
 							<SchemaDisplay />
 						</>
@@ -751,8 +749,8 @@ if (http_status(response)$category == "Success") {
 									<Link href="/search" className="link link-primary font-semibold">
 										Search
 									</Link>{" "}
-									page{" "}
-									to build filters through a user interface (no code necessary!), then copy the API query from the URL.
+									page to build filters through a user interface (no code necessary!), then copy the API query from the
+									URL.
 								</p>
 							</div>
 
@@ -841,7 +839,7 @@ if (http_status(response)$category == "Success") {
 
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-primary" }}
+								endpoint={{ value: "/api/sample", label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
 										value: `advanced=[["geo_loc_name","contains","Atlantic"],["collection_timestamp","gte","2019-01-01"]]`,
@@ -873,7 +871,7 @@ if (http_status(response)$category == "Success") {
 							</div>
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
+								endpoint={{ value: "/api/project", label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
 										value: `ids=${project?.id || 1}`,

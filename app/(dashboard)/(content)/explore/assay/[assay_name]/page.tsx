@@ -58,8 +58,8 @@ export default async function Assay_name({
 	params: Promise<{ assay_name: Assay["assay_name"] }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	let { assay_name } = await params;
-	assay_name = decodeURIComponent(assay_name);
+	const { assay_name } = await params;
+
 	const { view } = await searchParams;
 	if (view !== undefined) {
 		redirect(`/explore/assay/${encodeURIComponent(assay_name)}`);
@@ -314,14 +314,14 @@ export default async function Assay_name({
 									title="Samples"
 									icon={<LocationIcon />}
 									value={new Set(assay.Libraries.map((lib) => lib.samp_name)).size}
-									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
+									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${encodeURIComponent(assay_name)}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
 									title="Libraries"
 									icon={<LocationIcon />}
 									value={assay.Libraries.length}
-									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
+									link={`/search?table=library&advanced=[["assay_name","equals","${encodeURIComponent(assay_name)}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
@@ -347,7 +347,7 @@ export default async function Assay_name({
 										})
 									}
 									icon={<FishIcon />}
-									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
+									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${encodeURIComponent(assay_name)}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import PhyloPicClient from "../../images/PhyloPicClient";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import { TaxonomicRanks } from "@/types/objects";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";
@@ -9,7 +8,9 @@ import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGrid
 const commonNameCache = new Map<string, string | null>();
 const COMMON_NAME_CACHE_VERSION = "en-v2";
 
-function getBestRank(item: Taxonomy): { rank: (typeof RanksBySpecificity)[number]; label: string; value: string } | null {
+function getBestRank(
+	item: Taxonomy
+): { rank: (typeof RanksBySpecificity)[number]; label: string; value: string } | null {
 	for (const rank of RanksBySpecificity) {
 		const value = item[rank]?.toString().trim();
 		if (value) {
@@ -127,8 +128,6 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 			cancelled = true;
 		};
 	}, [cacheKey, item, showCommonName]);
-
-	const mostSpecificRank = TaxonomicRanks.toReversed().find((rank) => item[rank]);
 
 	return (
 		<Link

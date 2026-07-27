@@ -10,7 +10,7 @@ export default function VisualizeTabs() {
 	return (
 		<nav id="visualizations" className="flex pt-2">
 			<Link
-				href={`/visualize/metadata?${searchParams.toString()}`}
+				href={`/visualize/metadata?${searchParams}`}
 				className={`btn px-6 py-3 transition-colors rounded-none${
 					pathname === "/visualize/metadata" ? " rounded-t-lg btn-primary" : ""
 				}`}
@@ -18,7 +18,7 @@ export default function VisualizeTabs() {
 				Metadata
 			</Link>
 			<Link
-				href={`/visualize/taxonomy?${searchParams.toString()}`}
+				href={`/visualize/taxonomy?${searchParams}`}
 				className={`btn px-6 py-3 transition-colors rounded-none${
 					pathname === "/visualize/taxonomy" ? " rounded-t-lg btn-primary" : ""
 				}`}
@@ -26,7 +26,7 @@ export default function VisualizeTabs() {
 				Taxonomy
 			</Link>
 			<Link
-				href={`/visualize/alphaDiversity?${searchParams.toString()}`}
+				href={`/visualize/alphaDiversity?${searchParams}`}
 				className={`btn px-6 py-3 transition-colors rounded-none${
 					pathname === "/visualize/alphaDiversity" ? " rounded-t-lg btn-primary" : ""
 				}`}

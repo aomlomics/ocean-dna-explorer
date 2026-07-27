@@ -116,39 +116,13 @@ async function doEdit(
 
 		//TODO: only do updates if relevant file was provided
 		//error checks
-		const [dbAssays, dbSamples, dbLibraries] = await prisma.$transaction([
-			prisma.assay.findMany({
-				where: {
-					assay_name: {
-						in: assays.map((a) => a.assay_name)
-					}
+		const dbAssays = await prisma.assay.findMany({
+			where: {
+				assay_name: {
+					in: assays.map((a) => a.assay_name)
 				}
-			}),
-			prisma.sample.findMany({
-				where: {
-					samp_name: {
-						in: sampNames
-					}
-				},
-				select: {
-					project_id: true
-				}
-			}),
-			prisma.library.findMany({
-				where: {
-					lib_id: {
-						in: libraries.map((lib) => lib.lib_id)
-					}
-				},
-				select: {
-					Sample: {
-						select: {
-							project_id: true
-						}
-					}
-				}
-			})
-		]);
+			}
+		});
 
 		//check if assay data is correct
 		for (const a of assays) {
@@ -190,23 +164,7 @@ async function doEdit(
 
 		await projectChannel.stream.message("All checks passed.", 80);
 
-		//check if samples all belong to project
-		if (dbSamples.some((samp) => samp.project_id !== project_id)) {
-			await sampleChannel.stream.error(
-				`Some Sample in file does not belong to Project with project_id of "${project_id}".`
-			);
-			throw new Error(`Some Sample in file does not belong to Project with project_id of "${project_id}".`);
-		}
-
 		await sampleChannel.stream.message("All checks passed.", 80);
-
-		//check if libraries all belong to project
-		if (dbLibraries.some((lib) => lib.Sample.project_id !== project_id)) {
-			await libraryChannel.stream.error(
-				`Some Library in file does not belong to Project with project_id of "${project_id}".`
-			);
-			throw new Error(`Some Library in file does not belong to Project with project_id of "${project_id}".`);
-		}
 
 		await libraryChannel.stream.message("All checks passed.", 80);
 
@@ -338,9 +296,7 @@ async function doEdit(
 				//get samples to flag as deleted
 				const occsWithDeletedSamps = await tx.occurrence.findMany({
 					where: {
-						Analysis: {
-							project_id
-						},
+						project_id,
 						Library: {
 							samp_name: {
 								notIn: sampNames
@@ -373,6 +329,7 @@ async function doEdit(
 					//update samples to be marked as deleted
 					await tx.sample.updateMany({
 						where: {
+							project_id,
 							samp_name: {
 								in: samplesToDelete
 							}
@@ -438,11 +395,9 @@ async function doEdit(
 				//libraries
 				await tx.library.deleteMany({
 					where: {
+						project_id,
 						lib_id: {
 							notIn: libraries.map((lib) => lib.lib_id)
-						},
-						Sample: {
-							project_id
 						}
 					}
 				});

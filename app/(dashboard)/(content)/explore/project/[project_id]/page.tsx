@@ -10,10 +10,7 @@ import { Project } from "@/app/generated/prisma/client";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
 import Image from "next/image";
-import {
-	DepthCoverageCard,
-	DepthCoverageCardSkeleton
-} from "@/app/components/dataSummary/DepthCoverageCard";
+import { DepthCoverageCard, DepthCoverageCardSkeleton } from "@/app/components/dataSummary/DepthCoverageCard";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
@@ -27,13 +24,10 @@ function packInstitutionParts(parts: string[]): string[][] {
 	let cur: string[] = [];
 
 	const lineLen = (segs: string[]) =>
-		segs.length === 0
-			? 0
-			: segs.reduce((sum, s, i) => sum + s.length + (i > 0 ? INSTITUTION_PIPE_GAP_CH : 0), 0);
+		segs.length === 0 ? 0 : segs.reduce((sum, s, i) => sum + s.length + (i > 0 ? INSTITUTION_PIPE_GAP_CH : 0), 0);
 
 	for (const part of parts) {
-		const nextLen =
-			cur.length === 0 ? part.length : lineLen(cur) + INSTITUTION_PIPE_GAP_CH + part.length;
+		const nextLen = cur.length === 0 ? part.length : lineLen(cur) + INSTITUTION_PIPE_GAP_CH + part.length;
 		if (cur.length > 0 && nextLen > INSTITUTION_MAX_CH) {
 			lines.push(cur);
 			cur = [part];
@@ -84,7 +78,10 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 			</div>
 		);
 	}
-	const parts = raw.split(/\s*\|\s*/).map((p) => p.trim()).filter(Boolean);
+	const parts = raw
+		.split(/\s*\|\s*/)
+		.map((p) => p.trim())
+		.filter(Boolean);
 	if (parts.length === 0) {
 		return (
 			<div className="w-full min-w-0 space-y-1">
@@ -130,8 +127,7 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 }
 
 export default async function Project_id({ params }: { params: Promise<{ project_id: Project["project_id"] }> }) {
-	let { project_id } = await params;
-	project_id = decodeURIComponent(project_id);
+	const { project_id } = await params;
 
 	const project = await prisma.project.findUnique({
 		where: {
@@ -322,8 +318,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	/* Matches ContentLayout widths so full-bleed heroes align foreground with the page column. */
-	const contentColumnClass =
-		"mx-auto w-[85%] max-w-[1536px] sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%]";
+	const contentColumnClass = "mx-auto w-[85%] max-w-[1536px] sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%]";
 
 	const breadcrumbsBlock = (
 		<div className="text-base breadcrumbs mb-3">
@@ -339,9 +334,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	const headerBlock = (
-		<header
-			className={hasCoverImage ? "relative z-raised w-full min-w-0 max-w-full" : "w-full min-w-0 max-w-full"}
-		>
+		<header className={hasCoverImage ? "relative z-raised w-full min-w-0 max-w-full" : "w-full min-w-0 max-w-full"}>
 			<div className="flex flex-wrap gap-x-3 gap-y-2 items-center justify-between">
 				<div className="flex flex-wrap gap-2 items-center min-w-0">
 					<TitleHoverTooltip tooltip={TableMetadata.project.description}>
@@ -358,10 +351,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<EditHistory editHistory={project.editHistory} />
 				</div>
 				{hasCoverImage && project.imageFileUrl_ODE ? (
-					<ProjectCoverPhotoPreview
-						src={project.imageFileUrl_ODE}
-						title={project.project_name || project.project_id}
-					/>
+					<ProjectCoverPhotoPreview src={project.imageFileUrl_ODE} title={project.project_name || project.project_id} />
 				) : null}
 			</div>
 			<p
@@ -389,6 +379,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		</header>
 	);
 
+	const advancedProjStr = `"project_id","equals","${encodeURIComponent(project_id)}"`;
 	const glanceBlock = (
 		<div className="flex flex-col h-full">
 			<h2 className="text-2xl font-semibold text-base-content/90 pb-2">Project at a Glance</h2>
@@ -397,7 +388,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					title="Samples"
 					value={project._count.Samples}
 					icon={<LocationIcon />}
-					link={`/search?table=sample&advanced=[["project_id","equals","${project_id}"]]`}
+					link={`/search?table=sample&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
 					horizontalCardWidth="hug"
@@ -406,7 +397,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					title="Analyses"
 					value={project._count.Analyses}
 					icon={<AnalysisIcon />}
-					link={`/search?table=analysis&advanced=[["project_id","equals","${project_id}"]]`}
+					link={`/search?table=analysis&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
 					horizontalCardWidth="hug"
@@ -415,7 +406,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					title="Taxonomies"
 					value={sortedTaxa.length}
 					icon={<FishIcon />}
-					link={`/search?table=taxonomy&advanced=[["project", "project_id","equals","${project_id}"]]`}
+					link={`/search?table=taxonomy&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
 					horizontalCardWidth="hug"
@@ -424,7 +415,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					title="Occurrences"
 					value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
 					icon={<EyeIcon />}
-					link={`/search?table=occurrence&advanced=[["project","project_id","equals","${project_id}"]]`}
+					link={`/search?table=occurrence&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"
 					layout="horizontal"
 					horizontalCardWidth="hug"

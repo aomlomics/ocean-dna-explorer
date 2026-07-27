@@ -54,8 +54,8 @@ export async function getHelpSections() {
 			content: (
 				<>
 					<p className="mb-4">
-						The Ocean DNA Explorer is a data portal and visualization platform for uploading and exploring marine eDNA data. This help documentation
-						will guide you through the features of the site.
+						The Ocean DNA Explorer is a data portal and visualization platform for uploading and exploring marine eDNA
+						data. This help documentation will guide you through the features of the site.
 					</p>
 					<p className="mb-4">
 						Our goal is to make marine eDNA data more findable, accessible, interoperable, and reusable for researchers,
@@ -69,9 +69,7 @@ export async function getHelpSections() {
 					title: "Features Overview",
 					content: (
 						<>
-							<p className="mb-4">
-								ODE's custom features are built specifically for eDNA data:
-							</p>
+							<p className="mb-4">ODE's custom features are built specifically for eDNA data:</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
 									{" "}
@@ -126,17 +124,17 @@ export async function getHelpSections() {
 					content: (
 						<>
 							<p className="mb-4">
-								ODE requires login to access certain features of the platform, like submitting
-								data.
+								ODE requires login to access certain features of the platform, like submitting data.
 							</p>
 							<p className="mb-4">
-								You can login using the Sign-In button in the top right corner of the
-								website. Your personal data is not stored in our database. Authentication is handled by
-								Clerk, a user management platform. You can delete your account by clicking your profile
-								picture in the top right corner of the website, then clicking Manage Account &gt; Security &gt; Delete Account.
+								You can login using the Sign-In button in the top right corner of the website. Your personal data is not
+								stored in our database. Authentication is handled by Clerk, a user management platform. You can delete
+								your account by clicking your profile picture in the top right corner of the website, then clicking
+								Manage Account &gt; Security &gt; Delete Account.
 							</p>
 							<p className="mb-4">
-								The roles available on ODE are listed below. Please note, Contributor is required to submit data. Other roles are mostly for internal use by the ODE team:
+								The roles available on ODE are listed below. Please note, Contributor is required to submit data. Other
+								roles are mostly for internal use by the ODE team:
 							</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>Admin: Full access to the platform, including managing other user's roles</li>
@@ -307,12 +305,12 @@ export async function getHelpSections() {
 						<Link className="link link-primary font-semibold" href="/search">
 							Search
 						</Link>{" "}
-						page allows you to make complex queries across multiple tables using an intuitive search interface. This is different from the{" "}
+						page allows you to make complex queries across multiple tables using an intuitive search interface. This is
+						different from the{" "}
 						<Link className="link link-primary font-semibold" href="#explore">
 							Explore
 						</Link>{" "}
 						pages, which only let you filter data within a single table.
-		
 					</p>
 					<p className="mb-4">
 						Use Search when you need to find data based on relationships between tables (e.g., "find all taxonomies in a
@@ -331,10 +329,10 @@ export async function getHelpSections() {
 								<Link className="link link-primary font-semibold" href="/search">
 									Search
 								</Link>{" "}
-								page provides an intuitive query builder that lets you construct complex filters across
-								different data tables.
+								page provides an intuitive query builder that lets you construct complex filters across different data
+								tables.
 							</p>
-		
+
 							<p className="mb-4">To use the Search page:</p>
 							<ol className="list-decimal ml-6 mb-4">
 								<li>Select which table you want to search</li>
@@ -352,9 +350,7 @@ export async function getHelpSections() {
 								<li>Further filter those results by drawing on a map</li>
 								<li>Start exploring</li>
 							</ol>
-							<p className="mb-4">
-								Remember, you can always copy a search as an API query!
-							</p>
+							<p className="mb-4">Remember, you can always copy a search as an API query!</p>
 						</>
 					)
 				},
@@ -366,7 +362,11 @@ export async function getHelpSections() {
 							<p className="mb-4">What's the difference between the Search and Explore pages?</p>
 							<div className="mb-4">
 								<h4>
-									Use <Link className="link link-primary" href="/search">Search</Link> when:
+									Use{" "}
+									<Link className="link link-primary" href="/search">
+										Search
+									</Link>{" "}
+									when:
 								</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>You need to query across multiple tables (e.g., find taxonomies from a specific project)</li>
@@ -377,8 +377,11 @@ export async function getHelpSections() {
 							</div>
 							<div className="mb-4">
 								<h4>
-									Use <Link className="link link-primary" href="/explore">Explore</Link> when:
-				
+									Use{" "}
+									<Link className="link link-primary" href="/explore">
+										Explore
+									</Link>{" "}
+									when:
 								</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>You want to browse all data in a single table</li>
@@ -399,7 +402,9 @@ export async function getHelpSections() {
 							</p>
 
 							<div className="flex gap-8">
-								<Link href={`/search?table=sample&advanced=[["project_id","equals","${project?.project_id}"]]`}>
+								<Link
+									href={`/search?table=sample${project ? `&advanced=[["project_id","equals","${encodeURIComponent(project.project_id)}"]]` : ""}`}
+								>
 									<div className="group flex flex-col items-center text-center p-6 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-300 hover:scale-105 w-64">
 										<div className="w-16 h-16 mb-3 flex items-center justify-center text-primary">
 											<svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
@@ -413,7 +418,7 @@ export async function getHelpSections() {
 								</Link>
 
 								<Link
-									href={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${project?.Samples[0]?.samp_name}"]]`}
+									href={`/search?table=taxonomy${project ? `&advanced=[["sample","project_id","equals","${encodeURIComponent(project.project_id)}"],["sample","samp_name","equals","${encodeURIComponent(project.Samples[0].samp_name)}"]]` : ""}`}
 								>
 									<div className="group flex flex-col items-center text-center p-6 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-300 hover:scale-105 w-64">
 										<div className="w-16 h-16 mb-3 flex items-center justify-center text-primary">
@@ -444,17 +449,17 @@ export async function getHelpSections() {
 						<Link className="link link-primary font-semibold" href="/explore">
 							Explore
 						</Link>{" "}
-						pages{" "}
-						let you browse and filter data within individual tables. Each table has its own dedicated Explore page with specialized filters and
-						visualization options. Make sure to{" "}
-						<Link className="link link-primary font-semibold" href={`/explore/project/${project?.project_id}`}>
+						pages let you browse and filter data within individual tables. Each table has its own dedicated Explore page
+						with specialized filters and visualization options. Make sure to{" "}
+						<Link
+							className="link link-primary font-semibold"
+							href={`/explore/project/${project ? encodeURIComponent(project.project_id) : ""}`}
+						>
 							check them out
 						</Link>
 						!
 					</p>
-					<p className="mb-4">
-						Key features:
-					</p>
+					<p className="mb-4">Key features:</p>
 					<ul className="list-disc ml-6 mb-4">
 						<li>Quickly switch between different tables</li>
 						<li>Apply filters or searches across all columns</li>
@@ -468,8 +473,7 @@ export async function getHelpSections() {
 						<Link className="link link-primary font-semibold" href="#search">
 							Search
 						</Link>{" "}
-						page{" "}
-						instead.
+						page instead.
 					</p>
 				</>
 			),
@@ -479,19 +483,13 @@ export async function getHelpSections() {
 					title: "Searching on Explore Pages",
 					content: (
 						<>
-							<p className="mb-4">
-								The Explore page has two search methods, controlled by two sets of controls:
-							</p>
+							<p className="mb-4">The Explore page has two search methods, controlled by two sets of controls:</p>
 							<div className="mb-4">
 								<h4>Search methods:</h4>
 								<ul className="list-disc ml-6 mb-4">
+									<li>Global search: Use the top search box to search across all columns in the current table.</li>
 									<li>
-										Global search: Use the top search box to search across all columns in the
-										current table.
-									</li>
-									<li>
-										Column-specific search: Use the column header search input boxes to search within
-										a specific field.
+										Column-specific search: Use the column header search input boxes to search within a specific field.
 									</li>
 								</ul>
 							</div>

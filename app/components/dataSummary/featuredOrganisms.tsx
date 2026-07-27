@@ -469,10 +469,8 @@ const FEATURED_IMAGE_ATTRIBUTIONS: Record<string, FeaturedImageAttribution> = {
 		commonName: "Rhizopus mold",
 		attributionTitle: "Adobe Stock - ggw",
 		attributionNames: "ggw",
-		attributionUrl:
-			"https://stock.adobe.com/contributor/200465992/ggw?load_type=author&prev_url=detail",
-		imageSourceUrl:
-			"https://stock.adobe.com/contributor/200465992/ggw?load_type=author&prev_url=detail",
+		attributionUrl: "https://stock.adobe.com/contributor/200465992/ggw?load_type=author&prev_url=detail",
+		imageSourceUrl: "https://stock.adobe.com/contributor/200465992/ggw?load_type=author&prev_url=detail",
 		licenseName: "Adobe Stock Education License",
 		licenseUrl: "https://stock.adobe.com/license-terms"
 	},
@@ -619,8 +617,7 @@ function applyFeaturedOrganismMetadata(organisms: FeaturedOrganism[]): FeaturedO
 			imageSourceUrl: cleanAttributionValue(metadata.imageSourceUrl) ?? organism.imageSourceUrl,
 			attributionTitle: cleanAttributionValue(metadata.attributionTitle) ?? organism.attributionTitle,
 			attributionNames: cleanAttributionValue(metadata.attributionNames) ?? organism.attributionNames,
-			attributionInstitution:
-				cleanAttributionValue(metadata.attributionInstitution) ?? organism.attributionInstitution,
+			attributionInstitution: cleanAttributionValue(metadata.attributionInstitution) ?? organism.attributionInstitution,
 			attributionUrl: cleanAttributionValue(metadata.attributionUrl) ?? organism.attributionUrl,
 			licenseName: cleanAttributionValue(metadata.licenseName) ?? organism.licenseName,
 			licenseUrl: cleanAttributionValue(metadata.licenseUrl) ?? organism.licenseUrl,
@@ -675,8 +672,8 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		description:
 			"The blacktail snailfish is a deep-water fish found along the muddy seafloors of the North Pacific Ocean. Growing up to 20 inches long, they have a pale pink, jelly-like body ending in a distinctive dark tail. They possess a special belly fin modified into a small suction cup, which they use to anchor themselves to rocks in ocean currents. From these safe anchor points, they spend their time hovering just above the mud to hunt for small crustaceans and worms. "
 	},
-	
-	// TODO: this is the only full example. we need to add: image orientation, common name?, taxonomies for all, and need real images and attributions. 
+
+	// TODO: this is the only full example. we need to add: image orientation, common name?, taxonomies for all, and need real images and attributions.
 	{
 		id: "diaphus-dumerilii",
 		group: "Fish",
@@ -853,7 +850,7 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		imageSrc: "/images/featured_organisms/karlodinium.jpg",
 		imageAttribution: "Source: Flickr (to be updated).",
 		description:
-			"Karlodinium is a microscopic marine alga frequently found in estuaries and shallow coastal waters worldwide. While normally harmless in small numbers, they can bloom densely and release specialized toxins directly into the water. These unique \"karlotoxins\" severely damage the gills of fish, making this organism responsible for devastating fish kills globally. "
+			'Karlodinium is a microscopic marine alga frequently found in estuaries and shallow coastal waters worldwide. While normally harmless in small numbers, they can bloom densely and release specialized toxins directly into the water. These unique "karlotoxins" severely damage the gills of fish, making this organism responsible for devastating fish kills globally. '
 	},
 	{
 		id: "tripos",
@@ -880,7 +877,7 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		imageSrc: "/images/featured_organisms/karenia.png",
 		imageAttribution: "Source: GBIF occurrence (to be updated).",
 		description:
-			"Karenia is a notorious genus of marine phytoplankton primarily found blooming in the Gulf of America. They are the primary organisms responsible for extreme \"red tide\" events that discolor the water. During these massive blooms, they release airborne toxins that kill vast amounts of marine life and can cause severe respiratory irritation in humans living near the coast. "
+			'Karenia is a notorious genus of marine phytoplankton primarily found blooming in the Gulf of America. They are the primary organisms responsible for extreme "red tide" events that discolor the water. During these massive blooms, they release airborne toxins that kill vast amounts of marine life and can cause severe respiratory irritation in humans living near the coast. '
 	},
 	/*{
 		id: "ammonia",
@@ -1011,9 +1008,11 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		group: "Invertebrate animals",
 		taxonomyName: "Psychropotes longicauda",
 		commonName: "Psychropotes longicauda",
-		taxonomyString: "Animalia;Echinodermata;Holothuroidea;Elasipodida;Psychropotidae;Psychropotes;Psychropotes longicauda",
+		taxonomyString:
+			"Animalia;Echinodermata;Holothuroidea;Elasipodida;Psychropotidae;Psychropotes;Psychropotes longicauda",
 		imageSrc: "/images/featured_organisms/longicauda.jpg",
-		imageAttribution: "Source: https://oceanexplorer.noaa.gov/multimedia/daily-image-media-20210201/ (local filename pending).",
+		imageAttribution:
+			"Source: https://oceanexplorer.noaa.gov/multimedia/daily-image-media-20210201/ (local filename pending).",
 		description:
 			"Psychropotes longicauda is a striking deep-water sea cucumber typically found in deep shades of red or purple. It features a strange appendage that looks like a sail sticking out of its body to help it navigate slow ocean currents. They act as the vacuum cleaners of the deep sea floor by slowly crawling along the mud to consume fallen organic matter. By constantly turning over the sediment, they play a massive role in recycling nutrients in the otherwise barren abyssal plain."
 	},
@@ -1024,7 +1023,8 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		commonName: "Atolla",
 		taxonomyString: "Eukaryota;Cnidaria;Scyphozoa;Coronatae;Atollidae;Atolla",
 		imageSrc: "/images/featured_organisms/atolla.jpg",
-		imageAttribution: "Source: https://www.flickr.com/photos/noaaphotolib/27907473986/in/photolist-Jw66JA (local filename pending).",
+		imageAttribution:
+			"Source: https://www.flickr.com/photos/noaaphotolib/27907473986/in/photolist-Jw66JA (local filename pending).",
 		description:
 			"Atolla is a deep-sea jellyfish instantly recognizable by its dark red coloration and unique crown shape. The red color actually acts as deep-sea camouflage because red light does not penetrate the deep ocean, rendering them effectively invisible. If a predator manages to find them, they trigger a spectacular circular light show of bright blue bioluminescence. This glowing display functions like a burglar alarm to attract an even larger predator to eat their attacker."
 	},
@@ -1055,7 +1055,8 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		group: "Invertebrate animals",
 		taxonomyName: "Strongylocentrotus purpuratus",
 		commonName: "Strongylocentrotus purpuratus",
-		taxonomyString: "Eukaryota;Echinodermata;Echinoidea;Camarodonta;Strongylocentrotidae;Strongylocentrotus;Strongylocentrotus purpuratus",
+		taxonomyString:
+			"Eukaryota;Echinodermata;Echinoidea;Camarodonta;Strongylocentrotidae;Strongylocentrotus;Strongylocentrotus purpuratus",
 		imageSrc: "/images/featured_organisms/strongylocentrotus_sea_urchin.png",
 		imageAttribution: "Source: https://www.gbif.org/occurrence/5938357558 (local filename pending).",
 		description:
@@ -1197,7 +1198,8 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		taxonomyName: "Monosiga",
 		commonName: "Monosiga",
 		imageSrc: "/images/featured_organisms/monosiga.jpg",
-		imageAttribution: "Source: https://commons.wikimedia.org/w/index.php?search=Monosiga+brevicollis&title=Special%3AMediaSearch&type=image (local filename pending).",
+		imageAttribution:
+			"Source: https://commons.wikimedia.org/w/index.php?search=Monosiga+brevicollis&title=Special%3AMediaSearch&type=image (local filename pending).",
 		description:
 			"Monosiga is a microscopic aquatic organism equipped with a distinctive collar and a long swimming tail. They use this beating tail to create tiny water currents that trap swimming bacteria against their sticky collar for consumption. Biologically, they are considered the closest living single-celled relatives to all modern animals. Researchers study their genetics heavily to understand the evolutionary leap from solitary cells to complex multicellular creatures like sponges and humans."
 	},
@@ -1217,7 +1219,8 @@ export const FEATURED_ORGANISMS: FeaturedOrganism[] = applyFeaturedOrganismMetad
 		taxonomyName: "Lutjanus campechanus",
 		commonName: "Lutjanus campechanus",
 		imageSrc: "/images/featured_organisms/red_snapper.jpg",
-		imageAttribution: "Source: https://www.flickr.com/photos/noaaphotolib/9714428833/in/photolist-JbHScj-JMbHbs-JSkkvW-fNqZfi-8Usn6h-fUTZxz-23YKdpZ-fNJ12N (local filename pending).",
+		imageAttribution:
+			"Source: https://www.flickr.com/photos/noaaphotolib/9714428833/in/photolist-JbHScj-JMbHbs-JSkkvW-fNqZfi-8Usn6h-fUTZxz-23YKdpZ-fNJ12N (local filename pending).",
 		description:
 			"Lutjanus campechanus is an incredibly iconic and valuable reef fish found heavily throughout the Gulf of Mexico. They are easily identified by their sloped profiles and bright rosy red coloration. They prefer to live around structured deep-water habitats like natural coral reefs, shipwrecks, and offshore oil platforms. As one of the most sought-after fish in the culinary world, their populations are carefully monitored to protect against massive historical overfishing."
 	}
@@ -1448,13 +1451,7 @@ export default function FeaturedOrganisms() {
 				].join(" ")}
 				style={{ width: "100%", aspectRatio: `${width} / ${height}` }}
 			>
-				<Image
-					src={photo.src}
-					alt={alt ?? ""}
-					fill
-					sizes={sizes}
-					className="object-cover object-center"
-				/>
+				<Image src={photo.src} alt={alt ?? ""} fill sizes={sizes} className="object-cover object-center" />
 				{/* Always-visible common name across the bottom of every grid tile. */}
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-2 pb-1.5 pt-6">
 					<p className="truncate text-center text-xs font-semibold text-white">{label}</p>
@@ -1490,10 +1487,7 @@ export default function FeaturedOrganisms() {
 				{/* Left: the detail panel (master-detail), sticky so it stays in view while the grid scrolls. */}
 				<div className="lg:w-1/3">
 					<div className="sticky top-0 h-fit">
-						<SelectedOrganismCard
-							organism={activeOrganism}
-							resolvedCommonName={getDisplayCommonName(activeOrganism)}
-						/>
+						<SelectedOrganismCard organism={activeOrganism} resolvedCommonName={getDisplayCommonName(activeOrganism)} />
 					</div>
 				</div>
 
@@ -1540,9 +1534,7 @@ function SelectedOrganismCard({
 	const imageAttribution = getImageAttributionDetails(organism);
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
 	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
-	const taxonomyHref = taxonomyString
-		? `/explore/taxonomy/${encodeURIComponent(taxonomyString)}`
-		: "/explore/taxonomy";
+	const taxonomyHref = taxonomyString ? `/explore/taxonomy/${encodeURIComponent(taxonomyString)}` : "/explore/taxonomy";
 
 	useEffect(() => {
 		setImageFailed(false);
@@ -1580,7 +1572,12 @@ function SelectedOrganismCard({
 						)}
 						<ImageAttributionIcon attribution={imageAttribution} fallbackTitle={commonName} />
 					</div>
-					<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={imageSrc} alt={commonName} />
+					<ImagePreviewModal
+						isOpen={previewOpen}
+						onClose={() => setPreviewOpen(false)}
+						src={imageSrc}
+						alt={commonName}
+					/>
 				</div>
 
 				<div className="flex flex-col gap-4 p-4 pt-2 sm:p-5 sm:pt-2">
@@ -1601,7 +1598,7 @@ function SelectedOrganismCard({
 						</span>
 					</div>
 
-					<p className="max-h-[240px] overflow-y-auto pr-1 text-[0.95rem] leading-relaxed text-base-content/85">
+					<p className="max-h-60 overflow-y-auto pr-1 text-[0.95rem] leading-relaxed text-base-content/85">
 						{organism.description}
 					</p>
 
@@ -1777,4 +1774,3 @@ function createFallbackCommonName(organism: FeaturedOrganism): string {
 		.join(" ");
 	return fromId || organism.taxonomyName;
 }
-

@@ -69,8 +69,8 @@ export default async function Featureid({
 	params: Promise<{ featureid: Feature["featureid"] }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	let { featureid } = await params;
-	featureid = decodeURIComponent(featureid);
+	const { featureid } = await params;
+
 	const { view } = await searchParams;
 	if (view !== undefined) {
 		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
@@ -293,9 +293,7 @@ export default async function Featureid({
 												<h3 className="font-medium text-lg text-base-content leading-snug break-all">
 													{taxonomyItem.displayName}
 												</h3>
-												<p className="text-xs text-base-content/60 break-all leading-snug">
-													{taxonomyItem.hierarchy}
-												</p>
+												<p className="text-xs text-base-content/60 break-all leading-snug">{taxonomyItem.hierarchy}</p>
 											</div>
 											<svg
 												className="w-4 h-4 text-base-content/45 group-hover:text-base-content/75 transition-colors duration-150 shrink-0"
