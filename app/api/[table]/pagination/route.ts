@@ -266,6 +266,7 @@ export async function GET(
 			}
 		} else {
 			if (sampleWhere) {
+				//TODO: breaks with a sample query in nested group
 				//replace the where with samp_names that match the query and are inside the shapes
 				samples = await prisma.sample.findMany({
 					where: sampleWhere,
@@ -287,29 +288,34 @@ export async function GET(
 				}
 			}
 
-			const res = await prisma.$transaction(async (tx) => {
-				//@ts-ignore
-				const count = await tx[model].count({ where: query.where });
+			const res = await prisma.$transaction(
+				async (tx) => {
+					//@ts-ignore
+					const count = await tx[model].count({ where: query.where });
 
-				//give last page if page is too large
-				if (parsedPage && (parsedPage - 1) * parsedTake > count) {
-					parsedPage = Math.floor(count / parsedTake) + 1;
-				}
-
-				//skip database pagination if doing later
-				if (!(shapes && hasLocationData)) {
-					if (parsedPage) {
-						//offset pagination
-						query.skip = (parsedPage - 1) * parsedTake;
+					//give last page if page is too large
+					if (parsedPage && (parsedPage - 1) * parsedTake > count) {
+						parsedPage = Math.floor(count / parsedTake) + 1;
 					}
-					query.take = parsedTake;
+
+					//skip database pagination if doing later
+					if (!(shapes && hasLocationData)) {
+						if (parsedPage) {
+							//offset pagination
+							query.skip = (parsedPage - 1) * parsedTake;
+						}
+						query.take = parsedTake;
+					}
+
+					//@ts-ignore
+					const result = await tx[model].findMany(query);
+
+					return { count, result };
+				},
+				{
+					timeout: 0.5 * 60
 				}
-
-				//@ts-ignore
-				const result = await tx[model].findMany(query);
-
-				return { count, result };
-			});
+			);
 			count = res.count;
 			result = res.result;
 		}
