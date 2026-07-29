@@ -1,18 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import DocsSections, { DocsGenericSection, DocsPage, DocsSection, PageTitles } from "@/types/docsSections";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState, useRef, useEffect, Fragment } from "react";
 
-type Section = {
-	id: string;
-	title: string;
-	subsections?: Array<{
-		id: string;
-		title: string;
-	}>;
-};
-
-export default function MobileTOC({ sections }: { sections: Section[] }) {
+export default function MobileTOC() {
+	const pathname = usePathname();
 	const [isOpen, setIsOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 
@@ -49,16 +43,18 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 		};
 	}, [isOpen]);
 
-	// Ensure the component is mounted before trying to use the portal
-	const [mounted, setMounted] = useState(false);
-	useEffect(() => setMounted(true), []);
-
 	return (
 		<div className={`lg:hidden mb-6 relative ${isOpen ? "z-scrim" : ""}`} ref={menuRef}>
 			{/* The trigger button */}
 			<div role="button" className="btn btn-outline w-full justify-between" onClick={handleToggle}>
 				<span className="flex items-center gap-2">
-					<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						className="h-5 w-5"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
 					</svg>
 					Table of Contents
@@ -76,53 +72,47 @@ export default function MobileTOC({ sections }: { sections: Section[] }) {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-raised w-full p-2 shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
-					{sections.map((section, index) => {
-						const hasSubs = Boolean(section.subsections?.length);
-						return (
-							<li key={section.id} className="w-full">
-								<div className={`flex flex-col ${hasSubs ? "gap-2.5" : "gap-0"}`}>
-									<a
-										href={`#${section.id}`}
-										className="block w-full px-2 py-1 hover:text-primary transition-colors font-medium whitespace-normal break-words"
-										data-section-index={index}
-										onClick={handleClose}
-									>
-										{section.title}
-									</a>
-									{hasSubs && section.subsections && (
-										<ul className="ml-4 space-y-1 border-l border-base-300 pl-2">
-											{section.subsections.map((subsection) => (
-												<li key={subsection.id} className="w-full">
-													<a
-														href={`#${subsection.id}`}
-														data-toc-target={subsection.id}
-														className="block w-full py-1 px-2 text-sm hover:text-primary transition-colors whitespace-normal break-words"
-														onClick={handleClose}
+				<ul className="absolute top-full left-0 mt-2 p-6 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-raised w-full shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
+					{Object.entries(DocsSections).map(([page, sections]) => (
+						<div key={page} className="flex flex-col gap-2.5">
+							<div className="font-bold border-b border-primary pb-1">{PageTitles[page]}</div>
+
+							<div className="pl-3 flex flex-col gap-4">
+								{Object.entries(sections).map(([id, sect]: [string, DocsSection]) => (
+									<Fragment key={id}>
+										<Link
+											id={`sidebar-${id}`}
+											href={`/docs/${page}/${id}`}
+											className={`py-1 cursor-pointer hover:text-primary transition-colors${pathname.split("/").at(-1) === id ? " text-primary" : ""}`}
+											onClick={() => setIsOpen(false)}
+										>
+											{sect.title}
+										</Link>
+
+										{sect.subsections ? (
+											<div className="text-sm border-l border-base-300 pl-4 flex flex-col gap-2.5">
+												{Object.entries(sect.subsections).map(([ssId, ss]) => (
+													<Link
+														key={ssId}
+														id={`sidebar-${ssId}`}
+														href={`/docs/${page}/${id}#${ssId}`}
+														className="cursor-pointer hover:text-primary transition-colors"
+														onClick={() => setIsOpen(false)}
 													>
-														{subsection.title}
-													</a>
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
-							</li>
-						);
-					})}
+														{ss.title}
+													</Link>
+												))}
+											</div>
+										) : (
+											<></>
+										)}
+									</Fragment>
+								))}
+							</div>
+						</div>
+					))}
 				</ul>
 			)}
-
-			{/* The backdrop, rendered into the body via a portal */}
-			{mounted &&
-				isOpen &&
-				createPortal(
-					<div
-						className="fixed inset-0 bg-black/30 z-scrim"
-						onClick={handleClose}
-					></div>,
-					document.body
-				)}
 		</div>
 	);
-} 
+}

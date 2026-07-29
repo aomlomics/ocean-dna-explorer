@@ -1,34 +1,107 @@
 "use client";
 
-import DocsSections, { DocsSection } from "@/types/docsSections";
+import useHash from "@/app/hooks/useHash";
+import DocsSections, { DocsGenericSection, DocsPage, DocsSection, PageTitles } from "@/types/docsSections";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Fragment } from "react/jsx-runtime";
 
-const linkStyles = "cursor-pointer hover:text-primary transition-colors";
+function getAllSubsections(id: string, sect: DocsSection): string[] {
+	const curr = [id];
 
-//TODO: make sure current section is scrolled into view on page load
-//TODO: change highlight when scrolling down page to current subsection
-//TODO: remove all unused components from docs folder
+	if (sect.subsections) {
+		for (const [ssId, ss] of Object.entries(sect.subsections)) {
+			curr.push(...getAllSubsections(ssId, ss));
+		}
+	}
+
+	return curr;
+}
+
 export default function DocsSidebar() {
 	const pathname = usePathname();
+	const splitPath = pathname.split("/");
+	const page = splitPath.at(-2) as DocsPage;
+	const section = splitPath.at(-1) as DocsGenericSection<DocsPage>;
+
+	const hash = useHash();
+	const [currSection, setCurrSection] = useState(hash || section);
+
+	const ref = useRef<HTMLElement>(null);
+
+	useEffect(() => {
+		function handleScroll() {
+			const ids = getAllSubsections(section, DocsSections[page][section]);
+
+			const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+
+			//if at the bottom, highlight the last section (10 pixel tolerance)
+			const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
+
+			if (atBottom && elements.length) {
+				setCurrSection(elements[elements.length - 1].id);
+				return;
+			}
+
+			const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
+
+			if (current) {
+				setCurrSection(current.id);
+			}
+		}
+
+		window.addEventListener("scroll", handleScroll);
+		setCurrSection(section);
+		handleScroll();
+
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, [page, section]);
+
+	useEffect(() => {
+		const activeLink = document.getElementById(`sidebar-${currSection}`);
+		const sidebar = ref.current;
+
+		if (!activeLink || !sidebar) return;
+
+		const linkRect = activeLink.getBoundingClientRect();
+		const sidebarRect = sidebar.getBoundingClientRect();
+
+		const buffer = 16;
+
+		const isAbove = linkRect.top < sidebarRect.top + buffer;
+		const isBelow = linkRect.bottom > sidebarRect.bottom - buffer;
+
+		if (isAbove || isBelow) {
+			sidebar.scrollTo({
+				top: sidebar.scrollTop + linkRect.top - sidebarRect.top - buffer,
+				behavior: "smooth"
+			});
+		}
+	}, [currSection]);
 
 	function highlight(id: string) {
-		return pathname.endsWith(id) ? "text-primary" : "";
+		return currSection === id ? "text-primary" : "";
 	}
 
 	return (
-		<aside className="h-full px-10 flex flex-col gap-15 overflow-y-auto pb-5">
+		<aside ref={ref} className="h-full px-10 flex flex-col gap-10 overflow-y-auto pb-5">
 			{Object.entries(DocsSections).map(([page, sections]) => (
 				<div key={page} className="flex flex-col gap-2.5">
-					<div className="font-bold border-b border-primary pb-1">{page}</div>
+					<div className="font-bold border-b border-primary pb-1">{PageTitles[page]}</div>
 
 					<div className="pl-3 flex flex-col gap-4">
 						{Object.entries(sections).map(([id, sect]: [string, DocsSection]) => (
 							<Fragment key={id}>
 								<Link
-									href={`/docs/${page.toLowerCase()}/${id}`}
-									className={`py-1 ${linkStyles} ${highlight(`${page.toLowerCase()}/${id}`)}`}
+									id={`sidebar-${id}`}
+									href={`/docs/${page}/${id}`}
+									className={`py-1 cursor-pointer hover:text-primary transition-colors ${highlight(id)}`}
+									onClick={() =>
+										!hash &&
+										section === id &&
+										document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+									}
 								>
 									{sect.title}
 								</Link>
@@ -38,8 +111,9 @@ export default function DocsSidebar() {
 										{Object.entries(sect.subsections).map(([ssId, ss]) => (
 											<Link
 												key={ssId}
-												href={`/docs/${page.toLowerCase()}/${id}#${ssId}`}
-												className={`${linkStyles} ${highlight(`${page.toLowerCase()}/${id}#${ssId}`)}`}
+												id={`sidebar-${ssId}`}
+												href={`/docs/${page}/${id}#${ssId}`}
+												className={`cursor-pointer hover:text-primary transition-colors ${highlight(ssId)}`}
 											>
 												{ss.title}
 											</Link>

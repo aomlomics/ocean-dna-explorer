@@ -16,7 +16,7 @@ export default async function ApiEndpointsPage() {
 
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="endpoints"
 			header={
 				<>
@@ -96,11 +96,7 @@ export default async function ApiEndpointsPage() {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`}
-								defaultClosed={true}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/geo_loc_name`} />
 						</>
 					)
 				},
@@ -139,11 +135,7 @@ export default async function ApiEndpointsPage() {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}
-								defaultClosed={true}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`} />
 						</>
 					)
 				},
@@ -164,11 +156,7 @@ export default async function ApiEndpointsPage() {
 							</div>
 
 							<p className="mb-4">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`}
-								defaultClosed={true}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`} />
 						</>
 					)
 				}

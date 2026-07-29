@@ -14,7 +14,7 @@ export default async function HelpExplorePage() {
 
 	return (
 		<DocsPageSection
-			page="Help"
+			page="help"
 			section="explore"
 			header={
 				<>

@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function ApiQueryParametersPage() {
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="queryParameters"
 			header={
 				<div className="space-y-4">

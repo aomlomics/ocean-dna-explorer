@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function ApiSchemaPage() {
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="schema"
 			header={
 				<>

@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function HelpOverviewPage() {
 	return (
 		<DocsPageSection
-			page="Help"
+			page="help"
 			section="overview"
 			header={
 				<>

@@ -516,7 +516,7 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{Object.entries(DocsSections.Help).map(([id, sect]) => (
+						{Object.entries(DocsSections.help).map(([id, sect]) => (
 							<MenuItem key={id} href={`/docs/help/${id}`} label={sect.title} />
 						))}
 					</div>
@@ -530,7 +530,7 @@ export function DocsMegaMenu() {
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{Object.entries(DocsSections.API).map(([id, sect]) => (
+						{Object.entries(DocsSections.api).map(([id, sect]) => (
 							<MenuItem key={id} href={`/docs/api/${id}`} label={sect.title} />
 						))}
 					</div>

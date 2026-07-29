@@ -20,7 +20,7 @@ export default async function HelpSearchPage() {
 
 	return (
 		<DocsPageSection
-			page="Help"
+			page="help"
 			section="search"
 			header={
 				<>

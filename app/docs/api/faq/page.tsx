@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function ApiFaqPage() {
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="faq"
 			header={
 				<>

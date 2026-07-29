@@ -14,7 +14,7 @@ export default function DocsPage() {
 
 			<HelpQuickNav />
 
-			<Link className="btn" href={`/docs/${start.page}/${start.section}`}>
+			<Link className="btn btn-success" href={`/docs/${start.page}/${start.section}`}>
 				Get Started
 			</Link>
 		</div>

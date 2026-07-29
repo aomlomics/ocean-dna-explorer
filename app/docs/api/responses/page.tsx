@@ -6,7 +6,7 @@ import InlineCode from "@/app/components/docs/InlineCode";
 export default function ApiResponsesPage() {
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="responses"
 			header={
 				<div className="space-y-4">
@@ -77,11 +77,7 @@ export default function ApiResponsesPage() {
 										<strong>Invalid Table:</strong> Requesting a table that does not exist.
 									</p>
 									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
-									<ApiCodeBlock
-										language="json"
-										url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`}
-										defaultClosed={true}
-									/>
+									<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
 								</div>
 
 								<div>
@@ -93,7 +89,6 @@ export default function ApiResponsesPage() {
 									<ApiCodeBlock
 										language="json"
 										url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`}
-										defaultClosed={true}
 									/>
 								</div>
 
@@ -102,11 +97,7 @@ export default function ApiResponsesPage() {
 										<strong>Invalid Parameter Value:</strong> Providing an incorrect value for a parameter like `limit`.
 									</p>
 									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`} />
-									<ApiCodeBlock
-										language="json"
-										url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`}
-										defaultClosed={true}
-									/>
+									<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`} />
 								</div>
 							</div>
 						</>

@@ -5,22 +5,23 @@ export type DocsSection = Readonly<{
 
 export type DocsPage = keyof typeof DocsSections;
 
-type Section<P extends DocsPage> = keyof (typeof DocsSections)[P];
+export type DocsGenericSection<P extends DocsPage> = keyof (typeof DocsSections)[P];
 
 export type DocsGenericProps<P extends DocsPage> = {
 	page: P;
-	section: Section<P>;
+	section: DocsGenericSection<P>;
 };
 
 type DocsNavigationElement = {
 	[P in keyof typeof DocsSections]: {
 		page: P;
 		section: keyof (typeof DocsSections)[P];
+		title: string;
 	};
 }[keyof typeof DocsSections];
 
 const DocsSections = {
-	Help: {
+	help: {
 		overview: {
 			title: "Overview",
 			subsections: {
@@ -64,7 +65,7 @@ const DocsSections = {
 			}
 		}
 	},
-	API: {
+	api: {
 		introduction: {
 			title: "Introduction",
 			subsections: {
@@ -178,18 +179,25 @@ const DocsSections = {
 
 export default DocsSections;
 
+export const PageTitles = {
+	help: "Help",
+	api: "API"
+} as Record<string, string>;
+
 export const DocsNavigation = Object.entries(DocsSections).flatMap(([page, sections]) =>
-	Object.keys(sections).map((section) => ({
-		page: (page as DocsPage).toLowerCase(),
-		section
+	Object.entries(sections).map(([id, sect]) => ({
+		page: page as DocsPage,
+		section: id,
+		title: sect.title
 	}))
 ) as DocsNavigationElement[];
 
 //TODO: if only providing page, give next page with starting section
 export function getNextDocsSection<P extends DocsPage>(
-	{ page, section, dir = 1 }: DocsGenericProps<P> & { dir?: 1 | -1 } = DocsNavigation[0] as DocsGenericProps<P>
+	{ page, section, dir = 1 }: DocsGenericProps<P> & { dir?: 1 | -1 } = {
+		page: DocsNavigation[0].page,
+		section: DocsNavigation[0].section
+	} as DocsGenericProps<P>
 ): DocsNavigationElement | undefined {
-	return DocsNavigation[
-		DocsNavigation.findIndex((item) => item.page === page.toLowerCase() && item.section === section) + dir
-	];
+	return DocsNavigation[DocsNavigation.findIndex((item) => item.page === page && item.section === section) + dir];
 }

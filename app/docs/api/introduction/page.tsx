@@ -16,7 +16,7 @@ export default async function ApiIntroductionPage() {
 
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="introduction"
 			header={
 				<div className="space-y-4">

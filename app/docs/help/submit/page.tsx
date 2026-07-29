@@ -23,7 +23,7 @@ function ExampleFileGlyph({ className }: { className?: string }) {
 export default function HelpSubmitPage() {
 	return (
 		<DocsPageSection
-			page="Help"
+			page="help"
 			section="submit"
 			header={
 				<>

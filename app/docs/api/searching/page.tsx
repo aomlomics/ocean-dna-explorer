@@ -18,7 +18,7 @@ export default async function ApiSearchPage() {
 
 	return (
 		<DocsPageSection
-			page="API"
+			page="api"
 			section="searching"
 			header={
 				<>
@@ -57,11 +57,7 @@ export default async function ApiSearchPage() {
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
 							</div>
 							<p className="mb-2">This will return all projects where the string "gomecc" appears in any text field.</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`}
-								defaultClosed={true}
-							/>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
 						</>
 					)
 				},
@@ -218,7 +214,6 @@ export default async function ApiSearchPage() {
 							<ApiCodeBlock
 								language="json"
 								url={`${process.env.NEXT_PUBLIC_URL}/api/project?ids=${project?.id || 1}`}
-								defaultClosed={true}
 							/>
 						</>
 					)
@@ -246,7 +241,6 @@ export default async function ApiSearchPage() {
 							<ApiCodeBlock
 								language="json"
 								url={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`}
-								defaultClosed={true}
 							/>
 						</>
 					)
