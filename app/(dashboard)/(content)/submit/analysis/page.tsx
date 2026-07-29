@@ -3,6 +3,7 @@ import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import { SubmitDescription } from "../page";
 
 export default async function Analysis() {
 	const tags = await prisma.tag.findMany();
@@ -34,44 +35,7 @@ export default async function Analysis() {
 							Upload analysis files to projects that list your account. If you need access, ask a project member to add
 							you.
 						</p>
-						<p>
-							Build your FAIR eDNA metadata templates with{" "}
-							<a
-								href="https://github.com/aomlomics/FAIReSheets"
-								className="text-primary hover:text-primary-focus"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								FAIReSheets
-							</a>{" "}
-							and compare against the{" "}
-							<a
-								href="https://github.com/aomlomics/ODE_testdata"
-								className="text-primary hover:text-primary-focus"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								example datasets
-							</a>{" "}
-							there. The{" "}
-							<Link href="/help#submit" className="text-primary hover:text-primary-focus">
-								help page
-							</Link>{" "}
-							and the{" "}
-							<a
-								href={WORKSHOP_PLAYLIST_HREF}
-								className="text-primary hover:text-primary-focus"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								FAIR eDNA Workshop
-							</a>{" "}
-							video series from{" "}
-							<a href={OBON_HREF} className="text-primary hover:text-primary-focus" target="_blank" rel="noopener noreferrer">
-								OBON
-							</a>{" "}
-							cover the standard and filling in these templates.
-						</p>
+						<SubmitDescription />
 					</div>
 				</header>
 

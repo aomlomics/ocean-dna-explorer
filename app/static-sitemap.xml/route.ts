@@ -1,3 +1,4 @@
+//TODO: add docs pages
 export async function GET(request: Request) {
 	const SITE_URL = process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org";
 

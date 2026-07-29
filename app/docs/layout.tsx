@@ -1,0 +1,49 @@
+"use client";
+
+import Footer from "@/app/components/Footer";
+import Header from "@/app/components/header/Header";
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
+import DocsSidebar from "../components/docs/DocsSidebar";
+
+export default function DashboardLayout({ children }: { children: ReactNode }) {
+	const headerRef = useRef<HTMLDivElement>(null);
+	const [headerHeight, setHeaderHeight] = useState(0);
+	const [headerVisible, setHeaderVisible] = useState(true);
+
+	useEffect(() => {
+		if (!headerRef.current) return;
+
+		const resizeObserver = new ResizeObserver(([entry]) => {
+			setHeaderHeight(entry.contentRect.height);
+		});
+		resizeObserver.observe(headerRef.current);
+
+		const intersectObserver = new IntersectionObserver(([entry]) => setHeaderVisible(entry.isIntersecting), {
+			threshold: 0
+		});
+		intersectObserver.observe(headerRef.current);
+
+		return () => {
+			resizeObserver.disconnect();
+			intersectObserver.disconnect();
+		};
+	}, []);
+
+	return (
+		<>
+			<div ref={headerRef}>
+				<Header />
+			</div>
+			<div className="ml-[7.5%] sm:ml-[10%] md:ml-[12.5%] lg:ml-[12.5%] xl:ml-[10%] grid grid-cols-[15fr_85fr] gap-10 pb-5">
+				<div
+					className="sticky top-0 pt-10"
+					style={{ height: `calc(100dvh - ${headerVisible ? headerHeight : 0}px)` } as CSSProperties}
+				>
+					<DocsSidebar />
+				</div>
+				<div className="pt-10 pb-5 px-4 md:px-6 lg:px-8 overflow-x-auto">{children}</div>
+			</div>
+			<Footer />
+		</>
+	);
+}
