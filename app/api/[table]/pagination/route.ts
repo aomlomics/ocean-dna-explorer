@@ -313,7 +313,7 @@ export async function GET(
 					return { count, result };
 				},
 				{
-					timeout: 0.5 * 60
+					timeout: 0.5 * 60 * 1000
 				}
 			);
 			count = res.count;
