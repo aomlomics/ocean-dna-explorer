@@ -31,7 +31,9 @@ export default function DocsSidebar() {
 	const ref = useRef<HTMLElement>(null);
 
 	useEffect(() => {
-		if (section) {
+		if (!page) {
+			setCurrSection("");
+		} else if (section) {
 			function handleScroll() {
 				const ids = getAllSubsections(section, DocsSections[page][section]);
 
