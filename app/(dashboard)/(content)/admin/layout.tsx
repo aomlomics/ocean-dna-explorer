@@ -1,74 +1,13 @@
-"use client";
-
 import { ReactNode } from "react";
-import { RolePermissions } from "@/types/objects";
-import { useAuth } from "@clerk/react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
+import AdminTabs from "@/app/components/AdminTabs";
+import { auth } from "@clerk/nextjs/server";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
-	const pathname = usePathname();
-	const { userId, sessionClaims } = useAuth();
-	const role = sessionClaims?.metadata?.role;
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+	await auth.protect();
 
 	return (
 		<div>
-			<nav className="flex">
-				<Link
-					href="/admin/users"
-					className={`btn px-6 py-3 transition-colors rounded-none ${
-						pathname === "/admin/users" ? "rounded-t-lg btn-primary" : ""
-					}`}
-				>
-					Manage Users
-				</Link>
-
-				<Link
-					href="/admin/tour"
-					className={`btn px-6 py-3 transition-colors rounded-none ${
-						pathname === "/admin/tour" ? "rounded-t-lg btn-primary" : ""
-					}`}
-				>
-					Tour
-				</Link>
-
-				{userId && role && RolePermissions[role].includes("manageDatabase") && (
-					<>
-						<Link
-							href="/admin/tags"
-							className={`btn px-6 py-3 transition-colors rounded-none ${
-								pathname === "/admin/tags" ? "rounded-t-lg btn-primary" : ""
-							}`}
-						>
-							Tags
-						</Link>
-						<Link
-							href="/admin/images"
-							className={`btn px-6 py-3 transition-colors rounded-none ${
-								pathname === "/admin/images" ? "rounded-t-lg btn-primary" : ""
-							}`}
-						>
-							Home Carousel Images
-						</Link>
-						<Link
-							href="/admin/tools"
-							className={`btn px-6 py-3 transition-colors rounded-none ${
-								pathname === "/admin/tools" ? "rounded-t-lg btn-primary" : ""
-							}`}
-						>
-							Database Tools
-						</Link>
-						<Link
-							href="/admin/console"
-							className={`btn px-6 py-3 transition-colors rounded-none ${
-								pathname === "/admin/console" ? "rounded-t-lg btn-primary" : ""
-							}`}
-						>
-							Prisma Console
-						</Link>
-					</>
-				)}
-			</nav>
+			<AdminTabs />
 			<div className="border border-primary rounded-lg rounded-tl-none p-4">{children}</div>
 		</div>
 	);

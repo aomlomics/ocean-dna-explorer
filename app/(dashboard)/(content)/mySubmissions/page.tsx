@@ -14,10 +14,7 @@ import { ProjectIcon } from "@/app/components/icons";
 import { prismaImages } from "@/app/helpers/prismaImages";
 
 export default async function MySubmissions() {
-	const { userId } = await auth();
-	if (!userId) {
-		return <div>Unauthorized</div>;
-	}
+	const { userId } = await auth.protect();
 
 	const [projects, dbBadAnalyses, tags] = await prisma.$transaction([
 		prisma.project.findMany({
