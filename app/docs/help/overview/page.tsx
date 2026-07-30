@@ -164,7 +164,7 @@ export default function HelpOverviewPage() {
 					)
 				},
 				{
-					id: "faq",
+					id: "help-faq",
 					title: "FAQ",
 					content: (
 						<>
