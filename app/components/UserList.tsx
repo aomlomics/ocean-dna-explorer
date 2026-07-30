@@ -1,6 +1,6 @@
 "use client";
 
-import { NetworkPacket, Role } from "@/types/globals";
+import { NetworkPacket } from "@/types/globals";
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
@@ -68,7 +68,7 @@ export default function UserList() {
 
 									<div className="text-primary">Role:</div>
 									<div className="flex items-center gap-2">
-										{(user.publicMetadata.role as Role) || "No role"}
+										{user.publicMetadata.role || "No role"}
 										{!!user.publicMetadata.roleApplication && (
 											<InfoButton
 												text={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
