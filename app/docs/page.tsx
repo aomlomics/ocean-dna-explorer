@@ -9,7 +9,9 @@ export default function DocsPage() {
 	return (
 		<div>
 			<header className="mb-8">
-				<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-primary">Docs</h1>
+				<h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-normal leading-[0.95] text-primary">
+					Ocean DNA Explorer Documentation
+				</h1>
 			</header>
 
 			<HelpQuickNav />

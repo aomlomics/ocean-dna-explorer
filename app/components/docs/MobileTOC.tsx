@@ -1,6 +1,6 @@
 "use client";
 
-import DocsSections, { DocsSection, DocsPageTitles, DocsPage, DocsGenericSection } from "@/types/docsSections";
+import DocsSections, { DocsSection, DocsPage, DocsGenericSection } from "@/types/docsSections";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Fragment } from "react";

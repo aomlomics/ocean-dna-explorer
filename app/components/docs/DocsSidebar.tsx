@@ -27,9 +27,11 @@ export default function DocsSidebar() {
 
 	const hash = useHash();
 	const [currSection, setCurrSection] = useState(hash || section);
+	const [disableAutoScroll, setDisableAutoScroll] = useState(false);
 
 	const ref = useRef<HTMLElement>(null);
 
+	//detect current section in docs body
 	useEffect(() => {
 		if (!page) {
 			setCurrSection("");
@@ -62,25 +64,28 @@ export default function DocsSidebar() {
 		}
 	}, [page, section]);
 
+	//auto scroll sidebar to keep current section in view
 	useEffect(() => {
-		const activeLink = document.getElementById(`sidebar-${currSection}`);
-		const sidebar = ref.current;
+		if (!disableAutoScroll) {
+			const activeLink = document.getElementById(`sidebar-${currSection}`);
+			const sidebar = ref.current;
 
-		if (!activeLink || !sidebar) return;
+			if (!activeLink || !sidebar) return;
 
-		const linkRect = activeLink.getBoundingClientRect();
-		const sidebarRect = sidebar.getBoundingClientRect();
+			const linkRect = activeLink.getBoundingClientRect();
+			const sidebarRect = sidebar.getBoundingClientRect();
 
-		const buffer = 16;
+			const buffer = 16;
 
-		const isAbove = linkRect.top < sidebarRect.top + buffer;
-		const isBelow = linkRect.bottom > sidebarRect.bottom - buffer;
+			const isAbove = linkRect.top < sidebarRect.top + buffer;
+			const isBelow = linkRect.bottom > sidebarRect.bottom - buffer;
 
-		if (isAbove || isBelow) {
-			sidebar.scrollTo({
-				top: sidebar.scrollTop + linkRect.top - sidebarRect.top - buffer,
-				behavior: "smooth"
-			});
+			if (isAbove || isBelow) {
+				sidebar.scrollTo({
+					top: sidebar.scrollTop + linkRect.top - sidebarRect.top - buffer,
+					behavior: "smooth"
+				});
+			}
 		}
 	}, [currSection]);
 
@@ -89,7 +94,12 @@ export default function DocsSidebar() {
 	}
 
 	return (
-		<aside ref={ref} className="h-full px-10 flex flex-col gap-10 overflow-y-auto pb-5">
+		<aside
+			ref={ref}
+			className="h-full px-10 flex flex-col gap-10 overflow-y-auto pb-5"
+			onWheel={() => setDisableAutoScroll(true)}
+			onTouchMove={() => setDisableAutoScroll(true)}
+		>
 			{Object.entries(DocsSections).map(([page, sections]) => (
 				<div key={page} className="flex flex-col gap-2.5">
 					<div className="font-bold border-b border-primary pb-1">{DocsPageTitles[page]}</div>
@@ -101,11 +111,12 @@ export default function DocsSidebar() {
 									id={`sidebar-${id}`}
 									href={`/docs/${page}/${id}`}
 									className={`py-1 cursor-pointer hover:text-primary transition-colors ${highlight(id)}`}
-									onClick={() =>
-										!hash &&
-										section === id &&
-										document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-									}
+									onClick={() => {
+										setDisableAutoScroll(false);
+										if (!hash && section === id) {
+											document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+										}
+									}}
 								>
 									{sect.title}
 								</Link>
@@ -118,6 +129,7 @@ export default function DocsSidebar() {
 												id={`sidebar-${ssId}`}
 												href={`/docs/${page}/${id}#${ssId}`}
 												className={`cursor-pointer hover:text-primary transition-colors ${highlight(ssId)}`}
+												onClick={() => setDisableAutoScroll(false)}
 											>
 												{ss.title}
 											</Link>
