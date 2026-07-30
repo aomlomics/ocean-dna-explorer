@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import DocsSections from "@/types/docsSections";
 
 export default function MobileMenu() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -132,12 +133,12 @@ export default function MobileMenu() {
 							<summary className="text-base">Docs</summary>
 							<ul className="p-2">
 								<li className="py-1">
-									<Link href="/help" onClick={handleClose}>
+									<Link href={`/docs/help/${Object.keys(DocsSections.help)[0]}`} onClick={handleClose}>
 										Help
 									</Link>
 								</li>
 								<li className="py-1">
-									<Link href="/api" onClick={handleClose}>
+									<Link href={`/docs/api/${Object.keys(DocsSections.api)[0]}`} onClick={handleClose}>
 										API
 									</Link>
 								</li>
@@ -177,13 +178,7 @@ export default function MobileMenu() {
 			{/* The backdrop, rendered into the body via a portal */}
 			{mounted &&
 				isOpen &&
-				createPortal(
-					<div
-						className="fixed inset-0 bg-black/30 z-scrim"
-						onClick={handleClose}
-					></div>,
-					document.body
-				)}
+				createPortal(<div className="fixed inset-0 bg-black/30 z-scrim" onClick={handleClose}></div>, document.body)}
 		</div>
 	);
 }

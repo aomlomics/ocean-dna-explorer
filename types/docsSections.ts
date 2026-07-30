@@ -179,7 +179,7 @@ const DocsSections = {
 
 export default DocsSections;
 
-export const PageTitles = {
+export const DocsPageTitles = {
 	help: "Help",
 	api: "API"
 } as Record<string, string>;

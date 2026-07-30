@@ -510,7 +510,7 @@ export function DocsMegaMenu() {
 			<div className="grid grid-cols-[1fr_1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
-						href="/docs/help"
+						href={`/docs/help/${Object.keys(DocsSections.help)[0]}`}
 						title="Help"
 						subtitle="Documentation & guides"
 						titleClassName="text-base-content group-hover:text-primary"
@@ -524,7 +524,7 @@ export function DocsMegaMenu() {
 
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
-						href="/docs/api"
+						href={`/docs/api/${Object.keys(DocsSections.api)[0]}`}
 						title="API"
 						subtitle="Programmatic access"
 						titleClassName="text-base-content group-hover:text-primary"

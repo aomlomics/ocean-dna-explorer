@@ -1,6 +1,6 @@
-import { DocsNavigation } from "@/types/docsSections";
+import DocsSections from "@/types/docsSections";
 import { redirect } from "next/navigation";
 
 export default function DocsHelpPage() {
-	redirect(`/docs/${DocsNavigation[0].page}/${DocsNavigation[0].section}`);
+	redirect(`/docs/help/${Object.keys(DocsSections.help)[0]}`);
 }

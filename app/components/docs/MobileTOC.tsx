@@ -1,14 +1,20 @@
 "use client";
 
-import DocsSections, { DocsGenericSection, DocsPage, DocsSection, PageTitles } from "@/types/docsSections";
+import DocsSections, { DocsSection, DocsPageTitles, DocsPage, DocsGenericSection } from "@/types/docsSections";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, Fragment } from "react";
 
 export default function MobileTOC() {
 	const pathname = usePathname();
+	const splitPath = pathname.split("/");
+	const page = splitPath[2] as DocsPage;
+	const section = splitPath[3] as DocsGenericSection<DocsPage>;
+
 	const [isOpen, setIsOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
+
+	const router = useRouter();
 
 	const handleToggle = () => {
 		setIsOpen((prev) => !prev);
@@ -45,6 +51,23 @@ export default function MobileTOC() {
 
 	return (
 		<div className={`lg:hidden mb-6 relative ${isOpen ? "z-scrim" : ""}`} ref={menuRef}>
+			<div className="flex justify-center pb-5 gap-5">
+				<div className={page === "help" ? "text-primary" : "text-base-content/50"}>Help</div>
+				<input
+					type="checkbox"
+					defaultChecked={page === "api"}
+					className="toggle border-primary-content text-primary-content"
+					onChange={(e) =>
+						router.push(
+							e.currentTarget.checked
+								? `/docs/api/${Object.keys(DocsSections.api)[0]}`
+								: `/docs/help/${Object.keys(DocsSections.help)[0]}`
+						)
+					}
+				/>
+				<div className={page === "api" ? "text-primary" : "text-base-content/50"}>API</div>
+			</div>
+
 			{/* The trigger button */}
 			<div role="button" className="btn btn-outline w-full justify-between" onClick={handleToggle}>
 				<span className="flex items-center gap-2">
@@ -72,44 +95,36 @@ export default function MobileTOC() {
 
 			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 p-6 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-raised w-full shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
-					{Object.entries(DocsSections).map(([page, sections]) => (
-						<div key={page} className="flex flex-col gap-2.5">
-							<div className="font-bold border-b border-primary pb-1">{PageTitles[page]}</div>
+				<ul className="absolute top-full left-0 mt-2 px-6 py-4 menu flex flex-col flex-nowrap gap-5 bg-base-100 rounded-box z-raised w-full shadow-lg border border-base-300 max-h-[60vh] overflow-y-auto">
+					{Object.entries(DocsSections[page]).map(([id, sect]: [string, DocsSection]) => (
+						<Fragment key={id}>
+							<Link
+								id={`sidebar-${id}`}
+								href={`/docs/${page}/${id}`}
+								className={`py-1 cursor-pointer hover:text-primary transition-colors${section === id ? " text-primary" : ""}`}
+								onClick={() => setIsOpen(false)}
+							>
+								{sect.title}
+							</Link>
 
-							<div className="pl-3 flex flex-col gap-4">
-								{Object.entries(sections).map(([id, sect]: [string, DocsSection]) => (
-									<Fragment key={id}>
+							{sect.subsections ? (
+								<div className="text-sm border-l border-base-300 pl-4 flex flex-col gap-2.5">
+									{Object.entries(sect.subsections).map(([ssId, ss]) => (
 										<Link
-											id={`sidebar-${id}`}
-											href={`/docs/${page}/${id}`}
-											className={`py-1 cursor-pointer hover:text-primary transition-colors${pathname.split("/").at(-1) === id ? " text-primary" : ""}`}
+											key={ssId}
+											id={`sidebar-${ssId}`}
+											href={`/docs/${page}/${id}#${ssId}`}
+											className="cursor-pointer hover:text-primary transition-colors"
 											onClick={() => setIsOpen(false)}
 										>
-											{sect.title}
+											{ss.title}
 										</Link>
-
-										{sect.subsections ? (
-											<div className="text-sm border-l border-base-300 pl-4 flex flex-col gap-2.5">
-												{Object.entries(sect.subsections).map(([ssId, ss]) => (
-													<Link
-														key={ssId}
-														id={`sidebar-${ssId}`}
-														href={`/docs/${page}/${id}#${ssId}`}
-														className="cursor-pointer hover:text-primary transition-colors"
-														onClick={() => setIsOpen(false)}
-													>
-														{ss.title}
-													</Link>
-												))}
-											</div>
-										) : (
-											<></>
-										)}
-									</Fragment>
-								))}
-							</div>
-						</div>
+									))}
+								</div>
+							) : (
+								<></>
+							)}
+						</Fragment>
 					))}
 				</ul>
 			)}

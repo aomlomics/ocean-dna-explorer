@@ -1,7 +1,7 @@
 "use client";
 
 import useHash from "@/app/hooks/useHash";
-import DocsSections, { DocsGenericSection, DocsPage, DocsSection, PageTitles } from "@/types/docsSections";
+import DocsSections, { DocsGenericSection, DocsPage, DocsSection, DocsPageTitles } from "@/types/docsSections";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -22,8 +22,8 @@ function getAllSubsections(id: string, sect: DocsSection): string[] {
 export default function DocsSidebar() {
 	const pathname = usePathname();
 	const splitPath = pathname.split("/");
-	const page = splitPath.at(-2) as DocsPage;
-	const section = splitPath.at(-1) as DocsGenericSection<DocsPage>;
+	const page = splitPath[2] as DocsPage;
+	const section = splitPath[3] as DocsGenericSection<DocsPage>;
 
 	const hash = useHash();
 	const [currSection, setCurrSection] = useState(hash || section);
@@ -31,31 +31,33 @@ export default function DocsSidebar() {
 	const ref = useRef<HTMLElement>(null);
 
 	useEffect(() => {
-		function handleScroll() {
-			const ids = getAllSubsections(section, DocsSections[page][section]);
+		if (section) {
+			function handleScroll() {
+				const ids = getAllSubsections(section, DocsSections[page][section]);
 
-			const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+				const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
 
-			//if at the bottom, highlight the last section (10 pixel tolerance)
-			const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
+				//if at the bottom, highlight the last section (10 pixel tolerance)
+				const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
 
-			if (atBottom && elements.length) {
-				setCurrSection(elements[elements.length - 1].id);
-				return;
+				if (atBottom && elements.length) {
+					setCurrSection(elements[elements.length - 1].id);
+					return;
+				}
+
+				const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
+
+				if (current) {
+					setCurrSection(current.id);
+				}
 			}
 
-			const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
+			window.addEventListener("scroll", handleScroll);
+			setCurrSection(section);
+			handleScroll();
 
-			if (current) {
-				setCurrSection(current.id);
-			}
+			return () => window.removeEventListener("scroll", handleScroll);
 		}
-
-		window.addEventListener("scroll", handleScroll);
-		setCurrSection(section);
-		handleScroll();
-
-		return () => window.removeEventListener("scroll", handleScroll);
 	}, [page, section]);
 
 	useEffect(() => {
@@ -88,7 +90,7 @@ export default function DocsSidebar() {
 		<aside ref={ref} className="h-full px-10 flex flex-col gap-10 overflow-y-auto pb-5">
 			{Object.entries(DocsSections).map(([page, sections]) => (
 				<div key={page} className="flex flex-col gap-2.5">
-					<div className="font-bold border-b border-primary pb-1">{PageTitles[page]}</div>
+					<div className="font-bold border-b border-primary pb-1">{DocsPageTitles[page]}</div>
 
 					<div className="pl-3 flex flex-col gap-4">
 						{Object.entries(sections).map(([id, sect]: [string, DocsSection]) => (

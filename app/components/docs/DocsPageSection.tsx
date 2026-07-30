@@ -1,4 +1,10 @@
-import DocsSections, { DocsGenericProps, DocsPage, DocsSection, getNextDocsSection } from "@/types/docsSections";
+import DocsSections, {
+	DocsGenericProps,
+	DocsPage,
+	DocsPageTitles,
+	DocsSection,
+	getNextDocsSection
+} from "@/types/docsSections";
 import Link from "next/link";
 import { ReactNode } from "react";
 import MobileTOC from "./MobileTOC";
@@ -35,7 +41,7 @@ export default function DocsPageSection<P extends DocsPage>({
 				<div className="breadcrumbs text-sm text-base-content/70">
 					<ul>
 						<li>Docs</li>
-						<li>{page}</li>
+						<li>{DocsPageTitles[page]}</li>
 						<li className="text-base-content">{(DocsSections[page][section] as DocsSection).title}</li>
 					</ul>
 				</div>
