@@ -1,6 +1,7 @@
 import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
 import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
 import { BlastQueryPartial } from "@/prisma/generated/zod";
+import { ReactNode } from "react";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";

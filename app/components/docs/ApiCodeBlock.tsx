@@ -4,19 +4,11 @@ import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-export default function ApiCodeBlock({
-	language,
-	url,
-	defaultClosed = false
-}: {
-	language: string;
-	url: string;
-	defaultClosed?: boolean;
-}) {
+export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
 	const [theme, setTheme] = useState("dark");
 	const [copied, setCopied] = useState(false);
 	const [code, setCode] = useState("Loading...");
-	const [isOpen, setIsOpen] = useState(!defaultClosed);
+	const [isOpen, setIsOpen] = useState(false);
 
 	useEffect(() => {
 		async function doFetch() {
@@ -178,7 +170,7 @@ export default function ApiCodeBlock({
 						margin: 0,
 						padding: "1rem",
 						paddingTop: 0,
-						maxHeight: "100px", // Limit height of the preview
+						height: "100px", // Limit height of the preview
 						overflow: "hidden"
 					}}
 					wrapLongLines={false}

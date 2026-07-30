@@ -1,5 +1,6 @@
 "use client";
 
+import DocsSections from "@/types/docsSections";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,22 +29,6 @@ const EXPLORE_RIGHT_ITEMS = [
 	{ label: "Assignments", href: "/explore/assignment" },
 	{ label: "Features", href: "/explore/feature" },
 	{ label: "Taxonomies", href: "/explore/taxonomy" }
-];
-
-const HELP_ITEMS = [
-	{ label: "Overview", href: "/help#node-overview" },
-	{ label: "Submit Data", href: "/help#submit" },
-	{ label: "Login and Roles", href: "/help#login-and-roles" },
-	{ label: "Search", href: "/help#search" },
-	{ label: "Visualize", href: "/explore" }
-];
-
-const API_ITEMS = [
-	{ label: "Introduction", href: "/api#introduction" },
-	{ label: "Database Schema", href: "/api#database-schema" },
-	{ label: "API Endpoints", href: "/api#api-endpoints" },
-	{ label: "Searching & Filtering", href: "/api#searching-and-filtering" },
-	{ label: "Query Parameters", href: "/api#query-parameters" }
 ];
 
 const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[] = [
@@ -521,32 +506,32 @@ export function DocsMegaMenu() {
 	// NOTE: There is no `help#visualize` section in HelpSections currently.
 	// Using `/explore` as the closest existing “visualize-like” UI.
 	return (
-		<MegaMenu tabName="Docs" route="/help" activePaths={["/help", "/api"]} widthClass="max-w-[45.5rem]">
+		<MegaMenu tabName="Docs" route="/docs" activePaths={["/docs"]} widthClass="max-w-[45.5rem]">
 			<div className="grid grid-cols-[1fr_1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
-						href="/help"
+						href={`/docs/help/${Object.keys(DocsSections.help)[0]}`}
 						title="Help"
 						subtitle="Documentation & guides"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{HELP_ITEMS.map((i) => (
-							<MenuItem key={i.label} href={i.href} label={i.label} />
+						{Object.entries(DocsSections.help).map(([id, sect]) => (
+							<MenuItem key={id} href={`/docs/help/${id}`} label={sect.title} />
 						))}
 					</div>
 				</div>
 
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
-						href="/api"
+						href={`/docs/api/${Object.keys(DocsSections.api)[0]}`}
 						title="API"
 						subtitle="Programmatic access"
 						titleClassName="text-base-content group-hover:text-primary"
 					/>
 					<div className="mt-4 space-y-1">
-						{API_ITEMS.map((i) => (
-							<MenuItem key={i.label} href={i.href} label={i.label} />
+						{Object.entries(DocsSections.api).map(([id, sect]) => (
+							<MenuItem key={id} href={`/docs/api/${id}`} label={sect.title} />
 						))}
 					</div>
 				</div>

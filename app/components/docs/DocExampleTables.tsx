@@ -1,19 +1,12 @@
-import {
-	ODE_ASV_HEADERS,
-	ODE_ASV_ROWS,
-	ODE_OCCURRENCE_HEADERS,
-	ODE_OCCURRENCE_ROWS
-} from "./docExampleAnalysisData";
+import { ODE_ASV_HEADERS, ODE_ASV_ROWS, ODE_OCCURRENCE_HEADERS, ODE_OCCURRENCE_ROWS } from "./docExampleAnalysisData";
 
-const theadCell =
-	"px-4 py-3 text-left text-sm font-medium text-base-content/90 border-b border-base-content/10";
+const theadCell = "px-4 py-3 text-left text-sm font-medium text-base-content/90 border-b border-base-content/10";
 
 const theadRow = "bg-base-200/40";
 
 const dataCell = "border-b border-base-content/[0.06] px-4 py-2.5 text-sm align-middle text-base-content/85";
 
-const tableWrap =
-	"rounded-2xl border border-base-content/10 bg-base-100/40 p-4 sm:p-5 shadow-sm";
+const tableWrap = "rounded-2xl border border-base-content/10 bg-base-100/40 p-4 sm:p-5 shadow-sm";
 
 export function AnalysisAsvTablePreview() {
 	return (
@@ -44,7 +37,7 @@ export function AnalysisAsvTablePreview() {
 			</div>
 			<div className={tableWrap}>
 				<div className="overflow-x-auto rounded-xl -mx-1 px-1">
-					<table className="w-full min-w-[1200px] border-collapse text-left">
+					<table className="w-full min-w-300 border-collapse text-left">
 						<thead>
 							<tr className={theadRow}>
 								{ODE_ASV_HEADERS.map((h) => (
@@ -56,14 +49,7 @@ export function AnalysisAsvTablePreview() {
 						</thead>
 						<tbody>
 							{ODE_ASV_ROWS.map((row, rowIdx) => (
-								<tr
-									key={row.featureid}
-									className={
-										rowIdx % 2 === 0
-											? "bg-base-100/50"
-											: "bg-base-200/12"
-									}
-								>
+								<tr key={row.featureid} className={rowIdx % 2 === 0 ? "bg-base-100/50" : "bg-base-200/12"}>
 									<td
 										className={`${dataCell} max-w-40 truncate font-mono text-xs text-base-content/80`}
 										title={row.featureid}
@@ -129,24 +115,24 @@ export function AnalysisOccurrenceTablePreview() {
 							{ODE_OCCURRENCE_ROWS.map((row, i) => {
 								const rowBg = i % 2 === 0 ? "bg-base-100/50" : "bg-base-200/12";
 								return (
-								<tr key={row.id} className={rowBg}>
-									<td
-										className={`${dataCell} max-w-40 truncate font-mono text-xs text-base-content/80`}
-										title={row.id}
-									>
-										{row.id}
-									</td>
-									{row.counts.map((n, j) => (
+									<tr key={row.id} className={rowBg}>
 										<td
-											key={`${row.id}-${j}`}
-											className={`whitespace-nowrap ${dataCell} text-right tabular-nums text-base-content/85 ${
-												n === 0 ? "text-base-content/30" : ""
-											}`}
+											className={`${dataCell} max-w-40 truncate font-mono text-xs text-base-content/80`}
+											title={row.id}
 										>
-											{n}
+											{row.id}
 										</td>
-									))}
-								</tr>
+										{row.counts.map((n, j) => (
+											<td
+												key={`${row.id}-${j}`}
+												className={`whitespace-nowrap ${dataCell} text-right tabular-nums text-base-content/85 ${
+													n === 0 ? "text-base-content/30" : ""
+												}`}
+											>
+												{n}
+											</td>
+										))}
+									</tr>
 								);
 							})}
 						</tbody>

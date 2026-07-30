@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/app/helpers/prisma";
-import ThemeAwareSvg from "@/app/components/help/ThemeAwareSvg";
+import ThemeAwareSvg from "@/app/components/docs/ThemeAwareSvg";
 
 type PhylumData = {
 	phylum: string;
