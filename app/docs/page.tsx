@@ -1,10 +1,10 @@
-import { getNextDocsSection } from "@/types/docsSections";
 import Link from "next/link";
 import HelpQuickNav from "../components/docs/HelpQuickNav";
+import DocsSections, { DocsPage as DocsPageType } from "@/types/docsSections";
 
 //TODO: add content
 export default function DocsPage() {
-	const start = getNextDocsSection()!;
+	const firstPage = Object.keys(DocsSections)[0] as DocsPageType;
 
 	return (
 		<div>
@@ -14,7 +14,7 @@ export default function DocsPage() {
 
 			<HelpQuickNav />
 
-			<Link className="btn btn-success" href={`/docs/${start.page}/${start.section}`}>
+			<Link className="btn btn-success" href={`/docs/${firstPage}/${Object.keys(DocsSections[firstPage])[0]}`}>
 				Get Started
 			</Link>
 		</div>

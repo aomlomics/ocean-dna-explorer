@@ -76,7 +76,10 @@ export default function DocsPageSection<P extends DocsPage>({
 						>
 							<path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
 						</svg>
-						<div className="text-base-content text-xl">{prev.title}</div>
+						<div className="text-base-content text-xl">
+							{prev.page !== page ? DocsPageTitles[prev.page] + ": " : ""}
+							{prev.title}
+						</div>
 					</Link>
 				) : (
 					<></>
@@ -87,7 +90,10 @@ export default function DocsPageSection<P extends DocsPage>({
 						href={`/docs/${next.page}/${next.section}`}
 					>
 						<div className="col-span-2">Next</div>
-						<div className="text-base-content text-xl">{next.title}</div>
+						<div className="text-base-content text-xl">
+							{next.page !== page ? DocsPageTitles[next.page] + ": " : ""}
+							{next.title}
+						</div>
 						<svg
 							className="size-7 -rotate-90 p-1"
 							fill="none"

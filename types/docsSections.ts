@@ -184,7 +184,7 @@ export const DocsPageTitles = {
 	api: "API"
 } as Record<string, string>;
 
-export const DocsNavigation = Object.entries(DocsSections).flatMap(([page, sections]) =>
+const DocsNavigation = Object.entries(DocsSections).flatMap(([page, sections]) =>
 	Object.entries(sections).map(([id, sect]) => ({
 		page: page as DocsPage,
 		section: id,
