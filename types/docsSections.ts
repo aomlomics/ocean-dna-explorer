@@ -29,7 +29,7 @@ const DocsSections = {
 				"login-and-roles": { title: "Login and Roles" },
 				"submissions-manager": { title: "Submissions Manager" },
 				"contact-us": { title: "Contact Us, Report a Bug, Request a Feature" },
-				faq: { title: "FAQ" }
+				"help-faq": { title: "FAQ" }
 			}
 		},
 		search: {
