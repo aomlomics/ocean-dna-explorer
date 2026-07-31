@@ -9,10 +9,12 @@ model Project {
     editHistory   Json?
 
     // Relations
-    Samples    Sample[]
-    AssayPreps AssayPrep[]
-    Libraries  Library[]
-    Analyses   Analysis[]
+    Samples               Sample[]
+    AssayPreps            AssayPrep[]
+    Libraries             Library[]
+    Analyses              Analysis[]
+    Occurrences           Occurrence[]
+    AlphaDiversityIndexes AlphaDiversityIndex[]
 
     // Submission File URLs
     projectMetadataFileUrl_ODE      String
@@ -407,5 +409,6 @@ model Library {
     inhibition_check_0_1 DeadBoolean?
 
     @@unique([project_id, lib_id])
+    @@index([project_id, samp_name])
     @@index([project_id, assay_name])
 }

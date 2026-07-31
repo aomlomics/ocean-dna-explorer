@@ -50,7 +50,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.SampleScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.SampleWithRelationsSchema,
 		titleField: ["project_id", "samp_name"],
-		subFields: ["project_id", "samp_name", "geo_loc_name"],
+		subFields: ["geo_loc_name"],
 		fieldOrder: [
 			"samp_name",
 			"eventDate",
@@ -117,9 +117,8 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.LibraryWithRelationsSchema,
 		titleField: ["project_id", "lib_id"],
-		subFields: ["lib_id", "samp_name", "seq_run_id"],
+		subFields: ["project_id", "samp_name", "seq_run_id"],
 		fieldOrder: [
-			"lib_id",
 			"samp_name",
 			"seq_run_id",
 			"platform",
@@ -150,7 +149,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.OccurrenceWithRelationsSchema,
 		titleField: ["analysis_run_name", "lib_id", "featureid"],
-		subFields: ["analysis_run_name", "featureid", "organismQuantity"]
+		subFields: ["organismQuantity"]
 	},
 	assignment: {
 		plural: "Assignments",

@@ -55,11 +55,17 @@ export default function Table({
 	setExtraResults?: (args: ExtraResults) => void;
 	className?: string;
 }) {
+	//TODO: for compound fkeys, make the fields of the fkey immediately follow the fkey
 	const title = TableMetadata[table].titleField;
 
+	const combinedOmit = [...omit, ...GlobalOmit, "id"];
+
+	let defaultHeadersSet = new Set() as Set<string>;
+
+	//assemble relational data for table
 	const manyRelations = [] as string[];
 	const oneRelations = [] as string[];
-	const oneRelationsArrayTitle = {} as Record<Prisma.ModelName, readonly string[]>;
+	const oneRelationsWithArrayTitle = {} as Record<Prisma.ModelName, readonly string[]>;
 	for (const rel of TableMetadata[table].relations) {
 		if (!EXCLUDE_TABLES.includes(uncapitalizeTable(rel.table)))
 			if (rel.type.endsWith("many")) {
@@ -69,18 +75,26 @@ export default function Table({
 				if (typeof meta.titleField === "string") {
 					oneRelations.push(meta.titleField);
 				} else {
-					oneRelationsArrayTitle[rel.table] = meta.titleField;
+					oneRelationsWithArrayTitle[rel.table] = meta.titleField;
 				}
 			}
 	}
 
-	const combinedOmit = [...omit, ...GlobalOmit, "id"];
-	let defaultHeadersSet = new Set() as Set<string>;
 	//move tags to the front
 	const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
 	if (manyRelations.length !== manyRelationsNoTags.length) {
 		defaultHeadersSet.add("Tags");
 	}
+	//title field array
+	if (Array.isArray(title)) {
+		title.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	}
+	//relation fields with one, array title
+	for (const [field, titleFields] of Object.entries(oneRelationsWithArrayTitle)) {
+		defaultHeadersSet.add(field);
+		titleFields.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	}
+	//relation fields with one
 	if (oneRelations.length) {
 		//maintain field order for relation fields
 		if (TableMetadata[table].fieldOrder) {
@@ -93,11 +107,13 @@ export default function Table({
 
 		oneRelations.forEach(defaultHeadersSet.add, defaultHeadersSet);
 	}
-	Object.keys(oneRelationsArrayTitle).forEach(defaultHeadersSet.add, defaultHeadersSet);
+	//relation fields with many
 	manyRelationsNoTags.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	//field order
 	if (TableMetadata[table].fieldOrder) {
 		TableMetadata[table].fieldOrder.forEach(defaultHeadersSet.add, defaultHeadersSet);
 	}
+	//rest of fields
 	TableMetadata[table].enumSchema.options
 		.reduce((acc: string[], head) => {
 			if (
@@ -124,10 +140,10 @@ export default function Table({
 			if (
 				!TableMetadata[table].subFields.includes(head) &&
 				!manyRelations.includes(head) &&
-				//every title field is included in subFields
+				!(Array.isArray(title) && title.includes(head)) &&
 				!(
-					head in oneRelationsArrayTitle &&
-					oneRelationsArrayTitle[head as Prisma.ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
+					head in oneRelationsWithArrayTitle &&
+					oneRelationsWithArrayTitle[head as Prisma.ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
 				)
 			) {
 				defaultHeadersFilter[head] = true;
@@ -547,12 +563,12 @@ export default function Table({
 									//only render the header if it is selected in the header filter
 									if (!headersFilter[head] && !emptyFilter[head]) {
 										//Header
-										if (head in oneRelationsArrayTitle) {
+										if (head in oneRelationsWithArrayTitle) {
 											acc.push(
 												<td key={head + i} className="bg-base-100 cursor-not-allowed">
 													<div className="flex select-none mb-1">
 														{head}
-														{" (" + oneRelationsArrayTitle[head as Prisma.ModelName].join(" / ") + ")"}
+														{" (" + oneRelationsWithArrayTitle[head as Prisma.ModelName].join(" / ") + ")"}
 													</div>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
@@ -793,16 +809,16 @@ export default function Table({
 																{row[head]}
 															</Link>
 														);
-													} else if (head in oneRelationsArrayTitle) {
+													} else if (head in oneRelationsWithArrayTitle) {
 														const typedHead = head as Prisma.ModelName;
 														element = (
 															<Link
-																href={`/explore/${uncapitalizeTable(typedHead)}/${oneRelationsArrayTitle[typedHead]
+																href={`/explore/${uncapitalizeTable(typedHead)}/${oneRelationsWithArrayTitle[typedHead]
 																	.map((f) => encodeURIComponent(row[f]))
 																	.join("/")}`}
 																className="link link-primary link-hover font-bold"
 															>
-																{oneRelationsArrayTitle[typedHead]
+																{oneRelationsWithArrayTitle[typedHead]
 																	.map((f) => (row[f].length > 15 ? row[f].slice(0, 10) + "..." : row[f]))
 																	.join(" / ")}
 															</Link>
