@@ -52,10 +52,15 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 		// to avoid expensive calendar math while keeping the unit breakdown
 		// intuitive.
 		const totalDays = Math.max(0, Math.round((max.getTime() - min.getTime()) / msPerDay));
-		const years = Math.floor(totalDays / 365);
+		let years = Math.floor(totalDays / 365);
 		const daysAfterYears = totalDays % 365;
-		const months = Math.floor(daysAfterYears / 30);
+		let months = Math.floor(daysAfterYears / 30);
 		const days = daysAfterYears % 30;
+		// Normalize any overflow (e.g. 12 months) into years.
+		if (months >= 12) {
+			years += Math.floor(months / 12);
+			months = months % 12;
+		}
 
 		const parts: string[] = [];
 		if (years > 0) parts.push(`${years} year${years === 1 ? "" : "s"}`);
