@@ -215,7 +215,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 								description:
 									"The newest project that has been submitted to ODE. New submissions appear here within minutes.",
 								links: [
-									{ label: "View project", href: `/explore/project/${project.project_id}` },
+									{ label: "View project", href: `/explore/project/${encodeURIComponent(project.project_id)}` },
 									{ label: "Browse all projects", href: "/explore/project" }
 								]
 							}}
@@ -273,13 +273,19 @@ function LatestProjectCard({ project }: ProjectProps) {
 									</span>
 								)}
 							</div>
-							<Link href={`/explore/project/${project.project_id}`} className="btn btn-sm btn-primary self-end">
+							<Link
+								href={`/explore/project/${encodeURIComponent(project.project_id)}`}
+								className="btn btn-sm btn-primary self-end"
+							>
 								View project
 							</Link>
 						</div>
 					) : (
 						<div className="mt-auto flex justify-end">
-							<Link href={`/explore/project/${project.project_id}`} className="btn btn-sm btn-primary">
+							<Link
+								href={`/explore/project/${encodeURIComponent(project.project_id)}`}
+								className="btn btn-sm btn-primary"
+							>
 								View project
 							</Link>
 						</div>
@@ -337,11 +343,11 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 							links: [
 								{
 									label: "View analysis",
-									href: `/explore/analysis/${analysis.analysis_run_name}`
+									href: `/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`
 								},
 								{
 									label: "View parent project",
-									href: `/explore/project/${analysis.project_id}`
+									href: `/explore/project/${encodeURIComponent(analysis.project_id)}`
 								},
 								{ label: "Browse all analyses", href: "/explore/analysis" }
 							]
@@ -358,7 +364,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">Project</dt>
 						<dd>
 							<Link
-								href={`/explore/project/${analysis.project_id}`}
+								href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
 								className="text-base-content/85 hover:text-primary transition-colors inline-flex items-baseline gap-1.5 max-w-full"
 								title={analysis.Project?.project_name || analysis.project_id}
 							>
@@ -390,7 +396,10 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 
 				{/* No divider line above the button. Tucked bottom-right. */}
 				<div className="mt-auto flex justify-start">
-					<Link href={`/explore/analysis/${analysis.analysis_run_name}`} className="btn btn-sm btn-primary">
+					<Link
+						href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+						className="btn btn-sm btn-primary"
+					>
 						View analysis
 					</Link>
 				</div>

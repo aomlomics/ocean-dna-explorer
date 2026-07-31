@@ -10,9 +10,7 @@ export default async function Analysis_run_name_Featureid({
 }: {
 	params: Promise<{ analysis_run_name: Assignment["analysis_run_name"]; featureid: Assignment["featureid"] }>;
 }) {
-	let { analysis_run_name, featureid } = await params;
-	analysis_run_name = decodeURIComponent(analysis_run_name);
-	featureid = decodeURIComponent(featureid);
+	const { analysis_run_name, featureid } = await params;
 
 	const assignment = await prisma.assignment.findUnique({
 		where: {

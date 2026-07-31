@@ -30,8 +30,8 @@ export default async function Analysis_run_name({
 	params: Promise<{ analysis_run_name: Analysis["analysis_run_name"] }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	let { analysis_run_name } = await params;
-	analysis_run_name = decodeURIComponent(analysis_run_name);
+	const { analysis_run_name } = await params;
+
 	const { view } = await searchParams;
 	if (view !== undefined) {
 		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
@@ -84,7 +84,10 @@ export default async function Analysis_run_name({
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/project/${analysis.project_id}`} className="text-primary hover:text-primary-focus">
+						<Link
+							href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
+							className="text-primary hover:text-primary-focus"
+						>
 							{analysis.project_id}
 						</Link>
 					</li>
@@ -110,7 +113,10 @@ export default async function Analysis_run_name({
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link href={`/explore/project/${analysis.project_id}`} className="text-primary hover:text-primary-focus">
+					<Link
+						href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
+						className="text-primary hover:text-primary-focus"
+					>
 						{analysis.project_id}
 					</Link>{" "}
 					project
@@ -168,7 +174,7 @@ export default async function Analysis_run_name({
 								title="Occurrences"
 								value={analysis._count.Occurrences}
 								icon={<EyeIcon />}
-								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
+								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`}
 								tooltip="View as Search"
 							/>
 
@@ -176,7 +182,7 @@ export default async function Analysis_run_name({
 								title="Assignments"
 								value={analysis._count.Assignments}
 								icon={<FishIcon />}
-								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
+								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`}
 								tooltip="View as Search"
 							/>
 
@@ -198,7 +204,7 @@ export default async function Analysis_run_name({
 									})
 								}
 								icon={<LocationIcon />}
-								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
+								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`}
 								tooltip="View as Search"
 							/>
 						</div>
@@ -291,7 +297,7 @@ export default async function Analysis_run_name({
 async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_name: Analysis["analysis_run_name"] }) {
 	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
 		async (tx) => {
-			const occurrences = await prisma.occurrence.findMany({
+			const occurrences = await tx.occurrence.findMany({
 				where: {
 					analysis_run_name
 				},
@@ -302,7 +308,7 @@ async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_n
 				}
 			});
 
-			const assignments = await prisma.assignment.findMany({
+			const assignments = await tx.assignment.findMany({
 				where: {
 					analysis_run_name
 				},
@@ -316,7 +322,7 @@ async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_n
 				}
 			});
 
-			const taxonomies = await prisma.taxonomy.findMany({
+			const taxonomies = await tx.taxonomy.findMany({
 				where: {
 					Assignments: {
 						some: {
@@ -330,7 +336,7 @@ async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_n
 				> & { id: true })
 			});
 
-			const samples = await prisma.sample.findMany({
+			const samples = await tx.sample.findMany({
 				where: {
 					Libraries: {
 						some: {

@@ -56,7 +56,7 @@ export default function UserList() {
 						acc.push(
 							<Link
 								key={user.id}
-								href={`/admin/users/${user.id}`}
+								href={`/admin/users/${encodeURIComponent(user.id)}`}
 								className="border-2 border-base-300 rounded-lg hover:bg-base-300 p-3"
 							>
 								<div className={`font-bold border-b-2 border-base-content mb-2 ${user.banned ? "text-error" : ""}`}>

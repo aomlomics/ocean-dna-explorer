@@ -90,7 +90,7 @@ export default function Grid({
 	}
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${getQuery().toString()}`,
+		`/api/${table}/pagination?${getQuery()}`,
 		fetcher,
 		{
 			keepPreviousData: true
@@ -135,7 +135,7 @@ export default function Grid({
 	}
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/${table}/pagination?${getQuery(dir).toString()}`, fetcher);
+		preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher);
 	}
 
 	function scrollTopPaginationIntoView() {

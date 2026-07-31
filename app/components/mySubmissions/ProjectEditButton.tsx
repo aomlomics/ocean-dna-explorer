@@ -112,7 +112,7 @@ export default function ProjectEditButton({
 
 				setters.push(setProjectResponse);
 				args.projectFileUrl = (
-					await upload(`submissions/${projectFile.name}`, projectFile, {
+					await upload(`submissions/${encodeURIComponent(projectFile.name)}`, projectFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -129,7 +129,7 @@ export default function ProjectEditButton({
 
 				setters.push(setSampleResponse);
 				args.sampleFileUrl = (
-					await upload(`submissions/${sampleFile.name}`, sampleFile, {
+					await upload(`submissions/${encodeURIComponent(sampleFile.name)}`, sampleFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -146,7 +146,7 @@ export default function ProjectEditButton({
 
 				setters.push(setLibraryResponse);
 				args.libraryFileUrl = (
-					await upload(`submissions/${libraryFile.name}`, libraryFile, {
+					await upload(`submissions/${encodeURIComponent(libraryFile.name)}`, libraryFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB

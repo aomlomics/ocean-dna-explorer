@@ -163,7 +163,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								}
 							} else {
 								//get project from database
-								const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
+								const response = await fetch(`/api/project?project_id=${encodeURIComponent(value)}&fields=project_id`);
 								const json = (await response.json()) as NetworkPacket;
 
 								//handle errors
@@ -284,7 +284,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const analysisUrl = (
-						await upload(`submissions/${files[id].analysisFile.name}`, files[id].analysisFile, {
+						await upload(`submissions/${encodeURIComponent(files[id].analysisFile.name)}`, files[id].analysisFile, {
 							access: "public",
 							handleUploadUrl: "/api/file/upload",
 							multipart: files[id].analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -304,11 +304,15 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const assignmentsUrl = (
-						await upload(`submissions/${files[id].assignmentsFile.name}`, files[id].assignmentsFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: files[id].assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
+						await upload(
+							`submissions/${encodeURIComponent(files[id].assignmentsFile.name)}`,
+							files[id].assignmentsFile,
+							{
+								access: "public",
+								handleUploadUrl: "/api/file/upload",
+								multipart: files[id].assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+							}
+						)
 					).url;
 					setResponses({
 						id,
@@ -324,11 +328,15 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
 					});
 					const occurrencesUrl = (
-						await upload(`submissions/${files[id].occurrencesFile.name}`, files[id].occurrencesFile, {
-							access: "public",
-							handleUploadUrl: "/api/file/upload",
-							multipart: files[id].occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-						})
+						await upload(
+							`submissions/${encodeURIComponent(files[id].occurrencesFile.name)}`,
+							files[id].occurrencesFile,
+							{
+								access: "public",
+								handleUploadUrl: "/api/file/upload",
+								multipart: files[id].occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+							}
+						)
 					).url;
 					setResponses({
 						id,
@@ -369,7 +377,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					<SubmitFormSection title="Project">
 						<div className="w-full">
 							{project ? (
-								<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+								<Link className="link link-primary" href={`/explore/project/${encodeURIComponent(project.project_id)}`}>
 									{project.project_id}
 								</Link>
 							) : (

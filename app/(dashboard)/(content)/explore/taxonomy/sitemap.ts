@@ -33,7 +33,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	});
 
 	return taxonomies.map((taxa) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${taxa.taxonomy}`,
+		url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${encodeURIComponent(taxa.taxonomy)}`,
 		lastModified: new Date()
 	}));
 }

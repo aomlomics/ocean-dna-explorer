@@ -106,8 +106,10 @@ model Occurrence {
     id Int @id @default(autoincrement())
 
     // Relations
+    project_id        String
+    Project           Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     lib_id            String
-    Library           Library    @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
+    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     analysis_run_name String
     Analysis          Analysis   @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
     featureid         String
@@ -118,6 +120,7 @@ model Occurrence {
     organismQuantity Int
 
     @@unique([analysis_run_name, lib_id, featureid])
+    @@index([project_id, lib_id])
     @@index([analysis_run_name, featureid])
 }
 
@@ -206,12 +209,16 @@ model AlphaDiversityIndex {
     id Int @id @default(autoincrement())
 
     // Relations
+    project_id     String
+    Project        Project        @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     lib_id         String
-    Library        Library        @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
+    Library        Library        @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     parentId       Int
     AlphaDiversity AlphaDiversity @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
     index Float
+
+    @@index([project_id, lib_id])
 }
 
 model BlastQuery {

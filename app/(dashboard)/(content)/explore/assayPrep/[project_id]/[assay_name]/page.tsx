@@ -12,9 +12,7 @@ export default async function Project_id_Assay_name({
 }: {
 	params: Promise<{ project_id: AssayPrep["project_id"]; assay_name: AssayPrep["assay_name"] }>;
 }) {
-	let { project_id, assay_name } = await params;
-	project_id = decodeURIComponent(project_id);
-	assay_name = decodeURIComponent(assay_name);
+	const { project_id, assay_name } = await params;
 
 	const assayPrep = await prisma.assayPrep.findUnique({
 		where: {

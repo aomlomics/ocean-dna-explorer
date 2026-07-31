@@ -376,10 +376,7 @@ export default function ShowcaseClient({
 	const projectEnrichBudgetUsedRef = useRef(0);
 
 	const project = projects[projectIdx];
-	const mapLocations = useMemo(
-		() => (project?.samples ?? []).filter(hasCoordinates),
-		[project?.project_id]
-	);
+	const mapLocations = useMemo(() => (project?.samples ?? []).filter(hasCoordinates), [project?.project_id]);
 
 	useEffect(() => {
 		if (projects.length <= 1) return;
@@ -537,93 +534,93 @@ export default function ShowcaseClient({
 							className="flex min-w-0 flex-col"
 							style={{ transform: `scale(${fitScale})`, transformOrigin: "left top" }}
 						>
-						<div className="mb-9 ml-3 flex items-center gap-5">
-							<Image
-								src="/images/ode_logo_clean.svg"
-								alt="Ocean DNA Explorer logo"
-								width={96}
-								height={96}
-								className="h-22 w-22 shrink-0"
-							/>
-							<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
-								Ocean DNA Explorer
-							</p>
-						</div>
-
-						<div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start">
-							<motion.div
-								className="relative w-fit"
-								initial={
-									swapIn
-										? {
-												x: fromLeft ? "-50vw" : "50vw",
-												rotate: fromLeft ? -52 : 52,
-												scale: 0.68,
-												opacity: 0
-											}
-										: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
-								}
-								animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
-								transition={{ duration: circleDuration, ease: PREMIUM_EASE }}
-							>
-								<div className="relative aspect-square h-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 xl:h-64">
-									{project.imageFileUrl_ODE ? (
-										// eslint-disable-next-line @next/next/no-img-element -- ODE image URLs are dynamic user uploads.
-										<img src={project.imageFileUrl_ODE} alt="" className="h-full w-full rounded-full object-cover" />
-									) : (
-										<div className="flex h-full w-full items-center justify-center rounded-full bg-linear-to-br from-primary/25 via-cyan-400/15 to-base-content/10">
-											<ProjectIcon className="h-[46%] w-[46%] text-primary/90" />
-										</div>
-									)}
-								</div>
-							</motion.div>
-
-							<motion.div
-								className="h-44 w-full overflow-hidden rounded-3xl border-[6px] border-primary bg-base-300/40 shadow-xl sm:h-56 md:max-w-104 xl:h-64"
-								initial={swapIn ? { x: fromLeft ? "-36vw" : "36vw", opacity: 0 } : { x: "-12vw", opacity: 0 }}
-								animate={{ x: 0, opacity: 1 }}
-								transition={{ duration: circleDuration, ease: PREMIUM_EASE, delay: 0.08 }}
-							>
-								<div className="showcase-map-minimal pointer-events-none h-full w-full">
-									<ProjectSamplesMap projectId={project.project_id} locations={mapLocations} />
-								</div>
-							</motion.div>
-						</div>
-
-						<MaskedReveal delay={0.06}>
-							<div className="text-2xl font-semibold leading-tight text-primary sm:text-3xl xl:text-4xl">
-								{project.project_id}
-							</div>
-						</MaskedReveal>
-
-						<MaskedReveal delay={0.14}>
-							<h1
-								className={`mt-3 max-w-4xl wrap-break-word pb-[0.08em] font-semibold leading-[1.08] tracking-[-0.03em] text-white drop-shadow-md ${projectTitleSizeClass}`}
-							>
-								{project.project_name}
-							</h1>
-						</MaskedReveal>
-
-						{project.projectDescription ? (
-							<MaskedReveal delay={0.22}>
-								<p className="mt-4 max-w-3xl line-clamp-4 text-base leading-relaxed text-base-content sm:text-lg xl:text-xl">
-									{project.projectDescription}
+							<div className="mb-9 ml-3 flex items-center gap-5">
+								<Image
+									src="/images/ode_logo_clean.svg"
+									alt="Ocean DNA Explorer logo"
+									width={96}
+									height={96}
+									className="h-22 w-22 shrink-0"
+								/>
+								<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
+									Ocean DNA Explorer
 								</p>
-							</MaskedReveal>
-						) : null}
+							</div>
 
-						<motion.dl
-							className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-base-content/75"
-							initial="hidden"
-							animate="show"
-							variants={{
-								hidden: {},
-								show: { transition: { staggerChildren: 0.12, delayChildren: 0.7 } }
-							}}
-						>
-							{project.institution ? <DetailRow label="Institute" value={project.institution} /> : null}
-							<DetailRow label="Contact" value={project.project_contact} />
-						</motion.dl>
+							<div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start">
+								<motion.div
+									className="relative w-fit"
+									initial={
+										swapIn
+											? {
+													x: fromLeft ? "-50vw" : "50vw",
+													rotate: fromLeft ? -52 : 52,
+													scale: 0.68,
+													opacity: 0
+												}
+											: { x: "-14vw", rotate: -16, scale: 0.9, opacity: 0 }
+									}
+									animate={{ x: 0, rotate: 0, scale: 1, opacity: 1 }}
+									transition={{ duration: circleDuration, ease: PREMIUM_EASE }}
+								>
+									<div className="relative aspect-square h-44 overflow-hidden rounded-full border-[6px] border-primary bg-base-300 sm:h-56 xl:h-64">
+										{project.imageFileUrl_ODE ? (
+											// eslint-disable-next-line @next/next/no-img-element -- ODE image URLs are dynamic user uploads.
+											<img src={project.imageFileUrl_ODE} alt="" className="h-full w-full rounded-full object-cover" />
+										) : (
+											<div className="flex h-full w-full items-center justify-center rounded-full bg-linear-to-br from-primary/25 via-cyan-400/15 to-base-content/10">
+												<ProjectIcon className="h-[46%] w-[46%] text-primary/90" />
+											</div>
+										)}
+									</div>
+								</motion.div>
+
+								<motion.div
+									className="h-44 w-full overflow-hidden rounded-3xl border-[6px] border-primary bg-base-300/40 shadow-xl sm:h-56 md:max-w-104 xl:h-64"
+									initial={swapIn ? { x: fromLeft ? "-36vw" : "36vw", opacity: 0 } : { x: "-12vw", opacity: 0 }}
+									animate={{ x: 0, opacity: 1 }}
+									transition={{ duration: circleDuration, ease: PREMIUM_EASE, delay: 0.08 }}
+								>
+									<div className="showcase-map-minimal pointer-events-none h-full w-full">
+										<ProjectSamplesMap projectId={project.project_id} locations={mapLocations} />
+									</div>
+								</motion.div>
+							</div>
+
+							<MaskedReveal delay={0.06}>
+								<div className="text-2xl font-semibold leading-tight text-primary sm:text-3xl xl:text-4xl">
+									{project.project_id}
+								</div>
+							</MaskedReveal>
+
+							<MaskedReveal delay={0.14}>
+								<h1
+									className={`mt-3 max-w-4xl wrap-break-word pb-[0.08em] font-semibold leading-[1.08] tracking-[-0.03em] text-white drop-shadow-md ${projectTitleSizeClass}`}
+								>
+									{project.project_name}
+								</h1>
+							</MaskedReveal>
+
+							{project.projectDescription ? (
+								<MaskedReveal delay={0.22}>
+									<p className="mt-4 max-w-3xl line-clamp-4 text-base leading-relaxed text-base-content sm:text-lg xl:text-xl">
+										{project.projectDescription}
+									</p>
+								</MaskedReveal>
+							) : null}
+
+							<motion.dl
+								className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm text-base-content/75"
+								initial="hidden"
+								animate="show"
+								variants={{
+									hidden: {},
+									show: { transition: { staggerChildren: 0.12, delayChildren: 0.7 } }
+								}}
+							>
+								{project.institution ? <DetailRow label="Institute" value={project.institution} /> : null}
+								<DetailRow label="Contact" value={project.project_contact} />
+							</motion.dl>
 						</div>
 					</div>
 
@@ -789,7 +786,7 @@ const ProjectSamplesMap = memo(
 				</div>
 			);
 		}
-		return <DynamicMap locations={locations} table="sample" id="samp_name" cluster clusterRadius={42} />;
+		return <DynamicMap locations={locations} cluster clusterRadius={42} />;
 	},
 	(prev, next) => prev.projectId === next.projectId
 );

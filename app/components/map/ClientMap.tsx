@@ -4,6 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { NetworkPacket, NullLocation } from "@/types/globals";
 import { useEffect, useState } from "react";
 import DynamicMap from "./DynamicMap";
+import { TableMetadataValue } from "@/types/tableMetadata";
 
 export default function ClientMap({
 	url,
@@ -23,7 +24,7 @@ export default function ClientMap({
 }: {
 	url: string;
 	where?: Record<string, string>;
-	id?: string;
+	id?: TableMetadataValue["titleField"];
 	table?: Uncapitalize<Prisma.ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;

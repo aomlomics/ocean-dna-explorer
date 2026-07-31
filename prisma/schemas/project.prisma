@@ -9,10 +9,12 @@ model Project {
     editHistory   Json?
 
     // Relations
-    Samples    Sample[]
-    AssayPreps AssayPrep[]
-    Libraries  Library[]
-    Analyses   Analysis[]
+    Samples               Sample[]
+    AssayPreps            AssayPrep[]
+    Libraries             Library[]
+    Analyses              Analysis[]
+    Occurrences           Occurrence[]
+    AlphaDiversityIndexes AlphaDiversityIndex[]
 
     // Submission File URLs
     projectMetadataFileUrl_ODE      String
@@ -59,8 +61,8 @@ model Project {
 
 model Sample {
     id                  Int     @id @default(autoincrement())
-    samp_name           String  @unique
-    biosample_accession String? @unique
+    samp_name           String
+    biosample_accession String?
     /// [UserDefinedType]
     userDefined         Json?
 
@@ -265,6 +267,9 @@ model Sample {
     ship_crs_expocode    String?
     woce_sect            String?
     bioproject_accession String? //[]     @default([])
+
+    @@unique([project_id, samp_name])
+    @@unique([project_id, biosample_accession])
 }
 
 model Assay {
@@ -342,7 +347,7 @@ model AssayPrep {
 
 model Library {
     id          Int    @id @default(autoincrement())
-    lib_id      String @unique
+    lib_id      String
     /// [UserDefinedType]
     userDefined Json?
 
@@ -350,7 +355,7 @@ model Library {
     project_id            String
     Project               Project               @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     samp_name             String
-    Sample                Sample                @relation(fields: [samp_name], references: [samp_name], onDelete: Cascade)
+    Sample                Sample                @relation(fields: [project_id, samp_name], references: [project_id, samp_name], onDelete: Cascade)
     assay_name            String
     Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name])
     AssayPrep             AssayPrep             @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
@@ -403,5 +408,7 @@ model Library {
     inhibition_check     String?
     inhibition_check_0_1 DeadBoolean?
 
+    @@unique([project_id, lib_id])
+    @@index([project_id, samp_name])
     @@index([project_id, assay_name])
 }

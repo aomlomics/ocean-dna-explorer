@@ -87,14 +87,17 @@ async function SuspenseDropdownCard({
 							const val = typeof i === "string" ? i : i[TableMetadata[table].titleField];
 							return (
 								<li key={val}>
-									<Link href={`/explore/${table}/${val}`} className="text-base-content hover:text-primary break-all">
+									<Link
+										href={`/explore/${table}/${encodeURIComponent(val)}`}
+										className="text-base-content hover:text-primary break-all"
+									>
 										{val}
 									</Link>
 								</li>
 							);
 						} else {
 							const typed = i as Record<string, string>;
-							const joined = TableMetadata[table].titleField.map((f) => typed[f]).join("/");
+							const joined = TableMetadata[table].titleField.map((f) => encodeURIComponent(typed[f])).join("/");
 							return (
 								<li key={joined}>
 									<Link href={`/explore/${table}/${joined}`} className="text-base-content hover:text-primary break-all">

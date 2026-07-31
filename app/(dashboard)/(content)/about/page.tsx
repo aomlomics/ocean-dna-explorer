@@ -28,7 +28,7 @@ export default function AboutPage() {
 	return (
 		<main className="min-h-screen bg-base-100 text-base-content -mt-4">
 			{/* Mission banner */}
-			<section id="mission" className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-28 bg-base-100">
+			<section id="mission" className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] mb-28 bg-base-100">
 				<div className="relative h-100">
 					<Image
 						src="/images/about_banner.jpg"
@@ -209,7 +209,12 @@ export default function AboutPage() {
 							FAIR eDNA Workshop
 						</Link>{" "}
 						video series from{" "}
-						<Link href={OBON_HREF} className="text-primary hover:underline font-medium" target="_blank" rel="noreferrer">
+						<Link
+							href={OBON_HREF}
+							className="text-primary hover:underline font-medium"
+							target="_blank"
+							rel="noreferrer"
+						>
 							OBON
 						</Link>{" "}
 						demonstrates many of these tools, and the{" "}

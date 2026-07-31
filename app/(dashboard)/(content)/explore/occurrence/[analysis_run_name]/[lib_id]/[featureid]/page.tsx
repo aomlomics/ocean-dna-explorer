@@ -32,13 +32,7 @@ function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	);
 }
 
-function MaskSvgIcon({
-	src,
-	className
-}: {
-	src: string;
-	className?: string;
-}) {
+function MaskSvgIcon({ src, className }: { src: string; className?: string }) {
 	return (
 		<span
 			aria-hidden="true"
@@ -66,10 +60,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 		featureid: Occurrence["featureid"];
 	}>;
 }) {
-	let { analysis_run_name, lib_id, featureid } = await params;
-	analysis_run_name = decodeURIComponent(analysis_run_name);
-	lib_id = decodeURIComponent(lib_id);
-	featureid = decodeURIComponent(featureid);
+	const { analysis_run_name, lib_id, featureid } = await params;
 
 	const occurrence = await prisma.occurrence.findUnique({
 		where: {
@@ -88,7 +79,6 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			Analysis: {
 				select: {
 					assay_name: true,
-					project_id: true,
 					Assay: {
 						select: {
 							target_gene: true
@@ -129,7 +119,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 
 	const topStatCards = (
 		<div className="flex flex-wrap gap-4">
-			<Link href={`/explore/feature/${featureid}`} className="block w-max max-w-full">
+			<Link href={`/explore/feature/${encodeURIComponent(featureid)}`} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
@@ -144,7 +134,10 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/library/${lib_id}`} className="block w-max max-w-full">
+			<Link
+				href={`/explore/library/${encodeURIComponent(occurrence.project_id)}/${encodeURIComponent(lib_id)}`}
+				className="block w-max max-w-full"
+			>
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
 						<MaskSvgIcon src="/images/icons/library_icon.svg" />
@@ -159,15 +152,13 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/analysis/${analysis_run_name}`} className="block w-max max-w-full">
+			<Link href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
 						<AnalysisIcon className="h-10 w-10" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
-						<div
-							className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700 tabular-nums leading-tight text-sm whitespace-nowrap"
-						>
+						<div className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700 tabular-nums leading-tight text-sm whitespace-nowrap">
 							{analysis_run_name}
 						</div>
 						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
@@ -191,7 +182,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${analysis_run_name}`}
+							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
 							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
 							title={analysis_run_name}
 						>
@@ -204,7 +195,10 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 						</Link>
 					</li>
 					<li>
-						<span className="inline-block max-w-[32ch] truncate align-bottom text-base-content/75" title={occurrenceTitle}>
+						<span
+							className="inline-block max-w-[32ch] truncate align-bottom text-base-content/75"
+							title={occurrenceTitle}
+						>
 							{occurrenceTitle}
 						</span>
 					</li>
@@ -225,11 +219,13 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</TitleHoverTooltip>
 				</div>
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">
-					An occurrence links a feature (
-					<span className="font-medium text-primary">featureid</span>), library (
-					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">lib_id</span>), and
-					analysis (
-					<span className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700">analysis_run_name</span>).
+					An occurrence links a feature (<span className="font-medium text-primary">featureid</span>), library (
+					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">lib_id</span>),
+					and analysis (
+					<span className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700">
+						analysis_run_name
+					</span>
+					).
 				</p>
 				<div className="mt-4">{topStatCards}</div>
 			</header>
@@ -242,7 +238,9 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 						<Map locations={[occurrence.Library.Sample]} className="w-full min-h-80 rounded-xl" />
 						<AssaysCard
 							title={assayCardTitle}
-							assays={[{ assay_name: occurrence.Analysis.assay_name, target_gene: occurrence.Analysis.Assay.target_gene }]}
+							assays={[
+								{ assay_name: occurrence.Analysis.assay_name, target_gene: occurrence.Analysis.Assay.target_gene }
+							]}
 						/>
 					</div>
 
@@ -315,7 +313,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 						</div>
 						<div className="w-full lg:max-w-sm">
 							<Link
-								href={`/explore/sample/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
+								href={`/explore/sample/${encodeURIComponent(occurrence.project_id)}/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">

@@ -7,25 +7,29 @@ import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 
-export default async function Lib_id({ params }: { params: Promise<{ lib_id: Library["lib_id"] }> }) {
-	let { lib_id } = await params;
-	lib_id = decodeURIComponent(lib_id);
+export default async function Lib_id({
+	params
+}: {
+	params: Promise<{ project_id: Library["project_id"]; lib_id: Library["lib_id"] }>;
+}) {
+	const { project_id, lib_id } = await params;
 
 	const library = await prisma.library.findUnique({
 		where: {
-			lib_id
+			project_id_lib_id: {
+				project_id,
+				lib_id
+			}
 		},
 		include: {
 			Project: {
 				select: {
-					project_id: true,
 					project_name: true
 				}
 			},
 			Sample: {
 				select: {
-					samp_name: true,
-					project_id: true
+					samp_name: true
 				}
 			},
 			Assay: {
@@ -33,20 +37,13 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 					assay_name: true,
 					target_gene: true
 				}
-			},
-			AssayPrep: {
-				select: {
-					project_id: true,
-					assay_name: true,
-					assay_type: true
-				}
 			}
 		}
 	});
 
 	if (!library) return <>Library not found</>;
 
-	const { Project: project, Sample: sample, Assay: assay, AssayPrep: assayPrep, ...justLibrary } = library;
+	const { Project: project, Sample: sample, Assay: assay, ...justLibrary } = library;
 
 	return (
 		<div className="space-y-6 pb-8">
@@ -71,7 +68,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This library connects{" "}
 					<Link
-						href={`/explore/sample/${encodeURIComponent(sample.samp_name)}`}
+						href={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(sample.samp_name)}`}
 						className="text-primary hover:text-primary-focus break-all"
 					>
 						sample {sample.samp_name}
@@ -85,10 +82,10 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 					</Link>{" "}
 					in project{" "}
 					<Link
-						href={`/explore/project/${encodeURIComponent(project.project_id)}`}
+						href={`/explore/project/${encodeURIComponent(project_id)}`}
 						className="text-primary hover:text-primary-focus break-all"
 					>
-						{project.project_id}
+						{project_id}
 					</Link>
 					.
 				</p>
@@ -111,7 +108,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 						<StatCard
 							title="Sample"
 							icon={<LocationIcon />}
-							link={`/explore/sample/${sample.samp_name}`}
+							link={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(sample.samp_name)}`}
 							value={sample.samp_name}
 							className="w-2/3"
 						/>
@@ -119,7 +116,7 @@ export default async function Lib_id({ params }: { params: Promise<{ lib_id: Lib
 						<StatCard
 							title="Assay"
 							icon={<AssayIcon />}
-							link={`/explore/assay/${assay.assay_name}`}
+							link={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
 							value={assay.assay_name}
 							className="w-2/3"
 						/>

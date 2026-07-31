@@ -99,8 +99,7 @@ function StaticActgBackdrop({ className = "" }: { className?: string }) {
 }
 
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: Taxonomy["taxonomy"] }> }) {
-	let { taxonomy } = await params;
-	taxonomy = decodeURIComponent(taxonomy);
+	const { taxonomy } = await params;
 
 	const [dbTaxonomy, samples] = await prisma.$transaction([
 		prisma.taxonomy.findUnique({
@@ -173,13 +172,15 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									const raw = (dbTaxonomy as any)[rank]?.toString().trim() ?? "";
 									const name = raw.replace(/_/g, " ");
 									const isLast = idx === breadcrumbRanks.length - 1;
-									const rankSearchUrl = `/explore/taxonomy?${rank}=${encodeURIComponent(name.replace(" ", "_"))}`;
 									return (
 										<li key={rank}>
 											{isLast ? (
 												<span className="font-medium text-base-content/70">{name}</span>
 											) : (
-												<Link href={rankSearchUrl} className="link link-hover text-primary">
+												<Link
+													href={`/explore/taxonomy?${rank}=${encodeURIComponent(name)}`}
+													className="link link-hover text-primary"
+												>
 													{name}
 												</Link>
 											)}
@@ -238,7 +239,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					<Map locations={samples} where={{ taxonomy }} cluster className="h-105 w-full rounded-lg" />
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
-						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
+						<Link
+							href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${encodeURIComponent(taxonomy)}"]]`}
+						>
 							<div
 								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
 								data-tip="View Analyses as Search"
@@ -253,7 +256,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							</div>
 						</Link>
 
-						<Link href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
+						<Link
+							href={`/search?table=project&advanced=[["taxonomy", "taxonomy", "contains", "${encodeURIComponent(taxonomy)}"]]`}
+						>
 							<div
 								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
 								data-tip="View Projects as Search"
@@ -268,7 +273,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 							</div>
 						</Link>
 
-						<Link href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
+						<Link
+							href={`/search?table=sample&advanced=[["taxonomy", "taxonomy", "contains", "${encodeURIComponent(taxonomy)}"]]`}
+						>
 							<div
 								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
 								data-tip="View Samples as Search"

@@ -210,7 +210,7 @@ async function doEdit(
 
 		//update BLAST databases
 		fetch(
-			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${encodeURIComponent(analysis_run_name)}/afterSubmission?delete=true&skipDiversities=true`,
 			{
 				method: "POST",
 				headers: {

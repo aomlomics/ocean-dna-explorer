@@ -18,6 +18,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 const DEFAULT_MAX_TAXONOMIES = 20;
 export const DEFAULT_RANK = "kingdom" as (typeof TaxonomicRanks)[0];
 
+//TODO: separate libraries by project_id
 //TODO: paginate on averageBy
 export default function TaxaBarChart({
 	occsByFeatureid,
