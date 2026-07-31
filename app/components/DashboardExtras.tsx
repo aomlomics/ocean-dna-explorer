@@ -67,16 +67,34 @@ function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"
  * lines instead of truncating, since these are a small, high-value list.
  */
 export async function TopInstitutionsCard() {
-	const rows = await prisma.project.groupBy({
-		by: ["institution"],
+	const projects = await prisma.project.findMany({
 		where: { institution: { not: null } },
-		_count: { project_id: true },
-		orderBy: { _count: { project_id: "desc" } },
-		take: 5
+		select: { institution: true }
 	});
-	const institutions = rows
-		.filter((r) => r.institution)
-		.map((r) => ({ name: r.institution as string, count: r._count.project_id }));
+
+	const counts = new Map<string, { name: string; count: number }>();
+	for (const project of projects) {
+		if (!project.institution) continue;
+
+		const uniqueContributorsForProject = new Set<string>();
+		for (const rawContributor of project.institution.split("|")) {
+			const contributor = rawContributor.trim();
+			if (!contributor) continue;
+			uniqueContributorsForProject.add(contributor);
+		}
+
+		for (const contributor of uniqueContributorsForProject) {
+			const key = contributor.toLocaleLowerCase();
+			const current = counts.get(key);
+			if (current) {
+				current.count += 1;
+			} else {
+				counts.set(key, { name: contributor, count: 1 });
+			}
+		}
+	}
+
+	const institutions = [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 5);
 
 	return (
 		<DashCard
@@ -86,7 +104,7 @@ export async function TopInstitutionsCard() {
 			info={{
 				title: "Data Contributors",
 				description:
-					"Lists data submitters based on each project's `institution` field. Each row is one submitted institution value.",
+					"Lists organizations from each project's `institution` field. Pipe-separated contributors are split into separate organizations, and duplicates are merged.",
 				links: [{ label: "Browse all projects", href: "/explore/project" }]
 			}}
 		>
