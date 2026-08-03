@@ -4,12 +4,13 @@ import { BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
 import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
 import { getClientSideCookie } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 const resultsFields = [] as string[];
-TableMetadata.blastQueryResult.fieldOrder?.forEach((f) => resultsFields.push(f));
-const omit = ["id", "queryId", "query", "sequence"];
+const omit = ["id", "queryId", "query", "sequence", "featureid"];
+TableMetadata.blastQueryResult.fieldOrder?.forEach((f) => !omit.includes(f) && resultsFields.push(f));
 TableMetadata.blastQueryResult.enumSchema.options.forEach(
 	(f) => !omit.includes(f) && !resultsFields.includes(f) && resultsFields.push(f)
 );
@@ -115,12 +116,24 @@ export default function BlastSearchResult({
 
 					<div className="overflow-y-scroll">
 						{resultsBySequence[page].map((r, i) => (
-							<div key={i} className="grid grid-cols-2 gap-x-2 py-2 border-t border-primary">
-								{resultsFields.map((f) => (
-									<div key={f + i}>
-										{f}: {r[f as keyof typeof r]}
-									</div>
-								))}
+							<div key={i} className="py-2 border-t border-primary flex flex-col items-center">
+								<div className="flex flex-col text-xl items-center">
+									<h1>featureid</h1>
+									<Link className="link link-primary link-hover" href={`/explore/feature/${r.featureid}`}>
+										{r.featureid}
+									</Link>
+								</div>
+								<div className="w-full grid grid-cols-[auto_1fr_auto_1fr] gap-x-2">
+									{resultsFields.map((f) => {
+										const val = r[f as keyof typeof r];
+										return (
+											<Fragment key={f + i}>
+												<div className="justify-self-end">{f}:</div>
+												<div>{val}</div>
+											</Fragment>
+										);
+									})}
+								</div>
 							</div>
 						))}
 					</div>
