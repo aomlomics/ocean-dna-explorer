@@ -128,7 +128,6 @@ export default function BlastSearch() {
 			}
 		}
 
-		setError("");
 		setBlastDatabase(defaults.database);
 		setBlastQuery(defaults.query);
 		setTask(defaults.task);
@@ -229,6 +228,8 @@ export default function BlastSearch() {
 		const blastSave = event.currentTarget.blastSave?.checked;
 		const queries = parseBlast(blastQuery);
 		if (queries) {
+			setError("");
+
 			//replace old blast queries with new ones
 			if (queries.toString().length > MAX_UNCOMPRESSED_LENGTH) {
 				newParams.set("blastQuery", compressURIComponent(JSON.stringify(queries)));
@@ -242,7 +243,13 @@ export default function BlastSearch() {
 			newParams.delete("blastSave");
 			if (blastSave) newParams.set("blastSave", blastSave);
 
-			router.push(`${pathname}?${newParams}`);
+			try {
+				console.log("pushing: " + `${pathname}?${newParams}`);
+				router.push(`${pathname}?${newParams}`);
+				console.log("route pushed: " + `${pathname}?${newParams}`);
+			} catch (err) {
+				console.log(err);
+			}
 		}
 	}
 
