@@ -123,7 +123,7 @@ export default function BlastSearchResult({
 										{r.featureid}
 									</Link>
 								</div>
-								<div className="w-full grid grid-cols-[auto_1fr_auto_1fr] gap-x-2">
+								<div className="w-full grid grid-cols-4 gap-x-2">
 									{resultsFields.map((f) => {
 										const val = r[f as keyof typeof r];
 										return (
