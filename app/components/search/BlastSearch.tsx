@@ -227,29 +227,24 @@ export default function BlastSearch() {
 
 		const blastSave = event.currentTarget.blastSave?.checked;
 		const queries = parseBlast(blastQuery);
-		console.log(blastQuery);
-		console.log(queries);
 		if (queries) {
 			setError("");
 
 			//replace old blast queries with new ones
 			if (queries.toString().length > MAX_UNCOMPRESSED_LENGTH) {
-				console.log(1);
 				newParams.set("blastQuery", compressURIComponent(JSON.stringify(queries)));
 			} else {
-				console.log(2);
 				newParams.delete("blastQuery");
 				for (const q of queries) {
 					console.log(q.join(","));
 					newParams.append("blastQuery", q.join(","));
 				}
 			}
-			console.log(newParams);
 
 			newParams.delete("blastSave");
 			if (blastSave) newParams.set("blastSave", blastSave);
-			console.log(newParams);
 
+			console.log(router, router.push, pathname, newParams);
 			router.push(`${pathname}?${newParams}`);
 		}
 	}
