@@ -5,7 +5,7 @@ import { MAX_UNCOMPRESSED_LENGTH, compressURIComponent } from "@/app/helpers/uti
 import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { SubmitEvent, useEffect, useState } from "react";
 import InfoButton from "../InfoButton";
 import { BlastQueryWithRelations } from "@/prisma/generated/zod";
@@ -20,10 +20,10 @@ const DEFAULT_QCOV_HSP = 80;
 //TODO: style
 //TODO: add clear query button
 //TODO: add list of existing queries for current user
+//TODO: use the useRouter hook instead of updating window.location.href directly (previously was unreliably failing to navigate on prod)
 export default function BlastSearch() {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const router = useRouter();
 
 	const { userId, sessionClaims } = useAuth();
 	const role = sessionClaims?.metadata?.role;
@@ -85,14 +85,6 @@ export default function BlastSearch() {
 	}, [blastQuery]);
 
 	useEffect(() => {
-		console.log("pathname changed:", pathname);
-	}, [pathname]);
-
-	useEffect(() => {
-		console.log("searchParams changed:", searchParams.toString());
-	}, [searchParams]);
-
-	useEffect(() => {
 		const defaults = {
 			database: "" as typeof blastDatabase,
 			query: "" as typeof blastQuery,
@@ -129,10 +121,10 @@ export default function BlastSearch() {
 
 			if (blast.options) {
 				if (blast.options.task === "megablast") defaults.task = "megablast";
-				if (blast.options.max_target_seqs) defaults.max_target_seqs = blast.options.max_target_seqs;
-				if (blast.options.evalue) defaults.evalue = blast.options.evalue.toString();
-				if (blast.options.perc_identity) defaults.perc_identity = blast.options.perc_identity;
-				if (blast.options.qcov_hsp_perc) defaults.qcov_hsp_perc = blast.options.qcov_hsp_perc;
+				if (blast.options.max_target_seqs != null) defaults.max_target_seqs = blast.options.max_target_seqs;
+				if (blast.options.evalue != null) defaults.evalue = blast.options.evalue.toString();
+				if (blast.options.perc_identity != null) defaults.perc_identity = blast.options.perc_identity;
+				if (blast.options.qcov_hsp_perc != null) defaults.qcov_hsp_perc = blast.options.qcov_hsp_perc;
 			}
 		}
 
