@@ -85,6 +85,14 @@ export default function BlastSearch() {
 	}, [blastQuery]);
 
 	useEffect(() => {
+		console.log("pathname changed:", pathname);
+	}, [pathname]);
+
+	useEffect(() => {
+		console.log("searchParams changed:", searchParams.toString());
+	}, [searchParams]);
+
+	useEffect(() => {
 		const defaults = {
 			database: "" as typeof blastDatabase,
 			query: "" as typeof blastQuery,
@@ -135,7 +143,7 @@ export default function BlastSearch() {
 		set_evalue(defaults.evalue);
 		set_perc_identity(defaults.perc_identity);
 		set_qcov_hsp_perc(defaults.qcov_hsp_perc);
-	}, [searchParams]);
+	}, [searchParams.toString()]);
 
 	function parseBlast(text: string) {
 		const names = new Set() as Set<string>;
@@ -243,13 +251,8 @@ export default function BlastSearch() {
 			newParams.delete("blastSave");
 			if (blastSave) newParams.set("blastSave", blastSave);
 
-			try {
-				console.log("pushing: " + `${pathname}?${newParams}`);
-				router.push(`${pathname}?${newParams}`);
-				console.log("route pushed: " + `${pathname}?${newParams}`);
-			} catch (err) {
-				console.log(err);
-			}
+			// router.push(`${pathname}?${newParams}`);
+			router.push(`${pathname}?test=1`);
 		}
 	}
 
