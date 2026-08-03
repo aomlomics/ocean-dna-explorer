@@ -252,12 +252,12 @@ export default function BlastSearch() {
 			if (blastSave) newParams.set("blastSave", blastSave);
 
 			// router.push(`${pathname}?${newParams}`);
-			router.push(`${pathname}?test=1`);
+			window.location.href = `${pathname}?${newParams.toString()}`;
 		}
 	}
 
 	return (
-		<form onSubmit={handleSubmit} inert={!assayNames} className="flex flex-col items-start">
+		<form onSubmit={handleSubmit} className="flex flex-col items-start" aria-disabled={!assayNames}>
 			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
 				<legend className="fieldset-legend">Database</legend>
 				<select value={blastDatabase} onChange={(e) => setBlastDatabase(e.currentTarget.value)} className="select">
