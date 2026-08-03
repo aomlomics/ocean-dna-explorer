@@ -227,6 +227,8 @@ export default function BlastSearch() {
 
 		const blastSave = event.currentTarget.blastSave?.checked;
 		const queries = parseBlast(blastQuery);
+		console.log(blastQuery);
+		console.log(queries);
 		if (queries) {
 			setError("");
 
