@@ -128,6 +128,7 @@ export default function BlastSearch() {
 			}
 		}
 
+		setError("");
 		setBlastDatabase(defaults.database);
 		setBlastQuery(defaults.query);
 		setTask(defaults.task);
@@ -208,7 +209,7 @@ export default function BlastSearch() {
 		return queries;
 	}
 
-	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+	function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
 
 		const newParams = new URLSearchParams(searchParams);
@@ -228,15 +229,12 @@ export default function BlastSearch() {
 		const blastSave = event.currentTarget.blastSave?.checked;
 		const queries = parseBlast(blastQuery);
 		if (queries) {
-			setError("");
-
 			//replace old blast queries with new ones
 			if (queries.toString().length > MAX_UNCOMPRESSED_LENGTH) {
 				newParams.set("blastQuery", compressURIComponent(JSON.stringify(queries)));
 			} else {
 				newParams.delete("blastQuery");
 				for (const q of queries) {
-					console.log(q.join(","));
 					newParams.append("blastQuery", q.join(","));
 				}
 			}
@@ -244,7 +242,6 @@ export default function BlastSearch() {
 			newParams.delete("blastSave");
 			if (blastSave) newParams.set("blastSave", blastSave);
 
-			console.log(router, router.push, pathname, newParams);
 			router.push(`${pathname}?${newParams}`);
 		}
 	}

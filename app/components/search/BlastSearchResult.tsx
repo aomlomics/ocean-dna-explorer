@@ -5,7 +5,7 @@ import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
 import { getClientSideCookie } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const resultsFields = [] as string[];
 TableMetadata.blastQueryResult.fieldOrder?.forEach((f) => resultsFields.push(f));
@@ -26,6 +26,30 @@ export default function BlastSearchResult({
 	const searchParams = useSearchParams();
 
 	const [page, setPage] = useState(0);
+	const [loading, setLoading] = useState(false);
+
+	useEffect(() => {
+		if (searchParams.get("blastQuery")) {
+			setLoading(true);
+		}
+	}, [searchParams]);
+
+	useEffect(() => {
+		if (blastResult) {
+			setLoading(false);
+		}
+	}, [blastResult]);
+
+	if (loading) {
+		return (
+			<div className="flex flex-col">
+				<div className="text-warning">Loading BLAST results...</div>
+				<div className="w-full p-75 grow self-center">
+					<span className="loading loading-spinner loading-xl w-full" />
+				</div>
+			</div>
+		);
+	}
 
 	const resultsBySequence = Object.values(
 		blastResult?.reduce(
@@ -43,7 +67,11 @@ export default function BlastSearchResult({
 	);
 
 	if (!resultsBySequence.length) {
-		return <></>;
+		return (
+			<div className="text-warning">
+				No BLAST results found. If you were expecting results, try broadening your search parameters.
+			</div>
+		);
 	}
 
 	return (
@@ -64,7 +92,6 @@ export default function BlastSearchResult({
 			) : (
 				<></>
 			)}
-
 			<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 				<button
 					className="btn btn-secondary rounded-full"
