@@ -225,7 +225,7 @@ export default function BlastSearch() {
 		newParams.delete("qcov_hsp_perc");
 		if (!isNaN(qcov_hsp_perc)) newParams.set("qcov_hsp_perc", qcov_hsp_perc.toString());
 
-		const blastSave = event.currentTarget.blastSave.checked;
+		const blastSave = event.currentTarget.blastSave?.checked;
 		const queries = parseBlast(blastQuery);
 		if (queries) {
 			setError("");
@@ -241,9 +241,7 @@ export default function BlastSearch() {
 			}
 
 			newParams.delete("blastSave");
-			if (blastSave) {
-				newParams.set("blastSave", blastSave);
-			}
+			if (blastSave) newParams.set("blastSave", blastSave);
 
 			router.push(`${pathname}?${newParams}`);
 		}
