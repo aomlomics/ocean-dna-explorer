@@ -132,7 +132,7 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 	: any;
 
 export type BlastRequest = {
-	queries: string[];
+	queries: (string | [string, string])[];
 	assay_name?: Assay["assay_name"];
 	save?: boolean;
 	options?: Omit<BlastQueryPartial, "id" | "userId" | "dateCalculated" | "sequences" | "database" | "databaseVersion">;

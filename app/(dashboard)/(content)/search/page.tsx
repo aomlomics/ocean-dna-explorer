@@ -65,8 +65,8 @@ export default function Search() {
 			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm mb-4">
 				<input key={table + "blastInput"} defaultChecked={!!searchParams.get("blastQuery")} type="checkbox" />
 				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">BLAST</div>
-				<div className="collapse-content grid grid-cols-2 gap-10">
-					<BlastSearch key={table + "blast"} />
+				<div key={table + "blast"} className="collapse-content grid grid-cols-2 gap-10">
+					<BlastSearch />
 					<BlastSearchResult
 						blastResult={extraResults.blastResult}
 						existingBlastDate={extraResults.existingBlastDate}

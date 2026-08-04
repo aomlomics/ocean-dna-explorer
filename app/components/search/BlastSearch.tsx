@@ -97,26 +97,7 @@ export default function BlastSearch() {
 		const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
 		if (blast) {
 			defaults.database = assayNames?.find((a) => a === blast.assay_name) || "";
-			if (blast.queries.length === 1) {
-				const split = blast.queries[0].split(",");
-				if (split[1]) {
-					defaults.query = `>${split[0]}\n${split[1]}`;
-				} else {
-					defaults.query = split[0];
-				}
-			} else {
-				defaults.query = blast.queries
-					.reduce((acc, q) => {
-						//ignore improperly formatted queries
-						const split = q.split(",");
-						if (split.length >= 2) {
-							acc.push(`>${split[0]}\n${split[1]}`);
-						}
-
-						return acc;
-					}, [] as string[])
-					.join("\n");
-			}
+			defaults.query = blast.queries.map((q) => (typeof q === "string" ? q : `>${q[0]}\n${q[1]}`)).join("\n");
 
 			if (blast.options) {
 				if (blast.options.task === "megablast") defaults.task = "megablast";
@@ -261,14 +242,17 @@ export default function BlastSearch() {
 
 			<fieldset className="fieldset w-full">
 				<legend className="fieldset-legend w-full">
-					<div className="flex justify-between w-full">
-						<span>
-							Enter a sequence or BLAST query in{" "}
-							<Link className="link link-primary link-hover" href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">
-								FASTA format
-							</Link>
-						</span>
-						<div className="text-warning">{error}</div>
+					<div className="w-full">
+						<div>Query</div>
+						<div className="flex justify-between">
+							<div>
+								Enter sequence(s) in{" "}
+								<Link className="link link-primary link-hover" href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">
+									FASTA format
+								</Link>
+							</div>
+							<div className="text-warning">{error}</div>
+						</div>
 					</div>
 				</legend>
 				<textarea
@@ -332,7 +316,7 @@ export default function BlastSearch() {
 				<div className="grid grid-cols-2 gap-x-5">
 					<fieldset className="fieldset">
 						<div className="flex flex-between">
-							<legend className="fieldset-legend">Number of results</legend>
+							<legend className="fieldset-legend">Number of Results</legend>
 							<InfoButton>
 								<div className="text-primary font-bold">
 									max_target_seqs <span className="text-base-content/50">(1 - 100)</span>
@@ -353,7 +337,7 @@ export default function BlastSearch() {
 
 					<fieldset className="fieldset">
 						<div className="flex flex-between">
-							<legend className="fieldset-legend">Maximum evalue</legend>
+							<legend className="fieldset-legend">Maximum eValue</legend>
 							<InfoButton>
 								<div className="text-primary font-bold">
 									evalue <span className="text-base-content/50">(0 - 1e6)</span>
@@ -371,7 +355,7 @@ export default function BlastSearch() {
 
 					<fieldset className="fieldset">
 						<div className="flex flex-between">
-							<legend className="fieldset-legend">Minimum percent identity</legend>
+							<legend className="fieldset-legend">Minimum Percent Identity</legend>
 							<InfoButton>
 								<div className="text-primary font-bold">
 									perc_identity <span className="text-base-content/50">(0 - 100)</span>
@@ -392,7 +376,7 @@ export default function BlastSearch() {
 
 					<fieldset className="fieldset">
 						<div className="flex flex-between gap-5">
-							<legend className="fieldset-legend">Minimum percent query coverage</legend>
+							<legend className="fieldset-legend">Minimum Percent Query Coverage</legend>
 							<InfoButton>
 								<div className="text-primary font-bold">
 									qcov_hsp_perc <span className="text-base-content/50">(0 - 100)</span>

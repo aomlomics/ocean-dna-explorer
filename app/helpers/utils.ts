@@ -360,7 +360,7 @@ export function getRandomKey() {
 	return (Math.random() + 1).toString(36).substring(7);
 }
 
-export const getClientSideCookie = (name: string): string | undefined => {
+export function getClientSideCookie(name: string) {
 	if (typeof document === "undefined") {
 		throw new Error("Must be in client side.");
 	}
@@ -371,4 +371,13 @@ export const getClientSideCookie = (name: string): string | undefined => {
 		?.split("=")[1];
 
 	return cookieValue;
-};
+}
+
+export function getLastModifiedDate(submission: {
+	dateSubmitted: Date;
+	editHistory: PrismaJson.EditHistoryType | null;
+}) {
+	return submission.editHistory?.length
+		? submission.editHistory.reduce((latest, curr) => (curr.dateEdited > latest.dateEdited ? curr : latest)).dateEdited
+		: submission.dateSubmitted;
+}

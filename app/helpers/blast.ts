@@ -2,9 +2,44 @@ import { BlastRequest, NetworkPacket, Role } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { BlastQuery, BlastQueryResult } from "../generated/prisma/client";
+import { COMPRESSION_FORMAT, decompressURIComponent } from "./utils";
 
 export function parseBlastRequest(searchParams: URLSearchParams, options?: { safe?: true; noPrefix?: true }) {
-	const queries = searchParams.getAll(options?.noPrefix ? "query" : "blastQuery");
+	const tempQueries = searchParams.getAll(options?.noPrefix ? "query" : "blastQuery");
+	let queries = tempQueries.reduce(
+		(acc, q) => {
+			const split = q.split(",");
+			//ignore queries with too many args
+			if (split.length > 2) {
+				if (!options?.safe)
+					throw new Error("Format is either <sequence> or <query>,<sequence>. More than 2 values were provided.");
+			} else {
+				//ignore queries with too few args when more than one query is provided
+				if (tempQueries.length > 1 && split.length === 1) {
+					if (!options?.safe)
+						throw new Error("If more than one sequence is provided, all sequences must have query names.");
+				} else {
+					acc.push(q.startsWith(COMPRESSION_FORMAT) || split.length === 1 ? q : [split[0], split[1]]);
+				}
+			}
+
+			return acc;
+		},
+		[] as BlastRequest["queries"]
+	);
+	//uncompress if necessary
+	if (queries.length === 1 && typeof queries[0] === "string" && queries[0].startsWith(COMPRESSION_FORMAT)) {
+		queries = JSON.parse(decompressURIComponent(queries[0]));
+		if (
+			!Array.isArray(queries) ||
+			!queries.every((e) => typeof e === "string" || (Array.isArray(e) && e.every((ee) => typeof ee === "string")))
+		) {
+			throw new Error(
+				`Compressed queries must be an array of strings or string arrays in ${COMPRESSION_FORMAT} format.`
+			);
+		}
+	}
+
 	searchParams.delete(options?.noPrefix ? "query" : "blastQuery");
 	const database = searchParams.get(options?.noPrefix ? "database" : "blastDatabase");
 	searchParams.delete(options?.noPrefix ? "database" : "blastDatabase");
@@ -50,7 +85,7 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 
 		if (queries.length) {
 			const blast = {
-				queries: queries,
+				queries,
 				assay_name: database
 			} as BlastRequest;
 
@@ -113,7 +148,7 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 
 export function insertBlastIntoQuery(blast: BlastRequest | undefined, query: URLSearchParams) {
 	if (blast) {
-		blast.queries.forEach((q) => query.append("blastQuery", q));
+		blast.queries.forEach((q) => query.append("blastQuery", q.toString()));
 		if (blast.assay_name) query.set("blastDatabase", blast.assay_name);
 		if (blast.save) query.set("blastSave", blast.save.toString());
 		if (blast.options) Object.entries(blast.options).forEach(([k, v]) => query.set(k, v.toString()));
@@ -147,7 +182,11 @@ export function blastCookieHasBlast(blast: BlastRequest | undefined, cookie: str
 			parsedCookie.some(
 				(pc) =>
 					blast.assay_name === pc.assay_name &&
-					blast.queries.every((q) => pc.queries.includes(q)) &&
+					blast.queries.every((q) =>
+						typeof q === "string"
+							? pc.queries.includes(q)
+							: pc.queries.find((pcq) => Array.isArray(pcq) && pcq[0] === q[0] && pcq[1] === q[1])
+					) &&
 					((!blast.options && !pc.options) ||
 						(blast.options &&
 							pc.options &&

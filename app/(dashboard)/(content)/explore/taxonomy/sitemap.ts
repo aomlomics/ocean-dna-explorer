@@ -1,15 +1,24 @@
 import { prisma } from "@/app/helpers/prisma";
+import { getLastModifiedDate } from "@/app/helpers/utils";
 import { MetadataRoute } from "next";
+
+const URL_LIMIT = 50000; // Google's limit is 50,000 URLs per sitemap
 
 export async function generateSitemaps() {
 	try {
-		let count = await prisma.taxonomy.count();
+		let count = await prisma.taxonomy.count({
+			where: {
+				Assignments: {
+					some: {}
+				}
+			}
+		});
 
 		const sitemaps = [];
 		let id = 0;
 		while (count > 0) {
 			sitemaps.push({ id });
-			count -= 50000; // Google's limit is 50,000 URLs per sitemap
+			count -= URL_LIMIT;
 			id++;
 		}
 
@@ -22,18 +31,38 @@ export async function generateSitemaps() {
 
 export default async function sitemap({ id }: { id: Promise<number> }): Promise<MetadataRoute.Sitemap> {
 	const i = await id;
-	const skip = i * 50000;
+	const skip = i * URL_LIMIT;
 
 	const taxonomies = await prisma.taxonomy.findMany({
 		select: {
-			taxonomy: true
+			taxonomy: true,
+			Assignments: {
+				distinct: ["analysis_run_name"],
+				select: {
+					Analysis: {
+						select: {
+							dateSubmitted: true,
+							editHistory: true
+						}
+					}
+				}
+			}
 		},
 		skip,
-		take: 50000
+		take: URL_LIMIT
 	});
 
-	return taxonomies.map((taxa) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${encodeURIComponent(taxa.taxonomy)}`,
-		lastModified: new Date()
-	}));
+	return taxonomies.reduce((acc, taxa) => {
+		if (taxa.Assignments.length) {
+			acc.push({
+				url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${encodeURIComponent(taxa.taxonomy)}`,
+				lastModified: taxa.Assignments.reduce((latest, curr) => {
+					const currLast = getLastModifiedDate(curr.Analysis);
+					return currLast > latest ? currLast : latest;
+				}, getLastModifiedDate(taxa.Assignments[0].Analysis))
+			});
+		}
+
+		return acc;
+	}, [] as MetadataRoute.Sitemap);
 }

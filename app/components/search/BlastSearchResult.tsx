@@ -9,11 +9,21 @@ import { useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 
 const resultsFields = [] as string[];
-const omit = ["id", "queryId", "query", "sequence", "featureid"];
+const omit = ["id", "queryId", "query", "sequence", "featureid", "queryEnd", "subjectEnd"];
 TableMetadata.blastQueryResult.fieldOrder?.forEach((f) => !omit.includes(f) && resultsFields.push(f));
 TableMetadata.blastQueryResult.enumSchema.options.forEach(
 	(f) => !omit.includes(f) && !resultsFields.includes(f) && resultsFields.push(f)
 );
+
+const fieldLabels = {
+	percentIdentity: "Percent Identity",
+	alignmentLength: "Alignment Length",
+	bitScore: "Bit Score",
+	mismatches: "Mismatches",
+	queryStart: "Query Range",
+	gapOpens: "Gap Opens",
+	subjectStart: "Subject Range"
+} as Record<string, string>;
 
 export default function BlastSearchResult({
 	blastResult,
@@ -107,32 +117,46 @@ export default function BlastSearchResult({
 				</button>
 
 				<div className="relative w-full h-full p-5 flex flex-col min-h-0">
-					{resultsBySequence[page][0].query ? (
-						<h1>
-							<span className="text-primary">query</span>: {resultsBySequence[page][0].query}
-						</h1>
-					) : (
-						<></>
-					)}
-					<h1 className="pb-4">
-						<span className="text-primary">sequence</span>: {resultsBySequence[page][0].sequence}
-					</h1>
+					<div className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
+						{resultsBySequence[page][0].query ? (
+							<>
+								<h1>Query:</h1>
+								<h1>{resultsBySequence[page][0].query}</h1>
+							</>
+						) : (
+							<></>
+						)}
+						<h1>Sequence:</h1>
+						<h1>{resultsBySequence[page][0].sequence}</h1>
+					</div>
 
-					<div className="overflow-y-scroll">
+					<div className="overflow-y-auto pr-3 py-2">
 						{resultsBySequence[page].map((r, i) => (
-							<div key={i} className="py-2 border-t border-primary flex flex-col items-center">
-								<div className="flex flex-col text-xl items-center">
-									<h1>featureid</h1>
+							<div key={i} className="flex flex-col">
+								<div className="grid grid-cols-[auto_1fr] gap-x-2">
+									<h1>Target featureid:</h1>
 									<Link className="link link-primary link-hover" href={`/explore/feature/${r.featureid}`}>
 										{r.featureid}
 									</Link>
 								</div>
-								<div className="w-full grid grid-cols-4 gap-x-2">
+
+								<div className="w-full grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-x-2 px-15">
 									{resultsFields.map((f) => {
-										const val = r[f as keyof typeof r];
+										const key = fieldLabels[f] || f;
+
+										let val;
+										if (f === "queryStart") {
+											val = `${r.queryStart} - ${r.queryEnd}`;
+										} else if (f === "subjectStart") {
+											val = `${r.subjectStart} - ${r.subjectEnd}`;
+										} else {
+											val = r[f as keyof typeof r] + (f.toLowerCase().includes("percent") ? "%" : "");
+										}
+
 										return (
 											<Fragment key={f + i}>
-												<div className="justify-self-end">{f}:</div>
+												<div className="text-primary-content/60">{key}</div>
+												<div>:</div>
 												<div>{val}</div>
 											</Fragment>
 										);
