@@ -85,7 +85,7 @@ export default function HelpOverviewPage() {
 								You can login using the Sign-In button in the top right corner of the website. Your personal data is not
 								stored in our database. Authentication is handled by Clerk, a user management platform. You can delete
 								your account by clicking your profile picture in the top right corner of the website, then clicking
-								Manage Account &gt; Security &gt; Delete Account.
+								Manage Account ❯ Security ❯ Delete Account.
 							</p>
 							<p className="mb-4">
 								The roles available on ODE are listed below. Please note, Contributor is required to submit data. Other

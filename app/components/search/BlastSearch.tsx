@@ -17,7 +17,6 @@ const DEFAULT_EVALUE = 1e-10;
 const DEFAULT_PERCENT_IDENTITY = 95;
 const DEFAULT_QCOV_HSP = 80;
 
-//TODO: style
 //TODO: add clear query button
 //TODO: add list of existing queries for current user
 //TODO: use the useRouter hook instead of updating window.location.href directly (previously was unreliably failing to navigate on prod)

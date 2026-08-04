@@ -15,14 +15,14 @@ TableMetadata.blastQueryResult.enumSchema.options.forEach(
 	(f) => !omit.includes(f) && !resultsFields.includes(f) && resultsFields.push(f)
 );
 
-//TODO: make height fit to parent and make paginated section consistent height
-//TODO: scroll resultsBySequence[page] div
 export default function BlastSearchResult({
 	blastResult,
-	existingBlastDate
+	existingBlastDate,
+	className
 }: {
 	blastResult: BlastQueryResult[] | undefined;
 	existingBlastDate: BlastQuery["dateCalculated"] | undefined;
+	className?: string;
 }) {
 	const searchParams = useSearchParams();
 
@@ -52,8 +52,12 @@ export default function BlastSearchResult({
 		);
 	}
 
+	if (!blastResult) {
+		return <></>;
+	}
+
 	const resultsBySequence = Object.values(
-		blastResult?.reduce(
+		blastResult.reduce(
 			(acc, r) => {
 				if (acc[r.sequence]) {
 					acc[r.sequence].push(r);
@@ -76,7 +80,7 @@ export default function BlastSearchResult({
 	}
 
 	return (
-		<div className="break-all flex flex-col items-center">
+		<div className={`break-all flex flex-col items-center ${className}`}>
 			{existingBlastDate &&
 			!blastCookieHasBlast(
 				parseBlastRequest(new URLSearchParams(searchParams), { safe: true }),
@@ -102,7 +106,7 @@ export default function BlastSearchResult({
 					❮
 				</button>
 
-				<div className="relative w-full h-full p-5">
+				<div className="relative w-full h-full p-5 flex flex-col min-h-0">
 					{resultsBySequence[page][0].query ? (
 						<h1>
 							<span className="text-primary">query</span>: {resultsBySequence[page][0].query}

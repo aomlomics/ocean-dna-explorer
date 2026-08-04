@@ -50,7 +50,7 @@ export default async function ApiEndpointsPage() {
 					title: "Get Table Relations",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/&lt;table&gt;/relations</div>
+							<div className="mb-4">Endpoint: /api/❮table❯/relations</div>
 
 							<p className="mb-4">Returns a list of all relations for a table in the database.</p>
 
@@ -68,7 +68,7 @@ export default async function ApiEndpointsPage() {
 					title: "Get Table Fields",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/&lt;table&gt;/fields</div>
+							<div className="mb-4">Endpoint: /api/❮table❯/fields</div>
 
 							<div className="mb-4 mt-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/assay/fields`} />
@@ -84,7 +84,7 @@ export default async function ApiEndpointsPage() {
 					title: "Get Unique Field Values",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/&lt;table&gt;/fields/&lt;fieldName&gt;</div>
+							<div className="mb-4">Endpoint: /api/❮table❯/fields/❮fieldName❯</div>
 
 							<p className="mb-4">
 								Returns all unique values for a specific field in a table. This is useful for discovering what values
@@ -105,14 +105,14 @@ export default async function ApiEndpointsPage() {
 					title: "Query Table Data",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/&lt;table&gt;</div>
+							<div className="mb-4">Endpoint: /api/❮table❯</div>
 
 							<p className="mb-4">
 								Returns multiple records from a specific table. This endpoint supports various query parameters for
 								filtering, selecting fields, including relations, and limiting results.
 							</p>
 							<p className="mb-2">
-								For <InlineCode code="&lt;table&gt;" />, you can use either singular or plural table names.
+								For <InlineCode code="❮table❯" />, you can use either singular or plural table names.
 							</p>
 							<div className="mb-2">
 								Singular table names: <InlineCode code={TableNames.map((table) => table.toLowerCase()).join(", ")} />
@@ -124,7 +124,7 @@ export default async function ApiEndpointsPage() {
 							<p className="mb-4">
 								These are interchangeable in API paths (for example, <InlineCode code="/api/project" /> and{" "}
 								<InlineCode code="/api/projects" /> both work). Use the same rule for related endpoints like{" "}
-								<InlineCode code="/api/&lt;table&gt;/fields" /> and <InlineCode code="/api/&lt;table&gt;/relations" />.
+								<InlineCode code="/api/❮table❯/fields" /> and <InlineCode code="/api/❮table❯/relations" />.
 							</p>
 							<p className="mb-4">
 								Table names are also case-insensitive in queries, so either spelling/casing is accepted.
@@ -144,7 +144,7 @@ export default async function ApiEndpointsPage() {
 					title: "Get Single Record",
 					content: (
 						<>
-							<div className="mb-4">Endpoint: /api/&lt;table&gt;/&lt;id&gt;</div>
+							<div className="mb-4">Endpoint: /api/❮table❯/❮id❯</div>
 
 							<div className="mb-4 mt-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/taxonomy/${taxonomy?.id || 1}`} />

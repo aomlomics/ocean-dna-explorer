@@ -44,7 +44,7 @@ export default async function ApiSearchPage() {
 					title: "Standard Search Parameter",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `search=&lt;query&gt;`</div>
+							<div className="mb-4">Parameter: `search=❮query❯`</div>
 							<p className="mb-4">
 								This is the simplest way to search. It performs a case-insensitive search across all text-based fields
 								in a specified table for your query string.
@@ -66,7 +66,7 @@ export default async function ApiSearchPage() {
 					title: "Advanced Search Parameter",
 					content: (
 						<div className="space-y-4">
-							<p>Query Parameter: `advanced=&lt;JSON_object&gt;`</p>
+							<p>Query Parameter: `advanced=❮JSON_object❯`</p>
 							<p>
 								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table
 								queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
@@ -191,7 +191,7 @@ export default async function ApiSearchPage() {
 					title: "ID Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `ids=&lt;id1&gt;,&lt;id2&gt;,...`</div>
+							<div className="mb-4">Parameter: `ids=❮id1❯,❮id2❯,...`</div>
 							<p className="mb-4">
 								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of IDs.
 							</p>
@@ -223,7 +223,7 @@ export default async function ApiSearchPage() {
 					title: "Direct Field Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `&lt;fieldName&gt;=&lt;value&gt;`</div>
+							<div className="mb-4">Parameter: `❮fieldName❯=❮value❯`</div>
 							<p className="mb-4">
 								This method allows you to filter results based on the value of one or more specific fields. This cannot
 								be combined with `advanced`, `search`, or `ids` parameters.

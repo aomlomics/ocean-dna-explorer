@@ -46,7 +46,7 @@ export default function Search() {
 						<div className="flex flex-wrap items-center gap-2">
 							<h1 className="text-4xl font-normal text-base-content">
 								<span className="">Search</span>{" "}
-								<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+								<span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
 								<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
 							</h1>
 							<TableInfo table={table} />
@@ -70,6 +70,7 @@ export default function Search() {
 					<BlastSearchResult
 						blastResult={extraResults.blastResult}
 						existingBlastDate={extraResults.existingBlastDate}
+						className="h-200"
 					/>
 				</div>
 			</div>

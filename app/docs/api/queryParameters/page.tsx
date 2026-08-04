@@ -21,7 +21,7 @@ export default function ApiQueryParametersPage() {
 					title: "Field Selection",
 					content: (
 						<>
-							<div className="mb-4">Parameter: fields=&lt;field1&gt;,&lt;field2&gt;,&lt;field3&gt;</div>
+							<div className="mb-4">Parameter: fields=❮field1❯,❮field2❯,❮field3❯</div>
 
 							<p className="mb-4">
 								Specifies which fields to include in the response. When omitted, all fields are returned.
@@ -44,7 +44,7 @@ export default function ApiQueryParametersPage() {
 					title: "Field Filtering (Legacy)",
 					content: (
 						<>
-							<div className="mb-4">Parameter: &lt;fieldName&gt;=&lt;value&gt;</div>
+							<div className="mb-4">Parameter: ❮fieldName❯=❮value❯</div>
 
 							<p className="mb-4">
 								Filters results to return only records where the specified field contains the provided value. For more
@@ -71,7 +71,7 @@ export default function ApiQueryParametersPage() {
 					title: "Relations",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relations=&lt;relation1&gt;,&lt;relation2&gt;</p>
+							<p>Parameter: relations=❮relation1❯,❮relation2❯</p>
 							<p>
 								Includes related data from other tables in the response. Relation names can be lowercase or capitalized.
 							</p>
@@ -137,7 +137,7 @@ export default function ApiQueryParametersPage() {
 					title: "Result Limiting",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: limit=&lt;number&gt;</p>
+							<p>Parameter: limit=❮number❯</p>
 							<p>Limits the number of results returned. Must be a positive number.</p>
 							<div>
 								Example URL: <InlineCode code="/api/project?limit=20" />
@@ -151,7 +151,7 @@ export default function ApiQueryParametersPage() {
 					title: "Relations Result Limiting",
 					content: (
 						<div className="space-y-4">
-							<p>Parameter: relationsLimit=&lt;number&gt;</p>
+							<p>Parameter: relationsLimit=❮number❯</p>
 							<p>
 								Limits the number of results returned when the{" "}
 								<Link className="link link-primary" href="#relations">

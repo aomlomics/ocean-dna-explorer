@@ -348,8 +348,8 @@ if (http_status(response)$category == "Success") {
 
 										<p className="mt-6">
 											Pro tip: Use the{" "}
-											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/&lt;table&gt;/relations</code>{" "}
-											endpoint to see the exact relation names available for any table. Or check the{" "}
+											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/❮table❯/relations</code> endpoint
+											to see the exact relation names available for any table. Or check the{" "}
 											<Link href="#table-definitions" className="link link-primary">
 												Table Definitions
 											</Link>{" "}

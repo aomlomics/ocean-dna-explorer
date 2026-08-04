@@ -29,7 +29,7 @@ export default function ExplorePage({
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="text-4xl font-normal text-base-content">
 						<span className="">Explore</span>{" "}
-						<span className="text-base-content text-2xl align-middle font-normal">&gt;</span>{" "}
+						<span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
 						<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
 					</h1>
 					<InfoButton dir="tooltip-right">
