@@ -48,7 +48,9 @@ export default function ViewModeToggle({
 			<button
 				type="button"
 				className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
-					currentView === "grid"
+					viewLocked
+						? "btn-ghost bg-base-100/70 text-base-content/40 hover:bg-base-100/70 cursor-not-allowed"
+						: currentView === "grid"
 						? "btn-primary text-primary-content"
 						: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
 				}`}

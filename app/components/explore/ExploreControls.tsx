@@ -190,7 +190,9 @@ function ControlsBody({
 				</div>
 			</div>
 
-			<TableDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
+			<div className="pb-8">
+				<TableDisplay table={table} tableWhere={tableWhere} displayMode={displayMode} toggle={toggle} />
+			</div>
 		</div>
 	);
 }
