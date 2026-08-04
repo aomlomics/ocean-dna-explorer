@@ -381,3 +381,10 @@ export function getLastModifiedDate(submission: {
 		? submission.editHistory.reduce((latest, curr) => (curr.dateEdited > latest.dateEdited ? curr : latest)).dateEdited
 		: submission.dateSubmitted;
 }
+
+export async function decodeRouteParams(params: Promise<Record<string, string>>) {
+	return Object.entries(await params).reduce(
+		(acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }),
+		{} as Record<string, string>
+	);
+}

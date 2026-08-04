@@ -97,7 +97,12 @@ function isEnglishLanguage(language: string | undefined): boolean {
 	return lang.startsWith("en-") || lang.startsWith("en_") || lang.startsWith("eng-") || lang.startsWith("eng_");
 }
 
-function scoreEnglishVernacular(row: { vernacularName?: string; country?: string; preferred?: boolean; isPreferredName?: boolean }) {
+function scoreEnglishVernacular(row: {
+	vernacularName?: string;
+	country?: string;
+	preferred?: boolean;
+	isPreferredName?: boolean;
+}) {
 	const name = row.vernacularName?.trim() ?? "";
 	if (!name) return -Infinity;
 	let score = 0;
@@ -123,7 +128,12 @@ async function resolveGbifTaxonKeyFromName(name: string): Promise<number | null>
 			gbifKeyByNameCache.set(key, null);
 			return null;
 		}
-		const json = (await res.json()) as { usageKey?: number; speciesKey?: number; acceptedUsageKey?: number; confidence?: number };
+		const json = (await res.json()) as {
+			usageKey?: number;
+			speciesKey?: number;
+			acceptedUsageKey?: number;
+			confidence?: number;
+		};
 		const resolved = json.usageKey ?? json.speciesKey ?? json.acceptedUsageKey ?? null;
 		const numeric = resolved != null ? Number(resolved) : null;
 		const out = Number.isFinite(numeric) ? (numeric as number) : null;
@@ -181,7 +191,10 @@ export default function FeaturedOrganismsGrid({ organisms }: Props) {
 
 	return (
 		<div className="space-y-4">
-			<nav className="flex min-w-0 flex-wrap content-center items-center gap-2 sm:gap-2" aria-label="Featured organism groups">
+			<nav
+				className="flex min-w-0 flex-wrap content-center items-center gap-2 sm:gap-2"
+				aria-label="Featured organism groups"
+			>
 				{FEATURED_ORGANISM_GROUPS.map((g) => {
 					const active = g.id === activeGroup;
 					return (
@@ -224,7 +237,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 	const [previewOpen, setPreviewOpen] = useState(false);
 
 	const iucnLabel = iucn ? IUCN_LABEL[iucn] : null;
-	const viewHref = organism.taxonomyString ? `/explore/taxonomy/${encodeURIComponent(organism.taxonomyString)}` : "/explore/taxonomy";
+	const viewHref = organism.taxonomyString ? `/explore/taxonomy/${organism.taxonomyString}` : "/explore/taxonomy";
 	const imageSrc = organism.imageSrc ?? "";
 
 	useEffect(() => {
@@ -342,7 +355,9 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 							title="IUCN Red List status (via GBIF)"
 						>
 							<span className="opacity-70 font-semibold tracking-wider">IUCN</span>
-							<span aria-hidden="true" className="opacity-40">·</span>
+							<span aria-hidden="true" className="opacity-40">
+								·
+							</span>
 							<span>{iucnLabel}</span>
 						</span>
 					) : (
@@ -352,9 +367,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 					)}
 				</div>
 
-				<p className="text-sm text-base-content/65 leading-relaxed line-clamp-5">
-					{organism.description}
-				</p>
+				<p className="text-sm text-base-content/65 leading-relaxed line-clamp-5">{organism.description}</p>
 
 				<div className="pt-2 flex justify-end">
 					<Link href={viewHref} className="btn btn-sm btn-primary">
@@ -392,4 +405,3 @@ function InlineAttributionBadge({ attribution }: { attribution: string }) {
 		</div>
 	);
 }
-

@@ -1,18 +1,14 @@
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
-import { Library } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { decodeRouteParams } from "@/app/helpers/utils";
 
-export default async function Lib_id({
-	params
-}: {
-	params: Promise<{ project_id: Library["project_id"]; lib_id: Library["lib_id"] }>;
-}) {
-	const { project_id, lib_id } = await params;
+export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
+	const { project_id, lib_id } = await decodeRouteParams(params);
 
 	const library = await prisma.library.findUnique({
 		where: {
@@ -68,23 +64,17 @@ export default async function Lib_id({
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This library connects{" "}
 					<Link
-						href={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(sample.samp_name)}`}
+						href={`/explore/sample/${project_id}/${sample.samp_name}`}
 						className="text-primary hover:text-primary-focus break-all"
 					>
 						sample {sample.samp_name}
 					</Link>{" "}
 					with{" "}
-					<Link
-						href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
-						className="text-primary hover:text-primary-focus break-all"
-					>
+					<Link href={`/explore/assay/${assay.assay_name}`} className="text-primary hover:text-primary-focus break-all">
 						assay {assay.assay_name}
 					</Link>{" "}
 					in project{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(project_id)}`}
-						className="text-primary hover:text-primary-focus break-all"
-					>
+					<Link href={`/explore/project/${project_id}`} className="text-primary hover:text-primary-focus break-all">
 						{project_id}
 					</Link>
 					.
@@ -108,7 +98,7 @@ export default async function Lib_id({
 						<StatCard
 							title="Sample"
 							icon={<LocationIcon />}
-							link={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(sample.samp_name)}`}
+							link={`/explore/sample/${project_id}/${sample.samp_name}`}
 							value={sample.samp_name}
 							className="w-2/3"
 						/>
@@ -116,7 +106,7 @@ export default async function Lib_id({
 						<StatCard
 							title="Assay"
 							icon={<AssayIcon />}
-							link={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
+							link={`/explore/assay/${assay.assay_name}`}
 							value={assay.assay_name}
 							className="w-2/3"
 						/>

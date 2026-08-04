@@ -90,9 +90,7 @@ export async function matchGbifForPhylopic(taxonomy: Taxonomy): Promise<GbifPhyl
 			if (!rawRank || !isPlausibleRankValue(rawRank)) continue;
 
 			const suggestQuery = rawRank.replace(/_/g, " ").replace(/\s+/g, " ").trim();
-			const gbifTaxaRes = await fetch(
-				`https://api.gbif.org/v1/species/suggest?q=${encodeURIComponent(suggestQuery)}`
-			);
+			const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${suggestQuery}`);
 			const gbifTaxa = await gbifTaxaRes.json();
 			if (!Array.isArray(gbifTaxa)) continue;
 

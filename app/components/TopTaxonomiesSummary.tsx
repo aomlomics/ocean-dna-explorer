@@ -175,7 +175,7 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 							section.phyla.map((p, idx) => (
 								<li key={p.phylum}>
 									<Link
-										href={`/explore/taxonomy?phylum=${encodeURIComponent(p.phylum)}`}
+										href={`/explore/taxonomy?phylum=${p.phylum}`}
 										className="flex items-center justify-between text-sm px-1 py-1.5 rounded-md hover:bg-base-200/40 transition-colors group"
 									>
 										<span className="flex items-center gap-2 min-w-0">

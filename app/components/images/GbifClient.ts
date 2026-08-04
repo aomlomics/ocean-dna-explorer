@@ -12,8 +12,7 @@ export type GbifImagePayload = {
 export function formatGbifAttributionDisplay(payload: GbifImagePayload): string | null {
 	const a = payload.attribution?.trim();
 	if (!a) return null;
-	const suffix =
-		payload.source === "occurrence" ? " · via GBIF occurrence record" : " · GBIF checklist media";
+	const suffix = payload.source === "occurrence" ? " · via GBIF occurrence record" : " · GBIF checklist media";
 	return `${a}${suffix}`;
 }
 
@@ -24,7 +23,7 @@ function makePayload(
 ): GbifImagePayload {
 	return {
 		directUrl,
-		proxyUrl: `https://wsrv.nl/?url=${encodeURIComponent(directUrl)}&w=480&output=webp`,
+		proxyUrl: `https://wsrv.nl/?url=${directUrl}&w=480&output=webp`,
 		attribution,
 		source
 	};

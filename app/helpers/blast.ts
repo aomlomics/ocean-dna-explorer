@@ -204,11 +204,11 @@ export function blastCookieHasBlast(blast: BlastRequest | undefined, cookie: str
 function blastRequestToString(blast: BlastRequest) {
 	return (
 		blast.queries.map((q) => `query=${q}`).join("&") +
-		(blast.assay_name ? `&assay_name=${encodeURIComponent(blast.assay_name)}` : "") +
+		(blast.assay_name ? `&assay_name=${blast.assay_name}` : "") +
 		(blast.options
 			? "&" +
 				Object.entries(blast.options)
-					.map(([k, v]) => k + "=" + encodeURIComponent(v))
+					.map(([k, v]) => k + "=" + v)
 					.join("&")
 			: "")
 	);

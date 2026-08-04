@@ -2,7 +2,6 @@ import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/Table";
-import { Assay } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import PrimerDiagram from "@/app/components/PrimerDiagram";
@@ -10,6 +9,7 @@ import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
+import { decodeRouteParams } from "@/app/helpers/utils";
 
 const ASSAY_MASTER_TSV_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
@@ -55,14 +55,14 @@ export default async function Assay_name({
 	params,
 	searchParams
 }: {
-	params: Promise<{ assay_name: Assay["assay_name"] }>;
+	params: Promise<{ assay_name: string }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	const { assay_name } = await params;
+	const { assay_name } = await decodeRouteParams(params);
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/assay/${encodeURIComponent(assay_name)}`);
+		redirect(`/explore/assay/${assay_name}`);
 	}
 
 	const assay = await prisma.assay.findUnique({
@@ -314,14 +314,14 @@ export default async function Assay_name({
 									title="Samples"
 									icon={<LocationIcon />}
 									value={new Set(assay.Libraries.map((lib) => lib.samp_name)).size}
-									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${encodeURIComponent(assay_name)}"]]`}
+									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
 									title="Libraries"
 									icon={<LocationIcon />}
 									value={assay.Libraries.length}
-									link={`/search?table=library&advanced=[["assay_name","equals","${encodeURIComponent(assay_name)}"]]`}
+									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
@@ -347,7 +347,7 @@ export default async function Assay_name({
 										})
 									}
 									icon={<FishIcon />}
-									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${encodeURIComponent(assay_name)}"]]`}
+									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard

@@ -1,5 +1,6 @@
 model Analysis {
     id                Int      @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The analysis_run_name field must not contain slashes." }))
     analysis_run_name String   @unique
     dateSubmitted     DateTime @default(now())
     trusted           Boolean
@@ -146,6 +147,7 @@ model Assignment {
 
 model Feature {
     id        Int    @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The featureid field must not contain slashes." }))
     featureid String @unique
 
     // Relations
@@ -160,6 +162,7 @@ model Feature {
 
 model Taxonomy {
     id       Int    @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The taxonomy field must not contain slashes." }))
     taxonomy String @unique
 
     // Relations

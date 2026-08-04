@@ -217,7 +217,7 @@ async function doEdit(
 
 		//update diversities
 		fetch(
-			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${encodeURIComponent(analysis_run_name)}/afterSubmission?delete=true&skipBlast=true`,
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission?delete=true&skipBlast=true`,
 			{
 				method: "POST",
 				headers: {

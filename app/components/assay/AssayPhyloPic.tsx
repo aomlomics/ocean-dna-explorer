@@ -95,7 +95,7 @@ export default async function AssayPhyloPic({ assay_name }: { assay_name: string
 		if (tried.has(key)) continue;
 		tried.add(key);
 
-		const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${encodeURIComponent(candidate.name)}`);
+		const gbifTaxaRes = await fetch(`https://api.gbif.org/v1/species/suggest?q=${candidate.name}`);
 		const gbifTaxa = await gbifTaxaRes.json();
 		const gbifTaxonomy = gbifTaxa.filter((taxa: Record<string, any>) => taxa.rank?.toLowerCase() === candidate.rank)[0];
 		if (!gbifTaxonomy) continue;

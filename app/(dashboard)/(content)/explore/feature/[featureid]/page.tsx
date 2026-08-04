@@ -1,5 +1,5 @@
 import TableMetadata from "@/types/tableMetadata";
-import { Feature, Taxonomy } from "@/app/generated/prisma/client";
+import { Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
+import { decodeRouteParams } from "@/app/helpers/utils";
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -66,14 +67,14 @@ export default async function Featureid({
 	params,
 	searchParams
 }: {
-	params: Promise<{ featureid: Feature["featureid"] }>;
+	params: Promise<{ featureid: string }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	const { featureid } = await params;
+	const { featureid } = await decodeRouteParams(params);
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
+		redirect(`/explore/feature/${featureid}`);
 	}
 
 	const { feature, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
@@ -277,7 +278,7 @@ export default async function Featureid({
 									{topTaxonomies.map((taxonomyItem) => (
 										<Link
 											key={taxonomyItem.taxonomy}
-											href={`/explore/taxonomy/${encodeURIComponent(taxonomyItem.taxonomy)}`}
+											href={`/explore/taxonomy/${taxonomyItem.taxonomy}`}
 											className="flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group"
 										>
 											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">

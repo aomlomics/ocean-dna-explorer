@@ -55,7 +55,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	return taxonomies.reduce((acc, taxa) => {
 		if (taxa.Assignments.length) {
 			acc.push({
-				url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${encodeURIComponent(taxa.taxonomy)}`,
+				url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${taxa.taxonomy}`,
 				lastModified: taxa.Assignments.reduce((latest, curr) => {
 					const currLast = getLastModifiedDate(curr.Analysis);
 					return currLast > latest ? currLast : latest;

@@ -11,7 +11,7 @@ interface AssayCardProps {
 export default function AssayCard({ assay_name, target_gene, className = "" }: AssayCardProps) {
 	return (
 		<Link
-			href={`/explore/assay/${encodeURIComponent(assay_name)}`}
+			href={`/explore/assay/${assay_name}`}
 			className={[
 				"flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group",
 				className

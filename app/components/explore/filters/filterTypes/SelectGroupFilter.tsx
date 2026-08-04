@@ -32,7 +32,7 @@ export default function SelectGroupFilter({
 		const where = Object.entries(activeFilters)
 			.reduce((acc, [field, value]) => {
 				if (group.includes(field)) {
-					acc.push(field + "=" + encodeURIComponent(value));
+					acc.push(field + "=" + value);
 
 					if (field === fieldName) {
 						extraSelf = false;

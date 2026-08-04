@@ -11,13 +11,10 @@ import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/
 import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { decodeRouteParams } from "@/app/helpers/utils";
 
-export default async function Samp_name({
-	params
-}: {
-	params: Promise<{ project_id: Sample["project_id"]; samp_name: Sample["samp_name"] }>;
-}) {
-	const { project_id, samp_name } = await params;
+export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
+	const { project_id, samp_name } = await decodeRouteParams(params);
 
 	const sample = await prisma.sample.findUnique({
 		where: {
@@ -60,10 +57,7 @@ export default async function Samp_name({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={`/explore/project/${project_id}`} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -84,10 +78,7 @@ export default async function Samp_name({
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(project_id)}`}
-						className="text-primary hover:text-primary-focus"
-					>
+					<Link href={`/explore/project/${project_id}`} className="text-primary hover:text-primary-focus">
 						{project_id}
 					</Link>{" "}
 					project
@@ -129,7 +120,7 @@ export default async function Samp_name({
 								).length
 							}
 							icon={<EyeIcon />}
-							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"]]`}
+							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
 						/>
@@ -182,7 +173,7 @@ export default async function Samp_name({
 								).length
 							}
 							icon={<FishIcon />}
-							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"]]`}
+							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
 							tooltip="View as Search"
 						/>

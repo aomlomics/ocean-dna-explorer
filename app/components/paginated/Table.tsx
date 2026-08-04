@@ -714,10 +714,7 @@ export default function Table({
 													i ? "border-t-2" : ""
 												}`}
 											>
-												<Link
-													href={`/explore/${table}/${encodeURIComponent(row[title])}`}
-													className="link link-primary link-hover"
-												>
+												<Link href={`/explore/${table}/${row[title]}`} className="link link-primary link-hover">
 													{row[title]}
 												</Link>
 											</th>
@@ -728,7 +725,7 @@ export default function Table({
 												}`}
 											>
 												<Link
-													href={`/explore/${table}/${title.map((f) => encodeURIComponent(row[f])).join("/")}`}
+													href={`/explore/${table}/${title.map((f) => row[f]).join("/")}`}
 													className="link link-primary link-hover"
 												>
 													{title.map((f) => (row[f].length > 15 ? row[f].slice(0, 10) + "..." : row[f])).join(" / ")}
@@ -768,12 +765,8 @@ export default function Table({
 																		className="btn text-nowrap"
 																		href={`/search?table=${depluralizeTable(head as Prisma.ModelName)}&advanced=[${
 																			typeof title === "string"
-																				? `["${table}", "${title}", "equals", "${encodeURIComponent(row[title])}"]`
-																				: title
-																						.map(
-																							(t) => `["${table}", "${t}", "equals", "${encodeURIComponent(row[t])}"]`
-																						)
-																						.join(",")
+																				? `["${table}", "${title}", "equals", "${row[title]}"]`
+																				: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																		}]`}
 																	>
 																		<LinkIcon /> {row._count[head]}{" "}
@@ -803,7 +796,7 @@ export default function Table({
 															<Link
 																href={`/explore/${
 																	Object.entries(TableMetadata).find(([_, meta]) => meta.titleField === head)![0]
-																}/${encodeURIComponent(row[head])}`}
+																}/${row[head]}`}
 																className="link link-primary link-hover font-bold"
 															>
 																{row[head]}
@@ -814,7 +807,7 @@ export default function Table({
 														element = (
 															<Link
 																href={`/explore/${uncapitalizeTable(typedHead)}/${oneRelationsWithArrayTitle[typedHead]
-																	.map((f) => encodeURIComponent(row[f]))
+																	.map((f) => row[f])
 																	.join("/")}`}
 																className="link link-primary link-hover font-bold"
 															>
@@ -896,10 +889,8 @@ export default function Table({
 																	className="btn text-nowrap"
 																	href={`/search?table=${rel.table}&advanced=[${
 																		typeof title === "string"
-																			? `["${table}", "${title}", "equals", "${encodeURIComponent(row[title])}"]`
-																			: title
-																					.map((t) => `["${table}", "${t}", "equals", "${encodeURIComponent(row[t])}"]`)
-																					.join(",")
+																			? `["${table}", "${title}", "equals", "${row[title]}"]`
+																			: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 																	}]`}
 																>
 																	<LinkIcon /> {row._count[rel.label]}{" "}
@@ -921,7 +912,7 @@ export default function Table({
 																key={rel.label + "child" + j}
 															>
 																<Link
-																	href={`/explore/${rel.table}/${(TableMetadata[rel.table].titleField as string[]).map((f) => encodeURIComponent(titleFieldObj[f])).join("/")}`}
+																	href={`/explore/${rel.table}/${(TableMetadata[rel.table].titleField as string[]).map((f) => titleFieldObj[f]).join("/")}`}
 																	className="link link-primary link-hover font-bold"
 																>
 																	{(TableMetadata[rel.table].titleField as string[])
@@ -943,7 +934,7 @@ export default function Table({
 																key={rel.label + "child" + j}
 															>
 																<Link
-																	href={`/explore/${rel.table}/${encodeURIComponent(titleFieldObj[rel.label])}`}
+																	href={`/explore/${rel.table}/${titleFieldObj[rel.label]}`}
 																	className="link link-primary link-hover font-bold"
 																>
 																	{titleFieldObj[rel.label]}

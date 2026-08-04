@@ -206,7 +206,7 @@ function CustomLegend({
 								/>
 								<div className="flex-1 min-w-0 flex items-center gap-2">
 									<Link
-										href={`/explore/taxonomy/${encodeURIComponent(labels[index])}`}
+										href={`/explore/taxonomy/${labels[index]}`}
 										className="text-sm font-medium truncate transition-colors"
 										style={{ color: textColor }}
 										title={labels[index]}

@@ -12,7 +12,7 @@ export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
-	const table = (await params).table;
+	const { table } = await params;
 
 	const { sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata?.role;

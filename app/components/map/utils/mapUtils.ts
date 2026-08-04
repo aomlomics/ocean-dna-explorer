@@ -82,11 +82,11 @@ export function getWhereAdvancedHref(
 	return Object.entries(where)
 		.map(([f, v]) => {
 			if (TableMetadata[table].enumSchema.options.includes(f)) {
-				return `["${f}","equals","${encodeURIComponent(v)}"]`;
+				return `["${f}","equals","${v}"]`;
 			} else {
 				for (const model of TableNames) {
 					if (f === TableMetadata[model].titleField) {
-						return `["${model}","${f}","equals","${encodeURIComponent(v)}"]`;
+						return `["${model}","${f}","equals","${v}"]`;
 					}
 				}
 			}

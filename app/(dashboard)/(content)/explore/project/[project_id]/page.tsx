@@ -6,7 +6,6 @@ import EditHistory from "@/app/components/EditHistory";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import DataDisplay from "@/app/components/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
-import { Project } from "@/app/generated/prisma/client";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
 import Image from "next/image";
@@ -14,6 +13,7 @@ import { DepthCoverageCard, DepthCoverageCardSkeleton } from "@/app/components/d
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { decodeRouteParams } from "@/app/helpers/utils";
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -126,8 +126,8 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 	);
 }
 
-export default async function Project_id({ params }: { params: Promise<{ project_id: Project["project_id"] }> }) {
-	const { project_id } = await params;
+export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
+	const { project_id } = await decodeRouteParams(params);
 
 	const project = await prisma.project.findUnique({
 		where: {
@@ -379,7 +379,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		</header>
 	);
 
-	const advancedProjStr = `"project_id","equals","${encodeURIComponent(project_id)}"`;
+	const advancedProjStr = `"project_id","equals","${project_id}"`;
 	const glanceBlock = (
 		<div className="flex flex-col h-full">
 			<h2 className="text-2xl font-semibold text-base-content/90 pb-2">Project at a Glance</h2>

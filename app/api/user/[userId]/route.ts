@@ -6,7 +6,7 @@ export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ userId: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
-	const userId = (await params).userId;
+	const { userId } = await params;
 	const client = await clerkClient();
 
 	const result = await client.users.getUser(userId);

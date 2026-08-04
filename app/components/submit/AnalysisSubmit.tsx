@@ -163,7 +163,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 								}
 							} else {
 								//get project from database
-								const response = await fetch(`/api/project?project_id=${encodeURIComponent(value)}&fields=project_id`);
+								const response = await fetch(`/api/project?project_id=${value}&fields=project_id`);
 								const json = (await response.json()) as NetworkPacket;
 
 								//handle errors
@@ -377,7 +377,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					<SubmitFormSection title="Project">
 						<div className="w-full">
 							{project ? (
-								<Link className="link link-primary" href={`/explore/project/${encodeURIComponent(project.project_id)}`}>
+								<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
 									{project.project_id}
 								</Link>
 							) : (

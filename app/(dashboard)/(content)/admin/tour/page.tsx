@@ -167,7 +167,7 @@ export default function Tour() {
 			//analysis
 			if (!analysis_run_name) {
 				const analysisRes = await fetch(
-					`/api/analysis?fields=analysis_run_name,assay_name&advanced=[["project_id","equals","${encodeURIComponent(project_id)}"]]`
+					`/api/analysis?fields=analysis_run_name,assay_name&advanced=[["project_id","equals","${project_id}"]]`
 				);
 				if (analysisRes.ok) {
 					const response = (await analysisRes.json()) as NetworkPacket;
@@ -188,7 +188,7 @@ export default function Tour() {
 				//sample
 				if (!samp_name) {
 					const sampRes = await fetch(
-						`/api/sample?fields=samp_name&advanced=[["occurrence","analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`
+						`/api/sample?fields=samp_name&advanced=[["occurrence","analysis_run_name","equals","${analysis_run_name}"]]`
 					);
 					if (sampRes.ok) {
 						const response = (await sampRes.json()) as NetworkPacket;
@@ -207,7 +207,7 @@ export default function Tour() {
 				if (samp_name) {
 					//TODO: only show features for selected taxonomy
 					const occRes = await fetch(
-						`/api/occurrence?fields=featureid&relations=Assignment&relationsAllFields=true&advanced=[["sample","samp_name","equals","${encodeURIComponent(samp_name)}"],["analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`
+						`/api/occurrence?fields=featureid&relations=Assignment&relationsAllFields=true&advanced=[["sample","samp_name","equals","${samp_name}"],["analysis_run_name","equals","${analysis_run_name}"]]`
 					);
 					if (occRes.ok) {
 						const response = (await occRes.json()) as NetworkPacket;
@@ -260,51 +260,40 @@ export default function Tour() {
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
-			{ url: project_id ? `/explore/project/${encodeURIComponent(project_id)}#project` : "/search?table=project" },
+			{ url: project_id ? `/explore/project/${project_id}#project` : "/search?table=project" },
 			{
-				url: project_id
-					? `/search?table=sample&advanced=[["project_id","equals","${encodeURIComponent(project_id)}"]]`
-					: "/explore/sample"
+				url: project_id ? `/search?table=sample&advanced=[["project_id","equals","${project_id}"]]` : "/explore/sample"
+			},
+			{
+				url: project_id && samp_name ? `/explore/sample/${project_id}/${samp_name}#sample` : "/search?table=sample"
 			},
 			{
 				url:
-					project_id && samp_name
-						? `/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(samp_name)}#sample`
-						: "/search?table=sample"
+					project_id && samp_name ? `/explore/sample/${project_id}/${samp_name}#taxonomyChart` : "/search?table=sample"
+			},
+			{ url: assay_name ? `/explore/assay/${assay_name}#assay` : "/explore/assay" },
+			{ url: assay_name ? `/explore/assay/${assay_name}#primerSection` : "/search?table=assay" },
+			{
+				url: analysis_run_name ? `/explore/analysis/${analysis_run_name}#analysis` : "/explore/analysis"
 			},
 			{
-				url:
-					project_id && samp_name
-						? `/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(samp_name)}#taxonomyChart`
-						: "/search?table=sample"
+				url: analysis_run_name ? `/explore/analysis/${analysis_run_name}#dataExplorer` : "/search?table=analysis"
 			},
-			{ url: assay_name ? `/explore/assay/${encodeURIComponent(assay_name)}#assay` : "/explore/assay" },
-			{ url: assay_name ? `/explore/assay/${encodeURIComponent(assay_name)}#primerSection` : "/search?table=assay" },
+			{ url: taxonomy ? `/explore/taxonomy/${taxonomy}#taxonomy` : "/search?table=taxonomy" },
+			{ url: featureid ? `/explore/feature/${featureid}#feature` : "/search?table=feature" },
 			{
-				url: analysis_run_name
-					? `/explore/analysis/${encodeURIComponent(analysis_run_name)}#analysis`
-					: "/explore/analysis"
-			},
-			{
-				url: analysis_run_name
-					? `/explore/analysis/${encodeURIComponent(analysis_run_name)}#dataExplorer`
-					: "/search?table=analysis"
-			},
-			{ url: taxonomy ? `/explore/taxonomy/${encodeURIComponent(taxonomy)}#taxonomy` : "/search?table=taxonomy" },
-			{ url: featureid ? `/explore/feature/${encodeURIComponent(featureid)}#feature` : "/search?table=feature" },
-			{
-				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${encodeURIComponent(project_id)}"]]` : ""}`,
+				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
 				stepTime: 2
 			},
 			{
-				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${encodeURIComponent(project_id)}"]]` : ""}#visualizations`
+				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#visualizations`
 			},
 			{
-				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${encodeURIComponent(project_id)}"]]` : ""}`,
+				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
 				stepTime: 2
 			},
 			{
-				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${encodeURIComponent(project_id)}"]]` : ""}#visualizations`
+				url: `/visualize/taxonomy${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}#visualizations`
 			},
 			{ url: "/learn?section=edna101#learn" },
 			{ url: "/learn?section=edna101#step1" },
@@ -561,7 +550,7 @@ export default function Tour() {
 										setLoading(true);
 
 										const res = await fetch(
-											`/api/feature?fields=featureid&advanced=[["occurrence","analysis_run_name","equals","${encodeURIComponent(currAnalysis)}"]]`
+											`/api/feature?fields=featureid&advanced=[["occurrence","analysis_run_name","equals","${currAnalysis}"]]`
 										);
 										if (res.ok) {
 											const response = (await res.json()) as NetworkPacket;

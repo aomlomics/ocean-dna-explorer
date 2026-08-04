@@ -19,6 +19,7 @@ import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTax
 import { Suspense } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { redirect } from "next/navigation";
+import { decodeRouteParams } from "@/app/helpers/utils";
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -27,14 +28,14 @@ export default async function Analysis_run_name({
 	params,
 	searchParams
 }: {
-	params: Promise<{ analysis_run_name: Analysis["analysis_run_name"] }>;
+	params: Promise<{ analysis_run_name: string }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	const { analysis_run_name } = await params;
+	const { analysis_run_name } = await decodeRouteParams(params);
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
+		redirect(`/explore/analysis/${analysis_run_name}`);
 	}
 
 	const analysis = await prisma.analysis.findUnique({
@@ -84,10 +85,7 @@ export default async function Analysis_run_name({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={`/explore/project/${analysis.project_id}`} className="text-primary hover:text-primary-focus">
 							{analysis.project_id}
 						</Link>
 					</li>
@@ -113,10 +111,7 @@ export default async function Analysis_run_name({
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
-						className="text-primary hover:text-primary-focus"
-					>
+					<Link href={`/explore/project/${analysis.project_id}`} className="text-primary hover:text-primary-focus">
 						{analysis.project_id}
 					</Link>{" "}
 					project
@@ -174,7 +169,7 @@ export default async function Analysis_run_name({
 								title="Occurrences"
 								value={analysis._count.Occurrences}
 								icon={<EyeIcon />}
-								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`}
+								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
 
@@ -182,7 +177,7 @@ export default async function Analysis_run_name({
 								title="Assignments"
 								value={analysis._count.Assignments}
 								icon={<FishIcon />}
-								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`}
+								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
 
@@ -204,7 +199,7 @@ export default async function Analysis_run_name({
 									})
 								}
 								icon={<LocationIcon />}
-								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${encodeURIComponent(analysis_run_name)}"]]`}
+								link={`/search?table=sample&advanced=[["analysis","analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
 							/>
 						</div>

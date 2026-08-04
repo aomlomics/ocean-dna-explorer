@@ -23,7 +23,7 @@ export default function ProjectGridItem({ item }: { item: ProjectWithAssays }) {
 
 	return (
 		<Link
-			href={`/explore/project/${encodeURIComponent(item.project_id)}`}
+			href={`/explore/project/${item.project_id}`}
 			key={item.project_id}
 			className="card overflow-hidden bg-base-200 transition-colors duration-200 hover:bg-base-300"
 		>

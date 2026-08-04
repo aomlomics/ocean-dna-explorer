@@ -1534,7 +1534,7 @@ function SelectedOrganismCard({
 	const imageAttribution = getImageAttributionDetails(organism);
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
 	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
-	const taxonomyHref = taxonomyString ? `/explore/taxonomy/${encodeURIComponent(taxonomyString)}` : "/explore/taxonomy";
+	const taxonomyHref = taxonomyString ? `/explore/taxonomy/${taxonomyString}` : "/explore/taxonomy";
 
 	useEffect(() => {
 		setImageFailed(false);

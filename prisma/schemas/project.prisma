@@ -1,5 +1,6 @@
 model Project {
     id            Int      @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The project_id field must not contain slashes." }))
     project_id    String   @unique
     userIds       String[]
     dateSubmitted DateTime @default(now())
@@ -61,6 +62,7 @@ model Project {
 
 model Sample {
     id                  Int     @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The samp_name field must not contain slashes." }))
     samp_name           String
     biosample_accession String?
     /// [UserDefinedType]
@@ -274,6 +276,7 @@ model Sample {
 
 model Assay {
     id                      Int    @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The assay_name field must not contain slashes." }))
     assay_name              String @unique
     pcr_primer_forward      String
     pcr_primer_reverse      String
@@ -347,6 +350,7 @@ model AssayPrep {
 
 model Library {
     id          Int    @id @default(autoincrement())
+    /// @zod.custom.use(z.string().refine((str) => !str.includes("/"), { message: "The lib_id field must not contain slashes." }))
     lib_id      String
     /// [UserDefinedType]
     userDefined Json?
