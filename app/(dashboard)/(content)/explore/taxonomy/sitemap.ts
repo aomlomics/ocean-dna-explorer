@@ -2,7 +2,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { getLastModifiedDate } from "@/app/helpers/utils";
 import { MetadataRoute } from "next";
 
-const URL_LIMIT = 10000; //getting lastmodified is expensive here, so we have to provide less per sitemap
+const URL_LIMIT = 1000; //getting lastmodified is expensive here, so we have to provide less per sitemap
 
 export async function generateSitemaps() {
 	try {
