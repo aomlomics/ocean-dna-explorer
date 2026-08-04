@@ -348,15 +348,6 @@ export default function Table({
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
 		);
 	}
-	if (!Array.isArray(data.result) || data.result.length === 0 || data.count === 0) {
-		return (
-			<TableStatusState
-				kind="empty"
-				title="No results found"
-				detail="Try broadening your search or removing one or more filters."
-			/>
-		);
-	}
 
 	//filters in the column header
 	function applyFilters(e: SubmitEvent<HTMLFormElement>) {
@@ -501,6 +492,7 @@ export default function Table({
 						</fieldset>
 					</div>
 				</div>
+
 				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
 					<table className="table table-sm table-pin-rows table-pin-cols">
 						{/* Headers */}
