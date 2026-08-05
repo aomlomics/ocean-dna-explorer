@@ -135,7 +135,10 @@ export default function BlastSearchResult({
 							<div key={i} className="flex flex-col">
 								<div className="grid grid-cols-[auto_1fr] gap-x-2">
 									<h1>Target featureid:</h1>
-									<Link className="link link-primary link-hover" href={`/explore/feature/${r.featureid}`}>
+									<Link
+										className="link link-primary link-hover"
+										href={`/explore/feature/${encodeURIComponent(r.featureid)}`}
+									>
 										{r.featureid}
 									</Link>
 								</div>

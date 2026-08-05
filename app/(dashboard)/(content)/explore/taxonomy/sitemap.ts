@@ -45,7 +45,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	const date = new Date();
 	const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
 	return taxonomies.map((taxa) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${taxa.taxonomy}`,
+		url: `${process.env.NEXT_PUBLIC_URL}/explore/taxonomy/${encodeURIComponent(taxa.taxonomy)}`,
 		lastModified: firstDayOfMonth
 	}));
 }

@@ -38,7 +38,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	});
 
 	return analyses.map((a) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/analysis/${a.analysis_run_name}`,
+		url: `${process.env.NEXT_PUBLIC_URL}/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`,
 		lastModified: getLastModifiedDate(a)
 	}));
 }

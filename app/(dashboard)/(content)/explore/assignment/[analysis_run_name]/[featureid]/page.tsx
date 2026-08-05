@@ -56,7 +56,7 @@ export default async function Analysis_run_name_Featureid({
 				<p className="text-lg text-base-content/90 max-w-3xl">
 					Assignment of feature{" "}
 					<Link
-						href={`/explore/feature/${assignment.featureid}`}
+						href={`/explore/feature/${encodeURIComponent(assignment.featureid)}`}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.featureid}
@@ -64,7 +64,7 @@ export default async function Analysis_run_name_Featureid({
 					to taxonomy{" "}
 					{assignment.taxonomy ? (
 						<Link
-							href={`/explore/taxonomy/${assignment.taxonomy}`}
+							href={`/explore/taxonomy/${encodeURIComponent(assignment.taxonomy)}`}
 							className="font-semibold text-primary hover:text-primary-focus break-all"
 						>
 							{assignment.taxonomy}
@@ -74,7 +74,7 @@ export default async function Analysis_run_name_Featureid({
 					)}{" "}
 					in analysis{" "}
 					<Link
-						href={`/explore/analysis/${assignment.analysis_run_name}`}
+						href={`/explore/analysis/${encodeURIComponent(assignment.analysis_run_name)}`}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.analysis_run_name}

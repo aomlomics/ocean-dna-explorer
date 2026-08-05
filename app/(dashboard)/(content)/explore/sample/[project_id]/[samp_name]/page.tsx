@@ -57,7 +57,10 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/project/${project_id}`} className="text-primary hover:text-primary-focus">
+						<Link
+							href={`/explore/project/${encodeURIComponent(project_id)}`}
+							className="text-primary hover:text-primary-focus"
+						>
 							{project_id}
 						</Link>
 					</li>
@@ -78,7 +81,10 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
-					<Link href={`/explore/project/${project_id}`} className="text-primary hover:text-primary-focus">
+					<Link
+						href={`/explore/project/${encodeURIComponent(project_id)}`}
+						className="text-primary hover:text-primary-focus"
+					>
 						{project_id}
 					</Link>{" "}
 					project

@@ -156,7 +156,7 @@ export type assay_typeType = `${z.infer<typeof assay_typeSchema>}`
 export const AnalysisSchema = z.object({
   discard_untrimmed: DeadBooleanSchema.nullish(),
   id: z.number().int(),
-  analysis_run_name: z.string().refine((str) => !str.includes("/"), { message: "The analysis_run_name field must not contain slashes." }),
+  analysis_run_name: z.string(),
   dateSubmitted: z.coerce.date(),
   trusted: z.boolean(),
   /**
@@ -594,7 +594,7 @@ export const AssignmentWithPartialRelationsSchema: z.ZodType<AssignmentWithParti
 
 export const FeatureSchema = z.object({
   id: z.number().int(),
-  featureid: z.string().refine((str) => !str.includes("/"), { message: "The featureid field must not contain slashes." }),
+  featureid: z.string(),
   dna_sequence: z.string(),
   sequenceLength_ODE: z.number().int(),
 })
@@ -691,7 +691,7 @@ export const FeatureWithPartialRelationsSchema: z.ZodType<FeatureWithPartialRela
 
 export const TaxonomySchema = z.object({
   id: z.number().int(),
-  taxonomy: z.string().refine((str) => !str.includes("/"), { message: "The taxonomy field must not contain slashes." }),
+  taxonomy: z.string(),
   verbatimIdentification: z.string(),
   higherClassification: z.string().nullish(),
   domain: z.string().nullish(),
@@ -1253,7 +1253,7 @@ export const ProjectSchema = z.object({
   neg_cont_0_1: DeadBooleanSchema.nullish(),
   pos_cont_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
-  project_id: z.string().refine((str) => !str.includes("/"), { message: "The project_id field must not contain slashes." }),
+  project_id: z.string(),
   userIds: z.string().array(),
   dateSubmitted: z.coerce.date(),
   /**
@@ -1432,7 +1432,7 @@ export const SampleSchema = z.object({
   filter_passive_active_0_1: DeadBooleanSchema.nullish(),
   dna_cleanup_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
-  samp_name: z.string().refine((str) => !str.includes("/"), { message: "The samp_name field must not contain slashes." }),
+  samp_name: z.string(),
   biosample_accession: z.string().nullish(),
   /**
    * [UserDefinedType]
@@ -1709,7 +1709,7 @@ export const SampleWithPartialRelationsSchema: z.ZodType<SampleWithPartialRelati
 
 export const AssaySchema = z.object({
   id: z.number().int(),
-  assay_name: z.string().refine((str) => !str.includes("/"), { message: "The assay_name field must not contain slashes." }),
+  assay_name: z.string(),
   pcr_primer_forward: z.string(),
   pcr_primer_reverse: z.string(),
   pcr_primer_name_forward: z.string(),
@@ -1951,7 +1951,7 @@ export const AssayPrepWithPartialRelationsSchema: z.ZodType<AssayPrepWithPartial
 export const LibrarySchema = z.object({
   inhibition_check_0_1: DeadBooleanSchema.nullish(),
   id: z.number().int(),
-  lib_id: z.string().refine((str) => !str.includes("/"), { message: "The lib_id field must not contain slashes." }),
+  lib_id: z.string(),
   /**
    * [UserDefinedType]
    */

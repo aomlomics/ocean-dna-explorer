@@ -197,7 +197,7 @@ export default function LegendControl({
 												<Link
 													href={`/explore/${Object.keys(TableMetadata).find(
 														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-													)}/${Object.keys(legendInfo.colorMap)[0]}`}
+													)}/${encodeURIComponent(Object.keys(legendInfo.colorMap)[0])}`}
 													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
 														legendInfo.hidden?.includes(Object.keys(legendInfo.colorMap)[0])
 															? "line-through text-base-content/50"
@@ -233,7 +233,7 @@ export default function LegendControl({
 													<Link
 														href={`/explore/${Object.keys(TableMetadata).find(
 															(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-														)}/${key}`}
+														)}/${encodeURIComponent(key)}`}
 														className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
 															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
 														}`}

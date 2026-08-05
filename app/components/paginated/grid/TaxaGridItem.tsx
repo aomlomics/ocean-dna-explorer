@@ -131,7 +131,7 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 
 	return (
 		<Link
-			href={`/explore/taxonomy/${item.taxonomy}`}
+			href={`/explore/taxonomy/${encodeURIComponent(item.taxonomy)}`}
 			key={item.taxonomy}
 			className="card relative z-0 hover:z-50 bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square overflow-visible"
 		>

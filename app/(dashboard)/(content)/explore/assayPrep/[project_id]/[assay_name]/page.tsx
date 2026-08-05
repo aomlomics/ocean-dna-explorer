@@ -70,7 +70,7 @@ export default async function Project_id_Assay_name({
 					Assay preparation for{" "}
 					{assay ? (
 						<Link
-							href={`/explore/assay/${assay.assay_name}`}
+							href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
 							className="text-primary hover:text-primary-focus break-all"
 						>
 							assay {assay.assay_name}
@@ -81,7 +81,7 @@ export default async function Project_id_Assay_name({
 					in project{" "}
 					{project ? (
 						<Link
-							href={`/explore/project/${project.project_id}`}
+							href={`/explore/project/${encodeURIComponent(project.project_id)}`}
 							className="text-primary hover:text-primary-focus break-all"
 						>
 							{project.project_id}
@@ -115,7 +115,7 @@ export default async function Project_id_Assay_name({
 						)}
 
 						{project && (
-							<Link href={`/explore/project/${project.project_id}`} className="group block w-2/3">
+							<Link href={`/explore/project/${encodeURIComponent(project.project_id)}`} className="group block w-2/3">
 								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 										<ProjectIcon />

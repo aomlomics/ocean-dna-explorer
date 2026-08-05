@@ -65,7 +65,7 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 					links: [
 						{
 							label: projectId ? "Browse this project's samples" : "Browse samples",
-							href: projectId ? `/explore/project/${projectId}` : "/explore/sample"
+							href: projectId ? `/explore/project/${encodeURIComponent(projectId)}` : "/explore/sample"
 						}
 					]
 				}}

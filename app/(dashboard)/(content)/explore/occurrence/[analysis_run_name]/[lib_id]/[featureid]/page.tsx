@@ -120,7 +120,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 
 	const topStatCards = (
 		<div className="flex flex-wrap gap-4">
-			<Link href={`/explore/feature/${featureid}`} className="block w-max max-w-full">
+			<Link href={`/explore/feature/${encodeURIComponent(featureid)}`} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
@@ -135,7 +135,10 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/library/${occurrence.project_id}/${lib_id}`} className="block w-max max-w-full">
+			<Link
+				href={`/explore/library/${encodeURIComponent(occurrence.project_id)}/${lib_id}`}
+				className="block w-max max-w-full"
+			>
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
 						<MaskSvgIcon src="/images/icons/library_icon.svg" />
@@ -150,7 +153,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/analysis/${analysis_run_name}`} className="block w-max max-w-full">
+			<Link href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
 						<AnalysisIcon className="h-10 w-10" />
@@ -180,7 +183,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${analysis_run_name}`}
+							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
 							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
 							title={analysis_run_name}
 						>
@@ -269,7 +272,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 									<div className="space-y-2">
 										{occurrence.Assignment.Taxonomy ? (
 											<Link
-												href={`/explore/taxonomy/${occurrence.Assignment.Taxonomy.taxonomy}`}
+												href={`/explore/taxonomy/${encodeURIComponent(occurrence.Assignment.Taxonomy.taxonomy)}`}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -311,7 +314,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 						</div>
 						<div className="w-full lg:max-w-sm">
 							<Link
-								href={`/explore/sample/${occurrence.project_id}/${occurrence.Library.Sample.samp_name}`}
+								href={`/explore/sample/${encodeURIComponent(occurrence.project_id)}/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">

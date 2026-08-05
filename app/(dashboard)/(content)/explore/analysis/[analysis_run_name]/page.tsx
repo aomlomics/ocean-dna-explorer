@@ -35,7 +35,7 @@ export default async function Analysis_run_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/analysis/${analysis_run_name}`);
+		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
 	}
 
 	const analysis = await prisma.analysis.findUnique({
@@ -85,7 +85,10 @@ export default async function Analysis_run_name({
 						</Link>
 					</li>
 					<li>
-						<Link href={`/explore/project/${analysis.project_id}`} className="text-primary hover:text-primary-focus">
+						<Link
+							href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
+							className="text-primary hover:text-primary-focus"
+						>
 							{analysis.project_id}
 						</Link>
 					</li>
@@ -111,7 +114,10 @@ export default async function Analysis_run_name({
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link href={`/explore/project/${analysis.project_id}`} className="text-primary hover:text-primary-focus">
+					<Link
+						href={`/explore/project/${encodeURIComponent(analysis.project_id)}`}
+						className="text-primary hover:text-primary-focus"
+					>
 						{analysis.project_id}
 					</Link>{" "}
 					project

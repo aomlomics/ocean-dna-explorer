@@ -377,7 +377,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					<SubmitFormSection title="Project">
 						<div className="w-full">
 							{project ? (
-								<Link className="link link-primary" href={`/explore/project/${project.project_id}`}>
+								<Link className="link link-primary" href={`/explore/project/${encodeURIComponent(project.project_id)}`}>
 									{project.project_id}
 								</Link>
 							) : (

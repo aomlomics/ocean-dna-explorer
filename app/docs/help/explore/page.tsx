@@ -1,17 +1,7 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
-import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 
-export default async function HelpExplorePage() {
-	const project = await prisma.project.findFirst({
-		orderBy: {
-			id: "asc"
-		},
-		select: {
-			project_id: true
-		}
-	});
-
+export default function HelpExplorePage() {
 	return (
 		<DocsPageSection
 			page="help"
@@ -24,11 +14,7 @@ export default async function HelpExplorePage() {
 							Explore
 						</Link>{" "}
 						pages let you browse and filter data within individual tables. Each table has its own dedicated Explore page
-						with specialized filters and visualization options. Make sure to{" "}
-						<Link className="link link-primary font-semibold" href={`/explore/project/${project?.project_id}`}>
-							check them out
-						</Link>
-						!
+						with specialized filters and visualization options.
 					</p>
 					<p className="mb-4">Key features:</p>
 					<ul className="list-disc ml-6 mb-4">

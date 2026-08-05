@@ -56,7 +56,8 @@ export default function PopupWithSearchBody({
 		}
 	}, [filter, loc.values]);
 
-	const locUrl = typeof id === "string" ? loc[id] : id.map((f) => loc[f]).join("/");
+	const locUrl =
+		typeof id === "string" ? encodeURIComponent(loc[id]) : id.map((f) => encodeURIComponent(loc[f])).join("/");
 
 	return (
 		<>
@@ -64,8 +65,8 @@ export default function PopupWithSearchBody({
 				<Link
 					href={`/explore/${titleTable}/${
 						typeof TableMetadata[titleTable].titleField === "string"
-							? loc[TableMetadata[titleTable].titleField]
-							: TableMetadata[titleTable].titleField.map((f) => loc[f]).join("/")
+							? encodeURIComponent(loc[TableMetadata[titleTable].titleField])
+							: TableMetadata[titleTable].titleField.map((f) => encodeURIComponent(loc[f])).join("/")
 					}`}
 					className="w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xl! self-start text-nowrap"
 				>
@@ -123,7 +124,10 @@ export default function PopupWithSearchBody({
 						</div>
 						<div className="flex flex-col overflow-y-scroll overscroll-contain [:where(&)]:pr-5">
 							{filteredValues.map((l) => {
-								const lUrl = typeof id === "string" ? l[id] : id.map((f) => l[f]).join("/");
+								const lUrl =
+									typeof id === "string"
+										? encodeURIComponent(l[id])
+										: id.map((f) => encodeURIComponent(l[f])).join("/");
 
 								if (legendInfo) {
 									const { color } = getLegendColor(legendInfo, l, userDefinedOptions);

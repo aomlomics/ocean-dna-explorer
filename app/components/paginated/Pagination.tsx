@@ -109,8 +109,8 @@ export default function Pagination({
 					<Link
 						href={`/explore/${table}/${
 							typeof TableMetadata[table].titleField === "string"
-								? d[TableMetadata[table].titleField]
-								: TableMetadata[table].titleField.map((field) => d[field]).join("/")
+								? encodeURIComponent(d[TableMetadata[table].titleField])
+								: TableMetadata[table].titleField.map((field) => encodeURIComponent(d[field])).join("/")
 						}`}
 						key={i}
 						className="card bg-base-200 hover:bg-base-300 transition-all duration-200 w-full max-w-lg"

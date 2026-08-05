@@ -62,7 +62,7 @@ export default async function Assay_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/assay/${assay_name}`);
+		redirect(`/explore/assay/${encodeURIComponent(assay_name)}`);
 	}
 
 	const assay = await prisma.assay.findUnique({

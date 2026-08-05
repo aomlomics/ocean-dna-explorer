@@ -129,7 +129,7 @@ export default async function MySubmissions() {
 												}`}
 											>
 												<Link
-													href={`/explore/project/${proj.project_id}`}
+													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 													className="text-primary hover:text-info-focus hover:underline transition-colors"
 												>
 													{proj.project_id}
@@ -174,7 +174,7 @@ export default async function MySubmissions() {
 																}`}
 															>
 																<Link
-																	href={`/explore/analysis/${analysis.analysis_run_name}`}
+																	href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
 																	className="text-primary hover:text-info-focus hover:underline transition-colors"
 																>
 																	{analysis.analysis_run_name}

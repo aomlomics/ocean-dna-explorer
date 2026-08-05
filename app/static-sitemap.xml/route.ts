@@ -1,22 +1,22 @@
 import DocsSections from "@/types/docsSections";
 
-const SITE_URL = process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org";
-function getSection(route?: string) {
-	//get most recent Monday at midnight
-	const date = new Date();
-	const day = date.getDay();
-	const daysSinceMonday = (day + 6) % 7;
-	date.setDate(date.getDate() - daysSinceMonday);
-	date.setHours(0, 0, 0, 0);
+export async function GET() {
+	const SITE_URL = process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org";
+	function getSection(route?: string) {
+		//get most recent Monday at midnight
+		const date = new Date();
+		const day = date.getDay();
+		const daysSinceMonday = (day + 6) % 7;
+		date.setDate(date.getDate() - daysSinceMonday);
+		date.setUTCHours(0, 0, 0, 0);
 
-	return `<url>
+		return `<url>
 		<loc>${SITE_URL}${route ? (route.startsWith("/") ? route : "/" + route) : ""}</loc>
 		<lastmod>${date.toISOString()}</lastmod>
 		<changefreq>weekly</changefreq>
 	</url>`;
-}
+	}
 
-export async function GET() {
 	return new Response(
 		`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	${getSection()}

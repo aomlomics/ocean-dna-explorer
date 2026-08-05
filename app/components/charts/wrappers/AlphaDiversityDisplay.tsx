@@ -448,7 +448,10 @@ export default function AlphaDiversityDisplay({
 							<div className="flex flex-col justify-center items-center pt-4">
 								<span>
 									Calculating for{" "}
-									<Link className="link link-primary link-hover" href={`/explore/analysis/${analysis_run_name}`}>
+									<Link
+										className="link link-primary link-hover"
+										href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+									>
 										{analysis_run_name}
 									</Link>
 									...

@@ -65,7 +65,10 @@ export default function DeleteTagButton({
 							<ul className="list-disc list-inside space-y-1 bg-base-100 p-3 rounded-lg">
 								{tag.Analyses.map((a) => (
 									<li key={a.analysis_run_name}>
-										<Link href={`/explore/analysis/${a.analysis_run_name}`} className="link-primary link-hover">
+										<Link
+											href={`/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`}
+											className="link-primary link-hover"
+										>
 											{a.analysis_run_name}
 										</Link>
 									</li>

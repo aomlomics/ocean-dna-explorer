@@ -149,7 +149,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 									<div key={proj.id} className="flex flex-col gap-3">
 										<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
 											<Link
-												href={`/explore/project/${proj.project_id}`}
+												href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
 												className="text-primary hover:text-info-focus hover:underline transition-colors"
 											>
 												{proj.project_id}
@@ -174,7 +174,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 															className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
 														>
 															<Link
-																href={`/explore/analysis/${analysis.analysis_run_name}`}
+																href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
 																className="text-primary hover:text-info-focus hover:underline transition-colors"
 															>
 																{analysis.analysis_run_name}

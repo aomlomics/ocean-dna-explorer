@@ -74,7 +74,7 @@ export default async function Featureid({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/feature/${featureid}`);
+		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
 	}
 
 	const { feature, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
@@ -278,7 +278,7 @@ export default async function Featureid({
 									{topTaxonomies.map((taxonomyItem) => (
 										<Link
 											key={taxonomyItem.taxonomy}
-											href={`/explore/taxonomy/${taxonomyItem.taxonomy}`}
+											href={`/explore/taxonomy/${encodeURIComponent(taxonomyItem.taxonomy)}`}
 											className="flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group"
 										>
 											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">

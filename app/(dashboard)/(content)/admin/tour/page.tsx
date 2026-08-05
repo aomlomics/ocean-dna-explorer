@@ -253,6 +253,13 @@ export default function Tour() {
 		setCurrTaxonomy(taxonomy || "");
 		setCurrFeature(featureid || "");
 
+		const encodedProjectId = encodeURIComponent(project_id || "");
+		const encodedSampName = encodeURIComponent(samp_name || "");
+		const encodedAssayName = encodeURIComponent(assay_name || "");
+		const encodedAnalysisRunName = encodeURIComponent(analysis_run_name || "");
+		const encodedTaxonomy = encodeURIComponent(taxonomy || "");
+		const encodedFeatureid = encodeURIComponent(featureid || "");
+
 		setTourSteps([
 			{ url: "/ambient" },
 			{ url: "/sponsors" },
@@ -260,27 +267,32 @@ export default function Tour() {
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
-			{ url: project_id ? `/explore/project/${project_id}#project` : "/search?table=project" },
+			{ url: project_id ? `/explore/project/${encodedProjectId}#project` : "/search?table=project" },
 			{
 				url: project_id ? `/search?table=sample&advanced=[["project_id","equals","${project_id}"]]` : "/explore/sample"
 			},
 			{
-				url: project_id && samp_name ? `/explore/sample/${project_id}/${samp_name}#sample` : "/search?table=sample"
+				url:
+					project_id && samp_name
+						? `/explore/sample/${encodedProjectId}/${encodedSampName}#sample`
+						: "/search?table=sample"
 			},
 			{
 				url:
-					project_id && samp_name ? `/explore/sample/${project_id}/${samp_name}#taxonomyChart` : "/search?table=sample"
+					project_id && samp_name
+						? `/explore/sample/${encodedProjectId}/${encodedSampName}#taxonomyChart`
+						: "/search?table=sample"
 			},
-			{ url: assay_name ? `/explore/assay/${assay_name}#assay` : "/explore/assay" },
-			{ url: assay_name ? `/explore/assay/${assay_name}#primerSection` : "/search?table=assay" },
+			{ url: assay_name ? `/explore/assay/${encodedAssayName}#assay` : "/explore/assay" },
+			{ url: assay_name ? `/explore/assay/${encodedAssayName}#primerSection` : "/search?table=assay" },
 			{
-				url: analysis_run_name ? `/explore/analysis/${analysis_run_name}#analysis` : "/explore/analysis"
+				url: analysis_run_name ? `/explore/analysis/${encodedAnalysisRunName}#analysis` : "/explore/analysis"
 			},
 			{
-				url: analysis_run_name ? `/explore/analysis/${analysis_run_name}#dataExplorer` : "/search?table=analysis"
+				url: analysis_run_name ? `/explore/analysis/${encodedAnalysisRunName}#dataExplorer` : "/search?table=analysis"
 			},
-			{ url: taxonomy ? `/explore/taxonomy/${taxonomy}#taxonomy` : "/search?table=taxonomy" },
-			{ url: featureid ? `/explore/feature/${featureid}#feature` : "/search?table=feature" },
+			{ url: taxonomy ? `/explore/taxonomy/${encodedTaxonomy}#taxonomy` : "/search?table=taxonomy" },
+			{ url: featureid ? `/explore/feature/${encodedFeatureid}#feature` : "/search?table=feature" },
 			{
 				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
 				stepTime: 2
