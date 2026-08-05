@@ -490,7 +490,7 @@ export const AssignmentSchema = z.object({
   analysis_run_name: z.string(),
   featureid: z.string(),
   taxonomy: z.string(),
-  Confidence: z.number().nullish(),
+  Confidence: z.number().lte(1, { message: "Confidence must be less than or equal to one." }).nullish(),
   percent_id: z.number().nullish(),
   consensus: z.number().nullish(),
 })

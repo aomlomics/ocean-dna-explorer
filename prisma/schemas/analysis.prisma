@@ -142,6 +142,7 @@ model Assignment {
     Occurrences       Occurrence[]
 
     // Data
+    ///@zod.number.lte(1, { message: "Confidence must be less than or equal to one." })
     Confidence Float?
     percent_id Float?
     consensus  Float?
