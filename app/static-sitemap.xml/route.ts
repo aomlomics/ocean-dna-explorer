@@ -2,41 +2,100 @@ import DocsSections from "@/types/docsSections";
 
 export async function GET() {
 	const SITE_URL = process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org";
-	function getSection(route?: string) {
-		//get most recent Monday at midnight
-		const date = new Date();
-		const day = date.getDay();
-		const daysSinceMonday = (day + 6) % 7;
-		date.setDate(date.getDate() - daysSinceMonday);
-		date.setUTCHours(0, 0, 0, 0);
 
-		return `<url>
-		<loc>${SITE_URL}${route ? (route.startsWith("/") ? route : "/" + route) : ""}</loc>
-		<lastmod>${date.toISOString()}</lastmod>
-		<changefreq>weekly</changefreq>
-	</url>`;
-	}
+	//get most recent Monday at midnight
+	const date = new Date();
+	//subtract days since Monday from current day
+	date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+	date.setHours(0, 0, 0, 0);
+	const iso = date.toISOString();
 
 	return new Response(
 		`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-	${getSection()}
-	${getSection("explore/project")}
-	${getSection("explore/sample")}
-	${getSection("explore/assay")}
-	${getSection("explore/analysis")}
-	${getSection("explore/feature")}
-	${getSection("explore/taxonomy")}
-	${getSection("search")}
-	${getSection("visualize")}
-	${getSection("docs")}
+	<url>
+		<loc>${SITE_URL}</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/explore/project</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/explore/sample</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/explore/assay</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/explore/analysis</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/explore/feature</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/explore/taxonomy</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/search</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/visualize</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/docs</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
 	${Object.entries(DocsSections).map(([page, sections]) =>
-		Object.keys(sections).map((sect) => getSection(`docs/${page}/${sect}`))
+		Object.keys(sections).map(
+			(sect) => `<url>
+		<loc>${SITE_URL}/docs/${page}/${sect}</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>`
+		)
 	)}
-	${getSection("learn?section=edna10")}
-	${getSection("learn?section=impact")}
-	${getSection("learn?section=discoveries")}
-	${getSection("about")}
-	${getSection("contribute")}
+	<url>
+		<loc>${SITE_URL}/learn?section=edna10</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/learn?section=impact</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/learn?section=discoveries</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/about</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
+	<url>
+		<loc>${SITE_URL}/contribute</loc>
+		<lastmod>${iso}</lastmod>
+		<changefreq>weekly</changefreq>
+	</url>
 </urlset>`,
 		{ headers: { "Content-Type": "text/xml" } }
 	);
