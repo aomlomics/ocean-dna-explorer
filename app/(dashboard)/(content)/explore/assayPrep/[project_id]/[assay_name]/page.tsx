@@ -6,6 +6,7 @@ import { ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 export default async function Project_id_Assay_name({
 	params
@@ -42,7 +43,7 @@ export default async function Project_id_Assay_name({
 		}
 	});
 
-	if (!assayPrep) return <>AssayPrep not found</>;
+	if (!assayPrep) notFound();
 
 	const { Project: project, Assay: assay, Libraries: libraries, ...justAssayPrep } = assayPrep;
 

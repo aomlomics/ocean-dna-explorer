@@ -3,7 +3,7 @@ import { Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import GcDonut from "@/app/components/charts/GcDonut";
 import Table from "@/app/components/paginated/Table";
@@ -147,7 +147,7 @@ export default async function Featureid({
 		return { feature, taxaCounts, assaySummaries };
 	});
 
-	if (!feature) return <>Feature not found</>;
+	if (!feature) notFound();
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(

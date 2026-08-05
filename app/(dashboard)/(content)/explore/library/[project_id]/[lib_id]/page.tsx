@@ -6,6 +6,7 @@ import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);
@@ -37,7 +38,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 		}
 	});
 
-	if (!library) return <>Library not found</>;
+	if (!library) notFound();
 
 	const { Project: project, Sample: sample, Assay: assay, ...justLibrary } = library;
 

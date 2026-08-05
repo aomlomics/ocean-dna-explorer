@@ -18,7 +18,7 @@ import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/Loadin
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 import { Suspense } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
 
 const dataExplorerTabBase =
@@ -71,7 +71,7 @@ export default async function Analysis_run_name({
 			}
 		}
 	});
-	if (!analysis) return <>Analysis not found</>;
+	if (!analysis) notFound();
 	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
 
 	return (

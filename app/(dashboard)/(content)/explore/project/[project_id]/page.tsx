@@ -14,6 +14,7 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -158,7 +159,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			}
 		}
 	});
-	if (!project) return <>Project not found</>;
+	if (!project) notFound();
 	const { _count: _, Analyses: ___, editHistory: ____, ...justProject } = project;
 
 	const uniqueAssays = project.Analyses.reduce(

@@ -4,6 +4,7 @@ import { prisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 export default async function Analysis_run_name_Featureid({
 	params
@@ -21,7 +22,7 @@ export default async function Analysis_run_name_Featureid({
 		}
 	});
 
-	if (!assignment) return <>Assignment not found</>;
+	if (!assignment) notFound();
 
 	const rawConfidence = assignment.Confidence ?? 0;
 	const confidencePercent = Math.max(0, Math.min(100, rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence));

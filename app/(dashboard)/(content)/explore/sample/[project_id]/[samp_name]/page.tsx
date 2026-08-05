@@ -12,6 +12,7 @@ import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);
@@ -37,7 +38,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 		}
 	});
 
-	if (!sample) return <>Sample not found</>;
+	if (!sample) notFound();
 	const { Libraries: _, ...justSample } = sample;
 	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
 	for (const lib of sample.Libraries) {

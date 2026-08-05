@@ -12,6 +12,7 @@ import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
 import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
 import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 function finestDisplayedRank(db: Taxonomy): {
 	rankKey: (typeof TaxonomicRanks)[number];
@@ -138,7 +139,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 		})
 	]);
 
-	if (!dbTaxonomy) return <>Taxonomy not found</>;
+	if (!dbTaxonomy) notFound();
 
 	// Get unique project IDs for display
 	const uniqueProjects = [...new Set(dbTaxonomy.Assignments.map((a) => a.Analysis.project_id))];

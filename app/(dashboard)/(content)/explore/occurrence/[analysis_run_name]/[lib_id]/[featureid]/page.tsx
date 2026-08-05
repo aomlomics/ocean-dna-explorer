@@ -10,6 +10,7 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)
@@ -99,7 +100,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			}
 		}
 	});
-	if (!occurrence) return <>Occurrence not found</>;
+	if (!occurrence) notFound();
 
 	const occurrenceTitle = `${featureid} in ${lib_id} (${analysis_run_name})`;
 	const occurrenceInfo = {
