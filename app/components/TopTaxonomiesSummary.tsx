@@ -18,7 +18,7 @@ type KingdomSection = {
 
 async function getPhylaByKingdom(kingdom: string, take: number = 8): Promise<PhylumData[]> {
 	const taxonomiesInKingdom = await prisma.taxonomy.findMany({
-		where: { kingdom: kingdom },
+		where: { kingdom },
 		select: { taxonomy: true, phylum: true }
 	});
 

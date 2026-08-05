@@ -28,10 +28,10 @@ export default async function Analysis_run_name({
 	params,
 	searchParams
 }: {
-	params: Promise<{ analysis_run_name: string }>;
+	params: Promise<{ project_id: string; analysis_run_name: string }>;
 	searchParams: Promise<{ view?: string | string[] }>;
 }) {
-	const { analysis_run_name } = await decodeRouteParams(params);
+	const { project_id, analysis_run_name } = await decodeRouteParams(params);
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
@@ -40,7 +40,10 @@ export default async function Analysis_run_name({
 
 	const analysis = await prisma.analysis.findUnique({
 		where: {
-			analysis_run_name: analysis_run_name
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
 		},
 		include: {
 			_count: {
@@ -135,6 +138,7 @@ export default async function Analysis_run_name({
 										some: {
 											Occurrences: {
 												some: {
+													project_id,
 													analysis_run_name
 												}
 											}
@@ -196,6 +200,7 @@ export default async function Analysis_run_name({
 												some: {
 													Occurrences: {
 														some: {
+															project_id,
 															analysis_run_name
 														}
 													}
@@ -273,7 +278,7 @@ export default async function Analysis_run_name({
 					/>
 					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingTaxonomyVisualize />}>
-							<TaxonomyVisualizeSuspense analysis_run_name={analysis_run_name} />
+							<TaxonomyVisualizeSuspense project_id={project_id} analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
 
@@ -295,11 +300,18 @@ export default async function Analysis_run_name({
 	);
 }
 
-async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_name: Analysis["analysis_run_name"] }) {
+async function TaxonomyVisualizeSuspense({
+	project_id,
+	analysis_run_name
+}: {
+	project_id: Analysis["project_id"];
+	analysis_run_name: Analysis["analysis_run_name"];
+}) {
 	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
 		async (tx) => {
 			const occurrences = await tx.occurrence.findMany({
 				where: {
+					project_id,
 					analysis_run_name
 				},
 				select: {
@@ -311,6 +323,7 @@ async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_n
 
 			const assignments = await tx.assignment.findMany({
 				where: {
+					project_id,
 					analysis_run_name
 				},
 				select: {
@@ -327,6 +340,7 @@ async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_n
 				where: {
 					Assignments: {
 						some: {
+							project_id,
 							analysis_run_name
 						}
 					}
@@ -343,6 +357,7 @@ async function TaxonomyVisualizeSuspense({ analysis_run_name }: { analysis_run_n
 						some: {
 							Occurrences: {
 								some: {
+									project_id,
 									analysis_run_name
 								}
 							}

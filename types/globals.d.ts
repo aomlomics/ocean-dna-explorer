@@ -2,6 +2,7 @@ import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/pr
 import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
 import { BlastQueryPartial } from "@/prisma/generated/zod";
 import { ReactNode } from "react";
+import TableMetadata from "@/types/tableMetadata";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -24,7 +25,7 @@ export type NetworkPacket = ErrorPacket | SuccessPacket;
 export type NetworkProgressPacket = ErrorPacket | SuccessPacket | ProgressPacket | undefined;
 
 export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
-export type TargetAction = (target: string, ...args: any[]) => Promise<NetworkPacket>;
+export type TargetAction = (...args: any[]) => Promise<NetworkPacket>;
 export type ProgressAction = (...args: any[]) => Promise<ReadableStream<any>>;
 export type ProgressActionMany = (...args: any[]) => Promise<ReadableStream<any>[]>;
 export type ProgressActionManyGlobal = (
@@ -137,6 +138,8 @@ export type BlastRequest = {
 	save?: boolean;
 	options?: Omit<BlastQueryPartial, "id" | "userId" | "dateCalculated" | "sequences" | "database" | "databaseVersion">;
 };
+
+export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 export type UserMetadata = {
 	role?: Role;

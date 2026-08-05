@@ -32,6 +32,7 @@ export default async function MySubmissions() {
 				libraryMetadataFileUrl_ODE: true,
 				Analyses: {
 					select: {
+						project_id: true,
 						analysis_run_name: true,
 						trusted: true,
 						analysisMetadataFileUrl_ODE: true,
@@ -155,8 +156,8 @@ export default async function MySubmissions() {
 
 													<SubmissionDeleteButton
 														field="project_id"
-														value={proj.project_id}
 														action={projectDeleteAction}
+														target={proj.project_id}
 														associatedAnalyses={proj.Analyses}
 													/>
 												</div>
@@ -184,8 +185,8 @@ export default async function MySubmissions() {
 																	<AnalysisEditButton analysis={analysis} tags={tags} />
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
-																		value={analysis.analysis_run_name}
 																		action={analysisDeleteAction}
+																		target={[proj.project_id, analysis.analysis_run_name]}
 																	/>
 																</div>
 															</div>

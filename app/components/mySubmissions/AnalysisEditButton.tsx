@@ -18,6 +18,7 @@ import AnalysisTag from "../tags/AnalysisTag";
 
 export default function AnalysisEditButton({
 	analysis: {
+		project_id,
 		analysis_run_name,
 		trusted,
 		analysisMetadataFileUrl_ODE,
@@ -28,6 +29,7 @@ export default function AnalysisEditButton({
 	tags
 }: {
 	analysis: {
+		project_id: Analysis["project_id"];
 		analysis_run_name: Analysis["analysis_run_name"];
 		trusted: Analysis["trusted"];
 		analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
@@ -127,7 +129,7 @@ export default function AnalysisEditButton({
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: setAnalysisResponse,
-					args: [editId, analysis_run_name, argsObj]
+					args: [editId, project_id, analysis_run_name, argsObj]
 				});
 
 				//handle errors
@@ -161,7 +163,7 @@ export default function AnalysisEditButton({
 				const analysisError = await doProgressAction({
 					action: analysisEditAction,
 					setter: undefined,
-					args: [editId, analysis_run_name, argsObj]
+					args: [editId, project_id, analysis_run_name, argsObj]
 				});
 
 				//handle errors
@@ -192,7 +194,7 @@ export default function AnalysisEditButton({
 				const assignmentsError = await doProgressAction({
 					action: assignEditAction,
 					setter: setAssignResponse,
-					args: [assignmentsUrl, editId, analysis_run_name]
+					args: [assignmentsUrl, editId, project_id, analysis_run_name]
 				});
 
 				//handle errors
@@ -235,7 +237,7 @@ export default function AnalysisEditButton({
 				const occurrencesError = await doProgressAction({
 					action: occEditAction,
 					setter: setOccResponse,
-					args: [occurrencesUrl, editId, analysis_run_name]
+					args: [occurrencesUrl, editId, project_id, analysis_run_name]
 				});
 
 				//handle errors

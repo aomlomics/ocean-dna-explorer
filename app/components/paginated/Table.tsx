@@ -62,6 +62,11 @@ export default function Table({
 
 	let defaultHeadersSet = new Set() as Set<string>;
 
+	//title field array
+	if (Array.isArray(title)) {
+		title.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	}
+
 	//assemble relational data for table
 	const manyRelations = [] as string[];
 	const oneRelations = [] as string[];
@@ -84,10 +89,6 @@ export default function Table({
 	const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
 	if (manyRelations.length !== manyRelationsNoTags.length) {
 		defaultHeadersSet.add("Tags");
-	}
-	//title field array
-	if (Array.isArray(title)) {
-		title.forEach(defaultHeadersSet.add, defaultHeadersSet);
 	}
 	//relation fields with one, array title
 	for (const [field, titleFields] of Object.entries(oneRelationsWithArrayTitle)) {

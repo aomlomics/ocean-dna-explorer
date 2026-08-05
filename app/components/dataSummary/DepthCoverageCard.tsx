@@ -1,14 +1,6 @@
 import { prisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
-
-type DepthCoverageCardProps = {
-	/**
-	 * Optional project scope. When supplied, the card aggregates only that
-	 * project's samples — used on the project detail page where the card
-	 * stands in for / sits under the project cover image.
-	 */
-	projectId?: string;
-};
+import { Sample } from "@/app/generated/prisma/client";
 
 type DepthStats = {
 	min: number | null;
@@ -16,26 +8,24 @@ type DepthStats = {
 	max: number | null;
 };
 
-export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
-	const whereBase = projectId ? { project_id: projectId } : {};
-
+export async function DepthCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
 	// -9999 is the project sentinel for "not applicable". Filtering depths
 	// to >= 0 strips both that sentinel and any other negative noise.
 	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await prisma.$transaction([
 		prisma.sample.aggregate({
-			where: { ...whereBase, minimumDepthInMeters: { gte: 0 } },
+			where: { project_id, minimumDepthInMeters: { gte: 0 } },
 			_min: { minimumDepthInMeters: true }
 		}),
 		prisma.sample.aggregate({
-			where: { ...whereBase, maximumDepthInMeters: { gte: 0 } },
+			where: { project_id, maximumDepthInMeters: { gte: 0 } },
 			_max: { maximumDepthInMeters: true }
 		}),
 		prisma.sample.aggregate({
-			where: { ...whereBase, minimumDepthInMeters: { gte: 0 } },
+			where: { project_id, minimumDepthInMeters: { gte: 0 } },
 			_avg: { minimumDepthInMeters: true }
 		}),
 		prisma.sample.aggregate({
-			where: { ...whereBase, maximumDepthInMeters: { gte: 0 } },
+			where: { project_id, maximumDepthInMeters: { gte: 0 } },
 			_avg: { maximumDepthInMeters: true }
 		})
 	]);
@@ -64,8 +54,8 @@ export async function DepthCoverageCard({ projectId }: DepthCoverageCardProps) {
 						"Displays minimumDepthInMeters and maximumDepthInMeters in meters. Average depth is computed as the mean of average minimumDepthInMeters and average maximumDepthInMeters.",
 					links: [
 						{
-							label: projectId ? "Browse this project's samples" : "Browse samples",
-							href: projectId ? `/explore/project/${encodeURIComponent(projectId)}` : "/explore/sample"
+							label: project_id ? "Browse this project's samples" : "Browse samples",
+							href: project_id ? `/explore/project/${encodeURIComponent(project_id)}` : "/explore/sample"
 						}
 					]
 				}}

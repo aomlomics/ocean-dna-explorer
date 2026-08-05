@@ -110,14 +110,9 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			},
 			include: {
 				Assignments: {
-					distinct: ["analysis_run_name"],
+					distinct: ["project_id"],
 					select: {
-						analysis_run_name: true,
-						Analysis: {
-							select: {
-								project_id: true
-							}
-						}
+						project_id: true
 					}
 				}
 			}
@@ -142,7 +137,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	if (!dbTaxonomy) notFound();
 
 	// Get unique project IDs for display
-	const uniqueProjects = [...new Set(dbTaxonomy.Assignments.map((a) => a.Analysis.project_id))];
+	const uniqueProjects = dbTaxonomy.Assignments.map((assign) => assign.project_id);
 	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as Taxonomy);
 	const phyloPic = pageGbif?.phyloPic ?? null;
 	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as Taxonomy);

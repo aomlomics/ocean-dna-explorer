@@ -15,6 +15,7 @@ import { del } from "@vercel/blob";
 async function doEdit(
 	stream: ProgressStream,
 	editId: string,
+	project_id: Analysis["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
@@ -37,7 +38,10 @@ async function doEdit(
 	try {
 		const dbAnalysisUntyped = await prisma.analysis.findUnique({
 			where: {
-				analysis_run_name
+				project_id_analysis_run_name: {
+					project_id,
+					analysis_run_name
+				}
 			},
 			select: {
 				analysisMetadataFileUrl_ODE: true,
@@ -182,7 +186,10 @@ async function doEdit(
 				//update analysis
 				await tx.analysis.update({
 					where: {
-						analysis_run_name
+						project_id_analysis_run_name: {
+							project_id,
+							analysis_run_name
+						}
 					},
 					data: {
 						...(parseResult
@@ -225,6 +232,7 @@ async function doEdit(
 						//remove trusted from other analyses
 						await tx.analysis.updateMany({
 							where: {
+								project_id,
 								analysis_run_name: {
 									in: otherTrusted
 								}
@@ -244,7 +252,7 @@ async function doEdit(
 		//only update assay BLAST database if assay has changed
 		if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
 			fetch(
-				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
+				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
 				{
 					method: "POST",
 					headers: {
@@ -268,6 +276,7 @@ async function doEdit(
 
 export default async function analysisEditAction(
 	editId: string,
+	project_id: Analysis["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
@@ -290,7 +299,7 @@ export default async function analysisEditAction(
 		}
 	}
 
-	doEdit(stream, editId, analysis_run_name, { url, trusted, tagNames }).then((success) => {
+	doEdit(stream, editId, project_id, analysis_run_name, { url, trusted, tagNames }).then((success) => {
 		stream.close();
 
 		if (url && !success) {

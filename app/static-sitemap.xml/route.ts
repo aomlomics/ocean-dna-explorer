@@ -72,17 +72,17 @@ export async function GET() {
 		)
 	)}
 	<url>
-		<loc>${SITE_URL}/learn?section=edna10</loc>
+		<loc>${SITE_URL}/learn/edna101</loc>
 		<lastmod>${iso}</lastmod>
 		<changefreq>weekly</changefreq>
 	</url>
 	<url>
-		<loc>${SITE_URL}/learn?section=impact</loc>
+		<loc>${SITE_URL}/learn/impact</loc>
 		<lastmod>${iso}</lastmod>
 		<changefreq>weekly</changefreq>
 	</url>
 	<url>
-		<loc>${SITE_URL}/learn?section=discoveries</loc>
+		<loc>${SITE_URL}/learn/discoveries</loc>
 		<lastmod>${iso}</lastmod>
 		<changefreq>weekly</changefreq>
 	</url>

@@ -1,6 +1,6 @@
 model Analysis {
     id                Int      @id @default(autoincrement())
-    analysis_run_name String   @unique
+    analysis_run_name String
     dateSubmitted     DateTime @default(now())
     trusted           Boolean
     /// [EditHistoryType]
@@ -100,6 +100,8 @@ model Analysis {
     percent_query_cover              Float?
     percent_query_cover_Midpoint_ODE Float?
     percent_query_cover_End_ODE      Float?
+
+    @@unique([project_id, analysis_run_name])
 }
 
 model Occurrence {
@@ -111,16 +113,17 @@ model Occurrence {
     lib_id            String
     Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     analysis_run_name String
-    Analysis          Analysis   @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis          Analysis   @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
     featureid         String
     Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
-    Assignment        Assignment @relation(fields: [analysis_run_name, featureid], references: [analysis_run_name, featureid], onDelete: Cascade)
+    Assignment        Assignment @relation(fields: [project_id, analysis_run_name, featureid], references: [project_id, analysis_run_name, featureid], onDelete: Cascade)
 
     // Data
     organismQuantity Int
 
-    @@unique([analysis_run_name, lib_id, featureid])
+    @@unique([project_id, analysis_run_name, lib_id, featureid])
     @@index([project_id, lib_id])
+    @@index([project_id, analysis_run_name])
     @@index([analysis_run_name, featureid])
 }
 
@@ -128,8 +131,10 @@ model Assignment {
     id Int @id @default(autoincrement())
 
     // Relations
+    project_id        String
+    Project           Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     analysis_run_name String
-    Analysis          Analysis     @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis          Analysis     @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
     featureid         String
     Feature           Feature      @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     taxonomy          String
@@ -141,7 +146,8 @@ model Assignment {
     percent_id Float?
     consensus  Float?
 
-    @@unique([analysis_run_name, featureid])
+    @@unique([project_id, analysis_run_name, featureid])
+    @@index([project_id, analysis_run_name])
 }
 
 model Feature {
@@ -197,12 +203,16 @@ model AlphaDiversity {
     finished       Boolean  @default(false)
 
     // Relations
+    project_id            String
+    Project               Project               @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     analysis_run_name     String
-    Analysis              Analysis              @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis              Analysis              @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
     AlphaDiversityIndexes AlphaDiversityIndex[]
 
     indexType String
     depth     Int?
+
+    @@index([project_id, analysis_run_name])
 }
 
 model AlphaDiversityIndex {

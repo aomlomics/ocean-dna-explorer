@@ -1,5 +1,6 @@
 "use server";
 
+import { Analysis } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { AnalysisSchema } from "@/prisma/generated/zod";
@@ -7,9 +8,12 @@ import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
+import z from "zod";
 
-//TODO: delete files from blob store
-export default async function analysisDeleteAction(target: string): Promise<NetworkPacket> {
+export default async function analysisDeleteAction(
+	targetProject: Analysis["project_id"],
+	targetAnalysis: Analysis["analysis_run_name"]
+): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -17,7 +21,12 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
-	const parsed = AnalysisSchema.shape.analysis_run_name.safeParse(target);
+	const parsed = z
+		.object({
+			project_id: AnalysisSchema.shape.project_id,
+			analysis_run_name: AnalysisSchema.shape.analysis_run_name
+		})
+		.safeParse({ project_id: targetProject, analysis_run_name: targetAnalysis });
 	if (!parsed.success) {
 		//TODO: make more specific, since the schema is only a string, and not an object
 		return {
@@ -27,12 +36,16 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 				: "Invalid analysis_run_name"
 		};
 	}
-	const analysis_run_name = parsed.data;
+	const project_id = parsed.data.project_id;
+	const analysis_run_name = parsed.data.analysis_run_name;
 
 	try {
 		const analysis = await prisma.analysis.findUnique({
 			where: {
-				analysis_run_name
+				project_id_analysis_run_name: {
+					project_id,
+					analysis_run_name
+				}
 			},
 			select: {
 				editHistory: true,
@@ -58,12 +71,19 @@ export default async function analysisDeleteAction(target: string): Promise<Netw
 
 		await prisma.analysis.delete({
 			where: {
-				analysis_run_name
+				project_id_analysis_run_name: {
+					project_id,
+					analysis_run_name
+				}
 			}
 		});
 
-		//TODO: delete files from edit history
-		await del([analysis.analysisMetadataFileUrl_ODE, analysis.asvFileUrl_ODE, analysis.occurrenceFileUrl_ODE]);
+		await del([
+			analysis.analysisMetadataFileUrl_ODE,
+			analysis.asvFileUrl_ODE,
+			analysis.occurrenceFileUrl_ODE,
+			...(analysis.editHistory?.flatMap((edit) => edit.changes.map((c) => c.oldValue)) || [])
+		]);
 
 		return { statusMessage: "success" };
 	} catch (err: any) {

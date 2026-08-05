@@ -275,12 +275,15 @@ async function doSubmit(
 		await assignmentsChannel.stream.success("Features, Taxonomies, and Assignments successfully uploaded to database.");
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
 
-		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/afterSubmission`, {
-			method: "POST",
-			headers: {
-				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+		fetch(
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.project_id}/${analysis.analysis_run_name}/afterSubmission`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+				}
 			}
-		});
+		);
 
 		return true;
 	} catch (err: any) {

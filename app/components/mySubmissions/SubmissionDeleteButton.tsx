@@ -1,10 +1,11 @@
 "use client";
 
-import { TargetAction } from "@/types/globals";
+import { TargetAction, Writeable } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";
 import DeleteConfirmModal from "@/app/components/mySubmissions/DeleteConfirmationModal";
+import TableMetadata from "@/types/tableMetadata";
 
 const Toast = ({ message, type }: { message: string; type: "success" | "error" }) => {
 	return (
@@ -21,14 +22,14 @@ const Toast = ({ message, type }: { message: string; type: "success" | "error" }
 
 export default function SubmissionDeleteButton({
 	field,
-	value,
 	action,
+	target,
 	associatedAnalyses = [],
 	disabled
 }: {
 	field: string;
-	value: string;
 	action: TargetAction;
+	target: Writeable<(typeof TableMetadata)[keyof typeof TableMetadata]["titleField"]>;
 	associatedAnalyses?: { analysis_run_name: string }[];
 	disabled?: boolean;
 }) {
@@ -51,7 +52,7 @@ export default function SubmissionDeleteButton({
 		setShowModal(false);
 
 		try {
-			const result = await action(value);
+			const result = await action(...(typeof target === "string" ? [target] : target));
 			if (result.statusMessage === "success") {
 				setIsDeleted(true);
 				setToast({ message: "Successfully deleted", type: "success" });
@@ -81,7 +82,7 @@ export default function SubmissionDeleteButton({
 				isOpen={showModal}
 				onClose={() => setShowModal(false)}
 				onConfirm={executeDelete}
-				projectId={value}
+				target={target}
 				associatedAnalyses={associatedAnalyses}
 			/>
 		</div>

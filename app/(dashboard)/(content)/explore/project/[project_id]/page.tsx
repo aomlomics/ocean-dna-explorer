@@ -301,7 +301,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			</div>
 			<div className="flex flex-col gap-6 lg:row-span-2">
 				<Suspense fallback={<DepthCoverageCardSkeleton />}>
-					<DepthCoverageCard projectId={project_id} />
+					<DepthCoverageCard project_id={project_id} />
 				</Suspense>
 				{assaysAndTaxa}
 			</div>
@@ -529,7 +529,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 						<div className="flex flex-col gap-6 lg:row-span-2">
 							<Suspense fallback={<DepthCoverageCardSkeleton />}>
-								<DepthCoverageCard projectId={project_id} />
+								<DepthCoverageCard project_id={project_id} />
 							</Suspense>
 							{assaysAndTaxa}
 						</div>

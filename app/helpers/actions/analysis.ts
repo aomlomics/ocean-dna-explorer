@@ -121,10 +121,12 @@ export async function parseAnalysisFile({
 
 export async function parseAssignmentsFile({
 	channel,
+	project_id,
 	analysis_run_name,
 	oldChecksum
 }: {
 	channel: Channel;
+	project_id: Assignment["project_id"];
 	analysis_run_name: Assignment["analysis_run_name"];
 	oldChecksum?: string;
 }) {
@@ -210,6 +212,7 @@ export async function parseAssignmentsFile({
 			const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
 				{
 					...assignmentRow,
+					project_id,
 					analysis_run_name
 				},
 				{
@@ -421,6 +424,7 @@ export async function parseAnalysisFiles({
 
 	const assignmentsParseResult = await parseAssignmentsFile({
 		channel: assignmentsChannel,
+		project_id: analysis.project_id,
 		analysis_run_name: analysis.analysis_run_name,
 		oldChecksum: oldChecksums?.assignmentsMd5
 	});

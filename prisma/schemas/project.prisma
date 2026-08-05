@@ -14,6 +14,8 @@ model Project {
     Libraries             Library[]
     Analyses              Analysis[]
     Occurrences           Occurrence[]
+    Assignments           Assignment[]
+    AlphaDiversities      AlphaDiversity[]
     AlphaDiversityIndexes AlphaDiversityIndex[]
 
     // Submission File URLs

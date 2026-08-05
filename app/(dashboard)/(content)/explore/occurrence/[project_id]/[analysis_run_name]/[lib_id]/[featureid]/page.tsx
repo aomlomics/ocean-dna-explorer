@@ -4,7 +4,7 @@ import TableMetadata from "@/types/tableMetadata";
 import { Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import { AnalysisIcon, LocationIcon } from "@/app/components/icons";
+import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
@@ -53,20 +53,22 @@ function MaskSvgIcon({ src, className }: { src: string; className?: string }) {
 	);
 }
 
-export default async function Analysis_run_name_Lib_id_Featureid({
+export default async function OccurrencePage({
 	params
 }: {
 	params: Promise<{
+		project_id: string;
 		analysis_run_name: string;
 		lib_id: string;
 		featureid: string;
 	}>;
 }) {
-	const { analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
+	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
 	const occurrence = await prisma.occurrence.findUnique({
 		where: {
-			analysis_run_name_lib_id_featureid: {
+			project_id_analysis_run_name_lib_id_featureid: {
+				project_id,
 				analysis_run_name,
 				lib_id,
 				featureid
@@ -136,10 +138,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 			</Link>
-			<Link
-				href={`/explore/library/${encodeURIComponent(occurrence.project_id)}/${lib_id}`}
-				className="block w-max max-w-full"
-			>
+			<Link href={`/explore/library/${encodeURIComponent(project_id)}/${lib_id}`} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
 						<MaskSvgIcon src="/images/icons/library_icon.svg" />
@@ -169,6 +168,21 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 					</div>
 				</div>
 			</Link>
+			<Link href={`/explore/project/${encodeURIComponent(project_id)}`} className="block w-max max-w-full">
+				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
+					<div className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">
+						<ProjectIcon className="h-10 w-10" />
+					</div>
+					<div className="flex min-w-0 flex-col gap-1 overflow-hidden">
+						<div className="font-medium text-purple-300 [html[data-theme='light']_&]:text-purple-700 tabular-nums leading-tight text-sm whitespace-nowrap">
+							{project_id}
+						</div>
+						<div className="text-xs font-sans font-medium text-base-content/70 uppercase tracking-wider whitespace-nowrap">
+							Project
+						</div>
+					</div>
+				</div>
+			</Link>
 		</div>
 	);
 
@@ -177,6 +191,19 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			{/* Breadcrumb navigation */}
 			<div className="text-sm breadcrumbs">
 				<ul className="flex-nowrap overflow-x-auto whitespace-nowrap pb-1">
+					<li>
+						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
+							Projects
+						</Link>
+					</li>
+					<li>
+						<Link
+							href={`/explore/project/${encodeURIComponent(project_id)}`}
+							className="text-primary hover:text-primary-focus"
+						>
+							{project_id}
+						</Link>
+					</li>
 					<li>
 						<Link href="/explore/analysis" className="text-primary hover:text-primary-focus whitespace-nowrap">
 							Analyses
@@ -210,24 +237,23 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 			<header>
 				<div className="flex gap-2 items-center">
 					<TitleHoverTooltip tooltip={TableMetadata.occurrence.description}>
-						<h1 className="mb-2 text-2xl sm:text-3xl font-semibold text-primary wrap-anywhere">
-							<span className="text-primary">{featureid}</span>
-							<span className="text-base-content/55"> in </span>
-							<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span>
-							<span className="text-base-content/55"> (</span>
-							<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span>
-							<span className="text-base-content/55">)</span>
+						<h1 className="mb-2 text-2xl sm:text-3xl font-semibold text-base-content/55 wrap-anywhere">
+							<span className="text-primary">{featureid}</span> in{" "}
+							<span className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">{lib_id}</span> (
+							<span className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">{analysis_run_name}</span> in{" "}
+							<span className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">{project_id}</span>)
 						</h1>
 					</TitleHoverTooltip>
 				</div>
 				<p className="mb-2 max-w-5xl text-sm text-base-content/65 wrap-anywhere">
 					An occurrence links a feature (<span className="font-medium text-primary">featureid</span>), library (
 					<span className="font-medium text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">lib_id</span>),
-					and analysis (
+					analysis (
 					<span className="font-medium text-amber-300 [html[data-theme='light']_&]:text-amber-700">
 						analysis_run_name
 					</span>
-					).
+					), and project (
+					<span className="font-medium text-purple-300 [html[data-theme='light']_&]:text-purple-700">project_id</span>).
 				</p>
 				<div className="mt-4">{topStatCards}</div>
 			</header>
@@ -315,7 +341,7 @@ export default async function Analysis_run_name_Lib_id_Featureid({
 						</div>
 						<div className="w-full lg:max-w-sm">
 							<Link
-								href={`/explore/sample/${encodeURIComponent(occurrence.project_id)}/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
+								href={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">

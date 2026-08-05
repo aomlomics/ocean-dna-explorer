@@ -117,6 +117,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 									await prisma.occurrence.findMany({
 										where: {
 											Library: {
+												project_id,
 												samp_name
 											}
 										},
@@ -141,6 +142,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 										Occurrences: {
 											some: {
 												Library: {
+													project_id,
 													samp_name
 												}
 											}
@@ -166,6 +168,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 													Occurrences: {
 														some: {
 															Library: {
+																project_id,
 																samp_name
 															}
 														}
@@ -205,13 +208,19 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 
 			{/* Taxonomy Relative Abundance Chart */}
 			<Suspense>
-				<SuspenseTaxonomyDonutChart samp_name={samp_name} />
+				<SuspenseTaxonomyDonutChart project_id={project_id} samp_name={samp_name} />
 			</Suspense>
 		</div>
 	);
 }
 
-async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["samp_name"] }) {
+async function SuspenseTaxonomyDonutChart({
+	project_id,
+	samp_name
+}: {
+	project_id: Sample["project_id"];
+	samp_name: Sample["samp_name"];
+}) {
 	const taxonomies = await prisma.taxonomy.findMany({
 		where: {
 			Assignments: {
@@ -219,6 +228,7 @@ async function SuspenseTaxonomyDonutChart({ samp_name }: { samp_name: Sample["sa
 					Occurrences: {
 						some: {
 							Library: {
+								project_id,
 								samp_name
 							}
 						}

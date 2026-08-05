@@ -6,16 +6,17 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
-export default async function Analysis_run_name_Featureid({
+export default async function AssignmentPage({
 	params
 }: {
-	params: Promise<{ analysis_run_name: string; featureid: string }>;
+	params: Promise<{ project_id: string; analysis_run_name: string; featureid: string }>;
 }) {
-	const { analysis_run_name, featureid } = await decodeRouteParams(params);
+	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
 
 	const assignment = await prisma.assignment.findUnique({
 		where: {
-			analysis_run_name_featureid: {
+			project_id_analysis_run_name_featureid: {
+				project_id,
 				analysis_run_name,
 				featureid
 			}
@@ -32,6 +33,32 @@ export default async function Analysis_run_name_Featureid({
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
+					<li>
+						<Link href="/explore/project" className="text-primary hover:text-primary-focus">
+							Projects
+						</Link>
+					</li>
+					<li>
+						<Link
+							href={`/explore/project/${encodeURIComponent(project_id)}`}
+							className="text-primary hover:text-primary-focus"
+						>
+							{project_id}
+						</Link>
+					</li>
+					<li>
+						<Link href="/explore/analysis" className="text-primary hover:text-primary-focus">
+							Analyses
+						</Link>
+					</li>
+					<li>
+						<Link
+							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+							className="text-primary hover:text-primary-focus"
+						>
+							{analysis_run_name}
+						</Link>
+					</li>
 					<li>
 						<Link href="/explore/assignment" className="text-primary hover:text-primary-focus">
 							Assignments

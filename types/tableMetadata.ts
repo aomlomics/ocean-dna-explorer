@@ -138,8 +138,8 @@ const TableMetadata = {
 		schema: PrismaZodTypes.AnalysisSchema,
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AnalysisWithRelationsSchema,
-		titleField: "analysis_run_name",
-		subFields: ["assay_name", "project_id", "trusted"]
+		titleField: ["project_id", "analysis_run_name"],
+		subFields: ["assay_name", "trusted"]
 	},
 	occurrence: {
 		plural: "Occurrences",
@@ -148,7 +148,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.OccurrenceSchema,
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.OccurrenceWithRelationsSchema,
-		titleField: ["analysis_run_name", "lib_id", "featureid"],
+		titleField: ["project_id", "analysis_run_name", "lib_id", "featureid"],
 		subFields: ["organismQuantity"]
 	},
 	assignment: {
@@ -158,7 +158,7 @@ const TableMetadata = {
 		schema: PrismaZodTypes.AssignmentSchema,
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssignmentWithRelationsSchema,
-		titleField: ["analysis_run_name", "featureid"],
+		titleField: ["project_id", "analysis_run_name", "featureid"],
 		subFields: ["taxonomy", "Confidence"]
 	},
 	feature: {

@@ -1,5 +1,6 @@
 import { prisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
+import { Sample } from "@/app/generated/prisma/client";
 
 /**
  * Floor for what counts as a "real" sample collection date. Anything
@@ -13,22 +14,14 @@ import DashCard from "@/app/components/dataSummary/DashCard";
  */
 export const EARLIEST_VALID_SAMPLE_DATE = new Date(Date.UTC(1990, 0, 1));
 
-type TemporalCoverageCardProps = {
-	/**
-	 * Optional project scope. When supplied, the card shows the temporal
-	 * window for that project's samples only.
-	 */
-	projectId?: string;
-};
-
-export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardProps) {
+export async function TemporalCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
 	// Only consider samples whose eventDate is *actually* a usable date —
 	// filter out sentinel values (e.g. -9999) encoded as absurdly-early
 	// dates in the DB.
 	const agg = await prisma.sample.aggregate({
 		where: {
-			eventDate: { gte: EARLIEST_VALID_SAMPLE_DATE },
-			...(projectId ? { project_id: projectId } : {})
+			project_id,
+			eventDate: { gte: EARLIEST_VALID_SAMPLE_DATE }
 		},
 		_min: { eventDate: true },
 		_max: { eventDate: true },
@@ -73,8 +66,8 @@ export async function TemporalCoverageCard({ projectId }: TemporalCoverageCardPr
 					"The earliest and latest real eventDate across samples. Samples whose eventDate encodes a 'not applicable' sentinel (e.g. -9999) or an epoch-parse ghost (≈1969-1970) are excluded.",
 				links: [
 					{
-						label: projectId ? "Browse this project's samples" : "Browse samples",
-						href: projectId ? `/explore/project/${encodeURIComponent(projectId)}` : "/explore/sample"
+						label: project_id ? "Browse this project's samples" : "Browse samples",
+						href: project_id ? `/explore/project/${encodeURIComponent(project_id)}` : "/explore/sample"
 					}
 				]
 			}}
