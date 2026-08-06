@@ -23,13 +23,14 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	const ids = searchParams.get("userIds");
 
 	let users = [] as User[];
+	//TODO: paginate users list
 	if (query) {
-		users = (await client.users.getUserList({ query })).data;
+		users = (await client.users.getUserList({ query, limit: 500 })).data;
 	} else if (ids) {
 		const userId = ids.split(",");
-		users = (await client.users.getUserList({ userId })).data;
+		users = (await client.users.getUserList({ userId, limit: 500 })).data;
 	} else {
-		users = (await client.users.getUserList()).data;
+		users = (await client.users.getUserList({ limit: 500 })).data;
 	}
 
 	return NextResponse.json({
