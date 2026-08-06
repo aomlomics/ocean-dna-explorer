@@ -185,7 +185,7 @@ export default function LegendControl({
 												className="aspect-square w-[1em] h-[1em]"
 												style={{ backgroundColor: DEFAULT_COLOR.hex() }}
 											></div>
-											<div className="text-xs">
+											<div className="text-xs text-nowrap">
 												{legendInfo.tooManyOptions ? `Too many values (>${LEGEND_VALUES_LIMIT})` : "No value"}
 											</div>
 										</div>
@@ -200,7 +200,7 @@ export default function LegendControl({
 													href={`/explore/${Object.keys(TableMetadata).find(
 														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
 													)}/${encodeURIComponent(Object.keys(legendInfo.colorMap)[0])}`}
-													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
+													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
 														legendInfo.hidden?.includes(Object.keys(legendInfo.colorMap)[0])
 															? "line-through text-base-content/50"
 															: ""
@@ -209,7 +209,7 @@ export default function LegendControl({
 													{Object.keys(legendInfo.colorMap)[0]}
 												</Link>
 											) : (
-												<div className="text-xs">{Object.keys(legendInfo.colorMap)[0]}</div>
+												<div className="text-xs text-nowrap">{Object.keys(legendInfo.colorMap)[0]}</div>
 											)}
 										</div>
 									) : (
@@ -236,7 +236,7 @@ export default function LegendControl({
 														href={`/explore/${Object.keys(TableMetadata).find(
 															(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
 														)}/${encodeURIComponent(key)}`}
-														className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! ${
+														className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
 															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
 														}`}
 													>
@@ -244,7 +244,7 @@ export default function LegendControl({
 													</Link>
 												) : (
 													<div
-														className={`text-xs ${
+														className={`text-xs text-nowrap ${
 															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
 														}`}
 													>
@@ -288,7 +288,7 @@ export default function LegendControl({
 													className="aspect-square w-[1em] h-[1em]"
 													style={{ backgroundColor: DEFAULT_COLOR.hex() }}
 												></div>
-												<div className="text-xs">No value</div>
+												<div className="text-xs text-nowrap">No value</div>
 											</div>
 										) : (
 											<></>

@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import { DeadValues } from "@/types/enums";
 import { Location, LocationWithValues } from "@/types/globals";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import chroma from "chroma-js";
@@ -111,4 +112,14 @@ export function getWhereAdvancedHref(
 			}
 		})
 		.join(",");
+}
+
+export function legendValueSort(a: string, b: string) {
+	if (DeadValues.includes(a) && !DeadValues.includes(b)) {
+		return 1;
+	} else if (!DeadValues.includes(a) && DeadValues.includes(b)) {
+		return -1;
+	} else {
+		return a.localeCompare(b);
+	}
 }

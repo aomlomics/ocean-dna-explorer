@@ -2,7 +2,7 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { Location, LocationWithValues } from "@/types/globals";
-import { DEFAULT_COLOR, getLegendColor, getLegendValue, LegendInfo } from "../utils/mapUtils";
+import { DEFAULT_COLOR, getLegendColor, getLegendValue, LegendInfo, legendValueSort } from "../utils/mapUtils";
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
@@ -56,9 +56,10 @@ export default function PopupWithSearchBody({
 			if (legendInfo) {
 				if (legendInfo.mode === "discreet") {
 					tempFilteredValues.sort((a, b) =>
-						getLegendValue(legendInfo.field, a, userDefinedOptions)
-							.toString()
-							.localeCompare(getLegendValue(legendInfo.field, b, userDefinedOptions).toString())
+						legendValueSort(
+							getLegendValue(legendInfo.field, a, userDefinedOptions).toString(),
+							getLegendValue(legendInfo.field, b, userDefinedOptions).toString()
+						)
 					);
 				} else {
 					tempFilteredValues.sort((a, b) => {

@@ -44,7 +44,8 @@ import {
 	getLegendColor,
 	getLegendValue,
 	LEGEND_VALUES_LIMIT,
-	LegendInfo
+	LegendInfo,
+	legendValueSort
 } from "./utils/mapUtils";
 import LoadingControl from "./controls/LoadingControl";
 import RecenterControl from "./controls/RecenterControl";
@@ -375,7 +376,7 @@ export default function ActualMap({
 		const titleId = TableMetadata[titleTable].titleField;
 
 		//assign color to each option
-		const optionsArray = Array.from(defaultOptions);
+		const optionsArray = Array.from(defaultOptions).sort(legendValueSort);
 		const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
 		const colorMap = {} as Record<string, Color>;
 		for (let i = 0; i < optionsArray.length; i++) {
@@ -422,7 +423,7 @@ export default function ActualMap({
 				}
 			}
 
-			const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+			const optionsArray = Array.from(options).sort(legendValueSort);
 
 			//check if invalid number of options
 			if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
@@ -469,7 +470,7 @@ export default function ActualMap({
 						someNoData = true;
 					}
 				}
-				const optionsArray = Array.from(options).sort((a, b) => a.localeCompare(b));
+				const optionsArray = Array.from(options).sort(legendValueSort);
 
 				//check if invalid number of options
 				if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
