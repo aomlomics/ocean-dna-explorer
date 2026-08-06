@@ -14,6 +14,9 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 	const [formatError, setFormatError] = useState(false);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+	const ref = useRef<HTMLAudioElement>(null);
+	const [playing, setPlaying] = useState(false);
+
 	const { userId, sessionClaims } = useAuth();
 	const role = sessionClaims?.metadata?.role;
 
@@ -172,7 +175,32 @@ export default function PrismaConsole({ modelQueries }: { modelQueries: string[]
 					<div className="text-6xl flex justify-around">
 						<span>⚠️</span>
 						<span>⚠️</span>
-						<span>⚠️</span>
+						<span
+							onClick={async () => {
+								if (playing) {
+									setPlaying(false);
+									if (ref.current) {
+										ref.current.pause();
+										ref.current.currentTime = 0;
+									}
+								} else {
+									setPlaying(true);
+									await ref.current?.play();
+								}
+							}}
+						>
+							⚠️
+						</span>
+						<audio
+							onEnded={async () => {
+								if (ref.current) {
+									ref.current.currentTime = 0;
+									await ref.current?.play();
+								}
+							}}
+							ref={ref}
+							src="/adminSound.mp3"
+						/>
 					</div>
 					<h1 className="text-6xl text-warning text-center font-bold">WARNING</h1>
 					<div className="text-3xl font-semibold text-warning grow text-center flex items-center px-20">
