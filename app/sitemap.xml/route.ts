@@ -3,7 +3,7 @@ import { generateSitemaps as getAnalysisSitemaps } from "@/app/(dashboard)/(cont
 import { generateSitemaps as getAssaySitemaps } from "@/app/(dashboard)/(content)/explore/assay/sitemap";
 import { generateSitemaps as getTaxonomySitemaps } from "@/app/(dashboard)/(content)/explore/taxonomy/sitemap";
 
-export async function GET(request: Request) {
+export async function GET() {
 	const SITE_URL = process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org";
 
 	return new Response(

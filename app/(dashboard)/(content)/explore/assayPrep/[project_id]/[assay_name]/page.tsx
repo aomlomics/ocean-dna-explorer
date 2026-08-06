@@ -1,18 +1,19 @@
 import Link from "next/link";
 import TableMetadata from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
-import { AssayPrep } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { AssayIcon, ProjectIcon } from "@/app/components/icons";
+import { ProjectIcon } from "@/app/components/icons";
+import AssaysCard from "@/app/components/assay/AssaysCard";
+import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { decodeRouteParams } from "@/app/helpers/utils";
+import { notFound } from "next/navigation";
 
 export default async function Project_id_Assay_name({
 	params
 }: {
-	params: Promise<{ project_id: AssayPrep["project_id"]; assay_name: AssayPrep["assay_name"] }>;
+	params: Promise<{ project_id: string; assay_name: string }>;
 }) {
-	let { project_id, assay_name } = await params;
-	project_id = decodeURIComponent(project_id);
-	assay_name = decodeURIComponent(assay_name);
+	const { project_id, assay_name } = await decodeRouteParams(params);
 
 	const assayPrep = await prisma.assayPrep.findUnique({
 		where: {
@@ -25,8 +26,7 @@ export default async function Project_id_Assay_name({
 			Project: {
 				select: {
 					project_id: true,
-					project_name: true,
-					isPrivate: true
+					project_name: true
 				}
 			},
 			Assay: {
@@ -43,12 +43,12 @@ export default async function Project_id_Assay_name({
 		}
 	});
 
-	if (!assayPrep) return <>AssayPrep not found</>;
+	if (!assayPrep) notFound();
 
 	const { Project: project, Assay: assay, Libraries: libraries, ...justAssayPrep } = assayPrep;
 
 	return (
-		<div className="space-y-8 pb-8">
+		<div className="space-y-6 pb-8">
 			{/* Breadcrumb navigation */}
 			<div className="text-base breadcrumbs">
 				<ul>
@@ -63,12 +63,9 @@ export default async function Project_id_Assay_name({
 
 			<header>
 				<div className="flex gap-2 items-center">
-					<h1
-						className="text-4xl font-semibold text-primary mb-2 tooltip tooltip-right"
-						data-tip={TableMetadata.assayPrep.description}
-					>
-						{assayPrep.assay_name}
-					</h1>
+					<TitleHoverTooltip tooltip={TableMetadata.assayPrep.description}>
+						<h1 className="text-4xl font-semibold text-primary mb-2">{assayPrep.assay_name}</h1>
+					</TitleHoverTooltip>
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					Assay preparation for{" "}
@@ -103,7 +100,7 @@ export default async function Project_id_Assay_name({
 					<div className="lg:col-span-2">
 						<div className="bg-base-200 rounded-xl p-6 h-full flex flex-col">
 							<h2 className="text-xl font-medium text-base-content/90 mb-4">Assay prep metadata</h2>
-							<div className="h-80 overflow-y-auto">
+							<div className="h-128 overflow-y-auto">
 								<DataDisplay table="assayPrep" data={justAssayPrep} omit={["project_id", "assay_name"]} />
 							</div>
 						</div>
@@ -112,19 +109,10 @@ export default async function Project_id_Assay_name({
 					{/* Context cards */}
 					<div className="space-y-4">
 						{assay && (
-							<Link href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`} className="group block w-2/3">
-								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
-									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
-										<AssayIcon />
-									</div>
-									<div className="text-sm font-sans font-medium text-base-content/70 uppercase tracking-wider">
-										View assay
-									</div>
-									<div className="text-base font-semibold text-base-content group-hover:text-primary mt-1 break-all">
-										{assay.target_gene || assay.assay_name}
-									</div>
-								</div>
-							</Link>
+							<AssaysCard
+								title="Assay used:"
+								assays={[{ assay_name: assay.assay_name, target_gene: assay.target_gene ?? assay.assay_name }]}
+							/>
 						)}
 
 						{project && (

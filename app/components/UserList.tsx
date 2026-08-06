@@ -1,19 +1,20 @@
 "use client";
 
-import { NetworkPacket, Role } from "@/types/globals";
+import { NetworkPacket } from "@/types/globals";
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
 import { User } from "@clerk/nextjs/server";
+import InfoButton from "./InfoButton";
 
 export default function UserList() {
 	const { userId } = useAuth();
 	const [users, setUsers] = useState([] as User[]);
 	const [error, setError] = useState("");
 
-	async function searchUsers(query = "") {
-		const response = await fetch(`/api/user?query=${query}`);
+	async function searchUsers(query?: string) {
+		const response = await fetch(`/api/user${query ? "?query=" + query : ""}`);
 		if (response.ok) {
 			const json = (await response.json()) as NetworkPacket;
 			if (json.statusMessage === "success") {
@@ -67,26 +68,12 @@ export default function UserList() {
 
 									<div className="text-primary">Role:</div>
 									<div className="flex items-center gap-2">
-										{(user.publicMetadata.role as Role) || "No role"}
+										{user.publicMetadata.role || "No role"}
 										{!!user.publicMetadata.roleApplication && (
-											<div
-												className="tooltip tooltip-warning flex items-center"
-												data-tip={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
-											>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													viewBox="0 0 24 24"
-													fill="none"
-													className="stroke-current text-warning shrink-0 w-4 h-4"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-													></path>
-												</svg>
-											</div>
+											<InfoButton
+												text={`Applied for role: ${user.publicMetadata.roleApplication.role}`}
+												type="warning"
+											/>
 										)}
 									</div>
 								</div>

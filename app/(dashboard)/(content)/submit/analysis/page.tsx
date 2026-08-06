@@ -1,7 +1,9 @@
 import AnalysisSubmit from "@/app/components/submit/AnalysisSubmit";
 import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
+import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import { SubmitDescription } from "../page";
 
 export default async function Analysis() {
 	const tags = await prisma.tag.findMany();
@@ -9,8 +11,7 @@ export default async function Analysis() {
 	return (
 		<>
 			<SubmitMobileGate />
-			<main className="hidden lg:block container mx-auto px-4 py-4 space-y-6">
-				{/* Breadcrumbs */}
+			<main className="hidden lg:block container mx-auto px-4 py-4">
 				<div className="text-sm breadcrumbs">
 					<ul>
 						<li>
@@ -27,34 +28,17 @@ export default async function Analysis() {
 					</ul>
 				</div>
 
-				{/* Header & Intro */}
-				<header className="my-8 space-y-3">
+				<header className="my-8">
 					<h1 className="text-4xl font-normal text-primary">Submit a New Analysis</h1>
-					<p className="text-base text-base-content/80">
-						Want to contribute new analyses? You can upload analysis files to any existing Ocean DNA Explorer project
-						where you're an authorized user. If you need access to a project, contact the project owner using the
-						project's project_contact and institution information.
-					</p>
-					<p className="text-base text-base-content/80">
-						Need help? Check out the{" "}
-						<Link
-							href="https://noaa-omics-dmg.readthedocs.io/en/latest/"
-							className="text-primary hover:text-primary-focus"
-						>
-							NOAA 'Omics Data Management Guide
-						</Link>
-						. All files must be in TSV format and follow the template structure exactly.
-					</p>
-					<p className="text-base text-base-content/80">
-						For help formatting your data, see the{" "}
-						<Link href="/help#submit" className="text-primary hover:text-primary-focus">
-							Submit section of the Ocean DNA Explorer Help page
-						</Link>
-						.
-					</p>
+					<div className="mt-4 max-w-3xl space-y-4 text-base text-base-content/80 leading-relaxed">
+						<p>
+							Upload analysis files to projects that list your account. If you need access, ask a project member to add
+							you.
+						</p>
+						<SubmitDescription />
+					</div>
 				</header>
 
-				{/* Form (handles left: project selection, right: files/progress) */}
 				<AnalysisSubmit tags={tags} />
 			</main>
 		</>

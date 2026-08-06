@@ -16,6 +16,7 @@ async function doEdit(
 	stream: ProgressStream,
 	url: string,
 	editId: string,
+	project_id: Occurrence["project_id"],
 	analysis_run_name: Occurrence["analysis_run_name"]
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
@@ -29,9 +30,13 @@ async function doEdit(
 	try {
 		const dbAnalysis = await prisma.analysis.findUnique({
 			where: {
-				analysis_run_name
+				project_id_analysis_run_name: {
+					project_id,
+					analysis_run_name
+				}
 			},
 			select: {
+				project_id: true,
 				occurrenceFileChecksum_ODE: true,
 				Project: { select: { userIds: true } }
 			}
@@ -47,6 +52,7 @@ async function doEdit(
 
 		const parseResult = await parseOccurrencesFile({
 			channel: { stream, url },
+			project_id: dbAnalysis.project_id,
 			analysis_run_name,
 			oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
 		});
@@ -73,7 +79,10 @@ async function doEdit(
 				//check if allowed
 				const dbAnalysis = await tx.analysis.findUnique({
 					where: {
-						analysis_run_name
+						project_id_analysis_run_name: {
+							project_id,
+							analysis_run_name
+						}
 					},
 					select: {
 						Project: {
@@ -81,7 +90,6 @@ async function doEdit(
 								userIds: true
 							}
 						},
-						project_id: true,
 						assay_name: true,
 						editHistory: true,
 						occurrenceFileUrl_ODE: true,
@@ -98,7 +106,7 @@ async function doEdit(
 				//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
 				const dbLibraries = await tx.library.findMany({
 					where: {
-						project_id: dbAnalysis.project_id,
+						project_id,
 						assay_name: dbAnalysis.assay_name,
 						lib_id: {
 							in: Array.from(libIds)
@@ -156,6 +164,7 @@ async function doEdit(
 				//delete unused
 				const currOccs = await tx.occurrence.findMany({
 					where: {
+						project_id,
 						analysis_run_name
 					},
 					select: {
@@ -174,6 +183,7 @@ async function doEdit(
 
 				await tx.occurrence.deleteMany({
 					where: {
+						project_id,
 						analysis_run_name,
 						id: {
 							in: occToDelete
@@ -199,7 +209,10 @@ async function doEdit(
 				//add occurrence file to analysis
 				await tx.analysis.update({
 					where: {
-						analysis_run_name
+						project_id_analysis_run_name: {
+							project_id,
+							analysis_run_name
+						}
 					},
 					data: {
 						editHistory,
@@ -213,15 +226,16 @@ async function doEdit(
 
 		await stream.success("Success");
 
-		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis_run_name}/alphaDiversity`, {
-			method: "POST",
-			headers: {
-				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
-			},
-			body: JSON.stringify({
-				delete: true
-			})
-		});
+		//update diversities
+		fetch(
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipBlast=true`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+				}
+			}
+		);
 
 		return true;
 	} catch (err: any) {
@@ -238,6 +252,7 @@ async function doEdit(
 export default async function occEditAction(
 	url: string,
 	editId: string,
+	project_id: Occurrence["project_id"],
 	analysis_run_name: Occurrence["analysis_run_name"]
 ) {
 	const stream = createProgressStream();
@@ -251,7 +266,7 @@ export default async function occEditAction(
 		}
 	}
 
-	doEdit(stream, url, editId, analysis_run_name).then((success) => {
+	doEdit(stream, url, editId, project_id, analysis_run_name).then((success) => {
 		stream.close();
 
 		if (url && !success) {

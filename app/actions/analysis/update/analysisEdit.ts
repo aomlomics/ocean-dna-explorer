@@ -15,16 +15,19 @@ import { del } from "@vercel/blob";
 async function doEdit(
 	stream: ProgressStream,
 	editId: string,
-	project_id: Project["project_id"],
+	project_id: Analysis["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
-		isPrivate,
 		trusted,
 		tagNames
-	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
+	}: {
+		url?: string;
+		trusted?: boolean;
+		tagNames?: Tag["tagName"][];
+	}
 ) {
-	const { userId, sessionClaims } = await auth();
+	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
@@ -33,25 +36,81 @@ async function doEdit(
 	}
 
 	try {
-		const dbAnalysis = await prisma.analysis.findUnique({
+		const dbAnalysisUntyped = await prisma.analysis.findUnique({
 			where: {
-				analysis_run_name
+				project_id_analysis_run_name: {
+					project_id,
+					analysis_run_name
+				}
 			},
 			select: {
+				analysisMetadataFileUrl_ODE: true,
 				analysisMetadataFileChecksum_ODE: true,
 				asvFileUrl_ODE: true,
 				occurrenceFileUrl_ODE: true,
-				Project: { select: { userIds: true } }
+				trusted: true,
+				editHistory: true,
+				assay_name: true,
+				project_id: true,
+				Project: {
+					select: {
+						userIds: true
+					}
+				},
+				Tags: {
+					select: {
+						tagName: true
+					}
+				},
+				Occurrences: trusted
+					? {
+							select: {
+								featureid: true,
+								Library: {
+									select: {
+										Occurrences: {
+											where: {
+												Analysis: {
+													trusted: true
+												},
+												analysis_run_name: {
+													not: analysis_run_name
+												}
+											},
+											select: {
+												featureid: true,
+												analysis_run_name: true
+											}
+										}
+									}
+								}
+							}
+						}
+					: false
 			}
 		});
 
-		if (!dbAnalysis) {
+		if (!dbAnalysisUntyped) {
 			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 			return;
-		} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-			await stream.error("Unauthorized action.");
+		} else if (!dbAnalysisUntyped.Project.userIds.includes(userId)) {
+			await stream.error(
+				`Permission denied for editing analysis with Project with project_id of ${dbAnalysisUntyped.project_id}. Please contact submission owner with a request to be added to the Project.`
+			);
 			return;
 		}
+
+		const dbAnalysis = dbAnalysisUntyped as unknown as Omit<typeof dbAnalysisUntyped, "Occurrences"> & {
+			Occurrences?: {
+				featureid: Occurrence["featureid"];
+				Library: {
+					Occurrences: {
+						featureid: Occurrence["featureid"];
+						analysis_run_name: Occurrence["analysis_run_name"];
+					}[];
+				};
+			}[];
+		};
 
 		let parseResult = undefined as AsyncReturnType<typeof parseAnalysisFile>;
 		if (url) {
@@ -59,7 +118,6 @@ async function doEdit(
 				channel: { stream, url },
 				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
 				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
-				isPrivate,
 				trusted,
 				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 			});
@@ -72,93 +130,7 @@ async function doEdit(
 
 		await prisma.$transaction(
 			async (tx) => {
-				//check if the associated project is private, and throw an error if it is private but the submission is public
-				const project = await tx.project.findUnique({
-					where: {
-						project_id
-					},
-					select: {
-						isPrivate: true,
-						userIds: true
-					}
-				});
-				if (!project) {
-					throw new Error(`Project with project_id of ${project_id} does not exist.`);
-				} else if (!project.userIds.includes(userId)) {
-					throw new Error(
-						`Permission denied for editing analysis with Project with project_id of ${project_id}. Please contact submission owner with a request to be added to the Project.`
-					);
-				} else if (project.isPrivate && !isPrivate) {
-					throw new Error(
-						`Project with project_id of ${project_id} is private. Analyses can't be public if the associated project is private.`
-					);
-				}
-
-				const dbAnalysis = (await tx.analysis.findUnique({
-					where: {
-						analysis_run_name
-					},
-					select: {
-						analysisMetadataFileUrl_ODE: true,
-						analysisMetadataFileChecksum_ODE: true,
-						isPrivate: true,
-						trusted: true,
-						editHistory: true,
-						Tags: {
-							select: {
-								tagName: true
-							}
-						},
-						Occurrences: trusted
-							? {
-									select: {
-										featureid: true,
-										Library: {
-											select: {
-												Occurrences: {
-													where: {
-														Analysis: {
-															trusted: true
-														},
-														analysis_run_name: {
-															not: analysis_run_name
-														}
-													},
-													select: {
-														featureid: true,
-														analysis_run_name: true
-													}
-												}
-											}
-										}
-									}
-								}
-							: false
-					}
-				})) as unknown as {
-					isPrivate: Analysis["isPrivate"];
-					trusted: Analysis["trusted"];
-					editHistory: PrismaJson.EditHistoryType | null;
-					analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
-					analysisMetadataFileChecksum_ODE: Analysis["analysisMetadataFileChecksum_ODE"];
-					Tags: Tag[];
-				} & {
-					Occurrences?: {
-						featureid: Occurrence["featureid"];
-						Library: {
-							Occurrences: {
-								featureid: Occurrence["featureid"];
-								analysis_run_name: Occurrence["analysis_run_name"];
-							}[];
-						};
-					}[];
-				};
-
-				if (!dbAnalysis) {
-					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
-				}
-
-				if (parseResult) {
+				if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
 					//check if assay is valid
 					const dbAssay = await tx.assay.findUnique({
 						where: {
@@ -214,7 +186,10 @@ async function doEdit(
 				//update analysis
 				await tx.analysis.update({
 					where: {
-						analysis_run_name
+						project_id_analysis_run_name: {
+							project_id,
+							analysis_run_name
+						}
 					},
 					data: {
 						...(parseResult
@@ -234,7 +209,6 @@ async function doEdit(
 									])
 								}
 							: {
-									isPrivate: isPrivate === undefined ? dbAnalysis.isPrivate : isPrivate,
 									trusted: trusted === undefined ? dbAnalysis.trusted : trusted
 								}),
 						Tags: {
@@ -258,6 +232,7 @@ async function doEdit(
 						//remove trusted from other analyses
 						await tx.analysis.updateMany({
 							where: {
+								project_id,
 								analysis_run_name: {
 									in: otherTrusted
 								}
@@ -274,6 +249,19 @@ async function doEdit(
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
+		//only update assay BLAST database if assay has changed
+		if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
+			fetch(
+				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+					}
+				}
+			);
+		}
+
 		return true;
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
@@ -288,14 +276,17 @@ async function doEdit(
 
 export default async function analysisEditAction(
 	editId: string,
-	project_id: Project["project_id"],
+	project_id: Analysis["project_id"],
 	analysis_run_name: Analysis["analysis_run_name"],
 	{
 		url,
-		isPrivate,
 		trusted,
 		tagNames
-	}: { url?: string; isPrivate?: boolean; trusted?: boolean; tagNames?: Tag["tagName"][] }
+	}: {
+		url?: string;
+		trusted?: boolean;
+		tagNames?: Tag["tagName"][];
+	}
 ) {
 	const stream = createProgressStream();
 
@@ -308,7 +299,7 @@ export default async function analysisEditAction(
 		}
 	}
 
-	doEdit(stream, editId, project_id, analysis_run_name, { url, isPrivate, trusted, tagNames }).then((success) => {
+	doEdit(stream, editId, project_id, analysis_run_name, { url, trusted, tagNames }).then((success) => {
 		stream.close();
 
 		if (url && !success) {

@@ -12,19 +12,18 @@ import {
 } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../schema";
 import { Channel } from "../progress";
+import { get } from "@vercel/blob";
 
 export async function parseAnalysisFile({
 	channel,
 	assignmentsUrl,
 	occurrencesUrl,
-	isPrivate,
 	trusted,
 	oldChecksum
 }: {
 	channel: Channel;
 	assignmentsUrl: string;
 	occurrencesUrl: string;
-	isPrivate?: Analysis["isPrivate"];
 	trusted?: Analysis["trusted"];
 	oldChecksum?: string;
 }) {
@@ -33,14 +32,14 @@ export async function parseAnalysisFile({
 
 	//fetch file from blob storage
 	await channel.stream.message("Downloading file", 10);
-	const fileResponse = await fetch(channel.url);
-	if (!fileResponse.ok) {
-		await channel.stream.error(`Analysis file responded ${fileResponse.status}: ${fileResponse.statusText}.`);
+	const fileResponse = await get(channel.url, { access: "public" });
+	if (!fileResponse || fileResponse.statusCode === 304) {
+		await channel.stream.error(`Analysis file does not exist at provided URL: ${channel.url}.`);
 		return;
 	}
 
 	await channel.stream.message("Reading file into memory", 15);
-	const text = await fileResponse.text();
+	const text = await new Response(fileResponse.stream).text();
 	const analysisMd5 = md5(text);
 
 	if (oldChecksum === analysisMd5) {
@@ -81,7 +80,6 @@ export async function parseAnalysisFile({
 	const parsedAnalysis = AnalysisOptionalDefaultsSchema.safeParse(
 		{
 			...analysisCol,
-			isPrivate: isPrivate === undefined ? false : isPrivate,
 			trusted: trusted === undefined ? false : trusted,
 			editHistory: "JsonNull",
 			analysisMetadataFileUrl_ODE: channel.url,
@@ -123,10 +121,12 @@ export async function parseAnalysisFile({
 
 export async function parseAssignmentsFile({
 	channel,
+	project_id,
 	analysis_run_name,
 	oldChecksum
 }: {
 	channel: Channel;
+	project_id: Assignment["project_id"];
 	analysis_run_name: Assignment["analysis_run_name"];
 	oldChecksum?: string;
 }) {
@@ -136,16 +136,16 @@ export async function parseAssignmentsFile({
 
 	//fetch file from blob storage
 	await channel.stream.message("Downloading file", 10);
-	const response = await fetch(channel.url);
-	if (!response.ok) {
+	const fileResponse = await get(channel.url, { access: "public" });
+	if (!fileResponse || fileResponse.statusCode === 304) {
 		await channel.stream.error(
-			`Assignment file for ${analysis_run_name} responded ${response.status}: ${response.statusText}.`
+			`Assignment file for ${analysis_run_name} does not exist at provided URL: ${channel.url}.`
 		);
 		return;
 	}
 
 	await channel.stream.message("Reading file into memory", 15);
-	const text = await response.text();
+	const text = await new Response(fileResponse.stream).text();
 	const assignmentsMd5 = md5(text);
 
 	if (oldChecksum === assignmentsMd5) {
@@ -212,6 +212,7 @@ export async function parseAssignmentsFile({
 			const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
 				{
 					...assignmentRow,
+					project_id,
 					analysis_run_name
 				},
 				{
@@ -282,10 +283,12 @@ export async function parseAssignmentsFile({
 
 export async function parseOccurrencesFile({
 	channel,
+	project_id,
 	analysis_run_name,
 	oldChecksum
 }: {
 	channel: Channel;
+	project_id: Occurrence["project_id"];
 	analysis_run_name: Occurrence["analysis_run_name"];
 	oldChecksum?: string;
 }) {
@@ -293,10 +296,10 @@ export async function parseOccurrencesFile({
 
 	//fetch from blob storage
 	await channel.stream.message("Downloading file", 10);
-	const response = await fetch(channel.url);
-	if (!response.ok) {
+	const fileResponse = await get(channel.url, { access: "public" });
+	if (!fileResponse || fileResponse.statusCode === 304) {
 		await channel.stream.error(
-			`Occurrence file for ${analysis_run_name} responded ${response.status}: ${response.statusText}.`
+			`Occurrence file for ${analysis_run_name} does not exist at provided URL: ${channel.url}.`
 		);
 		return;
 	}
@@ -304,7 +307,7 @@ export async function parseOccurrencesFile({
 	let headers = [] as string[];
 
 	await channel.stream.message("Reading file into memory", 15);
-	const text = await response.text();
+	const text = await new Response(fileResponse.stream).text();
 	const occurrencesMd5 = md5(text);
 
 	if (oldChecksum === occurrencesMd5) {
@@ -352,6 +355,7 @@ export async function parseOccurrencesFile({
 							lib_id,
 							featureid,
 							organismQuantity,
+							project_id,
 							analysis_run_name
 						},
 						{
@@ -397,14 +401,12 @@ export async function parseAnalysisFiles({
 	analysisChannel,
 	assignmentsChannel,
 	occurrencesChannel,
-	isPrivate,
 	trusted,
 	oldChecksums
 }: {
 	analysisChannel: Channel;
 	assignmentsChannel: Channel;
 	occurrencesChannel: Channel;
-	isPrivate: Analysis["isPrivate"];
 	trusted: Analysis["trusted"];
 	oldChecksums?: { analysisMd5?: string; assignmentsMd5?: string; occurrencesMd5?: string };
 }) {
@@ -412,7 +414,6 @@ export async function parseAnalysisFiles({
 		channel: analysisChannel,
 		assignmentsUrl: assignmentsChannel.url,
 		occurrencesUrl: occurrencesChannel.url,
-		isPrivate,
 		trusted,
 		oldChecksum: oldChecksums?.analysisMd5
 	});
@@ -423,6 +424,7 @@ export async function parseAnalysisFiles({
 
 	const assignmentsParseResult = await parseAssignmentsFile({
 		channel: assignmentsChannel,
+		project_id: analysis.project_id,
 		analysis_run_name: analysis.analysis_run_name,
 		oldChecksum: oldChecksums?.assignmentsMd5
 	});
@@ -433,6 +435,7 @@ export async function parseAnalysisFiles({
 
 	const occurrencesParseResult = await parseOccurrencesFile({
 		channel: occurrencesChannel,
+		project_id: analysis.project_id,
 		analysis_run_name: analysis.analysis_run_name,
 		oldChecksum: oldChecksums?.occurrencesMd5
 	});

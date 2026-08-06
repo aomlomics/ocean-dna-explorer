@@ -46,19 +46,19 @@ export function handleFilterChange(
 	searchParams: ReadonlyURLSearchParams,
 	router: AppRouterInstance
 ) {
-	const params = new URLSearchParams(searchParams);
+	const newParams = new URLSearchParams(searchParams);
 
 	if (value === undefined || value === "") {
 		if (typeof field === "string") {
-			params.delete(field);
+			newParams.delete(field);
 		} else {
-			params.delete(field.rel);
+			newParams.delete(field.rel);
 		}
 	} else if (typeof value === "string") {
 		if (typeof field === "string") {
-			params.set(field, value);
+			newParams.set(field, value);
 		} else {
-			params.set(field.rel, JSON.stringify({ [field.f]: value }));
+			newParams.set(field.rel, JSON.stringify({ [field.f]: value }));
 		}
 	} else if (typeof value === "object") {
 		//range
@@ -69,9 +69,9 @@ export function handleFilterChange(
 
 		let valObj;
 		if (typeof field === "string") {
-			valObj = params.get(field);
+			valObj = newParams.get(field);
 		} else {
-			valObj = params.get(field.rel);
+			valObj = newParams.get(field.rel);
 		}
 
 		if (valObj) {
@@ -93,13 +93,88 @@ export function handleFilterChange(
 		}
 
 		if (typeof field === "string") {
-			params.set(field, JSON.stringify(temp));
+			newParams.set(field, JSON.stringify(temp));
 		} else {
-			params.set(field.rel, JSON.stringify(temp));
+			newParams.set(field.rel, JSON.stringify(temp));
 		}
 	}
 
-	router.push(`?${params.toString()}`, { scroll: false });
+	router.push(`?${newParams.toString()}`, { scroll: false });
+}
+
+export function formatLabelFromField(fieldKey: string): string {
+	const withSpaces = fieldKey.replace(/_/g, " ");
+	return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+}
+
+export function buildActiveSummaries(
+	tableConfig: FilterConfig[],
+	activeFilters: Record<string, string>
+): string[] {
+	const summaries: string[] = [];
+	for (const config of tableConfig) {
+		if (config.type === "select" || config.type === "enum") {
+			if (typeof config.field === "string") {
+				const raw = activeFilters[config.field];
+				if (raw !== undefined) {
+					let valueLabel = String(raw);
+					if (config.type === "select" && Array.isArray(config.options)) {
+						const idx = (config.options as string[]).indexOf(raw);
+						if (idx !== -1 && Array.isArray((config as SelectFilterConfig).optionsLabels)) {
+							valueLabel = (config as SelectFilterConfig).optionsLabels![idx] ?? valueLabel;
+						}
+					}
+					summaries.push(`${formatLabelFromField(config.field)}: ${valueLabel}`);
+				}
+			} else {
+				const rel = config.field.rel;
+				const f = config.field.f;
+				const rawRel = activeFilters[rel];
+				if (rawRel !== undefined) {
+					try {
+						const parsed = JSON.parse(rawRel);
+						if (parsed && parsed[f] !== undefined) {
+							summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
+						}
+					} catch {}
+				}
+			}
+		} else if (config.type === "range") {
+			if (typeof config.field === "string") {
+				const raw = activeFilters[config.field];
+				if (raw !== undefined) {
+					try {
+						const parsed = JSON.parse(raw);
+						const g = parsed.gte ?? (config as RangeFilterConfig).gte;
+						const l = parsed.lte ?? (config as RangeFilterConfig).lte;
+						summaries.push(`${formatLabelFromField(config.field)}: ${g}–${l}`);
+					} catch {}
+				}
+			}
+		} else if (config.type === "selectGroup") {
+			for (const field of config.group) {
+				if (typeof field === "string") {
+					const raw = activeFilters[field];
+					if (raw !== undefined) {
+						summaries.push(`${formatLabelFromField(field)}: ${raw}`);
+					}
+				} else {
+					const rel = field.rel;
+					const f = field.f;
+					const rawRel = activeFilters[rel];
+					if (rawRel !== undefined) {
+						try {
+							const parsed = JSON.parse(rawRel);
+							if (parsed && parsed[f] !== undefined) {
+								summaries.push(`${formatLabelFromField(f)}: ${parsed[f]}`);
+							}
+						} catch {}
+					}
+				}
+			}
+		}
+	}
+	return summaries;
 }
 
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {

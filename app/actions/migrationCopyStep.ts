@@ -2,11 +2,11 @@
 
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { Prisma } from "../generated/prisma/client";
-import { unsafePrisma } from "../helpers/prisma";
+import { prisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
-import { uncapitalizeTable } from "../helpers/utils";
+import { capitalizeTable, uncapitalizeTable } from "../helpers/utils";
 import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
@@ -27,8 +27,7 @@ export default async function migrationCopyStepAction() {
 		}
 
 		const oldFieldsByTable = TableNames.reduce(
-			(acc, t) => {
-				const table = uncapitalizeTable(t as Prisma.ModelName);
+			(acc, table) => {
 				const tempFields = TableMetadata[table].enumSchema.options.filter((f) => f.endsWith("__TEMP"));
 				if (tempFields.length) {
 					acc[table] = tempFields.map((f) => f.slice(0, f.length - 6));
@@ -39,7 +38,7 @@ export default async function migrationCopyStepAction() {
 			{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
 		);
 
-		await unsafePrisma.$transaction(async (tx) => {
+		await prisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
 				const table = t as Uncapitalize<Prisma.ModelName>;
 
@@ -72,7 +71,7 @@ export default async function migrationCopyStepAction() {
 						Object.entries(row).some(([field, value]) => field !== "id" && value)
 					);
 					if (filteredResult.length) {
-						const modelName = (t.slice(0, 1).toUpperCase() + t.slice(1)) as Prisma.ModelName;
+						const modelName = capitalizeTable(table);
 						await updateManyRaw(tx, modelName, filteredResult);
 					}
 				}

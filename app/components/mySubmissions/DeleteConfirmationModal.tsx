@@ -1,32 +1,34 @@
 "use client";
 
-type DeleteConfirmModalProps = {
-	isOpen: boolean;
-	onClose: () => void;
-	onConfirm: () => void;
-	projectId: string;
-	associatedAnalyses: { analysis_run_name: string }[];
-	entityLabel?: string;
-};
+import { Writeable } from "@/types/globals";
+import TableMetadata from "@/types/tableMetadata";
 
 export default function DeleteConfirmModal({
 	isOpen,
 	onClose,
 	onConfirm,
-	projectId,
+	target,
 	associatedAnalyses,
 	entityLabel
-}: DeleteConfirmModalProps) {
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	onConfirm: () => void;
+	target: Writeable<(typeof TableMetadata)[keyof typeof TableMetadata]["titleField"]>;
+	associatedAnalyses: { analysis_run_name: string }[];
+	entityLabel?: string;
+}) {
 	if (!isOpen) return null;
 
 	const label = entityLabel ?? "project";
 
 	return (
-		<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+		<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-modal">
 			<div className="bg-base-100 p-6 rounded-lg shadow-sm max-w-md w-full mx-4 text-center text-md text-base-content">
 				<h3 className="text-2xl font-bold text-primary mb-2">Confirm Deletion</h3>
 				<p className="mb-2 text-md text-base-content">
-					Are you sure you want to delete {label} <span className="text-md text-base-content">{projectId}</span>?
+					Are you sure you want to delete {label}{" "}
+					<span className="text-md text-base-content">{typeof target === "string" ? target : target.join(" / ")}</span>?
 				</p>
 				{associatedAnalyses.length > 0 && (
 					<div className="mb-2">

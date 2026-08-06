@@ -1,3 +1,9 @@
+import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
+import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
+import { BlastQueryPartial } from "@/prisma/generated/zod";
+import { ReactNode } from "react";
+import TableMetadata from "@/types/tableMetadata";
+
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
 
@@ -19,7 +25,7 @@ export type NetworkPacket = ErrorPacket | SuccessPacket;
 export type NetworkProgressPacket = ErrorPacket | SuccessPacket | ProgressPacket | undefined;
 
 export type FormAction = (formData: FormData) => Promise<NetworkPacket>;
-export type TargetAction = (target: string, ...args: any[]) => Promise<NetworkPacket>;
+export type TargetAction = (...args: any[]) => Promise<NetworkPacket>;
 export type ProgressAction = (...args: any[]) => Promise<ReadableStream<any>>;
 export type ProgressActionMany = (...args: any[]) => Promise<ReadableStream<any>[]>;
 export type ProgressActionManyGlobal = (
@@ -127,6 +133,15 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 	? R
 	: any;
 
+export type BlastRequest = {
+	queries: (string | [string, string])[];
+	assay_name?: Assay["assay_name"];
+	save?: boolean;
+	options?: Omit<BlastQueryPartial, "id" | "userId" | "dateCalculated" | "sequences" | "database" | "databaseVersion">;
+};
+
+export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+
 export type UserMetadata = {
 	role?: Role;
 	roleApplication?: {
@@ -134,6 +149,8 @@ export type UserMetadata = {
 		description?: string;
 	};
 };
+declare module "wordcloud";
+
 declare global {
 	namespace PrismaJson {
 		type UserDefinedType = Record<string, string>;

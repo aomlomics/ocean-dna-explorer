@@ -1,0 +1,37 @@
+datasource db {
+    provider = "postgresql"
+}
+
+generator client {
+    provider            = "prisma-client"
+    output              = "../../app/generated/prisma"
+    runtime             = "edge-light"
+    importFileExtension = ""
+    previewFeatures     = ["relationJoins", "fullTextSearchPostgres"]
+}
+
+generator json {
+    provider     = "prisma-json-types-generator"
+    clientOutput = "@/app/generated/prisma"
+}
+
+generator zod {
+    provider                         = "zod-prisma-types"
+    prismaClientPath                 = "@/app/generated/prisma"
+    output                           = "../generated/zod"
+    createInputTypes                 = false
+    addIncludeType                   = false
+    addSelectType                    = false
+    writeNullishInModelTypes         = true
+    createOptionalDefaultValuesTypes = true
+    createRelationValuesTypes        = true
+    createPartialTypes               = true
+}
+
+// generator erd {
+//     provider      = "prisma-erd-generator"
+//     output        = "../public/images/ERD.svg"
+//     tableOnly     = true
+//     theme         = "neutral"
+//     ignorePattern = "Tag,AlphaDiversity*"
+// }

@@ -9,11 +9,11 @@ export async function GET(
 	request: Request,
 	{ params }: { params: Promise<{ table: string }> }
 ): Promise<NextResponse<NetworkPacket>> {
-	const table = (await params).table;
-
-	const model = getTableName(table);
+	const { table } = await params;
 
 	try {
+		const model = getTableName(table);
+
 		const { searchParams } = new URL(request.url);
 
 		const extraFieldsParams = searchParams.get("extraFields");

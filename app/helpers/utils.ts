@@ -1,9 +1,8 @@
-import { RanksBySpecificity } from "@/types/objects";
-import { Prisma, Taxonomy } from "@/app/generated/prisma/client";
-import distinctColors from "distinct-colors";
+import { Prisma } from "@/app/generated/prisma/client";
 import { Circle, Location, LocationWithValues, MapShape, NullLocation, Point, Polygon } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 
 export async function fetcher(url: string) {
 	const res = await fetch(url);
@@ -12,162 +11,6 @@ export async function fetcher(url: string) {
 		return { error: data.error };
 	}
 	return await res.json();
-}
-
-//export function getBaseUrl() {
-//	if (process.env.NODE_ENV === "development") {
-//		return "http://localhost:3000/";
-//	}
-//	return "https://opaldb.vercel.app/";
-//}
-
-//export function getRemoteUrl() {
-//	if (process.env.NODE_ENV === "development") {
-//		return "http://localhost:8080";
-//	}
-//	return "https://opalserver-qnwedardvq-uc.a.run.app";
-//}
-
-export function randomColors(count: number) {
-	const colors = distinctColors({ count });
-
-	return colors.map((c) => {
-		const rgb = c.rgb();
-		return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`;
-	});
-}
-
-export function generateThemedColors(count: number, baseColor: string): string[] {
-	const colors: string[] = [];
-	const [baseR, baseG, baseB] = baseColor.match(/\d+/g)!.map(Number);
-
-	for (let i = 0; i < count; i++) {
-		const factor = 1 - i / (count * 1.5);
-		const r = Math.max(0, Math.min(255, Math.floor(baseR * factor)));
-		const g = Math.max(0, Math.min(255, Math.floor(baseG * factor)));
-		const b = Math.max(0, Math.min(255, Math.floor(baseB * factor)));
-		colors.push(`rgb(${r},${g},${b})`);
-	}
-
-	return colors;
-}
-
-export function generateChartColors(count: number): string[] {
-	const primary = "rgb(100, 171, 220)";
-	const secondary = "rgb(35, 61, 127)";
-	const colors: string[] = [];
-
-	if (count === 0) {
-		return colors;
-	}
-
-	if (count === 1) {
-		return [primary];
-	}
-
-	colors.push(primary, secondary);
-
-	const generateShade = (color: string, factor: number) => {
-		const [r, g, b] = color.match(/\d+/g)!.map(Number);
-		const newR = Math.max(0, Math.min(255, Math.floor(r * factor)));
-		const newG = Math.max(0, Math.min(255, Math.floor(g * factor)));
-		const newB = Math.max(0, Math.min(255, Math.floor(b * factor)));
-		return `rgb(${newR},${newG},${newB})`;
-	};
-
-	for (let i = 2; i < count; i++) {
-		const factor = 1 - (i - 1) / (count * 1.5);
-		if (i % 2 === 0) {
-			colors.push(generateShade(primary, factor));
-		} else {
-			colors.push(generateShade(secondary, factor));
-		}
-	}
-
-	return colors;
-}
-
-export function getMostSpecificRank(taxonomy: Taxonomy) {
-	for (const rank of RanksBySpecificity) {
-		if (taxonomy[rank]) {
-			return { rank, label: taxonomy[rank] as string };
-		}
-	}
-
-	return { rank: "taxonomy", label: taxonomy.taxonomy };
-}
-
-//handles converting numbers from 0 to 99
-function stringToNumber(str: string) {
-	const NUMBERS = {
-		ZERO: 0,
-		ONE: 1,
-		TWO: 2,
-		THREE: 3,
-		FOUR: 4,
-		FIVE: 5,
-		SIX: 6,
-		SEVEN: 7,
-		EIGHT: 8,
-		NINE: 9,
-		TEN: 10,
-		ELEVEN: 11,
-		TWELVE: 12,
-		THIRTEEN: 13,
-		FOURTEEN: 14,
-		FIFTEEN: 15,
-		SIXTEEN: 16,
-		SEVENTEEN: 17,
-		EIGHTEEN: 18,
-		NINETEEN: 19,
-		TWENTY: 20,
-		THIRTY: 30,
-		FOURTY: 40,
-		FIFTY: 50,
-		SIXTY: 60,
-		SEVENTY: 70,
-		EIGHTY: 80,
-		NINETY: 90
-	} as Record<string, number>;
-
-	const ENDING = "__";
-	const SEP = "_";
-
-	const words = str.toString().split(ENDING);
-	if (words.length === 1) {
-		return str;
-	}
-
-	let num = 0;
-	let replace = "";
-
-	words[0].split(SEP).forEach((word) => {
-		if (word in NUMBERS) {
-			num += NUMBERS[word];
-
-			if (replace === "") {
-				replace += word;
-			} else {
-				replace += SEP + word;
-			}
-		}
-	});
-
-	if (replace === "") {
-		return str;
-	} else {
-		return str.replace(replace + ENDING, num.toString());
-	}
-}
-
-export function deadBooleanToString(value: any) {
-	return stringToNumber(value)
-		.replaceAll("PAREN1_", "(")
-		.replaceAll("PAREN2_", ")")
-		.replaceAll("PERCENT_", "%")
-		.replaceAll("COLON__", ": ")
-		.replaceAll("__", "-")
-		.replaceAll("_", " ");
 }
 
 export function parseNestedJson(json: string) {
@@ -222,7 +65,7 @@ export function getOptions(arr: Record<string, any>[]) {
 }
 
 function isObject(item: any) {
-	return item && typeof item === "object" && !Array.isArray(item);
+	return item != null && typeof item === "object" && !Array.isArray(item);
 }
 
 export function deepMerge(target: Record<string, any>, ...sources: Record<string, any>[]) {
@@ -302,7 +145,7 @@ function Turn(p1: Point, p2: Point, p3: Point) {
 	return a > b + Number.EPSILON ? 1 : a + Number.EPSILON < b ? -1 : 0;
 }
 
-function isIntersecting(p1: Point, p2: Point, p3: Point, p4: Point) {
+function isIntersecting([p1, p2]: [Point, Point], [p3, p4]: [Point, Point]) {
 	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
 }
 
@@ -344,7 +187,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 						//get number of times the ray intersects with the polygon
 						let numIntersections = 0;
 						for (const s of sides) {
-							if (isIntersecting(...raycastLine, ...s)) {
+							if (isIntersecting(raycastLine, s)) {
 								numIntersections++;
 							}
 						}
@@ -501,4 +344,47 @@ export function getTextColorHex(hex: string) {
 		b = parseInt(hex.slice(4, 6), 16);
 
 	return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
+}
+
+export const MAX_UNCOMPRESSED_LENGTH = 500;
+export const COMPRESSION_FORMAT = "compressed/lz-string";
+export function compressURIComponent(str: string) {
+	return COMPRESSION_FORMAT + ":" + compressToEncodedURIComponent(str);
+}
+
+export function decompressURIComponent(str: string) {
+	return decompressFromEncodedURIComponent(str.substring(COMPRESSION_FORMAT.length + 1));
+}
+
+export function getRandomKey() {
+	return (Math.random() + 1).toString(36).substring(7);
+}
+
+export function getClientSideCookie(name: string) {
+	if (typeof document === "undefined") {
+		throw new Error("Must be in client side.");
+	}
+
+	const cookieValue = document.cookie
+		.split("; ")
+		.find((row) => row.startsWith(`${name}=`))
+		?.split("=")[1];
+
+	return cookieValue;
+}
+
+export function getLastModifiedDate(submission: {
+	dateSubmitted: Date;
+	editHistory: PrismaJson.EditHistoryType | null;
+}) {
+	return submission.editHistory?.length
+		? submission.editHistory.reduce((latest, curr) => (curr.dateEdited > latest.dateEdited ? curr : latest)).dateEdited
+		: submission.dateSubmitted;
+}
+
+export async function decodeRouteParams(params: Promise<Record<string, string>>) {
+	return Object.entries(await params).reduce(
+		(acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }),
+		{} as Record<string, string>
+	);
 }

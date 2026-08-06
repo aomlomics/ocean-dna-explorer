@@ -1,11 +1,8 @@
-import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
 import { prisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
-import Link from "next/link";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import TableMetadata from "@/types/tableMetadata";
 
 export default async function Sample() {
 	const samples = await prisma.sample.findMany({
@@ -62,21 +59,5 @@ export default async function Sample() {
 		}
 	];
 
-	return (
-		<ExplorePage table="sample" tableConfig={tableConfig}>
-			<div className="w-full space-y-4">
-				<div className="text-base-content/80 pb-4 space-y-2">
-					<p>{TableMetadata.sample.description}</p>
-					<p className="text-sm">
-						For more detailed information, visit our{" "}
-						<Link href="/help" className="link link-primary link-hover">
-							Help page
-						</Link>
-						.
-					</p>
-				</div>
-				<ExploreTabButtons />
-			</div>
-		</ExplorePage>
-	);
+	return <ExplorePage table="sample" tableConfig={tableConfig} />;
 }

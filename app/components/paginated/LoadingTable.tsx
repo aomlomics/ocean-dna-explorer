@@ -20,17 +20,13 @@ export default function LoadingTable({
 					{/* Left side: Filters */}
 					<div className="flex-1 flex">
 						<div className="flex items-center gap-2">
-							<button
-								className="btn btn-sm bg-base-200 text-base-content border-base-300 hover:bg-base-300/80"
-								type="button"
-								disabled
-							>
+							<button className="btn btn-sm" disabled>
 								Clear Filters
 							</button>
-							<button type="submit" className="btn btn-sm" disabled>
+							<button className="btn btn-sm" disabled>
 								Apply Filters
 							</button>
-							<label className="input input-sm input-bordered">
+							<label className="input input-sm input-bordered focus-within:outline-none">
 								Per Page:
 								<input name="take" defaultValue={take} type="number" disabled />
 							</label>
@@ -43,31 +39,32 @@ export default function LoadingTable({
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
 						<div className="flex gap-2">
 							<InfoButton
-								infoText="If many rows are displayed per page, selecting these options can cause long load times."
+								text="If many rows are displayed per page, selecting these options can cause long load times."
 								type="warning"
 								dir="tooltip-left"
 								className="z-60"
 							/>
 
-							<div tabIndex={0} role="button" className="btn btn-sm btn-disabled">
+							<button className="btn btn-sm" disabled>
 								Deep Relations
-							</div>
+							</button>
 						</div>
 
 						<div className="dropdown dropdown-end justify-self-end">
-							<div tabIndex={0} role="button" className="btn btn-sm btn-disabled">
+							<button className="btn btn-sm" disabled>
 								Columns
-							</div>
+							</button>
 						</div>
 
 						<fieldset className="fieldset bg-base-100 border-base-300">
-							<label className="label select-none">
+							<label className="label select-none cursor-not-allowed">
 								<input type="checkbox" className="checkbox" disabled />
 								Hide empty columns
 							</label>
 						</fieldset>
 					</div>
 				</div>
+
 				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
 					<table className="table table-sm table-pin-rows table-pin-cols">
 						{/* Headers */}
@@ -81,7 +78,7 @@ export default function LoadingTable({
 
 									<label className="form-control w-full max-w-xs text-lg">
 										{/* Value Filter */}
-										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 16 16"
@@ -106,7 +103,7 @@ export default function LoadingTable({
 										</div>
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
-											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													viewBox="0 0 16 16"
@@ -152,6 +149,11 @@ export default function LoadingTable({
 							))}
 						</tbody>
 					</table>
+				</div>
+
+				{/* Bottom Pagination Controls */}
+				<div className="flex justify-center mt-4">
+					<LoadingPaginationControls />
 				</div>
 			</div>
 		</div>

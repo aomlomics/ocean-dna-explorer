@@ -93,8 +93,6 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			behavior: "smooth"
 		});
 
-		const isPrivate = event.currentTarget.isPrivate.checked;
-
 		//get all files from event beforehand
 		const projectFile = event.currentTarget.project.files[0] as File;
 		const sampleFile = event.currentTarget.sample.files[0] as File;
@@ -134,7 +132,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			//project
 			setProjectResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const projectFileUrl = (
-				await upload(`submissions/${projectFile.name}`, projectFile, {
+				await upload(`submissions/${encodeURIComponent(projectFile.name)}`, projectFile, {
 					access: "public",
 					handleUploadUrl: "/api/file/upload",
 					multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -145,7 +143,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			//samples
 			setSampleResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const sampleFileUrl = (
-				await upload(`submissions/${sampleFile.name}`, sampleFile, {
+				await upload(`submissions/${encodeURIComponent(sampleFile.name)}`, sampleFile, {
 					access: "public",
 					handleUploadUrl: "/api/file/upload",
 					multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -156,7 +154,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			//libraries
 			setLibraryResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 			const libraryFileUrl = (
-				await upload(`submissions/${libraryFile.name}`, libraryFile, {
+				await upload(`submissions/${encodeURIComponent(libraryFile.name)}`, libraryFile, {
 					access: "public",
 					handleUploadUrl: "/api/file/upload",
 					multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -166,7 +164,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 
 			if (imageFile) {
 				const imageUrl = (
-					await upload(`submissions/${imageFile.name}`, imageFile, {
+					await upload(`submissions/${encodeURIComponent(imageFile.name)}`, imageFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload"
 					})
@@ -183,7 +181,6 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 				sampleFileUrl,
 				libraryFileUrl,
 				userIds,
-				isPrivate,
 				imageInfo
 			);
 		} catch (err) {
@@ -341,18 +338,6 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 								</fieldset>
 							</div>
 						</div>
-					</SubmitFormSection>
-
-					<SubmitFormSection
-						title="Make submission private"
-						info="Only users added to this Project will be able to see private submissions."
-					>
-						<fieldset className="fieldset">
-							<label className="fieldset-label flex gap-2">
-								<input name="isPrivate" type="checkbox" className="checkbox" disabled={loading} />
-								<p>Private submission</p>
-							</label>
-						</fieldset>
 					</SubmitFormSection>
 
 					<SubmitFormSection

@@ -24,7 +24,6 @@ async function doSubmit(
 	sampleChannel: Channel,
 	libraryChannel: Channel,
 	userIds: Project["userIds"],
-	isPrivate: Project["isPrivate"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const client = await clerkClient();
@@ -94,19 +93,24 @@ async function doSubmit(
 		}
 	}
 
+	let project;
+	let samples;
+	let libraries;
 	try {
+		let assays;
+		let assayPreps;
+
 		const parseResult = await parseProjectFiles({
 			projectChannel,
 			sampleChannel,
 			libraryChannel,
 			userIds,
-			isPrivate,
 			imageFileUrl: imageInfo?.image.url
 		});
 		if (!parseResult) {
 			return;
 		}
-		const { project, samples, assays, assayPreps, libraries } = parseResult;
+		({ project, samples, assays, assayPreps, libraries } = parseResult);
 
 		await projectChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -244,7 +248,6 @@ export default async function projectSubmitAction(
 	sampleFileUrl: Project["sampleMetadataFileUrl_ODE"],
 	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
 	userIds: Project["userIds"],
-	isPrivate: Project["isPrivate"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const globalStream = createProgressStream();
@@ -275,7 +278,6 @@ export default async function projectSubmitAction(
 		{ url: sampleFileUrl, stream: sampleStream },
 		{ url: libraryFileUrl, stream: libraryStream },
 		userIds,
-		isPrivate,
 		imageInfo
 	).then((success) => {
 		globalStream.close();

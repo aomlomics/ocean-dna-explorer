@@ -1,5 +1,9 @@
 import { AnalysisIcon, ProjectIcon } from "@/app/components/icons";
+import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import Link from "next/link";
+
+const ODE_TESTDATA_HREF = "https://github.com/aomlomics/ODE_testdata";
+const FAIRESHEETS_HREF = "https://github.com/aomlomics/FAIReSheets";
 
 export default function Submit() {
 	return (
@@ -15,29 +19,14 @@ export default function Submit() {
 				</ul>
 			</div>
 
-			<header className="my-8">
+			<header className="my-8 space-y-3 text-base text-base-content/80">
 				<h1 className="text-4xl font-normal text-primary">Submit to the Ocean DNA Explorer</h1>
-				<p className="mt-2 text-base text-base-content/80">
-					Choose a submission type below to contribute your data to the Ocean DNA Explorer database.
-				</p>
-				<p className="text-base text-base-content/80">
-					For more information on the submission requirements and data format, please see the{" "}
-					<a href="/help#submit" className="text-primary hover:text-primary-focus">
-						Submit Data
-					</a>{" "}
-					section of our Help page, or the{" "}
-					<a
-						href="https://noaa-omics-dmg.readthedocs.io/en/latest/metadata-guidelines.html"
-						className="text-primary hover:text-primary-focus"
-					>
-						NOAA Omics Data Management Guide
-					</a>
-					.
-				</p>
+				<p>Choose a submission type below to contribute your data.</p>
+				<SubmitDescription />
 			</header>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-				<div className="card bg-base-200 shadow-sm min-h-[260px] relative overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-65 relative overflow-hidden">
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
 							<div>
@@ -58,7 +47,7 @@ export default function Submit() {
 						</div>
 					</div>
 				</div>
-				<div className="card bg-base-200 shadow-sm min-h-[260px] relative overflow-hidden">
+				<div className="card bg-base-200 shadow-sm min-h-65 relative overflow-hidden">
 					<div className="card-body">
 						<div className="w-full h-full flex flex-col" style={{ zIndex: 1 }}>
 							<div>
@@ -81,5 +70,48 @@ export default function Submit() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+export function SubmitDescription() {
+	return (
+		<p>
+			Build your FAIR eDNA metadata templates with{" "}
+			<a
+				href="https://github.com/aomlomics/FAIReSheets"
+				className="text-primary hover:text-primary-focus"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				FAIReSheets
+			</a>{" "}
+			and compare against the{" "}
+			<a
+				href="https://github.com/aomlomics/ODE_testdata"
+				className="text-primary hover:text-primary-focus"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				example datasets
+			</a>{" "}
+			there. The{" "}
+			<Link href="/docs/help#submit" className="text-primary hover:text-primary-focus">
+				help page
+			</Link>{" "}
+			and the{" "}
+			<a
+				href={WORKSHOP_PLAYLIST_HREF}
+				className="text-primary hover:text-primary-focus"
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				FAIR eDNA Workshop
+			</a>{" "}
+			video series from{" "}
+			<a href={OBON_HREF} className="text-primary hover:text-primary-focus" target="_blank" rel="noopener noreferrer">
+				OBON
+			</a>{" "}
+			cover the standard and filling in these templates.
+		</p>
 	);
 }

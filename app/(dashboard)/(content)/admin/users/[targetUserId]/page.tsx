@@ -35,7 +35,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 	}
 
 	const targetRole = (target.publicMetadata as UserMetadata).role;
-	const uneditable = !targetRole || !RoleHeirarchy[role!].includes(targetRole);
+	const uneditable = !RoleHeirarchy[role!].includes(targetRole);
 
 	const projects = await prisma.project.findMany({
 		where: {
@@ -157,8 +157,8 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 											<div className="flex gap-3">
 												<SubmissionDeleteButton
 													field="project_id"
-													value={proj.project_id}
 													action={projectDeleteAction}
+													target={proj.project_id}
 													associatedAnalyses={proj.Analyses}
 												/>
 											</div>
@@ -182,8 +182,8 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 															<div className="flex gap-3">
 																<SubmissionDeleteButton
 																	field="analysis_run_name"
-																	value={analysis.analysis_run_name}
 																	action={analysisDeleteAction}
+																	target={[proj.project_id, analysis.analysis_run_name]}
 																/>
 															</div>
 														</div>

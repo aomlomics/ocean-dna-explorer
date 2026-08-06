@@ -14,7 +14,6 @@ async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
-	isPrivate: Analysis["isPrivate"],
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
@@ -31,7 +30,6 @@ async function doSubmit(
 			analysisChannel,
 			assignmentsChannel,
 			occurrencesChannel,
-			isPrivate,
 			trusted
 		});
 		if (!parseResult) {
@@ -65,7 +63,6 @@ async function doSubmit(
 					project_id: analysis.project_id
 				},
 				select: {
-					isPrivate: true,
 					userIds: true
 				}
 			}),
@@ -114,16 +111,11 @@ async function doSubmit(
 			})
 		]);
 
-		//check if the associated project is private, and throw an error if it is private but the submission is public
 		if (!dbProject) {
 			throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
 		} else if (!dbProject.userIds.includes(userId)) {
 			throw new Error(
 				`Permission denied for adding analysis to Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
-			);
-		} else if (dbProject.isPrivate && !isPrivate) {
-			throw new Error(
-				`Project with project_id of ${analysis.project_id} is private. Analyses can't be public if the associated project is private.`
 			);
 		}
 
@@ -235,7 +227,7 @@ async function doSubmit(
 				}
 			},
 			{
-				timeout: 3 * 60 * 1000
+				timeout: 10 * 60 * 1000
 			}
 		);
 
@@ -283,12 +275,15 @@ async function doSubmit(
 		await assignmentsChannel.stream.success("Features, Taxonomies, and Assignments successfully uploaded to database.");
 		await occurrencesChannel.stream.success("Occurrences successfully uploaded to database.");
 
-		fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.analysis_run_name}/alphaDiversity`, {
-			method: "POST",
-			headers: {
-				Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+		fetch(
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${analysis.project_id}/${analysis.analysis_run_name}/afterSubmission`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+				}
 			}
-		});
+		);
 
 		return true;
 	} catch (err: any) {
@@ -310,7 +305,6 @@ export default async function analysisSubmitAction(
 	analysisFileUrl: Analysis["analysisMetadataFileUrl_ODE"],
 	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
 	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
-	isPrivate: Analysis["isPrivate"],
 	trusted: Analysis["trusted"],
 	tagNames: Tag["tagName"][]
 ) {
@@ -335,7 +329,6 @@ export default async function analysisSubmitAction(
 		{ url: analysisFileUrl, stream: analysisStream },
 		{ url: assignmentsFileUrl, stream: assignmentsStream },
 		{ url: occurrencesFileUrl, stream: occurrencesStream },
-		isPrivate,
 		trusted,
 		tagNames
 	).then((success) => {

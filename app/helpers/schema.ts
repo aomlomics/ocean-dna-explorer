@@ -3,9 +3,82 @@ import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional
 import { Prisma } from "../generated/prisma/client";
 import TableMetadata, { DataTableNames, RelationMetadata, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
-import { capitalizeTable, deadBooleanToString } from "./utils";
+import { capitalizeTable } from "./utils";
 import { DbType } from "@/types/globals";
 import { JsonValue } from "@prisma/client/runtime/client";
+
+//handles converting numbers from 0 to 99
+function stringToNumber(str: string) {
+	const NUMBERS = {
+		ZERO: 0,
+		ONE: 1,
+		TWO: 2,
+		THREE: 3,
+		FOUR: 4,
+		FIVE: 5,
+		SIX: 6,
+		SEVEN: 7,
+		EIGHT: 8,
+		NINE: 9,
+		TEN: 10,
+		ELEVEN: 11,
+		TWELVE: 12,
+		THIRTEEN: 13,
+		FOURTEEN: 14,
+		FIFTEEN: 15,
+		SIXTEEN: 16,
+		SEVENTEEN: 17,
+		EIGHTEEN: 18,
+		NINETEEN: 19,
+		TWENTY: 20,
+		THIRTY: 30,
+		FOURTY: 40,
+		FIFTY: 50,
+		SIXTY: 60,
+		SEVENTY: 70,
+		EIGHTY: 80,
+		NINETY: 90
+	} as Record<string, number>;
+
+	const ENDING = "__";
+	const SEP = "_";
+
+	const words = str.toString().split(ENDING);
+	if (words.length === 1) {
+		return str;
+	}
+
+	let num = 0;
+	let replace = "";
+
+	words[0].split(SEP).forEach((word) => {
+		if (word in NUMBERS) {
+			num += NUMBERS[word];
+
+			if (replace === "") {
+				replace += word;
+			} else {
+				replace += SEP + word;
+			}
+		}
+	});
+
+	if (replace === "") {
+		return str;
+	} else {
+		return str.replace(replace + ENDING, num.toString());
+	}
+}
+
+function deadBooleanToString(value: any) {
+	return stringToNumber(value)
+		.replaceAll("PAREN1_", "(")
+		.replaceAll("PAREN2_", ")")
+		.replaceAll("PERCENT_", "%")
+		.replaceAll("COLON__", ": ")
+		.replaceAll("__", "-")
+		.replaceAll("_", " ");
+}
 
 export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 	const newEnum = {} as Record<string, string>;
@@ -248,13 +321,17 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 		path.push(curr);
 
 		if (curr === capsTarget) {
+			if (!path.length) {
+				return;
+			}
+
 			//convert to path of relation metadata
 			const pathRelations = [] as RelationMetadata[];
 			path.reduce((prev, t) => {
 				pathRelations.push(TableMetadata[prev].relations.find((rel) => rel.table === t)!);
 				return t;
 			});
-			return pathRelations;
+			return pathRelations as [RelationMetadata, ...RelationMetadata[]];
 		}
 
 		if (
@@ -286,7 +363,9 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 }
 
 export function getTableName(table: string, err?: string) {
-	const found = TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+	const found = TableNames.find(
+		(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
+	);
 
 	if (!found) {
 		throw new Error(err || `Invalid table name: "${table}".`);

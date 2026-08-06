@@ -71,7 +71,7 @@ const TaxonomyBubbleChart = ({
 	// );
 
 	return (
-		<div className="w-full h-[500px] flex items-center justify-center rounded-lg bg-base-200 text-base-content/70">
+		<div className="w-full h-125 flex items-center justify-center rounded-lg bg-base-200 text-base-content/70">
 			Taxonomy bubble chart temporarily disabled
 		</div>
 	);

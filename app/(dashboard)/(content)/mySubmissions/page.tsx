@@ -14,10 +14,7 @@ import { ProjectIcon } from "@/app/components/icons";
 import { prismaImages } from "@/app/helpers/prismaImages";
 
 export default async function MySubmissions() {
-	const { userId } = await auth();
-	if (!userId) {
-		return <div>Unauthorized</div>;
-	}
+	const { userId } = await auth.protect();
 
 	const [projects, dbBadAnalyses, tags] = await prisma.$transaction([
 		prisma.project.findMany({
@@ -29,15 +26,14 @@ export default async function MySubmissions() {
 			select: {
 				project_id: true,
 				userIds: true,
-				isPrivate: true,
 				imageFileUrl_ODE: true,
 				projectMetadataFileUrl_ODE: true,
 				sampleMetadataFileUrl_ODE: true,
 				libraryMetadataFileUrl_ODE: true,
 				Analyses: {
 					select: {
+						project_id: true,
 						analysis_run_name: true,
-						isPrivate: true,
 						trusted: true,
 						analysisMetadataFileUrl_ODE: true,
 						asvFileUrl_ODE: true,
@@ -151,7 +147,6 @@ export default async function MySubmissions() {
 
 													<ProjectEditButton
 														project_id={proj.project_id}
-														isPrivate={proj.isPrivate}
 														imageFileUrl_ODE={proj.imageFileUrl_ODE}
 														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
 														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
@@ -161,8 +156,8 @@ export default async function MySubmissions() {
 
 													<SubmissionDeleteButton
 														field="project_id"
-														value={proj.project_id}
 														action={projectDeleteAction}
+														target={proj.project_id}
 														associatedAnalyses={proj.Analyses}
 													/>
 												</div>
@@ -187,16 +182,11 @@ export default async function MySubmissions() {
 																</Link>
 
 																<div className="flex gap-3">
-																	<AnalysisEditButton
-																		analysis={analysis}
-																		project_id={proj.project_id}
-																		isPrivateDisabled={proj.isPrivate}
-																		tags={tags}
-																	/>
+																	<AnalysisEditButton analysis={analysis} tags={tags} />
 																	<SubmissionDeleteButton
 																		field="analysis_run_name"
-																		value={analysis.analysis_run_name}
 																		action={analysisDeleteAction}
+																		target={[proj.project_id, analysis.analysis_run_name]}
 																	/>
 																</div>
 															</div>

@@ -18,29 +18,25 @@ import AnalysisTag from "../tags/AnalysisTag";
 
 export default function AnalysisEditButton({
 	analysis: {
+		project_id,
 		analysis_run_name,
-		isPrivate,
 		trusted,
 		analysisMetadataFileUrl_ODE,
 		asvFileUrl_ODE,
 		occurrenceFileUrl_ODE,
 		Tags: currentTags
 	},
-	project_id,
-	isPrivateDisabled,
 	tags
 }: {
 	analysis: {
+		project_id: Analysis["project_id"];
 		analysis_run_name: Analysis["analysis_run_name"];
-		isPrivate: Analysis["isPrivate"];
 		trusted: Analysis["trusted"];
 		analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
 		asvFileUrl_ODE: Analysis["asvFileUrl_ODE"];
 		occurrenceFileUrl_ODE: Analysis["occurrenceFileUrl_ODE"];
 		Tags: Tag[];
 	};
-	project_id: Project["project_id"];
-	isPrivateDisabled: boolean;
 	tags: Tag[];
 }) {
 	const router = useRouter();
@@ -60,7 +56,6 @@ export default function AnalysisEditButton({
 	const occurrencesRef = useRef<HTMLInputElement>(null);
 
 	//state variables to hold contents of form for disabling submit button
-	const [isPrivateToggle, setIsPrivateToggle] = useState(isPrivate);
 	const [trustedToggle, setTrustedToggle] = useState(trusted);
 	const [selectedTags, setSelectedTags] = useState(currentTags);
 	const [analysisFile, setAnalysisFile] = useState(undefined as File | undefined);
@@ -109,7 +104,7 @@ export default function AnalysisEditButton({
 				setAnalysisResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				const analysisUrl = (
-					await upload(`submissions/${analysisFile.name}`, analysisFile, {
+					await upload(`submissions/${encodeURIComponent(analysisFile.name)}`, analysisFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -120,13 +115,9 @@ export default function AnalysisEditButton({
 
 				const argsObj = { url: analysisUrl } as {
 					url?: string;
-					isPrivate?: boolean;
 					trusted?: boolean;
 					tagNames?: string[];
 				};
-				if (isPrivateToggle !== isPrivate) {
-					argsObj.isPrivate = isPrivateToggle;
-				}
 				if (trustedToggle !== trusted) {
 					argsObj.trusted = trustedToggle;
 				}
@@ -156,15 +147,11 @@ export default function AnalysisEditButton({
 				}
 			}
 
-			if (!analysisFile && (tagsAreChanged || isPrivateToggle !== isPrivate || trustedToggle !== trusted)) {
+			if (!analysisFile && (tagsAreChanged || trustedToggle !== trusted)) {
 				const argsObj = {} as {
-					isPrivate?: boolean;
 					trusted?: boolean;
 					tagNames?: string[];
 				};
-				if (isPrivateToggle !== isPrivate) {
-					argsObj.isPrivate = isPrivateToggle;
-				}
 				if (trustedToggle !== trusted) {
 					argsObj.trusted = trustedToggle;
 				}
@@ -194,7 +181,7 @@ export default function AnalysisEditButton({
 				setAssignResponse({ statusMessage: "progress", progress: { message: "Uploading file", value: 0 } });
 
 				const assignmentsUrl = (
-					await upload(`submissions/${assignmentsFile.name}`, assignmentsFile, {
+					await upload(`submissions/${encodeURIComponent(assignmentsFile.name)}`, assignmentsFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -207,7 +194,7 @@ export default function AnalysisEditButton({
 				const assignmentsError = await doProgressAction({
 					action: assignEditAction,
 					setter: setAssignResponse,
-					args: [assignmentsUrl, editId, analysis_run_name]
+					args: [assignmentsUrl, editId, project_id, analysis_run_name]
 				});
 
 				//handle errors
@@ -234,7 +221,7 @@ export default function AnalysisEditButton({
 				});
 
 				const occurrencesUrl = (
-					await upload(`submissions/${occurrencesFile.name}`, occurrencesFile, {
+					await upload(`submissions/${encodeURIComponent(occurrencesFile.name)}`, occurrencesFile, {
 						access: "public",
 						handleUploadUrl: "/api/file/upload",
 						multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
@@ -250,7 +237,7 @@ export default function AnalysisEditButton({
 				const occurrencesError = await doProgressAction({
 					action: occEditAction,
 					setter: setOccResponse,
-					args: [occurrencesUrl, editId, analysis_run_name]
+					args: [occurrencesUrl, editId, project_id, analysis_run_name]
 				});
 
 				//handle errors
@@ -290,18 +277,6 @@ export default function AnalysisEditButton({
 			<Modal ref={modalRef} xRef={modalXRef} clickOffRef={modalClickOffRef}>
 				<form onSubmit={onSubmit} className="flex flex-col gap-3">
 					<h2>Edit Analysis: {analysis_run_name}</h2>
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend flex gap-2">
-							<h2>isPrivate</h2>
-						</legend>
-						<input
-							type="checkbox"
-							className="checkbox checkbox-primary"
-							disabled={isPrivateDisabled}
-							checked={isPrivateToggle}
-							onChange={(e) => setIsPrivateToggle(e.currentTarget.checked)}
-						/>
-					</fieldset>
 
 					<fieldset className="fieldset">
 						<legend className="fieldset-legend flex gap-2">
@@ -421,12 +396,7 @@ export default function AnalysisEditButton({
 							className="btn"
 							disabled={
 								loading ||
-								(!analysisFile &&
-									!assignmentsFile &&
-									!occurrencesFile &&
-									isPrivateToggle === isPrivate &&
-									trustedToggle === trusted &&
-									!tagsChanged())
+								(!analysisFile && !assignmentsFile && !occurrencesFile && trustedToggle === trusted && !tagsChanged())
 							}
 						>
 							Submit

@@ -16,9 +16,10 @@ async function doEdit(
 	stream: ProgressStream,
 	url: string,
 	editId: string,
+	project_id: Assignment["project_id"],
 	analysis_run_name: Assignment["analysis_run_name"]
 ) {
-	const { userId, sessionClaims } = await auth();
+	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
 
 	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
@@ -29,7 +30,10 @@ async function doEdit(
 	try {
 		const dbAnalysis = await prisma.analysis.findUnique({
 			where: {
-				analysis_run_name
+				project_id_analysis_run_name: {
+					project_id,
+					analysis_run_name
+				}
 			},
 			select: {
 				analysisMetadataFileChecksum_ODE: true,
@@ -47,6 +51,7 @@ async function doEdit(
 
 		const parseResult = await parseAssignmentsFile({
 			channel: { stream, url },
+			project_id,
 			analysis_run_name,
 			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
 		});
@@ -64,7 +69,10 @@ async function doEdit(
 				//check if allowed
 				const dbAnalysis = await tx.analysis.findUnique({
 					where: {
-						analysis_run_name
+						project_id_analysis_run_name: {
+							project_id,
+							analysis_run_name
+						}
 					},
 					select: {
 						Project: {
@@ -150,6 +158,7 @@ async function doEdit(
 				//rely on cron to delete unused features and taxonomies
 				const currAssigns = await tx.assignment.findMany({
 					where: {
+						project_id,
 						analysis_run_name
 					},
 					select: {
@@ -167,6 +176,7 @@ async function doEdit(
 
 				await tx.assignment.deleteMany({
 					where: {
+						project_id,
 						analysis_run_name,
 						id: {
 							in: assignsToDelete
@@ -192,7 +202,10 @@ async function doEdit(
 				//add asv file to analysis
 				await tx.analysis.update({
 					where: {
-						analysis_run_name
+						project_id_analysis_run_name: {
+							project_id,
+							analysis_run_name
+						}
 					},
 					data: {
 						editHistory,
@@ -207,6 +220,17 @@ async function doEdit(
 		);
 
 		await stream.success("Success");
+
+		//update BLAST databases
+		fetch(
+			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+				}
+			}
+		);
 
 		return true;
 	} catch (err: any) {
@@ -223,6 +247,7 @@ async function doEdit(
 export default async function assignEditAction(
 	url: string,
 	editId: string,
+	project_id: Assignment["project_id"],
 	analysis_run_name: Assignment["analysis_run_name"]
 ) {
 	const stream = createProgressStream();
@@ -236,7 +261,7 @@ export default async function assignEditAction(
 		}
 	}
 
-	doEdit(stream, url, editId, analysis_run_name).then((success) => {
+	doEdit(stream, url, editId, project_id, analysis_run_name).then((success) => {
 		stream.close();
 
 		if (url && !success) {

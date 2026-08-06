@@ -1,8 +1,7 @@
 model Analysis {
     id                Int      @id @default(autoincrement())
-    analysis_run_name String   @unique
+    analysis_run_name String
     dateSubmitted     DateTime @default(now())
-    isPrivate         Boolean
     trusted           Boolean
     /// [EditHistoryType]
     editHistory       Json?
@@ -101,33 +100,41 @@ model Analysis {
     percent_query_cover              Float?
     percent_query_cover_Midpoint_ODE Float?
     percent_query_cover_End_ODE      Float?
+
+    @@unique([project_id, analysis_run_name])
 }
 
 model Occurrence {
     id Int @id @default(autoincrement())
 
     // Relations
+    project_id        String
+    Project           Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     lib_id            String
-    Library           Library    @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
+    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     analysis_run_name String
-    Analysis          Analysis   @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis          Analysis   @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
     featureid         String
     Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
-    Assignment        Assignment @relation(fields: [analysis_run_name, featureid], references: [analysis_run_name, featureid], onDelete: Cascade)
+    Assignment        Assignment @relation(fields: [project_id, analysis_run_name, featureid], references: [project_id, analysis_run_name, featureid], onDelete: Cascade)
 
     // Data
     organismQuantity Int
 
-    @@unique([analysis_run_name, lib_id, featureid])
-    @@index(fields: [analysis_run_name, featureid])
+    @@unique([project_id, analysis_run_name, lib_id, featureid])
+    @@index([project_id, lib_id])
+    @@index([project_id, analysis_run_name])
+    @@index([analysis_run_name, featureid])
 }
 
 model Assignment {
     id Int @id @default(autoincrement())
 
     // Relations
+    project_id        String
+    Project           Project      @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     analysis_run_name String
-    Analysis          Analysis     @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis          Analysis     @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
     featureid         String
     Feature           Feature      @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     taxonomy          String
@@ -135,11 +142,13 @@ model Assignment {
     Occurrences       Occurrence[]
 
     // Data
+    ///@zod.number.lte(1, { message: "Confidence must be less than or equal to one." })
     Confidence Float?
     percent_id Float?
     consensus  Float?
 
-    @@unique([analysis_run_name, featureid])
+    @@unique([project_id, analysis_run_name, featureid])
+    @@index([project_id, analysis_run_name])
 }
 
 model Feature {
@@ -147,8 +156,9 @@ model Feature {
     featureid String @unique
 
     // Relations
-    Occurrences Occurrence[]
-    Assignments Assignment[]
+    Occurrences       Occurrence[]
+    Assignments       Assignment[]
+    BlastQueryResults BlastQueryResult[]
 
     // Data
     dna_sequence       String
@@ -161,8 +171,6 @@ model Taxonomy {
 
     // Relations
     Assignments Assignment[]
-
-    imageFileUrl_ODE String?
 
     // Data
     verbatimIdentification String
@@ -196,23 +204,76 @@ model AlphaDiversity {
     finished       Boolean  @default(false)
 
     // Relations
+    project_id            String
+    Project               Project               @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     analysis_run_name     String
-    Analysis              Analysis              @relation(fields: [analysis_run_name], references: [analysis_run_name], onDelete: Cascade)
+    Analysis              Analysis              @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
     AlphaDiversityIndexes AlphaDiversityIndex[]
 
     indexType String
-    rarefied  Boolean
     depth     Int?
+
+    @@index([project_id, analysis_run_name])
 }
 
 model AlphaDiversityIndex {
     id Int @id @default(autoincrement())
 
     // Relations
+    project_id     String
+    Project        Project        @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     lib_id         String
-    Library        Library        @relation(fields: [lib_id], references: [lib_id], onDelete: Cascade)
+    Library        Library        @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     parentId       Int
     AlphaDiversity AlphaDiversity @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
     index Float
+
+    @@index([project_id, lib_id])
+}
+
+model BlastQuery {
+    id             Int      @id @default(autoincrement())
+    userId         String
+    dateCalculated DateTime @default(now())
+    sequences      String[]
+
+    // Relations
+    database          String?
+    Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Cascade)
+    BlastQueryResults BlastQueryResult[]
+
+    databaseVersion Int
+    task            String
+    max_target_seqs Int
+    evalue          Float
+    perc_identity   Float
+    qcov_hsp_perc   Float
+
+    @@index([sequences], type: Gin)
+}
+
+model BlastQueryResult {
+    id       Int     @id @default(autoincrement())
+    query    String?
+    sequence String
+
+    // Relations
+    featureid  String
+    Feature    Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
+    queryId    Int
+    BlastQuery BlastQuery @relation(fields: [queryId], references: [id], onDelete: Cascade)
+
+    percentIdentity Float
+    alignmentLength Int
+    mismatches      Int
+    gapOpens        Int
+    queryStart      Int
+    queryEnd        Int
+    subjectStart    Int
+    subjectEnd      Int
+    eValue          Float
+    bitScore        Float
+
+    @@index([queryId, sequence])
 }

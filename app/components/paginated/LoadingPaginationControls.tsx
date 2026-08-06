@@ -1,9 +1,9 @@
 export default function LoadingPaginationControls() {
 	return (
 		<div className="w-full flex justify-center flex-1">
-			<div className="grid grid-cols-3 items-center grow max-w-[600px]">
+			<div className="grid grid-cols-3 items-center grow max-w-150">
 				<div className="justify-self-end">
-					<button className="btn btn-ghost" disabled={true} type="button">
+					<button className="btn btn-ghost" disabled>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="16"
@@ -20,7 +20,7 @@ export default function LoadingPaginationControls() {
 							<path d="M11 19L4.70711 12.7071C4.31658 12.3166 4.31658 11.6834 4.70711 11.2929L11 5" />
 						</svg>
 					</button>
-					<button className="btn btn-ghost" disabled={true} type="button">
+					<button className="btn btn-ghost" disabled>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="16"
@@ -43,7 +43,7 @@ export default function LoadingPaginationControls() {
 				</div>
 
 				<div className="justify-self-start">
-					<button className="btn btn-ghost" disabled={true} type="button">
+					<button className="btn btn-ghost" disabled>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="16"
@@ -59,7 +59,7 @@ export default function LoadingPaginationControls() {
 							<path d="m9 18 6-6-6-6" />
 						</svg>
 					</button>
-					<button className="btn btn-ghost" disabled={true} type="button">
+					<button className="btn btn-ghost" disabled>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="16"
