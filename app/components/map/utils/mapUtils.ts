@@ -5,10 +5,22 @@ import chroma from "chroma-js";
 import { Color } from "chroma-js";
 
 export type LegendInfo =
-	| ({ field: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"] } & (
-			| { mode: "discreet"; colorMap: Record<string, Color>; hidden?: string[] }
-			| { mode: "gradient"; range: [number, number] | [Date, Date]; palette: string; someNoValue?: boolean }
-	  ))
+	| (
+			| {
+					field: (typeof TableMetadata)[keyof typeof TableMetadata]["titleField"];
+					mode: "discreet";
+					colorMap: Record<string, Color>;
+					hidden?: string[];
+					tooManyOptions?: boolean;
+			  }
+			| {
+					field: string;
+					mode: "gradient";
+					range: [number, number] | [Date, Date];
+					palette: string;
+					someNoValue?: boolean;
+			  }
+	  )
 	| undefined;
 
 export const DEFAULT_COLOR = chroma("red");
@@ -17,6 +29,7 @@ export const DEFAULT_PALETTE = "YlGnBu";
 export const DEFAULT_POINT_SIZE = 15;
 export const DEFAULT_POINT_SIZE_STEP = 5;
 export const DEFAULT_CLUSTER_RADIUS = 0;
+export const LEGEND_VALUES_LIMIT = 100;
 
 export function getLegendValue(
 	field: NonNullable<LegendInfo>["field"],
@@ -26,9 +39,9 @@ export function getLegendValue(
 ) {
 	if (typeof field === "string") {
 		if (userDefinedOptions.has(field)) {
-			return loc.userDefined[field];
+			return loc.userDefined[field] || "";
 		} else {
-			return loc[field];
+			return loc[field] || "";
 		}
 	} else {
 		let joined = "";
@@ -49,12 +62,16 @@ export function getLegendColor(
 ) {
 	if (legendInfo) {
 		if (legendInfo.mode === "discreet") {
+			if (legendInfo.tooManyOptions) {
+				return { color: DEFAULT_COLOR };
+			}
+
 			const titleIdVal = getLegendValue(legendInfo.field, loc, userDefinedOptions);
 			if (titleIdVal) {
 				return { color: legendInfo.colorMap[titleIdVal] };
 			}
 		} else if (legendInfo.mode === "gradient") {
-			const val = getLegendValue(legendInfo.field, loc, userDefinedOptions) as number | Date | null;
+			const val = getLegendValue(legendInfo.field, loc, userDefinedOptions) as number | string | Date | null;
 			if (val) {
 				let percent;
 				if (typeof val === "number") {
@@ -62,7 +79,9 @@ export function getLegendColor(
 					percent = (val - range[0]) / (range[1] - range[0]);
 				} else {
 					const range = legendInfo.range as [Date, Date];
-					percent = (val.getTime() - range[0].getTime()) / (range[1].getTime() - range[0].getTime());
+					percent =
+						((typeof val === "string" ? new Date(val).getTime() : val.getTime()) - range[0].getTime()) /
+						(range[1].getTime() - range[0].getTime());
 				}
 
 				if (percent >= 0 && percent <= 100) {

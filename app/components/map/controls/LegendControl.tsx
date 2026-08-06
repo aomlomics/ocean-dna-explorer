@@ -6,7 +6,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
-import { DEFAULT_COLOR, DEFAULT_PALETTE, LegendInfo } from "../utils/mapUtils";
+import { DEFAULT_COLOR, DEFAULT_PALETTE, LEGEND_VALUES_LIMIT, LegendInfo } from "../utils/mapUtils";
 import InfoButton from "../../InfoButton";
 import TableMetadata from "@/types/tableMetadata";
 import ResetButtonMap from "../utils/ResetButtonMap";
@@ -74,7 +74,7 @@ export default function LegendControl({
 							/>
 
 							<select
-								className="select select-xs select-primary select-ghost text-sm mr-3 grow min-w-max"
+								className="select select-xs select-primary text-sm mr-3 grow min-w-max"
 								value={legendInfo?.field ?? ""}
 								onChange={async (e) => {
 									const field = e.target.value;
@@ -185,7 +185,9 @@ export default function LegendControl({
 												className="aspect-square w-[1em] h-[1em]"
 												style={{ backgroundColor: DEFAULT_COLOR.hex() }}
 											></div>
-											<div className="text-xs">No value</div>
+											<div className="text-xs">
+												{legendInfo.tooManyOptions ? `Too many values (>${LEGEND_VALUES_LIMIT})` : "No value"}
+											</div>
 										</div>
 									) : Object.keys(legendInfo.colorMap).length === 1 ? (
 										<div className="flex gap-2 items-center">

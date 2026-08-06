@@ -1,6 +1,6 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, FeatureGroup, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, FeatureGroup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import {
 	divIcon,
@@ -1010,26 +1010,26 @@ export default function ActualMap({
 									</Marker>
 								);
 
-								if (loc.polylines) {
-									acc.push(
-										<Polyline
-											key={i + "polyline"}
-											positions={loc.polylines}
-											pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
-										>
-											<PopupWithSearch
-												table={table}
-												titleTable={titleTable}
-												where={where}
-												loc={loc}
-												id={id}
-												legendInfo={legendInfo}
-												userDefinedOptions={userDefinedOptions}
-												disableSearch={disableSearch}
-											/>
-										</Polyline>
-									);
-								}
+								// if (loc.polylines) {
+								// 	acc.push(
+								// 		<Polyline
+								// 			key={i + "polyline"}
+								// 			positions={loc.polylines}
+								// 			pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
+								// 		>
+								// 			<PopupWithSearch
+								// 				table={table}
+								// 				titleTable={titleTable}
+								// 				where={where}
+								// 				loc={loc}
+								// 				id={id}
+								// 				legendInfo={legendInfo}
+								// 				userDefinedOptions={userDefinedOptions}
+								// 				disableSearch={disableSearch}
+								// 			/>
+								// 		</Polyline>
+								// 	);
+								// }
 							}
 
 							return acc;
@@ -1062,25 +1062,25 @@ export default function ActualMap({
 											</Marker>
 										);
 
-										if (loc.polylines) {
-											acc.push(
-												<Polyline
-													key={j + "polyline"}
-													positions={loc.polylines}
-													pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
-												>
-													<PopupWithSearch
-														table={table}
-														titleTable={titleTable}
-														where={where}
-														loc={loc}
-														id={id}
-														legendInfo={legendInfo}
-														userDefinedOptions={userDefinedOptions}
-													/>
-												</Polyline>
-											);
-										}
+										// if (loc.polylines) {
+										// 	acc.push(
+										// 		<Polyline
+										// 			key={j + "polyline"}
+										// 			positions={loc.polylines}
+										// 			pathOptions={{ color: getLegendColor(legendInfo, loc, userDefinedOptions).color.hex() }}
+										// 		>
+										// 			<PopupWithSearch
+										// 				table={table}
+										// 				titleTable={titleTable}
+										// 				where={where}
+										// 				loc={loc}
+										// 				id={id}
+										// 				legendInfo={legendInfo}
+										// 				userDefinedOptions={userDefinedOptions}
+										// 			/>
+										// 		</Polyline>
+										// 	);
+										// }
 									}
 
 									return acc;
