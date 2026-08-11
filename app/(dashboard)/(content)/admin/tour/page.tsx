@@ -268,7 +268,7 @@ export default function Tour() {
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
-			{ url: project_id ? exploreProjectUrl(project_id) : "/search?table=project" },
+			{ url: project_id ? exploreProjectUrl(project_id, { hash: "project" }) : "/search?table=project" },
 			{
 				url: project_id ? `/search?table=sample&advanced=[["project_id","equals","${project_id}"]]` : "/explore/sample"
 			},
