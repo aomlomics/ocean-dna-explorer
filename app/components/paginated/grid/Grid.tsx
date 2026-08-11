@@ -93,7 +93,8 @@ export default function Grid({
 		`/api/${table}/pagination?${getQuery()}`,
 		fetcher,
 		{
-			keepPreviousData: true
+			keepPreviousData: true,
+			revalidateOnFocus: false
 		}
 	);
 	if (isLoading || !data) {

@@ -25,7 +25,7 @@ export default function TableStatusState({
 		);
 
 	return (
-		<div className="rounded-box border border-base-300 bg-base-100 p-8">
+		<div aria-live="polite" className="rounded-box border border-base-300 bg-base-100 p-8">
 			<div className="mx-auto flex min-h-55 max-w-2xl flex-col items-center justify-center gap-3 text-center">
 				{icon}
 				<h3 className="text-lg font-semibold text-base-content">{title}</h3>

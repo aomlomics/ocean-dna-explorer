@@ -53,7 +53,8 @@ export default function Pagination({
 		`/api/${table}/pagination?${getQuery()}`,
 		fetcher,
 		{
-			keepPreviousData: true
+			keepPreviousData: true,
+			revalidateOnFocus: false
 		}
 	);
 	if (isLoading) {

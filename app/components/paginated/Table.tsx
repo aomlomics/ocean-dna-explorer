@@ -254,7 +254,11 @@ export default function Table({
 
 	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
 		`/api/${table}/pagination?${getQuery()}`,
-		fetcher
+		fetcher,
+		{
+			keepPreviousData: true,
+			revalidateOnFocus: false
+		}
 	);
 
 	// Reset to first page whenever the table or URL search params change

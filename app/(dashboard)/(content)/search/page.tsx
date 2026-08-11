@@ -36,6 +36,7 @@ export default function Search() {
 		}
 	}, [searchParams]);
 
+	//TODO: add loading state
 	if (!table) return <></>;
 
 	return (
