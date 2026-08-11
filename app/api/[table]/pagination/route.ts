@@ -151,7 +151,7 @@ export async function GET(
 				_count: {
 					select: relCounts
 						.split(",")
-						.reduce((acc: Record<string, boolean>, rel: string) => ({ ...acc, [rel]: true }), {})
+						.reduce((acc: Record<string, boolean>, rel: string) => ({ ...acc, [getDataTableName(rel)]: true }), {})
 				}
 			};
 		}
@@ -164,14 +164,12 @@ export async function GET(
 
 			const relationsAllFields = searchParams.get("relationsAllFields");
 			const relationsArr = relations.split(",");
+			let includeVal = { select: { id: true } } as { select: { id: true } } | true;
 			if (relationsAllFields != null) {
-				for (const rel of relationsArr) {
-					query.include[rel] = true;
-				}
-			} else {
-				for (const rel of relationsArr) {
-					query.include[rel] = { select: { id: true } };
-				}
+				includeVal = true;
+			}
+			for (const rel of relationsArr) {
+				query.include[getDataTableName(rel)] = includeVal;
 			}
 		}
 

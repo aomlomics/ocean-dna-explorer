@@ -7,8 +7,7 @@ import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from
 export async function fetcher(url: string) {
 	const res = await fetch(url);
 	if (!res.ok) {
-		const data = await res.json();
-		return { error: data.error };
+		throw new Error(res.statusText);
 	}
 	return await res.json();
 }

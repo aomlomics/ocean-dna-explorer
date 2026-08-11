@@ -340,7 +340,7 @@ export default function Table({
 			<TableStatusState
 				kind="error"
 				title="Could not load results"
-				detail={error.toString() instanceof Error ? error.message : String(error)}
+				detail={error instanceof Error ? error.message : String(error)}
 			/>
 		);
 	}

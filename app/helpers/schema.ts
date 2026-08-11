@@ -375,7 +375,9 @@ export function getTableName(table: string, err?: string) {
 }
 
 export function getDataTableName(table: string, err?: string) {
-	const found = DataTableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+	const found = DataTableNames.find(
+		(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
+	);
 
 	if (!found) {
 		throw new Error(err || `Invalid table name: "${table}".`);
@@ -386,12 +388,16 @@ export function getDataTableName(table: string, err?: string) {
 
 export function getTableNameSafe(table?: string | null) {
 	if (table) {
-		return TableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+		return TableNames.find(
+			(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
+		);
 	}
 }
 
 export function getDataTableNameSafe(table?: string | null) {
 	if (table) {
-		return DataTableNames.find((t) => t.toLowerCase() === table.toLowerCase());
+		return DataTableNames.find(
+			(t) => t.toLowerCase() === table.toLowerCase() || TableMetadata[t].plural.toLowerCase() === table.toLowerCase()
+		);
 	}
 }
