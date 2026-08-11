@@ -24,7 +24,7 @@ const heroPrimaryBtnClass =
 
 export default function Home() {
 	return (
-		<main className="relative flex flex-col grow bg-base-400 text-base-content">
+		<div className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-sticky bg-orange-500 text-white p-2 sm:p-4 text-center">
 				<p className="text-sm sm:text-base">
 					<span className="font-bold">BETA:</span> The Ocean DNA Explorer is under active development. Please report
@@ -105,12 +105,7 @@ export default function Home() {
 						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 							<div className="lg:col-span-8">
 								<div className="w-full">
-									<ClientMap
-										url={"/api/sample"}
-										legend
-										titleTable="project"
-										cluster
-									/>
+									<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
 								</div>
 							</div>
 
@@ -300,7 +295,7 @@ export default function Home() {
 					</div>
 				</div>
 			</div>
-		</main>
+		</div>
 	);
 }
 

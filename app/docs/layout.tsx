@@ -34,7 +34,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 			<div ref={headerRef}>
 				<Header />
 			</div>
-			<div className="w-[85%] mx-auto sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%] lg:grid lg:grid-cols-[15fr_85fr] lg:gap-10 pb-5">
+			<main
+				id="main-content"
+				className="w-[85%] mx-auto sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%] lg:grid lg:grid-cols-[15fr_85fr] lg:gap-10 pb-5"
+			>
 				<div
 					className="hidden lg:block sticky top-0 pt-10"
 					style={{ height: `calc(100dvh - ${headerVisible ? headerHeight : 0}px)` } as CSSProperties}
@@ -42,7 +45,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 					<DocsSidebar />
 				</div>
 				<div className="pt-10 pb-5 px-4 md:px-6 lg:px-8 overflow-x-auto">{children}</div>
-			</div>
+			</main>
 			<Footer />
 		</>
 	);

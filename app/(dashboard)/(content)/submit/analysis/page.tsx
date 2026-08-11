@@ -1,6 +1,5 @@
 import AnalysisSubmit from "@/app/components/submit/AnalysisSubmit";
 import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
-import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { SubmitDescription } from "../page";
@@ -11,7 +10,7 @@ export default async function Analysis() {
 	return (
 		<>
 			<SubmitMobileGate />
-			<main className="hidden lg:block container mx-auto px-4 py-4">
+			<div className="hidden lg:block container mx-auto px-4 py-4">
 				<div className="text-sm breadcrumbs">
 					<ul>
 						<li>
@@ -40,7 +39,7 @@ export default async function Analysis() {
 				</header>
 
 				<AnalysisSubmit tags={tags} />
-			</main>
+			</div>
 		</>
 	);
 }

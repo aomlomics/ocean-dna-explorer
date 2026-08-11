@@ -1,6 +1,5 @@
 import ProjectSubmit from "@/app/components/submit/ProjectSubmit";
 import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
-import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import Link from "next/link";
 import { SubmitDescription } from "../page";
@@ -11,7 +10,7 @@ export default async function Project() {
 	return (
 		<>
 			<SubmitMobileGate />
-			<main className="hidden lg:block container mx-auto px-4 py-4">
+			<div className="hidden lg:block container mx-auto px-4 py-4">
 				<div className="text-sm breadcrumbs">
 					<ul>
 						<li>
@@ -45,7 +44,7 @@ export default async function Project() {
 
 				{/* Form (handles left: people/privacy, right: files/progress) */}
 				<ProjectSubmit attributions={attributions} />
-			</main>
+			</div>
 		</>
 	);
 }

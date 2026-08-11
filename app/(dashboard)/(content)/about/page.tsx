@@ -26,7 +26,7 @@ const teamMembers = [
 
 export default function AboutPage() {
 	return (
-		<main className="min-h-screen bg-base-100 text-base-content -mt-4">
+		<div className="min-h-screen bg-base-100 text-base-content -mt-4">
 			{/* Mission banner */}
 			<section id="mission" className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] mb-28 bg-base-100">
 				<div className="relative h-100">
@@ -338,6 +338,6 @@ export default function AboutPage() {
 					Open an issue on GitHub <span>↗</span>
 				</Link>
 			</section>
-		</main>
+		</div>
 	);
 }

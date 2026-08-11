@@ -37,7 +37,7 @@ export default function Contribute() {
 	}
 
 	return (
-		<main className="max-w-7xl mx-auto p-6">
+		<div className="max-w-7xl mx-auto p-6">
 			<div className="py-10 md:py-12 max-w-350 mx-auto flex flex-col md:flex-row justify-between items-start gap-6 md:gap-8 lg:gap-12">
 				<div className="w-full md:max-w-xl lg:max-w-2xl space-y-3 md:space-y-4">
 					<h1 className="text-3xl md:text-3xl lg:text-4xl font-semibold text-primary">
@@ -140,6 +140,6 @@ export default function Contribute() {
 					</button>
 				</form>
 			</dialog>
-		</main>
+		</div>
 	);
 }

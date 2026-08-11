@@ -38,9 +38,9 @@ export default async function LearnPage({ searchParams }: PageProps) {
 		params.section && VALID_SECTIONS.includes(params.section) ? (params.section as SectionId) : "edna101";
 
 	return (
-		<main id="learn" className="min-h-screen bg-base-100 text-base-content -mt-4">
+		<div id="learn" className="min-h-screen bg-base-100 text-base-content -mt-4">
 			{/* Page Banner */}
-			<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-6 sm:mb-8 bg-base-100">
+			<section className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] mb-6 sm:mb-8 bg-base-100">
 				<div className="relative min-h-0">
 					<Image
 						src="/images/learn_page_banner.jpg"
@@ -96,14 +96,17 @@ export default async function LearnPage({ searchParams }: PageProps) {
 					</div>
 
 					{/* Wave section 1: Search */}
-					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-100">
+					<section className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] bg-base-100">
 						<svg
 							className="absolute -top-px left-0 w-full h-16 sm:h-24 text-base-100 rotate-180"
 							viewBox="0 0 1440 160"
 							preserveAspectRatio="none"
 							aria-hidden="true"
 						>
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+							<path
+								fill="currentColor"
+								d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
+							/>
 						</svg>
 						<div className="pt-20 sm:pt-28 pb-20 sm:pb-28">
 							<div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -117,7 +120,8 @@ export default async function LearnPage({ searchParams }: PageProps) {
 										</h3>
 										<p className="text-base text-base-content/80 leading-relaxed mb-6">
 											Search projects, samples, and occurrences. Build filters and relations in the UI, then use{" "}
-											<span className="font-medium text-base-content">Copy as API query</span> to copy the URL and get that data outside the app.
+											<span className="font-medium text-base-content">Copy as API query</span> to copy the URL and get
+											that data outside the app.
 										</p>
 										<ul className="space-y-3 mb-8">
 											{[
@@ -141,7 +145,10 @@ export default async function LearnPage({ searchParams }: PageProps) {
 												</li>
 											))}
 										</ul>
-										<a href="/search" className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors">
+										<a
+											href="/search"
+											className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors"
+										>
 											Go to Search
 											<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path
@@ -200,12 +207,15 @@ export default async function LearnPage({ searchParams }: PageProps) {
 							preserveAspectRatio="none"
 							aria-hidden="true"
 						>
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+							<path
+								fill="currentColor"
+								d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
+							/>
 						</svg>
 					</section>
 
 					{/* Section 2: Maps */}
-					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200">
+					<section className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] bg-base-200">
 						<div className="py-16 sm:py-20">
 							<div className="max-w-7xl mx-auto px-4 sm:px-6">
 								<div className="grid lg:grid-cols-[1fr_1fr] gap-8 lg:gap-12 items-center">
@@ -217,7 +227,9 @@ export default async function LearnPage({ searchParams }: PageProps) {
 											Custom maps across the site
 										</h3>
 										<p className="text-base text-base-content/80 leading-relaxed mb-6">
-											Maps are tailored to each part of the site and the level you are working at. Draw polygons, view search hits on the map, and filter by metadata such as taxonomy, temperature, salinity, or any other fields you have.
+											Maps are tailored to each part of the site and the level you are working at. Draw polygons, view
+											search hits on the map, and filter by metadata such as taxonomy, temperature, salinity, or any
+											other fields you have.
 										</p>
 										<ul className="space-y-3 mb-8">
 											{[
@@ -293,19 +305,25 @@ export default async function LearnPage({ searchParams }: PageProps) {
 							preserveAspectRatio="none"
 							aria-hidden="true"
 						>
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+							<path
+								fill="currentColor"
+								d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
+							/>
 						</svg>
 					</section>
 
 					{/* Wave section 3: Visualize */}
-					<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-100">
+					<section className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] bg-base-100">
 						<svg
 							className="absolute -top-px left-0 w-full h-16 sm:h-24 text-base-100 rotate-180"
 							viewBox="0 0 1440 160"
 							preserveAspectRatio="none"
 							aria-hidden="true"
 						>
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+							<path
+								fill="currentColor"
+								d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
+							/>
 						</svg>
 						<div className="pt-20 sm:pt-28 pb-20 sm:pb-28">
 							<div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -318,7 +336,9 @@ export default async function LearnPage({ searchParams }: PageProps) {
 											Build charts directly in your browser
 										</h3>
 										<p className="text-base text-base-content/80 leading-relaxed mb-6">
-											Filter your input data with the search query builder, then open sample scatter plots or taxonomy bar charts. Pick axes, ranks, and absolute or relative abundance. Diversity metrics are computed on the backend from your filters. Pan, zoom, and copy the chart image.
+											Filter your input data with the search query builder, then open sample scatter plots or taxonomy
+											bar charts. Pick axes, ranks, and absolute or relative abundance. Diversity metrics are computed
+											on the backend from your filters. Pan, zoom, and copy the chart image.
 										</p>
 										<ul className="space-y-3 mb-8">
 											{[
@@ -392,7 +412,10 @@ export default async function LearnPage({ searchParams }: PageProps) {
 							preserveAspectRatio="none"
 							aria-hidden="true"
 						>
-							<path fill="currentColor" d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z" />
+							<path
+								fill="currentColor"
+								d="M0,80 C240,160 480,160 720,104 C960,48 1200,48 1440,104 L1440,160 L0,160 Z"
+							/>
 						</svg>
 					</section>
 				</div>
@@ -402,6 +425,6 @@ export default async function LearnPage({ searchParams }: PageProps) {
 			<div className="flex justify-center pb-8 sm:pt-5 sm:pb-10">
 				<LearnSectionToggle currentSection={section} />
 			</div>
-		</main>
+		</div>
 	);
 }
