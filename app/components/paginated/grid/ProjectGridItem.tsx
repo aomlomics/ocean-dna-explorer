@@ -2,6 +2,7 @@ import { Project } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import Image from "next/image";
 import { ProjectIcon } from "@/app/components/icons";
+import { exploreProjectUrl } from "@/app/helpers/utils";
 
 type ProjectWithAssays = Project & {
 	AssayPreps?: { assay_name: string }[];
@@ -23,7 +24,7 @@ export default function ProjectGridItem({ item }: { item: ProjectWithAssays }) {
 
 	return (
 		<Link
-			href={`/explore/project/${encodeURIComponent(item.project_id)}`}
+			href={exploreProjectUrl(item.project_id)}
 			key={item.project_id}
 			className="card overflow-hidden bg-base-200 transition-colors duration-200 hover:bg-base-300"
 		>

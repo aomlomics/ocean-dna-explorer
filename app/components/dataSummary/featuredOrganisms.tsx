@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
 import ImagePreviewModal from "../ImagePreviewModal";
+import { exploreTaxonomyUrl } from "@/app/helpers/utils";
 
 export type FeaturedOrganismGroup =
 	| "Fish"
@@ -1534,7 +1535,7 @@ function SelectedOrganismCard({
 	const imageAttribution = getImageAttributionDetails(organism);
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
 	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
-	const taxonomyHref = taxonomyString ? `/explore/taxonomy/${encodeURIComponent(taxonomyString)}` : "/explore/taxonomy";
+	const taxonomyHref = taxonomyString ? exploreTaxonomyUrl(taxonomyString) : "/explore/taxonomy";
 
 	useEffect(() => {
 		setImageFailed(false);

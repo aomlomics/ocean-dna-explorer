@@ -15,7 +15,7 @@ import { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
 import Checklist from "../../Checklist";
 import InfoButton from "../../InfoButton";
-import { getRandomKey } from "@/app/helpers/utils";
+import { exploreAnalysisUrl, getRandomKey } from "@/app/helpers/utils";
 
 const METRIC_SEP = " | ";
 const DEFAULT_MAX_HUES = 20;
@@ -450,7 +450,7 @@ export default function AlphaDiversityDisplay({
 									Calculating for{" "}
 									<Link
 										className="link link-primary link-hover"
-										href={`/explore/analysis/${encodeURIComponent(ad.project_id)}/${encodeURIComponent(ad.analysis_run_name)}`}
+										href={exploreAnalysisUrl(ad.project_id, ad.analysis_run_name)}
 									>
 										{ad.project_id}: {ad.analysis_run_name}
 									</Link>

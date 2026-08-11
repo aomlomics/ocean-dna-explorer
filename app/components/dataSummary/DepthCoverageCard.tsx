@@ -1,6 +1,7 @@
 import { prisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 import { Sample } from "@/app/generated/prisma/client";
+import { exploreProjectUrl } from "@/app/helpers/utils";
 
 type DepthStats = {
 	min: number | null;
@@ -55,7 +56,7 @@ export async function DepthCoverageCard({ project_id }: { project_id?: Sample["p
 					links: [
 						{
 							label: project_id ? "Browse this project's samples" : "Browse samples",
-							href: project_id ? `/explore/project/${encodeURIComponent(project_id)}` : "/explore/sample"
+							href: project_id ? exploreProjectUrl(project_id) : "/explore/sample"
 						}
 					]
 				}}

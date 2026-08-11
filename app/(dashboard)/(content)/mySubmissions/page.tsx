@@ -12,6 +12,7 @@ import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton"
 import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 import { ProjectIcon } from "@/app/components/icons";
 import { prismaImages } from "@/app/helpers/prismaImages";
+import { exploreAnalysisUrl, exploreProjectUrl } from "@/app/helpers/utils";
 
 export default async function MySubmissions() {
 	const { userId } = await auth.protect();
@@ -130,7 +131,7 @@ export default async function MySubmissions() {
 												}`}
 											>
 												<Link
-													href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
+													href={exploreProjectUrl(proj.project_id)}
 													className="text-primary hover:text-info-focus hover:underline transition-colors"
 												>
 													{proj.project_id}
@@ -175,7 +176,7 @@ export default async function MySubmissions() {
 																}`}
 															>
 																<Link
-																	href={`/explore/analysis/${encodeURIComponent(analysis.project_id)}/${encodeURIComponent(analysis.analysis_run_name)}`}
+																	href={exploreAnalysisUrl(analysis.project_id, analysis.analysis_run_name)}
 																	className="text-primary hover:text-info-focus hover:underline transition-colors"
 																>
 																	{analysis.analysis_run_name}

@@ -10,6 +10,7 @@ import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
 import WarningButton from "@/app/components/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
+import { exploreAnalysisUrl, exploreProjectUrl } from "@/app/helpers/utils";
 import { Role, UserMetadata } from "@/types/globals";
 import { RoleHeirarchy } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
@@ -149,7 +150,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 									<div key={proj.id} className="flex flex-col gap-3">
 										<div className="flex items-center justify-between p-3 bg-base-100 rounded-lg">
 											<Link
-												href={`/explore/project/${encodeURIComponent(proj.project_id)}`}
+												href={exploreProjectUrl(proj.project_id)}
 												className="text-primary hover:text-info-focus hover:underline transition-colors"
 											>
 												{proj.project_id}
@@ -174,7 +175,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 															className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
 														>
 															<Link
-																href={`/explore/analysis/${encodeURIComponent(proj.project_id)}/${encodeURIComponent(analysis.analysis_run_name)}`}
+																href={exploreAnalysisUrl(proj.project_id, analysis.analysis_run_name)}
 																className="text-primary hover:text-info-focus hover:underline transition-colors"
 															>
 																{analysis.analysis_run_name}

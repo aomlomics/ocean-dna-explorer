@@ -3,7 +3,13 @@ import TableMetadata from "@/types/tableMetadata";
 import { prisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import {
+	decodeRouteParams,
+	exploreAnalysisUrl,
+	exploreFeatureUrl,
+	exploreProjectUrl,
+	exploreTaxonomyUrl
+} from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function AssignmentPage({
@@ -39,10 +45,7 @@ export default async function AssignmentPage({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -53,7 +56,7 @@ export default async function AssignmentPage({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+							href={exploreAnalysisUrl(project_id, analysis_run_name)}
 							className="text-primary hover:text-primary-focus"
 						>
 							{analysis_run_name}
@@ -84,7 +87,7 @@ export default async function AssignmentPage({
 				<p className="text-lg text-base-content/90 max-w-3xl">
 					Assignment of feature{" "}
 					<Link
-						href={`/explore/feature/${encodeURIComponent(assignment.featureid)}`}
+						href={exploreFeatureUrl(assignment.featureid)}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.featureid}
@@ -92,7 +95,7 @@ export default async function AssignmentPage({
 					to taxonomy{" "}
 					{assignment.taxonomy ? (
 						<Link
-							href={`/explore/taxonomy/${encodeURIComponent(assignment.taxonomy)}`}
+							href={exploreTaxonomyUrl(assignment.taxonomy)}
 							className="font-semibold text-primary hover:text-primary-focus break-all"
 						>
 							{assignment.taxonomy}
@@ -102,7 +105,7 @@ export default async function AssignmentPage({
 					)}{" "}
 					in analysis{" "}
 					<Link
-						href={`/explore/analysis/${encodeURIComponent(project_id)}/${encodeURIComponent(assignment.analysis_run_name)}`}
+						href={exploreAnalysisUrl(project_id, assignment.analysis_run_name)}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.analysis_run_name}

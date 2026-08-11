@@ -11,7 +11,7 @@ import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/
 import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import { decodeRouteParams, exploreProjectUrl } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
@@ -58,10 +58,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -82,10 +79,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(project_id)}`}
-						className="text-primary hover:text-primary-focus"
-					>
+					<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
 						{project_id}
 					</Link>{" "}
 					project

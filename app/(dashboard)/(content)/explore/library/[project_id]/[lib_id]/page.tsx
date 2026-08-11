@@ -5,7 +5,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import { decodeRouteParams, exploreAssayUrl, exploreProjectUrl, exploreSampleUrl } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
@@ -65,23 +65,17 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This library connects{" "}
 					<Link
-						href={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(sample.samp_name)}`}
+						href={exploreSampleUrl(project_id, sample.samp_name)}
 						className="text-primary hover:text-primary-focus break-all"
 					>
 						sample {sample.samp_name}
 					</Link>{" "}
 					with{" "}
-					<Link
-						href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
-						className="text-primary hover:text-primary-focus break-all"
-					>
+					<Link href={exploreAssayUrl(assay.assay_name)} className="text-primary hover:text-primary-focus break-all">
 						assay {assay.assay_name}
 					</Link>{" "}
 					in project{" "}
-					<Link
-						href={`/explore/project/${encodeURIComponent(project_id)}`}
-						className="text-primary hover:text-primary-focus break-all"
-					>
+					<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus break-all">
 						{project_id}
 					</Link>
 					.
@@ -105,7 +99,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						<StatCard
 							title="Sample"
 							icon={<LocationIcon />}
-							link={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(sample.samp_name)}`}
+							link={exploreSampleUrl(project_id, sample.samp_name)}
 							value={sample.samp_name}
 							className="w-2/3"
 						/>
@@ -113,7 +107,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						<StatCard
 							title="Assay"
 							icon={<AssayIcon />}
-							link={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
+							link={exploreAssayUrl(assay.assay_name)}
 							value={assay.assay_name}
 							className="w-2/3"
 						/>

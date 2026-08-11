@@ -9,7 +9,15 @@ import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import {
+	decodeRouteParams,
+	exploreAnalysisUrl,
+	exploreFeatureUrl,
+	exploreLibraryUrl,
+	exploreProjectUrl,
+	exploreSampleUrl,
+	exploreTaxonomyUrl
+} from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
@@ -123,7 +131,7 @@ export default async function OccurrencePage({
 
 	const topStatCards = (
 		<div className="flex flex-wrap gap-4">
-			<Link href={`/explore/feature/${encodeURIComponent(featureid)}`} className="block w-max max-w-full">
+			<Link href={exploreFeatureUrl(featureid)} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
@@ -138,7 +146,7 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/library/${encodeURIComponent(project_id)}/${lib_id}`} className="block w-max max-w-full">
+			<Link href={exploreLibraryUrl(project_id, lib_id)} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
 						<MaskSvgIcon src="/images/icons/library_icon.svg" />
@@ -153,7 +161,7 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`} className="block w-max max-w-full">
+			<Link href={exploreAnalysisUrl(project_id, analysis_run_name)} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
 						<AnalysisIcon className="h-10 w-10" />
@@ -168,7 +176,7 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={`/explore/project/${encodeURIComponent(project_id)}`} className="block w-max max-w-full">
+			<Link href={exploreProjectUrl(project_id)} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">
 						<ProjectIcon className="h-10 w-10" />
@@ -197,10 +205,7 @@ export default async function OccurrencePage({
 						</Link>
 					</li>
 					<li>
-						<Link
-							href={`/explore/project/${encodeURIComponent(project_id)}`}
-							className="text-primary hover:text-primary-focus"
-						>
+						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -211,7 +216,7 @@ export default async function OccurrencePage({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${encodeURIComponent(project_id)}/${encodeURIComponent(analysis_run_name)}`}
+							href={exploreAnalysisUrl(project_id, analysis_run_name)}
 							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
 							title={analysis_run_name}
 						>
@@ -299,7 +304,7 @@ export default async function OccurrencePage({
 									<div className="space-y-2">
 										{occurrence.Assignment.Taxonomy ? (
 											<Link
-												href={`/explore/taxonomy/${encodeURIComponent(occurrence.Assignment.Taxonomy.taxonomy)}`}
+												href={exploreTaxonomyUrl(occurrence.Assignment.Taxonomy.taxonomy)}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -341,7 +346,7 @@ export default async function OccurrencePage({
 						</div>
 						<div className="w-full lg:max-w-sm">
 							<Link
-								href={`/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(occurrence.Library.Sample.samp_name)}`}
+								href={exploreSampleUrl(project_id, occurrence.Library.Sample.samp_name)}
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">

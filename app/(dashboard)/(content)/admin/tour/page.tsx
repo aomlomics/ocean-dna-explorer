@@ -1,6 +1,14 @@
 "use client";
 
 import InfoButton from "@/app/components/InfoButton";
+import {
+	exploreAnalysisUrl,
+	exploreAssayUrl,
+	exploreFeatureUrl,
+	exploreProjectUrl,
+	exploreSampleUrl,
+	exploreTaxonomyUrl
+} from "@/app/helpers/utils";
 import { DEFAULT_TOUR_STEP_TIME, TourContext, TourStep } from "@/app/hooks/TourProvider";
 import { NetworkPacket } from "@/types/globals";
 import { useAuth } from "@clerk/react";
@@ -253,13 +261,6 @@ export default function Tour() {
 		setCurrTaxonomy(taxonomy || "");
 		setCurrFeature(featureid || "");
 
-		const encodedProjectId = encodeURIComponent(project_id || "");
-		const encodedSampName = encodeURIComponent(samp_name || "");
-		const encodedAssayName = encodeURIComponent(assay_name || "");
-		const encodedAnalysisRunName = encodeURIComponent(analysis_run_name || "");
-		const encodedTaxonomy = encodeURIComponent(taxonomy || "");
-		const encodedFeatureid = encodeURIComponent(featureid || "");
-
 		setTourSteps([
 			{ url: "/ambient" },
 			{ url: "/sponsors" },
@@ -267,34 +268,36 @@ export default function Tour() {
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
-			{ url: project_id ? `/explore/project/${encodedProjectId}#project` : "/search?table=project" },
+			{ url: project_id ? exploreProjectUrl(project_id) : "/search?table=project" },
 			{
 				url: project_id ? `/search?table=sample&advanced=[["project_id","equals","${project_id}"]]` : "/explore/sample"
 			},
 			{
 				url:
-					project_id && samp_name
-						? `/explore/sample/${encodedProjectId}/${encodedSampName}#sample`
-						: "/search?table=sample"
+					project_id && samp_name ? exploreSampleUrl(project_id, samp_name, { hash: "sample" }) : "/search?table=sample"
 			},
 			{
 				url:
 					project_id && samp_name
-						? `/explore/sample/${encodedProjectId}/${encodedSampName}#taxonomyChart`
+						? exploreSampleUrl(project_id, samp_name, { hash: "taxonomyChart" })
 						: "/search?table=sample"
 			},
-			{ url: assay_name ? `/explore/assay/${encodedAssayName}#assay` : "/explore/assay" },
-			{ url: assay_name ? `/explore/assay/${encodedAssayName}#primerSection` : "/search?table=assay" },
+			{ url: assay_name ? exploreAssayUrl(assay_name, { hash: "assay" }) : "/explore/assay" },
+			{ url: assay_name ? exploreAssayUrl(assay_name, { hash: "primerSection" }) : "/search?table=assay" },
 			{
-				url: analysis_run_name ? `/explore/analysis/${encodedAnalysisRunName}#analysis` : "/explore/analysis"
+				url:
+					project_id && analysis_run_name
+						? exploreAnalysisUrl(project_id, analysis_run_name, { hash: "analysis" })
+						: "/explore/analysis"
 			},
 			{
-				url: analysis_run_name
-					? `/explore/analysis/${encodedProjectId}/${encodedAnalysisRunName}#dataExplorer`
-					: "/search?table=analysis"
+				url:
+					project_id && analysis_run_name
+						? exploreAnalysisUrl(project_id, analysis_run_name, { hash: "dataExplorer" })
+						: "/search?table=analysis"
 			},
-			{ url: taxonomy ? `/explore/taxonomy/${encodedTaxonomy}#taxonomy` : "/search?table=taxonomy" },
-			{ url: featureid ? `/explore/feature/${encodedFeatureid}#feature` : "/search?table=feature" },
+			{ url: taxonomy ? exploreTaxonomyUrl(taxonomy, { hash: "taxonomy" }) : "/search?table=taxonomy" },
+			{ url: featureid ? exploreFeatureUrl(featureid, { hash: "feature" }) : "/search?table=feature" },
 			{
 				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
 				stepTime: 2

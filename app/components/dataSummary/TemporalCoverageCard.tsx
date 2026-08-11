@@ -1,6 +1,7 @@
 import { prisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 import { Sample } from "@/app/generated/prisma/client";
+import { exploreProjectUrl } from "@/app/helpers/utils";
 
 /**
  * Floor for what counts as a "real" sample collection date. Anything
@@ -67,7 +68,7 @@ export async function TemporalCoverageCard({ project_id }: { project_id?: Sample
 				links: [
 					{
 						label: project_id ? "Browse this project's samples" : "Browse samples",
-						href: project_id ? `/explore/project/${encodeURIComponent(project_id)}` : "/explore/sample"
+						href: project_id ? exploreProjectUrl(project_id) : "/explore/sample"
 					}
 				]
 			}}

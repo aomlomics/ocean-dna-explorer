@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
+import { exploreAssayUrl } from "@/app/helpers/utils";
 
 interface AssayCardProps {
 	assay_name: string;
@@ -11,7 +12,7 @@ interface AssayCardProps {
 export default function AssayCard({ assay_name, target_gene, className = "" }: AssayCardProps) {
 	return (
 		<Link
-			href={`/explore/assay/${encodeURIComponent(assay_name)}`}
+			href={exploreAssayUrl(assay_name)}
 			className={[
 				"flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group",
 				className

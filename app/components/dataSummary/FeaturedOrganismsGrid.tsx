@@ -10,6 +10,7 @@ import {
 	type FeaturedOrganism,
 	type FeaturedOrganismGroup
 } from "./featuredOrganisms";
+import { exploreTaxonomyUrl } from "@/app/helpers/utils";
 
 type Props = {
 	/**
@@ -237,9 +238,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 	const [previewOpen, setPreviewOpen] = useState(false);
 
 	const iucnLabel = iucn ? IUCN_LABEL[iucn] : null;
-	const viewHref = organism.taxonomyString
-		? `/explore/taxonomy/${encodeURIComponent(organism.taxonomyString)}`
-		: "/explore/taxonomy";
+	const viewHref = organism.taxonomyString ? exploreTaxonomyUrl(organism.taxonomyString) : "/explore/taxonomy";
 	const imageSrc = organism.imageSrc ?? "";
 
 	useEffect(() => {

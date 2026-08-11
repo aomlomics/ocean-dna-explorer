@@ -12,7 +12,7 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import { decodeRouteParams, exploreFeatureUrl, exploreTaxonomyUrl } from "@/app/helpers/utils";
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -74,7 +74,7 @@ export default async function Featureid({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/feature/${encodeURIComponent(featureid)}`);
+		redirect(exploreFeatureUrl(featureid));
 	}
 
 	const { feature, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
@@ -275,16 +275,16 @@ export default async function Featureid({
 							</div>
 							{topTaxonomies.length > 0 ? (
 								<div className="divide-y divide-base-content/10">
-									{topTaxonomies.map((taxonomyItem) => (
+									{topTaxonomies.map((taxa) => (
 										<Link
-											key={taxonomyItem.taxonomy}
-											href={`/explore/taxonomy/${encodeURIComponent(taxonomyItem.taxonomy)}`}
+											key={taxa.taxonomy}
+											href={exploreTaxonomyUrl(taxa.taxonomy)}
 											className="flex items-center gap-4 p-4 hover:bg-base-300/30 cursor-pointer transition-colors duration-150 group"
 										>
 											<div className="w-16 h-16 shrink-0 rounded-lg bg-linear-to-br from-base-200 to-base-300 group-hover:from-base-300 group-hover:to-base-200 flex items-center justify-center shadow-sm overflow-hidden transition-colors duration-150">
 												<div className="relative w-12 h-12 flex items-center justify-center">
-													{taxonomyItem.details ? (
-														<PhyloPic taxonomy={taxonomyItem.details} />
+													{taxa.details ? (
+														<PhyloPic taxonomy={taxa.details} />
 													) : (
 														<span className="text-xs text-base-content/55">No image</span>
 													)}
@@ -292,9 +292,9 @@ export default async function Featureid({
 											</div>
 											<div className="flex-1 min-w-0">
 												<h3 className="font-medium text-lg text-base-content leading-snug break-all">
-													{taxonomyItem.displayName}
+													{taxa.displayName}
 												</h3>
-												<p className="text-xs text-base-content/60 break-all leading-snug">{taxonomyItem.hierarchy}</p>
+												<p className="text-xs text-base-content/60 break-all leading-snug">{taxa.hierarchy}</p>
 											</div>
 											<svg
 												className="w-4 h-4 text-base-content/45 group-hover:text-base-content/75 transition-colors duration-150 shrink-0"

@@ -1,4 +1,16 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import {
+	Analysis,
+	Assay,
+	AssayPrep,
+	Assignment,
+	Feature,
+	Library,
+	Occurrence,
+	Prisma,
+	Project,
+	Sample,
+	Taxonomy
+} from "@/app/generated/prisma/client";
 import { Circle, Location, LocationWithValues, MapShape, NullLocation, Point, Polygon } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
@@ -386,4 +398,67 @@ export async function decodeRouteParams(params: Promise<Record<string, string>>)
 		(acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }),
 		{} as Record<string, string>
 	);
+}
+
+type ExploreUrlExtra = { hash?: string; params?: Record<string, string> | URLSearchParams };
+function extraToString(extra: ExploreUrlExtra) {
+	return `${extra.params ? "?" + new URLSearchParams(extra.params) : ""}${extra.hash ? "#" + extra.hash : ""}`;
+}
+
+export function exploreProjectUrl(project_id: Project["project_id"], extra: ExploreUrlExtra = {}) {
+	return `/explore/project/${encodeURIComponent(project_id)}${extraToString(extra)}`;
+}
+export function exploreSampleUrl(
+	project_id: Sample["project_id"],
+	samp_name: Sample["samp_name"],
+	extra: ExploreUrlExtra = {}
+) {
+	return `/explore/sample/${encodeURIComponent(project_id)}/${encodeURIComponent(samp_name)}${extraToString(extra)}`;
+}
+export function exploreAssayUrl(assay_name: Assay["assay_name"], extra: ExploreUrlExtra = {}) {
+	return `/explore/assay/${encodeURIComponent(assay_name)}${extraToString(extra)}`;
+}
+export function exploreAssayPrepUrl(
+	project_id: AssayPrep["project_id"],
+	assay_name: AssayPrep["assay_name"],
+	extra: ExploreUrlExtra = {}
+) {
+	return `/explore/assayPrep/${encodeURIComponent(project_id)}/${encodeURIComponent(assay_name)}${extraToString(extra)}`;
+}
+export function exploreLibraryUrl(
+	project_id: Library["project_id"],
+	lib_id: Library["lib_id"],
+	extra: ExploreUrlExtra = {}
+) {
+	return `/explore/library/${encodeURIComponent(project_id)}/${encodeURIComponent(lib_id)}${extraToString(extra)}`;
+}
+export function exploreAnalysisUrl(
+	project_id: Analysis["project_id"],
+	analysis_run_name: Analysis["analysis_run_name"],
+	extra: ExploreUrlExtra = {}
+) {
+	return `/explore/analysis/${encodeURIComponent(project_id)}/${encodeURIComponent(analysis_run_name)}${extraToString(extra)}`;
+}
+export function exploreOccurrenceUrl(
+	project_id: Occurrence["project_id"],
+	analysis_run_name: Occurrence["analysis_run_name"],
+	lib_id: Occurrence["lib_id"],
+	featureid: Occurrence["featureid"],
+	extra: ExploreUrlExtra = {}
+) {
+	return `/explore/occurrence/${encodeURIComponent(project_id)}/${encodeURIComponent(analysis_run_name)}/${encodeURIComponent(lib_id)}/${encodeURIComponent(featureid)}${extraToString(extra)}`;
+}
+export function exploreAssignmentUrl(
+	project_id: Assignment["project_id"],
+	analysis_run_name: Assignment["analysis_run_name"],
+	featureid: Assignment["featureid"],
+	extra: ExploreUrlExtra = {}
+) {
+	return `/explore/assignment/${encodeURIComponent(project_id)}/${encodeURIComponent(analysis_run_name)}/${encodeURIComponent(featureid)}${extraToString(extra)}`;
+}
+export function exploreFeatureUrl(featureid: Feature["featureid"], extra: ExploreUrlExtra = {}) {
+	return `/explore/feature/${encodeURIComponent(featureid)}${extraToString(extra)}`;
+}
+export function exploreTaxonomyUrl(taxonomy: Taxonomy["taxonomy"], extra: ExploreUrlExtra = {}) {
+	return `/explore/taxonomy/${encodeURIComponent(taxonomy)}${extraToString(extra)}`;
 }

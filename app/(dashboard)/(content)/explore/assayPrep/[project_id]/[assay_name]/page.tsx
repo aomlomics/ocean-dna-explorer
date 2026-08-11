@@ -5,7 +5,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams } from "@/app/helpers/utils";
+import { decodeRouteParams, exploreAssayUrl, exploreProjectUrl } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function Project_id_Assay_name({
@@ -70,22 +70,16 @@ export default async function Project_id_Assay_name({
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					Assay preparation for{" "}
 					{assay ? (
-						<Link
-							href={`/explore/assay/${encodeURIComponent(assay.assay_name)}`}
-							className="text-primary hover:text-primary-focus break-all"
-						>
-							assay {assay.assay_name}
+						<Link href={exploreAssayUrl(assay_name)} className="text-primary hover:text-primary-focus break-all">
+							assay {assay_name}
 						</Link>
 					) : (
 						<span className="italic">an unspecified assay</span>
 					)}{" "}
 					in project{" "}
 					{project ? (
-						<Link
-							href={`/explore/project/${encodeURIComponent(project.project_id)}`}
-							className="text-primary hover:text-primary-focus break-all"
-						>
-							{project.project_id}
+						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus break-all">
+							{project_id}
 						</Link>
 					) : (
 						<span className="italic">not specified</span>
@@ -109,14 +103,11 @@ export default async function Project_id_Assay_name({
 					{/* Context cards */}
 					<div className="space-y-4">
 						{assay && (
-							<AssaysCard
-								title="Assay used:"
-								assays={[{ assay_name: assay.assay_name, target_gene: assay.target_gene ?? assay.assay_name }]}
-							/>
+							<AssaysCard title="Assay used:" assays={[{ assay_name, target_gene: assay.target_gene ?? assay_name }]} />
 						)}
 
 						{project && (
-							<Link href={`/explore/project/${encodeURIComponent(project.project_id)}`} className="group block w-2/3">
+							<Link href={exploreProjectUrl(project_id)} className="group block w-2/3">
 								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 										<ProjectIcon />
@@ -125,7 +116,7 @@ export default async function Project_id_Assay_name({
 										View project
 									</div>
 									<div className="text-base font-semibold text-base-content group-hover:text-primary mt-1 break-all">
-										{project.project_id}
+										{project_id}
 									</div>
 								</div>
 							</Link>

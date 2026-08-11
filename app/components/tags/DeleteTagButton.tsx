@@ -7,6 +7,7 @@ import deleteTagAction from "@/app/actions/tag/deleteTag";
 import { Analysis, Tag } from "@/app/generated/prisma/client";
 import AnalysisTag from "./AnalysisTag";
 import Link from "next/link";
+import { exploreAnalysisUrl } from "@/app/helpers/utils";
 
 export default function DeleteTagButton({
 	tag
@@ -66,7 +67,7 @@ export default function DeleteTagButton({
 								{tag.Analyses.map((a) => (
 									<li key={a.analysis_run_name}>
 										<Link
-											href={`/explore/analysis/${encodeURIComponent(a.project_id)}/${encodeURIComponent(a.analysis_run_name)}`}
+											href={exploreAnalysisUrl(a.project_id, a.analysis_run_name)}
 											className="link-primary link-hover"
 										>
 											{a.analysis_run_name}
