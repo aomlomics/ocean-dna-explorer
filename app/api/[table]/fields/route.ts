@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { getTableName, getZodType } from "@/app/helpers/schema";
-import { stripSecureFields } from "@/app/helpers/queries";
 
 export async function GET(
 	request: Request,
@@ -19,8 +18,6 @@ export async function GET(
 			result[f] = type;
 		}
 	}
-
-	stripSecureFields(result);
 
 	return NextResponse.json({ statusMessage: "success", result });
 }

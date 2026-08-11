@@ -1,9 +1,16 @@
 import { ReactNode } from "react";
 import AdminTabs from "@/app/components/AdminTabs";
 import { auth } from "@clerk/nextjs/server";
+import { RolePermissions } from "@/types/objects";
+import { notFound } from "next/navigation";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-	await auth.protect();
+	const { sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!role || !RolePermissions[role].includes("manageUsers")) {
+		notFound();
+	}
 
 	return (
 		<div>

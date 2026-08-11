@@ -14,7 +14,7 @@ export default function UserList() {
 	const [error, setError] = useState("");
 
 	async function searchUsers(query?: string) {
-		const response = await fetch(`/api/user${query ? "?query=" + query : ""}`);
+		const response = await fetch(`/api/user?emails=true${query ? "&query=" + query : ""}`);
 		if (response.ok) {
 			const json = (await response.json()) as NetworkPacket;
 			if (json.statusMessage === "success") {
