@@ -1,5 +1,6 @@
 import { prisma } from "@/app/helpers/prisma";
 import {
+	capitalizeTable,
 	deepMerge,
 	getLocationsInsideShapes,
 	getShapesFromUrl,
@@ -149,9 +150,14 @@ export async function GET(
 		if (relCounts != null) {
 			query.include = {
 				_count: {
-					select: relCounts
-						.split(",")
-						.reduce((acc: Record<string, boolean>, rel: string) => ({ ...acc, [getDataTableName(rel)]: true }), {})
+					select: relCounts.split(",").reduce(
+						(acc: Record<string, boolean>, rel: string) => ({
+							...acc,
+							[TableMetadata[model].relations.find((mr) => mr.table === capitalizeTable(getDataTableName(rel)))!.field]:
+								true
+						}),
+						{}
+					)
 				}
 			};
 		}
@@ -169,7 +175,9 @@ export async function GET(
 				includeVal = true;
 			}
 			for (const rel of relationsArr) {
-				query.include[getDataTableName(rel)] = includeVal;
+				query.include[
+					TableMetadata[model].relations.find((mr) => mr.table === capitalizeTable(getTableName(rel)))!.field
+				] = includeVal;
 			}
 		}
 
