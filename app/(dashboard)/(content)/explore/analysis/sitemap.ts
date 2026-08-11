@@ -29,6 +29,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 
 	const analyses = await prisma.analysis.findMany({
 		select: {
+			project_id: true,
 			analysis_run_name: true,
 			dateSubmitted: true,
 			editHistory: true
@@ -38,7 +39,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	});
 
 	return analyses.map((a) => ({
-		url: `${process.env.NEXT_PUBLIC_URL}/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`,
+		url: `${process.env.NEXT_PUBLIC_URL}/explore/analysis/${encodeURIComponent(a.project_id)}/${encodeURIComponent(a.analysis_run_name)}`,
 		lastModified: getLastModifiedDate(a)
 	}));
 }

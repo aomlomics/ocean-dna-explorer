@@ -289,7 +289,9 @@ export default function Tour() {
 				url: analysis_run_name ? `/explore/analysis/${encodedAnalysisRunName}#analysis` : "/explore/analysis"
 			},
 			{
-				url: analysis_run_name ? `/explore/analysis/${encodedAnalysisRunName}#dataExplorer` : "/search?table=analysis"
+				url: analysis_run_name
+					? `/explore/analysis/${encodedProjectId}/${encodedAnalysisRunName}#dataExplorer`
+					: "/search?table=analysis"
 			},
 			{ url: taxonomy ? `/explore/taxonomy/${encodedTaxonomy}#taxonomy` : "/search?table=taxonomy" },
 			{ url: featureid ? `/explore/feature/${encodedFeatureid}#feature` : "/search?table=feature" },

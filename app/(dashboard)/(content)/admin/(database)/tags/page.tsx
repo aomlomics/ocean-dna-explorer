@@ -11,6 +11,7 @@ export default async function AddTags() {
 		include: {
 			Analyses: {
 				select: {
+					project_id: true,
 					analysis_run_name: true
 				}
 			}

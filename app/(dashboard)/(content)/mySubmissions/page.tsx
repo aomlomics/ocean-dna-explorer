@@ -175,7 +175,7 @@ export default async function MySubmissions() {
 																}`}
 															>
 																<Link
-																	href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+																	href={`/explore/analysis/${encodeURIComponent(analysis.project_id)}/${encodeURIComponent(analysis.analysis_run_name)}`}
 																	className="text-primary hover:text-info-focus hover:underline transition-colors"
 																>
 																	{analysis.analysis_run_name}

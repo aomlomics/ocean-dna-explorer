@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function DeleteTagButton({
 	tag
 }: {
-	tag: Tag & { Analyses: { analysis_run_name: Analysis["analysis_run_name"] }[] };
+	tag: Tag & { Analyses: { project_id: Analysis["project_id"]; analysis_run_name: Analysis["analysis_run_name"] }[] };
 }) {
 	const router = useRouter();
 
@@ -66,7 +66,7 @@ export default function DeleteTagButton({
 								{tag.Analyses.map((a) => (
 									<li key={a.analysis_run_name}>
 										<Link
-											href={`/explore/analysis/${encodeURIComponent(a.analysis_run_name)}`}
+											href={`/explore/analysis/${encodeURIComponent(a.project_id)}/${encodeURIComponent(a.analysis_run_name)}`}
 											className="link-primary link-hover"
 										>
 											{a.analysis_run_name}

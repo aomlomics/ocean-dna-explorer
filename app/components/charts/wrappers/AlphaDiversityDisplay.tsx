@@ -299,12 +299,12 @@ export default function AlphaDiversityDisplay({
 		? diversitiesByMetric[currMetric].reduce(
 				(acc, ad) => {
 					if (!ad.finished && !(ad.analysis_run_name in acc)) {
-						acc[ad.analysis_run_name] = ad.dateCalculated.getTime();
+						acc.push(ad);
 					}
 
 					return acc;
 				},
-				{} as Record<AlphaDiversity["analysis_run_name"], number>
+				[] as (typeof diversitiesByMetric)[typeof currMetric]
 			)
 		: undefined;
 	const omit = ["id", "userDefined", "deleted_ODE", "project_id"];
@@ -441,8 +441,8 @@ export default function AlphaDiversityDisplay({
 						<></>
 					)}
 
-					{Object.entries(unfinishedAnalyses!).map(([analysis_run_name, time]) => {
-						const timeSinceStarted = currTime - time;
+					{unfinishedAnalyses!.map((ad) => {
+						const timeSinceStarted = currTime - ad.dateCalculated.getTime();
 
 						return (
 							<div className="flex flex-col justify-center items-center pt-4">
@@ -450,9 +450,9 @@ export default function AlphaDiversityDisplay({
 									Calculating for{" "}
 									<Link
 										className="link link-primary link-hover"
-										href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+										href={`/explore/analysis/${encodeURIComponent(ad.project_id)}/${encodeURIComponent(ad.analysis_run_name)}`}
 									>
-										{analysis_run_name}
+										{ad.project_id}: {ad.analysis_run_name}
 									</Link>
 									...
 								</span>

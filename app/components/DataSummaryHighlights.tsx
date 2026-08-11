@@ -343,7 +343,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 							links: [
 								{
 									label: "View analysis",
-									href: `/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`
+									href: `/explore/analysis/${encodeURIComponent(analysis.project_id)}/${encodeURIComponent(analysis.analysis_run_name)}`
 								},
 								{
 									label: "View parent project",

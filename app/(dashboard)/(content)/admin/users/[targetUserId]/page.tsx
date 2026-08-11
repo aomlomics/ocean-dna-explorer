@@ -174,7 +174,7 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 															className="flex items-center justify-between p-3 bg-base-100 rounded-lg"
 														>
 															<Link
-																href={`/explore/analysis/${encodeURIComponent(analysis.analysis_run_name)}`}
+																href={`/explore/analysis/${encodeURIComponent(proj.project_id)}/${encodeURIComponent(analysis.analysis_run_name)}`}
 																className="text-primary hover:text-info-focus hover:underline transition-colors"
 															>
 																{analysis.analysis_run_name}

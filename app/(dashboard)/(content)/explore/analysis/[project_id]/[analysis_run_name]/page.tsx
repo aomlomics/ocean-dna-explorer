@@ -35,7 +35,7 @@ export default async function Analysis_run_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(`/explore/analysis/${encodeURIComponent(analysis_run_name)}`);
+		redirect(`/explore/analysis/${encodeURIComponent(project_id)}/${encodeURIComponent(analysis_run_name)}`);
 	}
 
 	const analysis = await prisma.analysis.findUnique({

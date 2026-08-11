@@ -211,7 +211,7 @@ export default async function OccurrencePage({
 					</li>
 					<li>
 						<Link
-							href={`/explore/analysis/${encodeURIComponent(analysis_run_name)}`}
+							href={`/explore/analysis/${encodeURIComponent(project_id)}/${encodeURIComponent(analysis_run_name)}`}
 							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
 							title={analysis_run_name}
 						>

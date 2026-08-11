@@ -102,7 +102,7 @@ export default async function AssignmentPage({
 					)}{" "}
 					in analysis{" "}
 					<Link
-						href={`/explore/analysis/${encodeURIComponent(assignment.analysis_run_name)}`}
+						href={`/explore/analysis/${encodeURIComponent(project_id)}/${encodeURIComponent(assignment.analysis_run_name)}`}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.analysis_run_name}
