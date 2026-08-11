@@ -498,15 +498,22 @@ export default function Table({
 					</div>
 				</div>
 
-				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
+				<div tabIndex={0} className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
 					<table className="table table-sm table-pin-rows table-pin-cols">
+						<caption className="sr-only">{TableMetadata[table].plural} table</caption>
 						{/* Headers */}
 						<thead>
 							<tr>
 								{/* Title Header Cell */}
 								{typeof title === "string" ? (
-									<th className="px-3 py-2 z-40 bg-base-100">
-										<div
+									<th
+										scope="col"
+										aria-sort={
+											orderBy.field === title ? (orderBy.order === "asc" ? "ascending" : "descending") : "none"
+										}
+										className="px-3 py-2 z-40 bg-base-100"
+									>
+										<button
 											className="cursor-pointer select-none flex justify-between mb-1"
 											onClick={() =>
 												orderBy.field === title
@@ -518,7 +525,7 @@ export default function Table({
 										>
 											<span>{title}</span>
 											{orderBy.field === title ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
-										</div>
+										</button>
 
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
@@ -527,6 +534,7 @@ export default function Table({
 													<SearchIcon />
 													<input
 														name={title}
+														aria-label={title}
 														defaultValue={whereFilter[title] || ""}
 														type="text"
 														className="grow"
@@ -562,7 +570,7 @@ export default function Table({
 										//Header
 										if (head in oneRelationsWithArrayTitle) {
 											acc.push(
-												<td key={head + i} className="bg-base-100 cursor-not-allowed">
+												<th key={head + i} className="bg-base-100 cursor-not-allowed">
 													<div className="flex select-none mb-1">
 														{head}
 														{" (" + oneRelationsWithArrayTitle[head as Prisma.ModelName].join(" / ") + ")"}
@@ -576,12 +584,19 @@ export default function Table({
 															</label>
 														)}
 													</label>
-												</td>
+												</th>
 											);
 										} else if (manyRelations.includes(head)) {
 											acc.push(
-												<td key={head + i} className="bg-base-100">
-													<div
+												<th
+													key={head + i}
+													scope="col"
+													aria-sort={
+														orderBy.field === head ? (orderBy.order === "asc" ? "ascending" : "descending") : "none"
+													}
+													className="bg-base-100"
+												>
+													<button
 														className="flex justify-between select-none mb-1 cursor-pointer"
 														onClick={() =>
 															orderBy.field === head
@@ -593,7 +608,7 @@ export default function Table({
 													>
 														{head}
 														{orderBy.field === head ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
-													</div>
+													</button>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
@@ -603,11 +618,11 @@ export default function Table({
 															</label>
 														)}
 													</label>
-												</td>
+												</th>
 											);
 										} else if (userDefinedHeaders.includes(head)) {
 											acc.push(
-												<td key={head + i} className="bg-base-100 cursor-not-allowed">
+												<th key={head + i} className="bg-base-100 cursor-not-allowed">
 													<div className="flex gap-1 select-none mb-1">
 														{head}
 														<sup className="text-xs">UD</sup>
@@ -619,6 +634,7 @@ export default function Table({
 																<SearchIcon />
 																<input
 																	name={head}
+																	aria-label={head}
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
 																	className="grow min-w-10"
@@ -627,12 +643,19 @@ export default function Table({
 															</label>
 														)}
 													</label>
-												</td>
+												</th>
 											);
 										} else {
 											acc.push(
-												<td key={head + i} className="bg-base-100">
-													<div
+												<th
+													key={head + i}
+													scope="col"
+													aria-sort={
+														orderBy.field === head ? (orderBy.order === "asc" ? "ascending" : "descending") : "none"
+													}
+													className="bg-base-100"
+												>
+													<button
 														className="flex justify-between select-none mb-1 cursor-pointer"
 														onClick={() =>
 															orderBy.field === head
@@ -644,7 +667,7 @@ export default function Table({
 													>
 														{head}
 														{orderBy.field === head ? orderBy.order === "asc" ? <UpArrow /> : <DownArrow /> : <></>}
-													</div>
+													</button>
 													<label className="form-control w-full max-w-xs text-lg">
 														{/* Value Filter */}
 														{!hideFilters && (
@@ -652,6 +675,7 @@ export default function Table({
 																<SearchIcon />
 																<input
 																	name={head}
+																	aria-label={head}
 																	defaultValue={whereFilter[head] || ""}
 																	type="text"
 																	className="grow min-w-10"
@@ -660,7 +684,7 @@ export default function Table({
 															</label>
 														)}
 													</label>
-												</td>
+												</th>
 											);
 										}
 									}
@@ -671,7 +695,7 @@ export default function Table({
 								{deepRelations.reduce((acc, rel, i) => {
 									if (!deepRelationsFilter[rel.label]) {
 										acc.push(
-											<td key={rel.label + i} className="bg-base-100 cursor-not-allowed">
+											<th key={rel.label + i} className="bg-base-100 cursor-not-allowed">
 												<div className="flex select-none mb-1">
 													{rel.label}
 													{rel.type === "table"
@@ -689,7 +713,7 @@ export default function Table({
 														</label>
 													)}
 												</label>
-											</td>
+											</th>
 										);
 									}
 
