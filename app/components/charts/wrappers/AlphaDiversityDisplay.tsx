@@ -99,7 +99,7 @@ export default function AlphaDiversityDisplay({
 
 	const [data, setData] = useState(undefined as ChartData | undefined);
 
-	const [currTime, setCurrTime] = useState(new Date().getTime());
+	const [currTime, setCurrTime] = useState(0);
 
 	const [showPoints, setShowPoints] = useState(false);
 
@@ -274,6 +274,7 @@ export default function AlphaDiversityDisplay({
 
 	useEffect(() => {
 		if (alphaDiversities.some((ad) => !ad.finished)) {
+			setCurrTime(Date.now());
 			const interval = setInterval(() => setCurrTime((prev) => prev + 1000), 1000);
 
 			return () => clearInterval(interval);

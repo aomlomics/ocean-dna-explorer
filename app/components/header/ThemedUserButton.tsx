@@ -1,24 +1,10 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 export function ThemedUserButton() {
-	const { theme } = useTheme();
-	const [mounted, setMounted] = useState(false);
-
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-
-	if (!mounted) {
-		return null;
-	}
-
 	return (
 		<UserButton
-			key={`${theme}-${mounted}`}
 			appearance={{
 				elements: {
 					// Real portal wrapper (see @clerk/shared Elements); old userButtonPopover* keys are ignored

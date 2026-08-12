@@ -1,14 +1,9 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 
 export default function Page() {
-	const { resolvedTheme } = useTheme();
-	const isDark = resolvedTheme === "dark";
-	const logoImageUrl = isDark ? "/images/node_logo_dark_mode.svg" : "/images/node_logo_light_mode.svg";
-
 	const searchParams = useSearchParams();
 	const redirectUrl = searchParams?.get("redirect_url");
 	const decodedRedirectUrl = redirectUrl ? decodeURIComponent(redirectUrl) : null;
@@ -39,57 +34,43 @@ export default function Page() {
 			<div className="relative z-10 flex w-full max-w-xl flex-col items-center">
 				<SignIn
 					appearance={{
-						variables: isDark
-							? {
-									colorPrimary: "#64ABDC",
-									colorBackground: "#121A2E",
-									colorForeground: "#E2E8F0",
-									colorInput: "#1E2A45",
-									colorInputForeground: "#E2E8F0"
-								}
-							: {
-									colorPrimary: "#233D7F",
-									colorBackground: "#F7FAFC",
-									colorForeground: "#1F2F57",
-									colorInput: "#FFFFFF",
-									colorInputForeground: "#233D7F"
-								},
+						variables: {
+							colorPrimary: "var(--clerk-color-primary)",
+							colorBackground: "var(--clerk-color-background)",
+							colorForeground: "var(--clerk-color-foreground)"
+						},
 						options: {
 							logoPlacement: "inside",
-							logoImageUrl,
+							logoImageUrl: "/images/node_logo_light_mode.svg",
 							socialButtonsVariant: "blockButton"
 						},
 						elements: {
 							rootBox: "w-full",
 							cardBox: "w-full max-w-[560px]",
-							card: `w-full border shadow-2xl rounded-3xl px-10 py-10 sm:px-12 ${cardVariantClass} ${isDark ? "border-[#4B95C3]/40 bg-[#111A2D]/90 backdrop-blur-md" : "border-[#233D7F]/25 bg-white/95 backdrop-blur-md"}`,
-							logoImage: "mx-auto h-auto w-[360px] max-w-full",
-							headerTitle: `text-center font-semibold text-[1.35rem] ${isDark ? "text-[#E2E8F0]" : "text-[#1F2F57]"}`,
+							card: `w-full border shadow-2xl rounded-3xl px-10 py-10 sm:px-12 ${cardVariantClass} border-primary/25 bg-white/95 backdrop-blur-md [html[data-theme='dark']_&]:border-[#4B95C3]/40 [html[data-theme='dark']_&]:bg-[#111A2D]/90`,
+							logoImage:
+								"mx-auto h-auto w-[360px] max-w-full [html[data-theme='dark']_&]:brightness-0 [html[data-theme='dark']_&]:invert",
+							headerTitle:
+								"text-center font-semibold text-[1.35rem] text-[#1F2F57] [html[data-theme='dark']_&]:text-[#E2E8F0]",
 							headerSubtitle: "hidden",
-							formButtonPrimary: isDark
-								? "bg-[#64ABDC] text-white hover:bg-[#4B95C3] font-semibold rounded-lg min-h-11"
-								: "bg-[#233D7F] text-white hover:bg-[#1E346B] font-semibold rounded-lg min-h-11",
+							formButtonPrimary:
+								"bg-primary text-white hover:bg-primary/80 font-semibold rounded-lg min-h-11",
 							socialButtonsRoot: "w-full",
 							socialButtons: "flex flex-row justify-center gap-2 w-full",
-							socialButtonsBlockButton: isDark
-								? "flex-1 bg-[#181f32] text-[#E2E8F0] font-normal hover:bg-[#233D7F]/50 rounded-lg border border-[#4B95C3]/40 min-h-11"
-								: "flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20 min-h-11",
-							socialButtonsBlockButtonText: isDark ? "text-[#E2E8F0]" : "text-[#233D7F]",
-							formFieldInput: isDark
-								? "bg-[#1E2A45] text-[#E2E8F0] border border-[#4B95C3]/60 rounded-lg min-h-11"
-								: "bg-[#FFFFFF] text-[#233D7F] border border-[#233D7F]/35 rounded-lg min-h-11",
-							dividerLine: isDark ? "bg-[#4B95C3]/75" : "bg-[#233D7F]/35"
+							socialButtonsBlockButton:
+								"flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20 min-h-11 [html[data-theme='dark']_&]:bg-[#181f32] [html[data-theme='dark']_&]:text-[#E2E8F0] [html[data-theme='dark']_&]:hover:bg-[#233D7F]/50 [html[data-theme='dark']_&]:border-[#4B95C3]/40",
+							socialButtonsBlockButtonText:
+								"text-[#233D7F] [html[data-theme='dark']_&]:text-[#E2E8F0]",
+							formFieldInput:
+								"bg-white text-[#233D7F] border border-[#233D7F]/35 rounded-lg min-h-11 [html[data-theme='dark']_&]:bg-[#1E2A45] [html[data-theme='dark']_&]:text-[#E2E8F0] [html[data-theme='dark']_&]:border-[#4B95C3]/60",
+							dividerLine: "bg-[#233D7F]/35 [html[data-theme='dark']_&]:bg-[#4B95C3]/75"
 						}
 					}}
 					path="/sign-in"
 					routing="path"
 					signUpUrl="/sign-up"
 				/>
-				<p
-					className={`mt-5 max-w-md text-center text-base font-semibold tracking-tight leading-relaxed ${
-						isDark ? "text-[#D6E2F3]" : "text-[#33446D]"
-					}`}
-				>
+				<p className="mt-5 max-w-md text-center text-base font-semibold tracking-tight leading-relaxed text-[#33446D] [html[data-theme='dark']_&]:text-[#D6E2F3]">
 					{helperText}
 				</p>
 			</div>

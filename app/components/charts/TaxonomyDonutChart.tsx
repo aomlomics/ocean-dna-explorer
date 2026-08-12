@@ -95,7 +95,7 @@ function CustomLegend({
 		<div className="flex flex-col gap-4 mt-0 h-full">
 			{/* Taxonomic Level Dropdown */}
 			<div className="flex flex-col gap-1.5">
-				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor + "99" }}>
+				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor, opacity: 0.6 }}>
 					Taxonomic Level
 				</label>
 				<div className="dropdown w-full">
@@ -139,8 +139,8 @@ function CustomLegend({
 			</div>
 
 			{/* Threshold Control */}
-			<div className="flex flex-col gap-3 pb-3" style={{ borderColor: textColor + "20" }}>
-				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor + "99" }}>
+			<div className="flex flex-col gap-3 pb-3" style={{ borderColor: "color-mix(in oklab, var(--color-base-content) 12%, transparent)" }}>
+				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor, opacity: 0.6 }}>
 					Group items below (%)
 				</label>
 				<div className="flex items-center gap-3">
@@ -168,7 +168,7 @@ function CustomLegend({
 						}}
 						className="w-16 px-2 py-1.5 text-sm rounded border transition-colors"
 						style={{
-							borderColor: textColor + "30",
+							borderColor: "color-mix(in oklab, var(--color-base-content) 19%, transparent)",
 							color: textColor,
 							backgroundColor: "transparent"
 						}}
@@ -228,8 +228,8 @@ function CustomLegend({
 
 				{/* Other Group - Always at Bottom */}
 				{otherCount > 0 && (
-					<div className="flex items-center gap-2.5 pt-3 mt-3 border-t" style={{ borderColor: textColor + "15" }}>
-						<div className="w-3.5 h-3.5 rounded-sm shrink-0" style={{ backgroundColor: textColor + "50" }} />
+					<div className="flex items-center gap-2.5 pt-3 mt-3 border-t" style={{ borderColor: "color-mix(in oklab, var(--color-base-content) 8%, transparent)" }}>
+						<div className="w-3.5 h-3.5 rounded-sm shrink-0" style={{ backgroundColor: "color-mix(in oklab, var(--color-base-content) 31%, transparent)" }} />
 						<div className="flex-1 min-w-0 flex items-center gap-2">
 							<span className="text-sm font-medium" style={{ color: textColor }}>
 								Other
@@ -253,7 +253,7 @@ export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: Taxonom
 	const [otherThreshold, setOtherThreshold] = useState(0.5);
 	const [taxLevel, setTaxLevel] = useState<(typeof TaxonomicRanks)[0]>("family");
 	const [isLoading, setIsLoading] = useState(true);
-	const textColor = theme === "dark" ? "#E2E8F0" : "#2D3748";
+	const textColor = "var(--color-base-content)";
 
 	// Simulate chart loading - fade in after component mounts
 	useEffect(() => {
@@ -312,7 +312,7 @@ export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: Taxonom
 		if (otherSum > 0) {
 			filtered.labels.push("Other");
 			filtered.data.push(otherSum);
-			filtered.colors.push(textColor + "40");
+			filtered.colors.push(theme === "dark" ? "rgba(226, 232, 240, 0.25)" : "rgba(45, 55, 72, 0.25)");
 		}
 
 		return {
@@ -321,7 +321,7 @@ export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: Taxonom
 			filteredColors: filtered.colors,
 			otherCount: otherSum
 		};
-	}, [labels, data, colors, otherThreshold, textColor]);
+	}, [labels, data, colors, otherThreshold, theme]);
 
 	const chartData = {
 		labels: filteredLabels,

@@ -12,6 +12,8 @@ import { UserObject } from "@/types/globals";
 export default function UserList() {
 	const { userId } = useAuth();
 	const [query, setQuery] = useState("");
+	// Must run every render — calling this after early returns causes "Rendered more hooks..."
+	const handleSearch = useDebouncedCallback(setQuery, 300);
 
 	const { data, error, isLoading } = useSWR(`/api/user?emails=true${query ? "&query=" + query : ""}`, fetcher);
 	if (error) {
@@ -23,12 +25,6 @@ export default function UserList() {
 	}
 	if (data.statusMessage === "error") {
 		return <>{data.error}</>;
-	}
-
-	const handleSearch = useDebouncedCallback(setQuery, 300);
-
-	if (error) {
-		return <>{error}</>;
 	}
 
 	return (
