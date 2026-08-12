@@ -81,7 +81,7 @@ export default function UserAdder({
 
 			setUserIds([...currUserIds, ...newUsers.map((u) => u.id)]);
 		}
-	}, [newUsers, deletedUsers]);
+	}, [newUsers, deletedUsers, setUserIds, submittable, users]);
 
 	async function searchUsers(query = "") {
 		if (query) {

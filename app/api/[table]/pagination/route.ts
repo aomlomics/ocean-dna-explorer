@@ -296,7 +296,7 @@ export async function GET(
 
 			const res = await prisma.$transaction(
 				async (tx) => {
-					//@ts-expect-error
+					//@ts-expect-error dynamically accessing table
 					const count = await tx[model].count({ where: query.where });
 
 					//give last page if page is too large
@@ -313,7 +313,7 @@ export async function GET(
 						query.take = parsedTake;
 					}
 
-					//@ts-expect-error
+					//@ts-expect-error dynamically accessing table
 					const result = await tx[model].findMany(query);
 
 					return { count, result };
@@ -363,7 +363,7 @@ export async function GET(
 								}
 
 								//only deep relations that are -to-many need to be gathered here
-								//@ts-expect-error
+								//@ts-expect-error dynamically accessing table
 								return prisma[dr].count({
 									where
 								});

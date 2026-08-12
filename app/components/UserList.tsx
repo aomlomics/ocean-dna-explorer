@@ -13,6 +13,8 @@ export default function UserList() {
 	const { userId } = useAuth();
 	const [query, setQuery] = useState("");
 
+	const handleSearch = useDebouncedCallback(setQuery, 300);
+
 	const { data, error, isLoading } = useSWR(`/api/user?emails=true${query ? "&query=" + query : ""}`, fetcher);
 	if (error) {
 		return <>{error}</>;
@@ -24,8 +26,6 @@ export default function UserList() {
 	if (data.statusMessage === "error") {
 		return <>{data.error}</>;
 	}
-
-	const handleSearch = useDebouncedCallback(setQuery, 300);
 
 	if (error) {
 		return <>{error}</>;

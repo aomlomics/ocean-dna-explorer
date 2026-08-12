@@ -134,7 +134,7 @@ export default function Table({
 		.forEach(defaultHeadersSet.add, defaultHeadersSet);
 
 	//apply default filters
-	let defaultHeadersFilter = {} as Record<string, true>;
+	let defaultHeadersFilter = {} as Record<string, boolean>;
 	if (filterHeadersAtStart && TableMetadata[table].subFields) {
 		for (const head of defaultHeadersSet) {
 			if (
@@ -190,7 +190,7 @@ export default function Table({
 		[] as { label: string; table: Uncapitalize<Prisma.ModelName>; type: "field" | "table" | "many" }[]
 	);
 	const [deepRelationsFilter, setDeepRelationsFilter] = useState(
-		deepRelations.reduce((acc, rel) => ({ ...acc, [rel.label]: true }), {}) as Record<string, true>
+		deepRelations.reduce((acc, rel) => ({ ...acc, [rel.label]: true }), {}) as Record<string, boolean>
 	);
 	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
 	const [pendingFilters, setPendingFilters] = useState(0);
@@ -386,7 +386,7 @@ export default function Table({
 	}
 
 	function resetForm() {
-		//@ts-expect-error
+		//@ts-expect-error indexing collection by string
 		document.forms[`${table}TableForm`].reset();
 		setWhereFilter({});
 		setPendingFilters(0);

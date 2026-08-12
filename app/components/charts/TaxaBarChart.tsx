@@ -2,7 +2,7 @@
 
 import { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import { Bar } from "react-chartjs-2";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { RankPlurals, TaxonomicRanks } from "@/types/objects";
@@ -51,189 +51,160 @@ export default function TaxaBarChart({
 }) {
 	const ref = useRef<ChartJS<"bar", { x: string; y: number }[]>>(null);
 
+	const [loading, startTransition] = useTransition();
+
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
 
 	const [rank, setRank] = useState(DEFAULT_RANK);
-	const [metricType, setMetricType] = useState("absolute" as "absolute" | "relative");
+	const [metricType, setMetricType] = useState<"absolute" | "relative">("absolute");
 	const [averageBy, setAverageBy] = useState("lib_id");
 
-	const [taxonomies, setTaxonomies] = useState([] as string[]);
-	const [taxaColors, setTaxaColors] = useState([] as chroma.Color[]);
-	const [taxonomiesFilter, setTaxonomiesFilter] = useState({} as Record<string, true>);
-	const [taxaFilterGate, setTaxaFilterGate] = useState(false); //used to set default filter without retriggering effect
-	const [xLabels, setXLabels] = useState([] as string[]);
-	const [xLabelsFilter, setXLabelsFilter] = useState({} as Record<string, true>);
+	const [taxonomiesFilter, setTaxonomiesFilter] = useState({} as Record<string, boolean>);
 
-	const [loading, setLoading] = useState(true);
-	const [chartData, setChartData] = useState({ labels: [], datasets: [] } as {
-		labels: string[];
-		datasets: {
-			data: { x: string; y: number }[];
-			borderColor: string;
-			backgroundColor: string;
-			borderWidth: number;
-		}[];
-	});
+	const [xLabelsFilter, setXLabelsFilter] = useState({} as Record<string, boolean>);
 
-	useEffect(() => {
-		if (taxaFilterGate) {
-			setTaxaFilterGate(false);
-		} else {
-			async function doLoad() {
-				if (!(averageBy !== "lib_id" && metricType === "absolute")) {
-					//give control back to browser to display loading
-					await new Promise((resolve) => setTimeout(resolve, 1));
+	const { taxonomies, taxaColors, xLabels, chartData } = useMemo(() => {
+		const rankValues = new Set<string>();
+		const libIdRankQuantities: Record<string, Record<string, number>> = {};
 
-					//assemble counts on label.rank
-					const rankValues = new Set() as Set<string>;
-					const libIdRankQuantities = {} as Record<string, Record<string, number>>;
-					for (const assign of assignments) {
-						if (occsByFeatureid[assign.featureid]) {
-							let rankVal = taxonomiesById[assign.Taxonomy.id][rank];
-							if (!rankVal) {
-								rankVal = "undefined";
-							}
-							rankValues.add(rankVal);
+		for (const assign of assignments) {
+			const occs = occsByFeatureid[assign.featureid];
 
-							for (const occ of occsByFeatureid[assign.featureid]) {
-								if (!libIdRankQuantities[occ.lib_id]) {
-									//initialize both library and rank
-									libIdRankQuantities[occ.lib_id] = {
-										[rankVal]: occ.organismQuantity
-									};
-								} else if (!libIdRankQuantities[occ.lib_id][rankVal]) {
-									//initialize rank
-									libIdRankQuantities[occ.lib_id][rankVal] = occ.organismQuantity;
-								} else {
-									//add to count
-									libIdRankQuantities[occ.lib_id][rankVal] += occ.organismQuantity;
-								}
-							}
-						}
-					}
+			if (!occs) continue;
 
-					const uniqueColors = distinctColors({ count: rankValues.size, chromaMin: 35, lightMin: 35 });
-					setTaxaColors(uniqueColors);
-					const sortedRanks = Array.from(rankValues).sort();
-					setTaxonomies(sortedRanks);
+			let rankVal = taxonomiesById[assign.Taxonomy.id][rank] ?? "undefined";
+			rankValues.add(rankVal);
 
-					let currRanks;
-					let currColors;
-					//only display first DEFAULT_MAX_TAXONOMIES taxonomies if the list is new
-					const newTaxa = sortedRanks.length !== taxonomies.length || sortedRanks.some((r) => !taxonomies.includes(r));
-					if (sortedRanks.length > DEFAULT_MAX_TAXONOMIES && newTaxa) {
-						currRanks = sortedRanks.slice(0, DEFAULT_MAX_TAXONOMIES);
-						currColors = uniqueColors.slice(0, DEFAULT_MAX_TAXONOMIES);
-
-						setTaxaFilterGate(true);
-						setTaxonomiesFilter(
-							sortedRanks
-								.slice(DEFAULT_MAX_TAXONOMIES)
-								.reduce((acc, r) => ({ ...acc, [r]: true }), {} as typeof taxonomiesFilter)
-						);
-					} else {
-						currRanks = [...sortedRanks];
-						currColors = [...uniqueColors];
-
-						if (newTaxa) {
-							setTaxaFilterGate(true);
-							setTaxonomiesFilter({});
-						} else {
-							//filter taxonomies
-							for (let i = 0; i < currRanks.length; i++) {
-								if (taxonomiesFilter[currRanks[i]]) {
-									currRanks.splice(i, 1);
-									currColors.splice(i, 1);
-									i--;
-								}
-							}
-						}
-					}
-
-					let libIds = Object.keys(libIdRankQuantities).sort();
-					let averageByGroups = {} as Record<string, Library["lib_id"][]>;
-					if (averageBy !== "lib_id") {
-						for (const lib_id of libIds) {
-							let val;
-							if (userDefinedFields?.has(averageBy)) {
-								if (samplesById[sampleIdsByLibId[lib_id]].userDefined) {
-									val = samplesById[sampleIdsByLibId[lib_id]].userDefined![averageBy]?.toString() || "undefined";
-								} else {
-									val = "undefined";
-								}
-							} else {
-								val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() || "undefined";
-							}
-
-							if (averageByGroups[val]) {
-								averageByGroups[val].push(lib_id);
-							} else {
-								averageByGroups[val] = [lib_id];
-							}
-						}
-					}
-					let groupLabels = Object.keys(averageByGroups).sort();
-
-					//filter labels
-					let labels;
-					if (averageBy === "lib_id") {
-						setXLabels(libIds);
-						libIds = libIds.filter((l) => !xLabelsFilter[l]);
-						labels = libIds;
-					} else {
-						setXLabels(groupLabels);
-						groupLabels = groupLabels.filter((l) => !xLabelsFilter[l]);
-						labels = groupLabels;
-					}
-
-					setChartData({
-						labels,
-						datasets: currRanks.map((lev, i) => {
-							let data = [] as { x: string; y: number }[];
-							if (metricType === "relative") {
-								data = libIds.map((lib_id) => {
-									const absoluteValue = libIdRankQuantities[lib_id][lev];
-
-									if (absoluteValue) {
-										// Calculate total for this lib_id across all taxonomic values at this rank
-										const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, val) => sum + val, 0);
-										return { x: lib_id, y: (absoluteValue / total) * 100 };
-									} else {
-										return { x: lib_id, y: 0 };
-									}
-								});
-
-								if (averageBy !== "lib_id") {
-									data = groupLabels.map((val) => ({
-										x: val,
-										y:
-											averageByGroups[val].reduce((sum, lib_id) => sum + data[libIds.indexOf(lib_id)].y, 0) /
-											averageByGroups[val].length
-									}));
-								}
-							} else {
-								data = libIds.map((lib_id) => ({ x: lib_id, y: libIdRankQuantities[lib_id][lev] }));
-							}
-
-							return {
-								label: lev,
-								data,
-								borderColor: currColors[i].hex(),
-								backgroundColor: currColors[i].alpha(0.8).hex(),
-								borderWidth: 1,
-								barThickness: "flex"
-							};
-						})
-					});
+			for (const occ of occs) {
+				if (!libIdRankQuantities[occ.lib_id]) {
+					libIdRankQuantities[occ.lib_id] = {};
 				}
 
-				setLoading(false);
+				libIdRankQuantities[occ.lib_id][rankVal] =
+					(libIdRankQuantities[occ.lib_id][rankVal] ?? 0) + occ.organismQuantity;
+			}
+		}
+
+		const sortedRanks = Array.from(rankValues).sort();
+
+		const uniqueColors = distinctColors({
+			count: sortedRanks.length,
+			chromaMin: 35,
+			lightMin: 35
+		});
+
+		//default to first N taxonomies
+		const currRanks = sortedRanks.filter((taxon, i) => {
+			if (taxonomiesFilter[taxon] !== undefined) {
+				return !taxonomiesFilter[taxon];
 			}
 
-			doLoad();
+			return i < DEFAULT_MAX_TAXONOMIES;
+		});
+		const currColors = currRanks.map((taxon) => uniqueColors[sortedRanks.indexOf(taxon)]);
+		const libIds = Object.keys(libIdRankQuantities).sort();
+		const averageByGroups: Record<string, Library["lib_id"][]> = {};
+
+		if (averageBy !== "lib_id") {
+			for (const lib_id of libIds) {
+				let val: string;
+
+				if (userDefinedFields?.has(averageBy)) {
+					val = samplesById[sampleIdsByLibId[lib_id]].userDefined?.[averageBy]?.toString() ?? "undefined";
+				} else {
+					val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() ?? "undefined";
+				}
+
+				(averageByGroups[val] ??= []).push(lib_id);
+			}
 		}
-	}, [rank, metricType, averageBy, taxonomiesFilter, xLabelsFilter]);
+
+		const groupLabels = Object.keys(averageByGroups).sort();
+		const allXLabels = averageBy === "lib_id" ? libIds : groupLabels;
+		const visibleLibIds = libIds.filter((libId) => !xLabelsFilter[libId]);
+		const visibleGroupLabels = groupLabels.filter((label) => !xLabelsFilter[label]);
+		const labels = averageBy === "lib_id" ? visibleLibIds : visibleGroupLabels;
+
+		const datasets = currRanks.map((taxon, i) => {
+			let data: { x: string; y: number }[];
+
+			if (metricType === "relative") {
+				//calculate relative abundance for all libraries first
+				const libData = libIds.map((lib_id) => {
+					const absoluteValue = libIdRankQuantities[lib_id][taxon] ?? 0;
+
+					const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, value) => sum + value, 0);
+
+					return {
+						x: lib_id,
+						y: total ? (absoluteValue / total) * 100 : 0
+					};
+				});
+
+				if (averageBy === "lib_id") {
+					//only filter after calculating the values
+					data = libData.filter((point) => !xLabelsFilter[point.x]);
+				} else {
+					//average using all libraries in each group
+					data = visibleGroupLabels.map((group) => {
+						const groupLibIds = averageByGroups[group];
+
+						return {
+							x: group,
+							y: groupLibIds.reduce((sum, libId) => sum + libData[libIds.indexOf(libId)].y, 0) / groupLibIds.length
+						};
+					});
+				}
+			} else {
+				//absolute counts only work with lib_id
+				data = libIds
+					.filter((libId) => !xLabelsFilter[libId])
+					.map((lib_id) => ({
+						x: lib_id,
+						y: libIdRankQuantities[lib_id][taxon] ?? 0
+					}));
+			}
+
+			return {
+				label: taxon,
+				data,
+				borderColor: currColors[i].hex(),
+				backgroundColor: currColors[i].alpha(0.8).hex(),
+				borderWidth: 1,
+				barThickness: "flex" as const
+			};
+		});
+
+		return {
+			taxonomies: sortedRanks,
+			taxaColors: uniqueColors,
+			xLabels: allXLabels,
+			chartData: {
+				labels,
+				datasets
+			}
+		};
+	}, [
+		assignments,
+		occsByFeatureid,
+		taxonomiesById,
+		samplesById,
+		sampleIdsByLibId,
+		rank,
+		metricType,
+		averageBy,
+		taxonomiesFilter,
+		xLabelsFilter,
+		userDefinedFields
+	]);
+
+	const defaultTaxonomiesFilter = useMemo(() => {
+		return Object.fromEntries(taxonomies.slice(DEFAULT_MAX_TAXONOMIES).map((taxon) => [taxon, true])) as Record<
+			string,
+			true
+		>;
+	}, [taxonomies]);
 
 	return (
 		<div className="relative p-6">
@@ -243,8 +214,9 @@ export default function TaxaBarChart({
 					<select
 						value={rank}
 						onChange={(e) => {
-							setLoading(true);
-							setRank(e.target.value as (typeof TaxonomicRanks)[0]);
+							startTransition(() => {
+								setRank(e.target.value as (typeof TaxonomicRanks)[0]);
+							});
 						}}
 						className="select"
 						disabled={loading}
@@ -260,8 +232,9 @@ export default function TaxaBarChart({
 					<select
 						value={metricType}
 						onChange={(e) => {
-							setLoading(true);
-							setMetricType(e.target.value as typeof metricType);
+							startTransition(() => {
+								setMetricType(e.target.value as "absolute" | "relative");
+							});
 						}}
 						className="select"
 						disabled={loading || averageBy !== "lib_id"}
@@ -276,11 +249,13 @@ export default function TaxaBarChart({
 					<select
 						value={averageBy}
 						onChange={(e) => {
-							setLoading(true);
-							if (e.target.value !== "lib_id" && metricType === "absolute") {
-								setMetricType("relative");
-							}
-							setAverageBy(e.target.value);
+							startTransition(() => {
+								if (e.target.value !== "lib_id" && metricType === "absolute") {
+									setMetricType("relative");
+								}
+								setAverageBy(e.target.value);
+								setXLabelsFilter({});
+							});
 						}}
 						className="select"
 						disabled={loading}
@@ -315,7 +290,8 @@ export default function TaxaBarChart({
 						colorList={taxaColors}
 						listFilter={taxonomiesFilter}
 						setListFilter={setTaxonomiesFilter}
-						sideEffect={() => setLoading(true)}
+						defaultListFilter={defaultTaxonomiesFilter}
+						startTransition={startTransition}
 					/>
 				</div>
 
@@ -324,7 +300,6 @@ export default function TaxaBarChart({
 					list={xLabels}
 					listFilter={xLabelsFilter}
 					setListFilter={setXLabelsFilter}
-					sideEffect={() => setLoading(true)}
 				/>
 			</div>
 
@@ -410,7 +385,7 @@ export default function TaxaBarChart({
 				}}
 			/>
 
-			{loading ? <div className="absolute left-0 top-0 w-full h-full bg-black/20 rounded-md"></div> : <></>}
+			{loading && <div className="absolute left-0 top-0 w-full h-full bg-black/20 rounded-md" />}
 		</div>
 	);
 }

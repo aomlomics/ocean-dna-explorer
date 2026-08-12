@@ -345,7 +345,10 @@ export default function Tour() {
 		setLoading(false);
 	}
 
-	generateTourSteps();
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		generateTourSteps();
+	}, []);
 
 	const checkUrl = useDebouncedCallback(async (i: number, url: string) => {
 		const res = await fetch(url);
