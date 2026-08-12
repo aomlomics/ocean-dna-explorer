@@ -5,13 +5,11 @@ import LoadingPaginationControls from "./LoadingPaginationControls";
 export default function LoadingTable({
 	take = 50,
 	page = 1,
-	columns = 10,
-	error
+	columns = 10
 }: {
 	take?: number;
 	page?: number;
 	columns?: number;
-	error?: string;
 }) {
 	return (
 		<div className="bg-base-100 border-base-300 rounded-box h-full w-full p-6">

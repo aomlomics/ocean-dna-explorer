@@ -55,7 +55,7 @@ export default async function ApiIntroductionPage() {
 								<div>
 									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
 									<p>
-										Before you can ask for data, you need to know what's available. The best place to start is our{" "}
+										Before you can ask for data, you need to know what&apos;s available. The best place to start is our{" "}
 										<Link href="#database-schema" className="link link-primary">
 											Database Schema
 										</Link>
@@ -63,7 +63,7 @@ export default async function ApiIntroductionPage() {
 										available and how they are linked together.
 									</p>
 									<p className="mt-2">
-										Once you know which table you're interested in (e.g., Project), look at the{" "}
+										Once you know which table you&apos;re interested in (e.g., Project), look at the{" "}
 										<Link href="#table-definitions" className="link link-primary">
 											Table Definitions
 										</Link>{" "}
@@ -123,8 +123,8 @@ export default async function ApiIntroductionPage() {
 									<p>
 										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
 										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you're telling the
-										API: "also give me the data from the related table."
+										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you&apos;re telling
+										the API: &quot;also give me the data from the related table.&quot;
 									</p>
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
@@ -201,21 +201,21 @@ response = requests.get(url)
 
 # Check if request was successful
 if response.status_code == 200:
-    # Parse JSON response
-    data = response.json()
-    results = data.get("result", [])
-    
-    # --> Your code here
-    
-    # Example: Print as JSON
-    print(json.dumps(results, indent=2))
-    
-    # Example: Convert to DataFrame
-    if results:
-        df = pd.DataFrame(results)
-        print(df)
+	# Parse JSON response
+	data = response.json()
+	results = data.get("result", [])
+
+	# --> Your code here
+
+	# Example: Print as JSON
+	print(json.dumps(results, indent=2))
+
+	# Example: Convert to DataFrame
+	if results:
+		df = pd.DataFrame(results)
+		print(df)
 else:
-    print(f"Error: {response.status_code} - {response.reason}")`}
+	print(f"Error: {response.status_code} - {response.reason}")`}
 								/>
 
 								<div className="mb-4 mt-8 text-lg font-medium">R example:</div>
@@ -230,19 +230,19 @@ response <- GET(url)
 
 # Check if request was successful
 if (http_status(response)$category == "Success") {
-  # Parse JSON response
-  data <- content(response, "text", encoding = "UTF-8") %>% fromJSON()
-  results <- data$result
-  
-  # --> Your code here
-  
-  # Example: Print results
-  if (length(results) > 0) {
-    print(results)
-  }
-  
+	# Parse JSON response
+	data <- content(response, "text", encoding = "UTF-8") %>% fromJSON()
+	results <- data$result
+
+	# --> Your code here
+
+	# Example: Print results
+	if (length(results) > 0) {
+		print(results)
+	}
+
 } else {
-  print(paste("Error:", http_status(response)$reason))
+	print(paste("Error:", http_status(response)$reason))
 }`}
 								/>
 							</div>

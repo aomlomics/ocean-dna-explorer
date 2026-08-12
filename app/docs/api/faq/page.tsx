@@ -27,10 +27,10 @@ export default function ApiFaqPage() {
 						</div>
 
 						<div>
-							<h4 className="font-medium mb-2">Q: I'm not familiar with APIs. How do I get started?</h4>
+							<h4 className="font-medium mb-2">Q: I&apos;m not familiar with APIs. How do I get started?</h4>
 							<p>
 								A: An API (Application Programming Interface) allows computers or programs to send data to one another.
-								To use our API, you'll need to make HTTP requests to our endpoints. The simplest way to start is by
+								To use our API, you&apos;ll need to make HTTP requests to our endpoints. The simplest way to start is by
 								following our{" "}
 								<Link className="link link-primary font-semibold" href="#how-to-use-api">
 									3-Step Guide
@@ -42,7 +42,7 @@ export default function ApiFaqPage() {
 						<div>
 							<h4 className="font-medium mb-2">Q: How do I report issues with the API?</h4>
 							<p>
-								A: Please submit any API issues through our GitHub repository's{" "}
+								A: Please submit any API issues through our GitHub repository&apos;s{" "}
 								<Link className="link link-primary font-semibold" href="https://github.com/aomlomics/node/issues">
 									issue tracker
 								</Link>

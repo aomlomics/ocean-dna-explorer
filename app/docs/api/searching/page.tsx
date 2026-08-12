@@ -50,13 +50,15 @@ export default async function ApiSearchPage() {
 								in a specified table for your query string.
 							</p>
 							<div className="mb-4">
-								<strong>Use Case:</strong> Ideal for quick, general searches when you're not sure which specific field
-								contains the information.
+								<strong>Use Case:</strong> Ideal for quick, general searches when you&apos;re not sure which specific
+								field contains the information.
 							</div>
 							<div className="mb-4">
 								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
 							</div>
-							<p className="mb-2">This will return all projects where the string "gomecc" appears in any text field.</p>
+							<p className="mb-2">
+								This will return all projects where the string &quot;gomecc&quot; appears in any text field.
+							</p>
 							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
 						</>
 					)
@@ -178,8 +180,8 @@ export default async function ApiSearchPage() {
 								]}
 								description={
 									<>
-										This query returns samples where the <strong>geo_loc_name</strong> contains "Atlantic" AND the{" "}
-										<strong>collection_timestamp</strong> is on or after January 1st, 2019.
+										This query returns samples where the <strong>geo_loc_name</strong> contains &quot;Atlantic&quot; AND
+										the <strong>collection_timestamp</strong> is on or after January 1st, 2019.
 									</>
 								}
 							/>
@@ -236,7 +238,8 @@ export default async function ApiSearchPage() {
 								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`} />
 							</div>
 							<p className="mb-2">
-								This query returns projects where `project_name` contains "gomecc" AND `institution` contains "noaa".
+								This query returns projects where `project_name` contains &quot;gomecc&quot; AND `institution` contains
+								&quot;noaa&quot;.
 							</p>
 							<ApiCodeBlock
 								language="json"

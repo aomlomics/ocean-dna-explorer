@@ -33,6 +33,7 @@ export default function ResizableMapContainer({
 	const [sizeClassName, setSizeClassName] = useState("invisible" as "w-full h-full" | "invisible");
 	const [checkSize, setCheckSize] = useState(false);
 
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (ref.current && (!detectChange || detectChange?.every((c) => !!c))) {
 			//unlock child size to allow automatic resizing
@@ -41,6 +42,7 @@ export default function ResizableMapContainer({
 		}
 	}, [ref, detectChange]);
 
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		//TODO: doesn't shrink after resetting legend
 		//TODO: don't trigger resize when legendInfo.hidden changes

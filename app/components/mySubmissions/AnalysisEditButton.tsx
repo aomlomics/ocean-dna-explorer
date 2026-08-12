@@ -1,6 +1,6 @@
 "use client";
 
-import { Analysis, Project, Tag } from "@/app/generated/prisma/client";
+import { Analysis, Tag } from "@/app/generated/prisma/client";
 import { ReactNode, useRef, useState } from "react";
 import Modal from "../Modal";
 import { NetworkProgressPacket } from "@/types/globals";

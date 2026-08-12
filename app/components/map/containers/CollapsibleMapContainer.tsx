@@ -19,6 +19,7 @@ export default function CollapsibleMapContainer({
 
 	//delay 2nd state variable by a render cycle to fix tooltip appearing immediately after collapsing
 	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => setDelayedCollapse(collapse), [collapse]);
 
 	let rotationOpen;

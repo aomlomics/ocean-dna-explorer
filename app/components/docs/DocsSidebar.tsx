@@ -33,35 +33,55 @@ export default function DocsSidebar() {
 
 	//detect current section in docs body
 	useEffect(() => {
+		let animationFrame: number | undefined;
+
 		if (!page) {
-			setCurrSection("");
-		} else if (section) {
-			function handleScroll() {
-				const ids = getAllSubsections(section, DocsSections[page][section]);
+			animationFrame = requestAnimationFrame(() => {
+				setCurrSection("");
+			});
 
-				const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-
-				//if at the bottom, highlight the last section (10 pixel tolerance)
-				const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
-
-				if (atBottom && elements.length) {
-					setCurrSection(elements[elements.length - 1].id);
-					return;
+			return () => {
+				if (animationFrame !== undefined) {
+					cancelAnimationFrame(animationFrame);
 				}
+			};
+		}
 
-				const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
+		if (!section) {
+			return;
+		}
 
-				if (current) {
-					setCurrSection(current.id);
-				}
+		function handleScroll() {
+			const ids = getAllSubsections(section, DocsSections[page][section]);
+			const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+
+			//if at the bottom, highlight the last section (10 pixel tolerance)
+			const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
+
+			if (atBottom && elements.length) {
+				setCurrSection(elements[elements.length - 1].id);
+				return;
 			}
 
-			window.addEventListener("scroll", handleScroll);
-			setCurrSection(section);
-			handleScroll();
+			const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);
 
-			return () => window.removeEventListener("scroll", handleScroll);
+			if (current) {
+				setCurrSection(current.id);
+			}
 		}
+
+		window.addEventListener("scroll", handleScroll, { passive: true });
+		animationFrame = requestAnimationFrame(() => {
+			handleScroll();
+		});
+
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+
+			if (animationFrame !== undefined) {
+				cancelAnimationFrame(animationFrame);
+			}
+		};
 	}, [page, section]);
 
 	//auto scroll sidebar to keep current section in view
@@ -70,7 +90,9 @@ export default function DocsSidebar() {
 			const activeLink = document.getElementById(`sidebar-${currSection}`);
 			const sidebar = ref.current;
 
-			if (!activeLink || !sidebar) return;
+			if (!activeLink || !sidebar) {
+				return;
+			}
 
 			const linkRect = activeLink.getBoundingClientRect();
 			const sidebarRect = sidebar.getBoundingClientRect();
@@ -114,7 +136,10 @@ export default function DocsSidebar() {
 									onClick={() => {
 										setDisableAutoScroll(false);
 										if (!hash && section === id) {
-											document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+											document.getElementById(id)?.scrollIntoView({
+												behavior: "smooth",
+												block: "start"
+											});
 										}
 									}}
 								>

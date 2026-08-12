@@ -75,13 +75,13 @@ export function parseNestedJson(json: string) {
 export function getOptions(arr: Record<string, any>[]) {
 	//create object of sets with keys matching arr
 	const filterOptionsSet = {} as Record<keyof (typeof arr)[0], Set<any>>;
-	for (let field in arr[0]) {
+	for (const field in arr[0]) {
 		filterOptionsSet[field as keyof (typeof arr)[0]] = new Set();
 	}
 
 	//fill sets with all possible values
-	for (let e of arr) {
-		for (let [field, value] of Object.entries(e)) {
+	for (const e of arr) {
+		for (const [field, value] of Object.entries(e)) {
 			if (value) {
 				filterOptionsSet[field as keyof typeof e].add(value);
 			}
@@ -90,7 +90,7 @@ export function getOptions(arr: Record<string, any>[]) {
 
 	//convert sets to arrays
 	const filterOptions = {} as Record<keyof (typeof arr)[0], any[]>;
-	for (let e in filterOptionsSet) {
+	for (const e in filterOptionsSet) {
 		filterOptions[e as keyof typeof filterOptions] = Array.from(
 			filterOptionsSet[e as keyof typeof filterOptionsSet]
 		).sort();
@@ -424,7 +424,7 @@ export async function decodeRouteParams(params: Promise<Record<string, string>>)
 	);
 }
 
-type ExploreUrlExtra = { hash?: string; params?: Record<string, string> | URLSearchParams };
+type ExploreUrlExtra = { params?: Record<string, string> | URLSearchParams; hash?: string };
 function extraToString(extra: ExploreUrlExtra) {
 	return `${extra.params ? "?" + new URLSearchParams(extra.params) : ""}${extra.hash ? "#" + extra.hash : ""}`;
 }

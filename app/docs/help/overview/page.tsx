@@ -24,7 +24,7 @@ export default function HelpOverviewPage() {
 					title: "Features Overview",
 					content: (
 						<>
-							<p className="mb-4">ODE's custom features are built specifically for eDNA data:</p>
+							<p className="mb-4">ODE&apos;s custom features are built specifically for eDNA data:</p>
 							<ul className="list-disc ml-6 mb-4">
 								<li>
 									{" "}
@@ -92,8 +92,8 @@ export default function HelpOverviewPage() {
 								roles are mostly for internal use by the ODE team:
 							</p>
 							<ul className="list-disc ml-6 mb-4">
-								<li>Admin: Full access to the platform, including managing other user's roles</li>
-								<li>Moderator: Similar to admin, except they cannot manage Admin's roles</li>
+								<li>Admin: Full access to the platform, including managing other user&apos;s roles</li>
+								<li>Moderator: Similar to admin, except they cannot manage Admin&apos;s roles</li>
 								<li>
 									Contributor: Allows you to submit data to the platform, and to access the Submissions Manager to view,
 									delete, or edit your own submissions. Click{" "}
@@ -216,8 +216,8 @@ export default function HelpOverviewPage() {
 									<div className="collapse-title font-medium">Can I download the entire database?</div>
 									<div className="collapse-content">
 										<p>
-											While individual datasets can be downloaded, we currently don't provide a bulk download of the
-											entire database. For large-scale data access, please contact us to discuss your needs.
+											While individual datasets can be downloaded, we currently don&apos;t provide a bulk download of
+											the entire database. For large-scale data access, please contact us to discuss your needs.
 										</p>
 									</div>
 								</div>
@@ -239,8 +239,8 @@ export default function HelpOverviewPage() {
 									<div className="collapse-content">
 										<p>
 											There is no personal data stored in the Ocean DNA Explorer database. User authentication is
-											handled by the platform's reputable authentication provider, Clerk, and all data is stored in a
-											secure database.
+											handled by the platform&apos;s reputable authentication provider, Clerk, and all data is stored in
+											a secure database.
 										</p>
 									</div>
 								</div>

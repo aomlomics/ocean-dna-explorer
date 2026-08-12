@@ -684,7 +684,7 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 					transition={{ duration: 0.65, ease: PREMIUM_EASE }}
 				>
 					{cell.phylopic?.imageUrl ? (
-						<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" fill className="object-contain" />
+						<ThemeAwarePhyloPic src={cell.phylopic.imageUrl} alt="Taxonomy image" className="object-contain" />
 					) : (
 						<div className="flex h-full w-full items-center justify-center text-4xl font-semibold leading-none text-primary/95">
 							?

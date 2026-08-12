@@ -115,6 +115,7 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 		if (!showCommonName) return;
 		if (!cacheKey) return;
 		if (commonNameCache.has(cacheKey)) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setCommonName(commonNameCache.get(cacheKey) ?? null);
 			return;
 		}
@@ -123,6 +124,7 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 		resolveGbifCommonName(item).then((name) => {
 			if (cancelled) return;
 			commonNameCache.set(cacheKey, name);
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setCommonName(name);
 		});
 		return () => {

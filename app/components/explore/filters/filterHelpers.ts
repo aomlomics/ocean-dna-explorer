@@ -107,10 +107,7 @@ export function formatLabelFromField(fieldKey: string): string {
 	return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 }
 
-export function buildActiveSummaries(
-	tableConfig: FilterConfig[],
-	activeFilters: Record<string, string>
-): string[] {
+export function buildActiveSummaries(tableConfig: FilterConfig[], activeFilters: Record<string, string>): string[] {
 	const summaries: string[] = [];
 	for (const config of tableConfig) {
 		if (config.type === "select" || config.type === "enum") {
@@ -180,9 +177,9 @@ export function buildActiveSummaries(
 export function getActiveFilters(searchParams: ReadonlyURLSearchParams, tableConfig: FilterConfig[]) {
 	const fields = [] as string[];
 
-	for (let config of tableConfig) {
+	for (const config of tableConfig) {
 		if (config.type === "selectGroup") {
-			for (let field of config.group) {
+			for (const field of config.group) {
 				fields.push(typeof field === "string" ? field : field.f);
 			}
 		} else {

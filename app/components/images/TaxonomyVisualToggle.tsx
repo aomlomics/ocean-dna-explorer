@@ -140,7 +140,6 @@ export default function TaxonomyVisualToggle({
 									src={phyloPicUrl}
 									alt={`PhyloPic silhouette for ${altScientificName}`}
 									priority
-									fill
 									className="object-contain"
 								/>
 							</div>

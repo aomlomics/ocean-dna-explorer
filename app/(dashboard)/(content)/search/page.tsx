@@ -32,7 +32,7 @@ export default function Search() {
 		if (!table) {
 			router.replace("/search?table=project");
 		}
-	}, [table, router]);
+	}, [table]);
 
 	//TODO: add loading state
 	if (!table) return <></>;

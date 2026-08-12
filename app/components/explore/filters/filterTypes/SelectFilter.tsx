@@ -7,15 +7,13 @@ import { parseDbDeadBoolean } from "@/app/helpers/schema";
 export default function SelectFilter({
 	config,
 	activeFilters,
-	fieldName,
-	value: _value
+	fieldName
 }: {
 	config: SelectFilterConfig | EnumFilterConfig;
 	activeFilters: {
 		[k: string]: string;
 	};
 	fieldName: string;
-	value: string;
 }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
@@ -40,7 +38,7 @@ export default function SelectFilter({
 				>
 					<option value="">Any</option>
 					{config.type === "enum"
-						? Object.values(parseDbDeadBoolean(config.enum)).map((option, i) => (
+						? Object.values(parseDbDeadBoolean(config.enum)).map((option) => (
 								<option key={option} value={option}>
 									{option}
 								</option>

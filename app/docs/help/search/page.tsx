@@ -37,8 +37,8 @@ export default async function HelpSearchPage() {
 						pages, which only let you filter data within a single table.
 					</p>
 					<p className="mb-4">
-						Use Search when you need to find data based on relationships between tables (e.g., "find all taxonomies in a
-						specific project" or "find all samples from a particular analysis").
+						Use Search when you need to find data based on relationships between tables (e.g., &quot;find all taxonomies
+						in a specific project&quot; or &quot;find all samples from a particular analysis&quot;).
 					</p>
 				</>
 			}
@@ -63,7 +63,7 @@ export default async function HelpSearchPage() {
 								<li>Add filters using the query builder to specify your search criteria</li>
 								<li>
 									Filters can include conditions based on fields from related tables (e.g., search for Samples where the
-									Project's institution is "NOAA")
+									Project&apos;s institution is &quot;NOAA&quot;)
 								</li>
 								<li>
 									Combine multiple filters using AND/OR logic: Each filter and/or relation is combined with AND logic.
@@ -83,7 +83,7 @@ export default async function HelpSearchPage() {
 					title: "Search vs Explore",
 					content: (
 						<>
-							<p className="mb-4">What's the difference between the Search and Explore pages?</p>
+							<p className="mb-4">What&apos;s the difference between the Search and Explore pages?</p>
 							<div className="mb-4">
 								<h4>
 									Use{" "}
@@ -109,7 +109,7 @@ export default async function HelpSearchPage() {
 								</h4>
 								<ul className="list-disc ml-6 mb-4">
 									<li>You want to browse all data in a single table</li>
-									<li>You only need to filter within one table's own fields</li>
+									<li>You only need to filter within one table&apos;s own fields</li>
 									<li>You want a quick overview and are not asking a specific question</li>
 								</ul>
 							</div>

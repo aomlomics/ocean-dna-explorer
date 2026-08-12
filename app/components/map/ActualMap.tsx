@@ -214,9 +214,9 @@ export default function ActualMap({
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
 	//clump locations if they have identical latlng
-	let filteredLocations = [] as Array<Location | LocationWithValues>;
+	const filteredLocations = [] as Array<Location | LocationWithValues>;
 	//track points with invalid location data
-	let noLocationPoints = [] as NullLocation[];
+	const noLocationPoints = [] as NullLocation[];
 	//calculate starting map view
 	let mapProps = {} as MapProps;
 	//legend options
@@ -246,7 +246,7 @@ export default function ActualMap({
 					verbatimLatitudeArray[0] !== verbatimLatitudeArray[verbatimLatitudeArray.length - 1] ||
 					verbatimLongitudeArray[0] !== verbatimLongitudeArray[verbatimLongitudeArray.length - 1])
 			) {
-				let bounds = DEFAULT_BOUNDS;
+				const bounds = DEFAULT_BOUNDS;
 				const polylines = [] as [number, number][];
 				for (let i = 0; i < verbatimLatitudeArray.length; i++) {
 					bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
@@ -281,7 +281,7 @@ export default function ActualMap({
 			}
 		}
 	} else {
-		let bounds = DEFAULT_BOUNDS;
+		const bounds = DEFAULT_BOUNDS;
 
 		for (const nullLoc of locations) {
 			if (
@@ -654,6 +654,7 @@ export default function ActualMap({
 	}
 
 	//shapes
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (drawReady) {
 			checkShapes();
@@ -677,6 +678,7 @@ export default function ActualMap({
 	}, [shapes]);
 
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (!drawAlmostReady) {
 			setDrawAlmostReady(true);
@@ -708,6 +710,7 @@ export default function ActualMap({
 		}
 	}, [drawAlmostReady]);
 
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		checkShapes();
 		setLoading(false);

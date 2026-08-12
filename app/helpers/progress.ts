@@ -130,7 +130,7 @@ async function handleReadable(readable: ReadableStream<any>, setter: (res: Netwo
 
 export async function doProgressActionMany(
 	action: ProgressActionMany,
-	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
+	setters: ((res: NetworkProgressPacket) => void)[],
 	...args: any[]
 ) {
 	const readables = await action(...args);
@@ -142,8 +142,8 @@ export async function doProgressActionMany(
 
 export async function doProgressActionManyGlobal(
 	action: ProgressActionManyGlobal,
-	setters: Dispatch<SetStateAction<NetworkProgressPacket>>[],
-	globalSetter: Dispatch<SetStateAction<NetworkProgressPacket>>,
+	setters: ((res: NetworkProgressPacket) => void)[],
+	globalSetter: (res: NetworkProgressPacket) => void,
 	...args: any[]
 ) {
 	const { global, readables } = await action(...args);

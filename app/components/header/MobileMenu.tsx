@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import DocsSections from "@/types/docsSections";
@@ -10,47 +10,54 @@ export default function MobileMenu() {
 	const [isOpen, setIsOpen] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 
-	const handleToggle = () => {
+	function handleToggle() {
 		setIsOpen((prev) => !prev);
-	};
+	}
 
-	const handleClose = () => {
+	function handleClose() {
 		setIsOpen(false);
-	};
+	}
 
-	// Effect to handle closing when clicking outside the menu
+	// Close when clicking outside the menu.
 	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (isOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
-				handleClose();
+		if (!isOpen) return;
+
+		function handleClickOutside(event: MouseEvent) {
+			const menu = menuRef.current;
+
+			if (menu && !menu.contains(event.target as Node)) {
+				setIsOpen(false);
 			}
-		};
+		}
+
 		document.addEventListener("mousedown", handleClickOutside);
+
 		return () => {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [isOpen]);
 
-	// Effect to prevent body scroll when the menu is open
+	// Prevent the page from scrolling while the menu is open.
 	useEffect(() => {
-		if (isOpen) {
-			document.body.style.overflow = "hidden";
-		} else {
-			document.body.style.overflow = "";
-		}
+		if (!isOpen) return;
+
+		const previousOverflow = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+
 		return () => {
-			document.body.style.overflow = "";
+			document.body.style.overflow = previousOverflow;
 		};
 	}, [isOpen]);
 
-	// Ensure the component is mounted before trying to use the portal
-	const [mounted, setMounted] = useState(false);
-	useEffect(() => setMounted(true), []);
-
 	return (
 		<div className="relative" ref={menuRef}>
-			{/* The trigger button */}
-			<div role="button" className="btn btn-ghost lg:hidden p-1 sm:p-2" onClick={handleToggle}>
+			<button
+				type="button"
+				className="btn btn-ghost lg:hidden p-1 sm:p-2"
+				onClick={handleToggle}
+				aria-expanded={isOpen}
+				aria-label="Toggle navigation menu"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					className="h-5 w-5"
@@ -60,11 +67,10 @@ export default function MobileMenu() {
 				>
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
 				</svg>
-			</div>
+			</button>
 
-			{/* The dropdown menu */}
 			{isOpen && (
-				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-menu w-60 p-3 shadow-lg">
+				<ul className="absolute top-full left-0 mt-2 menu bg-base-100 rounded-box z-menu w-72 max-w-[calc(100vw-1rem)] p-3 shadow-lg">
 					<li className="text-base py-1">
 						<Link href="/" onClick={handleClose}>
 							Home
@@ -73,10 +79,14 @@ export default function MobileMenu() {
 					<li className="text-base py-1">
 						<details>
 							<summary className="text-base">Explore</summary>
-							<ul className="p-2">
+							<ul className="w-full max-w-full p-2">
 								{DataTableNames.map((table) => (
 									<li key={table} className="py-1">
-										<Link href={`/explore/${table}`} onClick={handleClose}>
+										<Link
+											href={`/explore/${table}`}
+											onClick={handleClose}
+											className="whitespace-normal wrap-break-word"
+										>
 											{TableMetadata[table].plural}
 										</Link>
 									</li>
@@ -92,7 +102,7 @@ export default function MobileMenu() {
 					<li className="text-base py-1">
 						<details>
 							<summary className="text-base">Visualize</summary>
-							<ul className="p-2">
+							<ul className="w-full max-w-full p-2">
 								<li className="py-1">
 									<Link href="/visualize/metadata" onClick={handleClose}>
 										Metadata
@@ -109,7 +119,7 @@ export default function MobileMenu() {
 					<li className="text-base py-1">
 						<details>
 							<summary className="text-base">Submit</summary>
-							<ul className="p-2">
+							<ul className="w-full max-w-full p-2">
 								<li className="py-1">
 									<Link href="/submit/project" onClick={handleClose}>
 										Project
@@ -123,15 +133,10 @@ export default function MobileMenu() {
 							</ul>
 						</details>
 					</li>
-					{/* <li className="text-base py-1">
-						<Link href="/contribute" onClick={handleClose}>
-							Contribute
-						</Link>
-					</li> */}
 					<li className="text-base py-1">
 						<details>
 							<summary className="text-base">Docs</summary>
-							<ul className="p-2">
+							<ul className="w-full max-w-full p-2">
 								<li className="py-1">
 									<Link href={`/docs/help/${Object.keys(DocsSections.help)[0]}`} onClick={handleClose}>
 										Help
@@ -148,19 +153,31 @@ export default function MobileMenu() {
 					<li className="text-base py-1">
 						<details>
 							<summary className="text-base">Learn</summary>
-							<ul className="p-2">
+							<ul className="w-full max-w-full p-2">
 								<li className="py-1">
-									<Link href="/learn?section=edna101" onClick={handleClose}>
+									<Link
+										href="/learn?section=edna101"
+										onClick={handleClose}
+										className="whitespace-normal wrap-break-word"
+									>
 										eDNA 101
 									</Link>
 								</li>
 								<li className="py-1">
-									<Link href="/learn?section=impact" onClick={handleClose}>
+									<Link
+										href="/learn?section=impact"
+										onClick={handleClose}
+										className="whitespace-normal wrap-break-word"
+									>
 										Impact
 									</Link>
 								</li>
 								<li className="py-1">
-									<Link href="/learn?section=discoveries" onClick={handleClose}>
+									<Link
+										href="/learn?section=discoveries"
+										onClick={handleClose}
+										className="whitespace-normal wrap-break-word"
+									>
 										Make your own Discoveries
 									</Link>
 								</li>
@@ -175,10 +192,11 @@ export default function MobileMenu() {
 				</ul>
 			)}
 
-			{/* The backdrop, rendered into the body via a portal */}
-			{mounted &&
-				isOpen &&
-				createPortal(<div className="fixed inset-0 bg-black/30 z-scrim" onClick={handleClose}></div>, document.body)}
+			{isOpen &&
+				createPortal(
+					<div className="fixed inset-0 bg-black/30 z-scrim" onClick={handleClose} aria-hidden="true" />,
+					document.body
+				)}
 		</div>
 	);
 }

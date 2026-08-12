@@ -1,10 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 
-const sharedTheme = {
-	// Shared theme values that will be applied to both themes
-	"map-colors": "#FF6B6B" // Map accents
-};
-
 module.exports = {
 	darkMode: "class",
 	content: [

@@ -262,7 +262,7 @@ const relations = Object.entries(TableMetadata).reduce(
 	{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
 );
 
-for (let e in TableMetadata) {
+for (const e in TableMetadata) {
 	const table = e as Uncapitalize<Prisma.ModelName>;
 
 	delete TableMetadata[table].relationsSchema;

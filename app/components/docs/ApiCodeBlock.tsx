@@ -1,29 +1,31 @@
 "use client";
 
+import { fetcher } from "@/app/helpers/utils";
 import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import useSWR from "swr";
 
 export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
-	const [theme, setTheme] = useState("dark");
+	const [theme, setTheme] = useState(document.documentElement.getAttribute("data-theme") || "dark");
 	const [copied, setCopied] = useState(false);
-	const [code, setCode] = useState("Loading...");
 	const [isOpen, setIsOpen] = useState(false);
 
+	const { data, error, isLoading } = useSWR(url, fetcher);
+	let code;
+	if (error) {
+		code = JSON.stringify(error, null, 2);
+	} else if (isLoading || !data) {
+		code = "Loading...";
+	} else if (data.statusMessage === "error") {
+		code = data.error;
+	} else if (data.statusMessage === "success") {
+		code = JSON.stringify(data.result, undefined, 2);
+	} else {
+		code = "Unexpected error occurred";
+	}
+
 	useEffect(() => {
-		async function doFetch() {
-			const response = await fetch(url);
-			if (!response.ok) {
-				setCode(response.statusText);
-			} else {
-				setCode(JSON.stringify(await response.json(), null, 2));
-			}
-		}
-		doFetch();
-
-		const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
-		setTheme(currentTheme);
-
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
 				if (mutation.attributeName === "data-theme") {

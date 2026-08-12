@@ -1,16 +1,26 @@
 import Image from "next/image";
-import { ImageProps } from "next/image";
+import { CSSProperties } from "react";
 
-interface ThemeAwareLogoProps extends Omit<ImageProps, "className"> {
+export default function ThemeAwareLogo({
+	src,
+	alt,
+	className,
+	sizes,
+	style
+}: {
+	src: string;
+	alt: string;
 	className?: string;
-}
-
-export default function ThemeAwareLogo(props: ThemeAwareLogoProps) {
-	const { className = "", ...imageProps } = props;
-
+	sizes: string;
+	style?: CSSProperties;
+}) {
 	return (
 		<Image
-			{...imageProps}
+			src={src}
+			alt={alt}
+			fill
+			sizes={sizes}
+			style={style}
 			className={`
         transition-all duration-200
         [html[data-theme='light']_&]:invert-[0.85]

@@ -243,7 +243,7 @@ export async function fetchBlast(
 					}
 				: undefined
 		);
-	} catch (err) {
+	} catch {
 		throw new Error("Could not reach BLAST server.");
 	}
 	if (res.ok) {

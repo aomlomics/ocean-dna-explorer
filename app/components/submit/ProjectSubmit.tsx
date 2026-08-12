@@ -3,7 +3,7 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { SubmitEvent, Fragment, useEffect, useRef, useState } from "react";
+import { SubmitEvent, Fragment, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
 import { NetworkProgressPacket } from "@/types/globals";
@@ -28,10 +28,10 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 	const [showCoverImage, setShowCoverImage] = useState(false);
 
 	//response state variables that will have information streamed to them
-	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
-	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket);
-	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket);
-	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket);
+	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket | undefined);
 
 	//state variable that will have any error passed to it
 	const [errorMessage, setErrorMessage] = useState("");
@@ -41,39 +41,31 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 
-	//detect when there's an error
-	useEffect(() => {
-		if (projectResponse?.statusMessage === "error") {
-			doError(projectResponse.error);
-		}
-	}, [projectResponse]);
-	useEffect(() => {
-		if (sampleResponse?.statusMessage === "error") {
-			doError(sampleResponse.error);
-		}
-	}, [sampleResponse]);
-	useEffect(() => {
-		if (libraryResponse?.statusMessage === "error") {
-			doError(libraryResponse.error);
-		}
-	}, [libraryResponse]);
+	function doError(err: string) {
+		setLoading(false);
+		setErrorMessage(err);
+		modalRef.current?.showModal();
+	}
 
-	//detect when entire submission was successful
-	useEffect(() => {
-		if (globalResponse?.statusMessage === "success") {
+	function updateResponse(setter: (res: NetworkProgressPacket) => void, res: NetworkProgressPacket) {
+		setter(res);
+
+		if (res?.statusMessage === "error") {
+			doError(res.error);
+		}
+	}
+
+	function updateGlobalResponse(res: NetworkProgressPacket) {
+		setGlobalResponse(res);
+
+		if (res?.statusMessage === "success") {
 			setLoading(false);
 			modalXRef.current!.disabled = true;
 			modalClickOffRef.current!.disabled = true;
 			modalRef.current?.showModal();
-		} else if (globalResponse?.statusMessage === "error") {
-			doError(globalResponse.error);
+		} else if (res?.statusMessage === "error") {
+			doError(res.error);
 		}
-	}, [globalResponse]);
-
-	async function doError(err: string) {
-		setLoading(false);
-		setErrorMessage(err);
-		modalRef.current?.showModal();
 	}
 
 	async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -175,8 +167,12 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			//trigger streamed action
 			doProgressActionManyGlobal(
 				projectSubmitAction,
-				[setProjectResponse, setSampleResponse, setLibraryResponse],
-				setGlobalResponse,
+				[
+					(res) => updateResponse(setProjectResponse, res),
+					(res) => updateResponse(setSampleResponse, res),
+					(res) => updateResponse(setLibraryResponse, res)
+				],
+				updateGlobalResponse,
 				projectFileUrl,
 				sampleFileUrl,
 				libraryFileUrl,

@@ -310,7 +310,7 @@ export default function AlphaDiversityDisplay({
 			hueColors: colors,
 			defaultHueFilter
 		};
-	}, [diversitiesByMetric, effectiveCurrMetric, xField, hueField, hueFilter, primaryColor, userDefinedFields]);
+	}, [effectiveCurrMetric, xField, hueField, hueFilter]);
 
 	const { data, hueValues, hueColors, defaultHueFilter } = chartResult;
 

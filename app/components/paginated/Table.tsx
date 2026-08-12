@@ -59,7 +59,7 @@ export default function Table({
 
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 
-	let defaultHeadersSet = new Set() as Set<string>;
+	const defaultHeadersSet = new Set() as Set<string>;
 
 	//title field array
 	if (Array.isArray(title)) {
@@ -134,7 +134,7 @@ export default function Table({
 		.forEach(defaultHeadersSet.add, defaultHeadersSet);
 
 	//apply default filters
-	let defaultHeadersFilter = {} as Record<string, boolean>;
+	const defaultHeadersFilter = {} as Record<string, boolean>;
 	if (filterHeadersAtStart && TableMetadata[table].subFields) {
 		for (const head of defaultHeadersSet) {
 			if (
@@ -196,7 +196,7 @@ export default function Table({
 	const [pendingFilters, setPendingFilters] = useState(0);
 
 	function getQuery(dir?: 1 | -1) {
-		let query = new URLSearchParams({
+		const query = new URLSearchParams({
 			take: take.toString(),
 			page: (dir ? page + dir : page).toString(),
 			orderBy: orderBy.field + "," + orderBy.order
@@ -257,12 +257,14 @@ export default function Table({
 	});
 
 	// Reset to first page whenever the table or URL search params change
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (page !== 1) {
 			setPage(1);
 		}
 	}, [table, searchParams]);
 
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			if (hideEmpty) {
@@ -289,6 +291,7 @@ export default function Table({
 		}
 	}, [hideEmpty, data]);
 
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			//pass up extra results from query

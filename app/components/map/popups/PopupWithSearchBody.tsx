@@ -39,6 +39,7 @@ export default function PopupWithSearchBody({
 	const [filter, setFilter] = useState("");
 	const [filteredValues, setFilteredValues] = useState(loc.values ? loc.values : undefined);
 
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (loc.values) {
 			const tempFilteredValues = [] as Location[];

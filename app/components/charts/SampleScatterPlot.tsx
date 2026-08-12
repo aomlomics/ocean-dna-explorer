@@ -192,10 +192,7 @@ export default function SampleScatterPlot({
 	const [yField, setYField] = useState(DEFAULT_Y_FIELD);
 	const [legendField, setLegendField] = useState(DEFAULT_LEGEND_FIELD);
 
-	const chartInfo = useMemo(
-		() => buildChartData(xField, yField, legendField),
-		[samples, buildChartData, xField, yField, legendField]
-	);
+	const chartInfo = useMemo(() => buildChartData(xField, yField, legendField), [samples, xField, yField, legendField]);
 
 	function getFieldType(newField: keyof Sample) {
 		if (userDefinedFields?.has(newField)) {

@@ -1,8 +1,5 @@
-import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
-import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
+import { Assay } from "@/app/generated/prisma/client";
 import { BlastQueryPartial } from "@/prisma/generated/zod";
-import { ReactNode } from "react";
-import TableMetadata from "@/types/tableMetadata";
 import { User } from "@clerk/nextjs/server";
 
 export type Role = "admin" | "moderator" | "contributor";

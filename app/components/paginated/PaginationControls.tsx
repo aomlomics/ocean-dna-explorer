@@ -13,7 +13,7 @@ export default function PaginationControls({
 	count: number;
 	setPage: Dispatch<SetStateAction<number>>;
 	sideEffect?: () => void;
-	handlePageHover?: Function;
+	handlePageHover?: (dir?: 1 | -1) => void;
 }) {
 	return (
 		<div className="w-full flex justify-center flex-1">

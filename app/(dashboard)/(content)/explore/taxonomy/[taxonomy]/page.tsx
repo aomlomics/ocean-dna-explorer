@@ -299,7 +299,6 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 												<ThemeAwarePhyloPic
 													src={phyloPic.imageUrl}
 													alt="Taxonomic outline"
-													fill
 													className="object-contain"
 												/>
 											</div>

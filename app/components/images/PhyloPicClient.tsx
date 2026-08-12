@@ -68,7 +68,7 @@ export default function PhyloPicClient({
 					data-tip={"PhyloPic nodes: " + imageDetails}
 				>
 					<div className="relative h-full w-full">
-						<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" fill className="object-contain" />
+						<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" className="object-contain" />
 					</div>
 				</div>
 			) : loading ? (

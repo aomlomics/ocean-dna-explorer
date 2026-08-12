@@ -42,7 +42,7 @@ export default function Grid({
 	const topPaginationRef = useRef<HTMLDivElement>(null);
 
 	function getQuery(dir?: 1 | -1) {
-		let query = new URLSearchParams({
+		const query = new URLSearchParams({
 			take: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});

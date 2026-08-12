@@ -185,19 +185,7 @@ export default function TaxaBarChart({
 				datasets
 			}
 		};
-	}, [
-		assignments,
-		occsByFeatureid,
-		taxonomiesById,
-		samplesById,
-		sampleIdsByLibId,
-		rank,
-		metricType,
-		averageBy,
-		taxonomiesFilter,
-		xLabelsFilter,
-		userDefinedFields
-	]);
+	}, [rank, metricType, averageBy, taxonomiesFilter, xLabelsFilter]);
 
 	const defaultTaxonomiesFilter = useMemo(() => {
 		return Object.fromEntries(taxonomies.slice(DEFAULT_MAX_TAXONOMIES).map((taxon) => [taxon, true])) as Record<

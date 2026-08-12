@@ -26,16 +26,16 @@ export default function ApiResponsesPage() {
 							<CodeBlock
 								language="json"
 								code={`{
-				  "message": "Success",
-				  "result": [
-					// Array of results or single object
-				  ]
-				}`}
+	"message": "Success",
+	"result": [
+	// Array of results or single object
+	]
+}`}
 							/>
 
 							<p className="mb-4">
-								The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain "Success"
-								for successful requests.
+								The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain
+								&quot;Success&quot; for successful requests.
 							</p>
 
 							<p className="mb-4">
@@ -61,9 +61,9 @@ export default function ApiResponsesPage() {
 							<CodeBlock
 								language="json"
 								code={`{
-				  "message": "Error",
-				  "error": "A description of what went wrong."
-				}`}
+	"message": "Error",
+	"error": "A description of what went wrong."
+}`}
 							/>
 							<p className="mb-4 mt-4">
 								The <code className="px-1 py-0.5 bg-base-200 rounded">error</code> field contains a human-readable

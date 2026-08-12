@@ -37,19 +37,7 @@ export default function BlastSearchResult({
 	const searchParams = useSearchParams();
 
 	const [page, setPage] = useState(0);
-	const [loading, setLoading] = useState(false);
-
-	useEffect(() => {
-		if (searchParams.get("blastQuery")) {
-			setLoading(true);
-		}
-	}, [searchParams]);
-
-	useEffect(() => {
-		if (blastResult) {
-			setLoading(false);
-		}
-	}, [blastResult]);
+	const loading = !!searchParams.get("blastQuery") && !blastResult;
 
 	if (loading) {
 		return (

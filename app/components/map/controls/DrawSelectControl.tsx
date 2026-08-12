@@ -38,9 +38,8 @@ export default function DrawSelectedControl({
 	const [delayedPointsInside, setDelayedPointsInside] = useState(pointsInside);
 
 	//delay changing state variable by 1 render cycle to allow for resizable to work
-	useEffect(() => {
-		setDelayedPointsInside(pointsInside);
-	}, [pointsInside]);
+	// eslint-disable-next-line react-hooks/set-state-in-effect
+	useEffect(() => setDelayedPointsInside(pointsInside), [pointsInside]);
 
 	return (
 		<LeafletControl click scroll>

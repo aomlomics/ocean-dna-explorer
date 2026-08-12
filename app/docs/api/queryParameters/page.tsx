@@ -61,7 +61,7 @@ export default function ApiQueryParametersPage() {
 
 							<p className="mb-4">
 								This example returns all projects where the{" "}
-								<code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> field contains "Test".
+								<code className="px-1 py-0.5 bg-base-200 rounded">project_name</code> field contains &quot;Test&quot;.
 							</p>
 						</>
 					)
@@ -85,7 +85,8 @@ export default function ApiQueryParametersPage() {
 								<ol className="list-decimal list-inside text-sm mt-2 space-y-1">
 									<li>Make a first request to get the project data.</li>
 									<li>
-										Make a second request to the sample table, filtering by the project's ID to get the related samples.
+										Make a second request to the sample table, filtering by the project&apos;s ID to get the related
+										samples.
 									</li>
 								</ol>
 								<p className="text-sm mt-2">

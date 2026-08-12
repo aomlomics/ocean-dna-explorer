@@ -10,13 +10,10 @@ interface CodeBlockProps {
 }
 
 export default function CodeBlock({ language, code }: CodeBlockProps) {
-	const [theme, setTheme] = useState("dark");
+	const [theme, setTheme] = useState(document.documentElement.getAttribute("data-theme") || "dark");
 	const [copied, setCopied] = useState(false);
 
 	useEffect(() => {
-		const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
-		setTheme(currentTheme);
-
 		const observer = new MutationObserver((mutations) => {
 			mutations.forEach((mutation) => {
 				if (mutation.attributeName === "data-theme") {
