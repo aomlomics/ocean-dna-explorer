@@ -45,7 +45,7 @@ export async function GET(
 			};
 		};
 
-		let shapes = getShapesFromUrl(searchParams);
+		const shapes = getShapesFromUrl(searchParams);
 		if (shapes) {
 			//skips database pagination
 			searchParams.delete("polygon");
@@ -296,7 +296,7 @@ export async function GET(
 
 			const res = await prisma.$transaction(
 				async (tx) => {
-					//@ts-ignore
+					//@ts-expect-error
 					const count = await tx[model].count({ where: query.where });
 
 					//give last page if page is too large
@@ -313,7 +313,7 @@ export async function GET(
 						query.take = parsedTake;
 					}
 
-					//@ts-ignore
+					//@ts-expect-error
 					const result = await tx[model].findMany(query);
 
 					return { count, result };
@@ -363,7 +363,7 @@ export async function GET(
 								}
 
 								//only deep relations that are -to-many need to be gathered here
-								//@ts-ignore
+								//@ts-expect-error
 								return prisma[dr].count({
 									where
 								});

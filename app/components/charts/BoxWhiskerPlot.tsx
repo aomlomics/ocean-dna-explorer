@@ -109,7 +109,7 @@ export default function BoxWhiskerPlot({
 				currRef.current.destroy();
 			}
 		};
-	}, [textColor]);
+	}, [textColor, gridColor, data, ref, title, xField, yField, legend, onLegendHover, showPoints]);
 
 	return <canvas ref={canvasRef} style={{ width: "100%" }} />;
 }

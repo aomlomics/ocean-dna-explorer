@@ -11,7 +11,7 @@ export async function POST(request: Request) {
 		const jsonResponse = await handleUpload({
 			body,
 			request,
-			onBeforeGenerateToken: async (pathname, clientPayload) => {
+			onBeforeGenerateToken: async () => {
 				// Generate a client token for the browser to upload the file
 				// ⚠️ Authenticate and authorize users before generating the token.
 				// Otherwise, you're allowing anonymous uploads.
@@ -44,18 +44,14 @@ export async function POST(request: Request) {
 					throw new Error("Missing token payload");
 				}
 
-				try {
-					// Run any logic after the file upload completed
-					const { userId } = JSON.parse(tokenPayload);
-					await prismaImages.blobFile.create({
-						data: {
-							url: blob.url,
-							userId: userId as string
-						}
-					});
-				} catch (error) {
-					throw new Error("Error");
-				}
+				// Run any logic after the file upload completed
+				const { userId } = JSON.parse(tokenPayload);
+				await prismaImages.blobFile.create({
+					data: {
+						url: blob.url,
+						userId: userId as string
+					}
+				});
 			}
 		});
 

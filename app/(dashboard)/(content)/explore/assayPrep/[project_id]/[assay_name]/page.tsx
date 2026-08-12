@@ -34,18 +34,13 @@ export default async function Project_id_Assay_name({
 					assay_name: true,
 					target_gene: true
 				}
-			},
-			Libraries: {
-				select: {
-					lib_id: true
-				}
 			}
 		}
 	});
 
 	if (!assayPrep) notFound();
 
-	const { Project: project, Assay: assay, Libraries: libraries, ...justAssayPrep } = assayPrep;
+	const { Project: project, Assay: assay, ...justAssayPrep } = assayPrep;
 
 	return (
 		<div className="space-y-6 pb-8">

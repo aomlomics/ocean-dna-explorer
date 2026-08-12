@@ -66,10 +66,10 @@ export function MainStatsSkeleton() {
 export async function MainStats() {
 	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await prisma.$transaction(
 		async (tx) => {
-			const projectCount = await prisma.project.count();
-			const sampleCount = await prisma.sample.count();
-			const taxaCount = await prisma.taxonomy.count();
-			const occurrenceCount = await prisma.occurrence.count();
+			const projectCount = await tx.project.count();
+			const sampleCount = await tx.sample.count();
+			const taxaCount = await tx.taxonomy.count();
+			const occurrenceCount = await tx.occurrence.count();
 
 			return { projectCount, sampleCount, taxaCount, occurrenceCount };
 		},

@@ -24,7 +24,7 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		let { query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, { sampleWhere: true });
+		const { query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, { sampleWhere: true });
 
 		//replace the where with samp_names that match the query and are inside the shapes
 		if (sampleWhere) {
@@ -60,7 +60,7 @@ export async function GET(
 			query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
 		}
 
-		//@ts-ignore
+		//@ts-expect-error
 		let result = await prisma[model].findMany(query);
 
 		if (result) {

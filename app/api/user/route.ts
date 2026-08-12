@@ -1,9 +1,9 @@
-import { NetworkPacket } from "@/types/globals";
+import { NetworkPacket, UserObject } from "@/types/globals";
 import { NextResponse } from "next/server";
 import { auth, clerkClient, User } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 
-function getUsersResult(users: User[], emails?: boolean) {
+function getUsersResult(users: User[], emails?: boolean): UserObject[] {
 	return users.map((u) => ({
 		id: u.id,
 		publicMetadata: u.publicMetadata,

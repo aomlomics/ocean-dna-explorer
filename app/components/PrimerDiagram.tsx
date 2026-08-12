@@ -33,19 +33,6 @@ const generateHelixData = (topSeq: string, bottomSeq: string): any[] => {
 	return columns;
 };
 
-interface HelixProps {
-	data: any[];
-	primerStrand: "top" | "bottom";
-	primerStartIndex: number;
-	primerEndIndex: number;
-	primerBlinks: boolean;
-	primerColor: string;
-	templateColor: string;
-	scale?: number;
-	// Optional: letters to draw along the primer segment (in display order)
-	primerSequence?: string;
-}
-
 const Helix = ({
 	data,
 	primerStrand,
@@ -53,10 +40,19 @@ const Helix = ({
 	primerEndIndex,
 	primerBlinks,
 	primerColor,
-	templateColor,
 	scale,
 	primerSequence
-}: HelixProps) => {
+}: {
+	data: any[];
+	primerStrand: "top" | "bottom";
+	primerStartIndex: number;
+	primerEndIndex: number;
+	primerBlinks: boolean;
+	primerColor: string;
+	scale?: number;
+	// Optional: letters to draw along the primer segment (in display order)
+	primerSequence?: string;
+}) => {
 	if (!data || data.length === 0) return null;
 
 	// Compact sizing that automatically shrinks for very long sequences
@@ -261,7 +257,17 @@ const ReferenceLink = ({ reference }: { reference: string | null | undefined }) 
 	return <span>{reference}</span>;
 };
 
-interface PrimerDiagramProps {
+const PrimerDiagram = ({
+	forwardPrimerSequence,
+	reversePrimerSequence,
+	forwardPrimerName,
+	reversePrimerName,
+	forwardPrimerReference,
+	reversePrimerReference,
+	scale,
+	showInfo = true,
+	primerToDisplay
+}: {
 	forwardPrimerSequence: string;
 	reversePrimerSequence: string;
 	forwardPrimerName?: string;
@@ -273,22 +279,8 @@ interface PrimerDiagramProps {
 	// Hide header/sequence/reference blocks; show only the visual diagrams
 	showInfo?: boolean;
 	// If true, render forward primer visuals first (on top)
-	forwardFirst?: boolean;
 	primerToDisplay: "forward" | "reverse";
-}
-
-const PrimerDiagram = ({
-	forwardPrimerSequence,
-	reversePrimerSequence,
-	forwardPrimerName,
-	reversePrimerName,
-	forwardPrimerReference,
-	reversePrimerReference,
-	scale,
-	showInfo = true,
-	forwardFirst = false,
-	primerToDisplay
-}: PrimerDiagramProps) => {
+}) => {
 	const calculateGcContent = (seq: string) => {
 		if (!seq || seq.length === 0) return "0.0";
 
@@ -383,15 +375,15 @@ const PrimerDiagram = ({
 			)}
 			<div className="text-md leading-relaxed text-base-content flex flex-col items-center">
 				<div className="flex justify-between w-full">
-					<span>5'</span>
-					<span>3'</span>
+					<span>5&apos;</span>
+					<span>3&apos;</span>
 				</div>
 				<div className="flex items-center -my-1 w-full overflow-x-auto justify-center">
 					<Helix {...reversePrimerRenderProps} />
 				</div>
 				<div className="flex justify-between w-full">
-					<span>3'</span>
-					<span>5'</span>
+					<span>3&apos;</span>
+					<span>5&apos;</span>
 				</div>
 			</div>
 		</div>
@@ -417,15 +409,15 @@ const PrimerDiagram = ({
 			)}
 			<div className="text-md leading-relaxed text-base-content flex flex-col items-center">
 				<div className="flex justify-between w-full">
-					<span>5'</span>
-					<span>3'</span>
+					<span>5&apos;</span>
+					<span>3&apos;</span>
 				</div>
 				<div className="flex items-center -my-1 w-full overflow-x-auto justify-center">
 					<Helix {...forwardPrimerRenderProps} />
 				</div>
 				<div className="flex justify-between w-full">
-					<span>3'</span>
-					<span>5'</span>
+					<span>3&apos;</span>
+					<span>5&apos;</span>
 				</div>
 			</div>
 		</div>

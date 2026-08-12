@@ -315,9 +315,9 @@ export default function AmbientPage() {
 			if (cancelled) return;
 
 			// @ts-expect-error wordcloud2 has no bundled TS types.
-			const module = await import("wordcloud");
+			const wordcloudMod = await import("wordcloud");
 			if (cancelled) return;
-			wordCloud = (module.default ?? module) as WordCloudFn;
+			wordCloud = (wordcloudMod.default ?? wordcloudMod) as WordCloudFn;
 
 			clearReveal();
 			wordCloud.stop?.();

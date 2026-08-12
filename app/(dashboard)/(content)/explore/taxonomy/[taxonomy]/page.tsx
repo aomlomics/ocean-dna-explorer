@@ -145,7 +145,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
 	const databaseRankKey = finestRank?.rankKey ?? null;
 	const breadcrumbRanks = [...RanksBySpecificity].reverse().filter((rank) => {
-		const raw = (dbTaxonomy as any)[rank]?.toString().trim();
+		const raw = (dbTaxonomy as Taxonomy)[rank]?.toString().trim();
 		return Boolean(raw);
 	});
 
@@ -166,7 +166,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						<div className="breadcrumbs text-sm text-base-content/70">
 							<ul>
 								{breadcrumbRanks.map((rank, idx) => {
-									const raw = (dbTaxonomy as any)[rank]?.toString().trim() ?? "";
+									const raw = (dbTaxonomy as Taxonomy)[rank]?.toString().trim() ?? "";
 									const name = raw.replace(/_/g, " ");
 									const isLast = idx === breadcrumbRanks.length - 1;
 									return (

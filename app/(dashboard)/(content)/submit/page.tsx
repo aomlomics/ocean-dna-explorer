@@ -2,9 +2,6 @@ import { AnalysisIcon, ProjectIcon } from "@/app/components/icons";
 import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
 import Link from "next/link";
 
-const ODE_TESTDATA_HREF = "https://github.com/aomlomics/ODE_testdata";
-const FAIRESHEETS_HREF = "https://github.com/aomlomics/FAIReSheets";
-
 export default function Submit() {
 	return (
 		<div className="container mx-auto px-4 py-4">

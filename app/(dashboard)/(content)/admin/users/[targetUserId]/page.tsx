@@ -13,7 +13,7 @@ import { prisma } from "@/app/helpers/prisma";
 import { exploreAnalysisUrl, exploreProjectUrl } from "@/app/helpers/utils";
 import { Role, UserMetadata } from "@/types/globals";
 import { RoleHeirarchy } from "@/types/objects";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient, EmailAddress } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -57,7 +57,10 @@ export default async function UserId({ params }: { params: Promise<{ targetUserI
 						{target.firstName} {target.lastName}
 					</p>
 					<p className="text-lg text-base-content/70">
-						{target.emailAddresses.find((email: any) => email.id === target.primaryEmailAddressId)?.emailAddress}
+						{
+							target.emailAddresses.find((email: EmailAddress) => email.id === target.primaryEmailAddressId)
+								?.emailAddress
+						}
 					</p>
 				</div>
 

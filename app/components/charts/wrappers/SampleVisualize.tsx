@@ -26,11 +26,21 @@ export default function SampleVisualize({ samples }: { samples: Sample[] }) {
 
 	const xyFields = new Set(["eventDate", "minimumDepthInMeters"]) as Set<string>;
 	const userDefinedFields = new Set() as Set<string>;
+	//add to xy field options
 	for (const f of Array.from(fields)) {
 		const key = f as keyof Sample;
 		const type = getZodType("sample", key).type;
 
-		//remove all fields without any values
+		if (type === "integer" || type === "float" || type === "date") {
+			xyFields.add(key);
+		}
+	}
+
+	//remove all fields without any values
+	for (const f of Array.from(fields)) {
+		const key = f as keyof Sample;
+		const type = getZodType("sample", key).type;
+
 		let hasVal = false;
 		for (const samp of samples) {
 			if (samp[key] !== null) {
@@ -72,12 +82,7 @@ export default function SampleVisualize({ samples }: { samples: Sample[] }) {
 
 		if (!hasVal) {
 			fields.delete(f);
-		} else {
-			//add to xy field options
-			const type = getZodType("sample", key).type;
-			if (type === "integer" || type === "float" || type === "date") {
-				xyFields.add(key);
-			}
+			xyFields.delete(f);
 		}
 	}
 

@@ -2,7 +2,6 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { fetcher } from "@/app/helpers/utils";
-import { NetworkPacket } from "@/types/globals";
 import { useSearchParams } from "next/navigation";
 import { FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
@@ -89,14 +88,19 @@ export default function Grid({
 		return query;
 	}
 
-	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${getQuery()}`,
-		fetcher,
-		{
-			keepPreviousData: true,
-			revalidateOnFocus: false
-		}
-	);
+	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
 	if (isLoading || !data) {
 		return table === "taxonomy" ? (
 			<div className="space-y-4">
@@ -109,15 +113,6 @@ export default function Grid({
 			</div>
 		) : (
 			<TableStatusState kind="loading" title="Loading results..." detail="Applying filters and fetching table rows." />
-		);
-	}
-	if (error) {
-		return (
-			<TableStatusState
-				kind="error"
-				title="Could not load results"
-				detail={error.toString() instanceof Error ? error.message : String(error)}
-			/>
 		);
 	}
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result)) {

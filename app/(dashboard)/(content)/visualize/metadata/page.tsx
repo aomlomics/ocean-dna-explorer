@@ -2,42 +2,24 @@
 
 import LoadingSampleScatterPlot from "@/app/components/charts/loading/LoadingSampleScatterPlot";
 import SampleVisualize from "@/app/components/charts/wrappers/SampleVisualize";
-import { Sample } from "@/app/generated/prisma/client";
+import { fetcher } from "@/app/helpers/utils";
 import { SamplePartialSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 export default function VisualizeMetadata() {
 	const searchParams = useSearchParams();
 
-	const [samples, setSamples] = useState(undefined as Sample[] | undefined);
-
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		setLoading(true);
-
-		async function doFetch() {
-			const res = await fetch(`/api/sample/swapToTable?${searchParams}`);
-			if (!res.ok) {
-				throw new Error("Sample query failed to reach the server.");
-			}
-			const response = (await res.json()) as NetworkPacket;
-			if (response.statusMessage === "error") {
-				throw new Error(response.error);
-			}
-			setSamples(response.result.map((r: any) => SamplePartialSchema.parse(r)));
-
-			setLoading(false);
-		}
-
-		doFetch();
-	}, [searchParams]);
-
-	if (loading || !samples) {
+	const { data, error, isLoading } = useSWR(`/api/sample/swapToTable?${searchParams.toString()}`, fetcher);
+	if (error) {
+		throw new Error("Sample query failed to reach the server.");
+	}
+	if (isLoading || !data) {
 		return <LoadingSampleScatterPlot />;
 	}
+	if (data.statusMessage === "error") {
+		throw new Error(data.error);
+	}
 
-	return <SampleVisualize samples={samples} />;
+	return <SampleVisualize samples={data.result.map((r: any) => SamplePartialSchema.parse(r))} />;
 }

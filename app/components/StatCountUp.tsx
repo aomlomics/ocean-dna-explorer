@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+const motionQuery = "(prefers-reduced-motion: reduce)";
+
+function subscribeToReducedMotion(callback: () => void) {
+	const mq = window.matchMedia(motionQuery);
+
+	mq.addEventListener("change", callback);
+
+	return () => mq.removeEventListener("change", callback);
+}
 
 /** Count-up when the element scrolls into view; respects prefers-reduced-motion. */
 export function StatCountUp({ value }: { value: number }) {
 	const ref = useRef<HTMLSpanElement>(null);
 	const [ready, setReady] = useState(false);
 	const [display, setDisplay] = useState(0);
-	const [prefersReduced, setPrefersReduced] = useState(false);
 
-	useEffect(() => {
-		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-		setPrefersReduced(mq.matches);
-		const onChange = () => setPrefersReduced(mq.matches);
-		mq.addEventListener("change", onChange);
-		return () => mq.removeEventListener("change", onChange);
-	}, []);
+	const prefersReduced = useSyncExternalStore(
+		subscribeToReducedMotion,
+		() => window.matchMedia(motionQuery).matches,
+		() => false
+	);
 
 	useEffect(() => {
 		const el = ref.current;
@@ -45,10 +52,12 @@ export function StatCountUp({ value }: { value: number }) {
 
 	useEffect(() => {
 		if (prefersReduced) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDisplay(value);
 			return;
 		}
 		if (!ready) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDisplay(0);
 			return;
 		}
@@ -67,9 +76,11 @@ export function StatCountUp({ value }: { value: number }) {
 			const elapsed = now - startAt;
 			const t = Math.min(1, elapsed / duration);
 			const eased = 1 - (1 - t) ** 3;
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDisplay(Math.round(eased * value));
 			if (t < 1) raf = requestAnimationFrame(step);
 		}
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setDisplay(0);
 		raf = requestAnimationFrame(step);
 		return () => {

@@ -1,35 +1,31 @@
 "use client";
 
-import { NetworkPacket } from "@/types/globals";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
-import { User } from "@clerk/nextjs/server";
 import InfoButton from "./InfoButton";
+import useSWR from "swr";
+import { fetcher } from "../helpers/utils";
+import { UserObject } from "@/types/globals";
 
 export default function UserList() {
 	const { userId } = useAuth();
-	const [users, setUsers] = useState([] as User[]);
-	const [error, setError] = useState("");
+	const [query, setQuery] = useState("");
 
-	async function searchUsers(query?: string) {
-		const response = await fetch(`/api/user?emails=true${query ? "&query=" + query : ""}`);
-		if (response.ok) {
-			const json = (await response.json()) as NetworkPacket;
-			if (json.statusMessage === "success") {
-				setUsers(json.result);
-			} else if (json.statusMessage === "error") {
-				setError(json.error);
-			}
-		}
+	const { data, error, isLoading } = useSWR(`/api/user?emails=true${query ? "&query=" + query : ""}`, fetcher);
+	if (error) {
+		return <>{error}</>;
+	}
+	if (isLoading || !data) {
+		//TODO: add loading state
+		return <></>;
+	}
+	if (data.statusMessage === "error") {
+		return <>{data.error}</>;
 	}
 
-	useEffect(() => {
-		searchUsers();
-	}, []);
-
-	const handleSearch = useDebouncedCallback(searchUsers, 300);
+	const handleSearch = useDebouncedCallback(setQuery, 300);
 
 	if (error) {
 		return <>{error}</>;
@@ -51,7 +47,7 @@ export default function UserList() {
 			</fieldset>
 
 			<div className="flex flex-col gap-2 overflow-y-auto h-[50vh] pr-5">
-				{users.reduce((acc: ReactNode[], user: any) => {
+				{data.result.reduce((acc: ReactNode[], user: UserObject) => {
 					if (userId !== user.id) {
 						acc.push(
 							<Link

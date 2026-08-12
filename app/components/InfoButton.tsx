@@ -27,12 +27,7 @@ export default function InfoButton({
 	const panelRef = useRef<HTMLDivElement | null>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [open, setOpen] = useState(false);
-	const [mounted, setMounted] = useState(false);
 	const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null);
-
-	useEffect(() => {
-		setMounted(true);
-	}, []);
 
 	const computePanelStyle = useCallback((): CSSProperties | null => {
 		if (!wrapperRef.current) return null;
@@ -89,10 +84,6 @@ export default function InfoButton({
 		setPanelStyle(computePanelStyle());
 		setOpen(true);
 	}, [computePanelStyle]);
-
-	const closePanel = useCallback(() => {
-		setOpen(false);
-	}, []);
 
 	const scheduleClosePanel = useCallback(() => {
 		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -151,7 +142,7 @@ export default function InfoButton({
 					: "left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 rotate-45 border-r border-b";
 
 	const richPanel = useMemo(() => {
-		if (!mounted || !open || !panelStyle) return null;
+		if (!open || !panelStyle) return null;
 		const tooltipBody = children ?? <span>{text}</span>;
 		return createPortal(
 			<div
@@ -169,7 +160,7 @@ export default function InfoButton({
 			</div>,
 			document.body
 		);
-	}, [children, text, mounted, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
+	}, [children, text, open, openPanel, panelStyle, richCaretClass, scheduleClosePanel]);
 
 	return (
 		<div

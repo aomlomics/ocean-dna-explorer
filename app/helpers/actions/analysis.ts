@@ -111,7 +111,7 @@ export async function parseAnalysisFile({
 	//unset all optional fields that were not provided
 	for (const field of AnalysisScalarFieldEnumSchema.options) {
 		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
-			//@ts-ignore
+			//@ts-expect-error
 			parsedAnalysis.data[field] = null;
 		}
 	}
@@ -259,7 +259,7 @@ export async function parseAssignmentsFile({
 			//unset all optional fields that were not provided
 			for (const field of TaxonomyScalarFieldEnumSchema.options) {
 				if (field !== "id" && !(field in parsedTaxonomy.data)) {
-					//@ts-ignore
+					//@ts-expect-error
 					parsedTaxonomy.data[field] = null;
 				}
 			}

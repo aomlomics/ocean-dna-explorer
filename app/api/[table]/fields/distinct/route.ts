@@ -28,7 +28,7 @@ export async function GET(
 
 		//validate input
 		//filtered
-		for (let [field, value] of params) {
+		for (const [field, value] of params) {
 			//check if field exists on table
 			const parsed = TableMetadata[model].enumSchema.safeParse(field);
 			if (!parsed.success) {
@@ -41,7 +41,7 @@ export async function GET(
 			where[field] = value;
 		}
 		//extra fields
-		for (let field of extraFields) {
+		for (const field of extraFields) {
 			//check if field exists on table
 			const parsed = TableMetadata[model].enumSchema.safeParse(field);
 			if (!parsed.success) {
@@ -55,12 +55,12 @@ export async function GET(
 		//assemble queries
 		const queries = [] as PrismaPromise<any>[];
 		//filtered
-		for (let field in where) {
+		for (const field in where) {
 			const temp = { ...where };
 			delete temp[field];
 
 			queries.push(
-				//@ts-ignore
+				//@ts-expect-error
 				prisma[model].findMany({
 					distinct: [field],
 					select: {
@@ -71,9 +71,9 @@ export async function GET(
 			);
 		}
 		//extra fields
-		for (let field of extraFields) {
+		for (const field of extraFields) {
 			queries.push(
-				//@ts-ignore
+				//@ts-expect-error
 				prisma[model].findMany({
 					distinct: [field],
 					select: {

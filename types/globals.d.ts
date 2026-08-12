@@ -3,6 +3,7 @@ import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
 import { BlastQueryPartial } from "@/prisma/generated/zod";
 import { ReactNode } from "react";
 import TableMetadata from "@/types/tableMetadata";
+import { User } from "@clerk/nextjs/server";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -149,6 +150,17 @@ export type UserMetadata = {
 		description?: string;
 	};
 };
+
+export type UserObject = {
+	id: User["id"];
+	publicMetadata: UserMetadata;
+	firstName: User["firstName"];
+	lastName: User["lastName"];
+	banned: User["banned"];
+	imageUrl: User["imageUrl"];
+	primaryEmailAddress?: User["emailAddresses"][number]["emailAddress"];
+};
+
 declare module "wordcloud";
 
 declare global {

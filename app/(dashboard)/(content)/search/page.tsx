@@ -7,11 +7,11 @@ import TableDisplay from "@/app/components/paginated/TableDisplay";
 import BlastSearch from "@/app/components/search/BlastSearch";
 import BlastSearchResult from "@/app/components/search/BlastSearchResult";
 import SearchUI from "@/app/components/search/SearchUI";
-import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
+import { BlastQuery, BlastQueryResult, Sample } from "@/app/generated/prisma/client";
 import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable, getRandomKey } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
-import { useRouter, useSearchParams } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import TableInfo from "@/app/components/TableInfo";
 
@@ -19,7 +19,6 @@ export default function Search() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
-	const [table, setTable] = useState(undefined as Uncapitalize<Prisma.ModelName> | undefined);
 	const [extraResults, setExtraResults] = useState({
 		blastResult: undefined as BlastQueryResult[] | undefined,
 		existingBlastDate: undefined as BlastQuery["dateCalculated"] | undefined,
@@ -27,14 +26,13 @@ export default function Search() {
 	});
 	const [mapKey, setMapKey] = useState("0");
 
+	const table = getDataTableNameSafe(searchParams.get("table"));
+
 	useEffect(() => {
-		const t = getDataTableNameSafe(searchParams.get("table"));
-		if (!t) {
+		if (!table) {
 			router.replace("/search?table=project");
-		} else {
-			setTable(t);
 		}
-	}, [searchParams]);
+	}, [table, router]);
 
 	//TODO: add loading state
 	if (!table) return <></>;

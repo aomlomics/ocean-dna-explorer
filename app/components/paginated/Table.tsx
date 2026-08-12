@@ -9,7 +9,6 @@ import useSWR, { preload } from "swr";
 import { getRelationPath, getZodType } from "../../helpers/schema";
 import LoadingTable from "./LoadingTable";
 import PaginationControls from "./PaginationControls";
-import { NetworkPacket } from "@/types/globals";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { capitalizeTable, depluralizeTable, fetcher, uncapitalizeTable } from "@/app/helpers/utils";
@@ -252,14 +251,10 @@ export default function Table({
 		return query;
 	}
 
-	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${getQuery()}`,
-		fetcher,
-		{
-			keepPreviousData: true,
-			revalidateOnFocus: false
-		}
-	);
+	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
 
 	// Reset to first page whenever the table or URL search params change
 	useEffect(() => {
@@ -338,7 +333,6 @@ export default function Table({
 		}
 	}, [data]);
 
-	if (isLoading) return <LoadingTable take={take} page={page} />;
 	if (error) {
 		return (
 			<TableStatusState
@@ -348,6 +342,7 @@ export default function Table({
 			/>
 		);
 	}
+	if (isLoading || !data) return <LoadingTable take={take} page={page} />;
 	if (data.statusMessage === "error") {
 		return (
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
@@ -391,7 +386,7 @@ export default function Table({
 	}
 
 	function resetForm() {
-		//@ts-ignore
+		//@ts-expect-error
 		document.forms[`${table}TableForm`].reset();
 		setWhereFilter({});
 		setPendingFilters(0);

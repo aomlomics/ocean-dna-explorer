@@ -1,6 +1,7 @@
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import LearnSectionToggle from "@/app/components/LearnSectionToggle";
+import Link from "next/link";
 
 // Dynamic import for the DataJourney component to optimize loading
 const DataJourney = dynamic(() => import("@/app/components/DataJourney"), {
@@ -145,7 +146,7 @@ export default async function LearnPage({ searchParams }: PageProps) {
 												</li>
 											))}
 										</ul>
-										<a
+										<Link
 											href="/search"
 											className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors"
 										>
@@ -158,7 +159,7 @@ export default async function LearnPage({ searchParams }: PageProps) {
 													d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
 												/>
 											</svg>
-										</a>
+										</Link>
 									</div>
 									<div className="flex flex-col gap-4 lg:order-1">
 										<div className="w-full rounded-2xl ring-1 ring-base-300/80 [html[data-theme='dark']_&]:ring-base-content/15 overflow-hidden">
@@ -253,7 +254,7 @@ export default async function LearnPage({ searchParams }: PageProps) {
 												</li>
 											))}
 										</ul>
-										<a
+										<Link
 											href="/#dataSummary"
 											className="inline-flex items-center gap-1.5 text-base font-normal text-primary hover:underline transition-colors"
 										>
@@ -266,7 +267,7 @@ export default async function LearnPage({ searchParams }: PageProps) {
 													d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
 												/>
 											</svg>
-										</a>
+										</Link>
 									</div>
 									<div className="flex flex-col gap-4 pb-6 sm:pb-8">
 										<div className="w-full">

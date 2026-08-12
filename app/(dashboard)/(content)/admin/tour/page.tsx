@@ -166,6 +166,13 @@ export default function Tour() {
 
 					if (!projects.length) {
 						setProjects(response.result.map((r: { project_id: string }) => r.project_id).sort());
+						setSelectedTourProjects((current) => {
+							if (!projects.length) return [];
+							if (!current.length) return projects;
+							const available = new Set(projects);
+							const retained = current.filter((id) => available.has(id));
+							return retained.length ? retained : projects;
+						});
 					}
 				}
 			}
@@ -338,9 +345,7 @@ export default function Tour() {
 		setLoading(false);
 	}
 
-	useEffect(() => {
-		generateTourSteps();
-	}, []);
+	generateTourSteps();
 
 	const checkUrl = useDebouncedCallback(async (i: number, url: string) => {
 		const res = await fetch(url);
@@ -358,21 +363,11 @@ export default function Tour() {
 					? `All projects selected (${projects.length})`
 					: `${selectedTourProjects.length} project${selectedTourProjects.length === 1 ? "" : "s"} selected`;
 
-	const toggleTourProject = (projectId: string) => {
+	function toggleTourProject(projectId: string) {
 		setSelectedTourProjects((current) =>
 			current.includes(projectId) ? current.filter((id) => id !== projectId) : [...current, projectId]
 		);
-	};
-
-	useEffect(() => {
-		setSelectedTourProjects((current) => {
-			if (!projects.length) return [];
-			if (!current.length) return projects;
-			const available = new Set(projects);
-			const retained = current.filter((id) => available.has(id));
-			return retained.length ? retained : projects;
-		});
-	}, [projects]);
+	}
 
 	useEffect(() => {
 		const syncedSteps = syncShowcaseStepUrls(tourSteps);
