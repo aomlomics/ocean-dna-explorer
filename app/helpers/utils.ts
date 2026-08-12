@@ -11,17 +11,41 @@ import {
 	Sample,
 	Taxonomy
 } from "@/app/generated/prisma/client";
-import { Circle, Location, LocationWithValues, MapShape, NullLocation, Point, Polygon } from "@/types/globals";
+import {
+	Circle,
+	Location,
+	LocationWithValues,
+	MapShape,
+	NetworkPacket,
+	NullLocation,
+	Point,
+	Polygon,
+	SuccessPacket
+} from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 
-export async function fetcher(url: string) {
+export async function fetcher(url: string): Promise<NetworkPacket> {
 	const res = await fetch(url);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
-	return await res.json();
+	return res.json();
+}
+
+export async function fetcherAll(urls: string[]): Promise<NetworkPacket[]> {
+	return Promise.all(urls.map((url) => fetcher(url)));
+}
+
+export async function fetcherAllSuccess(urls: string[]): Promise<SuccessPacket[]> {
+	const results = await Promise.all(urls.map(fetcher));
+	for (const result of results) {
+		if (result.statusMessage === "error") {
+			throw new Error(result.error);
+		}
+	}
+	return results as SuccessPacket[];
 }
 
 export function parseNestedJson(json: string) {

@@ -381,11 +381,11 @@
 /* Clerk renders button text in a child span (cl-socialButtonsBlockButtonText) with its
    own grey color that doesn't inherit from the parent button element. */
 [data-theme="dark"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
-	color: #E2E8F0 !important;
+	color: #e2e8f0 !important;
 }
 [data-theme="light"] .ode-signin-page [class*="cl-socialButtonsBlockButtonText"],
 .ode-signin-page [class*="cl-socialButtonsBlockButtonText"] {
-	color: #233D7F !important;
+	color: #233d7f !important;
 }
 
 /* ============================================================
@@ -483,7 +483,6 @@ body:has(.tour-layout-root) {
 	}
 }
 
-
 /* ---------- /sponsors ---------- */
 .sponsors-title {
 	animation: sponsorsTitleIn 2s ease-out both;
@@ -555,7 +554,6 @@ body:has(.tour-layout-root) {
 	}
 }
 
-
 @keyframes sponsorsTitleIn {
 	from {
 		opacity: 0;
@@ -577,3 +575,16 @@ body:has(.tour-layout-root) {
 	}
 }
 
+:root {
+	--clerk-color-primary: #233d7f;
+	--clerk-color-background: #f4f3f2;
+	--clerk-color-foreground: #2d3748;
+	--clerk-color-text-secondary: #233d7f;
+}
+
+[data-theme="dark"] {
+	--clerk-color-primary: #233d7f;
+	--clerk-color-background: #141824;
+	--clerk-color-foreground: #e2e8f0;
+	--clerk-color-text-secondary: #7dbae5;
+}

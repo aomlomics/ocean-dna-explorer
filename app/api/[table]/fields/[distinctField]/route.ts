@@ -28,7 +28,7 @@ export async function GET(
 			}
 		});
 
-		//@ts-ignore
+		//@ts-expect-error
 		const result = await prisma[model].findMany(query);
 
 		if (result) {

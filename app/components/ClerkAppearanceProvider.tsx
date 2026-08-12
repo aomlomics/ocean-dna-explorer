@@ -5,12 +5,16 @@ import { useTheme } from "next-themes";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
+//TODO: use CSS variables instead of state and remove all state variables. then, fix hydration errors that the change causes
+//current solution causes SSR for the entire site to essentially be disabled
+//https://clerk.com/docs/nextjs/guides/customizing-clerk/appearance-prop/variables
 export default function ClerkAppearanceProvider({ children }: { children: ReactNode }) {
 	const { theme, resolvedTheme } = useTheme();
 	const [mounted, setMounted] = useState(false);
 	const isDark = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setMounted(true);
 	}, []);
 

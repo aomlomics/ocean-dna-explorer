@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 type ImagePreviewModalProps = {
@@ -30,10 +31,7 @@ export default function ImagePreviewModal({ isOpen, onClose, src, alt }: ImagePr
 
 	return (
 		<dialog ref={dialogRef} className="modal transition-none backdrop:bg-black/80" onClose={onClose}>
-			<div
-				className="modal-box w-auto max-w-none bg-transparent p-0 shadow-none transition-none"
-				onClick={closeModal}
-			>
+			<div className="modal-box w-auto max-w-none bg-transparent p-0 shadow-none transition-none" onClick={closeModal}>
 				<form method="dialog">
 					<button
 						type="submit"
@@ -43,7 +41,7 @@ export default function ImagePreviewModal({ isOpen, onClose, src, alt }: ImagePr
 						✕
 					</button>
 				</form>
-				<img src={src} alt={alt} className="max-h-[90vh] max-w-[95vw] cursor-zoom-out object-contain" />
+				<Image src={src} alt={alt} className="max-h-[90vh] max-w-[95vw] cursor-zoom-out object-contain" />
 			</div>
 			<form method="dialog" className="modal-backdrop">
 				<button aria-label="Close image preview">close</button>

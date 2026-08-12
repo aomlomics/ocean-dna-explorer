@@ -14,11 +14,11 @@ export default function SubmissionUsersButton({
 	target: string;
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
-	const [reset, setReset] = useState(false);
+	const [resetKey, setResetKey] = useState(0);
 
 	function close() {
 		modalRef.current?.close();
-		setReset(!reset);
+		setResetKey((key) => key + 1);
 	}
 
 	return (
@@ -36,12 +36,12 @@ export default function SubmissionUsersButton({
 					</button>
 
 					<UserAdder
+						key={resetKey}
 						submittable
 						userIds={userIds}
 						submitAction={action}
 						target={target}
 						afterSubmit={close}
-						reset={reset}
 					/>
 				</div>
 				<form method="dialog" onSubmit={close} className="modal-backdrop">

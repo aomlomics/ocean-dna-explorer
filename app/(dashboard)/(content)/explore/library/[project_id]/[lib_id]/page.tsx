@@ -19,11 +19,6 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 			}
 		},
 		include: {
-			Project: {
-				select: {
-					project_name: true
-				}
-			},
 			Sample: {
 				select: {
 					samp_name: true
@@ -40,7 +35,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 
 	if (!library) notFound();
 
-	const { Project: project, Sample: sample, Assay: assay, ...justLibrary } = library;
+	const { Sample: sample, Assay: assay, ...justLibrary } = library;
 
 	return (
 		<div className="space-y-6 pb-8">

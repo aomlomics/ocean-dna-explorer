@@ -22,7 +22,7 @@ import {
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
 
-export default function Home() {
+export default async function Home() {
 	return (
 		<div className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-sticky bg-orange-500 text-white p-2 sm:p-4 text-center">
@@ -43,7 +43,16 @@ export default function Home() {
 
 			<div className="relative w-full h-screen max-h-[68vh] min-h-80 sm:max-h-[64vh] bg-black overflow-hidden">
 				<Suspense fallback={<div className="absolute inset-0 overflow-hidden bg-base-100"></div>}>
-					<SuspenseCarousel />
+					<Carousel
+						images={await prismaImages.image.findMany({
+							where: {
+								homePage: true
+							},
+							include: {
+								Attribution: true
+							}
+						})}
+					/>
 				</Suspense>
 
 				<div className="absolute inset-0 flex items-center z-raised">
@@ -297,32 +306,4 @@ export default function Home() {
 			</div>
 		</div>
 	);
-}
-
-async function SuspenseCarousel() {
-	const carouselImages = await prismaImages.image.findMany({
-		where: {
-			homePage: true
-		},
-		include: {
-			Attribution: true
-		}
-	});
-
-	let currentIndex = carouselImages.length;
-
-	// While there remain elements to shuffle...
-	while (currentIndex != 0) {
-		// Pick a remaining element...
-		let randomIndex = Math.floor(Math.random() * currentIndex);
-		currentIndex--;
-
-		// And swap it with the current element.
-		[carouselImages[currentIndex], carouselImages[randomIndex]] = [
-			carouselImages[randomIndex],
-			carouselImages[currentIndex]
-		];
-	}
-
-	return <Carousel images={carouselImages} />;
 }

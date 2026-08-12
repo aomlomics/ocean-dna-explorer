@@ -13,10 +13,9 @@ export default function UserAdder({
 	setUserIds,
 	submitAction,
 	target,
-	reset,
 	afterSubmit,
 	cols = 2
-}: { disabled?: boolean; userIds: string[]; reset?: boolean; afterSubmit?: () => void; cols?: number } & (
+}: { disabled?: boolean; userIds: string[]; afterSubmit?: () => void; cols?: number } & (
 	| {
 			submittable?: false;
 			setUserIds: Dispatch<SetStateAction<string[]>>;
@@ -68,14 +67,7 @@ export default function UserAdder({
 		}
 
 		getCurrentUsers();
-	}, [userId]);
-
-	useEffect(() => {
-		setSearch("");
-		setNewUsers([]);
-		setDeletedUsers([]);
-		setSubmitError("");
-	}, [reset]);
+	}, [userId, setUserIds, submittable, userIds]);
 
 	useEffect(() => {
 		if (!submittable && users.length) {

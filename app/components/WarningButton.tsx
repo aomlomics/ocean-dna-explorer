@@ -80,7 +80,7 @@ export default function WarningButton({
 						}}
 					>
 						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Enter "{confirmText}" below to confirm</legend>
+							<legend className="fieldset-legend">Enter &quot;{confirmText}&quot; below to confirm</legend>
 							<input
 								type="text"
 								className="input"

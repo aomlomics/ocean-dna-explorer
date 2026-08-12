@@ -1,22 +1,20 @@
 "use client";
 
 import { NetworkProgressPacket } from "@/types/globals";
-import { useEffect, useState } from "react";
 
 export default function ProgressBar({ loading, data }: { loading: boolean; data: NetworkProgressPacket }) {
-	const [value, setValue] = useState(0);
-	const [message, setMessage] = useState("");
-
-	useEffect(() => {
-		if (data) {
-			if ((data.statusMessage === "success" || data.statusMessage === "progress") && data.progress) {
-				setValue(data.progress.value);
-				setMessage(data.progress.message);
-			} else if (data.statusMessage === "error" && data.error) {
-				setMessage(data.error);
+	let value = 0;
+	let message = "";
+	if (data) {
+		if (data.statusMessage === "success" || data.statusMessage === "progress") {
+			if (data.progress) {
+				value = data.progress.value;
+				message = data.progress.message;
 			}
+		} else if (data.statusMessage === "error" && data.error) {
+			message = data.error;
 		}
-	}, [data]);
+	}
 
 	return (
 		<div className="flex items-center h-2 w-full">

@@ -1,6 +1,7 @@
 import AddImageButton from "@/app/components/AddImageButton";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import ImageDeleteButton from "@/app/components/images/ImageDeleteButton";
+import Image from "next/image";
 
 //TODO: add way to manage attributions
 export default async function AdminImages() {
@@ -33,7 +34,7 @@ export default async function AdminImages() {
 					{images.map((img) => (
 						<div key={img.id} className="card bg-base-100 shadow">
 							<figure className="aspect-video overflow-hidden bg-base-200">
-								<img src={img.url} alt={img.name} className="object-cover w-full h-full" />
+								<Image src={img.url} alt={img.name} className="object-cover w-full h-full" />
 							</figure>
 							<div className="card-body p-4">
 								<div className="flex items-center justify-between gap-2">

@@ -8,7 +8,6 @@ import PaginationControls from "./PaginationControls";
 import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
-import { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { buildWhereParams } from "@/app/helpers/queries";
 import TableStatusState from "./TableStatusState";
@@ -49,15 +48,20 @@ export default function Pagination({
 		return query;
 	}
 
-	const { data, error, isLoading }: { data: NetworkPacket; error: any; isLoading: boolean } = useSWR(
-		`/api/${table}/pagination?${getQuery()}`,
-		fetcher,
-		{
-			keepPreviousData: true,
-			revalidateOnFocus: false
-		}
-	);
-	if (isLoading) {
+	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
+	if (error) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={error.toString() instanceof Error ? error.message : String(error)}
+			/>
+		);
+	}
+	if (isLoading || !data) {
 		return (
 			<div className="space-y-4">
 				<TableStatusState
@@ -67,15 +71,6 @@ export default function Pagination({
 				/>
 				<LoadingPagination />
 			</div>
-		);
-	}
-	if (error) {
-		return (
-			<TableStatusState
-				kind="error"
-				title="Could not load results"
-				detail={error.toString() instanceof Error ? error.message : String(error)}
-			/>
 		);
 	}
 	if (data.statusMessage === "error") {

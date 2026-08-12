@@ -6,7 +6,7 @@ import { prisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
-import { capitalizeTable, uncapitalizeTable } from "../helpers/utils";
+import { capitalizeTable } from "../helpers/utils";
 import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
@@ -42,7 +42,7 @@ export default async function migrationCopyStepAction() {
 			for (const t in oldFieldsByTable) {
 				const table = t as Uncapitalize<Prisma.ModelName>;
 
-				// @ts-ignore
+				// @ts-expect-error
 				const result = (await tx[table].findMany({
 					select: {
 						...oldFieldsByTable[table].reduce(

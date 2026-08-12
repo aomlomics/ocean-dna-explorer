@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 				>
 					Skip to content
 				</a>
-				<ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem>
+				<ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
 					<ClerkAppearanceProvider>
 						<TourProvider>{children}</TourProvider>
 					</ClerkAppearanceProvider>

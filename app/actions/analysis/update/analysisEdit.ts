@@ -1,6 +1,6 @@
 "use server";
 
-import { Analysis, Occurrence, Project, Tag } from "@/app/generated/prisma/client";
+import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";

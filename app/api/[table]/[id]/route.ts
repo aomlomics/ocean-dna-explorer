@@ -31,7 +31,7 @@ export async function GET(
 			}
 		});
 
-		//@ts-ignore
+		//@ts-expect-error
 		const result = await prisma[model].findUnique(query);
 
 		if (result) {

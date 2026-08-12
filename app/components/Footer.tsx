@@ -20,7 +20,7 @@ export default function Footer() {
 						target="_blank"
 						rel="noreferrer"
 					>
-						<span className="hidden sm:inline">NOAA's Atlantic Oceanographic and Meteorological Laboratory</span>
+						<span className="hidden sm:inline">NOAA&apos;s Atlantic Oceanographic and Meteorological Laboratory</span>
 						<span className="sm:hidden">NOAA AOML</span>
 					</Link>
 				</p>

@@ -21,6 +21,8 @@ export default function ScrollToTop() {
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
+		// Intentionally trigger a second render after hydration.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setMounted(true);
 	}, []);
 

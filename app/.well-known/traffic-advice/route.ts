@@ -1,4 +1,4 @@
-export async function GET(request: Request) {
+export async function GET() {
 	return new Response(
 		`[
     {"user_agent": "prefetch-proxy", "disallow": true}

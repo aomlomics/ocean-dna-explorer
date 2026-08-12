@@ -91,7 +91,7 @@ export default async function addImageAction(
 
 	if (target) {
 		try {
-			//@ts-ignore
+			//@ts-expect-error
 			await prisma[target.table].update({
 				where: {
 					[TableMetadata[target.table].titleField as string]: target.value

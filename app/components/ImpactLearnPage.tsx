@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 
@@ -24,7 +23,7 @@ function WaveSection({
 	const padClass = size === "lg" ? "pt-24 sm:pt-32 pb-24 sm:pb-32" : "pt-12 sm:pt-16 pb-12 sm:pb-16";
 
 	return (
-		<section className={`relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] ${bgClass}`}>
+		<section className={`relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] ${bgClass}`}>
 			<svg
 				className="absolute -top-px left-0 w-full h-14 sm:h-20 text-base-100 rotate-180"
 				viewBox="0 0 1440 160"
@@ -48,6 +47,7 @@ function WaveSection({
 	);
 }
 
+//TODO: remove unused components
 function InfoCard({ title, children, className = "" }: { title: string; children: ReactNode; className?: string }) {
 	return (
 		<div className={`rounded-2xl bg-base-200 p-6 shadow-sm border border-base-300/60 ${className}`}>
@@ -121,9 +121,7 @@ function FaqItem({ q, children }: { q: string; children: ReactNode }) {
 					<path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
 				</svg>
 			</summary>
-			<div className="px-4 pb-4 pt-3 text-base leading-relaxed text-base-content/80">
-				{children}
-			</div>
+			<div className="px-4 pb-4 pt-3 text-base leading-relaxed text-base-content/80">{children}</div>
 		</details>
 	);
 }
@@ -344,8 +342,8 @@ export default function ImpactLearnPage() {
 					<div className="text-center lg:text-left">
 						<h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary">Why do we study eDNA?</h1>
 						<p className="mt-5 text-base sm:text-lg text-base-content/80 leading-relaxed">
-							eDNA is a flexible,low impact method to measure life in the ocean. It works best alongside other methods, helping scientists decide
-							where to look, what to monitor, and how ecosystems change over time.
+							eDNA is a flexible,low impact method to measure life in the ocean. It works best alongside other methods,
+							helping scientists decide where to look, what to monitor, and how ecosystems change over time.
 						</p>
 						<p className="mt-4 text-base sm:text-lg text-base-content/80 leading-relaxed">
 							Learn more below about how eDNA is changing how we study the sea.

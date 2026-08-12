@@ -7,15 +7,29 @@ import AttributionBadge from "./AttributionBadge";
 import { useEffect, useState } from "react";
 
 export default function Carousel({ images }: { images: (DbImage & { Attribution?: Attribution | null })[] }) {
+	const [shuffledImages] = useState(() => {
+		const copy = [...images];
+
+		// While there remain elements to shuffle...
+		for (let i = copy.length - 1; i > 0; i--) {
+			// Pick a remaining element...
+			const randomIndex = Math.floor(Math.random() * i);
+
+			// And swap it with the current element.
+			[copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
+		}
+
+		return copy;
+	});
 	const [currIndex, setCurrIndex] = useState(0);
 
 	useEffect(() => {
-		if (images.length <= 1) {
+		if (shuffledImages.length <= 1) {
 			return;
 		}
 
 		const timer = setTimeout(() => {
-			setCurrIndex(currIndex === images.length - 1 ? 0 : currIndex + 1);
+			setCurrIndex(currIndex === shuffledImages.length - 1 ? 0 : currIndex + 1);
 		}, 10000);
 
 		return () => clearTimeout(timer);
@@ -23,10 +37,10 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 
 	return (
 		<div className="absolute inset-0 overflow-hidden bg-base-100">
-			{images[currIndex] ? (
+			{shuffledImages[currIndex] ? (
 				<>
 					<div
-						key={images[currIndex].url}
+						key={shuffledImages[currIndex].url}
 						className="absolute inset-0 opacity-0 animate-[fade-in-out_10s_ease-in-out]"
 						style={{
 							WebkitMaskImage: "radial-gradient(ellipse 75% 75% at 80% 35%, rgba(0,0,0,1) 45%, rgba(0,0,0,0) 85%)",
@@ -34,14 +48,14 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 						}}
 					>
 						<Image
-							src={images[currIndex].url}
-							alt={images[currIndex].description || "A background image"}
+							src={shuffledImages[currIndex].url}
+							alt={shuffledImages[currIndex].description || "A background image"}
 							fill
 							className="object-cover opacity-50 [html[data-theme='dark']_&]:opacity-70"
 							priority
 						/>
 					</div>
-					<AttributionBadge image={images[currIndex]} />
+					<AttributionBadge image={shuffledImages[currIndex]} />
 				</>
 			) : (
 				<></>

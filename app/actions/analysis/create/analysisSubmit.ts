@@ -186,7 +186,7 @@ async function doSubmit(
 		await prisma.$transaction(
 			async (tx) => {
 				await tx.analysis.create({
-					//@ts-ignore issue with Json database type
+					//@ts-expect-error issue with Json database type
 					data: {
 						...analysis,
 						Tags: {
@@ -233,7 +233,7 @@ async function doSubmit(
 
 		// await prisma.$transaction([
 		// 	prisma.analysis.create({
-		// 		//@ts-ignore issue with Json database type
+		// 		//@ts-expect-error issue with Json database type
 		// 		data: {
 		// 			...analysis,
 		// 			Tags: {

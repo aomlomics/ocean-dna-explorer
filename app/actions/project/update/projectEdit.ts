@@ -230,7 +230,7 @@ async function doEdit(
 
 				//assayPreps
 				let i = 0;
-				for (let prep of assayPreps) {
+				for (const prep of assayPreps) {
 					await tx.assayPrep.upsert({
 						where: {
 							project_id_assay_name: {

@@ -184,7 +184,7 @@ async function parseProjectFile({
 		//unset all optional fields that were not provided
 		for (const field of ProjectScalarFieldEnumSchema.options) {
 			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
-				//@ts-ignore
+				//@ts-expect-error
 				parsedProject.data[field] = null;
 			}
 		}
@@ -333,7 +333,7 @@ async function parseLibraryFile({
 				//unset all optional fields that were not provided
 				for (const field of LibraryScalarFieldEnumSchema.options) {
 					if (field !== "id" && !(field in parsedLibrary.data)) {
-						//@ts-ignore
+						//@ts-expect-error
 						parsedLibrary.data[field] = null;
 					}
 				}
@@ -448,7 +448,7 @@ async function parseSampleFile({
 				//unset all optional fields that were not provided
 				for (const field of SampleScalarFieldEnumSchema.options) {
 					if (field !== "id" && !(field in parsedSample.data)) {
-						//@ts-ignore
+						//@ts-expect-error
 						parsedSample.data[field] = null;
 					}
 				}
