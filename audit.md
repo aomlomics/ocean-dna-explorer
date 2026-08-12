@@ -6,7 +6,7 @@
 
 **Ranking:** findings are ordered by demonstrated repository evidence multiplied by user-facing impact. Coverage is deliberately spread across security, performance and availability, correctness, code quality, and accessibility/UX rather than weighted toward any single area.
 
-**Status:** <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 12px;border-radius:4px">✓ DONE</span> <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 12px;border-radius:4px">✗ TODO</span> <span style="background:#2563eb;color:#fff;font-weight:700;padding:4px 12px;border-radius:4px">↻ WIP</span>
+**Status:** ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) ![WIP](https://img.shields.io/badge/%E2%86%BB_WIP-2563eb?style=flat-square)
 
 **"Leaving beta"** in this document refers to removing the in-app beta notices at `app/(dashboard)/page.tsx:28-30` and `app/components/header/Header.tsx:36`, and to the readiness bar that implies: external users reading data through the public API and outside contributors submitting real datasets.
 
@@ -42,7 +42,7 @@ Severity tiers: **P0 = blocker for leaving beta**, **P1 = fix soon (weeks)**, **
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P0-1 · Correctness / Navigation — Analysis deep links 404 after a route rename
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-1 · Correctness / Navigation — Analysis deep links 404 after a route rename
 **Location**
 - Route that exists: `app/(dashboard)/(content)/explore/analysis/[project_id]/[analysis_run_name]/page.tsx`
 - Redirect to a dead URL inside that same file: line 38
@@ -82,7 +82,7 @@ The `occurrence` and `assignment` routes were renamed in the same pass, so they 
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P0-2 · Security — `/api/user` and `/api/user/[userId]` are unauthenticated and return email addresses
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-2 · Security — `/api/user` and `/api/user/[userId]` are unauthenticated and return email addresses
 **Location** `app/api/user/route.ts` (whole file — no `auth()` call), `app/api/user/[userId]/route.ts`
 
 **Issue**
@@ -107,7 +107,7 @@ The clean split is a narrow authenticated lookup returning only `{ id, firstName
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P0-3 · Security / Privacy — `userIds` and `editHistory` are returned by the public data API *(potentially not an issue)*
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P0-3 · Security / Privacy — `userIds` and `editHistory` are returned by the public data API *(potentially not an issue)*
 **Location**
 - `types/objects.ts:78` — `GlobalOmit = ["userId", "userIds", "editHistory", "deleted_ODE"]`
 - `app/helpers/queries.ts:821-834` — `secureFields = ["userIds"]` and `stripSecureFields()`
@@ -132,7 +132,7 @@ Whether `editHistory` should be public at all deserves an explicit decision. The
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P0-4 · Security — "Manage Users" is gated by login, not by role
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-4 · Security — "Manage Users" is gated by login, not by role
 **Location** `app/(dashboard)/(content)/admin/layout.tsx:6`, `app/(dashboard)/(content)/admin/users/layout.tsx` (whole file — no auth), `app/(dashboard)/(content)/admin/users/[targetUserId]/page.tsx`
 
 **Issue**
@@ -157,7 +157,7 @@ Two related habits: prefer `auth.protect({ role })` or an explicit permission ch
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P0-5 · Reliability / UX — Visualize pages render a loading skeleton indefinitely when a fetch fails
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-5 · Reliability / UX — Visualize pages render a loading skeleton indefinitely when a fetch fails
 **Location** `app/(dashboard)/(content)/visualize/taxonomy/page.tsx:52-114` (read in full); the same pattern in `visualize/metadata/page.tsx` and `visualize/alphaDiversity/page.tsx`
 
 **Issue**
@@ -196,7 +196,7 @@ Also worth fixing while in these files: the four fetches are independent but awa
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P0-6 · Accessibility — Mobile navigation is not keyboard-operable
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P0-6 · Accessibility — Mobile navigation is not keyboard-operable
 **Location** `app/components/header/MobileMenu.tsx:53`; same pattern at `app/components/docs/MobileTOC.tsx:72`
 
 **Issue**
@@ -218,7 +218,7 @@ Related, one level up the tree: `app/(dashboard)/layout.tsx:8` renders `<button 
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P0-7 · Accessibility — No skip link and no `<main>` landmark on most routes
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-7 · Accessibility — No skip link and no `<main>` landmark on most routes
 **Location** `app/layout.tsx:50-58`, `app/(dashboard)/layout.tsx:5-14`, `app/(dashboard)/(content)/layout.tsx:3-9`
 
 **Issue**
@@ -238,7 +238,7 @@ Add `<main id="main-content">` in `app/(dashboard)/(content)/layout.tsx` so ever
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-1 · UX / Correctness — No custom 404 page and no root error boundary
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-1 · UX / Correctness — No custom 404 page and no root error boundary
 **Location** Repository-wide: no `not-found.tsx` and no `global-error.tsx` exist anywhere under `app/`. Only two error boundaries exist: `app/(dashboard)/error.tsx` and `app/(dashboard)/(content)/(tour)/showcase/error.tsx`. `notFound()` is called by all ten entity detail pages (`explore/project/[project_id]`, `explore/analysis/[project_id]/[analysis_run_name]`, `explore/sample/[project_id]/[samp_name]`, `explore/library/[project_id]/[lib_id]`, `explore/assayPrep/[project_id]/[assay_name]`, `explore/occurrence/...`, `explore/assignment/...`, `explore/feature/[featureid]`, `explore/taxonomy/[taxonomy]`).
 
 **Issue**
@@ -252,7 +252,7 @@ Add `app/not-found.tsx` with the site header and footer, a plain explanation, an
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-2 · Performance / Availability — No result ceiling, no rate limiting, and two amplification paths on public endpoints
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-2 · Performance / Availability — No result ceiling, no rate limiting, and two amplification paths on public endpoints
 **Location**
 - Unbounded `findMany`: `app/api/[table]/route.ts:64`, `app/api/[table]/swapToTable/route.ts:21`
 - Optional, uncapped `limit` parsing: `app/helpers/queries.ts:681-691`
@@ -285,7 +285,7 @@ For the visualize pages the deeper issue is architectural: they fetch raw rows i
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-3 · API contract / Security / UX — Errors return HTTP 200, expose raw database messages, and never reach client error states
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-3 · API contract / Security / UX — Errors return HTTP 200, expose raw database messages, and never reach client error states
 **Location**
 - Every API route returns 200 on error: `app/api/[table]/route.ts:74-83`, `[id]/route.ts:18` and `:40-49`, `count/route.ts:91`, `pagination/route.ts:398`, `swapToTable/route.ts:35`, `fields/distinct/route.ts:105`, `fields/[distinctField]/route.ts:49`, `crons/seedDatabase/route.ts:9`, `crons/cleanEmptyTables/route.ts:8`, `api/file/upload/route.ts:65-68`. A search for `status: 4xx`/`5xx` across `app/api` returns no matches.
 - Shared fetcher swallows failures: `app/helpers/utils.ts:7-13`
@@ -321,7 +321,7 @@ Return real HTTP status codes (400 for invalid input, 401/403 for auth failures,
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-4 · Security — `getBlobSizes` server action has no authentication and no input bounds *(not on dev)*
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-4 · Security — `getBlobSizes` server action has no authentication and no input bounds *(not on dev)*
 **Location** `app/actions/file/getBlobSizes.ts`, called from `app/components/explore/ProjectFileDownloads.tsx:146`
 
 **Issue**
@@ -346,7 +346,7 @@ Three cheap layers: add `auth()`, validate each URL against the blob hostname (t
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-5 · Performance — Explore > Features pays four compounding costs per page view
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-5 · Performance — Explore > Features pays four compounding costs per page view
 **Location** `app/api/[table]/pagination/route.ts:291-318`, `app/components/paginated/Table.tsx:223-231`, `:255-258`, `app/(dashboard)/(content)/explore/feature/page.tsx:6-13`, `app/helpers/queries.ts:388-402`
 
 **Issue**
@@ -372,7 +372,7 @@ Items 1 through 3 all scale with row count, so current latency degrades as data 
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-6 · Performance — Explore list pages scan whole tables to build filter dropdowns
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-6 · Performance — Explore list pages scan whole tables to build filter dropdowns
 **Location** `app/(dashboard)/(content)/explore/sample/page.tsx:8-17`, `explore/project/page.tsx:8-13`, `explore/analysis/page.tsx:8-19`, `explore/assay/page.tsx:9-19`, with `getOptions` in `app/helpers/utils.ts`
 
 **Issue**
@@ -425,7 +425,7 @@ Build the upstream URL with `URLSearchParams` so encoding is automatic and struc
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-8 · Security — No security response headers are configured
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-8 · Security — No security response headers are configured
 **Location** `next.config.js` (no `headers()` function; only `experimental.serverActions` and `images.remotePatterns`), `proxy.ts` (no header manipulation)
 
 **Issue**
@@ -441,7 +441,7 @@ Add a `headers()` entry in `next.config.js` covering `X-Content-Type-Options: no
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P1-9 · UX — Table refetches replace content with a skeleton; several async states are unannounced
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P1-9 · UX — Table refetches replace content with a skeleton; several async states are unannounced
 **Location** `app/components/paginated/Table.tsx:255-258` and `:337`, `app/components/paginated/Pagination.tsx:52-58`, `Grid.tsx:92-98`, `app/(dashboard)/(content)/search/page.tsx:39`, `app/components/paginated/TableStatusState.tsx:27-41`, `app/components/charts/wrappers/AlphaDiversityDisplay.tsx:466-511`
 
 **Issue**
@@ -454,7 +454,7 @@ Add `keepPreviousData: true` to the `Table.tsx` SWR call — a one-line change w
 
 ---
 
-#### <span style="background:#16a34a;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✓ DONE</span> P1-10 · Accessibility — Data table semantics and controls
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P1-10 · Accessibility — Data table semantics and controls
 **Location** `app/components/paginated/Table.tsx:497-660`; sort handlers at `:505-513`, `:580-588`, `:631-639`; header cells at `:504` and `:536` (`<th>`) versus `:561`, `:579`, `:606`, `:630` (`<td>`); filter inputs at `:519-533`, `:649-655`
 
 **Issue**
@@ -473,7 +473,7 @@ Make each sortable header a `<button>` inside a `<th scope="col">` and put `aria
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-11 · Accessibility — Charts, maps, and the globe have no text alternative
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-11 · Accessibility — Charts, maps, and the globe have no text alternative
 **Location** `app/components/charts/**` (for example `SampleScatterPlot.tsx:404`, `BoxWhiskerPlot.tsx:114`, `TaxaBarChart.tsx`, `DoughnutChart.tsx`), `app/components/OceanGlobe.tsx:493-504`, Leaflet maps under `app/components/map/**`
 
 **Issue**
@@ -489,7 +489,7 @@ For Leaflet, ensure markers are keyboard-reachable with accessible names and pro
 
 ---
 
-#### <span style="background:#dc2626;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">✗ TODO</span> P1-12 · Mobile — Search, BLAST, and the query builder do not reflow at phone widths
+#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-12 · Mobile — Search, BLAST, and the query builder do not reflow at phone widths
 **Location** `app/(dashboard)/(content)/search/page.tsx:68`, `app/components/search/SearchUI.tsx:1142`, `:1240-1242`, `app/components/search/BlastSearchResult.tsx:110`, `:146`, `app/(dashboard)/(content)/visualize/layout.tsx:8`, `app/components/VisualizeTabs.tsx:11`
 
 **Issue**
@@ -517,7 +517,7 @@ Mobile-first variants: `grid-cols-1 lg:grid-cols-2` for the BLAST section, and f
 
 ---
 
-#### <span style="background:#2563eb;color:#fff;font-weight:700;padding:4px 10px;border-radius:4px">↻ WIP</span> P1-13 · Code quality — No automated tests, and linting is entirely non-functional
+#### ![WIP](https://img.shields.io/badge/%E2%86%BB_WIP-2563eb?style=flat-square) P1-13 · Code quality — No automated tests, and linting is entirely non-functional
 **Location** Repository-wide. No `*.test.*`, `*.spec.*`, `vitest.config.*`, `jest.config.*`, or `playwright.config.*` exists. No `eslint.config.*` or `.eslintrc*` exists, despite `eslint@^9.39.1` and `eslint-config-next@16.2.10` being dependencies (`package.json:51-52`) and `package.json:24` defining `"lint": "next lint"` on `next@16.2.6` (`:61`).
 
 **Issue**
@@ -543,31 +543,31 @@ Enabling `noUncheckedIndexedAccess` in `tsconfig.json` is also worth considering
 
 | # | Status | Area | Location | Issue | Direction |
 | --- | --- | --- | --- | --- | --- |
-| P2-1 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Security | `app/api/file/upload/route.ts:30-36` | `onBeforeGenerateToken` sets `allowedContentTypes` and `addRandomSuffix` but no `maximumSizeInBytes`, so any contributor-role account can upload arbitrarily large blobs | Set an explicit size cap sized to the largest legitimate TSV. The rest of this route is a good model — auth, role check, content-type allowlist, random suffix |
-| P2-2 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Reliability | `app/api/file/upload/route.ts:63-68` | The catch block returns an error body with no status code, so failures respond 200; the in-file comment notes the upload webhook retries until it receives a 200 | Return a 4xx/5xx so retry semantics work as intended (see P1-3) |
-| P2-3 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Correctness | `deleted_ODE` on `prisma/schemas/project.prisma:76`; set in `projectEdit.ts:338`; cleared by `fixDeletedSamples.ts` | Samples flagged for deletion are excluded only by the client-side `GlobalOmit` list; no server-side filter exists in `parseApiQuery`, so pending-deletion rows are still returned by the API and counted in totals | Filter `deleted_ODE` server-side in the query layer alongside the P0-3 `omit` work, so "deleted" means the same thing in the UI and the API |
-| P2-4 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Perf | `app/api/[table]/pagination/route.ts:335-371`, `app/components/paginated/Table.tsx:233-250` | Deep-relations mode issues `rows × relations` individual `count()` calls in one transaction; the empty-selection case requests all relations. Covered in P1-2; listed separately because the mapping between checkbox state and requested relations also appears inverted and deserves review | Batch via `groupBy`; review the filter-to-parameter mapping. The user-facing warning at `Table.tsx:455-457` does not cover the inverted case |
-| P2-5 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | A11y | `app/components/Modal.tsx:25-41`, `:47-48` | Close button is a bare `✕`; the backdrop button's only text is "close" — neither has an `aria-label` | Add `aria-label="Close dialog"`. Using native `<dialog>` is already correct — focus trapping and Escape come free |
-| P2-6 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | A11y | `PaginationControls.tsx:22-49`, `:86-109`; `ThemeToggle.tsx:40-46`; `BlastSearchResult.tsx:111-116` | Icon-only controls (first/prev/next/last, theme swap, `❮`/`❯`) with no accessible name | Add `aria-label` to each; a lint rule prevents recurrence |
-| P2-7 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | A11y | `DocsPageSection.tsx:49`; `visualize/*/page.tsx`; `BlastSearchResult.tsx:123-137`; `BlastSearch.tsx:300`; `ExploreSearch.tsx:105` | Heading hierarchy: docs pages start at `<h2>`, visualize subpages have no heading, and `<h1>` labels subsections in several BLAST components | One `<h1>` per page describing the page, `<h2>`+ for sections. Headings are the primary screen-reader navigation structure, so this is more than cosmetic |
-| P2-8 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | A11y | 80+ uses of `text-base-content/50`, `/60`, `opacity-50`; e.g. `DashboardExtras.tsx:575`, `:585`, `DataSummaryHighlights.tsx:246`, `GbifImage.tsx:171` | 10–11px text at 50% opacity likely fails 4.5:1 in both themes | Measure with a contrast checker, then raise to `/70`+ for small text. Both themes are properly defined in `styles/globals.css:6-61`, so this is a token-value fix rather than a theming change |
-| P2-9 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | A11y | Framer Motion under `(tour)/**`; `.sponsors-logo` infinite animation; `OrganismOutlines.tsx:83` `animate-float` | `prefers-reduced-motion` is respected only in `StatCountUp.tsx:13` and one rule at `globals.css:480-483` | Gate looping and large-movement animation behind `motion-reduce:` or `useReducedMotion`. Infinite animations are the worst offenders for vestibular disorders |
-| P2-10 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | A11y / Mobile | `UserAdder.tsx:265`, `:273` (`btn-xs h-5 w-5`); `SearchUI.tsx:1099`, `:1246`; `TaxonomyVisualToggle.tsx:108` | Touch targets around 20px, well under the ~44px guideline | Increase hit area with padding; the visual can stay small |
-| P2-11 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Mobile | `MobileMenu.tsx:96-106` vs `MegaMenus.tsx:83-84` and `VisualizeTabs.tsx:28-35` | The mobile Visualize submenu lists only Metadata and Taxonomy; Alpha Diversity exists but has no mobile entry point | Add the missing link — this is functionality unreachable on mobile, not a layout difference |
-| P2-12 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Mobile | `EditHistory.tsx:30` (`min-w-[600px]`); `Table.tsx:453` (`grid-cols-3` toolbar); `Header.tsx:22-25` (fixed logo widths) | Fixed widths likely overflow near 390px | Responsive variants or scroll containers |
-| P2-13 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Code quality | ~20 `@ts-ignore` sites, notably `api/[table]/route.ts:63`, `pagination/route.ts:293`, `:310`, `:360`, `swapToTable/route.ts:20`; `explore/taxonomy/[taxonomy]/page.tsx:148`, `:169` (`(dbTaxonomy as any)[rank]`) | Dynamic `prisma[model]` access defeats type checking on the core public API | A typed model map (`Record<TableName, Delegate>`) restores safety at the boundary. These are load-bearing suppressions on the most-used code path, not incidental ones |
-| P2-14 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Code quality | `explore/project/page.tsx:14`, `explore/sample/page.tsx:18` (`if (!projects) return <>Loading...</>`); `Table.tsx:917`, `:939` (`"test" === null`) | Unreachable branches: `findMany` always returns an array, and the string comparison is constantly false. Dead code rather than user-visible defects | Remove. Worth noting because these read as real states during review and obscure genuine error handling |
-| P2-15 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Code quality | `SearchUI.tsx:185` (`console.log(err)` swallowing URL parse errors); `AnalysisSubmit.tsx:210`; `explore/*/sitemap.ts:21-27` | Errors logged to console only; the user sees nothing or a generic message | Use `console.error` server-side and surface something actionable. The `SearchUI` case means a malformed shared search URL fails silently |
-| P2-16 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Code quality | `featuredOrganisms.tsx` (~1777 lines), `SearchUI.tsx` (~1755), `ActualMap.tsx` (~1113), `queries.ts` (~1119), `Table.tsx` (~1041) | Very large files | Not urgent, but `SearchUI.tsx` and `Table.tsx` are the two files most affected by the UI work above, so splitting them first reduces that work. Separating static data from components in `featuredOrganisms.tsx` is the easiest win |
-| P2-17 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Content | `TaxonomyBubbleChart.tsx:73-76` ("temporarily disabled", ~70 commented lines); `learn/page.tsx:371`, `:383`; `learn/discoveries/page.tsx:302`, `:314` ("Coming Soon!"); `ImpactLearnPage.tsx:376`, `:394` ("Photo placeholder"); `featuredOrganisms.tsx:1656` ("Attribution details coming soon.") | Visible unfinished content on live pages | Finish or hide behind a flag. "Coming Soon!" reads as beta regardless of whether the badge is removed |
-| P2-18 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Content | `app/(dashboard)/page.tsx:196-204` | `FeaturedOrganismsSection` and the taxonomy spotlight row are commented out ("temporarily disabled for main merge"), though `TopTaxonomiesSummary.tsx` appears fully implemented | Check whether the component can simply be re-enabled; if not, the blocking issue is worth recording |
-| P2-19 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Content | `app/(dashboard)/(content)/tourmaline/page.tsx` renders `UnderConstruction` | A live route displays "Under Construction" | Correctly disallowed in `robots.ts:8`, so exposure is low, but confirm no in-app links point at it |
-| P2-20 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Schema | `prisma/schemas/*.prisma` — no `createdAt`/`updatedAt` on any model (some have `dateSubmitted`); no `onDelete` on `Assay` relations (`analysis.prisma:13`, and `Library`/`AssayPrep` → `Assay` in `project.prisma`); no `@@index` on `Taxonomy` rank columns | Timestamps aid debugging and provenance; missing `onDelete` risks failed or orphaning deletes; `TopTaxonomiesSummary` filters `Taxonomy` by kingdom with no supporting index | Add `createdAt`/`updatedAt` going forward, set explicit `onDelete` on every relation, and index filtered columns. Most core relations already declare cascade deletes; this concerns the remaining gaps |
-| P2-21 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | SEO | ~119 of ~125 `page.tsx` files export no `metadata`; only `learn/edna101`, `learn/discoveries`, `learn/impact`, `explore/assignment`, and `explore/occurrence` do | Every other page inherits the root title "Ocean DNA Explorer", so search results and browser tabs are indistinguishable | Add per-page `metadata`, and `generateMetadata` for dynamic entity pages so a shared link previews the actual record. Cheap, and directly serves findability |
-| P2-22 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Nav | `Header.tsx:49` (`{/* <TabButton tabName="Contribute" route="/contribute" /> */}`) vs `static-sitemap.xml/route.ts:95-97` | `/contribute` is commented out of the nav but remains routable and listed in the sitemap | Ship it or remove it from the sitemap; currently search engines can route users to a page the nav hides |
-| P2-23 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Perf | `app/helpers/prisma.ts:28-34` | Prisma via `@prisma/adapter-pg` with no visible pool tuning; no `unstable_cache` anywhere and a single `revalidate` in the repository (`showcase/page.tsx:7`) | Effectively everything is dynamic and uncached, so every interaction pays full Neon latency including cold starts. Caching genuinely static data (schema metadata, `deadValues`, table counts, min/max aggregates, filter options per P1-6) is the cheapest available latency win |
-| P2-24 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Docs | `app/docs/page.tsx:5` (`//TODO: add content`); `app/docs/api/endpoints/page.tsx:138` documents `?limit=3` | The docs landing page is a stub (title, quick-nav, "Get Started" button). The documented endpoints describe `limit` but not the absence of a default or maximum, which will change when P1-2 lands | Fill in the landing page, and document the pagination contract and applied limit once P1-2 introduces one. Internal endpoints (`pagination`, `count`, `swapToTable`, `fields/distinct`) do not need public documentation; a short "internal, may change without notice" note is sufficient if their existence needs acknowledging at all. `/api/user` should be removed from the public surface per P0-2 rather than documented |
-| P2-25 | <span style="background:#dc2626;color:#fff;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;min-width:28px;text-align:center">✗</span> | Cleanup | `BlastSearch.tsx:30` (unused `prevQueries` state), `:20-22` (in-repo TODOs: clear button, query history, use `useRouter` instead of `window.location.href`), `:227`; numeric inputs render `NaN` when unset (`:333`, `:372`, `:393`) | `NaN` appearing in a form field is the most user-visible of these. The `window.location.href` navigation at `:227` forces a full page reload where `useRouter` would perform a client transition | Address the `NaN` rendering first; the navigation change is small and improves perceived speed |
+| P2-1 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Security | `app/api/file/upload/route.ts:30-36` | `onBeforeGenerateToken` sets `allowedContentTypes` and `addRandomSuffix` but no `maximumSizeInBytes`, so any contributor-role account can upload arbitrarily large blobs | Set an explicit size cap sized to the largest legitimate TSV. The rest of this route is a good model — auth, role check, content-type allowlist, random suffix |
+| P2-2 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Reliability | `app/api/file/upload/route.ts:63-68` | The catch block returns an error body with no status code, so failures respond 200; the in-file comment notes the upload webhook retries until it receives a 200 | Return a 4xx/5xx so retry semantics work as intended (see P1-3) |
+| P2-3 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Correctness | `deleted_ODE` on `prisma/schemas/project.prisma:76`; set in `projectEdit.ts:338`; cleared by `fixDeletedSamples.ts` | Samples flagged for deletion are excluded only by the client-side `GlobalOmit` list; no server-side filter exists in `parseApiQuery`, so pending-deletion rows are still returned by the API and counted in totals | Filter `deleted_ODE` server-side in the query layer alongside the P0-3 `omit` work, so "deleted" means the same thing in the UI and the API |
+| P2-4 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Perf | `app/api/[table]/pagination/route.ts:335-371`, `app/components/paginated/Table.tsx:233-250` | Deep-relations mode issues `rows × relations` individual `count()` calls in one transaction; the empty-selection case requests all relations. Covered in P1-2; listed separately because the mapping between checkbox state and requested relations also appears inverted and deserves review | Batch via `groupBy`; review the filter-to-parameter mapping. The user-facing warning at `Table.tsx:455-457` does not cover the inverted case |
+| P2-5 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | `app/components/Modal.tsx:25-41`, `:47-48` | Close button is a bare `✕`; the backdrop button's only text is "close" — neither has an `aria-label` | Add `aria-label="Close dialog"`. Using native `<dialog>` is already correct — focus trapping and Escape come free |
+| P2-6 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | `PaginationControls.tsx:22-49`, `:86-109`; `ThemeToggle.tsx:40-46`; `BlastSearchResult.tsx:111-116` | Icon-only controls (first/prev/next/last, theme swap, `❮`/`❯`) with no accessible name | Add `aria-label` to each; a lint rule prevents recurrence |
+| P2-7 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | `DocsPageSection.tsx:49`; `visualize/*/page.tsx`; `BlastSearchResult.tsx:123-137`; `BlastSearch.tsx:300`; `ExploreSearch.tsx:105` | Heading hierarchy: docs pages start at `<h2>`, visualize subpages have no heading, and `<h1>` labels subsections in several BLAST components | One `<h1>` per page describing the page, `<h2>`+ for sections. Headings are the primary screen-reader navigation structure, so this is more than cosmetic |
+| P2-8 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | 80+ uses of `text-base-content/50`, `/60`, `opacity-50`; e.g. `DashboardExtras.tsx:575`, `:585`, `DataSummaryHighlights.tsx:246`, `GbifImage.tsx:171` | 10–11px text at 50% opacity likely fails 4.5:1 in both themes | Measure with a contrast checker, then raise to `/70`+ for small text. Both themes are properly defined in `styles/globals.css:6-61`, so this is a token-value fix rather than a theming change |
+| P2-9 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | Framer Motion under `(tour)/**`; `.sponsors-logo` infinite animation; `OrganismOutlines.tsx:83` `animate-float` | `prefers-reduced-motion` is respected only in `StatCountUp.tsx:13` and one rule at `globals.css:480-483` | Gate looping and large-movement animation behind `motion-reduce:` or `useReducedMotion`. Infinite animations are the worst offenders for vestibular disorders |
+| P2-10 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y / Mobile | `UserAdder.tsx:265`, `:273` (`btn-xs h-5 w-5`); `SearchUI.tsx:1099`, `:1246`; `TaxonomyVisualToggle.tsx:108` | Touch targets around 20px, well under the ~44px guideline | Increase hit area with padding; the visual can stay small |
+| P2-11 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Mobile | `MobileMenu.tsx:96-106` vs `MegaMenus.tsx:83-84` and `VisualizeTabs.tsx:28-35` | The mobile Visualize submenu lists only Metadata and Taxonomy; Alpha Diversity exists but has no mobile entry point | Add the missing link — this is functionality unreachable on mobile, not a layout difference |
+| P2-12 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Mobile | `EditHistory.tsx:30` (`min-w-[600px]`); `Table.tsx:453` (`grid-cols-3` toolbar); `Header.tsx:22-25` (fixed logo widths) | Fixed widths likely overflow near 390px | Responsive variants or scroll containers |
+| P2-13 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | ~20 `@ts-ignore` sites, notably `api/[table]/route.ts:63`, `pagination/route.ts:293`, `:310`, `:360`, `swapToTable/route.ts:20`; `explore/taxonomy/[taxonomy]/page.tsx:148`, `:169` (`(dbTaxonomy as any)[rank]`) | Dynamic `prisma[model]` access defeats type checking on the core public API | A typed model map (`Record<TableName, Delegate>`) restores safety at the boundary. These are load-bearing suppressions on the most-used code path, not incidental ones |
+| P2-14 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | `explore/project/page.tsx:14`, `explore/sample/page.tsx:18` (`if (!projects) return <>Loading...</>`); `Table.tsx:917`, `:939` (`"test" === null`) | Unreachable branches: `findMany` always returns an array, and the string comparison is constantly false. Dead code rather than user-visible defects | Remove. Worth noting because these read as real states during review and obscure genuine error handling |
+| P2-15 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | `SearchUI.tsx:185` (`console.log(err)` swallowing URL parse errors); `AnalysisSubmit.tsx:210`; `explore/*/sitemap.ts:21-27` | Errors logged to console only; the user sees nothing or a generic message | Use `console.error` server-side and surface something actionable. The `SearchUI` case means a malformed shared search URL fails silently |
+| P2-16 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | `featuredOrganisms.tsx` (~1777 lines), `SearchUI.tsx` (~1755), `ActualMap.tsx` (~1113), `queries.ts` (~1119), `Table.tsx` (~1041) | Very large files | Not urgent, but `SearchUI.tsx` and `Table.tsx` are the two files most affected by the UI work above, so splitting them first reduces that work. Separating static data from components in `featuredOrganisms.tsx` is the easiest win |
+| P2-17 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Content | `TaxonomyBubbleChart.tsx:73-76` ("temporarily disabled", ~70 commented lines); `learn/page.tsx:371`, `:383`; `learn/discoveries/page.tsx:302`, `:314` ("Coming Soon!"); `ImpactLearnPage.tsx:376`, `:394` ("Photo placeholder"); `featuredOrganisms.tsx:1656` ("Attribution details coming soon.") | Visible unfinished content on live pages | Finish or hide behind a flag. "Coming Soon!" reads as beta regardless of whether the badge is removed |
+| P2-18 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Content | `app/(dashboard)/page.tsx:196-204` | `FeaturedOrganismsSection` and the taxonomy spotlight row are commented out ("temporarily disabled for main merge"), though `TopTaxonomiesSummary.tsx` appears fully implemented | Check whether the component can simply be re-enabled; if not, the blocking issue is worth recording |
+| P2-19 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Content | `app/(dashboard)/(content)/tourmaline/page.tsx` renders `UnderConstruction` | A live route displays "Under Construction" | Correctly disallowed in `robots.ts:8`, so exposure is low, but confirm no in-app links point at it |
+| P2-20 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Schema | `prisma/schemas/*.prisma` — no `createdAt`/`updatedAt` on any model (some have `dateSubmitted`); no `onDelete` on `Assay` relations (`analysis.prisma:13`, and `Library`/`AssayPrep` → `Assay` in `project.prisma`); no `@@index` on `Taxonomy` rank columns | Timestamps aid debugging and provenance; missing `onDelete` risks failed or orphaning deletes; `TopTaxonomiesSummary` filters `Taxonomy` by kingdom with no supporting index | Add `createdAt`/`updatedAt` going forward, set explicit `onDelete` on every relation, and index filtered columns. Most core relations already declare cascade deletes; this concerns the remaining gaps |
+| P2-21 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | SEO | ~119 of ~125 `page.tsx` files export no `metadata`; only `learn/edna101`, `learn/discoveries`, `learn/impact`, `explore/assignment`, and `explore/occurrence` do | Every other page inherits the root title "Ocean DNA Explorer", so search results and browser tabs are indistinguishable | Add per-page `metadata`, and `generateMetadata` for dynamic entity pages so a shared link previews the actual record. Cheap, and directly serves findability |
+| P2-22 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Nav | `Header.tsx:49` (`{/* <TabButton tabName="Contribute" route="/contribute" /> */}`) vs `static-sitemap.xml/route.ts:95-97` | `/contribute` is commented out of the nav but remains routable and listed in the sitemap | Ship it or remove it from the sitemap; currently search engines can route users to a page the nav hides |
+| P2-23 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Perf | `app/helpers/prisma.ts:28-34` | Prisma via `@prisma/adapter-pg` with no visible pool tuning; no `unstable_cache` anywhere and a single `revalidate` in the repository (`showcase/page.tsx:7`) | Effectively everything is dynamic and uncached, so every interaction pays full Neon latency including cold starts. Caching genuinely static data (schema metadata, `deadValues`, table counts, min/max aggregates, filter options per P1-6) is the cheapest available latency win |
+| P2-24 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Docs | `app/docs/page.tsx:5` (`//TODO: add content`); `app/docs/api/endpoints/page.tsx:138` documents `?limit=3` | The docs landing page is a stub (title, quick-nav, "Get Started" button). The documented endpoints describe `limit` but not the absence of a default or maximum, which will change when P1-2 lands | Fill in the landing page, and document the pagination contract and applied limit once P1-2 introduces one. Internal endpoints (`pagination`, `count`, `swapToTable`, `fields/distinct`) do not need public documentation; a short "internal, may change without notice" note is sufficient if their existence needs acknowledging at all. `/api/user` should be removed from the public surface per P0-2 rather than documented |
+| P2-25 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Cleanup | `BlastSearch.tsx:30` (unused `prevQueries` state), `:20-22` (in-repo TODOs: clear button, query history, use `useRouter` instead of `window.location.href`), `:227`; numeric inputs render `NaN` when unset (`:333`, `:372`, `:393`) | `NaN` appearing in a form field is the most user-visible of these. The `window.location.href` navigation at `:227` forces a full page reload where `useRouter` would perform a client transition | Address the `NaN` rendering first; the navigation change is small and improves perceived speed |
 
 ---
 
