@@ -256,14 +256,6 @@ export default function Table({
 		revalidateOnFocus: false
 	});
 
-	// Reset to first page whenever the table or URL search params change
-	useEffect(() => {
-		if (page !== 1) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setPage(1);
-		}
-	}, [table, searchParams]);
-
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			if (hideEmpty) {
