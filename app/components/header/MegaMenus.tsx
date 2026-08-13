@@ -132,6 +132,7 @@ function MegaMenu({
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const [disableCloseAnimation, setDisableCloseAnimation] = useState(false);
+	const [prevPathname, setPrevPathname] = useState(pathname);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const triggerRef = useRef<HTMLAnchorElement | null>(null);
 	const [panelRightStyle, setPanelRightStyle] = useState<{ right: number } | null>(null);
@@ -149,6 +150,13 @@ function MegaMenu({
 		setOpen(false);
 	}, MEGA_MENU_CLOSE_DELAY_MS);
 
+	if (pathname !== prevPathname) {
+		// Ensure dropdown/backdrop always closes after route transitions.
+		setPrevPathname(pathname);
+		setDisableCloseAnimation(false);
+		setOpen(false);
+	}
+
 	useEffect(() => {
 		return () => {
 			debouncedOpen.cancel();
@@ -157,11 +165,8 @@ function MegaMenu({
 	}, [debouncedOpen, debouncedClose]);
 
 	useEffect(() => {
-		// Ensure dropdown/backdrop always closes after route transitions.
 		debouncedOpen.cancel();
 		debouncedClose.cancel();
-		setDisableCloseAnimation(false);
-		setOpen(false);
 	}, [debouncedOpen, debouncedClose, pathname]);
 
 	useEffect(() => {
@@ -189,7 +194,6 @@ function MegaMenu({
 
 	useLayoutEffect(() => {
 		if (!open || !anchorPanelToTrigger) {
-			setPanelRightStyle(null);
 			return;
 		}
 		updatePanelRightFromTrigger();
@@ -295,7 +299,7 @@ function MegaMenu({
 					widthClass
 				].join(" ")}
 				style={
-					anchorPanelToTrigger && panelRightStyle
+					open && anchorPanelToTrigger && panelRightStyle
 						? { right: panelRightStyle.right }
 						: panelShiftRight
 							? { transform: `translateX(calc(-50% + ${panelShiftRight}))` }

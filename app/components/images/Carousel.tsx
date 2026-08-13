@@ -4,22 +4,35 @@ import { Image as DbImage } from "@/app/generated/prismaImages/client";
 import { Attribution } from "@/prismaImages/generated/zod";
 import Image from "next/image";
 import AttributionBadge from "./AttributionBadge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+function subscribeNever() {
+	return () => {};
+}
+
+function shuffleImages<T>(list: T[]): T[] {
+	const copy = [...list];
+	for (let i = copy.length - 1; i > 0; i--) {
+		const randomIndex = Math.floor(Math.random() * i);
+		[copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
+	}
+	return copy;
+}
 
 export default function Carousel({ images }: { images: (DbImage & { Attribution?: Attribution | null })[] }) {
 	// Start with the server order so the first client paint matches SSR HTML.
 	// Shuffle after mount; Math.random() during render would mismatch.
 	const [shuffledImages, setShuffledImages] = useState(images);
+	const [shuffleSource, setShuffleSource] = useState(images);
+	const [hasClientShuffle, setHasClientShuffle] = useState(false);
 	const [currIndex, setCurrIndex] = useState(0);
+	const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
 
-	useEffect(() => {
-		const copy = [...images];
-		for (let i = copy.length - 1; i > 0; i--) {
-			const randomIndex = Math.floor(Math.random() * i);
-			[copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
-		}
-		setShuffledImages(copy);
-	}, [images]);
+	if (mounted && (!hasClientShuffle || shuffleSource !== images)) {
+		setHasClientShuffle(true);
+		setShuffleSource(images);
+		setShuffledImages(shuffleImages(images));
+	}
 
 	useEffect(() => {
 		if (shuffledImages.length <= 1) {

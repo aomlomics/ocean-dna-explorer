@@ -2,7 +2,11 @@
 
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+
+function subscribeNever() {
+	return () => {};
+}
 
 /** Portaled to <body> to avoid clipping; sits at the popover layer (see z-index scale in globals.css). */
 const PREVIEW_Z_INDEX = "var(--z-popover)";
@@ -14,8 +18,8 @@ export default function ProjectCoverPhotoPreview({ src, title }: { src: string; 
 	const anchorRef = useRef<HTMLButtonElement>(null);
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [open, setOpen] = useState(false);
-	const [mounted, setMounted] = useState(false);
 	const [pos, setPos] = useState({ top: 0, right: 0 });
+	const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
 
 	const clearCloseTimer = useCallback(() => {
 		if (closeTimerRef.current) {
@@ -44,10 +48,6 @@ export default function ProjectCoverPhotoPreview({ src, title }: { src: string; 
 		updatePosition();
 		setOpen(true);
 	}, [clearCloseTimer, updatePosition]);
-
-	useLayoutEffect(() => {
-		setMounted(true);
-	}, []);
 
 	useLayoutEffect(() => {
 		if (open) updatePosition();

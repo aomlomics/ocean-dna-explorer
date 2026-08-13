@@ -48,6 +48,7 @@ export default function GbifImage({
 			setActiveSrc(null);
 			setLoadFailed(false);
 			setImageLoaded(false);
+			setPreviewOpen(false);
 			try {
 				const p = await getGbifStillImagePayload(taxonKey);
 				if (!cancelled) {
@@ -75,16 +76,10 @@ export default function GbifImage({
 		onPayloadChange?.(payload);
 	}, [payload, onPayloadChange]);
 
-	useEffect(() => {
-		setImageLoaded(false);
-	}, [activeSrc]);
-
-	useEffect(() => {
-		setPreviewOpen(false);
-	}, [activeSrc]);
-
 	function handleImgError() {
 		if (payload && activeSrc === payload.proxyUrl && payload.directUrl !== payload.proxyUrl) {
+			setImageLoaded(false);
+			setPreviewOpen(false);
 			setActiveSrc(payload.directUrl);
 			return;
 		}

@@ -14,9 +14,17 @@ function getColor() {
 }
 
 export default function useDaisyTheme() {
-	const [colors, setColors] = useState(getColor());
+	//default light theme
+	const [colors, setColors] = useState({
+		textColor: "#334155",
+		backgroundColor: "#f4f3f2",
+		primaryColor: "#233d7f"
+	});
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		setColors(getColor());
+
 		// Listen for theme changes
 		const observer = new MutationObserver(() => setColors(getColor()));
 		observer.observe(document.documentElement, {

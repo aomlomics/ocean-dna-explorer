@@ -37,9 +37,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 						<button className="btn btn-primary" onClick={() => reset()}>
 							Try again
 						</button>
-						<a href="/" className="btn btn-primary">
+						<Link href="/" className="btn btn-primary">
 							Home
-						</a>
+						</Link>
 					</div>
 				</main>
 			</body>

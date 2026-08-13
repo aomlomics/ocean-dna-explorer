@@ -2,7 +2,7 @@
 
 import type { Taxonomy } from "@/app/generated/prisma/client";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { TaxonomicRanks } from "@/types/objects";
 import InfoButton from "@/app/components/InfoButton";
 import type { GbifImagePayload } from "./GbifClient";
@@ -58,13 +58,11 @@ export default function TaxonomyVisualToggle({
 
 	const gbifPhotoAllowed = rankAllowsGbifPhoto(databaseRankKey);
 
-	useEffect(() => {
-		if (!gbifPhotoAllowed) {
-			setMode("phylopic");
-			setGbifLayerMounted(false);
-			setGbifPayload(null);
-		}
-	}, [gbifPhotoAllowed]);
+	if (!gbifPhotoAllowed && (mode !== "phylopic" || gbifLayerMounted || gbifPayload)) {
+		setMode("phylopic");
+		setGbifLayerMounted(false);
+		setGbifPayload(null);
+	}
 
 	const activateGbifMode = useCallback(() => {
 		setGbifLayerMounted(true);
