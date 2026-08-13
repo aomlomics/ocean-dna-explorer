@@ -1,8 +1,5 @@
-import { Assay, Feature, BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
-import { BlastQueryResultCreateInput } from "@/app/generated/prisma/models";
+import { Assay } from "@/app/generated/prisma/client";
 import { BlastQueryPartial } from "@/prisma/generated/zod";
-import { ReactNode } from "react";
-import TableMetadata from "@/types/tableMetadata";
 import { User } from "@clerk/nextjs/server";
 
 export type Role = "admin" | "moderator" | "contributor";
@@ -117,15 +114,15 @@ export type NullLocation = {
 	decimalLongitude: number | null;
 	[key: string]: any;
 } & { values?: never };
-export type Location = {
+export type MapLocation = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	[key: string]: any;
 } & { values?: never; polylines?: never };
-export type LocationWithValues = {
+export type MapLocationWithValues = {
 	decimalLatitude: number;
 	decimalLongitude: number;
-	values?: Location[];
+	values?: MapLocation[];
 	polylines?: [number, number][];
 	[key: string]: any;
 };

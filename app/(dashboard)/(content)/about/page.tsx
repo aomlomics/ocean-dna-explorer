@@ -171,7 +171,7 @@ export default function AboutPage() {
 						<ThemeAwareLogo
 							src="/images/ngi_msu_logo_FINAL.svg"
 							alt="Mississippi State University, Northern Gulf Institute Logo"
-							fill={true}
+							sizes="(max-width: 768px) 90vw, 617px"
 							className="object-contain"
 						/>
 					</Link>

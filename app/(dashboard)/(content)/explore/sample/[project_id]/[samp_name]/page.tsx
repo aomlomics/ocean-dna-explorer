@@ -39,9 +39,9 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 	});
 
 	if (!sample) notFound();
-	const { Libraries: _, ...justSample } = sample;
+	const { Libraries, ...justSample } = sample;
 	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
-	for (const lib of sample.Libraries) {
+	for (const lib of Libraries) {
 		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
 			uniqueAssays.push(lib.Assay);
 		}

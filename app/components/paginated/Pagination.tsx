@@ -29,7 +29,7 @@ export default function Pagination({
 	const [page, setPage] = useState(1);
 
 	function getQuery(dir?: 1 | -1) {
-		let query = new URLSearchParams({
+		const query = new URLSearchParams({
 			take: (25).toString(),
 			page: (dir ? page + dir : page).toString()
 		});

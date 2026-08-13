@@ -73,9 +73,7 @@ function buildDiverseMapSamples<T extends { decimalLatitude: number | null; deci
 		}
 	}
 
-	const bucketEntries = sample(Array.from(buckets.entries()), buckets.size).map(([_, rows]) =>
-		sample(rows, rows.length)
-	);
+	const bucketEntries = sample(Array.from(buckets.values()), buckets.size).map((rows) => sample(rows, rows.length));
 	const picked: T[] = [];
 	let cursor = 0;
 	while (picked.length < maxCount) {

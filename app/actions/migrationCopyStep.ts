@@ -42,7 +42,7 @@ export default async function migrationCopyStepAction() {
 			for (const t in oldFieldsByTable) {
 				const table = t as Uncapitalize<Prisma.ModelName>;
 
-				// @ts-expect-error
+				// @ts-expect-error dynamically accessing table
 				const result = (await tx[table].findMany({
 					select: {
 						...oldFieldsByTable[table].reduce(

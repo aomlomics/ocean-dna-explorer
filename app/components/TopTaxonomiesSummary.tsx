@@ -134,10 +134,8 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 						lightSrc="/images/bacteria_image.jpeg"
 						darkSrc="/images/bacteria_image_dark.png"
 						alt={section.kingdom}
-						fill
 						className="object-cover"
 						sizes="(max-width: 768px) 100vw, 33vw"
-						priority={false}
 					/>
 				) : (
 					<Image

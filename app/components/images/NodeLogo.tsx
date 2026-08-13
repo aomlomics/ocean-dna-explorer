@@ -1,17 +1,26 @@
 import Image from "next/image";
-import { ImageProps } from "next/image";
+import { CSSProperties } from "react";
 
-interface NodeLogoProps extends Omit<ImageProps, "className" | "src"> {
+export default function NodeLogo({
+	alt,
+	fill,
+	style,
+	sizes,
+	className
+}: {
+	alt: string;
+	fill: boolean;
+	style: CSSProperties;
+	sizes: string;
 	className?: string;
-}
-
-export default function NodeLogo(props: NodeLogoProps) {
-	const { className = "", ...imageProps } = props;
-
+}) {
 	return (
 		<div className="relative w-full h-full">
 			<Image
-				{...imageProps}
+				alt={alt}
+				fill={fill}
+				style={style}
+				sizes={sizes}
 				src="/images/node_logo_dark_mode.svg"
 				className={`
 					absolute inset-0
@@ -22,7 +31,10 @@ export default function NodeLogo(props: NodeLogoProps) {
 				`}
 			/>
 			<Image
-				{...imageProps}
+				alt={alt}
+				fill={fill}
+				style={style}
+				sizes={sizes}
 				src="/images/node_logo_light_mode.svg"
 				className={`
 					absolute inset-0

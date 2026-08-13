@@ -160,9 +160,9 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) notFound();
-	const { _count: _, Analyses: ___, editHistory: ____, ...justProject } = project;
+	const { _count, Analyses, editHistory, ...justProject } = project;
 
-	const uniqueAssays = project.Analyses.reduce(
+	const uniqueAssays = Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
 			...acc,
 			[a.assay_name]: { target_gene: a.Assay.target_gene }
@@ -179,7 +179,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	const taxaCountByAnalysis = {} as Record<string, Record<string, number>>;
 	const taxaCountByAssay = {} as Record<string, Record<string, number>>;
 
-	for (const a of project.Analyses) {
+	for (const a of Analyses) {
 		taxaCountByAnalysis[a.analysis_run_name] = {};
 		if (!taxaCountByAssay[a.assay_name]) {
 			taxaCountByAssay[a.assay_name] = {};
@@ -349,7 +349,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 							{project.project_id}
 						</h1>
 					</TitleHoverTooltip>
-					<EditHistory editHistory={project.editHistory} />
+					<EditHistory editHistory={editHistory} />
 				</div>
 				{hasCoverImage && project.imageFileUrl_ODE ? (
 					<ProjectCoverPhotoPreview src={project.imageFileUrl_ODE} title={project.project_name || project.project_id} />
@@ -387,7 +387,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			<div className="flex flex-wrap gap-3">
 				<StatCard
 					title="Samples"
-					value={project._count.Samples}
+					value={_count.Samples}
 					icon={<LocationIcon />}
 					link={`/search?table=sample&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
@@ -396,7 +396,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				/>
 				<StatCard
 					title="Analyses"
-					value={project._count.Analyses}
+					value={_count.Analyses}
 					icon={<AnalysisIcon />}
 					link={`/search?table=analysis&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
@@ -414,7 +414,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				/>
 				<StatCard
 					title="Occurrences"
-					value={project.Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
+					value={Analyses.reduce((sum, a) => sum + a.Assignments.length, 0)}
 					icon={<EyeIcon />}
 					link={`/search?table=occurrence&advanced=[["project",${advancedProjStr}]]`}
 					tooltip="View as Search"

@@ -59,7 +59,7 @@ export default function Table({
 
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 
-	let defaultHeadersSet = new Set() as Set<string>;
+	const defaultHeadersSet = new Set() as Set<string>;
 
 	//title field array
 	if (Array.isArray(title)) {
@@ -134,7 +134,7 @@ export default function Table({
 		.forEach(defaultHeadersSet.add, defaultHeadersSet);
 
 	//apply default filters
-	let defaultHeadersFilter = {} as Record<string, true>;
+	const defaultHeadersFilter = {} as Record<string, boolean>;
 	if (filterHeadersAtStart && TableMetadata[table].subFields) {
 		for (const head of defaultHeadersSet) {
 			if (
@@ -190,13 +190,13 @@ export default function Table({
 		[] as { label: string; table: Uncapitalize<Prisma.ModelName>; type: "field" | "table" | "many" }[]
 	);
 	const [deepRelationsFilter, setDeepRelationsFilter] = useState(
-		deepRelations.reduce((acc, rel) => ({ ...acc, [rel.label]: true }), {}) as Record<string, true>
+		deepRelations.reduce((acc, rel) => ({ ...acc, [rel.label]: true }), {}) as Record<string, boolean>
 	);
 	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
 	const [pendingFilters, setPendingFilters] = useState(0);
 
 	function getQuery(dir?: 1 | -1) {
-		let query = new URLSearchParams({
+		const query = new URLSearchParams({
 			take: take.toString(),
 			page: (dir ? page + dir : page).toString(),
 			orderBy: orderBy.field + "," + orderBy.order
@@ -259,6 +259,7 @@ export default function Table({
 	// Reset to first page whenever the table or URL search params change
 	useEffect(() => {
 		if (page !== 1) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setPage(1);
 		}
 	}, [table, searchParams]);
@@ -269,8 +270,8 @@ export default function Table({
 				const emptyFields = {} as Record<string, true>;
 				const exemptFields = {} as Record<string, true>;
 
-				for (let row of data.result) {
-					for (let [field, value] of Object.entries(row)) {
+				for (const row of data.result) {
+					for (const [field, value] of Object.entries(row)) {
 						if (!combinedOmit.includes(field)) {
 							if (value === null && !exemptFields[field]) {
 								emptyFields[field] = true;
@@ -282,6 +283,7 @@ export default function Table({
 					}
 				}
 
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setEmptyFilter(emptyFields);
 			} else if (Object.keys(emptyFilter).length) {
 				setEmptyFilter({});
@@ -302,6 +304,7 @@ export default function Table({
 
 			//set to last page if page is too large
 			if ((page - 1) * take > data.count) {
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setPage(Math.floor(data.count / take) + 1);
 			}
 
@@ -386,7 +389,7 @@ export default function Table({
 	}
 
 	function resetForm() {
-		//@ts-expect-error
+		//@ts-expect-error indexing collection by string
 		document.forms[`${table}TableForm`].reset();
 		setWhereFilter({});
 		setPendingFilters(0);
@@ -400,7 +403,7 @@ export default function Table({
 		const formData = new FormData(form);
 		let count = 0;
 		formData.delete("take");
-		for (const [_, value] of formData.entries()) {
+		for (const value of formData.values()) {
 			if (typeof value === "string" && value.trim()) {
 				count++;
 			}

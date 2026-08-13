@@ -13,8 +13,8 @@ import {
 } from "@/app/generated/prisma/client";
 import {
 	Circle,
-	Location,
-	LocationWithValues,
+	MapLocation,
+	MapLocationWithValues,
 	MapShape,
 	NetworkPacket,
 	NullLocation,
@@ -75,13 +75,13 @@ export function parseNestedJson(json: string) {
 export function getOptions(arr: Record<string, any>[]) {
 	//create object of sets with keys matching arr
 	const filterOptionsSet = {} as Record<keyof (typeof arr)[0], Set<any>>;
-	for (let field in arr[0]) {
+	for (const field in arr[0]) {
 		filterOptionsSet[field as keyof (typeof arr)[0]] = new Set();
 	}
 
 	//fill sets with all possible values
-	for (let e of arr) {
-		for (let [field, value] of Object.entries(e)) {
+	for (const e of arr) {
+		for (const [field, value] of Object.entries(e)) {
 			if (value) {
 				filterOptionsSet[field as keyof typeof e].add(value);
 			}
@@ -90,7 +90,7 @@ export function getOptions(arr: Record<string, any>[]) {
 
 	//convert sets to arrays
 	const filterOptions = {} as Record<keyof (typeof arr)[0], any[]>;
-	for (let e in filterOptionsSet) {
+	for (const e in filterOptionsSet) {
 		filterOptions[e as keyof typeof filterOptions] = Array.from(
 			filterOptionsSet[e as keyof typeof filterOptionsSet]
 		).sort();
@@ -130,7 +130,7 @@ export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
 }
 
 export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
-	return Object.entries(TableMetadata).find(([_, meta]) => meta.plural === table)![0] as Uncapitalize<Prisma.ModelName>;
+	return Object.entries(TableMetadata).find((tm) => tm[1].plural === table)![0] as Uncapitalize<Prisma.ModelName>;
 }
 
 export function getSubmissionFileName(value: string) {
@@ -163,14 +163,14 @@ export function unfocus() {
 
 function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	// generally used geo measurement function
-	var R = 6378.137; // Radius of earth in KM
-	var dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
-	var dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
-	var a =
+	const R = 6378.137; // Radius of earth in KM
+	const dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
+	const dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
+	const a =
 		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
 		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	var d = R * c;
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	const d = R * c;
 	return d * 1000; // meters
 }
 
@@ -184,8 +184,11 @@ function isIntersecting([p1, p2]: [Point, Point], [p3, p4]: [Point, Point]) {
 	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
 }
 
-export function getLocationsInsideShapes(locs: (NullLocation | Location | LocationWithValues)[], shapes: MapShape[]) {
-	const locsInside = [] as Location[];
+export function getLocationsInsideShapes(
+	locs: (NullLocation | MapLocation | MapLocationWithValues)[],
+	shapes: MapShape[]
+) {
+	const locsInside = [] as MapLocation[];
 	for (const l of locs) {
 		if (
 			l.decimalLatitude !== null &&
@@ -232,7 +235,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 							if (l.values) {
 								locsInside.push(...l.values);
 							} else {
-								locsInside.push(l as Location);
+								locsInside.push(l as MapLocation);
 							}
 							break;
 						}
@@ -244,7 +247,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 						if (l.values) {
 							locsInside.push(...l.values);
 						} else {
-							locsInside.push(l as Location);
+							locsInside.push(l as MapLocation);
 						}
 						break;
 					}
@@ -374,7 +377,7 @@ export function getTextColorHex(hex: string) {
 	if (hex.length !== 6) {
 		throw new Error("Invalid HEX color.");
 	}
-	var r = parseInt(hex.slice(0, 2), 16),
+	const r = parseInt(hex.slice(0, 2), 16),
 		g = parseInt(hex.slice(2, 4), 16),
 		b = parseInt(hex.slice(4, 6), 16);
 
@@ -424,7 +427,7 @@ export async function decodeRouteParams(params: Promise<Record<string, string>>)
 	);
 }
 
-type ExploreUrlExtra = { hash?: string; params?: Record<string, string> | URLSearchParams };
+type ExploreUrlExtra = { params?: Record<string, string> | URLSearchParams; hash?: string };
 function extraToString(extra: ExploreUrlExtra) {
 	return `${extra.params ? "?" + new URLSearchParams(extra.params) : ""}${extra.hash ? "#" + extra.hash : ""}`;
 }

@@ -80,7 +80,7 @@ export default async function Assay_name({
 	});
 
 	if (!assay) return <>Assay not found</>;
-	const { Libraries: _, Analyses: __, ...justAssay } = assay;
+	const { Libraries, Analyses, ...justAssay } = assay;
 
 	const forwardGc = calculateGcContent(assay.pcr_primer_forward);
 	const reverseGc = calculateGcContent(assay.pcr_primer_reverse);
@@ -313,14 +313,14 @@ export default async function Assay_name({
 								<StatCard
 									title="Samples"
 									icon={<LocationIcon />}
-									value={new Set(assay.Libraries.map((lib) => lib.samp_name)).size}
+									value={new Set(Libraries.map((lib) => lib.samp_name)).size}
 									link={`/search?table=sample&advanced=[["assay","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
 								<StatCard
 									title="Libraries"
 									icon={<LocationIcon />}
-									value={assay.Libraries.length}
+									value={Libraries.length}
 									link={`/search?table=library&advanced=[["assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"
 								/>
@@ -357,7 +357,7 @@ export default async function Assay_name({
 								/>
 								<DropdownCard
 									table="analysis"
-									items={assay.Analyses}
+									items={Analyses}
 									icon={<AnalysisIcon />}
 									className="sm:col-span-2 w-full"
 								/>

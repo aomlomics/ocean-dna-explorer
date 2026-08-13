@@ -25,9 +25,8 @@ export default function Header() {
 						<div className="avatar w-52 h-14 md:w-60 md:h-14 xl:w-88 xl:h-22 relative">
 							<NodeLogo
 								alt="Ocean DNA Explorer Logo"
-								fill={true}
+								fill
 								style={{ objectFit: "contain" }}
-								priority={true}
 								sizes="(max-width: 1280px) 100vw, 33vw"
 							/>
 						</div>

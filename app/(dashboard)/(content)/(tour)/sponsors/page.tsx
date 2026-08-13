@@ -27,7 +27,6 @@ const SPONSORS = [
 export default function SponsorsPage() {
 	return (
 		<div className="tour-motion-bg relative isolate flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-base-200 [html[data-theme='dark']_&]:bg-base-300/50 px-6">
-
 			<motion.div
 				className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-6 text-center"
 				initial={{ opacity: 0, x: 120, y: 16 }}
@@ -66,7 +65,6 @@ export default function SponsorsPage() {
 								<ThemeAwareLogo
 									src={sponsor.srcLight}
 									alt={sponsor.name}
-									fill
 									sizes="(max-width: 640px) 16rem, 24rem"
 									className="object-contain"
 								/>

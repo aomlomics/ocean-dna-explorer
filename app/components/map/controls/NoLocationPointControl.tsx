@@ -1,7 +1,7 @@
 "use client";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { Location, NullLocation } from "@/types/globals";
+import { MapLocation, NullLocation } from "@/types/globals";
 import { getWhereAdvancedHref, LegendInfo } from "../utils/mapUtils";
 import { RefObject, useState } from "react";
 import { Map } from "leaflet";
@@ -58,7 +58,7 @@ export default function NoLocationPointsControl({
 							loc={{
 								decimalLatitude: NaN,
 								decimalLongitude: NaN,
-								values: noLocationPoints as Location[] //doesn't matter here
+								values: noLocationPoints as MapLocation[] //doesn't matter here
 							}}
 							href={`/search?table=${table}&advanced=[["OR",["decimalLatitude","null"],["decimalLatitude","deadValue","any"],["decimalLongitude","null"],["decimalLongitude","deadValue","any"]]${
 								where ? "," + getWhereAdvancedHref(where, table) : ""

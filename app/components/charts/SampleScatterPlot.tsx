@@ -1,7 +1,7 @@
 "use client";
 
 import { Sample } from "@/app/generated/prisma/client";
-import { ReactNode, useMemo, useReducer, useRef, useState } from "react";
+import { ReactNode, useMemo, useRef, useState } from "react";
 import distinctColors from "distinct-colors";
 import { Scatter } from "react-chartjs-2";
 import {
@@ -192,10 +192,7 @@ export default function SampleScatterPlot({
 	const [yField, setYField] = useState(DEFAULT_Y_FIELD);
 	const [legendField, setLegendField] = useState(DEFAULT_LEGEND_FIELD);
 
-	const chartInfo = useMemo(
-		() => buildChartData(xField, yField, legendField),
-		[samples, xField, yField, legendField, userDefinedFields]
-	);
+	const chartInfo = useMemo(() => buildChartData(xField, yField, legendField), [samples, xField, yField, legendField]);
 
 	function getFieldType(newField: keyof Sample) {
 		if (userDefinedFields?.has(newField)) {

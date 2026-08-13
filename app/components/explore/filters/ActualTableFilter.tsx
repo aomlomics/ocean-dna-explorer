@@ -94,30 +94,11 @@ export default function ActualTableFilter({
 						config={config}
 						activeFilters={activeFilters}
 						fieldName={typeof config.field === "string" ? config.field : config.field.f}
-						value={
-							typeof config.field === "string" && activeFilters[config.field] !== undefined
-								? activeFilters[config.field]
-								: typeof config.field === "object" &&
-									activeFilters[config.field.rel] !== undefined &&
-									JSON.parse(activeFilters[config.field.rel])[config.field.f]
-						}
 					/>
 				);
 			} else if (config.type === "range") {
 				acc.push(
-					<Filter
-						key={i}
-						fieldName={typeof config.field === "string" ? config.field : config.field.f}
-						value={
-							typeof config.field === "string" && activeFilters[config.field] !== undefined
-								? (JSON.parse(activeFilters[config.field]).gte || config.gte) +
-									" to " +
-									(JSON.parse(activeFilters[config.field]).lte || config.lte)
-								: typeof config.field === "object" &&
-									activeFilters[config.field.rel] !== undefined &&
-									JSON.parse(activeFilters[config.field.rel])[config.field.f]
-						}
-					>
+					<Filter key={i} fieldName={typeof config.field === "string" ? config.field : config.field.f}>
 						<RangeFilter config={config} />
 					</Filter>
 				);

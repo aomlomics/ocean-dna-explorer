@@ -11,7 +11,7 @@ import { BlastQuery, BlastQueryResult, Sample } from "@/app/generated/prisma/cli
 import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable, getRandomKey } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import TableInfo from "@/app/components/TableInfo";
 
@@ -32,7 +32,7 @@ export default function Search() {
 		if (!table) {
 			router.replace("/search?table=project");
 		}
-	}, [table, router]);
+	}, [table]);
 
 	//TODO: add loading state
 	if (!table) return <></>;

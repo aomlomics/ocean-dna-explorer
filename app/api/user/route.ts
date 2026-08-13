@@ -43,19 +43,27 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 
 	const client = await clerkClient();
 
-	let users = [] as User[];
-	//TODO: paginate users list
-	if (query) {
-		users = (await client.users.getUserList({ query, limit: 500 })).data;
-	} else if (ids) {
-		const userId = ids.split(",");
-		users = (await client.users.getUserList({ userId, limit: 500 })).data;
-	} else {
-		users = (await client.users.getUserList({ limit: 500 })).data;
-	}
+	try {
+		let users = [] as User[];
+		//TODO: paginate users list
+		if (query) {
+			users = (await client.users.getUserList({ query, limit: 500 })).data;
+		} else if (ids) {
+			const userId = ids.split(",");
+			users = (await client.users.getUserList({ userId, limit: 500 })).data;
+		} else {
+			users = (await client.users.getUserList({ limit: 500 })).data;
+		}
 
-	return NextResponse.json({
-		statusMessage: "success",
-		result: getUsersResult(users, emails)
-	});
+		return NextResponse.json({
+			statusMessage: "success",
+			result: getUsersResult(users, emails)
+		});
+	} catch (err) {
+		const error = err as Error;
+		return NextResponse.json({
+			statusMessage: "error",
+			error: error.message
+		});
+	}
 }

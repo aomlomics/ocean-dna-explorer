@@ -62,7 +62,7 @@ export default function SubmissionDeleteButton({
 			} else {
 				setToast({ message: result.error || "Failed to delete", type: "error" });
 			}
-		} catch (error) {
+		} catch {
 			setToast({ message: "Failed to delete", type: "error" });
 		}
 		setIsDeleting(false);

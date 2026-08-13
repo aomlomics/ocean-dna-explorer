@@ -19,6 +19,7 @@ export default function CollapsibleMapContainer({
 
 	//delay 2nd state variable by a render cycle to fix tooltip appearing immediately after collapsing
 	const [delayedCollapse, setDelayedCollapse] = useState(defaultCollapse);
+	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => setDelayedCollapse(collapse), [collapse]);
 
 	let rotationOpen;
@@ -58,7 +59,7 @@ export default function CollapsibleMapContainer({
 		openRounded = "rounded-r-none pr-1";
 	}
 
-	let panel = (
+	const panel = (
 		<div
 			className={`card card-xs card-body justify-center min-h-11.25 min-w-11.25 gap-0 bg-base-100 shadow-sm p-0 ${
 				collapse ? "hidden" : ""

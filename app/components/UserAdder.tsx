@@ -67,7 +67,7 @@ export default function UserAdder({
 		}
 
 		getCurrentUsers();
-	}, [userId, setUserIds, submittable, userIds]);
+	}, [userId]);
 
 	useEffect(() => {
 		if (!submittable && users.length) {
@@ -240,12 +240,13 @@ function UserDisplay({
 }) {
 	return (
 		<>
-			<div className={`relative h-5 aspect-square ${disabled ? "opacity-25" : ""}`}>
+			<div className={`relative h-6 w-6 shrink-0 ${disabled ? "opacity-25" : ""}`}>
 				<Image
 					src={user.imageUrl}
 					alt={`${user.firstName} ${user.lastName} Profile Picture`}
 					fill
-					className="object-contain rounded-full"
+					sizes="24px"
+					className="object-cover rounded-full"
 				/>
 			</div>
 			<span className={`grow ${disabled ? "opacity-25" : ""}`}>

@@ -1,5 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { LocationWithValues } from "@/types/globals";
+import { MapLocationWithValues } from "@/types/globals";
 import { getWhereAdvancedHref, LegendInfo } from "../utils/mapUtils";
 import { Popup } from "react-leaflet";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
@@ -18,7 +18,7 @@ export default function PopupWithSearch({
 	table: Uncapitalize<Prisma.ModelName>;
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	where?: Record<string, string>;
-	loc: LocationWithValues;
+	loc: MapLocationWithValues;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;
 	userDefinedOptions: Set<string>;

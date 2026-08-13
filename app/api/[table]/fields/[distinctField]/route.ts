@@ -28,7 +28,7 @@ export async function GET(
 			}
 		});
 
-		//@ts-expect-error
+		//@ts-expect-error dynamically accessing table
 		const result = await prisma[model].findMany(query);
 
 		if (result) {

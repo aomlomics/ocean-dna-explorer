@@ -17,17 +17,10 @@ export async function GET(
 
 		const { query } = parseApiQuery(model, searchParams, { swapToTable: true });
 
-		//@ts-expect-error
+		//@ts-expect-error dynamically accessing table
 		const result = await prisma[model].findMany(query);
 
-		if (result) {
-			return NextResponse.json({ statusMessage: "success", result });
-		} else {
-			return NextResponse.json({
-				statusMessage: "error",
-				error: `No ${model} matching the search parameters could be found.`
-			});
-		}
+		return NextResponse.json({ statusMessage: "success", result });
 	} catch (err) {
 		const error = err as Error;
 

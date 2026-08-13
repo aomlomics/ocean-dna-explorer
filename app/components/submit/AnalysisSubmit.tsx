@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -35,10 +35,10 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 
 	//list of analyses added to page, stored as a string of the analysis_run_name, -1 means the analysis was deleted from the list, -2 means the analysis file has not been selected yet
 	const [analysisIds, setAnalysisIds] = useState([-2] as Array<string | -1 | -2>);
-	const [prevAnalysisIdsLength, setPrevAnalysisIdsLength] = useState(1);
+	const prevAnalysisIdsLength = useRef(1);
 
 	//detecting what project the analyses are associated with and whether it's trusted or not
-	const [project, setProject] = useState<Project | null>(null);
+	const [project, setProject] = useState(null as Project | null);
 	const [trusted, setTrusted] = useState(false);
 
 	//list of tags to be added to submitted analyses
@@ -46,65 +46,57 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
-	//	to set value of single response: setResponses({ id: <analysisId>, key: <fileName>, res: <response> })
-	//	to clear one response: setResponses({ id: <analysisId>, clear: true })
-	//	to clear all responses: setResponses()
-	const [responses, setResponses] = useReducer(
-		(
-			state: Record<string, ResponseSet>,
-			update?: { id: string; clear: true } | { id: string; key: string; res: NetworkProgressPacket; clear?: undefined }
-		) => {
-			if (update) {
-				if (update.clear) {
-					const temp = { ...state };
-					delete temp[update.id];
-					return temp;
-				} else {
-					if (update.res?.statusMessage === "error") {
-						//TODO: don't stop loading until ALL submissions complete
-						setLoading(false);
-						setErrorMessage(update.res.error);
-						modalRef.current?.showModal();
-						//use trigger to call the delete once, instead of for every error
-					} else if (update.res?.statusMessage === "success") {
-						//check if current analysis was completed successfully
-						if (
-							Object.entries(state[update.id]).every(
-								//make sure to include current key, since we already checked that
-								([key, res]) => key === update.key || res?.statusMessage === "success"
-							)
-						) {
-							//check if all analyses were completed successfully
-							if (
-								Object.entries(state).every(
-									([id, resSet]) =>
-										//make sure to include current analysis, since we already checked that
-										id === update.id || Object.values(resSet).every((res) => res?.statusMessage === "success")
-								)
-							) {
-								//redirect user to Analysis explore page
-								setLoading(false);
-								modalXRef.current!.disabled = true;
-								modalClickOffRef.current!.disabled = true;
-								modalRef.current?.showModal();
-								setTimeout(() => {
-									router.push("/explore/analysis");
-								}, 5000);
-							}
-						}
-					}
+	//  to set value of single response: setResponses({ id: <analysisId>, key: <fileName>, res: <response> })
+	//  to clear one response: setResponses({ id: <analysisId>, clear: true })
+	//  to clear all responses: setResponses()
+	const [responses, setResponses] = useState<Record<string, ResponseSet>>({});
+	const responsesRef = useRef<Record<string, ResponseSet>>({});
 
-					return { ...state, [update.id]: { ...state[update.id], [update.key]: update.res } };
+	function updateResponse(id: string, key: string, res: NetworkProgressPacket) {
+		const nextResponses = {
+			...responsesRef.current,
+			[id]: { ...responsesRef.current[id], [key]: res }
+		} as Record<string, ResponseSet>;
+
+		responsesRef.current = nextResponses;
+		setResponses(nextResponses);
+
+		if (res?.statusMessage === "error") {
+			//TODO: don't stop loading until ALL submissions complete
+			setLoading(false);
+			setErrorMessage(res.error);
+			modalRef.current?.showModal();
+		} else if (res?.statusMessage === "success") {
+			//check if current analysis was completed successfully
+			if (
+				Object.entries(nextResponses[id]).every(
+					//make sure to include current key, since we already checked that
+					([entryKey, entryRes]) => entryKey === key || entryRes?.statusMessage === "success"
+				)
+			) {
+				//check if all analyses were completed successfully
+				if (
+					Object.entries(nextResponses).every(
+						([entryId, resSet]) =>
+							//make sure to include current analysis, since we already checked that
+							entryId === id || Object.values(resSet).every((entryRes) => entryRes?.statusMessage === "success")
+					)
+				) {
+					//redirect user to Analysis explore page
+					setLoading(false);
+					modalXRef.current!.disabled = true;
+					modalClickOffRef.current!.disabled = true;
+					modalRef.current?.showModal();
+					setTimeout(() => {
+						router.push("/explore/analysis");
+					}, 5000);
 				}
-			} else {
-				return {};
 			}
-		},
-		{}
-	);
+		}
+	}
 
 	useEffect(() => {
-		if (analysisIds.length > prevAnalysisIdsLength) {
+		if (analysisIds.length > prevAnalysisIdsLength.current) {
 			const element = document.getElementById((analysisIds.length - 1).toString());
 			if (element) {
 				element.scrollIntoView({
@@ -114,9 +106,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			}
 		}
 
-		if (analysisIds.length !== prevAnalysisIdsLength) {
-			setPrevAnalysisIdsLength(analysisIds.length);
-		}
+		prevAnalysisIdsLength.current = analysisIds.length;
 	}, [analysisIds]);
 
 	//TODO: add loading overlay when this is called
@@ -248,20 +238,17 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						};
 
 						//set status of uploads to pending
-						setResponses({
-							id: id,
-							key: "analysis",
-							res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+						updateResponse(id, "analysis", {
+							statusMessage: "progress",
+							progress: { message: "Pending...", value: 0 }
 						});
-						setResponses({
-							id: id,
-							key: "assignments",
-							res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+						updateResponse(id, "assignments", {
+							statusMessage: "progress",
+							progress: { message: "Pending...", value: 0 }
 						});
-						setResponses({
-							id: id,
-							key: "occurrences",
-							res: { statusMessage: "progress", progress: { message: "Pending...", value: 0 } }
+						updateResponse(id, "occurrences", {
+							statusMessage: "progress",
+							progress: { message: "Pending...", value: 0 }
 						});
 
 						return true;
@@ -279,10 +266,9 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 				//submit for every analysis section
 				for (const id of activeIds) {
 					//upload file to blob storage
-					setResponses({
-						id,
-						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					updateResponse(id, "analysis", {
+						statusMessage: "progress",
+						progress: { message: "Uploading file", value: 1 }
 					});
 					const analysisUrl = (
 						await upload(`submissions/${encodeURIComponent(files[id].analysisFile.name)}`, files[id].analysisFile, {
@@ -291,18 +277,16 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							multipart: files[id].analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
-					setResponses({
-						id,
-						key: "analysis",
-						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					updateResponse(id, "analysis", {
+						statusMessage: "progress",
+						progress: { message: "File uploaded", value: 5 }
 					});
 
 					//assignments submit
 					//upload file to blob storage
-					setResponses({
-						id,
-						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					updateResponse(id, "assignments", {
+						statusMessage: "progress",
+						progress: { message: "Uploading file", value: 1 }
 					});
 					const assignmentsUrl = (
 						await upload(
@@ -315,18 +299,16 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							}
 						)
 					).url;
-					setResponses({
-						id,
-						key: "assignments",
-						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					updateResponse(id, "assignments", {
+						statusMessage: "progress",
+						progress: { message: "File uploaded", value: 5 }
 					});
 
 					//occurrences submit
 					//upload file to blob storage
-					setResponses({
-						id,
-						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "Uploading file", value: 1 } }
+					updateResponse(id, "occurrences", {
+						statusMessage: "progress",
+						progress: { message: "Uploading file", value: 1 }
 					});
 					const occurrencesUrl = (
 						await upload(
@@ -339,19 +321,18 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							}
 						)
 					).url;
-					setResponses({
-						id,
-						key: "occurrences",
-						res: { statusMessage: "progress", progress: { message: "File uploaded", value: 5 } }
+					updateResponse(id, "occurrences", {
+						statusMessage: "progress",
+						progress: { message: "File uploaded", value: 5 }
 					});
 
 					//trigger streamed action
 					doProgressActionMany(
 						analysisSubmitAction,
 						[
-							(res) => setResponses({ id, key: "analysis", res }),
-							(res) => setResponses({ id, key: "assignments", res }),
-							(res) => setResponses({ id, key: "occurrences", res })
+							(res) => updateResponse(id, "analysis", res),
+							(res) => updateResponse(id, "assignments", res),
+							(res) => updateResponse(id, "occurrences", res)
 						],
 						analysisUrl,
 						assignmentsUrl,

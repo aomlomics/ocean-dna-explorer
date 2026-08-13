@@ -1,5 +1,3 @@
-"use client";
-
 import { UserButton } from "@clerk/nextjs";
 
 export function ThemedUserButton() {
@@ -7,7 +5,7 @@ export function ThemedUserButton() {
 		<UserButton
 			appearance={{
 				elements: {
-					// Real portal wrapper (see @clerk/shared Elements); old userButtonPopover* keys are ignored
+					// Real portal wrapper (see @clerk/shared Elements)
 					userButtonPopoverRootBox: {
 						zIndex: 2147483647
 					},
@@ -26,9 +24,6 @@ export function ThemedUserButton() {
 						backgroundColor: "var(--color-base-100)",
 						color: "var(--color-base-content)"
 					}
-					// userButtonPopoverCustomItemButton: {
-					//   backgroundColor: isDark ? "#7DBAE5" : "#233D7F",
-					// }
 				}
 			}}
 		>

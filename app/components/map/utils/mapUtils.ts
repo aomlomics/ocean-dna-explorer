@@ -1,6 +1,6 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValues } from "@/types/enums";
-import { Location, LocationWithValues } from "@/types/globals";
+import { MapLocation, MapLocationWithValues } from "@/types/globals";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import chroma from "chroma-js";
 import { Color } from "chroma-js";
@@ -34,7 +34,7 @@ export const LEGEND_VALUES_LIMIT = 100;
 
 export function getLegendValue(
 	field: NonNullable<LegendInfo>["field"],
-	loc: LocationWithValues | Location,
+	loc: MapLocationWithValues | MapLocation,
 	userDefinedOptions: Set<string>,
 	sep = "/"
 ) {
@@ -58,7 +58,7 @@ export function getLegendValue(
 
 export function getLegendColor(
 	legendInfo: LegendInfo,
-	loc: LocationWithValues | Location,
+	loc: MapLocationWithValues | MapLocation,
 	userDefinedOptions: Set<string>
 ) {
 	if (legendInfo) {

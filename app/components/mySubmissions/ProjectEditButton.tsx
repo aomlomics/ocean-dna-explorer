@@ -1,7 +1,7 @@
 "use client";
 
 import { Project } from "@/app/generated/prisma/client";
-import { SetStateAction, useEffect, useRef, useState } from "react";
+import { SetStateAction, useRef, useState } from "react";
 import Modal from "../Modal";
 import ProgressBar from "../ProgressBar";
 import { NetworkProgressPacket } from "@/types/globals";
@@ -45,20 +45,20 @@ export default function ProjectEditButton({
 	const [libraryFile, setLibraryFile] = useState(undefined as File | undefined);
 
 	//response state variables that will have information streamed to them
-	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket);
-	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket);
-	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket);
-	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket);
-	const [_, setFillerResponse] = useState(undefined as NetworkProgressPacket);
+	const [globalResponse, setGlobalResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket | undefined);
+	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket | undefined);
 
 	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
 	const modalClickOffRef = useRef<HTMLButtonElement>(null);
 
-	//detect when entire submission was successful
-	useEffect(() => {
-		if (globalResponse?.statusMessage === "success") {
+	function handleGlobalResponse(res: NetworkProgressPacket) {
+		setGlobalResponse(res);
+
+		if (res?.statusMessage === "success") {
 			if (projectRef.current && sampleRef.current && libraryRef.current) {
 				projectRef.current.value = "";
 				setProjectFile(undefined);
@@ -70,10 +70,12 @@ export default function ProjectEditButton({
 
 			modalXRef.current!.disabled = false;
 			modalClickOffRef.current!.disabled = false;
+			setLoading(false);
 			router.refresh();
+		} else if (res?.statusMessage === "error") {
+			setLoading(false);
 		}
-		setLoading(false);
-	}, [globalResponse]);
+	}
 
 	async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -121,7 +123,7 @@ export default function ProjectEditButton({
 
 				setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			} else {
-				setters.push(setFillerResponse);
+				setters.push(() => {});
 			}
 
 			if (sampleFile) {
@@ -138,7 +140,7 @@ export default function ProjectEditButton({
 
 				setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			} else {
-				setters.push(setFillerResponse);
+				setters.push(() => {});
 			}
 
 			if (libraryFile) {
@@ -155,12 +157,12 @@ export default function ProjectEditButton({
 
 				setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			} else {
-				setters.push(setFillerResponse);
+				setters.push(() => {});
 			}
 
 			//trigger streamed action
-			await doProgressActionManyGlobal(projectEditAction, setters, setGlobalResponse, args);
-		} catch (err) {
+			await doProgressActionManyGlobal(projectEditAction, setters, handleGlobalResponse, args);
+		} catch {
 			setLoading(false);
 		}
 	}

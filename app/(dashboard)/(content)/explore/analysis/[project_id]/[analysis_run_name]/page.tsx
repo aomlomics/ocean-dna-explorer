@@ -75,7 +75,7 @@ export default async function Analysis_run_name({
 		}
 	});
 	if (!analysis) notFound();
-	const { _count: _, editHistory: __, Assay: ___, Tags: ____, AlphaDiversities: _____, ...justAnalysis } = analysis;
+	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...justAnalysis } = analysis;
 
 	return (
 		<div id="analysis" className="space-y-6">
@@ -106,9 +106,9 @@ export default async function Analysis_run_name({
 					<TitleHoverTooltip tooltip={TableMetadata.analysis.description}>
 						<h1 className="text-4xl font-semibold text-primary mb-2">{analysis_run_name}</h1>
 					</TitleHoverTooltip>
-					<EditHistory editHistory={analysis.editHistory} />
+					<EditHistory editHistory={editHistory} />
 					{analysis.trusted && <div className="badge badge-primary p-3 select-none">Trusted</div>}
-					{analysis.Tags.map((t) => (
+					{Tags.map((t) => (
 						<AnalysisTag key={t.tagName} tag={t} />
 					))}
 				</div>
@@ -171,7 +171,7 @@ export default async function Analysis_run_name({
 						<div className="grid grid-cols-2 gap-4">
 							<StatCard
 								title="Occurrences"
-								value={analysis._count.Occurrences}
+								value={_count.Occurrences}
 								icon={<EyeIcon />}
 								link={`/search?table=occurrence&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
@@ -179,7 +179,7 @@ export default async function Analysis_run_name({
 
 							<StatCard
 								title="Assignments"
-								value={analysis._count.Assignments}
+								value={_count.Assignments}
 								icon={<FishIcon />}
 								link={`/search?table=assignment&advanced=[["analysis_run_name","equals","${analysis_run_name}"]]`}
 								tooltip="View as Search"
@@ -213,7 +213,7 @@ export default async function Analysis_run_name({
 					{/* Assay Card */}
 					<AssaysCard
 						title="Assays used in this Analysis"
-						assays={[{ assay_name: analysis.assay_name, target_gene: analysis.Assay.target_gene }]}
+						assays={[{ assay_name: analysis.assay_name, target_gene: Assay.target_gene }]}
 					/>
 				</div>
 			</div>
@@ -285,7 +285,7 @@ export default async function Analysis_run_name({
 					/>
 					<div role="tabpanel" className="tab-content w-full mt-2">
 						<Suspense fallback={<LoadingAlphaDiversityDisplay />}>
-							<AlphaDiversityDisplay alphaDiversities={analysis.AlphaDiversities} sameAnalysis />
+							<AlphaDiversityDisplay alphaDiversities={AlphaDiversities} sameAnalysis />
 						</Suspense>
 					</div>
 				</div>

@@ -28,7 +28,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 				className="tooltip tooltip-bottom tooltip-primary w-full h-full before:bg-base-100 before:text-base-content before:border before:border-base-300"
 				data-tip={`Image of ${rankLabel}: ${title}`}
 			>
-				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority={true} fill className="object-contain" />
+				<ThemeAwarePhyloPic src={imageUrl} alt="Image of taxonomy" priority className="object-contain" />
 			</div>
 		</div>
 	);

@@ -1,10 +1,23 @@
 "use client";
 
 import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
-import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, Legend, ChartData } from "chart.js";
+import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, Legend } from "chart.js";
 import { BoxPlotController, BoxAndWiskers } from "@sgratzl/chartjs-chart-boxplot";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
+import { BoxPlotDataPoint } from "@sgratzl/chartjs-chart-boxplot";
+
+export type BoxWhiskerDataset = {
+	label?: string;
+	data: (BoxPlotDataPoint | null)[];
+	borderColor?: string;
+	backgroundColor?: string;
+};
+
+export type BoxWhiskerData = {
+	labels?: string[];
+	datasets: BoxWhiskerDataset[];
+};
 
 ChartJS.register(CategoryScale, LinearScale, BoxPlotController, BoxAndWiskers, Title, Tooltip, Legend);
 
@@ -18,8 +31,8 @@ export default function BoxWhiskerPlot({
 	onLegendHover,
 	showPoints = true
 }: {
-	data: ChartData;
-	ref?: RefObject<ChartJS<any> | null>;
+	data: BoxWhiskerData;
+	ref?: RefObject<ChartJS | null>;
 	title?: string;
 	xField?: string;
 	yField?: string;
@@ -29,7 +42,7 @@ export default function BoxWhiskerPlot({
 }) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	//used if ref is not provided
-	const chartRef = useRef<ChartJS<any> | null>(null);
+	const chartRef = useRef<ChartJS | null>(null);
 
 	const { textColor } = useDaisyTheme();
 	const gridColor = chroma(textColor).alpha(0.3).hex();
@@ -109,7 +122,7 @@ export default function BoxWhiskerPlot({
 				currRef.current.destroy();
 			}
 		};
-	}, [textColor, gridColor, data, ref, title, xField, yField, legend, onLegendHover, showPoints]);
+	}, [textColor]);
 
 	return <canvas ref={canvasRef} style={{ width: "100%" }} />;
 }

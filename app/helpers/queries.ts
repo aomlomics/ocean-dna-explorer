@@ -898,7 +898,7 @@ async function updateManyRawChunked(
 	for (const d of data) {
 		//add parameterized count(s) for id field(s)
 		const valuesStrArr = [
-			...(typeof id === "string" ? [`\$${++paramIndex}`] : id.map((i) => `\$${++paramIndex}`))
+			...(typeof id === "string" ? [`\$${++paramIndex}`] : id.map(() => `\$${++paramIndex}`))
 		] as string[];
 
 		//add flat data for id field(s)

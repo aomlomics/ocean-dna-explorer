@@ -70,7 +70,6 @@ export default function Footer() {
 						<ThemeAwareLogo
 							src="/images/ngi_msu_logo_FINAL.svg"
 							alt="MSU NGI Logo"
-							fill={true}
 							sizes="(max-width: 640px) 12rem, 18rem"
 							style={{ objectFit: "contain" }}
 						/>

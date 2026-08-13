@@ -1,25 +1,5 @@
-import { DynamicClientExtensionThis, InternalArgs } from "@prisma/client/runtime/client";
-import { Prisma, PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-
-type PrismaExtension = DynamicClientExtensionThis<
-	Prisma.TypeMap<
-		InternalArgs & {
-			result: {};
-			model: {};
-			query: {};
-			client: {};
-		},
-		{}
-	>,
-	Prisma.TypeMapCb<Prisma.PrismaClientOptions>,
-	{
-		result: {};
-		model: {};
-		query: {};
-		client: {};
-	}
->;
 
 //database initialization
 const globalForPrisma = global as unknown as { prisma: PrismaClient };

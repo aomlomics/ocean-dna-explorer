@@ -60,7 +60,7 @@ export async function GET(
 			delete temp[field];
 
 			queries.push(
-				//@ts-expect-error
+				//@ts-expect-error dynamically accessing table
 				prisma[model].findMany({
 					distinct: [field],
 					select: {
@@ -73,7 +73,7 @@ export async function GET(
 		//extra fields
 		for (const field of extraFields) {
 			queries.push(
-				//@ts-expect-error
+				//@ts-expect-error dynamically accessing table
 				prisma[model].findMany({
 					distinct: [field],
 					select: {

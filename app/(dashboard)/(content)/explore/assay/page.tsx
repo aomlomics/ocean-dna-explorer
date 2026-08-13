@@ -17,6 +17,7 @@ export default async function Assay() {
 	});
 
 	const filterOptions = getOptions(assays);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanToEnum;
 
 	const tableConfig: FilterConfig[] = [

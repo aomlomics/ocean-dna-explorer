@@ -159,7 +159,7 @@ export default function HelpExplorePage() {
 								<Link href="https://www.gbif.org/" className="text-primary hover:underline" target="_blank">
 									GBIF
 								</Link>{" "}
-								Suggest API to match our taxonomy with PhyloPic's database. Images on PhyloPic are contributed by
+								Suggest API to match our taxonomy with PhyloPic&apos;s database. Images on PhyloPic are contributed by
 								scientists and artists worldwide under various Creative Commons licenses.
 							</p>
 							<p className="mb-4">If no image is displayed for a taxonomy, it could be due to:</p>

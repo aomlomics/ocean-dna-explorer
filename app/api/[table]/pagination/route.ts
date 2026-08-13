@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { Location } from "@/types/globals";
+import { MapLocation } from "@/types/globals";
 import { getDataTableName, getRelationPath, getTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
@@ -296,7 +296,7 @@ export async function GET(
 
 			const res = await prisma.$transaction(
 				async (tx) => {
-					//@ts-expect-error
+					//@ts-expect-error dynamically accessing table
 					const count = await tx[model].count({ where: query.where });
 
 					//give last page if page is too large
@@ -313,7 +313,7 @@ export async function GET(
 						query.take = parsedTake;
 					}
 
-					//@ts-expect-error
+					//@ts-expect-error dynamically accessing table
 					const result = await tx[model].findMany(query);
 
 					return { count, result };
@@ -328,7 +328,7 @@ export async function GET(
 
 		//paginate using shapes and location data
 		if (shapes && hasLocationData) {
-			result = getLocationsInsideShapes(result as Location[], shapes);
+			result = getLocationsInsideShapes(result as MapLocation[], shapes);
 			count = result.length;
 		}
 
@@ -363,7 +363,7 @@ export async function GET(
 								}
 
 								//only deep relations that are -to-many need to be gathered here
-								//@ts-expect-error
+								//@ts-expect-error dynamically accessing table
 								return prisma[dr].count({
 									where
 								});

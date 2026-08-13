@@ -84,9 +84,14 @@ function worstCategoryFromText(text: string): CategoryId | null {
 	return best;
 }
 
-function parseIucnFromGbifDescriptions(descriptions: { type?: string; language?: string; description?: string }[]): CategoryId | null {
+function parseIucnFromGbifDescriptions(
+	descriptions: { type?: string; language?: string; description?: string }[]
+): CategoryId | null {
 	const conservation = descriptions.filter((d) => (d.type ?? "").toLowerCase() === "conservation");
-	const englishFirst = [...conservation.filter((d) => (d.language ?? "").toLowerCase().startsWith("en")), ...conservation];
+	const englishFirst = [
+		...conservation.filter((d) => (d.language ?? "").toLowerCase().startsWith("en")),
+		...conservation
+	];
 	const text = englishFirst.map((d) => d.description ?? "").join("\n");
 	if (!/iucn/i.test(text)) return null;
 
@@ -202,8 +207,8 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 					fromDesc = parseIucnFromGbifDescriptions(results);
 				}
 
-				let chosen: CategoryId | null = fromIucnDist ?? fromOtherDist ?? fromDesc;
-				let kind: SourceKind = fromIucnDist
+				const chosen: CategoryId | null = fromIucnDist ?? fromOtherDist ?? fromDesc;
+				const kind: SourceKind = fromIucnDist
 					? "iucn_distribution"
 					: fromOtherDist
 						? "distribution_other"
@@ -254,7 +259,12 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 			IUCN Red List status is retrieved from <span className="font-medium text-base-content/65">GBIF</span> and is often
 			missing for a given taxonomy.
 			{sourceLine ? <> {sourceLine}</> : null} Official assessments:{" "}
-			<a href="https://www.iucnredlist.org/" className="font-medium text-primary hover:underline" target="_blank" rel="noreferrer">
+			<a
+				href="https://www.iucnredlist.org/"
+				className="font-medium text-primary hover:underline"
+				target="_blank"
+				rel="noreferrer"
+			>
 				iucnredlist.org
 			</a>
 			.
@@ -297,7 +307,9 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 							title={cell.line}
 						>
 							<span className={`text-xs font-black leading-none sm:text-sm ${cell.text}`}>{cell.short}</span>
-							<span className={`mt-1 hidden text-[7px] font-bold uppercase leading-tight opacity-95 sm:block sm:text-[8px] ${cell.text}`}>
+							<span
+								className={`mt-1 hidden text-[7px] font-bold uppercase leading-tight opacity-95 sm:block sm:text-[8px] ${cell.text}`}
+							>
 								{cell.line}
 							</span>
 						</div>

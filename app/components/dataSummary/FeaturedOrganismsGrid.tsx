@@ -285,8 +285,6 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 		return () => {
 			cancelled = true;
 		};
-		// Intentionally tied to the organism identity.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [organism.id]);
 
 	return (

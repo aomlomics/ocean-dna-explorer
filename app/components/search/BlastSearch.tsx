@@ -32,13 +32,17 @@ export default function BlastSearch() {
 
 	const [error, setError] = useState("");
 
-	const [blastDatabase, setBlastDatabase] = useState("");
-	const [blastQuery, setBlastQuery] = useState("");
-	const [task, setTask] = useState("blastn" as "blastn" | "megablast");
-	const [max_target_seqs, set_max_target_seqs] = useState(NaN);
-	const [evalue, set_evalue] = useState("");
-	const [perc_identity, set_perc_identity] = useState(NaN);
-	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(NaN);
+	const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
+
+	const [blastDatabase, setBlastDatabase] = useState(blast?.assay_name ?? "");
+	const [blastQuery, setBlastQuery] = useState(
+		blast ? blast.queries.map((q) => (typeof q === "string" ? q : `>${q[0]}\n${q[1]}`)).join("\n") : ""
+	);
+	const [task, setTask] = useState(blast?.options?.task === "megablast" ? "megablast" : "blastn");
+	const [max_target_seqs, set_max_target_seqs] = useState(blast?.options?.max_target_seqs ?? NaN);
+	const [evalue, set_evalue] = useState(blast?.options?.evalue?.toString() ?? "");
+	const [perc_identity, set_perc_identity] = useState(blast?.options?.perc_identity ?? NaN);
+	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(blast?.options?.qcov_hsp_perc ?? NaN);
 
 	useEffect(() => {
 		async function doFetch() {
@@ -76,46 +80,6 @@ export default function BlastSearch() {
 
 		doFetch();
 	}, []);
-
-	useEffect(() => {
-		if (!blastQuery || parseBlast(blastQuery)) {
-			setError("");
-		}
-	}, [blastQuery]);
-
-	useEffect(() => {
-		const defaults = {
-			database: "" as typeof blastDatabase,
-			query: "" as typeof blastQuery,
-			task: "blastn" as typeof task,
-			max_target_seqs: NaN as typeof max_target_seqs,
-			evalue: "" as typeof evalue,
-			perc_identity: NaN as typeof perc_identity,
-			qcov_hsp_perc: NaN as typeof qcov_hsp_perc
-		};
-
-		const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
-		if (blast) {
-			defaults.database = assayNames?.find((a) => a === blast.assay_name) || "";
-			defaults.query = blast.queries.map((q) => (typeof q === "string" ? q : `>${q[0]}\n${q[1]}`)).join("\n");
-
-			if (blast.options) {
-				if (blast.options.task === "megablast") defaults.task = "megablast";
-				if (blast.options.max_target_seqs != null) defaults.max_target_seqs = blast.options.max_target_seqs;
-				if (blast.options.evalue != null) defaults.evalue = blast.options.evalue.toString();
-				if (blast.options.perc_identity != null) defaults.perc_identity = blast.options.perc_identity;
-				if (blast.options.qcov_hsp_perc != null) defaults.qcov_hsp_perc = blast.options.qcov_hsp_perc;
-			}
-		}
-
-		setBlastDatabase(defaults.database);
-		setBlastQuery(defaults.query);
-		setTask(defaults.task);
-		set_max_target_seqs(defaults.max_target_seqs);
-		set_evalue(defaults.evalue);
-		set_perc_identity(defaults.perc_identity);
-		set_qcov_hsp_perc(defaults.qcov_hsp_perc);
-	}, [searchParams.toString()]);
 
 	function parseBlast(text: string) {
 		const names = new Set() as Set<string>;
@@ -229,10 +193,15 @@ export default function BlastSearch() {
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-col items-start" aria-disabled={!assayNames}>
+		<form onSubmit={handleSubmit} className="flex flex-col items-start">
 			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
 				<legend className="fieldset-legend">Database</legend>
-				<select value={blastDatabase} onChange={(e) => setBlastDatabase(e.currentTarget.value)} className="select">
+				<select
+					value={blastDatabase}
+					onChange={(e) => setBlastDatabase(e.currentTarget.value)}
+					className="select"
+					disabled={!assayNames}
+				>
 					<option value="">All</option>
 					{assayNames?.map((assay_name) => (
 						<option key={assay_name}>{assay_name}</option>
@@ -258,7 +227,13 @@ export default function BlastSearch() {
 				<textarea
 					className="textarea w-full aspect-4/1"
 					value={blastQuery}
-					onChange={(e) => setBlastQuery(e.currentTarget.value)}
+					onChange={(e) => {
+						setBlastQuery(e.currentTarget.value);
+						if (!e.currentTarget.value || parseBlast(e.currentTarget.value)) {
+							setError("");
+						}
+					}}
+					disabled={!assayNames}
 				/>
 			</fieldset>
 
@@ -283,13 +258,14 @@ export default function BlastSearch() {
 							}
 						}
 					}}
+					disabled={!assayNames}
 				/>
 			</fieldset>
 
 			{role && RolePermissions[role].includes("contribute") ? (
 				<fieldset className="fieldset mt-2">
 					<label className="label select-none">
-						<input name="blastSave" type="checkbox" className="checkbox" />
+						<input name="blastSave" type="checkbox" className="checkbox" disabled={!assayNames} />
 						Save BLAST
 					</label>
 				</fieldset>
@@ -308,6 +284,7 @@ export default function BlastSearch() {
 							className="toggle"
 							checked={task === "megablast"}
 							onChange={(e) => (e.target.checked ? setTask("megablast") : setTask("blastn"))}
+							disabled={!assayNames}
 						/>
 						{task}
 					</label>
@@ -332,6 +309,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_NUM_RESULTS}`}
 							value={max_target_seqs.toString()}
 							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -350,6 +328,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_EVALUE}`}
 							value={evalue.toString()}
 							onChange={(e) => set_evalue(e.currentTarget.value)}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -371,6 +350,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_PERCENT_IDENTITY}`}
 							value={perc_identity.toString()}
 							onChange={(e) => set_perc_identity(parseFloat(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -392,12 +372,13 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_QCOV_HSP}`}
 							value={qcov_hsp_perc.toString()}
 							onChange={(e) => set_qcov_hsp_perc(parseFloat(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 				</div>
 			</div>
 
-			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!blastQuery}>
+			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!assayNames || !blastQuery}>
 				BLAST
 			</button>
 		</form>

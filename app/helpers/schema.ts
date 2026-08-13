@@ -91,7 +91,7 @@ export function parseDbDeadBoolean(dbEnum: Record<string, string>) {
 }
 
 function getTypeRecursive(field: any): { type: DbType; optional?: boolean; values?: string[] } {
-	let shape = {} as { type: DbType; optional?: boolean; values?: string[] };
+	const shape = {} as { type: DbType; optional?: boolean; values?: string[] };
 
 	if (field instanceof ZodOptional) {
 		shape.optional = true;
@@ -317,7 +317,7 @@ export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: U
 
 	const capsTarget = capitalizeTable(target);
 	while (queue.length) {
-		let [curr, [...path]] = queue.shift()!;
+		const [curr, [...path]] = queue.shift()!;
 		path.push(curr);
 
 		if (curr === capsTarget) {

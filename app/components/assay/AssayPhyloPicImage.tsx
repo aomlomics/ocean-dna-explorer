@@ -20,7 +20,6 @@ export default function AssayPhyloPicImage({ src }: AssayPhyloPicImageProps) {
 			<ThemeAwarePhyloPic
 				src={src}
 				alt="Image of taxonomy"
-				fill
 				onLoad={() => setIsLoading(false)}
 				onError={() => setIsLoading(false)}
 				className={`object-contain transition-opacity duration-200 ${isLoading ? "opacity-0" : "opacity-100"}`}
