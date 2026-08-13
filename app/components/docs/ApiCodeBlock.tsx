@@ -35,6 +35,7 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 			});
 		});
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setTheme(document.documentElement.getAttribute("data-theme") || "dark");
 
 		observer.observe(document.documentElement, { attributes: true });

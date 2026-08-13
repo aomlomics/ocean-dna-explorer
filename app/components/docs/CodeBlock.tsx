@@ -23,6 +23,7 @@ export default function CodeBlock({ language, code }: CodeBlockProps) {
 			});
 		});
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setTheme(document.documentElement.getAttribute("data-theme") || "dark");
 
 		observer.observe(document.documentElement, { attributes: true });
