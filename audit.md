@@ -238,7 +238,7 @@ Add `<main id="main-content">` in `app/(dashboard)/(content)/layout.tsx` so ever
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-1 · UX / Correctness — No custom 404 page and no root error boundary
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P1-1 · UX / Correctness — No custom 404 page and no root error boundary
 **Location** Repository-wide: no `not-found.tsx` and no `global-error.tsx` exist anywhere under `app/`. Only two error boundaries exist: `app/(dashboard)/error.tsx` and `app/(dashboard)/(content)/(tour)/showcase/error.tsx`. `notFound()` is called by all ten entity detail pages (`explore/project/[project_id]`, `explore/analysis/[project_id]/[analysis_run_name]`, `explore/sample/[project_id]/[samp_name]`, `explore/library/[project_id]/[lib_id]`, `explore/assayPrep/[project_id]/[assay_name]`, `explore/occurrence/...`, `explore/assignment/...`, `explore/feature/[featureid]`, `explore/taxonomy/[taxonomy]`).
 
 **Issue**
