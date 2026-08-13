@@ -15,7 +15,9 @@ export default function UserList() {
 
 	const handleSearch = useDebouncedCallback(setQuery, 300);
 
-	const { data, error, isLoading } = useSWR(`/api/user?emails=true${query ? "&query=" + query : ""}`, fetcher);
+	const { data, error, isLoading } = useSWR(`/api/user?emails=true${query ? "&query=" + query : ""}`, fetcher, {
+		keepPreviousData: true
+	});
 	if (error) {
 		return <>{error}</>;
 	}
