@@ -320,7 +320,6 @@ const japanMarkers: [number, number][] = [
 
 // COBE has a hard limit on markers due to shader uniform array size.
 // Each marker uses 2 vec4 uniforms, and the shader allocates `u[64*2]`, so max markers = 64.
-const MAX_COBE_MARKERS = 64;
 const TARGET_MARKERS = 60;
 
 function sampleEvenly<T>(arr: T[], count: number): T[] {
