@@ -404,6 +404,16 @@ body:has(.tour-layout-root) {
 	overflow: hidden;
 }
 
+/* Tour pages sit inside the regular content <main>, which is otherwise a
+   centered 75–85% column. Make that shell full-viewport so the tour does not
+   have to break out with 100vw (that is what caused the right-side gap). */
+body:has(.tour-layout-root) #main-content {
+	width: 100%;
+	max-width: none;
+	margin: 0;
+	min-height: 100dvh;
+}
+
 /* Shared motion background (login-page style, slightly more movement). */
 .tour-motion-bg::before {
 	content: "";

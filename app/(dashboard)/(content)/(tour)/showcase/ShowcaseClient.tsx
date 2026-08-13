@@ -16,9 +16,9 @@ const GRID_CELL_COUNT = 10;
 const FAST_START_CELL_COUNT = 6;
 const FAST_START_TICK_MS = 55;
 const WARMUP_TICK_MS = 220;
-const STEADY_TICK_MIN_MS = 1800;
-const STEADY_TICK_MAX_MS = 2400;
-const STEADY_CLEAR_CHANCE = 0.12;
+const STEADY_TICK_MIN_MS = 2600;
+const STEADY_TICK_MAX_MS = 3500;
+const STEADY_CLEAR_CHANCE = 0.08;
 const INITIAL_TAXONOMY_DELAY_MS = 120;
 const INITIAL_PROJECT_INTRO_DELAY_MS = 950;
 const PROJECT_SWAP_INTRO_DELAY_MS = 420;
@@ -28,6 +28,19 @@ const PREMIUM_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const REVEAL_TRANSITION: Transition = { duration: 1.8, ease: PREMIUM_EASE };
 const FIRST_PROJECT_CIRCLE_DURATION_S = 6.2;
 const SWAP_PROJECT_CIRCLE_DURATION_S = 4.8;
+
+// First-fill typewriter is snappy so the grid can populate without lagging the
+// card pop-ins. Steady swaps type slower so each replacement is readable.
+const FAST_TYPE = {
+	scientific: { delay: 0.04, charMs: 14 },
+	common: { delay: 0.18, charMs: 16 },
+	path: { delay: 0.3, charMs: 10 }
+};
+const SLOW_TYPE = {
+	scientific: { delay: 0.35, charMs: 120 },
+	common: { delay: 1.2, charMs: 145 },
+	path: { delay: 1.9, charMs: 130 }
+};
 
 type IucnCategoryId = "NE" | "DD" | "LC" | "NT" | "VU" | "EN" | "CR" | "EW" | "EX";
 
@@ -78,9 +91,10 @@ type ActiveGridTaxonomy = {
 		imageUrl: string;
 		imageDetails: string;
 	} | null;
+	fastType: boolean;
 };
 
-type TaxonomyCardMeta = Omit<ActiveGridTaxonomy, "id">;
+type TaxonomyCardMeta = Omit<ActiveGridTaxonomy, "id" | "fastType">;
 
 type ShowcaseMapLocation = {
 	samp_name: string;
@@ -374,6 +388,7 @@ export default function ShowcaseClient({
 	const gridItemIdCounter = useRef(0);
 	const recentSwapSlotsRef = useRef<number[]>([]);
 	const projectEnrichBudgetUsedRef = useRef(0);
+	const initialFillCompleteRef = useRef(false);
 
 	const project = projects[projectIdx];
 	const mapLocations = useMemo(() => (project?.samples ?? []).filter(hasCoordinates), [project?.project_id]);
@@ -395,6 +410,7 @@ export default function ShowcaseClient({
 		gridItemIdCounter.current = 0;
 		recentSwapSlotsRef.current = [];
 		projectEnrichBudgetUsedRef.current = 0;
+		initialFillCompleteRef.current = false;
 		if (!list.length) return;
 
 		let cancelled = false;
@@ -478,9 +494,11 @@ export default function ShowcaseClient({
 			const next = [...gridRef.current];
 			next[slot] = {
 				id: insertedId,
-				...insertMeta
+				...insertMeta,
+				fastType: !initialFillCompleteRef.current
 			};
 			applyGrid(next);
+			if (next.every(Boolean)) initialFillCompleteRef.current = true;
 			const recentSlots = recentSwapSlotsRef.current;
 			recentSlots.push(slot);
 			if (recentSlots.length > RECENT_SWAP_MEMORY) {
@@ -514,7 +532,7 @@ export default function ShowcaseClient({
 	const projectTitleSizeClass = getProjectTitleSizeClass(project.project_name);
 
 	return (
-		<div className="tour-motion-bg relative isolate min-h-screen w-full overflow-hidden bg-linear-to-b from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
+		<div className="tour-motion-bg relative isolate min-h-dvh w-full overflow-hidden bg-linear-to-b from-base-300 via-base-200 to-base-300 text-base-content [html[data-theme='dark']_&]:from-base-300 [html[data-theme='dark']_&]:via-base-300/90 [html[data-theme='dark']_&]:to-base-300">
 			<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_18%,oklch(var(--p)/0.16),transparent_46%),radial-gradient(ellipse_at_82%_48%,oklch(var(--s)/0.13),transparent_48%)]" />
 
 			<AnimatePresence mode="wait">
@@ -522,7 +540,7 @@ export default function ShowcaseClient({
 					key={project.project_id}
 					role="group"
 					aria-label={project.project_name}
-					className="relative z-10 grid h-screen grid-cols-1 gap-6 px-[5vw] py-[5vh] lg:grid-cols-[minmax(0,0.88fr)_minmax(34rem,1.12fr)]"
+					className="relative z-10 grid h-dvh w-full min-w-0 grid-cols-1 gap-6 px-[5vw] py-[5vh] lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0, scale: 0.992, transition: { duration: 0.55, ease: PREMIUM_EASE } }}
@@ -624,8 +642,8 @@ export default function ShowcaseClient({
 						</div>
 					</div>
 
-					<div className="relative flex min-h-[56vh] items-center justify-center lg:min-h-0">
-						<div className="grid h-full min-h-[56vh] w-full grid-cols-2 grid-rows-5 place-content-center gap-x-10 gap-y-5 lg:min-h-0">
+					<div className="relative flex min-h-[56vh] min-w-0 items-center justify-center lg:min-h-0">
+						<div className="grid h-full min-h-[56vh] w-full min-w-0 grid-cols-2 grid-rows-5 place-content-center gap-x-10 gap-y-5 lg:min-h-0">
 							{Array.from({ length: GRID_CELL_COUNT }, (_, slot) => (
 								<TaxonomyGridCell key={slot} cell={gridTaxa[slot]} />
 							))}
@@ -698,8 +716,8 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 							key={`${cell.id}-scientific`}
 							text={cell.scientificName}
 							className="line-clamp-2 text-balance text-[22px] font-semibold leading-tight tracking-tight text-primary drop-shadow-md"
-							delay={0.25}
-							charMs={86}
+							delay={cell.fastType ? FAST_TYPE.scientific.delay : SLOW_TYPE.scientific.delay}
+							charMs={cell.fastType ? FAST_TYPE.scientific.charMs : SLOW_TYPE.scientific.charMs}
 						/>
 						{cell.iucn ? (
 							<span
@@ -718,15 +736,15 @@ function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
 						key={`${cell.id}-common`}
 						text={cell.commonName ?? "No common name found"}
 						className="mt-0.5 line-clamp-1 text-[16px] font-medium text-base-content/72"
-						delay={0.9}
-						charMs={104}
+						delay={cell.fastType ? FAST_TYPE.common.delay : SLOW_TYPE.common.delay}
+						charMs={cell.fastType ? FAST_TYPE.common.charMs : SLOW_TYPE.common.charMs}
 					/>
 					<TypewriterText
 						key={`${cell.id}-taxonomy`}
 						text={cell.taxonomyPath}
 						className="mt-1 line-clamp-2 wrap-anywhere text-[12px] leading-snug text-base-content/58"
-						delay={1.45}
-						charMs={92}
+						delay={cell.fastType ? FAST_TYPE.path.delay : SLOW_TYPE.path.delay}
+						charMs={cell.fastType ? FAST_TYPE.path.charMs : SLOW_TYPE.path.charMs}
 					/>
 				</div>
 			</motion.div>
@@ -792,23 +810,24 @@ const ProjectSamplesMap = memo(
 				</div>
 			);
 		}
-		return <DynamicMap locations={locations} cluster clusterRadius={42} />;
+		return (
+			<DynamicMap locations={locations} cluster clusterRadius={42} table="sample" id="samp_name" disableSearch />
+		);
 	},
 	(prev, next) => prev.projectId === next.projectId
 );
 
 function MaskedReveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
 	return (
-		<span className="block overflow-hidden">
-			<motion.span
-				className="block"
+		<div className="overflow-hidden">
+			<motion.div
 				initial={{ y: "100%" }}
 				animate={{ y: "0%" }}
 				exit={{ y: "-25%" }}
 				transition={{ ...REVEAL_TRANSITION, delay }}
 			>
 				{children}
-			</motion.span>
-		</span>
+			</motion.div>
+		</div>
 	);
 }
