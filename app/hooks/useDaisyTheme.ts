@@ -22,15 +22,14 @@ export default function useDaisyTheme() {
 	});
 
 	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setColors(getColor());
-
 		// Listen for theme changes
 		const observer = new MutationObserver(() => setColors(getColor()));
 		observer.observe(document.documentElement, {
 			attributes: true,
 			attributeFilter: ["data-theme"]
 		});
+
+		setColors(getColor());
 
 		return () => observer.disconnect();
 	}, []);

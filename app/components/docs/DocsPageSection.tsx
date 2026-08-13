@@ -18,7 +18,6 @@ const docContentProseClassName =
 	"[&_h5]:text-lg [&_h5]:font-medium [&_h5]:text-base-content [&_h5]:mt-6 [&_h5]:mb-1.5 " +
 	"[&_table_code]:text-base [&_table_code]:font-mono";
 
-//TODO: add route breadcrumbs
 export default function DocsPageSection<P extends DocsPage>({
 	page,
 	section,
