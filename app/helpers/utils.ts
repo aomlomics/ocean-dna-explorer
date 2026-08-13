@@ -13,8 +13,8 @@ import {
 } from "@/app/generated/prisma/client";
 import {
 	Circle,
-	Location,
-	LocationWithValues,
+	MapLocation,
+	MapLocationWithValues,
 	MapShape,
 	NetworkPacket,
 	NullLocation,
@@ -163,14 +163,14 @@ export function unfocus() {
 
 function measure(lat1: number, lon1: number, lat2: number, lon2: number) {
 	// generally used geo measurement function
-	var R = 6378.137; // Radius of earth in KM
-	var dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
-	var dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
-	var a =
+	const R = 6378.137; // Radius of earth in KM
+	const dLat = (lat2 * Math.PI) / 180 - (lat1 * Math.PI) / 180;
+	const dLon = (lon2 * Math.PI) / 180 - (lon1 * Math.PI) / 180;
+	const a =
 		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
 		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	var d = R * c;
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	const d = R * c;
 	return d * 1000; // meters
 }
 
@@ -184,8 +184,11 @@ function isIntersecting([p1, p2]: [Point, Point], [p3, p4]: [Point, Point]) {
 	return Turn(p1, p3, p4) != Turn(p2, p3, p4) && Turn(p1, p2, p3) != Turn(p1, p2, p4);
 }
 
-export function getLocationsInsideShapes(locs: (NullLocation | Location | LocationWithValues)[], shapes: MapShape[]) {
-	const locsInside = [] as Location[];
+export function getLocationsInsideShapes(
+	locs: (NullLocation | MapLocation | MapLocationWithValues)[],
+	shapes: MapShape[]
+) {
+	const locsInside = [] as MapLocation[];
 	for (const l of locs) {
 		if (
 			l.decimalLatitude !== null &&
@@ -232,7 +235,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 							if (l.values) {
 								locsInside.push(...l.values);
 							} else {
-								locsInside.push(l as Location);
+								locsInside.push(l as MapLocation);
 							}
 							break;
 						}
@@ -244,7 +247,7 @@ export function getLocationsInsideShapes(locs: (NullLocation | Location | Locati
 						if (l.values) {
 							locsInside.push(...l.values);
 						} else {
-							locsInside.push(l as Location);
+							locsInside.push(l as MapLocation);
 						}
 						break;
 					}
@@ -374,7 +377,7 @@ export function getTextColorHex(hex: string) {
 	if (hex.length !== 6) {
 		throw new Error("Invalid HEX color.");
 	}
-	var r = parseInt(hex.slice(0, 2), 16),
+	const r = parseInt(hex.slice(0, 2), 16),
 		g = parseInt(hex.slice(2, 4), 16),
 		b = parseInt(hex.slice(4, 6), 16);
 

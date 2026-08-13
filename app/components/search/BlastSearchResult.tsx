@@ -6,7 +6,7 @@ import { exploreFeatureUrl, getClientSideCookie } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 
 const resultsFields = [] as string[];
 const omit = ["id", "queryId", "query", "sequence", "featureid", "queryEnd", "subjectEnd"];

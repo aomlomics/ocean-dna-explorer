@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
@@ -49,28 +49,8 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	//  to set value of single response: setResponses({ id: <analysisId>, key: <fileName>, res: <response> })
 	//  to clear one response: setResponses({ id: <analysisId>, clear: true })
 	//  to clear all responses: setResponses()
-	const [responses, setResponses] = useReducer(
-		(
-			state: Record<string, ResponseSet>,
-			update?: { id: string; clear: true } | { id: string; key: string; res: NetworkProgressPacket; clear?: undefined }
-		) => {
-			if (update) {
-				if (update.clear) {
-					const temp = { ...state };
-					delete temp[update.id];
-					return temp;
-				} else {
-					return { ...state, [update.id]: { ...state[update.id], [update.key]: update.res } };
-				}
-			} else {
-				return {};
-			}
-		},
-		{}
-	);
-
-	const responsesRef = useRef(responses);
-	responsesRef.current = responses;
+	const [responses, setResponses] = useState<Record<string, ResponseSet>>({});
+	const responsesRef = useRef<Record<string, ResponseSet>>({});
 
 	function updateResponse(id: string, key: string, res: NetworkProgressPacket) {
 		const nextResponses = {
@@ -79,7 +59,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		} as Record<string, ResponseSet>;
 
 		responsesRef.current = nextResponses;
-		setResponses({ id, key, res });
+		setResponses(nextResponses);
 
 		if (res?.statusMessage === "error") {
 			//TODO: don't stop loading until ALL submissions complete

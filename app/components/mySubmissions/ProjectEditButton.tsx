@@ -163,7 +163,7 @@ export default function ProjectEditButton({
 
 			//trigger streamed action
 			await doProgressActionManyGlobal(projectEditAction, setters, handleGlobalResponse, args);
-		} catch (err) {
+		} catch {
 			setLoading(false);
 		}
 	}

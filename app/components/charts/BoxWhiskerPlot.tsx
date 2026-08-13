@@ -1,7 +1,7 @@
 "use client";
 
 import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
-import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, Legend, ChartData } from "chart.js";
+import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, Legend } from "chart.js";
 import { BoxPlotController, BoxAndWiskers } from "@sgratzl/chartjs-chart-boxplot";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";

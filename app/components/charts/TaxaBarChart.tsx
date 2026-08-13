@@ -73,7 +73,7 @@ export default function TaxaBarChart({
 
 			if (!occs) continue;
 
-			let rankVal = taxonomiesById[assign.Taxonomy.id][rank] ?? "undefined";
+			const rankVal = taxonomiesById[assign.Taxonomy.id][rank] ?? "undefined";
 			rankValues.add(rankVal);
 
 			for (const occ of occs) {

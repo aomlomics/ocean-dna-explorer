@@ -84,7 +84,7 @@ export default function AlphaDiversityDisplay({
 	const [xField, setXField] = useState(DEFAULT_X_FIELD);
 	const [hueField, setHueField] = useState(DEFAULT_HUE_FIELD);
 	const [hueFilter, setHueFilter] = useState<HueFilter>({});
-	const [currTime, setCurrTime] = useState(Date.now());
+	const [currTime, setCurrTime] = useState(() => Date.now());
 	const [showPoints, setShowPoints] = useState(false);
 
 	const { diversitiesByMetric, userDefinedFields } = useMemo(() => {

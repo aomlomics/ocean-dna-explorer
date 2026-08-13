@@ -59,7 +59,7 @@ export default function CollapsibleMapContainer({
 		openRounded = "rounded-r-none pr-1";
 	}
 
-	let panel = (
+	const panel = (
 		<div
 			className={`card card-xs card-body justify-center min-h-11.25 min-w-11.25 gap-0 bg-base-100 shadow-sm p-0 ${
 				collapse ? "hidden" : ""

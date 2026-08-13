@@ -1,9 +1,7 @@
 "use client";
 
 import { MapContainer, TileLayer, Marker, FeatureGroup } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-markercluster";
 import {
-	divIcon,
 	LatLng,
 	FeatureGroup as LFeatureGroup,
 	Map,
@@ -22,8 +20,8 @@ import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { circleToString, getLocationsInsideShapes, getShapesFromUrl, polygonToString } from "@/app/helpers/utils";
-import { LocationWithValues, Location, NullLocation, MapShape } from "@/types/globals";
-import chroma, { Color } from "chroma-js";
+import { MapLocationWithValues, MapLocation, NullLocation, MapShape } from "@/types/globals";
+import { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
@@ -37,11 +35,9 @@ import PopupWithSearch from "./popups/PopupWithSearch";
 import {
 	DEFAULT_CLUSTER_RADIUS,
 	DEFAULT_COLOR,
-	DEFAULT_OUTSIDE_COLOR,
 	DEFAULT_PALETTE,
 	DEFAULT_POINT_SIZE,
 	DEFAULT_POINT_SIZE_STEP,
-	getLegendColor,
 	getLegendValue,
 	LEGEND_VALUES_LIMIT,
 	LegendInfo,
@@ -50,6 +46,7 @@ import {
 import LoadingControl from "./controls/LoadingControl";
 import RecenterControl from "./controls/RecenterControl";
 import NoLocationPointsControl from "./controls/NoLocationPointControl";
+import ClusterGroup from "./utils/ClusterGroup";
 
 type MapProps =
 	| {
@@ -68,12 +65,6 @@ type Bounds = [[number, number], [number, number]];
 const lightMin = 35;
 const chromaMin = 35;
 
-function getConicGradient(colors: chroma.Color[]) {
-	return `conic-gradient(from ${360 / colors.length}deg,${colors
-		.map((c, i) => `${c.hex()} 0% ${(100 / colors.length) * (i + 1)}%`)
-		.join(",")});`;
-}
-
 function getShape(shape: any) {
 	if (shape.layerType === "polygon") {
 		return {
@@ -90,30 +81,6 @@ function getShape(shape: any) {
 			center: shape.layer.getLatLng(),
 			radius: shape.layer.getRadius()
 		};
-	}
-}
-
-function getMarkerHtml(count: number, valuesCount: number, combined: number, style: string, borderStyle?: string) {
-	const sharedClassName = "h-full w-full rounded-full";
-	const borderClassName = "border border-black";
-	const tooltipClassName = "tooltip tooltip-secondary before:text-primary-content";
-
-	if (count === 1 && !valuesCount) {
-		return `<div class='${sharedClassName} ${borderClassName}' style='${style}'></div>`;
-	} else {
-		if (count === 1) {
-			return `<div class='${sharedClassName} ${borderClassName} ${tooltipClassName}' data-tip='${valuesCount}' style='${style}'></div>`;
-		} else {
-			if (borderStyle) {
-				return (
-					`<div class='p-1 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${borderStyle}'>` +
-					`<div class='${sharedClassName}' style='${style}'></div>` +
-					`</div>`
-				);
-			}
-
-			return `<div class='border-4 border-white/40 ${sharedClassName} ${tooltipClassName}' data-tip='${combined}' style='${style}'></div>`;
-		}
 	}
 }
 
@@ -214,7 +181,7 @@ export default function ActualMap({
 	const featureGroupRef = useRef<LFeatureGroup>(null);
 
 	//clump locations if they have identical latlng
-	const filteredLocations = [] as Array<Location | LocationWithValues>;
+	const filteredLocations = [] as Array<MapLocation | MapLocationWithValues>;
 	//track points with invalid location data
 	const noLocationPoints = [] as NullLocation[];
 	//calculate starting map view
@@ -259,7 +226,7 @@ export default function ActualMap({
 				mapProps = { bounds };
 
 				filteredLocations.push({
-					...(locations[0] as Location),
+					...(locations[0] as MapLocation),
 					polylines
 				});
 			} else {
@@ -268,7 +235,7 @@ export default function ActualMap({
 					zoom: 5
 				};
 
-				filteredLocations.push(locations[0] as Location);
+				filteredLocations.push(locations[0] as MapLocation);
 			}
 		} else {
 			noLocationPoints.push(locations[0]);
@@ -290,7 +257,7 @@ export default function ActualMap({
 				!(nullLoc.decimalLatitude! in DeadValueEnum) &&
 				!(nullLoc.decimalLongitude! in DeadValueEnum)
 			) {
-				const loc = { ...nullLoc } as Location;
+				const loc = { ...nullLoc } as MapLocation;
 
 				//check if point already exists
 				//don't combine points if they belong to different groups
@@ -310,7 +277,7 @@ export default function ActualMap({
 					if (filteredLocations[foundIndex].values) {
 						filteredLocations[foundIndex].values.push(loc);
 					} else {
-						filteredLocations[foundIndex].values = [{ ...filteredLocations[foundIndex] } as Location, loc];
+						filteredLocations[foundIndex].values = [{ ...filteredLocations[foundIndex] } as MapLocation, loc];
 					}
 				} else {
 					bounds[0][0] = Math.max(loc.decimalLatitude, bounds[0][0]);
@@ -385,7 +352,7 @@ export default function ActualMap({
 		defaultLegend = { field: titleId, mode: "discreet", colorMap };
 
 		//assemble locations object with assigned color and list of locations
-		pointsOrGroups = {} as Record<string, LocationWithValues[]>;
+		pointsOrGroups = {} as Record<string, MapLocationWithValues[]>;
 		for (const loc of filteredLocations) {
 			const opt = getLegendValue(titleId, loc, userDefinedOptions);
 			if (pointsOrGroups[opt]) {
@@ -622,7 +589,7 @@ export default function ActualMap({
 
 	const [legendInfo, setLegendInfo] = useState(defaultLegend);
 	const [loading, setLoading] = useState(false);
-	const [pointsInside, setPointsInside] = useState([] as Location[]);
+	const [pointsInside, setPointsInside] = useState([] as MapLocation[]);
 
 	const [pointSize, setPointSize] = useState(DEFAULT_POINT_SIZE as number | undefined);
 	const [pointSizeStep, setPointSizeStep] = useState(DEFAULT_POINT_SIZE_STEP as number | undefined);
@@ -654,9 +621,9 @@ export default function ActualMap({
 	}
 
 	//shapes
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (drawReady) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			checkShapes();
 
 			if (shapesToUrl) {
@@ -678,9 +645,9 @@ export default function ActualMap({
 	}, [shapes]);
 
 	//waiting until the ref is set, for some reason the ref won't work as a dependency, so wait 2 cycles of rendering to render the draw feature group
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (!drawAlmostReady) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDrawAlmostReady(true);
 		} else if (!drawReady) {
 			if (shapesToUrl) {
@@ -702,161 +669,22 @@ export default function ActualMap({
 							}
 						}
 					}
+					// eslint-disable-next-line react-hooks/set-state-in-effect
 					setShapes(tempShapes);
 				}
 			}
 
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);
 
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		checkShapes();
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setLoading(false);
 	}, [legendInfo]);
-
-	function ClusterGroup({ radius, children }: { radius: number | undefined; children: ReactNode }) {
-		return (
-			<MarkerClusterGroup
-				maxClusterRadius={radius || 0}
-				singleMarkerMode={true}
-				chunkedLoading={true}
-				iconCreateFunction={(cluster: any) => {
-					let count = 0;
-					let childrenWithValues = 0;
-					let valuesCount = 0;
-					let outsideShapesCount = 0;
-					const uniqueColors = {} as Record<string, { color: chroma.Color; percent?: number }>; //key is hex
-					const colorsArray = [] as chroma.Color[];
-					for (const marker of cluster.getAllChildMarkers()) {
-						count++;
-
-						//TODO: make colors have less alpha when outside shapes instead of turning them black
-						const loc = marker.options.children.props.loc;
-						if (loc.values) {
-							childrenWithValues++;
-							valuesCount += loc.values.length;
-
-							//check if location is outside any drawn shapes
-							if (
-								Object.keys(shapes).length &&
-								pointsInside &&
-								pointsInside.find((p) =>
-									typeof id === "string" ? p[id] === loc[id] : id.every((f) => p[f] === loc[f])
-								) === undefined
-							) {
-								outsideShapesCount += loc.values.length;
-							} else {
-								for (const val of loc.values) {
-									const { color, percent } = getLegendColor(legendInfo, val, userDefinedOptions);
-									uniqueColors[color.hex()] = { color, percent };
-									colorsArray.push(color);
-								}
-							}
-						} else {
-							//check if location is outside any drawn shapes
-							if (
-								Object.keys(shapes).length &&
-								pointsInside &&
-								pointsInside.find((p) =>
-									typeof id === "string" ? p[id] === loc[id] : id.every((f) => p[f] === loc[f])
-								) === undefined
-							) {
-								outsideShapesCount++;
-							} else {
-								const { color, percent } = getLegendColor(legendInfo, loc, userDefinedOptions);
-								uniqueColors[color.hex()] = { color, percent };
-								colorsArray.push(color);
-							}
-						}
-					}
-
-					const combined = childrenWithValues ? count - childrenWithValues + valuesCount : count;
-
-					let size =
-						(pointSize || DEFAULT_POINT_SIZE) +
-						(pointSizeStep || DEFAULT_POINT_SIZE_STEP) * (Math.floor(combined).toString().length - 1);
-					if (count > 1) {
-						//TODO: make border size a percentage of current size
-						size += 5;
-					}
-
-					let html;
-					const uniqueHex = Object.keys(uniqueColors);
-					if ((uniqueHex.length === 1 && !outsideShapesCount) || (!uniqueHex.length && outsideShapesCount)) {
-						//only one color, no gradient
-						let color;
-						if (outsideShapesCount) {
-							color = DEFAULT_OUTSIDE_COLOR;
-						} else {
-							color = Object.values(uniqueColors)[0].color;
-						}
-
-						html = getMarkerHtml(
-							count,
-							valuesCount,
-							combined,
-							`background-color:${color.hex()};`,
-							`background-color:${color.alpha(0.5).hex()};`
-						);
-					} else {
-						//more than one color, display as gradient
-						let orderedColors;
-
-						if (legendInfo?.mode === "discreet") {
-							orderedColors = Object.values(legendInfo.colorMap).filter((color) => uniqueHex.includes(color.hex()));
-						} else {
-							//gradient
-							orderedColors = Object.values(uniqueColors)
-								.sort((c1, c2) => {
-									if (c1.percent && c2.percent) {
-										return c1.percent - c2.percent;
-									} else {
-										let val = 0;
-
-										if (!c1.percent) {
-											val++;
-										}
-										if (!c2.percent) {
-											val--;
-										}
-
-										return val;
-									}
-								})
-								.map((obj) => obj.color);
-						}
-
-						//move first color to end because conic gradient doesn't start at 12 o'clock
-						orderedColors.push(orderedColors.shift() as chroma.Color);
-
-						//account for points outside of drawn shapes
-						if (outsideShapesCount) {
-							orderedColors.push(DEFAULT_OUTSIDE_COLOR);
-						}
-
-						html = getMarkerHtml(
-							count,
-							valuesCount,
-							combined,
-							`background:${getConicGradient(orderedColors)};`,
-							`background:${getConicGradient(orderedColors.map((color) => color.alpha(0.5)))};`
-							// `background:${getConicGradient(orderedColors.map((color) => color.mix("white", 0.4, "oklab")))};`
-						);
-					}
-
-					return divIcon({
-						className: "bg-none",
-						html,
-						iconSize: [size, size]
-					});
-				}}
-			>
-				{children}
-			</MarkerClusterGroup>
-		);
-	}
 
 	return (
 		<div className="flex flex-col items-start h-full w-full z-100 relative">
@@ -945,7 +773,7 @@ export default function ActualMap({
 				/>
 
 				<FeatureGroup ref={featureGroupRef}>
-					{draw && drawReady && featureGroupRef.current && (
+					{draw && drawReady && (
 						<EditControl
 							position="topright"
 							onEdited={(e) => {
@@ -983,14 +811,23 @@ export default function ActualMap({
 								marker: false,
 								circlemarker: false
 							}}
-							featureGroup={featureGroupRef.current}
+							featureGroup={featureGroupRef.current!}
 						/>
 					)}
 				</FeatureGroup>
 
 				{Array.isArray(pointsOrGroups) ? (
 					//points
-					<ClusterGroup radius={cluster ? clusterRadiusValue : 0}>
+					<ClusterGroup
+						shapes={shapes}
+						pointsInside={pointsInside}
+						id={id}
+						legendInfo={legendInfo}
+						userDefinedOptions={userDefinedOptions}
+						pointSize={pointSize}
+						pointSizeStep={pointSizeStep}
+						radius={clusterRadiusValue ?? 0}
+					>
 						{pointsOrGroups.reduce((acc, loc, i) => {
 							if (
 								!(
@@ -1043,7 +880,16 @@ export default function ActualMap({
 					//groups
 					<>
 						{Object.values(pointsOrGroups).map((locArray, i) => (
-							<ClusterGroup key={i} radius={cluster ? clusterRadiusValue : 0}>
+							<ClusterGroup
+								shapes={shapes}
+								pointsInside={pointsInside}
+								id={id}
+								legendInfo={legendInfo}
+								userDefinedOptions={userDefinedOptions}
+								pointSize={pointSize}
+								pointSizeStep={pointSizeStep}
+								radius={clusterRadiusValue ?? 0}
+							>
 								{locArray.reduce((acc, loc, j) => {
 									if (
 										!(

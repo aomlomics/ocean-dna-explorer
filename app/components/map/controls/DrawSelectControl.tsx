@@ -11,7 +11,7 @@ import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import { circleToString, polygonToString } from "@/app/helpers/utils";
 import PopupWithSearchBody from "../popups/PopupWithSearchBody";
-import { Location } from "@/types/globals";
+import { MapLocation } from "@/types/globals";
 
 export default function DrawSelectedControl({
 	pointsInside,
@@ -24,7 +24,7 @@ export default function DrawSelectedControl({
 	shapes,
 	disableSearch
 }: {
-	pointsInside: Location[];
+	pointsInside: MapLocation[];
 	table: Uncapitalize<Prisma.ModelName>;
 	where?: Record<string, string>;
 	id: TableMetadataValue["titleField"];

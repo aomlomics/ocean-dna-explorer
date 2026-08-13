@@ -114,15 +114,15 @@ export type NullLocation = {
 	decimalLongitude: number | null;
 	[key: string]: any;
 } & { values?: never };
-export type Location = {
+export type MapLocation = {
 	decimalLatitude: number;
 	decimalLongitude: number;
 	[key: string]: any;
 } & { values?: never; polylines?: never };
-export type LocationWithValues = {
+export type MapLocationWithValues = {
 	decimalLatitude: number;
 	decimalLongitude: number;
-	values?: Location[];
+	values?: MapLocation[];
 	polylines?: [number, number][];
 	[key: string]: any;
 };

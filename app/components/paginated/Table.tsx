@@ -257,14 +257,13 @@ export default function Table({
 	});
 
 	// Reset to first page whenever the table or URL search params change
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (page !== 1) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setPage(1);
 		}
 	}, [table, searchParams]);
 
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			if (hideEmpty) {
@@ -284,14 +283,15 @@ export default function Table({
 					}
 				}
 
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setEmptyFilter(emptyFields);
 			} else if (Object.keys(emptyFilter).length) {
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setEmptyFilter({});
 			}
 		}
 	}, [hideEmpty, data]);
 
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
 			//pass up extra results from query
@@ -305,6 +305,7 @@ export default function Table({
 
 			//set to last page if page is too large
 			if ((page - 1) * take > data.count) {
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setPage(Math.floor(data.count / take) + 1);
 			}
 
@@ -319,7 +320,9 @@ export default function Table({
 			if (tempUserDefinedHeadersSet.size) {
 				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
 				//TODO: inject deep relations headers after close relation headers
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setHeaders([...headers.filter((head) => !userDefinedHeaders.includes(head)), ...tempUserDefinedHeadersSet]);
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setUserDefinedHeaders(tempUserDefinedHeaders);
 
 				if (!userDefinedHeaders.length && filterHeadersAtStart) {
@@ -329,6 +332,7 @@ export default function Table({
 					} as Record<string, true>;
 
 					if (Object.keys(tempHeadersFilter).length) {
+						// eslint-disable-next-line react-hooks/set-state-in-effect
 						setHeadersFilter(tempHeadersFilter);
 					}
 				}
