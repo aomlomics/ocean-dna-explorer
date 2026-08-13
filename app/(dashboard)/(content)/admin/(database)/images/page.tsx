@@ -33,8 +33,14 @@ export default async function AdminImages() {
 				<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 					{images.map((img) => (
 						<div key={img.id} className="card bg-base-100 shadow">
-							<figure className="aspect-video overflow-hidden bg-base-200">
-								<Image src={img.url} alt={img.name} className="object-cover w-full h-full" />
+							<figure className="relative aspect-video overflow-hidden bg-base-200">
+								<Image
+									src={img.url}
+									alt={img.name}
+									fill
+									sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+									className="object-cover"
+								/>
 							</figure>
 							<div className="card-body p-4">
 								<div className="flex items-center justify-between gap-2">

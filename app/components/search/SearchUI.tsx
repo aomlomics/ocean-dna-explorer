@@ -845,7 +845,8 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 									setApiFieldSelections((prev) => {
 										if (!normalizedSelection.length || selectionIsAll) {
-											const { [searchTable]: _omit, ...rest } = prev;
+											const rest = { ...prev };
+											delete rest[searchTable];
 											return rest;
 										}
 
