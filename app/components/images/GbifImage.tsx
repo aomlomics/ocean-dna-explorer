@@ -1,6 +1,7 @@
 "use client";
 
 import type { Taxonomy } from "@/app/generated/prisma/client";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { GbifImagePayload } from "./GbifClient";
 import { formatGbifAttributionDisplay, getGbifStillImagePayload } from "./GbifClient";
@@ -132,15 +133,15 @@ export default function GbifImage({
 							<span className="loading loading-spinner loading-lg text-primary" />
 						</div>
 					) : null}
-					<img
+					<Image
 						src={activeSrc}
 						alt={altText}
-						width={480}
-						height={480}
+						fill
+						sizes="(max-width: 768px) 100vw, 320px"
+						unoptimized
 						onLoad={handleImgLoad}
 						onError={handleImgError}
-						className={`absolute inset-0 box-border h-full w-full max-h-full max-w-full ${fitClass}`}
-						decoding="async"
+						className={fitClass}
 					/>
 				</div>
 			</div>
