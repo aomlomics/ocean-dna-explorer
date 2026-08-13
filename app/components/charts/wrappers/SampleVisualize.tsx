@@ -1,10 +1,19 @@
+"use client";
+
 import { Sample } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
-import SampleScatterPlot from "../SampleScatterPlot";
+import dynamic from "next/dynamic";
+const SampleScatterPlot = dynamic(() => import("../SampleScatterPlot"), {
+	ssr: false
+});
+
+export const DEFAULT_X_FIELD = "eventDate" as keyof Sample;
+export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof Sample;
+export const DEFAULT_LEGEND_FIELD = "project_id" as keyof Sample;
 
 export default function SampleVisualize({ samples }: { samples: Sample[] }) {
 	const fields = new Set(["project_id"]) as Set<string>;

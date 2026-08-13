@@ -12,11 +12,11 @@ import InfoButton from "../InfoButton";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import Checklist from "../Checklist";
 import chroma from "chroma-js";
+import { DEFAULT_RANK } from "./wrappers/TaxonomyVisualize";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, zoomPlugin);
 
 const DEFAULT_MAX_TAXONOMIES = 20;
-export const DEFAULT_RANK = "kingdom" as (typeof TaxonomicRanks)[0];
 
 //TODO: separate libraries by project_id
 //TODO: paginate on averageBy

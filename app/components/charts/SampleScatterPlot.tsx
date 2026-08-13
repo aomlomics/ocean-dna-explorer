@@ -21,14 +21,11 @@ import { DeadValueEnum } from "@/types/enums";
 import { getZodType } from "@/app/helpers/schema";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
+import { DEFAULT_LEGEND_FIELD, DEFAULT_X_FIELD, DEFAULT_Y_FIELD } from "./wrappers/SampleVisualize";
 
 ChartJS.register(TimeScale, LinearScale, PointElement, ScatterController, Title, Tooltip, Legend, zoomPlugin);
 
 type SamplePoint = { x: number | Date; y: number | Date; samp_name: Sample["samp_name"] };
-
-export const DEFAULT_X_FIELD = "eventDate" as keyof Sample;
-export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof Sample;
-export const DEFAULT_LEGEND_FIELD = "project_id" as keyof Sample;
 
 const POINT_STYLES = {
 	borderWidth: 1,

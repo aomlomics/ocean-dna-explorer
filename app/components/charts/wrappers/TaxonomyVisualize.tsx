@@ -1,10 +1,17 @@
+"use client";
+
 import { DeadValueEnum } from "@/types/enums";
 import { Assignment, Library, Occurrence, Sample, Taxonomy } from "../../../generated/prisma/client";
 import { getZodType } from "../../../helpers/schema";
-import TaxaBarChart from "../TaxaBarChart";
 import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import dynamic from "next/dynamic";
+const TaxaBarChart = dynamic(() => import("../TaxaBarChart"), {
+	ssr: false
+});
+
+export const DEFAULT_RANK = "kingdom" as (typeof TaxonomicRanks)[0];
 
 export default function TaxonomyVisualize({
 	occurrences,
