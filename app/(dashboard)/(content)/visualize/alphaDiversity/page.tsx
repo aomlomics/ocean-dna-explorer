@@ -12,7 +12,8 @@ export default function VisualizeAlphaDiversity() {
 
 	const { data, error, isLoading } = useSWR(
 		`/api/alphaDiversity/swapToTable?relations=alphaDiversityIndex,sample&relationsAllFields=true&${searchParams.toString()}`,
-		fetcher
+		fetcher,
+		{ revalidateOnFocus: false }
 	);
 	if (error) {
 		throw new Error("Alpha Diversity query failed to reach the server.");

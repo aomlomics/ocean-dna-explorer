@@ -24,7 +24,8 @@ export default function VisualizeTaxonomy() {
 			`/api/taxonomy/swapToTable?fields=id,${TaxonomicRanks.join(",")}&${stringParams}`,
 			`/api/sample/swapToTable?relations=Libraries&relationsAllFields=true&${stringParams}`
 		],
-		fetcherAllSuccess
+		fetcherAllSuccess,
+		{ revalidateOnFocus: false }
 	);
 	if (error) {
 		throw new Error("Taxonomy query failed to reach the server.");

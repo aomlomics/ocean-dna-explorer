@@ -10,7 +10,9 @@ import useSWR from "swr";
 export default function VisualizeMetadata() {
 	const searchParams = useSearchParams();
 
-	const { data, error, isLoading } = useSWR(`/api/sample/swapToTable?${searchParams.toString()}`, fetcher);
+	const { data, error, isLoading } = useSWR(`/api/sample/swapToTable?${searchParams.toString()}`, fetcher, {
+		revalidateOnFocus: false
+	});
 	if (error) {
 		throw new Error("Sample query failed to reach the server.");
 	}

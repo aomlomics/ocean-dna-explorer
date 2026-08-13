@@ -4,14 +4,14 @@ import { fetcher } from "@/app/helpers/utils";
 import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 
 export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
 	const [theme, setTheme] = useState(document.documentElement.getAttribute("data-theme") || "dark");
 	const [copied, setCopied] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
-	const { data, error, isLoading } = useSWR(url, fetcher);
+	const { data, error, isLoading } = useSWRImmutable(url, fetcher);
 	let code;
 	if (error) {
 		code = JSON.stringify(error, null, 2);
