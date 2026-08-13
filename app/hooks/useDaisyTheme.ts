@@ -29,6 +29,7 @@ export default function useDaisyTheme() {
 			attributeFilter: ["data-theme"]
 		});
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setColors(getColor());
 
 		return () => observer.disconnect();
