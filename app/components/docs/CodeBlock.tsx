@@ -10,7 +10,7 @@ interface CodeBlockProps {
 }
 
 export default function CodeBlock({ language, code }: CodeBlockProps) {
-	const [theme, setTheme] = useState(document.documentElement.getAttribute("data-theme") || "dark");
+	const [theme, setTheme] = useState("dark");
 	const [copied, setCopied] = useState(false);
 
 	useEffect(() => {
@@ -22,6 +22,8 @@ export default function CodeBlock({ language, code }: CodeBlockProps) {
 				}
 			});
 		});
+
+		setTheme(document.documentElement.getAttribute("data-theme") || "dark");
 
 		observer.observe(document.documentElement, { attributes: true });
 		return () => observer.disconnect();

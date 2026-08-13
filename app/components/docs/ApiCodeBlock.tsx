@@ -7,7 +7,7 @@ import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/pris
 import useSWRImmutable from "swr/immutable";
 
 export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
-	const [theme, setTheme] = useState(document.documentElement.getAttribute("data-theme") || "dark");
+	const [theme, setTheme] = useState("dark");
 	const [copied, setCopied] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -34,6 +34,8 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 				}
 			});
 		});
+
+		setTheme(document.documentElement.getAttribute("data-theme") || "dark");
 
 		observer.observe(document.documentElement, { attributes: true });
 		return () => observer.disconnect();
