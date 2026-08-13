@@ -1,41 +1,37 @@
-"use client";
-
 import ExploreTabButtons from "@/app/components/explore/ExploreTabButtons";
-import DynamicMap from "@/app/components/map/DynamicMap";
-import MapWrapper from "@/app/components/map/MapWrapper";
-import TableDisplay from "@/app/components/paginated/TableDisplay";
-import BlastSearch from "@/app/components/search/BlastSearch";
-import BlastSearchResult from "@/app/components/search/BlastSearchResult";
 import SearchUI from "@/app/components/search/SearchUI";
-import { BlastQuery, BlastQueryResult, Sample } from "@/app/generated/prisma/client";
 import { getDataTableNameSafe } from "@/app/helpers/schema";
-import { capitalizeTable, getRandomKey } from "@/app/helpers/utils";
+import { capitalizeTable } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import TableInfo from "@/app/components/TableInfo";
+import SearchContent from "@/app/components/search/SearchCollapsibles";
+import { redirect } from "next/navigation";
+import { prisma } from "@/app/helpers/prisma";
 
-export default function Search() {
-	const router = useRouter();
-	const searchParams = useSearchParams();
+export default async function Search({
+	searchParams
+}: {
+	searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+	const params = await searchParams;
+	let table;
+	if (params.table && typeof params.table == "string") {
+		table = getDataTableNameSafe(params.table);
+	}
+	if (!table) {
+		redirect("/search?table=project");
+	}
 
-	const [extraResults, setExtraResults] = useState({
-		blastResult: undefined as BlastQueryResult[] | undefined,
-		existingBlastDate: undefined as BlastQuery["dateCalculated"] | undefined,
-		samples: undefined as Sample[] | undefined
-	});
-	const [mapKey, setMapKey] = useState("0");
-
-	const table = getDataTableNameSafe(searchParams.get("table"));
-
-	useEffect(() => {
-		if (!table) {
-			router.replace("/search?table=project");
+	const assays = await prisma.assay.findMany({
+		where: {
+			Analyses: {
+				some: {}
+			}
+		},
+		select: {
+			assay_name: true
 		}
-	}, [table]);
-
-	//TODO: add loading state
-	if (!table) return <></>;
+	});
 
 	return (
 		<>
@@ -61,87 +57,7 @@ export default function Search() {
 				</div>
 			</div>
 
-			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm mb-4">
-				<input key={table + "blastInput"} defaultChecked={!!searchParams.get("blastQuery")} type="checkbox" />
-				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">BLAST</div>
-				<div key={table + "blast"} className="collapse-content grid grid-cols-2 gap-10">
-					<BlastSearch />
-					<BlastSearchResult
-						blastResult={extraResults.blastResult}
-						existingBlastDate={extraResults.existingBlastDate}
-						className="h-200"
-					/>
-				</div>
-			</div>
-
-			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
-				<input
-					key={table + "mapInput"}
-					defaultChecked={!!(searchParams.get("circle") || searchParams.get("polygon"))}
-					type="checkbox"
-				/>
-				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">
-					<div className="z-10 flex items-center gap-2">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							strokeWidth={1.9}
-							stroke="currentColor"
-							className="size-5 text-primary"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"
-							/>
-						</svg>
-						<span>Show on Map</span>
-					</div>
-				</div>
-				<div className="collapse-content text-sm p-0">
-					<div className="rounded-lg">
-						<MapWrapper loading={!extraResults.samples}>
-							<DynamicMap
-								key={mapKey}
-								locations={extraResults.samples || []}
-								legend
-								draw
-								shapesToUrl
-								cluster
-								disableSearch
-							/>
-						</MapWrapper>
-					</div>
-				</div>
-			</div>
-
-			<div className="mt-6" id="search-results">
-				<h2 className="text-xl mb-2">
-					Showing all{" "}
-					{table && TableMetadata[table] ? (
-						<span className="text-primary font-bold">{TableMetadata[table].plural}</span>
-					) : (
-						"results"
-					)}{" "}
-					that match your search
-				</h2>
-
-				<div className="w-full">
-					<TableDisplay
-						key={table}
-						table={table}
-						displayMode={table === "taxonomy" ? "grid" : "table"}
-						ignoreParams={["table"]}
-						extraParams={{ getSamples: "true" }}
-						setExtraResults={(args) => {
-							setExtraResults(args);
-							setMapKey(getRandomKey());
-						}}
-						toggle={table === "taxonomy" || table === "project" || undefined}
-					/>
-				</div>
-			</div>
+			<SearchContent table={table} assayNames={assays.map((a) => a.assay_name)} />
 		</>
 	);
 }

@@ -2,6 +2,7 @@
 
 import "@/styles/globals.css";
 import { Source_Sans_3 } from "next/font/google";
+import Link from "next/link";
 import { useEffect } from "react";
 
 const sourceSans = Source_Sans_3({
@@ -10,13 +11,7 @@ const sourceSans = Source_Sans_3({
 	display: "swap"
 });
 
-export default function GlobalError({
-	error,
-	reset
-}: {
-	error: Error & { digest?: string };
-	reset: () => void;
-}) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
 	useEffect(() => {
 		console.error(error);
 	}, [error]);
@@ -28,14 +23,14 @@ export default function GlobalError({
 					<h1 className="mb-2 text-4xl font-normal text-primary">Something went wrong</h1>
 					<p className="mb-6 max-w-md text-base-content/80">
 						We&apos;ve encountered an unexpected issue. You can try again, or report it on our{" "}
-						<a
+						<Link
 							href="https://github.com/aomlomics/ocean-dna-explorer/issues"
 							className="text-primary underline"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
 							GitHub Issues tracker
-						</a>
+						</Link>
 						.
 					</p>
 					<div className="flex flex-wrap justify-center gap-3">

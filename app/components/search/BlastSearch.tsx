@@ -1,12 +1,11 @@
 "use client";
 
-import { Analysis, Assay } from "@/app/generated/prisma/client";
+import { Assay } from "@/app/generated/prisma/client";
 import { MAX_UNCOMPRESSED_LENGTH, compressURIComponent } from "@/app/helpers/utils";
-import { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SubmitEvent, useEffect, useState } from "react";
+import { SubmitEvent, useState } from "react";
 import InfoButton from "../InfoButton";
 import { BlastQueryWithRelations } from "@/prisma/generated/zod";
 import Link from "next/link";
@@ -20,7 +19,7 @@ const DEFAULT_QCOV_HSP = 80;
 //TODO: add clear query button
 //TODO: add list of existing queries for current user
 //TODO: use the useRouter hook instead of updating window.location.href directly (previously was unreliably failing to navigate on prod)
-export default function BlastSearch() {
+export default function BlastSearch({ assayNames }: { assayNames: Assay["assay_name"][] }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 
@@ -28,13 +27,14 @@ export default function BlastSearch() {
 	const role = sessionClaims?.metadata?.role;
 
 	const [prevQueries, setPrevQueries] = useState(undefined as BlastQueryWithRelations[] | undefined);
-	const [assayNames, setAssayNames] = useState(undefined as Assay["assay_name"][] | undefined);
 
 	const [error, setError] = useState("");
 
 	const blast = parseBlastRequest(new URLSearchParams(searchParams), { safe: true });
 
-	const [blastDatabase, setBlastDatabase] = useState(blast?.assay_name ?? "");
+	const [blastDatabase, setBlastDatabase] = useState(
+		blast?.assay_name ?? assayNames.find((a) => a === searchParams.get("blastDatabase")) ?? ""
+	);
 	const [blastQuery, setBlastQuery] = useState(
 		blast ? blast.queries.map((q) => (typeof q === "string" ? q : `>${q[0]}\n${q[1]}`)).join("\n") : ""
 	);
@@ -43,43 +43,6 @@ export default function BlastSearch() {
 	const [evalue, set_evalue] = useState(blast?.options?.evalue?.toString() ?? "");
 	const [perc_identity, set_perc_identity] = useState(blast?.options?.perc_identity ?? NaN);
 	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(blast?.options?.qcov_hsp_perc ?? NaN);
-
-	useEffect(() => {
-		async function doFetch() {
-			const res = await fetch("/api/assay?fields=assay_name&relations=analysis");
-			if (res.ok) {
-				const response = (await res.json()) as NetworkPacket;
-				if (response.statusMessage === "success") {
-					const names = response.result.reduce(
-						(
-							acc: Assay["assay_name"][],
-							a: { assay_name: Assay["assay_name"]; Analyses: { id: Analysis["id"] }[] }
-						) => {
-							if (a.Analyses.length) {
-								acc.push(a.assay_name);
-							}
-
-							return acc;
-						},
-						[]
-					) as Assay["assay_name"][];
-					setAssayNames(names);
-					const blastDbParam = names?.find((a) => a === searchParams.get("blastDatabase"));
-					if (blastDbParam) {
-						setBlastDatabase(blastDbParam);
-					}
-				} else if (response.statusMessage === "error") {
-					setError(response.error);
-					return;
-				}
-			} else {
-				setError(res.statusText);
-				return;
-			}
-		}
-
-		doFetch();
-	}, []);
 
 	function parseBlast(text: string) {
 		const names = new Set() as Set<string>;
@@ -194,7 +157,7 @@ export default function BlastSearch() {
 
 	return (
 		<form onSubmit={handleSubmit} className="flex flex-col items-start">
-			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
+			<fieldset className="fieldset w-full">
 				<legend className="fieldset-legend">Database</legend>
 				<select
 					value={blastDatabase}

@@ -1,14 +1,8 @@
+"use client";
+
 import { useEffect, useState } from "react";
 
 function getColor() {
-	if (typeof document === "undefined") {
-		return {
-			textColor: "",
-			backgroundColor: "",
-			primaryColor: ""
-		};
-	}
-
 	const computedElement = getComputedStyle(document.documentElement);
 	const computedBody = getComputedStyle(document.body);
 
@@ -20,15 +14,9 @@ function getColor() {
 }
 
 export default function useDaisyTheme() {
-	const [colors, setColors] = useState({
-		textColor: "",
-		backgroundColor: "",
-		primaryColor: ""
-	});
+	const [colors, setColors] = useState(getColor());
 
 	useEffect(() => {
-		setColors(getColor());
-
 		// Listen for theme changes
 		const observer = new MutationObserver(() => setColors(getColor()));
 		observer.observe(document.documentElement, {

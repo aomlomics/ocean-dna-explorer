@@ -394,10 +394,6 @@ export function decompressURIComponent(str: string) {
 	return decompressFromEncodedURIComponent(str.substring(COMPRESSION_FORMAT.length + 1));
 }
 
-export function getRandomKey() {
-	return (Math.random() + 1).toString(36).substring(7);
-}
-
 export function getClientSideCookie(name: string) {
 	if (typeof document === "undefined") {
 		throw new Error("Must be in client side.");
