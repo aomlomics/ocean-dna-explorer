@@ -270,8 +270,8 @@ export default function Table({
 				const emptyFields = {} as Record<string, true>;
 				const exemptFields = {} as Record<string, true>;
 
-				for (let row of data.result) {
-					for (let [field, value] of Object.entries(row)) {
+				for (const row of data.result) {
+					for (const [field, value] of Object.entries(row)) {
 						if (!combinedOmit.includes(field)) {
 							if (value === null && !exemptFields[field]) {
 								emptyFields[field] = true;

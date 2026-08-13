@@ -3,7 +3,7 @@
 import daisyui from "daisyui";
 import scrollbar from "tailwind-scrollbar";
 
-export default {
+const config = {
 	darkMode: "class",
 	content: [
 		"./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -169,3 +169,5 @@ export default {
 		themeRoot: ":root"
 	}
 };
+
+export default config;

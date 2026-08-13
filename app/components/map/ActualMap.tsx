@@ -811,6 +811,7 @@ export default function ActualMap({
 								marker: false,
 								circlemarker: false
 							}}
+							// eslint-disable-next-line react-hooks/refs
 							featureGroup={featureGroupRef.current!}
 						/>
 					)}
@@ -881,6 +882,7 @@ export default function ActualMap({
 					<>
 						{Object.values(pointsOrGroups).map((locArray, i) => (
 							<ClusterGroup
+								key={i}
 								shapes={shapes}
 								pointsInside={pointsInside}
 								id={id}
