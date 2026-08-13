@@ -12,9 +12,9 @@ const eslintConfig = [
 			"out/**",
 			"build/**",
 			"next-env.d.ts",
-			"app/generated/**",
-			"app/prisma/generated/**",
-			"app/prismaImages/generated/**"
+			"generated/**",
+			"prisma/generated/**",
+			"prismaImages/generated/**"
 		],
 		rules: {
 			"@typescript-eslint/no-explicit-any": "off",
