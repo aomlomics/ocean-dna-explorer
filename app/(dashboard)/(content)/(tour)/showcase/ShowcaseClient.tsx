@@ -16,13 +16,10 @@ const GRID_CELL_COUNT = 10;
 const FAST_START_CELL_COUNT = 6;
 const FAST_START_TICK_MS = 55;
 const WARMUP_TICK_MS = 220;
-const STEADY_TICK_MIN_MS = 2600;
-const STEADY_TICK_MAX_MS = 3500;
-const STEADY_CLEAR_CHANCE = 0.08;
+const STEADY_TICK_MS = 3000;
 const INITIAL_TAXONOMY_DELAY_MS = 120;
 const INITIAL_PROJECT_INTRO_DELAY_MS = 950;
 const PROJECT_SWAP_INTRO_DELAY_MS = 420;
-const RECENT_SWAP_MEMORY = 3;
 const MAX_NEW_ENRICHES_PER_PROJECT = 24;
 const PREMIUM_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const REVEAL_TRANSITION: Transition = { duration: 1.8, ease: PREMIUM_EASE };
@@ -158,10 +155,6 @@ function scoreEnglishVernacular(row: {
 	if (["US", "GB", "CA", "AU", "NZ"].includes((row.country ?? "").toUpperCase())) score += 25;
 	if (/^[A-Za-z][A-Za-z\s-]*$/.test(name)) score += 5;
 	return score;
-}
-
-function randomSteadyTickMs() {
-	return STEADY_TICK_MIN_MS + Math.floor(Math.random() * (STEADY_TICK_MAX_MS - STEADY_TICK_MIN_MS + 1));
 }
 
 function getProjectTitleSizeClass(projectName: string): string {
@@ -386,9 +379,7 @@ export default function ShowcaseClient({
 	const [isFirstProjectPaint, setIsFirstProjectPaint] = useState(true);
 	const nextTaxonomyIndex = useRef(0);
 	const gridItemIdCounter = useRef(0);
-	const recentSwapSlotsRef = useRef<number[]>([]);
 	const projectEnrichBudgetUsedRef = useRef(0);
-	const initialFillCompleteRef = useRef(false);
 
 	const project = projects[projectIdx];
 	const mapLocations = useMemo(() => (project?.samples ?? []).filter(hasCoordinates), [project?.project_id]);
@@ -408,67 +399,21 @@ export default function ShowcaseClient({
 		setGridTaxa(gridRef.current);
 		nextTaxonomyIndex.current = 0;
 		gridItemIdCounter.current = 0;
-		recentSwapSlotsRef.current = [];
 		projectEnrichBudgetUsedRef.current = 0;
-		initialFillCompleteRef.current = false;
 		if (!list.length) return;
 
 		let cancelled = false;
 		let timeoutId: number | null = null;
 		let startDelayId: number | null = null;
 
-		const applyGrid = (next: Array<ActiveGridTaxonomy | null>) => {
-			gridRef.current = next;
-			setGridTaxa(next);
-		};
-
-		const scheduleNextTick = () => {
-			if (cancelled) return;
-			const hasEmptySlot = gridRef.current.some((cell) => !cell);
-			const filledCount = gridRef.current.reduce((count, cell) => count + (cell ? 1 : 0), 0);
-			timeoutId = window.setTimeout(
-				() => void tick(),
-				hasEmptySlot
-					? filledCount < FAST_START_CELL_COUNT
-						? FAST_START_TICK_MS
-						: WARMUP_TICK_MS
-					: randomSteadyTickMs()
-			);
-		};
-
 		const tick = async () => {
 			if (cancelled) return;
 
-			let current = gridRef.current;
-			const warmup = current.some((cell) => !cell);
-
-			if (!warmup && Math.random() < STEADY_CLEAR_CHANCE) {
-				const clearSlot = Math.floor(Math.random() * GRID_CELL_COUNT);
-				if (current[clearSlot]) {
-					const cleared = [...current];
-					cleared[clearSlot] = null;
-					applyGrid(cleared);
-					current = cleared;
-				}
-			}
-
-			const taxonomy = list[nextTaxonomyIndex.current % list.length];
+			const taxonomyIndex = nextTaxonomyIndex.current;
+			const slot = taxonomyIndex % GRID_CELL_COUNT;
+			const taxonomy = list[taxonomyIndex % list.length];
 			nextTaxonomyIndex.current += 1;
 
-			const emptySlot = current.findIndex((cell) => !cell);
-			let slot = emptySlot;
-			if (slot === -1) {
-				const recentSlots = recentSwapSlotsRef.current;
-				const allowedSlots: number[] = [];
-				for (let i = 0; i < GRID_CELL_COUNT; i += 1) {
-					if (!recentSlots.includes(i)) allowedSlots.push(i);
-				}
-				if (allowedSlots.length) {
-					slot = allowedSlots[Math.floor(Math.random() * allowedSlots.length)];
-				} else {
-					slot = Math.floor(Math.random() * GRID_CELL_COUNT);
-				}
-			}
 			gridItemIdCounter.current += 1;
 			const insertedId = gridItemIdCounter.current;
 			const fallbackMeta = buildFallbackTaxonomyMeta(taxonomy);
@@ -495,24 +440,27 @@ export default function ShowcaseClient({
 			next[slot] = {
 				id: insertedId,
 				...insertMeta,
-				fastType: !initialFillCompleteRef.current
+				fastType: taxonomyIndex < GRID_CELL_COUNT
 			};
-			applyGrid(next);
-			if (next.every(Boolean)) initialFillCompleteRef.current = true;
-			const recentSlots = recentSwapSlotsRef.current;
-			recentSlots.push(slot);
-			if (recentSlots.length > RECENT_SWAP_MEMORY) {
-				recentSlots.splice(0, recentSlots.length - RECENT_SWAP_MEMORY);
-			}
+			gridRef.current = next;
+			setGridTaxa(next);
 
-			scheduleNextTick();
+			if (cancelled) return;
+			const filledCount = nextTaxonomyIndex.current;
+			const delayMs =
+				filledCount < GRID_CELL_COUNT
+					? filledCount < FAST_START_CELL_COUNT
+						? FAST_START_TICK_MS
+						: WARMUP_TICK_MS
+					: STEADY_TICK_MS;
+			timeoutId = window.setTimeout(() => void tick(), delayMs);
 		};
 
 		const introDelayMs = isFirstProjectPaint ? INITIAL_PROJECT_INTRO_DELAY_MS : PROJECT_SWAP_INTRO_DELAY_MS;
 		const taxonomyStartDelayMs = Math.max(INITIAL_TAXONOMY_DELAY_MS, introDelayMs);
 		startDelayId = window.setTimeout(() => {
 			if (cancelled) return;
-			scheduleNextTick();
+			void tick();
 		}, taxonomyStartDelayMs);
 		return () => {
 			cancelled = true;
