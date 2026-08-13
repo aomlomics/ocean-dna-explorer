@@ -369,7 +369,7 @@ export default function ShowcaseClient({
 		Array.from({ length: GRID_CELL_COUNT }, () => null)
 	);
 	const gridRef = useRef<Array<ActiveGridTaxonomy | null>>(Array.from({ length: GRID_CELL_COUNT }, () => null));
-	const firstProjectPaint = useRef(true);
+	const [isFirstProjectPaint, setIsFirstProjectPaint] = useState(true);
 	const nextTaxonomyIndex = useRef(0);
 	const gridItemIdCounter = useRef(0);
 	const recentSwapSlotsRef = useRef<number[]>([]);
@@ -381,7 +381,7 @@ export default function ShowcaseClient({
 	useEffect(() => {
 		if (projects.length <= 1) return;
 		const id = window.setInterval(() => {
-			firstProjectPaint.current = false;
+			setIsFirstProjectPaint(false);
 			setProjectIdx((i) => (i + 1) % projects.length);
 		}, projectDurationMs);
 		return () => window.clearInterval(id);
@@ -490,7 +490,7 @@ export default function ShowcaseClient({
 			scheduleNextTick();
 		};
 
-		const introDelayMs = firstProjectPaint.current ? INITIAL_PROJECT_INTRO_DELAY_MS : PROJECT_SWAP_INTRO_DELAY_MS;
+		const introDelayMs = isFirstProjectPaint ? INITIAL_PROJECT_INTRO_DELAY_MS : PROJECT_SWAP_INTRO_DELAY_MS;
 		const taxonomyStartDelayMs = Math.max(INITIAL_TAXONOMY_DELAY_MS, introDelayMs);
 		startDelayId = window.setTimeout(() => {
 			if (cancelled) return;
@@ -509,7 +509,7 @@ export default function ShowcaseClient({
 	if (!project) return null;
 
 	const fromLeft = projectIdx % 2 === 0;
-	const swapIn = !firstProjectPaint.current;
+	const swapIn = !isFirstProjectPaint;
 	const circleDuration = swapIn ? SWAP_PROJECT_CIRCLE_DURATION_S : FIRST_PROJECT_CIRCLE_DURATION_S;
 	const projectTitleSizeClass = getProjectTitleSizeClass(project.project_name);
 
@@ -746,9 +746,15 @@ function TypewriterText({
 	charMs?: number;
 }) {
 	const [visibleChars, setVisibleChars] = useState(0);
+	const animationKey = `${text}\0${delay ?? ""}\0${charMs ?? ""}`;
+	const [prevAnimationKey, setPrevAnimationKey] = useState(animationKey);
+
+	if (animationKey !== prevAnimationKey) {
+		setPrevAnimationKey(animationKey);
+		setVisibleChars(0);
+	}
 
 	useEffect(() => {
-		setVisibleChars(0);
 		const startDelayMs = Math.max(0, Math.round((delay ?? 0) * 1000));
 		const perCharMs = Math.max(8, charMs ?? 14);
 		let timer: number | null = null;

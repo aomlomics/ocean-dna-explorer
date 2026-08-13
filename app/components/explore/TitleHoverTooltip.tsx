@@ -29,10 +29,7 @@ export default function TitleHoverTooltip({
 	}, []);
 
 	useLayoutEffect(() => {
-		if (!hovering) {
-			setShiftX(0);
-			return;
-		}
+		if (!hovering) return;
 		clampToViewport();
 		const onResize = () => clampToViewport();
 		window.addEventListener("resize", onResize);
@@ -44,11 +41,15 @@ export default function TitleHoverTooltip({
 			ref={wrapperRef}
 			className="relative inline-flex"
 			onMouseEnter={() => setHovering(true)}
-			onMouseLeave={() => setHovering(false)}
+			onMouseLeave={() => {
+				setHovering(false);
+				setShiftX(0);
+			}}
 			onFocus={() => setHovering(true)}
 			onBlur={(event) => {
 				if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
 					setHovering(false);
+					setShiftX(0);
 				}
 			}}
 		>

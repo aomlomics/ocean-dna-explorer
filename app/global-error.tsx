@@ -2,6 +2,7 @@
 
 import "@/styles/globals.css";
 import { Source_Sans_3 } from "next/font/google";
+import Link from "next/link";
 import { useEffect } from "react";
 
 const sourceSans = Source_Sans_3({
@@ -42,9 +43,9 @@ export default function GlobalError({
 						<button className="btn btn-primary" onClick={() => reset()}>
 							Try again
 						</button>
-						<a href="/" className="btn btn-primary">
+						<Link href="/" className="btn btn-primary">
 							Home
-						</a>
+						</Link>
 					</div>
 				</main>
 			</body>

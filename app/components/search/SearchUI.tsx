@@ -124,6 +124,22 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 	return root;
 }
 
+function searchTreeFromSearchParams(searchParams: { get: (key: string) => string | null; toString: () => string }): SearchGroupNode {
+	if (!searchParams.toString()) return createEmptyGroup(0);
+	const advanced = searchParams.get("advanced");
+	if (!advanced) return createEmptyGroup(0);
+	try {
+		return paramsArrayToSearchTree(JSON.parse(advanced) as ParamsArray);
+	} catch {
+		try {
+			return paramsArrayToSearchTree(JSON.parse(decodeURIComponent(advanced)) as ParamsArray);
+		} catch {
+			console.error("Failed to parse advanced query parameter", advanced);
+			return createEmptyGroup(0);
+		}
+	}
+}
+
 export default function SearchUI({ noTable }: { noTable?: true }) {
 	//hooks
 	const searchParams = useSearchParams();
@@ -133,7 +149,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		const paramTable = searchParams.get("table");
 		return getTableNameSafe(paramTable);
 	}); //either noTable or searchTable will always exist, parent without noTable redirects to ?table=project
-	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => createEmptyGroup(0));
+	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => searchTreeFromSearchParams(searchParams));
+	const searchParamsKey = searchParams.toString();
+	const [prevSearchParamsKey, setPrevSearchParamsKey] = useState(searchParamsKey);
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const apiFieldsModalRef = useRef<HTMLDialogElement>(null);
@@ -146,34 +164,11 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const [queryDescription, setQueryDescription] = useState("");
 	const [triggerQueryDescription, setTriggerQueryDescription] = useState(false); //delay updating query description by a render cycle
 
-	useEffect(() => {
+	if (searchParamsKey !== prevSearchParamsKey) {
+		setPrevSearchParamsKey(searchParamsKey);
 		try {
-			if (searchParams.toString()) {
-				const advanced = searchParams.get("advanced");
-				if (advanced) {
-					let advancedParsed: ParamsArray | undefined;
-					try {
-						advancedParsed = JSON.parse(advanced) as ParamsArray;
-					} catch {
-						// Fallback for URLs where "advanced" may be percent-encoded JSON
-						try {
-							advancedParsed = JSON.parse(decodeURIComponent(advanced)) as ParamsArray;
-						} catch {
-							console.error("Failed to parse advanced query parameter", advanced);
-						}
-					}
-
-					if (advancedParsed) {
-						setSearchTree(paramsArrayToSearchTree(advancedParsed));
-					} else {
-						setSearchTree(createEmptyGroup(0));
-					}
-				} else {
-					// Clear filters when switching tables without advanced parameter.
-					// Initialize with an empty root group.
-					setSearchTree(createEmptyGroup(0));
-				}
-
+			if (searchParamsKey) {
+				setSearchTree(searchTreeFromSearchParams(searchParams));
 				const paramTable = searchParams.get("table");
 				const table = getTableNameSafe(paramTable);
 				if (table) {
@@ -183,81 +178,6 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		} catch (err) {
 			//ignore bad urls
 			console.log(err);
-		}
-	}, [searchParams]);
-
-	// Ensure we always have a root group
-	useEffect(() => {
-		if (searchTree.children.length === 0) {
-			setQueryDescription("");
-		} else {
-			handleQueryDescription();
-		}
-	}, [searchTree]);
-
-	useEffect(() => {
-		if (Object.keys(searchTree).length === 1 && !Object.values(searchTree)[0].children.length) {
-			handleQueryDescription();
-		}
-	}, [queryDescription]);
-
-	useEffect(() => {
-		handleQueryDescription();
-	}, [triggerQueryDescription]);
-
-	useEffect(() => {
-		// Set default table parameter without creating a new history entry
-		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
-			const newParams = new URLSearchParams(searchParams.toString());
-			newParams.set("table", searchTable);
-			router.replace(`${pathname}?${newParams.toString()}`);
-		}
-	}, [searchTable, searchParams, pathname, router]);
-
-	useEffect(() => {
-		function handleClickOutside(event: MouseEvent) {
-			if (apiDropdownRef.current && !apiDropdownRef.current.contains(event.target as Node)) {
-				setApiDropdownOpen(false);
-			}
-		}
-
-		if (apiDropdownOpen) {
-			document.addEventListener("mousedown", handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, [apiDropdownOpen]);
-
-	//functions
-	function getAvailableApiFields(table: Uncapitalize<Prisma.ModelName> | undefined) {
-		if (table) {
-			const omit = new Set(GlobalOmit);
-			const meta = TableMetadata[table];
-			const allFields = meta.enumSchema.options as string[];
-
-			const ordered: string[] = [];
-
-			if (meta.fieldOrder && meta.fieldOrder.length) {
-				for (const f of meta.fieldOrder) {
-					if (!omit.has(f)) {
-						ordered.push(f);
-					}
-				}
-			}
-
-			for (const head of allFields) {
-				if (ordered.includes(head)) continue;
-				if (head === "id") continue;
-				if (omit.has(head)) continue;
-
-				ordered.push(head);
-			}
-
-			return ordered;
-		} else {
-			return [];
 		}
 	}
 
@@ -330,6 +250,81 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		setQueryDescription(
 			desc ? `Searching for ${noTable ? "results" : TableMetadata[searchTable!].plural} where: ${desc}` : ""
 		);
+	}
+
+	// Ensure we always have a root group
+	useEffect(() => {
+		if (searchTree.children.length === 0) {
+			return;
+		} else {
+			handleQueryDescription();
+		}
+	}, [searchTree]);
+
+	useEffect(() => {
+		if (Object.keys(searchTree).length === 1 && !Object.values(searchTree)[0].children.length) {
+			handleQueryDescription();
+		}
+	}, [queryDescription]);
+
+	useEffect(() => {
+		handleQueryDescription();
+	}, [triggerQueryDescription]);
+
+	useEffect(() => {
+		// Set default table parameter without creating a new history entry
+		if (searchTable && !searchParams.has("advanced") && !searchParams.has("table")) {
+			const newParams = new URLSearchParams(searchParams.toString());
+			newParams.set("table", searchTable);
+			router.replace(`${pathname}?${newParams.toString()}`);
+		}
+	}, [searchTable, searchParams, pathname, router]);
+
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (apiDropdownRef.current && !apiDropdownRef.current.contains(event.target as Node)) {
+				setApiDropdownOpen(false);
+			}
+		}
+
+		if (apiDropdownOpen) {
+			document.addEventListener("mousedown", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, [apiDropdownOpen]);
+
+	//functions
+	function getAvailableApiFields(table: Uncapitalize<Prisma.ModelName> | undefined) {
+		if (table) {
+			const omit = new Set(GlobalOmit);
+			const meta = TableMetadata[table];
+			const allFields = meta.enumSchema.options as string[];
+
+			const ordered: string[] = [];
+
+			if (meta.fieldOrder && meta.fieldOrder.length) {
+				for (const f of meta.fieldOrder) {
+					if (!omit.has(f)) {
+						ordered.push(f);
+					}
+				}
+			}
+
+			for (const head of allFields) {
+				if (ordered.includes(head)) continue;
+				if (head === "id") continue;
+				if (omit.has(head)) continue;
+
+				ordered.push(head);
+			}
+
+			return ordered;
+		} else {
+			return [];
+		}
 	}
 
 	function getParamsArrayFromTree(root: SearchGroupNode) {
@@ -576,13 +571,14 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		field.toLowerCase().includes(fieldSearchText.toLowerCase())
 	);
 	const allFieldsSelected = availableApiFields.length > 0 && fieldSelectionDraft.length === availableApiFields.length;
-	const hasActiveConditions = queryDescription.trim().length > 0;
+	const shownQueryDescription = searchTree.children.length === 0 ? "" : queryDescription;
+	const hasActiveConditions = shownQueryDescription.trim().length > 0;
 
 	const rootFooter = (
 		<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-4">
 			<div className="flex-1 text-sm md:text-base text-base-content whitespace-pre-wrap">
-				{queryDescription ? (
-					<p className="text-left">{queryDescription}</p>
+				{shownQueryDescription ? (
+					<p className="text-left">{shownQueryDescription}</p>
 				) : (
 					<p className="text-base-content/60 italic text-sm text-left">
 						Begin selecting filters and relations, and your query will be displayed here...
@@ -898,7 +894,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 								<p className="font-mono text-sm mb-1">Examples:</p>
 								<p className="font-mono text-xs">
 									Project tab: Field = <span className="font-normal">institution</span>, Condition ={" "}
-									<span className="font-normal">contains</span>, Value = <span className="font-normal">"NOAA"</span>
+									<span className="font-normal">contains</span>, Value = <span className="font-normal">{'"NOAA"'}</span>
 								</p>
 								<p className="font-mono text-xs">
 									Sample tab: Field = <span className="font-normal">minimumDepthInMeters</span>, Condition ={" "}
@@ -965,9 +961,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 							<div className="bg-base-200 p-3 rounded-md mt-2">
 								<p className="font-mono text-sm mb-1">Example (field + relation):</p>
 								<p className="font-mono text-xs">
-									(Project.institution = "NOAA" OR Project.institution = "EPA")
+									{`(Project.institution = "NOAA" OR Project.institution = "EPA")`}
 									{" AND "}
-									(Sample.geo_loc_name contains "Gulf of Mexico" OR Sample.geo_loc_name contains "Caribbean Sea")
+									{`(Sample.geo_loc_name contains "Gulf of Mexico" OR Sample.geo_loc_name contains "Caribbean Sea")`}
 								</p>
 								<p className="text-xs text-base-content/70 mt-1">
 									To build this, create one nested group for the two Project field filters (institution) with ANY (OR),
@@ -1214,7 +1210,6 @@ function SearchRuleComponent({
 			| ""
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
-	const [loaded, setLoaded] = useState(false);
 
 	const table = relation ? relation : searchTable;
 	const invalidField =
@@ -1223,12 +1218,10 @@ function SearchRuleComponent({
 	useEffect(() => {
 		if (invalidField) {
 			onChange(null);
-		} else {
-			setLoaded(true);
 		}
 	}, []);
 
-	if (invalidField && !loaded) {
+	if (invalidField) {
 		return <></>;
 	}
 

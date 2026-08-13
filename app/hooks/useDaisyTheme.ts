@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-function getColor() {
+type DaisyColors = {
+	textColor: string;
+	backgroundColor: string;
+	primaryColor: string;
+};
+
+const emptyColors: DaisyColors = {
+	textColor: "",
+	backgroundColor: "",
+	primaryColor: ""
+};
+
+let cachedColors: DaisyColors = emptyColors;
+
+function readColors(): DaisyColors {
 	if (typeof document === "undefined") {
-		return {
-			textColor: "",
-			backgroundColor: "",
-			primaryColor: ""
-		};
+		return emptyColors;
 	}
 
 	const computedElement = getComputedStyle(document.documentElement);
@@ -19,25 +29,28 @@ function getColor() {
 	};
 }
 
-export default function useDaisyTheme() {
-	const [colors, setColors] = useState({
-		textColor: "",
-		backgroundColor: "",
-		primaryColor: ""
+function getClientSnapshot(): DaisyColors {
+	const next = readColors();
+	if (
+		next.textColor === cachedColors.textColor &&
+		next.backgroundColor === cachedColors.backgroundColor &&
+		next.primaryColor === cachedColors.primaryColor
+	) {
+		return cachedColors;
+	}
+	cachedColors = next;
+	return cachedColors;
+}
+
+function subscribe(callback: () => void) {
+	const observer = new MutationObserver(callback);
+	observer.observe(document.documentElement, {
+		attributes: true,
+		attributeFilter: ["data-theme"]
 	});
+	return () => observer.disconnect();
+}
 
-	useEffect(() => {
-		setColors(getColor());
-
-		// Listen for theme changes
-		const observer = new MutationObserver(() => setColors(getColor()));
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ["data-theme"]
-		});
-
-		return () => observer.disconnect();
-	}, []);
-
-	return colors;
+export default function useDaisyTheme() {
+	return useSyncExternalStore(subscribe, getClientSnapshot, () => emptyColors);
 }

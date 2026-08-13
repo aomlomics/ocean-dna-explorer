@@ -1368,9 +1368,10 @@ export default function FeaturedOrganisms() {
 	const photos = useMemo(() => toOrganismPhotos(filteredOrganisms), [filteredOrganisms]);
 
 	// Pick a random default once on the client so the detail panel is never empty.
-	// Done in an effect (not during render) so the server and client produce identical
-	// first-paint markup and we avoid a hydration mismatch from Math.random().
+	// Must be an effect: Math.random() during render fails the purity lint, and during SSR
+	// it would mismatch the server HTML and the browser HTML.
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setSelectedOrganism(
 			(current) => current ?? FEATURED_ORGANISMS[Math.floor(Math.random() * FEATURED_ORGANISMS.length)]
 		);
@@ -1488,7 +1489,11 @@ export default function FeaturedOrganisms() {
 				{/* Left: the detail panel (master-detail), sticky so it stays in view while the grid scrolls. */}
 				<div className="lg:w-1/3">
 					<div className="sticky top-0 h-fit">
-						<SelectedOrganismCard organism={activeOrganism} resolvedCommonName={getDisplayCommonName(activeOrganism)} />
+						<SelectedOrganismCard
+							key={activeOrganism.id}
+							organism={activeOrganism}
+							resolvedCommonName={getDisplayCommonName(activeOrganism)}
+						/>
 					</div>
 				</div>
 
@@ -1536,14 +1541,6 @@ function SelectedOrganismCard({
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
 	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
 	const taxonomyHref = taxonomyString ? exploreTaxonomyUrl(taxonomyString) : "/explore/taxonomy";
-
-	useEffect(() => {
-		setImageFailed(false);
-	}, [imageSrc]);
-
-	useEffect(() => {
-		setPreviewOpen(false);
-	}, [imageSrc]);
 
 	return (
 		<article className="overflow-hidden rounded-2xl bg-transparent">
