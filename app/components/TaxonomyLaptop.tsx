@@ -31,8 +31,8 @@ interface TaxonomyLaptopProps {
 export default function TaxonomyLaptop({ className, screenBounds }: TaxonomyLaptopProps) {
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [phase, setPhase] = useState<"feature" | "matching" | "assignment">("feature");
-	const [featureId, setFeatureId] = useState(generateFeatureId());
-	const [sequence, setSequence] = useState(generateSequence(24));
+	const [featureId, setFeatureId] = useState("");
+	const [sequence, setSequence] = useState("");
 	const [isTransitioning, setIsTransitioning] = useState(false);
 	const [flashingOutlineIndex, setFlashingOutlineIndex] = useState(0);
 	const timeoutRefs = useRef<NodeJS.Timeout[]>([]);

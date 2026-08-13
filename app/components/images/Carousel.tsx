@@ -7,21 +7,19 @@ import AttributionBadge from "./AttributionBadge";
 import { useEffect, useState } from "react";
 
 export default function Carousel({ images }: { images: (DbImage & { Attribution?: Attribution | null })[] }) {
-	const [shuffledImages] = useState(() => {
+	// Start with the server order so the first client paint matches SSR HTML.
+	// Shuffle after mount; Math.random() during render would mismatch.
+	const [shuffledImages, setShuffledImages] = useState(images);
+	const [currIndex, setCurrIndex] = useState(0);
+
+	useEffect(() => {
 		const copy = [...images];
-
-		// While there remain elements to shuffle...
 		for (let i = copy.length - 1; i > 0; i--) {
-			// Pick a remaining element...
 			const randomIndex = Math.floor(Math.random() * i);
-
-			// And swap it with the current element.
 			[copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
 		}
-
-		return copy;
-	});
-	const [currIndex, setCurrIndex] = useState(0);
+		setShuffledImages(copy);
+	}, [images]);
 
 	useEffect(() => {
 		if (shuffledImages.length <= 1) {

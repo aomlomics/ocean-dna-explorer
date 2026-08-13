@@ -37,7 +37,7 @@ export default function TableDisplay({
 }) {
 	const searchParams = useSearchParams();
 
-	const [size, setSize] = useState((window.innerWidth > 1024 ? "lg" : "sm") as "lg" | "sm");
+	const [size, setSize] = useState<"lg" | "sm">("lg");
 	const [showCommonNames, setShowCommonNames] = useState(true);
 
 	// When inside an ExplorePage, mode is driven by ViewModeContext (list/grid control above the table).
@@ -66,6 +66,7 @@ export default function TableDisplay({
 			}
 		}
 
+		handleResize();
 		window.addEventListener("resize", handleResize);
 
 		return () => window.removeEventListener("resize", handleResize);

@@ -166,9 +166,9 @@ function CustomLegend({
 					onClick={() => setShowAll(!showAll)}
 					className="mt-2 px-3 py-1 text-sm rounded-md transition-colors duration-200 hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
 					style={{
-						backgroundColor: textColor + "20",
+						backgroundColor: "color-mix(in oklab, var(--color-base-content) 12%, transparent)",
 						color: textColor,
-						border: `1px solid ${textColor}30`
+						border: "1px solid color-mix(in oklab, var(--color-base-content) 19%, transparent)"
 					}}
 				>
 					{showAll ? "Show Less" : labels.length <= 9 ? "Showing All" : "Show More"}
@@ -180,7 +180,7 @@ function CustomLegend({
 
 export default function DoughnutChart({ labels, data, compact = false }: DoughnutChartProps) {
 	const { theme } = useTheme();
-	const textColor = theme === "dark" ? "#E2E8F0" : "#2D3748";
+	const textColor = "var(--color-base-content)";
 	// Determine the index of the most abundant value
 	const maxIndex = data.reduce((bestIndex, value, i, arr) => (value > arr[bestIndex] ? i : bestIndex), 0);
 	const colors = generateColorsWithPrimaryAtIndex(labels.length, maxIndex);
