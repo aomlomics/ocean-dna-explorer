@@ -286,7 +286,6 @@ export default function Table({
 				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setEmptyFilter(emptyFields);
 			} else if (Object.keys(emptyFilter).length) {
-				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setEmptyFilter({});
 			}
 		}
@@ -320,9 +319,7 @@ export default function Table({
 			if (tempUserDefinedHeadersSet.size) {
 				const tempUserDefinedHeaders = Array.from(tempUserDefinedHeadersSet);
 				//TODO: inject deep relations headers after close relation headers
-				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setHeaders([...headers.filter((head) => !userDefinedHeaders.includes(head)), ...tempUserDefinedHeadersSet]);
-				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setUserDefinedHeaders(tempUserDefinedHeaders);
 
 				if (!userDefinedHeaders.length && filterHeadersAtStart) {
@@ -332,7 +329,6 @@ export default function Table({
 					} as Record<string, true>;
 
 					if (Object.keys(tempHeadersFilter).length) {
-						// eslint-disable-next-line react-hooks/set-state-in-effect
 						setHeadersFilter(tempHeadersFilter);
 					}
 				}
@@ -407,7 +403,7 @@ export default function Table({
 		const formData = new FormData(form);
 		let count = 0;
 		formData.delete("take");
-		for (const [_, value] of formData.entries()) {
+		for (const value of formData.values()) {
 			if (typeof value === "string" && value.trim()) {
 				count++;
 			}

@@ -41,7 +41,6 @@ export default function UserAdder({
 	const [newUsers, setNewUsers] = useState([] as ClerkUserObject[]);
 	const [deletedUsers, setDeletedUsers] = useState([] as ClerkUserObject[]);
 
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		async function getCurrentUsers() {
 			if (userId) {
@@ -70,7 +69,6 @@ export default function UserAdder({
 		getCurrentUsers();
 	}, [userId]);
 
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		if (!submittable && users.length) {
 			const currUserIds = users.reduce((acc, u) => {

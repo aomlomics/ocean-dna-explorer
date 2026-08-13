@@ -130,7 +130,7 @@ export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
 }
 
 export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
-	return Object.entries(TableMetadata).find(([_, meta]) => meta.plural === table)![0] as Uncapitalize<Prisma.ModelName>;
+	return Object.entries(TableMetadata).find((tm) => tm[1].plural === table)![0] as Uncapitalize<Prisma.ModelName>;
 }
 
 export function getSubmissionFileName(value: string) {

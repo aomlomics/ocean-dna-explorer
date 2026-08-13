@@ -44,7 +44,6 @@ export default function BlastSearch() {
 	const [perc_identity, set_perc_identity] = useState(blast?.options?.perc_identity ?? NaN);
 	const [qcov_hsp_perc, set_qcov_hsp_perc] = useState(blast?.options?.qcov_hsp_perc ?? NaN);
 
-	// eslint-disable-next-line react-hooks/set-state-in-effect
 	useEffect(() => {
 		async function doFetch() {
 			const res = await fetch("/api/assay?fields=assay_name&relations=analysis");
@@ -194,10 +193,15 @@ export default function BlastSearch() {
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-col items-start" aria-disabled={!assayNames}>
+		<form onSubmit={handleSubmit} className="flex flex-col items-start">
 			<fieldset className="fieldset w-full" key={assayNames?.toString()}>
 				<legend className="fieldset-legend">Database</legend>
-				<select value={blastDatabase} onChange={(e) => setBlastDatabase(e.currentTarget.value)} className="select">
+				<select
+					value={blastDatabase}
+					onChange={(e) => setBlastDatabase(e.currentTarget.value)}
+					className="select"
+					disabled={!assayNames}
+				>
 					<option value="">All</option>
 					{assayNames?.map((assay_name) => (
 						<option key={assay_name}>{assay_name}</option>
@@ -229,6 +233,7 @@ export default function BlastSearch() {
 							setError("");
 						}
 					}}
+					disabled={!assayNames}
 				/>
 			</fieldset>
 
@@ -253,13 +258,14 @@ export default function BlastSearch() {
 							}
 						}
 					}}
+					disabled={!assayNames}
 				/>
 			</fieldset>
 
 			{role && RolePermissions[role].includes("contribute") ? (
 				<fieldset className="fieldset mt-2">
 					<label className="label select-none">
-						<input name="blastSave" type="checkbox" className="checkbox" />
+						<input name="blastSave" type="checkbox" className="checkbox" disabled={!assayNames} />
 						Save BLAST
 					</label>
 				</fieldset>
@@ -278,6 +284,7 @@ export default function BlastSearch() {
 							className="toggle"
 							checked={task === "megablast"}
 							onChange={(e) => (e.target.checked ? setTask("megablast") : setTask("blastn"))}
+							disabled={!assayNames}
 						/>
 						{task}
 					</label>
@@ -302,6 +309,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_NUM_RESULTS}`}
 							value={max_target_seqs.toString()}
 							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -320,6 +328,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_EVALUE}`}
 							value={evalue.toString()}
 							onChange={(e) => set_evalue(e.currentTarget.value)}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -341,6 +350,7 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_PERCENT_IDENTITY}`}
 							value={perc_identity.toString()}
 							onChange={(e) => set_perc_identity(parseFloat(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 
@@ -362,12 +372,13 @@ export default function BlastSearch() {
 							placeholder={`${DEFAULT_QCOV_HSP}`}
 							value={qcov_hsp_perc.toString()}
 							onChange={(e) => set_qcov_hsp_perc(parseFloat(e.currentTarget.value))}
+							disabled={!assayNames}
 						/>
 					</fieldset>
 				</div>
 			</div>
 
-			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!blastQuery}>
+			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!assayNames || !blastQuery}>
 				BLAST
 			</button>
 		</form>

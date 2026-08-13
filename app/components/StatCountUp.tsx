@@ -57,7 +57,6 @@ export function StatCountUp({ value }: { value: number }) {
 			return;
 		}
 		if (!ready) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDisplay(0);
 			return;
 		}
@@ -76,11 +75,9 @@ export function StatCountUp({ value }: { value: number }) {
 			const elapsed = now - startAt;
 			const t = Math.min(1, elapsed / duration);
 			const eased = 1 - (1 - t) ** 3;
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDisplay(Math.round(eased * value));
 			if (t < 1) raf = requestAnimationFrame(step);
 		}
-		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setDisplay(0);
 		raf = requestAnimationFrame(step);
 		return () => {

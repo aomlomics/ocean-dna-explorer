@@ -18,6 +18,7 @@ export default async function Sample() {
 	if (!samples) return <>Loading...</>;
 
 	const filterOptions = getOptions(samples);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { "0": _, "1": __, ...deadBooleanOptions } = DeadBooleanToEnum;
 
 	const tableConfig: FilterConfig[] = [

@@ -49,7 +49,6 @@ export default function ProjectEditButton({
 	const [projectResponse, setProjectResponse] = useState(undefined as NetworkProgressPacket | undefined);
 	const [sampleResponse, setSampleResponse] = useState(undefined as NetworkProgressPacket | undefined);
 	const [libraryResponse, setLibraryResponse] = useState(undefined as NetworkProgressPacket | undefined);
-	const [_, setFillerResponse] = useState(undefined as NetworkProgressPacket | undefined);
 
 	//refs for popup modal
 	const modalRef = useRef<HTMLDialogElement>(null);
@@ -124,7 +123,7 @@ export default function ProjectEditButton({
 
 				setProjectResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			} else {
-				setters.push(setFillerResponse);
+				setters.push(() => {});
 			}
 
 			if (sampleFile) {
@@ -141,7 +140,7 @@ export default function ProjectEditButton({
 
 				setSampleResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			} else {
-				setters.push(setFillerResponse);
+				setters.push(() => {});
 			}
 
 			if (libraryFile) {
@@ -158,7 +157,7 @@ export default function ProjectEditButton({
 
 				setLibraryResponse({ statusMessage: "progress", progress: { message: "File uploaded", value: 5 } });
 			} else {
-				setters.push(setFillerResponse);
+				setters.push(() => {});
 			}
 
 			//trigger streamed action

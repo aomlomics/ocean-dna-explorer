@@ -669,12 +669,10 @@ export default function ActualMap({
 							}
 						}
 					}
-					// eslint-disable-next-line react-hooks/set-state-in-effect
 					setShapes(tempShapes);
 				}
 			}
 
-			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setDrawReady(true);
 		}
 	}, [drawAlmostReady]);
@@ -682,7 +680,6 @@ export default function ActualMap({
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		checkShapes();
-		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setLoading(false);
 	}, [legendInfo]);
 
