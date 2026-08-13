@@ -6,16 +6,7 @@ const eslintConfig = [
 	...nextCoreWebVitals,
 	...nextTypescript,
 	{
-		ignores: [
-			"node_modules/**",
-			".next/**",
-			"out/**",
-			"build/**",
-			"next-env.d.ts",
-			"generated/**",
-			"prisma/generated/**",
-			"prismaImages/generated/**"
-		],
+		ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "**/generated/**"],
 		rules: {
 			"@typescript-eslint/no-explicit-any": "off",
 			"react-hooks/exhaustive-deps": "off"
