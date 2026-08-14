@@ -1,9 +1,11 @@
 "use client";
 
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import { useTheme } from "next-themes";
 
 export default function ThemeToggle() {
-	const { theme, setTheme } = useTheme();
+	const { setTheme } = useTheme();
+	const { theme } = useDaisyTheme();
 
 	return (
 		<label className="swap swap-rotate" suppressHydrationWarning>
