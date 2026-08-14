@@ -2,7 +2,8 @@
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 interface CodeBlockProps {
 	language: string;
@@ -10,25 +11,8 @@ interface CodeBlockProps {
 }
 
 export default function CodeBlock({ language, code }: CodeBlockProps) {
-	const [theme, setTheme] = useState("dark");
+	const { theme } = useDaisyTheme();
 	const [copied, setCopied] = useState(false);
-
-	useEffect(() => {
-		const observer = new MutationObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				if (mutation.attributeName === "data-theme") {
-					const newTheme = document.documentElement.getAttribute("data-theme") || "dark";
-					setTheme(newTheme);
-				}
-			});
-		});
-
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-
-		observer.observe(document.documentElement, { attributes: true });
-		return () => observer.disconnect();
-	}, []);
 
 	const handleCopy = async () => {
 		await navigator.clipboard.writeText(code);

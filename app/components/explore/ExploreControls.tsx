@@ -166,9 +166,6 @@ function ControlsBody({
 		setActivePanel(null);
 	}
 
-	const canClearBar = currentSearch.length > 0 || activeFilterCount > 0;
-	const canUseClear = canClearBar || activePanel !== null;
-
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-col gap-3">
@@ -184,7 +181,6 @@ function ControlsBody({
 							activePanel={activePanel}
 							onPanelChange={(panel) => setActivePanel((prev) => (prev === panel ? null : panel))}
 							activeFilterCount={activeFilterCount}
-							canClear={canUseClear}
 							onClear={clearSearchAndFilters}
 						/>
 

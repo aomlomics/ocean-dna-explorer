@@ -7,7 +7,7 @@ import { FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
 import { buildWhereParams } from "@/app/helpers/queries";
-import LoadingTaxaGrid from "../LoadingTaxaGrid";
+import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
 import TableStatusState from "../TableStatusState";
 

@@ -184,11 +184,11 @@ export default function TableDisplay({
 									onChange={(e) => setShowCommonNames(e.target.checked)}
 								/>
 								<span>Show common names</span>
-								<InfoButton
-									text="GBIF common names are approximations and are not stored in our database."
-									dir="tooltip-left"
-								/>
 							</label>
+							<InfoButton
+								text="GBIF common names are approximations and are not stored in our database."
+								dir="tooltip-right"
+							/>
 						</div>
 					) : null}
 					<div className={`w-full ${dataShellClass}`}>{dataContent}</div>

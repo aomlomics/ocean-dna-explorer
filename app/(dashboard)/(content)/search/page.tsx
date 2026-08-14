@@ -4,7 +4,7 @@ import { getDataTableNameSafe } from "@/app/helpers/schema";
 import { capitalizeTable } from "@/app/helpers/utils";
 import TableMetadata from "@/types/tableMetadata";
 import TableInfo from "@/app/components/TableInfo";
-import SearchContent from "@/app/components/search/SearchCollapsibles";
+import SearchContent from "@/app/components/search/SearchContent";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/helpers/prisma";
 
