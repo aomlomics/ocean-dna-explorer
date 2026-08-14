@@ -59,7 +59,7 @@ export default function TableDisplay({
 
 	useEffect(() => {
 		function handleResize() {
-			if (window.innerWidth > 1024) {
+			if (window.innerWidth >= 1280) {
 				setSize("lg");
 			} else {
 				setSize("sm");
