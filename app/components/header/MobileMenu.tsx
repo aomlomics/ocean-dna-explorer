@@ -161,7 +161,7 @@ export default function MobileMenu() {
 							<ul className="w-full max-w-full p-2">
 								<li className="py-1">
 									<Link
-										href="/learn?section=edna101"
+										href="/learn/edna101"
 										onClick={handleClose}
 										className="whitespace-normal wrap-break-word"
 									>
@@ -170,7 +170,7 @@ export default function MobileMenu() {
 								</li>
 								<li className="py-1">
 									<Link
-										href="/learn?section=impact"
+										href="/learn/impact"
 										onClick={handleClose}
 										className="whitespace-normal wrap-break-word"
 									>
@@ -179,7 +179,7 @@ export default function MobileMenu() {
 								</li>
 								<li className="py-1">
 									<Link
-										href="/learn?section=discoveries"
+										href="/learn/discoveries"
 										onClick={handleClose}
 										className="whitespace-normal wrap-break-word"
 									>

@@ -33,17 +33,17 @@ const EXPLORE_RIGHT_ITEMS = [
 
 const LEARN_MEGA_MENU_ITEMS: { href: string; title: string; subtitle: string }[] = [
 	{
-		href: "/learn?section=edna101",
+		href: "/learn/edna101",
 		title: "eDNA 101",
 		subtitle: "Take the data journey from a sample to an eDNA dataset"
 	},
 	{
-		href: "/learn?section=impact",
+		href: "/learn/impact",
 		title: "Impact",
 		subtitle: "See how eDNA helps biodiversity research and conservation"
 	},
 	{
-		href: "/learn?section=discoveries",
+		href: "/learn/discoveries",
 		title: "Make your own Discoveries",
 		subtitle: "Leverage ODE's custom exploration features"
 	}

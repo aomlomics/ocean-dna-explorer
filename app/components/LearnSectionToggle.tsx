@@ -1,21 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const TABS = [
-	{ id: "edna101", label: "eDNA 101" },
-	{ id: "impact", label: "Impact" },
-	{ id: "discoveries", label: "Make your own Discoveries" }
+	{ id: "edna101", label: "eDNA 101", href: "/learn/edna101" },
+	{ id: "impact", label: "Impact", href: "/learn/impact" },
+	{ id: "discoveries", label: "Make your own Discoveries", href: "/learn/discoveries" }
 ] as const;
 
-type SectionId = (typeof TABS)[number]["id"];
-
-interface LearnSectionToggleProps {
-	currentSection: SectionId;
-}
-
-export default function LearnSectionToggle({ currentSection }: LearnSectionToggleProps) {
-	const activeIndex = TABS.findIndex((t) => t.id === currentSection);
+export default function LearnSectionToggle() {
+	const pathname = usePathname();
+	const activeIndex = Math.max(
+		0,
+		TABS.findIndex((t) => pathname === t.href || pathname?.startsWith(`${t.href}/`))
+	);
 
 	return (
 		<nav
@@ -31,13 +30,12 @@ export default function LearnSectionToggle({ currentSection }: LearnSectionToggl
 				}}
 				aria-hidden
 			/>
-			{TABS.map((tab) => {
-				const isActive = currentSection === tab.id;
-				const href = tab.id === "edna101" ? "/learn" : `/learn?section=${tab.id}`;
+			{TABS.map((tab, index) => {
+				const isActive = index === activeIndex;
 				return (
 					<Link
 						key={tab.id}
-						href={href}
+						href={tab.href}
 						aria-current={isActive ? "page" : undefined}
 						className={`relative z-10 flex-1 min-w-0 py-2 px-3 text-center text-sm sm:text-base font-normal rounded-lg transition-all duration-200 ${
 							isActive ? "pointer-events-none" : ""
