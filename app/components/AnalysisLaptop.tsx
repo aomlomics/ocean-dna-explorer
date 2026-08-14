@@ -164,7 +164,7 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 						<div className="w-2.5 h-2.5 rounded-full bg-red-400 [html[data-theme='dark']_&]:bg-red-500" />
 						<div className="w-2.5 h-2.5 rounded-full bg-yellow-400 [html[data-theme='dark']_&]:bg-yellow-500" />
 						<div className="w-2.5 h-2.5 rounded-full bg-green-400 [html[data-theme='dark']_&]:bg-green-500" />
-						<span className="ml-2 text-base-content/50" style={{ fontSize: 10 }}>analysis.sh</span>
+						<span className="ml-2 text-base-content/70" style={{ fontSize: 10 }}>analysis.sh</span>
 					</div>
 
 					{/* Terminal content */}

@@ -128,7 +128,7 @@ export async function TemporalCoverageCard({ project_id }: { project_id?: Sample
 
 			<div className="flex items-center justify-between text-xs">
 				<div>
-					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">Earliest</div>
+					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70">Earliest</div>
 
 					<div className="text-base-content tabular-nums font-semibold text-base sm:text-lg leading-tight">
 						{fmt(min)}
@@ -136,7 +136,7 @@ export async function TemporalCoverageCard({ project_id }: { project_id?: Sample
 				</div>
 
 				<div className="text-right">
-					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55">Latest</div>
+					<div className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70">Latest</div>
 
 					<div className="text-base-content tabular-nums font-semibold text-base sm:text-lg leading-tight">
 						{fmt(max)}

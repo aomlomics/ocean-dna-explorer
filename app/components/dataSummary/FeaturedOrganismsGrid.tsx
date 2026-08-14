@@ -360,7 +360,7 @@ function FeaturedOrganismCard({ organism }: { organism: FeaturedOrganism }) {
 							<span>{iucnLabel}</span>
 						</span>
 					) : (
-						<span className="shrink-0 text-[11px] text-base-content/60">
+						<span className="shrink-0 text-[11px] text-base-content/70">
 							{loadingMeta ? "Loading IUCN..." : "IUCN unavailable"}
 						</span>
 					)}

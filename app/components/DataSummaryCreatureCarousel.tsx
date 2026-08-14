@@ -152,7 +152,7 @@ function CreatureCard({ creature }: { creature: FeaturedCreature }) {
 
 			<div className="p-5 flex flex-col gap-2.5 grow">
 				<div className="flex items-center gap-2 flex-wrap">
-					<span className="text-[11px] font-semibold uppercase tracking-wider text-base-content/55">
+					<span className="text-[11px] font-semibold uppercase tracking-wider text-base-content/70">
 						{creature.rank}
 					</span>
 					{iucn && (

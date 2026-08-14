@@ -354,7 +354,7 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 						y={y(v)}
 						textAnchor="end"
 						dominantBaseline="middle"
-						className="fill-base-content/60 text-[10px] tabular-nums"
+						className="fill-base-content/70 text-[10px] tabular-nums"
 					>
 						{v.toLocaleString()}
 					</text>
@@ -369,7 +369,7 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 						y={padding.top + innerH + 6}
 						textAnchor="middle"
 						dominantBaseline="hanging"
-						className="fill-base-content/60 text-[10px] tabular-nums"
+						className="fill-base-content/70 text-[10px] tabular-nums"
 					>
 						{year}
 					</text>
@@ -381,7 +381,7 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 				<text
 					transform={`translate(12, ${padding.top + innerH / 2}) rotate(-90)`}
 					textAnchor="middle"
-					className="fill-base-content/55 text-[10px] uppercase tracking-wider font-semibold"
+					className="fill-base-content/70 text-[10px] uppercase tracking-wider font-semibold"
 				>
 					Samples
 				</text>
@@ -475,7 +475,7 @@ function BigCountTile({ label, count, href }: { label: string; count: number; hr
 			<span className="text-2xl sm:text-3xl font-extrabold text-base-content leading-none tabular-nums tracking-tight group-hover:text-primary transition-colors">
 				{formatPunchy(count)}
 			</span>
-			<span className="text-[10px] uppercase tracking-wider font-semibold text-base-content/55 leading-snug">
+			<span className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 leading-snug">
 				{label}
 			</span>
 		</Link>
@@ -572,17 +572,17 @@ export async function MetadataCompletenessCard() {
 									<span className="text-sm font-semibold text-base-content group-hover:text-primary transition-colors truncate">
 										{e.label}
 									</span>
-									<span className="text-[10px] uppercase tracking-wider text-base-content/50 tabular-nums shrink-0">
+									<span className="text-[10px] uppercase tracking-wider text-base-content/70 tabular-nums shrink-0">
 										{e.total.toLocaleString()} records
 									</span>
 								</div>
-								<div className="text-[11px] text-base-content/55 mt-0.5">{e.fieldCount} optional fields tracked</div>
+								<div className="text-[11px] text-base-content/70 mt-0.5">{e.fieldCount} optional fields tracked</div>
 							</div>
 						</Link>
 					</li>
 				))}
 			</ul>
-			<p className="text-[11px] text-base-content/50 mt-5 leading-relaxed">
+			<p className="text-[11px] text-base-content/70 mt-5 leading-relaxed">
 				Higher scores mean submitters went beyond the minimum and filled in richer, more reusable metadata.
 			</p>
 		</DashCard>

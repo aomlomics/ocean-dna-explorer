@@ -184,7 +184,7 @@ export default function TaxonomyVisualToggle({
 			<div className="mt-4 w-full max-w-2xl px-2">
 				<div className="mx-auto grid w-full min-w-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:gap-6">
 					<div className="min-w-0 rounded-lg p-3 text-center sm:text-left">
-						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">
+						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/70">
 							Scientific name
 						</div>
 						<div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
@@ -227,7 +227,7 @@ export default function TaxonomyVisualToggle({
 					</div>
 
 					<div className="min-w-0 rounded-lg p-3 text-center sm:text-left">
-						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/50">Common name</div>
+						<div className="text-[10px] font-medium uppercase tracking-widest text-base-content/70">Common name</div>
 						<div className="mt-1 flex items-center justify-center gap-2 sm:justify-start">
 							<div
 								className="min-w-0 flex-1 whitespace-normal wrap-break-word text-left text-xl font-semibold leading-tight text-base-content first-letter:uppercase sm:text-2xl"
