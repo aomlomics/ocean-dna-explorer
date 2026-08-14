@@ -113,6 +113,11 @@ export default function MobileMenu() {
 										Taxonomy
 									</Link>
 								</li>
+								<li className="py-1">
+									<Link href="/visualize/alphaDiversity" onClick={handleClose}>
+										Alpha Diversity
+									</Link>
+								</li>
 							</ul>
 						</details>
 					</li>
