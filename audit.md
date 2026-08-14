@@ -473,11 +473,14 @@ Make each sortable header a `<button>` inside a `<th scope="col">` and put `aria
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-11 · Accessibility — Charts, maps, and the globe have no text alternative
-**Location** `app/components/charts/**` (for example `SampleScatterPlot.tsx:404`, `BoxWhiskerPlot.tsx:114`, `TaxaBarChart.tsx`, `DoughnutChart.tsx`), `app/components/OceanGlobe.tsx:493-504`, Leaflet maps under `app/components/map/**`
+#### ![WIP](https://img.shields.io/badge/%E2%86%BB_WIP-2563eb?style=flat-square) P1-11 · Accessibility — Charts, maps, and the globe have no text alternative
+**Location** `app/components/charts/**` (for example `SampleScatterPlot.tsx:404`, `BoxWhiskerPlot.tsx:114`, `TaxaBarChart.tsx`, `DoughnutChart.tsx`), `app/components/OceanGlobe.tsx:491-510`, Leaflet maps under `app/components/map/**`
 
 **Issue**
-Chart.js renders to `<canvas>`, which is an opaque bitmap to assistive technology with no readable DOM inside it. None of the chart components supply `role="img"` with a summarizing `aria-label`, an `aria-describedby` pointing at a text summary, or a data-table fallback. The globe canvas has no label at all. Chart.js tooltips are hover affordances and are not exposed to screen readers. The net effect is that the entire Visualize section conveys no information to a screen-reader user.
+Chart.js renders to `<canvas>`, which is an opaque bitmap to assistive technology with no readable DOM inside it. None of the chart components supply `role="img"` with a summarizing `aria-label`, an `aria-describedby` pointing at a text summary, or a data-table fallback. Chart.js tooltips are hover affordances and are not exposed to screen readers. The net effect is that the entire Visualize section conveys no information to a screen-reader user.
+
+**Progress**
+Globe done: `OceanGlobe` now wraps the canvas in `role="img"` with a summarizing `aria-label` (same pattern as the ambient word cloud) and sets `aria-hidden` on the canvas so AT does not announce an unlabeled bitmap. Charts and Leaflet are still open.
 
 **Suggested direction**
 Two layers, and the second is the one worth pushing for:

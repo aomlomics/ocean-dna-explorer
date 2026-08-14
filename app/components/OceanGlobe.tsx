@@ -488,9 +488,14 @@ export default function OceanGlobe({ className }: OceanGlobeProps) {
 	}, [isDark]);
 
 	return (
-		<div className={`relative aspect-square w-full ${className ?? ""}`}>
+		<div
+			className={`relative aspect-square w-full ${className ?? ""}`}
+			role="img"
+			aria-label="Rotating globe showing ocean eDNA sampling locations as dots across the Atlantic, Pacific, Indian, Arctic, and Southern Oceans"
+		>
 			<canvas
 				ref={canvasRef}
+				aria-hidden="true"
 				className="w-full h-full cursor-grab"
 				style={{
 					contain: "layout paint size"
