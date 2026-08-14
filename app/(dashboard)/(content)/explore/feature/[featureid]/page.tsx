@@ -63,6 +63,8 @@ const calculateGcContent = (seq: string) => {
 	return (gcCount / totalBases) * 100;
 };
 
+const formatPrevalencePercent = (percent: number) => (percent < 0.1 ? "< 0.1%" : `${percent.toFixed(1)}%`);
+
 export default async function Featureid({
 	params,
 	searchParams
@@ -164,9 +166,6 @@ export default async function Featureid({
 		};
 	});
 	const gcPercent = calculateGcContent(feature.dna_sequence);
-	const sequenceMidpoint = Math.ceil(feature.dna_sequence.length / 2);
-	const sequenceLineTop = feature.dna_sequence.slice(0, sequenceMidpoint);
-	const sequenceLineBottom = feature.dna_sequence.slice(sequenceMidpoint);
 	const totalAssignments = feature._count.Assignments || 0;
 	const assignmentLabel = totalAssignments === 1 ? "assignment" : "assignments";
 
@@ -225,35 +224,23 @@ export default async function Featureid({
 							<div className="mb-4">
 								<h2 className={cardHeading}>DNA Sequence</h2>
 							</div>
-							<div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-4">
-								<div>
-									<p className="text-xs font-semibold text-base-content/70">Length</p>
-									<p className="text-4xl leading-tight font-semibold text-base-content mt-1">
-										{feature.sequenceLength_ODE}
-										<span className="ml-1 text-base font-normal text-base-content/60">bp</span>
-									</p>
-								</div>
-								<div className="flex items-center gap-3">
-									<div>
-										<p className="text-xs font-semibold text-base-content/70">GC Content</p>
-										<p className="text-3xl leading-tight font-semibold text-base-content mt-1">
-											{gcPercent.toFixed(1)}%
-										</p>
-									</div>
+							<div className="inline-grid grid-cols-[auto_auto_auto] gap-x-6 gap-y-1 mb-4">
+								<p className="text-xs font-semibold text-base-content/70">Length</p>
+								<p className="text-xs font-semibold text-base-content/70">GC Content</p>
+								<div className="row-span-2 self-center">
 									<GcDonut percentage={gcPercent} size={74} strokeWidth={8} />
 								</div>
+								<p className="text-3xl leading-tight font-semibold text-base-content">
+									{feature.sequenceLength_ODE}
+									<span className="ml-1 text-base font-normal text-base-content/60">bp</span>
+								</p>
+								<p className="text-3xl leading-tight font-semibold text-base-content">{gcPercent.toFixed(1)}%</p>
 							</div>
-							{/* Sequence is split at its midpoint so it reads as two balanced rows */}
 							<div className="rounded-lg bg-base-100/40 p-4">
 								<div className="flex items-center justify-between gap-4">
-									<div className="flex-1 min-w-0 space-y-1">
-										<p className="font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
-											{sequenceLineTop}
-										</p>
-										<p className="font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
-											{sequenceLineBottom}
-										</p>
-									</div>
+									<p className="flex-1 min-w-0 font-mono text-base xl:text-lg leading-relaxed text-primary break-all">
+										{feature.dna_sequence}
+									</p>
 									<CopyButton
 										value={feature.dna_sequence}
 										variant="icon"
@@ -319,14 +306,14 @@ export default async function Featureid({
 						<AssaysCard title="Assays used by this Feature" assays={assaySummaries} />
 
 						{/* Prevalence graphs */}
-						<div className={`${cardBase} flex flex-1 flex-col`}>
-							<div className="flex items-start justify-between gap-4 mb-4">
+						<div className={cardBase}>
+							<div className="flex items-start justify-between gap-4 mb-6">
 								<h2 className={cardHeading}>Feature Prevalence</h2>
 								<DashCardInfoButton info={prevalenceCardInfo} />
 							</div>
 							<Suspense
 								fallback={
-									<div className="flex flex-1 items-center justify-center gap-3 py-6">
+									<div className="flex items-center justify-center gap-3 py-6">
 										<span className="loading loading-spinner loading-md text-primary" />
 										<span className="text-sm text-base-content/70">Loading prevalence…</span>
 									</div>
@@ -456,9 +443,12 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 		);
 	}
 
+	const projectPercentLabel = formatPrevalencePercent(projectPercent);
+	const globalPercentLabel = formatPrevalencePercent(globalPercent);
+
 	return (
-		<div className="flex flex-1 flex-col justify-center divide-y divide-base-content/10">
-			<div className="flex items-center justify-between gap-4 pb-4">
+		<div className="space-y-8">
+			<div className="flex items-center justify-between gap-4">
 				<div>
 					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
 						Within top project
@@ -469,7 +459,7 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 							</>
 						) : null}
 					</p>
-					<p className="text-3xl font-bold text-primary mt-1">{projectPercent.toFixed(1)}%</p>
+					<p className="text-3xl font-bold text-primary mt-1">{projectPercentLabel}</p>
 					{primaryProjectId ? (
 						<p className="text-xs text-base-content/70 mt-1">
 							{primaryProjectFeatureSamples.toLocaleString()} of {primaryProjectTotalSamples.toLocaleString()} samples
@@ -481,18 +471,18 @@ async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
 						</p>
 					)}
 				</div>
-				<GcDonut percentage={projectPercent} size={64} strokeWidth={8} />
+				<GcDonut percentage={projectPercent} size={64} strokeWidth={8} label={projectPercentLabel} />
 			</div>
 
-			<div className="flex items-center justify-between gap-4 pt-4">
+			<div className="flex items-center justify-between gap-4">
 				<div>
 					<p className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Across all samples</p>
-					<p className="text-3xl font-bold text-primary mt-1">{globalPercent.toFixed(1)}%</p>
+					<p className="text-3xl font-bold text-primary mt-1">{globalPercentLabel}</p>
 					<p className="text-xs text-base-content/70 mt-1">
 						{globalFeatureSamples.toLocaleString()} of {totalSamplesCount.toLocaleString()} samples
 					</p>
 				</div>
-				<GcDonut percentage={globalPercent} size={64} strokeWidth={8} />
+				<GcDonut percentage={globalPercent} size={64} strokeWidth={8} label={globalPercentLabel} />
 			</div>
 		</div>
 	);
