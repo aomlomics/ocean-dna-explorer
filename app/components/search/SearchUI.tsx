@@ -1095,7 +1095,7 @@ function SearchGroupComponent({
 						{!isRoot && onDelete && (
 							<button
 								type="button"
-								className="btn btn-xs btn-square btn-primary"
+								className="btn btn-sm btn-square btn-primary"
 								onClick={onDelete}
 								aria-label="Remove group"
 							>
@@ -1138,7 +1138,7 @@ function SearchGroupComponent({
 					{group.children.reduce((acc: ReactNode[], child, index) => {
 						if (index > 0) {
 							acc.push(
-								<div key={child.id + "_op"} className="grid grid-cols-[30px_15%_18%_18%_1fr] px-3">
+								<div key={child.id + "_op"} className="grid grid-cols-[2rem_15%_18%_18%_1fr] px-3">
 									<div className="flex justify-center items-center">
 										<span className="text-xs text-base-content/60 font-semibold tracking-wide">{group.operator}</span>
 									</div>
@@ -1234,12 +1234,12 @@ function SearchRuleComponent({
 	return (
 		<div
 			className={`grid ${
-				type === "relation" && !noTable ? "grid-cols-[30px_14%_14%_20%_1fr]" : "grid-cols-[30px_14%_26%_1fr]"
+				type === "relation" && !noTable ? "grid-cols-[2rem_14%_14%_20%_1fr]" : "grid-cols-[2rem_14%_26%_1fr]"
 			} gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
 		>
 			<div className="flex justify-center">
 				<button
-					className="btn btn-xs btn-square btn-primary"
+					className="btn btn-sm btn-square btn-primary"
 					type="button"
 					onClick={() => onChange(null)}
 					aria-label="Remove filter"
@@ -1430,7 +1430,7 @@ function InputElement({
 								/>
 								<button
 									type="button"
-									className="btn btn-xs btn-ghost text-error"
+									className="btn btn-sm btn-square btn-ghost text-error"
 									onClick={() => {
 										setInValues(inValues.filter((_, i) => i !== idx));
 									}}
@@ -1544,7 +1544,7 @@ function InputElement({
 								/>
 								<button
 									type="button"
-									className="btn btn-xs btn-ghost text-error"
+									className="btn btn-sm btn-square btn-ghost text-error"
 									onClick={() => {
 										setInValues(inValues.filter((_, i) => i !== idx));
 									}}
@@ -1699,7 +1699,7 @@ function InputElement({
 								/>
 								<button
 									type="button"
-									className="btn btn-xs btn-ghost text-error"
+									className="btn btn-sm btn-square btn-ghost text-error"
 									onClick={() => {
 										setInValues(inValues.filter((_, i) => i !== idx));
 									}}

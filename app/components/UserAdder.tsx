@@ -255,7 +255,7 @@ function UserDisplay({
 			{deletable &&
 				(disabled ? (
 					<button
-						className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-success"
+						className="btn btn-sm btn-circle btn-ghost text-success"
 						onClick={onAdd}
 						disabled={parentDisabled}
 					>
@@ -263,7 +263,7 @@ function UserDisplay({
 					</button>
 				) : (
 					<button
-						className="btn btn-xs h-5 w-5 btn-circle btn-ghost text-red-400"
+						className="btn btn-sm btn-circle btn-ghost text-red-400"
 						onClick={onDelete}
 						disabled={parentDisabled}
 					>

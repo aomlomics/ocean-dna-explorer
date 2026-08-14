@@ -295,7 +295,7 @@ export default function AnalysisEditButton({
 							<div key={t.tagName} className="flex gap-1 items-center">
 								<AnalysisTag tag={t} />
 								<button
-									className="btn btn-error btn-xs"
+									className="btn btn-error btn-sm"
 									onClick={() => setSelectedTags(selectedTags.filter((st) => st.tagName !== t.tagName))}
 									disabled={!!loading}
 								>

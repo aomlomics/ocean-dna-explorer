@@ -103,14 +103,14 @@ export default function TaxonomyVisualToggle({
 					<div className="join bg-base-100 p-0.5">
 						<button
 							type="button"
-							className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "phylopic" ? "btn-primary" : "btn-ghost"}`}
+							className={`join-item btn min-h-9 h-9 rounded-btn ${mode === "phylopic" ? "btn-primary" : "btn-ghost"}`}
 							onClick={() => setMode("phylopic")}
 						>
 							PhyloPic Outline
 						</button>
 						<button
 							type="button"
-							className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "gbif" ? "btn-primary" : "btn-ghost"}`}
+							className={`join-item btn min-h-9 h-9 rounded-btn ${mode === "gbif" ? "btn-primary" : "btn-ghost"}`}
 							disabled={!gbifPhotoAllowed}
 							onClick={openGbifOrWarn}
 							title={
