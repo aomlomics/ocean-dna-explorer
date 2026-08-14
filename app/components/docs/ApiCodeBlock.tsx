@@ -1,13 +1,14 @@
 "use client";
 
 import { fetcher } from "@/app/helpers/utils";
-import { useEffect, useState } from "react";
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
+import { useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import useSWRImmutable from "swr/immutable";
 
 export default function ApiCodeBlock({ language, url }: { language: string; url: string }) {
-	const [theme, setTheme] = useState("dark");
+	const { theme } = useDaisyTheme();
 	const [copied, setCopied] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -24,23 +25,6 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 	} else {
 		code = "Unexpected error occurred";
 	}
-
-	useEffect(() => {
-		const observer = new MutationObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				if (mutation.attributeName === "data-theme") {
-					const newTheme = document.documentElement.getAttribute("data-theme") || "dark";
-					setTheme(newTheme);
-				}
-			});
-		});
-
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setTheme(document.documentElement.getAttribute("data-theme") || "dark");
-
-		observer.observe(document.documentElement, { attributes: true });
-		return () => observer.disconnect();
-	}, []);
 
 	const handleCopy = async () => {
 		await navigator.clipboard.writeText(code);

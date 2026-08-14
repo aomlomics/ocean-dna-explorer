@@ -23,13 +23,11 @@ export default function ActionBar({
 	activePanel,
 	onPanelChange,
 	activeFilterCount,
-	canClear,
 	onClear
 }: {
 	activePanel: "search" | "filters" | null;
 	onPanelChange: (panel: "search" | "filters") => void;
 	activeFilterCount: number;
-	canClear: boolean;
 	onClear: () => void;
 }) {
 	const filtersActive = activePanel === "filters";
@@ -90,10 +88,8 @@ export default function ActionBar({
 
 			<button
 				type="button"
-				disabled={!canClear}
 				onClick={onClear}
 				className={`${segBase} ${segOff} disabled:pointer-events-none disabled:opacity-35`}
-				aria-disabled={!canClear}
 			>
 				<IconWrap>
 					<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" aria-hidden>

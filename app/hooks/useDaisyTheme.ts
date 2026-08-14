@@ -9,7 +9,8 @@ function getColor() {
 	return {
 		textColor: computedElement.getPropertyValue("color") || computedBody.color,
 		backgroundColor: computedElement.getPropertyValue("backgroundColor") || computedBody.backgroundColor,
-		primaryColor: computedElement.getPropertyValue("--color-primary")
+		primaryColor: computedElement.getPropertyValue("--color-primary"),
+		theme: document.documentElement.getAttribute("data-theme") || "light"
 	};
 }
 
@@ -18,19 +19,21 @@ export default function useDaisyTheme() {
 	const [colors, setColors] = useState({
 		textColor: "#334155",
 		backgroundColor: "#f4f3f2",
-		primaryColor: "#233d7f"
+		primaryColor: "#233d7f",
+		theme: "light"
 	});
 
 	useEffect(() => {
+		const updateTheme = () => setColors(getColor());
+
 		// Listen for theme changes
-		const observer = new MutationObserver(() => setColors(getColor()));
+		const observer = new MutationObserver(updateTheme);
 		observer.observe(document.documentElement, {
 			attributes: true,
 			attributeFilter: ["data-theme"]
 		});
 
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setColors(getColor());
+		updateTheme();
 
 		return () => observer.disconnect();
 	}, []);

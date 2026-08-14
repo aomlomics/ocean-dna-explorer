@@ -124,7 +124,10 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 	return root;
 }
 
-function searchTreeFromSearchParams(searchParams: { get: (key: string) => string | null; toString: () => string }): SearchGroupNode {
+function searchTreeFromSearchParams(searchParams: {
+	get: (key: string) => string | null;
+	toString: () => string;
+}): SearchGroupNode {
 	if (!searchParams.toString()) return createEmptyGroup(0);
 	const advanced = searchParams.get("advanced");
 	if (!advanced) return createEmptyGroup(0);
@@ -838,7 +841,6 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 							<button
 								type="button"
 								className="btn btn-primary"
-								disabled={!fieldSelectionDraft.length}
 								onClick={() => {
 									const normalizedSelection = availableApiFields.filter((field) => fieldSelectionDraft.includes(field));
 									const selectionIsAll = normalizedSelection.length === availableApiFields.length;
