@@ -24,6 +24,7 @@ export default function Modal({
 			<div className={`modal-box [:where(&)]:m-10 ${className ?? ""}`}>
 				<button
 					ref={xRef}
+					aria-label="Close dialog"
 					className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
 					onClick={(e) => {
 						e.preventDefault();
@@ -44,7 +45,7 @@ export default function Modal({
 				{children}
 			</div>
 			<form method="dialog" className="modal-backdrop">
-				<button ref={clickOffRef} onClick={onClose}>
+				<button ref={clickOffRef} aria-label="Close dialog" onClick={onClose}>
 					close
 				</button>
 			</form>
