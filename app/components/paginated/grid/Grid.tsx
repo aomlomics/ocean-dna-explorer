@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
+import LoadingPaginationControls from "../LoadingPaginationControls";
 import { buildWhereParams } from "@/app/helpers/queries";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
@@ -102,17 +103,26 @@ export default function Grid({
 		);
 	}
 	if (isLoading || !data) {
-		return table === "taxonomy" ? (
-			<div className="space-y-4">
-				<TableStatusState
-					kind="loading"
-					title="Loading results..."
-					detail="Applying filters and fetching taxonomy rows."
-				/>
-				<LoadingTaxaGrid cols={5} />
+		if (table === "taxonomy") {
+			return <LoadingTaxaGrid cols={5} />;
+		}
+
+		return (
+			<div className="flex flex-col gap-6 p-6">
+				<LoadingPaginationControls />
+				<div className={itemsGridClassName}>
+					{Array.from({ length: 6 }, (_, i) => (
+						<div key={i} className="overflow-hidden rounded-xl bg-base-200">
+							<div className="aspect-16/10 bg-base-content/10" />
+							<div className="space-y-2 p-3">
+								<div className="h-4 w-1/2 rounded bg-base-content/10" />
+								<div className="h-3 w-3/4 rounded bg-base-content/10" />
+								<div className="h-3 w-1/3 rounded bg-base-content/10" />
+							</div>
+						</div>
+					))}
+				</div>
 			</div>
-		) : (
-			<TableStatusState kind="loading" title="Loading results..." detail="Applying filters and fetching table rows." />
 		);
 	}
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result)) {

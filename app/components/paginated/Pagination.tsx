@@ -62,16 +62,7 @@ export default function Pagination({
 		);
 	}
 	if (isLoading || !data) {
-		return (
-			<div className="space-y-4">
-				<TableStatusState
-					kind="loading"
-					title="Loading results..."
-					detail="Applying filters and fetching table rows."
-				/>
-				<LoadingPagination />
-			</div>
-		);
+		return <LoadingPagination />;
 	}
 	if (data.statusMessage === "error") {
 		return (
