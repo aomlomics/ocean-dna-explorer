@@ -178,6 +178,24 @@
 
 @tailwind utilities;
 
+/*
+  daisyUI table-pin-cols is `sticky; left: 0; right: 0` on EVERY <th>.
+  Our explore tables use <th> for all column headers, so they stack over each other.
+  Keep freeze-pane on the first and last columns only.
+*/
+.table-pin-cols thead th:not(:first-child):not(:last-child) {
+	left: auto;
+	right: auto;
+}
+
+.table-pin-cols tr > th:first-child {
+	right: auto;
+}
+
+.table-pin-cols tr > th:last-child {
+	left: auto;
+}
+
 @layer base {
 	:root {
 		color-scheme: light;
