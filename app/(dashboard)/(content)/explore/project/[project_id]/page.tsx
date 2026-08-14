@@ -319,7 +319,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	);
 
 	/* Matches ContentLayout widths so full-bleed heroes align foreground with the page column. */
-	const contentColumnClass = "mx-auto w-[85%] max-w-[1536px] sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%]";
+	const contentColumnClass = "mx-auto w-[85%] sm:w-[80%] md:w-[75%] lg:w-[75%] xl:w-[80%]";
 
 	const breadcrumbsBlock = (
 		<div className="text-base breadcrumbs mb-3">
