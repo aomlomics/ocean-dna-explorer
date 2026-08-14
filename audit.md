@@ -196,7 +196,7 @@ Also worth fixing while in these files: the four fetches are independent but awa
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P0-6 · Accessibility — Mobile navigation is not keyboard-operable
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-6 · Accessibility — Mobile navigation is not keyboard-operable
 **Location** `app/components/header/MobileMenu.tsx:53`; same pattern at `app/components/docs/MobileTOC.tsx:72`
 
 **Issue**
