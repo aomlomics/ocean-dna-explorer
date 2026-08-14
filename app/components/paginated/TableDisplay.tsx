@@ -73,12 +73,7 @@ export default function TableDisplay({
 	}, []);
 
 	const fixedViewportClass = size === "lg" ? "h-[90vh]" : "";
-	const dataShellClass =
-		mode !== "grid"
-			? `rounded-lg ${fixedViewportClass}`
-			: table === "taxonomy"
-				? "rounded-lg"
-				: `rounded-lg ${fixedViewportClass} min-h-0 flex flex-col`;
+	const dataShellClass = mode === "grid" ? "rounded-lg" : `rounded-lg ${fixedViewportClass}`;
 
 	const dataContent =
 		mode === "table" ? (
@@ -104,6 +99,7 @@ export default function TableDisplay({
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
 				extraQueryParams={{ relations: "AssayPreps", relationsAllFields: "true" }}
+				fillViewport={false}
 				itemsGridClassName="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5"
 			/>
 		) : table === "taxonomy" ? (

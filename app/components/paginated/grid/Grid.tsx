@@ -183,7 +183,7 @@ export default function Grid({
 				{paginationControlsTop}
 			</div>
 
-			<div className="min-h-0 flex-1">
+			<div className="min-h-0 flex-1 overflow-y-auto">
 				<div className={itemsGridClassName}>
 					{data.result.map((item: any, i: number) => (
 						<Child key={i} item={item} {...childProps} />
