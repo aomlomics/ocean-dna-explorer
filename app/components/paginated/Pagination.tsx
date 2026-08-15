@@ -94,7 +94,7 @@ export default function Pagination({
 				{data.result.map((d: any, i: number) => {
 					const titleField = TableMetadata[table].titleField;
 					const titleKeys = typeof titleField === "string" ? [titleField] : [...titleField];
-					const title = d[titleKeys[titleKeys.length - 1]];
+					const title = d[titleKeys.at(-1)!];
 					const subtitle = titleKeys
 						.slice(0, -1)
 						.map((key) => d[key])
@@ -111,9 +111,7 @@ export default function Pagination({
 							className="block w-full rounded-xl bg-base-200 px-4 py-3 transition-colors duration-200 hover:bg-base-300"
 						>
 							<h3 className="text-base font-medium text-primary wrap-break-word">{title}</h3>
-							{subtitle ? (
-								<p className="mt-0.5 text-sm text-base-content/55 wrap-break-word">{subtitle}</p>
-							) : null}
+							{subtitle ? <p className="mt-0.5 text-sm text-base-content/55 wrap-break-word">{subtitle}</p> : null}
 
 							{details.length > 0 ? (
 								<div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-sm">

@@ -13,12 +13,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		if (!headerRef.current) return;
 
-		const resizeObserver = new ResizeObserver(([entry]) => {
-			setHeaderHeight(entry.contentRect.height);
-		});
+		const resizeObserver = new ResizeObserver(([entry]) => entry && setHeaderHeight(entry.contentRect.height));
 		resizeObserver.observe(headerRef.current);
 
-		const intersectObserver = new IntersectionObserver(([entry]) => setHeaderVisible(entry.isIntersecting), {
+		const intersectObserver = new IntersectionObserver(([entry]) => setHeaderVisible(!!entry && entry.isIntersecting), {
 			threshold: 0
 		});
 		intersectObserver.observe(headerRef.current);
