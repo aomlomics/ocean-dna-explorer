@@ -24,7 +24,8 @@
 		"lint": "eslint .",
 		"generate": "npx prisma generate && npx prisma generate --schema ./prismaImages/schema.prisma --config ./prismaImages/prisma.config.ts",
 		"migrate": "npx prisma migrate deploy && npx prisma migrate deploy --schema ./prismaImages/schema.prisma --config ./prismaImages/prisma.config.ts",
-		"postinstall": "npm run migrate && npm run generate"
+		"postinstall": "npm run migrate && npm run generate",
+		"check": "npm run lint && echo Running TypeScript... && tsc --noEmit --skipLibCheck && echo Finished TypeScript"
 	},
 	"dependencies": {
 		"@clerk/nextjs": "^7.5.2",
