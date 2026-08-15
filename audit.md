@@ -196,7 +196,7 @@ Also worth fixing while in these files: the four fetches are independent but awa
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P0-6 · Accessibility — Mobile navigation is not keyboard-operable
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P0-6 · Accessibility — Mobile navigation is not keyboard-operable
 **Location** `app/components/header/MobileMenu.tsx:53`; same pattern at `app/components/docs/MobileTOC.tsx:72`
 
 **Issue**
@@ -473,11 +473,14 @@ Make each sortable header a `<button>` inside a `<th scope="col">` and put `aria
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-11 · Accessibility — Charts, maps, and the globe have no text alternative
-**Location** `app/components/charts/**` (for example `SampleScatterPlot.tsx:404`, `BoxWhiskerPlot.tsx:114`, `TaxaBarChart.tsx`, `DoughnutChart.tsx`), `app/components/OceanGlobe.tsx:493-504`, Leaflet maps under `app/components/map/**`
+#### ![WIP](https://img.shields.io/badge/%E2%86%BB_WIP-2563eb?style=flat-square) P1-11 · Accessibility — Charts, maps, and the globe have no text alternative
+**Location** `app/components/charts/**` (for example `SampleScatterPlot.tsx:404`, `BoxWhiskerPlot.tsx:114`, `TaxaBarChart.tsx`, `DoughnutChart.tsx`), `app/components/OceanGlobe.tsx:491-510`, Leaflet maps under `app/components/map/**`
 
 **Issue**
-Chart.js renders to `<canvas>`, which is an opaque bitmap to assistive technology with no readable DOM inside it. None of the chart components supply `role="img"` with a summarizing `aria-label`, an `aria-describedby` pointing at a text summary, or a data-table fallback. The globe canvas has no label at all. Chart.js tooltips are hover affordances and are not exposed to screen readers. The net effect is that the entire Visualize section conveys no information to a screen-reader user.
+Chart.js renders to `<canvas>`, which is an opaque bitmap to assistive technology with no readable DOM inside it. None of the chart components supply `role="img"` with a summarizing `aria-label`, an `aria-describedby` pointing at a text summary, or a data-table fallback. Chart.js tooltips are hover affordances and are not exposed to screen readers. The net effect is that the entire Visualize section conveys no information to a screen-reader user.
+
+**Progress**
+Globe done: `OceanGlobe` now wraps the canvas in `role="img"` with a summarizing `aria-label` (same pattern as the ambient word cloud) and sets `aria-hidden` on the canvas so AT does not announce an unlabeled bitmap. Charts and Leaflet are still open.
 
 **Suggested direction**
 Two layers, and the second is the one worth pushing for:
@@ -552,9 +555,9 @@ Enabling `noUncheckedIndexedAccess` in `tsconfig.json` is also worth considering
 | P2-7 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | `DocsPageSection.tsx:49`; `visualize/*/page.tsx`; `BlastSearchResult.tsx:123-137`; `BlastSearch.tsx:300`; `ExploreSearch.tsx:105` | Heading hierarchy: docs pages start at `<h2>`, visualize subpages have no heading, and `<h1>` labels subsections in several BLAST components | One `<h1>` per page describing the page, `<h2>`+ for sections. Headings are the primary screen-reader navigation structure, so this is more than cosmetic |
 | P2-8 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | 80+ uses of `text-base-content/50`, `/60`, `opacity-50`; e.g. `DashboardExtras.tsx:575`, `:585`, `DataSummaryHighlights.tsx:246`, `GbifImage.tsx:171` | 10–11px text at 50% opacity likely fails 4.5:1 in both themes | Measure with a contrast checker, then raise to `/70`+ for small text. Both themes are properly defined in `styles/globals.css:6-61`, so this is a token-value fix rather than a theming change |
 | P2-9 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y | Framer Motion under `(tour)/**`; `.sponsors-logo` infinite animation; `OrganismOutlines.tsx:83` `animate-float` | `prefers-reduced-motion` is respected only in `StatCountUp.tsx:13` and one rule at `globals.css:480-483` | Gate looping and large-movement animation behind `motion-reduce:` or `useReducedMotion`. Infinite animations are the worst offenders for vestibular disorders |
-| P2-10 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | A11y / Mobile | `UserAdder.tsx:265`, `:273` (`btn-xs h-5 w-5`); `SearchUI.tsx:1099`, `:1246`; `TaxonomyVisualToggle.tsx:108` | Touch targets around 20px, well under the ~44px guideline | Increase hit area with padding; the visual can stay small |
-| P2-11 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Mobile | `MobileMenu.tsx:96-106` vs `MegaMenus.tsx:83-84` and `VisualizeTabs.tsx:28-35` | The mobile Visualize submenu lists only Metadata and Taxonomy; Alpha Diversity exists but has no mobile entry point | Add the missing link — this is functionality unreachable on mobile, not a layout difference |
-| P2-12 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Mobile | `EditHistory.tsx:30` (`min-w-[600px]`); `Table.tsx:453` (`grid-cols-3` toolbar); `Header.tsx:22-25` (fixed logo widths) | Fixed widths likely overflow near 390px | Responsive variants or scroll containers |
+| P2-10 | ![DONE](https://img.shields.io/badge/%E2%9C%93-16a34a?style=flat-square) | A11y / Mobile | `UserAdder.tsx`; `SearchUI.tsx`; `TaxonomyVisualToggle.tsx` | Touch targets around 20px, well under the ~44px guideline | Icon-only controls bumped from `btn-xs` (~20px) to `btn-sm` (~32px). Taxonomy toggle uses `h-10`. Query-builder first column is 2rem so the delete button fits |
+| P2-11 | ![DONE](https://img.shields.io/badge/%E2%9C%93-16a34a?style=flat-square) | Mobile | `MobileMenu.tsx:106-121` vs `MegaMenus.tsx:83-84` and `VisualizeTabs.tsx:28-35` | The mobile Visualize submenu listed only Metadata and Taxonomy; Alpha Diversity exists but had no mobile entry point | Added the missing `/visualize/alphaDiversity` link so the mobile submenu matches desktop |
+| P2-12 | ![DONE](https://img.shields.io/badge/%E2%9C%93-16a34a?style=flat-square) | Mobile | `EditHistory.tsx`; `Header.tsx` logo | Fixed widths likely overflow near 390px | Edit history dropdown is viewport-capped. Table toolbar left unchanged. Header logo kept at its original `w-56` / `w-52` mobile size |
 | P2-13 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | ~20 `@ts-ignore` sites, notably `api/[table]/route.ts:63`, `pagination/route.ts:293`, `:310`, `:360`, `swapToTable/route.ts:20`; `explore/taxonomy/[taxonomy]/page.tsx:148`, `:169` (`(dbTaxonomy as any)[rank]`) | Dynamic `prisma[model]` access defeats type checking on the core public API | A typed model map (`Record<TableName, Delegate>`) restores safety at the boundary. These are load-bearing suppressions on the most-used code path, not incidental ones |
 | P2-14 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | `explore/project/page.tsx:14`, `explore/sample/page.tsx:18` (`if (!projects) return <>Loading...</>`); `Table.tsx:917`, `:939` (`"test" === null`) | Unreachable branches: `findMany` always returns an array, and the string comparison is constantly false. Dead code rather than user-visible defects | Remove. Worth noting because these read as real states during review and obscure genuine error handling |
 | P2-15 | ![TODO](https://img.shields.io/badge/%E2%9C%97-dc2626?style=flat-square) | Code quality | `SearchUI.tsx:185` (`console.log(err)` swallowing URL parse errors); `AnalysisSubmit.tsx:210`; `explore/*/sitemap.ts:21-27` | Errors logged to console only; the user sees nothing or a generic message | Use `console.error` server-side and surface something actionable. The `SearchUI` case means a malformed shared search URL fails silently |

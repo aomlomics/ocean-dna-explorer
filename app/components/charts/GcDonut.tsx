@@ -5,9 +5,10 @@ type GcDonutProps = {
 	percentage: number;
 	size?: number;
 	strokeWidth?: number;
+	label?: string;
 };
 
-const GcDonut = ({ percentage, size = 80, strokeWidth = 10 }: GcDonutProps) => {
+const GcDonut = ({ percentage, size = 80, strokeWidth = 10, label }: GcDonutProps) => {
 	const radius = (size - strokeWidth) / 2;
 	const circumference = 2 * Math.PI * radius;
 	const offset = circumference - (percentage / 100) * circumference;
@@ -36,7 +37,7 @@ const GcDonut = ({ percentage, size = 80, strokeWidth = 10 }: GcDonutProps) => {
 					style={{ transition: "stroke-dashoffset 0.5s ease-in-out" }}
 				/>
 			</svg>
-			<span className="absolute text-sm font-bold text-base-content">{`${percentage.toFixed(1)}%`}</span>
+			<span className="absolute text-sm font-bold text-base-content">{label ?? `${percentage.toFixed(1)}%`}</span>
 		</div>
 	);
 };

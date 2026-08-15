@@ -69,7 +69,12 @@ export default function MobileTOC() {
 			</div>
 
 			{/* The trigger button */}
-			<div role="button" className="btn btn-outline w-full justify-between" onClick={handleToggle}>
+			<button
+				type="button"
+				className="btn btn-outline w-full justify-between"
+				onClick={handleToggle}
+				aria-expanded={isOpen}
+			>
 				<span className="flex items-center gap-2">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +96,7 @@ export default function MobileTOC() {
 				>
 					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
 				</svg>
-			</div>
+			</button>
 
 			{/* The dropdown menu */}
 			{isOpen && (

@@ -89,6 +89,7 @@ export default function BlastSearchResult({
 			<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 				<button
 					className="btn btn-secondary rounded-full"
+					aria-label="Previous sequence"
 					onClick={() => setPage(page ? page - 1 : resultsBySequence.length - 1)}
 					disabled={resultsBySequence.length < 2}
 				>
@@ -148,6 +149,7 @@ export default function BlastSearchResult({
 
 				<button
 					className="btn btn-secondary rounded-full"
+					aria-label="Next sequence"
 					onClick={() => setPage(page === resultsBySequence.length - 1 ? 0 : page + 1)}
 					disabled={resultsBySequence.length < 2}
 				>

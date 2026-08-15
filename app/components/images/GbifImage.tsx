@@ -164,7 +164,7 @@ export default function GbifImage({
 			<>
 				<div className={`flex h-full w-full flex-col overflow-hidden ${className}`}>
 					<div className="min-h-0 flex-1 overflow-hidden">{clickToPreviewImage}</div>
-					<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/50">
+					<p className="mt-1 line-clamp-2 text-center text-[10px] leading-snug text-base-content/70">
 						{attributionLine}
 					</p>
 				</div>

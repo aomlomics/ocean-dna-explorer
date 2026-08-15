@@ -93,7 +93,7 @@ export default function DashCard({
 				<div className={["flex items-start justify-between gap-4", pad.header, headerClassName].join(" ")}>
 					<div className="min-w-0">
 						{eyebrow && (
-							<div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/55 mb-1">
+							<div className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/70 mb-1">
 								{eyebrow}
 							</div>
 						)}

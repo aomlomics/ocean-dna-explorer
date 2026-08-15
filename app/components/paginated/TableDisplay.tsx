@@ -59,7 +59,7 @@ export default function TableDisplay({
 
 	useEffect(() => {
 		function handleResize() {
-			if (window.innerWidth > 1024) {
+			if (window.innerWidth >= 1280) {
 				setSize("lg");
 			} else {
 				setSize("sm");
@@ -73,12 +73,7 @@ export default function TableDisplay({
 	}, []);
 
 	const fixedViewportClass = size === "lg" ? "h-[90vh]" : "";
-	const dataShellClass =
-		mode !== "grid"
-			? `rounded-lg ${fixedViewportClass}`
-			: table === "taxonomy"
-				? "rounded-lg"
-				: `rounded-lg ${fixedViewportClass} min-h-0 flex flex-col`;
+	const dataShellClass = mode === "grid" ? "rounded-lg" : `rounded-lg ${fixedViewportClass}`;
 
 	const dataContent =
 		mode === "table" ? (
@@ -104,6 +99,7 @@ export default function TableDisplay({
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
 				extraQueryParams={{ relations: "AssayPreps", relationsAllFields: "true" }}
+				fillViewport={false}
 				itemsGridClassName="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5"
 			/>
 		) : table === "taxonomy" ? (
@@ -128,7 +124,7 @@ export default function TableDisplay({
 					<div className="inline-flex items-center gap-2 rounded-xl bg-base-200/40 p-1">
 						<button
 							type="button"
-							className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
+							className={`btn gap-2 rounded-lg border-0 px-3.5 normal-case min-h-10 h-10 shadow-none ${
 								mode === "table"
 									? "btn-primary text-primary-content"
 									: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
@@ -137,7 +133,7 @@ export default function TableDisplay({
 							aria-pressed={mode === "table"}
 							title="List view"
 						>
-							<span className="flex h-4 w-4 shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4">
+							<span className="flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
 								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
 									<path d="M9 6h12M9 12h12M9 18h12" strokeLinecap="round" />
 									<circle cx="5" cy="6" r="1.5" fill={stroke} />
@@ -149,7 +145,7 @@ export default function TableDisplay({
 						</button>
 						<button
 							type="button"
-							className={`btn btn-sm gap-2 rounded-lg border-0 px-3 normal-case min-h-9 h-9 shadow-none ${
+							className={`btn gap-2 rounded-lg border-0 px-3.5 normal-case min-h-10 h-10 shadow-none ${
 								mode === "grid"
 									? "btn-primary text-primary-content"
 									: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
@@ -158,7 +154,7 @@ export default function TableDisplay({
 							aria-pressed={mode === "grid"}
 							title="Grid view"
 						>
-							<span className="flex h-4 w-4 shrink-0 items-center justify-center [&_svg]:h-4 [&_svg]:w-4">
+							<span className="flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
 								<svg viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} aria-hidden>
 									<rect x="4" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />
 									<rect x="13" y="4" width="7" height="7" rx="1.5" strokeLinejoin="round" />

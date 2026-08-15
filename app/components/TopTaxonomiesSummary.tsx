@@ -165,8 +165,8 @@ function KingdomCard({ section }: { section: KingdomSection }) {
 
 				<div>
 					<div className="flex items-center justify-between mb-2.5">
-						<p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/55">Top phyla</p>
-						<span className="text-[11px] text-base-content/50">Count</span>
+						<p className="text-[11px] uppercase tracking-[0.14em] font-semibold text-base-content/70">Top phyla</p>
+						<span className="text-[11px] text-base-content/70">Count</span>
 					</div>
 					<ul className="divide-y divide-base-content/5">
 						{section.phyla.length > 0 ? (

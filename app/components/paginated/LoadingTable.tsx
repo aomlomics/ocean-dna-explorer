@@ -64,7 +64,7 @@ export default function LoadingTable({
 				</div>
 
 				<div className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
-					<table className="table table-sm table-pin-rows table-pin-cols">
+					<table className="table table-sm table-pin-rows table-pin-cols w-max min-w-full">
 						{/* Headers */}
 						<thead>
 							<tr>

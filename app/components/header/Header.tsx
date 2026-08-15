@@ -10,19 +10,19 @@ import AdminButton from "./AdminButton";
 export default function Header() {
 	// z-header + relative: navbar is a stacking context above page content, so its menus render over the page below
 	return (
-		<header className="navbar shrink-0 bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
+		<header className="navbar w-full min-w-0 shrink-0 bg-base-100 border-b-4 border-primary h-20 xl:h-24 top-0 z-header relative overflow-visible">
 			{/* Mobile hamburger menu + Logo */}
-			<div className="navbar-start w-auto shrink-0 min-w-0 pr-2 md:pr-3 xl:pr-6">
+			<div className="navbar-start w-auto min-w-0 pr-2 md:pr-3 xl:pr-6 lg:shrink-0">
 				{/* Mobile hamburger dropdown */}
 				<MobileMenu />
 
 				{/* Logo */}
-				<div className="flex items-center min-w-0">
+				<div className="flex items-center min-w-0 lg:min-w-max">
 					<Link
-						className="px-2 md:px-3 xl:px-8 md:ml-2 xl:ml-6 normal-case text-xl h-16 w-56 md:w-64 xl:h-22 xl:w-80 flex flex-col items-center justify-center shrink"
+						className="px-2 md:px-3 xl:px-8 md:ml-2 xl:ml-6 normal-case text-xl h-16 w-56 md:w-64 xl:h-22 xl:w-80 flex flex-col items-center justify-center max-lg:min-w-0 max-lg:max-w-full"
 						href="/"
 					>
-						<div className="avatar w-52 h-14 md:w-60 md:h-14 xl:w-88 xl:h-22 relative">
+						<div className="avatar w-52 h-14 md:w-60 md:h-14 xl:w-88 xl:h-22 relative max-lg:max-w-full">
 							<NodeLogo
 								alt="Ocean DNA Explorer Logo"
 								fill
@@ -31,7 +31,7 @@ export default function Header() {
 							/>
 						</div>
 					</Link>
-					<div className="bg-orange-500 text-white font-semibold rounded-md ml-2 md:ml-3 xl:ml-8 text-[10px] md:text-[11px] xl:text-xs px-2.5 md:px-3 xl:px-4 py-1 md:py-1.5 leading-tight">
+					<div className="bg-orange-500 text-white font-semibold rounded-md ml-2 md:ml-3 xl:ml-8 text-[10px] md:text-[11px] xl:text-xs px-2.5 md:px-3 xl:px-4 py-1 md:py-1.5 leading-tight shrink-0">
 						BETA
 					</div>
 				</div>

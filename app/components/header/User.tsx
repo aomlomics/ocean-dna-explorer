@@ -11,7 +11,7 @@ export default function User() {
 			</Show>
             <Show when="signed-out">
 				<SignInButton>
-					<button className="btn bg-primary text-white hover:bg-primary/80">Sign In</button>
+					<button className="btn btn-sm md:btn-md bg-primary text-white hover:bg-primary/80">Sign In</button>
 				</SignInButton>
 			</Show>
         </>

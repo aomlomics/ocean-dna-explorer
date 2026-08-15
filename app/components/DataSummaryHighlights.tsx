@@ -244,7 +244,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 					<dl className="grid grid-cols-2 gap-3 text-xs">
 						{project.institution && (
 							<div>
-								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
+								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">
 									Institution
 								</dt>
 								<dd className="text-base-content/85 truncate" title={project.institution}>
@@ -254,7 +254,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 						)}
 						{project.assay_type && (
 							<div>
-								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
+								<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">
 									Assay type
 								</dt>
 								<dd className="text-base-content/85 truncate">{project.assay_type}</dd>
@@ -356,7 +356,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 
 				<dl className="text-xs space-y-2 grow">
 					<div>
-						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">Project</dt>
+						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">Project</dt>
 						<dd>
 							<Link
 								href={exploreProjectUrl(analysis.project_id)}
@@ -372,7 +372,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 					</div>
 					{analysis.Project?.institution && (
 						<div>
-							<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-0.5">
+							<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">
 								Institution
 							</dt>
 							<dd className="text-base-content/85 truncate" title={analysis.Project.institution}>
@@ -381,7 +381,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 						</div>
 					)}
 					<div>
-						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/50 mb-1">Assay</dt>
+						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-1">Assay</dt>
 						{/* Inline — chip does NOT stretch to full width */}
 						<div className="flex">
 							<CompactAssayChip assay_name={analysis.assay_name} target_gene={analysis.Assay.target_gene} />

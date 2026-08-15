@@ -489,7 +489,7 @@ export default function Table({
 				</div>
 
 				<div tabIndex={0} className="overflow-x-auto scrollbar scrollbar-thumb-accent scrollbar-track-base-100 h-full">
-					<table className="table table-sm table-pin-rows table-pin-cols">
+					<table className="table table-sm table-pin-rows table-pin-cols w-max min-w-full">
 						<caption className="sr-only">{TableMetadata[table].plural} table</caption>
 						{/* Headers */}
 						<thead>

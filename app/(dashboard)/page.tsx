@@ -83,7 +83,7 @@ export default async function Home() {
 								<Link href="/explore/project" className={heroPrimaryBtnClass}>
 									Explore the Data
 								</Link>
-								<Link href="/learn?section=edna101" className={heroPrimaryBtnClass}>
+								<Link href="/learn/edna101" className={heroPrimaryBtnClass}>
 									What is eDNA?
 								</Link>
 							</div>

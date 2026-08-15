@@ -16,7 +16,7 @@ export default function Pagination({
 	table,
 	where,
 	relCounts,
-	take = 10,
+	take = 25,
 	ignoreParams
 }: {
 	table: Uncapitalize<Prisma.ModelName>;
@@ -30,7 +30,7 @@ export default function Pagination({
 
 	function getQuery(dir?: 1 | -1) {
 		const query = new URLSearchParams({
-			take: (25).toString(),
+			take: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});
 
@@ -62,16 +62,7 @@ export default function Pagination({
 		);
 	}
 	if (isLoading || !data) {
-		return (
-			<div className="space-y-4">
-				<TableStatusState
-					kind="loading"
-					title="Loading results..."
-					detail="Applying filters and fetching table rows."
-				/>
-				<LoadingPagination />
-			</div>
-		);
+		return <LoadingPagination />;
 	}
 	if (data.statusMessage === "error") {
 		return (
@@ -89,7 +80,7 @@ export default function Pagination({
 	}
 
 	return (
-		<div className="space-y-6 p-6">
+		<div className="space-y-4">
 			{/* Pagination Controls */}
 			<PaginationControls
 				page={page}
@@ -99,70 +90,55 @@ export default function Pagination({
 				handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
 			/>
 
-			{/* Project Cards */}
-			<div className={`flex flex-col gap-4 ${table === "sample" ? "items-start" : "items-center"}`}>
-				{data.result.map((d: any, i: number) => (
-					<Link
-						href={`/explore/${table}/${
-							typeof TableMetadata[table].titleField === "string"
-								? encodeURIComponent(d[TableMetadata[table].titleField])
-								: TableMetadata[table].titleField.map((field) => encodeURIComponent(d[field])).join("/")
-						}`}
-						key={i}
-						className="card bg-base-200 hover:bg-base-300 transition-all duration-200 w-full max-w-lg"
-					>
-						<div className="card-body p-5">
-							<div className="flex flex-col gap-2">
-								{/* Title with hover animation */}
-								{typeof TableMetadata[table].titleField === "string" ? (
-									<h3 className="text-lg text-primary break-all">{d[TableMetadata[table].titleField]}</h3>
-								) : (
-									<div
-										className="grid gap-x-4"
-										style={{
-											gridTemplateColumns: `repeat(${TableMetadata[table].titleField.length}, minmax(0, 1fr))`
-										}}
-									>
-										{TableMetadata[table].titleField.map((t) => (
-											<h3 key={`${t}1`} className="text-lg font-medium text-primary">
-												{t}:
-											</h3>
-										))}
-										{TableMetadata[table].titleField.map((t) => (
-											<h3 key={`${t}2`} className="font-medium text-primary wrap-break-word">
-												{d[t]}
-											</h3>
-										))}
-									</div>
-								)}
+			<div className="flex flex-col gap-2">
+				{data.result.map((d: any, i: number) => {
+					const titleField = TableMetadata[table].titleField;
+					const titleKeys = typeof titleField === "string" ? [titleField] : [...titleField];
+					const title = d[titleKeys[titleKeys.length - 1]];
+					const subtitle = titleKeys
+						.slice(0, -1)
+						.map((key) => d[key])
+						.filter(Boolean)
+						.join(" · ");
+					const details = (TableMetadata[table].subFields ?? []).filter(
+						(field) => !titleKeys.includes(field) && d[field] != null && d[field] !== ""
+					);
 
-								{/* Info section with clean layout */}
-								{TableMetadata[table].subFields && (
-									<div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-base-content/70">
-										{TableMetadata[table].subFields.map((field) => (
-											<div key={field} className="flex items-center gap-2">
-												<span className="font-medium">{field}:</span>
-												<span className="break-all text-base-content">{d[field]}</span>
-											</div>
-										))}
-									</div>
-								)}
+					return (
+						<Link
+							key={i}
+							href={`/explore/${table}/${titleKeys.map((key) => encodeURIComponent(d[key])).join("/")}`}
+							className="block w-full rounded-xl bg-base-200 px-4 py-3 transition-colors duration-200 hover:bg-base-300"
+						>
+							<h3 className="text-base font-medium text-primary wrap-break-word">{title}</h3>
+							{subtitle ? (
+								<p className="mt-0.5 text-sm text-base-content/55 wrap-break-word">{subtitle}</p>
+							) : null}
 
-								{/* Stats with subtle separator */}
-								{relCounts && (
-									<div className="flex flex-wrap gap-6 pt-1">
-										{relCounts.map((rel) => (
-											<div key={rel} className="flex items-center gap-2">
-												<span className="text-lg font-medium">{d._count[rel]}</span>
-												<span className="text-sm text-base-content/70">{rel}</span>
-											</div>
-										))}
-									</div>
-								)}
-							</div>
-						</div>
-					</Link>
-				))}
+							{details.length > 0 ? (
+								<div className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-sm">
+									{details.map((field) => (
+										<div key={field} className="contents">
+											<span className="text-base-content/50">{field.replaceAll("_", " ")}</span>
+											<span className="wrap-break-word">{String(d[field])}</span>
+										</div>
+									))}
+								</div>
+							) : null}
+
+							{relCounts ? (
+								<div className="mt-2 flex flex-wrap gap-x-4 text-sm">
+									{relCounts.map((rel) => (
+										<p key={rel}>
+											<span className="font-medium">{d._count[rel]}</span>{" "}
+											<span className="text-base-content/50">{rel}</span>
+										</p>
+									))}
+								</div>
+							) : null}
+						</Link>
+					);
+				})}
 			</div>
 
 			{/* Pagination Controls */}
