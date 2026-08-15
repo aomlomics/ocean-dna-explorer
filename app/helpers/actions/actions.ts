@@ -32,7 +32,7 @@ export function addToHistory(
 		} else {
 			//group changes together into previously existing edit
 			const temp = [...editHistory];
-			temp[currEditIndex].changes = [...editHistory[currEditIndex].changes, ...changes];
+			temp[currEditIndex]!.changes = [...editHistory[currEditIndex]!.changes, ...changes];
 			return temp;
 		}
 	} else {

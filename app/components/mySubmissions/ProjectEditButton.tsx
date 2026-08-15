@@ -220,7 +220,7 @@ export default function ProjectEditButton({
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
-								onChange={(e) => setProjectFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								onChange={(e) => setProjectFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={projectRef}
 							/>
 							<ProgressBar loading={loading && !!projectFile} data={projectResponse} />
@@ -240,7 +240,7 @@ export default function ProjectEditButton({
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
-								onChange={(e) => setSampleFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								onChange={(e) => setSampleFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={sampleRef}
 							/>
 							<ProgressBar loading={loading && !!sampleFile} data={sampleResponse} />
@@ -260,7 +260,7 @@ export default function ProjectEditButton({
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
-								onChange={(e) => setLibraryFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								onChange={(e) => setLibraryFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={libraryRef}
 							/>
 							<ProgressBar loading={loading && !!libraryFile} data={libraryResponse} />

@@ -97,7 +97,7 @@ async function SuspenseDropdownCard({
 							);
 						} else {
 							const typed = i as Record<string, string>;
-							const joined = TableMetadata[table].titleField.map((f) => encodeURIComponent(typed[f])).join("/");
+							const joined = TableMetadata[table].titleField.map((f) => encodeURIComponent(typed[f]!)).join("/");
 							return (
 								<li key={joined}>
 									<Link href={`/explore/${table}/${joined}`} className="text-base-content hover:text-primary break-all">

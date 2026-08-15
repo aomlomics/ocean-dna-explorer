@@ -17,7 +17,7 @@ function getBestRank(
 		if (value) {
 			return {
 				rank,
-				label: rank[0].toUpperCase() + rank.slice(1),
+				label: rank.charAt(0).toUpperCase() + rank.slice(1),
 				value: value.replace(/_/g, " ")
 			};
 		}

@@ -72,28 +72,43 @@ export function parseNestedJson(json: string) {
 	return parsed;
 }
 
-export function getOptions(arr: Record<string, any>[]) {
-	//create object of sets with keys matching arr
-	const filterOptionsSet = {} as Record<keyof (typeof arr)[0], Set<any>>;
-	for (const field in arr[0]) {
-		filterOptionsSet[field as keyof (typeof arr)[0]] = new Set();
+type OptionKeys<T> = {
+	[K in keyof T]: Exclude<T[K], null> extends string | number ? K : never;
+}[keyof T];
+
+type OptionsResult<T> = {
+	[K in OptionKeys<T>]: string[];
+};
+
+export function getOptions<T extends Record<string, unknown>>(arr: T[]): OptionsResult<T> {
+	if (!arr.length) {
+		return {} as OptionsResult<T>;
 	}
 
-	//fill sets with all possible values
+	const filterOptionsSets = {} as Record<string, Set<string>>;
+
 	for (const e of arr) {
 		for (const [field, value] of Object.entries(e)) {
-			if (value) {
-				filterOptionsSet[field as keyof typeof e].add(value);
+			if (value != null) {
+				filterOptionsSets[field] ??= new Set();
+
+				if (typeof value === "string") {
+					filterOptionsSets[field].add(value);
+				} else if (typeof value === "number") {
+					if (value in DeadValueEnum) {
+						filterOptionsSets[field].add(DeadValueEnum[value]!);
+					} else {
+						filterOptionsSets[field].add(value.toString());
+					}
+				}
 			}
 		}
 	}
 
-	//convert sets to arrays
-	const filterOptions = {} as Record<keyof (typeof arr)[0], any[]>;
-	for (const e in filterOptionsSet) {
-		filterOptions[e as keyof typeof filterOptions] = Array.from(
-			filterOptionsSet[e as keyof typeof filterOptionsSet]
-		).sort();
+	const filterOptions = {} as OptionsResult<T>;
+
+	for (const field in filterOptionsSets) {
+		filterOptions[field as OptionKeys<T>] = Array.from(filterOptionsSets[field]!).sort();
 	}
 
 	return filterOptions;
@@ -122,11 +137,11 @@ export function deepMerge(target: Record<string, any>, ...sources: Record<string
 }
 
 export function uncapitalizeTable(table: Prisma.ModelName) {
-	return (table.slice(0, 1).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+	return (table.charAt(0).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
 }
 
 export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
-	return (table.slice(0, 1).toUpperCase() + table.slice(1)) as Prisma.ModelName;
+	return (table.charAt(0).toUpperCase() + table.slice(1)) as Prisma.ModelName;
 }
 
 export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
@@ -138,7 +153,7 @@ export function getSubmissionFileName(value: string) {
 	if (url.origin.endsWith("blob.vercel-storage.com") && url.pathname.startsWith("/submissions")) {
 		//reassemble file name without the random suffix
 		const splitPath = url.pathname.split("/");
-		const name = splitPath[splitPath.length - 1];
+		const name = splitPath[splitPath.length - 1]!;
 		const dashSplit = name.split("-"); //file name
 		const dotSplit = name.split("."); //file type
 		return decodeURIComponent(dashSplit.slice(0, dashSplit.length - 1).join("-")) + "." + dotSplit[dotSplit.length - 1];
@@ -212,15 +227,14 @@ export function getLocationsInsideShapes(
 						] as [Point, Point];
 
 						//get sides of polygon
+						const [first, ...rest] = s.points;
+						let previous = first;
 						const sides = [] as [Point, Point][];
-						for (let i = 0; i < s.points.length; i++) {
-							//last point connects to first point
-							if (i === s.points.length - 1) {
-								sides.push([s.points[i], s.points[0]]);
-							} else {
-								sides.push([s.points[i], s.points[i + 1]]);
-							}
+						for (const point of rest) {
+							sides.push([previous, point]);
+							previous = point;
 						}
+						sides.push([previous, first]);
 
 						//get number of times the ray intersects with the polygon
 						let numIntersections = 0;
@@ -261,9 +275,14 @@ export function getLocationsInsideShapes(
 
 function stringToPolygon(poly: string): Polygon {
 	//format: <lat>/<lng>,<lat>/<lng>,...
-	const points = poly.split(",").map((p) => {
+	const polyArr = poly.split(",");
+	if (polyArr.length < 3) {
+		throw new Error("Polygon must have at least 3 points.");
+	}
+
+	const points = polyArr.map((p) => {
 		const split = p.split("/");
-		if (split.length !== 2) {
+		if (!split[0] || !split[1]) {
 			throw new Error(`Invalid LatLng format: "${p}". Format must be <lat>/<lng>.`);
 		}
 		const pnt = {
@@ -278,7 +297,7 @@ function stringToPolygon(poly: string): Polygon {
 		}
 
 		return pnt;
-	});
+	}) as Polygon["points"];
 
 	const bounds = { sw: { lat: -90, lng: -180 }, ne: { lat: 90, lng: 180 } };
 	for (const p of points) {
@@ -298,14 +317,14 @@ function stringToPolygon(poly: string): Polygon {
 function stringToCircle(circle: string): Circle {
 	//format: <lat>/<lng>,<radius>
 	const split = circle.split(",");
-	if (split.length !== 2) {
+	if (!split[0] || !split[1]) {
 		throw new Error(
 			`Invalid circle format: "${circle}". Circle must have a center followed by a radius, separated by a comma.`
 		);
 	}
 
 	const centerSplit = split[0].split("/");
-	if (split.length !== 2) {
+	if (!centerSplit[0] || !centerSplit[1]) {
 		throw new Error(`Invalid center format: "${split[0]}". Format must be <lat>/<lng>.`);
 	}
 	const center = {
@@ -372,7 +391,7 @@ export function getTextColorHex(hex: string) {
 	}
 	// convert 3-digit hex to 6-digits.
 	if (hex.length === 3) {
-		hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+		hex = hex[0]! + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
 	}
 	if (hex.length !== 6) {
 		throw new Error("Invalid HEX color.");
@@ -416,11 +435,8 @@ export function getLastModifiedDate(submission: {
 		: submission.dateSubmitted;
 }
 
-export async function decodeRouteParams(params: Promise<Record<string, string>>) {
-	return Object.entries(await params).reduce(
-		(acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }),
-		{} as Record<string, string>
-	);
+export async function decodeRouteParams<T extends Record<string, string>>(params: Promise<T>): Promise<T> {
+	return Object.entries(await params).reduce((acc, [k, v]) => ({ ...acc, [k]: decodeURIComponent(v) }), {} as T);
 }
 
 type ExploreUrlExtra = { params?: Record<string, string> | URLSearchParams; hash?: string };

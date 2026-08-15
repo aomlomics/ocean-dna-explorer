@@ -23,11 +23,11 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 			</div>
 			<ul
 				tabIndex={-1}
-				className="dropdown-content bg-base-200 rounded-box p-6 shadow-sm max-h-[400px] overflow-y-scroll overflow-x-hidden overscroll-contain"
+				className="dropdown-content bg-base-200 rounded-box p-6 shadow-sm max-h-100 overflow-y-scroll overflow-x-hidden overscroll-contain"
 			>
 				{editHistory && editHistory.length > 0 ? (
 					editHistory.map((edit, i) => (
-						<li className={`min-w-[600px] pb-4 ${i ? "border-t-2 border-primary pt-4" : ""}`} key={i}>
+						<li className={`min-w-150 pb-4 ${i ? "border-t-2 border-primary pt-4" : ""}`} key={i}>
 							<div className="text-base text-base-content pb-2 font-bold">
 								Changed: <span className="text-primary">{new Date(edit.dateEdited).toLocaleString()}</span>
 							</div>
@@ -63,7 +63,7 @@ export default async function EditHistory({ editHistory }: { editHistory: Prisma
 						</li>
 					))
 				) : (
-					<div className="min-w-[100px] flex justify-center">No changes</div>
+					<div className="min-w-25 flex justify-center">No changes</div>
 				)}
 			</ul>
 		</div>

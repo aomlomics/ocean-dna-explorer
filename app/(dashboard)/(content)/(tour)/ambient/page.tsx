@@ -284,7 +284,7 @@ export default function AmbientPage() {
 				revealTimer = window.setInterval(() => {
 					if (cancelled) return;
 					for (let i = 0; i < BATCH_SIZE && idx < shuffled.length; i++, idx++) {
-						typeInWord(shuffled[idx]);
+						typeInWord(shuffled[idx]!);
 					}
 					if (idx >= shuffled.length && revealTimer != null) {
 						// All words are visible — let the cycle timer handle the next reset.

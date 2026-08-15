@@ -54,20 +54,11 @@ export default function BlastSearchResult({
 		return <></>;
 	}
 
-	const resultsBySequence = Object.values(
-		blastResult.reduce(
-			(acc, r) => {
-				if (acc[r.sequence]) {
-					acc[r.sequence].push(r);
-				} else {
-					acc[r.sequence] = [r];
-				}
-
-				return acc;
-			},
-			{} as Record<BlastQueryResult["sequence"], BlastQueryResult[]>
-		) || {}
-	);
+	const grouped = {} as Record<BlastQueryResult["sequence"], BlastQueryResult[]>;
+	for (const r of blastResult) {
+		(grouped[r.sequence] ??= []).push(r);
+	}
+	const resultsBySequence = Object.values(grouped);
 
 	if (!resultsBySequence.length) {
 		return (
@@ -106,20 +97,20 @@ export default function BlastSearchResult({
 
 				<div className="relative w-full h-full p-5 flex flex-col min-h-0">
 					<div className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
-						{resultsBySequence[page][0].query ? (
+						{resultsBySequence[page]![0]!.query ? (
 							<>
 								<h1>Query:</h1>
-								<h1>{resultsBySequence[page][0].query}</h1>
+								<h1>{resultsBySequence[page]![0]!.query}</h1>
 							</>
 						) : (
 							<></>
 						)}
 						<h1>Sequence:</h1>
-						<h1>{resultsBySequence[page][0].sequence}</h1>
+						<h1>{resultsBySequence[page]![0]!.sequence}</h1>
 					</div>
 
 					<div className="overflow-y-auto pr-3 py-2">
-						{resultsBySequence[page].map((r, i) => (
+						{resultsBySequence[page]!.map((r, i) => (
 							<div key={i} className="flex flex-col">
 								<div className="grid grid-cols-[auto_1fr] gap-x-2">
 									<h1>Target featureid:</h1>

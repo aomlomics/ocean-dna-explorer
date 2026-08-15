@@ -75,11 +75,11 @@ function CustomLegend({
 		const displayed = [];
 
 		for (let i = 0; i < labels.length; i++) {
-			const percentage = total > 0 ? (data[i] / total) * 100 : 0;
+			const percentage = total > 0 ? (data[i]! / total) * 100 : 0;
 			if (percentage >= thresholdPercentage) {
 				displayed.push(i);
 			} else {
-				otherSum += data[i];
+				otherSum += data[i]!;
 			}
 		}
 
@@ -139,7 +139,10 @@ function CustomLegend({
 			</div>
 
 			{/* Threshold Control */}
-			<div className="flex flex-col gap-3 pb-3" style={{ borderColor: "color-mix(in oklab, var(--color-base-content) 12%, transparent)" }}>
+			<div
+				className="flex flex-col gap-3 pb-3"
+				style={{ borderColor: "color-mix(in oklab, var(--color-base-content) 12%, transparent)" }}
+			>
 				<label className="text-xs uppercase font-semibold tracking-wide" style={{ color: textColor, opacity: 0.6 }}>
 					Group items below (%)
 				</label>
@@ -198,7 +201,7 @@ function CustomLegend({
 				{/* Scrollable Content */}
 				<div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2">
 					{displayedItems.map((index) => {
-						const percentage = total > 0 ? ((data[index] / total) * 100).toFixed(1) : "0.0";
+						const percentage = total > 0 ? ((data[index]! / total) * 100).toFixed(1) : "0.0";
 						return (
 							<div key={index} className="flex items-center gap-2.5 group">
 								<div
@@ -207,7 +210,7 @@ function CustomLegend({
 								/>
 								<div className="flex-1 min-w-0 flex items-center gap-2">
 									<Link
-										href={exploreTaxonomyUrl(labels[index])}
+										href={exploreTaxonomyUrl(labels[index]!)}
 										className="text-sm font-medium truncate transition-colors"
 										style={{ color: textColor }}
 										title={labels[index]}
@@ -228,8 +231,14 @@ function CustomLegend({
 
 				{/* Other Group - Always at Bottom */}
 				{otherCount > 0 && (
-					<div className="flex items-center gap-2.5 pt-3 mt-3 border-t" style={{ borderColor: "color-mix(in oklab, var(--color-base-content) 8%, transparent)" }}>
-						<div className="w-3.5 h-3.5 rounded-sm shrink-0" style={{ backgroundColor: "color-mix(in oklab, var(--color-base-content) 31%, transparent)" }} />
+					<div
+						className="flex items-center gap-2.5 pt-3 mt-3 border-t"
+						style={{ borderColor: "color-mix(in oklab, var(--color-base-content) 8%, transparent)" }}
+					>
+						<div
+							className="w-3.5 h-3.5 rounded-sm shrink-0"
+							style={{ backgroundColor: "color-mix(in oklab, var(--color-base-content) 31%, transparent)" }}
+						/>
 						<div className="flex-1 min-w-0 flex items-center gap-2">
 							<span className="text-sm font-medium" style={{ color: textColor }}>
 								Other
@@ -297,14 +306,14 @@ export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: Taxonom
 		};
 
 		for (let i = 0; i < labels.length; i++) {
-			const percentage = total > 0 ? (data[i] / total) * 100 : 0;
+			const percentage = total > 0 ? (data[i]! / total) * 100 : 0;
 			if (percentage >= thresholdPercentage) {
-				filtered.labels.push(labels[i]);
-				filtered.data.push(data[i]);
-				filtered.colors.push(colors[i]);
+				filtered.labels.push(labels[i]!);
+				filtered.data.push(data[i]!);
+				filtered.colors.push(colors[i]!);
 				filtered.colorIndices.push(i);
 			} else {
-				otherSum += data[i];
+				otherSum += data[i]!;
 			}
 		}
 

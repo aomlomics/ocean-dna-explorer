@@ -105,11 +105,11 @@ export default function BlastSearch({ assayNames }: { assayNames: Assay["assay_n
 			}
 		} else {
 			//singular sequence, potentially with newlines
-			queries.push([split.map((s) => s.trim()).join("")]);
-
-			if (!queries[0].length) {
+			const seq = split.map((s) => s.trim()).join("");
+			if (!seq.length) {
 				return;
 			}
+			queries.push([seq]);
 		}
 
 		return queries;
@@ -212,12 +212,14 @@ export default function BlastSearch({ assayNames }: { assayNames: Assay["assay_n
 					accept=".fasta"
 					onChange={async (e) => {
 						if (e.currentTarget.files) {
-							const file = e.currentTarget.files[0];
+							const file = e.currentTarget.files.item(0);
 							e.currentTarget.value = "";
-							if (file.name.endsWith(".fasta")) {
-								setBlastQuery(await file.text());
-							} else {
-								setError("File must be of type .fasta.");
+							if (file) {
+								if (file.name.endsWith(".fasta")) {
+									setBlastQuery(await file.text());
+								} else {
+									setError("File must be of type .fasta.");
+								}
 							}
 						}
 					}}

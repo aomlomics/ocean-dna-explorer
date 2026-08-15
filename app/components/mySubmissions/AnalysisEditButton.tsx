@@ -349,7 +349,7 @@ export default function AnalysisEditButton({
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
-								onChange={(e) => setAnalysisFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								onChange={(e) => setAnalysisFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={analysisRef}
 							/>
 						</fieldset>
@@ -367,7 +367,7 @@ export default function AnalysisEditButton({
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
-								onChange={(e) => setAssignmentsFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								onChange={(e) => setAssignmentsFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={assignmentsRef}
 							/>
 						</fieldset>
@@ -385,7 +385,7 @@ export default function AnalysisEditButton({
 								className="file-input file-input-primary"
 								disabled={loading}
 								accept=".tsv"
-								onChange={(e) => setOccurrencesFile(e.currentTarget.files ? e.currentTarget.files[0] : undefined)}
+								onChange={(e) => setOccurrencesFile(e.currentTarget.files?.item(0) ?? undefined)}
 								ref={occurrencesRef}
 							/>
 						</fieldset>

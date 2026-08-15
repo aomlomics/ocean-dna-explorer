@@ -54,15 +54,15 @@ export default async function migrationCopyStepAction() {
 				})) as Record<string, any>[];
 
 				if (result.length) {
-					for (let i = 0; i < result.length; i++) {
+					for (const row of result) {
 						for (const field of oldFieldsByTable[table]) {
-							if (exists(result[i][field])) {
-								parseSchemaToObject(field + "__TEMP", result[i][field].toString(), result[i], table);
+							if (exists(row[field])) {
+								parseSchemaToObject(field + "__TEMP", row[field].toString(), row, table);
 							} else {
-								result[i][field + "__TEMP"] = null;
+								row[field + "__TEMP"] = null;
 							}
 
-							delete result[i][field];
+							delete row[field];
 						}
 					}
 

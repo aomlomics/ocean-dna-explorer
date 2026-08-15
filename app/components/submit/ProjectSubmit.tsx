@@ -86,11 +86,11 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 		});
 
 		//get all files from event beforehand
-		const projectFile = event.currentTarget.project.files[0] as File;
-		const sampleFile = event.currentTarget.sample.files[0] as File;
-		const libraryFile = event.currentTarget.library.files[0] as File;
+		const projectFile = (event.currentTarget.elements.namedItem("project") as HTMLInputElement).files!.item(0)!;
+		const sampleFile = (event.currentTarget.elements.namedItem("sample") as HTMLInputElement).files!.item(0)!;
+		const libraryFile = (event.currentTarget.elements.namedItem("library") as HTMLInputElement).files!.item(0)!;
 
-		const imageFile = event.currentTarget.image.files[0] as File | undefined;
+		const imageFile = (event.currentTarget.elements.namedItem("image") as HTMLInputElement).files!.item(0);
 		let imageInfo;
 		if (imageFile) {
 			if (!imageFile.type.startsWith("image")) {

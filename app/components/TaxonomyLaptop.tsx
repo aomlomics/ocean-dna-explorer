@@ -5,10 +5,25 @@ import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/LaptopSc
 
 // Marine species with verified scientific names
 const identifications = [
-	{ src: "/images/outlines/xl_dolphin.svg", common: "Clymene Dolphin", scientific: "Stenella clymene", confidence: "98.7" },
-	{ src: "/images/outlines/lg_bluefin_tuna.svg", common: "Bluefin Tuna", scientific: "Thunnus thynnus", confidence: "94.2" },
+	{
+		src: "/images/outlines/xl_dolphin.svg",
+		common: "Clymene Dolphin",
+		scientific: "Stenella clymene",
+		confidence: "98.7"
+	},
+	{
+		src: "/images/outlines/lg_bluefin_tuna.svg",
+		common: "Bluefin Tuna",
+		scientific: "Thunnus thynnus",
+		confidence: "94.2"
+	},
 	{ src: "/images/outlines/xl_lamniformes.svg", common: "Order: Lamniformes", scientific: "", confidence: "91.5" },
-	{ src: "/images/outlines/sm_copepod.svg", common: "Type of: Copepod", scientific: "Calanus finmarchicus", confidence: "92.3" }
+	{
+		src: "/images/outlines/sm_copepod.svg",
+		common: "Type of: Copepod",
+		scientific: "Calanus finmarchicus",
+		confidence: "92.3"
+	}
 ];
 
 // Generate random MD5-like hash for feature ID
@@ -116,15 +131,11 @@ export default function TaxonomyLaptop({ className, screenBounds }: TaxonomyLapt
 		};
 	}, [currentIndex]);
 
-	const current = identifications[currentIndex];
+	const current = identifications[currentIndex]!;
 
 	return (
 		<LaptopScreen className={className ?? ""} screenBounds={screenBounds} alt="Laptop showing taxonomy identification">
-			<div
-				className={`w-full h-full transition-opacity duration-500 ${
-					isTransitioning ? "opacity-0" : "opacity-100"
-				}`}
-			>
+			<div className={`w-full h-full transition-opacity duration-500 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
 				{/* Phase 1: Feature - fixed px for 320x220 reference; scales with LaptopScreen */}
 				{phase === "feature" && (
 					<div className="flex flex-col items-center justify-center w-full h-full">
@@ -154,8 +165,8 @@ export default function TaxonomyLaptop({ className, screenBounds }: TaxonomyLapt
 							style={{
 								width: 96,
 								backgroundColor: "var(--color-primary)",
-								WebkitMaskImage: `url(${identifications[flashingOutlineIndex].src})`,
-								maskImage: `url(${identifications[flashingOutlineIndex].src})`,
+								WebkitMaskImage: `url(${identifications[flashingOutlineIndex]!.src})`,
+								maskImage: `url(${identifications[flashingOutlineIndex]!.src})`,
 								WebkitMaskRepeat: "no-repeat",
 								maskRepeat: "no-repeat",
 								WebkitMaskPosition: "center",
@@ -165,7 +176,7 @@ export default function TaxonomyLaptop({ className, screenBounds }: TaxonomyLapt
 							}}
 						/>
 						<div className="flex items-center gap-2 mb-1">
-							<div className="w-[18px] h-[18px] border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
+							<div className="w-4.5 h-4.5 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
 							<p className="font-bold text-primary" style={{ fontSize: 18 }}>
 								MATCHING
 							</p>

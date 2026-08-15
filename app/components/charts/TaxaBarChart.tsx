@@ -71,18 +71,14 @@ export default function TaxaBarChart({
 		for (const assign of assignments) {
 			const occs = occsByFeatureid[assign.featureid];
 
-			if (!occs) continue;
+			if (occs) {
+				const rankVal = taxonomiesById[assign.Taxonomy.id]![rank] ?? "undefined";
+				rankValues.add(rankVal);
 
-			const rankVal = taxonomiesById[assign.Taxonomy.id][rank] ?? "undefined";
-			rankValues.add(rankVal);
-
-			for (const occ of occs) {
-				if (!libIdRankQuantities[occ.lib_id]) {
-					libIdRankQuantities[occ.lib_id] = {};
+				for (const occ of occs) {
+					const quantity = (libIdRankQuantities[occ.lib_id] ??= {});
+					quantity[rankVal] = (quantity[rankVal] ?? 0) + occ.organismQuantity;
 				}
-
-				libIdRankQuantities[occ.lib_id][rankVal] =
-					(libIdRankQuantities[occ.lib_id][rankVal] ?? 0) + occ.organismQuantity;
 			}
 		}
 
@@ -111,9 +107,9 @@ export default function TaxaBarChart({
 				let val: string;
 
 				if (userDefinedFields?.has(averageBy)) {
-					val = samplesById[sampleIdsByLibId[lib_id]].userDefined?.[averageBy]?.toString() ?? "undefined";
+					val = samplesById[sampleIdsByLibId[lib_id]!]!.userDefined?.[averageBy]?.toString() ?? "undefined";
 				} else {
-					val = samplesById[sampleIdsByLibId[lib_id]][averageBy as keyof Sample]?.toString() ?? "undefined";
+					val = samplesById[sampleIdsByLibId[lib_id]!]![averageBy as keyof Sample]?.toString() ?? "undefined";
 				}
 
 				(averageByGroups[val] ??= []).push(lib_id);
@@ -132,9 +128,9 @@ export default function TaxaBarChart({
 			if (metricType === "relative") {
 				//calculate relative abundance for all libraries first
 				const libData = libIds.map((lib_id) => {
-					const absoluteValue = libIdRankQuantities[lib_id][taxon] ?? 0;
+					const absoluteValue = libIdRankQuantities[lib_id]![taxon] ?? 0;
 
-					const total = Object.values(libIdRankQuantities[lib_id]).reduce((sum, value) => sum + value, 0);
+					const total = Object.values(libIdRankQuantities[lib_id]!).reduce((sum, value) => sum + value, 0);
 
 					return {
 						x: lib_id,
@@ -148,11 +144,11 @@ export default function TaxaBarChart({
 				} else {
 					//average using all libraries in each group
 					data = visibleGroupLabels.map((group) => {
-						const groupLibIds = averageByGroups[group];
+						const groupLibIds = averageByGroups[group]!;
 
 						return {
 							x: group,
-							y: groupLibIds.reduce((sum, libId) => sum + libData[libIds.indexOf(libId)].y, 0) / groupLibIds.length
+							y: groupLibIds.reduce((sum, libId) => sum + libData[libIds.indexOf(libId)]!.y, 0) / groupLibIds.length
 						};
 					});
 				}
@@ -162,15 +158,15 @@ export default function TaxaBarChart({
 					.filter((libId) => !xLabelsFilter[libId])
 					.map((lib_id) => ({
 						x: lib_id,
-						y: libIdRankQuantities[lib_id][taxon] ?? 0
+						y: libIdRankQuantities[lib_id]![taxon] ?? 0
 					}));
 			}
 
 			return {
 				label: taxon,
 				data,
-				borderColor: currColors[i].hex(),
-				backgroundColor: currColors[i].alpha(0.8).hex(),
+				borderColor: currColors[i]!.hex(),
+				backgroundColor: currColors[i]!.alpha(0.8).hex(),
 				borderWidth: 1,
 				barThickness: "flex" as const
 			};

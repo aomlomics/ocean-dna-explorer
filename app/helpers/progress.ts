@@ -136,7 +136,7 @@ export async function doProgressActionMany(
 	const readables = await action(...args);
 
 	for (let i = 0; i < readables.length; i++) {
-		handleReadable(readables[i], setters[i]);
+		handleReadable(readables[i]!, setters[i]!);
 	}
 }
 
@@ -150,6 +150,6 @@ export async function doProgressActionManyGlobal(
 
 	handleReadable(global, globalSetter);
 	for (let i = 0; i < readables.length; i++) {
-		handleReadable(readables[i], setters[i]);
+		handleReadable(readables[i]!, setters[i]!);
 	}
 }

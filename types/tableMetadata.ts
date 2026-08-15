@@ -271,13 +271,13 @@ for (const e in TableMetadata) {
 		let relationTable = "" as Prisma.ModelName;
 
 		//self
-		if (rel.slice(0, 1).toLowerCase() + rel.slice(1) in relations) {
+		if (rel.charAt(0).toLowerCase() + rel.slice(1) in relations) {
 			//singular
 			const lowercaseRelation = uncapitalizeTable(rel as Prisma.ModelName);
 			relationTable = rel as Prisma.ModelName;
 
 			//other
-			if (relations[lowercaseRelation].some((f) => f.slice(0, 1).toLowerCase() + f.slice(1) === table)) {
+			if (relations[lowercaseRelation].some((f) => f.charAt(0).toLowerCase() + f.slice(1) === table)) {
 				//singular
 				type = "one-to-one";
 			} else {
@@ -292,7 +292,7 @@ for (const e in TableMetadata) {
 			relationTable = capitalizeTable(lowercaseRelation);
 
 			//other
-			if (relations[lowercaseRelation].some((t) => t.slice(0, 1).toLowerCase() + t.slice(1) === table)) {
+			if (relations[lowercaseRelation].some((t) => t.charAt(0).toLowerCase() + t.slice(1) === table)) {
 				//singular
 				type = "one-to-many";
 			} else {

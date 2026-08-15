@@ -94,11 +94,8 @@ export default function AlphaDiversityDisplay({
 		for (const ad of alphaDiversities) {
 			const metric = ad.indexType + (ad.depth ? METRIC_SEP + ad.depth : "");
 
-			if (metric in diversitiesByMetric) {
-				diversitiesByMetric[metric].push(ad);
-			} else {
-				diversitiesByMetric[metric] = [ad];
-			}
+			const diversities = (diversitiesByMetric[metric] ??= []);
+			diversities.push(ad);
 
 			for (const index of ad.AlphaDiversityIndexes) {
 				const sample = index.Library?.Sample;
@@ -132,7 +129,7 @@ export default function AlphaDiversityDisplay({
 		if (value != null && value !== "") {
 			if ((value as string | number) in DeadValueEnum) {
 				if (DeadValueNumbers.includes(value as number)) {
-					return DeadValueEnum[value as number];
+					return DeadValueEnum[value as number]!;
 				} else {
 					return value.toString();
 				}
@@ -161,7 +158,7 @@ export default function AlphaDiversityDisplay({
 			};
 		}
 
-		const finishedDiversities = diversitiesByMetric[effectiveCurrMetric].filter((ad) => ad.finished);
+		const finishedDiversities = diversitiesByMetric[effectiveCurrMetric]!.filter((ad) => ad.finished);
 
 		if (!finishedDiversities.length) {
 			return {
@@ -269,9 +266,9 @@ export default function AlphaDiversityDisplay({
 					}, {} as DefaultHueFilter)
 				: {};
 
-		const validHueFilter = Object.keys(hueFilter).reduce((acc, hue) => {
+		const validHueFilter = Object.entries(hueFilter).reduce((acc, [hue, value]) => {
 			if (sortedHues.includes(hue)) {
-				acc[hue] = hueFilter[hue];
+				acc[hue] = value;
 			}
 
 			return acc;
@@ -294,8 +291,8 @@ export default function AlphaDiversityDisplay({
 
 					return values[hue] ?? null;
 				}),
-				borderColor: colors[i].hex(),
-				backgroundColor: colors[i].alpha(0.5).hex()
+				borderColor: colors[i]!.hex(),
+				backgroundColor: colors[i]!.alpha(0.5).hex()
 			});
 
 			return acc;
@@ -327,7 +324,7 @@ export default function AlphaDiversityDisplay({
 	}, [alphaDiversities]);
 
 	const unfinishedAnalyses = effectiveCurrMetric
-		? diversitiesByMetric[effectiveCurrMetric].reduce((acc, ad) => {
+		? diversitiesByMetric[effectiveCurrMetric]!.reduce((acc, ad) => {
 				if (!ad.finished && !(ad.analysis_run_name in acc)) {
 					acc.push(ad);
 				}
@@ -497,8 +494,8 @@ export default function AlphaDiversityDisplay({
 								<BoxWhiskerPlot
 									data={data}
 									ref={chartRef}
-									title={`${effectiveCurrMetric.split(METRIC_SEP)[0].slice(0, 1).toUpperCase()}${effectiveCurrMetric
-										.split(METRIC_SEP)[0]
+									title={`${effectiveCurrMetric.split(METRIC_SEP)[0]!.charAt(0).toUpperCase()}${effectiveCurrMetric
+										.split(METRIC_SEP)[0]!
 										.slice(1)} Alpha Diversity${
 										effectiveCurrMetric.split(METRIC_SEP)[1]
 											? " at " + effectiveCurrMetric.split(METRIC_SEP)[1] + " depth"

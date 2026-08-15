@@ -176,134 +176,142 @@ export default function LegendControl({
 							)}
 						</div>
 
-						{legendInfo ? (
-							<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 overflow-y-auto overflow-x-hidden">
-								{legendInfo.mode === "discreet" ? (
-									Object.keys(legendInfo.colorMap).length === 0 ? (
-										<div className="flex gap-2 items-center">
-											<div
-												className="aspect-square w-[1em] h-[1em]"
-												style={{ backgroundColor: DEFAULT_COLOR.hex() }}
-											></div>
-											<div className="text-xs text-nowrap">
-												{legendInfo.tooManyOptions ? `Too many values (>${LEGEND_VALUES_LIMIT})` : "No value"}
-											</div>
-										</div>
-									) : Object.keys(legendInfo.colorMap).length === 1 ? (
-										<div className="flex gap-2 items-center">
-											<div
-												className="aspect-square w-[1em] h-[1em]"
-												style={{ backgroundColor: Object.values(legendInfo.colorMap)[0].hex() }}
-											></div>
-											{Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
-												<Link
-													href={`/explore/${Object.keys(TableMetadata).find(
-														(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-													)}/${encodeURIComponent(Object.keys(legendInfo.colorMap)[0])}`}
-													className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
-														legendInfo.hidden?.includes(Object.keys(legendInfo.colorMap)[0])
-															? "line-through text-base-content/50"
-															: ""
-													}`}
-												>
-													{Object.keys(legendInfo.colorMap)[0]}
-												</Link>
-											) : (
-												<div className="text-xs text-nowrap">{Object.keys(legendInfo.colorMap)[0]}</div>
-											)}
-										</div>
-									) : (
-										Object.entries(legendInfo.colorMap).map(([key, color]) => (
-											<div key={key} className="flex gap-2 items-center ">
-												<div
-													className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
-													data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
-													style={{ backgroundColor: color.hex() }}
-													onClick={(e) => {
-														if (legendInfo.hidden?.includes(key)) {
-															setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-															e.currentTarget.style.background = "";
-															e.currentTarget.style.backgroundColor = color.hex();
-														} else {
-															setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-															e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-															e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
-														}
-													}}
-												></div>
-												{Object.values(TableMetadata).find((meta) => meta.titleField === legendInfo.field) ? (
-													<Link
-														href={`/explore/${Object.keys(TableMetadata).find(
-															(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
-														)}/${encodeURIComponent(key)}`}
-														className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
-															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-														}`}
-													>
-														{key}
-													</Link>
-												) : (
-													<div
-														className={`text-xs text-nowrap ${
-															legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-														}`}
-													>
-														{key}
-													</div>
-												)}
-											</div>
-										))
-									)
-								) : legendInfo.mode === "gradient" ? (
-									<div className="flex flex-col items-center">
-										<div
-											className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
-											// data-tip={legendInfo.palette}
-											style={{
-												backgroundImage: `linear-gradient(to right, ${chroma.brewer[
-													legendInfo.palette as keyof typeof chroma.brewer
-												].join(",")})`
-											}}
-										/>
-										<div className="flex justify-between w-full">
-											{typeof legendInfo.range[0] === "number" ? (
-												<>
-													<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
-													<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
-												</>
-											) : (
-												//TODO: display dates differently depending on distance between dates
-												//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
-												//when dates are all on the same day, time must be displayed as well
-												<>
-													<span>{legendInfo.range[0].toLocaleDateString()}</span>
-													<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
-												</>
-											)}
-										</div>
-										{legendInfo.someNoValue ? (
-											//TODO: change color of no value label if palette has red
-											<div className="flex gap-2 items-center">
-												<div
-													className="aspect-square w-[1em] h-[1em]"
-													style={{ backgroundColor: DEFAULT_COLOR.hex() }}
-												></div>
-												<div className="text-xs text-nowrap">No value</div>
-											</div>
-										) : (
-											<></>
-										)}
-									</div>
-								) : (
-									<></>
-								)}
-							</div>
-						) : (
-							<></>
-						)}
+						<Legend legendInfo={legendInfo} setLegendInfo={setLegendInfo} />
 					</div>
 				</ResizableMapContainer>
 			</CollapsibleMapContainer>
 		</LeafletControl>
 	);
+}
+
+function Legend({
+	legendInfo,
+	setLegendInfo
+}: {
+	legendInfo: LegendInfo;
+	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
+}) {
+	if (!legendInfo) {
+		return <></>;
+	}
+
+	if (legendInfo.mode === "gradient") {
+		return (
+			<div className="flex flex-col items-center">
+				<div
+					className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
+					// data-tip={legendInfo.palette}
+					style={{
+						backgroundImage: `linear-gradient(to right, ${chroma.brewer[
+							legendInfo.palette as keyof typeof chroma.brewer
+						].join(",")})`
+					}}
+				/>
+				<div className="flex justify-between w-full">
+					{typeof legendInfo.range[0] === "number" ? (
+						<>
+							<span>{Math.round(legendInfo.range[0] * 1000) / 1000}</span>
+							<span>{Math.round((legendInfo.range[1] as number) * 1000) / 1000}</span>
+						</>
+					) : (
+						//TODO: display dates differently depending on distance between dates
+						//EG: when dates are at least 2 days apart, displaying them as MM/DD/YYYY is fine
+						//when dates are all on the same day, time must be displayed as well
+						<>
+							<span>{legendInfo.range[0].toLocaleDateString()}</span>
+							<span>{(legendInfo.range[1] as Date).toLocaleDateString()}</span>
+						</>
+					)}
+				</div>
+				{legendInfo.someNoValue ? (
+					//TODO: change color of no value label if palette has red
+					<div className="flex gap-2 items-center">
+						<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
+						<div className="text-xs text-nowrap">No value</div>
+					</div>
+				) : (
+					<></>
+				)}
+			</div>
+		);
+	} else if (legendInfo.mode === "discreet") {
+		const colorMapArray = Object.entries(legendInfo.colorMap);
+		const table = Object.keys(TableMetadata).find(
+			(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+		);
+
+		if (colorMapArray.length === 0) {
+			return (
+				<div className="flex gap-2 items-center">
+					<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
+					<div className="text-xs text-nowrap">
+						{legendInfo.tooManyOptions ? `Too many values (>${LEGEND_VALUES_LIMIT})` : "No value"}
+					</div>
+				</div>
+			);
+		} else if (colorMapArray.length === 1) {
+			const [key, color] = colorMapArray[0]!;
+
+			return (
+				<div className="flex gap-2 items-center">
+					<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
+					{table ? (
+						<Link
+							href={`/explore/${table}/${encodeURIComponent(key)}`}
+							className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
+								legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+							}`}
+						>
+							{key}
+						</Link>
+					) : (
+						<div className="text-xs text-nowrap">{key}</div>
+					)}
+				</div>
+			);
+		} else {
+			return (
+				<>
+					{colorMapArray.map(([key, color]) => (
+						<div key={key} className="flex gap-2 items-center ">
+							<div
+								className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
+								data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
+								style={{ backgroundColor: color.hex() }}
+								onClick={(e) => {
+									if (legendInfo.hidden?.includes(key)) {
+										setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
+										e.currentTarget.style.background = "";
+										e.currentTarget.style.backgroundColor = color.hex();
+									} else {
+										setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
+										e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
+										e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+									}
+								}}
+							></div>
+							{table ? (
+								<Link
+									href={`/explore/${table}/${encodeURIComponent(key)}`}
+									className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
+										legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+									}`}
+								>
+									{key}
+								</Link>
+							) : (
+								<div
+									className={`text-xs text-nowrap ${
+										legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
+									}`}
+								>
+									{key}
+								</div>
+							)}
+						</div>
+					))}
+				</>
+			);
+		}
+	}
 }

@@ -1355,12 +1355,9 @@ function InputElement({
 	defaultMode: string;
 	defaultValue: string;
 }) {
-	const [gteDateSelected, setGteDateSelected] = useState(
-		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[0].split("T")[0]
-	);
-	const [lteDateSelected, setLteDateSelected] = useState(
-		defaultValue.split(",").length === 2 && !!defaultValue.split(",")[1].split("T")[0]
-	);
+	const [defaultGte, defaultLte] = defaultValue.split(",");
+	const [gteDateSelected, setGteDateSelected] = useState(!!defaultGte);
+	const [lteDateSelected, setLteDateSelected] = useState(!!defaultLte);
 
 	const type = getZodType(table, field).type;
 
@@ -1586,9 +1583,7 @@ function InputElement({
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
 								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0].split("T")[0] : ""
-								}
+								defaultValue={defaultLte?.split("T")[0] ?? ""}
 								onChange={(e) => setGteDateSelected(!!e.target.value)}
 								type="date"
 								required
@@ -1596,9 +1591,7 @@ function InputElement({
 							<input
 								type="time"
 								className="text-center"
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0].split("T")[1] : ""
-								}
+								defaultValue={defaultLte?.split("T")[1] ?? ""}
 								name={`filter_${nameSuffix}_gte_time`}
 							/>
 						</div>
@@ -1607,9 +1600,7 @@ function InputElement({
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
 								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1].split("T")[0] : ""
-								}
+								defaultValue={defaultGte?.split("T")[0] ?? ""}
 								onChange={(e) => setLteDateSelected(!!e.target.value)}
 								type="date"
 								required
@@ -1617,9 +1608,7 @@ function InputElement({
 							<input
 								type="time"
 								className="text-center"
-								defaultValue={
-									defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1].split("T")[1] : ""
-								}
+								defaultValue={defaultGte?.split("T")[1] ?? ""}
 								name={`filter_${nameSuffix}_lte_time`}
 							/>
 						</div>

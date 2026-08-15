@@ -58,9 +58,12 @@ export default function DocsSidebar() {
 			//if at the bottom, highlight the last section (10 pixel tolerance)
 			const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10;
 
-			if (atBottom && elements.length) {
-				setCurrSection(elements[elements.length - 1].id);
-				return;
+			if (atBottom) {
+				const last = elements[elements.length - 1];
+				if (last) {
+					setCurrSection(last.id);
+					return;
+				}
 			}
 
 			const current = [...elements].reverse().find((el) => el.getBoundingClientRect().top <= 50);

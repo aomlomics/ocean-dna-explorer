@@ -290,7 +290,7 @@ export function parseToQuery(
 						},
 						{
 							[field]: {
-								lte: new Date(DeadValueNumbers[DeadValueNumbers.length - 1])
+								lte: new Date(DeadValueNumbers.at(-1)!)
 							}
 						}
 					]
@@ -480,16 +480,16 @@ export function parseApiQuery(
 		const orderByStr = newParams.get("orderBy");
 		if (orderByStr != null) {
 			newParams.delete("orderBy");
-			const split = orderByStr?.split(",");
-			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
-				if (TableMetadata[table].enumSchema.options.includes(split[0])) {
+			const [field, order] = orderByStr?.split(",");
+			if (field && (order === "asc" || order === "desc")) {
+				if (TableMetadata[table].enumSchema.options.includes(field)) {
 					query.orderBy = {
-						[split[0]]: split[1]
+						[field]: order
 					};
-				} else if (TableMetadata[table].relations.find((rel) => rel.field === split[0] && rel.type.endsWith("many"))) {
+				} else if (TableMetadata[table].relations.find((rel) => rel.field === field && rel.type.endsWith("many"))) {
 					query.orderBy = {
-						[split[0]]: {
-							_count: split[1]
+						[field]: {
+							_count: order
 						}
 					};
 				} else {
@@ -601,26 +601,23 @@ export function parseApiQuery(
 				let add = true;
 				for (let i = 0; i < relPaths.length; i++) {
 					if (allFields) {
-						if (
-							path.length < relPaths[i].length &&
-							relPaths[i].some((step) => path[path.length - 1].field === step.field)
-						) {
+						const currRelPath = relPaths[i]!;
+						const lastPath = path.at(-1)!;
+						if (path.length < currRelPath.length && currRelPath.some((step) => lastPath.field === step.field)) {
 							//already a part of another path
-							if (allFields === true || allFields.has(uncapitalizeTable(path[path.length - 1].table))) {
-								includeSteps.add(path[path.length - 1].field);
+							if (allFields === true || allFields.has(uncapitalizeTable(lastPath.table))) {
+								includeSteps.add(lastPath.field);
 							}
 
 							if (!take) {
 								add = false;
 							}
 						} else {
-							if (
-								path.length > relPaths[i].length &&
-								path.some((step) => relPaths[i][relPaths[i].length - 1].field === step.field)
-							) {
+							const lastRelPath = currRelPath.at(-1)!;
+							if (path.length > currRelPath.length && path.some((step) => lastRelPath.field === step.field)) {
 								//existing path is a part of new path
-								if (allFields === true || allFields.has(uncapitalizeTable(relPaths[i][relPaths[i].length - 1].table))) {
-									includeSteps.add(relPaths[i][relPaths[i].length - 1].field);
+								if (allFields === true || allFields.has(uncapitalizeTable(lastRelPath.table))) {
+									includeSteps.add(lastRelPath.field);
 								}
 
 								relPaths.splice(i, 1);
@@ -650,7 +647,7 @@ export function parseApiQuery(
 			type FinalVal = typeof relationVal | { [key: string]: FinalVal };
 			const relObjs = relPaths.map((rp) => {
 				let currVal = relationVal as FinalVal;
-				if (!allFields || (allFields !== true && !allFields.has(uncapitalizeTable(rp[rp.length - 1].table)))) {
+				if (!allFields || (allFields !== true && !allFields.has(uncapitalizeTable(rp.at(-1)!.table)))) {
 					if (typeof relationVal === "object") {
 						currVal = { ...relationVal, select: { id: true } };
 					} else {

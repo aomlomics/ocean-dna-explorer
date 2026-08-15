@@ -40,11 +40,8 @@ export default function TaxonomyVisualize({
 	//sort occurrences by featureid
 	const occsByFeatureid = {} as Record<Occurrence["featureid"], typeof occurrences>;
 	for (const occ of occurrences) {
-		if (occsByFeatureid[occ.featureid]) {
-			occsByFeatureid[occ.featureid].push(occ);
-		} else {
-			occsByFeatureid[occ.featureid] = [occ];
-		}
+		const occs = (occsByFeatureid[occ.featureid] ??= []);
+		occs.push(occ);
 	}
 
 	const taxonomiesById = {} as Record<Taxonomy["id"], (typeof taxonomies)[number]>;

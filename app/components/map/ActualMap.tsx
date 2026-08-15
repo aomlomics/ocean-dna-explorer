@@ -97,7 +97,7 @@ function ddmToDec(deg: string) {
 	}
 
 	const degArray = trimmed.slice(0, -1).trim().split(" ");
-	if (degArray.length !== 2) {
+	if (!degArray[0] || !degArray[1]) {
 		return;
 	}
 
@@ -196,14 +196,15 @@ export default function ActualMap({
 	] as Bounds;
 
 	if (locations.length === 1) {
+		const firstLoc = locations[0]!;
 		if (
-			locations[0].decimalLatitude !== null &&
-			locations[0].decimalLongitude !== null &&
-			!(locations[0].decimalLatitude! in DeadValueEnum) &&
-			!(locations[0].decimalLongitude! in DeadValueEnum)
+			firstLoc.decimalLatitude !== null &&
+			firstLoc.decimalLongitude !== null &&
+			!(firstLoc.decimalLatitude! in DeadValueEnum) &&
+			!(firstLoc.decimalLongitude! in DeadValueEnum)
 		) {
-			const verbatimLatitudeArray = verbatimToArray(locations[0].verbatimLatitude);
-			const verbatimLongitudeArray = verbatimToArray(locations[0].verbatimLongitude);
+			const verbatimLatitudeArray = verbatimToArray(firstLoc.verbatimLatitude);
+			const verbatimLongitudeArray = verbatimToArray(firstLoc.verbatimLongitude);
 			if (
 				verbatimLatitudeArray &&
 				verbatimLongitudeArray &&
@@ -216,34 +217,37 @@ export default function ActualMap({
 				const bounds = DEFAULT_BOUNDS;
 				const polylines = [] as [number, number][];
 				for (let i = 0; i < verbatimLatitudeArray.length; i++) {
-					bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
-					bounds[0][1] = Math.max(verbatimLongitudeArray[i], bounds[0][1]);
-					bounds[1][0] = Math.min(verbatimLatitudeArray[i], bounds[1][0]);
-					bounds[1][1] = Math.min(verbatimLongitudeArray[i], bounds[1][1]);
+					const lat = verbatimLatitudeArray[i]!;
+					const lng = verbatimLongitudeArray[i]!;
 
-					polylines.push([verbatimLatitudeArray[i], verbatimLongitudeArray[i]]);
+					bounds[0][0] = Math.max(lat, bounds[0][0]);
+					bounds[0][1] = Math.max(lng, bounds[0][1]);
+					bounds[1][0] = Math.min(lat, bounds[1][0]);
+					bounds[1][1] = Math.min(lng, bounds[1][1]);
+
+					polylines.push([lat, lng]);
 				}
 				mapProps = { bounds };
 
 				filteredLocations.push({
-					...(locations[0] as MapLocation),
+					...(firstLoc as MapLocation),
 					polylines
 				});
 			} else {
 				mapProps = {
-					center: [locations[0].decimalLatitude, locations[0].decimalLongitude] as unknown as LatLng,
+					center: [firstLoc.decimalLatitude, firstLoc.decimalLongitude] as unknown as LatLng,
 					zoom: 5
 				};
 
-				filteredLocations.push(locations[0] as MapLocation);
+				filteredLocations.push(firstLoc as MapLocation);
 			}
 		} else {
-			noLocationPoints.push(locations[0]);
+			noLocationPoints.push(firstLoc);
 			mapProps = { bounds: DEFAULT_BOUNDS };
 		}
 
-		if (locations[0].userDefined) {
-			for (const opt in locations[0].userDefined) {
+		if (firstLoc.userDefined) {
+			for (const opt in firstLoc.userDefined) {
 				userDefinedOptions.add(opt);
 			}
 		}
@@ -274,10 +278,11 @@ export default function ActualMap({
 				);
 
 				if (foundIndex !== -1) {
-					if (filteredLocations[foundIndex].values) {
-						filteredLocations[foundIndex].values.push(loc);
+					const found = filteredLocations[foundIndex]!;
+					if (found.values) {
+						found.values.push(loc);
 					} else {
-						filteredLocations[foundIndex].values = [{ ...filteredLocations[foundIndex] } as MapLocation, loc];
+						found.values = [{ ...found } as MapLocation, loc];
 					}
 				} else {
 					bounds[0][0] = Math.max(loc.decimalLatitude, bounds[0][0]);
@@ -303,12 +308,15 @@ export default function ActualMap({
 					) {
 						polylines = [];
 						for (let i = 0; i < verbatimLatitudeArray.length; i++) {
-							bounds[0][0] = Math.max(verbatimLatitudeArray[i], bounds[0][0]);
-							bounds[0][1] = Math.max(verbatimLongitudeArray[i], bounds[0][1]);
-							bounds[1][0] = Math.min(verbatimLatitudeArray[i], bounds[1][0]);
-							bounds[1][1] = Math.min(verbatimLongitudeArray[i], bounds[1][1]);
+							const lat = verbatimLatitudeArray[i]!;
+							const lng = verbatimLongitudeArray[i]!;
 
-							polylines.push([verbatimLatitudeArray[i], verbatimLongitudeArray[i]]);
+							bounds[0][0] = Math.max(lat, bounds[0][0]);
+							bounds[0][1] = Math.max(lng, bounds[0][1]);
+							bounds[1][0] = Math.min(lat, bounds[1][0]);
+							bounds[1][1] = Math.min(lng, bounds[1][1]);
+
+							polylines.push([lat, lng]);
 						}
 					}
 
@@ -345,10 +353,7 @@ export default function ActualMap({
 		//assign color to each option
 		const optionsArray = Array.from(defaultOptions).sort(legendValueSort);
 		const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
-		const colorMap = {} as Record<string, Color>;
-		for (let i = 0; i < optionsArray.length; i++) {
-			colorMap[optionsArray[i]] = colors[i];
-		}
+		const colorMap = optionsArray.reduce((acc, opt, i) => ({ ...acc, [opt]: colors[i]! }), {} as Record<string, Color>);
 		defaultLegend = { field: titleId, mode: "discreet", colorMap };
 
 		//assemble locations object with assigned color and list of locations
@@ -402,10 +407,10 @@ export default function ActualMap({
 			} else {
 				//valid
 				const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
-				const colorMap = {} as Record<string, Color>;
-				for (let i = 0; i < optionsArray.length; i++) {
-					colorMap[optionsArray[i]] = colors[i];
-				}
+				const colorMap = optionsArray.reduce(
+					(acc, opt, i) => ({ ...acc, [opt]: colors[i]! }),
+					{} as Record<string, Color>
+				);
 
 				//add default color if there is some point with no data
 				if (someNoData) {
@@ -449,10 +454,10 @@ export default function ActualMap({
 				} else {
 					//valid
 					const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
-					const colorMap = {} as Record<string, Color>;
-					for (let i = 0; i < optionsArray.length; i++) {
-						colorMap[optionsArray[i]] = colors[i];
-					}
+					const colorMap = optionsArray.reduce(
+						(acc, opt, i) => ({ ...acc, [opt]: colors[i]! }),
+						{} as Record<string, Color>
+					);
 
 					//add default color if there is some point with no data
 					if (someNoData) {

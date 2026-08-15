@@ -13,8 +13,8 @@ function subscribeNever() {
 function shuffleImages<T>(list: T[]): T[] {
 	const copy = [...list];
 	for (let i = copy.length - 1; i > 0; i--) {
-		const randomIndex = Math.floor(Math.random() * i);
-		[copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
+		const randomIndex = Math.floor(Math.random() * i + 1);
+		[copy[i], copy[randomIndex]] = [copy[randomIndex]!, copy[i]!];
 	}
 	return copy;
 }
@@ -26,7 +26,11 @@ export default function Carousel({ images }: { images: (DbImage & { Attribution?
 	const [shuffleSource, setShuffleSource] = useState(images);
 	const [hasClientShuffle, setHasClientShuffle] = useState(false);
 	const [currIndex, setCurrIndex] = useState(0);
-	const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+	const mounted = useSyncExternalStore(
+		subscribeNever,
+		() => true,
+		() => false
+	);
 
 	if (mounted && (!hasClientShuffle || shuffleSource !== images)) {
 		setHasClientShuffle(true);

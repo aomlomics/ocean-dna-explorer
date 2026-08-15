@@ -21,7 +21,7 @@ const generateHelixData = (topSeq: string, bottomSeq: string): any[] => {
 		const topBase = topSeq?.[i] || " ";
 		const bottomBase = bottomSeq?.[i] || " ";
 
-		const config = COLUMN_CONFIG[i % COLUMN_CONFIG.length];
+		const config = COLUMN_CONFIG[i % COLUMN_CONFIG.length]!;
 		columns.push({
 			topBase,
 			bottomBase,

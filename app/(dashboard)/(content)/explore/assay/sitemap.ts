@@ -54,7 +54,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 				lastModified: a.Analyses.reduce((latest, curr) => {
 					const currLast = getLastModifiedDate(curr);
 					return currLast > latest ? currLast : latest;
-				}, getLastModifiedDate(a.Analyses[0]))
+				}, getLastModifiedDate(a.Analyses[0]!))
 			});
 		}
 

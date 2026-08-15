@@ -79,7 +79,7 @@ export default function SelectGroupFilter({
 					<option value="">Any</option>
 					{!!value && <option value={value}>{value}</option>}
 					{Object.keys(options).length !== 0 &&
-						options[typeof field === "string" ? field : field.f].map((option: string) => (
+						options[typeof field === "string" ? field : field.f]!.map((option: string) => (
 							<option key={option} value={option}>
 								{option}
 							</option>

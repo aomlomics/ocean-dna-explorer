@@ -190,7 +190,7 @@ const DocsNavigation = Object.entries(DocsSections).flatMap(([page, sections]) =
 		section: id,
 		title: sect.title
 	}))
-) as DocsNavigationElement[];
+) as [DocsNavigationElement, ...DocsNavigationElement[]];
 
 //TODO: if only providing page, give next page with starting section
 export function getNextDocsSection<P extends DocsPage>(

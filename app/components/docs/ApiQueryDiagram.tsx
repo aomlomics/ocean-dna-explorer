@@ -20,7 +20,7 @@ export default function ApiQueryDiagram({
 	let protocol = "";
 	let domain = baseUrl;
 	if (domain.includes("://")) {
-		[protocol, domain] = domain.split("://");
+		[protocol, domain] = domain.split("://") as [string, string];
 		protocol += "://";
 	}
 

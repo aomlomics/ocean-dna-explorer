@@ -98,7 +98,7 @@ export type Polygon = {
 		ne: Point;
 		sw: Point;
 	};
-	points: Point[];
+	points: [Point, Point, Point, ...Point[]];
 };
 export type Circle = {
 	type: "circle";

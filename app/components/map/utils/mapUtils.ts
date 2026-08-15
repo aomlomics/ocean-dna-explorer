@@ -46,11 +46,11 @@ export function getLegendValue(
 		}
 	} else {
 		let joined = "";
-		for (let i = 0; i < field.length; i++) {
+		for (const [i, char] of [...field].entries()) {
 			if (i) {
 				joined += sep;
 			}
-			joined += loc[field[i]];
+			joined += loc[char];
 		}
 		return joined;
 	}
@@ -68,7 +68,7 @@ export function getLegendColor(
 			}
 
 			const titleIdVal = getLegendValue(legendInfo.field, loc, userDefinedOptions);
-			if (titleIdVal) {
+			if (titleIdVal && legendInfo.colorMap[titleIdVal]) {
 				return { color: legendInfo.colorMap[titleIdVal] };
 			}
 		} else if (legendInfo.mode === "gradient") {

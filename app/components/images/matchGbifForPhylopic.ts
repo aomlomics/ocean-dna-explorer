@@ -48,20 +48,20 @@ function pickAcceptedForRank(
 		(t) => (t.rank ?? "").toString().toLowerCase() === rank && t.status === "ACCEPTED"
 	);
 	if (!filtered.length) return null;
-	if (filtered.length === 1) return filtered[0];
+	if (filtered.length === 1) return filtered[0]!;
 
 	const q = normName(suggestQuery);
 	const byCanon = filtered.filter((t) => normName((t.canonicalName ?? "").toString()) === q);
-	if (byCanon.length === 1) return byCanon[0];
+	if (byCanon.length === 1) return byCanon[0]!;
 
 	const bySci = filtered.filter((t) => normName((t.scientificName ?? "").toString()) === q);
-	if (bySci.length === 1) return bySci[0];
+	if (bySci.length === 1) return bySci[0]!;
 
 	const byCanonPrefix = filtered.filter((t) => {
 		const c = normName((t.canonicalName ?? "").toString());
 		return c === q || c.startsWith(`${q} `) || q.startsWith(`${c} `);
 	});
-	if (byCanonPrefix.length === 1) return byCanonPrefix[0];
+	if (byCanonPrefix.length === 1) return byCanonPrefix[0]!;
 
 	if (rank === "species" && q.includes(" ")) {
 		const parts = q.split(" ").filter(Boolean);
@@ -73,7 +73,7 @@ function pickAcceptedForRank(
 				const sp = normName((t.specificEpithet ?? "").toString());
 				return tg === g && sp === epithet;
 			});
-			if (byGenusEpithet.length === 1) return byGenusEpithet[0];
+			if (byGenusEpithet.length === 1) return byGenusEpithet[0]!;
 		}
 	}
 

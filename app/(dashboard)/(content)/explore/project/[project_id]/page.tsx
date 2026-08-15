@@ -15,6 +15,7 @@ import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhoto
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Analysis, Assay, Taxonomy } from "@/app/generated/prisma/client";
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -112,7 +113,7 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 			<div className="flex min-w-0 flex-wrap items-start gap-x-1">
 				<span className="font-medium text-base-content/70 shrink-0">Institution:</span>
 				<div className="flex min-w-0 flex-1 basis-0 flex-wrap content-start items-baseline gap-x-0">
-					{renderInstitutionPipeLine(lines[0], "inst-l0")}
+					{renderInstitutionPipeLine(lines[0]!, "inst-l0")}
 				</div>
 			</div>
 			{lines.slice(1).map((line, idx) => (
@@ -175,34 +176,19 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	}));
 
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
-	const taxaCount = {} as Record<string, number>;
-	const taxaCountByAnalysis = {} as Record<string, Record<string, number>>;
-	const taxaCountByAssay = {} as Record<string, Record<string, number>>;
+	const taxaCount = {} as Record<Taxonomy["taxonomy"], number>;
+	const taxaCountByAnalysis = {} as Record<Analysis["analysis_run_name"], Record<Taxonomy["taxonomy"], number>>;
+	const taxaCountByAssay = {} as Record<Assay["assay_name"], Record<Taxonomy["taxonomy"], number>>;
 
 	for (const a of Analyses) {
-		taxaCountByAnalysis[a.analysis_run_name] = {};
-		if (!taxaCountByAssay[a.assay_name]) {
-			taxaCountByAssay[a.assay_name] = {};
-		}
-
 		for (const assign of a.Assignments) {
-			if (assign.taxonomy in taxaCount) {
-				taxaCount[assign.taxonomy] += 1;
-			} else {
-				taxaCount[assign.taxonomy] = 1;
-			}
+			taxaCount[assign.taxonomy] = (taxaCount[assign.taxonomy] ?? 0) + 1;
 
-			if (assign.taxonomy in taxaCountByAnalysis[a.analysis_run_name]) {
-				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] += 1;
-			} else {
-				taxaCountByAnalysis[a.analysis_run_name][assign.taxonomy] = 1;
-			}
+			const analysisCounts = (taxaCountByAnalysis[a.analysis_run_name] ??= {});
+			analysisCounts[assign.taxonomy] = (analysisCounts[assign.taxonomy] ?? 0) + 1;
 
-			if (assign.taxonomy in taxaCountByAssay[a.assay_name]) {
-				taxaCountByAssay[a.assay_name][assign.taxonomy] += 1;
-			} else {
-				taxaCountByAssay[a.assay_name][assign.taxonomy] = 1;
-			}
+			const assayCounts = (taxaCountByAssay[a.assay_name] ??= {});
+			assayCounts[assign.taxonomy] = (assayCounts[assign.taxonomy] ?? 0) + 1;
 		}
 	}
 	const sortedTaxa = Object.entries(taxaCount).sort(([, a], [, b]) => b - a);
@@ -257,7 +243,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 							<div className="space-y-2.5">
 								<div className="flex flex-col gap-1">
 									<h3 className="text-base font-medium leading-snug text-base-content">
-										{uniqueAssays[assay].target_gene}
+										{uniqueAssays[assay]!.target_gene}
 									</h3>
 									<p className="truncate text-sm text-base-content/70">{assay}</p>
 								</div>

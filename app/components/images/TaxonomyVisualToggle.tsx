@@ -86,7 +86,7 @@ export default function TaxonomyVisualToggle({
 		activateGbifMode();
 	}, [skipWarn, activateGbifMode]);
 
-	const rankTip = phyloRank ? `${phyloRank[0].toUpperCase() + phyloRank.slice(1)}: ${phyloTitle}` : phyloTitle;
+	const rankTip = phyloRank ? `${phyloRank.charAt(0).toUpperCase() + phyloRank.slice(1)}: ${phyloTitle}` : phyloTitle;
 
 	const showGbifToggle = mediaTaxonKey != null && gbifPhotoAllowed;
 	const displayCommonName = commonName?.trim() ? commonName.trim() : "No common name found";

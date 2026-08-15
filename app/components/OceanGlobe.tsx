@@ -326,7 +326,7 @@ function sampleEvenly<T>(arr: T[], count: number): T[] {
 	if (count >= arr.length) return arr;
 	if (count <= 0) return [];
 	const step = arr.length / count;
-	return Array.from({ length: count }, (_, i) => arr[Math.floor(i * step)]);
+	return Array.from({ length: count }, (_, i) => arr[Math.floor(i * step)]!);
 }
 
 // Round-robin interleave so no single region dominates the start of the list.
@@ -342,16 +342,16 @@ function interleaveMarkers(
 		ji = 0;
 	while (bi < base.length || ii < indian.length || ji < japan.length) {
 		if (bi < base.length) {
-			markers.push(base[bi]);
+			markers.push(base[bi]!);
 			bi++;
 		}
 		if (ii < indian.length) {
-			markers.push(indian[ii]);
+			markers.push(indian[ii]!);
 			indianIndices.add(markers.length - 1);
 			ii++;
 		}
 		if (ji < japan.length) {
-			markers.push(japan[ji]);
+			markers.push(japan[ji]!);
 			ji++;
 		}
 	}

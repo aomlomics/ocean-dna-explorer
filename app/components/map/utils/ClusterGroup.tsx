@@ -139,14 +139,9 @@ export default function ClusterGroup({
 
 				let html;
 				const uniqueHex = Object.keys(uniqueColors);
-				if ((uniqueHex.length === 1 && !outsideShapesCount) || (!uniqueHex.length && outsideShapesCount)) {
+				if (uniqueHex.length === 1 && !outsideShapesCount) {
 					//only one color, no gradient
-					let color;
-					if (outsideShapesCount) {
-						color = DEFAULT_OUTSIDE_COLOR;
-					} else {
-						color = Object.values(uniqueColors)[0].color;
-					}
+					const color = Object.values(uniqueColors)[0]!.color;
 
 					html = getMarkerHtml(
 						count,
@@ -154,6 +149,14 @@ export default function ClusterGroup({
 						combined,
 						`background-color:${color.hex()};`,
 						`background-color:${color.alpha(0.5).hex()};`
+					);
+				} else if (!uniqueHex.length && outsideShapesCount) {
+					html = getMarkerHtml(
+						count,
+						valuesCount,
+						combined,
+						`background-color:${DEFAULT_OUTSIDE_COLOR.hex()};`,
+						`background-color:${DEFAULT_OUTSIDE_COLOR.alpha(0.5).hex()};`
 					);
 				} else {
 					//more than one color, display as gradient

@@ -113,7 +113,7 @@ function generateColorsWithPrimaryAtIndex(count: number, primaryIndex: number): 
 	let cursor = 0;
 	for (let i = 0; i < count; i++) {
 		if (i === primaryIndex) continue;
-		result[i] = colors[cursor++];
+		result[i] = colors[cursor++]!;
 	}
 
 	return result;
@@ -144,11 +144,11 @@ function CustomLegend({
 					Legend
 				</h3>
 			)}
-			{labels.slice(0, displayedItems).map((label, index) => {
-				const percentage = total > 0 ? ((data[index] / total) * 100).toFixed(1) : "0.0";
+			{labels.slice(0, displayedItems).map((label, i) => {
+				const percentage = total > 0 ? ((data[i]! / total) * 100).toFixed(1) : "0.0";
 				return (
-					<div key={index} className="flex items-center gap-3">
-						<div className="w-4 h-4 rounded-sm shrink-0" style={{ backgroundColor: colors[index] }} />
+					<div key={i} className="flex items-center gap-3">
+						<div className="w-4 h-4 rounded-sm shrink-0" style={{ backgroundColor: colors[i] }} />
 						<div className="flex-1 min-w-0 flex items-center gap-1">
 							<span className="text-sm font-medium truncate" style={{ color: textColor }} title={label}>
 								{label}
@@ -182,8 +182,7 @@ export default function DoughnutChart({ labels, data, compact = false }: Doughnu
 	const { theme } = useTheme();
 	const textColor = "var(--color-base-content)";
 	// Determine the index of the most abundant value
-	const maxIndex = data.reduce((bestIndex, value, i, arr) => (value > arr[bestIndex] ? i : bestIndex), 0);
-	const colors = generateColorsWithPrimaryAtIndex(labels.length, maxIndex);
+	const colors = generateColorsWithPrimaryAtIndex(labels.length, data.indexOf(Math.max(...data)));
 
 	const chartData = {
 		labels,
@@ -233,31 +232,17 @@ export default function DoughnutChart({ labels, data, compact = false }: Doughnu
 
 	return (
 		<div className="w-full h-full flex flex-col">
-			<div
-				className={
-					compact ? "flex flex-col items-center gap-5" : "flex flex-col lg:flex-row items-start gap-8"
-				}
-			>
+			<div className={compact ? "flex flex-col items-center gap-5" : "flex flex-col lg:flex-row items-start gap-8"}>
 				{/* Chart Container */}
 				<div
-					className={
-						compact
-							? "relative h-56 w-56 shrink-0 mx-auto"
-							: "relative h-85 w-75 shrink-0 mx-auto lg:mx-0"
-					}
+					className={compact ? "relative h-56 w-56 shrink-0 mx-auto" : "relative h-85 w-75 shrink-0 mx-auto lg:mx-0"}
 				>
 					<Doughnut data={chartData} options={options} />
 				</div>
 
 				{/* Custom Legend */}
 				<div className={compact ? "w-full" : "flex-1 min-w-0 lg:max-w-xs"}>
-					<CustomLegend
-						labels={labels}
-						data={data}
-						colors={colors}
-						textColor={textColor}
-						hideHeading={compact}
-					/>
+					<CustomLegend labels={labels} data={data} colors={colors} textColor={textColor} hideHeading={compact} />
 				</div>
 			</div>
 

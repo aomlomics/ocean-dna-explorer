@@ -68,7 +68,7 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 	const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const scrollRef = useRef<HTMLDivElement | null>(null);
 
-	const currentSequence = terminalSequences[sequenceIndex];
+	const currentSequence = terminalSequences[sequenceIndex]!;
 	const prompt = useMemo(() => "ocean-dna@lab:~$", []);
 
 	// Type out the command character by character
@@ -100,7 +100,7 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 		const lines = currentSequence.lines;
 		if (currentLineIndex < lines.length) {
 			timeoutRef.current = setTimeout(() => {
-				setVisibleLines((prev) => [...prev, lines[currentLineIndex]]);
+				setVisibleLines((prev) => [...prev, lines[currentLineIndex]!]);
 				setCurrentLineIndex((prev) => prev + 1);
 			}, 180);
 		} else {
@@ -164,7 +164,9 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 						<div className="w-2.5 h-2.5 rounded-full bg-red-400 [html[data-theme='dark']_&]:bg-red-500" />
 						<div className="w-2.5 h-2.5 rounded-full bg-yellow-400 [html[data-theme='dark']_&]:bg-yellow-500" />
 						<div className="w-2.5 h-2.5 rounded-full bg-green-400 [html[data-theme='dark']_&]:bg-green-500" />
-						<span className="ml-2 text-base-content/50" style={{ fontSize: 10 }}>analysis.sh</span>
+						<span className="ml-2 text-base-content/50" style={{ fontSize: 10 }}>
+							analysis.sh
+						</span>
 					</div>
 
 					{/* Terminal content */}
@@ -189,11 +191,14 @@ export default function AnalysisLaptop({ className, screenBounds }: AnalysisLapt
 						{visibleLines.map((line, i) => (
 							<div
 								key={i}
-							className={`whitespace-pre ${
-									line.includes("[done]") || line.startsWith("✓") ? "text-success" : 
-									line.includes("[warn]") ? "text-warning" :
-									line.includes("found:") || line.includes("generated:") || line.includes("Matches") ? "text-primary" : 
-									"text-base-content/70"
+								className={`whitespace-pre ${
+									line.includes("[done]") || line.startsWith("✓")
+										? "text-success"
+										: line.includes("[warn]")
+											? "text-warning"
+											: line.includes("found:") || line.includes("generated:") || line.includes("Matches")
+												? "text-primary"
+												: "text-base-content/70"
 								}`}
 							>
 								{line}

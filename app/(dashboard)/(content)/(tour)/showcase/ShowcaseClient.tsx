@@ -372,10 +372,10 @@ export default function ShowcaseClient({
 	projectDurationMs?: number;
 }) {
 	const [projectIdx, setProjectIdx] = useState(0);
-	const [gridTaxa, setGridTaxa] = useState<Array<ActiveGridTaxonomy | null>>(() =>
-		Array.from({ length: GRID_CELL_COUNT }, () => null)
+	const [gridTaxa, setGridTaxa] = useState<Array<ActiveGridTaxonomy | undefined>>(() =>
+		Array.from({ length: GRID_CELL_COUNT })
 	);
-	const gridRef = useRef<Array<ActiveGridTaxonomy | null>>(Array.from({ length: GRID_CELL_COUNT }, () => null));
+	const gridRef = useRef<Array<ActiveGridTaxonomy | undefined>>(Array.from({ length: GRID_CELL_COUNT }));
 	const [isFirstProjectPaint, setIsFirstProjectPaint] = useState(true);
 	const nextTaxonomyIndex = useRef(0);
 	const gridItemIdCounter = useRef(0);
@@ -395,7 +395,7 @@ export default function ShowcaseClient({
 
 	useEffect(() => {
 		const list = project?.taxonomies ?? [];
-		gridRef.current = Array.from({ length: GRID_CELL_COUNT }, () => null);
+		gridRef.current = Array.from({ length: GRID_CELL_COUNT });
 		setGridTaxa(gridRef.current);
 		nextTaxonomyIndex.current = 0;
 		gridItemIdCounter.current = 0;
@@ -411,7 +411,7 @@ export default function ShowcaseClient({
 
 			const taxonomyIndex = nextTaxonomyIndex.current;
 			const slot = taxonomyIndex % GRID_CELL_COUNT;
-			const taxonomy = list[taxonomyIndex % list.length];
+			const taxonomy = list[taxonomyIndex % list.length]!;
 			nextTaxonomyIndex.current += 1;
 
 			gridItemIdCounter.current += 1;
@@ -627,7 +627,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 	);
 }
 
-function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | null }) {
+function TaxonomyGridCell({ cell }: { cell: ActiveGridTaxonomy | undefined }) {
 	if (!cell) {
 		return <div className="min-h-28" />;
 	}
@@ -758,9 +758,7 @@ const ProjectSamplesMap = memo(
 				</div>
 			);
 		}
-		return (
-			<DynamicMap locations={locations} cluster clusterRadius={42} table="sample" id="samp_name" disableSearch />
-		);
+		return <DynamicMap locations={locations} cluster clusterRadius={42} table="sample" id="samp_name" disableSearch />;
 	},
 	(prev, next) => prev.projectId === next.projectId
 );

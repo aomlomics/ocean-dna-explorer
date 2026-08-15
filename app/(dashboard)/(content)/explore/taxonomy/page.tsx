@@ -8,7 +8,7 @@ export default async function Taxonomy() {
 			type: "select",
 			field: "assignmentLevel",
 			options: ["", ...RanksBySpecificity],
-			optionsLabels: ["All levels", ...RanksBySpecificity.map((rank) => rank[0].toUpperCase() + rank.slice(1))]
+			optionsLabels: ["All levels", ...RanksBySpecificity.map((rank) => rank.charAt(0).toUpperCase() + rank.slice(1))]
 		},
 		{
 			type: "selectGroup",

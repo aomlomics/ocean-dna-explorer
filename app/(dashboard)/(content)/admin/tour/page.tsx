@@ -97,24 +97,33 @@ export default function Tour() {
 		): TourStepWithInvalid[] => {
 			if (Array.isArray(update)) {
 				return update;
-			} else if (update.add) {
-				const temp = [...state];
-				temp.splice(update.i - 1, 0, { url: "" });
-				return temp;
-			} else if (update.delete) {
-				const temp = [...state];
-				temp.splice(update.i, 1);
-				return temp;
-			} else if (update.shift) {
-				const temp = [...state];
-				//swap current element with element in direction of shift
-				[temp[update.i], temp[update.i + update.shift]] = [temp[update.i + update.shift], temp[update.i]];
-				return temp;
 			} else {
-				//update.value
 				const temp = [...state];
-				temp[update.i] = { ...temp[update.i], ...update.value };
-				return temp;
+				const curr = temp[update.i];
+				if (!curr) {
+					throw new Error("update.i out of range");
+				}
+
+				if (update.add) {
+					temp.splice(update.i - 1, 0, { url: "" });
+					return temp;
+				} else if (update.delete) {
+					temp.splice(update.i, 1);
+					return temp;
+				} else if (update.shift) {
+					const shifted = temp[update.i + update.shift];
+					if (!shifted) {
+						throw new Error("update.i + update.shift out of range");
+					}
+
+					//swap current element with element in direction of shift
+					[temp[update.i], temp[update.i + update.shift]] = [shifted, curr];
+					return temp;
+				} else {
+					//update.value
+					temp[update.i] = { ...curr, ...update.value };
+					return temp;
+				}
 			}
 		},
 		[]
@@ -717,7 +726,7 @@ export default function Tour() {
 
 						<div className={`w-full pr-2 py-1${i % 2 === 0 ? " bg-base-200" : ""}`}>
 							<input
-								className={`input w-full${tourSteps[i].url && !tourSteps[i].invalid ? "" : " input-error"}`}
+								className={`input w-full${step.url && !step.invalid ? "" : " input-error"}`}
 								value={step.url}
 								onChange={(e) => {
 									const url = e.currentTarget.value;

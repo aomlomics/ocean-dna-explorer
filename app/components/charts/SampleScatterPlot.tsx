@@ -86,11 +86,14 @@ export default function SampleScatterPlot({
 
 				if (val != null && !((val as string | number) in DeadValueEnum) && val !== "") {
 					let xVal = null as number | Date | null;
-					if (userDefinedFields?.has(newXField) && p.userDefined) {
-						if (getFieldType(newXField) === "number") {
-							xVal = parseFloat(p.userDefined[newXField]);
-						} else {
-							xVal = new Date(p.userDefined[newXField]);
+					if (userDefinedFields?.has(newXField)) {
+						const val = p.userDefined?.[newXField];
+						if (val != null) {
+							if (getFieldType(newXField) === "number") {
+								xVal = parseFloat(val);
+							} else {
+								xVal = new Date(val);
+							}
 						}
 					} else {
 						xVal = p[newXField] as typeof xVal;
@@ -103,11 +106,14 @@ export default function SampleScatterPlot({
 							: Number.isFinite(xVal.getTime()) && !(xVal.getTime() in DeadValueEnum))
 					) {
 						let yVal = null as number | Date | null;
-						if (userDefinedFields?.has(newYField) && p.userDefined) {
-							if (getFieldType(newYField) === "number") {
-								yVal = parseFloat(p.userDefined[newYField]);
-							} else {
-								yVal = new Date(p.userDefined[newYField]);
+						if (userDefinedFields?.has(newYField)) {
+							const val = p.userDefined?.[newYField];
+							if (val) {
+								if (getFieldType(newYField) === "number") {
+									yVal = parseFloat(val);
+								} else {
+									yVal = new Date(val);
+								}
 							}
 						} else {
 							yVal = p[newYField] as typeof yVal;
@@ -136,9 +142,9 @@ export default function SampleScatterPlot({
 							}
 
 							const label = val.toString();
-							const setIndex = acc.findIndex((s) => s.label === label);
-							if (setIndex !== -1) {
-								acc[setIndex].data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
+							const set = acc.find((s) => s.label === label);
+							if (set) {
+								set.data.push({ x: xVal, y: yVal, samp_name: p.samp_name });
 							} else {
 								labels.add(label);
 								acc.push({
@@ -170,8 +176,8 @@ export default function SampleScatterPlot({
 
 		//assign colors
 		distinctColors({ count: tempDatasets.length, chromaMin: 35, lightMin: 35 }).forEach((color, i) => {
-			tempDatasets[i].borderColor = color.hex();
-			tempDatasets[i].backgroundColor = color.alpha(0.5).hex();
+			tempDatasets[i]!.borderColor = color.hex();
+			tempDatasets[i]!.backgroundColor = color.alpha(0.5).hex();
 		});
 
 		return {

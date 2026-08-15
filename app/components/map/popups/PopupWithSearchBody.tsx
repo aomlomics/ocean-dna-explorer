@@ -163,7 +163,7 @@ export default function PopupWithSearchBody({
 
 										return (
 											<Fragment key={lUrl}>
-												{legendValue !== (i > 0 ? valuesWithLegend![i - 1].legendValue : undefined) ? (
+												{legendValue !== (i > 0 ? valuesWithLegend![i - 1]!.legendValue : undefined) ? (
 													<h3 className="text-base-content text-md text-nowrap">{legendValue}</h3>
 												) : (
 													<></>

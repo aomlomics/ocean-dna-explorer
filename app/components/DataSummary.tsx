@@ -29,11 +29,8 @@ export async function AssayStats({ compact = false }: { compact?: boolean } = {}
 
 	const countsByGene = {} as Record<Assay["target_gene"], number>;
 	for (const a of analyses) {
-		if (a.Assay.target_gene in countsByGene) {
-			countsByGene[a.Assay.target_gene] += a._count.Assignments;
-		} else {
-			countsByGene[a.Assay.target_gene] = a._count.Assignments;
-		}
+		const count = (countsByGene[a.Assay.target_gene] ??= 0);
+		countsByGene[a.Assay.target_gene] = count + a._count.Assignments;
 	}
 
 	return (

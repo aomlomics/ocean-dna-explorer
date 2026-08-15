@@ -127,7 +127,7 @@ export async function GET(
 		const orderByStr = searchParams.get("orderBy");
 		if (orderByStr != null) {
 			const split = orderByStr?.split(",");
-			if (split.length === 2 && (split[1] === "asc" || split[1] === "desc")) {
+			if (split.length === 2 && split[0] && (split[1] === "asc" || split[1] === "desc")) {
 				if (TableMetadata[model].enumSchema.options.includes(split[0])) {
 					query.orderBy = {
 						[split[0]]: split[1]

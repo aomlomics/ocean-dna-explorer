@@ -36,7 +36,7 @@ function sample<T>(arr: T[], count: number): T[] {
 	const copy = arr.slice();
 	for (let i = copy.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1));
-		[copy[i], copy[j]] = [copy[j], copy[i]];
+		[copy[i], copy[j]] = [copy[j]!, copy[i]!];
 	}
 	return copy.slice(0, count);
 }
@@ -80,7 +80,7 @@ function buildDiverseMapSamples<T extends { decimalLatitude: number | null; deci
 		let addedThisPass = false;
 		for (const rows of bucketEntries) {
 			if (cursor < rows.length) {
-				picked.push(rows[cursor]);
+				picked.push(rows[cursor]!);
 				addedThisPass = true;
 				if (picked.length >= maxCount) break;
 			}

@@ -89,10 +89,11 @@ export async function GET(
 		const allFields = [...params.map((e) => e[0]), ...extraFields];
 		const result = {} as Record<string, string[]>;
 
-		for (let i = 0; i < dbResult.length; i++) {
-			result[allFields[i]] = dbResult[i].reduce((acc, e) => {
-				if (e[allFields[i]]) {
-					acc.push(e[allFields[i]]);
+		for (const [i, field] of allFields.entries()) {
+			result[field] = dbResult[i]!.reduce((acc, row) => {
+				const value = row[field];
+				if (value != null) {
+					acc.push(value);
 				}
 
 				return acc;

@@ -248,8 +248,8 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 	const innerW = width - padding.left - padding.right;
 	const innerH = height - padding.top - padding.bottom;
 
-	const minYear = points[0].year;
-	const maxYear = points[points.length - 1].year;
+	const minYear = points[0]!.year;
+	const maxYear = points[points.length - 1]!.year;
 	const yearRange = Math.max(1, maxYear - minYear);
 
 	const maxCount = Math.max(1, ...points.map((p) => p.count));
@@ -262,9 +262,9 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
 		.join(" ");
 
 	const areaPath = [
-		`M${x(points[0].year).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
+		`M${x(minYear).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
 		...points.map((p) => `L${x(p.year).toFixed(2)},${y(p.count).toFixed(2)}`),
-		`L${x(points[points.length - 1].year).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
+		`L${x(maxYear).toFixed(2)},${(padding.top + innerH).toFixed(2)}`,
 		"Z"
 	].join(" ");
 
@@ -523,10 +523,10 @@ export async function MetadataCompletenessCard() {
 			];
 
 			const optionalFields = getOptionalScalarFieldNames(entity.modelName);
-			const total = await delegate.count();
+			const total = await delegate!.count();
 			const populatedCounts = await Promise.all(
 				optionalFields.map((field) =>
-					delegate.count({
+					delegate!.count({
 						where: { [field]: { not: null } }
 					})
 				)

@@ -53,10 +53,15 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	const responsesRef = useRef<Record<string, ResponseSet>>({});
 
 	function updateResponse(id: string, key: string, res: NetworkProgressPacket) {
+		const nextRes = {
+			...responsesRef.current[id],
+			[key]: res
+		} as ResponseSet;
+
 		const nextResponses = {
 			...responsesRef.current,
-			[id]: { ...responsesRef.current[id], [key]: res }
-		} as Record<string, ResponseSet>;
+			[id]: nextRes
+		};
 
 		responsesRef.current = nextResponses;
 		setResponses(nextResponses);
@@ -69,7 +74,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 		} else if (res?.statusMessage === "success") {
 			//check if current analysis was completed successfully
 			if (
-				Object.entries(nextResponses[id]).every(
+				Object.entries(nextRes).every(
 					//make sure to include current key, since we already checked that
 					([entryKey, entryRes]) => entryKey === key || entryRes?.statusMessage === "success"
 				)
@@ -115,7 +120,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	async function parseAnalysis(event: ChangeEvent<HTMLInputElement>, i: number) {
 		try {
 			if (event.target.files?.length) {
-				const file = event.target.files[0] as File;
+				const file = event.target.files.item(0)!;
 
 				let currAnalysis_run_name = "";
 				let currProject = undefined as Project | undefined;
@@ -221,7 +226,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			const target = event.target as HTMLFormElement;
 			const files = {} as Record<string, { analysisFile: File; assignmentsFile: File; occurrencesFile: File }>;
 
-			const activeIds = analysisIds.filter((id) => {
+			for (const id of analysisIds) {
 				if (typeof id === "string") {
 					//skip files that have already been successfully submitted
 					if (
@@ -232,9 +237,9 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					) {
 						//gather files
 						files[id] = {
-							analysisFile: target[`analysis_${id}`].files[0],
-							assignmentsFile: target[`assignments_${id}`].files[0],
-							occurrencesFile: target[`occurrences_${id}`].files[0]
+							analysisFile: (target.elements.namedItem(`analysis_${id}`) as HTMLInputElement).files!.item(0)!,
+							assignmentsFile: (target.elements.namedItem(`assignments_${id}`) as HTMLInputElement).files!.item(0)!,
+							occurrencesFile: (target.elements.namedItem(`occurrences_${id}`) as HTMLInputElement).files!.item(0)!
 						};
 
 						//set status of uploads to pending
@@ -254,27 +259,28 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						return true;
 					}
 				}
-			}) as string[];
+			}
 
+			const activeIds = Object.keys(files);
 			if (activeIds.length) {
 				//scroll first analysis into view
-				document.getElementById(activeIds[0])!.scrollIntoView({
+				document.getElementById(activeIds[0]!)!.scrollIntoView({
 					block: "start",
 					behavior: "smooth"
 				});
 
 				//submit for every analysis section
-				for (const id of activeIds) {
+				for (const [id, fileSet] of Object.entries(files)) {
 					//upload file to blob storage
 					updateResponse(id, "analysis", {
 						statusMessage: "progress",
 						progress: { message: "Uploading file", value: 1 }
 					});
 					const analysisUrl = (
-						await upload(`submissions/${encodeURIComponent(files[id].analysisFile.name)}`, files[id].analysisFile, {
+						await upload(`submissions/${encodeURIComponent(fileSet.analysisFile.name)}`, fileSet.analysisFile, {
 							access: "public",
 							handleUploadUrl: "/api/file/upload",
-							multipart: files[id].analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+							multipart: fileSet.analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
 					updateResponse(id, "analysis", {
@@ -289,15 +295,11 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						progress: { message: "Uploading file", value: 1 }
 					});
 					const assignmentsUrl = (
-						await upload(
-							`submissions/${encodeURIComponent(files[id].assignmentsFile.name)}`,
-							files[id].assignmentsFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: files[id].assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${encodeURIComponent(fileSet.assignmentsFile.name)}`, fileSet.assignmentsFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: fileSet.assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
 					updateResponse(id, "assignments", {
 						statusMessage: "progress",
@@ -311,15 +313,11 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						progress: { message: "Uploading file", value: 1 }
 					});
 					const occurrencesUrl = (
-						await upload(
-							`submissions/${encodeURIComponent(files[id].occurrencesFile.name)}`,
-							files[id].occurrencesFile,
-							{
-								access: "public",
-								handleUploadUrl: "/api/file/upload",
-								multipart: files[id].occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-							}
-						)
+						await upload(`submissions/${encodeURIComponent(fileSet.occurrencesFile.name)}`, fileSet.occurrencesFile, {
+							access: "public",
+							handleUploadUrl: "/api/file/upload",
+							multipart: fileSet.occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+						})
 					).url;
 					updateResponse(id, "occurrences", {
 						statusMessage: "progress",

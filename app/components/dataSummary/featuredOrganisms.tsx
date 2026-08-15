@@ -1373,13 +1373,13 @@ export default function FeaturedOrganisms() {
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setSelectedOrganism(
-			(current) => current ?? FEATURED_ORGANISMS[Math.floor(Math.random() * FEATURED_ORGANISMS.length)]
+			(current) => current ?? FEATURED_ORGANISMS[Math.floor(Math.random() * FEATURED_ORGANISMS.length)]!
 		);
 	}, []);
 
 	// The organism shown in the detail panel. Falls back to the first entry during the
 	// brief pre-mount window before the random default is applied.
-	const activeOrganism = selectedOrganism ?? FEATURED_ORGANISMS[0];
+	const activeOrganism = selectedOrganism ?? FEATURED_ORGANISMS[0]!;
 
 	useEffect(() => {
 		let cancelled = false;

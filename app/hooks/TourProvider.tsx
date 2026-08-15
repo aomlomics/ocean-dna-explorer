@@ -41,13 +41,13 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 			const nextI = (step + 1) % tourSteps.length;
 
 			//next step navigation timeout
-			timeoutRef.current = setTimeout(() => setStep(nextI), (tourSteps[step].stepTime || stepTime) * 1000);
+			timeoutRef.current = setTimeout(() => setStep(nextI), (tourSteps[step]!.stepTime || stepTime) * 1000);
 
 			//prefetch next step
-			router.prefetch(tourSteps[nextI].url);
+			router.prefetch(tourSteps[nextI]!.url);
 
 			//navigate to current step
-			router.replace(tourSteps[step].url);
+			router.replace(tourSteps[step]!.url);
 		}
 	}, [step]);
 

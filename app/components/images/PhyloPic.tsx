@@ -20,7 +20,7 @@ export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
 	const imageUrl = phyloPic._embedded.primaryImage._links.vectorFile.href;
 	const title = phyloPic._embedded.primaryImage._links.self.title ?? "";
 	const rank = matched.rankMatched;
-	const rankLabel = rank ? rank[0].toUpperCase() + rank.slice(1) : "Taxon";
+	const rankLabel = rank ? rank[0]!.toUpperCase() + rank.slice(1) : "Taxon";
 
 	return (
 		<div className="w-full h-full relative flex flex-col items-center justify-center">

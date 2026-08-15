@@ -103,7 +103,7 @@ function SectionHeader({ children, className = "" }: { children: React.ReactNode
 // Full-width section wrapper with waves
 function TintedSection({ children }: { children: React.ReactNode }) {
 	return (
-		<section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50">
+		<section className="relative w-screen left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] bg-base-200/60 [html[data-theme='dark']_&]:bg-base-300/50">
 			{/* Wave at top */}
 			<svg
 				className="absolute -top-px left-0 w-full h-14 sm:h-20 text-base-100 rotate-180"

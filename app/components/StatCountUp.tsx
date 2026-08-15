@@ -37,12 +37,10 @@ export function StatCountUp({ value }: { value: number }) {
 		markReadyIfVisible();
 		const raf = requestAnimationFrame(markReadyIfVisible);
 
-		const io = new IntersectionObserver(
-			([entry]) => {
-				if (entry.isIntersecting) setReady(true);
-			},
-			{ threshold: 0.05, rootMargin: "0px 0px 0px 0px" }
-		);
+		const io = new IntersectionObserver(([entry]) => entry?.isIntersecting && setReady(true), {
+			threshold: 0.05,
+			rootMargin: "0px 0px 0px 0px"
+		});
 		io.observe(el);
 		return () => {
 			cancelAnimationFrame(raf);

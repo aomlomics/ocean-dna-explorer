@@ -48,9 +48,9 @@ export default function LaptopScreen({
 	useEffect(() => {
 		const el = screenRef.current;
 		if (!el) return;
-		const ro = new ResizeObserver((entries) => {
-			const { width, height } = entries[0].contentRect;
-			setScreenSize({ w: width, h: height });
+		const ro = new ResizeObserver(([entry]) => {
+			if (!entry) return;
+			setScreenSize({ w: entry.contentRect.width, h: entry.contentRect.height });
 		});
 		ro.observe(el);
 		return () => ro.disconnect();
@@ -62,13 +62,8 @@ export default function LaptopScreen({
 			: 1;
 
 	return (
-		<div
-			className={`relative w-full h-full min-w-0 min-h-0 flex items-center justify-center ${className}`}
-		>
-			<div
-				className="relative w-full h-full max-w-full max-h-full min-h-0"
-				style={{ aspectRatio: "1320 / 1080" }}
-			>
+		<div className={`relative w-full h-full min-w-0 min-h-0 flex items-center justify-center ${className}`}>
+			<div className="relative w-full h-full max-w-full max-h-full min-h-0" style={{ aspectRatio: "1320 / 1080" }}>
 				<Image
 					src="/images/biorender/laptop.png"
 					alt={alt}

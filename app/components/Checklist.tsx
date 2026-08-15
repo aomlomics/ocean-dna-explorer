@@ -120,7 +120,7 @@ export default function Checklist({
 											{colorList ? (
 												<div
 													className="aspect-square w-[1em] h-[1em]"
-													style={{ backgroundColor: colorList[i].hex() }}
+													style={{ backgroundColor: colorList[i]!.hex() }}
 												></div>
 											) : (
 												<></>

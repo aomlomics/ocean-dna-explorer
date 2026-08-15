@@ -19,7 +19,7 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 					if (!options?.safe)
 						throw new Error("If more than one sequence is provided, all sequences must have query names.");
 				} else {
-					acc.push(q.startsWith(COMPRESSION_FORMAT) || split.length === 1 ? q : [split[0], split[1]]);
+					acc.push(q.startsWith(COMPRESSION_FORMAT) || split.length === 1 ? q : [split[0]!, split[1]!]);
 				}
 			}
 

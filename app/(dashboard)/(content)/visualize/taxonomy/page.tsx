@@ -9,6 +9,7 @@ import {
 	SamplePartialWithRelationsSchema,
 	TaxonomyPartialSchema
 } from "@/prisma/generated/zod";
+import { SuccessPacket } from "@/types/globals";
 import { TaxonomicRanks } from "@/types/objects";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
@@ -34,7 +35,12 @@ export default function VisualizeTaxonomy() {
 		return <LoadingTaxonomyVisualize />;
 	}
 
-	const [occurrenceData, assignmentData, taxonomyData, sampleData] = data;
+	const [occurrenceData, assignmentData, taxonomyData, sampleData] = data as [
+		SuccessPacket,
+		SuccessPacket,
+		SuccessPacket,
+		SuccessPacket
+	];
 
 	return (
 		<TaxonomyVisualize

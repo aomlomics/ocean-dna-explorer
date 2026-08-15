@@ -43,17 +43,18 @@ function stringToNumber(str: string) {
 	const ENDING = "__";
 	const SEP = "_";
 
-	const words = str.toString().split(ENDING);
-	if (words.length === 1) {
+	const [first, ...rest] = str.toString().split(ENDING) as [string, ...string[]];
+	if (!rest) {
 		return str;
 	}
 
 	let num = 0;
 	let replace = "";
 
-	words[0].split(SEP).forEach((word) => {
-		if (word in NUMBERS) {
-			num += NUMBERS[word];
+	first.split(SEP).forEach((word) => {
+		const curr = NUMBERS[word];
+		if (curr != null) {
+			num += curr;
 
 			if (replace === "") {
 				replace += word;
@@ -167,10 +168,10 @@ export function parseSchemaToObject(
 				obj[field] = new Date(DeadValueEnum[value.toLowerCase() as keyof typeof DeadValueEnum]);
 			} else if (isNaN(dateVal.valueOf())) {
 				//value is not a singular valid date
-				const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
+				const [start, end, ...rest] = value.split(TypeSeparators[type]).map((v) => v.trim());
 
 				//check if there are exactly 2 dates
-				if (valArray.length !== 2) {
+				if (!start || !end || rest.length) {
 					throw new Error(
 						`Invalid format for the field "${field}". Field must be either one ISO 8601 date, or two dates separated with a "${TypeSeparators[type]}". The provided value was "${value}".`
 					);
@@ -187,41 +188,41 @@ export function parseSchemaToObject(
 				}
 
 				//check if either date is dead value
-				if (valArray[0].toLowerCase() in DeadValueEnum || valArray[1].toLowerCase() in DeadValueEnum) {
+				if (start.toLowerCase() in DeadValueEnum || end.toLowerCase() in DeadValueEnum) {
 					throw new Error(
 						`Invalid format for the field "${field}". If providing two dates, neither can be a dead value. The provided value was "${value}".`
 					);
 				}
 
-				const dateArray = valArray.map((v) => new Date(v));
+				const [startDate, endDate] = [new Date(start), new Date(end)];
 
 				//check if first date is invalid
-				if (isNaN(dateArray[0].valueOf())) {
+				if (isNaN(startDate.valueOf())) {
 					throw new Error(
-						`Invalid format for the field "${field}". The first value must be a valid ISO 8601 date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+						`Invalid format for the field "${field}". The first value must be a valid ISO 8601 date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//check if second date is invalid
-				if (isNaN(dateArray[1].valueOf())) {
+				if (isNaN(endDate.valueOf())) {
 					throw new Error(
-						`Invalid format for the field "${field}". The second value must be a valid ISO 8601 date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+						`Invalid format for the field "${field}". The second value must be a valid ISO 8601 date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//check if dates are in correct order
-				if (dateArray[0].getTime() >= dateArray[1].getTime()) {
+				if (startDate.getTime() >= endDate.getTime()) {
 					throw new Error(
-						`Invalid format for the field "${field}". The first date must be before second date. The provided value for the first date was "${dateArray[0]}". The provided value for the second date was "${dateArray[1]}".`
+						`Invalid format for the field "${field}". The first date must be before second date. The provided value for the first date was "${start}". The provided value for the second date was "${end}".`
 					);
 				}
 
 				//add to normal field
-				obj[field] = dateArray[0];
+				obj[field] = startDate;
 
 				//add to database specific fields
-				obj[field + "_Midpoint_ODE"] = new Date((dateArray[0].getTime() + dateArray[1].getTime()) / 2);
-				obj[field + "_End_ODE"] = dateArray[1];
+				obj[field + "_Midpoint_ODE"] = new Date((startDate.getTime() + endDate.getTime()) / 2);
+				obj[field + "_End_ODE"] = endDate;
 			} else {
 				//value is singular valid date
 				//use date value
@@ -234,14 +235,13 @@ export function parseSchemaToObject(
 			} else {
 				obj[field] = value;
 			}
-		} else if (value in DeadValueEnum) {
+		} else if (value.toLowerCase() in DeadValueEnum) {
 			//replace the value with the DeadValue equivalent
-			obj[field] = DeadValueEnum[value as unknown as DeadValueEnum];
+			obj[field] = DeadValueEnum[value as keyof typeof DeadValueEnum];
 		} else if (type === "float" || type === "integer") {
-			const parser = type === "float" ? parseFloat : parseInt;
-			const valArray = value.split(TypeSeparators[type]).map((v) => v.trim());
+			const [start, end, ...rest] = value.split(TypeSeparators[type]).map((v) => v.trim());
 
-			if (valArray.length === 2) {
+			if (start && end && !rest.length) {
 				//value is not a singular valid number
 				//check if field has corresponding range fields in database
 				if (
@@ -254,45 +254,45 @@ export function parseSchemaToObject(
 				}
 
 				//check if either number is dead value
-				if (valArray[0].toLowerCase() in DeadValueEnum || valArray[1].toLowerCase() in DeadValueEnum) {
+				if (start.toLowerCase() in DeadValueEnum || end.toLowerCase() in DeadValueEnum) {
 					throw new Error(
-						`Invalid format for the field "${field}". If providing two ${type}s, neither can be a dead value. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+						`Invalid format for the field "${field}". If providing two ${type}s, neither can be a dead value. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
-				const parsedArray = valArray.map((v) => parser(v));
+				const [parsedStart, parsedEnd] = [Number(start), Number(end)];
 
 				//check if first number is invalid
-				if (isNaN(parsedArray[0])) {
+				if (!Number.isFinite(parsedStart) || (type === "integer" && !Number.isInteger(parsedStart))) {
 					throw new Error(
-						`Invalid format for the field "${field}". First value must be a valid ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+						`Invalid format for the field "${field}". First value must be a valid ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//check if second number is invalid
-				if (isNaN(parsedArray[1])) {
+				if (!Number.isFinite(parsedEnd) || (type === "integer" && !Number.isInteger(parsedEnd))) {
 					throw new Error(
-						`Invalid format for the field "${field}". Second value must be a valid ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+						`Invalid format for the field "${field}". Second value must be a valid ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//check if numbers are in correct order
-				if (parsedArray[0] >= parsedArray[1]) {
+				if (parsedStart >= parsedEnd) {
 					throw new Error(
-						`Invalid format for the field "${field}". First ${type} must be before second ${type}. The first provided value was "${valArray[0]}". The second provided value was "${valArray[1]}".`
+						`Invalid format for the field "${field}". First ${type} must be before second ${type}. The first provided value was "${start}". The second provided value was "${end}".`
 					);
 				}
 
 				//add to normal field
-				obj[field] = parsedArray[0];
+				obj[field] = parsedStart;
 
 				//add to database specific fields
-				const midpoint = (parsedArray[0] + parsedArray[1]) / 2;
+				const midpoint = (parsedStart + parsedEnd) / 2;
 				obj[field + "_Midpoint_ODE"] = type === "float" ? midpoint : Math.round(midpoint);
-				obj[field + "_End_ODE"] = parsedArray[1];
-			} else if (valArray.length === 1) {
-				const parsed = parser(valArray[0]);
-				if (isNaN(parsed)) {
+				obj[field + "_End_ODE"] = parsedEnd;
+			} else if (start && !end && !rest.length) {
+				const parsed = Number(start);
+				if (!Number.isFinite(parsed) || (type === "integer" && !Number.isInteger(parsed))) {
 					throw new Error(
 						`Invalid format for the field "${field}". Field must be a number. The provided value was "${value}".`
 					);
