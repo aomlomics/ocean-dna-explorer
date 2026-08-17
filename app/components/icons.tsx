@@ -1,3 +1,49 @@
+export function ArrowIcon({ order }: { order: "asc" | "desc" }) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			width="24"
+			height="20"
+			className="text-primary mr-2"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			transform={order === "desc" ? "rotate(180 12 10)" : undefined}
+		>
+			<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+		</svg>
+	);
+}
+
+export function SearchIcon() {
+	return (
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4 opacity-70">
+			<path
+				fillRule="evenodd"
+				d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+				clipRule="evenodd"
+			/>
+		</svg>
+	);
+}
+
+export function LinkIcon() {
+	return (
+		<svg
+			width="20px"
+			height="20px"
+			viewBox="0 0 32 32"
+			version="1.1"
+			xmlns="http://www.w3.org/2000/svg"
+			className="text-primary"
+			stroke="currentColor"
+			fill="currentColor"
+		>
+			<path d="M15.694 13.541l2.666 2.665 5.016-5.017 2.59 2.59 0.004-7.734-7.785-0.046 2.526 2.525-5.017 5.017zM25.926 16.945l-1.92-1.947 0.035 9.007-16.015 0.009 0.016-15.973 8.958-0.040-2-2h-7c-1.104 0-2 0.896-2 2v16c0 1.104 0.896 2 2 2h16c1.104 0 2-0.896 2-2l-0.074-7.056z"></path>
+		</svg>
+	);
+}
+
 export function AnalysisIcon({ className }: { className?: string }) {
 	return (
 		<svg

@@ -15,7 +15,6 @@ export default async function Sample() {
 			size_frac: true
 		}
 	});
-	if (!samples) return <>Loading...</>;
 
 	const filterOptions = getOptions(samples);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars

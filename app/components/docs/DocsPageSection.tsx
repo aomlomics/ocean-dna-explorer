@@ -45,15 +45,17 @@ export default function DocsPageSection<P extends DocsPage>({
 					</ul>
 				</div>
 
-				<h2 className="text-4xl font-semibold tracking-tight text-primary mb-3 pt-5">
+				<h1 className="text-4xl font-semibold tracking-tight text-primary mb-3 pt-5">
 					{(DocsSections[page][section] as DocsSection).title}
-				</h2>
+				</h1>
 				<div className={docContentProseClassName}>{header}</div>
 			</div>
 
 			{subsections ? (
 				subsections.map((sect) => (
-					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title} content={sect.content} />
+					<DocsPageSubsection key={sect.id} id={sect.id} title={sect.title}>
+						{sect.content}
+					</DocsPageSubsection>
 				))
 			) : (
 				<></>
@@ -111,11 +113,11 @@ export default function DocsPageSection<P extends DocsPage>({
 	);
 }
 
-function DocsPageSubsection({ id, title, content }: { id: string; title: string; content: ReactNode }) {
+function DocsPageSubsection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
 	return (
 		<div id={id} className="pt-5">
-			<h3 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{title}</h3>
-			<div className={docContentProseClassName}>{content}</div>
+			<h2 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{title}</h2>
+			<div className={docContentProseClassName}>{children}</div>
 		</div>
 	);
 }

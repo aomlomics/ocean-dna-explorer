@@ -1,7 +1,7 @@
 import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
-import Table from "@/app/components/paginated/Table";
+import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import PrimerDiagram from "@/app/components/PrimerDiagram";

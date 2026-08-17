@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FilterConfig, getActiveFilters } from "./filters/filterHelpers";
 import { Prisma } from "@/app/generated/prisma/client";
-import TableDisplay from "../paginated/TableDisplay";
+import TableDisplay from "../paginated/table/TableDisplay";
 import ActionBar from "./ActionBar";
 import TableFilter from "./filters/TableFilter";
 import TableMetadata from "@/types/tableMetadata";

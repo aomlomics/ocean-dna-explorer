@@ -11,7 +11,6 @@ export default async function Project() {
 			study_factor: true
 		}
 	});
-	if (!projects) return <>Loading...</>;
 
 	const filterOptions = getOptions(projects);
 

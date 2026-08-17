@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import GcDonut from "@/app/components/charts/GcDonut";
-import Table from "@/app/components/paginated/Table";
+import Table from "@/app/components/paginated/table/Table";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import Map from "@/app/components/map/Map";

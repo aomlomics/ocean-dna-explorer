@@ -1,4 +1,4 @@
-import LoadingPaginationControls from "./LoadingPaginationControls";
+import LoadingPaginationControls from "../LoadingPaginationControls";
 
 export default function LoadingPagination() {
 	return (

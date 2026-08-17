@@ -1,6 +1,6 @@
-import InfoButton from "../InfoButton";
-import LoadingText from "../LoadingText";
-import LoadingPaginationControls from "./LoadingPaginationControls";
+import InfoButton from "../../InfoButton";
+import LoadingText from "../../LoadingText";
+import LoadingPaginationControls from "../LoadingPaginationControls";
 
 export default function LoadingTable({
 	take = 50,

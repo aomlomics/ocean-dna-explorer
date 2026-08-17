@@ -1,13 +1,9 @@
-"use client";
-
-type TableStatusKind = "loading" | "error" | "empty";
-
 export default function TableStatusState({
 	kind,
 	title,
 	detail
 }: {
-	kind: TableStatusKind;
+	kind: "loading" | "error" | "empty";
 	title: string;
 	detail?: string;
 }) {

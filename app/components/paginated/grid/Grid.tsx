@@ -10,7 +10,7 @@ import LoadingPaginationControls from "../LoadingPaginationControls";
 import { buildWhereParams } from "@/app/helpers/queries";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
-import TableStatusState from "../TableStatusState";
+import TableStatusState from "../table/TableStatusState";
 
 const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
 

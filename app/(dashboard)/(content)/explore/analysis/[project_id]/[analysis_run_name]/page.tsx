@@ -1,7 +1,7 @@
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import Table from "@/app/components/paginated/Table";
+import Table from "@/app/components/paginated/table/Table";
 import DataDisplay from "@/app/components/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 import TableMetadata from "@/types/tableMetadata";

@@ -1,14 +1,14 @@
 "use client";
 
 import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
-import Table from "../paginated/Table";
-import Pagination from "../paginated/Pagination";
+import Table from "./Table";
+import Pagination from "../pagination/Pagination";
 import { useEffect, useState } from "react";
-import Grid from "./grid/Grid";
-import TaxaGridItem from "./grid/TaxaGridItem";
-import ProjectGridItem from "./grid/ProjectGridItem";
-import { useViewMode } from "../explore/ViewModeContext";
-import InfoButton from "../InfoButton";
+import Grid from "../grid/Grid";
+import TaxaGridItem from "../grid/TaxaGridItem";
+import ProjectGridItem from "../grid/ProjectGridItem";
+import { useViewMode } from "../../explore/ViewModeContext";
+import InfoButton from "../../InfoButton";
 import { useSearchParams } from "next/navigation";
 
 const sw = 1.75;

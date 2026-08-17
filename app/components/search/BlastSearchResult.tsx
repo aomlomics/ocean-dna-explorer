@@ -97,28 +97,28 @@ export default function BlastSearchResult({
 				</button>
 
 				<div className="relative w-full h-full p-5 flex flex-col min-h-0">
-					<div className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
+					<h1 className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
 						{resultsBySequence[page]![0]!.query ? (
 							<>
-								<h1>Query:</h1>
-								<h1>{resultsBySequence[page]![0]!.query}</h1>
+								<div>Query:</div>
+								<div>{resultsBySequence[page]![0]!.query}</div>
 							</>
 						) : (
 							<></>
 						)}
-						<h1>Sequence:</h1>
-						<h1>{resultsBySequence[page]![0]!.sequence}</h1>
-					</div>
+						<div>Sequence:</div>
+						<div>{resultsBySequence[page]![0]!.sequence}</div>
+					</h1>
 
 					<div className="overflow-y-auto pr-3 py-2">
 						{resultsBySequence[page]!.map((r, i) => (
 							<div key={i} className="flex flex-col">
-								<div className="grid grid-cols-[auto_1fr] gap-x-2">
-									<h1>Target featureid:</h1>
+								<h2 className="grid grid-cols-[auto_1fr] gap-x-2">
+									<div>Target featureid:</div>
 									<Link className="link link-primary link-hover" href={exploreFeatureUrl(r.featureid)}>
 										{r.featureid}
 									</Link>
-								</div>
+								</h2>
 
 								<div className="w-full grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-x-2 px-15">
 									{resultsFields.map((f) => {

@@ -46,7 +46,7 @@ export default function Modal({
 			</div>
 			<form method="dialog" className="modal-backdrop">
 				<button ref={clickOffRef} aria-label="Close dialog" onClick={onClose}>
-					close
+					Close dialog
 				</button>
 			</form>
 		</dialog>

@@ -4,13 +4,13 @@ import { Prisma } from "@/app/generated/prisma/client";
 import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
-import PaginationControls from "./PaginationControls";
+import PaginationControls from "../PaginationControls";
 import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import TableMetadata from "@/types/tableMetadata";
 import { buildWhereParams } from "@/app/helpers/queries";
-import TableStatusState from "./TableStatusState";
+import TableStatusState from "../table/TableStatusState";
 
 export default function Pagination({
 	table,
