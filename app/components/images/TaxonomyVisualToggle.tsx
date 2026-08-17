@@ -191,6 +191,7 @@ export default function TaxonomyVisualToggle({
 							<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 								<button
 									className="btn btn-secondary rounded-full"
+									aria-label="Previous Taxonomy Spotlight"
 									onClick={() => setSpotlightIndex(spotlightIndex ? spotlightIndex - 1 : taxonomySpotlights.length - 1)}
 									disabled={taxonomySpotlights.length < 2}
 								>
@@ -209,6 +210,7 @@ export default function TaxonomyVisualToggle({
 
 								<button
 									className="btn btn-secondary rounded-full"
+									aria-label="Next Taxonomy Spotlight"
 									onClick={() =>
 										setSpotlightIndex(spotlightIndex === taxonomySpotlights.length - 1 ? 0 : spotlightIndex + 1)
 									}
