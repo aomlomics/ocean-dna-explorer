@@ -168,6 +168,8 @@ model Feature {
 model Taxonomy {
     id       Int    @id @default(autoincrement())
     taxonomy String @unique
+    // /// [EditHistoryType]
+    // editHistory       Json?
 
     // Relations
     Assignments Assignment[]
@@ -178,6 +180,7 @@ model Taxonomy {
     domain                 String?
     supergroup             String?
     division               String?
+    // subdivision            String?
     kingdom                String?
     phylum                 String?
     class                  String?
@@ -185,6 +188,11 @@ model Taxonomy {
     family                 String?
     genus                  String?
     species                String?
+
+    // @@index([kingdom])
+    // @@index([family])
+    // @@index([genus])
+    // @@index([species])
 }
 
 model Tag {

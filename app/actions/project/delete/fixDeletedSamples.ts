@@ -12,7 +12,11 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId) {
+	if (
+		!userId ||
+		!role ||
+		!(RolePermissions[role].includes("contribute") || RolePermissions[role].includes("manageUsers"))
+	) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -37,7 +41,7 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 
 			if (!project) {
 				throw new Error(`No Project with project_id of "${project_id}" found.`);
-			} else if (!project.userIds.includes(userId) && (!role || !RolePermissions[role].includes("manageUsers"))) {
+			} else if (!project.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
 				throw new Error("Unauthorized action.");
 			}
 

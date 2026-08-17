@@ -15,6 +15,7 @@ import {
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import { NetworkPacket } from "@/types/globals";
+import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
@@ -29,9 +30,10 @@ export default async function projectUpdateImageAction(
 		}
 	}
 
-	const { userId } = await auth();
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		if (imageInfo?.image.url) {
 			await del(imageInfo.image.url);
 		}

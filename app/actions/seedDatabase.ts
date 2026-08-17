@@ -10,12 +10,8 @@ export default async function seedDatabaseAction() {
 	const role = sessionClaims?.metadata?.role;
 
 	try {
-		if (!userId) {
-			throw new Error("Must be logged in.");
-		}
-
-		if (!role || !RolePermissions[role].includes("manageDatabase")) {
-			throw new Error("Invalid role.");
+		if (!userId || !role || !RolePermissions[role].includes("manageDatabase")) {
+			throw new Error("Unauthorized");
 		}
 
 		await seedAssays(prisma);

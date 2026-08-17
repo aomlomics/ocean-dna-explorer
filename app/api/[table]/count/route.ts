@@ -68,7 +68,7 @@ export async function GET(
 			query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
 		}
 
-		//@ts-expect-error dynamically accessing table
+		//@ts-expect-error dynamically accessing prisma client
 		let result = await prisma[model].count(query);
 
 		if (result) {

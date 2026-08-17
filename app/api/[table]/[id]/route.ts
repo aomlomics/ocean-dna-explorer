@@ -31,7 +31,7 @@ export async function GET(
 			}
 		});
 
-		//@ts-expect-error dynamically accessing table
+		//@ts-expect-error dynamically accessing prisma client
 		const result = await prisma[model].findUnique(query);
 
 		if (result) {

@@ -17,7 +17,11 @@ export default async function analysisDeleteAction(
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (
+		!userId ||
+		!role ||
+		!(RolePermissions[role].includes("contribute") || RolePermissions[role].includes("manageUsers"))
+	) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -62,10 +66,7 @@ export default async function analysisDeleteAction(
 
 		if (!analysis) {
 			throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
-		} else if (
-			!analysis.Project.userIds.includes(userId) &&
-			(!role || !RolePermissions[role].includes("manageUsers"))
-		) {
+		} else if (!analysis.Project.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
 			throw new Error("Unauthorized action.");
 		}
 

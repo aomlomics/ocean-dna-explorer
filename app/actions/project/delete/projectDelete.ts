@@ -14,7 +14,11 @@ export default async function projectDeleteAction(target: Project["project_id"])
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
-	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
+	if (
+		!userId ||
+		!role ||
+		!(RolePermissions[role].includes("contribute") || RolePermissions[role].includes("manageUsers"))
+	) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
@@ -51,7 +55,7 @@ export default async function projectDeleteAction(target: Project["project_id"])
 
 		if (!dbProject) {
 			throw new Error(`No Project with project_id of "${project_id}" found.`);
-		} else if (!dbProject.userIds.includes(userId)) {
+		} else if (!dbProject.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
 			throw new Error("Unauthorized action.");
 		}
 

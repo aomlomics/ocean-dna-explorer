@@ -14,9 +14,10 @@ export default async function projectUpdateUserIdsAction(
 	deletedUserIds: Project["userIds"]
 ): Promise<NetworkPacket> {
 	const client = await clerkClient();
-	const { userId } = await auth();
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
-	if (!userId) {
+	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 		return { statusMessage: "error", error: "Unauthorized" };
 	}
 

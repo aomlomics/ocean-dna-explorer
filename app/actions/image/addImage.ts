@@ -33,14 +33,16 @@ export default async function addImageAction(
 		return { statusMessage: "error", error: "Must be logged in." };
 	}
 
-	if (!role || !RolePermissions[role].includes("manageDatabase")) {
-		return { statusMessage: "error", error: "Invalid role." };
+	if (
+		!role ||
+		(!target && !RolePermissions[role].includes("manageDatabase")) ||
+		(target && !RolePermissions[role].includes("contribute"))
+	) {
+		return { statusMessage: "error", error: "Unauthorized" };
 	}
 
-	if (target) {
-		if (!DataTableNames.includes(target.table)) {
-			return { statusMessage: "error", error: `Table with name of "${target.table}" does not exist.` };
-		}
+	if (target && !DataTableNames.includes(target.table)) {
+		return { statusMessage: "error", error: `Table with name of "${target.table}" does not exist.` };
 	}
 
 	let attribution = undefined as undefined | AttributionCreateInput;
@@ -91,7 +93,7 @@ export default async function addImageAction(
 
 	if (target) {
 		try {
-			//@ts-expect-error dynamically accessing table
+			//@ts-expect-error dynamically accessing prisma client
 			await prisma[target.table].update({
 				where: {
 					[TableMetadata[target.table].titleField as string]: target.value

@@ -16,16 +16,13 @@ async function editUser(
 
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
-	if (!userId) {
+
+	if (!userId || !role || !RolePermissions[role].includes("manageUsers")) {
 		throw new Error("Unauthorized");
 	}
 
 	if (targetUserId === userId) {
 		throw new Error("Can't edit own role");
-	}
-
-	if (!role || !RolePermissions[role].includes("manageUsers")) {
-		throw new Error("Not authorized");
 	}
 
 	//TODO: fix potential race condition

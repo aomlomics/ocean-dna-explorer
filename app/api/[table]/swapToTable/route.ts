@@ -17,7 +17,7 @@ export async function GET(
 
 		const { query } = parseApiQuery(model, searchParams, { swapToTable: true });
 
-		//@ts-expect-error dynamically accessing table
+		//@ts-expect-error dynamically accessing prisma client
 		const result = await prisma[model].findMany(query);
 
 		return NextResponse.json({ statusMessage: "success", result });
