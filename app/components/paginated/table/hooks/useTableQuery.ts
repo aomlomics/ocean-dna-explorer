@@ -5,7 +5,7 @@ import { SubmitEvent, RefObject, useEffect, useState } from "react";
 import { TableColumns } from "./useTableColumns";
 import { DEFAULT_ORDER_BY, ExtraResults } from "../Table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildWhereParams } from "@/app/helpers/api";
 import useSWR from "swr";
 import { fetcher } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";

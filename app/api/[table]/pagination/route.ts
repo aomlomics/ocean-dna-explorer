@@ -10,7 +10,7 @@ import {
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
-import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/queries";
+import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/api";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { MapLocation } from "@/types/globals";
 import { getDataTableName, getRelationPath, getTableName } from "@/app/helpers/schema";

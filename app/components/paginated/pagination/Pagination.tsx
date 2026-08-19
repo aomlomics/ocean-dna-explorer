@@ -9,7 +9,7 @@ import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import TableMetadata from "@/types/tableMetadata";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildWhereParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
 
 export default function Pagination({

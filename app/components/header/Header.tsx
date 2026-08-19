@@ -45,7 +45,6 @@ export default function Header() {
 					<TabButton tabName="Search" route="/search" />
 					<VisualizeMegaMenu />
 					<SubmitMegaMenu />
-					{/* <TabButton tabName="Contribute" route="/contribute" /> */}
 					<DocsMegaMenu />
 					<LearnMegaMenu />
 					<TabButton tabName="About" route="/about" />

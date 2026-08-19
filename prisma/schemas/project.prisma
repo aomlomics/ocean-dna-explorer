@@ -311,7 +311,7 @@ model AssayPrep {
     project_id String
     Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name String
-    Assay      Assay     @relation(fields: [assay_name], references: [assay_name])
+    Assay      Assay     @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
     Libraries  Library[]
 
     thermocycler  String?
@@ -359,7 +359,7 @@ model Library {
     samp_name             String
     Sample                Sample                @relation(fields: [project_id, samp_name], references: [project_id, samp_name], onDelete: Cascade)
     assay_name            String
-    Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name])
+    Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
     AssayPrep             AssayPrep             @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
     Occurrences           Occurrence[]
     AlphaDiversityIndexes AlphaDiversityIndex[]

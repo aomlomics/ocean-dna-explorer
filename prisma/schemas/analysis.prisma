@@ -10,7 +10,7 @@ model Analysis {
     project_id       String
     Project          Project          @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name       String
-    Assay            Assay            @relation(fields: [assay_name], references: [assay_name])
+    Assay            Assay            @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
     Occurrences      Occurrence[]
     Assignments      Assignment[]
     Tags             Tag[]
@@ -168,8 +168,6 @@ model Feature {
 model Taxonomy {
     id       Int    @id @default(autoincrement())
     taxonomy String @unique
-    // /// [EditHistoryType]
-    // editHistory       Json?
 
     // Relations
     Assignments Assignment[]
@@ -189,10 +187,10 @@ model Taxonomy {
     genus                  String?
     species                String?
 
-    // @@index([kingdom])
-    // @@index([family])
-    // @@index([genus])
-    // @@index([species])
+    @@index([kingdom])
+    @@index([family])
+    @@index([genus])
+    @@index([species])
 }
 
 model Tag {
@@ -248,7 +246,7 @@ model BlastQuery {
 
     // Relations
     database          String?
-    Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Cascade)
+    Assay             Assay?             @relation(fields: [database], references: [assay_name], onDelete: Restrict)
     BlastQueryResults BlastQueryResult[]
 
     databaseVersion Int

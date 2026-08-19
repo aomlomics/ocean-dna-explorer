@@ -2,7 +2,7 @@
 
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
-import { BlastQuery, BlastQueryResult, Prisma, Sample, Tag } from "@/app/generated/prisma/client";
+import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { preload } from "swr";
 import LoadingTable from "./LoadingTable";

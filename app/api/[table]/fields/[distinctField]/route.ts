@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import { parseApiQuery } from "@/app/helpers/queries";
+import { parseApiQuery } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";

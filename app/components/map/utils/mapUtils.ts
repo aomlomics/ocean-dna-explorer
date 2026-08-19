@@ -1,9 +1,12 @@
 import { Prisma } from "@/app/generated/prisma/client";
-import { DeadValues } from "@/types/enums";
+import { getZodType } from "@/app/helpers/schema";
+import { DeadValueNumbers, DeadValues } from "@/types/enums";
 import { MapLocation, MapLocationWithValues } from "@/types/globals";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import chroma from "chroma-js";
 import { Color } from "chroma-js";
+import distinctColors from "distinct-colors";
+import useMapLocations from "./useMapLocations";
 
 export type LegendInfo =
 	| (
@@ -31,6 +34,8 @@ export const DEFAULT_POINT_SIZE = 15;
 export const DEFAULT_POINT_SIZE_STEP = 5;
 export const DEFAULT_CLUSTER_RADIUS = 0;
 export const LEGEND_VALUES_LIMIT = 100;
+export const lightMin = 35;
+export const chromaMin = 35;
 
 export function getLegendValue(
 	field: NonNullable<LegendInfo>["field"],
@@ -121,5 +126,211 @@ export function legendValueSort(a: string, b: string) {
 		return -1;
 	} else {
 		return a.localeCompare(b);
+	}
+}
+
+export function getMapLegendField({
+	field,
+	userDefinedOptions,
+	reducedPoints,
+	table,
+	legendInfo
+}: {
+	field: string;
+	userDefinedOptions: Set<string>;
+	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
+	table: Uncapitalize<Prisma.ModelName>;
+	legendInfo?: LegendInfo;
+}): LegendInfo {
+	if (userDefinedOptions.has(field)) {
+		//get unique options
+		const options = new Set() as Set<any>;
+		let someNoData = false;
+
+		for (const loc of reducedPoints) {
+			if (loc.values) {
+				for (const val of loc.values) {
+					if (val.userDefined[field] != null && val.userDefined[field] !== "") {
+						options.add(val.userDefined[field]);
+					} else {
+						someNoData = true;
+					}
+				}
+			} else if (loc.userDefined[field] != null && loc.userDefined[field] !== "") {
+				options.add(loc.userDefined[field]);
+			} else {
+				someNoData = true;
+			}
+		}
+
+		const optionsArray = Array.from(options).sort(legendValueSort);
+
+		//check if invalid number of options
+		if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+			return { field, mode: "discreet", colorMap: {} };
+		} else if (optionsArray.length === 1) {
+			return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+		} else if (optionsArray.length > LEGEND_VALUES_LIMIT) {
+			return { field, mode: "discreet", colorMap: {}, tooManyOptions: true };
+		} else {
+			//valid
+			const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
+			const colorMap = optionsArray.reduce(
+				(acc, opt, i) => ({ ...acc, [opt]: colors[i]! }),
+				{} as Record<string, Color>
+			);
+
+			//add default color if there is some point with no data
+			if (someNoData) {
+				colorMap["No value"] = DEFAULT_COLOR;
+			}
+
+			return { field, mode: "discreet", colorMap };
+		}
+	} else {
+		const type = getZodType(table, field).type;
+
+		if (type === "string" || type === "DeadBoolean") {
+			//get unique options
+			const options = new Set() as Set<any>;
+			let someNoData = false;
+
+			for (const loc of reducedPoints) {
+				if (loc.values) {
+					for (const val of loc.values) {
+						if (val[field]) {
+							options.add(val[field]);
+						} else {
+							someNoData = true;
+						}
+					}
+				} else if (loc[field]) {
+					options.add(loc[field]);
+				} else {
+					someNoData = true;
+				}
+			}
+			const optionsArray = Array.from(options).sort(legendValueSort);
+
+			//check if invalid number of options
+			if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+				return { field, mode: "discreet", colorMap: {} };
+			} else if (optionsArray.length === 1) {
+				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+			} else if (optionsArray.length > LEGEND_VALUES_LIMIT) {
+				return { field, mode: "discreet", colorMap: {}, tooManyOptions: true };
+			} else {
+				//valid
+				const colors = distinctColors({ count: optionsArray.length, chromaMin, lightMin });
+				const colorMap = optionsArray.reduce(
+					(acc, opt, i) => ({ ...acc, [opt]: colors[i]! }),
+					{} as Record<string, Color>
+				);
+
+				//add default color if there is some point with no data
+				if (someNoData) {
+					colorMap["No value"] = DEFAULT_COLOR;
+				}
+
+				return { field, mode: "discreet", colorMap };
+			}
+		} else if (type === "integer" || type === "float") {
+			//get unique options
+			const options = new Set() as Set<any>;
+			let someNoValue = false;
+
+			for (const loc of reducedPoints) {
+				if (loc.values) {
+					for (const val of loc.values) {
+						if (val[field] != null && !DeadValueNumbers.includes(val[field])) {
+							options.add(val[field]);
+						} else {
+							someNoValue = true;
+						}
+					}
+				} else {
+					if (loc[field] != null && !DeadValueNumbers.includes(loc[field])) {
+						options.add(loc[field]);
+					} else {
+						someNoValue = true;
+					}
+				}
+			}
+			const optionsArray = Array.from(options).sort((a, b) => a - b);
+
+			//check if invalid number of options
+			if (optionsArray.length === 0 || (optionsArray.length === 1 && optionsArray[0] == null)) {
+				return { field, mode: "discreet", colorMap: {} };
+			} else if (optionsArray.length === 1) {
+				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+			} else {
+				//valid
+				return {
+					field,
+					mode: "gradient",
+					range: [optionsArray[0], optionsArray[optionsArray.length - 1]],
+					palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+					someNoValue
+				};
+			}
+		} else if (type === "date") {
+			//get unique options and cast to epoch timestamp
+			const options = new Set() as Set<any>;
+			let someNoValue = false;
+
+			for (const loc of reducedPoints) {
+				if (loc.values) {
+					for (const val of loc.values) {
+						if (val[field]) {
+							const time = typeof val[field] === "string" ? new Date(val[field]).getTime() : val[field].getTime();
+							if (!DeadValueNumbers.includes(time)) {
+								options.add(time);
+							} else {
+								someNoValue = true;
+							}
+						} else {
+							someNoValue = true;
+						}
+					}
+				} else {
+					if (loc[field]) {
+						const time = typeof loc[field] === "string" ? new Date(loc[field]).getTime() : loc[field].getTime();
+						if (!DeadValueNumbers.includes(time)) {
+							options.add(time);
+						} else {
+							someNoValue = true;
+						}
+					} else {
+						someNoValue = true;
+					}
+				}
+			}
+			const optionsArray = Array.from(options).sort((a, b) => a - b);
+
+			//check if invalid number of options
+			if (
+				optionsArray.length === 0 ||
+				(optionsArray.length === 1 && (optionsArray[0] == null || isNaN(optionsArray[0])))
+			) {
+				return { field, mode: "discreet", colorMap: {} };
+			} else if (optionsArray.length === 1) {
+				return { field, mode: "discreet", colorMap: { [optionsArray[0]]: DEFAULT_COLOR } };
+			} else {
+				//valid
+				return {
+					field,
+					mode: "gradient",
+					range: [new Date(optionsArray[0]), new Date(optionsArray[optionsArray.length - 1])],
+					palette: legendInfo?.mode === "gradient" ? legendInfo.palette : DEFAULT_PALETTE,
+					someNoValue
+				};
+			}
+		} else {
+			return {
+				field,
+				mode: "discreet",
+				colorMap: { "Unsupported field": DEFAULT_COLOR }
+			};
+		}
 	}
 }

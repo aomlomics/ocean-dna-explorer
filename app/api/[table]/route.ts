@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import { deepWhere, parseApiQuery } from "@/app/helpers/queries";
+import { deepWhere, parseApiQuery } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";

@@ -6,33 +6,36 @@ import { Prisma } from "@/app/generated/prisma/client";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
-import { DEFAULT_COLOR, DEFAULT_PALETTE, LEGEND_VALUES_LIMIT, LegendInfo } from "../utils/mapUtils";
+import { DEFAULT_COLOR, DEFAULT_PALETTE, getMapLegendField, LEGEND_VALUES_LIMIT, LegendInfo } from "../utils/mapUtils";
 import InfoButton from "../../InfoButton";
 import TableMetadata from "@/types/tableMetadata";
 import ResetButtonMap from "../utils/ResetButtonMap";
 import chroma from "chroma-js";
 import Link from "next/link";
+import useMapLocations from "../utils/useMapLocations";
 
 export default function LegendControl({
 	legend,
 	legendInfo,
 	setLegendInfo,
-	getMapLegendField,
 	setLoading,
 	legendOptions,
 	userDefinedOptions,
 	mapRef,
+	table,
+	reducedPoints,
 	titleTable,
 	defaultLegend
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
 	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
-	getMapLegendField: (field: string) => LegendInfo;
 	setLoading: Dispatch<SetStateAction<boolean>>;
 	legendOptions: string[];
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
+	table: Uncapitalize<Prisma.ModelName>;
+	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	defaultLegend?: LegendInfo;
 }) {
@@ -81,7 +84,7 @@ export default function LegendControl({
 									//give control back to browser to display loading
 									setLoading(true);
 									await new Promise((resolve) => setTimeout(resolve, 1));
-									setLegendInfo(getMapLegendField(field));
+									setLegendInfo(getMapLegendField({ field, userDefinedOptions, reducedPoints, table }));
 								}}
 							>
 								<option disabled value="">

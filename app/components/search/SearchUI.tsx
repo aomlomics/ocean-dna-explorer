@@ -18,7 +18,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
 import { getRelationPath } from "@/app/helpers/schema";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildWhereParams } from "@/app/helpers/api";
 
 type Operator = "AND" | "OR";
 
