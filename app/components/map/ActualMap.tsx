@@ -1,14 +1,7 @@
 "use client";
 
 import { MapContainer, TileLayer, Marker, FeatureGroup } from "react-leaflet";
-import {
-	LatLng,
-	FeatureGroup as LFeatureGroup,
-	Map,
-	Polygon as LPolygon,
-	Circle as LCircle,
-	LatLngBoundsExpression
-} from "leaflet";
+import { FeatureGroup as LFeatureGroup, Map, Polygon as LPolygon, Circle as LCircle } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
@@ -20,7 +13,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { circleToString, getLocationsInsideShapes, getShapesFromUrl, polygonToString } from "@/app/helpers/utils";
-import { MapLocation, NullLocation, MapShape } from "@/types/globals";
+import { NullLocation, MapShape } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
 import { usePathname, useSearchParams } from "next/navigation";
 import LegendControl from "./controls/LegendControl";
@@ -195,6 +188,7 @@ export default function ActualMap({
 	}, [drawAlmostReady]);
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setLoading(false);
 	}, [legendInfo]);
 

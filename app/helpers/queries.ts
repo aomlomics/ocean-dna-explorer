@@ -1,19 +1,9 @@
-import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
-import { getRelationPath, getTableName, getZodType, parseSchemaToObject } from "./schema";
-import {
-	ErrorPacket,
-	ParamsArray,
-	ParamsArrayField,
-	ParamsArrayRelation,
-	ParamsArrayValue,
-	QueryMode
-} from "@/types/globals";
+import { getZodType, parseSchemaToObject } from "./schema";
+import { ErrorPacket } from "@/types/globals";
 import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
-import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
-import { DeadBooleanToEnum, DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
+import { DeadBooleanToEnum } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { insertBlastIntoQuery, parseBlastRequest } from "./blast";
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	try {
