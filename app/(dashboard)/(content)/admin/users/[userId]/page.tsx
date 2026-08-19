@@ -18,12 +18,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 //TODO: figure out why it's POSTing with every refresh
-export default async function UserId({ params }: { params: Promise<{ targetUserId: string }> }) {
-	const { targetUserId } = await params;
+export default async function UserId({ params }: { params: Promise<{ userId: string }> }) {
+	const { userId: targetUserId } = await params;
 
 	const { userId, sessionClaims } = await auth();
 	if (userId === targetUserId) {
-		redirect("/admin");
+		redirect("/admin/users");
 	}
 	const role = sessionClaims?.metadata.role;
 
