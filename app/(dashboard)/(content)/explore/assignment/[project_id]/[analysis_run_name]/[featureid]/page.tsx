@@ -1,15 +1,9 @@
 import Link from "next/link";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import { prisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import {
-	decodeRouteParams,
-	exploreAnalysisUrl,
-	exploreFeatureUrl,
-	exploreProjectUrl,
-	exploreTaxonomyUrl
-} from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function AssignmentPage({
@@ -45,7 +39,7 @@ export default async function AssignmentPage({
 						</Link>
 					</li>
 					<li>
-						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -56,7 +50,7 @@ export default async function AssignmentPage({
 					</li>
 					<li>
 						<Link
-							href={exploreAnalysisUrl(project_id, analysis_run_name)}
+							href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
 							className="text-primary hover:text-primary-focus"
 						>
 							{analysis_run_name}
@@ -87,25 +81,21 @@ export default async function AssignmentPage({
 				<p className="text-lg text-base-content/90 max-w-3xl">
 					Assignment of feature{" "}
 					<Link
-						href={exploreFeatureUrl(assignment.featureid)}
+						href={exploreUrl({ table: "feature", featureid })}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.featureid}
 					</Link>{" "}
 					to taxonomy{" "}
-					{assignment.taxonomy ? (
-						<Link
-							href={exploreTaxonomyUrl(assignment.taxonomy)}
-							className="font-semibold text-primary hover:text-primary-focus break-all"
-						>
-							{assignment.taxonomy}
-						</Link>
-					) : (
-						<span className="font-semibold text-base-content break-all">not specified</span>
-					)}{" "}
+					<Link
+						href={exploreUrl({ table: "taxonomy", taxonomy: assignment.taxonomy })}
+						className="font-semibold text-primary hover:text-primary-focus break-all"
+					>
+						{assignment.taxonomy}
+					</Link>{" "}
 					in analysis{" "}
 					<Link
-						href={exploreAnalysisUrl(project_id, assignment.analysis_run_name)}
+						href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
 						className="font-semibold text-primary hover:text-primary-focus break-all"
 					>
 						{assignment.analysis_run_name}

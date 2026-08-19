@@ -1,6 +1,18 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum, ZodObject, ZodType } from "zod";
-import { Prisma } from "@/app/generated/prisma/client";
+import {
+	Analysis,
+	Assay,
+	AssayPrep,
+	Assignment,
+	Feature,
+	Library,
+	Occurrence,
+	Prisma,
+	Project,
+	Sample,
+	Taxonomy
+} from "@/app/generated/prisma/client";
 import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { TaxonomicRanks } from "./objects";
 
@@ -317,3 +329,37 @@ for (const model of Object.values(Prisma.ModelName)) {
 }
 
 export default TableMetadata as Readonly<Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, TableMetadataValue>>;
+
+export function exploreUrl(
+	args: { params?: Record<string, string> | URLSearchParams; hash?: string } & (
+		| { table: "project"; project_id: Project["project_id"] }
+		| { table: "sample"; project_id: Sample["project_id"]; samp_name: Sample["samp_name"] }
+		| { table: "assay"; assay_name: Assay["assay_name"] }
+		| { table: "assayPrep"; project_id: AssayPrep["project_id"]; assay_name: AssayPrep["assay_name"] }
+		| { table: "library"; project_id: Library["project_id"]; lib_id: Library["lib_id"] }
+		| { table: "analysis"; project_id: Analysis["project_id"]; analysis_run_name: Analysis["analysis_run_name"] }
+		| {
+				table: "occurrence";
+				project_id: Occurrence["project_id"];
+				analysis_run_name: Occurrence["analysis_run_name"];
+				lib_id: Occurrence["lib_id"];
+				featureid: Occurrence["featureid"];
+		  }
+		| {
+				table: "assignment";
+				project_id: Assignment["project_id"];
+				analysis_run_name: Assignment["analysis_run_name"];
+				featureid: Assignment["featureid"];
+		  }
+		| { table: "feature"; featureid: Feature["featureid"] }
+		| { table: "taxonomy"; taxonomy: Taxonomy["taxonomy"] }
+	)
+) {
+	const { table, params, hash, ...titleFieldObj } = args;
+
+	return `/explore/${table}/${
+		typeof TableMetadata[table].titleField === "string"
+			? encodeURIComponent(titleFieldObj[TableMetadata[table].titleField as keyof typeof titleFieldObj])
+			: TableMetadata[table].titleField.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
+	}${params ? "?" + new URLSearchParams(params) : ""}${hash ? "#" + hash : ""}`;
+}

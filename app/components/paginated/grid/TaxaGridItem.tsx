@@ -4,7 +4,7 @@ import { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";
-import { exploreTaxonomyUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 const commonNameCache = new Map<string, string | null>();
 const COMMON_NAME_CACHE_VERSION = "en-v2";
@@ -133,7 +133,7 @@ export default function TaxaGridItem({ item, showCommonName = true }: { item: Ta
 
 	return (
 		<Link
-			href={exploreTaxonomyUrl(item.taxonomy)}
+			href={exploreUrl({ table: "taxonomy", taxonomy: item.taxonomy })}
 			key={item.taxonomy}
 			className="card relative z-0 hover:z-50 bg-base-200 hover:bg-base-300 transition-colors duration-200 aspect-square overflow-visible"
 		>

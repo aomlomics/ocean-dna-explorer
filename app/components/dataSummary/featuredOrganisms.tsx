@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MasonryPhotoAlbum, type Photo, type RenderImageContext, type RenderImageProps } from "react-photo-album";
 import "react-photo-album/masonry.css";
 import ImagePreviewModal from "../ImagePreviewModal";
-import { exploreTaxonomyUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 export type FeaturedOrganismGroup =
 	| "Fish"
@@ -1540,7 +1540,9 @@ function SelectedOrganismCard({
 	const imageAttribution = getImageAttributionDetails(organism);
 	const iucnStatus = organism.iucnStatus ?? "Not Evaluated";
 	const taxonomyString = toSingleTaxonomyString(organism.taxonomyString);
-	const taxonomyHref = taxonomyString ? exploreTaxonomyUrl(taxonomyString) : "/explore/taxonomy";
+	const taxonomyHref = taxonomyString
+		? exploreUrl({ table: "taxonomy", taxonomy: taxonomyString })
+		: "/explore/taxonomy";
 
 	return (
 		<article className="overflow-hidden rounded-2xl bg-transparent">

@@ -2,7 +2,7 @@ import DataDisplay from "@/app/components/DataDisplay";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
 import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
@@ -11,7 +11,7 @@ import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/
 import { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams, exploreProjectUrl } from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
@@ -58,7 +58,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						</Link>
 					</li>
 					<li>
-						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -79,7 +79,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 				</div>
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This sample is a part of the{" "}
-					<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+					<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 						{project_id}
 					</Link>{" "}
 					project

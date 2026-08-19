@@ -7,7 +7,7 @@ import FeaturedOrganisms from "./dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
 import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
 import InfoButton from "@/app/components/InfoButton";
-import { exploreAnalysisUrl, exploreAssayUrl, exploreProjectUrl } from "../helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 function formatSubmitted(date: Date) {
 	return new Date(date).toLocaleDateString(undefined, {
@@ -40,7 +40,7 @@ function LatestStamp({ label, date }: { label: string; date: Date }) {
 function CompactAssayChip({ assay_name, target_gene }: { assay_name: string; target_gene: string }) {
 	return (
 		<Link
-			href={exploreAssayUrl(assay_name)}
+			href={exploreUrl({ table: "assay", assay_name })}
 			className="group inline-flex items-center gap-2 rounded-lg bg-base-300/60 hover:bg-base-300 px-2 py-1.5 transition-colors max-w-full"
 		>
 			<div className="relative w-5 h-5 shrink-0 flex items-center justify-center">
@@ -216,7 +216,7 @@ function LatestProjectCard({ project }: ProjectProps) {
 								description:
 									"The newest project that has been submitted to ODE. New submissions appear here within minutes.",
 								links: [
-									{ label: "View project", href: exploreProjectUrl(project.project_id) },
+									{ label: "View project", href: exploreUrl({ table: "project", project_id: project.project_id }) },
 									{ label: "Browse all projects", href: "/explore/project" }
 								]
 							}}
@@ -274,13 +274,19 @@ function LatestProjectCard({ project }: ProjectProps) {
 									</span>
 								)}
 							</div>
-							<Link href={exploreProjectUrl(project.project_id)} className="btn btn-sm btn-primary self-end">
+							<Link
+								href={exploreUrl({ table: "project", project_id: project.project_id })}
+								className="btn btn-sm btn-primary self-end"
+							>
 								View project
 							</Link>
 						</div>
 					) : (
 						<div className="mt-auto flex justify-end">
-							<Link href={exploreProjectUrl(project.project_id)} className="btn btn-sm btn-primary">
+							<Link
+								href={exploreUrl({ table: "project", project_id: project.project_id })}
+								className="btn btn-sm btn-primary"
+							>
 								View project
 							</Link>
 						</div>
@@ -338,11 +344,15 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 							links: [
 								{
 									label: "View analysis",
-									href: exploreAnalysisUrl(analysis.project_id, analysis.analysis_run_name)
+									href: exploreUrl({
+										table: "analysis",
+										project_id: analysis.project_id,
+										analysis_run_name: analysis.analysis_run_name
+									})
 								},
 								{
 									label: "View parent project",
-									href: exploreProjectUrl(analysis.project_id)
+									href: exploreUrl({ table: "project", project_id: analysis.project_id })
 								},
 								{ label: "Browse all analyses", href: "/explore/analysis" }
 							]
@@ -359,7 +369,7 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 						<dt className="text-[10px] uppercase tracking-wider font-semibold text-base-content/70 mb-0.5">Project</dt>
 						<dd>
 							<Link
-								href={exploreProjectUrl(analysis.project_id)}
+								href={exploreUrl({ table: "project", project_id: analysis.project_id })}
 								className="text-base-content/85 hover:text-primary transition-colors inline-flex items-baseline gap-1.5 max-w-full"
 								title={analysis.Project?.project_name || analysis.project_id}
 							>
@@ -392,7 +402,11 @@ function LatestAnalysisCard({ analysis }: AnalysisProps) {
 				{/* No divider line above the button. Tucked bottom-right. */}
 				<div className="mt-auto flex justify-start">
 					<Link
-						href={exploreAnalysisUrl(analysis.project_id, analysis.analysis_run_name)}
+						href={exploreUrl({
+							table: "analysis",
+							project_id: analysis.project_id,
+							analysis_run_name: analysis.analysis_run_name
+						})}
 						className="btn btn-sm btn-primary"
 					>
 						View analysis

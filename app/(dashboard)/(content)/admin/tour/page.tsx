@@ -1,16 +1,9 @@
 "use client";
 
 import InfoButton from "@/app/components/InfoButton";
-import {
-	exploreAnalysisUrl,
-	exploreAssayUrl,
-	exploreFeatureUrl,
-	exploreProjectUrl,
-	exploreSampleUrl,
-	exploreTaxonomyUrl
-} from "@/app/helpers/utils";
 import { DEFAULT_TOUR_STEP_TIME, TourContext, TourStep } from "@/app/hooks/TourProvider";
 import { NetworkPacket } from "@/types/globals";
+import { exploreUrl } from "@/types/tableMetadata";
 import { useAuth } from "@clerk/react";
 import { Fragment, useContext, useEffect, useReducer, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
@@ -284,36 +277,38 @@ export default function Tour() {
 			{ url: "/#dataSummary" },
 			{ url: "/#dataTaxa" },
 			{ url: "/explore/project" },
-			{ url: project_id ? exploreProjectUrl(project_id, { hash: "project" }) : "/search?table=project" },
+			{ url: project_id ? exploreUrl({ table: "project", project_id, hash: "project" }) : "/search?table=project" },
 			{
 				url: project_id ? `/search?table=sample&advanced=[["project_id","equals","${project_id}"]]` : "/explore/sample"
 			},
 			{
 				url:
-					project_id && samp_name ? exploreSampleUrl(project_id, samp_name, { hash: "sample" }) : "/search?table=sample"
+					project_id && samp_name
+						? exploreUrl({ table: "sample", project_id, samp_name, hash: "sample" })
+						: "/search?table=sample"
 			},
 			{
 				url:
 					project_id && samp_name
-						? exploreSampleUrl(project_id, samp_name, { hash: "taxonomyChart" })
+						? exploreUrl({ table: "sample", project_id, samp_name, hash: "taxonomyChart" })
 						: "/search?table=sample"
 			},
-			{ url: assay_name ? exploreAssayUrl(assay_name, { hash: "assay" }) : "/explore/assay" },
-			{ url: assay_name ? exploreAssayUrl(assay_name, { hash: "primerSection" }) : "/search?table=assay" },
+			{ url: assay_name ? exploreUrl({ table: "assay", assay_name, hash: "assay" }) : "/explore/assay" },
+			{ url: assay_name ? exploreUrl({ table: "assay", assay_name, hash: "primerSection" }) : "/search?table=assay" },
 			{
 				url:
 					project_id && analysis_run_name
-						? exploreAnalysisUrl(project_id, analysis_run_name, { hash: "analysis" })
+						? exploreUrl({ table: "analysis", project_id, analysis_run_name, hash: "analysis" })
 						: "/explore/analysis"
 			},
 			{
 				url:
 					project_id && analysis_run_name
-						? exploreAnalysisUrl(project_id, analysis_run_name, { hash: "dataExplorer" })
+						? exploreUrl({ table: "analysis", project_id, analysis_run_name, hash: "dataExplorer" })
 						: "/search?table=analysis"
 			},
-			{ url: taxonomy ? exploreTaxonomyUrl(taxonomy, { hash: "taxonomy" }) : "/search?table=taxonomy" },
-			{ url: featureid ? exploreFeatureUrl(featureid, { hash: "feature" }) : "/search?table=feature" },
+			{ url: taxonomy ? exploreUrl({ table: "taxonomy", taxonomy, hash: "taxonomy" }) : "/search?table=taxonomy" },
+			{ url: featureid ? exploreUrl({ table: "feature", featureid, hash: "feature" }) : "/search?table=feature" },
 			{
 				url: `/visualize/metadata${project_id ? `?advanced=[["project","project_id","equals","${project_id}"]]` : ""}`,
 				stepTime: 2

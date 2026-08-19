@@ -19,7 +19,8 @@ import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTax
 import { Suspense } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { notFound, redirect } from "next/navigation";
-import { decodeRouteParams, exploreAnalysisUrl, exploreProjectUrl } from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -35,7 +36,7 @@ export default async function Analysis_run_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(exploreAnalysisUrl(project_id, analysis_run_name));
+		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
 	const analysis = await prisma.analysis.findUnique({
@@ -88,7 +89,7 @@ export default async function Analysis_run_name({
 						</Link>
 					</li>
 					<li>
-						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -114,7 +115,7 @@ export default async function Analysis_run_name({
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+					<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 						{project_id}
 					</Link>{" "}
 					project

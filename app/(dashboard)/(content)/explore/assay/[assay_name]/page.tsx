@@ -9,7 +9,8 @@ import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
-import { decodeRouteParams, exploreAssayUrl } from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 const ASSAY_MASTER_TSV_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";
@@ -62,7 +63,7 @@ export default async function Assay_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(exploreAssayUrl(assay_name));
+		redirect(exploreUrl({ table: "assay", assay_name }));
 	}
 
 	const assay = await prisma.assay.findUnique({

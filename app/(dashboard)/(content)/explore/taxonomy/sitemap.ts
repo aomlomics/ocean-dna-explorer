@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import { exploreTaxonomyUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 import { MetadataRoute } from "next";
 
 const URL_LIMIT = 50000; // Google's limit is 50,000 URLs per sitemap
@@ -45,7 +45,7 @@ export default async function sitemap({ id }: { id: Promise<number> }): Promise<
 	const date = new Date();
 	const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
 	return taxonomies.map((taxa) => ({
-		url: process.env.NEXT_PUBLIC_URL + exploreTaxonomyUrl(taxa.taxonomy),
+		url: process.env.NEXT_PUBLIC_URL + exploreUrl({ table: "taxonomy", taxonomy: taxa.taxonomy }),
 		lastModified: firstDayOfMonth
 	}));
 }

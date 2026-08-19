@@ -14,7 +14,7 @@ import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
 import { Tag } from "@/app/generated/prisma/client";
 import AnalysisTag from "../tags/AnalysisTag";
-import { exploreProjectUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;
@@ -357,7 +357,10 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					<SubmitFormSection title="Project">
 						<div className="w-full">
 							{project ? (
-								<Link className="link link-primary" href={exploreProjectUrl(project.project_id)}>
+								<Link
+									className="link link-primary"
+									href={exploreUrl({ table: "project", project_id: project.project_id })}
+								>
 									{project.project_id}
 								</Link>
 							) : (
