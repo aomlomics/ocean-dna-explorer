@@ -15,7 +15,7 @@ import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
@@ -113,7 +113,6 @@ export default function ActualMap({
 
 	const [legendInfo, setLegendInfo] = useState(defaultLegend);
 	const [loading, setLoading] = useState(false);
-	const [pointsInside, setPointsInside] = useState([] as MapLocation[]);
 
 	const [pointSize, setPointSize] = useState(DEFAULT_POINT_SIZE as number | undefined);
 	const [pointSizeStep, setPointSizeStep] = useState(DEFAULT_POINT_SIZE_STEP as number | undefined);
@@ -122,34 +121,28 @@ export default function ActualMap({
 	);
 
 	const [shapes, setShapes] = useState({} as Record<string, MapShape>);
-
-	function checkShapes() {
+	const pointsInside = useMemo(() => {
 		if (Object.keys(shapes).length) {
-			setPointsInside(
-				getLocationsInsideShapes(
-					//exclude locations hidden by legend
-					filteredLocations.filter(
-						(l) =>
-							!(
-								legendInfo &&
-								legendInfo.mode === "discreet" &&
-								legendInfo.hidden?.includes(l[legendInfo.field as string])
-							)
-					),
-					Object.values(shapes)
-				)
+			return getLocationsInsideShapes(
+				//exclude locations hidden by legend
+				filteredLocations.filter(
+					(l) =>
+						!(
+							legendInfo &&
+							legendInfo.mode === "discreet" &&
+							legendInfo.hidden?.includes(l[legendInfo.field as string])
+						)
+				),
+				Object.values(shapes)
 			);
 		} else {
-			setPointsInside([]);
+			return [];
 		}
-	}
+	}, [shapes, legendInfo]);
 
 	//shapes
 	useEffect(() => {
 		if (drawReady) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			checkShapes();
-
 			if (shapesToUrl) {
 				const newParams = new URLSearchParams(searchParams);
 				newParams.delete("polygon");
@@ -202,8 +195,6 @@ export default function ActualMap({
 	}, [drawAlmostReady]);
 
 	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		checkShapes();
 		setLoading(false);
 	}, [legendInfo]);
 
