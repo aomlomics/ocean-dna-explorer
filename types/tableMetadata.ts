@@ -356,10 +356,17 @@ export function exploreUrl(
 	)
 ) {
 	const { table, params, hash, ...titleFieldObj } = args;
+	let extra = "";
+	if (params) extra += "?" + new URLSearchParams(params);
+	if (hash) extra += "#" + hash;
 
-	return `/explore/${table}/${
-		typeof TableMetadata[table].titleField === "string"
-			? encodeURIComponent(titleFieldObj[TableMetadata[table].titleField as keyof typeof titleFieldObj])
-			: TableMetadata[table].titleField.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
-	}${params ? "?" + new URLSearchParams(params) : ""}${hash ? "#" + hash : ""}`;
+	if (typeof TableMetadata[table].titleField === "string") {
+		return `/explore/${table}/${encodeURIComponent(
+			titleFieldObj[TableMetadata[table].titleField as keyof typeof titleFieldObj]
+		)}${extra}`;
+	} else {
+		return `/explore/${table}/${TableMetadata[table].titleField
+			.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
+			.join("/")}${extra}`;
+	}
 }
