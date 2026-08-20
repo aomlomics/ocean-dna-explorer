@@ -6,7 +6,6 @@ import TableMetadata from "@/types/tableMetadata";
 import { capitalizeTable, depluralizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { DeadValueEnum } from "@/types/enums";
 import { LinkIcon } from "../../../icons";
-import { getRelationPath } from "@/app/helpers/schema";
 import { TableColumns } from "../hooks/useTableColumns";
 import { TableQuery } from "../hooks/useTableQuery";
 
@@ -137,7 +136,7 @@ export default function TableRow({
 									</td>
 								);
 							} else {
-								const path = getRelationPath(table, deepRel.table)!;
+								const path = [...TableMetadata[table].relationPaths[deepRel.table]!];
 								const titleFieldObj = path.reduce((obj, curr) => obj[curr.field], row[path.shift()!.field]);
 
 								if (deepRel.type === "table") {

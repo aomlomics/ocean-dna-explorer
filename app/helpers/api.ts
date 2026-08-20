@@ -1,6 +1,6 @@
 import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import { Prisma } from "../generated/prisma/client";
-import { getRelationPath, getTableName, getZodType } from "./schema";
+import { getTableName, getZodType } from "./schema";
 import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
@@ -43,7 +43,7 @@ export function deepWhere(
 	}
 
 	//find all paths to target from start
-	const path = getRelationPath(start, target);
+	const path = TableMetadata[start].relationPaths[target];
 
 	if (path) {
 		if (Object.keys(query).length) {
@@ -474,6 +474,9 @@ export function parseApiQuery(
 		distinct?: string[];
 	};
 
+	const trusted = newParams.get("trusted")?.toLowerCase() === "true" ? true : false;
+	newParams.delete("trusted");
+
 	//blast query
 	let blast;
 	if (!options?.features || options.features.blast) {
@@ -611,7 +614,7 @@ export function parseApiQuery(
 			const relPaths = [] as RelationMetadata[][];
 			const includeSteps = new Set() as Set<string>;
 			for (const rt of relTables) {
-				const path = getRelationPath(table, rt);
+				const path = TableMetadata[table].relationPaths[rt];
 				if (!path) {
 					throw new Error(`No path exists from ${table} to ${rt}.`);
 				}
@@ -646,7 +649,7 @@ export function parseApiQuery(
 				}
 
 				if (add) {
-					relPaths.push(path);
+					relPaths.push([...path]);
 				}
 			}
 
@@ -830,5 +833,5 @@ export function parseApiQuery(
 		}
 	}
 
-	return { query, blast, shapes, sampleWhere };
+	return { trusted, query, blast, shapes, sampleWhere };
 }

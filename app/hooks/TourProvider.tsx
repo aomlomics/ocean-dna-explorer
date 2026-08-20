@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, ReactNode, useEffect, useRef, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 
 export type TourStep = { url: string; stepTime?: number };
 
-export const TourContext = createContext<(tourSteps: TourStep[], stepTime?: number) => void>(() => {});
 export const DEFAULT_TOUR_STEP_TIME = 5; //seconds
+
+const TourContext = createContext<(tourSteps: TourStep[], stepTime?: number) => void>(() => {});
 
 export default function TourProvider({ children }: { children: ReactNode }) {
 	const router = useRouter();
@@ -52,4 +53,14 @@ export default function TourProvider({ children }: { children: ReactNode }) {
 	}, [step]);
 
 	return <TourContext.Provider value={startTour}>{children}</TourContext.Provider>;
+}
+
+export function useTour() {
+	const context = useContext(TourContext);
+
+	if (!context) {
+		throw new Error("useTour must be used inside TourProvider");
+	}
+
+	return context;
 }

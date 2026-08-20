@@ -1,7 +1,7 @@
 import Link from "next/link";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
@@ -15,7 +15,7 @@ export default async function Project_id_Assay_name({
 }) {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const assayPrep = await prisma.assayPrep.findUnique({
+	const assayPrep = await trustedPrisma.assayPrep.findUnique({
 		where: {
 			project_id_assay_name: {
 				project_id,

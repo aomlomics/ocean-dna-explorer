@@ -1,5 +1,5 @@
 import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
@@ -17,7 +17,7 @@ import { notFound } from "next/navigation";
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);
 
-	const sample = await prisma.sample.findUnique({
+	const sample = await trustedPrisma.sample.findUnique({
 		where: {
 			project_id_samp_name: {
 				project_id,
@@ -108,7 +108,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 							title="Occurrences"
 							query={async () =>
 								(
-									await prisma.occurrence.findMany({
+									await trustedPrisma.occurrence.findMany({
 										where: {
 											Library: {
 												project_id,
@@ -131,7 +131,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 							table="analysis"
 							icon={<AnalysisIcon />}
 							query={async () =>
-								await prisma.analysis.findMany({
+								await trustedPrisma.analysis.findMany({
 									where: {
 										Occurrences: {
 											some: {
@@ -155,7 +155,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 							title="Taxonomies"
 							query={async () =>
 								(
-									await prisma.taxonomy.findMany({
+									await trustedPrisma.taxonomy.findMany({
 										where: {
 											Assignments: {
 												some: {
@@ -215,7 +215,7 @@ async function SuspenseTaxonomyDonutChart({
 	project_id: Sample["project_id"];
 	samp_name: Sample["samp_name"];
 }) {
-	const taxonomies = await prisma.taxonomy.findMany({
+	const taxonomies = await trustedPrisma.taxonomy.findMany({
 		where: {
 			Assignments: {
 				some: {

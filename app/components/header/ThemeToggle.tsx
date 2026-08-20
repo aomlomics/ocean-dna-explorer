@@ -8,7 +8,7 @@ export default function ThemeToggle() {
 	const { theme } = useDaisyTheme();
 
 	return (
-		<label className="swap swap-rotate" suppressHydrationWarning>
+		<label className="swap swap-rotate">
 			<input
 				type="checkbox"
 				checked={theme === "dark"}

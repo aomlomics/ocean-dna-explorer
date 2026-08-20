@@ -11,6 +11,7 @@ import { useSearchParams } from "next/navigation";
 import TableMetadata from "@/types/tableMetadata";
 import { buildWhereParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function Pagination({
 	table,
@@ -26,6 +27,7 @@ export default function Pagination({
 	ignoreParams?: string[];
 }) {
 	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
 	const [page, setPage] = useState(1);
 
 	function getQuery(dir?: 1 | -1) {
@@ -33,6 +35,10 @@ export default function Pagination({
 			take: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});
+
+		if (trusted) {
+			query.set("trusted", "true");
+		}
 
 		let whereQuery = {} as Record<string, string>;
 		if (where) {

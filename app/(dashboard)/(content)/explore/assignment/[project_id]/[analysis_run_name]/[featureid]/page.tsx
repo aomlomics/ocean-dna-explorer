@@ -1,6 +1,6 @@
 import Link from "next/link";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
@@ -13,7 +13,7 @@ export default async function AssignmentPage({
 }) {
 	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
 
-	const assignment = await prisma.assignment.findUnique({
+	const assignment = await trustedPrisma.assignment.findUnique({
 		where: {
 			project_id_analysis_run_name_featureid: {
 				project_id,

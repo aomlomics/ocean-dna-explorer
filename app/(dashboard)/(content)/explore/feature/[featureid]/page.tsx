@@ -1,6 +1,6 @@
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -79,7 +79,7 @@ export default async function Featureid({
 		redirect(exploreUrl({ table: "feature", featureid }));
 	}
 
-	const { feature, taxaCounts, assaySummaries } = await prisma.$transaction(async (tx) => {
+	const { feature, taxaCounts, assaySummaries } = await trustedPrisma.$transaction(async (tx) => {
 		const feature = await tx.feature.findUnique({
 			where: {
 				featureid
@@ -200,7 +200,7 @@ export default async function Featureid({
 					<div className="lg:col-span-5 flex flex-col gap-6">
 						<Map
 							query={() =>
-								prisma.sample.findMany({
+								trustedPrisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -370,7 +370,7 @@ export default async function Featureid({
 }
 
 async function FeaturePrevalenceSection({ featureid }: { featureid: string }) {
-	const prevalenceData = await prisma.$transaction(async (tx) => {
+	const prevalenceData = await trustedPrisma.$transaction(async (tx) => {
 		const totalSamplesCount = await tx.sample.count();
 
 		const samplesWithFeature = await tx.sample.findMany({

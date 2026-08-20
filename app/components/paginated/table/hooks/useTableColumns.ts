@@ -1,7 +1,6 @@
 "use client";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { getRelationPath } from "@/app/helpers/schema";
 import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
 
@@ -80,7 +79,7 @@ export default function useTableColumns({
 	const deepRelations = DataTableNames.reduce(
 		(acc, name) => {
 			if (name !== table && TableMetadata[table].relations.every((rel) => uncapitalizeTable(rel.table) !== name)) {
-				const path = getRelationPath(table, name);
+				const path = TableMetadata[table].relationPaths[name];
 				if (path) {
 					let rel: (typeof acc)[number];
 					if (path.some((p) => p.type.endsWith("many"))) {

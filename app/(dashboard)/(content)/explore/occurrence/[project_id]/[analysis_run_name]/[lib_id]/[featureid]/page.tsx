@@ -2,7 +2,7 @@ import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
@@ -65,7 +65,7 @@ export default async function OccurrencePage({
 }) {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const occurrence = await prisma.occurrence.findUnique({
+	const occurrence = await trustedPrisma.occurrence.findUnique({
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
 import FeaturedOrganisms from "./dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton } from "./dataSummary/DashCard";
@@ -72,8 +72,8 @@ function AnalysisGlyph({ className = "" }: { className?: string }) {
 }
 
 export default async function DataSummaryHighlights() {
-	const [latestProject, latestAnalysis] = await prisma.$transaction([
-		prisma.project.findFirst({
+	const [latestProject, latestAnalysis] = await trustedPrisma.$transaction([
+		trustedPrisma.project.findFirst({
 			orderBy: { dateSubmitted: "desc" },
 			select: {
 				project_id: true,
@@ -91,7 +91,7 @@ export default async function DataSummaryHighlights() {
 				}
 			}
 		}),
-		prisma.analysis.findFirst({
+		trustedPrisma.analysis.findFirst({
 			orderBy: { dateSubmitted: "desc" },
 			select: {
 				analysis_run_name: true,

@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
@@ -39,7 +39,7 @@ export default async function Analysis_run_name({
 		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
-	const analysis = await prisma.analysis.findUnique({
+	const analysis = await trustedPrisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -127,7 +127,7 @@ export default async function Analysis_run_name({
 				<div className="lg:col-span-2 space-y-6">
 					<Map
 						query={async () =>
-							await prisma.sample.findMany({
+							await trustedPrisma.sample.findMany({
 								where: {
 									Libraries: {
 										some: {
@@ -189,7 +189,7 @@ export default async function Analysis_run_name({
 							<StatCard
 								title="Samples"
 								query={async () =>
-									await prisma.sample.count({
+									await trustedPrisma.sample.count({
 										where: {
 											Libraries: {
 												some: {
@@ -302,7 +302,7 @@ async function TaxonomyVisualizeSuspense({
 	project_id: Analysis["project_id"];
 	analysis_run_name: Analysis["analysis_run_name"];
 }) {
-	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
+	const { occurrences, assignments, taxonomies, samples } = await trustedPrisma.$transaction(
 		async (tx) => {
 			const occurrences = await tx.occurrence.findMany({
 				where: {

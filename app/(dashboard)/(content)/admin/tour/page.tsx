@@ -1,11 +1,11 @@
 "use client";
 
 import InfoButton from "@/app/components/InfoButton";
-import { DEFAULT_TOUR_STEP_TIME, TourContext, TourStep } from "@/app/hooks/TourProvider";
+import { DEFAULT_TOUR_STEP_TIME, useTour, TourStep } from "@/app/hooks/TourProvider";
 import { NetworkPacket } from "@/types/globals";
 import { exploreUrl } from "@/types/tableMetadata";
 import { useAuth } from "@clerk/react";
-import { Fragment, useContext, useEffect, useReducer, useRef, useState } from "react";
+import { Fragment, useEffect, useReducer, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 type TourStepWithInvalid = TourStep & { invalid?: boolean };
@@ -13,7 +13,7 @@ const TAXA_PER_PROJECT_OPTIONS = [24, 36, 48, 72, 96, 120] as const;
 const SHOWCASE_PATH = "/showcase";
 
 export default function Tour() {
-	const startTour = useContext(TourContext);
+	const startTour = useTour();
 	const { signOut } = useAuth();
 
 	const addRef = useRef<HTMLInputElement>(null);

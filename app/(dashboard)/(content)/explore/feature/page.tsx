@@ -1,9 +1,9 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 
 export default async function Feature() {
-	const minMaxSeqLength = await prisma.feature.aggregate({
+	const minMaxSeqLength = await trustedPrisma.feature.aggregate({
 		_min: {
 			sequenceLength_ODE: true
 		},

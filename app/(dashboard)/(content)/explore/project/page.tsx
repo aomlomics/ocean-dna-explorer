@@ -1,11 +1,11 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { assay_type } from "@/app/generated/prisma/client";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 
 export default async function Project() {
-	const projects = await prisma.project.findMany({
+	const projects = await trustedPrisma.project.findMany({
 		select: {
 			institution: true,
 			study_factor: true

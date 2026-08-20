@@ -1,5 +1,5 @@
 import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
@@ -66,7 +66,7 @@ export default async function Assay_name({
 		redirect(exploreUrl({ table: "assay", assay_name }));
 	}
 
-	const assay = await prisma.assay.findUnique({
+	const assay = await trustedPrisma.assay.findUnique({
 		where: {
 			assay_name
 		},
@@ -131,7 +131,7 @@ export default async function Assay_name({
 					<div className="lg:col-span-2">
 						<Map
 							query={() =>
-								prisma.sample.findMany({
+								trustedPrisma.sample.findMany({
 									where: {
 										Libraries: {
 											some: {
@@ -328,7 +328,7 @@ export default async function Assay_name({
 								<StatCard
 									title="Taxonomies"
 									query={async () =>
-										await prisma.taxonomy.count({
+										await trustedPrisma.taxonomy.count({
 											where: {
 												Assignments: {
 													some: {

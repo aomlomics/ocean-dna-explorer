@@ -17,8 +17,8 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
-import { getRelationPath } from "@/app/helpers/schema";
 import { buildWhereParams } from "@/app/helpers/api";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 type Operator = "AND" | "OR";
 
@@ -148,6 +148,8 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const router = useRouter();
+	const { trusted } = useTrusted();
+
 	const [searchTable, setSearchTable] = useState(() => {
 		const paramTable = searchParams.get("table");
 		return getTableNameSafe(paramTable);
@@ -155,9 +157,11 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => searchTreeFromSearchParams(searchParams));
 	const searchParamsKey = searchParams.toString();
 	const [prevSearchParamsKey, setPrevSearchParamsKey] = useState(searchParamsKey);
+
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const apiFieldsModalRef = useRef<HTMLDialogElement>(null);
+
 	const [apiCopied, setApiCopied] = useState(false);
 	const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
 	const apiDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -512,6 +516,11 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 
 		const newParams = new URLSearchParams();
+
+		if (trusted) {
+			newParams.set("trusted", "true");
+		}
+
 		if (advancedStr) {
 			newParams.set("advanced", advancedStr);
 		}
@@ -1281,7 +1290,7 @@ function SearchRuleComponent({
 						Select {noTable ? "Table" : "Relation"}
 					</option>
 					{TableNames.reduce((acc, t) => {
-						if (!searchTable || (t !== searchTable && getRelationPath(searchTable, t))) {
+						if (!searchTable || (t !== searchTable && TableMetadata[searchTable].relationPaths[t])) {
 							acc.push(
 								<option key={t} title={t}>
 									{t}

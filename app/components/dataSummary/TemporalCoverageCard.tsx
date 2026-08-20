@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 import { Sample } from "@/app/generated/prisma/client";
 import { exploreUrl } from "@/types/tableMetadata";
@@ -64,7 +64,7 @@ function getDateSpan(start: Date, end: Date): string | null {
 }
 
 export async function TemporalCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
-	const agg = await prisma.sample.aggregate({
+	const agg = await trustedPrisma.sample.aggregate({
 		where: {
 			project_id,
 			eventDate: {

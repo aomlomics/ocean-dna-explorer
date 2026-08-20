@@ -1,5 +1,6 @@
 "use client";
 
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 import DocsSections from "@/types/docsSections";
 import Image from "next/image";
 import Link from "next/link";
@@ -622,6 +623,7 @@ export function LearnMegaMenu() {
 // -----------------------------
 
 export function SubmitMegaMenu() {
+	const { trusted } = useTrusted();
 	const [projectCount, setProjectCount] = useState<string>("—");
 	const [analysisCount, setAnalysisCount] = useState<string>("—");
 
@@ -630,8 +632,8 @@ export function SubmitMegaMenu() {
 		async function loadCounts() {
 			try {
 				const [projectsRes, analysesRes] = await Promise.all([
-					fetch("/api/project/count").then((r) => r.json()),
-					fetch("/api/analysis/count").then((r) => r.json())
+					fetch(`/api/project/count${trusted ? "?trusted=true" : ""}`).then((r) => r.json()),
+					fetch(`/api/analysis/count${trusted ? "?trusted=true" : ""}`).then((r) => r.json())
 				]);
 
 				if (!cancelled) {

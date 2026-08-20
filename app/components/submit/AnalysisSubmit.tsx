@@ -255,8 +255,6 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 							statusMessage: "progress",
 							progress: { message: "Pending...", value: 0 }
 						});
-
-						return true;
 					}
 				}
 			}

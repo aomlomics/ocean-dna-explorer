@@ -102,6 +102,7 @@ model Analysis {
     percent_query_cover_End_ODE      Float?
 
     @@unique([project_id, analysis_run_name])
+    @@index([trusted])
 }
 
 model Occurrence {

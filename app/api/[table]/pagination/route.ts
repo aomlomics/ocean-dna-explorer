@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import {
 	capitalizeTable,
 	deepMerge,
@@ -13,7 +13,7 @@ import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/api";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import { MapLocation } from "@/types/globals";
-import { getDataTableName, getRelationPath, getTableName } from "@/app/helpers/schema";
+import { getDataTableName, getTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { fetchBlast, parseBlastRequest } from "@/app/helpers/blast";
@@ -44,6 +44,8 @@ export async function GET(
 				[key: string]: any;
 			};
 		};
+
+		const client = searchParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
 
 		const shapes = getShapesFromUrl(searchParams);
 		if (shapes) {
@@ -192,7 +194,7 @@ export async function GET(
 					(name) =>
 						name !== table &&
 						TableMetadata[model].relations.every(
-							(rel) => uncapitalizeTable(rel.table) !== name && getRelationPath(model, name)
+							(rel) => uncapitalizeTable(rel.table) !== name && TableMetadata[model].relationPaths[name]
 						)
 				);
 			} else {
@@ -206,7 +208,7 @@ export async function GET(
 
 			const alreadyDone = [] as typeof deepRelsArray;
 			for (const dr of deepRelsArray) {
-				const path = getRelationPath(model, dr);
+				const path = TableMetadata[model].relationPaths[dr];
 
 				if (!path) {
 					throw new Error(`No path exists from "${model}" to "${dr}".`);
@@ -262,7 +264,7 @@ export async function GET(
 		let count;
 		if (hasLocationData && sampleWhere) {
 			//skip extra database call on sample table
-			samples = await prisma.sample.findMany(query);
+			samples = await client.sample.findMany(query);
 			result = [...samples];
 			count = result.length;
 
@@ -274,7 +276,7 @@ export async function GET(
 			if (sampleWhere) {
 				//TODO: breaks with a sample query in nested group
 				//replace the where with samp_names that match the query and are inside the shapes
-				samples = await prisma.sample.findMany({
+				samples = await client.sample.findMany({
 					where: sampleWhere,
 					select: getSamples
 						? undefined
@@ -294,7 +296,7 @@ export async function GET(
 				}
 			}
 
-			const res = await prisma.$transaction(
+			const res = await client.$transaction(
 				async (tx) => {
 					//@ts-expect-error dynamically accessing prisma client
 					const count = await tx[model].count({ where: query.where });
@@ -340,14 +342,14 @@ export async function GET(
 
 		if (deepRelsArray?.length) {
 			//do queries
-			const deepTransactionResult = await prisma.$transaction(
+			const deepTransactionResult = await client.$transaction(
 				//for each row
 				result.reduce(
 					(acc: any[], res: Record<string, any>) => [
 						...acc,
 						//for each deep relation
 						...deepRelsArray.map((dr) => {
-							const path = getRelationPath(dr, model);
+							const path = TableMetadata[dr].relationPaths[model];
 
 							if (path) {
 								let where = { id: res.id } as Record<string, any>;
@@ -364,7 +366,7 @@ export async function GET(
 
 								//only deep relations that are -to-many need to be gathered here
 								//@ts-expect-error dynamically accessing prisma client
-								return prisma[dr].count({
+								return client[dr].count({
 									where
 								});
 							} else {

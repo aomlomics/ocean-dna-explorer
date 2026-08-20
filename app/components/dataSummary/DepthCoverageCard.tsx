@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 import { Sample } from "@/app/generated/prisma/client";
 import { exploreUrl } from "@/types/tableMetadata";
@@ -12,20 +12,20 @@ type DepthStats = {
 export async function DepthCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
 	// -9999 is the project sentinel for "not applicable". Filtering depths
 	// to >= 0 strips both that sentinel and any other negative noise.
-	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await prisma.$transaction([
-		prisma.sample.aggregate({
+	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await trustedPrisma.$transaction([
+		trustedPrisma.sample.aggregate({
 			where: { project_id, minimumDepthInMeters: { gte: 0 } },
 			_min: { minimumDepthInMeters: true }
 		}),
-		prisma.sample.aggregate({
+		trustedPrisma.sample.aggregate({
 			where: { project_id, maximumDepthInMeters: { gte: 0 } },
 			_max: { maximumDepthInMeters: true }
 		}),
-		prisma.sample.aggregate({
+		trustedPrisma.sample.aggregate({
 			where: { project_id, minimumDepthInMeters: { gte: 0 } },
 			_avg: { minimumDepthInMeters: true }
 		}),
-		prisma.sample.aggregate({
+		trustedPrisma.sample.aggregate({
 			where: { project_id, maximumDepthInMeters: { gte: 0 } },
 			_avg: { maximumDepthInMeters: true }
 		})

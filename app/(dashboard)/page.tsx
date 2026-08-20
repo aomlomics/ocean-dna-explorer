@@ -18,11 +18,15 @@ import {
 	TemporalCoverageCard,
 	WidgetCardSkeleton
 } from "../components/DashboardExtras";
+import { cookies } from "next/headers";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
 
 export default async function Home() {
+	const cookieStore = await cookies();
+	const trusted = cookieStore.get("trusted")?.value !== "false";
+
 	return (
 		<div className="relative flex flex-col grow bg-base-400 text-base-content">
 			<div className="absolute top-0 left-0 right-0 z-sticky bg-orange-500 text-white p-2 sm:p-4 text-center">
@@ -114,7 +118,13 @@ export default async function Home() {
 						<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 							<div className="lg:col-span-8">
 								<div className="w-full">
-									<ClientMap url={"/api/sample"} legend titleTable="project" cluster />
+									<ClientMap
+										key={trusted.toString()}
+										url={`/api/sample${trusted ? "?trusted=true" : ""}`}
+										legend
+										titleTable="project"
+										cluster
+									/>
 								</div>
 							</div>
 
@@ -176,7 +186,7 @@ export default async function Home() {
 							<div className="lg:col-span-8 flex flex-col gap-6">
 								<Suspense fallback={<WidgetCardSkeleton className="h-64" />}>{/* <TableCountsCard /> */}</Suspense>
 								<Suspense fallback={<WidgetCardSkeleton className="h-80" />}>
-									<SamplesOverTimeCard />
+									<SamplesOverTimeCard trusted={trusted} />
 								</Suspense>
 								<div className="w-full lg:w-[70%] lg:mr-auto">
 									<Suspense fallback={<WidgetCardSkeleton className="h-56" />}>
