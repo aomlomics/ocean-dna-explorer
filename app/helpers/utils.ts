@@ -1,16 +1,4 @@
-import {
-	Analysis,
-	Assay,
-	AssayPrep,
-	Assignment,
-	Feature,
-	Library,
-	Occurrence,
-	Prisma,
-	Project,
-	Sample,
-	Taxonomy
-} from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import {
 	Circle,
 	MapLocation,
@@ -22,7 +10,7 @@ import {
 	Polygon,
 	SuccessPacket
 } from "@/types/globals";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 

@@ -191,22 +191,23 @@ export async function SamplesOverTimeCard({ trusted }: { trusted: boolean }) {
 		? Prisma.sql`
 			AND EXISTS (
 				SELECT 1
-				FROM "Library" l
-				JOIN "Occurrence" o USING("lib_id")
-				JOIN "Analysis" a USING("analysis_run_name")
-				WHERE l."samp_name" = s."samp_name"
-					AND a."trusted" = true
+				FROM "Library" lib
+				JOIN "Occurrence" USING (project_id, lib_id)
+				JOIN "Analysis" a USING (project_id, analysis_run_name)
+				WHERE lib.project_id = samp.project_id
+					AND lib.samp_name = samp.samp_name
+					AND a.trusted
 			)
 		`
 		: Prisma.empty;
 
 	const rows = await trustedPrisma.$queryRaw<Row[]>`
 		SELECT
-			date_trunc('year', s."eventDate") AS bucket,
+			date_trunc('year', samp."eventDate") AS bucket,
 			COUNT(*)::bigint AS count
-		FROM "Sample" s
-		JOIN "Project" p USING("project_id")
-		WHERE s."eventDate" >= ${EARLIEST_VALID_DATE}
+		FROM "Sample" samp
+		JOIN "Project" USING(project_id)
+		WHERE samp."eventDate" >= ${EARLIEST_VALID_DATE}
 		${trustedFilter}
 		GROUP BY bucket
 		ORDER BY bucket ASC

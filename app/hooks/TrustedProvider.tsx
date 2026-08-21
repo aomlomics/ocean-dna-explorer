@@ -14,6 +14,7 @@ export default function TrustedProvider({ children }: { children: React.ReactNod
 	const [trusted, setTrustedState] = useState(true);
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setTrustedState(getClientSideCookie("trusted")?.toLowerCase() !== "false");
 	}, []);
 

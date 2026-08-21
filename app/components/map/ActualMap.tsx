@@ -131,7 +131,7 @@ export default function ActualMap({
 		} else {
 			return [];
 		}
-	}, [shapes, legendInfo]);
+	}, [shapes, legendInfo, filteredLocations]);
 
 	//shapes
 	useEffect(() => {

@@ -150,6 +150,7 @@ export default function Table({
 	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
 	useEffect(() => {
 		if (filterHeadersAtStart && userDefinedHeaders.length) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setHeadersFilter((current) => {
 				if (userDefinedHeaders.every((head) => head in current)) {
 					return current;

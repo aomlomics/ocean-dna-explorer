@@ -84,7 +84,7 @@ function mergeWhere(
 }
 
 function getTrustedWhere(table: Prisma.ModelName) {
-	let where: Record<string, any> = {
+	const where: Record<string, any> = {
 		trusted: true
 	};
 

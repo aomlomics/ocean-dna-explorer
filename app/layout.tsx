@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
 				<a
 					href="#main-content"
-					className="btn btn-secondary text-primary-content left-4 top-4 z-max sr-only focus:not-sr-only focus:fixed focus:p-1"
+					className="bg-secondary text-primary-content left-4 top-4 z-max sr-only focus:not-sr-only focus:fixed focus:p-1"
 				>
 					Skip to content
 				</a>

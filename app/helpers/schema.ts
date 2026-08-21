@@ -1,9 +1,8 @@
 import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
-import TableMetadata, { DataTableNames, RelationMetadata, TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
-import { capitalizeTable } from "./utils";
 import { DbType } from "@/types/globals";
 import { JsonValue } from "@prisma/client/runtime/client";
 

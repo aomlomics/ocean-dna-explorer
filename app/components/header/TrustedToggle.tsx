@@ -6,12 +6,15 @@ export default function TrustedToggle() {
 	const { trusted, setTrusted } = useTrusted();
 
 	return (
-		<label className="swap swap-rotate">
+		<label
+			className="swap swap-rotate tooltip tooltip-secondary before:text-primary-content"
+			data-tip={`Show ${trusted ? "all" : "only trusted"} data`}
+		>
 			<input
 				type="checkbox"
 				checked={trusted}
 				onChange={(e) => setTrusted(e.target.checked)}
-				aria-label={`Show ${trusted ? "only trusted" : "all"} data`}
+				aria-label={`Show ${trusted ? "all" : "only trusted"} data`}
 			/>
 
 			{/* trusted icon */}
