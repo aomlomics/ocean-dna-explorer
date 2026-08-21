@@ -1,5 +1,5 @@
 "use client";
-
+// TODO: fix hydration error on SearchUI
 import { Prisma } from "@/app/generated/prisma/client";
 import { getTableNameSafe, getZodType } from "@/app/helpers/schema";
 import {
@@ -118,6 +118,17 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 		}
 
 		return result;
+	}
+
+	// Root OR is serialized as [["OR", ...children]] so the backend sees an explicit OR.
+	// Promote that lone top-level group to the root so Search doesn't rebuild it as a nested card.
+	// AND(OR(A, B)) is the same as OR(A, B), so flattening a single wrapping group is safe.
+	const onlyElement = advancedParsed[0];
+	if (advancedParsed.length === 1 && onlyElement && isGroupElement(onlyElement)) {
+		const [operator, ...childrenElements] = onlyElement;
+		root.operator = operator;
+		root.children = buildFromParams(childrenElements, 1);
+		return root;
 	}
 
 	root.children = buildFromParams(advancedParsed as ParamsArrayElement[], 1);
