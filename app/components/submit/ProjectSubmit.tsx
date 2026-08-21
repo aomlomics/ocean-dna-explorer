@@ -126,7 +126,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			const projectFileUrl = (
 				await upload(`submissions/${encodeURIComponent(projectFile.name)}`, projectFile, {
 					access: "public",
-					handleUploadUrl: "/api/file/upload",
+					handleUploadUrl: "/api/internal/file/upload",
 					multipart: projectFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
@@ -137,7 +137,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			const sampleFileUrl = (
 				await upload(`submissions/${encodeURIComponent(sampleFile.name)}`, sampleFile, {
 					access: "public",
-					handleUploadUrl: "/api/file/upload",
+					handleUploadUrl: "/api/internal/file/upload",
 					multipart: sampleFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
@@ -148,7 +148,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 			const libraryFileUrl = (
 				await upload(`submissions/${encodeURIComponent(libraryFile.name)}`, libraryFile, {
 					access: "public",
-					handleUploadUrl: "/api/file/upload",
+					handleUploadUrl: "/api/internal/file/upload",
 					multipart: libraryFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 				})
 			).url;
@@ -158,7 +158,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 				const imageUrl = (
 					await upload(`submissions/${encodeURIComponent(imageFile.name)}`, imageFile, {
 						access: "public",
-						handleUploadUrl: "/api/file/upload"
+						handleUploadUrl: "/api/internal/file/upload"
 					})
 				).url;
 				imageInfo!.image.url = imageUrl;

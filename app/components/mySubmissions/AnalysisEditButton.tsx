@@ -106,7 +106,7 @@ export default function AnalysisEditButton({
 				const analysisUrl = (
 					await upload(`submissions/${encodeURIComponent(analysisFile.name)}`, analysisFile, {
 						access: "public",
-						handleUploadUrl: "/api/file/upload",
+						handleUploadUrl: "/api/internal/file/upload",
 						multipart: analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 					})
 				).url;
@@ -183,7 +183,7 @@ export default function AnalysisEditButton({
 				const assignmentsUrl = (
 					await upload(`submissions/${encodeURIComponent(assignmentsFile.name)}`, assignmentsFile, {
 						access: "public",
-						handleUploadUrl: "/api/file/upload",
+						handleUploadUrl: "/api/internal/file/upload",
 						multipart: assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 					})
 				).url;
@@ -223,7 +223,7 @@ export default function AnalysisEditButton({
 				const occurrencesUrl = (
 					await upload(`submissions/${encodeURIComponent(occurrencesFile.name)}`, occurrencesFile, {
 						access: "public",
-						handleUploadUrl: "/api/file/upload",
+						handleUploadUrl: "/api/internal/file/upload",
 						multipart: occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 					})
 				).url;

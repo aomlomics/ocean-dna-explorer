@@ -282,7 +282,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					const analysisUrl = (
 						await upload(`submissions/${encodeURIComponent(fileSet.analysisFile.name)}`, fileSet.analysisFile, {
 							access: "public",
-							handleUploadUrl: "/api/file/upload",
+							handleUploadUrl: "/api/internal/file/upload",
 							multipart: fileSet.analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
@@ -300,7 +300,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					const assignmentsUrl = (
 						await upload(`submissions/${encodeURIComponent(fileSet.assignmentsFile.name)}`, fileSet.assignmentsFile, {
 							access: "public",
-							handleUploadUrl: "/api/file/upload",
+							handleUploadUrl: "/api/internal/file/upload",
 							multipart: fileSet.assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
@@ -318,7 +318,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					const occurrencesUrl = (
 						await upload(`submissions/${encodeURIComponent(fileSet.occurrencesFile.name)}`, fileSet.occurrencesFile, {
 							access: "public",
-							handleUploadUrl: "/api/file/upload",
+							handleUploadUrl: "/api/internal/file/upload",
 							multipart: fileSet.occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;

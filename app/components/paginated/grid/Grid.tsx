@@ -95,7 +95,7 @@ export default function Grid({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
@@ -147,7 +147,7 @@ export default function Grid({
 	}
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
 	}
 
 	function scrollTopPaginationIntoView() {

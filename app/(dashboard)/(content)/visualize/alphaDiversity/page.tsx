@@ -13,7 +13,7 @@ export default function VisualizeAlphaDiversity() {
 	const { trusted } = useTrusted();
 
 	const { data, error, isLoading } = useSWR(
-		`/api/alphaDiversity/swapToTable?relations=alphaDiversityIndex,sample&relationsAllFields=true${trusted ? "&trusted=true" : ""}&${searchParams.toString()}`,
+		`/api/internal/alphaDiversity/swapToTable?relations=alphaDiversityIndex,sample&relationsAllFields=true${trusted ? "&trusted=true" : ""}&${searchParams.toString()}`,
 		fetcher,
 		{ revalidateOnFocus: false }
 	);

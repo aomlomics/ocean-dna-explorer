@@ -173,7 +173,7 @@ export default function Table({
 	}, [filterHeadersAtStart, userDefinedHeaders]);
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
 	}
 
 	if (error) {

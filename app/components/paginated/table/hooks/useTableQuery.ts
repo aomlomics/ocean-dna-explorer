@@ -108,7 +108,7 @@ export default function useTableQuery({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});

@@ -13,7 +13,7 @@ export default function VisualizeMetadata() {
 	const { trusted } = useTrusted();
 
 	const { data, error, isLoading } = useSWR(
-		`/api/sample/swapToTable?${trusted ? "trusted=true&" : ""}${searchParams.toString()}`,
+		`/api/internal/sample/swapToTable?${trusted ? "trusted=true&" : ""}${searchParams.toString()}`,
 		fetcher,
 		{
 			revalidateOnFocus: false

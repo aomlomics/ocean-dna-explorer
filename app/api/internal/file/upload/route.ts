@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 				return {
 					allowedContentTypes: ["text/tab-separated-values", "image/*"],
 					addRandomSuffix: true,
+					maximumSizeInBytes: 10 * 1024 * 1024 * 1024, //10GB
 					tokenPayload: JSON.stringify({
 						userId
 					})

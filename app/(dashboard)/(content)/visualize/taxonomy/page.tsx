@@ -22,10 +22,10 @@ export default function VisualizeTaxonomy() {
 	const stringParams = searchParams.toString();
 	const { data, error, isLoading } = useSWR(
 		[
-			`/api/occurrence/swapToTable?fields=lib_id,featureid,organismQuantity${trusted ? "&trusted=true" : ""}&${stringParams}`,
-			`/api/assignment/swapToTable?fields=featureid&relations=Taxonomy${trusted ? "&trusted=true" : ""}&${stringParams}`,
-			`/api/taxonomy/swapToTable?fields=id,${TaxonomicRanks.join(",")}${trusted ? "&trusted=true" : ""}&${stringParams}`,
-			`/api/sample/swapToTable?relations=Libraries&relationsAllFields=true${trusted ? "&trusted=true" : ""}&${stringParams}`
+			`/api/internal/occurrence/swapToTable?fields=lib_id,featureid,organismQuantity${trusted ? "&trusted=true" : ""}&${stringParams}`,
+			`/api/internal/assignment/swapToTable?fields=featureid&relations=Taxonomy${trusted ? "&trusted=true" : ""}&${stringParams}`,
+			`/api/internal/taxonomy/swapToTable?fields=id,${TaxonomicRanks.join(",")}${trusted ? "&trusted=true" : ""}&${stringParams}`,
+			`/api/internal/sample/swapToTable?relations=Libraries&relationsAllFields=true${trusted ? "&trusted=true" : ""}&${stringParams}`
 		],
 		fetcherAllSuccess,
 		{ revalidateOnFocus: false }

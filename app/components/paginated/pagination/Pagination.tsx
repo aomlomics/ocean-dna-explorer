@@ -54,7 +54,7 @@ export default function Pagination({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
@@ -85,6 +85,10 @@ export default function Pagination({
 		);
 	}
 
+	function handlePageHover(dir = 1 as 1 | -1) {
+		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
+	}
+
 	return (
 		<div className="space-y-4">
 			{/* Pagination Controls */}
@@ -93,7 +97,7 @@ export default function Pagination({
 				take={take}
 				count={data.count}
 				setPage={setPage}
-				handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
+				handlePageHover={handlePageHover}
 			/>
 
 			<div className="flex flex-col gap-2">
@@ -151,7 +155,7 @@ export default function Pagination({
 				take={take}
 				count={data.count}
 				setPage={setPage}
-				handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
+				handlePageHover={handlePageHover}
 			/>
 		</div>
 	);
