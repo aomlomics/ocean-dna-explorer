@@ -164,7 +164,9 @@ function CreatureCard({ creature }: { creature: FeaturedCreature }) {
 							title="IUCN Red List status"
 						>
 							<span className="opacity-70 font-semibold tracking-wider">IUCN</span>
-							<span aria-hidden="true" className="opacity-40">·</span>
+							<span aria-hidden="true" className="opacity-40">
+								·
+							</span>
 							<span>{iucn.label}</span>
 						</span>
 					)}

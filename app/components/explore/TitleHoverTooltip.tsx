@@ -2,13 +2,7 @@
 
 import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from "react";
 
-export default function TitleHoverTooltip({
-	tooltip,
-	children
-}: {
-	tooltip: string;
-	children: ReactNode;
-}) {
+export default function TitleHoverTooltip({ tooltip, children }: { tooltip: string; children: ReactNode }) {
 	const wrapperRef = useRef<HTMLDivElement | null>(null);
 	const tipRef = useRef<HTMLDivElement | null>(null);
 	const [hovering, setHovering] = useState(false);

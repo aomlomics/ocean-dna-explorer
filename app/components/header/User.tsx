@@ -5,15 +5,15 @@ import { ThemedUserButton } from "./ThemedUserButton";
 
 export default function User() {
 	return (
-        <>
-            <Show when="signed-in">
+		<>
+			<Show when="signed-in">
 				<ThemedUserButton />
 			</Show>
-            <Show when="signed-out">
+			<Show when="signed-out">
 				<SignInButton>
 					<button className="btn btn-sm md:btn-md bg-primary text-white hover:bg-primary/80">Sign In</button>
 				</SignInButton>
 			</Show>
-        </>
-    );
+		</>
+	);
 }

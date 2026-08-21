@@ -19,12 +19,12 @@ export default function ProgressCircle({
 				error
 					? "border-error bg-error/10"
 					: response
-					? "border-primary bg-primary text-white"
-					: loading
-					? "border-primary animate-pulse"
-					: hasFile
-					? "border-primary"
-					: "border-primary/40"
+						? "border-primary bg-primary text-white"
+						: loading
+							? "border-primary animate-pulse"
+							: hasFile
+								? "border-primary"
+								: "border-primary/40"
 			}
 		`}
 		>

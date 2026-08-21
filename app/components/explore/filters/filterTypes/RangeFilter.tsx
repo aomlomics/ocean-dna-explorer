@@ -29,10 +29,10 @@ export default function RangeFilter({ config }: { config: RangeFilterConfig }) {
 						typeof config.field === "string"
 							? (JSON.parse(searchParams.get(config.field) as string) &&
 									JSON.parse(searchParams.get(config.field) as string).gte) ||
-							  config.gte
+								config.gte
 							: (JSON.parse(searchParams.get(config.field.rel) as string) &&
 									JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].gte) ||
-							  config.gte
+								config.gte
 					}
 					onChange={(e) => {
 						handleFilterDebounce(config.field, e.target.value ? { gte: parseInt(e.target.value) } : undefined);
@@ -54,10 +54,10 @@ export default function RangeFilter({ config }: { config: RangeFilterConfig }) {
 							typeof config.field === "string"
 								? (JSON.parse(searchParams.get(config.field) as string) &&
 										JSON.parse(searchParams.get(config.field) as string).gte) ||
-								  config.gte
+									config.gte
 								: (JSON.parse(searchParams.get(config.field.rel) as string) &&
 										JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].gte) ||
-								  config.gte
+									config.gte
 						}
 						onChange={(e) => {
 							handleFilterDebounce(config.field, e.target.value ? { gte: parseInt(e.target.value) } : undefined);
@@ -82,10 +82,10 @@ export default function RangeFilter({ config }: { config: RangeFilterConfig }) {
 						typeof config.field === "string"
 							? (JSON.parse(searchParams.get(config.field) as string) &&
 									JSON.parse(searchParams.get(config.field) as string).lte) ||
-							  config.lte
+								config.lte
 							: (JSON.parse(searchParams.get(config.field.rel) as string) &&
 									JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].lte) ||
-							  config.lte
+								config.lte
 					}
 					onChange={(e) => {
 						handleFilterDebounce(config.field, e.target.value ? { lte: parseInt(e.target.value) } : undefined);
@@ -107,10 +107,10 @@ export default function RangeFilter({ config }: { config: RangeFilterConfig }) {
 							typeof config.field === "string"
 								? (JSON.parse(searchParams.get(config.field) as string) &&
 										JSON.parse(searchParams.get(config.field) as string).lte) ||
-								  config.lte
+									config.lte
 								: (JSON.parse(searchParams.get(config.field.rel) as string) &&
 										JSON.parse(searchParams.get(config.field.rel) as string)[config.field.f].lte) ||
-								  config.lte
+									config.lte
 						}
 						onChange={(e) => {
 							handleFilterDebounce(config.field, e.target.value ? { lte: parseInt(e.target.value) } : undefined);

@@ -225,12 +225,10 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			for (const id of analysisIds) {
 				if (typeof id === "string") {
 					//skip files that have already been successfully submitted
-					if (
-						!(
-							responsesRef.current[id] &&
-							Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
-						)
-					) {
+					if (!(
+						responsesRef.current[id] &&
+						Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
+					)) {
 						//gather files
 						files[id] = {
 							analysisFile: (target.elements.namedItem(`analysis_${id}`) as HTMLInputElement).files!.item(0)!,

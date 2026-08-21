@@ -1008,8 +1008,7 @@ function SearchGroupComponent({
 	footer?: ReactNode;
 	onHelpClick?: () => void;
 } & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
+	{ searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true }
 )) {
 	function updateGroup(updater: (group: SearchGroupNode) => void) {
 		const clone = { ...group, children: [...group.children] } as SearchGroupNode;
@@ -1210,16 +1209,14 @@ function SearchRuleComponent({
 	node: SearchRuleNode;
 	onChange: (node: SearchRuleNode | null) => void;
 } & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
+	{ searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true }
 )) {
 	const paramsArray = node.initialParams;
 	const [type, setType] = useState(noTable || (paramsArray && paramsArray.length === 4) ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
 		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as
-			| Uncapitalize<Prisma.ModelName>
-			| ""
+			Uncapitalize<Prisma.ModelName> | ""
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 

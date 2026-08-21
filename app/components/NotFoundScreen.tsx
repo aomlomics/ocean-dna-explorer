@@ -14,8 +14,8 @@ export default function NotFoundScreen() {
 					</p>
 					<h1 className="mb-3 text-xl font-normal text-base-content/80 sm:text-2xl">Page not found</h1>
 					<p className="mb-8 text-base leading-relaxed text-base-content/80">
-						Looks like you drifted off course. The page you&apos;re looking for doesn&apos;t exist or it may
-						have been moved.
+						Looks like you drifted off course. The page you&apos;re looking for doesn&apos;t exist or it may have been
+						moved.
 					</p>
 					<Link href="/" className="btn btn-primary btn-md w-fit min-h-12 px-8 text-base font-normal">
 						Home

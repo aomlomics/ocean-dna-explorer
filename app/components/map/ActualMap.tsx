@@ -337,13 +337,11 @@ export default function ActualMap({
 						radius={clusterRadiusValue ?? 0}
 					>
 						{pointsOrGroups.reduce((acc, loc, i) => {
-							if (
-								!(
-									legendInfo &&
-									legendInfo.mode === "discreet" &&
-									legendInfo.hidden?.includes(loc[legendInfo.field as string])
-								)
-							) {
+							if (!(
+								legendInfo &&
+								legendInfo.mode === "discreet" &&
+								legendInfo.hidden?.includes(loc[legendInfo.field as string])
+							)) {
 								acc.push(
 									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 										<PopupWithSearch
@@ -400,13 +398,11 @@ export default function ActualMap({
 								radius={clusterRadiusValue ?? 0}
 							>
 								{locArray.reduce((acc, loc, j) => {
-									if (
-										!(
-											legendInfo &&
-											legendInfo.mode === "discreet" &&
-											legendInfo.hidden?.includes(loc[legendInfo.field as string])
-										)
-									) {
+									if (!(
+										legendInfo &&
+										legendInfo.mode === "discreet" &&
+										legendInfo.hidden?.includes(loc[legendInfo.field as string])
+									)) {
 										acc.push(
 											<Marker key={j} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 												<PopupWithSearch

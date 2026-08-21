@@ -19,7 +19,11 @@ export default function ProjectCoverPhotoPreview({ src, title }: { src: string; 
 	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [open, setOpen] = useState(false);
 	const [pos, setPos] = useState({ top: 0, right: 0 });
-	const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+	const mounted = useSyncExternalStore(
+		subscribeNever,
+		() => true,
+		() => false
+	);
 
 	const clearCloseTimer = useCallback(() => {
 		if (closeTimerRef.current) {

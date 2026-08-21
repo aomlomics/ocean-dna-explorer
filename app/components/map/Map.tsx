@@ -33,8 +33,7 @@ export default function Map({
 	disableSearch?: true;
 	className?: string;
 } & (
-	| { query: () => Promise<NullLocation[]>; locations?: undefined }
-	| { query?: undefined; locations: NullLocation[] }
+	{ query: () => Promise<NullLocation[]>; locations?: undefined } | { query?: undefined; locations: NullLocation[] }
 ) &
 	(
 		| { titleTable?: Uncapitalize<Prisma.ModelName>; defaultLegendField?: undefined }
