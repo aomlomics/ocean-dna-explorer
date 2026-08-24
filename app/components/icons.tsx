@@ -8,9 +8,14 @@ export function ArrowIcon({ order }: { order: "asc" | "desc" }) {
 			fill="none"
 			stroke="currentColor"
 			strokeWidth="2"
-			transform={order === "desc" ? "rotate(180 12 10)" : undefined}
 		>
-			<path d="m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z" />
+			<path
+				d={
+					order === "asc"
+						? "m12 6.586-8.707 8.707 1.414 1.414L12 9.414l7.293 7.293 1.414-1.414L12 6.586z"
+						: "m12 13.414-8.707-8.707 1.414-1.414L12 10.586l7.293-7.293 1.414 1.414L12 13.414z"
+				}
+			/>
 		</svg>
 	);
 }
