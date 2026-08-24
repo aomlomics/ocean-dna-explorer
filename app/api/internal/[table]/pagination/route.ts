@@ -353,24 +353,23 @@ export async function GET(
 				//build JOIN for relation path
 				const joins = [];
 				for (const [i, step] of path.entries()) {
-					const prevTable = i ? path[i - 1]!.table : capitalizeTable(model);
-					let titleTable;
+					let stepTitleTable;
 					if (step.type === "one-to-one" || step.type === "one-to-many") {
-						titleTable = prevTable;
+						stepTitleTable = i ? path[i - 1]!.table : capitalizeTable(model);
 					} else if (step.type === "many-to-one") {
-						titleTable = step.table;
+						stepTitleTable = step.table;
 					} else {
 						//TODO: handle many-to-many case
 						throw new Error("Deep relations with many-to-many is not yet supported");
 					}
 
-					const titleField = TableMetadata[titleTable].titleField;
-					const titleFieldsArr = typeof titleField === "string" ? [titleField] : titleField;
+					const tf = TableMetadata[stepTitleTable].titleField;
+					const stepTitleFieldArr = typeof tf === "string" ? [tf] : tf;
 
 					joins.push(
 						Prisma.sql`
 							LEFT JOIN ${Prisma.raw(`"${step.table}"`)} USING (${Prisma.join(
-								titleFieldsArr.map((f) => Prisma.raw(`"${f}"`)),
+								stepTitleFieldArr.map((f) => Prisma.raw(`"${f}"`)),
 								", "
 							)})
 						`
@@ -397,7 +396,7 @@ export async function GET(
 				return Prisma.sql`
 					SELECT
 						${Prisma.join(selectFields, ", ")},
-						COUNT(DISTINCT ${Prisma.raw(`"${path.at(-1)!.table}".id`)})::int AS count
+						COUNT(DISTINCT ${Prisma.raw(`"${capitalizeTable(targetModel)}".id`)})::int AS count
 					FROM ${Prisma.raw(`"${capsModel}"`)}
 					${Prisma.join(joins, " ")}
 					WHERE ${Prisma.join(rootConditions, " OR ")}
