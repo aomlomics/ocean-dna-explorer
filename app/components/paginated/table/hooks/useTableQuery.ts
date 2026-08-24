@@ -86,23 +86,18 @@ export default function useTableQuery({
 			}
 		}
 
-		if (Object.values(deepRelationsFilter).includes(false)) {
-			if (Object.values(deepRelationsFilter).every((f) => !f)) {
-				query.set("deepRelations", "true");
-			} else {
-				query.set(
-					"deepRelations",
-					deepRelations
-						.reduce((acc, rel) => {
-							if (!deepRelationsFilter[rel.label]) {
-								acc.push(rel.table);
-							}
-
-							return acc;
-						}, [] as string[])
-						.join(",")
-				);
+		const deepRelsToGet = deepRelations.reduce((acc, rel) => {
+			if (!deepRelationsFilter[rel.label]) {
+				acc.push(rel.table);
 			}
+
+			return acc;
+		}, [] as string[]);
+
+		if (deepRelsToGet.length === deepRelations.length) {
+			query.set("deepRelations", "true");
+		} else if (deepRelsToGet.length) {
+			query.set("deepRelations", deepRelsToGet.join(","));
 		}
 
 		return query;

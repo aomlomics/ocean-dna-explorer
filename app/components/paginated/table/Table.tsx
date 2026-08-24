@@ -233,23 +233,14 @@ export default function Table({
 					/>
 
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
-						<div className="flex gap-2">
-							<InfoButton
-								text="If many rows are displayed per page, selecting these options can cause long load times."
-								type="warning"
-								dir="tooltip-left"
-								className="z-60"
-							/>
-
-							<Checklist
-								label="Deep Relations"
-								list={deepRelations.map((rel) => rel.label)}
-								listFilter={deepRelationsFilter}
-								setListFilter={setDeepRelationsFilter}
-								className="justify-self-end"
-								buttonClassName="btn-sm"
-							/>
-						</div>
+						<Checklist
+							label="Deep Relations"
+							list={deepRelations.map((rel) => rel.label)}
+							listFilter={deepRelationsFilter}
+							setListFilter={setDeepRelationsFilter}
+							className="justify-self-end"
+							buttonClassName="btn-sm"
+						/>
 
 						<Checklist
 							label="Columns"

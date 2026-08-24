@@ -11,7 +11,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/api";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { MapLocation } from "@/types/globals";
 import { getDataTableName, getTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
@@ -190,9 +190,9 @@ export async function GET(
 			//get relation tables
 			if (deepRelations.toLowerCase() === "true") {
 				//all relations
-				deepRelsArray = TableNames.filter(
+				deepRelsArray = DataTableNames.filter(
 					(name) =>
-						name !== table &&
+						name !== model &&
 						TableMetadata[model].relations.every(
 							(rel) => uncapitalizeTable(rel.table) !== name && TableMetadata[model].relationPaths[name]
 						)
@@ -200,7 +200,7 @@ export async function GET(
 			} else {
 				//comma separated list of relations
 				deepRelsArray = deepRelations.split(",").map((rel) => {
-					const name = getTableName(rel, `Deep relation named "${rel}" does not exist.`);
+					const name = getDataTableName(rel, `Deep relation named "${rel}" does not exist.`);
 
 					return name;
 				});
@@ -260,7 +260,7 @@ export async function GET(
 		}
 
 		let samples;
-		let result;
+		let result: any[];
 		let count;
 		if (hasLocationData && sampleWhere) {
 			//skip extra database call on sample table
@@ -340,54 +340,93 @@ export async function GET(
 			result = result.slice(start, start + parsedTake);
 		}
 
-		if (deepRelsArray?.length) {
-			//do queries
-			const deepTransactionResult = await client.$transaction(
-				//for each row
-				result.reduce(
-					(acc: any[], res: Record<string, any>) => [
-						...acc,
-						//for each deep relation
-						...deepRelsArray.map((dr) => {
-							const path = TableMetadata[dr].relationPaths[model];
+		//get deep relational counts
+		if (result.length && deepRelsArray?.length) {
+			const titleFieldArr =
+				typeof TableMetadata[model].titleField === "string"
+					? [TableMetadata[model].titleField]
+					: TableMetadata[model].titleField;
 
-							if (path) {
-								let where = { id: res.id } as Record<string, any>;
+			const queries = deepRelsArray.map((targetModel) => {
+				const path = TableMetadata[model].relationPaths[targetModel]!;
 
-								//assemble full path
-								for (const rel of path.toReversed()) {
-									if (rel.type.endsWith("many")) {
-										//if relation is a -to-many, add a some to the query
-										where = { [rel.field]: { some: where } };
-									} else {
-										where = { [rel.field]: where };
-									}
-								}
+				//build JOIN for relation path
+				const joins = [];
+				for (const [i, step] of path.entries()) {
+					const prevTable = i ? path[i - 1]!.table : capitalizeTable(model);
+					let titleTable;
+					if (step.type === "one-to-one" || step.type === "one-to-many") {
+						titleTable = prevTable;
+					} else if (step.type === "many-to-one") {
+						titleTable = step.table;
+					} else {
+						//TODO: handle many-to-many case
+						throw new Error("Deep relations with many-to-many is not yet supported");
+					}
 
-								//only deep relations that are -to-many need to be gathered here
-								//@ts-expect-error dynamically accessing prisma client
-								return client[dr].count({
-									where
-								});
-							} else {
-								throw new Error(`Deep relation named "${dr}" has no path to target "${model}".`);
-							}
-						})
-					],
-					[]
-				)
+					const titleField = TableMetadata[titleTable].titleField;
+					const titleFieldsArr = typeof titleField === "string" ? [titleField] : titleField;
+
+					joins.push(
+						Prisma.sql`
+							LEFT JOIN ${Prisma.raw(`"${step.table}"`)} USING (${Prisma.join(
+								titleFieldsArr.map((f) => Prisma.raw(`"${f}"`)),
+								", "
+							)})
+						`
+					);
+				}
+
+				const capsModel = capitalizeTable(model);
+
+				//only get records in the result
+				const rootConditions = result.map(
+					(row) =>
+						Prisma.sql`(
+							${Prisma.join(
+								titleFieldArr.map((field) => Prisma.sql`${Prisma.raw(`"${capsModel}"."${field}"`)} = ${row[field]}`),
+								" AND "
+							)}
+						)`
+				);
+
+				//select root fields to reassociate with row data
+				const selectFields = titleFieldArr.map((field) => Prisma.raw(`"${capsModel}"."${field}"`));
+
+				//final query
+				return Prisma.sql`
+					SELECT
+						${Prisma.join(selectFields, ", ")},
+						COUNT(DISTINCT ${Prisma.raw(`"${path.at(-1)!.table}".id`)})::int AS count
+					FROM ${Prisma.raw(`"${capsModel}"`)}
+					${Prisma.join(joins, " ")}
+					WHERE ${Prisma.join(rootConditions, " OR ")}
+					GROUP BY ${Prisma.join(selectFields, ", ")}
+				`;
+			});
+
+			const queryResults = await client.$transaction(
+				queries.map((query) => client.$queryRaw<Record<string, string | number>[]>(query)),
+				{
+					timeout: 0.5 * 60 * 1000
+				}
 			);
 
-			//assemble rows with extra data
-			for (let i = 0; i < result.length; i++) {
-				for (const rel of deepRelsArray) {
-					const res = deepTransactionResult.shift();
+			//using null character as separator for efficient map lookup
+			const sep = "\0";
+			//recombine counts on result
+			for (const [i, rows] of queryResults.entries()) {
+				//assemble counts
+				const counts = new Map() as Map<string, number>;
+				for (const r of rows) {
+					counts.set(titleFieldArr.map((field) => String(r[field])).join(sep), Number(r.count));
+				}
 
-					if (typeof res === "number") {
-						result[i]._count[TableMetadata[rel].plural] = res;
-					} else {
-						result[i] = { ...result[i], ...res };
-					}
+				//attach to results
+				for (const resRow of result) {
+					resRow._count ??= {};
+					resRow._count[TableMetadata[deepRelsArray[i]!].plural] =
+						counts.get(titleFieldArr.map((field) => String(resRow[field])).join(sep)) ?? 0;
 				}
 			}
 		}

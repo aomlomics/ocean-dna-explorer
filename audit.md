@@ -254,7 +254,7 @@ Add `app/not-found.tsx` with the site header and footer, a plain explanation, an
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-2 · Performance / Availability — No result ceiling, no rate limiting, and two amplification paths on public endpoints
+#### ![WIP](https://img.shields.io/badge/%E2%86%BB_WIP-2563eb?style=flat-square) P1-2 · Performance / Availability — No result ceiling, no rate limiting, and two amplification paths on public endpoints
 **Location**
 - Unbounded `findMany`: `app/api/[table]/route.ts:64`, `app/api/[table]/swapToTable/route.ts:21`
 - Optional, uncapped `limit` parsing: `app/helpers/queries.ts:681-691`
