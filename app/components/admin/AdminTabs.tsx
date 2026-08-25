@@ -41,12 +41,12 @@ export default function AdminTabs() {
 						Tags
 					</Link>
 					<Link
-						href="/admin/images"
+						href="/admin/carousel"
 						className={`btn px-6 py-3 transition-colors rounded-none ${
-							pathname === "/admin/images" ? "rounded-t-lg btn-primary" : ""
+							pathname === "/admin/carousel" ? "rounded-t-lg btn-primary" : ""
 						}`}
 					>
-						Home Carousel Images
+						Home Carousel
 					</Link>
 					<Link
 						href="/admin/tools"

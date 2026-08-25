@@ -1,7 +1,12 @@
-import AddTagButton from "@/app/components/tags/AddTagButton";
+import AddTagButton from "@/app/components/admin/tags/AddTagButton";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
-import DeleteTagButton from "@/app/components/tags/DeleteTagButton";
+import DeleteTagButton from "@/app/components/admin/tags/DeleteTagButton";
 import { prisma } from "@/app/helpers/prisma";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Analysis Tags"
+};
 
 export default async function AddTags() {
 	const tags = await prisma.tag.findMany({

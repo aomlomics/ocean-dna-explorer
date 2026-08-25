@@ -2,6 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
 import WorkshopVideoCallout, { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
+import { Metadata } from "next";
+
+const description = `The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We provide a unified, accessible platform for exploring, visualizing, and sharing standardized environmental DNA (eDNA) datasets.`;
+
+export const metadata: Metadata = {
+	title: "About Us",
+	description
+};
 
 const teamMembers = [
 	{
@@ -44,9 +52,7 @@ export default function AboutPage() {
 								Our Mission
 							</h1>
 							<p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-base-content [html[data-theme='dark']_&]:text-base-content/90">
-								The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We
-								provide a unified, accessible platform for exploring, visualizing, and sharing standardized
-								environmental DNA (eDNA) datasets.
+								{description}
 							</p>
 						</div>
 					</div>

@@ -13,6 +13,40 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; samp_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, samp_name } = await decodeRouteParams(params);
+
+	const sample = await trustedPrisma.sample.findUnique({
+		where: {
+			project_id_samp_name: {
+				project_id,
+				samp_name
+			}
+		},
+		select: {
+			//TODO: only select fields that are needed
+			project_id: true,
+			samp_name: true
+		}
+	});
+
+	if (sample) {
+		//TODO: add description
+		return {
+			title: `${samp_name} | ${TableMetadata.sample.plural}`
+		};
+	} else {
+		return {
+			title: "Sample not found"
+		};
+	}
+}
 
 export default async function Samp_name({ params }: { params: Promise<{ project_id: string; samp_name: string }> }) {
 	const { project_id, samp_name } = await decodeRouteParams(params);

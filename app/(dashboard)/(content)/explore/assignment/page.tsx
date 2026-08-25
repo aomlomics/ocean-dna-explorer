@@ -1,12 +1,14 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
+import TableMetadata from "@/types/tableMetadata";
 import { Metadata } from "next";
 
+const tableMeta = TableMetadata.assignment;
+const title = "Explore " + tableMeta.plural;
 export const metadata: Metadata = {
-	title: "Explore Assignments"
+	title,
+	description: title + ": " + tableMeta.description
 };
 
-const Page = async () => {
+export default function Assignment() {
 	return <ExplorePage table="assignment" tableConfig={[]} />;
-};
-
-export default Page;
+}

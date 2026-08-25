@@ -11,6 +11,49 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{
+		project_id: string;
+		analysis_run_name: string;
+		lib_id: string;
+		featureid: string;
+	}>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
+
+	const occurrence = await trustedPrisma.occurrence.findUnique({
+		where: {
+			project_id_analysis_run_name_lib_id_featureid: {
+				project_id,
+				analysis_run_name,
+				lib_id,
+				featureid
+			}
+		},
+		select: {
+			//TODO: only select fields that are needed
+			project_id: true,
+			analysis_run_name: true,
+			lib_id: true,
+			featureid: true
+		}
+	});
+
+	if (occurrence) {
+		//TODO: add description
+		return {
+			title: `${featureid} in ${lib_id} | ${TableMetadata.occurrence.plural}`
+		};
+	} else {
+		return {
+			title: "Occurrence not found"
+		};
+	}
+}
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
 	const taxonomicData = Object.entries(dbTaxonomy)

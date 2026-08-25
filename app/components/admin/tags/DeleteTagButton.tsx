@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Modal from "../Modal";
 import { useRouter } from "next/navigation";
 import deleteTagAction from "@/app/actions/tag/deleteTag";
 import { Analysis, Tag } from "@/app/generated/prisma/client";
-import AnalysisTag from "./AnalysisTag";
 import Link from "next/link";
 import { exploreUrl } from "@/types/tableMetadata";
+import Modal from "../../Modal";
+import AnalysisTag from "../../tags/AnalysisTag";
 
 export default function DeleteTagButton({
 	tag

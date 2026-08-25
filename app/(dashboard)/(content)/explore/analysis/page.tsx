@@ -3,6 +3,15 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import TableMetadata from "@/types/tableMetadata";
+import { Metadata } from "next";
+
+const tableMeta = TableMetadata.analysis;
+const title = "Explore " + tableMeta.plural;
+export const metadata: Metadata = {
+	title,
+	description: title + ": " + tableMeta.description
+};
 
 export default async function Analysis() {
 	const analyses = await trustedPrisma.analysis.findMany({

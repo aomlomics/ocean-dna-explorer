@@ -1,8 +1,13 @@
 import migrationCopyStepAction from "@/app/actions/migrationCopyStep";
 import remakeBlastDatabaseAction from "@/app/actions/remakeBlastDatabase";
 import seedDatabaseAction from "@/app/actions/seedDatabase";
-import WarningButton from "@/app/components/WarningButton";
+import WarningButton from "@/app/components/admin/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Database Tools"
+};
 
 export default async function AdminTools() {
 	const assaysInUse = await prisma.assay.findMany({

@@ -10,7 +10,33 @@ import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
-import { exploreUrl } from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
+import { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
+	const { assay_name } = await decodeRouteParams(params);
+
+	const assay = await trustedPrisma.assay.findUnique({
+		where: {
+			assay_name
+		},
+		select: {
+			//TODO: only select fields that are needed
+			assay_name: true
+		}
+	});
+
+	if (assay) {
+		//TODO: add description
+		return {
+			title: `${assay_name} | ${TableMetadata.assay.plural}`
+		};
+	} else {
+		return {
+			title: "Assay not found"
+		};
+	}
+}
 
 const ASSAY_MASTER_TSV_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";

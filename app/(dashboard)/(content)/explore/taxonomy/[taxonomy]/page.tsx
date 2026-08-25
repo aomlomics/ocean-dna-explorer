@@ -13,6 +13,31 @@ import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchToolt
 import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+import TableMetadata from "@/types/tableMetadata";
+
+export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
+	const { taxonomy } = await decodeRouteParams(params);
+
+	const dbTaxonomy = await trustedPrisma.taxonomy.findUnique({
+		where: {
+			taxonomy
+		}
+	});
+
+	if (dbTaxonomy) {
+		const mostSpecificRank = RanksBySpecificity.find((rank) => dbTaxonomy[rank]) || "taxonomy";
+
+		//TODO: add description
+		return {
+			title: `${dbTaxonomy[mostSpecificRank]} | ${TableMetadata.taxonomy.plural}`
+		};
+	} else {
+		return {
+			title: "Taxonomy not found"
+		};
+	}
+}
 
 function finestDisplayedRank(db: Taxonomy): {
 	rankKey: (typeof TaxonomicRanks)[number];

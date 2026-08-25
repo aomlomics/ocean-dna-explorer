@@ -62,7 +62,7 @@ const TableMetadata = {
 	sample: {
 		plural: "Samples",
 		description:
-			"A sample of environmental material, such as water or soil, that has been collected for analysis with metadata on collection, environmental conditions, storage, and processing methods.",
+			"Environmental material samples, such as water or soil, collected for analysis with metadata on collection, environmental conditions, storage, and processing methods.",
 		schema: PrismaZodTypes.SampleSchema,
 		enumSchema: PrismaZodTypes.SampleScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.SampleWithRelationsSchema,
@@ -92,7 +92,7 @@ const TableMetadata = {
 	assay: {
 		plural: "Assays",
 		description:
-			"The molecular targets, primer sequences, primer references, and expected amplicon size for a specific molecular analysis.",
+			"Molecular targets, primer sequences, primer references, and expected amplicon sizes for specific molecular analyses.",
 		schema: PrismaZodTypes.AssaySchema,
 		enumSchema: PrismaZodTypes.AssayScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssayWithRelationsSchema,
@@ -102,7 +102,7 @@ const TableMetadata = {
 	assayPrep: {
 		plural: "AssayPreps",
 		description:
-			"The protocol-specific details describing the laboratory procedures used to perform an assay, such as the chemicals, instruments, and conditions employed for sample processing and sequencing.",
+			"Protocol-specific details describing the laboratory procedures used to perform an assay, such as the chemicals, instruments, and conditions employed for sample processing and sequencing.",
 		schema: PrismaZodTypes.AssayPrepSchema,
 		enumSchema: PrismaZodTypes.AssayPrepScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssayPrepWithRelationsSchema,
@@ -129,7 +129,7 @@ const TableMetadata = {
 	library: {
 		plural: "Libraries",
 		description:
-			"A collection of sequencing library molecular preparation details (PCR amplification and indexing), the sequencing instrumentation and run parameters, and metadata for the generated DNA sequence files.",
+			"Collections of sequencing library molecular preparation details (PCR amplification and indexing), the sequencing instrumentation and run parameters, and metadata for the generated DNA sequence files.",
 		schema: PrismaZodTypes.LibrarySchema,
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.LibraryWithRelationsSchema,
@@ -181,7 +181,7 @@ const TableMetadata = {
 	feature: {
 		plural: "Features",
 		description:
-			"Unique DNA sequences (eg, ASVs) found in samples, typically representing distinct organisms, with their taxonomic classifications.",
+			"Unique DNA sequences (e.g., ASVs) found in samples, typically representing distinct organisms, with their taxonomic classifications.",
 		schema: PrismaZodTypes.FeatureSchema,
 		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.FeatureWithRelationsSchema,

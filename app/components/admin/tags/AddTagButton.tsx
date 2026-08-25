@@ -1,10 +1,10 @@
 "use client";
 
 import { SubmitEvent, useRef, useState } from "react";
-import Modal from "../Modal";
-import AnalysisTag from "./AnalysisTag";
-import addTagAction from "../../actions/tag/addTag";
 import { useRouter } from "next/navigation";
+import addTagAction from "@/app/actions/tag/addTag";
+import Modal from "../../Modal";
+import AnalysisTag from "../../tags/AnalysisTag";
 
 export default function AddTagButton() {
 	const router = useRouter();

@@ -1,4 +1,4 @@
-import UserList from "@/app/components/UserList";
+import UserList from "@/app/components/admin/UserList";
 import { ReactNode } from "react";
 
 export default function AdminUsersLayout({ children }: { children: ReactNode }) {

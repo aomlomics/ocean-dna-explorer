@@ -16,6 +16,33 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import { Analysis, Assay, Taxonomy } from "@/app/generated/prisma/client";
+import { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
+	const { project_id } = await decodeRouteParams(params);
+
+	const project = await trustedPrisma.project.findUnique({
+		where: {
+			project_id
+		},
+		select: {
+			project_name: true,
+			project_contact: true
+		}
+	});
+
+	if (project) {
+		return {
+			title: `${project_id} | ${TableMetadata.project.plural}`,
+			description: project.project_name,
+			publisher: project.project_contact
+		};
+	} else {
+		return {
+			title: "Project not found"
+		};
+	}
+}
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -354,11 +381,11 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<div className="flex flex-wrap gap-x-6 gap-y-1">
 					<div>
 						<span className="font-medium text-base-content/70">Contact: </span>
-						<span>{project.project_contact || "N/A"}</span>
+						<span>{project.project_contact}</span>
 					</div>
 					<div>
 						<span className="font-medium text-base-content/70">Assay Type: </span>
-						<span>{project.assay_type || "N/A"}</span>
+						<span>{project.assay_type}</span>
 					</div>
 				</div>
 				{formatInstitutionHeaderBlock(project.institution)}

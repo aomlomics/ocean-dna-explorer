@@ -3,6 +3,15 @@ import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
+import TableMetadata from "@/types/tableMetadata";
+import { Metadata } from "next";
+
+const tableMeta = TableMetadata.sample;
+const title = "Explore " + tableMeta.plural;
+export const metadata: Metadata = {
+	title,
+	description: title + ": " + tableMeta.description
+};
 
 export default async function Sample() {
 	const samples = await trustedPrisma.sample.findMany({

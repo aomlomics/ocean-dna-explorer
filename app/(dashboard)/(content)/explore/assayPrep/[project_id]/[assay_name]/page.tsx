@@ -7,6 +7,41 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; assay_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, assay_name } = await decodeRouteParams(params);
+
+	const assayPrep = await trustedPrisma.assayPrep.findUnique({
+		where: {
+			project_id_assay_name: {
+				project_id,
+				assay_name
+			}
+		},
+		select: {
+			//TODO: only select fields that are needed
+			project_id: true,
+			assay_name: true
+		}
+	});
+
+	if (assayPrep) {
+		//TODO: make title better
+		//TODO: add description
+		return {
+			title: `${assay_name} | ${TableMetadata.assayPrep.plural}`
+		};
+	} else {
+		return {
+			title: "AssayPrep not found"
+		};
+	}
+}
 
 export default async function Project_id_Assay_name({
 	params

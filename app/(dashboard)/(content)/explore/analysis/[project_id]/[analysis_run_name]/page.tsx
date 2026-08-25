@@ -21,6 +21,40 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { exploreUrl } from "@/types/tableMetadata";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; analysis_run_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name } = await decodeRouteParams(params);
+
+	const analysis = await trustedPrisma.analysis.findUnique({
+		where: {
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
+		},
+		select: {
+			//TODO: only select fields that are needed
+			project_id: true,
+			analysis_run_name: true
+		}
+	});
+
+	if (analysis) {
+		//TODO: add description
+		return {
+			title: `${analysis_run_name} | ${TableMetadata.analysis.plural}`
+		};
+	} else {
+		return {
+			title: "Analysis not found"
+		};
+	}
+}
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";

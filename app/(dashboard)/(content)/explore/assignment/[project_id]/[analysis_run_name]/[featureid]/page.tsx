@@ -5,6 +5,42 @@ import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+import { RanksBySpecificity } from "@/types/objects";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; analysis_run_name: string; featureid: string }>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
+
+	const assignment = await trustedPrisma.assignment.findUnique({
+		where: {
+			project_id_analysis_run_name_featureid: {
+				project_id,
+				analysis_run_name,
+				featureid
+			}
+		},
+		select: {
+			Taxonomy: true
+		}
+	});
+
+	if (assignment) {
+		const mostSpecificRank = RanksBySpecificity.find((rank) => assignment.Taxonomy[rank]) || "taxonomy";
+
+		return {
+			title: `${featureid} assigned ${assignment.Taxonomy[mostSpecificRank]} | ${TableMetadata.assignment.plural}`,
+			description: `The ${analysis_run_name} Analysis in the ${project_id} Project assigned the featureid ${featureid} to the ${mostSpecificRank} ${assignment.Taxonomy[mostSpecificRank]}.`
+		};
+	} else {
+		return {
+			title: "Assignment not found"
+		};
+	}
+}
 
 export default async function AssignmentPage({
 	params

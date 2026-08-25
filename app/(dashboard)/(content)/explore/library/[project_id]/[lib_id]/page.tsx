@@ -7,6 +7,40 @@ import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; lib_id: string }>;
+}): Promise<Metadata> {
+	const { project_id, lib_id } = await decodeRouteParams(params);
+
+	const library = await trustedPrisma.library.findUnique({
+		where: {
+			project_id_lib_id: {
+				project_id,
+				lib_id
+			}
+		},
+		select: {
+			//TODO: only select fields that are needed
+			project_id: true,
+			lib_id: true
+		}
+	});
+
+	if (library) {
+		//TODO: add description
+		return {
+			title: `${lib_id} | ${TableMetadata.library.plural}`
+		};
+	} else {
+		return {
+			title: "Library not found"
+		};
+	}
+}
 
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);

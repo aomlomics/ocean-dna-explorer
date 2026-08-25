@@ -13,6 +13,32 @@ import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
+	const { featureid } = await decodeRouteParams(params);
+
+	const feature = await trustedPrisma.feature.findUnique({
+		where: {
+			featureid
+		},
+		select: {
+			//TODO: only select fields that are needed
+			featureid: true
+		}
+	});
+
+	if (feature) {
+		//TODO: add description
+		return {
+			title: `${featureid} | ${TableMetadata.feature.plural}`
+		};
+	} else {
+		return {
+			title: "Feature not found"
+		};
+	}
+}
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";

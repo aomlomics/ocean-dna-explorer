@@ -1,7 +1,12 @@
 import AddImageButton from "@/app/components/AddImageButton";
 import { prismaImages } from "@/app/helpers/prismaImages";
-import ImageDeleteButton from "@/app/components/images/ImageDeleteButton";
+import ImageDeleteButton from "@/app/components/admin/ImageDeleteButton";
 import Image from "next/image";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Home Carousel"
+};
 
 //TODO: add way to manage attributions
 export default async function AdminImages() {

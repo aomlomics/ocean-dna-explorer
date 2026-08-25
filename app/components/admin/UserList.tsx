@@ -4,9 +4,9 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
-import InfoButton from "./InfoButton";
+import InfoButton from "../InfoButton";
 import useSWR from "swr";
-import { fetcher } from "../helpers/utils";
+import { fetcher } from "../../helpers/utils";
 import { UserObject } from "@/types/globals";
 
 export default function UserList() {
