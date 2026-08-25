@@ -109,6 +109,12 @@ Run the local test server:
 npm run dev
 ```
 
+Run ESLint:
+
+```bash
+npm run lint
+```
+
 Open the Prisma database view:
 
 ```bash
