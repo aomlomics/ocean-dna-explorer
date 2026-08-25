@@ -380,6 +380,51 @@
 	display: none !important;
 }
 
+/* Same two-file swap as NodeLogo: Clerk's <img> sizes the slot, CSS paints both theme files. */
+.ode-signin-page [class*="cl-logoBox"] {
+	position: relative;
+	width: 100%;
+	max-width: 22.5rem;
+	height: 5rem;
+	margin-inline: auto;
+}
+
+.ode-signin-page [class*="cl-logoImage"] {
+	opacity: 0;
+	width: 100% !important;
+	height: 100% !important;
+	max-height: none !important;
+}
+
+.ode-signin-page [class*="cl-logoBox"]::before,
+.ode-signin-page [class*="cl-logoBox"]::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	pointer-events: none;
+}
+
+.ode-signin-page [class*="cl-logoBox"]::before {
+	background-image: url("/images/node_logo_dark_mode.svg");
+	opacity: 0;
+}
+
+.ode-signin-page [class*="cl-logoBox"]::after {
+	background-image: url("/images/node_logo_light_mode.svg");
+	opacity: 1;
+}
+
+[data-theme="dark"] .ode-signin-page [class*="cl-logoBox"]::before {
+	opacity: 1;
+}
+
+[data-theme="dark"] .ode-signin-page [class*="cl-logoBox"]::after {
+	opacity: 0;
+}
+
 /* cl-socialButtonsRoot is the outer wrapper; its direct child (cl-socialButtons) is
    the actual flex container. Force row layout and centering here since Clerk's own
    stylesheet overrides Tailwind utility classes passed via appearance.elements. */

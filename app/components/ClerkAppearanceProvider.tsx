@@ -54,8 +54,8 @@ export default function ClerkAppearanceProvider({ children }: { children: ReactN
 			localization={{
 				signIn: {
 					start: {
-						title: "Sign in to the Ocean DNA Explorer",
-						titleCombined: "Sign in to the Ocean DNA Explorer"
+						title: "Sign in to ODE",
+						titleCombined: "Sign in to ODE"
 					}
 				},
 				dividerText: "or"

@@ -48,8 +48,8 @@ export default function Page() {
 							rootBox: "w-full",
 							cardBox: "w-full max-w-[560px]",
 							card: `w-full border shadow-2xl rounded-3xl px-10 py-10 sm:px-12 ${cardVariantClass} border-primary/25 bg-white/95 backdrop-blur-md [html[data-theme='dark']_&]:border-[#4B95C3]/40 [html[data-theme='dark']_&]:bg-[#111A2D]/90`,
-							logoImage:
-								"mx-auto h-auto w-[360px] max-w-full [html[data-theme='dark']_&]:brightness-0 [html[data-theme='dark']_&]:invert",
+							logoBox: "mx-auto h-20 w-[360px] max-w-full",
+							logoImage: "mx-auto h-20 w-[360px] max-w-full",
 							headerTitle:
 								"text-center font-semibold text-[1.35rem] text-[#1F2F57] [html[data-theme='dark']_&]:text-[#E2E8F0]",
 							headerSubtitle: "hidden",
