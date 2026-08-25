@@ -18,15 +18,8 @@ function getUsersResult(users: User[], emails?: boolean): UserObject[] {
 }
 
 export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {
-	const { userId, sessionClaims } = await auth();
+	const { sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
-
-	if (!userId || !role || !RolePermissions[role].includes("contribute")) {
-		return NextResponse.json({
-			statusMessage: "error",
-			error: "Unauthorized"
-		});
-	}
 
 	const { searchParams } = new URL(request.url);
 
@@ -34,7 +27,7 @@ export async function GET(request: Request): Promise<NextResponse<NetworkPacket>
 	const query = searchParams.get("query");
 	const ids = searchParams.get("userIds");
 
-	if (emails && !RolePermissions[role].includes("manageUsers")) {
+	if (emails && (!role || !RolePermissions[role].includes("manageUsers"))) {
 		return NextResponse.json({
 			statusMessage: "error",
 			error: "Unauthorized"

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "./dataSummary/DashCard";
 import DoughnutChart from "./charts/DoughnutChart";
 import { EARLIEST_VALID_SAMPLE_DATE } from "./dataSummary/TemporalCoverageCard";
+import { Prisma } from "../generated/prisma/client";
 
 /**
  * ---------------------------------------------------------------------------
@@ -43,7 +44,7 @@ const METADATA_RICHNESS_ENTITIES: RichnessEntityConfig[] = [
 
 function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"]): string[] {
 	const runtimeDataModel = (
-		prisma as unknown as {
+		trustedPrisma as unknown as {
 			_runtimeDataModel?: {
 				models?: Record<string, { fields?: { name: string; kind: string; isRequired: boolean; isList: boolean }[] }>;
 			};
@@ -67,7 +68,7 @@ function getOptionalScalarFieldNames(modelName: RichnessEntityConfig["modelName"
  * lines instead of truncating, since these are a small, high-value list.
  */
 export async function TopInstitutionsCard() {
-	const rows = await prisma.project.groupBy({
+	const rows = await trustedPrisma.project.groupBy({
 		by: ["institution"],
 		where: { institution: { not: null } },
 		_count: { project_id: true },
@@ -123,7 +124,7 @@ export async function TopInstitutionsCard() {
  */
 const ENV_SCALE_TOP_N = 8;
 export async function SamplingEnvironmentsCard() {
-	const rows = await prisma.sample.groupBy({
+	const rows = await trustedPrisma.sample.groupBy({
 		by: ["env_local_scale"],
 		where: { env_local_scale: { not: null } },
 		_count: { samp_name: true },
@@ -180,19 +181,34 @@ export { TemporalCoverageCard, TemporalCoverageCardSkeleton } from "./dataSummar
  *   or (b) 100 parallel count() queries per-year, which is wasteful. A single
  *   GROUP BY date_trunc('year', ...) is both cheapest and simplest.
  */
-export async function SamplesOverTimeCard() {
+export async function SamplesOverTimeCard({ trusted }: { trusted: boolean }) {
 	type Row = { bucket: Date; count: bigint };
 	// 1990-01-01 floor: matches the EARLIEST_VALID_SAMPLE_DATE used by the
 	// Temporal Coverage card. This excludes both the -9999 sentinel and
 	// Unix-epoch ghost rows around 1969-12-31 / 1970-01-01 that previously
 	// pulled the chart's left edge way back and squashed everything.
-	const rows = await prisma.$queryRaw<Row[]>`
+	const trustedFilter = trusted
+		? Prisma.sql`
+			AND EXISTS (
+				SELECT 1
+				FROM "Library" lib
+				JOIN "Occurrence" USING (project_id, lib_id)
+				JOIN "Analysis" a USING (project_id, analysis_run_name)
+				WHERE lib.project_id = samp.project_id
+					AND lib.samp_name = samp.samp_name
+					AND a.trusted
+			)
+		`
+		: Prisma.empty;
+
+	const rows = await trustedPrisma.$queryRaw<Row[]>`
 		SELECT
-			date_trunc('year', s."eventDate") AS bucket,
+			date_trunc('year', samp."eventDate") AS bucket,
 			COUNT(*)::bigint AS count
-		FROM "Sample" s
-		JOIN "Project" p ON s."project_id" = p."project_id"
-		WHERE s."eventDate" >= ${EARLIEST_VALID_DATE}
+		FROM "Sample" samp
+		JOIN "Project" USING(project_id)
+		WHERE samp."eventDate" >= ${EARLIEST_VALID_DATE}
+		${trustedFilter}
 		GROUP BY bucket
 		ORDER BY bucket ASC
 	`;
@@ -412,17 +428,17 @@ function SamplesOverTimeChart({ points }: { points: { year: number; count: numbe
  */
 export async function TableCountsCard() {
 	const [projects, samples, assays, assayPreps, libraries, analyses, occurrences, features, taxa, assignments] =
-		await prisma.$transaction([
-			prisma.project.count(),
-			prisma.sample.count(),
-			prisma.assay.count(),
-			prisma.assayPrep.count(),
-			prisma.library.count(),
-			prisma.analysis.count(),
-			prisma.occurrence.count(),
-			prisma.feature.count(),
-			prisma.taxonomy.count(),
-			prisma.assignment.count()
+		await trustedPrisma.$transaction([
+			trustedPrisma.project.count(),
+			trustedPrisma.sample.count(),
+			trustedPrisma.assay.count(),
+			trustedPrisma.assayPrep.count(),
+			trustedPrisma.library.count(),
+			trustedPrisma.analysis.count(),
+			trustedPrisma.occurrence.count(),
+			trustedPrisma.feature.count(),
+			trustedPrisma.taxonomy.count(),
+			trustedPrisma.assignment.count()
 		]);
 
 	const tables: { label: string; count: number; href: string }[] = [
@@ -518,7 +534,7 @@ export async function MetadataCompletenessCard() {
 	//TODO: rework to not use promise.all
 	const entities = await Promise.all(
 		METADATA_RICHNESS_ENTITIES.map(async (entity) => {
-			const delegate = (prisma as unknown as Record<string, { count: (args?: unknown) => Promise<number> }>)[
+			const delegate = (trustedPrisma as unknown as Record<string, { count: (args?: unknown) => Promise<number> }>)[
 				entity.delegate
 			];
 

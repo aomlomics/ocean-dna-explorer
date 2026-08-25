@@ -1,11 +1,11 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 
 export default async function Sample() {
-	const samples = await prisma.sample.findMany({
+	const samples = await trustedPrisma.sample.findMany({
 		select: {
 			project_id: true,
 			geo_loc_name: true,

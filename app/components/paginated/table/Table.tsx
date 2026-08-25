@@ -2,7 +2,7 @@
 
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
-import { BlastQuery, BlastQueryResult, Prisma, Sample, Tag } from "@/app/generated/prisma/client";
+import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { preload } from "swr";
 import LoadingTable from "./LoadingTable";
@@ -150,6 +150,7 @@ export default function Table({
 	const [headersFilter, setHeadersFilter] = useState(defaultHeadersFilter);
 	useEffect(() => {
 		if (filterHeadersAtStart && userDefinedHeaders.length) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setHeadersFilter((current) => {
 				if (userDefinedHeaders.every((head) => head in current)) {
 					return current;
@@ -172,7 +173,7 @@ export default function Table({
 	}, [filterHeadersAtStart, userDefinedHeaders]);
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
 	}
 
 	if (error) {
@@ -232,23 +233,14 @@ export default function Table({
 					/>
 
 					<div className="grid grid-cols-3 w-full gap-5 flex-1">
-						<div className="flex gap-2">
-							<InfoButton
-								text="If many rows are displayed per page, selecting these options can cause long load times."
-								type="warning"
-								dir="tooltip-left"
-								className="z-60"
-							/>
-
-							<Checklist
-								label="Deep Relations"
-								list={deepRelations.map((rel) => rel.label)}
-								listFilter={deepRelationsFilter}
-								setListFilter={setDeepRelationsFilter}
-								className="justify-self-end"
-								buttonClassName="btn-sm"
-							/>
-						</div>
+						<Checklist
+							label="Deep Relations"
+							list={deepRelations.map((rel) => rel.label)}
+							listFilter={deepRelationsFilter}
+							setListFilter={setDeepRelationsFilter}
+							className="justify-self-end"
+							buttonClassName="btn-sm"
+						/>
 
 						<Checklist
 							label="Columns"

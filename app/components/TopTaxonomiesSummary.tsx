@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import ThemeAwareSvg from "@/app/components/docs/ThemeAwareSvg";
 
 type PhylumData = {
@@ -17,7 +17,7 @@ type KingdomSection = {
 };
 
 async function getPhylaByKingdom(kingdom: string, take: number = 8): Promise<PhylumData[]> {
-	const taxonomiesInKingdom = await prisma.taxonomy.findMany({
+	const taxonomiesInKingdom = await trustedPrisma.taxonomy.findMany({
 		where: { kingdom },
 		select: { taxonomy: true, phylum: true }
 	});
@@ -25,7 +25,7 @@ async function getPhylaByKingdom(kingdom: string, take: number = 8): Promise<Phy
 	const taxonomyMap = new Map(taxonomiesInKingdom.map((t) => [t.taxonomy, t.phylum]));
 	const taxonomyStrings = Array.from(taxonomyMap.keys());
 
-	const phylaData = await prisma.assignment.groupBy({
+	const phylaData = await trustedPrisma.assignment.groupBy({
 		by: ["taxonomy"],
 		where: {
 			taxonomy: { in: taxonomyStrings }

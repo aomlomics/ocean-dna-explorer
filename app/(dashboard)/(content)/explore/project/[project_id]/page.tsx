@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import EditHistory from "@/app/components/EditHistory";
@@ -131,7 +131,7 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
 	const { project_id } = await decodeRouteParams(params);
 
-	const project = await prisma.project.findUnique({
+	const project = await trustedPrisma.project.findUnique({
 		where: {
 			project_id
 		},
@@ -275,7 +275,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 			<div className="lg:col-span-2">
 				<Map
-					query={() => prisma.sample.findMany({ where: { project_id } })}
+					query={() => trustedPrisma.sample.findMany({ where: { project_id } })}
 					where={{ project_id }}
 					cluster
 					legend
@@ -502,7 +502,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 						<div className="lg:col-span-2">
 							<Map
-								query={() => prisma.sample.findMany({ where: { project_id } })}
+								query={() => trustedPrisma.sample.findMany({ where: { project_id } })}
 								where={{ project_id }}
 								cluster
 								legend

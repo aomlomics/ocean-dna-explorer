@@ -2,8 +2,8 @@
 
 import { BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
 import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
-import { exploreFeatureUrl, getClientSideCookie } from "@/app/helpers/utils";
-import TableMetadata from "@/types/tableMetadata";
+import { getClientSideCookie } from "@/app/helpers/utils";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useState } from "react";
@@ -115,7 +115,10 @@ export default function BlastSearchResult({
 							<div key={i} className="flex flex-col">
 								<h2 className="grid grid-cols-[auto_1fr] gap-x-2">
 									<div>Target featureid:</div>
-									<Link className="link link-primary link-hover" href={exploreFeatureUrl(r.featureid)}>
+									<Link
+										className="link link-primary link-hover"
+										href={exploreUrl({ table: "feature", featureid: r.featureid })}
+									>
 										{r.featureid}
 									</Link>
 								</h2>

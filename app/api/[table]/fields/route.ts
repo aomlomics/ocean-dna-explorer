@@ -9,15 +9,20 @@ export async function GET(
 ): Promise<NextResponse<NetworkPacket>> {
 	const { table } = await params;
 
-	const model = getTableName(table);
+	try {
+		const model = getTableName(table);
 
-	const result = {} as Record<string, ReturnType<typeof getZodType>>;
-	for (const f of TableMetadata[model].enumSchema.options) {
-		if (f !== "userDefined") {
-			const type = getZodType(model, f);
-			result[f] = type;
+		const result = {} as Record<string, ReturnType<typeof getZodType>>;
+		for (const f of TableMetadata[model].enumSchema.options) {
+			if (f !== "userDefined") {
+				const type = getZodType(model, f);
+				result[f] = type;
+			}
 		}
-	}
 
-	return NextResponse.json({ statusMessage: "success", result });
+		return NextResponse.json({ statusMessage: "success", result });
+	} catch (err) {
+		const error = err as Error;
+		return NextResponse.json({ statusMessage: "error", error: error.message });
+	}
 }

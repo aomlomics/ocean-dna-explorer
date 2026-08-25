@@ -3,15 +3,17 @@
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
 import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversityDisplay";
 import { fetcher } from "@/app/helpers/utils";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 import { AlphaDiversityPartialWithRelationsSchema } from "@/prisma/generated/zod";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 
 export default function VisualizeAlphaDiversity() {
 	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
 
 	const { data, error, isLoading } = useSWR(
-		`/api/alphaDiversity/swapToTable?relations=alphaDiversityIndex,sample&relationsAllFields=true&${searchParams.toString()}`,
+		`/api/internal/alphaDiversity/swapToTable?relations=alphaDiversityIndex,sample&relationsAllFields=true${trusted ? "&trusted=true" : ""}&${searchParams.toString()}`,
 		fetcher,
 		{ revalidateOnFocus: false }
 	);

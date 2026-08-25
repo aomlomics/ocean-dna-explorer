@@ -53,14 +53,12 @@ export default function Page() {
 							headerTitle:
 								"text-center font-semibold text-[1.35rem] text-[#1F2F57] [html[data-theme='dark']_&]:text-[#E2E8F0]",
 							headerSubtitle: "hidden",
-							formButtonPrimary:
-								"bg-primary text-white hover:bg-primary/80 font-semibold rounded-lg min-h-11",
+							formButtonPrimary: "bg-primary text-white hover:bg-primary/80 font-semibold rounded-lg min-h-11",
 							socialButtonsRoot: "w-full",
 							socialButtons: "flex flex-row justify-center gap-2 w-full",
 							socialButtonsBlockButton:
 								"flex-1 bg-[#EEF2F7] text-[#233D7F] font-normal hover:bg-[#DFE7F1] rounded-lg border border-[#233D7F]/20 min-h-11 [html[data-theme='dark']_&]:bg-[#181f32] [html[data-theme='dark']_&]:text-[#E2E8F0] [html[data-theme='dark']_&]:hover:bg-[#233D7F]/50 [html[data-theme='dark']_&]:border-[#4B95C3]/40",
-							socialButtonsBlockButtonText:
-								"text-[#233D7F] [html[data-theme='dark']_&]:text-[#E2E8F0]",
+							socialButtonsBlockButtonText: "text-[#233D7F] [html[data-theme='dark']_&]:text-[#E2E8F0]",
 							formFieldInput:
 								"bg-white text-[#233D7F] border border-[#233D7F]/35 rounded-lg min-h-11 [html[data-theme='dark']_&]:bg-[#1E2A45] [html[data-theme='dark']_&]:text-[#E2E8F0] [html[data-theme='dark']_&]:border-[#4B95C3]/60",
 							dividerLine: "bg-[#233D7F]/35 [html[data-theme='dark']_&]:bg-[#4B95C3]/75"

@@ -1,23 +1,15 @@
 import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import { Taxonomy } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
 import { TaxonomicRanks } from "@/types/objects";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import {
-	decodeRouteParams,
-	exploreAnalysisUrl,
-	exploreFeatureUrl,
-	exploreLibraryUrl,
-	exploreProjectUrl,
-	exploreSampleUrl,
-	exploreTaxonomyUrl
-} from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
@@ -73,7 +65,7 @@ export default async function OccurrencePage({
 }) {
 	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
 
-	const occurrence = await prisma.occurrence.findUnique({
+	const occurrence = await trustedPrisma.occurrence.findUnique({
 		where: {
 			project_id_analysis_run_name_lib_id_featureid: {
 				project_id,
@@ -131,7 +123,7 @@ export default async function OccurrencePage({
 
 	const topStatCards = (
 		<div className="flex flex-wrap gap-4">
-			<Link href={exploreFeatureUrl(featureid)} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "feature", featureid })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-primary">
 						<MaskSvgIcon src="/images/icons/feature_icon.svg" />
@@ -146,7 +138,7 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={exploreLibraryUrl(project_id, lib_id)} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "library", project_id, lib_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-emerald-300 [html[data-theme='light']_&]:text-emerald-700">
 						<MaskSvgIcon src="/images/icons/library_icon.svg" />
@@ -161,7 +153,7 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={exploreAnalysisUrl(project_id, analysis_run_name)} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "analysis", project_id, analysis_run_name })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-amber-300 [html[data-theme='light']_&]:text-amber-700">
 						<AnalysisIcon className="h-10 w-10" />
@@ -176,7 +168,7 @@ export default async function OccurrencePage({
 					</div>
 				</div>
 			</Link>
-			<Link href={exploreProjectUrl(project_id)} className="block w-max max-w-full">
+			<Link href={exploreUrl({ table: "project", project_id })} className="block w-max max-w-full">
 				<div className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105">
 					<div className="text-purple-300 [html[data-theme='light']_&]:text-purple-700">
 						<ProjectIcon className="h-10 w-10" />
@@ -205,7 +197,7 @@ export default async function OccurrencePage({
 						</Link>
 					</li>
 					<li>
-						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -216,7 +208,7 @@ export default async function OccurrencePage({
 					</li>
 					<li>
 						<Link
-							href={exploreAnalysisUrl(project_id, analysis_run_name)}
+							href={exploreUrl({ table: "analysis", project_id, analysis_run_name })}
 							className="inline-block max-w-[26ch] truncate align-bottom text-primary hover:text-primary-focus"
 							title={analysis_run_name}
 						>
@@ -304,7 +296,7 @@ export default async function OccurrencePage({
 									<div className="space-y-2">
 										{occurrence.Assignment.Taxonomy ? (
 											<Link
-												href={exploreTaxonomyUrl(occurrence.Assignment.Taxonomy.taxonomy)}
+												href={exploreUrl({ table: "taxonomy", taxonomy: occurrence.Assignment.Taxonomy.taxonomy })}
 												className="text-base md:text-lg font-semibold text-base-content hover:text-primary wrap-break-word"
 											>
 												{taxonomyName}
@@ -346,7 +338,7 @@ export default async function OccurrencePage({
 						</div>
 						<div className="w-full lg:max-w-sm">
 							<Link
-								href={exploreSampleUrl(project_id, occurrence.Library.Sample.samp_name)}
+								href={exploreUrl({ table: "sample", project_id, samp_name: occurrence.Library.Sample.samp_name })}
 								className="group h-24 rounded-lg bg-base-200 p-4 flex items-center gap-4 hover:bg-base-300 transition-all duration-300 hover:scale-105"
 							>
 								<div className="text-primary">

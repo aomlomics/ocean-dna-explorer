@@ -5,10 +5,11 @@ import { SubmitEvent, RefObject, useEffect, useState } from "react";
 import { TableColumns } from "./useTableColumns";
 import { DEFAULT_ORDER_BY, ExtraResults } from "../Table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildWhereParams } from "@/app/helpers/api";
 import useSWR from "swr";
 import { fetcher } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export type TableQuery = ReturnType<typeof useTableQuery>;
 
@@ -36,6 +37,7 @@ export default function useTableQuery({
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const pathname = usePathname();
+	const { trusted } = useTrusted();
 
 	const [take, setTake] = useState(defaultTake);
 	const [page, setPage] = useState(1);
@@ -52,6 +54,10 @@ export default function useTableQuery({
 			page: (dir ? page + dir : page).toString(),
 			orderBy: orderBy.field + "," + orderBy.order
 		});
+
+		if (trusted) {
+			query.set("trusted", "true");
+		}
 
 		let whereQuery = {} as Record<string, string | number>;
 		if (where) {
@@ -80,29 +86,24 @@ export default function useTableQuery({
 			}
 		}
 
-		if (Object.values(deepRelationsFilter).includes(false)) {
-			if (Object.values(deepRelationsFilter).every((f) => !f)) {
-				query.set("deepRelations", "true");
-			} else {
-				query.set(
-					"deepRelations",
-					deepRelations
-						.reduce((acc, rel) => {
-							if (!deepRelationsFilter[rel.label]) {
-								acc.push(rel.table);
-							}
-
-							return acc;
-						}, [] as string[])
-						.join(",")
-				);
+		const deepRelsToGet = deepRelations.reduce((acc, rel) => {
+			if (!deepRelationsFilter[rel.label]) {
+				acc.push(rel.table);
 			}
+
+			return acc;
+		}, [] as string[]);
+
+		if (deepRelsToGet.length === deepRelations.length) {
+			query.set("deepRelations", "true");
+		} else if (deepRelsToGet.length) {
+			query.set("deepRelations", deepRelsToGet.join(","));
 		}
 
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});

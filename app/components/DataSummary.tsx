@@ -1,4 +1,4 @@
-import { prisma } from "../helpers/prisma";
+import { trustedPrisma } from "../helpers/prisma";
 import Link from "next/link";
 import DoughnutChart from "./charts/DoughnutChart";
 import { StatCountUp } from "./StatCountUp";
@@ -12,7 +12,7 @@ export type SummaryItemData = {
 };
 
 export async function AssayStats({ compact = false }: { compact?: boolean } = {}) {
-	const analyses = await prisma.analysis.findMany({
+	const analyses = await trustedPrisma.analysis.findMany({
 		select: {
 			_count: {
 				select: {
@@ -61,7 +61,7 @@ export function MainStatsSkeleton() {
 }
 
 export async function MainStats() {
-	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await prisma.$transaction(
+	const { projectCount, sampleCount, taxaCount, occurrenceCount } = await trustedPrisma.$transaction(
 		async (tx) => {
 			const projectCount = await tx.project.count();
 			const sampleCount = await tx.sample.count();

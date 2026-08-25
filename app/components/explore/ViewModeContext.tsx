@@ -9,13 +9,7 @@ const ViewModeContext = createContext<{
 	setMode: (m: ViewMode) => void;
 } | null>(null);
 
-export function ViewModeProvider({
-	children,
-	initialMode = "table"
-}: {
-	children: ReactNode;
-	initialMode?: ViewMode;
-}) {
+export function ViewModeProvider({ children, initialMode = "table" }: { children: ReactNode; initialMode?: ViewMode }) {
 	const [mode, setMode] = useState<ViewMode>(initialMode);
 	return <ViewModeContext.Provider value={{ mode, setMode }}>{children}</ViewModeContext.Provider>;
 }

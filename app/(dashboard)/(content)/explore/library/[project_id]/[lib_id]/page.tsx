@@ -1,17 +1,17 @@
 import Link from "next/link";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams, exploreAssayUrl, exploreProjectUrl, exploreSampleUrl } from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);
 
-	const library = await prisma.library.findUnique({
+	const library = await trustedPrisma.library.findUnique({
 		where: {
 			project_id_lib_id: {
 				project_id,
@@ -60,17 +60,23 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					This library connects{" "}
 					<Link
-						href={exploreSampleUrl(project_id, sample.samp_name)}
+						href={exploreUrl({ table: "sample", project_id, samp_name: sample.samp_name })}
 						className="text-primary hover:text-primary-focus break-all"
 					>
 						sample {sample.samp_name}
 					</Link>{" "}
 					with{" "}
-					<Link href={exploreAssayUrl(assay.assay_name)} className="text-primary hover:text-primary-focus break-all">
+					<Link
+						href={exploreUrl({ table: "assay", assay_name: assay.assay_name })}
+						className="text-primary hover:text-primary-focus break-all"
+					>
 						assay {assay.assay_name}
 					</Link>{" "}
 					in project{" "}
-					<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus break-all">
+					<Link
+						href={exploreUrl({ table: "project", project_id })}
+						className="text-primary hover:text-primary-focus break-all"
+					>
 						{project_id}
 					</Link>
 					.
@@ -94,7 +100,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						<StatCard
 							title="Sample"
 							icon={<LocationIcon />}
-							link={exploreSampleUrl(project_id, sample.samp_name)}
+							link={exploreUrl({ table: "sample", project_id, samp_name: sample.samp_name })}
 							value={sample.samp_name}
 							className="w-2/3"
 						/>
@@ -102,7 +108,7 @@ export default async function Lib_id({ params }: { params: Promise<{ project_id:
 						<StatCard
 							title="Assay"
 							icon={<AssayIcon />}
-							link={exploreAssayUrl(assay.assay_name)}
+							link={exploreUrl({ table: "assay", assay_name: assay.assay_name })}
 							value={assay.assay_name}
 							className="w-2/3"
 						/>

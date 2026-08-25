@@ -12,7 +12,7 @@ export enum DeadValueEnum {
 	"missing: restricted access: endangered species",
 	"missing: restricted access: human-identifiable",
 	"missing: restricted access",
-	"missing",
+	missing,
 	"not collected",
 	"not provided",
 	"restricted access",

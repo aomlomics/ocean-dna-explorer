@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
@@ -103,8 +103,8 @@ function StaticActgBackdrop({ className = "" }: { className?: string }) {
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	const { taxonomy } = await decodeRouteParams(params);
 
-	const [dbTaxonomy, samples] = await prisma.$transaction([
-		prisma.taxonomy.findUnique({
+	const [dbTaxonomy, samples] = await trustedPrisma.$transaction([
+		trustedPrisma.taxonomy.findUnique({
 			where: {
 				taxonomy
 			},
@@ -117,7 +117,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 				}
 			}
 		}),
-		prisma.sample.findMany({
+		trustedPrisma.sample.findMany({
 			where: {
 				Libraries: {
 					some: {

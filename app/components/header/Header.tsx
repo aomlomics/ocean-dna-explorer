@@ -6,6 +6,7 @@ import User from "./User";
 import { ExploreMegaMenu, SubmitMegaMenu, DocsMegaMenu, LearnMegaMenu, VisualizeMegaMenu } from "./MegaMenus";
 import MobileMenu from "./MobileMenu";
 import AdminButton from "./AdminButton";
+import TrustedToggle from "./TrustedToggle";
 
 export default function Header() {
 	// z-header + relative: navbar is a stacking context above page content, so its menus render over the page below
@@ -45,7 +46,6 @@ export default function Header() {
 					<TabButton tabName="Search" route="/search" />
 					<VisualizeMegaMenu />
 					<SubmitMegaMenu />
-					{/* <TabButton tabName="Contribute" route="/contribute" /> */}
 					<DocsMegaMenu />
 					<LearnMegaMenu />
 					<TabButton tabName="About" route="/about" />
@@ -55,6 +55,7 @@ export default function Header() {
 			{/* Right side - theme toggle, user, admin */}
 			<div className="navbar-end w-auto shrink-0 ml-auto pl-2 md:pl-3 xl:pl-6 flex items-center gap-2 sm:gap-3 xl:gap-4">
 				<AdminButton />
+				<TrustedToggle />
 				<ThemeToggle />
 				<div className="mr-2 sm:mr-5 flex items-center">
 					<User />

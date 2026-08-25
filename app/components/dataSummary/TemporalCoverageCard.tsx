@@ -1,7 +1,7 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
 import { Sample } from "@/app/generated/prisma/client";
-import { exploreProjectUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 /**
  * Floor for what counts as a "real" sample collection date.
@@ -64,7 +64,7 @@ function getDateSpan(start: Date, end: Date): string | null {
 }
 
 export async function TemporalCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
-	const agg = await prisma.sample.aggregate({
+	const agg = await trustedPrisma.sample.aggregate({
 		where: {
 			project_id,
 			eventDate: {
@@ -107,7 +107,7 @@ export async function TemporalCoverageCard({ project_id }: { project_id?: Sample
 				links: [
 					{
 						label: project_id ? "Browse this project's samples" : "Browse samples",
-						href: project_id ? exploreProjectUrl(project_id) : "/explore/sample"
+						href: project_id ? exploreUrl({ table: "project", project_id }) : "/explore/sample"
 					}
 				]
 			}}

@@ -14,7 +14,7 @@ import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
 import { Tag } from "@/app/generated/prisma/client";
 import AnalysisTag from "../tags/AnalysisTag";
-import { exploreProjectUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;
@@ -51,6 +51,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	//  to clear all responses: setResponses()
 	const [responses, setResponses] = useState<Record<string, ResponseSet>>({});
 	const responsesRef = useRef<Record<string, ResponseSet>>({});
+	const activeSubmissionIdsRef = useRef<string[]>([]);
 
 	function updateResponse(id: string, key: string, res: NetworkProgressPacket) {
 		const nextRes = {
@@ -73,19 +74,14 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			modalRef.current?.showModal();
 		} else if (res?.statusMessage === "success") {
 			//check if current analysis was completed successfully
-			if (
-				Object.entries(nextRes).every(
-					//make sure to include current key, since we already checked that
-					([entryKey, entryRes]) => entryKey === key || entryRes?.statusMessage === "success"
-				)
-			) {
+			if (Object.values(nextRes).every((entryRes) => entryRes?.statusMessage === "success")) {
 				//check if all analyses were completed successfully
 				if (
-					Object.entries(nextResponses).every(
-						([entryId, resSet]) =>
-							//make sure to include current analysis, since we already checked that
-							entryId === id || Object.values(resSet).every((entryRes) => entryRes?.statusMessage === "success")
-					)
+					Object.keys(nextResponses)
+						.filter((entryId) => activeSubmissionIdsRef.current.includes(entryId))
+						.every((entryId) =>
+							Object.values(nextResponses[entryId]!).every((entryRes) => entryRes?.statusMessage === "success")
+						)
 				) {
 					//redirect user to Analysis explore page
 					setLoading(false);
@@ -229,12 +225,10 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			for (const id of analysisIds) {
 				if (typeof id === "string") {
 					//skip files that have already been successfully submitted
-					if (
-						!(
-							responses[id] &&
-							Object.values(responses[id]).every((packet) => packet && packet.statusMessage === "success")
-						)
-					) {
+					if (!(
+						responsesRef.current[id] &&
+						Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
+					)) {
 						//gather files
 						files[id] = {
 							analysisFile: (target.elements.namedItem(`analysis_${id}`) as HTMLInputElement).files!.item(0)!,
@@ -243,25 +237,32 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 						};
 
 						//set status of uploads to pending
-						updateResponse(id, "analysis", {
-							statusMessage: "progress",
-							progress: { message: "Pending...", value: 0 }
-						});
-						updateResponse(id, "assignments", {
-							statusMessage: "progress",
-							progress: { message: "Pending...", value: 0 }
-						});
-						updateResponse(id, "occurrences", {
-							statusMessage: "progress",
-							progress: { message: "Pending...", value: 0 }
-						});
+						responsesRef.current = {
+							...responsesRef.current,
+							[id]: {
+								analysis: {
+									statusMessage: "progress",
+									progress: { message: "Pending...", value: 0 }
+								},
+								assignments: {
+									statusMessage: "progress",
+									progress: { message: "Pending...", value: 0 }
+								},
+								occurrences: {
+									statusMessage: "progress",
+									progress: { message: "Pending...", value: 0 }
+								}
+							}
+						};
 
-						return true;
+						setResponses(responsesRef.current);
 					}
 				}
 			}
 
 			const activeIds = Object.keys(files);
+			activeSubmissionIdsRef.current = activeIds;
+
 			if (activeIds.length) {
 				//scroll first analysis into view
 				document.getElementById(activeIds[0]!)!.scrollIntoView({
@@ -279,7 +280,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					const analysisUrl = (
 						await upload(`submissions/${encodeURIComponent(fileSet.analysisFile.name)}`, fileSet.analysisFile, {
 							access: "public",
-							handleUploadUrl: "/api/file/upload",
+							handleUploadUrl: "/api/internal/file/upload",
 							multipart: fileSet.analysisFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
@@ -297,7 +298,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					const assignmentsUrl = (
 						await upload(`submissions/${encodeURIComponent(fileSet.assignmentsFile.name)}`, fileSet.assignmentsFile, {
 							access: "public",
-							handleUploadUrl: "/api/file/upload",
+							handleUploadUrl: "/api/internal/file/upload",
 							multipart: fileSet.assignmentsFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
@@ -315,7 +316,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 					const occurrencesUrl = (
 						await upload(`submissions/${encodeURIComponent(fileSet.occurrencesFile.name)}`, fileSet.occurrencesFile, {
 							access: "public",
-							handleUploadUrl: "/api/file/upload",
+							handleUploadUrl: "/api/internal/file/upload",
 							multipart: fileSet.occurrencesFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 						})
 					).url;
@@ -351,13 +352,16 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 
 	return (
 		<>
-			<form className="grid grid-cols-12 gap-10 w-full" onSubmit={handleSubmit}>
+			<form className="grid grid-cols-12 gap-10 w-full" onSubmit={handleSubmit} autoComplete="off">
 				{/* Left column: project info and privacy */}
 				<div className="col-span-5 space-y-6">
 					<SubmitFormSection title="Project">
 						<div className="w-full">
 							{project ? (
-								<Link className="link link-primary" href={exploreProjectUrl(project.project_id)}>
+								<Link
+									className="link link-primary"
+									href={exploreUrl({ table: "project", project_id: project.project_id })}
+								>
 									{project.project_id}
 								</Link>
 							) : (

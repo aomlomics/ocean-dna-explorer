@@ -171,10 +171,7 @@ async function SuspenseStatCard({
 	if (link) {
 		const hug = layout === "horizontal" && horizontalCardWidth === "hug";
 		return (
-			<Link
-				href={link}
-				className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}
-			>
+			<Link href={link} className={[className, hug ? "block w-max max-w-full" : undefined].filter(Boolean).join(" ")}>
 				<div
 					className={`bg-base-200 p-4 ${hug ? "" : "h-full"} rounded-lg flex hover:bg-base-300 transition-all duration-300 hover:scale-105 ${innerClassName} ${tooltipClassName} ${showCustomViewAsSearchTooltip ? "group/vas relative" : ""}`}
 					data-tip={showCustomViewAsSearchTooltip ? undefined : resolvedTooltip}

@@ -17,8 +17,8 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
-import { getRelationPath } from "@/app/helpers/schema";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildWhereParams } from "@/app/helpers/api";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 type Operator = "AND" | "OR";
 
@@ -159,6 +159,8 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const router = useRouter();
+	const { trusted } = useTrusted();
+
 	const [searchTable, setSearchTable] = useState(() => {
 		const paramTable = searchParams.get("table");
 		return getTableNameSafe(paramTable);
@@ -166,9 +168,11 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	const [searchTree, setSearchTree] = useState<SearchGroupNode>(() => searchTreeFromSearchParams(searchParams));
 	const searchParamsKey = searchParams.toString();
 	const [prevSearchParamsKey, setPrevSearchParamsKey] = useState(searchParamsKey);
+
 	const formRef = useRef<HTMLFormElement>(null);
 	const helpModalRef = useRef<HTMLDialogElement>(null);
 	const apiFieldsModalRef = useRef<HTMLDialogElement>(null);
+
 	const [apiCopied, setApiCopied] = useState(false);
 	const [apiDropdownOpen, setApiDropdownOpen] = useState(false);
 	const apiDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -523,6 +527,11 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		}
 
 		const newParams = new URLSearchParams();
+
+		if (trusted) {
+			newParams.set("trusted", "true");
+		}
+
 		if (advancedStr) {
 			newParams.set("advanced", advancedStr);
 		}
@@ -1010,8 +1019,7 @@ function SearchGroupComponent({
 	footer?: ReactNode;
 	onHelpClick?: () => void;
 } & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
+	{ searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true }
 )) {
 	function updateGroup(updater: (group: SearchGroupNode) => void) {
 		const clone = { ...group, children: [...group.children] } as SearchGroupNode;
@@ -1212,16 +1220,14 @@ function SearchRuleComponent({
 	node: SearchRuleNode;
 	onChange: (node: SearchRuleNode | null) => void;
 } & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
+	{ searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true }
 )) {
 	const paramsArray = node.initialParams;
 	const [type, setType] = useState(noTable || (paramsArray && paramsArray.length === 4) ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
 		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as
-			| Uncapitalize<Prisma.ModelName>
-			| ""
+			Uncapitalize<Prisma.ModelName> | ""
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 
@@ -1292,7 +1298,7 @@ function SearchRuleComponent({
 						Select {noTable ? "Table" : "Relation"}
 					</option>
 					{TableNames.reduce((acc, t) => {
-						if (!searchTable || (t !== searchTable && getRelationPath(searchTable, t))) {
+						if (!searchTable || (t !== searchTable && TableMetadata[searchTable].relationPaths[t])) {
 							acc.push(
 								<option key={t} title={t}>
 									{t}

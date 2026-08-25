@@ -12,11 +12,7 @@ const segOn = "bg-primary text-primary-content shadow-md";
 const segOff = "bg-base-200/90 text-base-content hover:bg-base-300";
 
 function IconWrap({ children }: { children: ReactNode }) {
-	return (
-		<span className="flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">
-			{children}
-		</span>
-	);
+	return <span className="flex h-5 w-5 shrink-0 items-center justify-center [&_svg]:h-5 [&_svg]:w-5">{children}</span>;
 }
 
 export default function ActionBar({

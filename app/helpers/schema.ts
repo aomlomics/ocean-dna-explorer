@@ -1,9 +1,8 @@
 import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
 import { Prisma } from "../generated/prisma/client";
-import TableMetadata, { DataTableNames, RelationMetadata, TableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
-import { capitalizeTable } from "./utils";
 import { DbType } from "@/types/globals";
 import { JsonValue } from "@prisma/client/runtime/client";
 
@@ -239,6 +238,7 @@ export function parseSchemaToObject(
 			//replace the value with the DeadValue equivalent
 			obj[field] = DeadValueEnum[value as keyof typeof DeadValueEnum];
 		} else if (type === "float" || type === "integer") {
+			//TODO: handle dashes (and handle negative numbers)
 			const [start, end, ...rest] = value.split(TypeSeparators[type]).map((v) => v.trim());
 
 			if (start && end && !rest.length) {
@@ -308,57 +308,6 @@ export function parseSchemaToObject(
 			//continue as normal
 			obj[field] = value;
 		}
-	}
-}
-
-export function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
-	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
-	const visited = new Set() as Set<Prisma.ModelName>;
-
-	const capsTarget = capitalizeTable(target);
-	while (queue.length) {
-		const [curr, [...path]] = queue.shift()!;
-		path.push(curr);
-
-		if (curr === capsTarget) {
-			if (!path.length) {
-				return;
-			}
-
-			//convert to path of relation metadata
-			const pathRelations = [] as RelationMetadata[];
-			path.reduce((prev, t) => {
-				pathRelations.push(TableMetadata[prev].relations.find((rel) => rel.table === t)!);
-				return t;
-			});
-			return pathRelations as [RelationMetadata, ...RelationMetadata[]];
-		}
-
-		if (
-			!visited.has(curr) && //skip visited tables
-			//Project restrictions
-			(curr !== "Project" || //base case
-				path.length === 1) //starting at Project
-		) {
-			for (const rel of TableMetadata[curr].relations) {
-				if (
-					//Analysis restrictions
-					(curr !== "Analysis" || //base case
-						rel.table === "Project" || //Analysis to Project
-						rel.table === "Assay" || //Analysis to Assay
-						path.includes("Project") || //Project to Analysis
-						path.length === 1) && //starting at Analysis
-					//Assay restrictions
-					(curr !== "Assay" || //base case
-						rel.table === "AssayPrep" || //Assay to AssayPrep
-						(path.includes("AssayPrep") && path.length === 2) || //starting at AssayPrep to Assay
-						path.length === 1) //starting at Assay
-				) {
-					queue.push([rel.table, path]);
-				}
-			}
-		}
-		visited.add(curr);
 	}
 }
 

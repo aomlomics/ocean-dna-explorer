@@ -1,12 +1,12 @@
 import { target_gene } from "@/app/generated/prisma/client";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 
 export default async function Assay() {
-	const assays = await prisma.assay.findMany({
+	const assays = await trustedPrisma.assay.findMany({
 		select: {
 			target_subfragment: true,
 			pcr_primer_forward: true,

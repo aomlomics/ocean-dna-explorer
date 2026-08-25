@@ -169,12 +169,7 @@ export default function GbifImage({
 					</p>
 				</div>
 				{activeSrc ? (
-					<ImagePreviewModal
-						isOpen={previewOpen}
-						onClose={() => setPreviewOpen(false)}
-						src={activeSrc}
-						alt={altText}
-					/>
+					<ImagePreviewModal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} src={activeSrc} alt={altText} />
 				) : null}
 			</>
 		);

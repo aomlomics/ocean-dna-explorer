@@ -69,7 +69,7 @@ export default function ClusterGroup({
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setVersion((v) => v + 1);
-	}, [shapes, legendInfo, pointSize, pointSizeStep, radius]);
+	}, [shapes, pointsInside, legendInfo, pointSize, pointSizeStep, radius]);
 
 	return (
 		<MarkerClusterGroup

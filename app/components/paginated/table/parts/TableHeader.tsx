@@ -49,7 +49,7 @@ export default function TableHeader({
 					className="px-3 py-2 z-40 bg-base-100"
 				>
 					<button
-						className="cursor-pointer select-none flex justify-between mb-1"
+						className="cursor-pointer select-none flex justify-between mb-1 w-full"
 						onClick={() =>
 							orderBy.field === title
 								? orderBy.order === "asc"
@@ -129,7 +129,7 @@ export default function TableHeader({
 								className="bg-base-100"
 							>
 								<button
-									className="flex justify-between select-none mb-1 cursor-pointer"
+									className="flex justify-between select-none mb-1 cursor-pointer w-full"
 									onClick={() =>
 										orderBy.field === head
 											? orderBy.order === "asc"
@@ -210,7 +210,7 @@ export default function TableHeader({
 								className="bg-base-100"
 							>
 								<button
-									className="flex justify-between select-none mb-1 cursor-pointer"
+									className="flex justify-between select-none mb-1 cursor-pointer w-full"
 									onClick={() =>
 										orderBy.field === head
 											? orderBy.order === "asc"

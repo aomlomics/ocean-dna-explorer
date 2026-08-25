@@ -9,7 +9,7 @@ import Link from "next/link";
 import distinctColors from "distinct-colors";
 import { TaxonomicRanks } from "@/types/objects";
 import { TaxonomyPartial } from "@/prisma/generated/zod";
-import { exploreTaxonomyUrl } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 ChartJS.register(ArcElement, Tooltip);
 
@@ -210,7 +210,7 @@ function CustomLegend({
 								/>
 								<div className="flex-1 min-w-0 flex items-center gap-2">
 									<Link
-										href={exploreTaxonomyUrl(labels[index]!)}
+										href={exploreUrl({ table: "taxonomy", taxonomy: labels[index]! })}
 										className="text-sm font-medium truncate transition-colors"
 										style={{ color: textColor }}
 										title={labels[index]}

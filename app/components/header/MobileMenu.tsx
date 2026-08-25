@@ -160,29 +160,17 @@ export default function MobileMenu() {
 							<summary className="text-base">Learn</summary>
 							<ul className="w-full max-w-full p-2">
 								<li className="py-1">
-									<Link
-										href="/learn/edna101"
-										onClick={handleClose}
-										className="whitespace-normal wrap-break-word"
-									>
+									<Link href="/learn/edna101" onClick={handleClose} className="whitespace-normal wrap-break-word">
 										eDNA 101
 									</Link>
 								</li>
 								<li className="py-1">
-									<Link
-										href="/learn/impact"
-										onClick={handleClose}
-										className="whitespace-normal wrap-break-word"
-									>
+									<Link href="/learn/impact" onClick={handleClose} className="whitespace-normal wrap-break-word">
 										Impact
 									</Link>
 								</li>
 								<li className="py-1">
-									<Link
-										href="/learn/discoveries"
-										onClick={handleClose}
-										className="whitespace-normal wrap-break-word"
-									>
+									<Link href="/learn/discoveries" onClick={handleClose} className="whitespace-normal wrap-break-word">
 										Make your own Discoveries
 									</Link>
 								</li>

@@ -1,6 +1,18 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
 import { ZodEnum, ZodObject, ZodType } from "zod";
-import { Prisma } from "@/app/generated/prisma/client";
+import {
+	Analysis,
+	Assay,
+	AssayPrep,
+	Assignment,
+	Feature,
+	Library,
+	Occurrence,
+	Prisma,
+	Project,
+	Sample,
+	Taxonomy
+} from "@/app/generated/prisma/client";
 import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { TaxonomicRanks } from "./objects";
 
@@ -10,12 +22,17 @@ export type RelationMetadata = Readonly<{
 	type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
 }>;
 
+type RelationPaths = Partial<
+	Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, readonly [RelationMetadata, ...RelationMetadata[]]>
+>;
+
 export type TableMetadataValue = Readonly<{
 	plural: string;
 	description: string;
 	schema: Readonly<ZodObject<Record<string, any>>>;
 	enumSchema: Readonly<ZodEnum<Record<string, string>>>;
 	relations: readonly RelationMetadata[];
+	relationPaths: Readonly<RelationPaths>;
 	titleField: string | readonly string[];
 	subFields?: readonly string[];
 	fieldOrder?: readonly string[];
@@ -232,9 +249,10 @@ const TableMetadata = {
 	}
 } as Record<
 	Uncapitalize<Prisma.ModelName>,
-	Omit<TableMetadataValue, "relations"> & {
+	Omit<TableMetadataValue, "relations" | "relationPaths"> & {
 		relationsSchema?: ZodType<any>;
 		relations?: TableMetadataValue["relations"];
+		relationPaths?: TableMetadataValue["relationPaths"];
 	}
 >;
 
@@ -262,9 +280,7 @@ const relations = Object.entries(TableMetadata).reduce(
 	{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
 );
 
-for (const e in TableMetadata) {
-	const table = e as Uncapitalize<Prisma.ModelName>;
-
+for (const table of TableNames) {
 	delete TableMetadata[table].relationsSchema;
 	TableMetadata[table].relations = relations[table].map((rel) => {
 		let type = "" as "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
@@ -305,15 +321,125 @@ for (const e in TableMetadata) {
 	});
 }
 
+//assemble relational path metadata
+function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
+	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
+	const visited = new Set() as Set<Prisma.ModelName>;
+
+	const capsTarget = capitalizeTable(target);
+	while (queue.length) {
+		const [curr, [...path]] = queue.shift()!;
+		path.push(curr);
+
+		if (curr === capsTarget) {
+			if (!path.length) {
+				return;
+			}
+
+			//convert to path of relation metadata
+			const pathRelations = [] as RelationMetadata[];
+			path.reduce((prev, t) => {
+				pathRelations.push(TableMetadata[uncapitalizeTable(prev)].relations!.find((rel) => rel.table === t)!);
+				return t;
+			});
+			return pathRelations as [RelationMetadata, ...RelationMetadata[]];
+		}
+
+		if (
+			!visited.has(curr) && //skip visited tables
+			//Project restrictions
+			(curr !== "Project" || //base case
+				path.length === 1) //starting at Project
+		) {
+			for (const rel of TableMetadata[uncapitalizeTable(curr)].relations!) {
+				if (
+					//Analysis restrictions
+					(curr !== "Analysis" || //base case
+						rel.table === "Project" || //Analysis to Project
+						rel.table === "Assay" || //Analysis to Assay
+						path.includes("Project") || //Project to Analysis
+						path.length === 1) && //starting at Analysis
+					//Assay restrictions
+					(curr !== "Assay" || //base case
+						rel.table === "AssayPrep" || //Assay to AssayPrep
+						(path.includes("AssayPrep") && path.length === 2) || //starting at AssayPrep to Assay
+						path.length === 1) //starting at Assay
+				) {
+					queue.push([rel.table, path]);
+				}
+			}
+		}
+		visited.add(curr);
+	}
+}
+
+for (const start of TableNames) {
+	const paths = {} as RelationPaths;
+
+	for (const target of TableNames) {
+		if (start === target) continue;
+
+		const path = getRelationPath(start, target);
+
+		if (path) {
+			paths[target] = path;
+			paths[capitalizeTable(target)] = paths[target];
+		}
+	}
+
+	TableMetadata[start].relationPaths = paths;
+}
+
 //duplicate keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
-for (const model of Object.values(Prisma.ModelName)) {
+for (const table of TableNames) {
 	(
 		TableMetadata as Record<
 			Uncapitalize<Prisma.ModelName> | Prisma.ModelName,
 			(typeof TableMetadata)[keyof typeof TableMetadata]
 		>
-	)[model] = TableMetadata[uncapitalizeTable(model)];
+	)[capitalizeTable(table)] = TableMetadata[table];
 }
 
 export default TableMetadata as Readonly<Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, TableMetadataValue>>;
+
+export function exploreUrl(
+	args: { params?: Record<string, string> | URLSearchParams; hash?: string } & (
+		| { table: "project"; project_id: Project["project_id"] }
+		| { table: "sample"; project_id: Sample["project_id"]; samp_name: Sample["samp_name"] }
+		| { table: "assay"; assay_name: Assay["assay_name"] }
+		| { table: "assayPrep"; project_id: AssayPrep["project_id"]; assay_name: AssayPrep["assay_name"] }
+		| { table: "library"; project_id: Library["project_id"]; lib_id: Library["lib_id"] }
+		| { table: "analysis"; project_id: Analysis["project_id"]; analysis_run_name: Analysis["analysis_run_name"] }
+		| {
+				table: "occurrence";
+				project_id: Occurrence["project_id"];
+				analysis_run_name: Occurrence["analysis_run_name"];
+				lib_id: Occurrence["lib_id"];
+				featureid: Occurrence["featureid"];
+		  }
+		| {
+				table: "assignment";
+				project_id: Assignment["project_id"];
+				analysis_run_name: Assignment["analysis_run_name"];
+				featureid: Assignment["featureid"];
+		  }
+		| { table: "feature"; featureid: Feature["featureid"] }
+		| { table: "taxonomy"; taxonomy: Taxonomy["taxonomy"] }
+	)
+) {
+	const { table, params, hash, ...titleFieldObj } = args;
+	let extra = "";
+	if (params) extra += "?" + new URLSearchParams(params);
+	if (hash) extra += "#" + hash;
+
+	if (typeof TableMetadata[table].titleField === "string") {
+		return `/explore/${table}/${encodeURIComponent(
+			titleFieldObj[TableMetadata[table].titleField as keyof typeof titleFieldObj]
+		)}${extra}`;
+	} else {
+		return `/explore/${table}/${TableMetadata[table].titleField
+			.map((f) => encodeURIComponent(titleFieldObj[f as keyof typeof titleFieldObj]))
+			.join("/")}${extra}`;
+	}
+}

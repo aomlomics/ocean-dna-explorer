@@ -51,7 +51,7 @@ export default function AddImageButton({
 		const url = (
 			await upload(`${homePage ? "carousel" : "images"}/${encodeURIComponent(imageFile.name)}`, imageFile, {
 				access: "public",
-				handleUploadUrl: "/api/file/upload",
+				handleUploadUrl: "/api/internal/file/upload",
 				multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
 			})
 		).url;

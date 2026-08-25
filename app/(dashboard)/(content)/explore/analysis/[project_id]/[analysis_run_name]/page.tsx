@@ -1,4 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
@@ -19,7 +19,8 @@ import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTax
 import { Suspense } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { notFound, redirect } from "next/navigation";
-import { decodeRouteParams, exploreAnalysisUrl, exploreProjectUrl } from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
+import { exploreUrl } from "@/types/tableMetadata";
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -35,10 +36,10 @@ export default async function Analysis_run_name({
 
 	const { view } = await searchParams;
 	if (view !== undefined) {
-		redirect(exploreAnalysisUrl(project_id, analysis_run_name));
+		redirect(exploreUrl({ table: "analysis", project_id, analysis_run_name }));
 	}
 
-	const analysis = await prisma.analysis.findUnique({
+	const analysis = await trustedPrisma.analysis.findUnique({
 		where: {
 			project_id_analysis_run_name: {
 				project_id,
@@ -88,7 +89,7 @@ export default async function Analysis_run_name({
 						</Link>
 					</li>
 					<li>
-						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+						<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 							{project_id}
 						</Link>
 					</li>
@@ -114,7 +115,7 @@ export default async function Analysis_run_name({
 				</div>
 				<p className="text-lg text-base-content/70">
 					Part of the{" "}
-					<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus">
+					<Link href={exploreUrl({ table: "project", project_id })} className="text-primary hover:text-primary-focus">
 						{project_id}
 					</Link>{" "}
 					project
@@ -126,7 +127,7 @@ export default async function Analysis_run_name({
 				<div className="lg:col-span-2 space-y-6">
 					<Map
 						query={async () =>
-							await prisma.sample.findMany({
+							await trustedPrisma.sample.findMany({
 								where: {
 									Libraries: {
 										some: {
@@ -188,7 +189,7 @@ export default async function Analysis_run_name({
 							<StatCard
 								title="Samples"
 								query={async () =>
-									await prisma.sample.count({
+									await trustedPrisma.sample.count({
 										where: {
 											Libraries: {
 												some: {
@@ -301,7 +302,7 @@ async function TaxonomyVisualizeSuspense({
 	project_id: Analysis["project_id"];
 	analysis_run_name: Analysis["analysis_run_name"];
 }) {
-	const { occurrences, assignments, taxonomies, samples } = await prisma.$transaction(
+	const { occurrences, assignments, taxonomies, samples } = await trustedPrisma.$transaction(
 		async (tx) => {
 			const occurrences = await tx.occurrence.findMany({
 				where: {

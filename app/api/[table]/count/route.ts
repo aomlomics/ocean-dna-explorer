@@ -1,5 +1,4 @@
-import { prisma } from "@/app/helpers/prisma";
-import { deepWhere, parseApiQuery } from "@/app/helpers/queries";
+import { deepWhere, parseApiQuery } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import { NetworkPacket } from "@/types/globals";
@@ -7,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { fetchBlast } from "@/app/helpers/blast";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 
 export async function GET(
 	request: Request,
@@ -24,7 +24,7 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const { query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
+		const { trusted, query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
 			features: {
 				filters: true,
 				advanced: true,
@@ -33,10 +33,11 @@ export async function GET(
 			},
 			sampleWhere: true
 		});
+		const client = trusted ? trustedPrisma : prisma;
 
 		//replace the where with samp_names that match the query and are inside the shapes
 		if (sampleWhere) {
-			const samples = await prisma.sample.findMany({
+			const samples = await client.sample.findMany({
 				where: sampleWhere,
 				select: {
 					samp_name: true,
@@ -69,7 +70,7 @@ export async function GET(
 		}
 
 		//@ts-expect-error dynamically accessing prisma client
-		let result = await prisma[model].count(query);
+		let result = await client[model].count(query);
 
 		if (result) {
 			//don't do this if already done

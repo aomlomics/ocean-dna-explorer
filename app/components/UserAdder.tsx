@@ -254,19 +254,11 @@ function UserDisplay({
 			</span>
 			{deletable &&
 				(disabled ? (
-					<button
-						className="btn btn-sm btn-circle btn-ghost text-success"
-						onClick={onAdd}
-						disabled={parentDisabled}
-					>
+					<button className="btn btn-sm btn-circle btn-ghost text-success" onClick={onAdd} disabled={parentDisabled}>
 						✓
 					</button>
 				) : (
-					<button
-						className="btn btn-sm btn-circle btn-ghost text-red-400"
-						onClick={onDelete}
-						disabled={parentDisabled}
-					>
+					<button className="btn btn-sm btn-circle btn-ghost text-red-400" onClick={onDelete} disabled={parentDisabled}>
 						✕
 					</button>
 				))}

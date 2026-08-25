@@ -18,18 +18,15 @@ export async function POST(request: Request) {
 				const { userId, sessionClaims } = await auth();
 				const role = sessionClaims?.metadata.role;
 
-				if (!userId) {
+				if (!userId || !role || !RolePermissions[role].includes("contribute")) {
 					console.log("Blob upload unauthorized");
 					throw new Error("Unauthorized");
-				}
-				if (!role || !RolePermissions[role].includes("contribute")) {
-					console.log("Blob upload forbidden for", userId, "with role", role);
-					throw new Error("Forbidden");
 				}
 
 				return {
 					allowedContentTypes: ["text/tab-separated-values", "image/*"],
 					addRandomSuffix: true,
+					maximumSizeInBytes: 10 * 1024 * 1024 * 1024, //10GB
 					tokenPayload: JSON.stringify({
 						userId
 					})

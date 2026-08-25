@@ -46,7 +46,7 @@ export default function ImagePreviewModal({ isOpen, onClose, src, alt }: ImagePr
 					alt={alt}
 					width={1920}
 					height={1080}
-					unoptimized  //solves unknown hostname ESlint issue for image
+					unoptimized //solves unknown hostname ESlint issue for image
 					className="h-auto max-h-[90vh] w-auto max-w-[95vw] cursor-zoom-out object-contain"
 				/>
 			</div>

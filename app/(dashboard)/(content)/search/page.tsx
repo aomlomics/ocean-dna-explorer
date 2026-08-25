@@ -6,7 +6,7 @@ import TableMetadata from "@/types/tableMetadata";
 import TableInfo from "@/app/components/TableInfo";
 import SearchContent from "@/app/components/search/SearchContent";
 import { redirect } from "next/navigation";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 
 export default async function Search({
 	searchParams
@@ -22,7 +22,7 @@ export default async function Search({
 		redirect("/search?table=project");
 	}
 
-	const assays = await prisma.assay.findMany({
+	const assays = await trustedPrisma.assay.findMany({
 		where: {
 			Analyses: {
 				some: {}

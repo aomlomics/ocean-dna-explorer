@@ -1,11 +1,11 @@
 import Link from "next/link";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import DataDisplay from "@/app/components/DataDisplay";
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
-import { decodeRouteParams, exploreAssayUrl, exploreProjectUrl } from "@/app/helpers/utils";
+import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 
 export default async function Project_id_Assay_name({
@@ -15,7 +15,7 @@ export default async function Project_id_Assay_name({
 }) {
 	const { project_id, assay_name } = await decodeRouteParams(params);
 
-	const assayPrep = await prisma.assayPrep.findUnique({
+	const assayPrep = await trustedPrisma.assayPrep.findUnique({
 		where: {
 			project_id_assay_name: {
 				project_id,
@@ -65,7 +65,10 @@ export default async function Project_id_Assay_name({
 				<p className="text-lg text-base-content/70 max-w-4xl">
 					Assay preparation for{" "}
 					{assay ? (
-						<Link href={exploreAssayUrl(assay_name)} className="text-primary hover:text-primary-focus break-all">
+						<Link
+							href={exploreUrl({ table: "assay", assay_name })}
+							className="text-primary hover:text-primary-focus break-all"
+						>
 							assay {assay_name}
 						</Link>
 					) : (
@@ -73,7 +76,10 @@ export default async function Project_id_Assay_name({
 					)}{" "}
 					in project{" "}
 					{project ? (
-						<Link href={exploreProjectUrl(project_id)} className="text-primary hover:text-primary-focus break-all">
+						<Link
+							href={exploreUrl({ table: "project", project_id })}
+							className="text-primary hover:text-primary-focus break-all"
+						>
 							{project_id}
 						</Link>
 					) : (
@@ -102,7 +108,7 @@ export default async function Project_id_Assay_name({
 						)}
 
 						{project && (
-							<Link href={exploreProjectUrl(project_id)} className="group block w-2/3">
+							<Link href={exploreUrl({ table: "project", project_id })} className="group block w-2/3">
 								<div className="bg-base-200 p-4 rounded-lg hover:bg-base-300 transition-colors flex flex-col items-center text-center max-w-xs mx-auto">
 									<div className="w-12 h-12 mb-2 flex items-center justify-center text-primary">
 										<ProjectIcon />

@@ -9,8 +9,9 @@ import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import TableMetadata from "@/types/tableMetadata";
-import { buildWhereParams } from "@/app/helpers/queries";
+import { buildWhereParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function Pagination({
 	table,
@@ -26,6 +27,7 @@ export default function Pagination({
 	ignoreParams?: string[];
 }) {
 	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
 	const [page, setPage] = useState(1);
 
 	function getQuery(dir?: 1 | -1) {
@@ -33,6 +35,10 @@ export default function Pagination({
 			take: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});
+
+		if (trusted) {
+			query.set("trusted", "true");
+		}
 
 		let whereQuery = {} as Record<string, string>;
 		if (where) {
@@ -48,7 +54,7 @@ export default function Pagination({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
@@ -79,6 +85,10 @@ export default function Pagination({
 		);
 	}
 
+	function handlePageHover(dir = 1 as 1 | -1) {
+		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
+	}
+
 	return (
 		<div className="space-y-4">
 			{/* Pagination Controls */}
@@ -87,7 +97,7 @@ export default function Pagination({
 				take={take}
 				count={data.count}
 				setPage={setPage}
-				handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
+				handlePageHover={handlePageHover}
 			/>
 
 			<div className="flex flex-col gap-2">
@@ -145,7 +155,7 @@ export default function Pagination({
 				take={take}
 				count={data.count}
 				setPage={setPage}
-				handlePageHover={(dir = 1 as 1 | -1) => preload(`/api/${table}/pagination?${getQuery(dir)}`, fetcher)}
+				handlePageHover={handlePageHover}
 			/>
 		</div>
 	);

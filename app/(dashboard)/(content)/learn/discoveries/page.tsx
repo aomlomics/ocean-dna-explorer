@@ -41,8 +41,8 @@ export default function DiscoveriesPage() {
 								</h3>
 								<p className="text-base text-base-content/80 leading-relaxed mb-6">
 									Search projects, samples, and occurrences. Build filters and relations in the UI, then use{" "}
-									<span className="font-medium text-base-content">Copy as API query</span> to copy the URL and get
-									that data outside the app.
+									<span className="font-medium text-base-content">Copy as API query</span> to copy the URL and get that
+									data outside the app.
 								</p>
 								<ul className="space-y-3 mb-8">
 									{[
@@ -146,8 +146,8 @@ export default function DiscoveriesPage() {
 								</h3>
 								<p className="text-base text-base-content/80 leading-relaxed mb-6">
 									Maps are tailored to each part of the site and the level you are working at. Draw polygons, view
-									search hits on the map, and filter by metadata such as taxonomy, temperature, salinity, or any
-									other fields you have.
+									search hits on the map, and filter by metadata such as taxonomy, temperature, salinity, or any other
+									fields you have.
 								</p>
 								<ul className="space-y-3 mb-8">
 									{[
@@ -248,9 +248,9 @@ export default function DiscoveriesPage() {
 									Build charts directly in your browser
 								</h3>
 								<p className="text-base text-base-content/80 leading-relaxed mb-6">
-									Filter your input data with the search query builder, then open sample scatter plots or taxonomy
-									bar charts. Pick axes, ranks, and absolute or relative abundance. Diversity metrics are computed
-									on the backend from your filters. Pan, zoom, and copy the chart image.
+									Filter your input data with the search query builder, then open sample scatter plots or taxonomy bar
+									charts. Pick axes, ranks, and absolute or relative abundance. Diversity metrics are computed on the
+									backend from your filters. Pan, zoom, and copy the chart image.
 								</p>
 								<ul className="space-y-3 mb-8">
 									{[

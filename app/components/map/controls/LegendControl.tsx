@@ -1,38 +1,41 @@
 "use client";
 
-import { Dispatch, ReactNode, RefObject, SetStateAction, useState } from "react";
+import { Dispatch, ReactNode, RefObject, SetStateAction, useState, MouseEvent } from "react";
 import { Map } from "leaflet";
 import { Prisma } from "@/app/generated/prisma/client";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
-import { DEFAULT_COLOR, DEFAULT_PALETTE, LEGEND_VALUES_LIMIT, LegendInfo } from "../utils/mapUtils";
+import { DEFAULT_COLOR, DEFAULT_PALETTE, getMapLegendField, LEGEND_VALUES_LIMIT, LegendInfo } from "../utils/mapUtils";
 import InfoButton from "../../InfoButton";
 import TableMetadata from "@/types/tableMetadata";
 import ResetButtonMap from "../utils/ResetButtonMap";
-import chroma from "chroma-js";
+import chroma, { Color } from "chroma-js";
 import Link from "next/link";
+import useMapLocations from "../utils/useMapLocations";
 
 export default function LegendControl({
 	legend,
 	legendInfo,
 	setLegendInfo,
-	getMapLegendField,
 	setLoading,
 	legendOptions,
 	userDefinedOptions,
 	mapRef,
+	table,
+	reducedPoints,
 	titleTable,
 	defaultLegend
 }: {
 	legend: boolean;
 	legendInfo: LegendInfo;
 	setLegendInfo: Dispatch<SetStateAction<LegendInfo>>;
-	getMapLegendField: (field: string) => LegendInfo;
 	setLoading: Dispatch<SetStateAction<boolean>>;
 	legendOptions: string[];
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
+	table: Uncapitalize<Prisma.ModelName>;
+	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
 	titleTable?: Uncapitalize<Prisma.ModelName>;
 	defaultLegend?: LegendInfo;
 }) {
@@ -81,7 +84,7 @@ export default function LegendControl({
 									//give control back to browser to display loading
 									setLoading(true);
 									await new Promise((resolve) => setTimeout(resolve, 1));
-									setLegendInfo(getMapLegendField(field));
+									setLegendInfo(getMapLegendField({ field, userDefinedOptions, reducedPoints, table }));
 								}}
 							>
 								<option disabled value="">
@@ -176,7 +179,9 @@ export default function LegendControl({
 							)}
 						</div>
 
-						<Legend legendInfo={legendInfo} setLegendInfo={setLegendInfo} />
+						<div className="flex flex-col ml-1 mr-2 border-t-2 border-primary mt-2 pt-3 pb-2 overflow-y-auto overflow-x-hidden">
+							<Legend legendInfo={legendInfo} setLegendInfo={setLegendInfo} />
+						</div>
 					</div>
 				</ResizableMapContainer>
 			</CollapsibleMapContainer>
@@ -200,6 +205,7 @@ function Legend({
 			<div className="flex flex-col items-center">
 				<div
 					className="w-full flex items-center justify-center rounded-md p-2 tooltip tooltip-secondary before:text-primary-content"
+					//TODO: enable tooltip once daisyui overflow bug is fixed
 					// data-tip={legendInfo.palette}
 					style={{
 						backgroundImage: `linear-gradient(to right, ${chroma.brewer[
@@ -225,10 +231,7 @@ function Legend({
 				</div>
 				{legendInfo.someNoValue ? (
 					//TODO: change color of no value label if palette has red
-					<div className="flex gap-2 items-center">
-						<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
-						<div className="text-xs text-nowrap">No value</div>
-					</div>
+					<LegendItem value="No value" color={DEFAULT_COLOR} />
 				) : (
 					<></>
 				)}
@@ -242,76 +245,125 @@ function Legend({
 
 		if (colorMapArray.length === 0) {
 			return (
-				<div className="flex gap-2 items-center">
-					<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: DEFAULT_COLOR.hex() }}></div>
-					<div className="text-xs text-nowrap">
-						{legendInfo.tooManyOptions ? `Too many values (>${LEGEND_VALUES_LIMIT})` : "No value"}
-					</div>
-				</div>
+				<LegendItem
+					value={legendInfo.tooManyOptions ? `Too many values (>${LEGEND_VALUES_LIMIT})` : "No value"}
+					color={DEFAULT_COLOR}
+				/>
 			);
 		} else if (colorMapArray.length === 1) {
 			const [key, color] = colorMapArray[0]!;
 
-			return (
-				<div className="flex gap-2 items-center">
-					<div className="aspect-square w-[1em] h-[1em]" style={{ backgroundColor: color.hex() }}></div>
-					{table ? (
-						<Link
-							href={`/explore/${table}/${encodeURIComponent(key)}`}
-							className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
-								legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-							}`}
-						>
-							{key}
-						</Link>
-					) : (
-						<div className="text-xs text-nowrap">{key}</div>
-					)}
-				</div>
-			);
+			return <LegendItem value={key} color={color} link={table && `/explore/${table}/${encodeURIComponent(key)}`} />;
 		} else {
 			return (
 				<>
 					{colorMapArray.map(([key, color]) => (
-						<div key={key} className="flex gap-2 items-center ">
-							<div
-								className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
-								data-tip={legendInfo.hidden?.includes(key) ? "Show" : "Hide"}
-								style={{ backgroundColor: color.hex() }}
-								onClick={(e) => {
-									if (legendInfo.hidden?.includes(key)) {
-										setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-										e.currentTarget.style.background = "";
-										e.currentTarget.style.backgroundColor = color.hex();
-									} else {
-										setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-										e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-										e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
-									}
-								}}
-							></div>
-							{table ? (
-								<Link
-									href={`/explore/${table}/${encodeURIComponent(key)}`}
-									className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
-										legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-									}`}
-								>
-									{key}
-								</Link>
-							) : (
-								<div
-									className={`text-xs text-nowrap ${
-										legendInfo.hidden?.includes(key) ? "line-through text-base-content/50" : ""
-									}`}
-								>
-									{key}
-								</div>
-							)}
-						</div>
+						<LegendItem
+							key={key}
+							value={key}
+							color={color}
+							link={table && `/explore/${table}/${encodeURIComponent(key)}`}
+							onClick={() => {
+								if (legendInfo.hidden?.includes(key)) {
+									setLegendInfo({
+										...legendInfo,
+										hidden: legendInfo.hidden?.filter((e) => e !== key)
+									});
+								} else {
+									setLegendInfo({
+										...legendInfo,
+										hidden: [...(legendInfo.hidden || []), key]
+									});
+								}
+							}}
+							hidden={legendInfo.hidden?.includes(key)}
+						/>
 					))}
 				</>
 			);
 		}
 	}
+}
+
+function LegendItem({
+	value,
+	color,
+	link,
+	onClick,
+	hidden
+}: {
+	value: string;
+	color: Color;
+	link?: string;
+	onClick?: (e: MouseEvent<HTMLDivElement>) => void;
+	hidden?: boolean;
+}) {
+	const colorHex = color.hex();
+
+	const colorIndicator = (
+		<div
+			className={[
+				"relative!",
+				"aspect-square!",
+				"w-[1em]!",
+				"h-[1em]!",
+				"shrink-0!",
+				"select-none!",
+				"overflow-hidden!",
+				onClick ? "cursor-pointer!" : ""
+			].join(" ")}
+			style={{
+				backgroundColor: hidden ? color.alpha(0.5).hex() : colorHex
+			}}
+			onClick={onClick}
+			data-tip={onClick && (hidden ? "Show" : "Hide")}
+		>
+			{hidden && (
+				<span
+					aria-hidden="true"
+					className="absolute! left-1/2! top-1/2! z-10! block! w-[140%]! h-0.5! -bg-black! bg-black! origin-center! -rotate-45! -translate-x-1/2! -translate-y-1/2! pointer-events-none!"
+				/>
+			)}
+		</div>
+	);
+
+	if (link) {
+		return (
+			<div className="flex! items-center! gap-2!">
+				{colorIndicator}
+
+				<Link
+					href={link}
+					className={`
+						w-auto! h-auto!
+						bg-transparent!
+						cursor-pointer!
+						link-primary!
+						link-hover!
+						text-xs!
+						text-nowrap!
+						${hidden ? "line-through! text-base-content/50!" : ""}
+					`}
+				>
+					{value}
+				</Link>
+			</div>
+		);
+	}
+
+	return (
+		<div className="flex! items-center! gap-2!">
+			{colorIndicator}
+
+			<div
+				className={`
+					text-xs!
+					text-nowrap!
+					${hidden ? "line-through! text-base-content/50!" : ""}
+				`}
+			>
+				{value}
+			</div>
+		</div>
+	);
 }

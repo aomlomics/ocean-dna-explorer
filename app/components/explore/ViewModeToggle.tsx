@@ -5,13 +5,7 @@ import { useViewMode } from "./ViewModeContext";
 const sw = 1.75;
 const stroke = "currentColor";
 
-export default function ViewModeToggle({
-	displayMode,
-	toggle
-}: {
-	displayMode?: "table" | "grid";
-	toggle?: true;
-}) {
+export default function ViewModeToggle({ displayMode, toggle }: { displayMode?: "table" | "grid"; toggle?: true }) {
 	const viewCtx = useViewMode();
 	const viewLocked = !toggle;
 	const currentView = viewCtx?.mode ?? displayMode ?? "table";

@@ -1,1 +1,10 @@
-prisma/schema/generated/zod/index.ts
+node_modules
+.next
+
+# Prisma
+app/generated
+prisma/generated
+prismaImages/generated
+
+# TypeScript
+*.tsbuildinfo

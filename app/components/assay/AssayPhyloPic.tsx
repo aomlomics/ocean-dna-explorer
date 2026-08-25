@@ -1,16 +1,16 @@
-import { prisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import AssayPhyloPicImage from "@/app/components/assay/AssayPhyloPicImage";
 
 export default async function AssayPhyloPic({ assay_name }: { assay_name: string }) {
 	// Sum organismQuantity per (analysis_run_name, featureid)
-	const occurrenceSums = await prisma.occurrence.groupBy({
+	const occurrenceSums = await trustedPrisma.occurrence.groupBy({
 		by: ["analysis_run_name", "featureid"],
 		where: { Analysis: { assay_name } },
 		_sum: { organismQuantity: true }
 	});
 
 	// Fetch taxonomy rank data for the same (analysis_run_name, featureid)
-	const assignments = await prisma.assignment.findMany({
+	const assignments = await trustedPrisma.assignment.findMany({
 		where: { Analysis: { assay_name } },
 		select: {
 			analysis_run_name: true,

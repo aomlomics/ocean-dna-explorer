@@ -30,24 +30,24 @@ npm run dev
 ## Local Database Setup / Commands
 
 1. Install [PostgreSQL](https://www.postgresql.org/download/)
-	- Follow instructions per your system, use default parameters (NOTE: Do not change the default port of 5432)
-	- Note your postgres username and password. We recommend username: postgres, password: admin.
+   - Follow instructions per your system, use default parameters (NOTE: Do not change the default port of 5432)
+   - Note your postgres username and password. We recommend username: postgres, password: admin.
 
 2. Create your database using either:
 
-	```bash
-	# In terminal:
-	createdb <dbname>
+   ```bash
+   # In terminal:
+   createdb <dbname>
 
-	# Or in psql:
-	CREATE DATABASE <dbname>;
-	```
+   # Or in psql:
+   CREATE DATABASE <dbname>;
+   ```
 
 3. To view all local databases in psql:
 
-	```sql
-	\l
-	```
+   ```sql
+   \l
+   ```
 
 ### Configure .env File
 
