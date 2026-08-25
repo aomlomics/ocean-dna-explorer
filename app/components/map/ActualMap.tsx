@@ -276,7 +276,7 @@ export default function ActualMap({
 
 				<TileLayer
 					attribution='Powered by <a href="https://www.esri.com/en-us/home" target="_blank">Esri</a>'
-					url={`https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}?token=${process.env.ARCGIS_KEY}`}
+					url="https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}"
 				/>
 
 				<FeatureGroup ref={featureGroupRef}>

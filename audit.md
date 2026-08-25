@@ -427,7 +427,7 @@ Build the upstream URL with `URLSearchParams` so encoding is automatic and struc
 
 ---
 
-#### ![TODO](https://img.shields.io/badge/%E2%9C%97_TODO-dc2626?style=flat-square) P1-8 · Security — No security response headers are configured
+#### ![DONE](https://img.shields.io/badge/%E2%9C%93_DONE-16a34a?style=flat-square) P1-8 · Security — No security response headers are configured
 **Location** `next.config.js` (no `headers()` function; only `experimental.serverActions` and `images.remotePatterns`), `proxy.ts` (no header manipulation)
 
 **Issue**

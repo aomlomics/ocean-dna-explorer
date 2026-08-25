@@ -11,7 +11,6 @@ export default async function Feature() {
 			sequenceLength_ODE: true
 		}
 	});
-	if (!minMaxSeqLength) return <>Loading...</>;
 
 	const tableConfig: FilterConfig[] = [
 		{

@@ -263,15 +263,17 @@ function Legend({
 							value={key}
 							color={color}
 							link={table && `/explore/${table}/${encodeURIComponent(key)}`}
-							onClick={(e) => {
+							onClick={() => {
 								if (legendInfo.hidden?.includes(key)) {
-									setLegendInfo({ ...legendInfo, hidden: legendInfo.hidden?.filter((e) => e !== key) });
-									e.currentTarget.style.background = "";
-									e.currentTarget.style.backgroundColor = color.hex();
+									setLegendInfo({
+										...legendInfo,
+										hidden: legendInfo.hidden?.filter((e) => e !== key)
+									});
 								} else {
-									setLegendInfo({ ...legendInfo, hidden: [...(legendInfo.hidden || []), key] });
-									e.currentTarget.style.background = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 10 10'><path d='M 10 0 L 0 10' fill='none' stroke='black' stroke-width='1' /></svg>")`;
-									e.currentTarget.style.backgroundColor = color.alpha(0.5).hex();
+									setLegendInfo({
+										...legendInfo,
+										hidden: [...(legendInfo.hidden || []), key]
+									});
 								}
 							}}
 							hidden={legendInfo.hidden?.includes(key)}
@@ -296,36 +298,72 @@ function LegendItem({
 	onClick?: (e: MouseEvent<HTMLDivElement>) => void;
 	hidden?: boolean;
 }) {
+	const colorHex = color.hex();
+
+	const colorIndicator = (
+		<div
+			className={[
+				"relative!",
+				"aspect-square!",
+				"w-[1em]!",
+				"h-[1em]!",
+				"shrink-0!",
+				"select-none!",
+				"overflow-hidden!",
+				onClick ? "cursor-pointer!" : ""
+			].join(" ")}
+			style={{
+				backgroundColor: hidden ? color.alpha(0.5).hex() : colorHex
+			}}
+			onClick={onClick}
+			data-tip={onClick && (hidden ? "Show" : "Hide")}
+		>
+			{hidden && (
+				<span
+					aria-hidden="true"
+					className="absolute! left-1/2! top-1/2! z-10! block! w-[140%]! h-0.5! -bg-black! bg-black! origin-center! -rotate-45! -translate-x-1/2! -translate-y-1/2! pointer-events-none!"
+				/>
+			)}
+		</div>
+	);
+
 	if (link) {
 		return (
-			<div className="flex gap-2 items-center ">
-				<div
-					style={{ backgroundColor: color.hex() }}
-					className={`aspect-square w-[1em] h-[1em] ${onClick ? "select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content" : ""}`}
-					data-tip={onClick && (hidden ? "Show" : "Hide")}
-					onClick={onClick}
-				></div>
+			<div className="flex! items-center! gap-2!">
+				{colorIndicator}
+
 				<Link
 					href={link}
-					className={`w-auto! h-auto! bg-transparent! cursor-pointer! link-primary! link-hover! text-xs! text-nowrap! ${
-						hidden ? "line-through text-base-content/50" : ""
-					}`}
+					className={`
+						w-auto! h-auto!
+						bg-transparent!
+						cursor-pointer!
+						link-primary!
+						link-hover!
+						text-xs!
+						text-nowrap!
+						${hidden ? "line-through! text-base-content/50!" : ""}
+					`}
 				>
 					{value}
 				</Link>
 			</div>
 		);
-	} else {
-		return (
-			<div className="flex gap-2 items-center ">
-				<div
-					className="aspect-square w-[1em] h-[1em] select-none cursor-pointer tooltip tooltip-left tooltip-secondary before:text-primary-content"
-					data-tip={hidden ? "Show" : "Hide"}
-					style={{ backgroundColor: color.hex() }}
-					onClick={onClick}
-				></div>
-				<div className={`text-xs text-nowrap ${hidden ? "line-through text-base-content/50" : ""}`}>{value}</div>
-			</div>
-		);
 	}
+
+	return (
+		<div className="flex! items-center! gap-2!">
+			{colorIndicator}
+
+			<div
+				className={`
+					text-xs!
+					text-nowrap!
+					${hidden ? "line-through! text-base-content/50!" : ""}
+				`}
+			>
+				{value}
+			</div>
+		</div>
+	);
 }
