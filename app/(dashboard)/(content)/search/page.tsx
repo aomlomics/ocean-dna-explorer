@@ -8,6 +8,12 @@ import SearchContent from "@/app/components/search/SearchContent";
 import { redirect } from "next/navigation";
 import { trustedPrisma } from "@/app/helpers/prisma";
 
+export const metadata = {
+	title: "Search",
+	description:
+		"Query across related tables with filters, relations, a map, BLAST search, and build API queries from the user interface."
+};
+
 export default async function Search({
 	searchParams
 }: {
