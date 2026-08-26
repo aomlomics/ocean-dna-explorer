@@ -42,9 +42,11 @@ export default function ViewModeToggle({ displayMode, toggle }: { displayMode?: 
 			<button
 				type="button"
 				className={`btn gap-2 rounded-lg border-0 px-3.5 normal-case min-h-10 h-10 shadow-none ${
-					currentView === "grid"
-						? "btn-primary text-primary-content"
-						: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
+					viewLocked
+						? "btn-ghost bg-base-100/70 text-base-content/40 hover:bg-base-100/70 cursor-not-allowed"
+						: currentView === "grid"
+							? "btn-primary text-primary-content"
+							: "btn-ghost bg-base-100/90 text-base-content hover:bg-base-100"
 				}`}
 				onClick={() => !viewLocked && setMode?.("grid")}
 				disabled={viewLocked || !setMode}

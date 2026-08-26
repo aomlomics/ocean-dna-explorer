@@ -24,7 +24,7 @@ export default function ExplorePage({
 	const titleField = TableMetadata[table].titleField;
 
 	return (
-		<div className="grid grid-cols-1 gap-y-4 pt-4">
+		<div className="py-4">
 			<header>
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="text-4xl font-normal text-base-content">
@@ -56,15 +56,17 @@ export default function ExplorePage({
 				</div>
 			</header>
 
-			{children ? <div className="prose max-w-full text-base-content/80">{children}</div> : null}
+			{children ? <div className="prose mt-5 max-w-full text-base-content/80">{children}</div> : null}
 
-			<ExploreControls
-				table={table}
-				tableConfig={tableConfig}
-				toggle={toggle}
-				displayMode={displayMode}
-				tableWhere={tableWhere}
-			/>
+			<div className="mt-5">
+				<ExploreControls
+					table={table}
+					tableConfig={tableConfig}
+					toggle={toggle}
+					displayMode={displayMode}
+					tableWhere={tableWhere}
+				/>
+			</div>
 		</div>
 	);
 }
