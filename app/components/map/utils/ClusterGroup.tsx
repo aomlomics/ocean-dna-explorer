@@ -11,7 +11,7 @@ import {
 } from "./mapUtils";
 import { divIcon } from "leaflet";
 import type { MapShape, MapLocation } from "@/types/globals";
-import { TableMetadataValue } from "@/types/tableMetadata";
+import { type TableMetadataValue } from "@/types/tableMetadata";
 
 function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors

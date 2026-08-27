@@ -1,6 +1,6 @@
 "use client";
 
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { GbifImagePayload } from "./GbifClient";
@@ -10,7 +10,7 @@ import ImagePreviewModal from "../ImagePreviewModal";
 
 type GbifImageProps = {
 	taxonKey: number | string;
-	taxonomy: Taxonomy;
+	taxonomy: TaxonomyModel;
 	altText: string;
 	className?: string;
 	/** When false, no PhyloPic duplicate if GBIF has no photo (parent already shows PhyloPic). Default true (e.g. explore grid). */

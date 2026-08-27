@@ -6,7 +6,7 @@ import DataDisplay from "@/app/components/explore/DataDisplay";
 import EditHistory from "@/app/components/explore/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import type { Analysis } from "@/app/generated/prisma/client";
+import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
@@ -331,8 +331,8 @@ async function TaxonomyVisualizeSuspense({
 	project_id,
 	analysis_run_name
 }: {
-	project_id: Analysis["project_id"];
-	analysis_run_name: Analysis["analysis_run_name"];
+	project_id: AnalysisModel["project_id"];
+	analysis_run_name: AnalysisModel["analysis_run_name"];
 }) {
 	const { occurrences, assignments, taxonomies, samples } = await trustedPrisma.$transaction(
 		async (tx) => {

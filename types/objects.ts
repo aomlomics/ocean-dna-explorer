@@ -1,6 +1,6 @@
 import type { Permission, Role } from "./globals";
 import { z } from "zod";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 
 export const Roles = ["admin", "moderator", "contributor"] as Role[];
 export const Permissions = ["contribute", "manageUsers", "manageDatabase"] as Permission[];
@@ -60,7 +60,7 @@ export const TaxonomicRanks = [
 	"family",
 	"genus",
 	"species"
-] as Array<keyof Omit<Taxonomy, "id" | "taxonomy" | "verbatimIdentification" | "higherClassification">>;
+] as Array<keyof Omit<TaxonomyModel, "id" | "taxonomy" | "verbatimIdentification" | "higherClassification">>;
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
 	domain: "Domains",

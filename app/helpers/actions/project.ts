@@ -14,9 +14,11 @@ import {
 import { parseSchemaToObject } from "../schema";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
-import type { Library, Project, Sample } from "@/app/generated/prisma/client";
 import type { Channel } from "../progress";
 import type {
+	LibraryModel,
+	ProjectModel,
+	SampleModel,
 	AssayCreateManyInput,
 	AssayPrepCreateManyInput,
 	LibraryCreateManyInput,
@@ -34,11 +36,11 @@ async function parseProjectFile({
 	oldChecksum
 }: {
 	channel: Channel;
-	userIds: Project["userIds"];
-	sampleUrl: Project["sampleMetadataFileUrl_ODE"];
-	libraryUrl: Project["libraryMetadataFileUrl_ODE"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
-	oldChecksum?: Project["projectMetadataFileChecksum_ODE"];
+	userIds: ProjectModel["userIds"];
+	sampleUrl: ProjectModel["sampleMetadataFileUrl_ODE"];
+	libraryUrl: ProjectModel["libraryMetadataFileUrl_ODE"];
+	imageFileUrl?: ProjectModel["imageFileUrl_ODE"];
+	oldChecksum?: ProjectModel["projectMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const projectCol = {} as Record<string, string>;
@@ -250,7 +252,7 @@ async function parseLibraryFile({
 	channel: Channel;
 	projectCol: Record<string, string>;
 	assayCols: Record<string, Record<string, string>>;
-	oldChecksum?: Project["libraryMetadataFileChecksum_ODE"];
+	oldChecksum?: ProjectModel["libraryMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const libraries = [] as LibraryCreateManyInput[];
@@ -290,7 +292,7 @@ async function parseLibraryFile({
 			if (record.lib_id) {
 				i++;
 
-				const libraryRow = {} as Library;
+				const libraryRow = {} as LibraryModel;
 				const libraryUserDefined = {} as PrismaJson.UserDefinedType;
 
 				//iterate over each column
@@ -366,7 +368,7 @@ async function parseSampleFile({
 }: {
 	channel: Channel;
 	projectCol: Record<string, string>;
-	oldChecksum?: Project["sampleMetadataFileChecksum_ODE"];
+	oldChecksum?: ProjectModel["sampleMetadataFileChecksum_ODE"];
 }) {
 	try {
 		const samples = [] as SampleCreateManyInput[];
@@ -406,7 +408,7 @@ async function parseSampleFile({
 			if (record.samp_name) {
 				i++;
 
-				const sampleRow = {} as Sample;
+				const sampleRow = {} as SampleModel;
 				const sampleUserDefined = {} as PrismaJson.UserDefinedType;
 
 				for (const [field, v] of Object.entries(record)) {
@@ -486,12 +488,12 @@ export async function parseProjectFiles({
 	projectChannel: Channel;
 	sampleChannel: Channel;
 	libraryChannel: Channel;
-	userIds: Project["userIds"];
-	imageFileUrl?: Project["imageFileUrl_ODE"];
+	userIds: ProjectModel["userIds"];
+	imageFileUrl?: ProjectModel["imageFileUrl_ODE"];
 	oldChecksums?: {
-		projectMd5?: Project["projectMetadataFileChecksum_ODE"];
-		sampleMd5?: Project["sampleMetadataFileChecksum_ODE"];
-		libraryMd5?: Project["libraryMetadataFileChecksum_ODE"];
+		projectMd5?: ProjectModel["projectMetadataFileChecksum_ODE"];
+		sampleMd5?: ProjectModel["sampleMetadataFileChecksum_ODE"];
+		libraryMd5?: ProjectModel["libraryMetadataFileChecksum_ODE"];
 	};
 }) {
 	const projectParseResult = await parseProjectFile({

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { Dispatch, ReactNode, RefObject, SetStateAction, MouseEvent } from "react";
 import type { Map } from "leaflet";
-import type { Prisma } from "@/app/generated/prisma/client";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
@@ -15,7 +14,7 @@ import {
 	type LegendInfo
 } from "../utils/mapUtils";
 import InfoButton from "../../InfoButton";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResetButtonMap from "../utils/ResetButtonMap";
 import chroma, { type Color } from "chroma-js";
 import Link from "next/link";
@@ -41,9 +40,9 @@ export default function LegendControl({
 	legendOptions: string[];
 	userDefinedOptions: Set<string>;
 	mapRef: RefObject<Map | null>;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	defaultLegend?: LegendInfo;
 }) {
 	const [filter, setFilter] = useState("");
@@ -247,7 +246,7 @@ function Legend({
 	} else if (legendInfo.mode === "discreet") {
 		const colorMapArray = Object.entries(legendInfo.colorMap);
 		const table = Object.keys(TableMetadata).find(
-			(table) => TableMetadata[table as Prisma.ModelName].titleField === legendInfo.field
+			(table) => TableMetadata[table as ModelName].titleField === legendInfo.field
 		);
 
 		if (colorMapArray.length === 0) {

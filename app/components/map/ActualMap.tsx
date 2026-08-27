@@ -9,8 +9,7 @@ import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility
 import "leaflet-draw/dist/leaflet.draw.css";
 import "react-leaflet-fullscreen/styles.css";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import type { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata, { type TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import { EditControl } from "react-leaflet-draw-next";
 import { circleToString, getLocationsInsideShapes, getShapesFromUrl, polygonToString } from "@/app/helpers/utils";
 import type { NullLocation, MapShape } from "@/types/globals";
@@ -66,8 +65,8 @@ export default function ActualMap({
 	locations: NullLocation[];
 	where?: Record<string, string>;
 	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;
@@ -337,13 +336,11 @@ export default function ActualMap({
 						radius={clusterRadiusValue ?? 0}
 					>
 						{pointsOrGroups.reduce((acc, loc, i) => {
-							if (
-								!(
-									legendInfo &&
-									legendInfo.mode === "discreet" &&
-									legendInfo.hidden?.includes(loc[legendInfo.field as string])
-								)
-							) {
+							if (!(
+								legendInfo &&
+								legendInfo.mode === "discreet" &&
+								legendInfo.hidden?.includes(loc[legendInfo.field as string])
+							)) {
 								acc.push(
 									<Marker key={i} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 										<PopupWithSearch
@@ -400,13 +397,11 @@ export default function ActualMap({
 								radius={clusterRadiusValue ?? 0}
 							>
 								{locArray.reduce((acc, loc, j) => {
-									if (
-										!(
-											legendInfo &&
-											legendInfo.mode === "discreet" &&
-											legendInfo.hidden?.includes(loc[legendInfo.field as string])
-										)
-									) {
+									if (!(
+										legendInfo &&
+										legendInfo.mode === "discreet" &&
+										legendInfo.hidden?.includes(loc[legendInfo.field as string])
+									)) {
 										acc.push(
 											<Marker key={j} position={{ lat: loc.decimalLatitude, lng: loc.decimalLongitude }}>
 												<PopupWithSearch

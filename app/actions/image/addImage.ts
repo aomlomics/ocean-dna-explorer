@@ -7,7 +7,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
 import { validateBlobs } from "@/app/helpers/withDb";
-import type { Project, Taxonomy } from "@/app/generated/prisma/client";
+import type { ProjectModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import { prisma } from "@/app/helpers/prisma";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { handlePrismaError } from "@/app/helpers/queries";
@@ -16,7 +16,8 @@ import type { AttributionCreateInput, ImageCreateInput } from "@/app/generated/p
 export default async function addImageAction(
 	formData: FormData,
 	newAttribution: boolean,
-	target?: { table: "project"; value: Project["project_id"] } | { table: "taxonomy"; value: Taxonomy["taxonomy"] }
+	target?:
+		{ table: "project"; value: ProjectModel["project_id"] } | { table: "taxonomy"; value: TaxonomyModel["taxonomy"] }
 ): Promise<NetworkPacket> {
 	const url = formData.get("url");
 	if (url && typeof url === "string") {

@@ -1,6 +1,6 @@
 "use server";
 
-import type { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
+import type { AnalysisModel, OccurrenceModel, TagModel } from "@/app/generated/prisma/models";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
@@ -14,8 +14,8 @@ async function doSubmit(
 	analysisChannel: Channel,
 	assignmentsChannel: Channel,
 	occurrencesChannel: Channel,
-	trusted: Analysis["trusted"],
-	tagNames: Tag["tagName"][]
+	trusted: AnalysisModel["trusted"],
+	tagNames: TagModel["tagName"][]
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -51,7 +51,7 @@ async function doSubmit(
 		);
 
 		//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
-		const libIds = new Set() as Set<Occurrence["lib_id"]>;
+		const libIds = new Set() as Set<OccurrenceModel["lib_id"]>;
 		for (const occ of occurrences) {
 			libIds.add(occ.lib_id);
 		}
@@ -168,7 +168,7 @@ async function doSubmit(
 		await occurrencesChannel.stream.message("All checks successful.", 80);
 
 		//check if any libraries have another trusted analysis with shared features
-		const otherTrusted = [] as Analysis["analysis_run_name"][];
+		const otherTrusted = [] as AnalysisModel["analysis_run_name"][];
 		if (trusted) {
 			for (const lib of dbLibraries) {
 				for (const occ of lib.Occurrences) {
@@ -302,11 +302,11 @@ async function doSubmit(
 }
 
 export default async function analysisSubmitAction(
-	analysisFileUrl: Analysis["analysisMetadataFileUrl_ODE"],
-	assignmentsFileUrl: Analysis["asvFileUrl_ODE"],
-	occurrencesFileUrl: Analysis["occurrenceFileUrl_ODE"],
-	trusted: Analysis["trusted"],
-	tagNames: Tag["tagName"][]
+	analysisFileUrl: AnalysisModel["analysisMetadataFileUrl_ODE"],
+	assignmentsFileUrl: AnalysisModel["asvFileUrl_ODE"],
+	occurrencesFileUrl: AnalysisModel["occurrenceFileUrl_ODE"],
+	trusted: AnalysisModel["trusted"],
+	tagNames: TagModel["tagName"][]
 ) {
 	const analysisStream = createProgressStream();
 	const assignmentsStream = createProgressStream();

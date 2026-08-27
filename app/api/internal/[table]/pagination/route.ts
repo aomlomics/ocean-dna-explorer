@@ -11,7 +11,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import type { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/api";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, type ModelName } from "@/types/tableMetadata";
 import type { MapLocation } from "@/types/globals";
 import { getDataTableName, getTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
@@ -182,7 +182,7 @@ export async function GET(
 		}
 
 		//get deep relation data
-		let deepRelsArray = undefined as Uncapitalize<Prisma.ModelName>[] | undefined;
+		let deepRelsArray = undefined as Uncapitalize<ModelName>[] | undefined;
 		const deepRelations = searchParams.get("deepRelations");
 		if (deepRelations) {
 			//get relation tables

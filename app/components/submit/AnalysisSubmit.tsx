@@ -12,7 +12,7 @@ import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
-import { Tag } from "@/app/generated/prisma/client";
+import { TagModel } from "@/app/generated/prisma/models/Tag";
 import AnalysisTag from "../tags/AnalysisTag";
 import { exploreUrl } from "@/types/tableMetadata";
 
@@ -22,7 +22,7 @@ type ResponseSet = {
 	occurrences: NetworkProgressPacket;
 };
 
-export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
+export default function AnalysisSubmit({ tags }: { tags: TagModel[] }) {
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	const [trusted, setTrusted] = useState(false);
 
 	//list of tags to be added to submitted analyses
-	const [selectedTags, setSelectedTags] = useState([] as Tag[]);
+	const [selectedTags, setSelectedTags] = useState([] as TagModel[]);
 
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:
@@ -225,12 +225,10 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			for (const id of analysisIds) {
 				if (typeof id === "string") {
 					//skip files that have already been successfully submitted
-					if (
-						!(
-							responsesRef.current[id] &&
-							Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
-						)
-					) {
+					if (!(
+						responsesRef.current[id] &&
+						Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
+					)) {
 						//gather files
 						files[id] = {
 							analysisFile: (target.elements.namedItem(`analysis_${id}`) as HTMLInputElement).files!.item(0)!,

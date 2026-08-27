@@ -1,8 +1,7 @@
-import type { Prisma } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
 import DynamicMap from "./DynamicMap";
 import type { NullLocation } from "@/types/globals";
-import { TableMetadataValue } from "@/types/tableMetadata";
+import type { ModelName, TableMetadataValue } from "@/types/tableMetadata";
 
 export default function Map({
 	query,
@@ -23,7 +22,7 @@ export default function Map({
 }: {
 	where?: Record<string, string>;
 	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
 	legend?: boolean;
@@ -33,11 +32,10 @@ export default function Map({
 	disableSearch?: true;
 	className?: string;
 } & (
-	| { query: () => Promise<NullLocation[]>; locations?: undefined }
-	| { query?: undefined; locations: NullLocation[] }
+	{ query: () => Promise<NullLocation[]>; locations?: undefined } | { query?: undefined; locations: NullLocation[] }
 ) &
 	(
-		| { titleTable?: Uncapitalize<Prisma.ModelName>; defaultLegendField?: undefined }
+		| { titleTable?: Uncapitalize<ModelName>; defaultLegendField?: undefined }
 		| { titleTable?: undefined; defaultLegendField?: string }
 	)) {
 	return (
@@ -94,8 +92,8 @@ async function SuspenseMap({
 	locations?: NullLocation[];
 	where?: Record<string, string>;
 	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;

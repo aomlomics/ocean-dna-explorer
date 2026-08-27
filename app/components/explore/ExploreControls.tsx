@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type FilterConfig, getActiveFilters } from "./filters/filterHelpers";
-import type { Prisma } from "@/app/generated/prisma/client";
 import TableDisplay from "../paginated/table/TableDisplay";
 import ActionBar from "./ActionBar";
 import TableFilter from "./filters/TableFilter";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { capitalizeTable } from "@/app/helpers/utils";
 import { ViewModeProvider } from "./ViewModeContext";
 import ExploreTabButtons from "./ExploreTabButtons";
@@ -108,7 +107,7 @@ function ControlsBody({
 	displayMode,
 	tableWhere
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	tableConfig: FilterConfig[];
 	toggle?: true;
 	displayMode?: "table" | "grid";
@@ -121,7 +120,7 @@ function ControlsBody({
 	const router = useRouter();
 	const searchRef = useRef<HTMLInputElement>(null);
 	const currentSearch = searchParams.get("search") || "";
-	const plural = TableMetadata[table as Prisma.ModelName]?.plural || table;
+	const plural = TableMetadata[table as ModelName]?.plural || table;
 	const activeFilters = getActiveFilters(searchParams, tableConfig);
 	const activeFilterCount = Object.keys(activeFilters).length;
 
@@ -221,7 +220,7 @@ export default function ExploreControls({
 	tableWhere,
 	toggle
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	tableConfig: FilterConfig[];
 	toggle?: true;
 	displayMode?: "table" | "grid";

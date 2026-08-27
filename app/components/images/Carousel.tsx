@@ -1,6 +1,6 @@
 "use client";
 
-import { Image as DbImage } from "@/app/generated/prismaImages/client";
+import { ImageModel } from "@/app/generated/prismaImages/models/Image";
 import type { Attribution } from "@/prismaImages/generated/zod";
 import Image from "next/image";
 import AttributionBadge from "./AttributionBadge";
@@ -19,7 +19,7 @@ function shuffleImages<T>(list: T[]): T[] {
 	return copy;
 }
 
-export default function Carousel({ images }: { images: (DbImage & { Attribution?: Attribution | null })[] }) {
+export default function Carousel({ images }: { images: (ImageModel & { Attribution?: Attribution | null })[] }) {
 	// Start with the server order so the first client paint matches SSR HTML.
 	// Shuffle after mount; Math.random() during render would mismatch.
 	const [shuffledImages, setShuffledImages] = useState(images);

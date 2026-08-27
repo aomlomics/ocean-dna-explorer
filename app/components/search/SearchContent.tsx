@@ -1,6 +1,6 @@
 "use client";
 
-import type { Assay, BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
+import type { AssayModel, BlastQueryModel, BlastQueryResultModel, SampleModel } from "@/app/generated/prisma/models";
 import DynamicMap from "../map/DynamicMap";
 import MapWrapper from "../map/MapWrapper";
 import TableDisplay from "../paginated/table/TableDisplay";
@@ -8,21 +8,21 @@ import BlastSearch from "./BlastSearch";
 import BlastSearchResult from "./BlastSearchResult";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
 export default function SearchContent({
 	table,
 	assayNames
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
-	assayNames: Assay["assay_name"][];
+	table: Uncapitalize<ModelName>;
+	assayNames: AssayModel["assay_name"][];
 }) {
 	const searchParams = useSearchParams();
 
 	const [extraResults, setExtraResults] = useState({
-		blastResult: undefined as BlastQueryResult[] | undefined,
-		existingBlastDate: undefined as BlastQuery["dateCalculated"] | undefined,
-		samples: undefined as Sample[] | undefined
+		blastResult: undefined as BlastQueryResultModel[] | undefined,
+		existingBlastDate: undefined as BlastQueryModel["dateCalculated"] | undefined,
+		samples: undefined as SampleModel[] | undefined
 	});
 	const [mapKey, setMapKey] = useState("0");
 

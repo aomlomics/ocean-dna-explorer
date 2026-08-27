@@ -1,6 +1,6 @@
 "use client";
 
-import type { Analysis, Tag } from "@/app/generated/prisma/client";
+import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import { type ReactNode, useRef, useState } from "react";
 import Modal from "../Modal";
 import type { NetworkProgressPacket } from "@/types/globals";
@@ -29,15 +29,15 @@ export default function AnalysisEditButton({
 	tags
 }: {
 	analysis: {
-		project_id: Analysis["project_id"];
-		analysis_run_name: Analysis["analysis_run_name"];
-		trusted: Analysis["trusted"];
-		analysisMetadataFileUrl_ODE: Analysis["analysisMetadataFileUrl_ODE"];
-		asvFileUrl_ODE: Analysis["asvFileUrl_ODE"];
-		occurrenceFileUrl_ODE: Analysis["occurrenceFileUrl_ODE"];
-		Tags: Tag[];
+		project_id: AnalysisModel["project_id"];
+		analysis_run_name: AnalysisModel["analysis_run_name"];
+		trusted: AnalysisModel["trusted"];
+		analysisMetadataFileUrl_ODE: AnalysisModel["analysisMetadataFileUrl_ODE"];
+		asvFileUrl_ODE: AnalysisModel["asvFileUrl_ODE"];
+		occurrenceFileUrl_ODE: AnalysisModel["occurrenceFileUrl_ODE"];
+		Tags: TagModel[];
 	};
-	tags: Tag[];
+	tags: TagModel[];
 }) {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);

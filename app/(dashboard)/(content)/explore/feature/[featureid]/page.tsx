@@ -1,5 +1,5 @@
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -177,7 +177,7 @@ export default async function Featureid({
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(
-		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as Taxonomy | null])
+		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as TaxonomyModel | null])
 	);
 	const topTaxonomies = taxaCounts.slice(0, 5).map(({ taxonomy, count }) => {
 		const details = taxonomyById.get(taxonomy) ?? null;

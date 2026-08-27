@@ -1,12 +1,11 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
 import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
-import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, type ModelName, NonDataTableNames } from "@/types/tableMetadata";
 
 export type TableColumns = ReturnType<typeof useTableColumns>;
 
-const EXCLUDE_TABLES = NonDataTableNames.filter((t) => t !== "tag") as Uncapitalize<Prisma.ModelName>[];
+const EXCLUDE_TABLES = NonDataTableNames.filter((t) => t !== "tag") as Uncapitalize<ModelName>[];
 
 export default function useTableColumns({
 	table,
@@ -14,7 +13,7 @@ export default function useTableColumns({
 	combinedOmit,
 	filterHeadersAtStart
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
 	combinedOmit: string[];
 	filterHeadersAtStart?: boolean;
@@ -31,7 +30,7 @@ export default function useTableColumns({
 	//assemble relational data for table
 	const manyRelations = [] as string[];
 	const oneRelations = [] as string[];
-	const oneRelationsWithArrayTitle = {} as Record<Prisma.ModelName, readonly string[]>;
+	const oneRelationsWithArrayTitle = {} as Record<ModelName, readonly string[]>;
 	for (const rel of TableMetadata[table].relations) {
 		if (!EXCLUDE_TABLES.includes(uncapitalizeTable(rel.table)))
 			if (rel.type.endsWith("many")) {
@@ -98,7 +97,7 @@ export default function useTableColumns({
 
 			return acc;
 		},
-		[] as { label: string; table: Uncapitalize<Prisma.ModelName>; type: "field" | "table" | "many" }[]
+		[] as { label: string; table: Uncapitalize<ModelName>; type: "field" | "table" | "many" }[]
 	);
 
 	//field order
@@ -136,7 +135,7 @@ export default function useTableColumns({
 				!(Array.isArray(title) && title.includes(head)) &&
 				!(
 					head in oneRelationsWithArrayTitle &&
-					oneRelationsWithArrayTitle[head as Prisma.ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
+					oneRelationsWithArrayTitle[head as ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
 				) &&
 				!deepRelations.find((rel) => head === rel.label)
 			) {

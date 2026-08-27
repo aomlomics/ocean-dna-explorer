@@ -1,6 +1,6 @@
 "use server";
 
-import type { Assignment } from "@/app/generated/prisma/client";
+import type { AssignmentModel } from "@/app/generated/prisma/models/Assignment";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAssignmentsFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
@@ -16,8 +16,8 @@ async function doEdit(
 	stream: ProgressStream,
 	url: string,
 	editId: string,
-	project_id: Assignment["project_id"],
-	analysis_run_name: Assignment["analysis_run_name"]
+	project_id: AssignmentModel["project_id"],
+	analysis_run_name: AssignmentModel["analysis_run_name"]
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -247,8 +247,8 @@ async function doEdit(
 export default async function assignEditAction(
 	url: string,
 	editId: string,
-	project_id: Assignment["project_id"],
-	analysis_run_name: Assignment["analysis_run_name"]
+	project_id: AssignmentModel["project_id"],
+	analysis_run_name: AssignmentModel["analysis_run_name"]
 ) {
 	const stream = createProgressStream();
 

@@ -15,7 +15,7 @@ import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhoto
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import type { Analysis, Assay, Taxonomy } from "@/app/generated/prisma/client";
+import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
 import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
@@ -201,9 +201,12 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	}));
 
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
-	const taxaCount = {} as Record<Taxonomy["taxonomy"], number>;
-	const taxaCountByAnalysis = {} as Record<Analysis["analysis_run_name"], Record<Taxonomy["taxonomy"], number>>;
-	const taxaCountByAssay = {} as Record<Assay["assay_name"], Record<Taxonomy["taxonomy"], number>>;
+	const taxaCount = {} as Record<TaxonomyModel["taxonomy"], number>;
+	const taxaCountByAnalysis = {} as Record<
+		AnalysisModel["analysis_run_name"],
+		Record<TaxonomyModel["taxonomy"], number>
+	>;
+	const taxaCountByAssay = {} as Record<AssayModel["assay_name"], Record<TaxonomyModel["taxonomy"], number>>;
 
 	for (const a of Analyses) {
 		for (const assign of a.Assignments) {

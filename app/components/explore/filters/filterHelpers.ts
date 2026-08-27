@@ -1,4 +1,4 @@
-import type { Prisma } from "@/app/generated/prisma/client";
+import type { ModelName } from "@/types/tableMetadata";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 
@@ -22,7 +22,7 @@ export type SelectFilterConfig = {
 export type SelectGroupFilterConfig = {
 	type: "selectGroup";
 	group: ConfigField[];
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 };
 
 export type EnumFilterConfig = {

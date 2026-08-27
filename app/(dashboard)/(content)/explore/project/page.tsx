@@ -1,5 +1,5 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
-import { assay_type } from "@/app/generated/prisma/client";
+import { assay_type } from "@/app/generated/prisma/enums";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";

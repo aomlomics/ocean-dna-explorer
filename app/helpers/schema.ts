@@ -1,7 +1,7 @@
 import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
-import type { Prisma } from "../generated/prisma/client";
-import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
+import type { Prisma } from "@/app/generated/prisma/browser";
+import TableMetadata, { DataTableNames, type ModelName, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
 import type { DbType } from "@/types/globals";
 
@@ -129,7 +129,7 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 }
 
 export function getZodType(
-	table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>,
+	table: ModelName | Uncapitalize<ModelName>,
 	field: string
 ): { type: DbType; optional?: boolean; values?: string[] } {
 	const result = getTypeRecursive(TableMetadata[table].schema.shape[field]);
@@ -146,7 +146,7 @@ export function parseSchemaToObject(
 	f: string,
 	v: string,
 	obj: Record<string, string | string[] | number | number[] | Date | boolean | Prisma.JsonValue | null>,
-	table: Uncapitalize<Prisma.ModelName>
+	table: Uncapitalize<ModelName>
 ) {
 	const field = f.trim();
 	const value = v.trim();

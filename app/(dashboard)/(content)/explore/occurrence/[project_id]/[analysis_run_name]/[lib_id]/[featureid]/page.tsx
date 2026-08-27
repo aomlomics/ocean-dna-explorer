@@ -1,7 +1,7 @@
 import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
@@ -50,7 +50,7 @@ export async function generateMetadata({
 	}
 }
 
-function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
+function formatTaxonomyDisplay(dbTaxonomy: TaxonomyModel) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
 			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;

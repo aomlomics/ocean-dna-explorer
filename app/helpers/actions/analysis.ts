@@ -1,4 +1,11 @@
-import type { Analysis, Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type {
+	AnalysisModel,
+	AssignmentModel,
+	FeatureModel,
+	OccurrenceModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import {
@@ -24,7 +31,7 @@ export async function parseAnalysisFile({
 	channel: Channel;
 	assignmentsUrl: string;
 	occurrencesUrl: string;
-	trusted?: Analysis["trusted"];
+	trusted?: AnalysisModel["trusted"];
 	oldChecksum?: string;
 }) {
 	const analysisCol = {} as Record<string, string>;
@@ -126,8 +133,8 @@ export async function parseAssignmentsFile({
 	oldChecksum
 }: {
 	channel: Channel;
-	project_id: Assignment["project_id"];
-	analysis_run_name: Assignment["analysis_run_name"];
+	project_id: AssignmentModel["project_id"];
+	analysis_run_name: AssignmentModel["analysis_run_name"];
 	oldChecksum?: string;
 }) {
 	const features = [] as Prisma.FeatureCreateManyInput[];
@@ -163,9 +170,9 @@ export async function parseAssignmentsFile({
 		if (record.featureid) {
 			i++;
 
-			const featureRow = {} as Feature;
-			const assignmentRow = {} as Assignment;
-			const taxonomyRow = {} as Taxonomy;
+			const featureRow = {} as FeatureModel;
+			const assignmentRow = {} as AssignmentModel;
+			const taxonomyRow = {} as TaxonomyModel;
 
 			//iterate over each column
 			for (const [field, v] of Object.entries(record)) {
@@ -288,8 +295,8 @@ export async function parseOccurrencesFile({
 	oldChecksum
 }: {
 	channel: Channel;
-	project_id: Occurrence["project_id"];
-	analysis_run_name: Occurrence["analysis_run_name"];
+	project_id: OccurrenceModel["project_id"];
+	analysis_run_name: OccurrenceModel["analysis_run_name"];
 	oldChecksum?: string;
 }) {
 	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
@@ -407,7 +414,7 @@ export async function parseAnalysisFiles({
 	analysisChannel: Channel;
 	assignmentsChannel: Channel;
 	occurrencesChannel: Channel;
-	trusted: Analysis["trusted"];
+	trusted: AnalysisModel["trusted"];
 	oldChecksums?: { analysisMd5?: string; assignmentsMd5?: string; occurrencesMd5?: string };
 }) {
 	const analysisParseResult = await parseAnalysisFile({

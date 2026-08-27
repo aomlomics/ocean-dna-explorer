@@ -1,29 +1,31 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
 import type { ZodEnum, ZodObject, ZodType } from "zod";
+import type { Prisma } from "@/app/generated/prisma/browser";
 import type {
-	Analysis,
-	Assay,
-	AssayPrep,
-	Assignment,
-	Feature,
-	Library,
-	Occurrence,
-	Prisma,
-	Project,
-	Sample,
-	Taxonomy
-} from "@/app/generated/prisma/client";
+	AnalysisModel,
+	AssayModel,
+	AssayPrepModel,
+	AssignmentModel,
+	FeatureModel,
+	LibraryModel,
+	OccurrenceModel,
+	ProjectModel,
+	SampleModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
 import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { TaxonomicRanks } from "./objects";
 
+export type ModelName = Prisma.ModelName;
+
 export type RelationMetadata = Readonly<{
 	field: string;
-	table: Prisma.ModelName;
+	table: ModelName;
 	type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
 }>;
 
 type RelationPaths = Partial<
-	Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, readonly [RelationMetadata, ...RelationMetadata[]]>
+	Record<Uncapitalize<ModelName> | ModelName, readonly [RelationMetadata, ...RelationMetadata[]]>
 >;
 
 export type TableMetadataValue = Readonly<{
@@ -248,7 +250,7 @@ const TableMetadata = {
 		]
 	}
 } as Record<
-	Uncapitalize<Prisma.ModelName>,
+	Uncapitalize<ModelName>,
 	Omit<TableMetadataValue, "relations" | "relationPaths"> & {
 		relationsSchema?: ZodType<any>;
 		relations?: TableMetadataValue["relations"];
@@ -257,7 +259,7 @@ const TableMetadata = {
 >;
 
 //table name helpers
-export const TableNames = Object.keys(TableMetadata) as Readonly<Uncapitalize<Prisma.ModelName>[]>;
+export const TableNames = Object.keys(TableMetadata) as Readonly<Uncapitalize<ModelName>[]>;
 export const NonDataTableNames = [
 	"tag",
 	"alphaDiversity",
@@ -267,7 +269,7 @@ export const NonDataTableNames = [
 ] as const;
 type NonDataTable = (typeof NonDataTableNames)[number];
 export const DataTableNames = TableNames.filter((t) => !NonDataTableNames.includes(t as NonDataTable)) as Readonly<
-	Exclude<Uncapitalize<Prisma.ModelName>, NonDataTable>[]
+	Exclude<Uncapitalize<ModelName>, NonDataTable>[]
 >;
 
 //assemble relation metadata
@@ -277,20 +279,20 @@ function getRelations(fields: string[], relationsSchema: ZodType<any>) {
 }
 const relations = Object.entries(TableMetadata).reduce(
 	(acc, [table, meta]) => ({ ...acc, [table]: getRelations(meta.enumSchema.options, meta.relationsSchema!) }),
-	{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
+	{} as Record<Uncapitalize<ModelName>, string[]>
 );
 
 for (const table of TableNames) {
 	delete TableMetadata[table].relationsSchema;
 	TableMetadata[table].relations = relations[table].map((rel) => {
 		let type = "" as "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many";
-		let relationTable = "" as Prisma.ModelName;
+		let relationTable = "" as ModelName;
 
 		//self
 		if (rel.charAt(0).toLowerCase() + rel.slice(1) in relations) {
 			//singular
-			const lowercaseRelation = uncapitalizeTable(rel as Prisma.ModelName);
-			relationTable = rel as Prisma.ModelName;
+			const lowercaseRelation = uncapitalizeTable(rel as ModelName);
+			relationTable = rel as ModelName;
 
 			//other
 			if (relations[lowercaseRelation].some((f) => f.charAt(0).toLowerCase() + f.slice(1) === table)) {
@@ -304,7 +306,7 @@ for (const table of TableNames) {
 			//plural
 			const lowercaseRelation = Object.entries(TableMetadata).find(
 				(e) => e[1].plural === rel
-			)![0] as Uncapitalize<Prisma.ModelName>;
+			)![0] as Uncapitalize<ModelName>;
 			relationTable = capitalizeTable(lowercaseRelation);
 
 			//other
@@ -322,9 +324,9 @@ for (const table of TableNames) {
 }
 
 //assemble relational path metadata
-function getRelationPath(start: Uncapitalize<Prisma.ModelName>, target: Uncapitalize<Prisma.ModelName>) {
-	const queue = [[capitalizeTable(start), []]] as [Prisma.ModelName, Prisma.ModelName[]][];
-	const visited = new Set() as Set<Prisma.ModelName>;
+function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<ModelName>) {
+	const queue = [[capitalizeTable(start), []]] as [ModelName, ModelName[]][];
+	const visited = new Set() as Set<ModelName>;
 
 	const capsTarget = capitalizeTable(target);
 	while (queue.length) {
@@ -393,39 +395,40 @@ for (const start of TableNames) {
 //duplicate keys with capitalized model names, mapping them to the same value as uncapitalized keys
 //Ex: both project and Project map to the same value
 for (const table of TableNames) {
-	(
-		TableMetadata as Record<
-			Uncapitalize<Prisma.ModelName> | Prisma.ModelName,
-			(typeof TableMetadata)[keyof typeof TableMetadata]
-		>
-	)[capitalizeTable(table)] = TableMetadata[table];
+	(TableMetadata as Record<Uncapitalize<ModelName> | ModelName, (typeof TableMetadata)[keyof typeof TableMetadata]>)[
+		capitalizeTable(table)
+	] = TableMetadata[table];
 }
 
-export default TableMetadata as Readonly<Record<Uncapitalize<Prisma.ModelName> | Prisma.ModelName, TableMetadataValue>>;
+export default TableMetadata as Readonly<Record<Uncapitalize<ModelName> | ModelName, TableMetadataValue>>;
 
 export function exploreUrl(
 	args: { params?: Record<string, string> | URLSearchParams; hash?: string } & (
-		| { table: "project"; project_id: Project["project_id"] }
-		| { table: "sample"; project_id: Sample["project_id"]; samp_name: Sample["samp_name"] }
-		| { table: "assay"; assay_name: Assay["assay_name"] }
-		| { table: "assayPrep"; project_id: AssayPrep["project_id"]; assay_name: AssayPrep["assay_name"] }
-		| { table: "library"; project_id: Library["project_id"]; lib_id: Library["lib_id"] }
-		| { table: "analysis"; project_id: Analysis["project_id"]; analysis_run_name: Analysis["analysis_run_name"] }
+		| { table: "project"; project_id: ProjectModel["project_id"] }
+		| { table: "sample"; project_id: SampleModel["project_id"]; samp_name: SampleModel["samp_name"] }
+		| { table: "assay"; assay_name: AssayModel["assay_name"] }
+		| { table: "assayPrep"; project_id: AssayPrepModel["project_id"]; assay_name: AssayPrepModel["assay_name"] }
+		| { table: "library"; project_id: LibraryModel["project_id"]; lib_id: LibraryModel["lib_id"] }
+		| {
+				table: "analysis";
+				project_id: AnalysisModel["project_id"];
+				analysis_run_name: AnalysisModel["analysis_run_name"];
+		  }
 		| {
 				table: "occurrence";
-				project_id: Occurrence["project_id"];
-				analysis_run_name: Occurrence["analysis_run_name"];
-				lib_id: Occurrence["lib_id"];
-				featureid: Occurrence["featureid"];
+				project_id: OccurrenceModel["project_id"];
+				analysis_run_name: OccurrenceModel["analysis_run_name"];
+				lib_id: OccurrenceModel["lib_id"];
+				featureid: OccurrenceModel["featureid"];
 		  }
 		| {
 				table: "assignment";
-				project_id: Assignment["project_id"];
-				analysis_run_name: Assignment["analysis_run_name"];
-				featureid: Assignment["featureid"];
+				project_id: AssignmentModel["project_id"];
+				analysis_run_name: AssignmentModel["analysis_run_name"];
+				featureid: AssignmentModel["featureid"];
 		  }
-		| { table: "feature"; featureid: Feature["featureid"] }
-		| { table: "taxonomy"; taxonomy: Taxonomy["taxonomy"] }
+		| { table: "feature"; featureid: FeatureModel["featureid"] }
+		| { table: "taxonomy"; taxonomy: TaxonomyModel["taxonomy"] }
 	)
 ) {
 	const { table, params, hash, ...titleFieldObj } = args;

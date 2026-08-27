@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import deleteTagAction from "@/app/actions/tag/deleteTag";
-import type { Analysis, Tag } from "@/app/generated/prisma/client";
+import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import Link from "next/link";
 import { exploreUrl } from "@/types/tableMetadata";
 import Modal from "../../Modal";
@@ -12,7 +12,9 @@ import AnalysisTag from "../../tags/AnalysisTag";
 export default function DeleteTagButton({
 	tag
 }: {
-	tag: Tag & { Analyses: { project_id: Analysis["project_id"]; analysis_run_name: Analysis["analysis_run_name"] }[] };
+	tag: TagModel & {
+		Analyses: { project_id: AnalysisModel["project_id"]; analysis_run_name: AnalysisModel["analysis_run_name"] }[];
+	};
 }) {
 	const router = useRouter();
 

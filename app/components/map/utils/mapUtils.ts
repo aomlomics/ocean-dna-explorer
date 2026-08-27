@@ -1,8 +1,7 @@
-import type { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { DeadValueNumbers, DeadValues } from "@/types/enums";
 import type { MapLocation, MapLocationWithValues } from "@/types/globals";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
 import chroma from "chroma-js";
 import type { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
@@ -100,10 +99,7 @@ export function getLegendColor(
 	return { color: DEFAULT_COLOR };
 }
 
-export function getWhereAdvancedHref(
-	where: Record<string, string>,
-	table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>
-) {
+export function getWhereAdvancedHref(where: Record<string, string>, table: ModelName | Uncapitalize<ModelName>) {
 	return Object.entries(where)
 		.map(([f, v]) => {
 			if (TableMetadata[table].enumSchema.options.includes(f)) {
@@ -139,7 +135,7 @@ export function getMapLegendField({
 	field: string;
 	userDefinedOptions: Set<string>;
 	reducedPoints: ReturnType<typeof useMapLocations>["reducedPoints"];
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	legendInfo?: LegendInfo;
 }): LegendInfo {
 	if (userDefinedOptions.has(field)) {

@@ -1,13 +1,12 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
 import type { MapLocation, NullLocation } from "@/types/globals";
 import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
 import { type RefObject, useState } from "react";
 import type { Map } from "leaflet";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import PopupWithSearchBody from "../popups/PopupWithSearchBody";
 
@@ -22,7 +21,7 @@ export default function NoLocationPointsControl({
 	disableSearch
 }: {
 	noLocationPoints: NullLocation[];
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;

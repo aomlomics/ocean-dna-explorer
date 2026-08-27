@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { Prisma } from "@/app/generated/prisma/client";
-import { JsonValue } from "@prisma/client/runtime/client";
+import { Prisma } from "@/app/generated/prisma/browser";
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -9,7 +8,7 @@ import { JsonValue } from "@prisma/client/runtime/client";
 // JSON
 //------------------------------------------------------
 
-export type NullableJsonInput = JsonValue | null | 'JsonNull' | 'DbNull' | typeof Prisma.NullTypes.DbNull | typeof Prisma.NullTypes.JsonNull;
+export type NullableJsonInput = Prisma.JsonValue | null | 'JsonNull' | 'DbNull' | typeof Prisma.NullTypes.DbNull | typeof Prisma.NullTypes.JsonNull;
 
 export const transformJsonNull = (v?: NullableJsonInput) => {
 	if (!v || v === "DbNull") return typeof Prisma.NullTypes.DbNull;

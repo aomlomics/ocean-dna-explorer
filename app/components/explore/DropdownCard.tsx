@@ -1,5 +1,4 @@
-import type { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";
 
@@ -10,7 +9,7 @@ export default function DropdownCard({
 	icon,
 	className
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	icon: ReactNode;
 	className?: string;
 } & (
@@ -33,7 +32,7 @@ async function SuspenseDropdownCard({
 }: {
 	items?: (Record<string, any> | string)[];
 	query?: () => Promise<Record<string, any>[]>;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	icon: ReactNode;
 	className?: string;
 }) {

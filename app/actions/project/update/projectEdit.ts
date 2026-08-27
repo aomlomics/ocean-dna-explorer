@@ -1,6 +1,6 @@
 "use server";
 
-import type { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
@@ -17,7 +17,7 @@ async function doEdit(
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	project_id: Project["project_id"]
+	project_id: ProjectModel["project_id"]
 ) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -425,10 +425,10 @@ export default async function projectEditAction({
 	sampleFileUrl,
 	libraryFileUrl
 }: {
-	project_id: Project["project_id"];
-	projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
-	sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
-	libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
+	project_id: ProjectModel["project_id"];
+	projectFileUrl?: ProjectModel["projectMetadataFileUrl_ODE"];
+	sampleFileUrl?: ProjectModel["sampleMetadataFileUrl_ODE"];
+	libraryFileUrl?: ProjectModel["libraryMetadataFileUrl_ODE"];
 }) {
 	const globalStream = createProgressStream();
 	const projectStream = createProgressStream();

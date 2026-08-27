@@ -3,7 +3,7 @@ import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 import CopyButton from "@/app/components/CopyButton";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
@@ -40,13 +40,13 @@ export async function generateMetadata({ params }: { params: Promise<{ taxonomy:
 	}
 }
 
-function finestDisplayedRank(db: Taxonomy): {
+function finestDisplayedRank(db: TaxonomyModel): {
 	rankKey: (typeof TaxonomicRanks)[number];
 	rankLabel: string;
 	displayName: string;
 } | null {
 	for (const rank of RanksBySpecificity) {
-		const raw = db[rank as keyof Taxonomy]?.toString().trim();
+		const raw = db[rank as keyof TaxonomyModel]?.toString().trim();
 		if (raw) {
 			return {
 				rankKey: rank,
@@ -66,7 +66,7 @@ function isEnglishVernacularLang(raw: string | undefined): boolean {
 }
 
 /** GBIF + PhyloPic URL for this page — GBIF backbone match is identical to PhyloPicClient (`matchGbifForPhylopic` only). */
-async function resolveTaxonomyPageGbif(taxonomyObj: Taxonomy): Promise<{
+async function resolveTaxonomyPageGbif(taxonomyObj: TaxonomyModel): Promise<{
 	taxonKey: number;
 	mediaTaxonKey: number;
 	commonName: string | null;
@@ -164,14 +164,14 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 	// Get unique project IDs for display
 	const uniqueProjects = dbTaxonomy.Assignments.map((assign) => assign.project_id);
-	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as Taxonomy);
+	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as TaxonomyModel);
 	const phyloPic = pageGbif?.phyloPic ?? null;
-	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as Taxonomy);
+	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as TaxonomyModel);
 	const databaseScientificName = finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
 	const databaseRankKey = finestRank?.rankKey ?? null;
 	const breadcrumbRanks = [...RanksBySpecificity].reverse().filter((rank) => {
-		const raw = (dbTaxonomy as Taxonomy)[rank]?.toString().trim();
+		const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim();
 		return Boolean(raw);
 	});
 
@@ -192,7 +192,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						<div className="breadcrumbs text-sm text-base-content/70">
 							<ul>
 								{breadcrumbRanks.map((rank, idx) => {
-									const raw = (dbTaxonomy as Taxonomy)[rank]?.toString().trim() ?? "";
+									const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim() ?? "";
 									const name = raw.replace(/_/g, " ");
 									const isLast = idx === breadcrumbRanks.length - 1;
 									return (
@@ -232,7 +232,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						<div className="grid grid-cols-1 gap-3 items-start min-h-0">
 							<div className="flex min-w-0 w-full max-w-full flex-col items-center">
 								<TaxonomyVisualToggle
-									taxonomy={dbTaxonomy as unknown as Taxonomy}
+									taxonomy={dbTaxonomy as unknown as TaxonomyModel}
 									mediaTaxonKey={pageGbif?.mediaTaxonKey ?? null}
 									databaseRankKey={databaseRankKey}
 									phyloPicUrl={phyloPic?.imageUrl ?? null}

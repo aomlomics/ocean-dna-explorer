@@ -1,6 +1,5 @@
 import type { FilterConfig } from "./filters/filterHelpers";
-import type { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ExploreControls from "./ExploreControls";
 import TableInfo from "../TableInfo";
 
@@ -11,7 +10,7 @@ export default function ExplorePage({
 	tableWhere,
 	toggle
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	tableConfig: FilterConfig[];
 	toggle?: true;
 } & (

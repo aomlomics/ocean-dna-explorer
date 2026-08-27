@@ -1,6 +1,6 @@
 "use client";
 
-import type { BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
+import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
 import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
 import { getClientSideCookie } from "@/app/helpers/utils";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
@@ -30,8 +30,8 @@ export default function BlastSearchResult({
 	existingBlastDate,
 	className
 }: {
-	blastResult: BlastQueryResult[] | undefined;
-	existingBlastDate: BlastQuery["dateCalculated"] | undefined;
+	blastResult: BlastQueryResultModel[] | undefined;
+	existingBlastDate: BlastQueryModel["dateCalculated"] | undefined;
 	className?: string;
 }) {
 	const searchParams = useSearchParams();
@@ -54,7 +54,7 @@ export default function BlastSearchResult({
 		return <></>;
 	}
 
-	const grouped = {} as Record<BlastQueryResult["sequence"], BlastQueryResult[]>;
+	const grouped = {} as Record<BlastQueryResultModel["sequence"], BlastQueryResultModel[]>;
 	for (const r of blastResult) {
 		(grouped[r.sequence] ??= []).push(r);
 	}

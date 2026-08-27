@@ -1,8 +1,7 @@
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import InfoButton from "./InfoButton";
-import type { Prisma } from "../generated/prisma/client";
 
-export default function TableInfo({ table }: { table: Uncapitalize<Prisma.ModelName> }) {
+export default function TableInfo({ table }: { table: Uncapitalize<ModelName> }) {
 	const titleField = TableMetadata[table].titleField;
 
 	return (

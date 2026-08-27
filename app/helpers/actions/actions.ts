@@ -1,8 +1,7 @@
-import type { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
 export function addToHistory(
-	table: Uncapitalize<Prisma.ModelName>,
+	table: Uncapitalize<ModelName>,
 	editId: string,
 	editHistory: PrismaJson.EditHistoryType | null,
 	changes: PrismaJson.ChangesType

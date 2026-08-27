@@ -1,6 +1,6 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/browser";
 import { fetcher } from "@/app/helpers/utils";
 import { useSearchParams } from "next/navigation";
 import { type FunctionComponent, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { buildWhereParams } from "@/app/helpers/api";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
 import TableStatusState from "../table/TableStatusState";
+import type { ModelName } from "@/types/tableMetadata";
 
 const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
 
@@ -27,7 +28,7 @@ export default function Grid({
 	take = 25
 }: {
 	Child: FunctionComponent<{ item: any; [key: string]: any }>;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
 	orderBy?: { field: string; order: Prisma.SortOrder };
 	ignoreParams?: string[];

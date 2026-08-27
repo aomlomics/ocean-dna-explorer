@@ -1,13 +1,12 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
 import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
 import type { Map } from "leaflet";
 import { type RefObject, useEffect, useState } from "react";
 import type { MapShape, MapLocation } from "@/types/globals";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
 import { circleToString, polygonToString } from "@/app/helpers/utils";
 import PopupWithSearchBody from "../popups/PopupWithSearchBody";
@@ -24,7 +23,7 @@ export default function DrawSelectedControl({
 	disableSearch
 }: {
 	pointsInside: MapLocation[];
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;

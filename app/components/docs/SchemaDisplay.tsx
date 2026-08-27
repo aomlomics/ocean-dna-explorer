@@ -1,5 +1,4 @@
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import type { Prisma } from "@/app/generated/prisma/client";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
 import { getZodType } from "@/app/helpers/schema";
 import Link from "next/link";
 import { capitalizeTable } from "@/app/helpers/utils";
@@ -28,7 +27,7 @@ export default function SchemaDisplay() {
 			}
 		}
 
-		return [t, result] as [Uncapitalize<Prisma.ModelName>, typeof result];
+		return [t, result] as [Uncapitalize<ModelName>, typeof result];
 	});
 
 	return (

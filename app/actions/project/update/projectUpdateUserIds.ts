@@ -1,6 +1,6 @@
 "use server";
 
-import type { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
@@ -9,9 +9,9 @@ import { RolePermissions } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export default async function projectUpdateUserIdsAction(
-	target: Project["project_id"],
-	newUserIds: Project["userIds"],
-	deletedUserIds: Project["userIds"]
+	target: ProjectModel["project_id"],
+	newUserIds: ProjectModel["userIds"],
+	deletedUserIds: ProjectModel["userIds"]
 ): Promise<NetworkPacket> {
 	const client = await clerkClient();
 	const { userId, sessionClaims } = await auth();

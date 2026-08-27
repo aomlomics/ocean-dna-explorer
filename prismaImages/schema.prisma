@@ -4,8 +4,8 @@ datasource images_db {
 
 generator images_client {
     provider            = "prisma-client"
+    engineType          = "client"
     output              = "../app/generated/prismaImages"
-    runtime             = "edge-light"
     importFileExtension = ""
 }
 

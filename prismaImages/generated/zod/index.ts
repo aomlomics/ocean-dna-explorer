@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { Prisma } from '@/app/generated/prismaImages/client';
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS

@@ -1,8 +1,7 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
 import type { NullLocation } from "@/types/globals";
-import { TableMetadataValue } from "@/types/tableMetadata";
+import type { ModelName, TableMetadataValue } from "@/types/tableMetadata";
 import dynamic from "next/dynamic";
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {
 	ssr: false
@@ -26,8 +25,8 @@ export default function DynamicMap({
 	locations: NullLocation[];
 	where?: Record<string, string>;
 	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
 	cluster?: boolean;
 	clusterRadius?: number;

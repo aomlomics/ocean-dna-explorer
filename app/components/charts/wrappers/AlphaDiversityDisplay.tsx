@@ -1,7 +1,7 @@
 "use client";
 
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import type { AlphaDiversity, AlphaDiversityIndex, Sample } from "@/app/generated/prisma/client";
+import type { AlphaDiversityModel, AlphaDiversityIndexModel, SampleModel } from "@/app/generated/prisma/models";
 import BoxWhiskerPlot, { type BoxWhiskerData, type BoxWhiskerDataset } from "../BoxWhiskerPlot";
 import { Chart as ChartJS } from "chart.js";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
@@ -60,11 +60,11 @@ function getSortedValues(labels: string[], type: DbType) {
 	});
 }
 
-type AlphaDiversityWithIndexes = (AlphaDiversity & {
+type AlphaDiversityWithIndexes = (AlphaDiversityModel & {
 	AlphaDiversityIndexes: {
-		index: AlphaDiversityIndex["index"];
+		index: AlphaDiversityIndexModel["index"];
 		Library?: {
-			Sample?: Sample | null;
+			Sample?: SampleModel | null;
 		} | null;
 	}[];
 })[];
@@ -119,12 +119,12 @@ export default function AlphaDiversityDisplay({
 
 	const effectiveCurrMetric = currMetric && currMetric in diversitiesByMetric ? currMetric : availableMetrics[0];
 
-	function getSampleFieldValue(sample: Sample, field: string, type: string) {
+	function getSampleFieldValue(sample: SampleModel, field: string, type: string) {
 		if (!effectiveCurrMetric) {
 			throw new Error("Current Alpha Diversity must exist");
 		}
 
-		const value = sample[field as keyof Sample];
+		const value = sample[field as keyof SampleModel];
 
 		if (value != null && value !== "") {
 			if ((value as string | number) in DeadValueEnum) {

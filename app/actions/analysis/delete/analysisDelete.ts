@@ -1,6 +1,6 @@
 "use server";
 
-import type { Analysis } from "@/app/generated/prisma/client";
+import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { AnalysisSchema } from "@/prisma/generated/zod";
@@ -11,8 +11,8 @@ import { del } from "@vercel/blob";
 import z from "zod";
 
 export default async function analysisDeleteAction(
-	targetProject: Analysis["project_id"],
-	targetAnalysis: Analysis["analysis_run_name"]
+	targetProject: AnalysisModel["project_id"],
+	targetAnalysis: AnalysisModel["analysis_run_name"]
 ): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;

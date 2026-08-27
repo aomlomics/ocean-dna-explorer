@@ -2,10 +2,9 @@
 
 import { useSearchParams, usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import TableMetadata from "@/types/tableMetadata";
-import type { Prisma } from "@/app/generated/prisma/client";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
-export default function SearchBar({ table }: { table: Uncapitalize<Prisma.ModelName> }) {
+export default function SearchBar({ table }: { table: Uncapitalize<ModelName> }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 	const searchRef = useRef<HTMLInputElement>(null);

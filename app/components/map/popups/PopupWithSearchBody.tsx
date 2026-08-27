@@ -1,11 +1,10 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
 import type { MapLocation, MapLocationWithValues } from "@/types/globals";
 import { DEFAULT_COLOR, getLegendColor, getLegendValue, type LegendInfo, legendValueSort } from "../utils/mapUtils";
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
-import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 import { capitalizeTable, compressURIComponent, MAX_UNCOMPRESSED_LENGTH } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
 
@@ -27,8 +26,8 @@ export default function PopupWithSearchBody({
 	href,
 	disableSearch
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	loc: MapLocationWithValues;
 	id: TableMetadataValue["titleField"];
 	legendInfo: LegendInfo;

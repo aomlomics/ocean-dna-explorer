@@ -1,7 +1,13 @@
 "use client";
 
 import { DeadValueEnum } from "@/types/enums";
-import type { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
+import type {
+	AssignmentModel,
+	LibraryModel,
+	OccurrenceModel,
+	SampleModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
 import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
@@ -20,31 +26,31 @@ export default function TaxonomyVisualize({
 	samples
 }: {
 	occurrences: {
-		lib_id: Occurrence["lib_id"];
-		featureid: Occurrence["featureid"];
-		organismQuantity: Occurrence["organismQuantity"];
+		lib_id: OccurrenceModel["lib_id"];
+		featureid: OccurrenceModel["featureid"];
+		organismQuantity: OccurrenceModel["organismQuantity"];
 	}[];
 	assignments: {
-		featureid: Assignment["featureid"];
+		featureid: AssignmentModel["featureid"];
 		Taxonomy: {
-			id: Taxonomy["id"];
+			id: TaxonomyModel["id"];
 		};
 	}[];
-	taxonomies: (Record<(typeof TaxonomicRanks)[number], string | null> & { id: Taxonomy["id"] })[];
-	samples: (Sample & {
+	taxonomies: (Record<(typeof TaxonomicRanks)[number], string | null> & { id: TaxonomyModel["id"] })[];
+	samples: (SampleModel & {
 		Libraries: {
-			lib_id: Library["lib_id"];
+			lib_id: LibraryModel["lib_id"];
 		}[];
 	})[];
 }) {
 	//sort occurrences by featureid
-	const occsByFeatureid = {} as Record<Occurrence["featureid"], typeof occurrences>;
+	const occsByFeatureid = {} as Record<OccurrenceModel["featureid"], typeof occurrences>;
 	for (const occ of occurrences) {
 		const occs = (occsByFeatureid[occ.featureid] ??= []);
 		occs.push(occ);
 	}
 
-	const taxonomiesById = {} as Record<Taxonomy["id"], (typeof taxonomies)[number]>;
+	const taxonomiesById = {} as Record<TaxonomyModel["id"], (typeof taxonomies)[number]>;
 	for (const taxa of taxonomies) {
 		taxonomiesById[taxa.id] = taxa;
 	}
@@ -69,8 +75,11 @@ export default function TaxonomyVisualize({
 	const fieldsWithValues = new Set() as Set<string>;
 	const userDefinedFields = new Set() as Set<string>;
 
-	const samplesById = {} as Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
-	const sampleIdsByLibId = {} as Record<Library["lib_id"], Sample["id"]>;
+	const samplesById = {} as Record<
+		SampleModel["id"],
+		SampleModel & { Libraries: { lib_id: LibraryModel["lib_id"] }[] }
+	>;
+	const sampleIdsByLibId = {} as Record<LibraryModel["lib_id"], SampleModel["id"]>;
 	for (const samp of samples) {
 		samplesById[samp.id] = samp;
 
@@ -80,7 +89,7 @@ export default function TaxonomyVisualize({
 
 		//check if fields have values
 		for (const f of sampFields) {
-			const key = f as keyof Sample;
+			const key = f as keyof SampleModel;
 
 			if (!fieldsWithValues.has(f) && samp[key] != null) {
 				const type = getZodType("sample", key).type;

@@ -1,4 +1,4 @@
-import { asv_method, target_gene } from "@/app/generated/prisma/client";
+import { asv_method, target_gene } from "@/app/generated/prisma/enums";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";

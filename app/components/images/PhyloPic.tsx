@@ -1,8 +1,8 @@
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";
 
-export default async function PhyloPic({ taxonomy }: { taxonomy: Taxonomy }) {
+export default async function PhyloPic({ taxonomy }: { taxonomy: TaxonomyModel }) {
 	const errorImg = <>No Image</>;
 
 	const matched = await matchGbifForPhylopic(taxonomy);

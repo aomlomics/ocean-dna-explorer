@@ -1,6 +1,6 @@
 "use server";
 
-import type { Occurrence, Sample } from "@/app/generated/prisma/client";
+import type { OccurrenceModel, SampleModel } from "@/app/generated/prisma/models";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
@@ -8,7 +8,7 @@ import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function fixDeletedSamplesAction(project_id: Sample["project_id"]): Promise<NetworkPacket> {
+export default async function fixDeletedSamplesAction(project_id: SampleModel["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -75,7 +75,10 @@ export default async function fixDeletedSamplesAction(project_id: Sample["projec
 				const lastSample = sampNames.pop();
 				const badAnalyses = Array.from(
 					badSamples.reduce((acc, samp) => {
-						for (const occ of samp.Libraries.reduce((occs, lib) => [...occs, ...lib.Occurrences], [] as Occurrence[])) {
+						for (const occ of samp.Libraries.reduce(
+							(occs, lib) => [...occs, ...lib.Occurrences],
+							[] as OccurrenceModel[]
+						)) {
 							acc.add(occ.analysis_run_name);
 						}
 						return acc;

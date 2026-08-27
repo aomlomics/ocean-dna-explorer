@@ -1,6 +1,6 @@
 "use client";
 
-import type { Sample } from "@/app/generated/prisma/client";
+import type { SampleModel } from "@/app/generated/prisma/models/Sample";
 import { getZodType } from "@/app/helpers/schema";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { DeadValueEnum } from "@/types/enums";
@@ -11,11 +11,11 @@ const SampleScatterPlot = dynamic(() => import("../SampleScatterPlot"), {
 	ssr: false
 });
 
-export const DEFAULT_X_FIELD = "eventDate" as keyof Sample;
-export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof Sample;
-export const DEFAULT_LEGEND_FIELD = "project_id" as keyof Sample;
+export const DEFAULT_X_FIELD = "eventDate" as keyof SampleModel;
+export const DEFAULT_Y_FIELD = "minimumDepthInMeters" as keyof SampleModel;
+export const DEFAULT_LEGEND_FIELD = "project_id" as keyof SampleModel;
 
-export default function SampleVisualize({ samples }: { samples: Sample[] }) {
+export default function SampleVisualize({ samples }: { samples: SampleModel[] }) {
 	const fields = new Set(["project_id"]) as Set<string>;
 	//build fields in fieldOrder
 	for (const f of TableMetadata.sample.fieldOrder!) {
@@ -37,7 +37,7 @@ export default function SampleVisualize({ samples }: { samples: Sample[] }) {
 	const userDefinedFields = new Set() as Set<string>;
 	//add to xy field options
 	for (const f of Array.from(fields)) {
-		const key = f as keyof Sample;
+		const key = f as keyof SampleModel;
 		const type = getZodType("sample", key).type;
 
 		if (type === "integer" || type === "float" || type === "date") {
@@ -47,7 +47,7 @@ export default function SampleVisualize({ samples }: { samples: Sample[] }) {
 
 	//remove all fields without any values
 	for (const f of Array.from(fields)) {
-		const key = f as keyof Sample;
+		const key = f as keyof SampleModel;
 		const type = getZodType("sample", key).type;
 
 		let hasVal = false;

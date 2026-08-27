@@ -1,6 +1,5 @@
 "use client";
 
-import type { Prisma } from "@/app/generated/prisma/client";
 import { getTableNameSafe, getZodType } from "@/app/helpers/schema";
 import type {
 	ParamsArray,
@@ -12,7 +11,7 @@ import type {
 	QueryMode
 } from "@/types/globals";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
@@ -304,7 +303,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	}, [apiDropdownOpen]);
 
 	//functions
-	function getAvailableApiFields(table: Uncapitalize<Prisma.ModelName> | undefined) {
+	function getAvailableApiFields(table: Uncapitalize<ModelName> | undefined) {
 		if (table) {
 			const omit = new Set(GlobalOmit);
 			const meta = TableMetadata[table];
@@ -350,7 +349,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 					? (formRef.current[`relation_${id}`].value as string)
 					: "";
 
-			const table = (relation ? relation : searchTable) as Prisma.ModelName;
+			const table = (relation ? relation : searchTable) as ModelName;
 			const field = formRef.current[`field_${id}`].value as string;
 
 			if (!field) {
@@ -1007,10 +1006,7 @@ function SearchGroupComponent({
 	onDelete?: () => void;
 	footer?: ReactNode;
 	onHelpClick?: () => void;
-} & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
-)) {
+} & ({ searchTable: Uncapitalize<ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true })) {
 	function updateGroup(updater: (group: SearchGroupNode) => void) {
 		const clone = { ...group, children: [...group.children] } as SearchGroupNode;
 		updater(clone);
@@ -1209,17 +1205,12 @@ function SearchRuleComponent({
 }: {
 	node: SearchRuleNode;
 	onChange: (node: SearchRuleNode | null) => void;
-} & (
-	| { searchTable: Uncapitalize<Prisma.ModelName>; noTable?: undefined }
-	| { searchTable?: undefined; noTable: true }
-)) {
+} & ({ searchTable: Uncapitalize<ModelName>; noTable?: undefined } | { searchTable?: undefined; noTable: true })) {
 	const paramsArray = node.initialParams;
 	const [type, setType] = useState(noTable || (paramsArray && paramsArray.length === 4) ? "relation" : "field");
 	const paramsOffset = type === "relation" ? 1 : 0;
 	const [relation, setRelation] = useState(
-		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as
-			| Uncapitalize<Prisma.ModelName>
-			| ""
+		(paramsArray && type === "relation" ? getTableNameSafe(paramsArray[0]) || "" : "") as Uncapitalize<ModelName> | ""
 	);
 	const [field, setField] = useState(paramsArray ? (paramsArray[0 + paramsOffset] as string) : "");
 
@@ -1280,7 +1271,7 @@ function SearchRuleComponent({
 					className="select"
 					value={relation}
 					onChange={(e) => {
-						setRelation(e.target.value as Uncapitalize<Prisma.ModelName>);
+						setRelation(e.target.value as Uncapitalize<ModelName>);
 						setField("");
 					}}
 					required
@@ -1359,7 +1350,7 @@ function InputElement({
 	defaultValue
 }: {
 	nameSuffix: string;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	field: string;
 	defaultMode: string;
 	defaultValue: string;

@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { type ConfigField, handleFilterChange } from "../filterHelpers";
 import type { NetworkPacket } from "@/types/globals";
-import type { Prisma } from "@/app/generated/prisma/client";
 import { useState } from "react";
+import type { ModelName } from "@/types/tableMetadata";
 
 export default function SelectGroupFilter({
 	field,
@@ -18,7 +18,7 @@ export default function SelectGroupFilter({
 		[k: string]: string;
 	};
 	value: string;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	group: ConfigField[];
 }) {
 	const searchParams = useSearchParams();

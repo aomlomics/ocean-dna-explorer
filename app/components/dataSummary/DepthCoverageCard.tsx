@@ -1,6 +1,6 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
-import type { Sample } from "@/app/generated/prisma/client";
+import type { SampleModel } from "@/app/generated/prisma/models/Sample";
 import { exploreUrl } from "@/types/tableMetadata";
 
 type DepthStats = {
@@ -9,7 +9,7 @@ type DepthStats = {
 	max: number | null;
 };
 
-export async function DepthCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
+export async function DepthCoverageCard({ project_id }: { project_id?: SampleModel["project_id"] }) {
 	// -9999 is the project sentinel for "not applicable". Filtering depths
 	// to >= 0 strips both that sentinel and any other negative noise.
 	const [minAgg, maxAgg, avgMinAgg, avgMaxAgg] = await trustedPrisma.$transaction([

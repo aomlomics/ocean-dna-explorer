@@ -12,10 +12,10 @@ import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
-import type { Attribution } from "@/app/generated/prismaImages/client";
+import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
 import type { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
 
-export default function ProjectSubmit({ attributions }: { attributions: Attribution[] }) {
+export default function ProjectSubmit({ attributions }: { attributions: AttributionModel[] }) {
 	const { userId } = useAuth();
 	const [userIds, setUserIds] = useState([userId] as string[]);
 
@@ -24,7 +24,7 @@ export default function ProjectSubmit({ attributions }: { attributions: Attribut
 
 	//state variables for image submission
 	const [newAttribution, setNewAttribution] = useState(false);
-	const [currAttribution, setCurrAttribution] = useState(undefined as Attribution | undefined);
+	const [currAttribution, setCurrAttribution] = useState(undefined as AttributionModel | undefined);
 	const [showCoverImage, setShowCoverImage] = useState(false);
 
 	//response state variables that will have information streamed to them

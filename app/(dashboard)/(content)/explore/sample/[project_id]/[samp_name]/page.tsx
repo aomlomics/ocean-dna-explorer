@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
-import type { Assay, Sample } from "@/app/generated/prisma/client";
+import type { AssayModel, SampleModel } from "@/app/generated/prisma/models";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
@@ -71,7 +71,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 
 	if (!sample) notFound();
 	const { Libraries, ...justSample } = sample;
-	const uniqueAssays = [] as { assay_name: Assay["assay_name"]; target_gene: Assay["target_gene"] }[];
+	const uniqueAssays = [] as { assay_name: AssayModel["assay_name"]; target_gene: AssayModel["target_gene"] }[];
 	for (const lib of Libraries) {
 		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
 			uniqueAssays.push(lib.Assay);
@@ -243,8 +243,8 @@ async function SuspenseTaxonomyDonutChart({
 	project_id,
 	samp_name
 }: {
-	project_id: Sample["project_id"];
-	samp_name: Sample["samp_name"];
+	project_id: SampleModel["project_id"];
+	samp_name: SampleModel["samp_name"];
 }) {
 	const taxonomies = await trustedPrisma.taxonomy.findMany({
 		where: {
