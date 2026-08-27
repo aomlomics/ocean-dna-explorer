@@ -4,7 +4,7 @@ import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import EditHistory from "@/app/components/EditHistory";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
@@ -26,16 +26,15 @@ export async function generateMetadata({ params }: { params: Promise<{ project_i
 			project_id
 		},
 		select: {
-			project_name: true,
-			project_contact: true
+			project_name: true
 		}
 	});
 
 	if (project) {
+		//TODO: potentially? describe whats actually on the page
 		return {
 			title: `${project_id} | ${TableMetadata.project.plural}`,
-			description: project.project_name,
-			publisher: project.project_contact
+			description: project.project_name
 		};
 	} else {
 		return {

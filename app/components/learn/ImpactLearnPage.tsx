@@ -207,7 +207,7 @@ export default function ImpactLearnPage() {
 					<div className="text-center lg:text-left">
 						<h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-primary">Why do we study eDNA?</h1>
 						<p className="mt-5 text-base sm:text-lg text-base-content/80 leading-relaxed">
-							eDNA is a flexible,low impact method to measure life in the ocean. It works best alongside other methods,
+							eDNA is a flexible, low impact method to measure life in the ocean. It works best alongside other methods,
 							helping scientists decide where to look, what to monitor, and how ecosystems change over time.
 						</p>
 						<p className="mt-4 text-base sm:text-lg text-base-content/80 leading-relaxed">

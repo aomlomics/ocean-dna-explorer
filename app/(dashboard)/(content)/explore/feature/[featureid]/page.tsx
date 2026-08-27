@@ -23,13 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ featureid
 			featureid
 		},
 		select: {
-			//TODO: only select fields that are needed
-			featureid: true
+			id: true
 		}
 	});
 
 	if (feature) {
-		//TODO: add description
 		return {
 			title: `${featureid} | ${TableMetadata.feature.plural}`
 		};

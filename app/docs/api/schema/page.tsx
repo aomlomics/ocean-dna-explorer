@@ -1,6 +1,6 @@
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
-import SchemaDisplay from "@/app/components/SchemaDisplay";
+import SchemaDisplay from "@/app/components/docs/SchemaDisplay";
 import Link from "next/link";
 import Image from "next/image";
 

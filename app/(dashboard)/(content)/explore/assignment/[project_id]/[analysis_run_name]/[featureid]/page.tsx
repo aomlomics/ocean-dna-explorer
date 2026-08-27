@@ -29,11 +29,8 @@ export async function generateMetadata({
 	});
 
 	if (assignment) {
-		const mostSpecificRank = RanksBySpecificity.find((rank) => assignment.Taxonomy[rank]) || "taxonomy";
-
 		return {
-			title: `${featureid} assigned ${assignment.Taxonomy[mostSpecificRank]} | ${TableMetadata.assignment.plural}`,
-			description: `The ${analysis_run_name} Analysis in the ${project_id} Project assigned the featureid ${featureid} to the ${mostSpecificRank} ${assignment.Taxonomy[mostSpecificRank]}.`
+			title: `${featureid} assigned ${assignment.Taxonomy[RanksBySpecificity.find((rank) => assignment.Taxonomy[rank]) || "taxonomy"]} | ${TableMetadata.assignment.plural}`
 		};
 	} else {
 		return {

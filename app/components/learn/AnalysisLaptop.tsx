@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/LaptopScreen";
+import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/learn/LaptopScreen";
 
 // Terminal commands that cycle through
 const terminalSequences = [

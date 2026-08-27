@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/LaptopScreen";
+import LaptopScreen, { type LaptopScreenBounds } from "@/app/components/learn/LaptopScreen";
 
 // Marine species with verified scientific names
 const identifications = [

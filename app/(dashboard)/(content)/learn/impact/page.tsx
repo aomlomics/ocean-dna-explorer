@@ -2,10 +2,12 @@ import dynamic from "next/dynamic";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Impact"
+	title: "Impact",
+	description:
+		"Learn how eDNA supports low-impact ocean monitoring, biodiversity research, species detection, and ecosystem discovery."
 };
 
-const ImpactLearnPage = dynamic(() => import("@/app/components/ImpactLearnPage"), {
+const ImpactLearnPage = dynamic(() => import("@/app/components/learn/ImpactLearnPage"), {
 	ssr: true,
 	loading: () => (
 		<div className="min-h-100 flex items-center justify-center">

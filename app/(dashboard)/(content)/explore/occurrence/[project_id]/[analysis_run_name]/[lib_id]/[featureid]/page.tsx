@@ -35,16 +35,11 @@ export async function generateMetadata({
 			}
 		},
 		select: {
-			//TODO: only select fields that are needed
-			project_id: true,
-			analysis_run_name: true,
-			lib_id: true,
-			featureid: true
+			id: true
 		}
 	});
 
 	if (occurrence) {
-		//TODO: add description
 		return {
 			title: `${featureid} in ${lib_id} | ${TableMetadata.occurrence.plural}`
 		};

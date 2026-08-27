@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Make your own Discoveries"
+	title: "Discover Anything",
+	description: "Explore eDNA data with powerful search, custom maps, API export, and interactive visualization tools."
 };
 
 export default function DiscoveriesPage() {

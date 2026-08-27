@@ -1,6 +1,6 @@
 import Link from "next/link";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
@@ -24,14 +24,11 @@ export async function generateMetadata({
 			}
 		},
 		select: {
-			//TODO: only select fields that are needed
-			project_id: true,
-			lib_id: true
+			id: true
 		}
 	});
 
 	if (library) {
-		//TODO: add description
 		return {
 			title: `${lib_id} | ${TableMetadata.library.plural}`
 		};

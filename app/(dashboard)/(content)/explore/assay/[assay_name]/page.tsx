@@ -1,10 +1,10 @@
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import PrimerDiagram from "@/app/components/PrimerDiagram";
+import PrimerDiagram from "@/app/components/explore/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";

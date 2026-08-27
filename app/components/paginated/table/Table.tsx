@@ -14,7 +14,6 @@ import useTableQuery from "./hooks/useTableQuery";
 import TableHeader from "./parts/TableHeader";
 import TableRow from "./parts/TableRow";
 import Checklist from "../../Checklist";
-import InfoButton from "../../InfoButton";
 
 export type ExtraResults = {
 	blastResult: BlastQueryResult[] | undefined;

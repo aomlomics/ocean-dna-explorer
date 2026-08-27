@@ -1,5 +1,5 @@
 import Image from "next/image";
-import LearnSectionToggle from "@/app/components/LearnSectionToggle";
+import LearnSectionToggle from "@/app/components/learn/LearnSectionToggle";
 
 export default function LearnLayout({ children }: { children: React.ReactNode }) {
 	return (

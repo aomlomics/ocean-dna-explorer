@@ -2,7 +2,7 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import EditHistory from "@/app/components/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
 import AssaysCard from "@/app/components/assay/AssaysCard";
@@ -38,16 +38,16 @@ export async function generateMetadata({
 			}
 		},
 		select: {
-			//TODO: only select fields that are needed
-			project_id: true,
-			analysis_run_name: true
+			trusted: true,
+			assay_name: true
 		}
 	});
 
 	if (analysis) {
-		//TODO: add description
+		//TODO: describe whats on the page
 		return {
-			title: `${analysis_run_name} | ${TableMetadata.analysis.plural}`
+			title: `${analysis_run_name} | ${TableMetadata.analysis.plural}`,
+			description: `A${analysis.trusted ? " trusted" : "n"} Analysis in the ${project_id} Project that uses the ${analysis.assay_name} Assay.`
 		};
 	} else {
 		return {

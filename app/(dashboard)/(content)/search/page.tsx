@@ -7,6 +7,12 @@ import TableInfo from "@/app/components/TableInfo";
 import SearchContent from "@/app/components/search/SearchContent";
 import { redirect } from "next/navigation";
 import { trustedPrisma } from "@/app/helpers/prisma";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Search",
+	description: "Search eDNA data with a powerful query builder, map-based shape filtering, and BLAST sequence searches."
+};
 
 export default async function Search({
 	searchParams

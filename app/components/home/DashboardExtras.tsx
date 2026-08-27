@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { trustedPrisma } from "@/app/helpers/prisma";
-import DashCard from "./dataSummary/DashCard";
-import DoughnutChart from "./charts/DoughnutChart";
-import { EARLIEST_VALID_SAMPLE_DATE } from "./dataSummary/TemporalCoverageCard";
-import { Prisma } from "../generated/prisma/client";
+import DashCard from "../dataSummary/DashCard";
+import DoughnutChart from "../charts/DoughnutChart";
+import { EARLIEST_VALID_SAMPLE_DATE } from "../dataSummary/TemporalCoverageCard";
+import { Prisma } from "../../generated/prisma/client";
 
 /**
  * ---------------------------------------------------------------------------
@@ -163,7 +163,7 @@ export async function SamplingEnvironmentsCard() {
 // Moved to ./dataSummary/TemporalCoverageCard.tsx so it can be reused on
 // the project detail page. Re-export here to keep this module the single
 // import site for dashboard widgets.
-export { TemporalCoverageCard, TemporalCoverageCardSkeleton } from "./dataSummary/TemporalCoverageCard";
+export { TemporalCoverageCard, TemporalCoverageCardSkeleton } from "../dataSummary/TemporalCoverageCard";
 
 // ======================== Samples Collected Over Time ======================
 /**

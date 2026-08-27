@@ -1,4 +1,4 @@
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
@@ -30,14 +30,11 @@ export async function generateMetadata({
 			}
 		},
 		select: {
-			//TODO: only select fields that are needed
-			project_id: true,
-			samp_name: true
+			id: true
 		}
 	});
 
 	if (sample) {
-		//TODO: add description
 		return {
 			title: `${samp_name} | ${TableMetadata.sample.plural}`
 		};
