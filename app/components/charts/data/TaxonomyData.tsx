@@ -3,6 +3,7 @@
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
 import { fetcherAllSuccess } from "@/app/helpers/utils";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 import {
 	AssignmentPartialWithRelationsSchema,
 	OccurrencePartialSchema,
@@ -16,14 +17,15 @@ import useSWR from "swr";
 
 export default function TaxonomyData() {
 	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
 
 	const stringParams = searchParams.toString();
 	const { data, error, isLoading } = useSWR(
 		[
-			`/api/internal/occurrence/swapToTable?fields=lib_id,featureid,organismQuantity&${stringParams}`,
-			`/api/internal/assignment/swapToTable?fields=featureid&relations=Taxonomy&${stringParams}`,
-			`/api/internal/taxonomy/swapToTable?fields=id,${TaxonomicRanks.join(",")}&${stringParams}`,
-			`/api/internal/sample/swapToTable?relations=Libraries&relationsAllFields=true&${stringParams}`
+			`/api/internal/occurrence/swapToTable?fields=lib_id,featureid,organismQuantity&trusted=${trusted}&${stringParams}`,
+			`/api/internal/assignment/swapToTable?fields=featureid&relations=Taxonomy&trusted=${trusted}&${stringParams}`,
+			`/api/internal/taxonomy/swapToTable?fields=id,${TaxonomicRanks.join(",")}&trusted=${trusted}&${stringParams}`,
+			`/api/internal/sample/swapToTable?relations=Libraries&relationsAllFields=true&trusted=${trusted}&${stringParams}`
 		],
 		fetcherAllSuccess,
 		{ revalidateOnFocus: false }

@@ -1,4 +1,4 @@
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import {
 	capitalizeTable,
 	deepMerge,
@@ -33,6 +33,8 @@ export async function GET(
 		const model = getDataTableName(table);
 
 		const { searchParams } = new URL(request.url);
+
+		const client = searchParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
 
 		const query = {} as {
 			orderBy?: { [field: string]: Prisma.SortOrder | { _count: Prisma.SortOrder } };
@@ -262,7 +264,7 @@ export async function GET(
 		let count;
 		if (hasLocationData && sampleWhere) {
 			//skip extra database call on sample table
-			samples = await trustedPrisma.sample.findMany(query);
+			samples = await client.sample.findMany(query);
 			result = [...samples];
 			count = result.length;
 
@@ -274,7 +276,7 @@ export async function GET(
 			if (sampleWhere) {
 				//TODO: breaks with a sample query in nested group
 				//replace the where with samp_names that match the query and are inside the shapes
-				samples = await trustedPrisma.sample.findMany({
+				samples = await client.sample.findMany({
 					where: sampleWhere,
 					select: getSamples
 						? undefined
@@ -294,7 +296,7 @@ export async function GET(
 				}
 			}
 
-			const res = await trustedPrisma.$transaction(
+			const res = await client.$transaction(
 				async (tx) => {
 					//@ts-expect-error dynamically accessing prisma client
 					const count = await tx[model].count({ where: query.where });
@@ -402,8 +404,8 @@ export async function GET(
 				`;
 			});
 
-			const queryResults = await trustedPrisma.$transaction(
-				queries.map((query) => trustedPrisma.$queryRaw<Record<string, string | number>[]>(query)),
+			const queryResults = await client.$transaction(
+				queries.map((query) => client.$queryRaw<Record<string, string | number>[]>(query)),
 				{
 					timeout: 0.5 * 60 * 1000
 				}

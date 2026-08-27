@@ -1,5 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/client";
-import { trustedPrisma } from "@/app/helpers/prisma";
+import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
@@ -15,6 +15,8 @@ export async function GET(
 		const model = getTableName(table);
 
 		const { searchParams } = new URL(request.url);
+
+		const client = searchParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
 
 		const extraFieldsParams = searchParams.get("extraFields");
 		let extraFields = [] as string[];
@@ -61,7 +63,7 @@ export async function GET(
 
 			queries.push(
 				//@ts-expect-error dynamically accessing prisma client
-				trustedPrisma[model].findMany({
+				client[model].findMany({
 					distinct: [field],
 					select: {
 						[field]: true
@@ -74,7 +76,7 @@ export async function GET(
 		for (const field of extraFields) {
 			queries.push(
 				//@ts-expect-error dynamically accessing prisma client
-				trustedPrisma[model].findMany({
+				client[model].findMany({
 					distinct: [field],
 					select: {
 						[field]: true
@@ -84,7 +86,7 @@ export async function GET(
 			);
 		}
 
-		const dbResult = (await trustedPrisma.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
+		const dbResult = (await client.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
 
 		const allFields = [...params.map((e) => e[0]), ...extraFields];
 		const result = {} as Record<string, string[]>;
