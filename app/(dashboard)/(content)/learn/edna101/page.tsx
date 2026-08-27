@@ -1,4 +1,4 @@
-import dynamic from "next/dynamic";
+import DataJourney from "@/app/components/learn/DataJourney";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -6,16 +6,6 @@ export const metadata: Metadata = {
 	description:
 		"Follow eDNA from environmental sampling and laboratory processing to sequencing, bioinformatics, taxonomy, and biological discovery."
 };
-
-// Dynamic import for the DataJourney component to optimize loading
-const DataJourney = dynamic(() => import("@/app/components/learn/DataJourney"), {
-	ssr: true,
-	loading: () => (
-		<div className="min-h-100 flex items-center justify-center">
-			<div className="animate-pulse text-primary text-xl">Loading Data Journey...</div>
-		</div>
-	)
-});
 
 export default function Edna101Page() {
 	return (
