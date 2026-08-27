@@ -2,7 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import EditHistory from "@/app/components/EditHistory";
+import EditHistory from "@/app/components/explore/EditHistory";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import DataDisplay from "@/app/components/explore/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";

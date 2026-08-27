@@ -3,7 +3,7 @@ import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import DataDisplay from "@/app/components/explore/DataDisplay";
-import EditHistory from "@/app/components/EditHistory";
+import EditHistory from "@/app/components/explore/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import { Analysis } from "@/app/generated/prisma/client";
