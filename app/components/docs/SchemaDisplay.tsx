@@ -1,5 +1,5 @@
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import Link from "next/link";
 import { capitalizeTable } from "@/app/helpers/utils";

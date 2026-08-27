@@ -1,6 +1,6 @@
 import { AnalysisIcon, ProjectIcon } from "@/app/components/icons";
 import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {

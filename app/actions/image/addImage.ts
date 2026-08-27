@@ -1,17 +1,17 @@
 "use server";
 
 import { AttributionOptionalDefaultsSchema, ImageOptionalDefaultsSchema } from "@/prismaImages/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { Project, Taxonomy } from "@/app/generated/prisma/client";
+import type { Project, Taxonomy } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 import { handlePrismaError } from "@/app/helpers/queries";
-import { AttributionCreateInput, ImageCreateInput } from "@/app/generated/prismaImages/models";
+import type { AttributionCreateInput, ImageCreateInput } from "@/app/generated/prismaImages/models";
 
 export default async function addImageAction(
 	formData: FormData,

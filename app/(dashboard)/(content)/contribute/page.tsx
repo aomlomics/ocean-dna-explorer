@@ -1,6 +1,6 @@
 import ContributeForm from "@/app/components/ContributeForm";
 import { auth } from "@clerk/nextjs/server";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Apply to Contribute",

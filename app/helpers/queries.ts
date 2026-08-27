@@ -1,6 +1,7 @@
 import { getZodType, parseSchemaToObject } from "./schema";
-import { ErrorPacket } from "@/types/globals";
-import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
+import type { ErrorPacket } from "@/types/globals";
+import { DeadBoolean, Prisma } from "../generated/prisma/client";
+import type { Assay, PrismaClient } from "../generated/prisma/client";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";

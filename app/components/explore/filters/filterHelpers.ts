@@ -1,6 +1,6 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { ReadonlyURLSearchParams } from "next/navigation";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import type { ReadonlyURLSearchParams } from "next/navigation";
 
 export type FilterValue =
 	| string

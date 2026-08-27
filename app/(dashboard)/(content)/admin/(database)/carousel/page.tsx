@@ -2,7 +2,7 @@ import AddImageButton from "@/app/components/AddImageButton";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import ImageDeleteButton from "@/app/components/admin/ImageDeleteButton";
 import Image from "next/image";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Home Carousel"

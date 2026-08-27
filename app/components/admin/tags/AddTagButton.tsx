@@ -1,6 +1,6 @@
 "use client";
 
-import { SubmitEvent, useRef, useState } from "react";
+import { type SubmitEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import addTagAction from "@/app/actions/tag/addTag";
 import Modal from "../../Modal";

@@ -1,6 +1,6 @@
 "use server";
 
-import { NetworkPacket, Role } from "@/types/globals";
+import type { NetworkPacket, Role } from "@/types/globals";
 import { Roles } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 

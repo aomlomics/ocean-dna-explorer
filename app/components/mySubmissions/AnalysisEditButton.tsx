@@ -1,9 +1,9 @@
 "use client";
 
-import { Analysis, Tag } from "@/app/generated/prisma/client";
-import { ReactNode, useRef, useState } from "react";
+import type { Analysis, Tag } from "@/app/generated/prisma/client";
+import { type ReactNode, useRef, useState } from "react";
 import Modal from "../Modal";
-import { NetworkProgressPacket } from "@/types/globals";
+import type { NetworkProgressPacket } from "@/types/globals";
 import { upload } from "@vercel/blob/client";
 import { doProgressAction } from "@/app/helpers/progress";
 import occEditAction from "@/app/actions/analysis/update/occEdit";

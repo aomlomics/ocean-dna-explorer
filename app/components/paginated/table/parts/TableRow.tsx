@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import AnalysisTag from "../../../tags/AnalysisTag";
-import { Prisma, Tag } from "@/app/generated/prisma/client";
+import type { Prisma, Tag } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import { capitalizeTable, depluralizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { DeadValueEnum } from "@/types/enums";
 import { LinkIcon } from "../../../icons";
-import { TableColumns } from "../hooks/useTableColumns";
-import { TableQuery } from "../hooks/useTableQuery";
+import type { TableColumns } from "../hooks/useTableColumns";
+import type { TableQuery } from "../hooks/useTableQuery";
 
 export default function TableRow({
 	row,

@@ -3,7 +3,7 @@ import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { SubmitDescription } from "../page";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Submit Analyses",

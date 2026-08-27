@@ -2,7 +2,7 @@ import ApiCodeBlock from "@/app/components/docs/ApiCodeBlock";
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Response Format | API",

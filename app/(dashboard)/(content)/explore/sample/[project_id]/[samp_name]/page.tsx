@@ -8,12 +8,12 @@ import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
-import { Assay, Sample } from "@/app/generated/prisma/client";
+import type { Assay, Sample } from "@/app/generated/prisma/client";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({
 	params

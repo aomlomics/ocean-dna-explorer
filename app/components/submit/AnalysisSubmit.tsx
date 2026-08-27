@@ -1,11 +1,11 @@
 "use client";
 
-import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type SubmitEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
-import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
-import { Project } from "@/prisma/generated/zod";
+import type { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
+import type { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
@@ -225,10 +225,12 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 			for (const id of analysisIds) {
 				if (typeof id === "string") {
 					//skip files that have already been successfully submitted
-					if (!(
-						responsesRef.current[id] &&
-						Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
-					)) {
+					if (
+						!(
+							responsesRef.current[id] &&
+							Object.values(responsesRef.current[id]).every((packet) => packet && packet.statusMessage === "success")
+						)
+					) {
 						//gather files
 						files[id] = {
 							analysisFile: (target.elements.namedItem(`analysis_${id}`) as HTMLInputElement).files!.item(0)!,

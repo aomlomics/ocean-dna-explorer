@@ -3,7 +3,7 @@ import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity, TaxonomicRanks } from "@/types/objects";
 import CopyButton from "@/app/components/CopyButton";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { Taxonomy } from "@/app/generated/prisma/client";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
@@ -13,7 +13,7 @@ import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchToolt
 import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import TableMetadata from "@/types/tableMetadata";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {

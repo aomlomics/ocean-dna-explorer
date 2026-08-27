@@ -1,6 +1,6 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { capitalizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames, NonDataTableNames } from "@/types/tableMetadata";
 

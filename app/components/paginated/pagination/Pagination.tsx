@@ -1,6 +1,6 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
@@ -11,7 +11,6 @@ import { useSearchParams } from "next/navigation";
 import TableMetadata from "@/types/tableMetadata";
 import { buildWhereParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
-import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function Pagination({
 	table,

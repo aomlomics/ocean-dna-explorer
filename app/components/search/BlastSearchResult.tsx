@@ -1,6 +1,6 @@
 "use client";
 
-import { BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
+import type { BlastQuery, BlastQueryResult } from "@/app/generated/prisma/client";
 import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
 import { getClientSideCookie } from "@/app/helpers/utils";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";

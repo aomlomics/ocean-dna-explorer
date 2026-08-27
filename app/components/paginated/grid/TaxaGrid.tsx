@@ -1,6 +1,6 @@
 "use client";
 
-import { Analysis } from "@/app/generated/prisma/client";
+import type { Analysis } from "@/app/generated/prisma/client";
 import TaxaGridItem from "./TaxaGridItem";
 import Grid from "./Grid";
 

@@ -1,11 +1,11 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
+import type { Project } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";

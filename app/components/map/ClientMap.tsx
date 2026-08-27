@@ -1,7 +1,7 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { NetworkPacket, NullLocation } from "@/types/globals";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { NetworkPacket, NullLocation } from "@/types/globals";
 import { useEffect, useState } from "react";
 import DynamicMap from "./DynamicMap";
 import { TableMetadataValue } from "@/types/tableMetadata";

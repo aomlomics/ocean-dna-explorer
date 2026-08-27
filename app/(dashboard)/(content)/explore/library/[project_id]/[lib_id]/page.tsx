@@ -7,7 +7,7 @@ import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({
 	params

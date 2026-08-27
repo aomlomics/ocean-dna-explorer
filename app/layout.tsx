@@ -4,10 +4,10 @@ import ScrollToTop from "@/app/components/ScrollToTop";
 import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import TourProvider from "./hooks/TourProvider";
 import TrustedProvider from "./hooks/TrustedProvider";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 const sourceSans = Source_Sans_3({
 	weight: ["300", "400", "500", "600", "700", "800"],

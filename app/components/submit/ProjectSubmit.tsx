@@ -3,17 +3,17 @@
 import { useAuth } from "@clerk/nextjs";
 import Modal from "../Modal";
 import UserAdder from "../UserAdder";
-import { SubmitEvent, Fragment, useRef, useState } from "react";
+import { type SubmitEvent, Fragment, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import projectSubmitAction from "@/app/actions/project/create/projectSubmit";
-import { NetworkProgressPacket } from "@/types/globals";
+import type { NetworkProgressPacket } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import SubmitFormSection from "./SubmitFormSection";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
 import Link from "next/link";
-import { Attribution } from "@/app/generated/prismaImages/client";
-import { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
+import type { Attribution } from "@/app/generated/prismaImages/client";
+import type { AttributionOptionalDefaults, ImagePartial } from "@/prismaImages/generated/zod";
 
 export default function ProjectSubmit({ attributions }: { attributions: Attribution[] }) {
 	const { userId } = useAuth();

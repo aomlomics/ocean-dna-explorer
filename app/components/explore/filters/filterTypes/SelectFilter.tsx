@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { handleFilterChange, EnumFilterConfig, SelectFilterConfig } from "../filterHelpers";
+import { handleFilterChange, type EnumFilterConfig, type SelectFilterConfig } from "../filterHelpers";
 import { parseDbDeadBoolean } from "@/app/helpers/schema";
 
 export default function SelectFilter({

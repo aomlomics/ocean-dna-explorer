@@ -1,6 +1,6 @@
 import { DeadValueEnum } from "@/types/enums";
 import Link from "next/link";
-import { ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { SHARED_TOOLTIP_THEME_CLASS } from "../viewAsSearchTooltip";
 
 export default function StatCard({

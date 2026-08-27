@@ -14,9 +14,9 @@ import {
 import { parseSchemaToObject } from "../schema";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
-import { Library, Project, Sample } from "@/app/generated/prisma/client";
-import { Channel } from "../progress";
-import {
+import type { Library, Project, Sample } from "@/app/generated/prisma/client";
+import type { Channel } from "../progress";
+import type {
 	AssayCreateManyInput,
 	AssayPrepCreateManyInput,
 	LibraryCreateManyInput,

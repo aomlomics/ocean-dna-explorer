@@ -1,5 +1,5 @@
-import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
-import { Prisma } from "../generated/prisma/client";
+import type { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
+import type { Prisma } from "../generated/prisma/client";
 import { getTableName, getZodType } from "./schema";
 import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
 import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";

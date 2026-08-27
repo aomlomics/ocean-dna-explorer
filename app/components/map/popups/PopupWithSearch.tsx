@@ -1,6 +1,6 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import { MapLocationWithValues } from "@/types/globals";
-import { getWhereAdvancedHref, LegendInfo } from "../utils/mapUtils";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { MapLocationWithValues } from "@/types/globals";
+import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
 import { Popup } from "react-leaflet";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";
 import PopupWithSearchBody from "./PopupWithSearchBody";

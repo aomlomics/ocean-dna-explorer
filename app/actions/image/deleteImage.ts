@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { del } from "@vercel/blob";
 import { prisma } from "@/app/helpers/prisma";

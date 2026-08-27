@@ -1,7 +1,7 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { NullLocation } from "@/types/globals";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { NullLocation } from "@/types/globals";
 import { TableMetadataValue } from "@/types/tableMetadata";
 import dynamic from "next/dynamic";
 const ActualMap = dynamic(() => import("@/app/components/map/ActualMap"), {

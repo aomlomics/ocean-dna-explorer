@@ -1,5 +1,5 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import {
+import type { Prisma } from "@/app/generated/prisma/client";
+import type {
 	Circle,
 	MapLocation,
 	MapLocationWithValues,

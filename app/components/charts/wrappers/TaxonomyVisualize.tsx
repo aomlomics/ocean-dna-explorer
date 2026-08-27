@@ -1,8 +1,8 @@
 "use client";
 
 import { DeadValueEnum } from "@/types/enums";
-import { Assignment, Library, Occurrence, Sample, Taxonomy } from "../../../generated/prisma/client";
-import { getZodType } from "../../../helpers/schema";
+import type { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
+import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";

@@ -1,5 +1,5 @@
 import { getTextColorHex } from "@/app/helpers/utils";
-import { Tag } from "../../generated/prisma/client";
+import type { Tag } from "../../generated/prisma/client";
 import "./AnalysisTag.css";
 
 export default function AnalysisTag({ tag, hideDescription }: { tag: Omit<Tag, "id">; hideDescription?: true }) {

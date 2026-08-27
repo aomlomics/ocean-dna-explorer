@@ -1,8 +1,8 @@
+import type { Prisma } from "@/app/generated/prisma/client";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
-import { PrismaPromise } from "@prisma/client/runtime/client";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -53,7 +53,7 @@ export async function GET(
 		}
 
 		//assemble queries
-		const queries = [] as PrismaPromise<any>[];
+		const queries = [] as Prisma.PrismaPromise<any>[];
 		//filtered
 		for (const field in where) {
 			const temp = { ...where };

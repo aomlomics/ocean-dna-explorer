@@ -15,8 +15,8 @@ import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhoto
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import { Analysis, Assay, Taxonomy } from "@/app/generated/prisma/client";
-import { Metadata } from "next";
+import type { Analysis, Assay, Taxonomy } from "@/app/generated/prisma/client";
+import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
 	const { project_id } = await decodeRouteParams(params);

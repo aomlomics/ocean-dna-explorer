@@ -1,8 +1,8 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { MapLocation, MapLocationWithValues } from "@/types/globals";
-import { DEFAULT_COLOR, getLegendColor, getLegendValue, LegendInfo, legendValueSort } from "../utils/mapUtils";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { MapLocation, MapLocationWithValues } from "@/types/globals";
+import { DEFAULT_COLOR, getLegendColor, getLegendValue, type LegendInfo, legendValueSort } from "../utils/mapUtils";
 import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";

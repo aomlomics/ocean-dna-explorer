@@ -1,11 +1,11 @@
 "use client";
 
-import { SubmitEvent, useRef, useState } from "react";
-import { Attribution } from "../generated/prismaImages/client";
+import { type SubmitEvent, useRef, useState } from "react";
+import type { Attribution } from "../generated/prismaImages/client";
 import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
-import { Project, Taxonomy } from "../generated/prisma/client";
+import type { Project, Taxonomy } from "../generated/prisma/client";
 
 export default function AddImageButton({
 	attributions,

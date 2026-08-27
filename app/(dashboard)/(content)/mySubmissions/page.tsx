@@ -13,7 +13,7 @@ import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSa
 import { ProjectIcon } from "@/app/components/icons";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { exploreUrl } from "@/types/tableMetadata";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "My Submissions"

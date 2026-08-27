@@ -1,5 +1,5 @@
-import { FilterConfig } from "./filters/filterHelpers";
-import { Prisma } from "@/app/generated/prisma/client";
+import type { FilterConfig } from "./filters/filterHelpers";
+import type { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import ExploreControls from "./ExploreControls";
 import TableInfo from "../TableInfo";

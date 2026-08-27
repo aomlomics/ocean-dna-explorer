@@ -2,7 +2,7 @@ import { AnalysisAsvTablePreview, AnalysisOccurrenceTablePreview } from "@/app/c
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import WorkshopVideoCallout from "@/app/components/WorkshopVideoCallout";
 import Link from "next/link";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Submit | Help",

@@ -1,7 +1,7 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { Suspense } from "react";
 import DynamicMap from "./DynamicMap";
-import { NullLocation } from "@/types/globals";
+import type { NullLocation } from "@/types/globals";
 import { TableMetadataValue } from "@/types/tableMetadata";
 
 export default function Map({
@@ -33,7 +33,8 @@ export default function Map({
 	disableSearch?: true;
 	className?: string;
 } & (
-	{ query: () => Promise<NullLocation[]>; locations?: undefined } | { query?: undefined; locations: NullLocation[] }
+	| { query: () => Promise<NullLocation[]>; locations?: undefined }
+	| { query?: undefined; locations: NullLocation[] }
 ) &
 	(
 		| { titleTable?: Uncapitalize<Prisma.ModelName>; defaultLegendField?: undefined }

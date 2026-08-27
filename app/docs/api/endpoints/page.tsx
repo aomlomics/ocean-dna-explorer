@@ -3,7 +3,7 @@ import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
 import { prisma } from "@/app/helpers/prisma";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Endpoints | API",

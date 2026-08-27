@@ -1,6 +1,6 @@
 "use client";
 
-import { Assay, BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
+import type { Assay, BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
 import DynamicMap from "../map/DynamicMap";
 import MapWrapper from "../map/MapWrapper";
 import TableDisplay from "../paginated/table/TableDisplay";

@@ -9,10 +9,10 @@ import {
 } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
-import { NetworkPacket, ParamsArray } from "@/types/globals";
+import type { NetworkPacket, ParamsArray } from "@/types/globals";
 import { deepWhere, parseAdvancedQuery, parseSearchQuery, parseToQuery } from "@/app/helpers/api";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
-import { MapLocation } from "@/types/globals";
+import type { MapLocation } from "@/types/globals";
 import { getDataTableName, getTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";

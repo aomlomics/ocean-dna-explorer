@@ -5,7 +5,7 @@ import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { RanksBySpecificity } from "@/types/objects";
 
 export async function generateMetadata({

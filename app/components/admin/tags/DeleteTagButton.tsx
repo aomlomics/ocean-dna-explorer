@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import deleteTagAction from "@/app/actions/tag/deleteTag";
-import { Analysis, Tag } from "@/app/generated/prisma/client";
+import type { Analysis, Tag } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { exploreUrl } from "@/types/tableMetadata";
 import Modal from "../../Modal";

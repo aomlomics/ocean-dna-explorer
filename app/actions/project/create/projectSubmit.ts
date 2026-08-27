@@ -4,16 +4,16 @@ import { prisma } from "@/app/helpers/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
-import { Channel, createProgressStream } from "@/app/helpers/progress";
-import { UserMetadata } from "@/types/globals";
+import { type Channel, createProgressStream } from "@/app/helpers/progress";
+import type { UserMetadata } from "@/types/globals";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { del } from "@vercel/blob";
-import { Project } from "@/app/generated/prisma/client";
+import type { Project } from "@/app/generated/prisma/client";
 import { validateBlobs } from "@/app/helpers/withDb";
 import {
-	AttributionOptionalDefaults,
+	type AttributionOptionalDefaults,
 	AttributionOptionalDefaultsSchema,
-	ImageOptionalDefaults,
+	type ImageOptionalDefaults,
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import { prismaImages } from "@/app/helpers/prismaImages";

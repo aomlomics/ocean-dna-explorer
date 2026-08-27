@@ -1,5 +1,5 @@
 import AlphaDiversityData from "@/app/components/charts/data/AlphaDiversityData";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Alpha Diversity",

@@ -1,6 +1,6 @@
 import * as PrismaZodTypes from "@/prisma/generated/zod";
-import { ZodEnum, ZodObject, ZodType } from "zod";
-import {
+import type { ZodEnum, ZodObject, ZodType } from "zod";
+import type {
 	Analysis,
 	Assay,
 	AssayPrep,

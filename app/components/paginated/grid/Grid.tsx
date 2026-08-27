@@ -1,9 +1,9 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { fetcher } from "@/app/helpers/utils";
 import { useSearchParams } from "next/navigation";
-import { FunctionComponent, useRef, useState } from "react";
+import { type FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
 import LoadingPaginationControls from "../LoadingPaginationControls";
@@ -11,7 +11,6 @@ import { buildWhereParams } from "@/app/helpers/api";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
 import TableStatusState from "../table/TableStatusState";
-import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
 

@@ -6,7 +6,7 @@ import DataDisplay from "@/app/components/explore/DataDisplay";
 import EditHistory from "@/app/components/explore/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import { Analysis } from "@/app/generated/prisma/client";
+import type { Analysis } from "@/app/generated/prisma/client";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
@@ -21,7 +21,7 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { exploreUrl } from "@/types/tableMetadata";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({
 	params

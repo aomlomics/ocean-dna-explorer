@@ -1,8 +1,8 @@
-import { trustedPrisma } from "../../helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import DoughnutChart from "../charts/DoughnutChart";
 import { StatCountUp } from "./StatCountUp";
-import { Assay } from "../../generated/prisma/client";
+import type { Assay } from "@/app/generated/prisma/client";
 
 export type SummaryItemData = {
 	title: string;

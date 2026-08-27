@@ -1,6 +1,6 @@
 "use client";
 
-import { Sample } from "@/app/generated/prisma/client";
+import type { Sample } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { DeadValueEnum } from "@/types/enums";

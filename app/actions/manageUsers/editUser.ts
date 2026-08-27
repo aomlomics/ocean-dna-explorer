@@ -1,6 +1,6 @@
 "use server";
 
-import { Role, UserMetadata } from "@/types/globals";
+import type { Role, UserMetadata } from "@/types/globals";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RoleHeirarchy, RolePermissions, Roles } from "@/types/objects";
 import { z } from "zod";

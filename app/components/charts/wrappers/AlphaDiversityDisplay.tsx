@@ -1,20 +1,20 @@
 "use client";
 
-import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { AlphaDiversity, AlphaDiversityIndex, Sample } from "../../../generated/prisma/client";
-import BoxWhiskerPlot, { BoxWhiskerData, BoxWhiskerDataset } from "../BoxWhiskerPlot";
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import type { AlphaDiversity, AlphaDiversityIndex, Sample } from "@/app/generated/prisma/client";
+import BoxWhiskerPlot, { type BoxWhiskerData, type BoxWhiskerDataset } from "../BoxWhiskerPlot";
 import { Chart as ChartJS } from "chart.js";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import { getZodType } from "../../../helpers/schema";
+import { getZodType } from "@/app/helpers/schema";
 import ChartCopyButton from "../ChartCopyButton";
 import { DeadValueEnum, DeadValueNumbers } from "@/types/enums";
-import useDaisyTheme from "../../../hooks/useDaisyTheme";
+import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
 import Link from "next/link";
-import { DbType } from "@/types/globals";
+import type { DbType } from "@/types/globals";
 import distinctColors from "distinct-colors";
-import Checklist from "../../Checklist";
-import InfoButton from "../../InfoButton";
+import Checklist from "@/app/components/Checklist";
+import InfoButton from "@/app/components/InfoButton";
 import { exploreUrl } from "@/types/tableMetadata";
 
 const METRIC_SEP = " | ";

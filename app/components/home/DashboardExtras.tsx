@@ -3,7 +3,7 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "../dataSummary/DashCard";
 import DoughnutChart from "../charts/DoughnutChart";
 import { EARLIEST_VALID_SAMPLE_DATE } from "../dataSummary/TemporalCoverageCard";
-import { Prisma } from "../../generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 
 /**
  * ---------------------------------------------------------------------------

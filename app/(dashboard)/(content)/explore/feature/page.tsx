@@ -2,7 +2,7 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import TableMetadata from "@/types/tableMetadata";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 const tableMeta = TableMetadata.feature;
 const title = "Explore " + tableMeta.plural;

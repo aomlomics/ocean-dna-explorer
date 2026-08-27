@@ -2,9 +2,9 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import { assay_type } from "@/app/generated/prisma/client";
 import { getOptions } from "@/app/helpers/utils";
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import TableMetadata from "@/types/tableMetadata";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 const tableMeta = TableMetadata.project;
 const title = "Explore " + tableMeta.plural;

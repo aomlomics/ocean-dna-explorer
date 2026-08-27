@@ -11,7 +11,7 @@ import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
 	const { assay_name } = await decodeRouteParams(params);

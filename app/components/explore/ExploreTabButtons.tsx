@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { uncapitalizeTable } from "@/app/helpers/utils";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 

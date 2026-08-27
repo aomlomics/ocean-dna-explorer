@@ -1,10 +1,10 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
+import type { Project } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket, Role } from "@/types/globals";
+import type { NetworkPacket, Role } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 

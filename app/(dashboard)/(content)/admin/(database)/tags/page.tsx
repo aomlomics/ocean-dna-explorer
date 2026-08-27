@@ -2,7 +2,7 @@ import AddTagButton from "@/app/components/admin/tags/AddTagButton";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import DeleteTagButton from "@/app/components/admin/tags/DeleteTagButton";
 import { prisma } from "@/app/helpers/prisma";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Analysis Tags"

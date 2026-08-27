@@ -1,6 +1,6 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
-import { Sample } from "@/app/generated/prisma/client";
+import type { Sample } from "@/app/generated/prisma/client";
 import { exploreUrl } from "@/types/tableMetadata";
 
 type DepthStats = {

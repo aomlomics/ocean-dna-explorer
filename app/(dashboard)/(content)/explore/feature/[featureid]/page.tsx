@@ -1,5 +1,5 @@
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { Taxonomy } from "@/app/generated/prisma/client";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -13,7 +13,7 @@ import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
 	const { featureid } = await decodeRouteParams(params);

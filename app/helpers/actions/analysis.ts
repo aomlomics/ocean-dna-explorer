@@ -1,4 +1,4 @@
-import { Analysis, Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
+import type { Analysis, Assignment, Feature, Occurrence, Prisma, Taxonomy } from "../../generated/prisma/client";
 import { md5 } from "js-md5";
 import { parse } from "csv-parse";
 import {
@@ -11,7 +11,7 @@ import {
 	TaxonomyScalarFieldEnumSchema
 } from "@/prisma/generated/zod";
 import { parseSchemaToObject } from "../schema";
-import { Channel } from "../progress";
+import type { Channel } from "../progress";
 import { get } from "@vercel/blob";
 
 export async function parseAnalysisFile({

@@ -1,5 +1,5 @@
 import SampleMetadataData from "@/app/components/charts/data/SampleMetadataData";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Sample Metadata",

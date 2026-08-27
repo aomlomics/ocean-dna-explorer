@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import AdminTabs from "@/app/components/admin/AdminTabs";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: {

@@ -8,7 +8,7 @@ import { useThrottledCallback } from "use-debounce";
 import Link from "next/link";
 import distinctColors from "distinct-colors";
 import { TaxonomicRanks } from "@/types/objects";
-import { TaxonomyPartial } from "@/prisma/generated/zod";
+import type { TaxonomyPartial } from "@/prisma/generated/zod";
 import { exploreUrl } from "@/types/tableMetadata";
 
 ChartJS.register(ArcElement, Tooltip);

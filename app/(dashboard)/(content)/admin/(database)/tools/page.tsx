@@ -3,7 +3,7 @@ import remakeBlastDatabaseAction from "@/app/actions/remakeBlastDatabase";
 import seedDatabaseAction from "@/app/actions/seedDatabase";
 import WarningButton from "@/app/components/admin/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Database Tools"

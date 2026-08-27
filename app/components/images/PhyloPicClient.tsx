@@ -1,6 +1,6 @@
 "use client";
 
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useState } from "react";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "./matchGbifForPhylopic";

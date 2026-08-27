@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 
 // Note: Previously this component rendered a curved helix with nucleotide circles.

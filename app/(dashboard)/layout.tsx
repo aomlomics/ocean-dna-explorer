@@ -1,6 +1,6 @@
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/header/Header";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
 	return (

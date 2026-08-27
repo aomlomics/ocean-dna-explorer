@@ -11,12 +11,13 @@ import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDel
 import WarningButton from "@/app/components/admin/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
 import { exploreUrl } from "@/types/tableMetadata";
-import { Role, UserMetadata } from "@/types/globals";
+import type { Role, UserMetadata } from "@/types/globals";
 import { RoleHeirarchy } from "@/types/objects";
-import { auth, clerkClient, EmailAddress } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import type { EmailAddress } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
 	const { userId } = await params;

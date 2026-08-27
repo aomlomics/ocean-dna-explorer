@@ -1,16 +1,23 @@
 "use client";
 
-import { Dispatch, ReactNode, RefObject, SetStateAction, useState, MouseEvent } from "react";
-import { Map } from "leaflet";
-import { Prisma } from "@/app/generated/prisma/client";
+import { useState } from "react";
+import type { Dispatch, ReactNode, RefObject, SetStateAction, MouseEvent } from "react";
+import type { Map } from "leaflet";
+import type { Prisma } from "@/app/generated/prisma/client";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResizableMapContainer from "../containers/ResizableMapContainer";
-import { DEFAULT_COLOR, DEFAULT_PALETTE, getMapLegendField, LEGEND_VALUES_LIMIT, LegendInfo } from "../utils/mapUtils";
+import {
+	DEFAULT_COLOR,
+	DEFAULT_PALETTE,
+	getMapLegendField,
+	LEGEND_VALUES_LIMIT,
+	type LegendInfo
+} from "../utils/mapUtils";
 import InfoButton from "../../InfoButton";
 import TableMetadata from "@/types/tableMetadata";
 import ResetButtonMap from "../utils/ResetButtonMap";
-import chroma, { Color } from "chroma-js";
+import chroma, { type Color } from "chroma-js";
 import Link from "next/link";
 import useMapLocations from "../utils/useMapLocations";
 

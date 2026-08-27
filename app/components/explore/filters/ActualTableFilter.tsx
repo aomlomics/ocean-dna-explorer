@@ -3,9 +3,9 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import RangeFilter from "./filterTypes/RangeFilter";
-import { FilterConfig, getActiveFilters, buildActiveSummaries } from "./filterHelpers";
+import { type FilterConfig, getActiveFilters, buildActiveSummaries } from "./filterHelpers";
 import SelectFilter from "./filterTypes/SelectFilter";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import SelectGroup from "./filterTypes/SelectGroup";
 import Filter from "./filterTypes/Filter";
 

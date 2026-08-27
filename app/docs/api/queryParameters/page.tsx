@@ -1,7 +1,7 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
 import Link from "next/link";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Query Parameters | API",

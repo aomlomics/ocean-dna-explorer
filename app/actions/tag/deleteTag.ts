@@ -1,8 +1,8 @@
 "use server";
 
-import { Tag } from "@/app/generated/prisma/client";
+import type { Tag } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 

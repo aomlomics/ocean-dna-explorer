@@ -1,10 +1,10 @@
 "use server";
 
-import { Occurrence, Sample } from "@/app/generated/prisma/client";
+import type { Occurrence, Sample } from "@/app/generated/prisma/client";
 import { prisma } from "@/app/helpers/prisma";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 

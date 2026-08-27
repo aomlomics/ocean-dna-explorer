@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import ThemeAwareLogo from "@/app/components/images/ThemeAwareLogo";
 import WorkshopVideoCallout, { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 const description = `The Ocean DNA Explorer empowers scientists and citizens to advance ocean discovery and conservation. We provide a unified, accessible platform for exploring, visualizing, and sharing standardized environmental DNA (eDNA) datasets.`;
 

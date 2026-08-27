@@ -1,7 +1,7 @@
 "use client";
 
-import { Sample } from "@/app/generated/prisma/client";
-import { ReactNode, useMemo, useRef, useState } from "react";
+import type { Sample } from "@/app/generated/prisma/client";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import distinctColors from "distinct-colors";
 import { Scatter } from "react-chartjs-2";
 import {

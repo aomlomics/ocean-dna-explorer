@@ -1,13 +1,13 @@
 "use server";
 
-import { Occurrence } from "@/app/generated/prisma/client";
+import type { Occurrence } from "@/app/generated/prisma/client";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { ProgressStream } from "@/types/globals";
+import type { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";

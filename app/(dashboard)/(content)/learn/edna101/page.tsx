@@ -1,5 +1,5 @@
 import DataJourney from "@/app/components/learn/DataJourney";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "eDNA 101",

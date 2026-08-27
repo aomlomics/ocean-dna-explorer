@@ -1,7 +1,7 @@
 "use client";
 
 import chroma from "chroma-js";
-import { ReactNode, SetStateAction, TransitionStartFunction, useState } from "react";
+import { type ReactNode, type SetStateAction, type TransitionStartFunction, useState } from "react";
 
 export default function Checklist({
 	label,

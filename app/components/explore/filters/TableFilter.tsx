@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import ActualTableFilter from "./ActualTableFilter";
-import { FilterConfig } from "./filterHelpers";
+import type { FilterConfig } from "./filterHelpers";
 
 export default function TableFilter({
 	tableConfig,

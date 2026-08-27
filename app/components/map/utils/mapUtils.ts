@@ -1,10 +1,10 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { DeadValueNumbers, DeadValues } from "@/types/enums";
-import { MapLocation, MapLocationWithValues } from "@/types/globals";
+import type { MapLocation, MapLocationWithValues } from "@/types/globals";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 import chroma from "chroma-js";
-import { Color } from "chroma-js";
+import type { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
 import useMapLocations from "./useMapLocations";
 

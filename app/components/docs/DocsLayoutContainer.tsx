@@ -2,7 +2,7 @@
 
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/header/Header";
-import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 import DocsSidebar from "./DocsSidebar";
 
 export default function DocsLayoutContainer({ children }: { children: ReactNode }) {

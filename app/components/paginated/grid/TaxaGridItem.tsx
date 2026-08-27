@@ -1,6 +1,6 @@
 import Link from "next/link";
 import PhyloPicClient from "../../images/PhyloPicClient";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { Taxonomy } from "@/app/generated/prisma/client";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";

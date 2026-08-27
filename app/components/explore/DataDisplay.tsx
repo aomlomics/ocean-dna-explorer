@@ -1,10 +1,10 @@
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit, TypeSeparators } from "@/types/objects";
 import Link from "next/link";
-import { ReactNode } from "react";
-import { Prisma } from "../../generated/prisma/client";
+import type { ReactNode } from "react";
+import type { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
-import { getZodType } from "../../helpers/schema";
+import { getZodType } from "@/app/helpers/schema";
 
 export default function DataDisplay({
 	table,

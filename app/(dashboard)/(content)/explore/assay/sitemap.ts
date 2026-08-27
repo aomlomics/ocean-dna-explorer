@@ -1,7 +1,7 @@
 import { prisma } from "@/app/helpers/prisma";
 import { getLastModifiedDate } from "@/app/helpers/utils";
 import { exploreUrl } from "@/types/tableMetadata";
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
 
 const URL_LIMIT = 50000; // Google's limit is 50,000 URLs per sitemap
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { Dispatch, RefObject, SetStateAction, useEffect, useRef } from "react";
+import { type Dispatch, type RefObject, type SetStateAction, useEffect, useRef } from "react";
 import { Chart as ChartJS, ChartItem, CategoryScale, LinearScale, Title, Tooltip, Legend } from "chart.js";
 import { BoxPlotController, BoxAndWiskers } from "@sgratzl/chartjs-chart-boxplot";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
-import { BoxPlotDataPoint } from "@sgratzl/chartjs-chart-boxplot";
+import type { BoxPlotDataPoint } from "@sgratzl/chartjs-chart-boxplot";
 
 export type BoxWhiskerDataset = {
 	label?: string;

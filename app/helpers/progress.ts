@@ -1,5 +1,10 @@
-import { NetworkProgressPacket, ProgressAction, ProgressActionMany, ProgressActionManyGlobal } from "@/types/globals";
-import { Dispatch, SetStateAction, ActionDispatch } from "react";
+import type {
+	NetworkProgressPacket,
+	ProgressAction,
+	ProgressActionMany,
+	ProgressActionManyGlobal
+} from "@/types/globals";
+import type { Dispatch, SetStateAction, ActionDispatch } from "react";
 
 export type Channel = { url: string; stream: ReturnType<typeof createProgressStream> };
 

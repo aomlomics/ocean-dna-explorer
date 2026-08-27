@@ -1,12 +1,12 @@
 import DocsSections, {
-	DocsGenericProps,
-	DocsPage,
+	type DocsGenericProps,
+	type DocsPage,
 	DocsPageTitles,
-	DocsSection,
+	type DocsSection,
 	getNextDocsSection
 } from "@/types/docsSections";
 import Link from "next/link";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import MobileTOC from "./MobileTOC";
 
 const docContentProseClassName =

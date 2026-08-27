@@ -1,13 +1,13 @@
 "use client";
 
-import { Assay } from "@/app/generated/prisma/client";
+import type { Assay } from "@/app/generated/prisma/client";
 import { MAX_UNCOMPRESSED_LENGTH, compressURIComponent } from "@/app/helpers/utils";
 import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SubmitEvent, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import InfoButton from "../InfoButton";
-import { BlastQueryWithRelations } from "@/prisma/generated/zod";
+import type { BlastQueryWithRelations } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { parseBlastRequest } from "@/app/helpers/blast";
 

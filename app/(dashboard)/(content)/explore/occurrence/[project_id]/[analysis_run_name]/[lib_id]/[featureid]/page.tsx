@@ -1,7 +1,7 @@
 import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { Taxonomy } from "@/app/generated/prisma/client";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
@@ -11,7 +11,7 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata({
 	params

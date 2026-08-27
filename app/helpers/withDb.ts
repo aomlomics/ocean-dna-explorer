@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { BlobFile, Prisma } from "../generated/prismaImages/client";
+import { Prisma } from "../generated/prismaImages/client";
+import type { BlobFile } from "../generated/prismaImages/client";
 import { prismaImages } from "./prismaImages";
 
 export async function validateBlobs(urls: BlobFile["url"][]) {

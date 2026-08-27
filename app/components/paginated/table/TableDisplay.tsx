@@ -1,6 +1,6 @@
 "use client";
 
-import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
+import type { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
 import Table from "./Table";
 import Pagination from "../pagination/Pagination";
 import { useEffect, useState } from "react";

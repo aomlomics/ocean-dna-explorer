@@ -7,7 +7,7 @@ import TableInfo from "@/app/components/TableInfo";
 import SearchContent from "@/app/components/search/SearchContent";
 import { redirect } from "next/navigation";
 import { trustedPrisma } from "@/app/helpers/prisma";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Search",

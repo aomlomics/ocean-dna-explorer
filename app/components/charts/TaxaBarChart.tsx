@@ -1,6 +1,6 @@
 "use client";
 
-import { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
+import type { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
 import { Bar } from "react-chartjs-2";
 import { useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";

@@ -1,4 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import TableMetadata from "@/types/tableMetadata";
 import Link from "next/link";
 import { ReactNode, Suspense } from "react";

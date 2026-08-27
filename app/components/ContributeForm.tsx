@@ -4,7 +4,7 @@ import roleApplicationAction from "@/app/actions/roleApplication";
 import { RolePermissions } from "@/types/objects";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { SubmitEvent, useRef, useState } from "react";
+import { type SubmitEvent, useRef, useState } from "react";
 
 export default function ContributeForm() {
 	const modalRef = useRef<HTMLDialogElement>(null);

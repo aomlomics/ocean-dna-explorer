@@ -1,10 +1,10 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { MapLocation, NullLocation } from "@/types/globals";
-import { getWhereAdvancedHref, LegendInfo } from "../utils/mapUtils";
-import { RefObject, useState } from "react";
-import { Map } from "leaflet";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { MapLocation, NullLocation } from "@/types/globals";
+import { getWhereAdvancedHref, type LegendInfo } from "../utils/mapUtils";
+import { type RefObject, useState } from "react";
+import type { Map } from "leaflet";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import TableMetadata, { TableMetadataValue } from "@/types/tableMetadata";

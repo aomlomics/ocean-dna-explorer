@@ -1,9 +1,9 @@
 "use server";
 
-import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
+import type { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
-import { Channel, createProgressStream } from "@/app/helpers/progress";
+import { type Channel, createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import { RolePermissions } from "@/types/objects";

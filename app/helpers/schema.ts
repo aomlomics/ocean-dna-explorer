@@ -1,10 +1,9 @@
 import { DeadBooleanToEnum, DeadValueEnum } from "@/types/enums";
 import { ZodArray, ZodBoolean, ZodDate, ZodEnum, ZodLazy, ZodNumber, ZodOptional, ZodString } from "zod";
-import { Prisma } from "../generated/prisma/client";
+import type { Prisma } from "../generated/prisma/client";
 import TableMetadata, { DataTableNames, TableNames } from "@/types/tableMetadata";
 import { TypeSeparators } from "@/types/objects";
-import { DbType } from "@/types/globals";
-import { JsonValue } from "@prisma/client/runtime/client";
+import type { DbType } from "@/types/globals";
 
 //handles converting numbers from 0 to 99
 function stringToNumber(str: string) {
@@ -146,7 +145,7 @@ export function getZodType(
 export function parseSchemaToObject(
 	f: string,
 	v: string,
-	obj: Record<string, string | string[] | number | number[] | Date | boolean | JsonValue | null>,
+	obj: Record<string, string | string[] | number | number[] | Date | boolean | Prisma.JsonValue | null>,
 	table: Uncapitalize<Prisma.ModelName>
 ) {
 	const field = f.trim();

@@ -1,5 +1,5 @@
 import { handlePrismaError } from "@/app/helpers/queries";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request): Promise<NextResponse<NetworkPacket>> {

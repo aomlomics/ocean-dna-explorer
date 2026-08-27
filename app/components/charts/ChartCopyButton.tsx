@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject, useState } from "react";
+import { type RefObject, useState } from "react";
 import { Chart as ChartJS } from "chart.js";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 

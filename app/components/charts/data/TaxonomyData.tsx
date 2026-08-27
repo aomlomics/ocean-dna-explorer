@@ -9,7 +9,7 @@ import {
 	SamplePartialWithRelationsSchema,
 	TaxonomyPartialSchema
 } from "@/prisma/generated/zod";
-import { SuccessPacket } from "@/types/globals";
+import type { SuccessPacket } from "@/types/globals";
 import { TaxonomicRanks } from "@/types/objects";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";

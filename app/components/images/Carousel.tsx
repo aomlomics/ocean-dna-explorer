@@ -1,7 +1,7 @@
 "use client";
 
 import { Image as DbImage } from "@/app/generated/prismaImages/client";
-import { Attribution } from "@/prismaImages/generated/zod";
+import type { Attribution } from "@/prismaImages/generated/zod";
 import Image from "next/image";
 import AttributionBadge from "./AttributionBadge";
 import { useEffect, useState, useSyncExternalStore } from "react";

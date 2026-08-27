@@ -1,11 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ConfigField, handleFilterChange } from "../filterHelpers";
-import { NetworkPacket } from "@/types/globals";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type ConfigField, handleFilterChange } from "../filterHelpers";
+import type { NetworkPacket } from "@/types/globals";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { useState } from "react";
-import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function SelectGroupFilter({
 	field,

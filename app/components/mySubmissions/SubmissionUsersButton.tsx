@@ -1,6 +1,6 @@
 "use client";
 
-import { TargetAction } from "@/types/globals";
+import type { TargetAction } from "@/types/globals";
 import { useRef, useState } from "react";
 import UserAdder from "../UserAdder";
 

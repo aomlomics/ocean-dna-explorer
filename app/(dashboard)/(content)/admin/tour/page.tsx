@@ -1,5 +1,5 @@
 import TourForm from "@/app/components/admin/TourForm";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Tour"

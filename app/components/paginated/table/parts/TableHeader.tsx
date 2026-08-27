@@ -1,13 +1,13 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { TableColumns } from "../hooks/useTableColumns";
-import { TableQuery } from "../hooks/useTableQuery";
+import type { Prisma } from "@/app/generated/prisma/client";
+import type { TableColumns } from "../hooks/useTableColumns";
+import type { TableQuery } from "../hooks/useTableQuery";
 import { DEFAULT_ORDER_BY } from "../Table";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import TableMetadata from "@/types/tableMetadata";
 import { capitalizeTable } from "@/app/helpers/utils";
-import { ArrowIcon, SearchIcon } from "../../../icons";
+import { ArrowIcon, SearchIcon } from "@/app/components/icons";
 
 export default function TableHeader({
 	table,

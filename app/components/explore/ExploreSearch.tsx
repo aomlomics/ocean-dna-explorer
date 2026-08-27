@@ -1,11 +1,11 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export default function ExploreSearch({
 	table,

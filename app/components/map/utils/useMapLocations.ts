@@ -1,11 +1,11 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
-import { MapLocation, MapLocationWithValues, NullLocation } from "@/types/globals";
+import type { MapLocation, MapLocationWithValues, NullLocation } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
-import { LatLng, LatLngBoundsExpression } from "leaflet";
-import { chromaMin, getLegendValue, getMapLegendField, LegendInfo, legendValueSort, lightMin } from "./mapUtils";
+import type { LatLng, LatLngBoundsExpression } from "leaflet";
+import { chromaMin, getLegendValue, getMapLegendField, type LegendInfo, legendValueSort, lightMin } from "./mapUtils";
 import distinctColors from "distinct-colors";
-import { Color } from "chroma-js";
+import type { Color } from "chroma-js";
 
 type MapProps =
 	| {

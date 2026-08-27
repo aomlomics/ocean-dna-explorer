@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, SubmitEvent, useRef, useState } from "react";
+import { type ChangeEvent, type SubmitEvent, useRef, useState } from "react";
 import WarningButton from "./WarningButton";
 import { useAuth } from "@clerk/nextjs";
 import { RolePermissions } from "@/types/objects";

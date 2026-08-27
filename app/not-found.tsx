@@ -1,7 +1,7 @@
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/header/Header";
 import NotFoundScreen from "@/app/components/NotFoundScreen";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Page not found"
