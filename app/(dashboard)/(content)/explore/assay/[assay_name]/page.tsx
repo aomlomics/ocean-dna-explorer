@@ -21,15 +21,14 @@ export async function generateMetadata({ params }: { params: Promise<{ assay_nam
 			assay_name
 		},
 		select: {
-			//TODO: only select fields that are needed
-			assay_name: true
+			target_gene: true
 		}
 	});
 
 	if (assay) {
-		//TODO: add description
 		return {
-			title: `${assay_name} | ${TableMetadata.assay.plural}`
+			title: `${assay_name} | ${TableMetadata.assay.plural}`,
+			description: `Explore the ${assay_name} assay, including its ${assay.target_gene}, PCR primer sequences and characteristics, associated samples/libraries, and analyses.`
 		};
 	} else {
 		return {

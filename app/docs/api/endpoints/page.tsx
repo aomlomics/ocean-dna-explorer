@@ -3,6 +3,13 @@ import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
 import { prisma } from "@/app/helpers/prisma";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Endpoints | API",
+	description:
+		"Learn about Ocean DNA Explorer API endpoints for discovering tables, relations, fields, unique values, querying data, and retrieving individual records."
+};
 
 export default async function ApiEndpointsPage() {
 	const taxonomy = await prisma.taxonomy.findFirst({

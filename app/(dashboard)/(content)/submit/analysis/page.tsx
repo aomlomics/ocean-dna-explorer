@@ -3,6 +3,12 @@ import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { SubmitDescription } from "../page";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Submit Analyses",
+	description: "Submit analysis data by uploading analysis metadata, ASV taxonomic assignments, and occurrence tables."
+};
 
 export default async function Analysis() {
 	const tags = await prisma.tag.findMany();

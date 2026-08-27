@@ -1,6 +1,13 @@
 import { AnalysisIcon, ProjectIcon } from "@/app/components/icons";
 import { OBON_HREF, WORKSHOP_PLAYLIST_HREF } from "@/app/components/WorkshopVideoCallout";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+	title: "Submit",
+	description:
+		"Submit projects and analyses to the Ocean DNA Explorer. Contribute FAIR eDNA data, metadata, sequencing results, and analyses."
+};
 
 export default function Submit() {
 	return (

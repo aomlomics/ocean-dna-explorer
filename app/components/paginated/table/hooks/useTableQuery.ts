@@ -37,7 +37,6 @@ export default function useTableQuery({
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const pathname = usePathname();
-	const { trusted } = useTrusted();
 
 	const [take, setTake] = useState(defaultTake);
 	const [page, setPage] = useState(1);
@@ -54,10 +53,6 @@ export default function useTableQuery({
 			page: (dir ? page + dir : page).toString(),
 			orderBy: orderBy.field + "," + orderBy.order
 		});
-
-		if (trusted) {
-			query.set("trusted", "true");
-		}
 
 		let whereQuery = {} as Record<string, string | number>;
 		if (where) {

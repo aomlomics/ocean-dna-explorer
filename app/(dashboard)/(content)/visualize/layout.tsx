@@ -1,6 +1,14 @@
 import SearchUI from "@/app/components/search/SearchUI";
 import VisualizeTabs from "@/app/components/VisualizeTabs";
+import { Metadata } from "next";
 import { ReactNode } from "react";
+
+export const metadata: Metadata = {
+	title: {
+		default: "Visualize",
+		template: "%s | Visualize ODE"
+	}
+};
 
 export default function VisualizeLayout({ children }: { children: ReactNode }) {
 	return (

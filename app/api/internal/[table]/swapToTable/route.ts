@@ -1,5 +1,5 @@
 import { parseApiQuery } from "@/app/helpers/api";
-import { prisma, trustedPrisma } from "@/app/helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
@@ -15,11 +15,10 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const { trusted, query } = parseApiQuery(model, searchParams, { swapToTable: true });
-		const client = trusted ? trustedPrisma : prisma;
+		const { query } = parseApiQuery(model, searchParams, { swapToTable: true });
 
 		//@ts-expect-error dynamically accessing prisma client
-		const result = await client[model].findMany(query);
+		const result = await trustedPrisma[model].findMany(query);
 
 		return NextResponse.json({ statusMessage: "success", result });
 	} catch (err) {

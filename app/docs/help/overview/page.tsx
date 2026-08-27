@@ -1,5 +1,12 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Overview | Help",
+	description:
+		"Learn about Ocean DNA Explorer's features, login system, submissions manager, bug reports, and frequently asked questions."
+};
 
 export default function HelpOverviewPage() {
 	return (

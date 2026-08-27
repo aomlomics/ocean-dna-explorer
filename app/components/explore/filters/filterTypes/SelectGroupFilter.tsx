@@ -24,7 +24,6 @@ export default function SelectGroupFilter({
 }) {
 	const searchParams = useSearchParams();
 	const router = useRouter();
-	const { trusted } = useTrusted();
 	const [options, setOptions] = useState({} as Record<string, string[]>);
 
 	async function getOptions() {
@@ -46,7 +45,7 @@ export default function SelectGroupFilter({
 			.join("&");
 
 		const response = await fetch(
-			`/api/internal/${table}/fields/distinct?${trusted ? "trusted=true&" : ""}${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
+			`/api/internal/${table}/fields/distinct?${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
 			{ cache: "force-cache" }
 		);
 		const json = (await response.json()) as NetworkPacket;

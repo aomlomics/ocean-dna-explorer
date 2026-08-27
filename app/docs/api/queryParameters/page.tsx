@@ -1,6 +1,13 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
 import Link from "next/link";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Query Parameters | API",
+	description:
+		"Learn how to customize Ocean DNA Explorer API requests with parameters for field selection, filtering, relations, ID filtering, and result limits."
+};
 
 export default function ApiQueryParametersPage() {
 	return (

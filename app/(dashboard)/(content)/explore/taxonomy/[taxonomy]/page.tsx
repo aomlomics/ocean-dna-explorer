@@ -29,10 +29,9 @@ export async function generateMetadata({ params }: { params: Promise<{ taxonomy:
 		const mostSpecificRank = RanksBySpecificity.find((rank) => dbTaxonomy[rank]) || "taxonomy";
 		const gbifResult = await resolveTaxonomyPageGbif(dbTaxonomy);
 
-		//TODO: add description
 		return {
 			title: `${dbTaxonomy[mostSpecificRank]} | ${TableMetadata.taxonomy.plural}`,
-			description: `See photos, Red List status, taxonomic classification, and the detected locations for ${gbifResult?.commonName || dbTaxonomy[mostSpecificRank]}.`
+			description: `Explore the ${gbifResult?.commonName || dbTaxonomy[mostSpecificRank]} taxonomy, including its photos, Red List status, taxonomic classification, and the detected locations.`
 		};
 	} else {
 		return {

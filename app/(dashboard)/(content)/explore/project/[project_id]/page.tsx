@@ -26,15 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ project_i
 			project_id
 		},
 		select: {
-			project_name: true
+			id: true
 		}
 	});
 
 	if (project) {
-		//TODO: potentially? describe whats actually on the page
 		return {
 			title: `${project_id} | ${TableMetadata.project.plural}`,
-			description: project.project_name
+			description: `Explore the ${project_id} project, including its samples, analyses, assays, taxonomic assignments, sampling locations, sequencing depth, and project metadata.`
 		};
 	} else {
 		return {

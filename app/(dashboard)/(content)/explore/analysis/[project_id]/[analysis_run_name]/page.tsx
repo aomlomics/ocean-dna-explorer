@@ -38,16 +38,14 @@ export async function generateMetadata({
 			}
 		},
 		select: {
-			trusted: true,
 			assay_name: true
 		}
 	});
 
 	if (analysis) {
-		//TODO: describe whats on the page
 		return {
 			title: `${analysis_run_name} | ${TableMetadata.analysis.plural}`,
-			description: `A${analysis.trusted ? " trusted" : "n"} Analysis in the ${project_id} Project that uses the ${analysis.assay_name} Assay.`
+			description: `Explore the results of the ${analysis_run_name} analysis in the ${project_id} project, including associated samples, occurrences, taxonomic assignments, and diversity metrics using the ${analysis.assay_name} assay.`
 		};
 	} else {
 		return {

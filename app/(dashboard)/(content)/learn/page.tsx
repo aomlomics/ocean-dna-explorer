@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 
 export default async function LearnIndexPage() {
-	redirect("/learn/edna101");
+	permanentRedirect("/learn/edna101");
 }

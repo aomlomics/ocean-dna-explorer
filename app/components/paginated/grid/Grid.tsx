@@ -40,7 +40,6 @@ export default function Grid({
 	take?: number;
 }) {
 	const searchParams = useSearchParams();
-	const { trusted } = useTrusted();
 	const [page, setPage] = useState(1);
 	const topPaginationRef = useRef<HTMLDivElement>(null);
 
@@ -49,10 +48,6 @@ export default function Grid({
 			take: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});
-
-		if (trusted) {
-			query.set("trusted", "true");
-		}
 
 		let whereQuery = {} as Record<string, any>;
 		if (where) {

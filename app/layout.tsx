@@ -17,8 +17,8 @@ const sourceSans = Source_Sans_3({
 
 export const metadata: Metadata = {
 	title: {
-		template: "%s | ODE",
-		default: "Ocean DNA Explorer"
+		default: "Ocean DNA Explorer",
+		template: "%s | ODE"
 	},
 	description:
 		"A data sharing platform, search engine, and visualization and analysis tool for ocean environmental DNA data.",
