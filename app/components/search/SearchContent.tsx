@@ -9,6 +9,7 @@ import BlastSearchResult from "./BlastSearchResult";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
+import { BlastSearchIcon } from "../icons";
 
 export default function SearchContent({
 	table,
@@ -28,9 +29,14 @@ export default function SearchContent({
 
 	return (
 		<>
-			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm mb-4">
+			<div className="collapse collapse-arrow relative z-base mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm mb-4">
 				<input key={table + "blastInput"} defaultChecked={!!searchParams.get("blastQuery")} type="checkbox" />
-				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">BLAST</div>
+				<div className="collapse-title relative py-2.5 px-4 text-base font-medium text-base-content">
+					<div className="z-10 flex items-center gap-2">
+						<BlastSearchIcon />
+						<span>BLAST</span>
+					</div>
+				</div>
 				<div key={table + "blast"} className="collapse-content grid grid-cols-2 gap-10">
 					<BlastSearch assayNames={assayNames} />
 					<BlastSearchResult
@@ -41,7 +47,7 @@ export default function SearchContent({
 				</div>
 			</div>
 
-			<div className="collapse collapse-arrow mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
+			<div className="collapse collapse-arrow relative z-base mt-4.5 rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
 				<input
 					key={table + "mapInput"}
 					defaultChecked={!!(searchParams.get("circle") || searchParams.get("polygon"))}

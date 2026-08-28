@@ -695,3 +695,19 @@ z"
 		</svg>
 	);
 }
+
+export function BlastSearchIcon({ className }: { className?: string }) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="-458 256 41.7 50"
+			fill="currentColor"
+			className={className ?? "size-5 text-primary"}
+			aria-hidden
+		>
+			<path d="M-436.8,259.1c-12,1.1-30.1,7.5-8.4,16.7c10.8,4.6-25.8-9.5,8.3-11.7" />
+			<path d="M-437.6,302.9c11.9-1.1,30-7.5,8.4-16.7c-10.8-4.6,25.8,9.5-8.4,11.7" />
+			<path d="M-437.5,278.2c34.1-2.1-2.5-16.3,8.3-11.7c21.6,9.2,4.4,15.5-7.5,16.7l0,0c-34,2.3,2.5,16.2-8.4,11.7   C-466.7,285.7-449.4,279.3-437.5,278.2" />
+		</svg>
+	);
+}

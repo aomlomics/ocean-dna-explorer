@@ -53,6 +53,17 @@ const MODE_TEXTS = {
 	notNull: "is not null"
 };
 
+function paramsValueToInputDefault(value: unknown, mode: string): string {
+	if (value === undefined || value === null) return "";
+	if (mode === "in" || mode === "notIn") {
+		return JSON.stringify(value);
+	}
+	if (Array.isArray(value)) {
+		return value.join(",");
+	}
+	return String(value);
+}
+
 function isGroupElement(e: ParamsArrayElement): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
 	return Array.isArray(e) && typeof e[0] === "string" && (e[0] === "AND" || e[0] === "OR");
 }
@@ -513,26 +524,13 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 		const baseUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_URL;
 
-		// Prefer the current URL params so the API box always matches what the backend sees after a search
-		const paramsFromUrl = new URLSearchParams(searchParams.toString());
-		let advancedStr = paramsFromUrl.get("advanced");
-
-		// If there's no advanced parameter in the URL yet, build it from the current tree state
-		if (!advancedStr) {
-			const advanced = getParamsArrayFromTree(searchTree);
-			if (advanced && advanced.length) {
-				advancedStr = JSON.stringify(advanced);
-			}
-		}
-
 		const newParams = new URLSearchParams();
 
-		if (trusted) {
-			newParams.set("trusted", "true");
-		}
+		newParams.set("trusted", trusted ? "true" : "false");
 
-		if (advancedStr) {
-			newParams.set("advanced", advancedStr);
+		const advanced = getParamsArrayFromTree(searchTree);
+		if (advanced && advanced.length) {
+			newParams.set("advanced", JSON.stringify(advanced));
 		}
 
 		//maintain BLAST
@@ -753,7 +751,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 	return (
 		<>
-			<div className="collapse collapse-arrow overflow-visible rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
+			<div className="collapse collapse-arrow overflow-visible relative z-raised rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
 				<input defaultChecked type="checkbox" />
 				<div className="collapse-title py-2.5 px-4 text-base font-medium text-base-content">
 					<div className="flex items-center gap-2">
@@ -1241,6 +1239,8 @@ function SearchRuleComponent({
 
 	const omit = [...GlobalOmit, "id", "userDefined"];
 	const nameSuffix = node.id;
+	const defaultMode = paramsArray ? `${paramsArray[1 + paramsOffset]}` : "";
+	const defaultValue = paramsArray ? paramsValueToInputDefault(paramsArray[2 + paramsOffset], defaultMode) : "";
 
 	return (
 		<div
@@ -1336,11 +1336,12 @@ function SearchRuleComponent({
 
 					{field ? (
 						<InputElement
+							key={`${nameSuffix}:${field}:${defaultMode}:${defaultValue}`}
 							nameSuffix={nameSuffix}
 							table={table}
 							field={field}
-							defaultMode={paramsArray ? `${paramsArray[1 + paramsOffset]}` : ""}
-							defaultValue={paramsArray ? `${paramsArray[2 + paramsOffset]}` : ""}
+							defaultMode={defaultMode}
+							defaultValue={defaultValue}
 						/>
 					) : (
 						<></>
