@@ -16,7 +16,7 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
-import { buildWhereParams } from "@/app/helpers/api";
+import { buildWhereParams } from "@/app/helpers/api/api";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 type Operator = "AND" | "OR";

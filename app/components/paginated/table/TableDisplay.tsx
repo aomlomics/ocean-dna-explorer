@@ -9,7 +9,6 @@ import TaxaGridItem from "../grid/TaxaGridItem";
 import ProjectGridItem from "../grid/ProjectGridItem";
 import { useViewMode } from "../../explore/ViewModeContext";
 import InfoButton from "../../InfoButton";
-import { useSearchParams } from "next/navigation";
 import type { ModelName } from "@/types/tableMetadata";
 
 const sw = 1.75;
@@ -36,8 +35,6 @@ export default function TableDisplay({
 		samples: SampleModel[] | undefined;
 	}) => void;
 }) {
-	const searchParams = useSearchParams();
-
 	const [size, setSize] = useState<"lg" | "sm">("lg");
 	const [showCommonNames, setShowCommonNames] = useState(true);
 
@@ -80,7 +77,7 @@ export default function TableDisplay({
 		mode === "table" ? (
 			size === "lg" ? (
 				<Table
-					key={table + "?" + searchParams.toString()}
+					key={table}
 					table={table}
 					defaultTake={25}
 					filterHeadersAtStart
@@ -91,11 +88,11 @@ export default function TableDisplay({
 					hideEmptyAtStart={table === "taxonomy"}
 				/>
 			) : (
-				<Pagination key={table + "?" + searchParams.toString()} table={table} ignoreParams={effectiveIgnoreParams} />
+				<Pagination key={table} table={table} ignoreParams={effectiveIgnoreParams} />
 			)
 		) : table === "project" ? (
 			<Grid
-				key={table + "?" + searchParams.toString()}
+				key={table}
 				Child={ProjectGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
@@ -105,7 +102,7 @@ export default function TableDisplay({
 			/>
 		) : table === "taxonomy" ? (
 			<Grid
-				key={table + "?" + searchParams.toString()}
+				key={table}
 				Child={TaxaGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}

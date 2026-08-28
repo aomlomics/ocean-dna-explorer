@@ -8,23 +8,19 @@ import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
-import { buildWhereParams } from "@/app/helpers/api";
+import { buildWhereParams } from "@/app/helpers/api/api";
 import TableStatusState from "../table/TableStatusState";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
-export default function Pagination({
-	table,
-	where,
-	relCounts,
-	take = 25,
-	ignoreParams
-}: {
+type Props = {
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	relCounts?: string[];
 	take?: number;
 	ignoreParams?: string[];
-}) {
+};
+
+function ActualPagination({ table, where, relCounts, take = 25, ignoreParams }: Props) {
 	const searchParams = useSearchParams();
 	const { trusted } = useTrusted();
 	const [page, setPage] = useState(1);
@@ -53,28 +49,59 @@ export default function Pagination({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const strQuery = getQuery().toString();
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
+	const {
+		data: countData,
+		error: countError,
+		isLoading: countIsLoading
+	} = useSWR(`/api/internal/${table}/count?${strQuery}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
+
 	if (error) {
 		return (
 			<TableStatusState
 				kind="error"
 				title="Could not load results"
-				detail={error.toString() instanceof Error ? error.message : String(error)}
+				detail={error instanceof Error ? error.message : String(error)}
 			/>
 		);
 	}
-	if (isLoading || !data) {
+	if (countError) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={countError instanceof Error ? countError.message : String(countError)}
+			/>
+		);
+	}
+
+	if (isLoading || !data || countIsLoading || !countData) {
 		return <LoadingPagination />;
 	}
-	if (data.statusMessage === "error") {
+
+	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result)) {
 		return (
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
 		);
 	}
-	if (!Array.isArray(data.result) || data.result.length === 0 || data.count === 0) {
+	if (countData.statusMessage === "error" || countData.result == null) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={String(countData.error ?? "Unknown error")}
+			/>
+		);
+	}
+
+	if (data.result.length === 0 || countData.result === 0) {
 		return (
 			<TableStatusState
 				kind="empty"
@@ -85,7 +112,7 @@ export default function Pagination({
 	}
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir).toString()}`, fetcher);
 	}
 
 	return (
@@ -94,7 +121,7 @@ export default function Pagination({
 			<PaginationControls
 				page={page}
 				take={take}
-				count={data.count}
+				count={countData.result}
 				setPage={setPage}
 				handlePageHover={handlePageHover}
 			/>
@@ -152,10 +179,17 @@ export default function Pagination({
 			<PaginationControls
 				page={page}
 				take={take}
-				count={data.count}
+				count={countData.result}
 				setPage={setPage}
 				handlePageHover={handlePageHover}
 			/>
 		</div>
 	);
+}
+
+export default function Pagination(props: Props) {
+	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
+
+	return <ActualPagination key={`${searchParams.toString()}|${trusted}`} {...props} />;
 }

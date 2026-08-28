@@ -4,7 +4,7 @@ import { type SubmitEvent, type RefObject, useEffect, useState } from "react";
 import type { TableColumns } from "./useTableColumns";
 import { DEFAULT_ORDER_BY, type ExtraResults } from "../Table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { buildWhereParams } from "@/app/helpers/api";
+import { buildWhereParams } from "@/app/helpers/api/api";
 import useSWR from "swr";
 import { fetcher } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
@@ -103,20 +103,19 @@ export default function useTableQuery({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const strQuery = getQuery().toString();
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
-
-	useEffect(() => {
-		if (data && data.statusMessage === "success") {
-			//set to last page if page is too large
-			if ((page - 1) * take > data.count) {
-				// eslint-disable-next-line react-hooks/set-state-in-effect
-				setPage(Math.floor(data.count / take) + 1);
-			}
-		}
-	}, [data]);
+	const {
+		data: countData,
+		error: countError,
+		isLoading: countIsLoading
+	} = useSWR(`/api/internal/${table}/count?${strQuery}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
 
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
@@ -194,6 +193,9 @@ export default function useTableQuery({
 		data,
 		error,
 		isLoading,
+		countData,
+		countError,
+		countIsLoading,
 		page,
 		setPage,
 		take,

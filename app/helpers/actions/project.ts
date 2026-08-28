@@ -89,7 +89,9 @@ async function parseProjectFile({
 					return;
 				}
 
-				assayNames = fileHeaders.slice(fileHeaders.indexOf("project_level") + 1);
+				assayNames = fileHeaders
+					.slice(fileHeaders.indexOf("project_level") + 1)
+					.filter((assay_name) => !!assay_name.trim());
 				if (!assayNames.length) {
 					await channel.stream.error("No Assays found.");
 					return;
@@ -125,14 +127,11 @@ async function parseProjectFile({
 					//Assay Levels
 					for (const assay_name of assayNames) {
 						//flip table from long to wide
-						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
+						//constructing objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
 						//and whose values are an object representing a single "row"
 						if (record[assay_name]) {
 							//Assays
-							if (!assayCols[assay_name]) {
-								assayCols[assay_name] = {};
-							}
-
+							assayCols[assay_name] ??= {};
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assayPrep");
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "library");
@@ -168,7 +167,9 @@ async function parseProjectFile({
 			{
 				error: (iss) => {
 					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						message: `Field: ${iss.path![0] as string}\nIssue: ${
+							iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+						}`
 					};
 				}
 			}
@@ -317,7 +318,9 @@ async function parseLibraryFile({
 					{
 						error: (iss) => {
 							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+								message: `Field: ${iss.path![0] as string}\nIssue: ${
+									iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+								}`
 							};
 						}
 					}
@@ -432,7 +435,9 @@ async function parseSampleFile({
 					{
 						error: (iss) => {
 							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+								message: `Field: ${iss.path![0] as string}\nIssue: ${
+									iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+								}`
 							};
 						}
 					}

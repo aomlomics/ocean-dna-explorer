@@ -15,6 +15,8 @@ import useTableQuery from "./hooks/useTableQuery";
 import TableHeader from "./parts/TableHeader";
 import TableRow from "./parts/TableRow";
 import Checklist from "../../Checklist";
+import { useSearchParams } from "next/navigation";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export type ExtraResults = {
 	blastResult: BlastQueryResultModel[] | undefined;
@@ -22,23 +24,7 @@ export type ExtraResults = {
 	samples: SampleModel[] | undefined;
 };
 
-export const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
-
-//TODO: make where arg support relational queries
-//TODO: clamp table column width, add hover info to clamped columns
-export default function Table({
-	table,
-	where,
-	omit = [],
-	hideFilters,
-	hideEmptyAtStart,
-	filterHeadersAtStart,
-	defaultTake = 50,
-	ignoreParams,
-	extraParams,
-	setExtraResults,
-	className
-}: {
+type Props = {
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
 	omit?: string[];
@@ -50,7 +36,25 @@ export default function Table({
 	extraParams?: Record<string, string>;
 	setExtraResults?: (args: ExtraResults) => void;
 	className?: string;
-}) {
+};
+
+export const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
+
+//TODO: make where arg support relational queries
+//TODO: clamp table column width, add hover info to clamped columns
+function ActualTable({
+	table,
+	where,
+	omit = [],
+	hideFilters,
+	hideEmptyAtStart,
+	filterHeadersAtStart,
+	defaultTake = 50,
+	ignoreParams,
+	extraParams,
+	setExtraResults,
+	className
+}: Props) {
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 	const {
 		title,
@@ -72,6 +76,9 @@ export default function Table({
 		data,
 		error,
 		isLoading,
+		countData,
+		countError,
+		countIsLoading,
 		page,
 		setPage,
 		take,
@@ -173,7 +180,7 @@ export default function Table({
 	}, [filterHeadersAtStart, userDefinedHeaders]);
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir).toString()}`, fetcher);
 	}
 
 	if (error) {
@@ -185,10 +192,30 @@ export default function Table({
 			/>
 		);
 	}
-	if (isLoading || !data) return <LoadingTable take={take} page={page} />;
+	if (countError) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={countError instanceof Error ? countError.message : String(countError)}
+			/>
+		);
+	}
+
+	if (isLoading || !data || countIsLoading || !countData) return <LoadingTable take={take} page={page} />;
+
 	if (data.statusMessage === "error") {
 		return (
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
+		);
+	}
+	if (countData.statusMessage === "error") {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={String(countData.error ?? "Unknown error")}
+			/>
 		);
 	}
 
@@ -227,7 +254,7 @@ export default function Table({
 					<PaginationControls
 						page={page}
 						take={take}
-						count={data.count}
+						count={countData.result}
 						setPage={setPage}
 						handlePageHover={handlePageHover}
 					/>
@@ -320,7 +347,7 @@ export default function Table({
 					<PaginationControls
 						page={page}
 						take={take}
-						count={data.count}
+						count={countData.result}
 						setPage={setPage}
 						handlePageHover={handlePageHover}
 					/>
@@ -328,4 +355,11 @@ export default function Table({
 			</form>
 		</div>
 	);
+}
+
+export default function Table(props: Props) {
+	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
+
+	return <ActualTable key={`${searchParams.toString()}|${trusted}`} {...props} />;
 }

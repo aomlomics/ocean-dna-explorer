@@ -7,27 +7,14 @@ import { type FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
 import LoadingPaginationControls from "../LoadingPaginationControls";
-import { buildWhereParams } from "@/app/helpers/api";
+import { buildWhereParams } from "@/app/helpers/api/api";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
 import TableStatusState from "../table/TableStatusState";
 import type { ModelName } from "@/types/tableMetadata";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
-const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
-
-export default function Grid({
-	Child,
-	table,
-	where,
-	orderBy,
-	ignoreParams,
-	extraQueryParams,
-	childProps,
-	itemsGridClassName = defaultItemsGridClass,
-	fillViewport = true,
-	take = 25
-}: {
+type Props = {
 	Child: FunctionComponent<{ item: any; [key: string]: any }>;
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
@@ -39,7 +26,22 @@ export default function Grid({
 	/** When false, grid grows with the page (document scroll) instead of a fixed viewport + inner scroll. */
 	fillViewport?: boolean;
 	take?: number;
-}) {
+};
+
+const defaultItemsGridClass = "grid grid-cols-2 lg:grid-cols-5 gap-4";
+
+function ActualGrid({
+	Child,
+	table,
+	where,
+	orderBy,
+	ignoreParams,
+	extraQueryParams,
+	childProps,
+	itemsGridClassName = defaultItemsGridClass,
+	fillViewport = true,
+	take = 25
+}: Props) {
 	const searchParams = useSearchParams();
 	const { trusted } = useTrusted();
 	const [page, setPage] = useState(1);
@@ -96,20 +98,40 @@ export default function Grid({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const strQuery = getQuery().toString();
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
+	const {
+		data: countData,
+		error: countError,
+		isLoading: countIsLoading
+	} = useSWR(`/api/internal/${table}/count?${strQuery}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
+
 	if (error) {
 		return (
 			<TableStatusState
 				kind="error"
 				title="Could not load results"
-				detail={error.toString() instanceof Error ? error.message : String(error)}
+				detail={error instanceof Error ? error.message : String(error)}
 			/>
 		);
 	}
-	if (isLoading || !data) {
+	if (countError) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={countError instanceof Error ? countError.message : String(countError)}
+			/>
+		);
+	}
+
+	if (isLoading || !data || countIsLoading || !countData) {
 		if (table === "taxonomy") {
 			return <LoadingTaxaGrid cols={5} />;
 		}
@@ -132,12 +154,23 @@ export default function Grid({
 			</div>
 		);
 	}
+
 	if (data.statusMessage === "error" || !data.result || !Array.isArray(data.result)) {
 		return (
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
 		);
 	}
-	if (!data.result.length || data.count === 0) {
+	if (countData.statusMessage === "error" || countData.result == null) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={String(countData.error ?? "Unknown error")}
+			/>
+		);
+	}
+
+	if (data.result.length === 0 || countData.result === 0) {
 		return (
 			<TableStatusState
 				kind="empty"
@@ -148,7 +181,7 @@ export default function Grid({
 	}
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir).toString()}`, fetcher);
 	}
 
 	function scrollTopPaginationIntoView() {
@@ -159,7 +192,7 @@ export default function Grid({
 		<PaginationControls
 			page={page}
 			take={take}
-			count={data.count}
+			count={countData.result}
 			setPage={setPage}
 			handlePageHover={handlePageHover}
 		/>
@@ -169,7 +202,7 @@ export default function Grid({
 		<PaginationControls
 			page={page}
 			take={take}
-			count={data.count}
+			count={countData.result}
 			setPage={setPage}
 			handlePageHover={handlePageHover}
 			sideEffect={scrollTopPaginationIntoView}
@@ -211,4 +244,11 @@ export default function Grid({
 			<div className="flex shrink-0 justify-center">{paginationControlsBottom}</div>
 		</div>
 	);
+}
+
+export default function Grid(props: Props) {
+	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
+
+	return <ActualGrid key={`${searchParams.toString()}|${trusted}`} {...props} />;
 }

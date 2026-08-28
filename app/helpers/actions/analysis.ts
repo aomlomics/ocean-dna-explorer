@@ -100,7 +100,9 @@ export async function parseAnalysisFile({
 		{
 			error: (iss) => {
 				return {
-					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+					message: `Field: ${iss.path![0] as string}\nIssue: ${
+						iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+					}`
 				};
 			}
 		}
@@ -196,7 +198,9 @@ export async function parseAssignmentsFile({
 				{
 					error: (iss) => {
 						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+							message: `Field: ${iss.path![0] as string}\nIssue: ${
+								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+							}`
 						};
 					}
 				}
@@ -225,7 +229,9 @@ export async function parseAssignmentsFile({
 				{
 					error: (iss) => {
 						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+							message: `Field: ${iss.path![0] as string}\nIssue: ${
+								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+							}`
 						};
 					}
 				}
@@ -249,7 +255,9 @@ export async function parseAssignmentsFile({
 			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
 				error: (iss) => {
 					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						message: `Field: ${iss.path![0] as string}\nIssue: ${
+							iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+						}`
 					};
 				}
 			});
@@ -368,7 +376,9 @@ export async function parseOccurrencesFile({
 						{
 							error: (iss) => {
 								return {
-									message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+									message: `Field: ${iss.path![0] as string}\nIssue: ${
+										iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+									}`
 								};
 							}
 						}

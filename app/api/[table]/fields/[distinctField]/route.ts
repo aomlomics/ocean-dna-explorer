@@ -1,4 +1,4 @@
-import { parseApiQuery } from "@/app/helpers/api";
+import { parseApiQuery } from "@/app/helpers/api/parse";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";

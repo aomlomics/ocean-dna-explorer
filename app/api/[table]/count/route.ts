@@ -1,4 +1,5 @@
-import { deepWhere, parseApiQuery } from "@/app/helpers/api";
+import { deepWhere } from "@/app/helpers/api/api";
+import { parseApiQuery } from "@/app/helpers/api/parse";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import type { NetworkPacket } from "@/types/globals";
