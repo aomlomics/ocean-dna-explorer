@@ -30,13 +30,15 @@ export default function ExplorePage({
 				</div>
 			</header>
 
-			<ExploreControls
-				table={table}
-				tableConfig={tableConfig}
-				toggle={toggle}
-				displayMode={displayMode}
-				tableWhere={tableWhere}
-			/>
+			<div className="mt-5">
+				<ExploreControls
+					table={table}
+					tableConfig={tableConfig}
+					toggle={toggle}
+					displayMode={displayMode}
+					tableWhere={tableWhere}
+				/>
+			</div>
 		</div>
 	);
 }

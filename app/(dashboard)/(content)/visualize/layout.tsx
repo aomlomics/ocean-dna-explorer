@@ -10,11 +10,6 @@ export const metadata: Metadata = {
 	}
 };
 
-export const metadata = {
-	title: "Visualize",
-	description: "Build charts in your browser from filtered metadata, taxonomy, and Alpha Diversity."
-};
-
 export default function VisualizeLayout({ children }: { children: ReactNode }) {
 	return (
 		<div className="flex flex-col">
