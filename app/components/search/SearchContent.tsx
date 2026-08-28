@@ -37,7 +37,7 @@ export default function SearchContent({
 						<span>BLAST</span>
 					</div>
 				</div>
-				<div key={table + "blast"} className="collapse-content grid grid-cols-2 gap-10">
+				<div key={table + "blast"} className="search-focus-border collapse-content grid grid-cols-2 gap-10">
 					<BlastSearch assayNames={assayNames} />
 					<BlastSearchResult
 						blastResult={extraResults.blastResult}

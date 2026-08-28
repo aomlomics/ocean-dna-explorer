@@ -775,7 +775,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				<div className="collapse-content overflow-visible px-4">
 					<form
 						ref={formRef}
-						className="relative overflow-visible bg-transparent pb-4"
+						className="search-focus-border relative overflow-visible bg-transparent pb-4"
 						onSubmit={(e) => {
 							e.preventDefault();
 							search();
@@ -1246,9 +1246,9 @@ function SearchRuleComponent({
 		<div
 			className={`grid ${
 				type === "relation" && !noTable ? "grid-cols-[2rem_14%_14%_20%_1fr]" : "grid-cols-[2rem_14%_26%_1fr]"
-			} gap-2 items-center py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
+			} gap-2 items-start py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
 		>
-			<div className="flex justify-center">
+			<div className="flex justify-center pt-1">
 				<button
 					className="btn btn-sm btn-square btn-primary"
 					type="button"
@@ -1354,6 +1354,75 @@ function SearchRuleComponent({
 	);
 }
 
+function InValuesField({
+	nameSuffix,
+	values,
+	onChange,
+	inputType,
+	placeholder,
+	numeric
+}: {
+	nameSuffix: string;
+	values: string[];
+	onChange: (values: string[]) => void;
+	inputType: "text" | "number";
+	placeholder: string;
+	numeric?: "integer" | "float";
+}) {
+	const rows = values.length > 0 ? values : [""];
+
+	function serializedValues() {
+		const filled = rows.filter((v) => v.trim() !== "");
+		if (numeric === "integer") {
+			return filled.map((v) => parseInt(v, 10));
+		}
+		if (numeric === "float") {
+			return filled.map((v) => parseFloat(v));
+		}
+		return filled;
+	}
+
+	return (
+		<div className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-lg border border-base-300 bg-base-100 p-1.5">
+			{rows.map((val, idx) => (
+				<div key={idx} className="flex min-w-0 items-center gap-1">
+					<input
+						type={inputType}
+						className="input input-sm min-h-8 h-8 w-full min-w-0"
+						placeholder={placeholder}
+						value={val}
+						onChange={(e) => {
+							const next = [...rows];
+							next[idx] = e.currentTarget.value;
+							onChange(next);
+						}}
+						name={`filter_${nameSuffix}_${idx}`}
+					/>
+					<button
+						type="button"
+						className="btn btn-xs btn-square btn-primary shrink-0"
+						onClick={() => {
+							const next = rows.filter((_, i) => i !== idx);
+							onChange(next.length > 0 ? next : [""]);
+						}}
+						aria-label="Remove value"
+					>
+						<span className="text-primary-content leading-none">×</span>
+					</button>
+				</div>
+			))}
+			<button
+				type="button"
+				className="btn btn-sm btn-primary self-start"
+				onClick={() => onChange([...rows, ""])}
+			>
+				+ Add value
+			</button>
+			<input type="hidden" name={`filter_${nameSuffix}`} value={JSON.stringify(serializedValues())} />
+		</div>
+	);
+}
+
 function InputElement({
 	nameSuffix,
 	table,
@@ -1387,23 +1456,38 @@ function InputElement({
 		if (defaultMode === "in" || defaultMode === "notIn") {
 			try {
 				const parsed = JSON.parse(defaultValue);
-				return Array.isArray(parsed) ? parsed.map((e) => (typeof e !== "string" ? e.toString() : e)) : [];
+				const values = Array.isArray(parsed) ? parsed.map((e) => (typeof e !== "string" ? e.toString() : e)) : [];
+				return values.length > 0 ? values : [""];
 			} catch {
-				return [];
+				return [""];
 			}
 		}
 		return [];
 	});
 
+	function handleModeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+		const next = e.target.value;
+		setMode(next);
+		if ((next === "in" || next === "notIn") && inValues.length === 0) {
+			setInValues([""]);
+		}
+	}
+
+	const listMode = mode === "in" || mode === "notIn";
+	const wrapClass = listMode
+		? "flex w-full min-w-0 items-start gap-2"
+		: "flex w-full min-w-0 items-center gap-2";
+	const modeSelectClass = "select w-40 shrink-0";
+
 	if (type === "integer" || type === "float") {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className={wrapClass}>
 				<select
-					className="select rounded-r-none"
+					className={modeSelectClass}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
-					onChange={(e) => setMode(e.target.value)}
+					onChange={handleModeChange}
 				>
 					<option value="equals">Equals</option>
 					<option value="range">Range</option>
@@ -1418,65 +1502,31 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+					<div className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
-				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
-						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<input
-									type="number"
-									className="input input-primary input-sm w-full"
-									placeholder={`Value ${idx + 1}`}
-									value={val}
-									onChange={(e) => {
-										const newValues = [...inValues];
-										newValues[idx] = e.target.value;
-										setInValues(newValues);
-									}}
-									name={`filter_${nameSuffix}_${idx}`}
-								/>
-								<button
-									type="button"
-									className="btn btn-sm btn-square btn-ghost text-error"
-									onClick={() => {
-										setInValues(inValues.filter((_, i) => i !== idx));
-									}}
-									aria-label="Remove value"
-								>
-									×
-								</button>
-							</div>
-						))}
-						<button
-							type="button"
-							className="btn btn-xs btn-primary w-full"
-							onClick={() => setInValues([...inValues, ""])}
-						>
-							+ Add Value
-						</button>
-						<input
-							type="hidden"
-							name={`filter_${nameSuffix}`}
-							value={JSON.stringify(
-								inValues.filter((v) => v.trim() !== "").map((v) => (type === "integer" ? parseInt(v) : parseFloat(v)))
-							)}
-						/>
-					</div>
+				) : listMode ? (
+					<InValuesField
+						nameSuffix={nameSuffix}
+						values={inValues}
+						onChange={setInValues}
+						inputType="number"
+						placeholder="Value"
+						numeric={type === "integer" ? "integer" : "float"}
+					/>
 				) : mode === "range" ? (
-					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
+					<div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-1">
 						<input
-							className="input input-primary w-full rounded-none"
+							className="input w-full min-w-0"
 							placeholder="Lower bound"
 							name={`filter_${nameSuffix}_gte`}
 							defaultValue={defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[0] : ""}
 							type="number"
 							required
 						/>
-						<span className="text-4xl text-primary">-</span>
+						<span className="px-1 text-xl leading-none text-base-content/40">–</span>
 						<input
-							className="input input-primary w-full rounded-l-none"
+							className="input w-full min-w-0"
 							placeholder="Upper bound"
 							name={`filter_${nameSuffix}_lte`}
 							defaultValue={defaultValue && defaultValue.split(",").length === 2 ? defaultValue.split(",")[1] : ""}
@@ -1486,7 +1536,7 @@ function InputElement({
 					</div>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary rounded-l-md"
+						className="select min-w-0 flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1499,7 +1549,7 @@ function InputElement({
 					</select>
 				) : (
 					<input
-						className="input input-primary w-full rounded-l-none"
+						className="input min-w-0 flex-1"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
 						defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue : undefined}
@@ -1511,13 +1561,13 @@ function InputElement({
 		);
 	} else if (type === "date") {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className={wrapClass}>
 				<select
-					className="select rounded-r-none"
+					className={modeSelectClass}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
-					onChange={(e) => setMode(e.target.value)}
+					onChange={handleModeChange}
 				>
 					<option value="equals">Equals</option>
 					<option value="range">Range</option>
@@ -1532,53 +1582,20 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+					<div className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
-				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
-						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<input
-									type="text"
-									className="input input-primary input-sm w-full"
-									placeholder={`ISO 8601 Date (${idx + 1})`}
-									value={val}
-									onChange={(e) => {
-										const newValues = [...inValues];
-										newValues[idx] = e.target.value;
-										setInValues(newValues);
-									}}
-									name={`filter_${nameSuffix}_${idx}`}
-								/>
-								<button
-									type="button"
-									className="btn btn-sm btn-square btn-ghost text-error"
-									onClick={() => {
-										setInValues(inValues.filter((_, i) => i !== idx));
-									}}
-									aria-label="Remove value"
-								>
-									×
-								</button>
-							</div>
-						))}
-						<button
-							type="button"
-							className="btn btn-xs btn-primary w-full"
-							onClick={() => setInValues([...inValues, ""])}
-						>
-							+ Add Date
-						</button>
-						<input
-							type="hidden"
-							name={`filter_${nameSuffix}`}
-							value={JSON.stringify(inValues.filter((v) => v.trim() !== ""))}
-						/>
-					</div>
+				) : listMode ? (
+					<InValuesField
+						nameSuffix={nameSuffix}
+						values={inValues}
+						onChange={setInValues}
+						inputType="text"
+						placeholder="ISO 8601 date"
+					/>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary rounded-l-md"
+						className="select min-w-0 flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1590,8 +1607,8 @@ function InputElement({
 						))}
 					</select>
 				) : mode === "range" ? (
-					<div className="grid grid-cols-[45%_10%_45%] items-center justify-items-center">
-						<div className="input input-primary w-full rounded-none">
+					<div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-1">
+						<div className="input w-full min-w-0">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
 								className={`w-5 ${gteDateSelected ? "text-success" : "text-error"}`}
@@ -1607,8 +1624,8 @@ function InputElement({
 								name={`filter_${nameSuffix}_gte_time`}
 							/>
 						</div>
-						<span className="text-4xl text-primary">-</span>
-						<div className="input input-primary w-full rounded-l-none">
+						<span className="px-1 text-xl leading-none text-base-content/40">–</span>
+						<div className="input w-full min-w-0">
 							<input
 								name={`filter_${nameSuffix}_lte_date`}
 								className={`w-5 ${lteDateSelected ? "text-success" : "text-error"}`}
@@ -1626,29 +1643,27 @@ function InputElement({
 						</div>
 					</div>
 				) : (
-					<div className="flex justify-start">
-						<div className="input input-primary w-full max-w-xs">
-							<input
-								name={`filter_${nameSuffix}_date`}
-								className="w-1/2"
-								defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""}
-								type="date"
-								required
-							/>
-							<input
-								type="time"
-								className="text-center w-1/2"
-								defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""}
-								name={`filter_${nameSuffix}_time`}
-							/>
-						</div>
+					<div className="input min-w-0 flex-1">
+						<input
+							name={`filter_${nameSuffix}_date`}
+							className="w-1/2"
+							defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[0] : ""}
+							type="date"
+							required
+						/>
+						<input
+							type="time"
+							className="text-center w-1/2"
+							defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue.split("T")[1] : ""}
+							name={`filter_${nameSuffix}_time`}
+						/>
 					</div>
 				)}
 			</div>
 		);
 	} else if (type === "boolean") {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className="flex min-w-0 items-center gap-2 px-0">
 				<input type="hidden" name={`mode_${nameSuffix}`} value="boolean" />
 				<input
 					type="checkbox"
@@ -1660,13 +1675,13 @@ function InputElement({
 		);
 	} else {
 		return (
-			<div className="px-2 grid grid-cols-[30%_70%]">
+			<div className={wrapClass}>
 				<select
-					className="select rounded-r-none"
+					className={modeSelectClass}
 					required
 					name={`mode_${nameSuffix}`}
 					value={mode}
-					onChange={(e) => setMode(e.target.value)}
+					onChange={handleModeChange}
 				>
 					<option value="contains">Contains</option>
 					<option value="equals">Equals</option>
@@ -1679,53 +1694,20 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="bg-base-300/30 rounded-l-md px-4 py-2 text-sm text-base-content/60 flex items-center">
+					<div className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
-				) : mode === "in" || mode === "notIn" ? (
-					<div className="rounded-l-md space-y-2 py-2">
-						{inValues.map((val, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<input
-									type="text"
-									className="input input-primary input-sm w-full"
-									placeholder={`Value ${idx + 1}`}
-									value={val}
-									onChange={(e) => {
-										const newValues = [...inValues];
-										newValues[idx] = e.target.value;
-										setInValues(newValues);
-									}}
-									name={`filter_${nameSuffix}_${idx}`}
-								/>
-								<button
-									type="button"
-									className="btn btn-sm btn-square btn-ghost text-error"
-									onClick={() => {
-										setInValues(inValues.filter((_, i) => i !== idx));
-									}}
-									aria-label="Remove value"
-								>
-									×
-								</button>
-							</div>
-						))}
-						<button
-							type="button"
-							className="btn btn-xs btn-primary w-full"
-							onClick={() => setInValues([...inValues, ""])}
-						>
-							+ Add Value
-						</button>
-						<input
-							type="hidden"
-							name={`filter_${nameSuffix}`}
-							value={JSON.stringify(inValues.filter((v) => v.trim() !== ""))}
-						/>
-					</div>
+				) : listMode ? (
+					<InValuesField
+						nameSuffix={nameSuffix}
+						values={inValues}
+						onChange={setInValues}
+						inputType="text"
+						placeholder="Value"
+					/>
 				) : mode === "deadValue" ? (
 					<select
-						className="select select-primary rounded-l-md"
+						className="select min-w-0 flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1738,7 +1720,7 @@ function InputElement({
 					</select>
 				) : (
 					<input
-						className="input input-primary w-full rounded-l-none"
+						className="input min-w-0 flex-1"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
 						defaultValue={defaultValue === "undefined" ? undefined : defaultValue}

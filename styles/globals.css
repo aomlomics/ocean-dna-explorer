@@ -134,6 +134,18 @@
 	z-index: var(--z-max);
 }
 
+/* DaisyUI select/input already have a border. Their default focus, focus-within,
+   and :open states add an offset outline on top of that, which reads as a double ring.
+   One indicator: the existing border turns primary. */
+.search-focus-border :is(.select, .input):focus,
+.search-focus-border :is(.select, .input):focus-visible,
+.search-focus-border :is(.select, .input):focus-within,
+.search-focus-border :is(.select, .input):open {
+	outline: none;
+	outline-offset: 0;
+	border-color: var(--color-primary);
+}
+
 @keyframes gradient-organic {
 	0% {
 		transform: translate(0, 0) scale(1);
