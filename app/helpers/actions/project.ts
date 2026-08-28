@@ -87,7 +87,7 @@ async function parseProjectFile({
 					return;
 				}
 
-				assayNames = fileHeaders.slice(fileHeaders.indexOf("project_level") + 1);
+				assayNames = fileHeaders.slice(fileHeaders.indexOf("project_level") + 1).filter(Boolean);
 				if (!assayNames.length) {
 					await channel.stream.error("No Assays found.");
 					return;
@@ -123,14 +123,11 @@ async function parseProjectFile({
 					//Assay Levels
 					for (const assay_name of assayNames) {
 						//flip table from long to wide
-						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
+						//constructing objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
 						//and whose values are an object representing a single "row"
 						if (record[assay_name]) {
 							//Assays
-							if (!assayCols[assay_name]) {
-								assayCols[assay_name] = {};
-							}
-
+							assayCols[assay_name] ??= {};
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assayPrep");
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "library");
