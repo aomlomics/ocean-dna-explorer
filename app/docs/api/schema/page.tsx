@@ -1,8 +1,15 @@
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
-import SchemaDisplay from "@/app/components/SchemaDisplay";
+import SchemaDisplay from "@/app/components/docs/SchemaDisplay";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Database Schema | API",
+	description:
+		"Understand the Ocean DNA Explorer database schema, including table relationships and field definitions, to build effective API queries."
+};
 
 export default function ApiSchemaPage() {
 	return (

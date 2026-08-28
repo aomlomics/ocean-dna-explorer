@@ -1,13 +1,13 @@
 "use client";
 
-import { Assay } from "@/app/generated/prisma/client";
+import type { AssayModel } from "@/app/generated/prisma/models/Assay";
 import { MAX_UNCOMPRESSED_LENGTH, compressURIComponent } from "@/app/helpers/utils";
 import { RolePermissions } from "@/types/objects";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname, useSearchParams } from "next/navigation";
-import { SubmitEvent, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import InfoButton from "../InfoButton";
-import { BlastQueryWithRelations } from "@/prisma/generated/zod";
+import type { BlastQueryWithRelations } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { parseBlastRequest } from "@/app/helpers/blast";
 
@@ -19,7 +19,7 @@ const DEFAULT_QCOV_HSP = 80;
 //TODO: add clear query button
 //TODO: add list of existing queries for current user
 //TODO: use the useRouter hook instead of updating window.location.href directly (previously was unreliably failing to navigate on prod)
-export default function BlastSearch({ assayNames }: { assayNames: Assay["assay_name"][] }) {
+export default function BlastSearch({ assayNames }: { assayNames: AssayModel["assay_name"][] }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 

@@ -3,6 +3,13 @@ import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Introduction | API",
+	description:
+		"Learn how to use the Ocean DNA Explorer API to query and retrieve marine eDNA data, build queries, work with related tables, and access data programmatically."
+};
 
 export default async function ApiIntroductionPage() {
 	const project = await prisma.project.findFirst({

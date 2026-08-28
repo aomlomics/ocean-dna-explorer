@@ -1,4 +1,4 @@
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { RanksBySpecificity } from "@/types/objects";
 
 /**
@@ -80,7 +80,7 @@ function pickAcceptedForRank(
 	return null;
 }
 
-export async function matchGbifForPhylopic(taxonomy: Taxonomy): Promise<GbifPhylopicMatch | null> {
+export async function matchGbifForPhylopic(taxonomy: TaxonomyModel): Promise<GbifPhylopicMatch | null> {
 	let gbifTaxonomy: Record<string, any> | undefined;
 	let rankMatched = "";
 

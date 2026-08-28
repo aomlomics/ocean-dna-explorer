@@ -1,7 +1,7 @@
 "use client";
 
-import { Sample } from "@/app/generated/prisma/client";
-import { ReactNode, useMemo, useRef, useState } from "react";
+import type { SampleModel } from "@/app/generated/prisma/models/Sample";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import distinctColors from "distinct-colors";
 import { Scatter } from "react-chartjs-2";
 import {
@@ -25,7 +25,7 @@ import { DEFAULT_LEGEND_FIELD, DEFAULT_X_FIELD, DEFAULT_Y_FIELD } from "./wrappe
 
 ChartJS.register(TimeScale, LinearScale, PointElement, ScatterController, Title, Tooltip, Legend, zoomPlugin);
 
-type SamplePoint = { x: number | Date; y: number | Date; samp_name: Sample["samp_name"] };
+type SamplePoint = { x: number | Date; y: number | Date; samp_name: SampleModel["samp_name"] };
 
 const POINT_STYLES = {
 	borderWidth: 1,
@@ -49,7 +49,7 @@ export default function SampleScatterPlot({
 	xyFields,
 	userDefinedFields
 }: {
-	samples: Sample[];
+	samples: SampleModel[];
 	fields: string[];
 	xyFields: string[];
 	userDefinedFields?: Set<string>;
@@ -64,7 +64,11 @@ export default function SampleScatterPlot({
 
 	const [loading, setLoading] = useState(false);
 
-	function buildChartData(newXField: keyof Sample, newYField: keyof Sample, newLegendField: keyof Sample) {
+	function buildChartData(
+		newXField: keyof SampleModel,
+		newYField: keyof SampleModel,
+		newLegendField: keyof SampleModel
+	) {
 		const labels = new Set() as Set<string>;
 
 		let tempXMin = undefined as number | undefined;
@@ -197,7 +201,7 @@ export default function SampleScatterPlot({
 
 	const chartInfo = useMemo(() => buildChartData(xField, yField, legendField), [samples, xField, yField, legendField]);
 
-	function getFieldType(newField: keyof Sample) {
+	function getFieldType(newField: keyof SampleModel) {
 		if (userDefinedFields?.has(newField)) {
 			let tempType = "date" as "number" | "date";
 
@@ -250,7 +254,7 @@ export default function SampleScatterPlot({
 							value={xField}
 							onChange={(e) => {
 								setLoading(true);
-								setXField(e.currentTarget.value as keyof Sample);
+								setXField(e.currentTarget.value as keyof SampleModel);
 								setLoading(false);
 							}}
 							className="select"
@@ -313,7 +317,7 @@ export default function SampleScatterPlot({
 							value={yField}
 							onChange={(e) => {
 								setLoading(true);
-								setYField(e.currentTarget.value as keyof Sample);
+								setYField(e.currentTarget.value as keyof SampleModel);
 								setLoading(false);
 							}}
 							className="select"
@@ -341,7 +345,7 @@ export default function SampleScatterPlot({
 						value={legendField}
 						onChange={(e) => {
 							setLoading(true);
-							setLegendField(e.currentTarget.value as keyof Sample);
+							setLegendField(e.currentTarget.value as keyof SampleModel);
 							setLoading(false);
 						}}
 						className="select"

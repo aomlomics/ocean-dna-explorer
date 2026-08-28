@@ -1,13 +1,13 @@
 "use server";
 
-import { Analysis, Occurrence, Tag } from "@/app/generated/prisma/client";
+import type { AnalysisModel, OccurrenceModel, TagModel } from "@/app/generated/prisma/models";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { AsyncReturnType, ProgressStream } from "@/types/globals";
+import type { AsyncReturnType, ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
@@ -15,8 +15,8 @@ import { del } from "@vercel/blob";
 async function doEdit(
 	stream: ProgressStream,
 	editId: string,
-	project_id: Analysis["project_id"],
-	analysis_run_name: Analysis["analysis_run_name"],
+	project_id: AnalysisModel["project_id"],
+	analysis_run_name: AnalysisModel["analysis_run_name"],
 	{
 		url,
 		trusted,
@@ -24,7 +24,7 @@ async function doEdit(
 	}: {
 		url?: string;
 		trusted?: boolean;
-		tagNames?: Tag["tagName"][];
+		tagNames?: TagModel["tagName"][];
 	}
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
@@ -102,11 +102,11 @@ async function doEdit(
 
 		const dbAnalysis = dbAnalysisUntyped as unknown as Omit<typeof dbAnalysisUntyped, "Occurrences"> & {
 			Occurrences?: {
-				featureid: Occurrence["featureid"];
+				featureid: OccurrenceModel["featureid"];
 				Library: {
 					Occurrences: {
-						featureid: Occurrence["featureid"];
-						analysis_run_name: Occurrence["analysis_run_name"];
+						featureid: OccurrenceModel["featureid"];
+						analysis_run_name: OccurrenceModel["analysis_run_name"];
 					}[];
 				};
 			}[];
@@ -220,7 +220,7 @@ async function doEdit(
 
 				if (trusted) {
 					const featureids = new Set(dbAnalysis.Occurrences!.map((occ) => occ.featureid));
-					const otherTrusted = [] as Analysis["analysis_run_name"][];
+					const otherTrusted = [] as AnalysisModel["analysis_run_name"][];
 					for (const ourOcc of dbAnalysis.Occurrences!) {
 						for (const otherOcc of ourOcc.Library!.Occurrences)
 							if (!otherTrusted.includes(otherOcc.analysis_run_name) && featureids.has(otherOcc.featureid)) {
@@ -276,8 +276,8 @@ async function doEdit(
 
 export default async function analysisEditAction(
 	editId: string,
-	project_id: Analysis["project_id"],
-	analysis_run_name: Analysis["analysis_run_name"],
+	project_id: AnalysisModel["project_id"],
+	analysis_run_name: AnalysisModel["analysis_run_name"],
 	{
 		url,
 		trusted,
@@ -285,7 +285,7 @@ export default async function analysisEditAction(
 	}: {
 		url?: string;
 		trusted?: boolean;
-		tagNames?: Tag["tagName"][];
+		tagNames?: TagModel["tagName"][];
 	}
 ) {
 	const stream = createProgressStream();

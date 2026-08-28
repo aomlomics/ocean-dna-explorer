@@ -1,17 +1,17 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import {
 	DEFAULT_OUTSIDE_COLOR,
 	DEFAULT_POINT_SIZE,
 	DEFAULT_POINT_SIZE_STEP,
 	getLegendColor,
-	LegendInfo
+	type LegendInfo
 } from "./mapUtils";
 import { divIcon } from "leaflet";
-import { MapShape, MapLocation } from "@/types/globals";
-import { TableMetadataValue } from "@/types/tableMetadata";
+import type { MapShape, MapLocation } from "@/types/globals";
+import { type TableMetadataValue } from "@/types/tableMetadata";
 
 function getConicGradient(colors: chroma.Color[]) {
 	return `conic-gradient(from ${360 / colors.length}deg,${colors

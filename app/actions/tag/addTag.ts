@@ -1,13 +1,13 @@
 "use server";
 
-import { Tag } from "@/app/generated/prisma/client";
+import type { TagModel } from "@/app/generated/prisma/models/Tag";
 import { prisma } from "@/app/helpers/prisma";
 import { TagOptionalDefaultsSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 
-export default async function addTagAction(tag: Omit<Tag, "id">): Promise<NetworkPacket> {
+export default async function addTagAction(tag: Omit<TagModel, "id">): Promise<NetworkPacket> {
 	try {
 		const { userId, sessionClaims } = await auth();
 		const role = sessionClaims?.metadata?.role;

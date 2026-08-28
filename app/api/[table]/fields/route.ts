@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 import { getTableName, getZodType } from "@/app/helpers/schema";
 

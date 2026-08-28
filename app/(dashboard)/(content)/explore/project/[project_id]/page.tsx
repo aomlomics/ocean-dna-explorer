@@ -2,9 +2,9 @@ import { Suspense, type ReactNode } from "react";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
-import EditHistory from "@/app/components/EditHistory";
+import EditHistory from "@/app/components/explore/EditHistory";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import TableMetadata from "@/types/tableMetadata";
 import StatCard from "@/app/components/explore/StatCard";
 import { LocationIcon, AnalysisIcon, FishIcon, EyeIcon } from "@/app/components/icons";
@@ -20,7 +20,32 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { getBlobSizes } from "@/app/helpers/getBlobSizes";
 import { notFound } from "next/navigation";
-import { Analysis, Assay, Taxonomy } from "@/app/generated/prisma/client";
+import type { AnalysisModel, AssayModel, TaxonomyModel } from "@/app/generated/prisma/models";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ project_id: string }> }): Promise<Metadata> {
+	const { project_id } = await decodeRouteParams(params);
+
+	const project = await trustedPrisma.project.findUnique({
+		where: {
+			project_id
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (project) {
+		return {
+			title: `${project_id} | ${TableMetadata.project.plural}`,
+			description: `Explore the ${project_id} project, including its samples, analyses, assays, taxonomic assignments, sampling locations, sequencing depth, and project metadata.`
+		};
+	} else {
+		return {
+			title: "Project not found"
+		};
+	}
+}
 
 /** Char budget per row (incl. ` | ` between segments). */
 const INSTITUTION_MAX_CH = 98;
@@ -233,9 +258,12 @@ export default async function Project_id({ params }: { params: Promise<{ project
 	}));
 
 	//get a sorted array of taxonomy counts, and a separate object to show which analysis taxonomies came from
-	const taxaCount = {} as Record<Taxonomy["taxonomy"], number>;
-	const taxaCountByAnalysis = {} as Record<Analysis["analysis_run_name"], Record<Taxonomy["taxonomy"], number>>;
-	const taxaCountByAssay = {} as Record<Assay["assay_name"], Record<Taxonomy["taxonomy"], number>>;
+	const taxaCount = {} as Record<TaxonomyModel["taxonomy"], number>;
+	const taxaCountByAnalysis = {} as Record<
+		AnalysisModel["analysis_run_name"],
+		Record<TaxonomyModel["taxonomy"], number>
+	>;
+	const taxaCountByAssay = {} as Record<AssayModel["assay_name"], Record<TaxonomyModel["taxonomy"], number>>;
 
 	for (const a of Analyses) {
 		for (const assign of a.Assignments) {
@@ -411,11 +439,11 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				<div className="flex flex-wrap gap-x-6 gap-y-1">
 					<div>
 						<span className="font-medium text-base-content/70">Contact: </span>
-						<span>{project.project_contact || "N/A"}</span>
+						<span>{project.project_contact}</span>
 					</div>
 					<div>
 						<span className="font-medium text-base-content/70">Assay Type: </span>
-						<span>{project.assay_type || "N/A"}</span>
+						<span>{project.assay_type}</span>
 					</div>
 				</div>
 				{formatInstitutionHeaderBlock(project.institution)}

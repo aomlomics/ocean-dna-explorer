@@ -1,16 +1,41 @@
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import PrimerDiagram from "@/app/components/PrimerDiagram";
+import PrimerDiagram from "@/app/components/explore/PrimerDiagram";
 import GcDonut from "@/app/components/charts/GcDonut";
 import StatCard from "@/app/components/explore/StatCard";
 import { AnalysisIcon, DnaIcon, FishIcon, LocationIcon } from "@/app/components/icons";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
-import { exploreUrl } from "@/types/tableMetadata";
+import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ assay_name: string }> }): Promise<Metadata> {
+	const { assay_name } = await decodeRouteParams(params);
+
+	const assay = await trustedPrisma.assay.findUnique({
+		where: {
+			assay_name
+		},
+		select: {
+			target_gene: true
+		}
+	});
+
+	if (assay) {
+		return {
+			title: `${assay_name} | ${TableMetadata.assay.plural}`,
+			description: `Explore the ${assay_name} assay, including its ${assay.target_gene}, PCR primer sequences and characteristics, associated samples/libraries, and analyses.`
+		};
+	} else {
+		return {
+			title: "Assay not found"
+		};
+	}
+}
 
 const ASSAY_MASTER_TSV_URL =
 	"https://raw.githubusercontent.com/NOAA-Omics/noaa-omics-metabarcoding-assays/refs/heads/main/assays.tsv";

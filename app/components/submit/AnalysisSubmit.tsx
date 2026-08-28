@@ -1,18 +1,18 @@
 "use client";
 
-import { ChangeEvent, SubmitEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type SubmitEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import ProgressBar from "../ProgressBar";
 import SubmitFormSection from "./SubmitFormSection";
 import Modal from "../Modal";
-import { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
-import { Project } from "@/prisma/generated/zod";
+import type { NetworkPacket, NetworkProgressPacket } from "@/types/globals";
+import type { Project } from "@/prisma/generated/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
-import { Tag } from "@/app/generated/prisma/client";
+import { TagModel } from "@/app/generated/prisma/models/Tag";
 import AnalysisTag from "../tags/AnalysisTag";
 import { exploreUrl } from "@/types/tableMetadata";
 
@@ -22,7 +22,7 @@ type ResponseSet = {
 	occurrences: NetworkProgressPacket;
 };
 
-export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
+export default function AnalysisSubmit({ tags }: { tags: TagModel[] }) {
 	const router = useRouter();
 
 	const [loading, setLoading] = useState(false);
@@ -42,7 +42,7 @@ export default function AnalysisSubmit({ tags }: { tags: Tag[] }) {
 	const [trusted, setTrusted] = useState(false);
 
 	//list of tags to be added to submitted analyses
-	const [selectedTags, setSelectedTags] = useState([] as Tag[]);
+	const [selectedTags, setSelectedTags] = useState([] as TagModel[]);
 
 	//response state, where the key is the analysisId, and the value is an object with a key for each file name ("analysis", "assignments", and "occurrences") and values of the network response for that file name
 	//usage:

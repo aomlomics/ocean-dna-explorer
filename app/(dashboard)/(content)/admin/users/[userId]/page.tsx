@@ -8,14 +8,32 @@ import {
 } from "@/app/actions/manageUsers/editUser";
 import projectDeleteAction from "@/app/actions/project/delete/projectDelete";
 import SubmissionDeleteButton from "@/app/components/mySubmissions/SubmissionDeleteButton";
-import WarningButton from "@/app/components/WarningButton";
+import WarningButton from "@/app/components/admin/WarningButton";
 import { prisma } from "@/app/helpers/prisma";
 import { exploreUrl } from "@/types/tableMetadata";
-import { Role, UserMetadata } from "@/types/globals";
+import type { Role, UserMetadata } from "@/types/globals";
 import { RoleHeirarchy } from "@/types/objects";
-import { auth, clerkClient, EmailAddress } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import type { EmailAddress } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
+	const { userId } = await params;
+	const client = await clerkClient();
+
+	try {
+		const target = await client.users.getUser(userId);
+		return {
+			title: target.fullName
+		};
+	} catch {
+		return {
+			title: "User not found"
+		};
+	}
+}
 
 //TODO: figure out why it's POSTing with every refresh
 export default async function UserId({ params }: { params: Promise<{ userId: string }> }) {
@@ -53,9 +71,7 @@ export default async function UserId({ params }: { params: Promise<{ userId: str
 		<div className="grow flex flex-col gap-5">
 			<header className="flex gap-5 items-center justify-between">
 				<div>
-					<p className="text-2xl text-primary">
-						{target.firstName} {target.lastName}
-					</p>
+					<p className="text-2xl text-primary">{target.fullName}</p>
 					<p className="text-lg text-base-content/70">
 						{
 							target.emailAddresses.find((email: EmailAddress) => email.id === target.primaryEmailAddressId)

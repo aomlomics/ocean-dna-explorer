@@ -1,11 +1,11 @@
 "use client";
 
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import LeafletControl from "./LeafletControl";
 import CollapsibleMapContainer from "../containers/CollapsibleMapContainer";
 import ResetButtonMap from "../utils/ResetButtonMap";
 import { DEFAULT_CLUSTER_RADIUS } from "../utils/mapUtils";
-import InfoButton from "../../InfoButton";
+import InfoButton from "@/app/components/InfoButton";
 
 export default function ClusterControl({
 	cluster,

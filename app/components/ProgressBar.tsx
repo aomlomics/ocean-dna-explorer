@@ -1,6 +1,6 @@
 "use client";
 
-import { NetworkProgressPacket } from "@/types/globals";
+import type { NetworkProgressPacket } from "@/types/globals";
 
 export default function ProgressBar({ loading, data }: { loading: boolean; data: NetworkProgressPacket }) {
 	let value = 0;

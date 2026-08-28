@@ -1,16 +1,16 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { prisma } from "@/app/helpers/prisma";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { ProjectSchema } from "@/prisma/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
-export default async function projectDeleteAction(target: Project["project_id"]): Promise<NetworkPacket> {
+export default async function projectDeleteAction(target: ProjectModel["project_id"]): Promise<NetworkPacket> {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 

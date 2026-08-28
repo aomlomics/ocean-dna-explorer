@@ -1,7 +1,7 @@
 import { parseApiQuery } from "@/app/helpers/api";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { NextResponse } from "next/server";
 
 export async function GET(

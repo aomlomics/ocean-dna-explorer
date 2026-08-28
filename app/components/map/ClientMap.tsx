@@ -1,10 +1,9 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { NetworkPacket, NullLocation } from "@/types/globals";
+import type { NetworkPacket, NullLocation } from "@/types/globals";
 import { useEffect, useState } from "react";
 import DynamicMap from "./DynamicMap";
-import { TableMetadataValue } from "@/types/tableMetadata";
+import { type ModelName, type TableMetadataValue } from "@/types/tableMetadata";
 
 export default function ClientMap({
 	url,
@@ -25,7 +24,7 @@ export default function ClientMap({
 	url: string;
 	where?: Record<string, string>;
 	id?: TableMetadataValue["titleField"];
-	table?: Uncapitalize<Prisma.ModelName>;
+	table?: Uncapitalize<ModelName>;
 	cluster?: boolean;
 	clusterRadius?: number;
 	legend?: boolean;
@@ -35,7 +34,7 @@ export default function ClientMap({
 	disableSearch?: true;
 	className?: string;
 } & (
-	| { titleTable?: Uncapitalize<Prisma.ModelName>; defaultLegendField?: undefined }
+	| { titleTable?: Uncapitalize<ModelName>; defaultLegendField?: undefined }
 	| { titleTable?: undefined; defaultLegendField?: string }
 )) {
 	const [locations, setLocations] = useState(undefined as NullLocation[] | undefined);

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, RefObject, useRef } from "react";
+import { type ReactNode, type RefObject, useRef } from "react";
 
 export default function Modal({
 	children,

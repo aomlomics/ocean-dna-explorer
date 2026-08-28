@@ -2,11 +2,11 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import Map from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
-import DataDisplay from "@/app/components/DataDisplay";
-import EditHistory from "@/app/components/EditHistory";
+import DataDisplay from "@/app/components/explore/DataDisplay";
+import EditHistory from "@/app/components/explore/EditHistory";
 import TableMetadata from "@/types/tableMetadata";
 import AssaysCard from "@/app/components/assay/AssaysCard";
-import { Analysis } from "@/app/generated/prisma/client";
+import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import AnalysisTag from "@/app/components/tags/AnalysisTag";
 import StatCard from "@/app/components/explore/StatCard";
 import { EyeIcon, FishIcon, LocationIcon } from "@/app/components/icons";
@@ -21,6 +21,38 @@ import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { exploreUrl } from "@/types/tableMetadata";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; analysis_run_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name } = await decodeRouteParams(params);
+
+	const analysis = await trustedPrisma.analysis.findUnique({
+		where: {
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
+		},
+		select: {
+			assay_name: true
+		}
+	});
+
+	if (analysis) {
+		return {
+			title: `${analysis_run_name} | ${TableMetadata.analysis.plural}`,
+			description: `Explore the results of the ${analysis_run_name} analysis in the ${project_id} project, including associated samples, occurrences, taxonomic assignments, and diversity metrics using the ${analysis.assay_name} assay.`
+		};
+	} else {
+		return {
+			title: "Analysis not found"
+		};
+	}
+}
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -299,8 +331,8 @@ async function TaxonomyVisualizeSuspense({
 	project_id,
 	analysis_run_name
 }: {
-	project_id: Analysis["project_id"];
-	analysis_run_name: Analysis["analysis_run_name"];
+	project_id: AnalysisModel["project_id"];
+	analysis_run_name: AnalysisModel["analysis_run_name"];
 }) {
 	const { occurrences, assignments, taxonomies, samples } = await trustedPrisma.$transaction(
 		async (tx) => {

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import HelpQuickNav from "../components/docs/HelpQuickNav";
-import DocsSections, { DocsPage as DocsPageType } from "@/types/docsSections";
+import DocsSections, { type DocsPage } from "@/types/docsSections";
 
 //TODO: add content
 export default function DocsPage() {
-	const firstPage = Object.keys(DocsSections)[0] as DocsPageType;
+	const firstPage = Object.keys(DocsSections)[0] as DocsPage;
 
 	return (
 		<div>

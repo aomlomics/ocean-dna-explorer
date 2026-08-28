@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import InfoButton from "@/app/components/InfoButton";
 
 export type DashCardMenuItem = {

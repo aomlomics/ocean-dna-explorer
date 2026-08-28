@@ -1,7 +1,12 @@
 "use client";
 
 import useHash from "@/app/hooks/useHash";
-import DocsSections, { DocsGenericSection, DocsPage, DocsSection, DocsPageTitles } from "@/types/docsSections";
+import DocsSections, {
+	type DocsGenericSection,
+	type DocsPage,
+	type DocsSection,
+	DocsPageTitles
+} from "@/types/docsSections";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

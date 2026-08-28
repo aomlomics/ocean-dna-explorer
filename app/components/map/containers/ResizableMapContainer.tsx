@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, RefObject, useEffect, useRef, useState } from "react";
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 import { Map } from "leaflet";
 
 export default function ResizableMapContainer({

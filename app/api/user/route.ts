@@ -1,6 +1,6 @@
-import { NetworkPacket, UserObject } from "@/types/globals";
+import type { NetworkPacket, UserObject } from "@/types/globals";
 import { NextResponse } from "next/server";
-import { auth, clerkClient, User } from "@clerk/nextjs/server";
+import { auth, clerkClient, type User } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 
 function getUsersResult(users: User[], emails?: boolean): UserObject[] {

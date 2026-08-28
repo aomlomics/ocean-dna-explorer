@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { ProjectIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
@@ -79,7 +79,7 @@ const IUCN_CLASS: Record<IucnCategoryId, string> = {
 
 type ActiveGridTaxonomy = {
 	id: number;
-	taxonomy: Taxonomy;
+	taxonomy: TaxonomyModel;
 	scientificName: string;
 	taxonomyPath: string;
 	commonName: string | null;
@@ -172,7 +172,7 @@ function trimCommonName(commonName: string | null, scientificName: string) {
 }
 
 // Builds a semicolon-free breadcrumb from the individual rank columns.
-function formatTaxonomyPath(t: Taxonomy): string {
+function formatTaxonomyPath(t: TaxonomyModel): string {
 	const ranks = [t.kingdom, t.phylum, t.class, t.order, t.family, t.genus, t.species].filter(
 		(v): v is string => typeof v === "string" && v.trim().length > 0
 	);
@@ -180,7 +180,7 @@ function formatTaxonomyPath(t: Taxonomy): string {
 }
 
 // Picks the most specific known name for display.
-function mostSpecificName(t: Taxonomy): string {
+function mostSpecificName(t: TaxonomyModel): string {
 	for (const rank of RanksBySpecificity) {
 		const value = t[rank]?.toString().trim();
 		if (value) return value.replace(/_/g, " ");
@@ -188,7 +188,7 @@ function mostSpecificName(t: Taxonomy): string {
 	return t.taxonomy.split(";").pop()?.replace(/_/g, " ") ?? t.taxonomy;
 }
 
-async function fetchTaxonomyMeta(taxonomy: Taxonomy): Promise<TaxonomyCardMeta | null> {
+async function fetchTaxonomyMeta(taxonomy: TaxonomyModel): Promise<TaxonomyCardMeta | null> {
 	const cacheKey = taxonomy.taxonomy;
 	if (taxonomyMetaCache.has(cacheKey)) return taxonomyMetaCache.get(cacheKey) ?? null;
 	const inFlight = taxonomyMetaInFlight.get(cacheKey);
@@ -295,7 +295,7 @@ async function fetchTaxonomyMeta(taxonomy: Taxonomy): Promise<TaxonomyCardMeta |
 	return resolved;
 }
 
-function buildFallbackTaxonomyMeta(taxonomy: Taxonomy): TaxonomyCardMeta {
+function buildFallbackTaxonomyMeta(taxonomy: TaxonomyModel): TaxonomyCardMeta {
 	const scientificName = mostSpecificName(taxonomy);
 	return {
 		taxonomy,

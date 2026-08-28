@@ -10,7 +10,7 @@ export default clerkMiddleware({
 				"https://wsrv.nl",
 				"https://inaturalist-open-data.s3.amazonaws.com"
 			],
-			"connect-src": ["https://api.gbif.org", "https://api.phylopic.org"]
+			"connect-src": ["https://api.gbif.org", "https://api.phylopic.org", "https://vercel.com"]
 		}
 	}
 });

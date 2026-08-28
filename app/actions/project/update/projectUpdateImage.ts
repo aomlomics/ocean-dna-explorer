@@ -1,26 +1,26 @@
 "use server";
 
-import { Project } from "@/app/generated/prisma/client";
-import { Attribution } from "@/app/generated/prismaImages/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
+import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
 import { prisma } from "@/app/helpers/prisma";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import { ProjectSchema } from "@/prisma/generated/zod";
 import {
-	AttributionOptionalDefaults,
+	type AttributionOptionalDefaults,
 	AttributionOptionalDefaultsSchema,
-	Image,
-	ImageOptionalDefaults,
+	type Image,
+	type ImageOptionalDefaults,
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
 
 export default async function projectUpdateImageAction(
-	target: Project["project_id"],
+	target: ProjectModel["project_id"],
 	imageInfo: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults } | null
 ): Promise<NetworkPacket> {
 	if (imageInfo) {
@@ -71,7 +71,7 @@ export default async function projectUpdateImageAction(
 
 	let deletedImage = undefined as Image | undefined;
 	let parsedImage = undefined as Image | undefined;
-	let parsedAttribution = undefined as Attribution | undefined;
+	let parsedAttribution = undefined as AttributionModel | undefined;
 	try {
 		if (imageInfo) {
 			if (imageInfo.image.homePage) {
@@ -83,7 +83,7 @@ export default async function projectUpdateImageAction(
 			parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image) as Image;
 
 			parsedAttribution =
-				imageInfo.attribution && (AttributionOptionalDefaultsSchema.parse(imageInfo.attribution) as Attribution);
+				imageInfo.attribution && (AttributionOptionalDefaultsSchema.parse(imageInfo.attribution) as AttributionModel);
 
 			await prismaImages.$transaction(async (tx) => {
 				if (dbProject.imageFileUrl_ODE) {

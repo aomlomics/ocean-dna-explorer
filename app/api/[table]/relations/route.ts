@@ -1,6 +1,6 @@
 import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
-import { NetworkPacket } from "@/types/globals";
+import type { NetworkPacket } from "@/types/globals";
 import { getTableName } from "@/app/helpers/schema";
 
 export async function GET(

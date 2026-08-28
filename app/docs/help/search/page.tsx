@@ -1,6 +1,12 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Search | Help",
+	description: "Learn how to use Search to query across tables, filter related data, and combine complex conditions."
+};
 
 export default async function HelpSearchPage() {
 	const project = await prisma.project.findFirst({

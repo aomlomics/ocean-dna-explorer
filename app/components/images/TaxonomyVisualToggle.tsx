@@ -1,6 +1,6 @@
 "use client";
 
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { TaxonomicRanks } from "@/types/objects";
@@ -24,7 +24,7 @@ function rankAllowsGbifPhoto(rankKey: (typeof TaxonomicRanks)[number] | null | u
 }
 
 type TaxonomyVisualToggleProps = {
-	taxonomy: Taxonomy;
+	taxonomy: TaxonomyModel;
 	/** When null, only PhyloPic is shown (no GBIF photo mode). */
 	mediaTaxonKey: number | null;
 	/** Finest populated rank key on the taxonomy row; GBIF photo is disabled above family. */

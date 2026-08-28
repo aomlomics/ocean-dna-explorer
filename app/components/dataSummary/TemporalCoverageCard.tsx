@@ -1,6 +1,6 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
 import DashCard from "@/app/components/dataSummary/DashCard";
-import { Sample } from "@/app/generated/prisma/client";
+import type { SampleModel } from "@/app/generated/prisma/models/Sample";
 import { exploreUrl } from "@/types/tableMetadata";
 
 /**
@@ -63,7 +63,7 @@ function getDateSpan(start: Date, end: Date): string | null {
 	return parts.join(", ");
 }
 
-export async function TemporalCoverageCard({ project_id }: { project_id?: Sample["project_id"] }) {
+export async function TemporalCoverageCard({ project_id }: { project_id?: SampleModel["project_id"] }) {
 	const agg = await trustedPrisma.sample.aggregate({
 		where: {
 			project_id,

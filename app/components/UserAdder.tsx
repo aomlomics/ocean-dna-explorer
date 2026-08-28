@@ -1,8 +1,8 @@
 "use client";
 
-import { ClerkUserObject, NetworkPacket, TargetAction } from "@/types/globals";
+import type { ClerkUserObject, NetworkPacket, TargetAction } from "@/types/globals";
 import { useAuth } from "@clerk/nextjs";
-import { Dispatch, MouseEventHandler, ReactNode, SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type MouseEventHandler, type ReactNode, type SetStateAction, useEffect, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import Image from "next/image";
 

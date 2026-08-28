@@ -4,16 +4,16 @@ import { prisma } from "@/app/helpers/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseProjectFiles } from "@/app/helpers/actions/project";
-import { Channel, createProgressStream } from "@/app/helpers/progress";
-import { UserMetadata } from "@/types/globals";
+import { type Channel, createProgressStream } from "@/app/helpers/progress";
+import type { UserMetadata } from "@/types/globals";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { del } from "@vercel/blob";
-import { Project } from "@/app/generated/prisma/client";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import { validateBlobs } from "@/app/helpers/withDb";
 import {
-	AttributionOptionalDefaults,
+	type AttributionOptionalDefaults,
 	AttributionOptionalDefaultsSchema,
-	ImageOptionalDefaults,
+	type ImageOptionalDefaults,
 	ImageOptionalDefaultsSchema
 } from "@/prismaImages/generated/zod";
 import { prismaImages } from "@/app/helpers/prismaImages";
@@ -23,7 +23,7 @@ async function doSubmit(
 	projectChannel: Channel,
 	sampleChannel: Channel,
 	libraryChannel: Channel,
-	userIds: Project["userIds"],
+	userIds: ProjectModel["userIds"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const client = await clerkClient();
@@ -242,10 +242,10 @@ async function doSubmit(
 }
 
 export default async function projectSubmitAction(
-	projectFileUrl: Project["projectMetadataFileUrl_ODE"],
-	sampleFileUrl: Project["sampleMetadataFileUrl_ODE"],
-	libraryFileUrl: Project["libraryMetadataFileUrl_ODE"],
-	userIds: Project["userIds"],
+	projectFileUrl: ProjectModel["projectMetadataFileUrl_ODE"],
+	sampleFileUrl: ProjectModel["sampleMetadataFileUrl_ODE"],
+	libraryFileUrl: ProjectModel["libraryMetadataFileUrl_ODE"],
+	userIds: ProjectModel["userIds"],
 	imageInfo?: { image: ImageOptionalDefaults; attribution?: AttributionOptionalDefaults }
 ) {
 	const globalStream = createProgressStream();

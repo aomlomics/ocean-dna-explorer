@@ -1,13 +1,12 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { TableColumns } from "../hooks/useTableColumns";
-import { TableQuery } from "../hooks/useTableQuery";
+import type { TableColumns } from "../hooks/useTableColumns";
+import type { TableQuery } from "../hooks/useTableQuery";
 import { DEFAULT_ORDER_BY } from "../Table";
-import { ReactNode } from "react";
-import TableMetadata from "@/types/tableMetadata";
+import type { ReactNode } from "react";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { capitalizeTable } from "@/app/helpers/utils";
-import { ArrowIcon, SearchIcon } from "../../../icons";
+import { ArrowIcon, SearchIcon } from "@/app/components/icons";
 
 export default function TableHeader({
 	table,
@@ -25,7 +24,7 @@ export default function TableHeader({
 	whereFilter,
 	setOrderBy
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	headers: string[];
 	emptyFilter: Record<string, true>;
 	hideFilters?: boolean;
@@ -107,7 +106,7 @@ export default function TableHeader({
 							<th key={head + i} className="bg-base-100 cursor-not-allowed">
 								<div className="flex select-none mb-1">
 									{head}
-									{" (" + oneRelationsWithArrayTitle[head as Prisma.ModelName].join(" / ") + ")"}
+									{" (" + oneRelationsWithArrayTitle[head as ModelName].join(" / ") + ")"}
 								</div>
 								<div className="form-control w-full max-w-xs text-lg">
 									{/* Value Filter */}
@@ -159,9 +158,7 @@ export default function TableHeader({
 									<div className="flex select-none mb-1">
 										{deepRel.label}
 										{deepRel.type === "table"
-											? " (" +
-												(TableMetadata[deepRel.table as Prisma.ModelName].titleField as string[]).join(" / ") +
-												")"
+											? " (" + (TableMetadata[deepRel.table as ModelName].titleField as string[]).join(" / ") + ")"
 											: ""}
 									</div>
 									<div className="form-control w-full max-w-xs text-lg">

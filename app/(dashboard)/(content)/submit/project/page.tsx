@@ -3,6 +3,12 @@ import SubmitMobileGate from "@/app/components/submit/SubmitMobileGate";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import Link from "next/link";
 import { SubmitDescription } from "../page";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Submit Project",
+	description: "Create a new project by uploading project, sample, and library metadata."
+};
 
 export default async function Project() {
 	const attributions = await prismaImages.attribution.findMany();

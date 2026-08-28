@@ -1,13 +1,13 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import Link from "next/link";
 import { useDebouncedCallback } from "use-debounce";
 import { useAuth } from "@clerk/nextjs";
-import InfoButton from "./InfoButton";
+import InfoButton from "../InfoButton";
 import useSWR from "swr";
-import { fetcher } from "../helpers/utils";
-import { UserObject } from "@/types/globals";
+import { fetcher } from "../../helpers/utils";
+import type { UserObject } from "@/types/globals";
 
 export default function UserList() {
 	const { userId } = useAuth();

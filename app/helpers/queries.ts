@@ -1,9 +1,11 @@
 import { getZodType, parseSchemaToObject } from "./schema";
-import { ErrorPacket } from "@/types/globals";
-import { Assay, DeadBoolean, Prisma, PrismaClient } from "../generated/prisma/client";
+import type { ErrorPacket } from "@/types/globals";
+import { DeadBoolean, Prisma, type PrismaClient } from "@/app/generated/prisma/client";
+import type { AssayModel } from "@/app/generated/prisma/models/Assay";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
+import type { ModelName } from "@/types/tableMetadata";
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	try {
@@ -42,7 +44,7 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 //TODO: make it work with arrays
 async function updateManyRawChunked(
 	client: any,
-	table: Prisma.ModelName,
+	table: ModelName,
 	data: Record<string, any>[],
 	id = "id" as string | string[],
 	fields: string[]
@@ -140,7 +142,7 @@ async function updateManyRawChunked(
 
 export async function updateManyRaw(
 	client: any,
-	table: Prisma.ModelName,
+	table: ModelName,
 	data: Record<string, any>[],
 	id = "id" as string | string[]
 ) {
@@ -199,7 +201,7 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 	const parser = parse(await assaySeedFile.text(), { columns: true, delimiter: "\t" });
 	for await (const record of parser) {
 		const recordList = Object.entries(record) as [string, string][];
-		const assayRow = {} as Assay;
+		const assayRow = {} as AssayModel;
 
 		for (const [field, v] of recordList) {
 			if (AssayScalarFieldEnumSchema.safeParse(field).error) {

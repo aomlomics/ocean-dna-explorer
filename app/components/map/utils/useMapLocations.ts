@@ -1,11 +1,10 @@
-import { Prisma } from "@/app/generated/prisma/client";
 import { DeadValueEnum } from "@/types/enums";
-import { MapLocation, MapLocationWithValues, NullLocation } from "@/types/globals";
-import TableMetadata from "@/types/tableMetadata";
-import { LatLng, LatLngBoundsExpression } from "leaflet";
-import { chromaMin, getLegendValue, getMapLegendField, LegendInfo, legendValueSort, lightMin } from "./mapUtils";
+import type { MapLocation, MapLocationWithValues, NullLocation } from "@/types/globals";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
+import type { LatLng, LatLngBoundsExpression } from "leaflet";
+import { chromaMin, getLegendValue, getMapLegendField, type LegendInfo, legendValueSort, lightMin } from "./mapUtils";
 import distinctColors from "distinct-colors";
-import { Color } from "chroma-js";
+import type { Color } from "chroma-js";
 
 type MapProps =
 	| {
@@ -87,8 +86,8 @@ export default function useMapLocations({
 }: {
 	locations: NullLocation[];
 	omit: string[];
-	table: Uncapitalize<Prisma.ModelName>;
-	titleTable?: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
+	titleTable?: Uncapitalize<ModelName>;
 	defaultLegendField?: string;
 }) {
 	//clump locations if they have identical latlng

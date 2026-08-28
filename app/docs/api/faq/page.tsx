@@ -1,5 +1,11 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "FAQ | API",
+	description: "Frequently asked questions about using the Ocean DNA Explorer API."
+};
 
 export default function ApiFaqPage() {
 	return (

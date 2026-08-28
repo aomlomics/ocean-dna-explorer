@@ -1,5 +1,4 @@
-import { Prisma } from "@/app/generated/prisma/client";
-import {
+import type {
 	Circle,
 	MapLocation,
 	MapLocationWithValues,
@@ -10,7 +9,7 @@ import {
 	Polygon,
 	SuccessPacket
 } from "@/types/globals";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { DeadValueEnum } from "@/types/enums";
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
 
@@ -124,16 +123,16 @@ export function deepMerge(target: Record<string, any>, ...sources: Record<string
 	return deepMerge(target, ...sources);
 }
 
-export function uncapitalizeTable(table: Prisma.ModelName) {
-	return (table.charAt(0).toLowerCase() + table.slice(1)) as Uncapitalize<Prisma.ModelName>;
+export function uncapitalizeTable(table: ModelName) {
+	return (table.charAt(0).toLowerCase() + table.slice(1)) as Uncapitalize<ModelName>;
 }
 
-export function capitalizeTable(table: Uncapitalize<Prisma.ModelName>) {
-	return (table.charAt(0).toUpperCase() + table.slice(1)) as Prisma.ModelName;
+export function capitalizeTable(table: Uncapitalize<ModelName>) {
+	return (table.charAt(0).toUpperCase() + table.slice(1)) as ModelName;
 }
 
-export function depluralizeTable(table: Prisma.ModelName | Uncapitalize<Prisma.ModelName>) {
-	return Object.entries(TableMetadata).find((tm) => tm[1].plural === table)![0] as Uncapitalize<Prisma.ModelName>;
+export function depluralizeTable(table: ModelName | Uncapitalize<ModelName>) {
+	return Object.entries(TableMetadata).find((tm) => tm[1].plural === table)![0] as Uncapitalize<ModelName>;
 }
 
 export function getSubmissionFileName(value: string) {

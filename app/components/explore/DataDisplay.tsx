@@ -1,17 +1,16 @@
 import { DeadValueEnum } from "@/types/enums";
 import { GlobalOmit, TypeSeparators } from "@/types/objects";
 import Link from "next/link";
-import { ReactNode } from "react";
-import { Prisma } from "../generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
-import { getZodType } from "../helpers/schema";
+import type { ReactNode } from "react";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
+import { getZodType } from "@/app/helpers/schema";
 
 export default function DataDisplay({
 	table,
 	data,
 	omit = []
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	data: Record<string, any>;
 	omit?: string[];
 }) {
@@ -110,7 +109,7 @@ function ValueNode({
 	value,
 	userDefined
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	field: string;
 	value: any;
 	userDefined?: true;

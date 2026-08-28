@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
-import { Prisma, PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 
 type PrismaArgs = Record<string, any>;
 
@@ -83,7 +83,7 @@ function mergeWhere(
 	};
 }
 
-function getTrustedWhere(table: Prisma.ModelName) {
+function getTrustedWhere(table: ModelName) {
 	const where: Record<string, any> = {
 		trusted: true
 	};
@@ -110,7 +110,7 @@ function getTrustedWhere(table: Prisma.ModelName) {
 	}
 }
 
-function injectTrustedIntoCountSelection(selection: Record<string, any>, model: Prisma.ModelName): Record<string, any> {
+function injectTrustedIntoCountSelection(selection: Record<string, any>, model: ModelName): Record<string, any> {
 	const result: Record<string, any> = {};
 
 	for (const [field, value] of Object.entries(selection)) {
@@ -141,7 +141,7 @@ function injectTrustedIntoCountSelection(selection: Record<string, any>, model: 
 	return result;
 }
 
-function buildTrustedCountSelection(model: Prisma.ModelName) {
+function buildTrustedCountSelection(model: ModelName) {
 	return {
 		select: injectTrustedIntoCountSelection(
 			Object.fromEntries(
@@ -153,7 +153,7 @@ function buildTrustedCountSelection(model: Prisma.ModelName) {
 }
 
 //recursively transforms select/include arguments
-function injectTrustedIntoSelection(selection: Record<string, any>, model: Prisma.ModelName): Record<string, any> {
+function injectTrustedIntoSelection(selection: Record<string, any>, model: ModelName): Record<string, any> {
 	const result: Record<string, any> = {};
 
 	for (const [field, value] of Object.entries(selection)) {
@@ -204,7 +204,7 @@ function injectTrustedIntoSelection(selection: Record<string, any>, model: Prism
 	return result;
 }
 
-function injectTrustedIntoArgs(args: Record<string, any>, model: Prisma.ModelName): Record<string, any> {
+function injectTrustedIntoArgs(args: Record<string, any>, model: ModelName): Record<string, any> {
 	const result = {
 		...args
 	};
@@ -233,7 +233,7 @@ function injectTrustedIntoArgs(args: Record<string, any>, model: Prisma.ModelNam
 }
 
 function injectTrustedIntoQuery(
-	model: Prisma.ModelName,
+	model: ModelName,
 	args: Record<string, any>,
 	operation: (typeof readOperations)[number]
 ) {

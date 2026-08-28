@@ -4,8 +4,8 @@ datasource db {
 
 generator client {
     provider            = "prisma-client"
+    engineType          = "client"
     output              = "../../app/generated/prisma"
-    runtime             = "edge-light"
     importFileExtension = ""
     previewFeatures     = ["relationJoins", "fullTextSearchPostgres"]
 }

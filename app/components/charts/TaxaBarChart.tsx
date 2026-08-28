@@ -1,6 +1,12 @@
 "use client";
 
-import { Assignment, Library, Occurrence, Sample, Taxonomy } from "@/app/generated/prisma/client";
+import type {
+	AssignmentModel,
+	LibraryModel,
+	OccurrenceModel,
+	SampleModel,
+	TaxonomyModel
+} from "@/app/generated/prisma/models";
 import { Bar } from "react-chartjs-2";
 import { useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";
@@ -30,22 +36,22 @@ export default function TaxaBarChart({
 	userDefinedFields
 }: {
 	occsByFeatureid: Record<
-		Occurrence["featureid"],
+		OccurrenceModel["featureid"],
 		{
-			lib_id: Occurrence["lib_id"];
-			featureid: Occurrence["featureid"];
-			organismQuantity: Occurrence["organismQuantity"];
+			lib_id: OccurrenceModel["lib_id"];
+			featureid: OccurrenceModel["featureid"];
+			organismQuantity: OccurrenceModel["organismQuantity"];
 		}[]
 	>;
 	assignments: {
-		featureid: Assignment["featureid"];
+		featureid: AssignmentModel["featureid"];
 		Taxonomy: {
 			id: number;
 		};
 	}[];
-	taxonomiesById: Record<Taxonomy["id"], Record<(typeof TaxonomicRanks)[number], string | null>>;
-	samplesById: Record<Sample["id"], Sample & { Libraries: { lib_id: Library["lib_id"] }[] }>;
-	sampleIdsByLibId: Record<Library["lib_id"], Sample["id"]>;
+	taxonomiesById: Record<TaxonomyModel["id"], Record<(typeof TaxonomicRanks)[number], string | null>>;
+	samplesById: Record<SampleModel["id"], SampleModel & { Libraries: { lib_id: LibraryModel["lib_id"] }[] }>;
+	sampleIdsByLibId: Record<LibraryModel["lib_id"], SampleModel["id"]>;
 	sampFields: string[];
 	userDefinedFields?: Set<string>;
 }) {
@@ -100,7 +106,7 @@ export default function TaxaBarChart({
 		});
 		const currColors = currRanks.map((taxon) => uniqueColors[sortedRanks.indexOf(taxon)]);
 		const libIds = Object.keys(libIdRankQuantities).sort();
-		const averageByGroups: Record<string, Library["lib_id"][]> = {};
+		const averageByGroups: Record<string, LibraryModel["lib_id"][]> = {};
 
 		if (averageBy !== "lib_id") {
 			for (const lib_id of libIds) {
@@ -109,7 +115,7 @@ export default function TaxaBarChart({
 				if (userDefinedFields?.has(averageBy)) {
 					val = samplesById[sampleIdsByLibId[lib_id]!]!.userDefined?.[averageBy]?.toString() ?? "undefined";
 				} else {
-					val = samplesById[sampleIdsByLibId[lib_id]!]![averageBy as keyof Sample]?.toString() ?? "undefined";
+					val = samplesById[sampleIdsByLibId[lib_id]!]![averageBy as keyof SampleModel]?.toString() ?? "undefined";
 				}
 
 				(averageByGroups[val] ??= []).push(lib_id);

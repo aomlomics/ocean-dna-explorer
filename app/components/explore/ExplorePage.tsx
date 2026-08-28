@@ -1,28 +1,22 @@
-import { ReactNode } from "react";
-import { FilterConfig } from "./filters/filterHelpers";
-import { Prisma } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import type { FilterConfig } from "./filters/filterHelpers";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ExploreControls from "./ExploreControls";
-import InfoButton from "../InfoButton";
+import TableInfo from "../TableInfo";
 
 export default function ExplorePage({
 	table,
 	tableConfig,
-	children,
 	displayMode = "table",
 	tableWhere,
 	toggle
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	tableConfig: FilterConfig[];
-	children?: ReactNode;
 	toggle?: true;
 } & (
 	| { displayMode?: "table"; tableWhere?: Record<string, any> | undefined }
 	| { displayMode?: "grid"; tableWhere?: undefined }
 )) {
-	const titleField = TableMetadata[table].titleField;
-
 	return (
 		<div className="py-4">
 			<header>
@@ -32,41 +26,17 @@ export default function ExplorePage({
 						<span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
 						<span className="text-primary font-normal">{TableMetadata[table].plural}</span>
 					</h1>
-					<InfoButton dir="tooltip-right">
-						<div className="space-y-2">
-							<div className="flex items-start gap-2">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-								>
-									<path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-								</svg>
-								<p>
-									<span className="font-semibold text-primary">Unique Key:</span>{" "}
-									<span className="font-medium text-base-content">
-										{typeof titleField === "string" ? titleField : titleField.join(" / ")}
-									</span>
-								</p>
-							</div>
-							<p>{TableMetadata[table].description}</p>
-						</div>
-					</InfoButton>
+					<TableInfo table={table} />
 				</div>
 			</header>
 
-			{children ? <div className="prose mt-5 max-w-full text-base-content/80">{children}</div> : null}
-
-			<div className="mt-5">
-				<ExploreControls
-					table={table}
-					tableConfig={tableConfig}
-					toggle={toggle}
-					displayMode={displayMode}
-					tableWhere={tableWhere}
-				/>
-			</div>
+			<ExploreControls
+				table={table}
+				tableConfig={tableConfig}
+				toggle={toggle}
+				displayMode={displayMode}
+				tableWhere={tableWhere}
+			/>
 		</div>
 	);
 }

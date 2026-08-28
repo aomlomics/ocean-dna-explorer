@@ -1,8 +1,7 @@
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { Prisma } from "@/app/generated/prisma/client";
-import { getZodType } from "../helpers/schema";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
+import { getZodType } from "@/app/helpers/schema";
 import Link from "next/link";
-import { capitalizeTable } from "../helpers/utils";
+import { capitalizeTable } from "@/app/helpers/utils";
 
 export default function SchemaDisplay() {
 	const tables = TableNames.map((t) => {
@@ -28,7 +27,7 @@ export default function SchemaDisplay() {
 			}
 		}
 
-		return [t, result] as [Uncapitalize<Prisma.ModelName>, typeof result];
+		return [t, result] as [Uncapitalize<ModelName>, typeof result];
 	});
 
 	return (

@@ -2,6 +2,13 @@ import ApiCodeBlock from "@/app/components/docs/ApiCodeBlock";
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Response Format | API",
+	description:
+		"Learn how to interpret successful and error responses from the Ocean DNA Explorer API, including response structure, result formats, HTTP errors, and common request errors."
+};
 
 export default function ApiResponsesPage() {
 	return (
@@ -33,7 +40,7 @@ export default function ApiResponsesPage() {
 }`}
 							/>
 
-							<p className="mb-4">
+							<p className="my-4">
 								The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain
 								&quot;Success&quot; for successful requests.
 							</p>
@@ -65,23 +72,23 @@ export default function ApiResponsesPage() {
 	"error": "A description of what went wrong."
 }`}
 							/>
-							<p className="mb-4 mt-4">
+							<p className="my-4">
 								The <code className="px-1 py-0.5 bg-base-200 rounded">error</code> field contains a human-readable
 								description of the issue.
 							</p>
 
 							<h4 className="font-medium mt-8 mb-2">Common Error Examples:</h4>
 							<div className="space-y-6">
-								<div>
-									<p className="mb-2">
+								<div className="flex flex-col gap-2 items-start">
+									<p>
 										<strong>Invalid Table:</strong> Requesting a table that does not exist.
 									</p>
 									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
 									<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
 								</div>
 
-								<div>
-									<p className="mb-2">
+								<div className="flex flex-col gap-2 items-start">
+									<p>
 										<strong>Invalid Field:</strong> Using a field name that does not exist in a filter or field
 										selection.
 									</p>
@@ -92,8 +99,8 @@ export default function ApiResponsesPage() {
 									/>
 								</div>
 
-								<div>
-									<p className="mb-2">
+								<div className="flex flex-col gap-2 items-start">
+									<p>
 										<strong>Invalid Parameter Value:</strong> Providing an incorrect value for a parameter like `limit`.
 									</p>
 									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`} />

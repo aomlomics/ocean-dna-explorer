@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { ReactNode } from "react";
-import AnalysisTag from "../../../tags/AnalysisTag";
-import { Prisma, Tag } from "@/app/generated/prisma/client";
-import TableMetadata from "@/types/tableMetadata";
+import type { ReactNode } from "react";
+import AnalysisTag from "@/app/components/tags/AnalysisTag";
+import type { TagModel } from "@/app/generated/prisma/models/Tag";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { capitalizeTable, depluralizeTable, uncapitalizeTable } from "@/app/helpers/utils";
 import { DeadValueEnum } from "@/types/enums";
-import { LinkIcon } from "../../../icons";
-import { TableColumns } from "../hooks/useTableColumns";
-import { TableQuery } from "../hooks/useTableQuery";
+import { LinkIcon } from "@/app/components/icons";
+import type { TableColumns } from "../hooks/useTableColumns";
+import type { TableQuery } from "../hooks/useTableQuery";
 
 export default function TableRow({
 	row,
@@ -28,7 +28,7 @@ export default function TableRow({
 }: {
 	row: Record<string, any>;
 	i: number;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	headers: string[];
 	headersFilter: Record<string, boolean>;
 	emptyFilter: Record<string, true>;
@@ -84,7 +84,7 @@ export default function TableRow({
 									key={head + "child" + j}
 								>
 									<div className="flex gap-3">
-										{row.Tags.map((t: Tag) => (
+										{row.Tags.map((t: TagModel) => (
 											<AnalysisTag key={t.tagName} tag={t} hideDescription />
 										))}
 									</div>
@@ -99,14 +99,14 @@ export default function TableRow({
 									<div className="flex justify-center">
 										<Link
 											className="btn text-nowrap"
-											href={`/search?table=${depluralizeTable(head as Prisma.ModelName)}&advanced=[${
+											href={`/search?table=${depluralizeTable(head as ModelName)}&advanced=[${
 												typeof title === "string"
 													? `["${table}", "${title}", "equals", "${row[title]}"]`
 													: title.map((t) => `["${table}", "${t}", "equals", "${row[t]}"]`).join(",")
 											}]`}
 										>
 											<LinkIcon /> {row._count[head]}{" "}
-											{row._count[head] === 1 ? capitalizeTable(depluralizeTable(head as Prisma.ModelName)) : head}
+											{row._count[head] === 1 ? capitalizeTable(depluralizeTable(head as ModelName)) : head}
 										</Link>
 									</div>
 								</td>
@@ -196,11 +196,11 @@ export default function TableRow({
 						}
 					} else {
 						let element;
-						if (oneRelations.includes(head as Prisma.ModelName)) {
+						if (oneRelations.includes(head as ModelName)) {
 							element = (
 								<Link
 									href={`/explore/${Object.keys(TableMetadata).find(
-										(table) => TableMetadata[table as Prisma.ModelName].titleField === head
+										(table) => TableMetadata[table as ModelName].titleField === head
 									)}/${encodeURIComponent(row[head])}`}
 									className="link link-primary link-hover font-bold"
 								>
@@ -208,7 +208,7 @@ export default function TableRow({
 								</Link>
 							);
 						} else if (head in oneRelationsWithArrayTitle) {
-							const typedHead = head as Prisma.ModelName;
+							const typedHead = head as ModelName;
 							element = (
 								<Link
 									href={`/explore/${uncapitalizeTable(typedHead)}/${oneRelationsWithArrayTitle[typedHead]

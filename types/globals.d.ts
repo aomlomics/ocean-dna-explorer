@@ -1,6 +1,6 @@
-import { Assay } from "@/app/generated/prisma/client";
-import { BlastQueryPartial } from "@/prisma/generated/zod";
-import { User } from "@clerk/nextjs/server";
+import type { AssayModel } from "@/app/generated/prisma/models/Assay";
+import type { BlastQueryPartial } from "@/prisma/generated/zod";
+import type { User } from "@clerk/nextjs/server";
 
 export type Role = "admin" | "moderator" | "contributor";
 export type Permission = "contribute" | "manageUsers" | "manageDatabase";
@@ -125,7 +125,7 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 
 export type BlastRequest = {
 	queries: (string | [string, string])[];
-	assay_name?: Assay["assay_name"];
+	assay_name?: AssayModel["assay_name"];
 	save?: boolean;
 	options?: Omit<BlastQueryPartial, "id" | "userId" | "dateCalculated" | "sequences" | "database" | "databaseVersion">;
 };

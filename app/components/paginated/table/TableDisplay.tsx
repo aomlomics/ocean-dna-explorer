@@ -1,6 +1,6 @@
 "use client";
 
-import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
+import type { BlastQueryModel, BlastQueryResultModel, SampleModel } from "@/app/generated/prisma/models";
 import Table from "./Table";
 import Pagination from "../pagination/Pagination";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import ProjectGridItem from "../grid/ProjectGridItem";
 import { useViewMode } from "../../explore/ViewModeContext";
 import InfoButton from "../../InfoButton";
 import { useSearchParams } from "next/navigation";
+import type { ModelName } from "@/types/tableMetadata";
 
 const sw = 1.75;
 const stroke = "currentColor";
@@ -23,16 +24,16 @@ export default function TableDisplay({
 	extraParams,
 	setExtraResults
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	tableWhere?: Record<string, any> | undefined;
 	displayMode?: "table" | "grid";
 	toggle?: true;
 	ignoreParams?: string[];
 	extraParams?: Record<string, string>;
 	setExtraResults?: (args: {
-		blastResult: BlastQueryResult[] | undefined;
-		existingBlastDate: BlastQuery["dateCalculated"] | undefined;
-		samples: Sample[] | undefined;
+		blastResult: BlastQueryResultModel[] | undefined;
+		existingBlastDate: BlastQueryModel["dateCalculated"] | undefined;
+		samples: SampleModel[] | undefined;
 	}) => void;
 }) {
 	const searchParams = useSearchParams();

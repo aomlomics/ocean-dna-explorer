@@ -1,6 +1,6 @@
 "use client";
 
-import { SelectGroupFilterConfig } from "../filterHelpers";
+import type { SelectGroupFilterConfig } from "../filterHelpers";
 import SelectGroupFilter from "./SelectGroupFilter";
 
 export default function SelectGroup({

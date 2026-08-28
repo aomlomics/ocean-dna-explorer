@@ -1,18 +1,17 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export default function ExploreSearch({
 	table,
 	defaultField,
 	omit = []
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	defaultField: string;
 	omit?: string[];
 }) {

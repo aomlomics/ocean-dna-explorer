@@ -1,8 +1,9 @@
 "use client";
 
 import { GlobalOmit } from "@/types/objects";
-import TableMetadata from "@/types/tableMetadata";
-import { BlastQuery, BlastQueryResult, Prisma, Sample } from "@/app/generated/prisma/client";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
+import type { BlastQueryModel, BlastQueryResultModel, SampleModel } from "@/app/generated/prisma/models";
+import type { Prisma } from "@/app/generated/prisma/browser";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { preload } from "swr";
 import LoadingTable from "./LoadingTable";
@@ -14,12 +15,11 @@ import useTableQuery from "./hooks/useTableQuery";
 import TableHeader from "./parts/TableHeader";
 import TableRow from "./parts/TableRow";
 import Checklist from "../../Checklist";
-import InfoButton from "../../InfoButton";
 
 export type ExtraResults = {
-	blastResult: BlastQueryResult[] | undefined;
-	existingBlastDate: BlastQuery["dateCalculated"] | undefined;
-	samples: Sample[] | undefined;
+	blastResult: BlastQueryResultModel[] | undefined;
+	existingBlastDate: BlastQueryModel["dateCalculated"] | undefined;
+	samples: SampleModel[] | undefined;
 };
 
 export const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
@@ -39,7 +39,7 @@ export default function Table({
 	setExtraResults,
 	className
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
 	omit?: string[];
 	hideFilters?: boolean;

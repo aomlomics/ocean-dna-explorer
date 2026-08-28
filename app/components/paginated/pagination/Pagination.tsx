@@ -1,6 +1,5 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
 import useSWR, { preload } from "swr";
 import Link from "next/link";
 import { fetcher } from "@/app/helpers/utils";
@@ -8,7 +7,7 @@ import PaginationControls from "../PaginationControls";
 import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { buildWhereParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
@@ -20,7 +19,7 @@ export default function Pagination({
 	take = 25,
 	ignoreParams
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	relCounts?: string[];
 	take?: number;

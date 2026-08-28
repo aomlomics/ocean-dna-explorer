@@ -1,5 +1,11 @@
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Explore | Help",
+	description: "Learn how to browse and filter tables with searches, views, and visualizations."
+};
 
 export default function HelpExplorePage() {
 	return (

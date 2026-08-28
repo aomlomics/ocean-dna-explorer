@@ -1,11 +1,11 @@
 "use client";
 
-import { SubmitEvent, useRef, useState } from "react";
-import { Attribution } from "../generated/prismaImages/client";
+import { type SubmitEvent, useRef, useState } from "react";
+import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
 import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
-import { Project, Taxonomy } from "../generated/prisma/client";
+import type { ProjectModel, TaxonomyModel } from "@/app/generated/prisma/models";
 
 export default function AddImageButton({
 	attributions,
@@ -13,10 +13,11 @@ export default function AddImageButton({
 	homePage,
 	target
 }: {
-	attributions: Attribution[];
+	attributions: AttributionModel[];
 	title: string;
 	homePage?: true;
-	target?: { table: "project"; value: Project["project_id"] } | { table: "taxonomy"; value: Taxonomy["taxonomy"] };
+	target?:
+		{ table: "project"; value: ProjectModel["project_id"] } | { table: "taxonomy"; value: TaxonomyModel["taxonomy"] };
 }) {
 	const modalRef = useRef<HTMLDialogElement>(null);
 	const modalXRef = useRef<HTMLButtonElement>(null);
@@ -24,7 +25,7 @@ export default function AddImageButton({
 	const formRef = useRef<HTMLFormElement>(null);
 
 	const [newAttribution, setNewAttribution] = useState(false);
-	const [currAttribution, setCurrAttribution] = useState(undefined as Attribution | undefined);
+	const [currAttribution, setCurrAttribution] = useState(undefined as AttributionModel | undefined);
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");

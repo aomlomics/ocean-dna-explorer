@@ -1,5 +1,5 @@
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -13,6 +13,30 @@ import Map from "@/app/components/map/Map";
 import CopyButton from "@/app/components/CopyButton";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ featureid: string }> }): Promise<Metadata> {
+	const { featureid } = await decodeRouteParams(params);
+
+	const feature = await trustedPrisma.feature.findUnique({
+		where: {
+			featureid
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (feature) {
+		return {
+			title: `${featureid} | ${TableMetadata.feature.plural}`
+		};
+	} else {
+		return {
+			title: "Feature not found"
+		};
+	}
+}
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
@@ -153,7 +177,7 @@ export default async function Featureid({
 
 	taxaCounts.sort((a, b) => b.count - a.count);
 	const taxonomyById = new globalThis.Map(
-		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as Taxonomy | null])
+		feature.Assignments.map((assignment) => [assignment.taxonomy, assignment.Taxonomy as TaxonomyModel | null])
 	);
 	const topTaxonomies = taxaCounts.slice(0, 5).map(({ taxonomy, count }) => {
 		const details = taxonomyById.get(taxonomy) ?? null;

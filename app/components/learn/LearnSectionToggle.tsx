@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
 	{ id: "edna101", label: "eDNA 101", href: "/learn/edna101" },
 	{ id: "impact", label: "Impact", href: "/learn/impact" },
-	{ id: "discoveries", label: "Make your own Discoveries", href: "/learn/discoveries" }
+	{ id: "discoveries", label: "Discover Anything", href: "/learn/discoveries" }
 ] as const;
 
 export default function LearnSectionToggle() {

@@ -5,13 +5,13 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 
 // Dynamic imports to avoid SSR issues
-const OceanGlobe = dynamic(() => import("@/app/components/OceanGlobe"), {
+const OceanGlobe = dynamic(() => import("@/app/components/learn/OceanGlobe"), {
 	ssr: false,
 	loading: () => <div className="aspect-square w-full max-w-xs mx-auto bg-base-200/50 rounded-full animate-pulse" />
 });
 
-import TaxonomyLaptop from "@/app/components/TaxonomyLaptop";
-import AnalysisLaptop from "@/app/components/AnalysisLaptop";
+import TaxonomyLaptop from "@/app/components/learn/TaxonomyLaptop";
+import AnalysisLaptop from "@/app/components/learn/AnalysisLaptop";
 import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
 
 // Tables that appear in the data journey (have descriptions in TableMetadata)

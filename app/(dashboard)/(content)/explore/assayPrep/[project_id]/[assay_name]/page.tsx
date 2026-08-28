@@ -1,12 +1,43 @@
 import Link from "next/link";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { ProjectIcon } from "@/app/components/icons";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; assay_name: string }>;
+}): Promise<Metadata> {
+	const { project_id, assay_name } = await decodeRouteParams(params);
+
+	const assayPrep = await trustedPrisma.assayPrep.findUnique({
+		where: {
+			project_id_assay_name: {
+				project_id,
+				assay_name
+			}
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (assayPrep) {
+		return {
+			title: `${assay_name} | ${TableMetadata.assayPrep.plural}`
+		};
+	} else {
+		return {
+			title: "AssayPrep not found"
+		};
+	}
+}
 
 export default async function Project_id_Assay_name({
 	params

@@ -13,6 +13,11 @@ import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSa
 import { ProjectIcon } from "@/app/components/icons";
 import { prismaImages } from "@/app/helpers/prismaImages";
 import { exploreUrl } from "@/types/tableMetadata";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "My Submissions"
+};
 
 export default async function MySubmissions() {
 	const { userId } = await auth.protect();

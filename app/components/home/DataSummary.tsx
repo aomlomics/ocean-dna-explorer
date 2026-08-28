@@ -1,8 +1,8 @@
-import { trustedPrisma } from "../helpers/prisma";
+import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import DoughnutChart from "./charts/DoughnutChart";
+import DoughnutChart from "../charts/DoughnutChart";
 import { StatCountUp } from "./StatCountUp";
-import { Assay } from "../generated/prisma/client";
+import type { AssayModel } from "@/app/generated/prisma/models/Assay";
 
 export type SummaryItemData = {
 	title: string;
@@ -27,7 +27,7 @@ export async function AssayStats({ compact = false }: { compact?: boolean } = {}
 		}
 	});
 
-	const countsByGene = {} as Record<Assay["target_gene"], number>;
+	const countsByGene = {} as Record<AssayModel["target_gene"], number>;
 	for (const a of analyses) {
 		const count = (countsByGene[a.Assay.target_gene] ??= 0);
 		countsByGene[a.Assay.target_gene] = count + a._count.Assignments;

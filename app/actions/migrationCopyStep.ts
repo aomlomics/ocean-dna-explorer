@@ -1,7 +1,6 @@
 "use server";
 
-import TableMetadata, { TableNames } from "@/types/tableMetadata";
-import { Prisma } from "../generated/prisma/client";
+import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata";
 import { prisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
@@ -35,12 +34,12 @@ export default async function migrationCopyStepAction() {
 
 				return acc;
 			},
-			{} as Record<Uncapitalize<Prisma.ModelName>, string[]>
+			{} as Record<Uncapitalize<ModelName>, string[]>
 		);
 
 		await prisma.$transaction(async (tx) => {
 			for (const t in oldFieldsByTable) {
-				const table = t as Uncapitalize<Prisma.ModelName>;
+				const table = t as Uncapitalize<ModelName>;
 
 				// @ts-expect-error dynamically accessing prisma client
 				const result = (await tx[table].findMany({

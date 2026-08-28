@@ -1,7 +1,7 @@
-import { BlastRequest, NetworkPacket, Role } from "@/types/globals";
+import type { BlastRequest, NetworkPacket, Role } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
-import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { BlastQuery, BlastQueryResult } from "../generated/prisma/client";
+import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
 import { COMPRESSION_FORMAT, decompressURIComponent } from "./utils";
 
 export function parseBlastRequest(searchParams: URLSearchParams, options?: { safe?: true; noPrefix?: true }) {
@@ -254,8 +254,8 @@ export async function fetchBlast(
 			}
 
 			return {
-				BlastQueryResults: response.result as BlastQueryResult[],
-				existingBlastDate: response.dateCalculated as BlastQuery["dateCalculated"]
+				BlastQueryResults: response.result as BlastQueryResultModel[],
+				existingBlastDate: response.dateCalculated as BlastQueryModel["dateCalculated"]
 			};
 		} else if (response.statusMessage === "error") {
 			throw new Error("Response from BLAST server: " + response.error);

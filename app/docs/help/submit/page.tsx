@@ -2,6 +2,13 @@ import { AnalysisAsvTablePreview, AnalysisOccurrenceTablePreview } from "@/app/c
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import WorkshopVideoCallout from "@/app/components/WorkshopVideoCallout";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Submit | Help",
+	description:
+		"Learn how to submit projects and analyses using FAIRe metadata templates, example datasets, and supported data formats, including Tourmaline processing and OBIS/GBIF submission."
+};
 
 /** File icon for example TSV filenames. Pass className for size (e.g. size-14) and text-primary. */
 function ExampleFileGlyph({ className }: { className?: string }) {

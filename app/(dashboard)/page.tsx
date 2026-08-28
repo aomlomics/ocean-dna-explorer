@@ -1,4 +1,4 @@
-import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/DataSummary";
+import { MainStats, MainStatsSkeleton, AssayStats } from "@/app/components/home/DataSummary";
 import Link from "next/link";
 import Image from "next/image";
 import ThemeAwareLogo from "../components/images/ThemeAwareLogo";
@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import ClientMap from "../components/map/ClientMap";
 // Temporarily disabled for merge to main until Featured Organisms is ready.
 // import DataSummaryHighlights, { FeaturedOrganismsSection } from "../components/DataSummaryHighlights";
-import DataSummaryHighlights from "../components/DataSummaryHighlights";
+import DataSummaryHighlights from "../components/home/DataSummaryHighlights";
 import DashCard from "../components/dataSummary/DashCard";
 import { DepthCoverageCard } from "../components/dataSummary/DepthCoverageCard";
 import {
@@ -17,7 +17,7 @@ import {
 	SamplesOverTimeCard,
 	TemporalCoverageCard,
 	WidgetCardSkeleton
-} from "../components/DashboardExtras";
+} from "../components/home/DashboardExtras";
 import { cookies } from "next/headers";
 
 const heroPrimaryBtnClass =

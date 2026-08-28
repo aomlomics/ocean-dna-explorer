@@ -1,7 +1,7 @@
 "use client";
 
 import { DomEvent } from "leaflet";
-import { ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 export default function LeafletControl({
 	click,

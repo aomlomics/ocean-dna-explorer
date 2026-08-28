@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getSubmissionFileName } from "../helpers/utils";
+import { getSubmissionFileName } from "@/app/helpers/utils";
 
 export default async function EditHistory({ editHistory }: { editHistory: PrismaJson.EditHistoryType | null }) {
 	return (

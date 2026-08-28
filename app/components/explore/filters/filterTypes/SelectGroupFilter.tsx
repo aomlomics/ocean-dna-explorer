@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ConfigField, handleFilterChange } from "../filterHelpers";
-import { NetworkPacket } from "@/types/globals";
-import { Prisma } from "@/app/generated/prisma/client";
+import { type ConfigField, handleFilterChange } from "../filterHelpers";
+import type { NetworkPacket } from "@/types/globals";
 import { useState } from "react";
+import type { ModelName } from "@/types/tableMetadata";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function SelectGroupFilter({
@@ -19,7 +19,7 @@ export default function SelectGroupFilter({
 		[k: string]: string;
 	};
 	value: string;
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	group: ConfigField[];
 }) {
 	const searchParams = useSearchParams();
@@ -46,7 +46,7 @@ export default function SelectGroupFilter({
 			.join("&");
 
 		const response = await fetch(
-			`/api/internal/${table}/fields/distinct?${trusted ? "trusted=true&" : ""}${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
+			`/api/internal/${table}/fields/distinct?trusted=${trusted}&${where.length ? where + "&" : ""}${extraSelf ? `extraFields=${fieldName}` : ""}`,
 			{ cache: "force-cache" }
 		);
 		const json = (await response.json()) as NetworkPacket;

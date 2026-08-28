@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import { FilterValue, handleFilterChange, RangeFilterConfig } from "../filterHelpers";
+import { type FilterValue, handleFilterChange, type RangeFilterConfig } from "../filterHelpers";
 
 export default function RangeFilter({ config }: { config: RangeFilterConfig }) {
 	const searchParams = useSearchParams();

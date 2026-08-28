@@ -5,6 +5,39 @@ import GcDonut from "@/app/components/charts/GcDonut";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { RanksBySpecificity } from "@/types/objects";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; analysis_run_name: string; featureid: string }>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name, featureid } = await decodeRouteParams(params);
+
+	const assignment = await trustedPrisma.assignment.findUnique({
+		where: {
+			project_id_analysis_run_name_featureid: {
+				project_id,
+				analysis_run_name,
+				featureid
+			}
+		},
+		select: {
+			Taxonomy: true
+		}
+	});
+
+	if (assignment) {
+		return {
+			title: `${featureid} assigned ${assignment.Taxonomy[RanksBySpecificity.find((rank) => assignment.Taxonomy[rank]) || "taxonomy"]} | ${TableMetadata.assignment.plural}`
+		};
+	} else {
+		return {
+			title: "Assignment not found"
+		};
+	}
+}
 
 export default async function AssignmentPage({
 	params

@@ -1,11 +1,11 @@
 "use client";
 
-import { ChangeEvent, SubmitEvent, useRef, useState } from "react";
+import { type ChangeEvent, type SubmitEvent, useRef, useState } from "react";
 import WarningButton from "./WarningButton";
 import { useAuth } from "@clerk/nextjs";
 import { RolePermissions } from "@/types/objects";
 import JSON5 from "json5";
-import unsafeConsoleAction from "../actions/unsafeConsole";
+import unsafeConsoleAction from "../../actions/unsafeConsole";
 import { TableNames } from "@/types/tableMetadata";
 
 export default function PrismaConsole({ modelQueries }: { modelQueries: string[] }) {

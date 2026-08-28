@@ -4,9 +4,10 @@ import ScrollToTop from "@/app/components/ScrollToTop";
 import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import TourProvider from "./hooks/TourProvider";
 import TrustedProvider from "./hooks/TrustedProvider";
+import type { Metadata } from "next";
 
 const sourceSans = Source_Sans_3({
 	weight: ["300", "400", "500", "600", "700", "800"],
@@ -14,8 +15,11 @@ const sourceSans = Source_Sans_3({
 	display: "swap"
 });
 
-export const metadata = {
-	title: "Ocean DNA Explorer",
+export const metadata: Metadata = {
+	title: {
+		default: "Ocean DNA Explorer",
+		template: "%s | ODE"
+	},
 	description:
 		"A data sharing platform, search engine, and visualization and analysis tool for ocean environmental DNA data.",
 	metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://oceandnaexplorer.org")
@@ -24,30 +28,6 @@ export const metadata = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang="en" className="scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
-			<head>
-				<script
-					dangerouslySetInnerHTML={{
-						__html: `
-			(function() {
-				function getInitialTheme() {
-					const storedTheme = localStorage.getItem('theme');
-					if (storedTheme) {
-						return storedTheme;
-					}
-					
-					if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-						return 'dark';
-					}
-					
-					return 'light';
-				}
-
-				document.documentElement.setAttribute('data-theme', getInitialTheme());
-			})();
-						`
-					}}
-				/>
-			</head>
 			<body className={`${sourceSans.className} bg-base-100 text-base-content`}>
 				<a
 					href="#main-content"

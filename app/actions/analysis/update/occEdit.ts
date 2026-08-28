@@ -1,13 +1,13 @@
 "use server";
 
-import { Occurrence } from "@/app/generated/prisma/client";
+import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
-import { ProgressStream } from "@/types/globals";
+import type { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
 import { del } from "@vercel/blob";
@@ -16,8 +16,8 @@ async function doEdit(
 	stream: ProgressStream,
 	url: string,
 	editId: string,
-	project_id: Occurrence["project_id"],
-	analysis_run_name: Occurrence["analysis_run_name"]
+	project_id: OccurrenceModel["project_id"],
+	analysis_run_name: OccurrenceModel["analysis_run_name"]
 ) {
 	const { userId, sessionClaims, getToken } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -63,9 +63,9 @@ async function doEdit(
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
-		const occLibIds = [] as Occurrence["lib_id"][];
-		const occFeatureids = [] as Occurrence["featureid"][];
-		const libIds = new Set() as Set<Occurrence["lib_id"]>;
+		const occLibIds = [] as OccurrenceModel["lib_id"][];
+		const occFeatureids = [] as OccurrenceModel["featureid"][];
+		const libIds = new Set() as Set<OccurrenceModel["lib_id"]>;
 
 		for (const occ of occurrences) {
 			occLibIds.push(occ.lib_id);
@@ -252,8 +252,8 @@ async function doEdit(
 export default async function occEditAction(
 	url: string,
 	editId: string,
-	project_id: Occurrence["project_id"],
-	analysis_run_name: Occurrence["analysis_run_name"]
+	project_id: OccurrenceModel["project_id"],
+	analysis_run_name: OccurrenceModel["analysis_run_name"]
 ) {
 	const stream = createProgressStream();
 

@@ -1,7 +1,7 @@
 import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
@@ -11,8 +11,46 @@ import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
-function formatTaxonomyDisplay(dbTaxonomy: Taxonomy) {
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{
+		project_id: string;
+		analysis_run_name: string;
+		lib_id: string;
+		featureid: string;
+	}>;
+}): Promise<Metadata> {
+	const { project_id, analysis_run_name, lib_id, featureid } = await decodeRouteParams(params);
+
+	const occurrence = await trustedPrisma.occurrence.findUnique({
+		where: {
+			project_id_analysis_run_name_lib_id_featureid: {
+				project_id,
+				analysis_run_name,
+				lib_id,
+				featureid
+			}
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (occurrence) {
+		return {
+			title: `${featureid} in ${lib_id} | ${TableMetadata.occurrence.plural}`
+		};
+	} else {
+		return {
+			title: "Occurrence not found"
+		};
+	}
+}
+
+function formatTaxonomyDisplay(dbTaxonomy: TaxonomyModel) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
 			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;

@@ -1,10 +1,10 @@
 "use client";
 
-import { Project } from "@/app/generated/prisma/client";
-import { SetStateAction, useRef, useState } from "react";
+import type { ProjectModel } from "@/app/generated/prisma/models/Project";
+import { type SetStateAction, useRef, useState } from "react";
 import Modal from "../Modal";
 import ProgressBar from "../ProgressBar";
-import { NetworkProgressPacket } from "@/types/globals";
+import type { NetworkProgressPacket } from "@/types/globals";
 import projectEditAction from "@/app/actions/project/update/projectEdit";
 import { doProgressActionManyGlobal } from "@/app/helpers/progress";
 import { upload } from "@vercel/blob/client";
@@ -13,7 +13,7 @@ import { getSubmissionFileName } from "@/app/helpers/utils";
 import { useRouter } from "next/navigation";
 import projectUpdateImageAction from "@/app/actions/project/update/projectUpdateImage";
 import AddImageButton from "../AddImageButton";
-import { Attribution } from "@/app/generated/prismaImages/client";
+import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
 
 export default function ProjectEditButton({
 	project_id,
@@ -23,12 +23,12 @@ export default function ProjectEditButton({
 	libraryMetadataFileUrl_ODE,
 	attributions
 }: {
-	project_id: Project["project_id"];
-	imageFileUrl_ODE: Project["imageFileUrl_ODE"];
-	projectMetadataFileUrl_ODE: Project["projectMetadataFileUrl_ODE"];
-	sampleMetadataFileUrl_ODE: Project["sampleMetadataFileUrl_ODE"];
-	libraryMetadataFileUrl_ODE: Project["libraryMetadataFileUrl_ODE"];
-	attributions: Attribution[];
+	project_id: ProjectModel["project_id"];
+	imageFileUrl_ODE: ProjectModel["imageFileUrl_ODE"];
+	projectMetadataFileUrl_ODE: ProjectModel["projectMetadataFileUrl_ODE"];
+	sampleMetadataFileUrl_ODE: ProjectModel["sampleMetadataFileUrl_ODE"];
+	libraryMetadataFileUrl_ODE: ProjectModel["libraryMetadataFileUrl_ODE"];
+	attributions: AttributionModel[];
 }) {
 	const router = useRouter();
 
@@ -92,11 +92,11 @@ export default function ProjectEditButton({
 		setLibraryResponse(undefined);
 
 		const args = { project_id } as {
-			project_id: Project["project_id"];
-			projectFileUrl?: Project["projectMetadataFileUrl_ODE"];
-			sampleFileUrl?: Project["sampleMetadataFileUrl_ODE"];
-			libraryFileUrl?: Project["libraryMetadataFileUrl_ODE"];
-			imageFileUrl?: Project["imageFileUrl_ODE"];
+			project_id: ProjectModel["project_id"];
+			projectFileUrl?: ProjectModel["projectMetadataFileUrl_ODE"];
+			sampleFileUrl?: ProjectModel["sampleMetadataFileUrl_ODE"];
+			libraryFileUrl?: ProjectModel["libraryMetadataFileUrl_ODE"];
+			imageFileUrl?: ProjectModel["imageFileUrl_ODE"];
 		};
 
 		if (!projectFile && !sampleFile && !libraryFile) {

@@ -1,7 +1,7 @@
-import { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
-import { Prisma } from "../generated/prisma/client";
+import type { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
+import type { Prisma } from "@/app/generated/prisma/browser";
 import { getTableName, getZodType } from "./schema";
-import TableMetadata, { RelationMetadata } from "@/types/tableMetadata";
+import TableMetadata, { type ModelName, RelationMetadata } from "@/types/tableMetadata";
 import { COMPRESSION_FORMAT, decompressURIComponent, deepMerge, getShapesFromUrl, uncapitalizeTable } from "./utils";
 import { DeadValueEnum, DeadValueNumbers, DeadValues } from "@/types/enums";
 import { insertBlastIntoQuery, parseBlastRequest } from "./blast";
@@ -34,8 +34,8 @@ export function buildWhereParams(
 }
 
 export function deepWhere(
-	start: Uncapitalize<Prisma.ModelName>,
-	target: Uncapitalize<Prisma.ModelName>,
+	start: Uncapitalize<ModelName>,
+	target: Uncapitalize<ModelName>,
 	query: { [k: string]: any }
 ) {
 	if (start === target) {
@@ -85,11 +85,11 @@ const queryModes = [
 	"boolean"
 ];
 export function parseToQuery(
-	table: Uncapitalize<Prisma.ModelName>,
+	table: Uncapitalize<ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation,
-	swapTo?: Uncapitalize<Prisma.ModelName>
+	swapTo?: Uncapitalize<ModelName>
 ) {
-	let relation = undefined as Uncapitalize<Prisma.ModelName> | undefined;
+	let relation = undefined as Uncapitalize<ModelName> | undefined;
 	let field = "";
 	let mode = "" as QueryMode;
 	let value = "" as ParamsArrayValue;
@@ -372,9 +372,9 @@ export function parseToQuery(
 }
 
 function advancedRecurse(
-	table: Uncapitalize<Prisma.ModelName>,
+	table: Uncapitalize<ModelName>,
 	e: ParamsArray[0],
-	swapTo?: Uncapitalize<Prisma.ModelName>
+	swapTo?: Uncapitalize<ModelName>
 ): ReturnType<typeof parseToQuery> | { AND: any[] } | { OR: any[] } {
 	// New logical group support: ["AND", ...children] or ["OR", ...children]
 	if (typeof e[0] === "string") {
@@ -396,14 +396,14 @@ function advancedRecurse(
 }
 
 export function parseAdvancedQuery(
-	table: Uncapitalize<Prisma.ModelName>,
+	table: Uncapitalize<ModelName>,
 	paramsArray: ParamsArray,
-	swapTo?: Uncapitalize<Prisma.ModelName>
+	swapTo?: Uncapitalize<ModelName>
 ) {
 	return { AND: paramsArray.map((e) => advancedRecurse(table, e, swapTo)) };
 }
 
-export function parseSearchQuery(table: Uncapitalize<Prisma.ModelName>, search: string) {
+export function parseSearchQuery(table: Uncapitalize<ModelName>, search: string) {
 	//search entire table for value
 	const ors = [] as { [field: string]: { contains: string; mode: "insensitive" } }[];
 	for (const field of TableMetadata[table].enumSchema.options) {
@@ -424,7 +424,7 @@ export function parseSearchQuery(table: Uncapitalize<Prisma.ModelName>, search: 
 }
 
 export function parseApiQuery(
-	table: Uncapitalize<Prisma.ModelName>,
+	table: Uncapitalize<ModelName>,
 	searchParams: URLSearchParams,
 	options?: {
 		features?: {
@@ -563,7 +563,7 @@ export function parseApiQuery(
 		if (relations != null) {
 			newParams.delete("relations");
 
-			const relTables = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
+			const relTables = new Set() as Set<Uncapitalize<ModelName>>;
 			for (const r of relations.split(",")) {
 				const relTableArr = getTableName(r.trim().toLowerCase());
 				if (!relTableArr) {
@@ -586,7 +586,7 @@ export function parseApiQuery(
 			}
 
 			//include all fields in relations
-			let allFields = undefined as undefined | boolean | Set<Uncapitalize<Prisma.ModelName>>;
+			let allFields = undefined as undefined | boolean | Set<Uncapitalize<ModelName>>;
 			const relationsAllFields = newParams.get("relationsAllFields");
 			if (relationsAllFields != null) {
 				newParams.delete("relationsAllFields");
@@ -595,7 +595,7 @@ export function parseApiQuery(
 				} else if (relationsAllFields.toLowerCase() === "true") {
 					allFields = true;
 				} else {
-					allFields = new Set() as Set<Uncapitalize<Prisma.ModelName>>;
+					allFields = new Set() as Set<Uncapitalize<ModelName>>;
 					for (const r of relationsAllFields.split(",")) {
 						const trimmed = r.trim().toLowerCase();
 						const allFieldsArr = Object.entries(TableMetadata).find(
@@ -606,7 +606,7 @@ export function parseApiQuery(
 								`Invalid value for relationsAllFields: "${relationsAllFields}". Value must be "true", "false", or a relation provided in the "relations" field. Value was "${r}".`
 							);
 						}
-						allFields.add(allFieldsArr[0] as Uncapitalize<Prisma.ModelName>);
+						allFields.add(allFieldsArr[0] as Uncapitalize<ModelName>);
 					}
 				}
 			}

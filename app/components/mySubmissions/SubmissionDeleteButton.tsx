@@ -1,6 +1,6 @@
 "use client";
 
-import { TargetAction, Writeable } from "@/types/globals";
+import type { TargetAction, Writeable } from "@/types/globals";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";

@@ -1,14 +1,14 @@
 "use client";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { SubmitEvent, RefObject, useEffect, useState } from "react";
-import { TableColumns } from "./useTableColumns";
-import { DEFAULT_ORDER_BY, ExtraResults } from "../Table";
+import { type SubmitEvent, type RefObject, useEffect, useState } from "react";
+import type { TableColumns } from "./useTableColumns";
+import { DEFAULT_ORDER_BY, type ExtraResults } from "../Table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { buildWhereParams } from "@/app/helpers/api";
 import useSWR from "swr";
 import { fetcher } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
+import type { ModelName } from "@/types/tableMetadata";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export type TableQuery = ReturnType<typeof useTableQuery>;
@@ -24,7 +24,7 @@ export default function useTableQuery({
 	manyRelations,
 	deepRelations
 }: {
-	table: Uncapitalize<Prisma.ModelName>;
+	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
 	defaultTake: number;
 	ignoreParams?: string[];

@@ -1,8 +1,9 @@
-import TableMetadata from "@/types/tableMetadata";
+import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import InfoButton from "./InfoButton";
-import { Prisma } from "../generated/prisma/client";
 
-export default function TableInfo({ table }: { table: Uncapitalize<Prisma.ModelName> }) {
+export default function TableInfo({ table }: { table: Uncapitalize<ModelName> }) {
+	const titleField = TableMetadata[table].titleField;
+
 	return (
 		<InfoButton dir="tooltip-right">
 			<div className="space-y-2">
@@ -17,7 +18,9 @@ export default function TableInfo({ table }: { table: Uncapitalize<Prisma.ModelN
 					</svg>
 					<p>
 						<span className="font-semibold text-primary">Unique Key:</span>{" "}
-						<span className="font-medium text-base-content">{TableMetadata[table].titleField}</span>
+						<span className="font-medium text-base-content">
+							{typeof titleField === "string" ? titleField : titleField.join(" / ")}
+						</span>
 					</p>
 				</div>
 				<p>{TableMetadata[table].description}</p>

@@ -1,5 +1,6 @@
 node_modules
 .next
+*.md
 
 # Prisma
 app/generated

@@ -5,6 +5,13 @@ import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Searching and Filtering | API",
+	description:
+		"Learn how to search and filter Ocean DNA Explorer data using standard searches, advanced queries, ID filtering, and direct field filters."
+};
 
 export default async function ApiSearchPage() {
 	const project = await prisma.project.findFirst({

@@ -1,6 +1,6 @@
 "use client";
 
-import { Writeable } from "@/types/globals";
+import type { Writeable } from "@/types/globals";
 import TableMetadata from "@/types/tableMetadata";
 
 export default function DeleteConfirmModal({

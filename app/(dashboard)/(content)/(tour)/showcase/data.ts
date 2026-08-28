@@ -1,5 +1,5 @@
 import { prisma } from "@/app/helpers/prisma";
-import type { Taxonomy } from "@/app/generated/prisma/client";
+import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 
 // How many projects to cycle through, and how many taxa to pull per project.
 // Keeping these modest so the query stays cheap and the tour feels varied.
@@ -20,7 +20,7 @@ export type ProjectBundle = {
 	assay_type: string;
 	projectDescription: string | null;
 	imageFileUrl_ODE: string | null;
-	taxonomies: Taxonomy[];
+	taxonomies: TaxonomyModel[];
 	samples: {
 		samp_name: string;
 		decimalLatitude: number | null;
@@ -145,7 +145,7 @@ export async function getTourShowcaseProjects(options?: {
 	});
 
 	const bundles: ProjectBundle[] = projects.map((p) => {
-		const uniqueTaxa = new Map<string, Taxonomy>();
+		const uniqueTaxa = new Map<string, TaxonomyModel>();
 		for (const analysis of p.Analyses) {
 			for (const assignment of analysis.Assignments) {
 				if (!uniqueTaxa.has(assignment.Taxonomy.taxonomy)) {

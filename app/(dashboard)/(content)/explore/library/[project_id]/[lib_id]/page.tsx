@@ -1,12 +1,43 @@
 import Link from "next/link";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import DataDisplay from "@/app/components/DataDisplay";
+import DataDisplay from "@/app/components/explore/DataDisplay";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { AssayIcon, LocationIcon } from "@/app/components/icons";
 import StatCard from "@/app/components/explore/StatCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ project_id: string; lib_id: string }>;
+}): Promise<Metadata> {
+	const { project_id, lib_id } = await decodeRouteParams(params);
+
+	const library = await trustedPrisma.library.findUnique({
+		where: {
+			project_id_lib_id: {
+				project_id,
+				lib_id
+			}
+		},
+		select: {
+			id: true
+		}
+	});
+
+	if (library) {
+		return {
+			title: `${lib_id} | ${TableMetadata.library.plural}`
+		};
+	} else {
+		return {
+			title: "Library not found"
+		};
+	}
+}
 
 export default async function Lib_id({ params }: { params: Promise<{ project_id: string; lib_id: string }> }) {
 	const { project_id, lib_id } = await decodeRouteParams(params);

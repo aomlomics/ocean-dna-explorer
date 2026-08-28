@@ -1,13 +1,13 @@
 "use client";
 
-import { Image as DbImage } from "@/app/generated/prismaImages/client";
+import { ImageModel } from "@/app/generated/prismaImages/models/Image";
 import { useState } from "react";
 
 export default function AttributionBadge({
 	image
 }: {
 	image:
-		| (DbImage & {
+		| (ImageModel & {
 				Attribution?: {
 					attributionTitle: string;
 					attributionUrl?: string | null;

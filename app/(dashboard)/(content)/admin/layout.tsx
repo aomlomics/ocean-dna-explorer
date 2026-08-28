@@ -1,8 +1,16 @@
-import { ReactNode } from "react";
-import AdminTabs from "@/app/components/AdminTabs";
+import type { ReactNode } from "react";
+import AdminTabs from "@/app/components/admin/AdminTabs";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: {
+		default: "Admin Dashboard",
+		template: "%s | ODE Admin"
+	}
+};
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
 	const { sessionClaims } = await auth();
