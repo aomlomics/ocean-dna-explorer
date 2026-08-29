@@ -62,7 +62,7 @@ export default function TableHeader({
 					</button>
 
 					<div className="form-control w-full max-w-xs text-lg">
-						{!hideFilters && (
+						{!hideFilters ? (
 							<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 								<SearchIcon />
 								<input
@@ -74,6 +74,8 @@ export default function TableHeader({
 									placeholder="Press Enter to search"
 								/>
 							</label>
+						) : (
+							<></>
 						)}
 					</div>
 				</th>
@@ -86,11 +88,13 @@ export default function TableHeader({
 						</div>
 					</div>
 					<div className="form-control w-full max-w-xs text-lg">
-						{!hideFilters && (
+						{!hideFilters ? (
 							<label className="input input-bordered input-sm flex items-center gap-2 w-full">
 								<SearchIcon />
 								<input disabled type="text" className="grow" />
 							</label>
+						) : (
+							<></>
 						)}
 					</div>
 				</th>
@@ -110,11 +114,13 @@ export default function TableHeader({
 								</div>
 								<div className="form-control w-full max-w-xs text-lg">
 									{/* Value Filter */}
-									{!hideFilters && (
+									{!hideFilters ? (
 										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<SearchIcon />
 											<input type="text" className="grow" disabled />
 										</label>
+									) : (
+										<></>
 									)}
 								</div>
 							</th>
@@ -142,11 +148,13 @@ export default function TableHeader({
 								</button>
 								<div className="form-control w-full max-w-xs text-lg">
 									{/* Value Filter */}
-									{!hideFilters && (
+									{!hideFilters ? (
 										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<SearchIcon />
 											<input type="text" className="grow" disabled />
 										</label>
+									) : (
+										<></>
 									)}
 								</div>
 							</th>
@@ -163,11 +171,13 @@ export default function TableHeader({
 									</div>
 									<div className="form-control w-full max-w-xs text-lg">
 										{/* Value Filter */}
-										{!hideFilters && (
+										{!hideFilters ? (
 											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 												<SearchIcon />
 												<input type="text" className="grow" disabled />
 											</label>
+										) : (
+											<></>
 										)}
 									</div>
 								</th>
@@ -182,7 +192,7 @@ export default function TableHeader({
 								</div>
 								<div className="form-control w-full max-w-xs text-lg">
 									{/* Value Filter */}
-									{!hideFilters && (
+									{!hideFilters ? (
 										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<SearchIcon />
 											<input
@@ -194,6 +204,8 @@ export default function TableHeader({
 												disabled
 											/>
 										</label>
+									) : (
+										<></>
 									)}
 								</div>
 							</th>
@@ -221,7 +233,7 @@ export default function TableHeader({
 								</button>
 								<div className="form-control w-full max-w-xs text-lg">
 									{/* Value Filter */}
-									{!hideFilters && (
+									{!hideFilters ? (
 										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
 											<SearchIcon />
 											<input
@@ -233,6 +245,8 @@ export default function TableHeader({
 												placeholder="Press Enter to search"
 											/>
 										</label>
+									) : (
+										<></>
 									)}
 								</div>
 							</th>
@@ -243,7 +257,7 @@ export default function TableHeader({
 				return acc;
 			}, [])}
 
-			<th></th>
+			<th className="w-px"></th>
 		</tr>
 	);
 }

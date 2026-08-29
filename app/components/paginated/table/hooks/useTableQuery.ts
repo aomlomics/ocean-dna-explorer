@@ -16,6 +16,7 @@ export type TableQuery = ReturnType<typeof useTableQuery>;
 export default function useTableQuery({
 	table,
 	where,
+	hideFilters,
 	defaultTake,
 	ignoreParams,
 	extraParams,
@@ -26,6 +27,7 @@ export default function useTableQuery({
 }: {
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
+	hideFilters?: boolean;
 	defaultTake: number;
 	ignoreParams?: string[];
 	extraParams?: Record<string, string>;
@@ -194,7 +196,10 @@ export default function useTableQuery({
 		} else {
 			setTake(formTake);
 		}
-		setWhereFilter(temp);
+
+		if (!hideFilters) {
+			setWhereFilter(temp);
+		}
 	}
 
 	return {

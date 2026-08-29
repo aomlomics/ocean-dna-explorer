@@ -21,7 +21,8 @@ export default function TableDisplay({
 	toggle,
 	ignoreParams,
 	extraParams,
-	setExtraResults
+	setExtraResults,
+	hideFilters
 }: {
 	table: Uncapitalize<ModelName>;
 	tableWhere?: Record<string, any> | undefined;
@@ -34,6 +35,7 @@ export default function TableDisplay({
 		existingBlastDate: BlastQueryModel["dateCalculated"] | undefined;
 		samples: SampleModel[] | undefined;
 	}) => void;
+	hideFilters?: boolean;
 }) {
 	const [size, setSize] = useState<"lg" | "sm">("lg");
 	const [showCommonNames, setShowCommonNames] = useState(true);
@@ -86,6 +88,7 @@ export default function TableDisplay({
 					extraParams={extraParams}
 					setExtraResults={setExtraResults}
 					hideEmptyAtStart={table === "taxonomy"}
+					hideFilters={hideFilters}
 				/>
 			) : (
 				<Pagination key={table} table={table} ignoreParams={effectiveIgnoreParams} />

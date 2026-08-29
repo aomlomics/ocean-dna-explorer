@@ -106,6 +106,7 @@ export default function SearchContent({
 							setMapKey((curr) => curr + 1);
 						}}
 						toggle={table === "taxonomy" || table === "project" || undefined}
+						hideFilters
 					/>
 				</div>
 			</div>

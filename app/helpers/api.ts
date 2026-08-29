@@ -852,7 +852,6 @@ export function parseApiQuery(
 				throw new Error("The advanced option is not allowed on this route.");
 			}
 		} else {
-			//TODO: allow table header filtering with advanced search
 			if (Array.from(newParams).length) {
 				throw new Error("Advanced search may not include other filter parameters.");
 			}

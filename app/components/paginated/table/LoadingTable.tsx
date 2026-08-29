@@ -1,13 +1,16 @@
+import { SearchIcon } from "../../icons";
 import LoadingPaginationControls from "../LoadingPaginationControls";
 
 export default function LoadingTable({
 	take = 50,
 	page = 1,
-	columns = 10
+	columns = 10,
+	hideFilters
 }: {
 	take?: number;
 	page?: number;
 	columns?: number;
+	hideFilters?: boolean;
 }) {
 	return (
 		<div className="bg-base-100 border-base-300 rounded-box h-full w-full p-6">
@@ -67,50 +70,36 @@ export default function LoadingTable({
 
 									<label className="form-control w-full max-w-xs text-lg">
 										{/* Value Filter */}
-										<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												viewBox="0 0 16 16"
-												fill="currentColor"
-												className="h-4 w-4 opacity-70"
-											>
-												<path
-													fillRule="evenodd"
-													d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-													clipRule="evenodd"
-												/>
-											</svg>
-											<input type="text" className="grow" disabled />
-										</label>
+										{!hideFilters ? (
+											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+												<SearchIcon />
+												<input type="text" className="grow" disabled />
+											</label>
+										) : (
+											<></>
+										)}
 									</label>
 								</th>
 
 								{new Array(columns - 1).fill(null).map((_, i) => (
-									<td key={"head" + i} className="bg-base-100">
+									<th key={"head" + i} className="bg-base-100">
 										<div className="flex justify-between select-none mb-1">
 											<LoadingText />
 										</div>
 										<label className="form-control w-full max-w-xs text-lg">
 											{/* Value Filter */}
-											<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													viewBox="0 0 16 16"
-													fill="currentColor"
-													className="h-4 w-4 opacity-70"
-												>
-													<path
-														fillRule="evenodd"
-														d="M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
-														clipRule="evenodd"
-													/>
-												</svg>
-												<input type="text" className="grow" disabled />
-											</label>
+											{!hideFilters ? (
+												<label className="input input-bordered input-sm flex items-center gap-2 w-full focus-within:border-primary focus-within:ring-1 focus-within:ring-primary focus-within:outline-none">
+													<SearchIcon />
+													<input type="text" className="grow" disabled />
+												</label>
+											) : (
+												<></>
+											)}
 										</label>
-									</td>
+									</th>
 								))}
-								<th></th>
+								<th className="w-px"></th>
 							</tr>
 						</thead>
 						<tbody>

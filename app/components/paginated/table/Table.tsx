@@ -95,6 +95,7 @@ function ActualTable({
 	} = useTableQuery({
 		table,
 		where,
+		hideFilters,
 		defaultTake,
 		ignoreParams,
 		extraParams,
@@ -202,7 +203,8 @@ function ActualTable({
 		);
 	}
 
-	if (isLoading || !data || countIsLoading || !countData) return <LoadingTable take={take} page={page} />;
+	if (isLoading || !data || countIsLoading || !countData)
+		return <LoadingTable take={take} page={page} hideFilters={hideFilters} />;
 
 	if (data.statusMessage === "error") {
 		return (
