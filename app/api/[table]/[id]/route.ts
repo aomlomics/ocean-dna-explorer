@@ -1,4 +1,4 @@
-import { parseApiQuery } from "@/app/helpers/api/parse";
+import { parseApiQuery } from "@/app/helpers/api";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
@@ -24,10 +24,11 @@ export async function GET(
 			features: {
 				fields: true,
 				relations: true,
+				relCounts: true,
 				relationsLimit: true
 			},
 			defaults: {
-				filters: { id: parseInt(id) }
+				filters: { id: Number(id) }
 			}
 		});
 		const client = trusted ? trustedPrisma : prisma;

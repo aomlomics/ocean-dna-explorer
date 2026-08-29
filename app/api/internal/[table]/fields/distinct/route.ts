@@ -15,17 +15,18 @@ export async function GET(
 		const model = getTableName(table);
 
 		const { searchParams } = new URL(request.url);
-
-		const client = searchParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
+		const newParams = new URLSearchParams(searchParams);
+		const client = newParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
+		newParams.delete("trusted");
 
 		const extraFieldsParams = searchParams.get("extraFields");
 		let extraFields = [] as string[];
 		if (extraFieldsParams) {
-			searchParams.delete("extraFields");
+			newParams.delete("extraFields");
 			extraFields = extraFieldsParams.split(",");
 		}
 
-		const params = Array.from(searchParams.entries()) as Array<[string, string]>; //Array<field, value>
+		const params = Array.from(newParams.entries()) as Array<[string, string]>; //Array<field, value>
 		const where = {} as Record<string, string>; //Record<field, value>
 
 		//validate input
@@ -85,6 +86,8 @@ export async function GET(
 				})
 			);
 		}
+
+		console.log(JSON.stringify(queries, undefined, 2));
 
 		const dbResult = (await client.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
 

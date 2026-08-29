@@ -8,7 +8,7 @@ import { useState } from "react";
 import LoadingPagination from "./LoadingPagination";
 import { useSearchParams } from "next/navigation";
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
-import { buildWhereParams } from "@/app/helpers/api/api";
+import { buildParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
@@ -27,7 +27,8 @@ function ActualPagination({ table, where, relCounts, take = 25, ignoreParams }: 
 
 	function getQuery(dir?: 1 | -1) {
 		const query = new URLSearchParams({
-			take: take.toString(),
+			ignoreExtraOptions: "true",
+			limit: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});
 
@@ -37,11 +38,17 @@ function ActualPagination({ table, where, relCounts, take = 25, ignoreParams }: 
 
 		let whereQuery = {} as Record<string, string>;
 		if (where) {
-			whereQuery = { ...where };
+			for (const [field, value] of Object.entries(where)) {
+				if (typeof value === "object") {
+					whereQuery[field] = value;
+				} else {
+					query.set(field, value);
+				}
+			}
 		}
 
 		if (searchParams && searchParams.size) {
-			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
+			buildParams(searchParams, query, ignoreParams);
 		}
 
 		query.set("where", JSON.stringify(whereQuery));
@@ -58,7 +65,7 @@ function ActualPagination({ table, where, relCounts, take = 25, ignoreParams }: 
 		data: countData,
 		error: countError,
 		isLoading: countIsLoading
-	} = useSWR(`/api/internal/${table}/count?${strQuery}`, fetcher, {
+	} = useSWR(`/api/${table}/count?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});

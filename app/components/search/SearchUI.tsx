@@ -16,7 +16,7 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
-import { buildWhereParams } from "@/app/helpers/api/api";
+import { buildParams } from "@/app/helpers/api";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 type Operator = "AND" | "OR";
@@ -474,7 +474,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 			newParams.set("table", searchTable!);
 		}
 
-		buildWhereParams(searchParams, newParams);
+		buildParams(searchParams, newParams);
 
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {

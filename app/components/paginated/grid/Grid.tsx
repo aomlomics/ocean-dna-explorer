@@ -7,7 +7,7 @@ import { type FunctionComponent, useRef, useState } from "react";
 import useSWR, { preload } from "swr";
 import PaginationControls from "../PaginationControls";
 import LoadingPaginationControls from "../LoadingPaginationControls";
-import { buildWhereParams } from "@/app/helpers/api/api";
+import { buildParams } from "@/app/helpers/api";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
 import { RanksBySpecificity } from "@/types/objects";
 import TableStatusState from "../table/TableStatusState";
@@ -49,7 +49,8 @@ function ActualGrid({
 
 	function getQuery(dir?: 1 | -1) {
 		const query = new URLSearchParams({
-			take: take.toString(),
+			ignoreExtraOptions: "true",
+			limit: take.toString(),
 			page: (dir ? page + dir : page).toString()
 		});
 
@@ -59,31 +60,32 @@ function ActualGrid({
 
 		let whereQuery = {} as Record<string, any>;
 		if (where) {
-			whereQuery = { ...where };
+			for (const [field, value] of Object.entries(where)) {
+				if (typeof value === "object") {
+					whereQuery[field] = value;
+				} else {
+					query.set(field, value);
+				}
+			}
 		}
 
 		if (searchParams && searchParams.size) {
-			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
+			buildParams(searchParams, query, ignoreParams);
 
-			if (table === "taxonomy") {
-				const assignmentLevel = searchParams.get("assignmentLevel");
-				if (assignmentLevel && RanksBySpecificity.includes(assignmentLevel as (typeof RanksBySpecificity)[number])) {
-					const advanced: any[] = [[assignmentLevel, "notNull"]];
-					for (const finerRank of RanksBySpecificity) {
-						if (finerRank === assignmentLevel) break;
-						advanced.push([finerRank, "null"]);
-					}
-					whereQuery.advanced = advanced;
-				}
-			}
-			if (ignoreParams) {
-				for (const param of ignoreParams) {
-					delete whereQuery[param];
-				}
-			}
-			delete whereQuery.assignmentLevel;
+			//TODO: integrate with new parseApiQuery
+			// if (table === "taxonomy") {
+			// 	const assignmentLevel = searchParams.get("assignmentLevel");
+			// 	if (assignmentLevel && RanksBySpecificity.includes(assignmentLevel as (typeof RanksBySpecificity)[number])) {
+			// 		const advanced: any[] = [[assignmentLevel, "notNull"]];
+			// 		for (const finerRank of RanksBySpecificity) {
+			// 			if (finerRank === assignmentLevel) break;
+			// 			advanced.push([finerRank, "null"]);
+			// 		}
+			// 		whereQuery.advanced = advanced;
+			// 	}
+			// }
+			// delete whereQuery.assignmentLevel;
 		}
-
 		query.set("where", JSON.stringify(whereQuery));
 
 		if (orderBy) {
@@ -107,7 +109,7 @@ function ActualGrid({
 		data: countData,
 		error: countError,
 		isLoading: countIsLoading
-	} = useSWR(`/api/internal/${table}/count?${strQuery}`, fetcher, {
+	} = useSWR(`/api/${table}/count?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});

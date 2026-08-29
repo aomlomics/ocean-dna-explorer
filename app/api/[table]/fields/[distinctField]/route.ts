@@ -1,7 +1,7 @@
-import { parseApiQuery } from "@/app/helpers/api/parse";
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
 import { getTableName } from "@/app/helpers/schema";
 import type { NetworkPacket } from "@/types/globals";
+import TableMetadata from "@/types/tableMetadata";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -12,25 +12,24 @@ export async function GET(
 
 	try {
 		const model = getTableName(table);
+		const parsedField = TableMetadata[model].enumSchema.safeParse(distinctField);
+		if (!parsedField.success) {
+			return NextResponse.json({
+				statusMessage: "error",
+				error: `The field named "${distinctField}" does not exist on the table named "${model}".`
+			});
+		}
 
 		const { searchParams } = new URL(request.url);
-
-		const { trusted, query } = parseApiQuery(model, searchParams, {
-			features: {
-				relationsLimit: true,
-				filters: true,
-				advanced: true,
-				search: true
-			},
-			defaults: {
-				fields: { [distinctField]: true },
-				distinct: [distinctField]
-			}
-		});
-		const client = trusted ? trustedPrisma : prisma;
+		const client = searchParams.get("trusted")?.toLowerCase() === "true" ? trustedPrisma : prisma;
 
 		//@ts-expect-error dynamically accessing prisma client
-		const result = await client[model].findMany(query);
+		const result = await client[model].findMany({
+			distinct: [distinctField],
+			select: {
+				[distinctField]: true
+			}
+		});
 
 		if (result) {
 			return NextResponse.json({

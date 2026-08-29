@@ -3,8 +3,8 @@ import { capitalizeTable, deepMerge, getLocationsInsideShapes } from "@/app/help
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import type { NetworkPacket } from "@/types/globals";
-import { deepWhere } from "@/app/helpers/api/api";
-import { parsePaginationQuery } from "@/app/helpers/api/parse";
+import { deepWhere } from "@/app/helpers/api";
+import { parseApiQuery } from "@/app/helpers/api";
 import TableMetadata from "@/types/tableMetadata";
 import type { MapLocation } from "@/types/globals";
 import { getDataTableName } from "@/app/helpers/schema";
@@ -28,11 +28,29 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const parsedQuery = parsePaginationQuery(model, searchParams);
-		const { trusted, query, blast, shapes, getSamples, hasLocationData, page, deepRelsArray } = parsedQuery;
-		const take = parsedQuery.take!;
+		const parsedQuery = parseApiQuery(model, searchParams, {
+			features: {
+				orderBy: true,
+				relations: true,
+				relCounts: true,
+				limit: true,
+				filters: true,
+				advanced: true,
+				search: true
+			},
+			extras: {
+				blast: true,
+				shapes: true,
+				deepRelations: true
+			}
+		});
+		const { query, blast, shapes, getSamples, hasLocationData, limit, page, deepRelsArray } = parsedQuery;
 		let { sampleWhere } = parsedQuery;
-		const client = trusted ? trustedPrisma : prisma;
+		const client = parsedQuery.trusted ? trustedPrisma : prisma;
+
+		if (!limit) {
+			throw new Error("The limit option is required on this route.");
+		}
 
 		let BlastQueryResults;
 		let existingBlastDate;
@@ -90,9 +108,9 @@ export async function GET(
 			if (!(shapes && hasLocationData)) {
 				if (page) {
 					//offset pagination
-					query.skip = (page - 1) * take;
+					query.skip = (page - 1) * limit;
 				}
-				query.take = take;
+				query.take = limit;
 			}
 
 			//@ts-expect-error dynamically accessing prisma client
@@ -105,9 +123,9 @@ export async function GET(
 		}
 
 		//manually paginate
-		if (result.length > take) {
-			const start = page ? (page - 1) * take : 0;
-			result = result.slice(start, start + take);
+		if (result.length > limit) {
+			const start = page ? (page - 1) * limit : 0;
+			result = result.slice(start, start + limit);
 		}
 
 		//get deep relational counts

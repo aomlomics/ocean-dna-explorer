@@ -4,7 +4,7 @@ import { type SubmitEvent, type RefObject, useEffect, useState } from "react";
 import type { TableColumns } from "./useTableColumns";
 import { DEFAULT_ORDER_BY, type ExtraResults } from "../Table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { buildWhereParams } from "@/app/helpers/api/api";
+import { buildParams } from "@/app/helpers/api";
 import useSWR from "swr";
 import { fetcher } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
@@ -50,7 +50,8 @@ export default function useTableQuery({
 
 	function getQuery(dir?: 1 | -1) {
 		const query = new URLSearchParams({
-			take: take.toString(),
+			ignoreExtraOptions: "true",
+			limit: take.toString(),
 			page: (dir ? page + dir : page).toString(),
 			orderBy: orderBy.field + "," + orderBy.order
 		});
@@ -61,17 +62,24 @@ export default function useTableQuery({
 
 		let whereQuery = {} as Record<string, string | number>;
 		if (where) {
-			whereQuery = { ...where };
+			for (const [field, value] of Object.entries(where)) {
+				if (typeof value === "object") {
+					whereQuery[field] = value;
+				} else {
+					query.set(field, value);
+				}
+			}
 		}
-		if (Object.values(deepRelationsFilter).includes(false)) {
-			whereQuery = { ...whereQuery, ...whereFilter };
-		}
-		if (searchParams && searchParams.size) {
-			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
-		}
-
 		if (Object.keys(whereQuery).length) {
 			query.set("where", JSON.stringify(whereQuery));
+		}
+
+		for (const [field, value] of Object.entries(whereFilter)) {
+			query.set(field, value.toString());
+		}
+
+		if (searchParams && searchParams.size) {
+			buildParams(searchParams, query, ignoreParams);
 		}
 
 		Object.entries(extraParams || {}).forEach(([k, v]) => query.set(k, v));
@@ -112,7 +120,7 @@ export default function useTableQuery({
 		data: countData,
 		error: countError,
 		isLoading: countIsLoading
-	} = useSWR(`/api/internal/${table}/count?${strQuery}`, fetcher, {
+	} = useSWR(`/api/${table}/count?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
