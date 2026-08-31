@@ -62,7 +62,7 @@ export default function useTableQuery({
 			query.set("trusted", "true");
 		}
 
-		let whereQuery = {} as Record<string, string | number>;
+		const whereQuery = {} as Record<string, string | number>;
 		if (where) {
 			for (const [field, value] of Object.entries(where)) {
 				if (typeof value === "object") {

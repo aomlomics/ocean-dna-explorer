@@ -9,7 +9,7 @@ import PaginationControls from "../PaginationControls";
 import LoadingPaginationControls from "../LoadingPaginationControls";
 import { buildParams } from "@/app/helpers/api";
 import LoadingTaxaGrid from "./LoadingTaxaGrid";
-import { RanksBySpecificity } from "@/types/objects";
+// import { RanksBySpecificity } from "@/types/objects";
 import TableStatusState from "../table/TableStatusState";
 import type { ModelName } from "@/types/tableMetadata";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
@@ -58,7 +58,7 @@ function ActualGrid({
 			query.set("trusted", "true");
 		}
 
-		let whereQuery = {} as Record<string, any>;
+		const whereQuery = {} as Record<string, any>;
 		if (where) {
 			for (const [field, value] of Object.entries(where)) {
 				if (typeof value === "object") {

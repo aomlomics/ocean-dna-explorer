@@ -36,7 +36,7 @@ function ActualPagination({ table, where, relCounts, take = 25, ignoreParams }: 
 			query.set("trusted", "true");
 		}
 
-		let whereQuery = {} as Record<string, string>;
+		const whereQuery = {} as Record<string, string>;
 		if (where) {
 			for (const [field, value] of Object.entries(where)) {
 				if (typeof value === "object") {
