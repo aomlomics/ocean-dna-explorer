@@ -151,7 +151,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.LibraryWithRelationsSchema,
 		titleField: ["project_id", "lib_id"],
-		subFields: ["project_id", "samp_name", "seq_run_id"],
+		subFields: ["Sample", "seq_run_id"],
 		fieldOrder: [
 			"samp_name",
 			"seq_run_id",
@@ -183,7 +183,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.OccurrenceWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name", "lib_id", "featureid"],
-		subFields: ["project_id", "analysis_run_name", "lib_id", "featureid", "organismQuantity"]
+		subFields: ["Analysis", "Library", "Assignment", "organismQuantity"]
 	},
 	assignment: {
 		plural: "Assignments",
@@ -193,7 +193,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssignmentWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name", "featureid"],
-		subFields: ["project_id", "analysis_run_name", "taxonomy", "Confidence"]
+		subFields: ["Analysis", "taxonomy", "Confidence"]
 	},
 	feature: {
 		plural: "Features",

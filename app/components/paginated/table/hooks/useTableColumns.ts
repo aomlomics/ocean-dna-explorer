@@ -79,7 +79,7 @@ export default function useTableColumns({
 	//move title fields that are also relational fields to front
 	if (Array.isArray(title)) {
 		for (const tf of (title as string[]).toReversed()) {
-			const index = relationsFields.findIndex((rf) => rf === tf);
+			const index = relationsFields.findIndex((rtf) => rtf === tf);
 			if (index !== -1) {
 				relationsFields.splice(index, 1);
 				relationsFields.unshift(tf);
@@ -144,16 +144,17 @@ export default function useTableColumns({
 
 	//apply default filters
 	const defaultHeadersFilter = {} as Record<string, boolean>;
-	if (filterHeadersAtStart && TableMetadata[table].subFields) {
+	const subFields = TableMetadata[table].subFields;
+	if (filterHeadersAtStart && subFields) {
 		for (const head of defaultHeadersSet) {
 			if (
-				!TableMetadata[table].subFields.includes(head) &&
+				!subFields.includes(head) &&
 				head !== "Tags" &&
-				// !manyRelations.includes(head) &&
+				//include array title fields
 				!(Array.isArray(title) && title.includes(head)) &&
-				!(
-					head in oneRelationsWithArrayTitle &&
-					oneRelationsWithArrayTitle[head as ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
+				//include title fields of relations with array titles if relation is in subFields
+				!Object.entries(oneRelationsWithArrayTitle).some(
+					([relTable, rtf]) => subFields.includes(relTable) && rtf.includes(head)
 				) &&
 				//using separate filter for deep relations, so they need to always be unfiltered
 				!deepRelations.find((rel) => head === rel.label)
