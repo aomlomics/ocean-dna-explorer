@@ -185,8 +185,10 @@ async function parseProjectFile({
 		}
 
 		//unset all optional fields that were not provided
+		delete parsedProject.data.id;
+		delete parsedProject.data.dateSubmitted;
 		for (const field of ProjectScalarFieldEnumSchema.options) {
-			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
+			if (!(field in parsedProject.data)) {
 				//@ts-expect-error overriding never with null
 				parsedProject.data[field] = null;
 			}
@@ -201,12 +203,16 @@ async function parseProjectFile({
 				...assayCols[assay_name],
 				assay_name
 			});
+
 			if (!parsedAssay.success) {
 				await channel.stream.error(
 					`Table: Assay\n` + `Key: ${assay_name}\n\n` + `${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
 				);
 				return;
 			}
+
+			delete parsedAssay.data.id;
+
 			assays.push(parsedAssay.data);
 
 			//assayPrep
@@ -216,6 +222,7 @@ async function parseProjectFile({
 				assay_name,
 				project_id: projectCol.project_id
 			});
+
 			if (!parsedAssayPrep.success) {
 				await channel.stream.error(
 					`Table: AssayPrep\n` +
@@ -224,6 +231,9 @@ async function parseProjectFile({
 				);
 				return;
 			}
+
+			delete parsedAssayPrep.data.id;
+
 			assayPreps.push(parsedAssayPrep.data);
 		}
 
@@ -336,8 +346,9 @@ async function parseLibraryFile({
 				}
 
 				//unset all optional fields that were not provided
+				delete parsedLibrary.data.id;
 				for (const field of LibraryScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedLibrary.data)) {
+					if (!(field in parsedLibrary.data)) {
 						//@ts-expect-error overriding never with null
 						parsedLibrary.data[field] = null;
 					}
@@ -453,8 +464,10 @@ async function parseSampleFile({
 				}
 
 				//unset all optional fields that were not provided
+				delete parsedSample.data.id;
+				delete parsedSample.data.deleted_ODE;
 				for (const field of SampleScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedSample.data)) {
+					if (!(field in parsedSample.data)) {
 						//@ts-expect-error overriding never with null
 						parsedSample.data[field] = null;
 					}

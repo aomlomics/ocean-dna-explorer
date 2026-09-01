@@ -259,6 +259,7 @@ export type AnalysisPartial = z.infer<typeof AnalysisPartialSchema>
 export const AnalysisOptionalDefaultsSchema = AnalysisSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
+  trusted: z.boolean().optional(),
 }))
 
 export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSchema>

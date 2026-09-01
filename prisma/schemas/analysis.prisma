@@ -2,7 +2,7 @@ model Analysis {
     id                Int      @id @default(autoincrement())
     analysis_run_name String
     dateSubmitted     DateTime @default(now())
-    trusted           Boolean
+    trusted           Boolean  @default(false)
     /// [EditHistoryType]
     editHistory       Json?
 

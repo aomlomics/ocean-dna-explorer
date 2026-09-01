@@ -118,8 +118,10 @@ export async function parseAnalysisFile({
 	}
 
 	//unset all optional fields that were not provided
+	delete parsedAnalysis.data.id;
+	delete parsedAnalysis.data.dateSubmitted;
 	for (const field of AnalysisScalarFieldEnumSchema.options) {
-		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
+		if (!(field in parsedAnalysis.data)) {
 			//@ts-expect-error overriding never with null
 			parsedAnalysis.data[field] = null;
 		}
@@ -218,6 +220,8 @@ export async function parseAssignmentsFile({
 				return;
 			}
 
+			delete parsedAssignment.data.id;
+
 			assignments.push(parsedAssignment.data);
 
 			//parse feature
@@ -246,6 +250,8 @@ export async function parseAssignmentsFile({
 				return;
 			}
 
+			delete parsedFeature.data.id;
+
 			features.push(parsedFeature.data);
 
 			//parse taxonomy
@@ -270,8 +276,9 @@ export async function parseAssignmentsFile({
 				}
 
 				//unset all optional fields that were not provided
+				delete parsedTaxonomy.data.id;
 				for (const field of TaxonomyScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedTaxonomy.data)) {
+					if (!(field in parsedTaxonomy.data)) {
 						//@ts-expect-error overriding never with null
 						parsedTaxonomy.data[field] = null;
 					}
@@ -401,6 +408,8 @@ export async function parseOccurrencesFile({
 						);
 						return;
 					}
+
+					delete parsedOccurrence.data.id;
 
 					occurrences.push(parsedOccurrence.data);
 				}

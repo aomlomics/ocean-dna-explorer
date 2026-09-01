@@ -1,7 +1,7 @@
 "use client";
 
 import { MapContainer, TileLayer, Marker, FeatureGroup } from "react-leaflet";
-import { type FeatureGroup as LFeatureGroup, Map, Polygon as LPolygon, Circle as LCircle } from "leaflet";
+import { type FeatureGroup as LFeatureGroup, type Map, Polygon as LPolygon, Circle as LCircle } from "leaflet";
 import { FullscreenControl } from "react-leaflet-fullscreen";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility";
