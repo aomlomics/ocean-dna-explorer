@@ -8,7 +8,7 @@ import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { capitalizeTable } from "@/app/helpers/utils";
 import { ArrowIcon, SearchIcon } from "@/app/components/icons";
 
-export default function TableHeader({
+export default function TableHeaderRow({
 	table,
 	headers,
 	emptyFilter,

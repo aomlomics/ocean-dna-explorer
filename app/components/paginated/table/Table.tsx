@@ -12,7 +12,7 @@ import { fetcher } from "@/app/helpers/utils";
 import TableStatusState from "./TableStatusState";
 import useTableColumns from "./hooks/useTableColumns";
 import useTableQuery from "./hooks/useTableQuery";
-import TableHeader from "./parts/TableHeader";
+import TableHeaderRow from "./parts/TableHeaderRow";
 import TableRow from "./parts/TableRow";
 import Checklist from "../../Checklist";
 import { useSearchParams } from "next/navigation";
@@ -59,6 +59,7 @@ function ActualTable({
 	const {
 		title,
 		defaultHeaders,
+		relationsFields,
 		manyRelations,
 		oneRelations,
 		oneRelationsWithArrayTitle,
@@ -205,7 +206,6 @@ function ActualTable({
 
 	if (isLoading || !data || countIsLoading || !countData)
 		return <LoadingTable take={take} page={page} hideFilters={hideFilters} />;
-
 	if (data.statusMessage === "error") {
 		return (
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
@@ -220,6 +220,8 @@ function ActualTable({
 			/>
 		);
 	}
+
+	const relsSet = new Set([...relationsFields, ...deepRelations.map((rel) => rel.label)]);
 
 	return (
 		<div className={`bg-base-100 border-base-300 rounded-box h-full w-full p-6 ${className ?? ""}`}>
@@ -261,19 +263,28 @@ function ActualTable({
 						handlePageHover={handlePageHover}
 					/>
 
-					<div className="grid grid-cols-3 w-full gap-5 flex-1">
+					<div className="grid grid-cols-4 w-full gap-2 flex-1">
 						<Checklist
-							label="Deep Relations"
-							list={deepRelations.map((rel) => rel.label)}
-							listFilter={deepRelationsFilter}
-							setListFilter={setDeepRelationsFilter}
+							label="Relations"
+							list={relationsFields}
+							listFilter={headersFilter}
+							setListFilter={setHeadersFilter}
 							className="justify-self-end"
 							buttonClassName="btn-sm"
 						/>
 
 						<Checklist
+							label="Deep Relations"
+							list={deepRelations.map((rel) => rel.label)}
+							listFilter={deepRelationsFilter}
+							setListFilter={setDeepRelationsFilter}
+							className="justify-self-start"
+							buttonClassName="btn-sm"
+						/>
+
+						<Checklist
 							label="Columns"
-							list={headers.filter((head) => !deepRelations.find((rel) => head === rel.label))}
+							list={headers.filter((head) => !relsSet.has(head) || TableMetadata[table].titleField.includes(head))}
 							listFilter={headersFilter}
 							setListFilter={setHeadersFilter}
 							extraLists={[{ list: userDefinedHeaders, label: "UD" }]}
@@ -281,7 +292,7 @@ function ActualTable({
 							buttonClassName="btn-sm"
 						/>
 
-						<fieldset className="fieldset bg-base-100 border-base-300">
+						<fieldset className="fieldset bg-base-100 border-base-300 justify-self-start">
 							<label className="label select-none">
 								<input
 									type="checkbox"
@@ -301,7 +312,7 @@ function ActualTable({
 						<caption className="sr-only">{TableMetadata[table].plural} table</caption>
 
 						<thead>
-							<TableHeader
+							<TableHeaderRow
 								title={title}
 								table={table}
 								headers={headers}

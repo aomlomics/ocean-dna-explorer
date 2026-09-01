@@ -35,8 +35,14 @@ export default function LoadingTable({
 					<LoadingPaginationControls />
 
 					{/* Column Selection Button */}
-					<div className="grid grid-cols-3 w-full gap-5 flex-1">
+					<div className="grid grid-cols-4 w-full gap-2 flex-1">
 						<div className="dropdown dropdown-end justify-self-end">
+							<button className="btn text-nowrap btn-sm" disabled>
+								Relations
+							</button>
+						</div>
+
+						<div className="dropdown dropdown-end justify-self-start">
 							<button className="btn text-nowrap btn-sm" disabled>
 								Deep Relations
 							</button>
@@ -48,7 +54,7 @@ export default function LoadingTable({
 							</button>
 						</div>
 
-						<fieldset className="fieldset bg-base-100 border-base-300">
+						<fieldset className="fieldset bg-base-100 border-base-300 justify-self-start">
 							<label className="label select-none cursor-not-allowed">
 								<input type="checkbox" className="checkbox" disabled />
 								Hide empty columns

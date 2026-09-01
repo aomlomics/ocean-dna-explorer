@@ -18,21 +18,12 @@ export default function useTableColumns({
 	combinedOmit: string[];
 	filterHeadersAtStart?: boolean;
 }) {
-	const title = TableMetadata[table].titleField;
-
-	const defaultHeadersSet = new Set() as Set<string>;
-
-	//title field array
-	if (Array.isArray(title)) {
-		title.forEach(defaultHeadersSet.add, defaultHeadersSet);
-	}
-
 	//assemble relational data for table
 	const manyRelations = [] as string[];
 	const oneRelations = [] as string[];
 	const oneRelationsWithArrayTitle = {} as Record<ModelName, readonly string[]>;
 	for (const rel of TableMetadata[table].relations) {
-		if (!EXCLUDE_TABLES.includes(uncapitalizeTable(rel.table)))
+		if (!EXCLUDE_TABLES.includes(uncapitalizeTable(rel.table))) {
 			if (rel.type.endsWith("many")) {
 				manyRelations.push(rel.field);
 			} else if (rel.type.endsWith("one")) {
@@ -43,17 +34,30 @@ export default function useTableColumns({
 					oneRelationsWithArrayTitle[rel.table] = meta.titleField;
 				}
 			}
+		}
 	}
+
+	const defaultHeadersSet = new Set() as Set<string>;
+
+	//title field array
+	const title = TableMetadata[table].titleField;
+	if (Array.isArray(title)) {
+		title.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	}
+
+	const relationsFields = [] as string[];
 
 	//move tags to the front
 	const manyRelationsNoTags = manyRelations.filter((r) => r !== "Tags");
 	if (manyRelations.length !== manyRelationsNoTags.length) {
 		defaultHeadersSet.add("Tags");
+		relationsFields.push("Tags");
 	}
 
 	//relation fields with one, array title
 	for (const [field, titleFields] of Object.entries(oneRelationsWithArrayTitle)) {
 		defaultHeadersSet.add(field);
+		relationsFields.push(field);
 		titleFields.forEach(defaultHeadersSet.add, defaultHeadersSet);
 	}
 
@@ -69,10 +73,23 @@ export default function useTableColumns({
 		}
 
 		oneRelations.forEach(defaultHeadersSet.add, defaultHeadersSet);
+		relationsFields.push(...oneRelations);
+	}
+
+	//move title fields that are also relational fields to front
+	if (Array.isArray(title)) {
+		for (const tf of (title as string[]).toReversed()) {
+			const index = relationsFields.findIndex((rf) => rf === tf);
+			if (index !== -1) {
+				relationsFields.splice(index, 1);
+				relationsFields.unshift(tf);
+			}
+		}
 	}
 
 	//relation fields with many
 	manyRelationsNoTags.forEach(defaultHeadersSet.add, defaultHeadersSet);
+	relationsFields.push(...manyRelationsNoTags);
 
 	//deep relations
 	const deepRelations = DataTableNames.reduce(
@@ -149,6 +166,7 @@ export default function useTableColumns({
 	return {
 		title,
 		defaultHeaders: Array.from(defaultHeadersSet),
+		relationsFields,
 		manyRelations,
 		oneRelations,
 		oneRelationsWithArrayTitle,
