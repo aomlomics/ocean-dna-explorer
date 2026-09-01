@@ -139,14 +139,18 @@ export async function GET(
 			const queries = await Promise.all(
 				deepRelsArray.map(async (targetModel) => {
 					const path = TableMetadata[model].relationPaths[targetModel]!;
+					const capsModel = capitalizeTable(model);
 
 					const joins = [];
-
 					for (const [i, step] of path.entries()) {
 						if (step.type === "many-to-many") {
-							const implicitJoin = await getImplicitJoinTable({ from: model, to: uncapitalizeTable(step.table) });
+							const stepTitleTable = i ? path[i - 1]!.table : capsModel;
 
-							const stepTitleTable = i ? path[i - 1]!.table : capitalizeTable(model);
+							const implicitJoin = await getImplicitJoinTable({
+								from: uncapitalizeTable(stepTitleTable),
+								to: uncapitalizeTable(step.table)
+							});
+
 							const joinAlias = `jt${i}`;
 							joins.push(
 								Prisma.sql`
@@ -160,11 +164,7 @@ export async function GET(
 								`
 							);
 						} else {
-							const stepTitleTable = step.type.startsWith("one")
-								? i
-									? path[i - 1]!.table
-									: capitalizeTable(model)
-								: step.table;
+							const stepTitleTable = step.type.startsWith("one") ? (i ? path[i - 1]!.table : capsModel) : step.table;
 							const tf = TableMetadata[stepTitleTable].titleField;
 							const stepTitleFieldArr = typeof tf === "string" ? [tf] : tf;
 
@@ -180,8 +180,6 @@ export async function GET(
 							);
 						}
 					}
-
-					const capsModel = capitalizeTable(model);
 
 					const rootConditions = result.map(
 						(row) =>
