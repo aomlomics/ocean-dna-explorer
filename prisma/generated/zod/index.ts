@@ -60,7 +60,7 @@ export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','d
 
 export const RelationLoadStrategySchema = z.enum(['query','join']);
 
-export const OccurrenceScalarFieldEnumSchema = z.enum(['id','project_id','lib_id','analysis_run_name','featureid','organismQuantity']);
+export const OccurrenceScalarFieldEnumSchema = z.enum(['id','project_id','analysis_run_name','lib_id','featureid','organismQuantity']);
 
 export const AssignmentScalarFieldEnumSchema = z.enum(['id','project_id','analysis_run_name','featureid','taxonomy','Confidence','percent_id','consensus']);
 
@@ -100,7 +100,7 @@ export const NullsOrderSchema = z.enum(['first','last']);
 
 export const AnalysisOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_name','project_id','assay_name','analysisMetadataFileUrl_ODE','analysisMetadataFileChecksum_ODE','asvFileUrl_ODE','asvFileChecksum_ODE','occurrenceFileUrl_ODE','occurrenceFileChecksum_ODE','sop_bioinformatics','trim_method','trim_param','demux_tool','merge_tool','min_len_tool','error_rate_tool','error_rate_type','chimera_check_method','chimera_check_param','otu_clust_tool','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_pooling_method','dada2_chimera_method','otu_final_description','otu_raw_description','qiime2_version','tourmaline_asv_method','tourmaline_classify_method']);
 
-export const OccurrenceOrderByRelevanceFieldEnumSchema = z.enum(['project_id','lib_id','analysis_run_name','featureid']);
+export const OccurrenceOrderByRelevanceFieldEnumSchema = z.enum(['project_id','analysis_run_name','lib_id','featureid']);
 
 export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['project_id','analysis_run_name','featureid','taxonomy']);
 
@@ -396,8 +396,8 @@ export const AnalysisWithPartialRelationsSchema: z.ZodType<AnalysisWithPartialRe
 export const OccurrenceSchema = z.object({
   id: z.number().int(),
   project_id: z.string(),
-  lib_id: z.string(),
   analysis_run_name: z.string(),
+  lib_id: z.string(),
   featureid: z.string(),
   organismQuantity: z.number().int(),
 })
@@ -426,8 +426,8 @@ export type OccurrenceOptionalDefaults = z.infer<typeof OccurrenceOptionalDefaul
 
 export type OccurrenceRelations = {
   Project: ProjectWithRelations;
-  Library: LibraryWithRelations;
   Analysis: AnalysisWithRelations;
+  Library: LibraryWithRelations;
   Feature: FeatureWithRelations;
   Assignment: AssignmentWithRelations;
 };
@@ -436,8 +436,8 @@ export type OccurrenceWithRelations = z.infer<typeof OccurrenceSchema> & Occurre
 
 export const OccurrenceWithRelationsSchema: z.ZodType<OccurrenceWithRelations> = OccurrenceSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
-  Library: z.lazy(() => LibraryWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisWithRelationsSchema),
+  Library: z.lazy(() => LibraryWithRelationsSchema),
   Feature: z.lazy(() => FeatureWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentWithRelationsSchema),
 }))
@@ -447,8 +447,8 @@ export const OccurrenceWithRelationsSchema: z.ZodType<OccurrenceWithRelations> =
 
 export type OccurrenceOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
-  Library: LibraryOptionalDefaultsWithRelations;
   Analysis: AnalysisOptionalDefaultsWithRelations;
+  Library: LibraryOptionalDefaultsWithRelations;
   Feature: FeatureOptionalDefaultsWithRelations;
   Assignment: AssignmentOptionalDefaultsWithRelations;
 };
@@ -457,8 +457,8 @@ export type OccurrenceOptionalDefaultsWithRelations = z.infer<typeof OccurrenceO
 
 export const OccurrenceOptionalDefaultsWithRelationsSchema: z.ZodType<OccurrenceOptionalDefaultsWithRelations> = OccurrenceOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
-  Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
+  Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
   Feature: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema),
 }))
@@ -468,8 +468,8 @@ export const OccurrenceOptionalDefaultsWithRelationsSchema: z.ZodType<Occurrence
 
 export type OccurrencePartialRelations = {
   Project?: ProjectPartialWithRelations;
-  Library?: LibraryPartialWithRelations;
   Analysis?: AnalysisPartialWithRelations;
+  Library?: LibraryPartialWithRelations;
   Feature?: FeaturePartialWithRelations;
   Assignment?: AssignmentPartialWithRelations;
 };
@@ -478,8 +478,8 @@ export type OccurrencePartialWithRelations = z.infer<typeof OccurrencePartialSch
 
 export const OccurrencePartialWithRelationsSchema: z.ZodType<OccurrencePartialWithRelations> = OccurrencePartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
-  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 })).partial()
@@ -488,8 +488,8 @@ export type OccurrenceOptionalDefaultsWithPartialRelations = z.infer<typeof Occu
 
 export const OccurrenceOptionalDefaultsWithPartialRelationsSchema: z.ZodType<OccurrenceOptionalDefaultsWithPartialRelations> = OccurrenceOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
-  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 }).partial())
@@ -498,8 +498,8 @@ export type OccurrenceWithPartialRelations = z.infer<typeof OccurrenceSchema> & 
 
 export const OccurrenceWithPartialRelationsSchema: z.ZodType<OccurrenceWithPartialRelations> = OccurrenceSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
-  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 }).partial())

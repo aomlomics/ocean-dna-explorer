@@ -114,10 +114,10 @@ model Occurrence {
     // Relations
     project_id        String
     Project           Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    lib_id            String
-    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     analysis_run_name String
     Analysis          Analysis   @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
+    lib_id            String
+    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     featureid         String
     Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     Assignment        Assignment @relation(fields: [project_id, analysis_run_name, featureid], references: [project_id, analysis_run_name, featureid], onDelete: Cascade)

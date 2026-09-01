@@ -185,14 +185,14 @@ async function parseProjectFile({
 		}
 
 		//unset all optional fields that were not provided
-		delete parsedProject.data.id;
-		delete parsedProject.data.dateSubmitted;
 		for (const field of ProjectScalarFieldEnumSchema.options) {
 			if (!(field in parsedProject.data)) {
 				//@ts-expect-error overriding never with null
 				parsedProject.data[field] = null;
 			}
 		}
+		delete parsedProject.data.id;
+		delete parsedProject.data.dateSubmitted;
 
 		const assays = [] as AssayCreateManyInput[];
 		const assayPreps = [] as AssayPrepCreateManyInput[];
@@ -346,13 +346,14 @@ async function parseLibraryFile({
 				}
 
 				//unset all optional fields that were not provided
-				delete parsedLibrary.data.id;
 				for (const field of LibraryScalarFieldEnumSchema.options) {
 					if (!(field in parsedLibrary.data)) {
 						//@ts-expect-error overriding never with null
 						parsedLibrary.data[field] = null;
 					}
 				}
+				delete parsedLibrary.data.id;
+
 				libraries.push(parsedLibrary.data as LibraryCreateManyInput);
 
 				//add to progress bar every 10 percent
@@ -464,14 +465,15 @@ async function parseSampleFile({
 				}
 
 				//unset all optional fields that were not provided
-				delete parsedSample.data.id;
-				delete parsedSample.data.deleted_ODE;
 				for (const field of SampleScalarFieldEnumSchema.options) {
 					if (!(field in parsedSample.data)) {
 						//@ts-expect-error overriding never with null
 						parsedSample.data[field] = null;
 					}
 				}
+				delete parsedSample.data.id;
+				delete parsedSample.data.deleted_ODE;
+
 				samples.push(parsedSample.data as SampleCreateManyInput);
 
 				//add to progress bar every 10 percent

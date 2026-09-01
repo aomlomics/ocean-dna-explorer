@@ -131,12 +131,14 @@ export default function useTableColumns({
 		for (const head of defaultHeadersSet) {
 			if (
 				!TableMetadata[table].subFields.includes(head) &&
-				!manyRelations.includes(head) &&
+				head !== "Tags" &&
+				// !manyRelations.includes(head) &&
 				!(Array.isArray(title) && title.includes(head)) &&
 				!(
 					head in oneRelationsWithArrayTitle &&
 					oneRelationsWithArrayTitle[head as ModelName].every((f) => TableMetadata[table].subFields!.includes(f))
 				) &&
+				//using separate filter for deep relations, so they need to always be unfiltered
 				!deepRelations.find((rel) => head === rel.label)
 			) {
 				defaultHeadersFilter[head] = true;

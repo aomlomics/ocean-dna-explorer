@@ -118,14 +118,14 @@ export async function parseAnalysisFile({
 	}
 
 	//unset all optional fields that were not provided
-	delete parsedAnalysis.data.id;
-	delete parsedAnalysis.data.dateSubmitted;
 	for (const field of AnalysisScalarFieldEnumSchema.options) {
 		if (!(field in parsedAnalysis.data)) {
 			//@ts-expect-error overriding never with null
 			parsedAnalysis.data[field] = null;
 		}
 	}
+	delete parsedAnalysis.data.id;
+	delete parsedAnalysis.data.dateSubmitted;
 
 	return { analysis: parsedAnalysis.data, analysisMd5 };
 }
@@ -276,13 +276,13 @@ export async function parseAssignmentsFile({
 				}
 
 				//unset all optional fields that were not provided
-				delete parsedTaxonomy.data.id;
 				for (const field of TaxonomyScalarFieldEnumSchema.options) {
 					if (!(field in parsedTaxonomy.data)) {
 						//@ts-expect-error overriding never with null
 						parsedTaxonomy.data[field] = null;
 					}
 				}
+				delete parsedTaxonomy.data.id;
 
 				//TODO: verify taxonomy.taxonomy matches all rank fields
 
