@@ -1,7 +1,7 @@
 import type { ParamsArray, ParamsArrayField, ParamsArrayRelation, ParamsArrayValue, QueryMode } from "@/types/globals";
 import type { Prisma } from "@/app/generated/prisma/browser";
 import { getDataTableName, getTableName, getZodType } from "./schema";
-import TableMetadata, { DataTableNames, type ModelName, RelationMetadata } from "@/types/tableMetadata";
+import TableMetadata, { DataTableNames, type ModelName, type RelationMetadata } from "@/types/tableMetadata";
 import {
 	capitalizeTable,
 	COMPRESSION_FORMAT,

@@ -9,7 +9,7 @@ import type {
 	TaxonomyModel
 } from "@/app/generated/prisma/models";
 import { getZodType } from "@/app/helpers/schema";
-import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
+import { GlobalOmit, type TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import dynamic from "next/dynamic";

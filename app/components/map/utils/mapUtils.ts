@@ -5,7 +5,7 @@ import TableMetadata, { type ModelName, TableNames } from "@/types/tableMetadata
 import chroma from "chroma-js";
 import type { Color } from "chroma-js";
 import distinctColors from "distinct-colors";
-import useMapLocations from "./useMapLocations";
+import type useMapLocations from "./useMapLocations";
 
 export type LegendInfo =
 	| (

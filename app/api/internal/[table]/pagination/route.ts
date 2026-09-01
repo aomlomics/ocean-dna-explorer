@@ -1,5 +1,5 @@
 import { prisma, trustedPrisma } from "@/app/helpers/prisma";
-import { capitalizeTable, deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
+import { capitalizeTable, deepMerge, getLocationsInsideShapes, uncapitalizeTable } from "@/app/helpers/utils";
 import { Prisma } from "@/app/generated/prisma/client";
 import { NextResponse } from "next/server";
 import type { NetworkPacket } from "@/types/globals";
@@ -11,6 +11,7 @@ import { getDataTableName } from "@/app/helpers/schema";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { fetchBlast } from "@/app/helpers/blast";
+import { getImplicitJoinTable } from "@/app/helpers/withDb";
 
 export async function GET(
 	request: Request,
@@ -135,62 +136,76 @@ export async function GET(
 					? [TableMetadata[model].titleField]
 					: TableMetadata[model].titleField;
 
-			const queries = deepRelsArray.map((targetModel) => {
-				const path = TableMetadata[model].relationPaths[targetModel]!;
+			const queries = await Promise.all(
+				deepRelsArray.map(async (targetModel) => {
+					const path = TableMetadata[model].relationPaths[targetModel]!;
 
-				//build JOIN for relation path
-				const joins = [];
-				for (const [i, step] of path.entries()) {
-					let stepTitleTable;
-					if (step.type === "one-to-one" || step.type === "one-to-many") {
-						stepTitleTable = i ? path[i - 1]!.table : capitalizeTable(model);
-					} else if (step.type === "many-to-one") {
-						stepTitleTable = step.table;
-					} else {
-						//TODO: handle many-to-many case
-						throw new Error("Deep relations with many-to-many is not yet supported");
+					const joins = [];
+
+					for (const [i, step] of path.entries()) {
+						if (step.type === "many-to-many") {
+							const implicitJoin = await getImplicitJoinTable({ from: model, to: uncapitalizeTable(step.table) });
+
+							const stepTitleTable = i ? path[i - 1]!.table : capitalizeTable(model);
+							const joinAlias = `jt${i}`;
+							joins.push(
+								Prisma.sql`
+									LEFT JOIN ${Prisma.raw(`"${implicitJoin.table}"`)} AS ${Prisma.raw(joinAlias)}
+										ON ${Prisma.raw(`"${stepTitleTable}"."${implicitJoin.from.column}"`)}
+											= ${Prisma.raw(`${joinAlias}."${implicitJoin.from.joinColumn}"`)}
+
+									LEFT JOIN ${Prisma.raw(`"${step.table}"`)}
+										ON ${Prisma.raw(`${joinAlias}."${implicitJoin.to.joinColumn}"`)}
+											= ${Prisma.raw(`"${step.table}"."${implicitJoin.to.column}"`)}
+								`
+							);
+						} else {
+							const stepTitleTable = step.type.startsWith("one")
+								? i
+									? path[i - 1]!.table
+									: capitalizeTable(model)
+								: step.table;
+							const tf = TableMetadata[stepTitleTable].titleField;
+							const stepTitleFieldArr = typeof tf === "string" ? [tf] : tf;
+
+							joins.push(
+								Prisma.sql`
+									LEFT JOIN ${Prisma.raw(`"${step.table}"`)} USING (
+										${Prisma.join(
+											stepTitleFieldArr.map((f) => Prisma.raw(`"${f}"`)),
+											", "
+										)}
+									)
+								`
+							);
+						}
 					}
 
-					const tf = TableMetadata[stepTitleTable].titleField;
-					const stepTitleFieldArr = typeof tf === "string" ? [tf] : tf;
+					const capsModel = capitalizeTable(model);
 
-					joins.push(
-						Prisma.sql`
-							LEFT JOIN ${Prisma.raw(`"${step.table}"`)} USING (${Prisma.join(
-								stepTitleFieldArr.map((f) => Prisma.raw(`"${f}"`)),
-								", "
-							)})
-						`
+					const rootConditions = result.map(
+						(row) =>
+							Prisma.sql`(
+								${Prisma.join(
+									titleFieldArr.map((field) => Prisma.sql`${Prisma.raw(`"${capsModel}"."${field}"`)} = ${row[field]}`),
+									" AND "
+								)}
+							)`
 					);
-				}
 
-				const capsModel = capitalizeTable(model);
+					const selectFields = titleFieldArr.map((field) => Prisma.raw(`"${capsModel}"."${field}"`));
 
-				//only get records in the result
-				const rootConditions = result.map(
-					(row) =>
-						Prisma.sql`(
-							${Prisma.join(
-								titleFieldArr.map((field) => Prisma.sql`${Prisma.raw(`"${capsModel}"."${field}"`)} = ${row[field]}`),
-								" AND "
-							)}
-						)`
-				);
-
-				//select root fields to reassociate with row data
-				const selectFields = titleFieldArr.map((field) => Prisma.raw(`"${capsModel}"."${field}"`));
-
-				//final query
-				return Prisma.sql`
-					SELECT
-						${Prisma.join(selectFields, ", ")},
-						COUNT(DISTINCT ${Prisma.raw(`"${capitalizeTable(targetModel)}".id`)})::int AS count
-					FROM ${Prisma.raw(`"${capsModel}"`)}
-					${Prisma.join(joins, " ")}
-					WHERE ${Prisma.join(rootConditions, " OR ")}
-					GROUP BY ${Prisma.join(selectFields, ", ")}
-				`;
-			});
+					return Prisma.sql`
+						SELECT
+							${Prisma.join(selectFields, ", ")},
+							COUNT(DISTINCT ${Prisma.raw(`"${capitalizeTable(targetModel)}".id`)})::int AS count
+						FROM ${Prisma.raw(`"${capsModel}"`)}
+						${Prisma.join(joins, " ")}
+						WHERE ${Prisma.join(rootConditions, " OR ")}
+						GROUP BY ${Prisma.join(selectFields, ", ")}
+					`;
+				})
+			);
 
 			const queryResults = await client.$transaction(
 				queries.map((query) => client.$queryRaw<Record<string, string | number>[]>(query)),

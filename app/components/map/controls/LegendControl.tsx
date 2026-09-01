@@ -18,7 +18,7 @@ import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import ResetButtonMap from "../utils/ResetButtonMap";
 import chroma, { type Color } from "chroma-js";
 import Link from "next/link";
-import useMapLocations from "../utils/useMapLocations";
+import type useMapLocations from "../utils/useMapLocations";
 
 export default function LegendControl({
 	legend,

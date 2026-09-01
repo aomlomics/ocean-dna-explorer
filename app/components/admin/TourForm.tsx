@@ -1,7 +1,7 @@
 "use client";
 
 import InfoButton from "@/app/components/InfoButton";
-import { DEFAULT_TOUR_STEP_TIME, useTour, TourStep } from "@/app/hooks/TourProvider";
+import { DEFAULT_TOUR_STEP_TIME, useTour, type TourStep } from "@/app/hooks/TourProvider";
 import type { NetworkPacket } from "@/types/globals";
 import { exploreUrl } from "@/types/tableMetadata";
 import { useAuth } from "@clerk/react";

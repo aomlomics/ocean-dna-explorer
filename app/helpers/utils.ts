@@ -158,7 +158,6 @@ function __unfocus() {
 		el.blur();
 	}
 }
-
 export function unfocus() {
 	__unfocus();
 }

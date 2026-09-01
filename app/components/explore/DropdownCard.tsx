@@ -1,6 +1,6 @@
 import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import Link from "next/link";
-import { ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 
 export default function DropdownCard({
 	items,

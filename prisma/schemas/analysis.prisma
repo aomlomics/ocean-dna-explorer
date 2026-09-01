@@ -11,8 +11,11 @@ model Analysis {
     Project          Project          @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name       String
     Assay            Assay            @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
+    Libraries        Library[]
     Occurrences      Occurrence[]
     Assignments      Assignment[]
+    Features         Feature[]
+    Taxonomies       Taxonomy[]
     Tags             Tag[]
     AlphaDiversities AlphaDiversity[]
 
@@ -157,6 +160,7 @@ model Feature {
     featureid String @unique
 
     // Relations
+    Analyses          Analysis[]
     Occurrences       Occurrence[]
     Assignments       Assignment[]
     BlastQueryResults BlastQueryResult[]
@@ -171,6 +175,8 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
+    Analyses    Analysis[]
+    Samples     Sample[]
     Assignments Assignment[]
 
     // Data

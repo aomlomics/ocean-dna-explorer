@@ -1,7 +1,7 @@
 "use client";
 
 import { type RefObject, useState } from "react";
-import { Chart as ChartJS } from "chart.js";
+import type { Chart as ChartJS } from "chart.js";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 
 export default function ChartCopyButton({

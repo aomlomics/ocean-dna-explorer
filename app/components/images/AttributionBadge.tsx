@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageModel } from "@/app/generated/prismaImages/models/Image";
+import type { ImageModel } from "@/app/generated/prismaImages/models/Image";
 import { useState } from "react";
 
 export default function AttributionBadge({

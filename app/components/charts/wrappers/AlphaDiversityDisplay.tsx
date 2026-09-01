@@ -3,7 +3,7 @@
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { AlphaDiversityModel, AlphaDiversityIndexModel, SampleModel } from "@/app/generated/prisma/models";
 import BoxWhiskerPlot, { type BoxWhiskerData, type BoxWhiskerDataset } from "../BoxWhiskerPlot";
-import { Chart as ChartJS } from "chart.js";
+import type { Chart as ChartJS } from "chart.js";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { getZodType } from "@/app/helpers/schema";
 import ChartCopyButton from "../ChartCopyButton";

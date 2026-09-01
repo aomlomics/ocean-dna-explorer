@@ -1,5 +1,5 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
-import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import ExplorePage from "@/app/components/explore/ExplorePage";
 import TableMetadata from "@/types/tableMetadata";
 import type { Metadata } from "next";

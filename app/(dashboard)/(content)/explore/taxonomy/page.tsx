@@ -1,5 +1,5 @@
 import ExplorePage from "@/app/components/explore/ExplorePage";
-import { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
+import type { FilterConfig } from "@/app/components/explore/filters/filterHelpers";
 import { TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import type { Metadata } from "next";
