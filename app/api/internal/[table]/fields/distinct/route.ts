@@ -87,8 +87,6 @@ export async function GET(
 			);
 		}
 
-		console.log(JSON.stringify(queries, undefined, 2));
-
 		const dbResult = (await client.$transaction(queries)) as Array<Array<{ [key: string]: string }>>;
 
 		const allFields = [...params.map((e) => e[0]), ...extraFields];

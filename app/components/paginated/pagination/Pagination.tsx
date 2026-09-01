@@ -51,7 +51,9 @@ function ActualPagination({ table, where, relCounts, take = 25, ignoreParams }: 
 			buildParams(searchParams, query, ignoreParams);
 		}
 
-		query.set("where", JSON.stringify(whereQuery));
+		if (Object.keys(whereQuery).length) {
+			query.set("where", JSON.stringify(whereQuery));
+		}
 
 		return query;
 	}

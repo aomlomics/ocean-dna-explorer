@@ -99,7 +99,12 @@ export default async function Assay_name({
 			Libraries: true,
 			Analyses: {
 				select: {
-					analysis_run_name: true
+					analysis_run_name: true,
+					_count: {
+						select: {
+							Taxonomies: true
+						}
+					}
 				}
 			}
 		}
@@ -352,26 +357,7 @@ export default async function Assay_name({
 								/>
 								<StatCard
 									title="Taxonomies"
-									query={async () =>
-										await trustedPrisma.taxonomy.count({
-											where: {
-												Assignments: {
-													some: {
-														Analysis: {
-															assay_name
-														},
-														Occurrences: {
-															some: {
-																Library: {
-																	assay_name
-																}
-															}
-														}
-													}
-												}
-											}
-										})
-									}
+									value={assay.Analyses.reduce((count, a) => count + a._count.Taxonomies, 0)}
 									icon={<FishIcon />}
 									link={`/search?table=taxonomy&advanced=[["analysis","assay_name","equals","${assay_name}"]]`}
 									tooltip="View as Search"

@@ -129,41 +129,25 @@ function StaticActgBackdrop({ className = "" }: { className?: string }) {
 export default async function TaxonomyPage({ params }: { params: Promise<{ taxonomy: string }> }) {
 	const { taxonomy } = await decodeRouteParams(params);
 
-	const [dbTaxonomy, samples] = await trustedPrisma.$transaction([
-		trustedPrisma.taxonomy.findUnique({
-			where: {
-				taxonomy
-			},
-			include: {
-				Assignments: {
-					distinct: ["project_id"],
-					select: {
-						project_id: true
-					}
+	const dbTaxonomy = await trustedPrisma.taxonomy.findUnique({
+		where: {
+			taxonomy
+		},
+		include: {
+			Samples: true,
+			Analyses: {
+				distinct: ["project_id"],
+				select: {
+					project_id: true
 				}
 			}
-		}),
-		trustedPrisma.sample.findMany({
-			where: {
-				Libraries: {
-					some: {
-						Occurrences: {
-							some: {
-								Assignment: {
-									taxonomy
-								}
-							}
-						}
-					}
-				}
-			}
-		})
-	]);
+		}
+	});
 
 	if (!dbTaxonomy) notFound();
 
 	// Get unique project IDs for display
-	const uniqueProjects = dbTaxonomy.Assignments.map((assign) => assign.project_id);
+	const uniqueProjects = dbTaxonomy.Analyses.map((a) => a.project_id);
 	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as TaxonomyModel);
 	const phyloPic = pageGbif?.phyloPic ?? null;
 	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as TaxonomyModel);
@@ -219,7 +203,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					</div>
 				)}
 				<p className="text-lg text-base-content/70">
-					Found in {samples.length === 1 ? "1 sample" : `${samples!.length} samples`} across{" "}
+					Found in {dbTaxonomy.Samples.length === 1 ? "1 sample" : `${dbTaxonomy.Samples.length} samples`} across{" "}
 					{uniqueProjects.length === 1 ? "1 project" : `${uniqueProjects.length} projects`}
 				</p>
 			</header>
@@ -256,7 +240,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 
 				{/* Right: map + summary cards */}
 				<div className="lg:col-span-2 space-y-4">
-					<Map locations={samples} where={{ taxonomy }} cluster className="h-105 w-full rounded-lg" />
+					<Map locations={dbTaxonomy.Samples} where={{ taxonomy }} cluster className="h-105 w-full rounded-lg" />
 
 					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
@@ -268,7 +252,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									<AnalysisIcon />
 								</div>
 								<div className="text-center mb-1">
-									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Assignments.length}</div>
+									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Analyses.length}</div>
 									<div className="text-sm font-medium text-base-content/70 uppercase">Analyses</div>
 								</div>
 							</div>
@@ -298,7 +282,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 									<LocationIcon />
 								</div>
 								<div className="text-center mb-1">
-									<div className="text-3xl font-bold text-primary">{samples.length}</div>
+									<div className="text-3xl font-bold text-primary">{dbTaxonomy.Samples.length}</div>
 									<div className="text-sm font-medium text-base-content/70 uppercase">Samples</div>
 								</div>
 							</div>

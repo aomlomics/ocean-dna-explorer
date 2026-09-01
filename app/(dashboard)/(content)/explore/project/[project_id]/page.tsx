@@ -161,12 +161,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			project_id
 		},
 		include: {
-			_count: {
-				select: {
-					Samples: true,
-					Analyses: true
-				}
-			},
+			Samples: true,
 			Analyses: {
 				select: {
 					analysis_run_name: true,
@@ -186,7 +181,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		}
 	});
 	if (!project) notFound();
-	const { _count, Analyses, editHistory, ...justProject } = project;
+	const { Samples, Analyses, editHistory, ...justProject } = project;
 
 	const uniqueAssays = Analyses.reduce(
 		(acc: Record<string, Record<string, string>>, a) => ({
@@ -303,7 +298,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 			<div className="lg:col-span-2">
 				<Map
-					query={() => trustedPrisma.sample.findMany({ where: { project_id } })}
+					locations={Samples}
 					where={{ project_id }}
 					cluster
 					legend
@@ -401,7 +396,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			<div className="flex flex-wrap gap-3">
 				<StatCard
 					title="Samples"
-					value={_count.Samples}
+					value={Samples.length}
 					icon={<LocationIcon />}
 					link={`/search?table=sample&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
@@ -410,7 +405,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				/>
 				<StatCard
 					title="Analyses"
-					value={_count.Analyses}
+					value={Analyses.length}
 					icon={<AnalysisIcon />}
 					link={`/search?table=analysis&advanced=[[${advancedProjStr}]]`}
 					tooltip="View as Search"
@@ -530,7 +525,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 					<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 						<div className="lg:col-span-2">
 							<Map
-								query={() => trustedPrisma.sample.findMany({ where: { project_id } })}
+								locations={Samples}
 								where={{ project_id }}
 								cluster
 								legend

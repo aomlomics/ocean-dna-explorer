@@ -58,11 +58,13 @@ export default async function MySubmissions() {
 				}
 			}
 		}),
-		prisma.occurrence.findMany({
+		prisma.analysis.findMany({
 			where: {
-				Library: {
-					Sample: {
-						deleted_ODE: true
+				Libraries: {
+					some: {
+						Sample: {
+							deleted_ODE: true
+						}
 					}
 				}
 			},
@@ -73,7 +75,7 @@ export default async function MySubmissions() {
 		}),
 		prisma.tag.findMany()
 	]);
-	const badAnalyses = dbBadAnalyses.map((ba) => ba.analysis_run_name);
+	const badAnalyses = new Set(dbBadAnalyses.map((ba) => ba.analysis_run_name));
 
 	const attributions = await prismaImages.attribution.findMany();
 
@@ -177,7 +179,7 @@ export default async function MySubmissions() {
 															<div
 																key={analysis.analysis_run_name}
 																className={`flex items-center justify-between p-3 bg-base-100 rounded-lg ${
-																	badAnalyses.includes(analysis.analysis_run_name) ? "border-2 border-error" : ""
+																	badAnalyses.has(analysis.analysis_run_name) ? "border-2 border-error" : ""
 																}`}
 															>
 																<Link

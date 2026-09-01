@@ -51,7 +51,7 @@ async function doSubmit(
 		);
 
 		//error checks
-		const [dbProject, dbAssay, dbLibraries, dbTags] = await prisma.$transaction([
+		const [dbProject, dbAssay, dbLibraries, dbTags, dbOccs] = await prisma.$transaction([
 			prisma.project.findUnique({
 				where: {
 					project_id: analysis.project_id
@@ -77,20 +77,7 @@ async function doSubmit(
 					}
 				},
 				select: {
-					lib_id: true,
-					Occurrences: trusted
-						? {
-								where: {
-									Analysis: {
-										trusted: true
-									}
-								},
-								select: {
-									analysis_run_name: true,
-									featureid: true
-								}
-							}
-						: false
+					lib_id: true
 				}
 			}),
 			prisma.tag.findMany({
@@ -101,6 +88,24 @@ async function doSubmit(
 				},
 				select: {
 					tagName: true
+				}
+			}),
+			prisma.occurrence.findMany({
+				where: {
+					project_id: analysis.project_id,
+					lib_id: {
+						in: Array.from(libIds)
+					},
+					featureid: {
+						in: features.map((f) => f.featureid)
+					},
+					Analysis: {
+						trusted: true
+					}
+				},
+				distinct: ["analysis_run_name"],
+				select: {
+					analysis_run_name: true
 				}
 			})
 		]);
@@ -162,16 +167,7 @@ async function doSubmit(
 		await occurrencesChannel.stream.message("All checks successful.", 80);
 
 		//check if any libraries have another trusted analysis with shared features
-		const otherTrusted = new Set() as Set<AnalysisModel["analysis_run_name"]>;
-		if (trusted) {
-			for (const lib of dbLibraries) {
-				for (const occ of lib.Occurrences) {
-					if (!otherTrusted.has(occ.analysis_run_name) && features.find((feat) => feat.featureid === occ.featureid)) {
-						otherTrusted.add(occ.analysis_run_name);
-					}
-				}
-			}
-		}
+		const trustedWithSharedFeatures = new Set(dbOccs.map((occ) => occ.analysis_run_name));
 
 		//map taxonomies to the lib_id (sample) they were found in
 		const taxaByFeat = assignments.reduce(
@@ -231,11 +227,12 @@ async function doSubmit(
 					data: occurrences
 				});
 
-				if (otherTrusted.size) {
+				if (trustedWithSharedFeatures.size) {
 					await tx.analysis.updateMany({
 						where: {
+							project_id: analysis.project_id,
 							analysis_run_name: {
-								in: Array.from(otherTrusted)
+								in: Array.from(trustedWithSharedFeatures)
 							}
 						},
 						data: {

@@ -1,12 +1,6 @@
 "use client";
 
-import type {
-	AssignmentModel,
-	LibraryModel,
-	OccurrenceModel,
-	SampleModel,
-	TaxonomyModel
-} from "@/app/generated/prisma/models";
+import type { SampleModel } from "@/app/generated/prisma/models";
 import { Bar } from "react-chartjs-2";
 import { useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";
@@ -27,31 +21,29 @@ const DEFAULT_MAX_TAXONOMIES = 20;
 //TODO: separate libraries by project_id
 //TODO: paginate on averageBy
 export default function TaxaBarChart({
-	occsByFeatureid,
-	assignments,
-	taxonomiesById,
-	samplesById,
-	sampleIdsByLibId,
+	featuresById,
+	taxonomiesByName,
+	sampleByLibId,
 	sampFields,
 	userDefinedFields
 }: {
-	occsByFeatureid: Record<
-		OccurrenceModel["featureid"],
+	featuresById: Record<
+		string,
 		{
-			lib_id: OccurrenceModel["lib_id"];
-			featureid: OccurrenceModel["featureid"];
-			organismQuantity: OccurrenceModel["organismQuantity"];
-		}[]
+			taxonomy: string;
+			occurrences: {
+				lib_id: string;
+				organismQuantity: number;
+			}[];
+		}
 	>;
-	assignments: {
-		featureid: AssignmentModel["featureid"];
-		Taxonomy: {
-			id: number;
-		};
-	}[];
-	taxonomiesById: Record<TaxonomyModel["id"], Record<(typeof TaxonomicRanks)[number], string | null>>;
-	samplesById: Record<SampleModel["id"], SampleModel & { Libraries: { lib_id: LibraryModel["lib_id"] }[] }>;
-	sampleIdsByLibId: Record<LibraryModel["lib_id"], SampleModel["id"]>;
+	taxonomiesByName: Record<
+		string,
+		Record<(typeof TaxonomicRanks)[number], string | null> & {
+			taxonomy: string;
+		}
+	>;
+	sampleByLibId: Record<string, SampleModel>;
 	sampFields: string[];
 	userDefinedFields?: Set<string>;
 }) {
@@ -74,14 +66,14 @@ export default function TaxaBarChart({
 		const rankValues = new Set<string>();
 		const libIdRankQuantities: Record<string, Record<string, number>> = {};
 
-		for (const assign of assignments) {
-			const occs = occsByFeatureid[assign.featureid];
+		for (const feature of Object.values(featuresById)) {
+			const taxonomy = taxonomiesByName[feature.taxonomy];
 
-			if (occs) {
-				const rankVal = taxonomiesById[assign.Taxonomy.id]![rank] ?? "undefined";
+			if (taxonomy) {
+				const rankVal = taxonomy[rank] ?? "undefined";
 				rankValues.add(rankVal);
 
-				for (const occ of occs) {
+				for (const occ of feature.occurrences) {
 					const quantity = (libIdRankQuantities[occ.lib_id] ??= {});
 					quantity[rankVal] = (quantity[rankVal] ?? 0) + occ.organismQuantity;
 				}
@@ -106,16 +98,16 @@ export default function TaxaBarChart({
 		});
 		const currColors = currRanks.map((taxon) => uniqueColors[sortedRanks.indexOf(taxon)]);
 		const libIds = Object.keys(libIdRankQuantities).sort();
-		const averageByGroups: Record<string, LibraryModel["lib_id"][]> = {};
+		const averageByGroups: Record<string, string[]> = {};
 
 		if (averageBy !== "lib_id") {
 			for (const lib_id of libIds) {
 				let val: string;
 
 				if (userDefinedFields?.has(averageBy)) {
-					val = samplesById[sampleIdsByLibId[lib_id]!]!.userDefined?.[averageBy]?.toString() ?? "undefined";
+					val = sampleByLibId[lib_id]?.userDefined?.[averageBy]?.toString() ?? "undefined";
 				} else {
-					val = samplesById[sampleIdsByLibId[lib_id]!]![averageBy as keyof SampleModel]?.toString() ?? "undefined";
+					val = sampleByLibId[lib_id]?.[averageBy as keyof SampleModel]?.toString() ?? "undefined";
 				}
 
 				(averageByGroups[val] ??= []).push(lib_id);

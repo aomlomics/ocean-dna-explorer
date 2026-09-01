@@ -43,7 +43,11 @@ async function doEdit(
 			},
 			select: {
 				analysisMetadataFileChecksum_ODE: true,
-				Project: { select: { userIds: true } }
+				Project: {
+					select: {
+						userIds: true
+					}
+				}
 			}
 		});
 

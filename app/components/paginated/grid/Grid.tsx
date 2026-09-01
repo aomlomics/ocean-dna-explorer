@@ -86,7 +86,9 @@ function ActualGrid({
 			// }
 			// delete whereQuery.assignmentLevel;
 		}
-		query.set("where", JSON.stringify(whereQuery));
+		if (Object.keys(whereQuery).length) {
+			query.set("where", JSON.stringify(whereQuery));
+		}
 
 		if (orderBy) {
 			query.set("orderBy", `${orderBy.field},${orderBy.order}`);

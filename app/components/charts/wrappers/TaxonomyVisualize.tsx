@@ -1,13 +1,7 @@
 "use client";
 
 import { DeadValueEnum } from "@/types/enums";
-import type {
-	AssignmentModel,
-	LibraryModel,
-	OccurrenceModel,
-	SampleModel,
-	TaxonomyModel
-} from "@/app/generated/prisma/models";
+import type { SampleModel } from "@/app/generated/prisma/models";
 import { getZodType } from "@/app/helpers/schema";
 import { GlobalOmit, type TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
@@ -20,41 +14,28 @@ const TaxaBarChart = dynamic(() => import("../TaxaBarChart"), {
 export const DEFAULT_RANK = "kingdom" as (typeof TaxonomicRanks)[0];
 
 export default function TaxonomyVisualize({
-	occurrences,
-	assignments,
-	taxonomies,
-	samples
+	featuresById,
+	taxonomiesByName,
+	sampleByLibId
 }: {
-	occurrences: {
-		lib_id: OccurrenceModel["lib_id"];
-		featureid: OccurrenceModel["featureid"];
-		organismQuantity: OccurrenceModel["organismQuantity"];
-	}[];
-	assignments: {
-		featureid: AssignmentModel["featureid"];
-		Taxonomy: {
-			id: TaxonomyModel["id"];
-		};
-	}[];
-	taxonomies: (Record<(typeof TaxonomicRanks)[number], string | null> & { id: TaxonomyModel["id"] })[];
-	samples: (SampleModel & {
-		Libraries: {
-			lib_id: LibraryModel["lib_id"];
-		}[];
-	})[];
+	featuresById: Record<
+		string,
+		{
+			taxonomy: string;
+			occurrences: {
+				lib_id: string;
+				organismQuantity: number;
+			}[];
+		}
+	>;
+	taxonomiesByName: Record<
+		string,
+		Record<(typeof TaxonomicRanks)[number], string | null> & {
+			taxonomy: string;
+		}
+	>;
+	sampleByLibId: Record<string, SampleModel>;
 }) {
-	//sort occurrences by featureid
-	const occsByFeatureid = {} as Record<OccurrenceModel["featureid"], typeof occurrences>;
-	for (const occ of occurrences) {
-		const occs = (occsByFeatureid[occ.featureid] ??= []);
-		occs.push(occ);
-	}
-
-	const taxonomiesById = {} as Record<TaxonomyModel["id"], (typeof taxonomies)[number]>;
-	for (const taxa of taxonomies) {
-		taxonomiesById[taxa.id] = taxa;
-	}
-
 	const sampFields = new Set(["project_id"]) as Set<string>;
 	//build fields in fieldOrder
 	for (const f of TableMetadata.sample.fieldOrder!) {
@@ -72,32 +53,21 @@ export default function TaxonomyVisualize({
 	sampFields.delete("userDefined");
 	sampFields.delete("samp_name");
 
-	const fieldsWithValues = new Set() as Set<string>;
-	const userDefinedFields = new Set() as Set<string>;
+	const fieldsWithValues = new Set<string>();
+	const userDefinedFields = new Set<string>();
 
-	const samplesById = {} as Record<
-		SampleModel["id"],
-		SampleModel & { Libraries: { lib_id: LibraryModel["lib_id"] }[] }
-	>;
-	const sampleIdsByLibId = {} as Record<LibraryModel["lib_id"], SampleModel["id"]>;
-	for (const samp of samples) {
-		samplesById[samp.id] = samp;
-
-		for (const lib of samp.Libraries) {
-			sampleIdsByLibId[lib.lib_id] = samp.id;
-		}
-
+	for (const sample of Object.values(sampleByLibId)) {
 		//check if fields have values
 		for (const f of sampFields) {
 			const key = f as keyof SampleModel;
 
-			if (!fieldsWithValues.has(f) && samp[key] != null) {
+			if (!fieldsWithValues.has(f) && sample[key] != null) {
 				const type = getZodType("sample", key).type;
 
 				if (type !== "boolean") {
-					if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {
+					if (type === "date" && !((sample[key] as Date).getTime() in DeadValueEnum)) {
 						fieldsWithValues.add(f);
-					} else if (!((samp[key] as string | number) in DeadValueEnum)) {
+					} else if (!((sample[key] as string | number) in DeadValueEnum)) {
 						fieldsWithValues.add(f);
 					}
 				}
@@ -105,9 +75,13 @@ export default function TaxonomyVisualize({
 		}
 
 		//add userDefined fields
-		if (samp.userDefined) {
-			for (const ud in samp.userDefined) {
-				if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
+		if (sample.userDefined) {
+			for (const ud in sample.userDefined) {
+				if (
+					sample.userDefined[ud] != null &&
+					!(sample.userDefined[ud] in DeadValueEnum) &&
+					sample.userDefined[ud] !== ""
+				) {
 					sampFields.add(ud);
 					fieldsWithValues.add(ud);
 					userDefinedFields.add(ud);
@@ -118,11 +92,9 @@ export default function TaxonomyVisualize({
 
 	return (
 		<TaxaBarChart
-			occsByFeatureid={occsByFeatureid}
-			assignments={assignments}
-			taxonomiesById={taxonomiesById}
-			samplesById={samplesById}
-			sampleIdsByLibId={sampleIdsByLibId}
+			featuresById={featuresById}
+			taxonomiesByName={taxonomiesByName}
+			sampleByLibId={sampleByLibId}
 			sampFields={Array.from(sampFields)}
 			userDefinedFields={userDefinedFields}
 		/>

@@ -43,7 +43,11 @@ async function doEdit(
 			select: {
 				project_id: true,
 				occurrenceFileChecksum_ODE: true,
-				Project: { select: { userIds: true } }
+				Project: {
+					select: {
+						userIds: true
+					}
+				}
 			}
 		});
 

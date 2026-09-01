@@ -4,11 +4,10 @@ import Link from "next/link";
 import MapComponent from "@/app/components/map/Map";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import TaxonomyDonutChart from "@/app/components/charts/TaxonomyDonutChart";
-import { Suspense } from "react";
 import StatCard from "@/app/components/explore/StatCard";
 import DropdownCard from "@/app/components/explore/DropdownCard";
 import { EyeIcon, AnalysisIcon, AssayIcon, FishIcon, LocationIcon } from "@/app/components/icons";
-import type { AssayModel, SampleModel } from "@/app/generated/prisma/models";
+import type { AnalysisModel, AssayModel } from "@/app/generated/prisma/models";
 import AssaysCard from "@/app/components/assay/AssaysCard";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
@@ -56,12 +55,29 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			}
 		},
 		include: {
+			Taxonomies: {
+				omit: {
+					id: true,
+					verbatimIdentification: true
+				}
+			},
 			Libraries: {
 				select: {
+					_count: {
+						select: {
+							Occurrences: true
+						}
+					},
 					Assay: {
 						select: {
 							assay_name: true,
 							target_gene: true
+						}
+					},
+					Analyses: {
+						distinct: ["analysis_run_name"],
+						select: {
+							analysis_run_name: true
 						}
 					}
 				}
@@ -70,13 +86,22 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 	});
 
 	if (!sample) notFound();
-	const { Libraries, ...justSample } = sample;
+	const { Taxonomies, Libraries, ...justSample } = sample;
+
 	const uniqueAssays = [] as { assay_name: AssayModel["assay_name"]; target_gene: AssayModel["target_gene"] }[];
 	for (const lib of Libraries) {
 		if (!uniqueAssays.some((a) => lib.Assay.assay_name === a.assay_name)) {
 			uniqueAssays.push(lib.Assay);
 		}
 	}
+
+	const uniqueAnalyses = Libraries.reduce(
+		(acc, lib) => {
+			lib.Analyses.forEach((a) => acc.add(a.analysis_run_name));
+			return acc;
+		},
+		new Set() as Set<AnalysisModel["analysis_run_name"]>
+	);
 
 	return (
 		<div id="sample" className="space-y-6 pb-8">
@@ -137,21 +162,7 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 					<div className="grid grid-cols-3 gap-4">
 						<StatCard
 							title="Occurrences"
-							query={async () =>
-								(
-									await trustedPrisma.occurrence.findMany({
-										where: {
-											Library: {
-												project_id,
-												samp_name
-											}
-										},
-										select: {
-											featureid: true
-										}
-									})
-								).length
-							}
+							value={Libraries.reduce((count, lib) => count + lib._count.Occurrences, 0)}
 							icon={<EyeIcon />}
 							link={`/search?table=occurrence&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
@@ -161,52 +172,20 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 						<DropdownCard
 							table="analysis"
 							icon={<AnalysisIcon />}
-							query={async () =>
-								await trustedPrisma.analysis.findMany({
-									where: {
-										Occurrences: {
-											some: {
-												Library: {
-													project_id,
-													samp_name
-												}
-											}
-										}
-									},
-									select: {
-										analysis_run_name: true
-									}
-								})
-							}
+							items={Array.from(uniqueAnalyses).reduce(
+								(acc, analysis_run_name) => [...acc, { project_id, analysis_run_name }],
+								[] as {
+									project_id: AnalysisModel["project_id"];
+									analysis_run_name: AnalysisModel["analysis_run_name"];
+								}[]
+							)}
 						/>
 
 						<DropdownCard table="assay" items={uniqueAssays.map((a) => a.assay_name)} icon={<AssayIcon />} />
 
 						<StatCard
 							title="Taxonomies"
-							query={async () =>
-								(
-									await trustedPrisma.taxonomy.findMany({
-										where: {
-											Assignments: {
-												some: {
-													Occurrences: {
-														some: {
-															Library: {
-																project_id,
-																samp_name
-															}
-														}
-													}
-												}
-											}
-										},
-										select: {
-											taxonomy: true
-										}
-									})
-								).length
-							}
+							value={Taxonomies.length}
 							icon={<FishIcon />}
 							link={`/search?table=taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"]]`}
 							layout="horizontal"
@@ -232,54 +211,15 @@ export default async function Samp_name({ params }: { params: Promise<{ project_
 			</div>
 
 			{/* Taxonomy Relative Abundance Chart */}
-			<Suspense>
-				<SuspenseTaxonomyDonutChart project_id={project_id} samp_name={samp_name} />
-			</Suspense>
-		</div>
-	);
-}
-
-async function SuspenseTaxonomyDonutChart({
-	project_id,
-	samp_name
-}: {
-	project_id: SampleModel["project_id"];
-	samp_name: SampleModel["samp_name"];
-}) {
-	const taxonomies = await trustedPrisma.taxonomy.findMany({
-		where: {
-			Assignments: {
-				some: {
-					Occurrences: {
-						some: {
-							Library: {
-								project_id,
-								samp_name
-							}
-						}
-					}
-				}
-			}
-		},
-		omit: {
-			id: true,
-			verbatimIdentification: true
-		}
-	});
-
-	if (!taxonomies.length) {
-		return <></>;
-	}
-
-	return (
-		<div id="taxonomyChart">
-			<h2 className="text-xl font-medium mb-4">
-				<span className="text-base-content/90">
-					Taxonomies found in this <span className="text-primary font-bold">Sample</span>
-				</span>
-			</h2>
-			<div className="w-full">
-				<TaxonomyDonutChart taxonomies={taxonomies} />
+			<div id="taxonomyChart">
+				<h2 className="text-xl font-medium mb-4">
+					<span className="text-base-content/90">
+						Taxonomies found in this <span className="text-primary font-bold">Sample</span>
+					</span>
+				</h2>
+				<div className="w-full">
+					<TaxonomyDonutChart taxonomies={Taxonomies} />
+				</div>
 			</div>
 		</div>
 	);
