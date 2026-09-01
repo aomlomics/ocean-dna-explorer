@@ -170,12 +170,15 @@ export async function GET(
 
 							joins.push(
 								Prisma.sql`
-									LEFT JOIN ${Prisma.raw(`"${step.table}"`)} USING (
-										${Prisma.join(
-											stepTitleFieldArr.map((f) => Prisma.raw(`"${f}"`)),
-											", "
-										)}
-									)
+									LEFT JOIN ${Prisma.raw(`"${step.table}"`)}
+									ON ${Prisma.join(
+										stepTitleFieldArr.map(
+											(field) =>
+												Prisma.sql`${Prisma.raw(`"${stepTitleTable}"."${field}"`)}
+													= ${Prisma.raw(`"${step.table}"."${field}"`)}`
+										),
+										" AND "
+									)}
 								`
 							);
 						}
