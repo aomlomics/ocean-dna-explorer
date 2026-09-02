@@ -91,7 +91,13 @@ export default function TableDisplay({
 					hideEmptyAtStart={table === "taxonomy"}
 				/>
 			) : (
-				<Pagination key={table + "?" + searchParams.toString()} table={table} ignoreParams={effectiveIgnoreParams} />
+				<Pagination
+					key={table + "?" + searchParams.toString()}
+					table={table}
+					ignoreParams={effectiveIgnoreParams}
+					extraParams={extraParams}
+					setExtraResults={setExtraResults}
+				/>
 			)
 		) : table === "project" ? (
 			<Grid

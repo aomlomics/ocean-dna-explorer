@@ -37,12 +37,15 @@ export default function SearchContent({
 						<span>BLAST</span>
 					</div>
 				</div>
-				<div key={table + "blast"} className="search-focus-border collapse-content grid grid-cols-2 gap-10">
+				<div
+					key={table + "blast"}
+					className="search-focus-border collapse-content grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10"
+				>
 					<BlastSearch assayNames={assayNames} />
 					<BlastSearchResult
 						blastResult={extraResults.blastResult}
 						existingBlastDate={extraResults.existingBlastDate}
-						className="h-200"
+						className="max-h-[min(32rem,70vh)] min-w-0 lg:h-200 lg:max-h-none"
 					/>
 				</div>
 			</div>
@@ -89,7 +92,7 @@ export default function SearchContent({
 				</div>
 			</div>
 
-			<div className="mt-6" id="search-results">
+			<div className="mt-6 min-w-0" id="search-results">
 				<h2 className="text-xl mb-2">
 					Showing all{" "}
 					{table && TableMetadata[table] ? (

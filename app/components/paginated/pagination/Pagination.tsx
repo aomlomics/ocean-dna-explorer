@@ -11,19 +11,24 @@ import TableMetadata, { type ModelName } from "@/types/tableMetadata";
 import { buildWhereParams } from "@/app/helpers/api";
 import TableStatusState from "../table/TableStatusState";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
+import type { ExtraResults } from "../table/Table";
 
 export default function Pagination({
 	table,
 	where,
 	relCounts,
 	take = 25,
-	ignoreParams
+	ignoreParams,
+	extraParams,
+	setExtraResults
 }: {
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, string>;
 	relCounts?: string[];
 	take?: number;
 	ignoreParams?: string[];
+	extraParams?: Record<string, string>;
+	setExtraResults?: (args: ExtraResults) => void;
 }) {
 	const searchParams = useSearchParams();
 	const { trusted } = useTrusted();
@@ -50,12 +55,22 @@ export default function Pagination({
 
 		query.set("where", JSON.stringify(whereQuery));
 
+		Object.entries(extraParams || {}).forEach(([k, v]) => query.set(k, v));
+
 		return query;
 	}
 
 	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
 		keepPreviousData: true,
-		revalidateOnFocus: false
+		revalidateOnFocus: false,
+		onSuccess: (payload) => {
+			if (!setExtraResults || payload?.statusMessage !== "success") return;
+			setExtraResults({
+				samples: payload.samples,
+				blastResult: payload.BlastQueryResults,
+				existingBlastDate: payload.existingBlastDate
+			});
+		}
 	});
 	if (error) {
 		return (

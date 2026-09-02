@@ -41,7 +41,7 @@ export default async function Search({
 
 	return (
 		<>
-			<div className="py-4">
+			<div className="min-w-0 py-4">
 				{table && (
 					<header className="flex items-start justify-between">
 						<div className="flex flex-wrap items-center gap-2">

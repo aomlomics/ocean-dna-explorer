@@ -606,7 +606,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 				)}
 			</div>
 
-			<div className="flex items-center justify-end gap-3">
+			<div className="flex flex-wrap items-center justify-end gap-2 md:gap-3">
 				{noTable ? (
 					<></>
 				) : (
@@ -751,7 +751,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 
 	return (
 		<>
-			<div className="collapse collapse-arrow overflow-visible relative z-raised rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
+			<div className="collapse collapse-arrow overflow-visible relative z-raised min-w-0 rounded-xl border border-base-300 bg-base-200/30 shadow-sm">
 				<input defaultChecked type="checkbox" />
 				<div className="collapse-title py-2.5 px-4 text-base font-medium text-base-content">
 					<div className="flex items-center gap-2">
@@ -772,7 +772,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 						<span>Query Builder</span>
 					</div>
 				</div>
-				<div className="collapse-content overflow-visible px-4">
+				<div className="collapse-content overflow-visible px-2 md:px-4">
 					<form
 						ref={formRef}
 						className="search-focus-border relative overflow-visible bg-transparent pb-4"
@@ -1062,9 +1062,9 @@ function SearchGroupComponent({
 				isRoot ? "" : "card bg-base-100 shadow-sm border border-base-300"
 			} ${!isRoot ? "bg-base-200/60" : ""}`}
 		>
-			<div className={`${isRoot ? "space-y-2" : "card-body p-4"} space-y-2 relative ${!isRoot ? "pl-8" : ""}`}>
-				<div className="flex items-center justify-between gap-2">
-					<div className="flex items-center text-sm text-base-content/70">
+			<div className={`${isRoot ? "space-y-2" : "card-body p-3 md:p-4"} space-y-2 relative ${!isRoot ? "pl-3 md:pl-8" : ""}`}>
+				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-wrap items-center text-sm text-base-content/70">
 						{isRoot && (
 							<>
 								<span>Show</span>
@@ -1102,7 +1102,7 @@ function SearchGroupComponent({
 								<span className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-sm font-semibold">
 									?
 								</span>
-								<span className="text-xs md:text-sm normal-case">Help me use the query builder</span>
+								<span className="hidden sm:inline text-xs md:text-sm normal-case">Help me use the query builder</span>
 							</button>
 						)}
 
@@ -1152,7 +1152,7 @@ function SearchGroupComponent({
 					{group.children.reduce((acc: ReactNode[], child, index) => {
 						if (index > 0) {
 							acc.push(
-								<div key={child.id + "_op"} className="grid grid-cols-[2rem_15%_18%_18%_1fr] px-3">
+								<div key={child.id + "_op"} className="flex justify-center px-3 py-1 md:grid md:grid-cols-[2rem_15%_18%_18%_1fr] md:py-0">
 									<div className="flex justify-center items-center">
 										<span className="text-xs text-base-content/60 font-semibold tracking-wide">{group.operator}</span>
 									</div>
@@ -1206,6 +1206,10 @@ function SearchGroupComponent({
 	);
 }
 
+function MobileFieldLabel({ children }: { children: string }) {
+	return <span className="text-xs text-base-content/50 md:hidden">{children}</span>;
+}
+
 function SearchRuleComponent({
 	node,
 	searchTable,
@@ -1244,105 +1248,141 @@ function SearchRuleComponent({
 
 	return (
 		<div
-			className={`grid ${
-				type === "relation" && !noTable ? "grid-cols-[2rem_14%_14%_20%_1fr]" : "grid-cols-[2rem_14%_26%_1fr]"
-			} gap-2 items-start py-1.5 px-3 rounded-md hover:bg-base-200/60 transition-colors`}
+			className={`grid grid-cols-1 gap-2 rounded-md py-2 px-1 hover:bg-base-200/60 transition-colors md:items-start md:gap-2 md:py-1.5 md:px-3 ${
+				type === "relation" && !noTable
+					? "md:grid-cols-[2rem_14%_14%_20%_1fr]"
+					: "md:grid-cols-[2rem_14%_26%_1fr]"
+			}`}
 		>
-			<div className="flex justify-center pt-1">
-				<button
-					className="btn btn-sm btn-square btn-primary"
-					type="button"
-					onClick={() => onChange(null)}
-					aria-label="Remove filter"
-				>
-					<span className="text-primary-content text-sm leading-none">×</span>
-				</button>
+			<div className="flex items-start gap-2 md:contents">
+				<div className="flex justify-center pt-1">
+					<button
+						className="btn btn-sm btn-square btn-primary"
+						type="button"
+						onClick={() => onChange(null)}
+						aria-label="Remove filter"
+					>
+						<span className="text-primary-content text-sm leading-none">×</span>
+					</button>
+				</div>
+				{noTable ? (
+					<select
+						className="select invisible"
+						hidden
+						value={type}
+						onChange={(e) => {
+							setType(e.target.value);
+							setRelation("");
+							setField("");
+						}}
+						required
+						name={`type_${nameSuffix}`}
+					>
+						<option value="" disabled>
+							Select Type
+						</option>
+						<option value="field">Field</option>
+						<option value="relation">Relation</option>
+					</select>
+				) : (
+					<label className="flex min-w-0 flex-1 flex-col gap-1 md:contents">
+						<MobileFieldLabel>Type</MobileFieldLabel>
+						<select
+							className="select w-full min-w-0"
+							value={type}
+							onChange={(e) => {
+								setType(e.target.value);
+								setRelation("");
+								setField("");
+							}}
+							required
+							name={`type_${nameSuffix}`}
+						>
+							<option value="" disabled>
+								Select Type
+							</option>
+							<option value="field">Field</option>
+							<option value="relation">Relation</option>
+						</select>
+					</label>
+				)}
 			</div>
-			<select
-				className={`select ${noTable ? "invisible" : ""}`}
-				hidden={noTable}
-				value={type}
-				onChange={(e) => {
-					setType(e.target.value);
-					setRelation("");
-					setField("");
-				}}
-				required
-				name={`type_${nameSuffix}`}
-			>
-				<option value="" disabled>
-					Select Type
-				</option>
-				<option value="field">Field</option>
-				<option value="relation">Relation</option>
-			</select>
 
 			{type === "relation" && (
-				<select
-					className="select"
-					value={relation}
-					onChange={(e) => {
-						setRelation(e.target.value as Uncapitalize<ModelName>);
-						setField("");
-					}}
-					required
-					name={`relation_${nameSuffix}`}
-				>
-					<option value="" disabled>
-						Select {noTable ? "Table" : "Relation"}
-					</option>
-					{TableNames.reduce((acc, t) => {
-						if (!searchTable || (t !== searchTable && TableMetadata[searchTable].relationPaths[t])) {
-							acc.push(
-								<option key={t} title={t}>
-									{t}
-								</option>
-							);
-						}
+				<label className="flex min-w-0 flex-col gap-1 md:contents">
+					<MobileFieldLabel>Relation</MobileFieldLabel>
+					<select
+						className="select w-full min-w-0"
+						value={relation}
+						onChange={(e) => {
+							setRelation(e.target.value as Uncapitalize<ModelName>);
+							setField("");
+						}}
+						required
+						name={`relation_${nameSuffix}`}
+					>
+						<option value="" disabled>
+							Select {noTable ? "Table" : "Relation"}
+						</option>
+						{TableNames.reduce((acc, t) => {
+							if (!searchTable || (t !== searchTable && TableMetadata[searchTable].relationPaths[t])) {
+								acc.push(
+									<option key={t} title={t}>
+										{t}
+									</option>
+								);
+							}
 
-						return acc;
-					}, [] as ReactNode[])}
-				</select>
+							return acc;
+						}, [] as ReactNode[])}
+					</select>
+				</label>
 			)}
 
 			{table ? (
 				<>
 					{type === "field" || relation ? (
-						<select
-							className="select"
-							value={field}
-							onChange={(e) => setField(e.target.value)}
-							required
-							name={`field_${nameSuffix}`}
-						>
-							<option value="" disabled>
-								Select Field
-							</option>
-							{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
-								if (!omit.includes(val)) {
-									acc.push(
-										<option key={val} value={val} title={val}>
-											{val}
-										</option>
-									);
-								}
+						<label className="flex min-w-0 flex-col gap-1 md:contents">
+							<MobileFieldLabel>Field</MobileFieldLabel>
+							<select
+								className="select w-full min-w-0"
+								value={field}
+								onChange={(e) => setField(e.target.value)}
+								required
+								name={`field_${nameSuffix}`}
+							>
+								<option value="" disabled>
+									Select Field
+								</option>
+								{TableMetadata[table].enumSchema.options.reduce((acc, val) => {
+									if (!omit.includes(val)) {
+										acc.push(
+											<option key={val} value={val} title={val}>
+												{val}
+											</option>
+										);
+									}
 
-								return acc;
-							}, [] as ReactNode[])}
-						</select>
+									return acc;
+								}, [] as ReactNode[])}
+							</select>
+						</label>
 					) : (
 						<></>
 					)}
 
 					{field ? (
-						<InputElement
-							key={`${nameSuffix}:${field}:${defaultMode}:${defaultValue}`}
-							nameSuffix={nameSuffix}
-							table={table}
-							field={field}
-							defaultMode={defaultMode}
-							defaultValue={defaultValue}
-						/>
+						<div className="flex min-w-0 flex-col gap-1 md:contents">
+							<MobileFieldLabel>Value</MobileFieldLabel>
+							<InputElement
+								key={`${nameSuffix}:${field}:${defaultMode}:${defaultValue}`}
+								nameSuffix={nameSuffix}
+								table={table}
+								field={field}
+								defaultMode={defaultMode}
+								defaultValue={defaultValue}
+							/>
+						</div>
 					) : (
 						<></>
 					)}
@@ -1475,9 +1515,9 @@ function InputElement({
 
 	const listMode = mode === "in" || mode === "notIn";
 	const wrapClass = listMode
-		? "flex w-full min-w-0 items-start gap-2"
-		: "flex w-full min-w-0 items-center gap-2";
-	const modeSelectClass = "select w-40 shrink-0";
+		? "flex w-full min-w-0 flex-col items-stretch gap-2 md:flex-row md:items-start"
+		: "flex w-full min-w-0 flex-col items-stretch gap-2 md:flex-row md:items-center";
+	const modeSelectClass = "select w-full min-w-0 md:w-40 md:shrink-0";
 
 	if (type === "integer" || type === "float") {
 		return (
@@ -1515,7 +1555,7 @@ function InputElement({
 						numeric={type === "integer" ? "integer" : "float"}
 					/>
 				) : mode === "range" ? (
-					<div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-1">
+					<div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-1 md:grid-cols-[1fr_auto_1fr]">
 						<input
 							className="input w-full min-w-0"
 							placeholder="Lower bound"
@@ -1607,7 +1647,7 @@ function InputElement({
 						))}
 					</select>
 				) : mode === "range" ? (
-					<div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center gap-1">
+					<div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-1 md:grid-cols-[1fr_auto_1fr]">
 						<div className="input w-full min-w-0">
 							<input
 								name={`filter_${nameSuffix}_gte_date`}
