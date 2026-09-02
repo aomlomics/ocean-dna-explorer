@@ -24,8 +24,7 @@ export async function GET(
 			features: {
 				fields: true,
 				relations: true,
-				relCounts: true,
-				relationsLimit: true
+				relCounts: true
 			},
 			defaults: {
 				filters: { id: Number(id) }

@@ -90,7 +90,7 @@ export default function useTableQuery({
 			if (manyRelations.includes("Tags")) {
 				query.set("relCounts", manyRelations.filter((r) => r !== "Tags").join(","));
 				query.set("relations", "Tags");
-				query.set("relationsAllFields", "true");
+				query.set("relationsFields", "tags,tagName,description,color");
 			} else {
 				query.set("relCounts", manyRelations.join(","));
 			}

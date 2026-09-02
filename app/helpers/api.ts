@@ -431,7 +431,6 @@ export function parseApiQuery(
 			distinct?: true;
 			relations?: true;
 			relCounts?: true;
-			relationsLimit?: true;
 			ids?: true;
 			limit?: true;
 			filters?: true;
@@ -583,8 +582,10 @@ export function parseApiQuery(
 	//relations
 	const relations = newParams.get("relations");
 	newParams.delete("relations");
-	const relationsLimit = newParams.get("relationsLimit");
-	newParams.delete("relationsLimit");
+
+	const relationsFields = newParams.getAll("relationsFields");
+	newParams.delete("relationsFields");
+
 	const relationsAllFields = newParams.get("relationsAllFields");
 	newParams.delete("relationsAllFields");
 
@@ -603,51 +604,62 @@ export function parseApiQuery(
 				relTables.add(relTableArr);
 			}
 
-			//relations limit
-			let take;
-
-			if (relationsLimit != null) {
-				if (options?.features && !options.features.relationsLimit) {
-					if (!ignoreExtraOptions) {
-						throw new Error("The relationsLimit option is not allowed on this route.");
-					}
-				} else {
-					take = parseInt(relationsLimit);
-					if (Number.isNaN(take) || take < 1) {
-						throw new Error(
-							`Invalid relationsLimit: "${relationsLimit}". The relationsLimit option must be a positive integer.`
-						);
-					}
-				}
-			}
-
-			//include all fields in relations
-			let allFields = undefined as undefined | boolean | Set<Uncapitalize<ModelName>>;
+			//fields to select in relations
+			let relFields = undefined as undefined | true | Record<Uncapitalize<ModelName>, true | string[]>;
 
 			if (relationsAllFields != null) {
-				if (!relationsAllFields || relationsAllFields.toLowerCase() === "false") {
-					allFields = false;
-				} else if (relationsAllFields.toLowerCase() === "true") {
-					allFields = true;
-				} else {
-					allFields = new Set() as Set<Uncapitalize<ModelName>>;
-					for (const r of relationsAllFields.split(",")) {
-						const trimmed = r.trim().toLowerCase();
-						const allFieldsArr = Object.entries(TableMetadata).find(
-							([t, metadata]) => trimmed === t.toLowerCase() || trimmed === metadata.plural.toLowerCase()
-						);
-						if (!allFieldsArr) {
-							throw new Error(
-								`Invalid relationsAllFields: "${relationsAllFields}". The relationsAllFields option must be "true", "false", or a relation provided in the "relations" field. Value was "${r}".`
+				if (relationsFields.length) {
+					throw new Error("Only one of relationsFields and relationsAllFields may be specified.");
+				}
+
+				const relAllLower = relationsAllFields.toLowerCase();
+				if (relAllLower !== "false") {
+					if (relAllLower === "true") {
+						relFields = true;
+					} else {
+						relFields = {} as Record<Uncapitalize<ModelName>, true>;
+
+						for (const r of relationsAllFields.split(",")) {
+							const trimmed = r.trim().toLowerCase();
+
+							const allFieldsArr = Object.entries(TableMetadata).find(
+								([t, metadata]) => trimmed === t.toLowerCase() || trimmed === metadata.plural.toLowerCase()
 							);
+
+							if (!allFieldsArr) {
+								throw new Error(
+									`Invalid relationsAllFields: "${relationsAllFields}". The relationsAllFields option must be "true", "false", or a relation provided in the "relations" field. Value was "${r}".`
+								);
+							}
+
+							relFields[allFieldsArr[0] as Uncapitalize<ModelName>] = true;
 						}
-						allFields.add(allFieldsArr[0] as Uncapitalize<ModelName>);
 					}
+				}
+			} else if (relationsFields.length) {
+				relFields = {} as Record<Uncapitalize<ModelName>, string[]>;
+
+				for (const rfs of relationsFields) {
+					const [relTable, ...fields] = rfs.split(",").map((e) => e.trim());
+
+					if (!relTable || !fields.length) {
+						throw new Error(
+							`Invalid relationsFields: "${rfs}". The relationsFields option must be a table name and a list of fields, all separated by commas.`
+						);
+					}
+
+					const relModel = getTableName(relTable, `Invalid table name for relationsFields: "${relTable}".`);
+					if (!relTables.has(relModel)) {
+						throw new Error(`The relation "${relModel}" must be included in the relations option.`);
+					}
+
+					fields.forEach((f) => getZodType(relModel, f));
+					relFields[relModel] ??= [];
+					(relFields[relModel] as string[]).push(...fields);
 				}
 			}
 
 			const relPaths = [] as RelationMetadata[][];
-			const includeSteps = new Set() as Set<string>;
 			for (const rt of relTables) {
 				const path = TableMetadata[table].relationPaths[rt];
 				if (!path) {
@@ -656,30 +668,27 @@ export function parseApiQuery(
 
 				let add = true;
 				for (let i = 0; i < relPaths.length; i++) {
-					if (allFields) {
-						const currRelPath = relPaths[i]!;
-						const lastPath = path.at(-1)!;
-						if (path.length < currRelPath.length && currRelPath.some((step) => lastPath.field === step.field)) {
-							//already a part of another path
-							if (allFields === true || allFields.has(uncapitalizeTable(lastPath.table))) {
-								includeSteps.add(lastPath.field);
-							}
+					const currRelPath = relPaths[i]!;
 
-							if (!take) {
-								add = false;
-							}
-						} else {
-							const lastRelPath = currRelPath.at(-1)!;
-							if (path.length > currRelPath.length && path.some((step) => lastRelPath.field === step.field)) {
-								//existing path is a part of new path
-								if (allFields === true || allFields.has(uncapitalizeTable(lastRelPath.table))) {
-									includeSteps.add(lastRelPath.field);
-								}
+					//existing path is a prefix of the new path
+					const currIsPrefix =
+						currRelPath.length < path.length &&
+						currRelPath.every((step, index) => step.field === path[index]!.field && step.table === path[index]!.table);
 
-								relPaths.splice(i, 1);
-								i--;
-							}
-						}
+					//new path is a prefix of the existing path
+					const pathIsPrefix =
+						path.length < currRelPath.length &&
+						path.every(
+							(step, index) => step.field === currRelPath[index]!.field && step.table === currRelPath[index]!.table
+						);
+
+					if (currIsPrefix) {
+						//the new, longer path supersedes the existing one
+						relPaths.splice(i, 1);
+						i--;
+					} else if (pathIsPrefix) {
+						//the existing path already contains the new path
+						add = false;
 					}
 				}
 
@@ -688,40 +697,35 @@ export function parseApiQuery(
 				}
 			}
 
-			//assemble final query step before checking allFields
-			let relationVal = true as
-				| true
-				| { take: number }
-				| {
-						take?: number;
-						select: { id: true };
-				  };
-			if (take) {
-				relationVal = { take };
-			}
+			function buildRelationPath(path: RelationMetadata[]): Record<string, any> {
+				const [rel, ...rest] = path;
+				const relTable = uncapitalizeTable(rel!.table);
 
-			type FinalVal = typeof relationVal | { [key: string]: FinalVal };
-			const relObjs = relPaths.map((rp) => {
-				let currVal = relationVal as FinalVal;
-				if (!allFields || (allFields !== true && !allFields.has(uncapitalizeTable(rp.at(-1)!.table)))) {
-					if (typeof relationVal === "object") {
-						currVal = { ...relationVal, select: { id: true } };
-					} else {
-						currVal = { select: { id: true } };
-					}
-				}
-
-				const last = rp.pop()!;
-				currVal = { [last.field]: currVal };
-
-				for (const rel of rp.toReversed()) {
-					currVal = {
-						[rel.field]: includeSteps.has(rel.field) ? { include: currVal } : { select: { id: true, ...currVal } }
+				const relationFields = relFields === true ? true : relFields?.[relTable];
+				if (relationFields === true && !rest.length) {
+					return {
+						[rel!.field]: true
 					};
 				}
 
-				return currVal as { [key: string]: FinalVal };
-			});
+				const fields =
+					relationFields === true
+						? Object.fromEntries(TableMetadata[relTable].enumSchema.options.map((field) => [field, true]))
+						: Array.isArray(relationFields)
+							? Object.fromEntries(relationFields.map((field) => [field, true]))
+							: { id: true };
+
+				return {
+					[rel!.field]: {
+						select: {
+							...fields,
+							...(rest.length ? buildRelationPath(rest) : {})
+						}
+					}
+				};
+			}
+
+			const relObjs = relPaths.map((rp) => buildRelationPath(rp));
 
 			if (query.select) {
 				query.select = deepMerge(query.select, ...relObjs);
@@ -730,8 +734,8 @@ export function parseApiQuery(
 			}
 		}
 	} else {
-		if (relationsLimit != null) {
-			throw new Error("The relationsLimit option requires the relations option.");
+		if (relationsFields.length) {
+			throw new Error("The relationsFields option requires the relations option.");
 		}
 
 		if (relationsAllFields != null) {
@@ -743,9 +747,11 @@ export function parseApiQuery(
 	const tempLimit = newParams.get("limit");
 	newParams.delete("limit");
 	let parsedLimit: number | undefined;
+
 	const page = newParams.get("page");
 	newParams.delete("page");
 	let parsedPage: number | undefined;
+
 	if (tempLimit != null) {
 		if (options?.features && !options.features.limit) {
 			if (!ignoreExtraOptions) {
@@ -815,7 +821,11 @@ export function parseApiQuery(
 								: TableMetadata[dr].titleField.reduce((acc, f) => ({ ...acc, [f]: true }), {});
 
 						for (const rel of path.toReversed()) {
-							include = { [rel.field]: { select: include } };
+							include = {
+								[rel.field]: {
+									select: include
+								}
+							};
 						}
 
 						if (query.select) {
@@ -935,7 +945,10 @@ export function parseApiQuery(
 
 			//rest of the fields
 			for (const [field, value] of newParams) {
-				tempWhere = { ...tempWhere, ...parseToQuery(table, [field, value], options?.swapToTable ? table : undefined) };
+				tempWhere = {
+					...tempWhere,
+					...parseToQuery(table, [field, value], options?.swapToTable ? table : undefined)
+				};
 			}
 
 			if (Object.keys(tempWhere).length) {

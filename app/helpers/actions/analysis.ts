@@ -172,6 +172,14 @@ export async function parseAssignmentsFile({
 
 	let i = 0;
 	for await (const record of parser) {
+		if (!("featureid" in record)) {
+			await channel.stream.error("The featureid column is missing from the file.");
+			return;
+		} else if (!("taxonomy" in record)) {
+			await channel.stream.error("The taxonomy column is missing from the file.");
+			return;
+		}
+
 		if (record.featureid) {
 			i++;
 

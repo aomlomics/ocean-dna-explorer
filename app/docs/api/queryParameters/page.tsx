@@ -153,26 +153,6 @@ export default function ApiQueryParametersPage() {
 							<p>This example limits the results to 20 projects.</p>
 						</div>
 					)
-				},
-				{
-					id: "relations-result-limiting",
-					title: "Relations Result Limiting",
-					content: (
-						<div className="space-y-4">
-							<p>Parameter: relationsLimit=❮number❯</p>
-							<p>
-								Limits the number of results returned when the{" "}
-								<Link className="link link-primary" href="#relations">
-									Relations
-								</Link>{" "}
-								parameter is used. This will cause an error if the relation is not a list. Must be a positive number.
-							</p>
-							<div>
-								Example URL: <InlineCode code="/api/project?relations=Analyses&relationsLimit=3" />
-							</div>
-							<p>This example limits the list of related analyses to 3.</p>
-						</div>
-					)
 				}
 			]}
 		/>

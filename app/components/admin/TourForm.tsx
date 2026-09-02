@@ -224,7 +224,7 @@ export default function TourForm() {
 				if (samp_name) {
 					//TODO: only show features for selected taxonomy
 					const occRes = await fetch(
-						`/api/occurrence?fields=featureid&relations=Assignment&relationsAllFields=true&advanced=[["sample","samp_name","equals","${samp_name}"],["analysis_run_name","equals","${analysis_run_name}"]]`
+						`/api/occurrence?fields=featureid&relations=Assignment&relationsFields=assignment,taxonomy&advanced=[["sample","samp_name","equals","${samp_name}"],["analysis_run_name","equals","${analysis_run_name}"]]`
 					);
 					if (occRes.ok) {
 						const response = (await occRes.json()) as NetworkPacket;

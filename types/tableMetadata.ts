@@ -109,6 +109,7 @@ const TableMetadata = {
 		relationsSchema: PrismaZodTypes.AssayWithRelationsSchema,
 		titleField: "assay_name",
 		subFields: [
+			"AssayPreps",
 			"Analyses",
 			"pcr_primer_name_forward",
 			"pcr_primer_forward",
@@ -151,7 +152,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.LibraryWithRelationsSchema,
 		titleField: ["project_id", "lib_id"],
-		subFields: ["Sample", "seq_run_id"],
+		subFields: ["Sample", "assay_name", "seq_run_id"],
 		fieldOrder: [
 			"samp_name",
 			"seq_run_id",
@@ -183,7 +184,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.OccurrenceWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name", "lib_id", "featureid"],
-		subFields: ["Analysis", "Library", "Assignment", "organismQuantity"]
+		subFields: ["Analysis", "Library", "organismQuantity"]
 	},
 	assignment: {
 		plural: "Assignments",

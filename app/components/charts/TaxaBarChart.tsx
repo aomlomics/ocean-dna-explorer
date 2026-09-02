@@ -114,6 +114,7 @@ export default function TaxaBarChart({
 			}
 		}
 
+		//TODO: sort differently depending on type of averageBy type
 		const groupLabels = Object.keys(averageByGroups).sort();
 		const allXLabels = averageBy === "lib_id" ? libIds : groupLabels;
 		const visibleLibIds = libIds.filter((libId) => !xLabelsFilter[libId]);

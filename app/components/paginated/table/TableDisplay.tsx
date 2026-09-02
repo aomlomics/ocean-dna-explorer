@@ -99,7 +99,7 @@ export default function TableDisplay({
 				Child={ProjectGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
-				extraQueryParams={{ relations: "AssayPreps", relationsAllFields: "true" }}
+				extraQueryParams={{ relations: "AssayPreps", relationsFields: "assayPreps,assay_name" }}
 				fillViewport={false}
 				itemsGridClassName="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5"
 			/>

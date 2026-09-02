@@ -35,7 +35,7 @@ export default function TaxonomyData() {
 			`/api/internal/occurrence/swapToTable?fields=lib_id,featureid,organismQuantity&trusted=${trusted}&${stringParams}`,
 			`/api/internal/assignment/swapToTable?fields=featureid,taxonomy&trusted=${trusted}&${stringParams}`,
 			`/api/internal/taxonomy/swapToTable?fields=taxonomy,${TaxonomicRanks.join(",")}&trusted=${trusted}&${stringParams}`,
-			`/api/internal/sample/swapToTable?relations=Libraries&relationsAllFields=true&trusted=${trusted}&${stringParams}`
+			`/api/internal/sample/swapToTable?relations=Libraries&relationsFields=library,lib_id&trusted=${trusted}&${stringParams}`
 		],
 		fetcherAllSuccess,
 		{ revalidateOnFocus: false }
