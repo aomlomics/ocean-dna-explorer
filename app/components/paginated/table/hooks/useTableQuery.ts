@@ -4,7 +4,7 @@ import { type SubmitEvent, type RefObject, useEffect, useState } from "react";
 import type { TableColumns } from "./useTableColumns";
 import { DEFAULT_ORDER_BY, type ExtraResults } from "../Table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { buildWhereParams } from "@/app/helpers/api";
+import { buildParams } from "@/app/helpers/api";
 import useSWR from "swr";
 import { fetcher } from "@/app/helpers/utils";
 import { getZodType } from "@/app/helpers/schema";
@@ -16,6 +16,7 @@ export type TableQuery = ReturnType<typeof useTableQuery>;
 export default function useTableQuery({
 	table,
 	where,
+	hideFilters,
 	defaultTake,
 	ignoreParams,
 	extraParams,
@@ -26,6 +27,7 @@ export default function useTableQuery({
 }: {
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
+	hideFilters?: boolean;
 	defaultTake: number;
 	ignoreParams?: string[];
 	extraParams?: Record<string, string>;
@@ -50,7 +52,8 @@ export default function useTableQuery({
 
 	function getQuery(dir?: 1 | -1) {
 		const query = new URLSearchParams({
-			take: take.toString(),
+			ignoreExtraOptions: "true",
+			limit: take.toString(),
 			page: (dir ? page + dir : page).toString(),
 			orderBy: orderBy.field + "," + orderBy.order
 		});
@@ -59,19 +62,26 @@ export default function useTableQuery({
 			query.set("trusted", "true");
 		}
 
-		let whereQuery = {} as Record<string, string | number>;
+		const whereQuery = {} as Record<string, string | number>;
 		if (where) {
-			whereQuery = { ...where };
+			for (const [field, value] of Object.entries(where)) {
+				if (typeof value === "object") {
+					whereQuery[field] = value;
+				} else {
+					query.set(field, value);
+				}
+			}
 		}
-		if (Object.values(deepRelationsFilter).includes(false)) {
-			whereQuery = { ...whereQuery, ...whereFilter };
-		}
-		if (searchParams && searchParams.size) {
-			buildWhereParams(searchParams, query, whereQuery, ignoreParams);
-		}
-
 		if (Object.keys(whereQuery).length) {
 			query.set("where", JSON.stringify(whereQuery));
+		}
+
+		for (const [field, value] of Object.entries(whereFilter)) {
+			query.set(field, value.toString());
+		}
+
+		if (searchParams && searchParams.size) {
+			buildParams(searchParams, query, ignoreParams);
 		}
 
 		Object.entries(extraParams || {}).forEach(([k, v]) => query.set(k, v));
@@ -80,7 +90,7 @@ export default function useTableQuery({
 			if (manyRelations.includes("Tags")) {
 				query.set("relCounts", manyRelations.filter((r) => r !== "Tags").join(","));
 				query.set("relations", "Tags");
-				query.set("relationsAllFields", "true");
+				query.set("relationsFields", "tags,tagName,description,color");
 			} else {
 				query.set("relCounts", manyRelations.join(","));
 			}
@@ -103,20 +113,19 @@ export default function useTableQuery({
 		return query;
 	}
 
-	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${getQuery().toString()}`, fetcher, {
+	const strQuery = getQuery().toString();
+	const { data, error, isLoading } = useSWR(`/api/internal/${table}/pagination?${strQuery}`, fetcher, {
 		keepPreviousData: true,
 		revalidateOnFocus: false
 	});
-
-	useEffect(() => {
-		if (data && data.statusMessage === "success") {
-			//set to last page if page is too large
-			if ((page - 1) * take > data.count) {
-				// eslint-disable-next-line react-hooks/set-state-in-effect
-				setPage(Math.floor(data.count / take) + 1);
-			}
-		}
-	}, [data]);
+	const {
+		data: countData,
+		error: countError,
+		isLoading: countIsLoading
+	} = useSWR(`/api/${table}/count?${strQuery}`, fetcher, {
+		keepPreviousData: true,
+		revalidateOnFocus: false
+	});
 
 	useEffect(() => {
 		if (data && data.statusMessage === "success") {
@@ -187,13 +196,19 @@ export default function useTableQuery({
 		} else {
 			setTake(formTake);
 		}
-		setWhereFilter(temp);
+
+		if (!hideFilters) {
+			setWhereFilter(temp);
+		}
 	}
 
 	return {
 		data,
 		error,
 		isLoading,
+		countData,
+		countError,
+		countIsLoading,
 		page,
 		setPage,
 		take,

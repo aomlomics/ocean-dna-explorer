@@ -9,7 +9,6 @@ import TaxaGridItem from "../grid/TaxaGridItem";
 import ProjectGridItem from "../grid/ProjectGridItem";
 import { useViewMode } from "../../explore/ViewModeContext";
 import InfoButton from "../../InfoButton";
-import { useSearchParams } from "next/navigation";
 import type { ModelName } from "@/types/tableMetadata";
 
 const sw = 1.75;
@@ -22,7 +21,8 @@ export default function TableDisplay({
 	toggle,
 	ignoreParams,
 	extraParams,
-	setExtraResults
+	setExtraResults,
+	hideFilters
 }: {
 	table: Uncapitalize<ModelName>;
 	tableWhere?: Record<string, any> | undefined;
@@ -35,9 +35,8 @@ export default function TableDisplay({
 		existingBlastDate: BlastQueryModel["dateCalculated"] | undefined;
 		samples: SampleModel[] | undefined;
 	}) => void;
+	hideFilters?: boolean;
 }) {
-	const searchParams = useSearchParams();
-
 	const [size, setSize] = useState<"lg" | "sm">("lg");
 	const [showCommonNames, setShowCommonNames] = useState(true);
 
@@ -80,7 +79,7 @@ export default function TableDisplay({
 		mode === "table" ? (
 			size === "lg" ? (
 				<Table
-					key={table + "?" + searchParams.toString()}
+					key={table}
 					table={table}
 					defaultTake={25}
 					filterHeadersAtStart
@@ -89,29 +88,24 @@ export default function TableDisplay({
 					extraParams={extraParams}
 					setExtraResults={setExtraResults}
 					hideEmptyAtStart={table === "taxonomy"}
+					hideFilters={hideFilters}
 				/>
 			) : (
-				<Pagination
-					key={table + "?" + searchParams.toString()}
-					table={table}
-					ignoreParams={effectiveIgnoreParams}
-					extraParams={extraParams}
-					setExtraResults={setExtraResults}
-				/>
+				<Pagination key={table} table={table} ignoreParams={effectiveIgnoreParams} />
 			)
 		) : table === "project" ? (
 			<Grid
-				key={table + "?" + searchParams.toString()}
+				key={table}
 				Child={ProjectGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}
-				extraQueryParams={{ relations: "AssayPreps", relationsAllFields: "true" }}
+				extraQueryParams={{ relations: "AssayPreps", relationsFields: "assayPreps,assay_name" }}
 				fillViewport={false}
 				itemsGridClassName="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5"
 			/>
 		) : table === "taxonomy" ? (
 			<Grid
-				key={table + "?" + searchParams.toString()}
+				key={table}
 				Child={TaxaGridItem}
 				table={table}
 				ignoreParams={effectiveIgnoreParams}

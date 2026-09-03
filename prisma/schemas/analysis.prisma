@@ -2,7 +2,7 @@ model Analysis {
     id                Int      @id @default(autoincrement())
     analysis_run_name String
     dateSubmitted     DateTime @default(now())
-    trusted           Boolean
+    trusted           Boolean  @default(false)
     /// [EditHistoryType]
     editHistory       Json?
 
@@ -11,8 +11,11 @@ model Analysis {
     Project          Project          @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     assay_name       String
     Assay            Assay            @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
+    Libraries        Library[]
     Occurrences      Occurrence[]
     Assignments      Assignment[]
+    Features         Feature[]
+    Taxonomies       Taxonomy[]
     Tags             Tag[]
     AlphaDiversities AlphaDiversity[]
 
@@ -111,10 +114,10 @@ model Occurrence {
     // Relations
     project_id        String
     Project           Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
-    lib_id            String
-    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     analysis_run_name String
     Analysis          Analysis   @relation(fields: [project_id, analysis_run_name], references: [project_id, analysis_run_name], onDelete: Cascade)
+    lib_id            String
+    Library           Library    @relation(fields: [project_id, lib_id], references: [project_id, lib_id], onDelete: Cascade)
     featureid         String
     Feature           Feature    @relation(fields: [featureid], references: [featureid], onDelete: Cascade)
     Assignment        Assignment @relation(fields: [project_id, analysis_run_name, featureid], references: [project_id, analysis_run_name, featureid], onDelete: Cascade)
@@ -157,6 +160,7 @@ model Feature {
     featureid String @unique
 
     // Relations
+    Analyses          Analysis[]
     Occurrences       Occurrence[]
     Assignments       Assignment[]
     BlastQueryResults BlastQueryResult[]
@@ -171,6 +175,8 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
+    Analyses    Analysis[]
+    Samples     Sample[]
     Assignments Assignment[]
 
     // Data

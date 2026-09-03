@@ -274,18 +274,16 @@ async function doEdit(
 				//samples
 				await updateManyRaw(
 					tx,
-					"Sample",
-					samples.filter((samp) => !newSamples.some((dbSamp) => dbSamp.samp_name === samp.samp_name)),
-					"samp_name"
+					"sample",
+					samples.filter((samp) => !newSamples.some((dbSamp) => dbSamp.samp_name === samp.samp_name))
 				);
 				await sampleChannel.stream.message("Existing Samples successfully updated in database.", 93);
 
 				//libraries
 				await updateManyRaw(
 					tx,
-					"Library",
-					libraries.filter((lib) => !newLibraries.some((dbLib) => dbLib.lib_id === lib.lib_id)),
-					"lib_id"
+					"library",
+					libraries.filter((lib) => !newLibraries.some((dbLib) => dbLib.lib_id === lib.lib_id))
 				);
 				await libraryChannel.stream.message("Existing Libraries successfully updated in database.", 93);
 

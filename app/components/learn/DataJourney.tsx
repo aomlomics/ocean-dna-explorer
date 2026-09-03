@@ -12,7 +12,7 @@ const OceanGlobe = dynamic(() => import("@/app/components/learn/OceanGlobe"), {
 
 import TaxonomyLaptop from "@/app/components/learn/TaxonomyLaptop";
 import AnalysisLaptop from "@/app/components/learn/AnalysisLaptop";
-import TableMetadata, { DataTableNames } from "@/types/tableMetadata";
+import TableMetadata, { type DataTableNames } from "@/types/tableMetadata";
 
 // Tables that appear in the data journey (have descriptions in TableMetadata)
 type DataJourneyTableKey = (typeof DataTableNames)[0];

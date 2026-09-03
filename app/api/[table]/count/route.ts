@@ -1,4 +1,5 @@
-import { deepWhere, parseApiQuery } from "@/app/helpers/api";
+import { deepWhere } from "@/app/helpers/api";
+import { parseApiQuery } from "@/app/helpers/api";
 import { getTableName } from "@/app/helpers/schema";
 import { deepMerge, getLocationsInsideShapes } from "@/app/helpers/utils";
 import type { NetworkPacket } from "@/types/globals";
@@ -24,19 +25,47 @@ export async function GET(
 
 		const { searchParams } = new URL(request.url);
 
-		const { trusted, query, blast, shapes, sampleWhere } = parseApiQuery(model, searchParams, {
+		const parsedQuery = parseApiQuery(model, searchParams, {
 			features: {
 				filters: true,
 				advanced: true,
-				search: true,
-				shapes: true
+				search: true
 			},
-			sampleWhere: true
+			extras: {
+				blast: true,
+				shapes: true
+			}
 		});
+		const { trusted, query, blast, shapes } = parsedQuery;
+		let { sampleWhere } = parsedQuery;
 		const client = trusted ? trustedPrisma : prisma;
 
-		//replace the where with samp_names that match the query and are inside the shapes
-		if (sampleWhere) {
+		let featureidWhere;
+		let BlastQueryResults;
+		let existingBlastDate;
+		if (blast) {
+			({ BlastQueryResults, existingBlastDate } = await fetchBlast(
+				blast,
+				{ role, token: await getToken({ expiresInSeconds: 60 }) },
+				cookieStore
+			));
+
+			const baseFeatureWhere = {
+				featureid: {
+					in: BlastQueryResults.map((bqr) => bqr.featureid)
+				}
+			};
+			featureidWhere = deepWhere(model, "feature", baseFeatureWhere);
+
+			if (sampleWhere) {
+				sampleWhere = deepMerge(sampleWhere, deepWhere("sample", "feature", baseFeatureWhere));
+			}
+			query.where = query.where ? deepMerge(query.where, featureidWhere) : featureidWhere;
+		}
+
+		if (shapes && sampleWhere) {
+			//TODO: breaks with a sample query in nested group
+			//replace the where with samp_names that match the query and are inside the shapes
 			const samples = await client.sample.findMany({
 				where: sampleWhere,
 				select: {
@@ -46,33 +75,18 @@ export async function GET(
 				}
 			});
 
-			query.where = deepWhere(model, "sample", {
-				samp_name: { in: getLocationsInsideShapes(samples, shapes!).map((samp) => samp.samp_name) }
-			});
-		}
-
-		//inject blast results into queries
-		let BlastQueryResults;
-		let existingBlastDate;
-		if (blast) {
-			({ BlastQueryResults, existingBlastDate } = await fetchBlast(
-				blast,
-				{ role, token: await getToken({ expiresInSeconds: 60 }) },
-				cookieStore
-			));
-			const featureWhere = deepWhere(model, "feature", {
-				featureid: {
-					in: BlastQueryResults.map((bqr) => bqr.featureid)
-				}
+			const sampNamesWhere = deepWhere(model, "sample", {
+				samp_name: { in: getLocationsInsideShapes(samples, shapes).map((sample) => sample.samp_name) }
 			});
 
-			query.where = query.where ? deepMerge(query.where, featureWhere) : featureWhere;
+			//inject blast results if queried for
+			query.where = featureidWhere ? deepMerge(sampNamesWhere, featureidWhere) : sampNamesWhere;
 		}
 
 		//@ts-expect-error dynamically accessing prisma client
 		let result = await client[model].count(query);
 
-		if (result) {
+		if (result != null) {
 			//don't do this if already done
 			if (shapes && !sampleWhere) {
 				result = getLocationsInsideShapes(result, shapes);

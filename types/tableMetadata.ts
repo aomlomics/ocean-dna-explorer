@@ -49,7 +49,16 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.ProjectScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.ProjectWithRelationsSchema,
 		titleField: "project_id",
-		subFields: ["project_name", "study_factor", "institution", "project_contact", "sample_type"],
+		subFields: [
+			"Samples",
+			"Libraries",
+			"Analyses",
+			"project_name",
+			"study_factor",
+			"institution",
+			"project_contact",
+			"sample_type"
+		],
 		fieldOrder: [
 			"project_name",
 			"project_contact",
@@ -69,7 +78,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.SampleScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.SampleWithRelationsSchema,
 		titleField: ["project_id", "samp_name"],
-		subFields: ["geo_loc_name"],
+		subFields: ["Libraries", "Taxonomies", "geo_loc_name"],
 		fieldOrder: [
 			"samp_name",
 			"eventDate",
@@ -99,7 +108,14 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.AssayScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssayWithRelationsSchema,
 		titleField: "assay_name",
-		subFields: ["pcr_primer_name_forward", "pcr_primer_forward", "pcr_primer_name_reverse", "pcr_primer_reverse"]
+		subFields: [
+			"AssayPreps",
+			"Analyses",
+			"pcr_primer_name_forward",
+			"pcr_primer_forward",
+			"pcr_primer_name_reverse",
+			"pcr_primer_reverse"
+		]
 	},
 	assayPrep: {
 		plural: "AssayPreps",
@@ -136,7 +152,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.LibraryScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.LibraryWithRelationsSchema,
 		titleField: ["project_id", "lib_id"],
-		subFields: ["project_id", "samp_name", "seq_run_id"],
+		subFields: ["Sample", "assay_name", "seq_run_id"],
 		fieldOrder: [
 			"samp_name",
 			"seq_run_id",
@@ -158,7 +174,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.AnalysisScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AnalysisWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name"],
-		subFields: ["assay_name", "trusted"]
+		subFields: ["assay_name", "Features", "Taxonomies", "trusted"]
 	},
 	occurrence: {
 		plural: "Occurrences",
@@ -168,7 +184,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.OccurrenceScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.OccurrenceWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name", "lib_id", "featureid"],
-		subFields: ["organismQuantity"]
+		subFields: ["Analysis", "Library", "organismQuantity"]
 	},
 	assignment: {
 		plural: "Assignments",
@@ -178,7 +194,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.AssignmentWithRelationsSchema,
 		titleField: ["project_id", "analysis_run_name", "featureid"],
-		subFields: ["taxonomy", "Confidence"]
+		subFields: ["Analysis", "taxonomy", "Confidence"]
 	},
 	feature: {
 		plural: "Features",
@@ -188,7 +204,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.FeatureScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.FeatureWithRelationsSchema,
 		titleField: "featureid",
-		subFields: ["dna_sequence", "sequenceLength_ODE"]
+		subFields: ["Analyses", "dna_sequence", "sequenceLength_ODE"]
 	},
 	taxonomy: {
 		plural: "Taxonomies",
@@ -197,7 +213,7 @@ const TableMetadata = {
 		enumSchema: PrismaZodTypes.TaxonomyScalarFieldEnumSchema,
 		relationsSchema: PrismaZodTypes.TaxonomyWithRelationsSchema,
 		titleField: "taxonomy",
-		subFields: TaxonomicRanks
+		subFields: ["Analyses", "Samples", ...TaxonomicRanks]
 	},
 	tag: {
 		plural: "Tags",

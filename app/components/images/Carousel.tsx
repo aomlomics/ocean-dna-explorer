@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageModel } from "@/app/generated/prismaImages/models/Image";
+import type { ImageModel } from "@/app/generated/prismaImages/models/Image";
 import type { Attribution } from "@/prismaImages/generated/zod";
 import Image from "next/image";
 import AttributionBadge from "./AttributionBadge";

@@ -22,6 +22,7 @@ import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { exploreUrl } from "@/types/tableMetadata";
 import type { Metadata } from "next";
+import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
 
 export async function generateMetadata({
 	params
@@ -163,7 +164,7 @@ export default async function Analysis_run_name({
 								where: {
 									Libraries: {
 										some: {
-											Occurrences: {
+											Analyses: {
 												some: {
 													project_id,
 													analysis_run_name
@@ -225,7 +226,7 @@ export default async function Analysis_run_name({
 										where: {
 											Libraries: {
 												some: {
-													Occurrences: {
+													Analyses: {
 														some: {
 															project_id,
 															analysis_run_name
@@ -334,80 +335,89 @@ async function TaxonomyVisualizeSuspense({
 	project_id: AnalysisModel["project_id"];
 	analysis_run_name: AnalysisModel["analysis_run_name"];
 }) {
-	const { occurrences, assignments, taxonomies, samples } = await trustedPrisma.$transaction(
-		async (tx) => {
-			const occurrences = await tx.occurrence.findMany({
-				where: {
-					project_id,
-					analysis_run_name
-				},
+	const analysis = await trustedPrisma.analysis.findUnique({
+		where: {
+			project_id_analysis_run_name: {
+				project_id,
+				analysis_run_name
+			}
+		},
+		select: {
+			Occurrences: {
 				select: {
 					lib_id: true,
 					featureid: true,
 					organismQuantity: true
 				}
-			});
+			},
 
-			const assignments = await tx.assignment.findMany({
-				where: {
-					project_id,
-					analysis_run_name
-				},
+			Assignments: {
 				select: {
 					featureid: true,
-					Taxonomy: {
-						select: {
-							id: true
-						}
-					}
+					taxonomy: true
 				}
-			});
+			},
 
-			const taxonomies = await tx.taxonomy.findMany({
-				where: {
-					Assignments: {
-						some: {
-							project_id,
-							analysis_run_name
-						}
+			Taxonomies: {
+				select: TaxonomicRanks.reduce(
+					(acc, rank) => ({
+						...acc,
+						[rank]: true
+					}),
+					{ id: true, taxonomy: true } as Record<(typeof TaxonomicRanks)[number], true> & {
+						id: true;
+						taxonomy: true;
 					}
-				},
-				select: TaxonomicRanks.reduce((acc, rank) => ({ ...acc, [rank]: true }), { id: true } as Record<
-					(typeof TaxonomicRanks)[number],
-					true
-				> & { id: true })
-			});
+				)
+			},
 
-			const samples = await tx.sample.findMany({
-				where: {
-					Libraries: {
-						some: {
-							Occurrences: {
-								some: {
-									project_id,
-									analysis_run_name
-								}
-							}
-						}
-					}
-				},
-				include: {
-					Libraries: {
-						select: {
-							lib_id: true
-						}
-					}
+			Libraries: {
+				select: {
+					lib_id: true,
+					Sample: true
 				}
-			});
-
-			return { occurrences, assignments, taxonomies, samples };
-		},
-		{
-			timeout: 3 * 60 * 1000
+			}
 		}
-	);
+	});
+
+	if (!analysis) {
+		return null;
+	}
+
+	// Build feature → taxonomy + occurrences.
+	const featuresById = {} as Record<
+		OccurrenceModel["featureid"],
+		{
+			taxonomy: string;
+			occurrences: {
+				lib_id: OccurrenceModel["lib_id"];
+				organismQuantity: OccurrenceModel["organismQuantity"];
+			}[];
+		}
+	>;
+
+	for (const assignment of analysis.Assignments) {
+		featuresById[assignment.featureid] = {
+			taxonomy: assignment.taxonomy,
+			occurrences: []
+		};
+	}
+
+	for (const occurrence of analysis.Occurrences) {
+		const feature = featuresById[occurrence.featureid];
+
+		if (feature) {
+			feature.occurrences.push({
+				lib_id: occurrence.lib_id,
+				organismQuantity: occurrence.organismQuantity
+			});
+		}
+	}
+
+	const taxonomiesByName = Object.fromEntries(analysis.Taxonomies.map((taxonomy) => [taxonomy.taxonomy, taxonomy]));
+	const sampleByLibId = Object.fromEntries(analysis.Libraries.map(({ lib_id, Sample }) => [lib_id, Sample]));
 
 	return (
-		<TaxonomyVisualize occurrences={occurrences} assignments={assignments} taxonomies={taxonomies} samples={samples} />
+		<TaxonomyVisualize featuresById={featuresById} taxonomiesByName={taxonomiesByName} sampleByLibId={sampleByLibId} />
 	);
 }

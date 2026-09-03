@@ -4,7 +4,10 @@ import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension
 import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
 import { COMPRESSION_FORMAT, decompressURIComponent } from "./utils";
 
-export function parseBlastRequest(searchParams: URLSearchParams, options?: { safe?: true; noPrefix?: true }) {
+export function parseBlastRequest(
+	searchParams: URLSearchParams,
+	options?: { safe?: true; noPrefix?: true; noDelete?: true }
+) {
 	const tempQueries = searchParams.getAll(options?.noPrefix ? "query" : "blastQuery");
 	let queries = tempQueries.reduce(
 		(acc, q) => {
@@ -40,23 +43,27 @@ export function parseBlastRequest(searchParams: URLSearchParams, options?: { saf
 		}
 	}
 
-	searchParams.delete(options?.noPrefix ? "query" : "blastQuery");
 	const database = searchParams.get(options?.noPrefix ? "database" : "blastDatabase");
-	searchParams.delete(options?.noPrefix ? "database" : "blastDatabase");
 	const save = searchParams.get(options?.noPrefix ? "save" : "blastSave");
-	searchParams.delete(options?.noPrefix ? "save" : "blastSave");
 
 	//options
 	const task = searchParams.get("task");
-	searchParams.delete("task");
 	const max_target_seqs = searchParams.get("max_target_seqs");
-	searchParams.delete("max_target_seqs");
 	const evalue = searchParams.get("evalue");
-	searchParams.delete("evalue");
 	const perc_identity = searchParams.get("perc_identity");
-	searchParams.delete("perc_identity");
 	const qcov_hsp_perc = searchParams.get("qcov_hsp_perc");
-	searchParams.delete("qcov_hsp_perc");
+
+	if (!options?.noDelete) {
+		searchParams.delete(options?.noPrefix ? "query" : "blastQuery");
+		searchParams.delete(options?.noPrefix ? "database" : "blastDatabase");
+		searchParams.delete(options?.noPrefix ? "save" : "blastSave");
+
+		searchParams.delete("task");
+		searchParams.delete("max_target_seqs");
+		searchParams.delete("evalue");
+		searchParams.delete("perc_identity");
+		searchParams.delete("qcov_hsp_perc");
+	}
 
 	try {
 		if (!queries.length) {

@@ -22,6 +22,7 @@ export default async function AddTags() {
 			}
 		}
 	});
+
 	return (
 		<div className="space-y-6">
 			<AddTagButton />

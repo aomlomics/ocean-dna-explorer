@@ -5,7 +5,6 @@ import { prisma } from "../helpers/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { RolePermissions } from "@/types/objects";
 import { parseSchemaToObject } from "../helpers/schema";
-import { capitalizeTable } from "../helpers/utils";
 import { updateManyRaw } from "../helpers/queries";
 
 function exists(value: any) {
@@ -65,14 +64,12 @@ export default async function migrationCopyStepAction() {
 						}
 					}
 
-					//only update rows where the changed fields had a value
-					const filteredResult = result.filter((row) =>
-						Object.entries(row).some(([field, value]) => field !== "id" && value)
+					await updateManyRaw(
+						tx,
+						table,
+						result.filter((row) => Object.entries(row).some(([field, value]) => field !== "id" && value)),
+						"id"
 					);
-					if (filteredResult.length) {
-						const modelName = capitalizeTable(table);
-						await updateManyRaw(tx, modelName, filteredResult);
-					}
 				}
 			}
 		});

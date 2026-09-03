@@ -24,10 +24,10 @@ export async function GET(
 			features: {
 				fields: true,
 				relations: true,
-				relationsLimit: true
+				relCounts: true
 			},
 			defaults: {
-				filters: { id: parseInt(id) }
+				filters: { id: Number(id) }
 			}
 		});
 		const client = trusted ? trustedPrisma : prisma;

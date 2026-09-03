@@ -16,7 +16,7 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Modal from "@/app/components/Modal";
 import { DeadValues } from "@/types/enums";
-import { buildWhereParams } from "@/app/helpers/api";
+import { buildParams } from "@/app/helpers/api";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 type Operator = "AND" | "OR";
@@ -82,25 +82,38 @@ function createEmptyGroup(depth = 0): SearchGroupNode {
 	};
 }
 
+function searchNodeId(kind: "g" | "r", path: number[]): string {
+	return `${kind}-${path.join("-")}`;
+}
+
 function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): SearchGroupNode {
-	// Root group is always present
-	const root = createEmptyGroup(0);
+	// Stable root id so URL-hydrated trees match between SSR and client.
+	const root: SearchGroupNode = {
+		id: "root",
+		type: "group",
+		operator: "AND",
+		children: [],
+		depth: 0
+	};
 	if (!advancedParsed || !advancedParsed.length) {
 		return root;
 	}
 
-	function buildFromParams(params: ParamsArrayElement[], depth: number): SearchNode[] {
+	function buildFromParams(params: ParamsArrayElement[], depth: number, pathPrefix: number[] = []): SearchNode[] {
 		const result: SearchNode[] = [];
 
-		for (const element of params) {
+		for (let i = 0; i < params.length; i++) {
+			const element = params[i];
+			const nodePath = [...pathPrefix, i];
+
 			// Explicit logical groups: ["AND", ...] or ["OR", ...]
 			if (isGroupElement(element)) {
 				const [, ...childrenElements] = element;
 				result.push({
-					id: crypto.randomUUID(),
+					id: searchNodeId("g", nodePath),
 					type: "group",
 					operator: element[0],
-					children: buildFromParams(childrenElements, depth + 1),
+					children: buildFromParams(childrenElements, depth + 1, nodePath),
 					depth
 				});
 				continue;
@@ -109,10 +122,10 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 			// Legacy OR-group: nested ParamsArray
 			if (isLegacyOrGroup(element)) {
 				result.push({
-					id: crypto.randomUUID(),
+					id: searchNodeId("g", nodePath),
 					type: "group",
 					operator: "OR",
-					children: buildFromParams(element as ParamsArrayElement[], depth + 1),
+					children: buildFromParams(element as ParamsArrayElement[], depth + 1, nodePath),
 					depth
 				});
 				continue;
@@ -121,7 +134,7 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 			// Otherwise this is a single rule (field or relation filter)
 			const tuple = element as ParamsArrayField | ParamsArrayRelation;
 			result.push({
-				id: crypto.randomUUID(),
+				id: searchNodeId("r", nodePath),
 				type: "rule",
 				initialParams: tuple
 			});
@@ -496,7 +509,7 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 			newParams.set("table", searchTable!);
 		}
 
-		buildWhereParams(searchParams, newParams);
+		buildParams(searchParams, newParams);
 
 		const advanced = getParamsArrayFromTree(searchTree);
 		if (advanced && advanced.length) {
@@ -1423,7 +1436,7 @@ function InValuesField({
 	}
 
 	return (
-		<div className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-lg border border-base-300 bg-base-100 p-1.5">
+		<div className="flex w-full min-w-0 flex-col gap-1.5 rounded-lg border border-base-300 bg-base-100 p-1.5 md:flex-1">
 			{rows.map((val, idx) => (
 				<div key={idx} className="flex min-w-0 items-center gap-1">
 					<input
@@ -1542,7 +1555,7 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60">
+					<div className="flex min-h-10 w-full min-w-0 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60 md:flex-1">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
 				) : listMode ? (
@@ -1576,7 +1589,7 @@ function InputElement({
 					</div>
 				) : mode === "deadValue" ? (
 					<select
-						className="select min-w-0 flex-1"
+						className="select w-full min-w-0 md:flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1589,7 +1602,7 @@ function InputElement({
 					</select>
 				) : (
 					<input
-						className="input min-w-0 flex-1"
+						className="input w-full min-w-0 md:flex-1"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
 						defaultValue={defaultValue && defaultValue.split(",").length === 1 ? defaultValue : undefined}
@@ -1622,7 +1635,7 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60">
+					<div className="flex min-h-10 w-full min-w-0 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60 md:flex-1">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
 				) : listMode ? (
@@ -1635,7 +1648,7 @@ function InputElement({
 					/>
 				) : mode === "deadValue" ? (
 					<select
-						className="select min-w-0 flex-1"
+						className="select w-full min-w-0 md:flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1683,7 +1696,7 @@ function InputElement({
 						</div>
 					</div>
 				) : (
-					<div className="input min-w-0 flex-1">
+					<div className="input w-full min-w-0 md:flex-1">
 						<input
 							name={`filter_${nameSuffix}_date`}
 							className="w-1/2"
@@ -1734,7 +1747,7 @@ function InputElement({
 					<option value="deadValue">Dead value</option>
 				</select>
 				{mode === "null" || mode === "notNull" ? (
-					<div className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60">
+					<div className="flex min-h-10 w-full min-w-0 items-center rounded-lg bg-base-200 px-3 text-sm text-base-content/60 md:flex-1">
 						{mode === "null" ? "is empty" : "is not empty"}
 					</div>
 				) : listMode ? (
@@ -1747,7 +1760,7 @@ function InputElement({
 					/>
 				) : mode === "deadValue" ? (
 					<select
-						className="select min-w-0 flex-1"
+						className="select w-full min-w-0 md:flex-1"
 						defaultValue={defaultValue && DeadValues.includes(defaultValue) ? defaultValue : "any"}
 						name={`filter_${nameSuffix}`}
 					>
@@ -1760,7 +1773,7 @@ function InputElement({
 					</select>
 				) : (
 					<input
-						className="input min-w-0 flex-1"
+						className="input w-full min-w-0 md:flex-1"
 						placeholder="Filter..."
 						name={`filter_${nameSuffix}`}
 						defaultValue={defaultValue === "undefined" ? undefined : defaultValue}

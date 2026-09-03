@@ -12,9 +12,11 @@ import { fetcher } from "@/app/helpers/utils";
 import TableStatusState from "./TableStatusState";
 import useTableColumns from "./hooks/useTableColumns";
 import useTableQuery from "./hooks/useTableQuery";
-import TableHeader from "./parts/TableHeader";
+import TableHeaderRow from "./parts/TableHeaderRow";
 import TableRow from "./parts/TableRow";
 import Checklist from "../../Checklist";
+import { useSearchParams } from "next/navigation";
+import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export type ExtraResults = {
 	blastResult: BlastQueryResultModel[] | undefined;
@@ -22,23 +24,7 @@ export type ExtraResults = {
 	samples: SampleModel[] | undefined;
 };
 
-export const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
-
-//TODO: make where arg support relational queries
-//TODO: clamp table column width, add hover info to clamped columns
-export default function Table({
-	table,
-	where,
-	omit = [],
-	hideFilters,
-	hideEmptyAtStart,
-	filterHeadersAtStart,
-	defaultTake = 50,
-	ignoreParams,
-	extraParams,
-	setExtraResults,
-	className
-}: {
+type Props = {
 	table: Uncapitalize<ModelName>;
 	where?: Record<string, any>;
 	omit?: string[];
@@ -50,11 +36,30 @@ export default function Table({
 	extraParams?: Record<string, string>;
 	setExtraResults?: (args: ExtraResults) => void;
 	className?: string;
-}) {
+};
+
+export const DEFAULT_ORDER_BY = { field: "id", order: "desc" } as { field: string; order: Prisma.SortOrder };
+
+//TODO: make where arg support relational queries
+//TODO: clamp table column width, add hover info to clamped columns
+function ActualTable({
+	table,
+	where,
+	omit = [],
+	hideFilters,
+	hideEmptyAtStart,
+	filterHeadersAtStart,
+	defaultTake = 50,
+	ignoreParams,
+	extraParams,
+	setExtraResults,
+	className
+}: Props) {
 	const combinedOmit = [...omit, ...GlobalOmit, "id"];
 	const {
 		title,
 		defaultHeaders,
+		relationsFields,
 		manyRelations,
 		oneRelations,
 		oneRelationsWithArrayTitle,
@@ -72,6 +77,9 @@ export default function Table({
 		data,
 		error,
 		isLoading,
+		countData,
+		countError,
+		countIsLoading,
 		page,
 		setPage,
 		take,
@@ -88,6 +96,7 @@ export default function Table({
 	} = useTableQuery({
 		table,
 		where,
+		hideFilters,
 		defaultTake,
 		ignoreParams,
 		extraParams,
@@ -173,7 +182,7 @@ export default function Table({
 	}, [filterHeadersAtStart, userDefinedHeaders]);
 
 	function handlePageHover(dir = 1 as 1 | -1) {
-		preload(`/api/internal/${table}/pagination?${getQuery(dir)}`, fetcher);
+		preload(`/api/internal/${table}/pagination?${getQuery(dir).toString()}`, fetcher);
 	}
 
 	if (error) {
@@ -185,12 +194,34 @@ export default function Table({
 			/>
 		);
 	}
-	if (isLoading || !data) return <LoadingTable take={take} page={page} />;
+	if (countError) {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={countError instanceof Error ? countError.message : String(countError)}
+			/>
+		);
+	}
+
+	if (isLoading || !data || countIsLoading || !countData)
+		return <LoadingTable take={take} page={page} hideFilters={hideFilters} />;
 	if (data.statusMessage === "error") {
 		return (
 			<TableStatusState kind="error" title="Could not load results" detail={String(data.error ?? "Unknown error")} />
 		);
 	}
+	if (countData.statusMessage === "error") {
+		return (
+			<TableStatusState
+				kind="error"
+				title="Could not load results"
+				detail={String(countData.error ?? "Unknown error")}
+			/>
+		);
+	}
+
+	const relsSet = new Set([...relationsFields, ...deepRelations.map((rel) => rel.label)]);
 
 	return (
 		<div className={`bg-base-100 border-base-300 rounded-box h-full w-full p-6 ${className ?? ""}`}>
@@ -227,24 +258,33 @@ export default function Table({
 					<PaginationControls
 						page={page}
 						take={take}
-						count={data.count}
+						count={countData.result}
 						setPage={setPage}
 						handlePageHover={handlePageHover}
 					/>
 
-					<div className="grid grid-cols-3 w-full gap-5 flex-1">
+					<div className="grid grid-cols-4 w-full gap-2 flex-1">
 						<Checklist
-							label="Deep Relations"
-							list={deepRelations.map((rel) => rel.label)}
-							listFilter={deepRelationsFilter}
-							setListFilter={setDeepRelationsFilter}
+							label="Relations"
+							list={relationsFields}
+							listFilter={headersFilter}
+							setListFilter={setHeadersFilter}
 							className="justify-self-end"
 							buttonClassName="btn-sm"
 						/>
 
 						<Checklist
+							label="Deep Relations"
+							list={deepRelations.map((rel) => rel.label)}
+							listFilter={deepRelationsFilter}
+							setListFilter={setDeepRelationsFilter}
+							className="justify-self-start"
+							buttonClassName="btn-sm"
+						/>
+
+						<Checklist
 							label="Columns"
-							list={headers.filter((head) => !deepRelations.find((rel) => head === rel.label))}
+							list={headers.filter((head) => !relsSet.has(head) || TableMetadata[table].titleField.includes(head))}
 							listFilter={headersFilter}
 							setListFilter={setHeadersFilter}
 							extraLists={[{ list: userDefinedHeaders, label: "UD" }]}
@@ -252,7 +292,7 @@ export default function Table({
 							buttonClassName="btn-sm"
 						/>
 
-						<fieldset className="fieldset bg-base-100 border-base-300">
+						<fieldset className="fieldset bg-base-100 border-base-300 justify-self-start">
 							<label className="label select-none">
 								<input
 									type="checkbox"
@@ -272,7 +312,7 @@ export default function Table({
 						<caption className="sr-only">{TableMetadata[table].plural} table</caption>
 
 						<thead>
-							<TableHeader
+							<TableHeaderRow
 								title={title}
 								table={table}
 								headers={headers}
@@ -320,7 +360,7 @@ export default function Table({
 					<PaginationControls
 						page={page}
 						take={take}
-						count={data.count}
+						count={countData.result}
 						setPage={setPage}
 						handlePageHover={handlePageHover}
 					/>
@@ -328,4 +368,11 @@ export default function Table({
 			</form>
 		</div>
 	);
+}
+
+export default function Table(props: Props) {
+	const searchParams = useSearchParams();
+	const { trusted } = useTrusted();
+
+	return <ActualTable key={`${searchParams.toString()}|${trusted}`} {...props} />;
 }

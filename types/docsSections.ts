@@ -154,9 +154,6 @@ const DocsSections = {
 				},
 				"result-limiting": {
 					title: "Result Limiting"
-				},
-				"relations-result-limiting": {
-					title: "Relations Result Limiting"
 				}
 			}
 		},

@@ -6,6 +6,13 @@ import { DeadBooleanToEnum } from "@/types/enums";
 import { parse } from "csv-parse";
 import { AssayOptionalDefaultsSchema, AssayScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import type { ModelName } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
+import { capitalizeTable } from "./utils";
+import { getImplicitJoinTable } from "./withDb";
+import type { AssignmentModel, OccurrenceModel, ProjectModel } from "../generated/prisma/models";
+
+//Prisma prepared statements have a limit of 32,767
+const PARAM_LIMIT = 30000;
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
 	try {
@@ -44,9 +51,9 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 //TODO: make it work with arrays
 async function updateManyRawChunked(
 	client: any,
-	table: ModelName,
+	table: Uncapitalize<ModelName>,
 	data: Record<string, any>[],
-	id = "id" as string | string[],
+	id: string | string[],
 	fields: string[]
 ) {
 	//get shape of table to allow typecasting
@@ -54,98 +61,111 @@ async function updateManyRawChunked(
 	const deadBooleanFields = [] as string[];
 
 	//add set for provided fields
-	const setSql = fields
-		.map((f) => {
-			const type = getZodType(table, f).type;
-			let typecast = "";
+	const setSql = fields.map((f) => {
+		const type = getZodType(table, f).type;
+		let typecast = "";
 
-			if (type === "DeadBoolean") {
-				typecast = '::"DeadBoolean"';
-				deadBooleanFields.push(f);
-			} else if (type === "json") {
-				typecast = "::jsonb";
-			} else if (type === "integer") {
-				typecast = "::integer";
-			} else if (type === "float") {
-				typecast = "::float";
-			} else if (type === "boolean") {
-				typecast = "::boolean";
-			} else if (type === "date") {
-				typecast = "::timestamp";
-			}
+		if (type === "DeadBoolean") {
+			typecast = '::"DeadBoolean"';
+			deadBooleanFields.push(f);
+		} else if (type === "json") {
+			typecast = "::jsonb";
+		} else if (type === "integer") {
+			typecast = "::integer";
+		} else if (type === "float") {
+			typecast = "::float";
+		} else if (type === "boolean") {
+			typecast = "::boolean";
+		} else if (type === "date") {
+			typecast = "::timestamp";
+		}
 
-			return `"${f}" = "t"."${f}"${typecast}`;
-		})
-		.join(", ");
+		return Prisma.sql`
+			${Prisma.raw(`"${f}"`)} = ${Prisma.raw(`t."${f}"`)}${Prisma.raw(typecast)}
+		`;
+	});
 
 	const deadBooleanOptions = Object.keys(DeadBooleanToEnum);
-	//parameterized counts
-	const valuesSqlArr = [] as string[];
+
 	//parameterized values
-	const flatData = [] as (typeof data)[0][keyof (typeof data)[0]][];
-	let paramIndex = 0;
-	for (const d of data) {
+	const valuesSqlArr = data.map((d) => {
 		//add parameterized count(s) for id field(s)
-		const valuesStrArr = [
-			...(typeof id === "string" ? [`\$${++paramIndex}`] : id.map(() => `\$${++paramIndex}`))
-		] as string[];
+		const idValues = typeof id === "string" ? [d[id]] : id.map((i) => d[i]);
 
 		//add flat data for id field(s)
-		flatData.push(...(typeof id === "string" ? [d[id]] : id.map((i) => d[i])));
-
-		for (const f of fields) {
-			//add parameterized counts
-			valuesStrArr.push(`\$${++paramIndex}`);
-
+		const fieldValues = fields.map((f) => {
 			//flatten data
 			if (d[f] === undefined) {
-				flatData.push(null);
-			} else {
-				const foundOption = deadBooleanOptions.find(
-					(db) => DeadBooleanToEnum[db as keyof typeof DeadBooleanToEnum] === d[f]
-				);
-				if (deadBooleanFields.includes(f) && foundOption) {
-					if (foundOption === "0") {
-						flatData.push(DeadBoolean.false);
-					} else if (foundOption === "1") {
-						flatData.push(DeadBoolean.true);
-					} else {
-						flatData.push(foundOption);
-					}
-				} else if (d[f] === "JsonNull") {
-					flatData.push("[]");
-				} else {
-					flatData.push(d[f]);
-				}
+				return null;
 			}
-		}
-		valuesSqlArr.push("(" + valuesStrArr.join(",") + ")");
-	}
+
+			const foundOption = deadBooleanOptions.find(
+				(db) => DeadBooleanToEnum[db as keyof typeof DeadBooleanToEnum] === d[f]
+			);
+
+			if (deadBooleanFields.includes(f) && foundOption) {
+				if (foundOption === "0") {
+					return DeadBoolean.false;
+				} else if (foundOption === "1") {
+					return DeadBoolean.true;
+				} else {
+					return foundOption;
+				}
+			} else if (d[f] === "JsonNull") {
+				return "[]";
+			} else {
+				return d[f];
+			}
+		});
+
+		return Prisma.sql`(${Prisma.join([...idValues, ...fieldValues])})`;
+	});
 
 	//list field names
-	const idFieldsSql = typeof id === "string" ? `"${id}"` : id.map((i) => `"${i}"`).join(", ");
-	const fieldsSql = fields.map((f) => `"${f}"`).join(", ");
+	const idFieldsSql =
+		typeof id === "string"
+			? Prisma.raw(`"${id}"`)
+			: Prisma.join(
+					id.map((i) => Prisma.raw(`"${i}"`)),
+					", "
+				);
+
+	const fieldsSql = Prisma.join(
+		fields.map((f) => Prisma.raw(`"${f}"`)),
+		", "
+	);
 
 	//create where statement
+	const capsTable = capitalizeTable(table);
 	const whereSql =
 		typeof id === "string"
-			? `"${table}"."${id}" = "t"."${id}"`
-			: id.map((i) => `"${table}"."${i}" = "t"."${i}"`).join(" AND ");
+			? Prisma.sql`${Prisma.raw(`"${capsTable}"."${id}"`)} = ${Prisma.raw(`t."${id}"`)}`
+			: Prisma.join(
+					id.map((i) => Prisma.sql`${Prisma.raw(`"${capsTable}"."${i}"`)} = ${Prisma.raw(`t."${i}"`)}`),
+					" AND "
+				);
 
 	//combine into prepared statement
-	const sql = `UPDATE "${table}" SET ${setSql} FROM (VALUES ${valuesSqlArr.join(
-		","
-	)}) AS t(${idFieldsSql}, ${fieldsSql}) WHERE ${whereSql}`;
+	const sql = Prisma.sql`
+		UPDATE ${Prisma.raw(`"${capsTable}"`)}
+		SET ${Prisma.join(setSql, ", ")}
+		FROM (
+			VALUES ${Prisma.join(valuesSqlArr, ", ")}
+		) AS t(${idFieldsSql}, ${fieldsSql})
+		WHERE ${whereSql}
+	`;
 
-	return client.$executeRawUnsafe(sql, ...flatData);
+	return client.$executeRaw(sql);
 }
 
 export async function updateManyRaw(
 	client: any,
-	table: ModelName,
+	table: Uncapitalize<ModelName>,
 	data: Record<string, any>[],
-	id = "id" as string | string[]
+	altId?: string | string[]
 ) {
+	if (!data.length) return 0;
+
 	//get fields from data
 	const fieldsWithId = new Set() as Set<string>;
 	for (const d of data) {
@@ -153,9 +173,14 @@ export async function updateManyRaw(
 			fieldsWithId.add(field);
 		}
 	}
-	const fields = Array.from(fieldsWithId) as string[];
 
+	if (fieldsWithId.size > PARAM_LIMIT) {
+		throw new Error(`A singular row has more than the parameter limit of ${PARAM_LIMIT}.`);
+	}
+
+	const fields = Array.from(fieldsWithId) as string[];
 	//remove id field(s) to be handled separately
+	const id = altId || TableMetadata[table].titleField;
 	if (typeof id === "string") {
 		const keyIndex = fields.indexOf(id);
 		if (keyIndex === -1) {
@@ -179,9 +204,120 @@ export async function updateManyRaw(
 	}
 
 	let rowsAffected = 0;
-	const CHUNK_SIZE = 30000 / fieldsWithId.size; //Prisma prepared statements have a limit of 32,767
+	const CHUNK_SIZE = Math.floor(PARAM_LIMIT / fieldsWithId.size);
 	for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-		rowsAffected += await updateManyRawChunked(client, table, data.slice(i, i + CHUNK_SIZE), id, fields);
+		rowsAffected += await updateManyRawChunked(
+			client,
+			table,
+			data.slice(i, i + CHUNK_SIZE),
+			id as string | string[],
+			fields
+		);
+	}
+
+	return rowsAffected;
+}
+
+export async function connectTaxaToSamples(
+	client: Prisma.TransactionClient,
+	project_id: ProjectModel["project_id"],
+	taxaByLibId: Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+) {
+	const pairs = Object.entries(taxaByLibId).flatMap(([lib_id, taxa]) =>
+		Array.from(taxa).map((taxonomy) => ({ lib_id, taxonomy }))
+	);
+	if (!pairs.length) return 0;
+
+	const join = await getImplicitJoinTable({ from: "sample", to: "taxonomy" });
+	let rowsAffected = 0;
+	//project_id contributes 1 parameter
+	//each pair contributes 2 parameters: lib_id + taxonomy
+	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 1) / 2);
+	for (let i = 0; i < pairs.length; i += CHUNK_SIZE) {
+		rowsAffected += await client.$executeRaw`
+			INSERT INTO ${Prisma.raw(`"${join.table}"`)}
+				(${Prisma.raw(`"${join.from.joinColumn}"`)}, ${Prisma.raw(`"${join.to.joinColumn}"`)})
+			SELECT DISTINCT
+				s.id,
+				t.id
+			FROM (VALUES ${Prisma.join(
+				pairs.slice(i, i + CHUNK_SIZE).map(({ lib_id, taxonomy }) => Prisma.sql`(${lib_id}, ${taxonomy})`),
+				", "
+			)}) AS v("lib_id", "taxonomy")
+			JOIN "Library" l
+				ON l."project_id" = ${project_id}
+				AND l."lib_id" = v."lib_id"
+			JOIN "Sample" s
+				ON s."project_id" = l."project_id"
+				AND s."samp_name" = l."samp_name"
+			JOIN "Taxonomy" t
+				ON t."taxonomy" = v."taxonomy"
+			ON CONFLICT DO NOTHING
+		`;
+	}
+
+	return rowsAffected;
+}
+
+export async function disconnectTaxaFromSamples(
+	client: Prisma.TransactionClient,
+	project_id: ProjectModel["project_id"],
+	analysis_run_name: AssignmentModel["analysis_run_name"],
+	removedTaxaByLibId: Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+) {
+	const pairs = Object.entries(removedTaxaByLibId).flatMap(([lib_id, taxa]) =>
+		Array.from(taxa).map((taxonomy) => ({ lib_id, taxonomy }))
+	);
+	if (!pairs.length) return 0;
+
+	const join = await getImplicitJoinTable({ from: "sample", to: "taxonomy" });
+	let rowsAffected = 0;
+	// Each pair contributes 2 parameters: lib_id + taxonomy.
+	// project_id + analysis_run_name contribute 2 additional parameters.
+	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 2) / 2);
+	for (let i = 0; i < pairs.length; i += CHUNK_SIZE) {
+		const chunk = pairs.slice(i, i + CHUNK_SIZE);
+
+		rowsAffected += await client.$executeRaw`
+			DELETE FROM ${Prisma.raw(`"${join.table}"`)} AS jt
+			USING "Sample" AS s, "Taxonomy" AS t
+			WHERE jt.${Prisma.raw(`"${join.from.joinColumn}"`)} = s."id"
+				AND jt.${Prisma.raw(`"${join.to.joinColumn}"`)} = t."id"
+
+				-- get sample to taxonomy relations removed from the current analysis
+				AND EXISTS (
+					SELECT 1
+					FROM "Library" AS l
+					WHERE l."project_id" = ${project_id}
+						AND l."samp_name" = s."samp_name"
+						AND EXISTS (
+							SELECT 1
+							FROM (VALUES ${Prisma.join(
+								chunk.map(({ lib_id, taxonomy }) => Prisma.sql`(${lib_id}, ${taxonomy})`),
+								", "
+							)}) AS removed("lib_id", "taxonomy")
+							WHERE removed."lib_id" = l."lib_id"
+								AND removed."taxonomy" = t."taxonomy"
+						)
+				)
+
+				-- skip sample to taxonomy relations that exist in other analyses
+				AND NOT EXISTS (
+					SELECT 1
+					FROM "Library" AS l
+					JOIN "Occurrence" AS o
+						ON o."project_id" = l."project_id"
+						AND o."lib_id" = l."lib_id"
+					JOIN "Assignment" AS a
+						ON a."project_id" = o."project_id"
+						AND a."analysis_run_name" = o."analysis_run_name"
+						AND a."featureid" = o."featureid"
+					WHERE l."project_id" = ${project_id}
+						AND l."samp_name" = s."samp_name"
+						AND a."taxonomy" = t."taxonomy"
+						AND o."analysis_run_name" != ${analysis_run_name}
+				)
+		`;
 	}
 
 	return rowsAffected;
@@ -242,7 +378,7 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 				)
 		);
 		if (assaysToUpdate.length) {
-			await updateManyRaw(tx, "Assay", assaysToUpdate, ["pcr_primer_forward", "pcr_primer_reverse"]);
+			await updateManyRaw(tx, "assay", assaysToUpdate, ["pcr_primer_forward", "pcr_primer_reverse"]);
 		}
 
 		//delete any removed assays that are unused

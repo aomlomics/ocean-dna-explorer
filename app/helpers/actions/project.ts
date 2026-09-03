@@ -89,7 +89,9 @@ async function parseProjectFile({
 					return;
 				}
 
-				assayNames = fileHeaders.slice(fileHeaders.indexOf("project_level") + 1);
+				assayNames = fileHeaders
+					.slice(fileHeaders.indexOf("project_level") + 1)
+					.filter((assay_name) => !!assay_name.trim());
 				if (!assayNames.length) {
 					await channel.stream.error("No Assays found.");
 					return;
@@ -125,14 +127,11 @@ async function parseProjectFile({
 					//Assay Levels
 					for (const assay_name of assayNames) {
 						//flip table from long to wide
-						//constucting objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
+						//constructing objects whose keys are "levels" (ssu16sv4v5, ssu18sv9)
 						//and whose values are an object representing a single "row"
 						if (record[assay_name]) {
 							//Assays
-							if (!assayCols[assay_name]) {
-								assayCols[assay_name] = {};
-							}
-
+							assayCols[assay_name] ??= {};
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assay");
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "assayPrep");
 							parseSchemaToObject(field, record[assay_name], assayCols[assay_name], "library");
@@ -168,7 +167,9 @@ async function parseProjectFile({
 			{
 				error: (iss) => {
 					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+						message: `Field: ${iss.path![0] as string}\nIssue: ${
+							iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+						}`
 					};
 				}
 			}
@@ -185,11 +186,13 @@ async function parseProjectFile({
 
 		//unset all optional fields that were not provided
 		for (const field of ProjectScalarFieldEnumSchema.options) {
-			if (field !== "id" && field !== "dateSubmitted" && !(field in parsedProject.data)) {
+			if (!(field in parsedProject.data)) {
 				//@ts-expect-error overriding never with null
 				parsedProject.data[field] = null;
 			}
 		}
+		delete parsedProject.data.id;
+		delete parsedProject.data.dateSubmitted;
 
 		const assays = [] as AssayCreateManyInput[];
 		const assayPreps = [] as AssayPrepCreateManyInput[];
@@ -200,12 +203,16 @@ async function parseProjectFile({
 				...assayCols[assay_name],
 				assay_name
 			});
+
 			if (!parsedAssay.success) {
 				await channel.stream.error(
 					`Table: Assay\n` + `Key: ${assay_name}\n\n` + `${parsedAssay.error.issues.map((e) => e.message).join("\n\n")}`
 				);
 				return;
 			}
+
+			delete parsedAssay.data.id;
+
 			assays.push(parsedAssay.data);
 
 			//assayPrep
@@ -215,6 +222,7 @@ async function parseProjectFile({
 				assay_name,
 				project_id: projectCol.project_id
 			});
+
 			if (!parsedAssayPrep.success) {
 				await channel.stream.error(
 					`Table: AssayPrep\n` +
@@ -223,6 +231,9 @@ async function parseProjectFile({
 				);
 				return;
 			}
+
+			delete parsedAssayPrep.data.id;
+
 			assayPreps.push(parsedAssayPrep.data);
 		}
 
@@ -317,7 +328,9 @@ async function parseLibraryFile({
 					{
 						error: (iss) => {
 							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+								message: `Field: ${iss.path![0] as string}\nIssue: ${
+									iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+								}`
 							};
 						}
 					}
@@ -334,11 +347,13 @@ async function parseLibraryFile({
 
 				//unset all optional fields that were not provided
 				for (const field of LibraryScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedLibrary.data)) {
+					if (!(field in parsedLibrary.data)) {
 						//@ts-expect-error overriding never with null
 						parsedLibrary.data[field] = null;
 					}
 				}
+				delete parsedLibrary.data.id;
+
 				libraries.push(parsedLibrary.data as LibraryCreateManyInput);
 
 				//add to progress bar every 10 percent
@@ -432,7 +447,9 @@ async function parseSampleFile({
 					{
 						error: (iss) => {
 							return {
-								message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+								message: `Field: ${iss.path![0] as string}\nIssue: ${
+									iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+								}`
 							};
 						}
 					}
@@ -449,11 +466,14 @@ async function parseSampleFile({
 
 				//unset all optional fields that were not provided
 				for (const field of SampleScalarFieldEnumSchema.options) {
-					if (field !== "id" && !(field in parsedSample.data)) {
+					if (!(field in parsedSample.data)) {
 						//@ts-expect-error overriding never with null
 						parsedSample.data[field] = null;
 					}
 				}
+				delete parsedSample.data.id;
+				delete parsedSample.data.deleted_ODE;
+
 				samples.push(parsedSample.data as SampleCreateManyInput);
 
 				//add to progress bar every 10 percent

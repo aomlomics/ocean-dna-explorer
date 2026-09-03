@@ -100,7 +100,9 @@ export async function parseAnalysisFile({
 		{
 			error: (iss) => {
 				return {
-					message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+					message: `Field: ${iss.path![0] as string}\nIssue: ${
+						iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+					}`
 				};
 			}
 		}
@@ -117,11 +119,13 @@ export async function parseAnalysisFile({
 
 	//unset all optional fields that were not provided
 	for (const field of AnalysisScalarFieldEnumSchema.options) {
-		if (field !== "id" && field !== "dateSubmitted" && !(field in parsedAnalysis.data)) {
+		if (!(field in parsedAnalysis.data)) {
 			//@ts-expect-error overriding never with null
 			parsedAnalysis.data[field] = null;
 		}
 	}
+	delete parsedAnalysis.data.id;
+	delete parsedAnalysis.data.dateSubmitted;
 
 	return { analysis: parsedAnalysis.data, analysisMd5 };
 }
@@ -137,8 +141,9 @@ export async function parseAssignmentsFile({
 	analysis_run_name: AssignmentModel["analysis_run_name"];
 	oldChecksum?: string;
 }) {
-	const features = [] as Prisma.FeatureCreateManyInput[];
-	const taxonomies = [] as Prisma.TaxonomyCreateManyInput[];
+	const features = [] as Prisma.FeatureCreateWithoutAnalysesInput[];
+	const uniqueTaxa = new Set() as Set<TaxonomyModel["taxonomy"]>;
+	const taxonomies = [] as Prisma.TaxonomyCreateWithoutAnalysesInput[];
 	const assignments = [] as Prisma.AssignmentCreateManyInput[];
 
 	//fetch file from blob storage
@@ -167,6 +172,14 @@ export async function parseAssignmentsFile({
 
 	let i = 0;
 	for await (const record of parser) {
+		if (!("featureid" in record)) {
+			await channel.stream.error("The featureid column is missing from the file.");
+			return;
+		} else if (!("taxonomy" in record)) {
+			await channel.stream.error("The taxonomy column is missing from the file.");
+			return;
+		}
+
 		if (record.featureid) {
 			i++;
 
@@ -187,34 +200,6 @@ export async function parseAssignmentsFile({
 				parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
 			}
 
-			//parse feature
-			const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
-				{
-					...featureRow,
-					sequenceLength_ODE: featureRow.dna_sequence.length
-				},
-				{
-					error: (iss) => {
-						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-						};
-					}
-				}
-			);
-
-			if (!parsedFeature.success) {
-				await channel.stream.error(
-					`Table: Feature\n` +
-						`Key: ${featureRow.featureid}\n\n` +
-						`${parsedFeature.error.issues.map((e) => e.message).join("\n\n")}`
-				);
-				return;
-			}
-
-			//no optional fields
-
-			features.push(parsedFeature.data);
-
 			//parse assignment
 			const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
 				{
@@ -225,7 +210,9 @@ export async function parseAssignmentsFile({
 				{
 					error: (iss) => {
 						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+							message: `Field: ${iss.path![0] as string}\nIssue: ${
+								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+							}`
 						};
 					}
 				}
@@ -241,39 +228,75 @@ export async function parseAssignmentsFile({
 				return;
 			}
 
-			//no optional fields
+			delete parsedAssignment.data.id;
 
 			assignments.push(parsedAssignment.data);
 
-			//parse taxonomy
-			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
-				error: (iss) => {
-					return {
-						message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
-					};
+			//parse feature
+			const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
+				{
+					...featureRow,
+					sequenceLength_ODE: featureRow.dna_sequence.length
+				},
+				{
+					error: (iss) => {
+						return {
+							message: `Field: ${iss.path![0] as string}\nIssue: ${
+								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+							}`
+						};
+					}
 				}
-			});
+			);
 
-			if (!parsedTaxonomy.success) {
+			if (!parsedFeature.success) {
 				await channel.stream.error(
-					`Table: Taxonomy\n` +
-						`Key: ${taxonomyRow.taxonomy}\n\n` +
-						`${parsedTaxonomy.error.issues.map((e) => e.message).join("\n\n")}`
+					`Table: Feature\n` +
+						`Key: ${featureRow.featureid}\n\n` +
+						`${parsedFeature.error.issues.map((e) => e.message).join("\n\n")}`
 				);
 				return;
 			}
 
-			//unset all optional fields that were not provided
-			for (const field of TaxonomyScalarFieldEnumSchema.options) {
-				if (field !== "id" && !(field in parsedTaxonomy.data)) {
-					//@ts-expect-error overriding never with null
-					parsedTaxonomy.data[field] = null;
+			delete parsedFeature.data.id;
+
+			features.push(parsedFeature.data);
+
+			//parse taxonomy
+			if (!uniqueTaxa.has(taxonomyRow.taxonomy)) {
+				const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
+					error: (iss) => {
+						return {
+							message: `Field: ${iss.path![0] as string}\nIssue: ${
+								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+							}`
+						};
+					}
+				});
+
+				if (!parsedTaxonomy.success) {
+					await channel.stream.error(
+						`Table: Taxonomy\n` +
+							`Key: ${taxonomyRow.taxonomy}\n\n` +
+							`${parsedTaxonomy.error.issues.map((e) => e.message).join("\n\n")}`
+					);
+					return;
 				}
+
+				//unset all optional fields that were not provided
+				for (const field of TaxonomyScalarFieldEnumSchema.options) {
+					if (!(field in parsedTaxonomy.data)) {
+						//@ts-expect-error overriding never with null
+						parsedTaxonomy.data[field] = null;
+					}
+				}
+				delete parsedTaxonomy.data.id;
+
+				//TODO: verify taxonomy.taxonomy matches all rank fields
+
+				taxonomies.push(parsedTaxonomy.data);
+				uniqueTaxa.add(parsedTaxonomy.data.taxonomy);
 			}
-
-			//TODO: verify taxonomy.taxonomy matches all rank fields
-
-			taxonomies.push(parsedTaxonomy.data);
 
 			//add to progress bar every 10 percent
 			if (i % (parser.info.records / 10) === 0) {
@@ -299,6 +322,7 @@ export async function parseOccurrencesFile({
 	analysis_run_name: OccurrenceModel["analysis_run_name"];
 	oldChecksum?: string;
 }) {
+	const featureids = [] as OccurrenceModel["featureid"][];
 	const occurrences = [] as Prisma.OccurrenceCreateManyInput[];
 
 	//fetch from blob storage
@@ -310,8 +334,6 @@ export async function parseOccurrencesFile({
 		);
 		return;
 	}
-
-	let headers = [] as string[];
 
 	await channel.stream.message("Reading file into memory", 15);
 	const text = await new Response(fileResponse.stream).text();
@@ -327,35 +349,43 @@ export async function parseOccurrencesFile({
 	const parser = parse(text, { delimiter: "\t", relax_quotes: true });
 	await channel.stream.message("File read into memory", 25);
 
-	let i = 0;
+	let libIds = [] as OccurrenceModel["lib_id"][];
+	let i = 1;
 	for await (const record of parser) {
 		//get first row as headers
-		if (!headers.length) {
-			headers = record;
+		if (!libIds.length) {
+			libIds = record.slice(1).map((lib_id: OccurrenceModel["lib_id"]) => lib_id.trim());
 		} else {
-			i++;
-
 			//iterate over each column
-			const featureid = record[0];
+			const featureid = record[0]?.trim();
 			if (!featureid) {
 				await channel.stream.error(`No "featureid" found for row ${i}.`);
 				return;
 			}
-			for (let j = 1; j < headers.length; j++) {
-				const lib_id = headers[j];
+			featureids.push(featureid);
+
+			let j = 1;
+			for (const lib_id of libIds) {
 				if (!lib_id) {
 					await channel.stream.error(`No "lib_id" found for column ${j}.`);
 					return;
 				}
-				const organismQuantity = parseInt(record[j]);
-				if (isNaN(organismQuantity)) {
+
+				if (record[j] == null || record[j] === "") {
+					await channel.stream.error(
+						`Organism quantity is missing for Feature ${featureid} (row ${i}) and Library ${lib_id} (column ${j}).`
+					);
+					return;
+				}
+				const organismQuantity = Number(record[j]);
+				if (!Number.isInteger(organismQuantity)) {
 					await channel.stream.error(
 						`Organism quantity is not an integer for Feature ${featureid} (row ${i}) and Library ${lib_id} (column ${j}). Value is ${record[j]}.`
 					);
 					return;
 				}
 
-				if (organismQuantity) {
+				if (organismQuantity !== 0) {
 					//parse occurrence
 					const parsedOccurrence = OccurrenceOptionalDefaultsSchema.safeParse(
 						{
@@ -368,7 +398,9 @@ export async function parseOccurrencesFile({
 						{
 							error: (iss) => {
 								return {
-									message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input}`
+									message: `Field: ${iss.path![0] as string}\nIssue: ${
+										iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
+									}`
 								};
 							}
 						}
@@ -385,11 +417,15 @@ export async function parseOccurrencesFile({
 						return;
 					}
 
-					//no optional fields
+					delete parsedOccurrence.data.id;
 
 					occurrences.push(parsedOccurrence.data);
 				}
+
+				j++;
 			}
+
+			i++;
 		}
 
 		//add to progress bar every 10 percent
@@ -401,7 +437,7 @@ export async function parseOccurrencesFile({
 		}
 	}
 
-	return { occurrences, occurrencesMd5 };
+	return { occurrences, occurrencesMd5, libIds, featureids };
 }
 
 export async function parseAnalysisFiles({
@@ -449,7 +485,7 @@ export async function parseAnalysisFiles({
 	if (!occurrencesParseResult) {
 		return;
 	}
-	const { occurrences, occurrencesMd5 } = occurrencesParseResult;
+	const { occurrences, occurrencesMd5, libIds, featureids } = occurrencesParseResult;
 
 	return {
 		analysis: {
@@ -461,6 +497,8 @@ export async function parseAnalysisFiles({
 		taxonomies,
 		assignments,
 		occurrences,
+		libIds,
+		featureids,
 		checksums: {
 			analysisMd5,
 			assignmentsMd5,

@@ -5,7 +5,12 @@ import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseOccurrencesFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
-import { handlePrismaError, updateManyRaw } from "@/app/helpers/queries";
+import {
+	connectTaxaToSamples,
+	disconnectTaxaFromSamples,
+	handlePrismaError,
+	updateManyRaw
+} from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import type { ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
@@ -38,7 +43,11 @@ async function doEdit(
 			select: {
 				project_id: true,
 				occurrenceFileChecksum_ODE: true,
-				Project: { select: { userIds: true } }
+				Project: {
+					select: {
+						userIds: true
+					}
+				}
 			}
 		});
 
@@ -59,19 +68,9 @@ async function doEdit(
 		if (!parseResult) {
 			return;
 		}
-		const { occurrences, occurrencesMd5 } = parseResult;
+		const { occurrences, occurrencesMd5, libIds, featureids } = parseResult;
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
-
-		const occLibIds = [] as OccurrenceModel["lib_id"][];
-		const occFeatureids = [] as OccurrenceModel["featureid"][];
-		const libIds = new Set() as Set<OccurrenceModel["lib_id"]>;
-
-		for (const occ of occurrences) {
-			occLibIds.push(occ.lib_id);
-			occFeatureids.push(occ.featureid);
-			libIds.add(occ.lib_id);
-		}
 
 		//edit
 		await prisma.$transaction(
@@ -118,7 +117,7 @@ async function doEdit(
 				});
 
 				//check if any provided libraries are missing from database query
-				if (libIds.size !== dbLibraries.length) {
+				if (libIds.length !== dbLibraries.length) {
 					const invalidLibIds = [] as string[];
 					for (const lib_id of libIds) {
 						if (!dbLibraries.some((lib) => lib.lib_id === lib_id)) {
@@ -141,6 +140,43 @@ async function doEdit(
 
 				await stream.message("All checks passed.", 80);
 
+				//get existing occurrence -> assignment relationships before updating occurrences
+				const oldOccurrences = await tx.occurrence.findMany({
+					where: {
+						project_id,
+						analysis_run_name
+					},
+					select: {
+						lib_id: true,
+						featureid: true,
+						Assignment: {
+							select: {
+								taxonomy: true
+							}
+						}
+					}
+				});
+
+				//get assignments for features in the new occurrence file
+				const assignments = await tx.assignment.findMany({
+					where: {
+						project_id,
+						analysis_run_name,
+						featureid: {
+							in: featureids
+						}
+					},
+					select: {
+						featureid: true,
+						taxonomy: true
+					}
+				});
+
+				//map featureid -> taxonomy
+				const taxaByFeat = Object.fromEntries(
+					assignments.map((assign) => [assign.featureid, assign.taxonomy])
+				) as Record<OccurrenceModel["featureid"], string>;
+
 				//create new
 				const newOccurrences = await tx.occurrence.createManyAndReturn({
 					data: occurrences,
@@ -150,14 +186,36 @@ async function doEdit(
 				await stream.message("New entries successfully added to database.", 85);
 
 				//update old
+				const getOccKey = (lib_id: OccurrenceModel["lib_id"], featureid: OccurrenceModel["featureid"]) =>
+					//using null character as separator for efficient set lookup
+					`${lib_id}\0${featureid}`;
 				await updateManyRaw(
 					tx,
-					"Occurrence",
+					"occurrence",
 					occurrences.filter(
-						(occ) => !newOccurrences.some((dbOcc) => dbOcc.lib_id === occ.lib_id && dbOcc.featureid === occ.featureid)
-					),
-					["analysis_run_name", "lib_id", "featureid"]
+						(occ) =>
+							!new Set(newOccurrences.map((occ) => getOccKey(occ.lib_id, occ.featureid))).has(
+								getOccKey(occ.lib_id, occ.featureid)
+							)
+					)
 				);
+
+				//map new lib_id -> taxonomy relationships
+				const taxaByLibId = occurrences.reduce(
+					(acc, occ) => {
+						const taxonomy = taxaByFeat[occ.featureid];
+
+						if (taxonomy) {
+							(acc[occ.lib_id] ??= new Set()).add(taxonomy);
+						}
+
+						return acc;
+					},
+					{} as Record<OccurrenceModel["lib_id"], Set<string>>
+				);
+
+				//connect new Sample -> Taxonomy relationships
+				await connectTaxaToSamples(tx, project_id, taxaByLibId);
 
 				await stream.message("Existing entries successfully updated in database.", 90);
 
@@ -174,8 +232,10 @@ async function doEdit(
 					}
 				});
 
+				const libIdSet = new Set(libIds);
+				const featureidSet = new Set(featureids);
 				const occToDelete = currOccs.reduce((acc, occ) => {
-					if (!occLibIds.includes(occ.lib_id) || !occFeatureids.includes(occ.featureid)) {
+					if (!libIdSet.has(occ.lib_id) || !featureidSet.has(occ.featureid)) {
 						acc.push(occ.id);
 					}
 					return acc;
@@ -190,6 +250,24 @@ async function doEdit(
 						}
 					}
 				});
+
+				//map old occurrence relationships that were removed
+				const occurrenceKeys = new Set(occurrences.map((occ) => `${occ.lib_id}\0${occ.featureid}`));
+				const removedTaxaByLibId = oldOccurrences.reduce(
+					(acc, occ) => {
+						const key = `${occ.lib_id}\0${occ.featureid}`;
+
+						if (!occurrenceKeys.has(key)) {
+							(acc[occ.lib_id] ??= new Set()).add(occ.Assignment.taxonomy);
+						}
+
+						return acc;
+					},
+					{} as Record<OccurrenceModel["lib_id"], Set<string>>
+				);
+
+				//remove Sample -> Taxonomy relationships that don't exist in any analyses
+				await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, removedTaxaByLibId);
 
 				await stream.message("Removed entries successfully deleted in database.", 95);
 
@@ -217,11 +295,24 @@ async function doEdit(
 					data: {
 						editHistory,
 						occurrenceFileUrl_ODE: url,
-						occurrenceFileChecksum_ODE: occurrencesMd5
+						occurrenceFileChecksum_ODE: occurrencesMd5,
+						Libraries: {
+							set: libIds.map((lib_id) => ({
+								project_id_lib_id: {
+									project_id,
+									lib_id
+								}
+							}))
+						},
+						Features: {
+							set: featureids.map((featureid) => ({
+								featureid
+							}))
+						}
 					}
 				});
 			},
-			{ timeout: 1 * 60 * 1000 }
+			{ timeout: 5 * 60 * 1000 }
 		);
 
 		await stream.success("Success");

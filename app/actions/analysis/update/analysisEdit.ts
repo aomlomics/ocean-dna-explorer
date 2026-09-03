@@ -1,12 +1,13 @@
 "use server";
 
-import type { AnalysisModel, OccurrenceModel, TagModel } from "@/app/generated/prisma/models";
+import type { AnalysisModel, TagModel } from "@/app/generated/prisma/models";
 import { addToHistory } from "@/app/helpers/actions/actions";
 import { parseAnalysisFile } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { createProgressStream } from "@/app/helpers/progress";
 import { handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
+import type { LibraryWithRelations } from "@/prisma/generated/zod";
 import type { AsyncReturnType, ProgressStream } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -36,7 +37,7 @@ async function doEdit(
 	}
 
 	try {
-		const dbAnalysisUntyped = await prisma.analysis.findUnique({
+		const dbAnalysis = await prisma.analysis.findUnique({
 			where: {
 				project_id_analysis_run_name: {
 					project_id,
@@ -65,23 +66,27 @@ async function doEdit(
 				Occurrences: trusted
 					? {
 							select: {
-								featureid: true,
-								Library: {
-									select: {
-										Occurrences: {
-											where: {
-												Analysis: {
-													trusted: true
-												},
-												analysis_run_name: {
-													not: analysis_run_name
-												}
-											},
-											select: {
-												featureid: true,
-												analysis_run_name: true
+								lib_id: true,
+								featureid: true
+							}
+						}
+					: false,
+				Libraries: trusted
+					? {
+							select: {
+								lib_id: true,
+								Occurrences: {
+									where: {
+										Analysis: {
+											trusted: true,
+											analysis_run_name: {
+												not: analysis_run_name
 											}
 										}
+									},
+									select: {
+										featureid: true,
+										analysis_run_name: true
 									}
 								}
 							}
@@ -90,27 +95,15 @@ async function doEdit(
 			}
 		});
 
-		if (!dbAnalysisUntyped) {
+		if (!dbAnalysis) {
 			await stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
 			return;
-		} else if (!dbAnalysisUntyped.Project.userIds.includes(userId)) {
+		} else if (!dbAnalysis.Project.userIds.includes(userId)) {
 			await stream.error(
-				`Permission denied for editing analysis with Project with project_id of ${dbAnalysisUntyped.project_id}. Please contact submission owner with a request to be added to the Project.`
+				`Permission denied for editing analysis with Project with project_id of ${dbAnalysis.project_id}. Please contact submission owner with a request to be added to the Project.`
 			);
 			return;
 		}
-
-		const dbAnalysis = dbAnalysisUntyped as unknown as Omit<typeof dbAnalysisUntyped, "Occurrences"> & {
-			Occurrences?: {
-				featureid: OccurrenceModel["featureid"];
-				Library: {
-					Occurrences: {
-						featureid: OccurrenceModel["featureid"];
-						analysis_run_name: OccurrenceModel["analysis_run_name"];
-					}[];
-				};
-			}[];
-		};
 
 		let parseResult = undefined as AsyncReturnType<typeof parseAnalysisFile>;
 		if (url) {
@@ -219,22 +212,35 @@ async function doEdit(
 				});
 
 				if (trusted) {
-					const featureids = new Set(dbAnalysis.Occurrences!.map((occ) => occ.featureid));
-					const otherTrusted = [] as AnalysisModel["analysis_run_name"][];
-					for (const ourOcc of dbAnalysis.Occurrences!) {
-						for (const otherOcc of ourOcc.Library!.Occurrences)
-							if (!otherTrusted.includes(otherOcc.analysis_run_name) && featureids.has(otherOcc.featureid)) {
-								otherTrusted.push(otherOcc.analysis_run_name);
-							}
+					const featureidsByLibId = {} as Record<string, Set<string>>;
+
+					for (const occ of dbAnalysis.Occurrences) {
+						const featureids = featureidsByLibId[occ.lib_id] ?? (new Set() as Set<string>);
+						featureids.add(occ.featureid);
+						featureidsByLibId[occ.lib_id] = featureids;
 					}
 
-					if (otherTrusted.length) {
+					const otherTrusted = new Set() as Set<AnalysisModel["analysis_run_name"]>;
+
+					for (const library of dbAnalysis.Libraries) {
+						const featureids = featureidsByLibId[library.lib_id];
+
+						if (featureids) {
+							for (const occ of (library as LibraryWithRelations).Occurrences) {
+								if (featureids.has(occ.featureid)) {
+									otherTrusted.add(occ.analysis_run_name);
+								}
+							}
+						}
+					}
+
+					if (otherTrusted.size) {
 						//remove trusted from other analyses
 						await tx.analysis.updateMany({
 							where: {
 								project_id,
 								analysis_run_name: {
-									in: otherTrusted
+									in: Array.from(otherTrusted)
 								}
 							},
 							data: {

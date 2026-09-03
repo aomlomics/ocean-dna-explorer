@@ -60,7 +60,7 @@ export const AnalysisScalarFieldEnumSchema = z.enum(['id','analysis_run_name','d
 
 export const RelationLoadStrategySchema = z.enum(['query','join']);
 
-export const OccurrenceScalarFieldEnumSchema = z.enum(['id','project_id','lib_id','analysis_run_name','featureid','organismQuantity']);
+export const OccurrenceScalarFieldEnumSchema = z.enum(['id','project_id','analysis_run_name','lib_id','featureid','organismQuantity']);
 
 export const AssignmentScalarFieldEnumSchema = z.enum(['id','project_id','analysis_run_name','featureid','taxonomy','Confidence','percent_id','consensus']);
 
@@ -100,7 +100,7 @@ export const NullsOrderSchema = z.enum(['first','last']);
 
 export const AnalysisOrderByRelevanceFieldEnumSchema = z.enum(['analysis_run_name','project_id','assay_name','analysisMetadataFileUrl_ODE','analysisMetadataFileChecksum_ODE','asvFileUrl_ODE','asvFileChecksum_ODE','occurrenceFileUrl_ODE','occurrenceFileChecksum_ODE','sop_bioinformatics','trim_method','trim_param','demux_tool','merge_tool','min_len_tool','error_rate_tool','error_rate_type','chimera_check_method','chimera_check_param','otu_clust_tool','min_reads_cutoff_unit','min_reads_tool','otu_db','otu_db_custom','tax_assign_cat','otu_seq_comp_appr','tax_class_collapse','tax_class_other','screen_contam_method','screen_geograph_method','screen_nontarget_method','screen_other','bioinfo_method_additional','asv_method','dada2_pooling_method','dada2_chimera_method','otu_final_description','otu_raw_description','qiime2_version','tourmaline_asv_method','tourmaline_classify_method']);
 
-export const OccurrenceOrderByRelevanceFieldEnumSchema = z.enum(['project_id','lib_id','analysis_run_name','featureid']);
+export const OccurrenceOrderByRelevanceFieldEnumSchema = z.enum(['project_id','analysis_run_name','lib_id','featureid']);
 
 export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['project_id','analysis_run_name','featureid','taxonomy']);
 
@@ -259,6 +259,7 @@ export type AnalysisPartial = z.infer<typeof AnalysisPartialSchema>
 export const AnalysisOptionalDefaultsSchema = AnalysisSchema.merge(z.object({
   id: z.number().int().optional(),
   dateSubmitted: z.coerce.date().optional(),
+  trusted: z.boolean().optional(),
 }))
 
 export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSchema>
@@ -269,8 +270,11 @@ export type AnalysisOptionalDefaults = z.infer<typeof AnalysisOptionalDefaultsSc
 export type AnalysisRelations = {
   Project: ProjectWithRelations;
   Assay: AssayWithRelations;
+  Libraries: LibraryWithRelations[];
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
+  Features: FeatureWithRelations[];
+  Taxonomies: TaxonomyWithRelations[];
   Tags: TagWithRelations[];
   AlphaDiversities: AlphaDiversityWithRelations[];
 };
@@ -282,8 +286,11 @@ export type AnalysisWithRelations = Omit<z.infer<typeof AnalysisSchema>, "editHi
 export const AnalysisWithRelationsSchema: z.ZodType<AnalysisWithRelations> = AnalysisSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
   Assay: z.lazy(() => AssayWithRelationsSchema),
+  Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
+  Features: z.lazy(() => FeatureWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyWithRelationsSchema).array(),
   Tags: z.lazy(() => TagWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityWithRelationsSchema).array(),
 }))
@@ -294,8 +301,11 @@ export const AnalysisWithRelationsSchema: z.ZodType<AnalysisWithRelations> = Ana
 export type AnalysisOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
   Assay: AssayOptionalDefaultsWithRelations;
+  Libraries: LibraryOptionalDefaultsWithRelations[];
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
+  Features: FeatureOptionalDefaultsWithRelations[];
+  Taxonomies: TaxonomyOptionalDefaultsWithRelations[];
   Tags: TagOptionalDefaultsWithRelations[];
   AlphaDiversities: AlphaDiversityOptionalDefaultsWithRelations[];
 };
@@ -307,8 +317,11 @@ export type AnalysisOptionalDefaultsWithRelations = Omit<z.infer<typeof Analysis
 export const AnalysisOptionalDefaultsWithRelationsSchema: z.ZodType<AnalysisOptionalDefaultsWithRelations> = AnalysisOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
+  Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
+  Features: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema).array(),
   Tags: z.lazy(() => TagOptionalDefaultsWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityOptionalDefaultsWithRelationsSchema).array(),
 }))
@@ -319,8 +332,11 @@ export const AnalysisOptionalDefaultsWithRelationsSchema: z.ZodType<AnalysisOpti
 export type AnalysisPartialRelations = {
   Project?: ProjectPartialWithRelations;
   Assay?: AssayPartialWithRelations;
+  Libraries?: LibraryPartialWithRelations[];
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
+  Features?: FeaturePartialWithRelations[];
+  Taxonomies?: TaxonomyPartialWithRelations[];
   Tags?: TagPartialWithRelations[];
   AlphaDiversities?: AlphaDiversityPartialWithRelations[];
 };
@@ -332,8 +348,11 @@ export type AnalysisPartialWithRelations = Omit<z.infer<typeof AnalysisPartialSc
 export const AnalysisPartialWithRelationsSchema: z.ZodType<AnalysisPartialWithRelations> = AnalysisPartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
+  Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 })).partial()
@@ -345,8 +364,11 @@ export type AnalysisOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof A
 export const AnalysisOptionalDefaultsWithPartialRelationsSchema: z.ZodType<AnalysisOptionalDefaultsWithPartialRelations> = AnalysisOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
+  Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 }).partial())
@@ -358,8 +380,11 @@ export type AnalysisWithPartialRelations = Omit<z.infer<typeof AnalysisSchema>, 
 export const AnalysisWithPartialRelationsSchema: z.ZodType<AnalysisWithPartialRelations> = AnalysisSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
+  Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
+  Features: z.lazy(() => FeaturePartialWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
   Tags: z.lazy(() => TagPartialWithRelationsSchema).array(),
   AlphaDiversities: z.lazy(() => AlphaDiversityPartialWithRelationsSchema).array(),
 }).partial())
@@ -371,8 +396,8 @@ export const AnalysisWithPartialRelationsSchema: z.ZodType<AnalysisWithPartialRe
 export const OccurrenceSchema = z.object({
   id: z.number().int(),
   project_id: z.string(),
-  lib_id: z.string(),
   analysis_run_name: z.string(),
+  lib_id: z.string(),
   featureid: z.string(),
   organismQuantity: z.number().int(),
 })
@@ -401,8 +426,8 @@ export type OccurrenceOptionalDefaults = z.infer<typeof OccurrenceOptionalDefaul
 
 export type OccurrenceRelations = {
   Project: ProjectWithRelations;
-  Library: LibraryWithRelations;
   Analysis: AnalysisWithRelations;
+  Library: LibraryWithRelations;
   Feature: FeatureWithRelations;
   Assignment: AssignmentWithRelations;
 };
@@ -411,8 +436,8 @@ export type OccurrenceWithRelations = z.infer<typeof OccurrenceSchema> & Occurre
 
 export const OccurrenceWithRelationsSchema: z.ZodType<OccurrenceWithRelations> = OccurrenceSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
-  Library: z.lazy(() => LibraryWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisWithRelationsSchema),
+  Library: z.lazy(() => LibraryWithRelationsSchema),
   Feature: z.lazy(() => FeatureWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentWithRelationsSchema),
 }))
@@ -422,8 +447,8 @@ export const OccurrenceWithRelationsSchema: z.ZodType<OccurrenceWithRelations> =
 
 export type OccurrenceOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
-  Library: LibraryOptionalDefaultsWithRelations;
   Analysis: AnalysisOptionalDefaultsWithRelations;
+  Library: LibraryOptionalDefaultsWithRelations;
   Feature: FeatureOptionalDefaultsWithRelations;
   Assignment: AssignmentOptionalDefaultsWithRelations;
 };
@@ -432,8 +457,8 @@ export type OccurrenceOptionalDefaultsWithRelations = z.infer<typeof OccurrenceO
 
 export const OccurrenceOptionalDefaultsWithRelationsSchema: z.ZodType<OccurrenceOptionalDefaultsWithRelations> = OccurrenceOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
-  Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema),
+  Library: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema),
   Feature: z.lazy(() => FeatureOptionalDefaultsWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema),
 }))
@@ -443,8 +468,8 @@ export const OccurrenceOptionalDefaultsWithRelationsSchema: z.ZodType<Occurrence
 
 export type OccurrencePartialRelations = {
   Project?: ProjectPartialWithRelations;
-  Library?: LibraryPartialWithRelations;
   Analysis?: AnalysisPartialWithRelations;
+  Library?: LibraryPartialWithRelations;
   Feature?: FeaturePartialWithRelations;
   Assignment?: AssignmentPartialWithRelations;
 };
@@ -453,8 +478,8 @@ export type OccurrencePartialWithRelations = z.infer<typeof OccurrencePartialSch
 
 export const OccurrencePartialWithRelationsSchema: z.ZodType<OccurrencePartialWithRelations> = OccurrencePartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
-  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 })).partial()
@@ -463,8 +488,8 @@ export type OccurrenceOptionalDefaultsWithPartialRelations = z.infer<typeof Occu
 
 export const OccurrenceOptionalDefaultsWithPartialRelationsSchema: z.ZodType<OccurrenceOptionalDefaultsWithPartialRelations> = OccurrenceOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
-  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 }).partial())
@@ -473,8 +498,8 @@ export type OccurrenceWithPartialRelations = z.infer<typeof OccurrenceSchema> & 
 
 export const OccurrenceWithPartialRelationsSchema: z.ZodType<OccurrenceWithPartialRelations> = OccurrenceSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
-  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Analysis: z.lazy(() => AnalysisPartialWithRelationsSchema),
+  Library: z.lazy(() => LibraryPartialWithRelationsSchema),
   Feature: z.lazy(() => FeaturePartialWithRelationsSchema),
   Assignment: z.lazy(() => AssignmentPartialWithRelationsSchema),
 }).partial())
@@ -630,6 +655,7 @@ export type FeatureOptionalDefaults = z.infer<typeof FeatureOptionalDefaultsSche
 //------------------------------------------------------
 
 export type FeatureRelations = {
+  Analyses: AnalysisWithRelations[];
   Occurrences: OccurrenceWithRelations[];
   Assignments: AssignmentWithRelations[];
   BlastQueryResults: BlastQueryResultWithRelations[];
@@ -638,6 +664,7 @@ export type FeatureRelations = {
 export type FeatureWithRelations = z.infer<typeof FeatureSchema> & FeatureRelations
 
 export const FeatureWithRelationsSchema: z.ZodType<FeatureWithRelations> = FeatureSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultWithRelationsSchema).array(),
@@ -647,6 +674,7 @@ export const FeatureWithRelationsSchema: z.ZodType<FeatureWithRelations> = Featu
 //------------------------------------------------------
 
 export type FeatureOptionalDefaultsRelations = {
+  Analyses: AnalysisOptionalDefaultsWithRelations[];
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
   BlastQueryResults: BlastQueryResultOptionalDefaultsWithRelations[];
@@ -655,6 +683,7 @@ export type FeatureOptionalDefaultsRelations = {
 export type FeatureOptionalDefaultsWithRelations = z.infer<typeof FeatureOptionalDefaultsSchema> & FeatureOptionalDefaultsRelations
 
 export const FeatureOptionalDefaultsWithRelationsSchema: z.ZodType<FeatureOptionalDefaultsWithRelations> = FeatureOptionalDefaultsSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultOptionalDefaultsWithRelationsSchema).array(),
@@ -664,6 +693,7 @@ export const FeatureOptionalDefaultsWithRelationsSchema: z.ZodType<FeatureOption
 //------------------------------------------------------
 
 export type FeaturePartialRelations = {
+  Analyses?: AnalysisPartialWithRelations[];
   Occurrences?: OccurrencePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
   BlastQueryResults?: BlastQueryResultPartialWithRelations[];
@@ -672,6 +702,7 @@ export type FeaturePartialRelations = {
 export type FeaturePartialWithRelations = z.infer<typeof FeaturePartialSchema> & FeaturePartialRelations
 
 export const FeaturePartialWithRelationsSchema: z.ZodType<FeaturePartialWithRelations> = FeaturePartialSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
@@ -680,6 +711,7 @@ export const FeaturePartialWithRelationsSchema: z.ZodType<FeaturePartialWithRela
 export type FeatureOptionalDefaultsWithPartialRelations = z.infer<typeof FeatureOptionalDefaultsSchema> & FeaturePartialRelations
 
 export const FeatureOptionalDefaultsWithPartialRelationsSchema: z.ZodType<FeatureOptionalDefaultsWithPartialRelations> = FeatureOptionalDefaultsSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
@@ -688,6 +720,7 @@ export const FeatureOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Featur
 export type FeatureWithPartialRelations = z.infer<typeof FeatureSchema> & FeaturePartialRelations
 
 export const FeatureWithPartialRelationsSchema: z.ZodType<FeatureWithPartialRelations> = FeatureSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
   BlastQueryResults: z.lazy(() => BlastQueryResultPartialWithRelationsSchema).array(),
@@ -737,12 +770,16 @@ export type TaxonomyOptionalDefaults = z.infer<typeof TaxonomyOptionalDefaultsSc
 //------------------------------------------------------
 
 export type TaxonomyRelations = {
+  Analyses: AnalysisWithRelations[];
+  Samples: SampleWithRelations[];
   Assignments: AssignmentWithRelations[];
 };
 
 export type TaxonomyWithRelations = z.infer<typeof TaxonomySchema> & TaxonomyRelations
 
 export const TaxonomyWithRelationsSchema: z.ZodType<TaxonomyWithRelations> = TaxonomySchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
+  Samples: z.lazy(() => SampleWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentWithRelationsSchema).array(),
 }))
 
@@ -750,12 +787,16 @@ export const TaxonomyWithRelationsSchema: z.ZodType<TaxonomyWithRelations> = Tax
 //------------------------------------------------------
 
 export type TaxonomyOptionalDefaultsRelations = {
+  Analyses: AnalysisOptionalDefaultsWithRelations[];
+  Samples: SampleOptionalDefaultsWithRelations[];
   Assignments: AssignmentOptionalDefaultsWithRelations[];
 };
 
 export type TaxonomyOptionalDefaultsWithRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyOptionalDefaultsRelations
 
 export const TaxonomyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
+  Samples: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentOptionalDefaultsWithRelationsSchema).array(),
 }))
 
@@ -763,24 +804,32 @@ export const TaxonomyOptionalDefaultsWithRelationsSchema: z.ZodType<TaxonomyOpti
 //------------------------------------------------------
 
 export type TaxonomyPartialRelations = {
+  Analyses?: AnalysisPartialWithRelations[];
+  Samples?: SamplePartialWithRelations[];
   Assignments?: AssignmentPartialWithRelations[];
 };
 
 export type TaxonomyPartialWithRelations = z.infer<typeof TaxonomyPartialSchema> & TaxonomyPartialRelations
 
 export const TaxonomyPartialWithRelationsSchema: z.ZodType<TaxonomyPartialWithRelations> = TaxonomyPartialSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
 })).partial()
 
 export type TaxonomyOptionalDefaultsWithPartialRelations = z.infer<typeof TaxonomyOptionalDefaultsSchema> & TaxonomyPartialRelations
 
 export const TaxonomyOptionalDefaultsWithPartialRelationsSchema: z.ZodType<TaxonomyOptionalDefaultsWithPartialRelations> = TaxonomyOptionalDefaultsSchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
 }).partial())
 
 export type TaxonomyWithPartialRelations = z.infer<typeof TaxonomySchema> & TaxonomyPartialRelations
 
 export const TaxonomyWithPartialRelationsSchema: z.ZodType<TaxonomyWithPartialRelations> = TaxonomySchema.merge(z.object({
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
+  Samples: z.lazy(() => SamplePartialWithRelationsSchema).array(),
   Assignments: z.lazy(() => AssignmentPartialWithRelationsSchema).array(),
 }).partial())
 
@@ -1673,6 +1722,7 @@ export type SampleOptionalDefaults = z.infer<typeof SampleOptionalDefaultsSchema
 export type SampleRelations = {
   Project: ProjectWithRelations;
   Libraries: LibraryWithRelations[];
+  Taxonomies: TaxonomyWithRelations[];
 };
 
 export type SampleWithRelations = Omit<z.infer<typeof SampleSchema>, "userDefined"> & {
@@ -1682,6 +1732,7 @@ export type SampleWithRelations = Omit<z.infer<typeof SampleSchema>, "userDefine
 export const SampleWithRelationsSchema: z.ZodType<SampleWithRelations> = SampleSchema.merge(z.object({
   Project: z.lazy(() => ProjectWithRelationsSchema),
   Libraries: z.lazy(() => LibraryWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyWithRelationsSchema).array(),
 }))
 
 // SAMPLE OPTIONAL DEFAULTS RELATION SCHEMA
@@ -1690,6 +1741,7 @@ export const SampleWithRelationsSchema: z.ZodType<SampleWithRelations> = SampleS
 export type SampleOptionalDefaultsRelations = {
   Project: ProjectOptionalDefaultsWithRelations;
   Libraries: LibraryOptionalDefaultsWithRelations[];
+  Taxonomies: TaxonomyOptionalDefaultsWithRelations[];
 };
 
 export type SampleOptionalDefaultsWithRelations = Omit<z.infer<typeof SampleOptionalDefaultsSchema>, "userDefined"> & {
@@ -1699,6 +1751,7 @@ export type SampleOptionalDefaultsWithRelations = Omit<z.infer<typeof SampleOpti
 export const SampleOptionalDefaultsWithRelationsSchema: z.ZodType<SampleOptionalDefaultsWithRelations> = SampleOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectOptionalDefaultsWithRelationsSchema),
   Libraries: z.lazy(() => LibraryOptionalDefaultsWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyOptionalDefaultsWithRelationsSchema).array(),
 }))
 
 // SAMPLE PARTIAL RELATION SCHEMA
@@ -1707,6 +1760,7 @@ export const SampleOptionalDefaultsWithRelationsSchema: z.ZodType<SampleOptional
 export type SamplePartialRelations = {
   Project?: ProjectPartialWithRelations;
   Libraries?: LibraryPartialWithRelations[];
+  Taxonomies?: TaxonomyPartialWithRelations[];
 };
 
 export type SamplePartialWithRelations = Omit<z.infer<typeof SamplePartialSchema>, "userDefined"> & {
@@ -1716,6 +1770,7 @@ export type SamplePartialWithRelations = Omit<z.infer<typeof SamplePartialSchema
 export const SamplePartialWithRelationsSchema: z.ZodType<SamplePartialWithRelations> = SamplePartialSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
 })).partial()
 
 export type SampleOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof SampleOptionalDefaultsSchema>, "userDefined"> & {
@@ -1725,6 +1780,7 @@ export type SampleOptionalDefaultsWithPartialRelations = Omit<z.infer<typeof Sam
 export const SampleOptionalDefaultsWithPartialRelationsSchema: z.ZodType<SampleOptionalDefaultsWithPartialRelations> = SampleOptionalDefaultsSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
 }).partial())
 
 export type SampleWithPartialRelations = Omit<z.infer<typeof SampleSchema>, "userDefined"> & {
@@ -1734,6 +1790,7 @@ export type SampleWithPartialRelations = Omit<z.infer<typeof SampleSchema>, "use
 export const SampleWithPartialRelationsSchema: z.ZodType<SampleWithPartialRelations> = SampleSchema.merge(z.object({
   Project: z.lazy(() => ProjectPartialWithRelationsSchema),
   Libraries: z.lazy(() => LibraryPartialWithRelationsSchema).array(),
+  Taxonomies: z.lazy(() => TaxonomyPartialWithRelationsSchema).array(),
 }).partial())
 
 /////////////////////////////////////////
@@ -2061,6 +2118,7 @@ export type LibraryRelations = {
   Sample: SampleWithRelations;
   Assay: AssayWithRelations;
   AssayPrep: AssayPrepWithRelations;
+  Analyses: AnalysisWithRelations[];
   Occurrences: OccurrenceWithRelations[];
   AlphaDiversityIndexes: AlphaDiversityIndexWithRelations[];
 };
@@ -2074,6 +2132,7 @@ export const LibraryWithRelationsSchema: z.ZodType<LibraryWithRelations> = Libra
   Sample: z.lazy(() => SampleWithRelationsSchema),
   Assay: z.lazy(() => AssayWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepWithRelationsSchema),
+  Analyses: z.lazy(() => AnalysisWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexWithRelationsSchema).array(),
 }))
@@ -2086,6 +2145,7 @@ export type LibraryOptionalDefaultsRelations = {
   Sample: SampleOptionalDefaultsWithRelations;
   Assay: AssayOptionalDefaultsWithRelations;
   AssayPrep: AssayPrepOptionalDefaultsWithRelations;
+  Analyses: AnalysisOptionalDefaultsWithRelations[];
   Occurrences: OccurrenceOptionalDefaultsWithRelations[];
   AlphaDiversityIndexes: AlphaDiversityIndexOptionalDefaultsWithRelations[];
 };
@@ -2099,6 +2159,7 @@ export const LibraryOptionalDefaultsWithRelationsSchema: z.ZodType<LibraryOption
   Sample: z.lazy(() => SampleOptionalDefaultsWithRelationsSchema),
   Assay: z.lazy(() => AssayOptionalDefaultsWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepOptionalDefaultsWithRelationsSchema),
+  Analyses: z.lazy(() => AnalysisOptionalDefaultsWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrenceOptionalDefaultsWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexOptionalDefaultsWithRelationsSchema).array(),
 }))
@@ -2111,6 +2172,7 @@ export type LibraryPartialRelations = {
   Sample?: SamplePartialWithRelations;
   Assay?: AssayPartialWithRelations;
   AssayPrep?: AssayPrepPartialWithRelations;
+  Analyses?: AnalysisPartialWithRelations[];
   Occurrences?: OccurrencePartialWithRelations[];
   AlphaDiversityIndexes?: AlphaDiversityIndexPartialWithRelations[];
 };
@@ -2124,6 +2186,7 @@ export const LibraryPartialWithRelationsSchema: z.ZodType<LibraryPartialWithRela
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 })).partial()
@@ -2137,6 +2200,7 @@ export const LibraryOptionalDefaultsWithPartialRelationsSchema: z.ZodType<Librar
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 }).partial())
@@ -2150,6 +2214,7 @@ export const LibraryWithPartialRelationsSchema: z.ZodType<LibraryWithPartialRela
   Sample: z.lazy(() => SamplePartialWithRelationsSchema),
   Assay: z.lazy(() => AssayPartialWithRelationsSchema),
   AssayPrep: z.lazy(() => AssayPrepPartialWithRelationsSchema),
+  Analyses: z.lazy(() => AnalysisPartialWithRelationsSchema).array(),
   Occurrences: z.lazy(() => OccurrencePartialWithRelationsSchema).array(),
   AlphaDiversityIndexes: z.lazy(() => AlphaDiversityIndexPartialWithRelationsSchema).array(),
 }).partial())

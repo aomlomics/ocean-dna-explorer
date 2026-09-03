@@ -41,10 +41,10 @@ export default function BlastSearchResult({
 
 	if (loading) {
 		return (
-			<div className="flex min-w-0 flex-col">
+			<div className="flex flex-col">
 				<div className="text-warning">Loading BLAST results...</div>
-				<div className="flex w-full grow items-center justify-center self-center p-12 md:p-24">
-					<span className="loading loading-spinner loading-xl" />
+				<div className="w-full p-75 grow self-center">
+					<span className="loading loading-spinner loading-xl w-full" />
 				</div>
 			</div>
 		);
@@ -86,7 +86,7 @@ export default function BlastSearchResult({
 			) : (
 				<></>
 			)}
-			<div className="grid h-full w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center justify-items-center">
+			<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
 				<button
 					className="btn btn-secondary rounded-full"
 					aria-label="Previous sequence"
@@ -96,8 +96,8 @@ export default function BlastSearchResult({
 					❮
 				</button>
 
-				<div className="relative flex h-full min-h-0 min-w-0 w-full flex-col p-2 md:p-5">
-					<h1 className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 border-b border-primary pb-2">
+				<div className="relative w-full h-full p-5 flex flex-col min-h-0">
+					<h1 className="grid grid-cols-[auto_1fr] gap-x-2 border-b border-primary pb-2">
 						{resultsBySequence[page]![0]!.query ? (
 							<>
 								<div>Query:</div>
@@ -110,10 +110,10 @@ export default function BlastSearchResult({
 						<div>{resultsBySequence[page]![0]!.sequence}</div>
 					</h1>
 
-					<div className="overflow-y-auto py-2 pr-1 md:pr-3">
+					<div className="overflow-y-auto pr-3 py-2">
 						{resultsBySequence[page]!.map((r, i) => (
 							<div key={i} className="flex flex-col">
-								<h2 className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2">
+								<h2 className="grid grid-cols-[auto_1fr] gap-x-2">
 									<div>Target featureid:</div>
 									<Link
 										className="link link-primary link-hover"
@@ -123,7 +123,7 @@ export default function BlastSearchResult({
 									</Link>
 								</h2>
 
-								<div className="grid w-full grid-cols-[auto_auto_minmax(0,1fr)] gap-x-2 px-0 md:grid-cols-[auto_auto_1fr_auto_auto_auto] md:px-15">
+								<div className="w-full grid grid-cols-[auto_auto_1fr_auto_auto_auto] gap-x-2 px-15">
 									{resultsFields.map((f) => {
 										const key = fieldLabels[f] || f;
 

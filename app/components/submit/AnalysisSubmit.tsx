@@ -12,7 +12,7 @@ import analysisSubmitAction from "@/app/actions/analysis/create/analysisSubmit";
 import { parse } from "csv-parse";
 import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
-import { TagModel } from "@/app/generated/prisma/models/Tag";
+import type { TagModel } from "@/app/generated/prisma/models/Tag";
 import AnalysisTag from "../tags/AnalysisTag";
 import { exploreUrl } from "@/types/tableMetadata";
 

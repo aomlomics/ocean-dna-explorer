@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ProgressCircle from "@/app/components/submit/ProgressCircle";
 import DeleteConfirmModal from "@/app/components/mySubmissions/DeleteConfirmationModal";
-import TableMetadata from "@/types/tableMetadata";
+import type TableMetadata from "@/types/tableMetadata";
 
 const Toast = ({ message, type }: { message: string; type: "success" | "error" }) => {
 	return (

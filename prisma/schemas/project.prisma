@@ -70,8 +70,9 @@ model Sample {
 
     // Relations
     project_id String
-    Project    Project   @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    Project    Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     Libraries  Library[]
+    Taxonomies Taxonomy[]
 
     deleted_ODE Boolean?
 
@@ -361,6 +362,7 @@ model Library {
     assay_name            String
     Assay                 Assay                 @relation(fields: [assay_name], references: [assay_name], onDelete: Restrict)
     AssayPrep             AssayPrep             @relation(fields: [project_id, assay_name], references: [project_id, assay_name], onDelete: Cascade)
+    Analyses              Analysis[]
     Occurrences           Occurrence[]
     AlphaDiversityIndexes AlphaDiversityIndex[]
 

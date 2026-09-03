@@ -1,10 +1,10 @@
 "use server";
 
-import type { AnalysisModel, OccurrenceModel, TagModel } from "@/app/generated/prisma/models";
+import type { AnalysisModel, AssignmentModel, OccurrenceModel, TagModel } from "@/app/generated/prisma/models";
 import { parseAnalysisFiles } from "@/app/helpers/actions/analysis";
 import { prisma } from "@/app/helpers/prisma";
 import { type Channel, createProgressStream } from "@/app/helpers/progress";
-import { handlePrismaError } from "@/app/helpers/queries";
+import { connectTaxaToSamples, handlePrismaError } from "@/app/helpers/queries";
 import { validateBlobs } from "@/app/helpers/withDb";
 import { RolePermissions } from "@/types/objects";
 import { auth } from "@clerk/nextjs/server";
@@ -35,7 +35,7 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		const { analysis, features, taxonomies, assignments, occurrences } = parseResult;
+		const { analysis, features, taxonomies, assignments, occurrences, libIds } = parseResult;
 
 		await analysisChannel.stream.message(
 			"All files successfully parsed into database format. Parsing data into database.",
@@ -50,14 +50,8 @@ async function doSubmit(
 			75
 		);
 
-		//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
-		const libIds = new Set() as Set<OccurrenceModel["lib_id"]>;
-		for (const occ of occurrences) {
-			libIds.add(occ.lib_id);
-		}
-
 		//error checks
-		const [dbProject, dbAssay, dbLibraries, dbTags] = await prisma.$transaction([
+		const [dbProject, dbAssay, dbLibraries, dbTags, dbOccs] = await prisma.$transaction([
 			prisma.project.findUnique({
 				where: {
 					project_id: analysis.project_id
@@ -83,20 +77,7 @@ async function doSubmit(
 					}
 				},
 				select: {
-					lib_id: true,
-					Occurrences: trusted
-						? {
-								where: {
-									Analysis: {
-										trusted: true
-									}
-								},
-								select: {
-									analysis_run_name: true,
-									featureid: true
-								}
-							}
-						: false
+					lib_id: true
 				}
 			}),
 			prisma.tag.findMany({
@@ -107,6 +88,24 @@ async function doSubmit(
 				},
 				select: {
 					tagName: true
+				}
+			}),
+			prisma.occurrence.findMany({
+				where: {
+					project_id: analysis.project_id,
+					lib_id: {
+						in: Array.from(libIds)
+					},
+					featureid: {
+						in: features.map((f) => f.featureid)
+					},
+					Analysis: {
+						trusted: true
+					}
+				},
+				distinct: ["analysis_run_name"],
+				select: {
+					analysis_run_name: true
 				}
 			})
 		]);
@@ -144,7 +143,7 @@ async function doSubmit(
 		await analysisChannel.stream.message("All checks successful.", 80);
 
 		//check if any provided libraries are missing from database query
-		if (libIds.size !== dbLibraries.length) {
+		if (libIds.length !== dbLibraries.length) {
 			const invalidLibIds = [] as string[];
 			for (const lib_id of libIds) {
 				if (!dbLibraries.some((lib) => lib.lib_id === lib_id)) {
@@ -168,33 +167,27 @@ async function doSubmit(
 		await occurrencesChannel.stream.message("All checks successful.", 80);
 
 		//check if any libraries have another trusted analysis with shared features
-		const otherTrusted = [] as AnalysisModel["analysis_run_name"][];
-		if (trusted) {
-			for (const lib of dbLibraries) {
-				for (const occ of lib.Occurrences) {
-					if (
-						!otherTrusted.includes(occ.analysis_run_name) &&
-						features.find((feat) => feat.featureid === occ.featureid)
-					) {
-						otherTrusted.push(occ.analysis_run_name);
-					}
-				}
-			}
-		}
+		const trustedWithSharedFeatures = new Set(dbOccs.map((occ) => occ.analysis_run_name));
+
+		//map taxonomies to the lib_id (sample) they were found in
+		const taxaByFeat = assignments.reduce(
+			(acc, assign) => ({ ...acc, [assign.featureid]: assign.taxonomy }),
+			{} as Record<AssignmentModel["featureid"], AssignmentModel["taxonomy"]>
+		);
+		const taxaByLibId = occurrences.reduce(
+			(acc, occ) => {
+				const curr = (acc[occ.lib_id] ??= new Set());
+				curr.add(taxaByFeat[occ.featureid]!);
+				return acc;
+			},
+			{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+		);
+
+		const taxaNames = taxonomies.map((taxa) => taxa.taxonomy);
 
 		//submission
 		await prisma.$transaction(
 			async (tx) => {
-				await tx.analysis.create({
-					//@ts-expect-error issue with Json database type
-					data: {
-						...analysis,
-						Tags: {
-							connect: dbTags
-						}
-					}
-				});
-
 				await tx.feature.createMany({
 					data: features,
 					skipDuplicates: true
@@ -205,6 +198,27 @@ async function doSubmit(
 					skipDuplicates: true
 				});
 
+				await tx.analysis.create({
+					//@ts-expect-error issue with Json database type
+					data: {
+						...analysis,
+						Tags: {
+							connect: dbTags
+						},
+						Libraries: {
+							connect: libIds.map((lib_id) => ({ project_id_lib_id: { project_id: analysis.project_id, lib_id } }))
+						},
+						Features: {
+							connect: features.map((feat) => ({ featureid: feat.featureid }))
+						},
+						Taxonomies: {
+							connect: taxaNames.map((taxonomy) => ({ taxonomy }))
+						}
+					}
+				});
+
+				await connectTaxaToSamples(tx, analysis.project_id, taxaByLibId);
+
 				await tx.assignment.createMany({
 					data: assignments
 				});
@@ -213,11 +227,12 @@ async function doSubmit(
 					data: occurrences
 				});
 
-				if (otherTrusted.length) {
+				if (trustedWithSharedFeatures.size) {
 					await tx.analysis.updateMany({
 						where: {
+							project_id: analysis.project_id,
 							analysis_run_name: {
-								in: otherTrusted
+								in: Array.from(trustedWithSharedFeatures)
 							}
 						},
 						data: {

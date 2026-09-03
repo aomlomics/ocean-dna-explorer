@@ -1,6 +1,6 @@
 "use client";
 
-import chroma from "chroma-js";
+import type chroma from "chroma-js";
 import { type ReactNode, type SetStateAction, type TransitionStartFunction, useState } from "react";
 
 export default function Checklist({
@@ -52,18 +52,14 @@ export default function Checklist({
 								<input
 									type="checkbox"
 									onChange={(e) => {
-										function func() {
-											const checked = e.target.checked;
+										const checked = e.target.checked;
 
-											setListFilter(
-												list.reduce(
-													(acc, item) => {
-														acc[item] = !checked;
-														return acc;
-													},
-													{} as Record<string, boolean>
-												)
-											);
+										function func() {
+											const temp = { ...listFilter };
+											for (const item of list) {
+												temp[item] = !checked;
+											}
+											setListFilter(temp);
 										}
 
 										if (startTransition) {
@@ -75,7 +71,7 @@ export default function Checklist({
 									checked={list.every((item) => !isHidden(item))}
 									className="checkbox checkbox-xs"
 								/>
-								<span className="label-text text-sm">All</span>
+								<span className="label-text text-sm select-none">All</span>
 							</label>
 							<input
 								type="text"
@@ -97,10 +93,12 @@ export default function Checklist({
 											<input
 												type="checkbox"
 												checked={!isHidden(head)}
-												onChange={() => {
+												onChange={(e) => {
+													const checked = e.target.checked;
+
 													function func() {
 														const temp = { ...listFilter };
-														temp[head] = isHidden(head) ? false : true;
+														temp[head] = !checked;
 														setListFilter(temp);
 													}
 
@@ -113,7 +111,7 @@ export default function Checklist({
 												className="checkbox checkbox-xs"
 											/>
 
-											<span className="text-sm pl-2 truncate max-w-full">
+											<span className="text-sm pl-2 truncate max-w-full select-none">
 												{head} {extraLabel && <sup className="text-xs">{extraLabel}</sup>}
 											</span>
 

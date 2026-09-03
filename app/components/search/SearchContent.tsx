@@ -39,14 +39,19 @@ export default function SearchContent({
 				</div>
 				<div
 					key={table + "blast"}
-					className="search-focus-border collapse-content grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10"
+					className="search-focus-border collapse-content min-w-0"
 				>
-					<BlastSearch assayNames={assayNames} />
-					<BlastSearchResult
-						blastResult={extraResults.blastResult}
-						existingBlastDate={extraResults.existingBlastDate}
-						className="max-h-[min(32rem,70vh)] min-w-0 lg:h-200 lg:max-h-none"
-					/>
+					<p className="py-4 text-base-content/70 lg:hidden">
+						Use Search on a laptop or desktop to run BLAST searches.
+					</p>
+					<div className="hidden min-w-0 gap-10 lg:grid lg:grid-cols-2">
+						<BlastSearch assayNames={assayNames} />
+						<BlastSearchResult
+							blastResult={extraResults.blastResult}
+							existingBlastDate={extraResults.existingBlastDate}
+							className="h-200 min-w-0"
+						/>
+					</div>
 				</div>
 			</div>
 
@@ -76,7 +81,10 @@ export default function SearchContent({
 					</div>
 				</div>
 				<div className="collapse-content text-sm p-0">
-					<div className="rounded-lg">
+					<p className="p-4 text-base text-base-content/70 lg:hidden">
+						Use Search on a laptop or desktop to view the map and draw shapes.
+					</p>
+					<div className="hidden rounded-lg lg:block">
 						<MapWrapper loading={!extraResults.samples}>
 							<DynamicMap
 								key={mapKey}
@@ -115,6 +123,7 @@ export default function SearchContent({
 							setMapKey((curr) => curr + 1);
 						}}
 						toggle={table === "taxonomy" || table === "project" || undefined}
+						hideFilters
 					/>
 				</div>
 			</div>

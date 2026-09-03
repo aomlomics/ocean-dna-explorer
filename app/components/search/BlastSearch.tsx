@@ -156,7 +156,7 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 	}
 
 	return (
-		<form onSubmit={handleSubmit} className="flex min-w-0 w-full flex-col items-start">
+		<form onSubmit={handleSubmit} className="flex flex-col items-start">
 			<fieldset className="fieldset w-full">
 				<legend className="fieldset-legend">Database</legend>
 				<select
@@ -176,7 +176,7 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 				<legend className="fieldset-legend w-full">
 					<div className="w-full">
 						<div>Query</div>
-						<div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+						<div className="flex justify-between">
 							<div>
 								Enter sequence(s) in{" "}
 								<Link className="link link-primary link-hover" href="https://www.ncbi.nlm.nih.gov/genbank/fastaformat/">
@@ -255,7 +255,7 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 					</label>
 				</fieldset>
 
-				<div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
+				<div className="grid grid-cols-2 gap-x-5">
 					<fieldset className="fieldset">
 						<div className="flex flex-between">
 							<legend className="fieldset-legend">Number of Results</legend>
@@ -272,8 +272,8 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 							max="100"
 							className="input"
 							placeholder={`${DEFAULT_NUM_RESULTS}`}
-							value={max_target_seqs.toString()}
-							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value))}
+							value={Number.isFinite(max_target_seqs) ? max_target_seqs : ""}
+							onChange={(e) => set_max_target_seqs(parseInt(e.currentTarget.value, 10))}
 							disabled={!assayNames}
 						/>
 					</fieldset>
@@ -313,7 +313,7 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 							max="100"
 							className="input"
 							placeholder={`${DEFAULT_PERCENT_IDENTITY}`}
-							value={perc_identity.toString()}
+							value={Number.isFinite(perc_identity) ? perc_identity : ""}
 							onChange={(e) => set_perc_identity(parseFloat(e.currentTarget.value))}
 							disabled={!assayNames}
 						/>
@@ -335,7 +335,7 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 							max="100"
 							className="input"
 							placeholder={`${DEFAULT_QCOV_HSP}`}
-							value={qcov_hsp_perc.toString()}
+							value={Number.isFinite(qcov_hsp_perc) ? qcov_hsp_perc : ""}
 							onChange={(e) => set_qcov_hsp_perc(parseFloat(e.currentTarget.value))}
 							disabled={!assayNames}
 						/>
@@ -343,7 +343,7 @@ export default function BlastSearch({ assayNames }: { assayNames: AssayModel["as
 				</div>
 			</div>
 
-			<button className="btn btn-success mt-4 self-stretch mx-0 lg:mx-30" disabled={!assayNames || !blastQuery}>
+			<button className="btn btn-success self-stretch mt-4 mx-30" disabled={!assayNames || !blastQuery}>
 				BLAST
 			</button>
 		</form>
