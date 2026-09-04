@@ -37,10 +37,7 @@ export default function SearchContent({
 						<span>BLAST</span>
 					</div>
 				</div>
-				<div
-					key={table + "blast"}
-					className="search-focus-border collapse-content min-w-0"
-				>
+				<div key={table + "blast"} className="search-focus-border collapse-content min-w-0">
 					<p className="py-4 text-base-content/70 lg:hidden">
 						Use Search on a laptop or desktop to run BLAST searches.
 					</p>

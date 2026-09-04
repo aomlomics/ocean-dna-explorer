@@ -12,7 +12,10 @@ import Image from "next/image";
 import { DepthCoverageCard, DepthCoverageCardSkeleton } from "@/app/components/dataSummary/DepthCoverageCard";
 import { DashCardInfoButton } from "@/app/components/dataSummary/DashCard";
 import ProjectCoverPhotoPreview from "@/app/components/explore/ProjectCoverPhotoPreview";
-import ProjectFileDownloads, { type DownloadFile } from "@/app/components/explore/ProjectFileDownloads";
+import ProjectFileDownloads, {
+	type AnalysisDownloadBundle,
+	type DownloadFile
+} from "@/app/components/explore/ProjectFileDownloads";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { getBlobSizes } from "@/app/helpers/getBlobSizes";
@@ -155,33 +158,6 @@ function formatInstitutionHeaderBlock(institution: string | null | undefined): R
 	);
 }
 
-function ProjectDownloadsSkeleton() {
-	return (
-		<div className="relative z-raised flex flex-wrap items-center gap-3" aria-hidden>
-			<div className="inline-flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
-				<span className="skeleton h-8 w-8 shrink-0 rounded" />
-				<span className="flex flex-col gap-1">
-					<span className="skeleton h-4 w-36" />
-					<span className="skeleton h-3 w-14" />
-				</span>
-			</div>
-		</div>
-	);
-}
-
-async function ProjectDownloadsBlock({ metadataFiles }: { metadataFiles: DownloadFile[] }) {
-	const sizeByUrl = await getBlobSizes(metadataFiles.map((f) => f.href));
-
-	return (
-		<div className="relative z-raised">
-			<ProjectFileDownloads metadataFiles={metadataFiles} sizeByUrl={sizeByUrl} />
-		</div>
-	);
-}
-
-/*
-import type { AnalysisDownloadBundle } from "@/app/components/explore/ProjectFileDownloads";
-
 function ProjectDownloadsSkeleton({ hasAnalyses }: { hasAnalyses: boolean }) {
 	return (
 		<div className="relative z-raised flex flex-wrap items-center gap-3" aria-hidden>
@@ -230,7 +206,6 @@ async function ProjectDownloadsBlock({
 		</div>
 	);
 }
-*/
 
 export default async function Project_id({ params }: { params: Promise<{ project_id: string }> }) {
 	const { project_id } = await decodeRouteParams(params);
@@ -245,9 +220,9 @@ export default async function Project_id({ params }: { params: Promise<{ project
 				select: {
 					analysis_run_name: true,
 					assay_name: true,
-					// analysisMetadataFileUrl_ODE: true,
-					// asvFileUrl_ODE: true,
-					// occurrenceFileUrl_ODE: true,
+					analysisMetadataFileUrl_ODE: true,
+					asvFileUrl_ODE: true,
+					occurrenceFileUrl_ODE: true,
 					Assay: {
 						select: {
 							target_gene: true
@@ -476,27 +451,20 @@ export default async function Project_id({ params }: { params: Promise<{ project
 		{ label: "sampleMetadata", href: project.sampleMetadataFileUrl_ODE },
 		{ label: "libraryMetadata", href: project.libraryMetadataFileUrl_ODE }
 	].filter((f) => Boolean(f.href));
-	// const analysisDownloads = Analyses.map((a) => ({
-	// 	analysis_run_name: a.analysis_run_name,
-	// 	files: [
-	// 		{ label: "analysisMetadata", href: a.analysisMetadataFileUrl_ODE },
-	// 		{ label: "asv", href: a.asvFileUrl_ODE },
-	// 		{ label: "occurrence", href: a.occurrenceFileUrl_ODE }
-	// 	].filter((f) => Boolean(f.href))
-	// }));
+	const analysisDownloads = Analyses.map((a) => ({
+		analysis_run_name: a.analysis_run_name,
+		files: [
+			{ label: "analysisMetadata", href: a.analysisMetadataFileUrl_ODE },
+			{ label: "asv", href: a.asvFileUrl_ODE },
+			{ label: "occurrence", href: a.occurrenceFileUrl_ODE }
+		].filter((f) => Boolean(f.href))
+	}));
 
 	const downloadsBlock = (
-		<Suspense fallback={<ProjectDownloadsSkeleton />}>
-			<ProjectDownloadsBlock metadataFiles={metadataFiles} />
+		<Suspense fallback={<ProjectDownloadsSkeleton hasAnalyses={analysisDownloads.length > 0} />}>
+			<ProjectDownloadsBlock project_id={project_id} metadataFiles={metadataFiles} analyses={analysisDownloads} />
 		</Suspense>
 	);
-	// <Suspense fallback={<ProjectDownloadsSkeleton hasAnalyses={analysisDownloads.length > 0} />}>
-	// 	<ProjectDownloadsBlock
-	// 		project_id={project_id}
-	// 		metadataFiles={metadataFiles}
-	// 		analyses={analysisDownloads}
-	// 	/>
-	// </Suspense>
 
 	const advancedProjStr = `"project_id","equals","${project_id}"`;
 	const glanceBlock = (

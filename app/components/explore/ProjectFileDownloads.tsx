@@ -1,7 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import InfoButton from "@/app/components/InfoButton";
+import { AnalysisIcon } from "@/app/components/icons";
+import { exploreUrl } from "@/types/tableMetadata";
+import type { Analysis } from "@/app/generated/prisma/client";
 
 export type DownloadFile = {
 	label: string;
@@ -59,13 +64,7 @@ function FileDownloadIcon() {
 const downloadBtnClass =
 	"inline-flex items-center gap-3 bg-base-200 px-4 py-2 text-left transition-colors hover:bg-base-300 disabled:cursor-not-allowed";
 
-function DownloadButtonLabel({
-	title,
-	sizeLabel
-}: {
-	title: string;
-	sizeLabel: string | null;
-}) {
+function DownloadButtonLabel({ title, sizeLabel }: { title: string; sizeLabel: string | null }) {
 	return (
 		<span className="flex min-w-0 flex-col items-start gap-0.5 leading-tight">
 			<span className="text-base font-normal text-base-content">{title}</span>
@@ -112,6 +111,15 @@ export function AnalysisFileDownloads({
 		}
 	}
 
+	const downloadsInfo = (
+		<div className="space-y-2">
+			<div className="text-sm font-semibold text-base-content">What you can download</div>
+			<p className="text-xs leading-relaxed text-base-content">
+				<strong>Analyses:</strong> analysisMetadata, ASV / taxa features, and the abundance table (3 files).
+			</p>
+		</div>
+	);
+
 	return (
 		<div className="flex flex-wrap items-center gap-3">
 			<button
@@ -123,80 +131,27 @@ export function AnalysisFileDownloads({
 			>
 				<FileDownloadIcon />
 				<DownloadButtonLabel
-					title={busy ? "Downloading…" : "Download Analysis Metadata"}
+					title={busy ? "Downloading…" : "Download 1 analysis"}
 					sizeLabel={totalSizeLabel(urls, sizeByUrl)}
 				/>
 			</button>
-			<InfoButton dir="tooltip-bottom">
-				<p className="leading-relaxed">
-					Downloads this analysis’s files: analysisMetadata, the ASV / taxa feature table, and the abundance
-					(occurrence) table.
-				</p>
-			</InfoButton>
-		</div>
-	);
-}
-
-export default function ProjectFileDownloads({
-	metadataFiles,
-	sizeByUrl
-}: {
-	metadataFiles: DownloadFile[];
-	sizeByUrl: Record<string, number | null>;
-}) {
-	const [metaBusy, setMetaBusy] = useState(false);
-	const metadataUrls = useMemo(() => metadataFiles.map((f) => f.href).filter(Boolean), [metadataFiles]);
-
-	async function onDownloadMetadata() {
-		if (metaBusy || metadataUrls.length === 0) return;
-		setMetaBusy(true);
-		try {
-			await downloadUrls(metadataUrls);
-		} finally {
-			setMetaBusy(false);
-		}
-	}
-
-	const downloadsInfo = (
-		<div className="space-y-2">
-			<p className="leading-relaxed">
-				<strong>Metadata:</strong> projectMetadata, sampleMetadata, and libraryMetadata.
-			</p>
-			<p className="leading-relaxed">
-				<strong>Analyses:</strong> visit each analysis page to download its associated files.
-			</p>
-		</div>
-	);
-
-	return (
-		<div className="flex flex-wrap items-center gap-3">
-			<button
-				type="button"
-				onClick={onDownloadMetadata}
-				disabled={metaBusy || metadataUrls.length === 0}
-				className={`${downloadBtnClass} rounded-lg`}
-				aria-label="Download project, sample, and library metadata files"
-			>
-				<FileDownloadIcon />
-				<DownloadButtonLabel
-					title={metaBusy ? "Downloading…" : "Download Metadata"}
-					sizeLabel={totalSizeLabel(metadataUrls, sizeByUrl)}
-				/>
-			</button>
-
 			<InfoButton dir="tooltip-bottom">{downloadsInfo}</InfoButton>
 		</div>
 	);
 }
 
-/*
-	import Link from "next/link";
-	import { useEffect, useLayoutEffect, useRef, type CSSProperties } from "react";
-	import { createPortal } from "react-dom";
-	import { AnalysisIcon } from "@/app/components/icons";
-	import { exploreUrl } from "@/types/tableMetadata";
-	import type { Analysis } from "@/app/generated/prisma/client";
-
+export default function ProjectFileDownloads({
+	project_id,
+	metadataFiles,
+	analyses,
+	sizeByUrl
+}: {
+	project_id: Analysis["project_id"];
+	metadataFiles: DownloadFile[];
+	analyses: AnalysisDownloadBundle[];
+	sizeByUrl: Record<string, number | null>;
+}) {
+	const [metaBusy, setMetaBusy] = useState(false);
 	const [analysisBusy, setAnalysisBusy] = useState(false);
 	const [showAnalysisPicker, setShowAnalysisPicker] = useState(false);
 	const [pickerStyle, setPickerStyle] = useState<CSSProperties | null>(null);
@@ -207,6 +162,8 @@ export default function ProjectFileDownloads({
 		Object.fromEntries(analyses.map((a) => [a.analysis_run_name, true]))
 	);
 
+	const metadataUrls = useMemo(() => metadataFiles.map((f) => f.href).filter(Boolean), [metadataFiles]);
+
 	const selectedAnalyses = analyses.filter((a) => selected[a.analysis_run_name]);
 	const selectedCount = selectedAnalyses.length;
 	const selectedAnalysisUrls = selectedAnalyses.flatMap((a) => a.files.map((f) => f.href).filter(Boolean));
@@ -214,26 +171,29 @@ export default function ProjectFileDownloads({
 	const noneSelected = selectedCount === 0;
 
 	function sizeLabel(urls: string[]) {
-		let total = 0;
-		let known = 0;
-		for (const url of urls) {
-			const n = sizeByUrl[url];
-			if (typeof n === "number") {
-				total += n;
-				known += 1;
-			}
-		}
-		if (known === 0) return null;
-		const approx = known < urls.length ? "~" : "";
-		return `${approx}${formatBytes(total)}`;
+		return totalSizeLabel(urls, sizeByUrl);
 	}
 
+	const metadataSizeLabel = sizeLabel(metadataUrls);
 	const analysisSizeLabel = sizeLabel(selectedAnalysisUrls);
 	const analysisButtonLabel = analysisBusy
 		? "Downloading…"
 		: selectedCount === 1
 			? "Download 1 analysis"
 			: `Download ${selectedCount} analyses`;
+
+	const downloadsInfo = (
+		<div className="space-y-2">
+			<div className="text-sm font-semibold text-base-content">What you can download</div>
+			<p className="text-xs leading-relaxed text-base-content">
+				<strong>Metadata:</strong> projectMetadata, sampleMetadata, and libraryMetadata.
+			</p>
+			<p className="text-xs leading-relaxed text-base-content">
+				<strong>Analyses:</strong> for each selected analysis: analysisMetadata, ASV / taxa features, and the abundance
+				table (3 files each). Use the chevron to choose analyses.
+			</p>
+		</div>
+	);
 
 	const placePicker = () => {
 		if (!splitBtnRef.current) return null;
@@ -292,6 +252,16 @@ export default function ProjectFileDownloads({
 		};
 	}, [showAnalysisPicker]);
 
+	async function onDownloadMetadata() {
+		if (metaBusy || metadataUrls.length === 0) return;
+		setMetaBusy(true);
+		try {
+			await downloadUrls(metadataUrls);
+		} finally {
+			setMetaBusy(false);
+		}
+	}
+
 	async function onDownloadAnalysis() {
 		if (analysisBusy || noneSelected) return;
 		setAnalysisBusy(true);
@@ -321,9 +291,7 @@ export default function ProjectFileDownloads({
 									className="checkbox checkbox-primary checkbox-sm"
 									checked={allSelected}
 									onChange={(e) =>
-										setSelected(
-											Object.fromEntries(analyses.map((a) => [a.analysis_run_name, e.target.checked]))
-										)
+										setSelected(Object.fromEntries(analyses.map((a) => [a.analysis_run_name, e.target.checked])))
 									}
 								/>
 								<span>Select all ({analyses.length})</span>
@@ -362,9 +330,7 @@ export default function ProjectFileDownloads({
 											}
 										/>
 										<div className="min-w-0 flex-1">
-											<div className="leading-snug wrap-break-word text-base-content/90">
-												{a.analysis_run_name}
-											</div>
+											<div className="leading-snug wrap-break-word text-base-content/90">{a.analysis_run_name}</div>
 											<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-base-content/70">
 												<span className="inline-flex min-h-4 min-w-12 items-center">{rowSize ?? null}</span>
 												<Link
@@ -388,6 +354,19 @@ export default function ProjectFileDownloads({
 					document.body
 				)
 			: null;
+
+	return (
+		<div className="flex flex-wrap items-center gap-3">
+			<button
+				type="button"
+				onClick={onDownloadMetadata}
+				disabled={metaBusy || metadataUrls.length === 0}
+				className={`${downloadBtnClass} rounded-lg`}
+				aria-label="Download project, sample, and library metadata files"
+			>
+				<FileDownloadIcon />
+				<DownloadButtonLabel title={metaBusy ? "Downloading…" : "Download Metadata"} sizeLabel={metadataSizeLabel} />
+			</button>
 
 			{analyses.length > 0 ? (
 				<div
@@ -436,5 +415,8 @@ export default function ProjectFileDownloads({
 					</button>
 				</div>
 			) : null}
+			<InfoButton dir="tooltip-bottom">{downloadsInfo}</InfoButton>
 			{picker}
-*/
+		</div>
+	);
+}
