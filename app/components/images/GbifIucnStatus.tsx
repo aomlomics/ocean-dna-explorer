@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-function IucnLogoMark() {
+function IucnLogoMark({ compact = false }: { compact?: boolean }) {
 	const [failed, setFailed] = useState(false);
 	if (failed) {
 		return <span className="text-sm font-bold uppercase tracking-wide text-base-content/60">IUCN Red List</span>;
@@ -12,7 +12,7 @@ function IucnLogoMark() {
 		<img
 			src="/images/iucn_redlist_logo.webp"
 			alt="IUCN Red List"
-			className="h-14 w-auto max-w-40 shrink-0 object-contain object-left opacity-95 sm:h-16"
+			className={`w-auto shrink-0 object-contain object-left opacity-95 ${compact ? "h-9 max-w-28" : "h-14 max-w-40 sm:h-16"}`}
 			onError={() => setFailed(true)}
 		/>
 	);
@@ -154,11 +154,11 @@ async function resolveBackboneSpeciesKeyForGbif(initialKey: number | string, sig
 	return k;
 }
 
-type Props = { taxonKey: number | string; className?: string };
+type Props = { taxonKey: number | string; className?: string; compact?: boolean };
 
 type SourceKind = "iucn_distribution" | "distribution_other" | "description" | null;
 
-export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
+export default function GbifIucnStatus({ taxonKey, className = "", compact = false }: Props) {
 	const [loading, setLoading] = useState(true);
 	const [category, setCategory] = useState<CategoryId | null>(null);
 	const [sourceKind, setSourceKind] = useState<SourceKind>(null);
@@ -236,8 +236,11 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 
 	if (loading) {
 		return (
-			<div className={`flex min-h-28 w-full items-center justify-center py-6 ${className}`} aria-busy="true">
-				<span className="loading loading-spinner loading-lg text-base-content/50" />
+			<div
+				className={`flex w-full items-center justify-center ${compact ? "min-h-16 py-3" : "min-h-28 py-6"} ${className}`}
+				aria-busy="true"
+			>
+				<span className={`loading loading-spinner text-base-content/50 ${compact ? "loading-md" : "loading-lg"}`} />
 			</div>
 		);
 	}
@@ -272,24 +275,26 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 	);
 
 	return (
-		<div className={`w-full space-y-3 ${className}`}>
-			<div className="flex items-start justify-start gap-3">
+		<div className={`w-full ${compact ? "space-y-2" : "space-y-3"} ${className}`}>
+			<div className={`flex items-start justify-start ${compact ? "gap-2" : "gap-3"}`}>
 				<div className="shrink-0">
-					<IucnLogoMark />
+					<IucnLogoMark compact={compact} />
 				</div>
-				<div className="min-w-0 flex-1 space-y-2">
+				<div className="min-w-0 flex-1 space-y-1.5">
 					{active ? (
 						<p
-							className={`inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-4 py-2.5 text-base font-semibold leading-snug sm:text-lg ${active.bg} ${active.text}`}
+							className={`inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg font-semibold leading-snug ${compact ? "px-3 py-1.5 text-sm" : "px-4 py-2.5 text-base sm:text-lg"} ${active.bg} ${active.text}`}
 						>
 							<span className="font-black tracking-tight">{active.short}</span>
 							<span className={`opacity-90 ${active.text}`}>·</span>
 							<span className="font-semibold uppercase">{active.line}</span>
 						</p>
 					) : (
-						<p className="text-sm leading-snug text-base-content/65">No IUCN category found in GBIF for this taxon.</p>
+						<p className={`leading-snug text-base-content/65 ${compact ? "text-xs" : "text-sm"}`}>
+							No IUCN category found in GBIF for this taxon.
+						</p>
 					)}
-					<p className="text-xs leading-relaxed text-base-content/55">{supportBlock}</p>
+					{compact ? null : <p className="text-xs leading-relaxed text-base-content/55">{supportBlock}</p>}
 				</div>
 			</div>
 
@@ -299,19 +304,23 @@ export default function GbifIucnStatus({ taxonKey, className = "" }: Props) {
 					return (
 						<div
 							key={cell.id}
-							className={`relative flex min-h-14 flex-col items-center justify-center rounded-sm px-1 py-2.5 text-center sm:rounded-none ${cell.bg} ${
+							className={`relative flex flex-col items-center justify-center rounded-sm px-1 text-center sm:rounded-none ${compact ? "min-h-9 py-1.5" : "min-h-14 py-2.5"} ${cell.bg} ${
 								isActive
 									? "z-10 opacity-100 shadow-[inset_0_0_0_3px_rgba(255,255,255,0.92),0_0_0_1px_rgba(0,0,0,0.25)]"
 									: "opacity-85"
 							}`}
 							title={cell.line}
 						>
-							<span className={`text-xs font-black leading-none sm:text-sm ${cell.text}`}>{cell.short}</span>
-							<span
-								className={`mt-1 hidden text-[7px] font-bold uppercase leading-tight opacity-95 sm:block sm:text-[8px] ${cell.text}`}
-							>
-								{cell.line}
+							<span className={`font-black leading-none ${compact ? "text-[10px]" : "text-xs sm:text-sm"} ${cell.text}`}>
+								{cell.short}
 							</span>
+							{compact ? null : (
+								<span
+									className={`mt-1 hidden text-[7px] font-bold uppercase leading-tight opacity-95 sm:block sm:text-[8px] ${cell.text}`}
+								>
+									{cell.line}
+								</span>
+							)}
 						</div>
 					);
 				})}

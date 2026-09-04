@@ -5,10 +5,11 @@ import { useState } from "react";
 type CopyButtonProps = {
 	taxonomy?: string;
 	value?: string;
-	variant?: "text" | "icon";
+	variant?: "text" | "icon" | "button";
 	title?: string;
 	ariaLabel?: string;
 	className?: string;
+	label?: string;
 };
 
 export default function CopyButton({
@@ -17,7 +18,8 @@ export default function CopyButton({
 	variant = "text",
 	title,
 	ariaLabel,
-	className = ""
+	className = "",
+	label
 }: CopyButtonProps) {
 	const [copied, setCopied] = useState(false);
 	const textToCopy = value ?? taxonomy ?? "";
@@ -33,6 +35,20 @@ export default function CopyButton({
 			console.error("Failed to copy:", err);
 		}
 	};
+
+	if (variant === "button") {
+		return (
+			<button
+				onClick={handleCopy}
+				type="button"
+				title={copied ? "Copied" : (title ?? label ?? "Copy")}
+				aria-label={ariaLabel ?? label ?? "Copy"}
+				className={["btn btn-sm btn-primary", className].filter(Boolean).join(" ")}
+			>
+				{copied ? "Copied!" : (label ?? "Copy")}
+			</button>
+		);
+	}
 
 	if (variant === "icon") {
 		return (
@@ -95,7 +111,7 @@ export default function CopyButton({
 			title={title ?? "Copy full taxonomy"}
 			type="button"
 		>
-			{copied ? "Copied!" : "Copy full taxonomy"}
+			{copied ? "Copied!" : (label ?? "Copy full taxonomy")}
 		</button>
 	);
 }

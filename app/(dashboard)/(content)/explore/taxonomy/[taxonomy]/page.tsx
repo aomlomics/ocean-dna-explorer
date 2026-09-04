@@ -2,13 +2,13 @@ import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity, type TaxonomicRanks } from "@/types/objects";
-import CopyButton from "@/app/components/CopyButton";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
 import TaxonomyVisualToggle from "@/app/components/images/TaxonomyVisualToggle";
+import CopyButton from "@/app/components/CopyButton";
 import { VIEW_AS_SEARCH_TOOLTIP_CLASS } from "@/app/components/viewAsSearchTooltip";
 import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
@@ -154,7 +154,7 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 	const databaseScientificName = finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
 	const databaseRankKey = finestRank?.rankKey ?? null;
-	const breadcrumbRanks = [...RanksBySpecificity].reverse().filter((rank) => {
+	const classificationRanks = [...RanksBySpecificity].reverse().filter((rank) => {
 		const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim();
 		return Boolean(raw);
 	});
@@ -171,66 +171,66 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						{databaseRankLabel}
 					</span>
 				</div>
-				{breadcrumbRanks.length ? (
-					<div className="flex flex-wrap items-baseline gap-4">
-						<div className="breadcrumbs text-sm text-base-content/70">
-							<ul>
-								{breadcrumbRanks.map((rank, idx) => {
-									const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim() ?? "";
-									const name = raw.replace(/_/g, " ");
-									const isLast = idx === breadcrumbRanks.length - 1;
-									return (
-										<li key={rank}>
-											{isLast ? (
-												<span className="font-medium text-base-content/70">{name}</span>
-											) : (
-												<Link href={`/explore/taxonomy?${rank}=${name}`} className="link link-hover text-primary">
-													{name}
-												</Link>
-											)}
-										</li>
-									);
-								})}
-							</ul>
-						</div>
-						<div className="flex items-center gap-2 ml-4">
-							<CopyButton taxonomy={taxonomy} />
-						</div>
-					</div>
-				) : (
-					<div className="mt-1">
-						<CopyButton taxonomy={taxonomy} />
-					</div>
-				)}
 				<p className="text-lg text-base-content/70">
 					Found in {dbTaxonomy.Samples.length === 1 ? "1 sample" : `${dbTaxonomy.Samples.length} samples`} across{" "}
 					{uniqueProjects.length === 1 ? "1 project" : `${uniqueProjects.length} projects`}
 				</p>
 			</header>
 
-			{/* Main grid: taxonomy card (left) + map & stats (right) */}
-			<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-				{/* Left: taxonomy, image, hierarchy, Red List */}
-				<div className="lg:col-span-2 grid grid-cols-1 gap-4 items-stretch">
-					<div className="bg-base-200 rounded-lg p-4 shadow-sm flex flex-col gap-2">
-						<div className="grid grid-cols-1 gap-3 items-start min-h-0">
-							<div className="flex min-w-0 w-full max-w-full flex-col items-center">
-								<TaxonomyVisualToggle
-									taxonomy={dbTaxonomy as unknown as TaxonomyModel}
-									mediaTaxonKey={pageGbif?.mediaTaxonKey ?? null}
-									databaseRankKey={databaseRankKey}
-									phyloPicUrl={phyloPic?.imageUrl ?? null}
-									phyloRank={phyloPic?.rank ?? ""}
-									phyloTitle={phyloPic?.title ?? ""}
-									altScientificName={databaseScientificName}
-									databaseRankLabel={databaseRankLabel}
-									databaseScientificName={databaseScientificName}
-									commonName={pageGbif?.commonName ?? null}
-								/>
+			{/* Main grid: image + ranks (left), map + Red List (right), summary cards (bottom) */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<div className="bg-base-200 rounded-lg p-5 shadow-sm h-full">
+					<TaxonomyVisualToggle
+						taxonomy={dbTaxonomy as unknown as TaxonomyModel}
+						mediaTaxonKey={pageGbif?.mediaTaxonKey ?? null}
+						databaseRankKey={databaseRankKey}
+						phyloPicUrl={phyloPic?.imageUrl ?? null}
+						phyloRank={phyloPic?.rank ?? ""}
+						phyloTitle={phyloPic?.title ?? ""}
+						altScientificName={databaseScientificName}
+						databaseRankLabel={databaseRankLabel}
+						databaseScientificName={databaseScientificName}
+						commonName={pageGbif?.commonName ?? null}
+						>
+							<div className="flex flex-col items-start gap-3">
+								<CopyButton taxonomy={taxonomy} variant="button" label="Copy Taxonomy" />
+								{classificationRanks.length ? (
+									<div className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5">
+										{classificationRanks.map((rank, idx) => {
+											const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim() ?? "";
+											const name = raw.replace(/_/g, " ");
+											const rankLabel = rank.charAt(0).toUpperCase() + rank.slice(1);
+											const isLast = idx === classificationRanks.length - 1;
+											const nameClass =
+												rank === "species"
+													? "text-sm font-medium italic text-base-content"
+													: "text-sm font-medium text-base-content";
+											return (
+												<div key={rank} className="contents">
+													<span className="text-sm font-semibold text-base-content">{rankLabel}</span>
+													{isLast ? (
+														<span className={nameClass}>{name}</span>
+													) : (
+														<Link
+															href={`/explore/taxonomy?${rank}=${name}`}
+															className="link link-hover text-sm font-medium text-primary"
+														>
+															{name}
+														</Link>
+													)}
+												</div>
+											);
+										})}
+									</div>
+								) : (
+									<p className="text-sm text-base-content/70">{taxonomy.replace(/_/g, " ")}</p>
+								)}
 							</div>
-						</div>
-					</div>
+						</TaxonomyVisualToggle>
+				</div>
 
+				<div className="space-y-4">
+					<Map locations={dbTaxonomy.Samples} where={{ taxonomy }} cluster className="h-105 w-full rounded-lg" />
 					{pageGbif?.mediaTaxonKey != null ? (
 						<div className="bg-base-200 rounded-lg p-6 shadow-sm">
 							<GbifIucnStatus taxonKey={pageGbif.mediaTaxonKey} />
@@ -238,11 +238,8 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 					) : null}
 				</div>
 
-				{/* Right: map + summary cards */}
-				<div className="lg:col-span-2 space-y-4">
-					<Map locations={dbTaxonomy.Samples} where={{ taxonomy }} cluster className="h-105 w-full rounded-lg" />
-
-					<div className="grid grid-cols-3 gap-4 auto-rows-fr">
+				<div className="lg:col-span-2">
+					<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full lg:w-2/3">
 						<Link href={`/search?table=analysis&advanced=[["taxonomy", "taxonomy", "contains", "${taxonomy}"]]`}>
 							<div
 								className={`w-full bg-base-200 hover:bg-base-300 p-2 rounded-lg transition-all duration-300 hover:scale-105 ${VIEW_AS_SEARCH_TOOLTIP_CLASS}`}
