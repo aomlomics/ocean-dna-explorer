@@ -27,8 +27,8 @@ const EXPLORE_LEFT_ITEMS = [
 const EXPLORE_RIGHT_ITEMS = [
 	{ label: "Analyses", href: "/explore/analysis" },
 	{ label: "Occurrences", href: "/explore/occurrence" },
-	{ label: "Assignments", href: "/explore/assignment" },
 	{ label: "Features", href: "/explore/feature" },
+	{ label: "Assignments", href: "/explore/assignment" },
 	{ label: "Taxonomies", href: "/explore/taxonomy" }
 ];
 

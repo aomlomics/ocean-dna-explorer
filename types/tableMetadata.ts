@@ -186,16 +186,6 @@ const TableMetadata = {
 		titleField: ["project_id", "analysis_run_name", "lib_id", "featureid"],
 		subFields: ["Analysis", "Library", "organismQuantity"]
 	},
-	assignment: {
-		plural: "Assignments",
-		description:
-			"Taxonomic assignments for each Feature (DNA sequence) to a specific organism, including the confidence of the assignment.",
-		schema: PrismaZodTypes.AssignmentSchema,
-		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
-		relationsSchema: PrismaZodTypes.AssignmentWithRelationsSchema,
-		titleField: ["project_id", "analysis_run_name", "featureid"],
-		subFields: ["Analysis", "taxonomy", "Confidence"]
-	},
 	feature: {
 		plural: "Features",
 		description:
@@ -205,6 +195,16 @@ const TableMetadata = {
 		relationsSchema: PrismaZodTypes.FeatureWithRelationsSchema,
 		titleField: "featureid",
 		subFields: ["Analyses", "dna_sequence", "sequenceLength_ODE"]
+	},
+	assignment: {
+		plural: "Assignments",
+		description:
+			"Taxonomic assignments for each Feature (DNA sequence) to a specific organism, including the confidence of the assignment.",
+		schema: PrismaZodTypes.AssignmentSchema,
+		enumSchema: PrismaZodTypes.AssignmentScalarFieldEnumSchema,
+		relationsSchema: PrismaZodTypes.AssignmentWithRelationsSchema,
+		titleField: ["project_id", "analysis_run_name", "featureid"],
+		subFields: ["Analysis", "taxonomy", "Confidence"]
 	},
 	taxonomy: {
 		plural: "Taxonomies",
