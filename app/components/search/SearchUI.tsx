@@ -102,8 +102,7 @@ function paramsArrayToSearchTree(advancedParsed: ParamsArray | undefined): Searc
 	function buildFromParams(params: ParamsArrayElement[], depth: number, pathPrefix: number[] = []): SearchNode[] {
 		const result: SearchNode[] = [];
 
-		for (let i = 0; i < params.length; i++) {
-			const element = params[i];
+		for (const [i, element] of params.entries()) {
 			const nodePath = [...pathPrefix, i];
 
 			// Explicit logical groups: ["AND", ...] or ["OR", ...]
