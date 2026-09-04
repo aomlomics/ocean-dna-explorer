@@ -30,6 +30,7 @@ export default function VisualizeTaxonomy() {
 		undefined as
 			| {
 					featureid: Assignment["featureid"];
+					percent_id: Assignment["percent_id"];
 					Taxonomy: {
 						id: Taxonomy["id"];
 					};
@@ -37,7 +38,12 @@ export default function VisualizeTaxonomy() {
 			| undefined
 	);
 	const [taxonomies, setTaxonomies] = useState(
-		undefined as (Record<(typeof TaxonomicRanks)[number], string | null> & { id: Taxonomy["id"] })[] | undefined
+		undefined as
+			| (Record<(typeof TaxonomicRanks)[number], string | null> & {
+					id: Taxonomy["id"];
+					taxonomy: Taxonomy["taxonomy"];
+			  })[]
+			| undefined
 	);
 	const [samples, setSamples] = useState(
 		undefined as
@@ -69,7 +75,9 @@ export default function VisualizeTaxonomy() {
 			setOccurrences(occResponse.result.map((r: any) => OccurrencePartialSchema.parse(r)));
 
 			//assignments
-			const assignRes = await fetch(`/api/assignment/swapToTable?fields=featureid&relations=Taxonomy&${searchParams}`);
+			const assignRes = await fetch(
+				`/api/assignment/swapToTable?fields=featureid,percent_id&relations=Taxonomy&${searchParams}`
+			);
 			if (!assignRes.ok) {
 				throw new Error("Assignment query failed to reach the server.");
 			}
@@ -80,7 +88,9 @@ export default function VisualizeTaxonomy() {
 			setAssignments(assignResponse.result.map((r: any) => AssignmentPartialWithRelationsSchema.parse(r)));
 
 			//taxonomies
-			const taxaRes = await fetch(`/api/taxonomy/swapToTable?fields=id,${TaxonomicRanks.join(",")}&${searchParams}`);
+			const taxaRes = await fetch(
+				`/api/taxonomy/swapToTable?fields=id,taxonomy,${TaxonomicRanks.join(",")}&${searchParams}`
+			);
 			if (!taxaRes.ok) {
 				throw new Error("Taxonomy query failed to reach the server.");
 			}

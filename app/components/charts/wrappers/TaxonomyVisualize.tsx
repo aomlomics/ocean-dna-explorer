@@ -1,10 +1,28 @@
+import { useState } from "react";
 import { DeadValueEnum } from "@/types/enums";
 import { Assignment, Library, Occurrence, Sample, Taxonomy } from "../../../generated/prisma/client";
 import { getZodType } from "../../../helpers/schema";
 import TaxaBarChart from "../TaxaBarChart";
+import RelativeAbundanceByTaxonomy from "../RelativeAbundanceByTaxonomy";
+import TaxonomyTreemap from "../TaxonomyTreemap";
+import TaxaPrevalenceHistogram from "../TaxaPrevalenceHistogram";
+import TaxaSampleHeatmap from "../TaxaSampleHeatmap";
+import CompositionExplorer from "../CompositionExplorer";
+import DarkTaxaPlot from "../DarkTaxaPlot";
 import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
+
+const VIEWS = [
+	{ key: "abundance", label: "Relative Abundance" },
+	{ key: "search", label: "Search Taxonomy" },
+	{ key: "treemap", label: "Treemap" },
+	{ key: "prevalence", label: "Prevalence Histogram" },
+	{ key: "heatmap", label: "Sample Heatmap" },
+	{ key: "composition", label: "Composition Explorer" },
+	{ key: "darkTaxa", label: "Dark Taxa" }
+] as const;
+type View = (typeof VIEWS)[number]["key"];
 
 export default function TaxonomyVisualize({
 	occurrences,
@@ -19,17 +37,22 @@ export default function TaxonomyVisualize({
 	}[];
 	assignments: {
 		featureid: Assignment["featureid"];
+		percent_id: Assignment["percent_id"];
 		Taxonomy: {
 			id: Taxonomy["id"];
 		};
 	}[];
-	taxonomies: (Record<(typeof TaxonomicRanks)[number], string | null> & { id: Taxonomy["id"] })[];
+	taxonomies: (Record<(typeof TaxonomicRanks)[number], string | null> & {
+		id: Taxonomy["id"];
+		taxonomy: Taxonomy["taxonomy"];
+	})[];
 	samples: (Sample & {
 		Libraries: {
 			lib_id: Library["lib_id"];
 		}[];
 	})[];
 }) {
+	const [view, setView] = useState<View>("abundance");
 	//sort occurrences by featureid
 	const occsByFeatureid = {} as Record<Occurrence["featureid"], typeof occurrences>;
 	for (const occ of occurrences) {
@@ -41,8 +64,10 @@ export default function TaxonomyVisualize({
 	}
 
 	const taxonomiesById = {} as Record<Taxonomy["id"], (typeof taxonomies)[number]>;
+	const taxonomyStrings = {} as Record<Taxonomy["id"], Taxonomy["taxonomy"]>;
 	for (const taxa of taxonomies) {
 		taxonomiesById[taxa.id] = taxa;
+		taxonomyStrings[taxa.id] = taxa.taxonomy;
 	}
 
 	const sampFields = new Set(["project_id"]) as Set<string>;
@@ -104,14 +129,74 @@ export default function TaxonomyVisualize({
 	}
 
 	return (
-		<TaxaBarChart
-			occsByFeatureid={occsByFeatureid}
-			assignments={assignments}
-			taxonomiesById={taxonomiesById}
-			samplesById={samplesById}
-			sampleIdsByLibId={sampleIdsByLibId}
-			sampFields={Array.from(sampFields)}
-			userDefinedFields={userDefinedFields}
-		/>
+		<div>
+			<div className="w-full flex flex-wrap justify-center gap-2 pt-2">
+				{VIEWS.map((v) => (
+					<button key={v.key} className={`btn ${view === v.key ? "btn-primary" : ""}`} onClick={() => setView(v.key)}>
+						{v.label}
+					</button>
+				))}
+			</div>
+
+			{view === "abundance" && (
+				<TaxaBarChart
+					occsByFeatureid={occsByFeatureid}
+					assignments={assignments}
+					taxonomiesById={taxonomiesById}
+					samplesById={samplesById}
+					sampleIdsByLibId={sampleIdsByLibId}
+					sampFields={Array.from(sampFields)}
+					userDefinedFields={userDefinedFields}
+				/>
+			)}
+
+			{view === "search" && (
+				<RelativeAbundanceByTaxonomy
+					occsByFeatureid={occsByFeatureid}
+					assignments={assignments}
+					taxonomiesById={taxonomiesById}
+				/>
+			)}
+
+			{view === "treemap" && (
+				<TaxonomyTreemap occsByFeatureid={occsByFeatureid} assignments={assignments} taxonomiesById={taxonomiesById} />
+			)}
+
+			{view === "prevalence" && (
+				<TaxaPrevalenceHistogram
+					occsByFeatureid={occsByFeatureid}
+					assignments={assignments}
+					taxonomiesById={taxonomiesById}
+					sampleIdsByLibId={sampleIdsByLibId}
+				/>
+			)}
+
+			{view === "heatmap" && (
+				<TaxaSampleHeatmap
+					occsByFeatureid={occsByFeatureid}
+					assignments={assignments}
+					taxonomiesById={taxonomiesById}
+					sampleIdsByLibId={sampleIdsByLibId}
+				/>
+			)}
+
+			{view === "composition" && (
+				<CompositionExplorer
+					occsByFeatureid={occsByFeatureid}
+					assignments={assignments}
+					taxonomiesById={taxonomiesById}
+				/>
+			)}
+
+			{view === "darkTaxa" && (
+				<DarkTaxaPlot
+					occsByFeatureid={occsByFeatureid}
+					assignments={assignments}
+					taxonomiesById={taxonomiesById}
+					taxonomyStrings={taxonomyStrings}
+					sampleIdsByLibId={sampleIdsByLibId}
+				/>
+			)}
+		</div>
 	);
 }
