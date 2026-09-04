@@ -18,8 +18,10 @@ import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/Loadin
 import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
 import { Suspense } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
+import { AnalysisFileDownloads, type DownloadFile } from "@/app/components/explore/ProjectFileDownloads";
 import { notFound, redirect } from "next/navigation";
 import { decodeRouteParams } from "@/app/helpers/utils";
+import { getBlobSizes } from "@/app/helpers/getBlobSizes";
 import { exploreUrl } from "@/types/tableMetadata";
 import type { Metadata } from "next";
 import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
@@ -57,6 +59,29 @@ export async function generateMetadata({
 
 const dataExplorerTabBase =
 	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
+
+function AnalysisDownloadsSkeleton() {
+	return (
+		<div className="relative z-raised flex flex-wrap items-center gap-3" aria-hidden>
+			<div className="inline-flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
+				<span className="skeleton h-8 w-8 shrink-0 rounded" />
+				<span className="flex flex-col gap-1">
+					<span className="skeleton h-4 w-48" />
+					<span className="skeleton h-3 w-14" />
+				</span>
+			</div>
+		</div>
+	);
+}
+
+async function AnalysisDownloadsBlock({ files }: { files: DownloadFile[] }) {
+	const sizeByUrl = await getBlobSizes(files.map((f) => f.href));
+	return (
+		<div className="relative z-raised">
+			<AnalysisFileDownloads files={files} sizeByUrl={sizeByUrl} />
+		</div>
+	);
+}
 
 export default async function Analysis_run_name({
 	params,
@@ -111,6 +136,12 @@ export default async function Analysis_run_name({
 	if (!analysis) notFound();
 	const { _count, editHistory, Assay, Tags, AlphaDiversities, ...justAnalysis } = analysis;
 
+	const analysisFiles = [
+		{ label: "analysisMetadata", href: analysis.analysisMetadataFileUrl_ODE },
+		{ label: "asv", href: analysis.asvFileUrl_ODE },
+		{ label: "occurrence", href: analysis.occurrenceFileUrl_ODE }
+	].filter((f) => Boolean(f.href));
+
 	return (
 		<div id="analysis" className="space-y-6">
 			{/* Breadcrumb navigation */}
@@ -154,6 +185,10 @@ export default async function Analysis_run_name({
 					project
 				</p>
 			</header>
+
+			<Suspense fallback={<AnalysisDownloadsSkeleton />}>
+				<AnalysisDownloadsBlock files={analysisFiles} />
+			</Suspense>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}

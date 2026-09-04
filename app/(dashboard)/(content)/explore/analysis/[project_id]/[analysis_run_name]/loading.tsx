@@ -25,6 +25,15 @@ export default function Loading() {
 				</div>
 				<div className="skeleton h-5 w-1/2" />
 			</header>
+			<div className="relative z-raised flex flex-wrap items-center gap-3">
+				<div className="inline-flex items-center gap-3 rounded-lg bg-base-200 px-4 py-2">
+					<div className="skeleton h-8 w-8 shrink-0 rounded" />
+					<div className="flex flex-col gap-1">
+						<div className="skeleton h-4 w-48" />
+						<div className="skeleton h-3 w-14" />
+					</div>
+				</div>
+			</div>
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				<div className="lg:col-span-2 space-y-6">
 					<div className="skeleton h-110 rounded-xl" />
