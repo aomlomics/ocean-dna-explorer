@@ -64,13 +64,7 @@ function FileDownloadIcon() {
 const downloadBtnClass =
 	"inline-flex items-center gap-3 bg-base-200 px-4 py-2 text-left transition-colors hover:bg-base-300 disabled:cursor-not-allowed";
 
-function DownloadButtonLabel({
-	title,
-	sizeLabel
-}: {
-	title: string;
-	sizeLabel: string | null;
-}) {
+function DownloadButtonLabel({ title, sizeLabel }: { title: string; sizeLabel: string | null }) {
 	return (
 		<span className="flex min-w-0 flex-col items-start gap-0.5 leading-tight">
 			<span className="text-base font-normal text-base-content">{title}</span>
@@ -219,8 +213,8 @@ export default function ProjectFileDownloads({
 				<strong>Metadata:</strong> projectMetadata, sampleMetadata, and libraryMetadata.
 			</p>
 			<p className="text-xs leading-relaxed text-base-content">
-				<strong>Analyses:</strong> for each selected analysis: analysisMetadata, ASV / taxa features, and the
-				abundance table (3 files each). Use the chevron to choose analyses.
+				<strong>Analyses:</strong> for each selected analysis: analysisMetadata, ASV / taxa features, and the abundance
+				table (3 files each). Use the chevron to choose analyses.
 			</p>
 		</div>
 	);
@@ -244,9 +238,7 @@ export default function ProjectFileDownloads({
 									className="checkbox checkbox-primary checkbox-sm"
 									checked={allSelected}
 									onChange={(e) =>
-										setSelected(
-											Object.fromEntries(analyses.map((a) => [a.analysis_run_name, e.target.checked]))
-										)
+										setSelected(Object.fromEntries(analyses.map((a) => [a.analysis_run_name, e.target.checked])))
 									}
 								/>
 								<span>Select all ({analyses.length})</span>
@@ -286,9 +278,7 @@ export default function ProjectFileDownloads({
 											}
 										/>
 										<div className="min-w-0 flex-1">
-											<div className="leading-snug wrap-break-word text-base-content/90">
-												{a.analysis_run_name}
-											</div>
+											<div className="leading-snug wrap-break-word text-base-content/90">{a.analysis_run_name}</div>
 											<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-base-content/70">
 												<span className="inline-flex min-h-4 min-w-12 items-center">{rowSize ?? null}</span>
 												<Link
@@ -323,10 +313,7 @@ export default function ProjectFileDownloads({
 				aria-label="Download project, sample, and library metadata files"
 			>
 				<FileDownloadIcon />
-				<DownloadButtonLabel
-					title={metaBusy ? "Downloading…" : "Download Metadata"}
-					sizeLabel={metadataSizeLabel}
-				/>
+				<DownloadButtonLabel title={metaBusy ? "Downloading…" : "Download Metadata"} sizeLabel={metadataSizeLabel} />
 			</button>
 
 			{analyses.length > 0 ? (

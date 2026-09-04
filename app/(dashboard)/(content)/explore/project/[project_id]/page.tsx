@@ -462,11 +462,7 @@ export default async function Project_id({ params }: { params: Promise<{ project
 
 	const downloadsBlock = (
 		<Suspense fallback={<ProjectDownloadsSkeleton hasAnalyses={analysisDownloads.length > 0} />}>
-			<ProjectDownloadsBlock
-				project_id={project_id}
-				metadataFiles={metadataFiles}
-				analyses={analysisDownloads}
-			/>
+			<ProjectDownloadsBlock project_id={project_id} metadataFiles={metadataFiles} analyses={analysisDownloads} />
 		</Suspense>
 	);
 

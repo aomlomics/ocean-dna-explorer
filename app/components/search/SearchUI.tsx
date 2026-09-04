@@ -64,11 +64,11 @@ function paramsValueToInputDefault(value: unknown, mode: string): string {
 	return String(value);
 }
 
-function isGroupElement(e: ParamsArrayElement): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
+function isGroupElement(e: ParamsArrayElement | undefined): e is [ParamsLogicalOperator, ...ParamsArrayElement[]] {
 	return Array.isArray(e) && typeof e[0] === "string" && (e[0] === "AND" || e[0] === "OR");
 }
 
-function isLegacyOrGroup(e: ParamsArrayElement): e is ParamsArray {
+function isLegacyOrGroup(e: ParamsArrayElement | undefined): e is ParamsArray {
 	return Array.isArray(e) && Array.isArray(e[0]);
 }
 
@@ -1075,7 +1075,9 @@ function SearchGroupComponent({
 				isRoot ? "" : "card bg-base-100 shadow-sm border border-base-300"
 			} ${!isRoot ? "bg-base-200/60" : ""}`}
 		>
-			<div className={`${isRoot ? "space-y-2" : "card-body p-3 md:p-4"} space-y-2 relative ${!isRoot ? "pl-3 md:pl-8" : ""}`}>
+			<div
+				className={`${isRoot ? "space-y-2" : "card-body p-3 md:p-4"} space-y-2 relative ${!isRoot ? "pl-3 md:pl-8" : ""}`}
+			>
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex flex-wrap items-center text-sm text-base-content/70">
 						{isRoot && (
@@ -1165,7 +1167,10 @@ function SearchGroupComponent({
 					{group.children.reduce((acc: ReactNode[], child, index) => {
 						if (index > 0) {
 							acc.push(
-								<div key={child.id + "_op"} className="flex justify-center px-3 py-1 md:grid md:grid-cols-[2rem_15%_18%_18%_1fr] md:py-0">
+								<div
+									key={child.id + "_op"}
+									className="flex justify-center px-3 py-1 md:grid md:grid-cols-[2rem_15%_18%_18%_1fr] md:py-0"
+								>
 									<div className="flex justify-center items-center">
 										<span className="text-xs text-base-content/60 font-semibold tracking-wide">{group.operator}</span>
 									</div>
@@ -1262,9 +1267,7 @@ function SearchRuleComponent({
 	return (
 		<div
 			className={`grid grid-cols-1 gap-2 rounded-md py-2 px-1 hover:bg-base-200/60 transition-colors md:items-start md:gap-2 md:py-1.5 md:px-3 ${
-				type === "relation" && !noTable
-					? "md:grid-cols-[2rem_14%_14%_20%_1fr]"
-					: "md:grid-cols-[2rem_14%_26%_1fr]"
+				type === "relation" && !noTable ? "md:grid-cols-[2rem_14%_14%_20%_1fr]" : "md:grid-cols-[2rem_14%_26%_1fr]"
 			}`}
 		>
 			<div className="flex items-start gap-2 md:contents">
@@ -1464,11 +1467,7 @@ function InValuesField({
 					</button>
 				</div>
 			))}
-			<button
-				type="button"
-				className="btn btn-sm btn-primary self-start"
-				onClick={() => onChange([...rows, ""])}
-			>
+			<button type="button" className="btn btn-sm btn-primary self-start" onClick={() => onChange([...rows, ""])}>
 				+ Add value
 			</button>
 			<input type="hidden" name={`filter_${nameSuffix}`} value={JSON.stringify(serializedValues())} />

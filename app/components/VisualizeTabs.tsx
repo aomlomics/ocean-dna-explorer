@@ -39,8 +39,7 @@ export default function VisualizeTabs() {
 			<header className="flex items-start justify-between">
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="text-4xl font-normal text-base-content">
-						<span>Visualize</span>{" "}
-						<span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
+						<span>Visualize</span> <span className="text-base-content text-2xl align-middle font-normal">❯</span>{" "}
 						<span className="text-primary font-normal">{current.label}</span>
 					</h1>
 					<InfoButton dir="tooltip-right">
