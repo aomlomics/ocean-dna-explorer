@@ -16,7 +16,7 @@ export default function Loading() {
 					<div className="skeleton h-12 w-80" />
 					<div className="skeleton h-7 w-20 rounded-full" />
 				</div>
-				<div className="skeleton h-5 w-2/3" />
+				<div className="skeleton h-12 w-[min(100%,24rem)] sm:h-14 sm:w-[min(100%,38rem)]" />
 				<div className="skeleton h-4 w-3/4" />
 			</header>
 			<div className="space-y-4">

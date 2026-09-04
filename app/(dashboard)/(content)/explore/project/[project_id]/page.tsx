@@ -424,8 +424,8 @@ export default async function Project_id({ params }: { params: Promise<{ project
 			<p
 				className={
 					hasCoverImage
-						? "text-2xl max-w-4xl mt-2 text-base-content/90 drop-shadow-sm [html[data-theme='dark']_&]:text-white"
-						: "text-2xl max-w-4xl mt-2 text-base-content/90 [html[data-theme='dark']_&]:text-white"
+						? "mt-3 w-fit max-w-[min(100%,46rem)] text-left text-4xl sm:text-5xl font-semibold leading-[1.12] text-pretty break-words text-base-content drop-shadow-sm [html[data-theme='dark']_&]:text-white"
+						: "mt-3 w-fit max-w-[min(100%,54rem)] text-left text-4xl sm:text-5xl font-semibold leading-[1.12] text-pretty break-words text-base-content [html[data-theme='dark']_&]:text-white"
 				}
 			>
 				{project.project_name}
