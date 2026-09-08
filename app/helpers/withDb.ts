@@ -5,6 +5,7 @@ import { prismaImages } from "./prismaImages";
 import { prisma } from "./prisma";
 import type { ModelName } from "@/types/tableMetadata";
 import { capitalizeTable } from "./utils";
+import TableMetadata, { TableNames } from "@/types/tableMetadata";
 
 export async function validateBlobs(urls: BlobFile["url"][]) {
 	//skip check in development only, because onUploadCompleted does not trigger
@@ -136,7 +137,27 @@ async function getAllImplicitJoinTables(): Promise<ImplicitJoin[]> {
 		}
 	}
 
-	return Array.from(joins.values());
+	const joinTables = Array.from(joins.values());
+
+	//validate that all many-to-many relations are represented
+	for (const table of TableNames) {
+		const capsTable = capitalizeTable(table);
+		for (const rel of TableMetadata[table].relations) {
+			if (rel.type === "many-to-many") {
+				if (
+					!joinTables.find(
+						(join) =>
+							(join.left.table === capsTable && join.right.table === rel.table) ||
+							(join.left.table === rel.table && join.right.table === capsTable)
+					)
+				) {
+					throw new Error(`Implicit join table missing for ${capsTable} <-> ${rel.table}`);
+				}
+			}
+		}
+	}
+
+	return joinTables;
 }
 
 const implicitJoinTables = getAllImplicitJoinTables();
