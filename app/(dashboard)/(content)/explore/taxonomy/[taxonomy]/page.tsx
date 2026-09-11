@@ -15,6 +15,7 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import TableMetadata from "@/types/tableMetadata";
+import type { TaxonomicRank } from "@/types/globals";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ taxonomy:
 }
 
 function finestDisplayedRank(db: TaxonomyModel): {
-	rankKey: (typeof TaxonomicRanks)[number];
+	rankKey: TaxonomicRank;
 	rankLabel: string;
 	displayName: string;
 } | null {
@@ -191,42 +192,42 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						databaseRankLabel={databaseRankLabel}
 						databaseScientificName={databaseScientificName}
 						commonName={pageGbif?.commonName ?? null}
-						>
-							<div className="flex flex-col items-start gap-3">
-								<CopyButton taxonomy={taxonomy} variant="button" label="Copy Taxonomy" />
-								{classificationRanks.length ? (
-									<div className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5">
-										{classificationRanks.map((rank, idx) => {
-											const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim() ?? "";
-											const name = raw.replace(/_/g, " ");
-											const rankLabel = rank.charAt(0).toUpperCase() + rank.slice(1);
-											const isLast = idx === classificationRanks.length - 1;
-											const nameClass =
-												rank === "species"
-													? "text-sm font-medium italic text-base-content"
-													: "text-sm font-medium text-base-content";
-											return (
-												<div key={rank} className="contents">
-													<span className="text-sm font-semibold text-base-content">{rankLabel}</span>
-													{isLast ? (
-														<span className={nameClass}>{name}</span>
-													) : (
-														<Link
-															href={`/explore/taxonomy?${rank}=${name}`}
-															className="link link-hover text-sm font-medium text-primary"
-														>
-															{name}
-														</Link>
-													)}
-												</div>
-											);
-										})}
-									</div>
-								) : (
-									<p className="text-sm text-base-content/70">{taxonomy.replace(/_/g, " ")}</p>
-								)}
-							</div>
-						</TaxonomyVisualToggle>
+					>
+						<div className="flex flex-col items-start gap-3">
+							<CopyButton taxonomy={taxonomy} variant="button" label="Copy Taxonomy" />
+							{classificationRanks.length ? (
+								<div className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5">
+									{classificationRanks.map((rank, idx) => {
+										const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim() ?? "";
+										const name = raw.replace(/_/g, " ");
+										const rankLabel = rank.charAt(0).toUpperCase() + rank.slice(1);
+										const isLast = idx === classificationRanks.length - 1;
+										const nameClass =
+											rank === "species"
+												? "text-sm font-medium italic text-base-content"
+												: "text-sm font-medium text-base-content";
+										return (
+											<div key={rank} className="contents">
+												<span className="text-sm font-semibold text-base-content">{rankLabel}</span>
+												{isLast ? (
+													<span className={nameClass}>{name}</span>
+												) : (
+													<Link
+														href={`/explore/taxonomy?${rank}=${name}`}
+														className="link link-hover text-sm font-medium text-primary"
+													>
+														{name}
+													</Link>
+												)}
+											</div>
+										);
+									})}
+								</div>
+							) : (
+								<p className="text-sm text-base-content/70">{taxonomy.replace(/_/g, " ")}</p>
+							)}
+						</div>
+					</TaxonomyVisualToggle>
 				</div>
 
 				<div className="space-y-4">

@@ -10,12 +10,13 @@ import { formatGbifAttributionDisplay } from "./GbifClient";
 import GbifImage from "./GbifImage";
 import PhyloPicClient from "./PhyloPicClient";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
+import type { TaxonomicRank } from "@/types/globals";
 
 const SESSION_CONSENT_KEY = "opal-gbif-photo-warning-ok";
 
 type Mode = "phylopic" | "gbif";
 
-function rankAllowsGbifPhoto(rankKey: (typeof TaxonomicRanks)[number] | null | undefined): boolean {
+function rankAllowsGbifPhoto(rankKey: TaxonomicRank | null | undefined): boolean {
 	if (rankKey == null) return false;
 	const idx = TaxonomicRanks.indexOf(rankKey);
 	const familyIdx = TaxonomicRanks.indexOf("family");
@@ -28,7 +29,7 @@ type TaxonomyVisualToggleProps = {
 	/** When null, only PhyloPic is shown (no GBIF photo mode). */
 	mediaTaxonKey: number | null;
 	/** Finest populated rank key on the taxonomy row; GBIF photo is disabled above family. */
-	databaseRankKey: (typeof TaxonomicRanks)[number] | null;
+	databaseRankKey: TaxonomicRank | null;
 	phyloPicUrl: string | null;
 	phyloRank: string;
 	phyloTitle: string;
@@ -110,7 +111,9 @@ export default function TaxonomyVisualToggle({
 	const toggleBtnClass = compact ? "min-h-8 h-8 text-xs" : "min-h-8 h-8 text-sm";
 
 	return (
-		<div className={`flex h-full min-h-0 w-full min-w-0 max-w-full flex-col ${hasAside ? "items-stretch" : "items-center"}`}>
+		<div
+			className={`flex h-full min-h-0 w-full min-w-0 max-w-full flex-col ${hasAside ? "items-stretch" : "items-center"}`}
+		>
 			<div
 				className={
 					hasAside
@@ -258,7 +261,8 @@ export default function TaxonomyVisualToggle({
 											<span className="whitespace-nowrap">matchGbifForPhylopic</span>). GBIF photo, English common name,
 											and IUCN data on this page all use that match only. <strong>GBIF photo</strong> mode prefers
 											occurrence still images (e.g. iNaturalist), then filtered checklist media, skipping obvious range
-											maps when possible. Third‑party licenses apply; see the credit line under the GBIF photo when shown.
+											maps when possible. Third‑party licenses apply; see the credit line under the GBIF photo when
+											shown.
 										</p>
 									</div>
 								</div>

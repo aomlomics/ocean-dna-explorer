@@ -16,7 +16,7 @@ export default function VisualizeLayout({ children }: { children: ReactNode }) {
 			<div className="py-4">
 				<VisualizeTabs />
 				<div className="mt-6">
-					<SearchUI noTable />
+					<SearchUI noTable ignoreParams={["chart"]} />
 				</div>
 			</div>
 			<div id="search-results" className="flex flex-col gap-2">

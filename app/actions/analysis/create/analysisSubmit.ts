@@ -176,8 +176,7 @@ async function doSubmit(
 		);
 		const taxaByLibId = occurrences.reduce(
 			(acc, occ) => {
-				const curr = (acc[occ.lib_id] ??= new Set());
-				curr.add(taxaByFeat[occ.featureid]!);
+				(acc[occ.lib_id] ??= new Set()).add(taxaByFeat[occ.featureid]!);
 				return acc;
 			},
 			{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>

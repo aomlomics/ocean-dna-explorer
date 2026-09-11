@@ -86,7 +86,7 @@ const queryModes = [
 export function parseToQuery(
 	table: Uncapitalize<ModelName>,
 	queryArr: [string, string] | ParamsArrayField | ParamsArrayRelation,
-	swapTo?: Uncapitalize<ModelName>
+	options: { swapTo?: Uncapitalize<ModelName>; invalidFieldError?: string }
 ) {
 	let relation = undefined as Uncapitalize<ModelName> | undefined;
 	let field = "";
@@ -102,7 +102,7 @@ export function parseToQuery(
 			value = queryArr[1] as string;
 		}
 	} else if (queryArr.length === 3) {
-		if (swapTo) {
+		if (options.swapTo) {
 			relation = table;
 		}
 
@@ -113,7 +113,7 @@ export function parseToQuery(
 	} else if (queryArr.length === 4) {
 		//search related table's field for value
 		relation = getTableName(queryArr[0]);
-		if (relation === swapTo) {
+		if (relation === options.swapTo) {
 			relation = undefined;
 		}
 
@@ -132,13 +132,13 @@ export function parseToQuery(
 		}
 	}
 
-	const model = relation || swapTo || table;
+	const model = relation || options.swapTo || table;
 
 	if (TableMetadata[model].relations.some((rel) => rel.field === field) && typeof value === "object") {
 		return { [field]: value };
 	}
 
-	const zodType = getZodType(model, field);
+	const zodType = getZodType(model, field, options.invalidFieldError);
 
 	let searchWhere;
 	//universal mode behavior
@@ -360,7 +360,7 @@ export function parseToQuery(
 
 	if (searchWhere) {
 		if (relation) {
-			return deepWhere(swapTo || table, getTableName(relation), searchWhere);
+			return deepWhere(options.swapTo || table, getTableName(relation), searchWhere);
 		} else {
 			return searchWhere;
 		}
@@ -385,7 +385,7 @@ function advancedRecurse(
 		}
 
 		// Backwards-compatible behaviour: a tuple starting with a string is a field or relation filter
-		return parseToQuery(table, e as ParamsArrayField | ParamsArrayRelation, swapTo);
+		return parseToQuery(table, e as ParamsArrayField | ParamsArrayRelation, { swapTo });
 	}
 
 	// Legacy nested array syntax: an inner ParamsArray represents an implicit OR group
@@ -432,7 +432,6 @@ export function parseApiQuery(
 			relations?: true;
 			relCounts?: true;
 			ids?: true;
-			limit?: true;
 			filters?: true;
 			advanced?: true;
 			search?: true;
@@ -441,11 +440,12 @@ export function parseApiQuery(
 			filters?: Record<string, string | number>;
 		};
 		extras?: {
-			deepRelations?: true;
+			limit?: true;
+			deepRelations?: true; //internal
 			blast?: true;
 			shapes?: true;
 		};
-		swapToTable?: true;
+		swapToTable?: true; //internal
 	}
 ) {
 	//copy search params
@@ -545,6 +545,7 @@ export function parseApiQuery(
 			}
 		} else {
 			const split = distinct.split(",");
+			split.forEach((f) => getZodType(table, f));
 			query.distinct = query.distinct ? [...query.distinct, ...split] : split;
 		}
 	}
@@ -615,6 +616,7 @@ export function parseApiQuery(
 				const relAllLower = relationsAllFields.toLowerCase();
 				if (relAllLower !== "false") {
 					if (relAllLower === "true") {
+						//check to see how easy it is to make this only work for fields provided in the relations option
 						relFields = true;
 					} else {
 						relFields = {} as Record<Uncapitalize<ModelName>, true>;
@@ -632,7 +634,14 @@ export function parseApiQuery(
 								);
 							}
 
-							relFields[allFieldsArr[0] as Uncapitalize<ModelName>] = true;
+							const relTable = allFieldsArr[0] as Uncapitalize<ModelName>;
+							if (!relTables.has(relTable)) {
+								throw new Error(
+									`The relation "${relTable}" in the relationsAllFields option must be included in the relations option.`
+								);
+							}
+
+							relFields[relTable] = true;
 						}
 					}
 				}
@@ -650,12 +659,13 @@ export function parseApiQuery(
 
 					const relModel = getTableName(relTable, `Invalid table name for relationsFields: "${relTable}".`);
 					if (!relTables.has(relModel)) {
-						throw new Error(`The relation "${relModel}" must be included in the relations option.`);
+						throw new Error(
+							`The relation "${relModel}" in the relationsFields option must be included in the relations option.`
+						);
 					}
 
 					fields.forEach((f) => getZodType(relModel, f));
-					relFields[relModel] ??= [];
-					(relFields[relModel] as string[]).push(...fields);
+					((relFields[relModel] ??= []) as string[]).push(...fields);
 				}
 			}
 
@@ -753,7 +763,7 @@ export function parseApiQuery(
 	let parsedPage: number | undefined;
 
 	if (tempLimit != null) {
-		if (options?.features && !options.features.limit) {
+		if (!options?.extras?.limit) {
 			if (!ignoreExtraOptions) {
 				throw new Error("The limit option is not allowed on this route.");
 			}
@@ -938,7 +948,7 @@ export function parseApiQuery(
 				for (const [field, value] of Object.entries(parseNestedJson(where) as Record<string, string>)) {
 					tempWhere = {
 						...tempWhere,
-						...parseToQuery(table, [field, value], options?.swapToTable ? table : undefined)
+						...parseToQuery(table, [field, value], { swapTo: options?.swapToTable ? table : undefined })
 					};
 				}
 			}
@@ -947,7 +957,10 @@ export function parseApiQuery(
 			for (const [field, value] of newParams) {
 				tempWhere = {
 					...tempWhere,
-					...parseToQuery(table, [field, value], options?.swapToTable ? table : undefined)
+					...parseToQuery(table, [field, value], {
+						swapTo: options?.swapToTable ? table : undefined,
+						invalidFieldError: `Invalid option: "${field}".`
+					})
 				};
 			}
 

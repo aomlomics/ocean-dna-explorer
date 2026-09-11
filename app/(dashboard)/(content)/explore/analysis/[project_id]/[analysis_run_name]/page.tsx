@@ -1,6 +1,6 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
-import Map from "@/app/components/map/Map";
+import MapComponent from "@/app/components/map/Map";
 import Table from "@/app/components/paginated/table/Table";
 import DataDisplay from "@/app/components/explore/DataDisplay";
 import EditHistory from "@/app/components/explore/EditHistory";
@@ -15,8 +15,8 @@ import AlphaDiversityDisplay from "@/app/components/charts/wrappers/AlphaDiversi
 import TaxonomyVisualize from "@/app/components/charts/wrappers/TaxonomyVisualize";
 import { TaxonomicRanks } from "@/types/objects";
 import LoadingAlphaDiversityDisplay from "@/app/components/charts/loading/LoadingAlphaDiversityDisplay";
-import LoadingTaxonomyVisualize from "@/app/components/charts/loading/LoadingTaxonomyVisualize";
-import { Suspense } from "react";
+import LoadingTaxaBarChart from "@/app/components/charts/loading/taxonomy/LoadingTaxaBarChart";
+import { Suspense, type ReactNode } from "react";
 import TitleHoverTooltip from "@/app/components/explore/TitleHoverTooltip";
 import { AnalysisFileDownloads, type DownloadFile } from "@/app/components/explore/ProjectFileDownloads";
 import { notFound, redirect } from "next/navigation";
@@ -24,7 +24,8 @@ import { decodeRouteParams } from "@/app/helpers/utils";
 import { getBlobSizes } from "@/app/helpers/getBlobSizes";
 import { exploreUrl } from "@/types/tableMetadata";
 import type { Metadata } from "next";
-import type { OccurrenceModel } from "@/app/generated/prisma/models/Occurrence";
+import type { TaxonomicRank } from "@/types/globals";
+import { FIRST_TAXONOMY_VISUALIZE_TAB, TAXONOMY_VISUALIZE_TABS } from "@/app/components/charts/taxonomy/tabs";
 
 export async function generateMetadata({
 	params
@@ -83,7 +84,7 @@ async function AnalysisDownloadsBlock({ files }: { files: DownloadFile[] }) {
 	);
 }
 
-export default async function Analysis_run_name({
+export default async function Project_id_Analysis_run_name({
 	params,
 	searchParams
 }: {
@@ -193,7 +194,7 @@ export default async function Analysis_run_name({
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
 				{/* Left side content */}
 				<div className="lg:col-span-2 space-y-6">
-					<Map
+					<MapComponent
 						query={async () =>
 							await trustedPrisma.sample.findMany({
 								where: {
@@ -340,7 +341,7 @@ export default async function Analysis_run_name({
 						aria-label="Taxonomy"
 					/>
 					<div role="tabpanel" className="tab-content w-full mt-2">
-						<Suspense fallback={<LoadingTaxonomyVisualize />}>
+						<Suspense fallback={<LoadingTaxonomyVisualizeSuspense />}>
 							<TaxonomyVisualizeSuspense project_id={project_id} analysis_run_name={analysis_run_name} />
 						</Suspense>
 					</div>
@@ -378,36 +379,37 @@ async function TaxonomyVisualizeSuspense({
 			}
 		},
 		select: {
-			Occurrences: {
-				select: {
-					lib_id: true,
-					featureid: true,
-					organismQuantity: true
-				}
-			},
-
 			Assignments: {
 				select: {
 					featureid: true,
-					taxonomy: true
+					taxonomy: true,
+					percent_id: true,
+					Occurrences: {
+						select: {
+							organismQuantity: true,
+							Library: {
+								select: {
+									id: true
+								}
+							}
+						}
+					}
 				}
 			},
-
 			Taxonomies: {
 				select: TaxonomicRanks.reduce(
 					(acc, rank) => ({
 						...acc,
 						[rank]: true
 					}),
-					{ id: true, taxonomy: true } as Record<(typeof TaxonomicRanks)[number], true> & {
-						id: true;
+					{ taxonomy: true } as Record<TaxonomicRank, true> & {
 						taxonomy: true;
 					}
 				)
 			},
-
 			Libraries: {
 				select: {
+					id: true,
 					lib_id: true,
 					Sample: true
 				}
@@ -416,43 +418,67 @@ async function TaxonomyVisualizeSuspense({
 	});
 
 	if (!analysis) {
-		return null;
+		return <></>;
 	}
 
-	// Build feature → taxonomy + occurrences.
-	const featuresById = {} as Record<
-		OccurrenceModel["featureid"],
-		{
-			taxonomy: string;
-			occurrences: {
-				lib_id: OccurrenceModel["lib_id"];
-				organismQuantity: OccurrenceModel["organismQuantity"];
-			}[];
-		}
-	>;
-
-	for (const assignment of analysis.Assignments) {
-		featuresById[assignment.featureid] = {
-			taxonomy: assignment.taxonomy,
-			occurrences: []
-		};
-	}
-
-	for (const occurrence of analysis.Occurrences) {
-		const feature = featuresById[occurrence.featureid];
-
-		if (feature) {
-			feature.occurrences.push({
-				lib_id: occurrence.lib_id,
-				organismQuantity: occurrence.organismQuantity
-			});
-		}
-	}
-
+	const assignsByFeatureid = Object.fromEntries(analysis.Assignments.map((a) => [a.featureid, a]));
 	const taxonomiesByName = Object.fromEntries(analysis.Taxonomies.map((taxonomy) => [taxonomy.taxonomy, taxonomy]));
-	const sampleByLibId = Object.fromEntries(analysis.Libraries.map(({ lib_id, Sample }) => [lib_id, Sample]));
+	const libsWithSampleById = new Map(analysis.Libraries.map((lib) => [lib.id, { ...lib, Sample: lib.Sample }]));
 
 	return (
-		<TaxonomyVisualize featuresById={featuresById} taxonomiesByName={taxonomiesByName} sampleByLibId={sampleByLibId} />
+		<TaxonomyVisualize
+			assignsByFeatureid={assignsByFeatureid}
+			taxonomiesByName={taxonomiesByName}
+			libsWithSampleById={libsWithSampleById}
+		/>
+	);
+}
+
+function LoadingTaxonomyVisualizeSuspense() {
+	const currentTab = FIRST_TAXONOMY_VISUALIZE_TAB;
+
+	function getTab(
+		route: keyof typeof TAXONOMY_VISUALIZE_TABS,
+		t: (typeof TAXONOMY_VISUALIZE_TABS)[keyof typeof TAXONOMY_VISUALIZE_TABS],
+		i: number
+	) {
+		return (
+			<button
+				key={route}
+				disabled
+				className={`btn ${currentTab[i] === route ? "btn-primary text-primary-content" : "text-base-content"}`}
+			>
+				{t.title}
+			</button>
+		);
+	}
+
+	const tabRows: ReactNode[][] = [Object.entries(TAXONOMY_VISUALIZE_TABS).map(([route, t]) => getTab(route, t, 0))];
+
+	//show nested tabs if they exist for currently selected tab
+	let curr = TAXONOMY_VISUALIZE_TABS[currentTab[0]!]!;
+	let parentPath = [currentTab[0]!];
+	let i = 1;
+	while (curr.tabs) {
+		tabRows.push(Object.entries(curr.tabs).map(([route, t]) => getTab(route, t, 0)));
+
+		const selectedRoute = currentTab[i]!;
+		curr = curr.tabs[selectedRoute]!;
+		parentPath = [...parentPath, selectedRoute];
+		i++;
+	}
+
+	return (
+		<>
+			<div className="flex flex-col items-center gap-2">
+				{tabRows.map((row, i) => (
+					<div key={i} className="flex justify-center gap-2">
+						{row}
+					</div>
+				))}
+			</div>
+
+			<LoadingTaxaBarChart />
+		</>
 	);
 }

@@ -27,11 +27,12 @@ export async function GET(
 
 		const parsedQuery = parseApiQuery(model, searchParams, {
 			extras: {
+				limit: true,
 				blast: true,
 				shapes: true
 			}
 		});
-		const { query, blast, shapes } = parsedQuery;
+		const { query, limit, page, blast, shapes } = parsedQuery;
 		let { sampleWhere } = parsedQuery;
 		const client = parsedQuery.trusted ? trustedPrisma : prisma;
 
@@ -76,6 +77,15 @@ export async function GET(
 
 			//inject blast results if queried for
 			query.where = featureidWhere ? deepMerge(sampNamesWhere, featureidWhere) : sampNamesWhere;
+		}
+
+		//skip database pagination if doing later
+		if (limit && !(shapes && !sampleWhere)) {
+			if (page) {
+				//offset pagination
+				query.skip = (page - 1) * limit;
+			}
+			query.take = limit;
 		}
 
 		//@ts-expect-error dynamically accessing prisma client

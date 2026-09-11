@@ -1,17 +1,17 @@
-import { DEFAULT_RANK } from "../wrappers/TaxonomyVisualize";
-import LoadingChartCopyButton from "./LoadingChartCopyButton";
-import InfoButton from "../../InfoButton";
+import { ABUNDANCE_DEFAULT_RANK } from "../../wrappers/TaxonomyVisualize";
+import LoadingChartCopyButton from "../LoadingChartCopyButton";
+import InfoButton from "../../../InfoButton";
 import { RankPlurals } from "@/types/objects";
-import LoadingChart from "./LoadingChart";
+import LoadingChart from "../LoadingChart";
 
-export default function LoadingTaxonomyVisualize() {
+export default function LoadingTaxaBarChart() {
 	return (
 		<div className="relative p-6">
 			<div className="w-full flex justify-center items-center gap-5 mb-2">
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 					<select className="select" disabled>
-						<option>{DEFAULT_RANK}</option>
+						<option>{ABUNDANCE_DEFAULT_RANK}</option>
 					</select>
 				</fieldset>
 
@@ -19,7 +19,6 @@ export default function LoadingTaxonomyVisualize() {
 					<legend className="fieldset-legend">Display as:</legend>
 					<select className="select" disabled>
 						<option value="absolute">Absolute Counts</option>
-						<option value="relative">Relative Abundance (%)</option>
 					</select>
 				</fieldset>
 
@@ -43,7 +42,7 @@ export default function LoadingTaxonomyVisualize() {
 
 					<div className="dropdown dropdown-end">
 						<button className="btn" disabled>
-							0/0 {RankPlurals[DEFAULT_RANK]}
+							0/0 {RankPlurals[ABUNDANCE_DEFAULT_RANK]}
 						</button>
 					</div>
 				</div>

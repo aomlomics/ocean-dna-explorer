@@ -10,6 +10,7 @@ import distinctColors from "distinct-colors";
 import { TaxonomicRanks } from "@/types/objects";
 import type { TaxonomyPartial } from "@/prisma/generated/zod";
 import { exploreUrl } from "@/types/tableMetadata";
+import type { TaxonomicRank } from "@/types/globals";
 
 ChartJS.register(ArcElement, Tooltip);
 
@@ -46,8 +47,8 @@ function CustomLegend({
 	textColor: string;
 	otherThreshold: number;
 	setOtherThreshold: (value: number) => void;
-	taxLevel: (typeof TaxonomicRanks)[0];
-	setTaxLevel: (level: (typeof TaxonomicRanks)[0]) => void;
+	taxLevel: TaxonomicRank;
+	setTaxLevel: (level: TaxonomicRank) => void;
 }) {
 	const total = data.reduce((sum, value) => sum + value, 0);
 
@@ -260,7 +261,7 @@ function CustomLegend({
 export default function TaxonomyDonutChart({ taxonomies }: { taxonomies: TaxonomyPartial[] }) {
 	const { theme } = useTheme();
 	const [otherThreshold, setOtherThreshold] = useState(0.5);
-	const [taxLevel, setTaxLevel] = useState<(typeof TaxonomicRanks)[0]>("family");
+	const [taxLevel, setTaxLevel] = useState<TaxonomicRank>("family");
 	const [isLoading, setIsLoading] = useState(true);
 	const textColor = "var(--color-base-content)";
 

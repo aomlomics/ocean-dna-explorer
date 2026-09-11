@@ -34,12 +34,12 @@ export async function GET(
 				orderBy: true,
 				relations: true,
 				relCounts: true,
-				limit: true,
 				filters: true,
 				advanced: true,
 				search: true
 			},
 			extras: {
+				limit: true,
 				blast: true,
 				shapes: true,
 				deepRelations: true

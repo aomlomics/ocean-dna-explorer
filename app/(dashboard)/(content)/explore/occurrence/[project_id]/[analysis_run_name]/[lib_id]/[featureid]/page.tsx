@@ -12,6 +12,7 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import type { TaxonomicRank } from "@/types/globals";
 
 export async function generateMetadata({
 	params
@@ -53,7 +54,7 @@ export async function generateMetadata({
 function formatTaxonomyDisplay(dbTaxonomy: TaxonomyModel) {
 	const taxonomicData = Object.entries(dbTaxonomy)
 		.filter(([key, value]) => {
-			return TaxonomicRanks.includes(key as (typeof TaxonomicRanks)[0]) && value;
+			return TaxonomicRanks.includes(key as TaxonomicRank) && value;
 		})
 		.map(([key, value]) => ({
 			rank: key.charAt(0).toUpperCase() + key.slice(1),

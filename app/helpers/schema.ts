@@ -130,12 +130,17 @@ function getTypeRecursive(field: any): { type: DbType; optional?: boolean; value
 
 export function getZodType(
 	table: ModelName | Uncapitalize<ModelName>,
-	field: string
+	field: string,
+	error?: string
 ): { type: DbType; optional?: boolean; values?: string[] } {
 	const result = getTypeRecursive(TableMetadata[table].schema.shape[field]);
 
 	if (!result.type) {
-		throw new Error(`Could not find type of "${field}" on table named ${table}.`);
+		if (error) {
+			throw new Error(error);
+		} else {
+			throw new Error(`Could not find type of "${field}" on table named ${table}.`);
+		}
 	}
 
 	return result;

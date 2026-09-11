@@ -165,8 +165,7 @@ async function doSubmit(
 				for (const [f, value] of Object.entries(a)) {
 					const field = f as keyof (typeof dbAssays)[0];
 					if (value !== dbA[field]) {
-						const fields = (badAssayFields[a.assay_name] ??= []);
-						fields.push({ field, provided: value, actual: dbA[field] });
+						(badAssayFields[a.assay_name] ??= []).push({ field, provided: value, actual: dbA[field] });
 					}
 				}
 			}

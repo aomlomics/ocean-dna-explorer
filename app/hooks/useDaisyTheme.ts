@@ -7,20 +7,30 @@ function getColor() {
 	const computedBody = getComputedStyle(document.body);
 
 	return {
+		theme: document.documentElement.getAttribute("data-theme") || "light",
 		textColor: computedElement.getPropertyValue("color") || computedBody.color,
 		backgroundColor: computedElement.getPropertyValue("backgroundColor") || computedBody.backgroundColor,
 		primaryColor: computedElement.getPropertyValue("--color-primary"),
-		theme: document.documentElement.getAttribute("data-theme") || "light"
+		secondaryColor: computedElement.getPropertyValue("--color-secondary"),
+		accentColor: computedElement.getPropertyValue("--color-accent")
 	};
 }
 
 export default function useDaisyTheme() {
 	//default light theme
-	const [colors, setColors] = useState({
-		textColor: "#334155",
-		backgroundColor: "#f4f3f2",
-		primaryColor: "#233d7f",
-		theme: "light"
+	const [colors, setColors] = useState(() => {
+		if (typeof document === "undefined") {
+			return {
+				theme: "light",
+				textColor: "#334155",
+				backgroundColor: "#f4f3f2",
+				primaryColor: "#233d7f",
+				secondaryColor: "#233d7f",
+				accentColor: "#7dbae5"
+			};
+		}
+
+		return getColor();
 	});
 
 	useEffect(() => {

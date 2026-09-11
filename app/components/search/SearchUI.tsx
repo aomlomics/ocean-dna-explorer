@@ -176,7 +176,7 @@ function searchTreeFromSearchParams(searchParams: {
 	}
 }
 
-export default function SearchUI({ noTable }: { noTable?: true }) {
+export default function SearchUI({ noTable, ignoreParams }: { noTable?: true; ignoreParams?: string[] }) {
 	//hooks
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
@@ -499,7 +499,12 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 	function reset() {
 		setSearchTree(createEmptyGroup(0));
 		setQueryDescription("");
-		router.push(pathname + "?table=" + searchTable);
+
+		const keepParams = [] as string[];
+		if (!noTable) keepParams.push("table=" + searchTable);
+		if (ignoreParams) ignoreParams.forEach((param) => keepParams.push(param + "=" + searchParams.get(param)));
+
+		router.push(pathname + keepParams.length ? "?" + keepParams.join("&") : "");
 	}
 
 	function search() {
@@ -575,6 +580,9 @@ export default function SearchUI({ noTable }: { noTable?: true }) {
 		if (fieldsForTable && fieldsForTable.length) {
 			newParams.set("fields", fieldsForTable.join(","));
 		}
+
+		//ignore specified params
+		ignoreParams?.forEach((param) => newParams.delete(param));
 
 		const queryString = newParams.toString();
 

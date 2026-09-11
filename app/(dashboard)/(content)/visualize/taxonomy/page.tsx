@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function VisualizeTaxonomy() {
-	return <TaxonomyData />;
+	return <TaxonomyData pathnamePrefix="/visualize/taxonomy" />;
 }

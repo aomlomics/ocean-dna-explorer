@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import type { AlphaDiversityModel, AlphaDiversityIndexModel, SampleModel } from "@/app/generated/prisma/models";
-import BoxWhiskerPlot, { type BoxWhiskerData, type BoxWhiskerDataset } from "../BoxWhiskerPlot";
+import BoxWhiskerPlot, { type BoxWhiskerData, type BoxWhiskerDataset } from "../custom/BoxWhiskerPlot";
 import type { Chart as ChartJS } from "chart.js";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import { getZodType } from "@/app/helpers/schema";
@@ -94,8 +94,7 @@ export default function AlphaDiversityDisplay({
 		for (const ad of alphaDiversities) {
 			const metric = ad.indexType + (ad.depth ? METRIC_SEP + ad.depth : "");
 
-			const diversities = (diversitiesByMetric[metric] ??= []);
-			diversities.push(ad);
+			(diversitiesByMetric[metric] ??= []).push(ad);
 
 			for (const index of ad.AlphaDiversityIndexes) {
 				const sample = index.Library?.Sample;
