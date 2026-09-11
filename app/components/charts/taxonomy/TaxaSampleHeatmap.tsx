@@ -6,7 +6,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, Tooltip, Title } from "ch
 import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import ChartCopyButton from "../ChartCopyButton";
-import { SampleModel, type OccurrenceModel } from "@/app/generated/prisma/models";
+import type { SampleModel, OccurrenceModel } from "@/app/generated/prisma/models";
 import { TaxonomicRanks } from "@/types/objects";
 import chroma from "chroma-js";
 import {

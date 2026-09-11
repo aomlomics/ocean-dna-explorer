@@ -1,7 +1,7 @@
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Map from "@/app/components/map/Map";
 import Link from "next/link";
-import { RanksBySpecificity, type TaxonomicRanks } from "@/types/objects";
+import { RanksBySpecificity } from "@/types/objects";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";

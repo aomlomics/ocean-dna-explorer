@@ -197,18 +197,18 @@ export default function TaxonomyVisualize({
 			}
 
 			//build library id to label mapping
-			const sortedLibraries = Array.from(libsWithSampleById.entries()).sort(([_, a], [__, b]) =>
-				a.lib_id.localeCompare(b.lib_id)
+			const sortedLibraries = Array.from(libsWithSampleById.entries()).sort((a, b) =>
+				a[1].lib_id.localeCompare(b[1].lib_id)
 			);
 			const libIdsWithProjectId = {} as Record<
 				LibraryModel["lib_id"],
 				{ id: LibraryModel["id"]; project_id: SampleModel["project_id"] }[]
 			>;
 
-			for (const [_, lib] of sortedLibraries) {
-				(libIdsWithProjectId[lib.lib_id] ??= []).push({
-					id: lib.id,
-					project_id: lib.Sample.project_id
+			for (const libArr of sortedLibraries) {
+				(libIdsWithProjectId[libArr[1].lib_id] ??= []).push({
+					id: libArr[1].id,
+					project_id: libArr[1].Sample.project_id
 				});
 			}
 

@@ -311,7 +311,9 @@ export default function GbifIucnStatus({ taxonKey, className = "", compact = fal
 							}`}
 							title={cell.line}
 						>
-							<span className={`font-black leading-none ${compact ? "text-[10px]" : "text-xs sm:text-sm"} ${cell.text}`}>
+							<span
+								className={`font-black leading-none ${compact ? "text-[10px]" : "text-xs sm:text-sm"} ${cell.text}`}
+							>
 								{cell.short}
 							</span>
 							{compact ? null : (
