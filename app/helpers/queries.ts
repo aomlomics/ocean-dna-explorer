@@ -15,10 +15,9 @@ import type { AssignmentModel, OccurrenceModel, ProjectModel } from "../generate
 const PARAM_LIMIT = 30000;
 
 export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): ErrorPacket | undefined {
-	try {
-		if (err.constructor.name === Prisma.PrismaClientKnownRequestError.name) {
+	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
+		try {
 			if (err.code === "P2002") {
-				console.log(err);
 				return {
 					statusMessage: "error",
 					error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
@@ -33,18 +32,11 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 						.slice(1, -1)
 						.join("_")}.`
 				};
-			} else {
-				return {
-					statusMessage: "error",
-					error: err.message
-				};
 			}
-		}
-	} catch {
-		return {
-			statusMessage: "error",
-			error: err.message
-		};
+		} catch {}
+
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown database error occurred." };
 	}
 }
 

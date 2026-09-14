@@ -59,7 +59,7 @@ export default async function deleteImageAction(id: number): Promise<NetworkPack
 
 		return { statusMessage: "success" };
 	} catch (err) {
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }

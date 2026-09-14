@@ -85,11 +85,11 @@ export default async function addImageAction(
 
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
-			return { statusMessage: "error", error: prismaErr.error };
-		} else {
-			const error = err as Error;
-			return { statusMessage: "error", error: error.message };
+			return prismaErr;
 		}
+
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 
 	if (target) {
@@ -122,11 +122,11 @@ export default async function addImageAction(
 
 			const prismaErr = handlePrismaError(err);
 			if (prismaErr) {
-				return { statusMessage: "error", error: prismaErr.error };
-			} else {
-				const error = err as Error;
-				return { statusMessage: "error", error: error.message };
+				return prismaErr;
 			}
+
+			console.error(err);
+			return { statusMessage: "error", error: "An unknown server error occurred." };
 		}
 	}
 

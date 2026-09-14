@@ -172,7 +172,7 @@ export default async function fixDeletedSamplesAction(project_id: SampleModel["p
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }

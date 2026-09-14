@@ -92,7 +92,7 @@ export default async function projectDeleteAction(target: ProjectModel["project_
 			return prismaErr;
 		}
 
-		const error = err as Error;
-		return { statusMessage: "error", error: error.message };
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }

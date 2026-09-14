@@ -17,7 +17,7 @@ export async function GET(
 			result: TableMetadata[model].relations
 		});
 	} catch (err) {
-		const error = err as Error;
-		return NextResponse.json({ statusMessage: "error", error: error.message });
+		console.error(err);
+		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
 	}
 }

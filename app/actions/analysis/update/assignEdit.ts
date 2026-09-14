@@ -301,10 +301,10 @@ async function doEdit(
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await stream.error(prismaErr.error);
-		} else {
-			const error = err as Error;
-			await stream.error(error.message);
 		}
+
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }
 

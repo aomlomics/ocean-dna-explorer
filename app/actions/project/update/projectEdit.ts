@@ -409,10 +409,10 @@ async function doEdit(
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			await globalStream.error(prismaErr.error);
-		} else {
-			const error = err as Error;
-			await globalStream.error(error.message);
 		}
+
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }
 

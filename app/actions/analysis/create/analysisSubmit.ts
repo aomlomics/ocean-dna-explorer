@@ -307,10 +307,11 @@ async function doSubmit(
 			await assignmentsChannel.stream.error(prismaErr.error);
 			await occurrencesChannel.stream.error(prismaErr.error);
 		} else {
-			const error = err as Error;
-			await analysisChannel.stream.error(error.message);
-			await assignmentsChannel.stream.error(error.message);
-			await occurrencesChannel.stream.error(error.message);
+			console.error(err);
+			const message = "An unknown server error occurred.";
+			await analysisChannel.stream.error(message);
+			await assignmentsChannel.stream.error(message);
+			await occurrencesChannel.stream.error(message);
 		}
 	}
 }

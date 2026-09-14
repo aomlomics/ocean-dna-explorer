@@ -23,9 +23,7 @@ export async function GET(
 
 		return NextResponse.json({ statusMessage: "success", result });
 	} catch (err) {
-		const error = err as Error;
-
-		//TODO: replace database error messages with generic error message
-		return NextResponse.json({ statusMessage: "error", error: error.message });
+		console.error(err);
+		return NextResponse.json({ statusMessage: "error", error: "An unknown server error occurred." });
 	}
 }
