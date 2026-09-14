@@ -77,7 +77,7 @@ const VISUALIZE_ITEMS = [
 	},
 	{
 		label: "Taxonomy",
-		href: "/visualize/taxonomy",
+		href: "/visualize/taxonomy?chart=abundance",
 		subtitle: "Explore taxonomic distributions across datasets"
 	},
 	{

@@ -109,7 +109,7 @@ export default function MobileMenu() {
 									</Link>
 								</li>
 								<li className="py-1">
-									<Link href="/visualize/taxonomy" onClick={handleClose}>
+									<Link href="/visualize/taxonomy?chart=abundance" onClick={handleClose}>
 										Taxonomy
 									</Link>
 								</li>

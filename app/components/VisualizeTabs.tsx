@@ -4,9 +4,6 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import InfoButton from "./InfoButton";
 
-const tabBase =
-	"inline-flex min-h-9 items-center justify-center px-3 py-2 text-center text-sm font-medium transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 sm:min-h-10 sm:px-4 sm:py-2.5 sm:text-[0.9375rem]";
-
 const TABS = [
 	{
 		label: "Metadata",
@@ -31,8 +28,12 @@ const TABS = [
 export default function VisualizeTabs() {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const query = searchParams.toString();
-	const current = TABS.find((tab) => tab.href === pathname) ?? TABS[0];
+
+	const newParams = new URLSearchParams(searchParams);
+	newParams.delete("chart");
+	const stringParams = newParams.toString();
+
+	const current = TABS.find((tab) => pathname.startsWith(tab.href))!;
 
 	return (
 		<>
@@ -48,29 +49,25 @@ export default function VisualizeTabs() {
 				</div>
 			</header>
 
-			<nav
-				id="visualizations"
-				className="mt-5 flex min-w-0 flex-wrap content-center items-center gap-2 sm:gap-2"
-				aria-label="Visualization types"
-			>
-				{TABS.map((tab) => {
-					const active = pathname === tab.href;
-					return (
-						<Link
-							key={tab.href}
-							href={query ? `${tab.href}?${query}` : tab.href}
-							scroll={false}
-							className={`${tabBase} ${
-								active
-									? "bg-primary text-primary-content shadow-md"
-									: "bg-base-200/90 text-base-content hover:bg-base-300 active:brightness-95"
-							}`}
-							aria-current={active ? "page" : undefined}
-						>
-							{tab.label}
-						</Link>
-					);
-				})}
+			<nav id="visualizations" aria-label="Visualization types" className="flex gap-2 mt-2">
+				<Link
+					href={`/visualize/metadata${stringParams ? "?" + stringParams : ""}`}
+					className={`btn ${pathname.startsWith("/visualize/metadata") ? "btn-primary text-primary-conten" : "text-base-content"}`}
+				>
+					Sample Metadata
+				</Link>
+				<Link
+					href={`/visualize/taxonomy?chart=abundance${stringParams ? "&" + stringParams : ""}`}
+					className={`btn ${pathname.startsWith("/visualize/taxonomy") ? "btn-primary text-primary-content" : "text-base-content"}`}
+				>
+					Taxonomy
+				</Link>
+				<Link
+					href={`/visualize/alphaDiversity${stringParams ? "?" + stringParams : ""}`}
+					className={`btn ${pathname.startsWith("/visualize/alphaDiversity") ? "btn-primary text-primary-content" : "text-base-content"}`}
+				>
+					Alpha Diversity
+				</Link>
 			</nav>
 		</>
 	);
