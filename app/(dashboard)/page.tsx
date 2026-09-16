@@ -19,6 +19,7 @@ import {
 	WidgetCardSkeleton
 } from "../components/home/DashboardExtras";
 import { cookies } from "next/headers";
+import { HomeTrustedSubtitle } from "@/app/components/home/HomeTrustedIndicator";
 
 const heroPrimaryBtnClass =
 	"btn btn-md btn-secondary bg-primary/90 backdrop-blur-sm outline-none border-0 text-white font-normal hover:bg-primary transition-all duration-300 text-base px-6 py-3 min-h-12";
@@ -78,6 +79,10 @@ export default async function Home() {
 										and analysis tool for ocean environmental DNA data
 									</span>
 								</div>
+
+								<div className="mb-5 flex flex-wrap items-center gap-x-1.5 text-2xl font-semibold leading-tight text-shadow-3xl sm:mb-6 sm:text-3xl">
+									<HomeTrustedSubtitle variant="hero" />
+								</div>
 							</div>
 
 							<div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
@@ -103,9 +108,14 @@ export default async function Home() {
 					 * untouched on purpose — the user likes its current look,
 					 * animation and skeleton.
 					 */}
-					<Suspense fallback={<MainStatsSkeleton />}>
-						<MainStats />
-					</Suspense>
+					<div className="space-y-3">
+						<div className="flex justify-center">
+							<HomeTrustedSubtitle variant="pill" />
+						</div>
+						<Suspense fallback={<MainStatsSkeleton />}>
+							<MainStats />
+						</Suspense>
+					</div>
 
 					{/*
 					 * Row 2 — Map on the left, three small stat cards stacked on

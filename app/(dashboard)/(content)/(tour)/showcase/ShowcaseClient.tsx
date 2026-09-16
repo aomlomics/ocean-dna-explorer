@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { ShowcaseTrustedLabel } from "@/app/components/home/HomeTrustedIndicator";
 import { ProjectIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import { matchGbifForPhylopic } from "@/app/components/images/matchGbifForPhylopic";
@@ -366,10 +367,12 @@ function useFitColumnScale(dependency: string | undefined) {
 
 export default function ShowcaseClient({
 	projects,
-	projectDurationMs = DEFAULT_PROJECT_DURATION_MS
+	projectDurationMs = DEFAULT_PROJECT_DURATION_MS,
+	trusted
 }: {
 	projects: ProjectBundle[];
 	projectDurationMs?: number;
+	trusted: boolean;
 }) {
 	const [projectIdx, setProjectIdx] = useState(0);
 	const [gridTaxa, setGridTaxa] = useState<Array<ActiveGridTaxonomy | undefined>>(() =>
@@ -508,9 +511,12 @@ export default function ShowcaseClient({
 									height={96}
 									className="h-22 w-22 shrink-0"
 								/>
-								<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
-									Ocean DNA Explorer
-								</p>
+								<div className="min-w-0">
+									<p className="text-[1.75rem] font-semibold tracking-tight text-base-content/92 sm:text-[2.2rem]">
+										Ocean DNA Explorer
+									</p>
+									<ShowcaseTrustedLabel trusted={trusted} />
+								</div>
 							</div>
 
 							<div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start">
