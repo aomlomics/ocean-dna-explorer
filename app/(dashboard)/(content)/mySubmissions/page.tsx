@@ -182,16 +182,24 @@ export default async function MySubmissions() {
 																	badAnalyses.has(analysis.analysis_run_name) ? "border-2 border-error" : ""
 																}`}
 															>
-																<Link
-																	href={exploreUrl({
-																		table: "analysis",
-																		project_id: analysis.project_id,
-																		analysis_run_name: analysis.analysis_run_name
-																	})}
-																	className="text-primary hover:text-info-focus hover:underline transition-colors"
-																>
-																	{analysis.analysis_run_name}
-																</Link>
+																<div className="flex gap-5 items-center">
+																	<Link
+																		href={exploreUrl({
+																			table: "analysis",
+																			project_id: analysis.project_id,
+																			analysis_run_name: analysis.analysis_run_name
+																		})}
+																		className="text-primary hover:text-info-focus hover:underline transition-colors"
+																	>
+																		{analysis.analysis_run_name}
+																	</Link>
+
+																	{analysis.trusted ? (
+																		<div className="badge badge-primary badge-sm text-neutral-content">Trusted</div>
+																	) : (
+																		<></>
+																	)}
+																</div>
 
 																<div className="flex gap-3">
 																	<AnalysisEditButton analysis={analysis} tags={tags} />
