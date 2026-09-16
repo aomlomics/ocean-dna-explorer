@@ -52,7 +52,7 @@ export default function VisualizeTabs() {
 			<nav id="visualizations" aria-label="Visualization types" className="flex gap-2 mt-2">
 				<Link
 					href={`/visualize/metadata${stringParams ? "?" + stringParams : ""}`}
-					className={`btn ${pathname.startsWith("/visualize/metadata") ? "btn-primary text-primary-conten" : "text-base-content"}`}
+					className={`btn ${pathname.startsWith("/visualize/metadata") ? "btn-primary text-primary-content" : "text-base-content"}`}
 				>
 					Sample Metadata
 				</Link>

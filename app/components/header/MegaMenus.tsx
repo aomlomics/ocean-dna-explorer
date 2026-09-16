@@ -704,11 +704,11 @@ export function SubmitMegaMenu() {
 
 export function VisualizeMegaMenu() {
 	return (
-		<MegaMenu tabName="Visualize" route="/visualize" widthClass="max-w-[41.5rem]">
+		<MegaMenu tabName="Visualize" route="/visualize/metadata" widthClass="max-w-[41.5rem]">
 			<div className="grid grid-cols-[1fr_15rem] gap-0">
 				<div className="p-5 border-r border-base-200">
 					<MenuSectionHeader
-						href="/visualize"
+						href="/visualize/metadata"
 						title="Visualize"
 						subtitle="Build charts directly in your browser"
 						titleClassName="text-base-content group-hover:text-primary"
