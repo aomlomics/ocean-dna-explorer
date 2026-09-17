@@ -40,8 +40,8 @@ export default async function unsafeConsoleAction(
 
 		return { statusMessage: "success" };
 	} catch (err) {
+		console.error(err);
 		const error = err as Error;
-
 		return { statusMessage: "error", error: error.message };
 	}
 }

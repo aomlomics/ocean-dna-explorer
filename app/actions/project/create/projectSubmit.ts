@@ -49,58 +49,9 @@ async function doSubmit(
 		}
 	}
 
-	if (imageInfo) {
-		try {
-			for (const k in imageInfo.image) {
-				const key = k as keyof typeof imageInfo.image;
-				if (imageInfo.image[key] === "") {
-					delete imageInfo.image[key];
-				}
-			}
-			if (imageInfo.image.homePage) {
-				await globalStream.error("Not allowed to submit home page images.");
-				return;
-			} else {
-				imageInfo.image.homePage = false;
-			}
-			imageInfo.image.userId = userId;
-			const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
-
-			const parsedAttribution = imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
-
-			await prismaImages.$transaction([
-				...(parsedAttribution
-					? [
-							prismaImages.attribution.create({
-								data: parsedAttribution
-							})
-						]
-					: []),
-				prismaImages.image.create({
-					data: parsedImage
-				})
-			]);
-		} catch (err: any) {
-			const prismaErr = handlePrismaError(err);
-			if (prismaErr) {
-				await globalStream.error(prismaErr.error);
-			}
-
-			console.error(err);
-			await globalStream.error("An unknown server error occurred.");
-
-			return;
-		}
-	}
-
-	let project;
-	let samples;
-	let libraries;
+	let parseResult;
 	try {
-		let assays;
-		let assayPreps;
-
-		const parseResult = await parseProjectFiles({
+		parseResult = await parseProjectFiles({
 			projectChannel,
 			sampleChannel,
 			libraryChannel,
@@ -110,68 +61,116 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
-		({ project, samples, assays, assayPreps, libraries } = parseResult);
+	} catch (err) {
+		const error = err as Error;
+		await globalStream.error(error.message);
+		return;
+	}
 
-		await projectChannel.stream.message(
-			"All files successfully parsed into database format. Parsing data into database.",
-			75
-		);
-		await sampleChannel.stream.message(
-			"All files successfully parsed into database format. Parsing data into database.",
-			75
-		);
-		await libraryChannel.stream.message(
-			"All files successfully parsed into database format. Parsing data into database.",
-			75
-		);
+	const { project, samples, assays, assayPreps, libraries } = parseResult;
 
-		const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
+	await projectChannel.stream.message(
+		"All files successfully parsed into database format. Parsing data into database.",
+		75
+	);
+	await sampleChannel.stream.message(
+		"All files successfully parsed into database format. Parsing data into database.",
+		75
+	);
+	await libraryChannel.stream.message(
+		"All files successfully parsed into database format. Parsing data into database.",
+		75
+	);
 
-		//error checks
-		const dbAssays = await prisma.assay.findMany({
-			where: {
-				assay_name: {
-					in: assays.map((a) => a.assay_name)
-				}
+	const badAssayFields = {} as Record<string, { field: string; provided: any; actual: any }[]>;
+
+	//error checks
+	const dbAssays = await prisma.assay.findMany({
+		where: {
+			assay_name: {
+				in: assays.map((a) => a.assay_name)
 			}
-		});
+		}
+	});
 
-		//check if assay data is correct
-		for (const a of assays) {
-			const dbA = dbAssays.find((db) => a.assay_name === db.assay_name);
+	//check if assay data is correct
+	for (const a of assays) {
+		const dbA = dbAssays.find((db) => a.assay_name === db.assay_name);
 
-			if (!dbA) {
-				//assay does not exist
-				await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-				throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-			} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
-				//assay has incorrect pcr_primer_forward
-				await projectChannel.stream.error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
-				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
-				);
-			} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
-				//assay has incorrect pcr_primer_reverse
-				await projectChannel.stream.error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
-				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
-				);
-			} else {
-				//get all non-essential fields that do not match
-				for (const [f, value] of Object.entries(a)) {
-					const field = f as keyof (typeof dbAssays)[0];
-					if (value !== dbA[field]) {
-						(badAssayFields[a.assay_name] ??= []).push({ field, provided: value, actual: dbA[field] });
-					}
+		if (!dbA) {
+			//assay does not exist
+			await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+			return;
+		} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
+			//assay has incorrect pcr_primer_forward
+			await projectChannel.stream.error(
+				`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
+			);
+			return;
+		} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
+			//assay has incorrect pcr_primer_reverse
+			await projectChannel.stream.error(
+				`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
+			);
+			return;
+		} else {
+			//get all non-essential fields that do not match
+			for (const [f, value] of Object.entries(a)) {
+				const field = f as keyof (typeof dbAssays)[0];
+				if (value !== dbA[field]) {
+					(badAssayFields[a.assay_name] ??= []).push({ field, provided: value, actual: dbA[field] });
 				}
 			}
 		}
+	}
 
-		await projectChannel.stream.message("All checks successful.", 85);
+	await projectChannel.stream.message("All checks successful.", 85);
+
+	try {
+		if (imageInfo) {
+			try {
+				for (const k in imageInfo.image) {
+					const key = k as keyof typeof imageInfo.image;
+					if (imageInfo.image[key] === "") {
+						delete imageInfo.image[key];
+					}
+				}
+				if (imageInfo.image.homePage) {
+					await globalStream.error("Not allowed to submit home page images.");
+					return;
+				} else {
+					imageInfo.image.homePage = false;
+				}
+				imageInfo.image.userId = userId;
+				const parsedImage = ImageOptionalDefaultsSchema.parse(imageInfo.image);
+
+				const parsedAttribution =
+					imageInfo.attribution && AttributionOptionalDefaultsSchema.parse(imageInfo.attribution);
+
+				await prismaImages.$transaction([
+					...(parsedAttribution
+						? [
+								prismaImages.attribution.create({
+									data: parsedAttribution
+								})
+							]
+						: []),
+					prismaImages.image.create({
+						data: parsedImage
+					})
+				]);
+			} catch (err: any) {
+				const prismaErr = handlePrismaError(err);
+				if (prismaErr) {
+					await globalStream.error(prismaErr.error);
+				}
+
+				console.error(err);
+				await globalStream.error("An unknown server error occurred.");
+
+				return;
+			}
+		}
 
 		//submission
 		await prisma.$transaction([

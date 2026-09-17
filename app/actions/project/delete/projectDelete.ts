@@ -54,9 +54,9 @@ export default async function projectDeleteAction(target: ProjectModel["project_
 		});
 
 		if (!dbProject) {
-			throw new Error(`No Project with project_id of "${project_id}" found.`);
+			return { statusMessage: "error", error: `No Project with project_id of "${project_id}" found.` };
 		} else if (!dbProject.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
-			throw new Error("Unauthorized action.");
+			return { statusMessage: "error", error: "Unauthorized action." };
 		}
 
 		await prisma.project.delete({

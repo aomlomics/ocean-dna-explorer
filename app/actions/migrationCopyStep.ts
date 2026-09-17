@@ -74,7 +74,7 @@ export default async function migrationCopyStepAction() {
 			}
 		});
 	} catch (err) {
-		console.log(err);
+		console.error(err);
 		throw err;
 	}
 }

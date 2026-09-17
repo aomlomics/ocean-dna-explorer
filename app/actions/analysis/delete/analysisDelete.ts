@@ -65,9 +65,9 @@ export default async function analysisDeleteAction(
 		});
 
 		if (!analysis) {
-			throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+			return { statusMessage: "error", error: `No Analysis with analysis_run_name of "${analysis_run_name}" found.` };
 		} else if (!analysis.Project.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
-			throw new Error("Unauthorized action.");
+			return { statusMessage: "error", error: "Unauthorized action." };
 		}
 
 		await prisma.analysis.delete({

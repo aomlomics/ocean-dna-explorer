@@ -51,11 +51,11 @@ export default async function projectUpdateUserIdsAction(
 			});
 
 			if (!project) {
-				throw new Error(`No Project with project_id of "${project_id}" found.`);
+				return { statusMessage: "error", error: `No Project with project_id of "${project_id}" found.` };
 			} else if (!project.userIds.includes(userId)) {
-				throw new Error("Unauthorized action.");
+				return { statusMessage: "error", error: "Unauthorized action." };
 			} else if (deletedUserIds.includes(userId)) {
-				throw new Error("Can't remove self from userIds");
+				return { statusMessage: "error", error: "Can't remove self from userIds" };
 			}
 
 			const userIds = [...project.userIds.filter((id) => !deletedUserIds.includes(id)), ...newUserIds];

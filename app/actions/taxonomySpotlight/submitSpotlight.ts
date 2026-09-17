@@ -36,6 +36,25 @@ export default async function submitSpotlightAction(
 
 	let deleteImageOnError = false;
 	let deleteDbImageOnError = false;
+
+	async function handleImageDelete() {
+		if (deleteImageOnError) {
+			await del(image!.url!);
+		}
+
+		if (deleteDbImageOnError) {
+			const queries = [prismaImages.image.delete({ where: { url: image!.url } })] as PrismaPromise<
+				ImageModel | AttributionModel
+			>[];
+			if (attribution) {
+				queries.push(prismaImages.attribution.delete({ where: { attributionTitle: attribution.attributionTitle } }));
+				await prismaImages.$transaction(queries);
+			} else {
+				await queries[0];
+			}
+		}
+	}
+
 	try {
 		const parsedSpotlight = TaxonomySpotlightOptionalDefaultsSchema.parse(spotlight);
 		const parsedImage = image && ImageOptionalDefaultsSchema.parse({ ...image, userId, homePage: false });
@@ -84,10 +103,11 @@ export default async function submitSpotlightAction(
 			deleteImageOnError = true;
 
 			if (dbSpotlight) {
-				//throw instead of return to delete image data if necessary
-				throw new Error(
-					`Taxonomy Spotlight with project_id of "${parsedSpotlight.project_id}" and taxonomy of "${parsedSpotlight.taxonomy}" already exists.`
-				);
+				await handleImageDelete();
+				return {
+					statusMessage: "error",
+					error: `A Taxonomy Spotlight for the taxonomy "${parsedSpotlight.taxonomy}" already exists for the project "${parsedSpotlight.project_id}".`
+				};
 			}
 
 			//create image and new attribution (if provided)
@@ -115,28 +135,14 @@ export default async function submitSpotlightAction(
 
 		return { statusMessage: "success" };
 	} catch (err: any) {
-		if (deleteImageOnError) {
-			await del(image!.url!);
-		}
-
-		if (deleteDbImageOnError) {
-			const queries = [prismaImages.image.delete({ where: { url: image!.url } })] as PrismaPromise<
-				ImageModel | AttributionModel
-			>[];
-			if (attribution) {
-				queries.push(prismaImages.attribution.delete({ where: { attributionTitle: attribution.attributionTitle } }));
-				await prismaImages.$transaction(queries);
-			} else {
-				await queries[0];
-			}
-		}
+		await handleImageDelete();
 
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {
 			return { statusMessage: "error", error: prismaErr.error };
-		} else {
-			const error = err as Error;
-			return { statusMessage: "error", error: error.message };
 		}
+
+		console.error(err);
+		return { statusMessage: "error", error: "An unknown server error occurred." };
 	}
 }

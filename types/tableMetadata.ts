@@ -220,6 +220,7 @@ const TableMetadata = {
 		description: "",
 		schema: PrismaZodTypes.TaxonomySpotlightSchema,
 		enumSchema: PrismaZodTypes.TaxonomySpotlightScalarFieldEnumSchema,
+		relationsSchema: PrismaZodTypes.TaxonomySpotlightWithRelationsSchema,
 		titleField: ["project_id", "taxonomy"]
 	},
 	tag: {

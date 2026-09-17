@@ -25,8 +25,9 @@ async function doSubmit(
 		return;
 	}
 
+	let parseResult;
 	try {
-		const parseResult = await parseAnalysisFiles({
+		parseResult = await parseAnalysisFiles({
 			analysisChannel,
 			assignmentsChannel,
 			occurrencesChannel,
@@ -35,6 +36,13 @@ async function doSubmit(
 		if (!parseResult) {
 			return;
 		}
+	} catch (err) {
+		const error = err as Error;
+		await analysisChannel.stream.error(error.message);
+		return;
+	}
+
+	try {
 		const { analysis, features, taxonomies, assignments, occurrences, libIds } = parseResult;
 
 		await analysisChannel.stream.message(
@@ -111,16 +119,19 @@ async function doSubmit(
 		]);
 
 		if (!dbProject) {
-			throw new Error(`Project with project_id of ${analysis.project_id} does not exist.`);
+			await analysisChannel.stream.error(`Project with project_id of ${analysis.project_id} does not exist.`);
+			return;
 		} else if (!dbProject.userIds.includes(userId)) {
-			throw new Error(
+			await analysisChannel.stream.error(
 				`Permission denied for adding analysis to Project with project_id of ${analysis.project_id}. Please contact submission owner with a request to be added to the Project.`
 			);
+			return;
 		}
 
 		//check if assay is valid
 		if (!dbAssay) {
-			throw new Error(`The Assay with assay_name of "${analysis.assay_name}" does not exist.`);
+			await analysisChannel.stream.error(`The Assay with assay_name of "${analysis.assay_name}" does not exist.`);
+			return;
 		}
 
 		//check if any provided tags are missing from database query
@@ -129,14 +140,15 @@ async function doSubmit(
 
 			if (invalidTagNames.length) {
 				if (invalidTagNames.length === 1) {
-					throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
+					await analysisChannel.stream.error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 				} else {
-					throw new Error(
+					await analysisChannel.stream.error(
 						`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 							.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
 							.join(", ")}.`
 					);
 				}
+				return;
 			}
 		}
 
@@ -153,14 +165,17 @@ async function doSubmit(
 
 			if (invalidLibIds.length) {
 				if (invalidLibIds.length === 1) {
-					throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
+					await occurrencesChannel.stream.error(
+						`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`
+					);
 				} else {
-					throw new Error(
+					await occurrencesChannel.stream.error(
 						`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 							.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
 							.join(", ")}.`
 					);
 				}
+				return;
 			}
 		}
 

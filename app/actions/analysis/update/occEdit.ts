@@ -59,21 +59,29 @@ async function doEdit(
 			return;
 		}
 
-		const parseResult = await parseOccurrencesFile({
-			channel: { stream, url },
-			project_id: dbAnalysis.project_id,
-			analysis_run_name,
-			oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
-		});
-		if (!parseResult) {
+		let parseResult;
+		try {
+			parseResult = await parseOccurrencesFile({
+				channel: { stream, url },
+				project_id: dbAnalysis.project_id,
+				analysis_run_name,
+				oldChecksum: dbAnalysis.occurrenceFileChecksum_ODE || undefined
+			});
+			if (!parseResult) {
+				return;
+			}
+		} catch (err) {
+			const error = err as Error;
+			await stream.error(error.message);
 			return;
 		}
+
 		const { occurrences, occurrencesMd5, libIds, featureids } = parseResult;
 
 		await stream.message("Occurrences successfully parsed into database format. Parsing data into database.", 75);
 
 		//edit
-		await prisma.$transaction(
+		const success = await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
 				const dbAnalysis = await tx.analysis.findUnique({
@@ -97,9 +105,11 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					return;
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					throw new Error("Unauthorized action.");
+					stream.error("Unauthorized action.");
+					return;
 				}
 
 				//check that lib_ids in occurrences are part of the project for this analysis AND they have the assay for this analysis
@@ -127,14 +137,15 @@ async function doEdit(
 
 					if (invalidLibIds.length) {
 						if (invalidLibIds.length === 1) {
-							throw new Error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
+							stream.error(`A library in occurrence file is invalid. The invalid lib_id is "${invalidLibIds[0]}".`);
 						} else {
-							throw new Error(
+							stream.error(
 								`Some libraries in occurrence file are invalid. The invalid lib_ids are ${invalidLibIds
 									.map((lib_id, i) => (i === invalidLibIds.length - 1 ? `and "${lib_id}"` : `"${lib_id}"`))
 									.join(", ")}.`
 							);
 						}
+						return;
 					}
 				}
 
@@ -311,24 +322,27 @@ async function doEdit(
 						}
 					}
 				});
+
+				await stream.success("Success");
+				return true;
 			},
 			{ timeout: 5 * 60 * 1000 }
 		);
 
-		await stream.success("Success");
-
-		//update diversities
-		fetch(
-			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipBlast=true`,
-			{
-				method: "POST",
-				headers: {
-					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+		if (success) {
+			//update diversities
+			fetch(
+				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipBlast=true`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+					}
 				}
-			}
-		);
+			);
 
-		return true;
+			return true;
+		}
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

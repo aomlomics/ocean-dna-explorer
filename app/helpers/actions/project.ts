@@ -243,9 +243,9 @@ async function parseProjectFile({
 			projectMd5
 		};
 	} catch (err) {
-		const error = err as Error;
-		await channel.stream.error(error.message);
-		throw error;
+		console.error(err);
+		await channel.stream.error("An unknown server error occurred.");
+		throw err;
 	}
 }
 
@@ -355,9 +355,9 @@ async function parseLibraryFile({
 
 		return { libraries, libraryMd5 };
 	} catch (err) {
-		const error = err as Error;
-		await channel.stream.error(error.message);
-		throw error;
+		console.error(err);
+		await channel.stream.error("An unknown server error occurred.");
+		throw err;
 	}
 }
 
@@ -465,9 +465,9 @@ async function parseSampleFile({
 
 		return { samples, sampleMd5 };
 	} catch (err) {
-		const error = err as Error;
-		await channel.stream.error(error.message);
-		throw error;
+		console.error(err);
+		await channel.stream.error("An unknown server error occurred.");
+		throw err;
 	}
 }
 

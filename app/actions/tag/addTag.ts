@@ -13,11 +13,11 @@ export default async function addTagAction(tag: Omit<TagModel, "id">): Promise<N
 		const role = sessionClaims?.metadata?.role;
 
 		if (!userId) {
-			throw new Error("Must be logged in.");
+			return { statusMessage: "error", error: "Must be logged in." };
 		}
 
 		if (!role || !RolePermissions[role].includes("manageDatabase")) {
-			throw new Error("Invalid role.");
+			return { statusMessage: "error", error: "Invalid role." };
 		}
 
 		const parsedTag = TagOptionalDefaultsSchema.parse(tag);
