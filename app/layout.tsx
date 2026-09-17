@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 import { Source_Sans_3 } from "next/font/google";
 import ScrollToTop from "@/app/components/ScrollToTop";
+import TrustedFab from "@/app/components/TrustedFab";
 import ClerkAppearanceProvider from "@/app/components/ClerkAppearanceProvider";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/next";
@@ -38,7 +39,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 				<ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
 					<ClerkAppearanceProvider>
 						<TourProvider>
-							<TrustedProvider>{children}</TrustedProvider>
+							<TrustedProvider>
+								{children}
+								<TrustedFab />
+							</TrustedProvider>
 						</TourProvider>
 					</ClerkAppearanceProvider>
 				</ThemeProvider>
