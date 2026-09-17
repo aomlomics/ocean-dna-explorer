@@ -66,7 +66,7 @@ export const AssignmentScalarFieldEnumSchema = z.enum(['id','project_id','analys
 
 export const FeatureScalarFieldEnumSchema = z.enum(['id','featureid','dna_sequence','sequenceLength_ODE']);
 
-export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
+export const TaxonomyScalarFieldEnumSchema = z.enum(['id','taxonomy','verbatimIdentification','higherClassification','realm','subrealm','domain','superkingdom','supergroup','kingdom','infrakingdom','subkingdom','phylum','division','subphylum','subdivision','class','subclass','section','subsection','order','suborder','family','subfamily','genus','subgenus','species','subspecies','varietas','forma','biovar','serovar','pathovar','strain','clade','lineage','group','type']);
 
 export const TagScalarFieldEnumSchema = z.enum(['id','tagName','description','color']);
 
@@ -106,7 +106,7 @@ export const AssignmentOrderByRelevanceFieldEnumSchema = z.enum(['project_id','a
 
 export const FeatureOrderByRelevanceFieldEnumSchema = z.enum(['featureid','dna_sequence']);
 
-export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','domain','supergroup','division','kingdom','phylum','class','order','family','genus','species']);
+export const TaxonomyOrderByRelevanceFieldEnumSchema = z.enum(['taxonomy','verbatimIdentification','higherClassification','realm','subrealm','domain','superkingdom','supergroup','kingdom','infrakingdom','subkingdom','phylum','division','subphylum','subdivision','class','subclass','section','subsection','order','suborder','family','subfamily','genus','subgenus','species','subspecies','varietas','forma','biovar','serovar','pathovar','strain','clade','lineage','group','type']);
 
 export const TagOrderByRelevanceFieldEnumSchema = z.enum(['tagName','description','color']);
 
@@ -735,16 +735,40 @@ export const TaxonomySchema = z.object({
   taxonomy: z.string(),
   verbatimIdentification: z.string(),
   higherClassification: z.string().nullish(),
+  realm: z.string().nullish(),
+  subrealm: z.string().nullish(),
   domain: z.string().nullish(),
+  superkingdom: z.string().nullish(),
   supergroup: z.string().nullish(),
-  division: z.string().nullish(),
   kingdom: z.string().nullish(),
+  infrakingdom: z.string().nullish(),
+  subkingdom: z.string().nullish(),
   phylum: z.string().nullish(),
+  division: z.string().nullish(),
+  subphylum: z.string().nullish(),
+  subdivision: z.string().nullish(),
   class: z.string().nullish(),
+  subclass: z.string().nullish(),
+  section: z.string().nullish(),
+  subsection: z.string().nullish(),
   order: z.string().nullish(),
+  suborder: z.string().nullish(),
   family: z.string().nullish(),
+  subfamily: z.string().nullish(),
   genus: z.string().nullish(),
+  subgenus: z.string().nullish(),
   species: z.string().nullish(),
+  subspecies: z.string().nullish(),
+  varietas: z.string().nullish(),
+  forma: z.string().nullish(),
+  biovar: z.string().nullish(),
+  serovar: z.string().nullish(),
+  pathovar: z.string().nullish(),
+  strain: z.string().nullish(),
+  clade: z.string().nullish(),
+  lineage: z.string().nullish(),
+  group: z.string().nullish(),
+  type: z.string().nullish(),
 })
 
 export type Taxonomy = z.infer<typeof TaxonomySchema>

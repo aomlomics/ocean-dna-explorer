@@ -1,7 +1,6 @@
 import Map from "@/app/components/map/Map";
 import PhyloPic from "@/app/components/images/PhyloPic";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import { AnalysisIcon, LocationIcon, ProjectIcon } from "@/app/components/icons";
@@ -12,7 +11,6 @@ import AssaysCard from "@/app/components/assay/AssaysCard";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { TaxonomicRank } from "@/types/globals";
 
 export async function generateMetadata({
 	params
@@ -49,28 +47,6 @@ export async function generateMetadata({
 			title: "Occurrence not found"
 		};
 	}
-}
-
-function formatTaxonomyDisplay(dbTaxonomy: TaxonomyModel) {
-	const taxonomicData = Object.entries(dbTaxonomy)
-		.filter(([key, value]) => {
-			return TaxonomicRanks.includes(key as TaxonomicRank) && value;
-		})
-		.map(([key, value]) => ({
-			rank: key.charAt(0).toUpperCase() + key.slice(1),
-			name: String(value).replace("_", " ")
-		}));
-
-	return (
-		<div className="space-y-2">
-			{taxonomicData.map((item) => (
-				<div key={item.rank}>
-					<span className="text-base-content/70 font-semibold text-sm">{item.rank}: </span>
-					<span className="text-base-content font-medium text-sm">{item.name}</span>
-				</div>
-			))}
-		</div>
-	);
 }
 
 function MaskSvgIcon({ src, className }: { src: string; className?: string }) {
@@ -360,7 +336,18 @@ export default async function OccurrencePage({
 										<p className="text-xs font-semibold text-base-content/65 uppercase tracking-wide">Full taxonomy</p>
 										<div className="max-h-40 overflow-y-auto pr-1">
 											{occurrence.Assignment.Taxonomy ? (
-												formatTaxonomyDisplay(occurrence.Assignment.Taxonomy)
+												<div className="space-y-2">
+													{TaxonomicRanks.filter((rank) => occurrence.Assignment.Taxonomy[rank]).map((rank) => (
+														<div key={rank}>
+															<span className="text-base-content/70 font-semibold text-sm">
+																{rank.charAt(0).toUpperCase() + rank.slice(1)}:{" "}
+															</span>
+															<span className="text-base-content font-medium text-sm">
+																{occurrence.Assignment.Taxonomy[rank]?.replace("_", " ")}
+															</span>
+														</div>
+													))}
+												</div>
 											) : (
 												<p className="text-sm text-base-content/70">No taxonomy assignment available.</p>
 											)}

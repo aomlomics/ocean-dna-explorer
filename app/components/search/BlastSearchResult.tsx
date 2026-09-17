@@ -3,6 +3,7 @@
 import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/prisma/models";
 import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
 import { getClientSideCookie } from "@/app/helpers/utils";
+import { BlastQueryResultScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -11,7 +12,7 @@ import { Fragment, useState } from "react";
 const resultsFields = [] as string[];
 const omit = ["id", "queryId", "query", "sequence", "featureid", "queryEnd", "subjectEnd"];
 TableMetadata.blastQueryResult.fieldOrder?.forEach((f) => !omit.includes(f) && resultsFields.push(f));
-TableMetadata.blastQueryResult.enumSchema.options.forEach(
+BlastQueryResultScalarFieldEnumSchema.options.forEach(
 	(f) => !omit.includes(f) && !resultsFields.includes(f) && resultsFields.push(f)
 );
 

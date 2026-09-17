@@ -18,11 +18,10 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
 		try {
 			if (err.code === "P2002") {
+				const meta = TableMetadata[err.meta!.modelName as Prisma.ModelName];
 				return {
 					statusMessage: "error",
-					error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
-						", "
-					)} already exists in database.`
+					error: `${err.meta!.modelName} with provided ${typeof meta.titleField === "string" ? meta.titleField : meta.titleField.join(", ")} already exists in database.`
 				};
 			} else if (err.code === "P2003") {
 				return {

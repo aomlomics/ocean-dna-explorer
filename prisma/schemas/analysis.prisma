@@ -182,17 +182,40 @@ model Taxonomy {
     // Data
     verbatimIdentification String
     higherClassification   String?
+    realm                  String?
+    subrealm               String?
     domain                 String?
+    superkingdom           String?
     supergroup             String?
-    division               String?
-    // subdivision            String?
     kingdom                String?
+    infrakingdom           String?
+    subkingdom             String?
     phylum                 String?
+    division               String?
+    subphylum              String?
+    subdivision            String?
     class                  String?
+    subclass               String?
+    section                String?
+    subsection             String?
     order                  String?
+    suborder               String?
     family                 String?
+    subfamily              String?
     genus                  String?
+    subgenus               String?
     species                String?
+    subspecies             String?
+    varietas               String?
+    forma                  String?
+    biovar                 String?
+    serovar                String?
+    pathovar               String?
+    strain                 String?
+    clade                  String?
+    lineage                String?
+    group                  String?
+    type                   String?
 
     @@index([kingdom])
     @@index([family])

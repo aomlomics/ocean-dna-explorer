@@ -29,9 +29,9 @@ generator zod {
 }
 
 // generator erd {
-//     provider      = "prisma-erd-generator"
-//     output        = "../public/images/ERD.svg"
-//     tableOnly     = true
-//     theme         = "neutral"
-//     ignorePattern = "Tag,AlphaDiversity*"
+//     provider  = "prisma-erd-generator"
+//     output    = "../../public/images/ERD.svg"
+//     renderer  = "graphviz"
+//     tableOnly = true
+//     theme     = "neutral"
 // }

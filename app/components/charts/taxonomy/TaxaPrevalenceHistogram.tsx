@@ -5,7 +5,6 @@ import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip } from "chart.js";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import ChartCopyButton from "../ChartCopyButton";
-import { TaxonomicRanks } from "@/types/objects";
 import type { TaxonomicRank } from "@/types/globals";
 import {
 	type AssignsByFeatureid,
@@ -21,11 +20,13 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip);
 export default function TaxaPrevalenceHistogram({
 	assignsByFeatureid,
 	taxonomiesByName,
-	libsWithSampleById
+	libsWithSampleById,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const ref = useRef<ChartJS<"bar">>(null);
 	const { textColor, primaryColor } = useDaisyTheme();
@@ -87,7 +88,7 @@ export default function TaxaPrevalenceHistogram({
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 
 					<select value={rank} onChange={(e) => setRank(e.target.value as TaxonomicRank)} className="select">
-						{TaxonomicRanks.map((r) => (
+						{taxaRanksWithData.map((r) => (
 							<option key={r} value={r}>
 								{r}
 							</option>

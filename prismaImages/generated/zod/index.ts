@@ -11,7 +11,7 @@ import { z } from 'zod';
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','name','url','userId','homePage','attributionTitle','description','location','dateTaken','license']);
+export const ImageScalarFieldEnumSchema = z.enum(['id','dateSubmitted','url','userId','homePage','attributionTitle','name','description','location','dateTaken','license']);
 
 export const AttributionScalarFieldEnumSchema = z.enum(['id','attributionTitle','attributionNames','attributionUrl','attributionInstitution']);
 
@@ -33,11 +33,11 @@ export const NullsOrderSchema = z.enum(['first','last']);
 export const ImageSchema = z.object({
   id: z.number().int(),
   dateSubmitted: z.coerce.date(),
-  name: z.string(),
   url: z.string(),
   userId: z.string(),
   homePage: z.boolean(),
   attributionTitle: z.string().nullish(),
+  name: z.string(),
   description: z.string().nullish(),
   location: z.string().nullish(),
   dateTaken: z.coerce.date().nullish(),
