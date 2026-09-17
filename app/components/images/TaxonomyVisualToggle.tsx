@@ -15,10 +15,9 @@ import type { ProjectModel, TaxonomySpotlightModel } from "@/app/generated/prism
 import type { ImageWithRelations } from "@/prismaImages/generated/zod";
 import SpotlightSubmitButton from "../SpotlightSubmitButton";
 import Image from "next/image";
+import Modal from "../Modal";
 
 const SESSION_CONSENT_KEY = "opal-gbif-photo-warning-ok";
-
-type Mode = "phylopic" | "gbif" | "spotlight";
 
 function rankAllowsGbifPhoto(rankKey: TaxonomicRank | null | undefined): boolean {
 	if (rankKey == null) return false;
@@ -70,7 +69,7 @@ export default function TaxonomyVisualToggle({
 	taxonomySpotlights,
 	availableProjects
 }: TaxonomyVisualToggleProps) {
-	const [mode, setMode] = useState<Mode>("phylopic");
+	const [mode, setMode] = useState("phylopic" as "phylopic" | "gbif" | "spotlight");
 	const [spotlightIndex, setSpotlightIndex] = useState(0);
 	const [skipWarn, setSkipWarn] = useState(true);
 	const [gbifLayerMounted, setGbifLayerMounted] = useState(false);
@@ -79,7 +78,7 @@ export default function TaxonomyVisualToggle({
 
 	const gbifPhotoAllowed = rankAllowsGbifPhoto(databaseRankKey);
 
-	if (!gbifPhotoAllowed && (mode !== "phylopic" || gbifLayerMounted || gbifPayload)) {
+	if (!gbifPhotoAllowed && ((mode !== "phylopic" && mode !== "spotlight") || gbifLayerMounted || gbifPayload)) {
 		setMode("phylopic");
 		setGbifLayerMounted(false);
 		setGbifPayload(null);
@@ -114,7 +113,8 @@ export default function TaxonomyVisualToggle({
 
 	const phylopicLayerClass =
 		mode === "phylopic" || !showGbifToggle ? "opacity-100 z-[1]" : "pointer-events-none opacity-0 z-0";
-
+	const spotlightLayerClass =
+		mode === "phylopic" || !showGbifToggle ? "opacity-100 z-[1]" : "pointer-events-none opacity-0 z-0";
 	const gbifLayerClass = mode === "gbif" && showGbifToggle ? "opacity-100 z-[2]" : "pointer-events-none opacity-0 z-0";
 
 	const hasAside = Boolean(children);
@@ -146,6 +146,7 @@ export default function TaxonomyVisualToggle({
 								>
 									PhyloPic Outline
 								</button>
+
 								<button
 									type="button"
 									className={`join-item btn rounded-btn ${toggleBtnClass} ${mode === "gbif" ? "btn-primary" : "btn-ghost"}`}
@@ -159,6 +160,7 @@ export default function TaxonomyVisualToggle({
 								>
 									GBIF photo
 								</button>
+
 								{taxonomySpotlights?.length || allowedToSpotlight ? (
 									<button
 										className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "spotlight" ? "btn-primary" : "btn-ghost"}`}
@@ -213,7 +215,7 @@ export default function TaxonomyVisualToggle({
 							<></>
 						)}
 						<div
-							className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 flex justify-center items-center ${mode === "spotlight" ? "opacity-100 z-3" : "pointer-events-none opacity-0 z-0"}`}
+							className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 flex justify-center items-center ${spotlightLayerClass}`}
 						>
 							{taxonomySpotlights?.length ? (
 								<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
@@ -346,25 +348,14 @@ export default function TaxonomyVisualToggle({
 				</div>
 			)}
 
-			<dialog ref={gbifWarningModalRef} className="modal">
-				<div className="modal-box max-w-md">
-					<form method="dialog">
-						<button
-							type="submit"
-							className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-							aria-label="Close dialog"
-						>
-							✕
-						</button>
-					</form>
+			<Modal ref={gbifWarningModalRef}>
+				<>
 					<h3 id="gbif-photo-warn-title" className="text-lg font-semibold text-base-content">
 						GBIF Occurrence Photos
 					</h3>
 					<p className="py-3 text-sm text-base-content/80">
 						These images come from GBIF occurrence records and checklist media. They may show dead animals, strandings,
-						museum specimens, dissections, or other sensitive content. These images come from GBIF occurrence records
-						and checklist media. They may show dead animals, strandings, museum specimens, dissections, or other
-						sensitive content.
+						museum specimens, dissections, or other sensitive content.
 					</p>
 					<label className="label cursor-pointer justify-start gap-2 py-1">
 						<input
@@ -385,11 +376,8 @@ export default function TaxonomyVisualToggle({
 							Show GBIF photo
 						</button>
 					</div>
-				</div>
-				<form method="dialog" className="modal-backdrop">
-					<button>close</button>
-				</form>
-			</dialog>
+				</>
+			</Modal>
 		</div>
 	);
 }
