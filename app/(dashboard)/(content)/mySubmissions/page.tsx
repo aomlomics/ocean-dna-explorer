@@ -11,7 +11,6 @@ import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButto
 import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
 import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 import { ProjectIcon } from "@/app/components/icons";
-import { prismaImages } from "@/app/helpers/prismaImages";
 import { exploreUrl } from "@/types/tableMetadata";
 import type { Metadata } from "next";
 
@@ -76,8 +75,6 @@ export default async function MySubmissions() {
 		prisma.tag.findMany()
 	]);
 	const badAnalyses = new Set(dbBadAnalyses.map((ba) => ba.analysis_run_name));
-
-	const attributions = await prismaImages.attribution.findMany();
 
 	return (
 		<div className="container mx-auto px-4 py-8">
@@ -159,7 +156,6 @@ export default async function MySubmissions() {
 														projectMetadataFileUrl_ODE={proj.projectMetadataFileUrl_ODE}
 														sampleMetadataFileUrl_ODE={proj.sampleMetadataFileUrl_ODE}
 														libraryMetadataFileUrl_ODE={proj.libraryMetadataFileUrl_ODE}
-														attributions={attributions}
 													/>
 
 													<SubmissionDeleteButton

@@ -3,6 +3,7 @@ import Map from "@/app/components/map/Map";
 import Link from "next/link";
 import { RanksBySpecificity } from "@/types/objects";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import TableMetadata from "@/types/tableMetadata";
 import { AnalysisIcon, ProjectIcon, LocationIcon } from "@/app/components/icons";
 import ThemeAwarePhyloPic from "@/app/components/images/ThemeAwarePhyloPic";
 import GbifIucnStatus from "@/app/components/images/GbifIucnStatus";
@@ -14,8 +15,11 @@ import TableInfo from "@/app/components/TableInfo";
 import { decodeRouteParams } from "@/app/helpers/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import TableMetadata from "@/types/tableMetadata";
 import type { TaxonomicRank } from "@/types/globals";
+import { auth } from "@clerk/nextjs/server";
+import { prismaImages } from "@/app/helpers/prismaImages";
+import type { ImageWithRelations } from "@/prismaImages/generated/zod";
+import type { ProjectModel, TaxonomySpotlightModel } from "@/app/generated/prisma/models";
 
 export async function generateMetadata({ params }: { params: Promise<{ taxonomy: string }> }): Promise<Metadata> {
 	const { taxonomy } = await decodeRouteParams(params);
@@ -139,26 +143,50 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 			Analyses: {
 				distinct: ["project_id"],
 				select: {
-					project_id: true
+					project_id: true,
+					Project: {
+						select: {
+							userIds: true
+						}
+					}
 				}
-			}
+			},
+			TaxonomySpotlights: true
 		}
 	});
 
 	if (!dbTaxonomy) notFound();
 
+	//get images and attributions for spotlights
+	const images = await prismaImages.image.findMany({
+		where: {
+			url: {
+				in: dbTaxonomy.TaxonomySpotlights.map((sl) => sl.imageFileUrl_ODE)
+			}
+		},
+		include: {
+			Attribution: true
+		}
+	});
+	const spotlightsWithImages = dbTaxonomy.TaxonomySpotlights.map((sl) => ({
+		...sl,
+		Image: images.find((i) => sl.imageFileUrl_ODE === i.url)
+	})) as (TaxonomySpotlightModel & { Image: ImageWithRelations })[];
+
 	// Get unique project IDs for display
 	const uniqueProjects = dbTaxonomy.Analyses.map((a) => a.project_id);
-	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy as unknown as TaxonomyModel);
+	const pageGbif = await resolveTaxonomyPageGbif(dbTaxonomy);
 	const phyloPic = pageGbif?.phyloPic ?? null;
-	const finestRank = finestDisplayedRank(dbTaxonomy as unknown as TaxonomyModel);
+	const finestRank = finestDisplayedRank(dbTaxonomy);
 	const databaseScientificName = finestRank?.displayName ?? taxonomy.split(";").pop()?.replace(/_/g, " ") ?? taxonomy;
 	const databaseRankLabel = finestRank?.rankLabel ?? "Taxonomy";
 	const databaseRankKey = finestRank?.rankKey ?? null;
 	const classificationRanks = [...RanksBySpecificity].reverse().filter((rank) => {
-		const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim();
+		const raw = dbTaxonomy[rank]?.toString().trim();
 		return Boolean(raw);
 	});
+
+	const { userId } = await auth();
 
 	return (
 		<div id="taxonomy" className="container mx-auto py-6 space-y-6 max-w-full pb-8">
@@ -192,13 +220,29 @@ export default async function TaxonomyPage({ params }: { params: Promise<{ taxon
 						databaseRankLabel={databaseRankLabel}
 						databaseScientificName={databaseScientificName}
 						commonName={pageGbif?.commonName ?? null}
+						allowedToSpotlight={!!userId && dbTaxonomy.Analyses.some((a) => a.Project.userIds.includes(userId))}
+						taxonomySpotlights={spotlightsWithImages}
+						availableProjects={
+							userId
+								? dbTaxonomy.Analyses.reduce(
+										(acc, a) => {
+											if (a.Project.userIds.includes(userId)) {
+												acc.push(a.project_id);
+											}
+
+											return acc;
+										},
+										[] as ProjectModel["project_id"][]
+									)
+								: []
+						}
 					>
 						<div className="flex flex-col items-start gap-3">
 							<CopyButton taxonomy={taxonomy} variant="button" label="Copy Taxonomy" />
 							{classificationRanks.length ? (
 								<div className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5">
 									{classificationRanks.map((rank, idx) => {
-										const raw = (dbTaxonomy as TaxonomyModel)[rank]?.toString().trim() ?? "";
+										const raw = dbTaxonomy[rank]?.toString().trim() ?? "";
 										const name = raw.replace(/_/g, " ");
 										const rankLabel = rank.charAt(0).toUpperCase() + rank.slice(1);
 										const isLast = idx === classificationRanks.length - 1;

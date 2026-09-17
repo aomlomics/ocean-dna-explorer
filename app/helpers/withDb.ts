@@ -1,13 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { Prisma } from "@/app/generated/prismaImages/client";
-import type { BlobFile } from "@/app/generated/prismaImages/client";
+import type { BlobFileModel } from "@/app/generated/prismaImages/models/BlobFile";
 import { prismaImages } from "./prismaImages";
 import { prisma } from "./prisma";
 import type { ModelName } from "@/types/tableMetadata";
 import { capitalizeTable } from "./utils";
 import TableMetadata, { TableNames } from "@/types/tableMetadata";
 
-export async function validateBlobs(urls: BlobFile["url"][]) {
+export async function validateBlobs(urls: BlobFileModel["url"][]) {
 	//skip check in development only, because onUploadCompleted does not trigger
 	if (process.env.NODE_ENV === "development") {
 		return true;

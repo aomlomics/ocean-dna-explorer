@@ -35,9 +35,11 @@ export default function AttributionBadge({
 				{hover && (
 					<div className="absolute bottom-full right-0 mt-2 p-3 rounded-lg shadow-lg bg-base-100/90 backdrop-blur text-base-content max-w-[85vw] sm:max-w-sm w-72 border border-base-200">
 						<div className="text-xs sm:text-sm space-y-0.5 wrap-break-word">
-							<p className="font-semibold text-base-content truncate" title={image.name}>
-								{image.name}
-							</p>
+							{image.name && (
+								<p className="font-semibold text-base-content truncate" title={image.name}>
+									{image.name}
+								</p>
+							)}
 							{attr && (
 								<p>
 									<span className="text-base-content/70">Attribution:</span>{" "}

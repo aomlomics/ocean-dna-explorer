@@ -486,6 +486,7 @@ export function ExploreMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/taxonomy_explore_mega_menu_dark.webp"
@@ -494,6 +495,7 @@ export function ExploreMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}
@@ -553,6 +555,7 @@ export function DocsMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/docs_mega_menu_dark.webp"
@@ -561,6 +564,7 @@ export function DocsMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}
@@ -601,6 +605,7 @@ export function LearnMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/learn_page_mega_menu_dark.webp"
@@ -609,6 +614,7 @@ export function LearnMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}
@@ -685,6 +691,7 @@ export function SubmitMegaMenu() {
 								sizes="240px"
 								className="object-cover object-top-left origin-top-left scale-[1.3] [html[data-theme='dark']_&]:hidden"
 								priority={false}
+								quality={75}
 							/>
 							<Image
 								src="/images/submit_mega_menu_dark.webp"
@@ -741,6 +748,7 @@ export function VisualizeMegaMenu() {
 								sizes="240px"
 								className="object-cover object-center hidden [html[data-theme='dark']_&]:block"
 								priority={false}
+								quality={75}
 							/>
 						</div>
 					}

@@ -13,22 +13,19 @@ import { getSubmissionFileName } from "@/app/helpers/utils";
 import { useRouter } from "next/navigation";
 import projectUpdateImageAction from "@/app/actions/project/update/projectUpdateImage";
 import AddImageButton from "../AddImageButton";
-import type { AttributionModel } from "@/app/generated/prismaImages/models/Attribution";
 
 export default function ProjectEditButton({
 	project_id,
 	imageFileUrl_ODE,
 	projectMetadataFileUrl_ODE,
 	sampleMetadataFileUrl_ODE,
-	libraryMetadataFileUrl_ODE,
-	attributions
+	libraryMetadataFileUrl_ODE
 }: {
 	project_id: ProjectModel["project_id"];
 	imageFileUrl_ODE: ProjectModel["imageFileUrl_ODE"];
 	projectMetadataFileUrl_ODE: ProjectModel["projectMetadataFileUrl_ODE"];
 	sampleMetadataFileUrl_ODE: ProjectModel["sampleMetadataFileUrl_ODE"];
 	libraryMetadataFileUrl_ODE: ProjectModel["libraryMetadataFileUrl_ODE"];
-	attributions: AttributionModel[];
 }) {
 	const router = useRouter();
 
@@ -190,11 +187,7 @@ export default function ProjectEditButton({
 						)}
 					</legend>
 					<div className="grid grid-cols-2 gap-4">
-						<AddImageButton
-							title={"Replace with New Image"}
-							attributions={attributions}
-							target={{ table: "project", value: project_id }}
-						/>
+						<AddImageButton title={"Replace with New Image"} target={{ table: "project", value: project_id }} />
 						<button
 							className="btn btn-error"
 							onClick={async () => setGlobalResponse(await projectUpdateImageAction(project_id, null))}

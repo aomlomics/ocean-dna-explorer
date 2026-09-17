@@ -10,18 +10,15 @@ export const metadata: Metadata = {
 
 //TODO: add way to manage attributions
 export default async function AdminImages() {
-	const [attributions, images] = await prismaImages.$transaction([
-		prismaImages.attribution.findMany(),
-		prismaImages.image.findMany({
-			where: { homePage: true },
-			include: { Attribution: true },
-			orderBy: { dateSubmitted: "desc" }
-		})
-	]);
+	const images = await prismaImages.image.findMany({
+		where: { homePage: true },
+		include: { Attribution: true },
+		orderBy: { dateSubmitted: "desc" }
+	});
 
 	return (
 		<div className="space-y-6">
-			<AddImageButton attributions={attributions} title={"Add Carousel Image"} homePage />
+			<AddImageButton title={"Add Carousel Image"} homePage />
 
 			<div className="space-y-2">
 				<h2 className="text-xl font-semibold">Carousel images</h2>
@@ -41,7 +38,7 @@ export default async function AdminImages() {
 							<figure className="relative aspect-video overflow-hidden bg-base-200">
 								<Image
 									src={img.url}
-									alt={img.name}
+									alt={img.name || `Home carousel image #${img.id}`}
 									fill
 									sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
 									className="object-cover"
@@ -49,7 +46,7 @@ export default async function AdminImages() {
 							</figure>
 							<div className="card-body p-4">
 								<div className="flex items-center justify-between gap-2">
-									<h3 className="card-title text-base truncate" title={img.name}>
+									<h3 className="card-title text-base truncate" title={img.name || `Home carousel image #${img.id}`}>
 										{img.name}
 									</h3>
 									<span className="badge badge-ghost">#{img.id}</span>
@@ -77,7 +74,7 @@ export default async function AdminImages() {
 									)}
 								</div>
 								<div className="pt-2">
-									<ImageDeleteButton imageId={img.id} imageName={img.name} />
+									<ImageDeleteButton imageId={img.id} imageName={img.name || `Home carousel image #${img.id}`} />
 								</div>
 							</div>
 						</div>

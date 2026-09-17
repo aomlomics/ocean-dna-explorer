@@ -11,10 +11,14 @@ import GbifImage from "./GbifImage";
 import PhyloPicClient from "./PhyloPicClient";
 import ThemeAwarePhyloPic from "./ThemeAwarePhyloPic";
 import type { TaxonomicRank } from "@/types/globals";
+import type { ProjectModel, TaxonomySpotlightModel } from "@/app/generated/prisma/models";
+import type { ImageWithRelations } from "@/prismaImages/generated/zod";
+import SpotlightSubmitButton from "../SpotlightSubmitButton";
+import Image from "next/image";
 
 const SESSION_CONSENT_KEY = "opal-gbif-photo-warning-ok";
 
-type Mode = "phylopic" | "gbif";
+type Mode = "phylopic" | "gbif" | "spotlight";
 
 function rankAllowsGbifPhoto(rankKey: TaxonomicRank | null | undefined): boolean {
 	if (rankKey == null) return false;
@@ -43,6 +47,9 @@ type TaxonomyVisualToggleProps = {
 	compact?: boolean;
 	/** Optional content rendered to the right of the image (e.g. taxonomic ranks). */
 	children?: ReactNode;
+	allowedToSpotlight?: boolean;
+	taxonomySpotlights: (TaxonomySpotlightModel & { Image: ImageWithRelations })[];
+	availableProjects: ProjectModel["project_id"][];
 };
 
 export default function TaxonomyVisualToggle({
@@ -58,9 +65,13 @@ export default function TaxonomyVisualToggle({
 	commonName = null,
 	hideNamePanels = false,
 	compact = false,
-	children
+	children,
+	allowedToSpotlight,
+	taxonomySpotlights,
+	availableProjects
 }: TaxonomyVisualToggleProps) {
 	const [mode, setMode] = useState<Mode>("phylopic");
+	const [spotlightIndex, setSpotlightIndex] = useState(0);
 	const [skipWarn, setSkipWarn] = useState(true);
 	const [gbifLayerMounted, setGbifLayerMounted] = useState(false);
 	const [gbifPayload, setGbifPayload] = useState<GbifImagePayload | null>(null);
@@ -148,9 +159,21 @@ export default function TaxonomyVisualToggle({
 								>
 									GBIF photo
 								</button>
+								{taxonomySpotlights?.length || allowedToSpotlight ? (
+									<button
+										className={`join-item btn btn-xs rounded-btn sm:btn-sm ${mode === "spotlight" ? "btn-primary" : "btn-ghost"}`}
+										onClick={() => setMode("spotlight")}
+									>
+										Spotlight
+									</button>
+								) : (
+									<></>
+								)}
 							</div>
 						</div>
-					) : null}
+					) : (
+						<></>
+					)}
 
 					<div className="relative isolate aspect-square w-full max-w-full shrink-0 overflow-clip rounded-lg">
 						<div className={`absolute inset-0 overflow-hidden transition-opacity duration-150 ${phylopicLayerClass}`}>
@@ -186,7 +209,57 @@ export default function TaxonomyVisualToggle({
 									className="h-full w-full"
 								/>
 							</div>
-						) : null}
+						) : (
+							<></>
+						)}
+						<div
+							className={`absolute inset-0 overflow-clip p-1 transition-opacity duration-150 flex justify-center items-center ${mode === "spotlight" ? "opacity-100 z-3" : "pointer-events-none opacity-0 z-0"}`}
+						>
+							{taxonomySpotlights?.length ? (
+								<div className="w-full h-full grid grid-cols-[auto_1fr_auto] justify-items-center items-center">
+									<button
+										className="btn btn-secondary rounded-full"
+										aria-label="Previous Taxonomy Spotlight"
+										onClick={() =>
+											setSpotlightIndex(spotlightIndex ? spotlightIndex - 1 : taxonomySpotlights.length - 1)
+										}
+										disabled={taxonomySpotlights.length < 2}
+									>
+										❮
+									</button>
+
+									<div className="relative w-full h-full">
+										<Image
+											src={taxonomySpotlights[spotlightIndex]!.imageFileUrl_ODE}
+											alt={
+												taxonomySpotlights[spotlightIndex]!.Image.name || `Taxonomy Spotlight for ${taxonomy.taxonomy}`
+											}
+											fill
+											style={{ objectFit: "contain" }}
+											sizes="33vw"
+										/>
+									</div>
+
+									<button
+										className="btn btn-secondary rounded-full"
+										aria-label="Next Taxonomy Spotlight"
+										onClick={() =>
+											setSpotlightIndex(spotlightIndex === taxonomySpotlights.length - 1 ? 0 : spotlightIndex + 1)
+										}
+										disabled={taxonomySpotlights.length < 2}
+									>
+										❯
+									</button>
+								</div>
+							) : (
+								// TODO: Add button even when spotlights exist for this taxonomy
+								<SpotlightSubmitButton
+									taxonomy={taxonomy.taxonomy}
+									spotlights={taxonomySpotlights}
+									availableProjects={availableProjects}
+								/>
+							)}
+						</div>
 					</div>
 
 					{showGbifToggle ? (
@@ -289,7 +362,9 @@ export default function TaxonomyVisualToggle({
 					</h3>
 					<p className="py-3 text-sm text-base-content/80">
 						These images come from GBIF occurrence records and checklist media. They may show dead animals, strandings,
-						museum specimens, dissections, or other sensitive content.
+						museum specimens, dissections, or other sensitive content. These images come from GBIF occurrence records
+						and checklist media. They may show dead animals, strandings, museum specimens, dissections, or other
+						sensitive content.
 					</p>
 					<label className="label cursor-pointer justify-start gap-2 py-1">
 						<input

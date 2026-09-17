@@ -37,7 +37,7 @@ export const ImageSchema = z.object({
   userId: z.string(),
   homePage: z.boolean(),
   attributionTitle: z.string().nullish(),
-  name: z.string(),
+  name: z.string().nullish(),
   description: z.string().nullish(),
   location: z.string().nullish(),
   dateTaken: z.coerce.date().nullish(),

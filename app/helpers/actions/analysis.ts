@@ -20,6 +20,7 @@ import {
 import { parseSchemaToObject } from "../schema";
 import type { Channel } from "../progress";
 import { get } from "@vercel/blob";
+import { getSchemaParseError, schemaParseErrorFunction } from "../queries";
 
 export async function parseAnalysisFile({
 	channel,
@@ -98,21 +99,15 @@ export async function parseAnalysisFile({
 			occurrenceFileChecksum_ODE: ""
 		},
 		{
-			error: (iss) => {
-				return {
-					message: `Field: ${iss.path![0] as string}\nIssue: ${
-						iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
-					}`
-				};
-			}
+			error: schemaParseErrorFunction
 		}
 	);
 
 	if (!parsedAnalysis.success) {
 		await channel.stream.error(
-			`Table: Analysis\n` +
-				`Key: ${analysisCol.analysis_run_name}\n\n` +
-				`${parsedAnalysis.error.issues.map((e) => e.message).join("\n\n")}`
+			getSchemaParseError(parsedAnalysis.error, "Analysis", [
+				analysisCol.analysis_run_name ?? "Unknown analysis_run_name"
+			])
 		);
 		return;
 	}
@@ -192,6 +187,26 @@ export async function parseAssignmentsFile({
 				parseSchemaToObject(field, value, taxonomyRow, "taxonomy");
 			}
 
+			//parse feature
+			const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
+				{
+					...featureRow,
+					sequenceLength_ODE: featureRow.dna_sequence.length
+				},
+				{
+					error: schemaParseErrorFunction
+				}
+			);
+
+			if (!parsedFeature.success) {
+				await channel.stream.error(getSchemaParseError(parsedFeature.error, "Feature", [featureRow.featureid]));
+				return;
+			}
+
+			//no optional fields
+
+			features.push(parsedFeature.data);
+
 			//parse assignment
 			const parsedAssignment = AssignmentOptionalDefaultsSchema.safeParse(
 				{
@@ -200,22 +215,16 @@ export async function parseAssignmentsFile({
 					analysis_run_name
 				},
 				{
-					error: (iss) => {
-						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${
-								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
-							}`
-						};
-					}
+					error: schemaParseErrorFunction
 				}
 			);
 
 			if (!parsedAssignment.success) {
 				await channel.stream.error(
-					`Table: Assignment\n` +
-						`Key: ${assignmentRow.analysis_run_name}\n` +
-						`Key: ${assignmentRow.featureid}\n\n` +
-						`${parsedAssignment.error.issues.map((e) => e.message).join("\n\n")}`
+					getSchemaParseError(parsedAssignment.error, "Assignment", [
+						assignmentRow.analysis_run_name,
+						assignmentRow.featureid
+					])
 				);
 				return;
 			}
@@ -224,29 +233,13 @@ export async function parseAssignmentsFile({
 
 			assignments.push(parsedAssignment.data);
 
-			//parse feature
-			const parsedFeature = FeatureOptionalDefaultsSchema.safeParse(
-				{
-					...featureRow,
-					sequenceLength_ODE: featureRow.dna_sequence.length
-				},
-				{
-					error: (iss) => {
-						return {
-							message: `Field: ${iss.path![0] as string}\nIssue: ${
-								iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
-							}`
-						};
-					}
-				}
-			);
+			//parse taxonomy
+			const parsedTaxonomy = TaxonomyOptionalDefaultsSchema.safeParse(taxonomyRow, {
+				error: schemaParseErrorFunction
+			});
 
-			if (!parsedFeature.success) {
-				await channel.stream.error(
-					`Table: Feature\n` +
-						`Key: ${featureRow.featureid}\n\n` +
-						`${parsedFeature.error.issues.map((e) => e.message).join("\n\n")}`
-				);
+			if (!parsedTaxonomy.success) {
+				await channel.stream.error(getSchemaParseError(parsedTaxonomy.error, "Taxonomy", [taxonomyRow.taxonomy]));
 				return;
 			}
 
@@ -388,23 +381,13 @@ export async function parseOccurrencesFile({
 							analysis_run_name
 						},
 						{
-							error: (iss) => {
-								return {
-									message: `Field: ${iss.path![0] as string}\nIssue: ${
-										iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"
-									}`
-								};
-							}
+							error: schemaParseErrorFunction
 						}
 					);
 
 					if (!parsedOccurrence.success) {
 						await channel.stream.error(
-							`Table: Occurrence\n` +
-								`Key: ${analysis_run_name}\n` +
-								`Key: ${lib_id}\n` +
-								`Key: ${featureid}\n\n` +
-								`${parsedOccurrence.error.issues.map((e) => e.message).join("\n\n")}`
+							getSchemaParseError(parsedOccurrence.error, "Occurrence", [analysis_run_name, lib_id, featureid])
 						);
 						return;
 					}
