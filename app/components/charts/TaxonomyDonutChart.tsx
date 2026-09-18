@@ -9,7 +9,7 @@ import Link from "next/link";
 import distinctColors from "distinct-colors";
 import { TaxonomicRanks } from "@/types/objects";
 import type { TaxonomyPartial } from "@/prisma/generated/zod";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import type { TaxonomicRank } from "@/types/globals";
 
 ChartJS.register(ArcElement, Tooltip);

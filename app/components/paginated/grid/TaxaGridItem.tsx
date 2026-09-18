@@ -6,7 +6,7 @@ import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { useEffect, useMemo, useState } from "react";
 import { RanksBySpecificity } from "@/types/objects";
 import TaxonomyGridTooltip, { TAXONOMY_GRID_TOOLTIP_CLASS } from "./TaxonomyGridTooltip";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 const commonNameCache = new Map<string, string | null>();
 const COMMON_NAME_CACHE_VERSION = "en-v2";

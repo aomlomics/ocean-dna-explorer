@@ -21,7 +21,7 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
 		try {
 			if (err.code === "P2002") {
-				const meta = TableMetadata[err.meta!.modelName as Prisma.ModelName];
+				const meta = TableMetadata[err.meta!.modelName as ModelName];
 				return {
 					statusMessage: "error",
 					error: `${err.meta!.modelName} with provided ${typeof meta.titleField === "string" ? meta.titleField : meta.titleField.join(", ")} already exists in database.`
@@ -212,6 +212,101 @@ export async function updateManyRaw(
 	return rowsAffected;
 }
 
+export async function connectFeatsToSamples(
+	client: Prisma.TransactionClient,
+	project_id: ProjectModel["project_id"],
+	occurrences: { lib_id: OccurrenceModel["lib_id"]; featureid: OccurrenceModel["featureid"] }[]
+) {
+	if (!occurrences) return 0;
+
+	const join = await getImplicitJoinTable({ from: "sample", to: "feature" });
+	let rowsAffected = 0;
+	// project_id contributes 1 parameter
+	// each pair contributes 2 parameters: lib_id + featureid
+	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 1) / 2);
+	for (let i = 0; i < occurrences.length; i += CHUNK_SIZE) {
+		rowsAffected += await client.$executeRaw`
+			INSERT INTO ${Prisma.raw(`"${join.table}"`)}
+				(${Prisma.raw(`"${join.from.joinColumn}"`)}, ${Prisma.raw(`"${join.to.joinColumn}"`)})
+			SELECT DISTINCT
+				s.id,
+				f.id
+			FROM (VALUES ${Prisma.join(
+				occurrences.slice(i, i + CHUNK_SIZE).map(({ lib_id, featureid }) => Prisma.sql`(${lib_id}, ${featureid})`),
+				", "
+			)}) AS v(lib_id, featureid)
+			JOIN "Library" l
+				ON l.project_id = ${project_id}
+				AND l.lib_id = v.lib_id
+			JOIN "Sample" s
+				ON s.project_id = l.project_id
+				AND s.samp_name = l.samp_name
+			JOIN "Feature" f
+				ON f.featureid = v.featureid
+			ON CONFLICT DO NOTHING
+		`;
+	}
+
+	return rowsAffected;
+}
+
+export async function disconnectFeatsFromSamples(
+	client: Prisma.TransactionClient,
+	project_id: ProjectModel["project_id"],
+	analysis_run_name: OccurrenceModel["analysis_run_name"],
+	removedOccurrences: { lib_id: OccurrenceModel["lib_id"]; featureid: OccurrenceModel["featureid"] }[]
+) {
+	if (!removedOccurrences) return 0;
+
+	const join = await getImplicitJoinTable({ from: "sample", to: "feature" });
+	let rowsAffected = 0;
+	// Each pair contributes 2 parameters: lib_id + featureid.
+	// project_id + analysis_run_name contribute 2 additional parameters.
+	const CHUNK_SIZE = Math.floor((PARAM_LIMIT - 2) / 2);
+	for (let i = 0; i < removedOccurrences.length; i += CHUNK_SIZE) {
+		const chunk = removedOccurrences.slice(i, i + CHUNK_SIZE);
+
+		rowsAffected += await client.$executeRaw`
+			DELETE FROM ${Prisma.raw(`"${join.table}"`)} AS jt
+			USING "Sample" AS s, "Feature" AS f
+			WHERE jt.${Prisma.raw(`"${join.from.joinColumn}"`)} = s.id
+				AND jt.${Prisma.raw(`"${join.to.joinColumn}"`)} = f.id
+
+				-- get sample to feature relations removed from the current analysis
+				AND EXISTS (
+					SELECT 1
+					FROM "Library" AS l
+					WHERE l.project_id = ${project_id}
+						AND l.samp_name = s.samp_name
+						AND EXISTS (
+							SELECT 1
+							FROM (VALUES ${Prisma.join(
+								chunk.map(({ lib_id, featureid }) => Prisma.sql`(${lib_id}, ${featureid})`),
+								", "
+							)}) AS removed(lib_id, featureid)
+							WHERE removed.lib_id = l.lib_id
+								AND removed.featureid = f.featureid
+						)
+				)
+
+				-- skip sample to feature relations that exist in other analyses
+				AND NOT EXISTS (
+					SELECT 1
+					FROM "Library" AS l
+					JOIN "Occurrence" AS o
+						ON o.project_id = l.project_id
+						AND o.lib_id = l.lib_id
+					WHERE l.project_id = ${project_id}
+						AND l.samp_name = s.samp_name
+						AND o.featureid = f.featureid
+						AND o.analysis_run_name != ${analysis_run_name}
+				)
+		`;
+	}
+
+	return rowsAffected;
+}
+
 export async function connectTaxaToSamples(
 	client: Prisma.TransactionClient,
 	project_id: ProjectModel["project_id"],
@@ -237,15 +332,15 @@ export async function connectTaxaToSamples(
 			FROM (VALUES ${Prisma.join(
 				pairs.slice(i, i + CHUNK_SIZE).map(({ lib_id, taxonomy }) => Prisma.sql`(${lib_id}, ${taxonomy})`),
 				", "
-			)}) AS v("lib_id", "taxonomy")
+			)}) AS v(lib_id, taxonomy)
 			JOIN "Library" l
-				ON l."project_id" = ${project_id}
-				AND l."lib_id" = v."lib_id"
+				ON l.project_id = ${project_id}
+				AND l.lib_id = v.lib_id
 			JOIN "Sample" s
-				ON s."project_id" = l."project_id"
-				AND s."samp_name" = l."samp_name"
+				ON s.project_id = l.project_id
+				AND s.samp_name = l.samp_name
 			JOIN "Taxonomy" t
-				ON t."taxonomy" = v."taxonomy"
+				ON t.taxonomy = v.taxonomy
 			ON CONFLICT DO NOTHING
 		`;
 	}
@@ -275,23 +370,23 @@ export async function disconnectTaxaFromSamples(
 		rowsAffected += await client.$executeRaw`
 			DELETE FROM ${Prisma.raw(`"${join.table}"`)} AS jt
 			USING "Sample" AS s, "Taxonomy" AS t
-			WHERE jt.${Prisma.raw(`"${join.from.joinColumn}"`)} = s."id"
-				AND jt.${Prisma.raw(`"${join.to.joinColumn}"`)} = t."id"
+			WHERE jt.${Prisma.raw(`"${join.from.joinColumn}"`)} = s.id
+				AND jt.${Prisma.raw(`"${join.to.joinColumn}"`)} = t.id
 
 				-- get sample to taxonomy relations removed from the current analysis
 				AND EXISTS (
 					SELECT 1
 					FROM "Library" AS l
-					WHERE l."project_id" = ${project_id}
-						AND l."samp_name" = s."samp_name"
+					WHERE l.project_id = ${project_id}
+						AND l.samp_name = s.samp_name
 						AND EXISTS (
 							SELECT 1
 							FROM (VALUES ${Prisma.join(
 								chunk.map(({ lib_id, taxonomy }) => Prisma.sql`(${lib_id}, ${taxonomy})`),
 								", "
-							)}) AS removed("lib_id", "taxonomy")
-							WHERE removed."lib_id" = l."lib_id"
-								AND removed."taxonomy" = t."taxonomy"
+							)}) AS removed(lib_id, taxonomy)
+							WHERE removed.lib_id = l.lib_id
+								AND removed.taxonomy = t.taxonomy
 						)
 				)
 
@@ -300,16 +395,16 @@ export async function disconnectTaxaFromSamples(
 					SELECT 1
 					FROM "Library" AS l
 					JOIN "Occurrence" AS o
-						ON o."project_id" = l."project_id"
-						AND o."lib_id" = l."lib_id"
+						ON o.project_id = l.project_id
+						AND o.lib_id = l.lib_id
 					JOIN "Assignment" AS a
-						ON a."project_id" = o."project_id"
-						AND a."analysis_run_name" = o."analysis_run_name"
-						AND a."featureid" = o."featureid"
-					WHERE l."project_id" = ${project_id}
-						AND l."samp_name" = s."samp_name"
-						AND a."taxonomy" = t."taxonomy"
-						AND o."analysis_run_name" != ${analysis_run_name}
+						ON a.project_id = o.project_id
+						AND a.analysis_run_name = o.analysis_run_name
+						AND a.featureid = o.featureid
+					WHERE l.project_id = ${project_id}
+						AND l.samp_name = s.samp_name
+						AND a.taxonomy = t.taxonomy
+						AND o.analysis_run_name != ${analysis_run_name}
 				)
 		`;
 	}
@@ -400,7 +495,7 @@ export function schemaParseErrorFunction(iss: Parameters<NonNullable<ParseContex
 	};
 }
 
-export function getSchemaParseError(error: ZodError, table: Prisma.ModelName | PrismaImage.ModelName, keys: string[]) {
+export function getSchemaParseError(error: ZodError, table: ModelName | PrismaImage.ModelName, keys: string[]) {
 	return (
 		`Table: ${table}\n` +
 		keys?.map((k) => `Key: ${k}`).join("\n") +

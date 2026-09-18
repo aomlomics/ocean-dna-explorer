@@ -73,6 +73,7 @@ model Sample {
     project_id String
     Project    Project    @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
     Libraries  Library[]
+    Features   Feature[]
     Taxonomies Taxonomy[]
 
     deleted_ODE Boolean?

@@ -10,7 +10,7 @@ import {
 	type FeaturedOrganism,
 	type FeaturedOrganismGroup
 } from "./featuredOrganisms";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 type Props = {
 	/**

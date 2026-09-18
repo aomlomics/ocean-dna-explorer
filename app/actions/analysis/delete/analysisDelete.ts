@@ -1,8 +1,9 @@
 "use server";
 
+import type { AssignmentModel, OccurrenceModel } from "@/app/generated/prisma/models";
 import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 import { prisma } from "@/app/helpers/prisma";
-import { handlePrismaError } from "@/app/helpers/queries";
+import { disconnectFeatsFromSamples, disconnectTaxaFromSamples, handlePrismaError } from "@/app/helpers/queries";
 import { AnalysisSchema } from "@/prisma/generated/zod";
 import type { NetworkPacket } from "@/types/globals";
 import { RolePermissions } from "@/types/objects";
@@ -70,13 +71,46 @@ export default async function analysisDeleteAction(
 			return { statusMessage: "error", error: "Unauthorized action." };
 		}
 
-		await prisma.analysis.delete({
-			where: {
-				project_id_analysis_run_name: {
+		await prisma.$transaction(async (tx) => {
+			const occurrences = await tx.occurrence.findMany({
+				where: {
 					project_id,
 					analysis_run_name
+				},
+				select: {
+					lib_id: true,
+					featureid: true,
+					Assignment: {
+						select: {
+							taxonomy: true
+						}
+					}
 				}
-			}
+			});
+
+			const taxaByLibId = occurrences.reduce(
+				(acc, occ) => {
+					(acc[occ.lib_id] ??= new Set()).add(occ.Assignment.taxonomy);
+
+					return acc;
+				},
+				{} as Record<OccurrenceModel["lib_id"], Set<AssignmentModel["taxonomy"]>>
+			);
+
+			//remove Sample -> Feature relationships that don't exist in any analyses
+			await disconnectFeatsFromSamples(tx, project_id, analysis_run_name, occurrences);
+
+			//remove Sample -> Taxonomy relationships that don't exist in any analyses
+			await disconnectTaxaFromSamples(tx, project_id, analysis_run_name, taxaByLibId);
+
+			await tx.analysis.delete({
+				where: {
+					project_id_analysis_run_name: {
+						project_id,
+						analysis_run_name
+					}
+				}
+			});
 		});
 
 		await del([

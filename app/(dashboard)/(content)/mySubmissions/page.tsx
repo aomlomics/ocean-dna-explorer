@@ -11,7 +11,7 @@ import AnalysisEditButton from "@/app/components/mySubmissions/AnalysisEditButto
 import ProjectEditButton from "@/app/components/mySubmissions/ProjectEditButton";
 import FixDeletedSamplesButton from "@/app/components/mySubmissions/FixDeletedSamplesButton";
 import { ProjectIcon } from "@/app/components/icons";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

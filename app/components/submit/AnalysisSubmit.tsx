@@ -14,7 +14,7 @@ import { upload } from "@vercel/blob/client";
 import { doProgressActionMany } from "@/app/helpers/progress";
 import type { TagModel } from "@/app/generated/prisma/models/Tag";
 import AnalysisTag from "../tags/AnalysisTag";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 type ResponseSet = {
 	analysis: NetworkProgressPacket;

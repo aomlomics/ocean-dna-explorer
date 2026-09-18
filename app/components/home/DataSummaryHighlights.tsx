@@ -7,7 +7,7 @@ import FeaturedOrganisms from "../dataSummary/featuredOrganisms";
 import DashCard, { DashCardInfoButton } from "../dataSummary/DashCard";
 import { ProjectIcon, AnalysisIcon } from "@/app/components/icons";
 import InfoButton from "@/app/components/InfoButton";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 function formatSubmitted(date: Date) {
 	return new Date(date).toLocaleDateString(undefined, {

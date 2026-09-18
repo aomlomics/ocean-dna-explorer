@@ -3,7 +3,7 @@
 import InfoButton from "@/app/components/InfoButton";
 import { DEFAULT_TOUR_STEP_TIME, useTour, type TourStep } from "@/app/hooks/TourProvider";
 import type { NetworkPacket } from "@/types/globals";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import { useAuth } from "@clerk/react";
 import { Fragment, useEffect, useReducer, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import AssayPhyloPic from "@/app/components/assay/AssayPhyloPic";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 interface AssayCardProps {
 	assay_name: string;

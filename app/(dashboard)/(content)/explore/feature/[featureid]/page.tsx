@@ -1,4 +1,5 @@
-import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
 import { trustedPrisma } from "@/app/helpers/prisma";
 import { Suspense } from "react";

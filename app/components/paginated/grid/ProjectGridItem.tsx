@@ -2,7 +2,7 @@ import type { ProjectModel } from "@/app/generated/prisma/models/Project";
 import Link from "next/link";
 import Image from "next/image";
 import { ProjectIcon } from "@/app/components/icons";
-import { exploreUrl } from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 
 type ProjectWithAssays = ProjectModel & {
 	AssayPreps?: { assay_name: string }[];

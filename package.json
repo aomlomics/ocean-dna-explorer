@@ -22,6 +22,7 @@
 		"build": "npm run lint && next build",
 		"start": "next start",
 		"lint": "eslint .",
+		"generateMetadata": "tsx generateTableMetadata.ts",
 		"generate": "npx prisma generate && npx prisma generate --schema ./prismaImages/schema.prisma --config ./prismaImages/prisma.config.ts",
 		"migrate": "npx prisma migrate deploy && npx prisma migrate deploy --schema ./prismaImages/schema.prisma --config ./prismaImages/prisma.config.ts",
 		"postinstall": "npm run migrate && npm run generate",

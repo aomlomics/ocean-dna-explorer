@@ -4,7 +4,8 @@ import type { BlastQueryModel, BlastQueryResultModel } from "@/app/generated/pri
 import { blastCookieHasBlast, parseBlastRequest } from "@/app/helpers/blast";
 import { getClientSideCookie } from "@/app/helpers/utils";
 import { BlastQueryResultScalarFieldEnumSchema } from "@/prisma/generated/zod";
-import TableMetadata, { exploreUrl } from "@/types/tableMetadata";
+import TableMetadata from "@/types/tableMetadata";
+import { exploreUrl } from "@/app/helpers/utils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useState } from "react";
