@@ -3,7 +3,6 @@
 import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { TrustedModeExplanation, TrustedShieldIcon } from "@/app/components/home/HomeTrustedIndicator";
-import { SHARED_TOOLTIP_THEME_CLASS } from "@/app/components/viewAsSearchTooltip";
 import { unfocus } from "@/app/helpers/utils";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
@@ -13,11 +12,13 @@ const BUTTON_ZONE_PX = 120;
 /** Above Leaflet controls/popups (max ~1000) so the FAB stays clickable over maps. */
 const BUTTON_Z_INDEX = 10050;
 
-const TOOLTIP_CLASS = `tooltip tooltip-right relative z-tooltip before:z-tooltip after:z-tooltip ${SHARED_TOOLTIP_THEME_CLASS}`;
-
 const CIRCLE_BASE = "btn btn-xl btn-circle shadow-xl";
-const CIRCLE_CLASS = `${CIRCLE_BASE} bg-base-300 text-base-content hover:bg-primary hover:text-primary-content`;
+const CIRCLE_CLASS = `${CIRCLE_BASE} bg-base-300 text-base-content hover:bg-base-content/10`;
 const CIRCLE_ACTIVE_CLASS = `${CIRCLE_BASE} btn-primary`;
+const FAB_TIP_CLASS =
+	"pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-10 -translate-y-1/2 whitespace-nowrap rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-snug text-base-content opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100";
+const FAB_TIP_CARET_CLASS =
+	"absolute left-0 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-l border-base-content/20 bg-base-200";
 
 const DOCS_HREF = "/docs/help/overview";
 
@@ -54,8 +55,14 @@ function FabAction({
 	);
 
 	return (
-		<div className={TOOLTIP_CLASS} data-tip={tip}>
-			{control}
+		<div>
+			<div className="group relative hover:z-50 focus-within:z-50">
+				{control}
+				<span className={FAB_TIP_CLASS}>
+					<span aria-hidden="true" className={FAB_TIP_CARET_CLASS} />
+					{tip}
+				</span>
+			</div>
 		</div>
 	);
 }
@@ -162,7 +169,7 @@ export default function TrustedFab() {
 				<div
 					tabIndex={0}
 					role="button"
-					className={CIRCLE_CLASS}
+					className={CIRCLE_ACTIVE_CLASS}
 					aria-label={`Data filter, currently showing ${modeLabel}. Open options.`}
 					aria-haspopup="true"
 					onKeyDown={onTriggerKeyDown}
@@ -171,20 +178,20 @@ export default function TrustedFab() {
 				</div>
 
 				<div className="fab-close">
-					<span className={CIRCLE_CLASS} aria-hidden>
+					<span className={CIRCLE_ACTIVE_CLASS} aria-hidden>
 						✕
 					</span>
 				</div>
 
-				<FabAction tip="Explanation" onClick={openExplanation}>
+				<FabAction tip="What is trusted data?" onClick={openExplanation}>
 					<InfoIcon />
 				</FabAction>
 
-				<FabAction tip="Docs" href={DOCS_HREF} onClick={closeFab}>
+				<FabAction tip="Help Docs" href={DOCS_HREF} onClick={closeFab}>
 					<DocsIcon />
 				</FabAction>
 
-				<FabAction tip="Show trusted data" active={trusted} onClick={() => setMode(true)}>
+				<FabAction tip="Show only trusted data" active={trusted} onClick={() => setMode(true)}>
 					<TrustedShieldIcon trusted className="size-8 fill-current" />
 				</FabAction>
 

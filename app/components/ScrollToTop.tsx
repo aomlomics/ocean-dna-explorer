@@ -15,6 +15,24 @@ function getScrollTop(): number {
 	return window.scrollY ?? el.scrollTop ?? 0;
 }
 
+function getFooterOffset(): number {
+	const footer = document.querySelector("footer");
+	if (!footer) return 0;
+
+	const r = footer.getBoundingClientRect();
+	const ih = window.innerHeight;
+	const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+	const gap = remPx * 1.5;
+
+	if (r.bottom <= 0 || r.top >= ih) return 0;
+
+	const stripTop = ih - BUTTON_ZONE_PX;
+	if (r.bottom <= stripTop) return 0;
+
+	const effectiveTop = Math.max(r.top, stripTop);
+	return ih - effectiveTop + gap;
+}
+
 export default function ScrollToTop() {
 	const [isVisible, setIsVisible] = useState(false);
 	const [footerOffset, setFooterOffset] = useState(0);
@@ -29,31 +47,7 @@ export default function ScrollToTop() {
 	useEffect(() => {
 		const updatePosition = () => {
 			setIsVisible(getScrollTop() > 300);
-
-			const footer = document.querySelector("footer");
-			if (!footer) {
-				setFooterOffset(0);
-				return;
-			}
-
-			const r = footer.getBoundingClientRect();
-			const ih = window.innerHeight;
-			const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
-			const gap = remPx * 1.5;
-
-			if (r.bottom <= 0 || r.top >= ih) {
-				setFooterOffset(0);
-				return;
-			}
-
-			const stripTop = ih - BUTTON_ZONE_PX;
-			if (r.bottom <= stripTop) {
-				setFooterOffset(0);
-				return;
-			}
-
-			const effectiveTop = Math.max(r.top, stripTop);
-			setFooterOffset(ih - effectiveTop + gap);
+			setFooterOffset(getFooterOffset());
 		};
 
 		window.addEventListener("scroll", updatePosition, { passive: true });
@@ -87,7 +81,7 @@ export default function ScrollToTop() {
 						bottom: footerOffset > 0 ? `${footerOffset}px` : "2rem",
 						zIndex: BUTTON_Z_INDEX
 					}}
-					className="fixed right-3 sm:right-8 p-3 sm:p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-all duration-300 pointer-events-auto"
+					className="fixed right-3 sm:right-8 p-3 sm:p-4 bg-base-300 text-base-content rounded-full shadow-xl hover:bg-primary hover:text-primary-content transition-colors duration-300 pointer-events-auto"
 					aria-label="Scroll to top"
 				>
 					<svg

@@ -2,18 +2,36 @@
 
 import InfoButton from "@/app/components/InfoButton";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
+import {
+	type CSSProperties,
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState
+} from "react";
+import { createPortal } from "react-dom";
+
+export function trustedActionLabel(trusted: boolean) {
+	return trusted ? "Show all data" : "Show only trusted data";
+}
 
 export function TrustedModeExplanation() {
 	return (
 		<div className="space-y-2">
 			<p>
 				Trusted data includes only analyses that have passed ODE review for standardized metadata and bioinformatics
-				processing. All data (untrusted) adds unreviewed or experimental analyses, which can change the counts, map,
-				and charts on this page.
+				processing. All data (untrusted) adds unreviewed or experimental analyses.
 			</p>
 			<p>
-				An eDNA detection is an inference from DNA left in the environment, not a confirmed sighting of an organism.
-				Review keeps those detections more comparable and reduces results that are incomplete or not yet checked.
+				Switching this filter updates the data you see: points on maps, numbers in data cards, visualizations, search
+				results, and rows on Explore pages.
+			</p>
+			<p>
+				eDNA often picks up contamination, so unreviewed analyses can include false detections. Trusted mode hides
+				those until they have been checked.
 			</p>
 		</div>
 	);
@@ -41,50 +59,156 @@ function modeLabel(trusted: boolean) {
 	return trusted ? "Trusted data" : "All data (untrusted)";
 }
 
+export function TrustedActionHover({ trusted, children }: { trusted: boolean; children: ReactNode }) {
+	const wrapperRef = useRef<HTMLDivElement | null>(null);
+	const panelRef = useRef<HTMLDivElement | null>(null);
+	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [open, setOpen] = useState(false);
+	const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null);
+	const [caretLeft, setCaretLeft] = useState<number | null>(null);
+	const tip = trustedActionLabel(trusted);
+
+	const computePanelStyle = useCallback((): CSSProperties | null => {
+		if (!wrapperRef.current) return null;
+		const rect = wrapperRef.current.getBoundingClientRect();
+		const gap = 8;
+		return {
+			position: "fixed",
+			top: rect.bottom + gap,
+			left: rect.left + rect.width / 2,
+			transform: "translateX(-50%)"
+		};
+	}, []);
+
+	const openPanel = useCallback(() => {
+		if (closeTimerRef.current) {
+			clearTimeout(closeTimerRef.current);
+			closeTimerRef.current = null;
+		}
+		if (!open) setPanelStyle(computePanelStyle());
+		setOpen(true);
+	}, [computePanelStyle, open]);
+
+	const scheduleClosePanel = useCallback(() => {
+		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+		closeTimerRef.current = setTimeout(() => {
+			setOpen(false);
+		}, 90);
+	}, []);
+
+	useEffect(() => {
+		return () => {
+			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!open) return;
+		const update = () => setPanelStyle(computePanelStyle());
+		window.addEventListener("resize", update);
+		window.addEventListener("scroll", update, true);
+		return () => {
+			window.removeEventListener("resize", update);
+			window.removeEventListener("scroll", update, true);
+		};
+	}, [computePanelStyle, open]);
+
+	useLayoutEffect(() => {
+		if (!open || !panelRef.current || !wrapperRef.current) return;
+
+		const panelEl = panelRef.current;
+		const trigger = wrapperRef.current.getBoundingClientRect();
+		const width = panelEl.offsetWidth;
+		const pad = 16;
+		const gap = 8;
+		const viewWidth = document.documentElement.clientWidth;
+		const triggerCenter = trigger.left + trigger.width / 2;
+		const top = trigger.bottom + gap;
+		const unclampedLeft = triggerCenter - width / 2;
+		const left = Math.min(Math.max(unclampedLeft, pad), Math.max(pad, viewWidth - pad - width));
+		const caret = Math.min(Math.max(triggerCenter - left, 8), Math.max(8, width - 8));
+
+		setPanelStyle((prev) => {
+			if (prev && prev.top === top && prev.left === left && prev.transform === "none") return prev;
+			return { position: "fixed", top, left, transform: "none" };
+		});
+		setCaretLeft((prev) => (prev === caret ? prev : caret));
+	}, [open, tip]);
+
+	const panel = useMemo(() => {
+		if (!open || !panelStyle) return null;
+		return createPortal(
+			<div
+				ref={panelRef}
+				className="pointer-events-auto z-menu relative w-max whitespace-nowrap rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content shadow-xl"
+				style={panelStyle}
+				onMouseEnter={openPanel}
+				onMouseLeave={scheduleClosePanel}
+			>
+				<span
+					aria-hidden="true"
+					className="pointer-events-none absolute top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-l border-t border-base-content/20 bg-base-200"
+					style={{ left: caretLeft ?? "50%" }}
+				/>
+				{tip}
+			</div>,
+			document.body
+		);
+	}, [caretLeft, open, openPanel, panelStyle, scheduleClosePanel, tip]);
+
+	return (
+		<div
+			ref={wrapperRef}
+			className="relative inline-flex"
+			onMouseEnter={openPanel}
+			onMouseLeave={scheduleClosePanel}
+			onFocus={openPanel}
+			onBlur={(event) => {
+				const nextFocused = event.relatedTarget as Node | null;
+				if (nextFocused && panelRef.current?.contains(nextFocused)) return;
+				scheduleClosePanel();
+			}}
+		>
+			{children}
+			{panel}
+		</div>
+	);
+}
+
 function TrustedShieldToggle({ trusted, className }: { trusted: boolean; className?: string }) {
 	const { setTrusted } = useTrusted();
 
 	return (
-		<button
-			type="button"
-			className="inline-flex shrink-0 cursor-pointer border-0 bg-transparent p-0"
-			onClick={() => setTrusted(!trusted)}
-			aria-label={`Show ${trusted ? "all" : "only trusted"} data`}
-		>
-			<TrustedShieldIcon trusted={trusted} className={className} />
-		</button>
+		<TrustedActionHover trusted={trusted}>
+			<button
+				type="button"
+				className="inline-flex shrink-0 cursor-pointer border-0 bg-transparent p-0"
+				onClick={() => setTrusted(!trusted)}
+				aria-label={trustedActionLabel(trusted)}
+			>
+				<TrustedShieldIcon trusted={trusted} className={className} />
+			</button>
+		</TrustedActionHover>
 	);
 }
 
-export function HomeTrustedSubtitle({ variant }: { variant: "hero" | "pill" }) {
+export function HomeTrustedSubtitle() {
 	const { trusted } = useTrusted();
 	const label = modeLabel(trusted);
 
-	const content = (
-		<>
+	return (
+		<span className="inline-flex items-center gap-[0.3em]">
 			<TrustedShieldToggle
 				trusted={trusted}
-				className={`shrink-0 fill-current ${
-					variant === "pill" ? "h-5 w-5 text-primary" : "h-[1.5em] w-[1.5em] text-base-content"
-				}`}
+				className="h-[1.5em] w-[1.5em] shrink-0 fill-current text-base-content"
 			/>
-			<span className={variant === "hero" ? "font-semibold" : "font-medium"}>Showing</span>
+			<span className="font-semibold">Showing</span>
 			<span className="font-semibold text-primary">{label}</span>
 			<InfoButton dir="tooltip-bottom">
 				<TrustedModeExplanation />
 			</InfoButton>
-		</>
+		</span>
 	);
-
-	if (variant === "pill") {
-		return (
-			<div className="inline-flex items-center gap-2 rounded-full bg-base-200 px-3.5 py-1.5 text-sm text-base-content sm:text-base">
-				{content}
-			</div>
-		);
-	}
-
-	return <span className="inline-flex items-center gap-[0.3em]">{content}</span>;
 }
 
 export function ShowcaseTrustedLabel({ trusted }: { trusted: boolean }) {

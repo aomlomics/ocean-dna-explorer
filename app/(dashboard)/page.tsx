@@ -81,7 +81,7 @@ export default async function Home() {
 								</div>
 
 								<div className="mb-5 flex flex-wrap items-center gap-x-1.5 text-2xl font-semibold leading-tight text-shadow-3xl sm:mb-6 sm:text-3xl">
-									<HomeTrustedSubtitle variant="hero" />
+									<HomeTrustedSubtitle />
 								</div>
 							</div>
 
@@ -109,9 +109,6 @@ export default async function Home() {
 					 * animation and skeleton.
 					 */}
 					<div className="space-y-3">
-						<div className="flex justify-center">
-							<HomeTrustedSubtitle variant="pill" />
-						</div>
 						<Suspense fallback={<MainStatsSkeleton />}>
 							<MainStats />
 						</Suspense>

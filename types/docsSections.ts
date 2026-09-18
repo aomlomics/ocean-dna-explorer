@@ -26,6 +26,7 @@ const DocsSections = {
 			title: "Overview",
 			subsections: {
 				"features-overview": { title: "Features Overview" },
+				"trusted-vs-untrusted-data": { title: "Trusted vs Untrusted Data" },
 				"login-and-roles": { title: "Login and Roles" },
 				"submissions-manager": { title: "Submissions Manager" },
 				"contact-us": { title: "Contact Us, Report a Bug, Request a Feature" },

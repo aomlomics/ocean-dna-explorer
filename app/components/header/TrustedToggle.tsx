@@ -1,127 +1,19 @@
 "use client";
 
-import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { TrustedModeExplanation } from "@/app/components/home/HomeTrustedIndicator";
+import { TrustedActionHover, trustedActionLabel } from "@/app/components/home/HomeTrustedIndicator";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
 export default function TrustedToggle() {
 	const { trusted, setTrusted } = useTrusted();
-	const wrapperRef = useRef<HTMLDivElement | null>(null);
-	const panelRef = useRef<HTMLDivElement | null>(null);
-	const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const [open, setOpen] = useState(false);
-	const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null);
-	const [caretLeft, setCaretLeft] = useState<number | null>(null);
-
-	const computePanelStyle = useCallback((): CSSProperties | null => {
-		if (!wrapperRef.current) return null;
-		const rect = wrapperRef.current.getBoundingClientRect();
-		const gap = 8;
-		return {
-			position: "fixed",
-			top: rect.bottom + gap,
-			left: rect.left + rect.width / 2,
-			transform: "translateX(-50%)"
-		};
-	}, []);
-
-	const openPanel = useCallback(() => {
-		if (closeTimerRef.current) {
-			clearTimeout(closeTimerRef.current);
-			closeTimerRef.current = null;
-		}
-		setCaretLeft(null);
-		setCaretLeft(null);
-		setPanelStyle(computePanelStyle());
-		setOpen(true);
-	}, [computePanelStyle]);
-
-	const scheduleClosePanel = useCallback(() => {
-		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		closeTimerRef.current = setTimeout(() => {
-			setOpen(false);
-		}, 90);
-	}, []);
-
-	useEffect(() => {
-		return () => {
-			if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
-		};
-	}, []);
-
-	useEffect(() => {
-		if (!open) return;
-		const update = () => setPanelStyle(computePanelStyle());
-		window.addEventListener("resize", update);
-		window.addEventListener("scroll", update, true);
-		return () => {
-			window.removeEventListener("resize", update);
-			window.removeEventListener("scroll", update, true);
-		};
-	}, [computePanelStyle, open]);
-
-	useLayoutEffect(() => {
-		if (!open || !panelRef.current || !wrapperRef.current || !panelStyle) return;
-		const panel = panelRef.current.getBoundingClientRect();
-		const trigger = wrapperRef.current.getBoundingClientRect();
-		const pad = 16;
-		const viewWidth = document.documentElement.clientWidth;
-		const overflowLeft = pad - panel.left;
-		const overflowRight = panel.right - (viewWidth - pad);
-		const dx = overflowLeft > 0 ? overflowLeft : overflowRight > 0 ? -overflowRight : 0;
-		const triggerCenter = trigger.left + trigger.width / 2;
-		const nextCaretLeft = triggerCenter - (panel.left + dx);
-
-		if (dx !== 0) {
-			setPanelStyle((prev) => {
-				if (!prev || typeof prev.left !== "number") return prev;
-				return { ...prev, left: prev.left + dx };
-			});
-		}
-		setCaretLeft((prev) => (prev === nextCaretLeft ? prev : nextCaretLeft));
-	}, [open, panelStyle]);
-
-	const panel = useMemo(() => {
-		if (!open || !panelStyle) return null;
-		return createPortal(
-			<div
-				ref={panelRef}
-				className="pointer-events-auto z-menu relative w-max max-w-[min(90vw,24rem)] rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-relaxed text-base-content opacity-100 shadow-xl"
-				style={panelStyle}
-				onMouseEnter={openPanel}
-				onMouseLeave={scheduleClosePanel}
-			>
-				<span
-					aria-hidden="true"
-					className="pointer-events-none absolute top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-l border-t border-base-content/20 bg-base-200"
-					style={{ left: caretLeft ?? "50%" }}
-				/>
-				<TrustedModeExplanation />
-			</div>,
-			document.body
-		);
-	}, [caretLeft, open, openPanel, panelStyle, scheduleClosePanel]);
 
 	return (
-		<div
-			ref={wrapperRef}
-			className="relative inline-flex"
-			onMouseEnter={openPanel}
-			onMouseLeave={scheduleClosePanel}
-			onFocus={openPanel}
-			onBlur={(event) => {
-				const nextFocused = event.relatedTarget as Node | null;
-				if (nextFocused && panelRef.current?.contains(nextFocused)) return;
-				scheduleClosePanel();
-			}}
-		>
+		<TrustedActionHover trusted={trusted}>
 			<label className="swap swap-rotate">
 				<input
 					type="checkbox"
 					checked={trusted}
 					onChange={(e) => setTrusted(e.target.checked)}
-					aria-label={`Show ${trusted ? "all" : "only trusted"} data`}
+					aria-label={trustedActionLabel(trusted)}
 				/>
 
 				{/* trusted icon */}
@@ -141,7 +33,6 @@ export default function TrustedToggle() {
 					<path d="M10.787 5.446l-.4-.406h-.206L8.2 7.023 6.216 5.04h-.2l-.406.406v.2l1.983 1.983L5.61 9.61v.206l.406.4h.2l1.983-1.983 1.982 1.983h.206l.4-.4V9.61L8.804 7.63l1.983-1.983v-.2z" />
 				</svg>
 			</label>
-			{panel}
-		</div>
+		</TrustedActionHover>
 	);
 }
