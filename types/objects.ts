@@ -1,6 +1,6 @@
 import type { Permission, Role } from "./globals";
 import { z } from "zod";
-import type { TaxonomyModel } from "@/app/generated/prisma/models/Taxonomy";
+import { TaxonomyScalarFieldEnumSchema } from "@/prisma/generated/zod";
 
 export const Roles = ["admin", "moderator", "contributor"] as Role[];
 export const Permissions = ["contribute", "manageUsers", "manageDatabase"] as Permission[];
@@ -49,30 +49,45 @@ export const ZodBooleanSchema = z
 	.union([z.boolean(), z.literal("true"), z.literal("false"), z.literal("on")])
 	.transform((value) => value === true || value === "true" || value === "on");
 
-export const TaxonomicRanks = [
-	"domain",
-	"supergroup",
-	"division",
-	"kingdom",
-	"phylum",
-	"class",
-	"order",
-	"family",
-	"genus",
-	"species"
-] as Array<keyof Omit<TaxonomyModel, "id" | "taxonomy" | "verbatimIdentification" | "higherClassification">>;
+export const TaxonomicRanks = TaxonomyScalarFieldEnumSchema.options.filter(
+	(f) => f !== "id" && f !== "taxonomy" && f !== "verbatimIdentification" && f !== "higherClassification"
+);
 export const RanksBySpecificity = TaxonomicRanks.toReversed();
 export const RankPlurals = {
+	realm: "Realms",
+	subrealm: "Subrealms",
 	domain: "Domains",
+	superkingdom: "Superkingdoms",
 	supergroup: "Supergroups",
-	division: "Divisions",
 	kingdom: "Kingdoms",
+	infrakingdom: "Infrakingdoms",
+	subkingdom: "Subkingdoms",
 	phylum: "Phyla",
+	division: "Divisions",
+	subphylum: "Subphyla",
+	subdivision: "Subdivisions",
 	class: "Classes",
+	subclass: "Subclasses",
+	section: "Sections",
+	subsection: "Subsections",
 	order: "Orders",
+	suborder: "Suborders",
 	family: "Families",
+	subfamily: "Subfamilies",
 	genus: "Genera",
-	species: "Species"
+	subgenus: "Subgenera",
+	species: "Species",
+	subspecies: "Subspecies",
+	varietas: "Varietates",
+	forma: "Formae",
+	biovar: "Biovars",
+	serovar: "Serovars",
+	pathovar: "Pathovars",
+	strain: "Strains",
+	clade: "Clades",
+	lineage: "Lineages",
+	group: "Groups",
+	type: "Types"
 };
 
 export const GlobalOmit = ["userId", "userIds", "editHistory", "deleted_ODE"];

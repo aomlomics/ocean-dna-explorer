@@ -12,11 +12,11 @@ export default async function deleteTagAction(id: TagModel["id"]): Promise<Netwo
 		const role = sessionClaims?.metadata?.role;
 
 		if (!userId) {
-			throw new Error("Must be logged in.");
+			return { statusMessage: "error", error: "Must be logged in." };
 		}
 
 		if (!role || !RolePermissions[role].includes("manageDatabase")) {
-			throw new Error("Invalid role.");
+			return { statusMessage: "error", error: "Invalid role." };
 		}
 
 		await prisma.tag.delete({

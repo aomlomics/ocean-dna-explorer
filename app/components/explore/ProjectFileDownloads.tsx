@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import InfoButton from "@/app/components/InfoButton";
 import { AnalysisIcon } from "@/app/components/icons";
 import { exploreUrl } from "@/types/tableMetadata";
-import type { Analysis } from "@/app/generated/prisma/client";
+import type { AnalysisModel } from "@/app/generated/prisma/models/Analysis";
 
 export type DownloadFile = {
 	label: string;
@@ -146,7 +146,7 @@ export default function ProjectFileDownloads({
 	analyses,
 	sizeByUrl
 }: {
-	project_id: Analysis["project_id"];
+	project_id: AnalysisModel["project_id"];
 	metadataFiles: DownloadFile[];
 	analyses: AnalysisDownloadBundle[];
 	sizeByUrl: Record<string, number | null>;

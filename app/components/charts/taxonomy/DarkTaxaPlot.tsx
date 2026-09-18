@@ -5,7 +5,6 @@ import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, Tooltip, Filler } from "chart.js";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import { type AssignmentModel, type OccurrenceModel, type SampleModel } from "@/app/generated/prisma/models";
-import { TaxonomicRanks } from "@/types/objects";
 import {
 	DARK_TAXA_DEFAULT_INNER_RANK,
 	DARK_TAXA_DEFAULT_OUTER_RANK,
@@ -112,12 +111,14 @@ export default function DarkTaxaPlot({
 	assignsByFeatureid,
 	taxonomiesByName,
 	libsWithSampleById,
-	totalOrganismQuantity
+	totalOrganismQuantity,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	totalOrganismQuantity: number;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const { textColor } = useDaisyTheme();
 	const chartRef = useRef<ChartJS<"doughnut">>(null);
@@ -229,14 +230,14 @@ export default function DarkTaxaPlot({
 							const newParent = e.target.value as TaxonomicRank;
 							setParentRank(newParent);
 
-							if (TaxonomicRanks.indexOf(newParent) >= TaxonomicRanks.indexOf(childRank)) {
-								setChildRank(TaxonomicRanks[TaxonomicRanks.indexOf(newParent) + 1] ?? newParent);
+							if (taxaRanksWithData.indexOf(newParent) >= taxaRanksWithData.indexOf(childRank)) {
+								setChildRank(taxaRanksWithData[taxaRanksWithData.indexOf(newParent) + 1] ?? newParent);
 							}
 						}}
 
 						className="select"
 					>
-						{TaxonomicRanks.slice(0, -1).map((r) => (
+						{taxaRanksWithData.slice(0, -1).map((r) => (
 							<option key={r}>{r}</option>
 						))}
 					</select>
@@ -245,7 +246,7 @@ export default function DarkTaxaPlot({
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Outer ring:</legend>
 					<select value={childRank} onChange={(e) => setChildRank(e.target.value as TaxonomicRank)} className="select">
-						{TaxonomicRanks.slice(TaxonomicRanks.indexOf(parentRank) + 1).map((r) => (
+						{taxaRanksWithData.slice(taxaRanksWithData.indexOf(parentRank) + 1).map((r) => (
 							<option key={r}>{r}</option>
 						))}
 					</select>

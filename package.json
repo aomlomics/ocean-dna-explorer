@@ -86,12 +86,14 @@
 		"zod-prisma-types": "^3.3.11"
 	},
 	"devDependencies": {
+		"@hpcc-js/wasm-graphviz": "^1.29.1",
 		"@tailwindcss/postcss": "^4.3.3",
 		"@types/density-clustering": "^1.3.3",
 		"@types/leaflet": "^1.9.22",
 		"daisyui": "^5.7.22",
 		"prettier": "^3.9.6",
 		"prisma": "^7.9.1",
+		"prisma-erd-generator": "^3.2.1",
 		"prisma-json-types-generator": "^5.1.1",
 		"tailwind-scrollbar": "^4.0.2",
 		"tsx": "^4.23.12"

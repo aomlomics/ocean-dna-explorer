@@ -7,7 +7,6 @@ import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import ChartCopyButton from "../ChartCopyButton";
 import type { SampleModel, OccurrenceModel } from "@/app/generated/prisma/models";
-import { TaxonomicRanks } from "@/types/objects";
 import chroma from "chroma-js";
 import {
 	type AssignsByFeatureid,
@@ -26,12 +25,14 @@ export default function TaxaSampleHeatmap({
 	assignsByFeatureid,
 	taxonomiesByName,
 	libsWithSampleById,
-	sampleLabels
+	sampleLabels,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
 	libsWithSampleById: LibsWithSampleById;
 	sampleLabels: Map<SampleModel["id"], string>;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const ref = useRef<ChartJS<"matrix">>(null);
 	const { textColor, secondaryColor, accentColor } = useDaisyTheme();
@@ -83,7 +84,7 @@ export default function TaxaSampleHeatmap({
 				<fieldset className="fieldset">
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 					<select value={rank} onChange={(e) => setRank(e.target.value as TaxonomicRank)} className="select">
-						{TaxonomicRanks.map((r) => (
+						{taxaRanksWithData.map((r) => (
 							<option key={r}>{r}</option>
 						))}
 					</select>

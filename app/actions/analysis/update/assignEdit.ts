@@ -59,22 +59,30 @@ async function doEdit(
 			return;
 		}
 
-		const parseResult = await parseAssignmentsFile({
-			channel: { stream, url },
-			project_id,
-			analysis_run_name,
-			oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
-		});
-		if (!parseResult) {
+		let parseResult;
+		try {
+			parseResult = await parseAssignmentsFile({
+				channel: { stream, url },
+				project_id,
+				analysis_run_name,
+				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+			});
+			if (!parseResult) {
+				return;
+			}
+		} catch (err) {
+			const error = err as Error;
+			await stream.error(error.message);
 			return;
 		}
+
 		const { features, taxonomies, assignments, assignmentsMd5 } = parseResult;
 
 		await stream.message("Assignments successfully parsed into database format. Parsing data into database.", 75);
 
 		const featureids = new Set(features.map((feat) => feat.featureid));
 
-		await prisma.$transaction(
+		const success = await prisma.$transaction(
 			async (tx) => {
 				//check if allowed
 				const dbAnalysis = await tx.analysis.findUnique({
@@ -98,11 +106,14 @@ async function doEdit(
 				});
 
 				if (!dbAnalysis) {
-					throw new Error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					stream.error(`No Analysis with analysis_run_name of "${analysis_run_name}" found.`);
+					return;
 				} else if (!dbAnalysis.Project.userIds.includes(userId)) {
-					throw new Error("Unauthorized action.");
+					stream.error("Unauthorized action.");
+					return;
 				} else if (!dbAnalysis.asvFileUrl_ODE || !dbAnalysis.asvFileChecksum_ODE) {
-					throw new Error("Invalid Analysis. Missing file for ASVs.");
+					stream.error("Invalid Analysis. Missing file for ASVs.");
+					return;
 				}
 
 				await stream.message("All checks passed.", 80);
@@ -279,24 +290,27 @@ async function doEdit(
 						}
 					}
 				});
+
+				await stream.success("Success");
+				return true;
 			},
 			{ timeout: 5 * 60 * 1000 }
 		);
 
-		await stream.success("Success");
-
-		//update BLAST databases
-		fetch(
-			`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
-			{
-				method: "POST",
-				headers: {
-					Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+		if (success) {
+			//update BLAST databases
+			fetch(
+				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission?delete=true&skipDiversities=true`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+					}
 				}
-			}
-		);
+			);
 
-		return true;
+			return true;
+		}
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

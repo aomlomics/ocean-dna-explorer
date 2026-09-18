@@ -40,9 +40,9 @@ export default async function fixDeletedSamplesAction(project_id: SampleModel["p
 			});
 
 			if (!project) {
-				throw new Error(`No Project with project_id of "${project_id}" found.`);
+				return { statusMessage: "error", error: `No Project with project_id of "${project_id}" found.` };
 			} else if (!project.userIds.includes(userId) || !RolePermissions[role].includes("manageUsers")) {
-				throw new Error("Unauthorized action.");
+				return { statusMessage: "error", error: "Unauthorized action." };
 			}
 
 			//check if analyses with deleted samples were properly fixed
@@ -87,11 +87,12 @@ export default async function fixDeletedSamplesAction(project_id: SampleModel["p
 				const lastAnalysis = badAnalyses.pop();
 
 				if (!lastSample || !lastAnalysis) {
-					throw new Error("Unknown error when parsing Samples to delete.");
+					return { statusMessage: "error", error: "Unknown error when parsing Samples to delete." };
 				}
 
-				throw new Error(
-					`${
+				return {
+					statusMessage: "error",
+					error: `${
 						//plural Sample
 						sampNames.length ? "Samples" : "Sample"
 					} with the ${
@@ -130,7 +131,7 @@ export default async function fixDeletedSamplesAction(project_id: SampleModel["p
 								: //exactly 1
 									""
 					} "${lastAnalysis}". Then, click the "Fix" button on the Project with project_id of "${project_id}".`
-				);
+				};
 			}
 
 			//delete samples

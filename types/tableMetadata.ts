@@ -215,6 +215,14 @@ const TableMetadata = {
 		titleField: "taxonomy",
 		subFields: ["Analyses", "Samples", ...TaxonomicRanks]
 	},
+	taxonomySpotlight: {
+		plural: "TaxonomySpotlights",
+		description: "",
+		schema: PrismaZodTypes.TaxonomySpotlightSchema,
+		enumSchema: PrismaZodTypes.TaxonomySpotlightScalarFieldEnumSchema,
+		relationsSchema: PrismaZodTypes.TaxonomySpotlightWithRelationsSchema,
+		titleField: ["project_id", "taxonomy"]
+	},
 	tag: {
 		plural: "Tags",
 		description: "",
@@ -277,6 +285,7 @@ const TableMetadata = {
 //table name helpers
 export const TableNames = Object.keys(TableMetadata) as Readonly<Uncapitalize<ModelName>[]>;
 export const NonDataTableNames = [
+	"taxonomySpotlight",
 	"tag",
 	"alphaDiversity",
 	"alphaDiversityIndex",
@@ -340,6 +349,15 @@ for (const table of TableNames) {
 }
 
 //assemble relational path metadata
+const pathPriority = {
+	//Analysis before Library
+	Analysis: { Library: -1 },
+	Library: { Analysis: 1 },
+	//Occurrence before Assignment
+	Occurrence: { Assignment: -1 },
+	Assignment: { Occurrence: 1 }
+} as Record<Prisma.ModelName, Record<Prisma.ModelName, 1 | -1>>;
+
 function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<ModelName>) {
 	const queue = [[capitalizeTable(start), []]] as [ModelName, ModelName[]][];
 	const visited = new Set() as Set<ModelName>;
@@ -369,7 +387,9 @@ function getRelationPath(start: Uncapitalize<ModelName>, target: Uncapitalize<Mo
 			(curr !== "Project" || //base case
 				path.length === 1) //starting at Project
 		) {
-			for (const rel of TableMetadata[uncapitalizeTable(curr)].relations!) {
+			for (const rel of [...TableMetadata[uncapitalizeTable(curr)].relations!].sort(
+				(a, b) => pathPriority[a.table]?.[b.table] || 0
+			)) {
 				if (
 					//Analysis restrictions
 					(curr !== "Analysis" || //base case

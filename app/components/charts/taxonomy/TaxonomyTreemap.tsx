@@ -7,7 +7,6 @@ import { TreemapController, TreemapElement } from "chartjs-chart-treemap";
 import distinctColors from "distinct-colors";
 import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import ChartCopyButton from "../ChartCopyButton";
-import { TaxonomicRanks } from "@/types/objects";
 import type { TaxonomicRank } from "@/types/globals";
 import {
 	TREEMAP_DEFAULT_CHILD_RANK,
@@ -30,10 +29,12 @@ function getContrastText(color: Color) {
 
 export default function TaxonomyTreemap({
 	assignsByFeatureid,
-	taxonomiesByName
+	taxonomiesByName,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const ref = useRef<ChartJS<"treemap", any[]>>(null);
 	const { textColor } = useDaisyTheme();
@@ -42,7 +43,7 @@ export default function TaxonomyTreemap({
 	const [childRank, setChildRank] = useState(TREEMAP_DEFAULT_CHILD_RANK);
 
 	// Child must be more specific than parent.
-	const validChildRanks = TaxonomicRanks.slice(TaxonomicRanks.indexOf(parentRank) + 1);
+	const validChildRanks = taxaRanksWithData.slice(taxaRanksWithData.indexOf(parentRank) + 1);
 
 	const { rows, parentColors } = useMemo(() => {
 		const totals = new Map<string, Map<string, OccurrenceModel["organismQuantity"]>>();
@@ -119,13 +120,13 @@ export default function TaxonomyTreemap({
 							setParentRank(newParent);
 
 							// Make sure the child rank remains more specific.
-							if (TaxonomicRanks.indexOf(newParent) >= TaxonomicRanks.indexOf(childRank)) {
-								setChildRank(TaxonomicRanks[TaxonomicRanks.indexOf(newParent) + 1] ?? newParent);
+							if (taxaRanksWithData.indexOf(newParent) >= taxaRanksWithData.indexOf(childRank)) {
+								setChildRank(taxaRanksWithData[taxaRanksWithData.indexOf(newParent) + 1] ?? newParent);
 							}
 						}}
 						className="select"
 					>
-						{TaxonomicRanks.slice(0, -1).map((rank) => (
+						{taxaRanksWithData.slice(0, -1).map((rank) => (
 							<option key={rank} value={rank}>
 								{rank}
 							</option>

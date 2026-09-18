@@ -9,16 +9,17 @@ import {
 } from "../../wrappers/TaxonomyVisualize";
 import type { Chart as ChartJS } from "chart.js";
 import type { TaxonomicRank } from "@/types/globals";
-import { TaxonomicRanks } from "@/types/objects";
 import ChartCopyButton from "../../ChartCopyButton";
 import TaxonomySunburst from "../../custom/TaxonomySunburst";
 
 export default function CompositionSunburst({
 	assignsByFeatureid,
-	taxonomiesByName
+	taxonomiesByName,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const ref = useRef<ChartJS<"doughnut">>(null);
 
@@ -35,19 +36,19 @@ export default function CompositionSunburst({
 						value={parentRank}
 						onChange={(e) => {
 							const newParent = e.target.value as TaxonomicRank;
-							const parentIndex = TaxonomicRanks.indexOf(newParent);
-							const childIndex = TaxonomicRanks.indexOf(childRank);
+							const parentIndex = taxaRanksWithData.indexOf(newParent);
+							const childIndex = taxaRanksWithData.indexOf(childRank);
 
 							setParentRank(newParent);
 
 							// Ensure the child rank remains below the parent rank.
 							if (childIndex <= parentIndex) {
-								setChildRank(TaxonomicRanks[parentIndex + 1] ?? newParent);
+								setChildRank(taxaRanksWithData[parentIndex + 1] ?? newParent);
 							}
 						}}
 						className="select"
 					>
-						{TaxonomicRanks.slice(0, -1).map((r) => (
+						{taxaRanksWithData.slice(0, -1).map((r) => (
 							<option key={r}>{r}</option>
 						))}
 					</select>
@@ -57,7 +58,7 @@ export default function CompositionSunburst({
 					<legend className="fieldset-legend">Outer ring:</legend>
 
 					<select value={childRank} onChange={(e) => setChildRank(e.target.value as TaxonomicRank)} className="select">
-						{TaxonomicRanks.slice(TaxonomicRanks.indexOf(parentRank) + 1).map((r) => (
+						{taxaRanksWithData.slice(taxaRanksWithData.indexOf(parentRank) + 1).map((r) => (
 							<option key={r}>{r}</option>
 						))}
 					</select>

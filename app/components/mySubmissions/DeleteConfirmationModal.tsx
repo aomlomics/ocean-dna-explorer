@@ -7,14 +7,14 @@ export default function DeleteConfirmModal({
 	isOpen,
 	onClose,
 	onConfirm,
-	target,
+	title,
 	associatedAnalyses,
 	entityLabel
 }: {
 	isOpen: boolean;
 	onClose: () => void;
 	onConfirm: () => void;
-	target: Writeable<(typeof TableMetadata)[keyof typeof TableMetadata]["titleField"]>;
+	title: Writeable<(typeof TableMetadata)[keyof typeof TableMetadata]["titleField"]>;
 	associatedAnalyses: { analysis_run_name: string }[];
 	entityLabel?: string;
 }) {
@@ -28,7 +28,7 @@ export default function DeleteConfirmModal({
 				<h3 className="text-2xl font-bold text-primary mb-2">Confirm Deletion</h3>
 				<p className="mb-2 text-md text-base-content">
 					Are you sure you want to delete {label}{" "}
-					<span className="text-md text-base-content">{typeof target === "string" ? target : target.join(" / ")}</span>?
+					<span className="text-md text-base-content">{typeof title === "string" ? title : title.join(" / ")}</span>?
 				</p>
 				{associatedAnalyses.length > 0 && (
 					<div className="mb-2">

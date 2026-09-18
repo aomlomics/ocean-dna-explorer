@@ -105,23 +105,29 @@ async function doEdit(
 			return;
 		}
 
-		let parseResult = undefined as AsyncReturnType<typeof parseAnalysisFile>;
+		let parseResult: AsyncReturnType<typeof parseAnalysisFile>;
 		if (url) {
-			parseResult = await parseAnalysisFile({
-				channel: { stream, url },
-				assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
-				occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
-				trusted,
-				oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
-			});
-			if (!parseResult) {
+			try {
+				parseResult = await parseAnalysisFile({
+					channel: { stream, url },
+					assignmentsUrl: dbAnalysis.asvFileUrl_ODE,
+					occurrencesUrl: dbAnalysis.occurrenceFileUrl_ODE,
+					trusted,
+					oldChecksum: dbAnalysis.analysisMetadataFileChecksum_ODE
+				});
+				if (!parseResult) {
+					return;
+				}
+			} catch (err) {
+				const error = err as Error;
+				await stream.error(error.message);
 				return;
 			}
 		}
 
 		await stream.message("Analysis successfully parsed into database format. Parsing data into database.", 50);
 
-		await prisma.$transaction(
+		const success = await prisma.$transaction(
 			async (tx) => {
 				if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
 					//check if assay is valid
@@ -134,7 +140,8 @@ async function doEdit(
 						}
 					});
 					if (!dbAssay) {
-						throw new Error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
+						stream.error(`The Assay with assay_name of "${parseResult.analysis.assay_name}" does not exist.`);
+						return;
 					}
 				}
 
@@ -159,14 +166,15 @@ async function doEdit(
 
 						if (invalidTagNames.length) {
 							if (invalidTagNames.length === 1) {
-								throw new Error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
+								await stream.error(`A tag is invalid. The invalid tagName is "${invalidTagNames[0]}".`);
 							} else {
-								throw new Error(
+								stream.error(
 									`Some tags are invalid. The invalid tagNames are ${invalidTagNames
 										.map((tagName, i) => (i === invalidTagNames.length - 1 ? `and "${tagName}"` : `"${tagName}"`))
 										.join(", ")}.`
 								);
 							}
+							return;
 						}
 					}
 
@@ -251,24 +259,27 @@ async function doEdit(
 				}
 
 				await stream.success("Analysis file successfully updated in database.");
+				return true;
 			},
 			{ timeout: 0.5 * 60 * 1000 } //30 seconds
 		);
 
-		//only update assay BLAST database if assay has changed
-		if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
-			fetch(
-				`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
-				{
-					method: "POST",
-					headers: {
-						Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+		if (success) {
+			//only update assay BLAST database if assay has changed
+			if (parseResult && parseResult.analysis.assay_name !== dbAnalysis.assay_name) {
+				fetch(
+					`${process.env.NEXT_PUBLIC_SERVER_URL}/analysis/${project_id}/${analysis_run_name}/afterSubmission${dbAnalysis.assay_name}?delete=true&skipDiversities=true&skipAllBlast=True`,
+					{
+						method: "POST",
+						headers: {
+							Authorization: "Bearer " + (await getToken({ expiresInSeconds: 60 })) //manually set expire time to get fresh token
+						}
 					}
-				}
-			);
-		}
+				);
+			}
 
-		return true;
+			return true;
+		}
 	} catch (err: any) {
 		const prismaErr = handlePrismaError(err);
 		if (prismaErr) {

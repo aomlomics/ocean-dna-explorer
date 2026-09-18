@@ -17,6 +17,7 @@ model Project {
     Assignments           Assignment[]
     AlphaDiversities      AlphaDiversity[]
     AlphaDiversityIndexes AlphaDiversityIndex[]
+    TaxonomySpotlights    TaxonomySpotlight[]
 
     // Submission File URLs
     projectMetadataFileUrl_ODE      String

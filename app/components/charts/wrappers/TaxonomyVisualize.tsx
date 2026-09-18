@@ -9,7 +9,7 @@ import type {
 	TaxonomyModel
 } from "@/app/generated/prisma/models";
 import { getZodType } from "@/app/helpers/schema";
-import { GlobalOmit } from "@/types/objects";
+import { GlobalOmit, TaxonomicRanks } from "@/types/objects";
 import TableMetadata from "@/types/tableMetadata";
 import { SampleScalarFieldEnumSchema } from "@/prisma/generated/zod";
 import type { TaxonomicRank } from "@/types/globals";
@@ -113,134 +113,149 @@ export default function TaxonomyVisualize({
 	const searchParams = useSearchParams();
 	const [tab, setTab] = useState(["abundance"]);
 
-	const { sampFields, userDefinedFields, sampleLabels, libraryLabels, sortedLibraries, totalOrganismQuantity } =
-		useMemo(() => {
-			const sampFields = new Set(["project_id"]) as Set<string>;
-			//build fields in fieldOrder
-			for (const f of TableMetadata.sample.fieldOrder!) {
-				sampFields.add(f);
-			}
-			for (const f of SampleScalarFieldEnumSchema.options.sort()) {
-				sampFields.add(f);
-			}
+	const {
+		sampFields,
+		userDefinedFields,
+		sampleLabels,
+		libraryLabels,
+		sortedLibraries,
+		totalOrganismQuantity,
+		taxaRanksWithData
+	} = useMemo(() => {
+		const sampFields = new Set(["project_id"]) as Set<string>;
+		//build fields in fieldOrder
+		for (const f of TableMetadata.sample.fieldOrder!) {
+			sampFields.add(f);
+		}
+		for (const f of SampleScalarFieldEnumSchema.options.sort()) {
+			sampFields.add(f);
+		}
 
-			//remove bad fields
-			for (const omit of GlobalOmit) {
-				sampFields.delete(omit);
-			}
-			sampFields.delete("id");
-			sampFields.delete("userDefined");
-			sampFields.delete("samp_name");
+		//remove bad fields
+		for (const omit of GlobalOmit) {
+			sampFields.delete(omit);
+		}
+		sampFields.delete("id");
+		sampFields.delete("userDefined");
+		sampFields.delete("samp_name");
 
-			const fieldsWithValues = new Set<string>();
-			const userDefinedFields = new Set<string>();
+		const fieldsWithValues = new Set<string>();
+		const userDefinedFields = new Set<string>();
 
-			//deduplicate samples
-			const samples = Array.from(
-				new Map(Array.from(libsWithSampleById.values()).map(({ Sample }) => [Sample.id, Sample])).values()
-			);
+		//deduplicate samples
+		const samples = Array.from(
+			new Map(Array.from(libsWithSampleById.values()).map(({ Sample }) => [Sample.id, Sample])).values()
+		);
 
-			for (const samp of samples) {
-				//check if fields have values
-				for (const f of sampFields) {
-					const key = f as keyof SampleModel;
+		for (const samp of samples) {
+			//check if fields have values
+			for (const f of sampFields) {
+				const key = f as keyof SampleModel;
 
-					if (!fieldsWithValues.has(f) && samp[key] != null) {
-						const type = getZodType("sample", key).type;
+				if (!fieldsWithValues.has(f) && samp[key] != null) {
+					const type = getZodType("sample", key).type;
 
-						if (type !== "boolean") {
-							if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {
-								fieldsWithValues.add(f);
-							} else if (!((samp[key] as string | number) in DeadValueEnum)) {
-								fieldsWithValues.add(f);
-							}
-						}
-					}
-				}
-
-				//add userDefined fields
-				if (samp.userDefined) {
-					for (const ud in samp.userDefined) {
-						if (
-							samp.userDefined[ud] != null &&
-							!(samp.userDefined[ud] in DeadValueEnum) &&
-							samp.userDefined[ud] !== ""
-						) {
-							sampFields.add(ud);
-							fieldsWithValues.add(ud);
-							userDefinedFields.add(ud);
+					if (type !== "boolean") {
+						if (type === "date" && !((samp[key] as Date).getTime() in DeadValueEnum)) {
+							fieldsWithValues.add(f);
+						} else if (!((samp[key] as string | number) in DeadValueEnum)) {
+							fieldsWithValues.add(f);
 						}
 					}
 				}
 			}
 
-			//build sample id to label mapping
-			const sortedSamples = [...samples].sort((a, b) => a.samp_name.localeCompare(b.samp_name));
-			const sampNamesWithProjectId = {} as Record<
-				SampleModel["samp_name"],
-				{ id: SampleModel["id"]; project_id: SampleModel["project_id"] }[]
-			>;
-
-			for (const samp of sortedSamples) {
-				(sampNamesWithProjectId[samp.samp_name] ??= []).push({ id: samp.id, project_id: samp.project_id });
-			}
-
-			const sampleLabels = new Map() as Map<SampleModel["id"], string>;
-			for (const [samp_name, projectIds] of Object.entries(sampNamesWithProjectId)) {
-				if (projectIds.length > 1) {
-					for (const proj of projectIds) {
-						sampleLabels.set(proj.id, proj.project_id + " / " + samp_name);
-					}
-				} else {
-					sampleLabels.set(projectIds[0]!.id, samp_name);
-				}
-			}
-
-			//build library id to label mapping
-			const sortedLibraries = Array.from(libsWithSampleById.entries()).sort((a, b) =>
-				a[1].lib_id.localeCompare(b[1].lib_id)
-			);
-			const libIdsWithProjectId = {} as Record<
-				LibraryModel["lib_id"],
-				{ id: LibraryModel["id"]; project_id: SampleModel["project_id"] }[]
-			>;
-
-			for (const libArr of sortedLibraries) {
-				(libIdsWithProjectId[libArr[1].lib_id] ??= []).push({
-					id: libArr[1].id,
-					project_id: libArr[1].Sample.project_id
-				});
-			}
-
-			const libraryLabels = new Map() as Map<LibraryModel["id"], string>;
-			for (const [lib_id, projectIds] of Object.entries(libIdsWithProjectId)) {
-				if (projectIds.length > 1) {
-					for (const proj of projectIds) {
-						libraryLabels.set(proj.id, proj.project_id + " / " + lib_id);
-					}
-				} else {
-					libraryLabels.set(projectIds[0]!.id, lib_id);
-				}
-			}
-
-			let totalOrganismQuantity = 0;
-			for (const assign of Object.values(assignsByFeatureid)) {
-				for (const occ of assign.Occurrences) {
-					if (occ.organismQuantity > 0) {
-						totalOrganismQuantity += Number(occ.organismQuantity);
+			//add userDefined fields
+			if (samp.userDefined) {
+				for (const ud in samp.userDefined) {
+					if (samp.userDefined[ud] != null && !(samp.userDefined[ud] in DeadValueEnum) && samp.userDefined[ud] !== "") {
+						sampFields.add(ud);
+						fieldsWithValues.add(ud);
+						userDefinedFields.add(ud);
 					}
 				}
 			}
+		}
 
-			return {
-				sampFields,
-				userDefinedFields,
-				sampleLabels,
-				libraryLabels,
-				sortedLibraries: new Map(sortedLibraries),
-				totalOrganismQuantity
-			};
-		}, [assignsByFeatureid, libsWithSampleById]);
+		//build sample id to label mapping
+		const sortedSamples = [...samples].sort((a, b) => a.samp_name.localeCompare(b.samp_name));
+		const sampNamesWithProjectId = {} as Record<
+			SampleModel["samp_name"],
+			{ id: SampleModel["id"]; project_id: SampleModel["project_id"] }[]
+		>;
+
+		for (const samp of sortedSamples) {
+			(sampNamesWithProjectId[samp.samp_name] ??= []).push({ id: samp.id, project_id: samp.project_id });
+		}
+
+		const sampleLabels = new Map() as Map<SampleModel["id"], string>;
+		for (const [samp_name, projectIds] of Object.entries(sampNamesWithProjectId)) {
+			if (projectIds.length > 1) {
+				for (const proj of projectIds) {
+					sampleLabels.set(proj.id, proj.project_id + " / " + samp_name);
+				}
+			} else {
+				sampleLabels.set(projectIds[0]!.id, samp_name);
+			}
+		}
+
+		//build library id to label mapping
+		const sortedLibraries = Array.from(libsWithSampleById.entries()).sort((a, b) =>
+			a[1].lib_id.localeCompare(b[1].lib_id)
+		);
+		const libIdsWithProjectId = {} as Record<
+			LibraryModel["lib_id"],
+			{ id: LibraryModel["id"]; project_id: SampleModel["project_id"] }[]
+		>;
+
+		for (const libArr of sortedLibraries) {
+			(libIdsWithProjectId[libArr[1].lib_id] ??= []).push({
+				id: libArr[1].id,
+				project_id: libArr[1].Sample.project_id
+			});
+		}
+
+		const libraryLabels = new Map() as Map<LibraryModel["id"], string>;
+		for (const [lib_id, projectIds] of Object.entries(libIdsWithProjectId)) {
+			if (projectIds.length > 1) {
+				for (const proj of projectIds) {
+					libraryLabels.set(proj.id, proj.project_id + " / " + lib_id);
+				}
+			} else {
+				libraryLabels.set(projectIds[0]!.id, lib_id);
+			}
+		}
+
+		//total count of all organisms
+		let totalOrganismQuantity = 0;
+		for (const assign of Object.values(assignsByFeatureid)) {
+			for (const occ of assign.Occurrences) {
+				if (occ.organismQuantity > 0) {
+					totalOrganismQuantity += Number(occ.organismQuantity);
+				}
+			}
+		}
+
+		//taxonomic ranks with values
+		const taxaRanksWithData = new Set() as Set<TaxonomicRank>;
+		for (const taxonomy of Object.values(taxonomiesByName)) {
+			for (const rank of TaxonomicRanks) {
+				if (taxonomy[rank]) {
+					taxaRanksWithData.add(rank);
+				}
+			}
+		}
+
+		return {
+			sampFields,
+			userDefinedFields,
+			sampleLabels,
+			libraryLabels,
+			sortedLibraries: new Map(sortedLibraries),
+			totalOrganismQuantity,
+			taxaRanksWithData: [...taxaRanksWithData]
+		};
+	}, [assignsByFeatureid, taxonomiesByName, libsWithSampleById]);
 
 	//build tabs
 	const newParams = new URLSearchParams(searchParams);
@@ -325,6 +340,7 @@ export default function TaxonomyVisualize({
 						sampFields={Array.from(sampFields)}
 						userDefinedFields={userDefinedFields}
 						libraryLabels={libraryLabels}
+						taxaRanksWithData={taxaRanksWithData}
 					/>
 				)
 			) : (
@@ -335,7 +351,11 @@ export default function TaxonomyVisualize({
 				loading ? (
 					<LoadingTaxonomyTreemap />
 				) : (
-					<TaxonomyTreemap assignsByFeatureid={assignsByFeatureid} taxonomiesByName={taxonomiesByName} />
+					<TaxonomyTreemap
+						assignsByFeatureid={assignsByFeatureid}
+						taxonomiesByName={taxonomiesByName}
+						taxaRanksWithData={taxaRanksWithData}
+					/>
 				)
 			) : (
 				<></>
@@ -349,6 +369,7 @@ export default function TaxonomyVisualize({
 						assignsByFeatureid={assignsByFeatureid}
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={libsWithSampleById}
+						taxaRanksWithData={taxaRanksWithData}
 					/>
 				)
 			) : (
@@ -364,6 +385,7 @@ export default function TaxonomyVisualize({
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={libsWithSampleById}
 						sampleLabels={sampleLabels}
+						taxaRanksWithData={taxaRanksWithData}
 					/>
 				)
 			) : (
@@ -376,7 +398,11 @@ export default function TaxonomyVisualize({
 						loading ? (
 							<LoadingCompositionBarChart />
 						) : (
-							<CompositionBarChart assignsByFeatureid={assignsByFeatureid} taxonomiesByName={taxonomiesByName} />
+							<CompositionBarChart
+								assignsByFeatureid={assignsByFeatureid}
+								taxonomiesByName={taxonomiesByName}
+								taxaRanksWithData={taxaRanksWithData}
+							/>
 						)
 					) : (
 						<></>
@@ -385,7 +411,11 @@ export default function TaxonomyVisualize({
 						loading ? (
 							<LoadingTaxonomyLollipopChart />
 						) : (
-							<TaxonomyLollipopChart assignsByFeatureid={assignsByFeatureid} taxonomiesByName={taxonomiesByName} />
+							<TaxonomyLollipopChart
+								assignsByFeatureid={assignsByFeatureid}
+								taxonomiesByName={taxonomiesByName}
+								taxaRanksWithData={taxaRanksWithData}
+							/>
 						)
 					) : (
 						<></>
@@ -394,7 +424,11 @@ export default function TaxonomyVisualize({
 						loading ? (
 							<LoadingCompositionSunburst />
 						) : (
-							<CompositionSunburst assignsByFeatureid={assignsByFeatureid} taxonomiesByName={taxonomiesByName} />
+							<CompositionSunburst
+								assignsByFeatureid={assignsByFeatureid}
+								taxonomiesByName={taxonomiesByName}
+								taxaRanksWithData={taxaRanksWithData}
+							/>
 						)
 					) : (
 						<></>
@@ -413,6 +447,7 @@ export default function TaxonomyVisualize({
 						taxonomiesByName={taxonomiesByName}
 						libsWithSampleById={libsWithSampleById}
 						totalOrganismQuantity={totalOrganismQuantity}
+						taxaRanksWithData={taxaRanksWithData}
 					/>
 				)
 			) : (

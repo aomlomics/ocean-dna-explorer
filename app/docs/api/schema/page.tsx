@@ -45,13 +45,6 @@ export default function ApiSchemaPage() {
 							<div className="p-4 rounded-md mb-4 bg-base-200">
 								<div className="relative w-full h-200">
 									<Image fill src="/images/ERD.svg" alt="Database entity relationship diagram" />
-									<Image
-										src="/images/ERD-Notation.PNG"
-										alt="ERD notation key"
-										width="279"
-										height="137"
-										className="w-1/4 h-auto absolute right-0 top-0 px-6 py-6"
-									/>
 								</div>
 							</div>
 

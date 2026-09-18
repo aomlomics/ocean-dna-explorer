@@ -175,29 +175,69 @@ model Taxonomy {
     taxonomy String @unique
 
     // Relations
-    Analyses    Analysis[]
-    Samples     Sample[]
-    Assignments Assignment[]
+    Analyses           Analysis[]
+    Samples            Sample[]
+    Assignments        Assignment[]
+    TaxonomySpotlights TaxonomySpotlight[]
 
     // Data
     verbatimIdentification String
     higherClassification   String?
+    realm                  String?
+    subrealm               String?
     domain                 String?
+    superkingdom           String?
     supergroup             String?
-    division               String?
-    // subdivision            String?
     kingdom                String?
+    infrakingdom           String?
+    subkingdom             String?
     phylum                 String?
+    division               String?
+    subphylum              String?
+    subdivision            String?
     class                  String?
+    subclass               String?
+    section                String?
+    subsection             String?
     order                  String?
+    suborder               String?
     family                 String?
+    subfamily              String?
     genus                  String?
+    subgenus               String?
     species                String?
+    subspecies             String?
+    varietas               String?
+    forma                  String?
+    biovar                 String?
+    serovar                String?
+    pathovar               String?
+    strain                 String?
+    clade                  String?
+    lineage                String?
+    group                  String?
+    type                   String?
 
     @@index([kingdom])
     @@index([family])
     @@index([genus])
     @@index([species])
+}
+
+model TaxonomySpotlight {
+    id Int @id @default(autoincrement())
+
+    // Relations
+    project_id String
+    Project    Project  @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+    taxonomy   String
+    Taxonomy   Taxonomy @relation(fields: [taxonomy], references: [taxonomy], onDelete: Cascade)
+
+    commonName       String?
+    imageFileUrl_ODE String
+    description      String
+
+    @@unique([project_id, taxonomy])
 }
 
 model Tag {

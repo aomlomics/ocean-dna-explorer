@@ -32,7 +32,7 @@ model Image {
     attributionTitle String?
     Attribution      Attribution? @relation(fields: [attributionTitle], references: [attributionTitle])
 
-    name        String
+    name        String?
     description String?
     location    String?
     dateTaken   DateTime?

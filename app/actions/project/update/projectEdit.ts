@@ -85,16 +85,24 @@ async function doEdit(
 			delete oldChecksums.libraryMd5;
 		}
 
-		const parseResult = await parseProjectFiles({
-			projectChannel,
-			sampleChannel,
-			libraryChannel,
-			userIds: dbProject.userIds,
-			oldChecksums
-		});
-		if (!parseResult) {
+		let parseResult;
+		try {
+			parseResult = await parseProjectFiles({
+				projectChannel,
+				sampleChannel,
+				libraryChannel,
+				userIds: dbProject.userIds,
+				oldChecksums
+			});
+			if (!parseResult) {
+				return;
+			}
+		} catch (err) {
+			const error = err as Error;
+			await globalStream.error(error.message);
 			return;
 		}
+
 		const { project, assays, assayPreps, samples, libraries, checksums } = parseResult;
 
 		await projectChannel.stream.message(
@@ -131,23 +139,19 @@ async function doEdit(
 			if (!dbA) {
 				//assay does not exist
 				await projectChannel.stream.error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
-				throw new Error(`Assay with assay_name of "${a.assay_name}" does not exist.`);
+				return;
 			} else if (dbA.pcr_primer_forward !== a.pcr_primer_forward) {
 				//assay has incorrect pcr_primer_forward
 				await projectChannel.stream.error(
 					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
 				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_forward. It should be "${a.pcr_primer_forward}", but it has "${dbA.pcr_primer_forward}".`
-				);
+				return;
 			} else if (dbA.pcr_primer_reverse !== a.pcr_primer_reverse) {
 				//assay has incorrect pcr_primer_reverse
 				await projectChannel.stream.error(
 					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
 				);
-				throw new Error(
-					`Assay with assay_name of "${a.assay_name}" does not have the correct pcr_primer_reverse. It should be "${a.pcr_primer_reverse}", but it has "${dbA.pcr_primer_reverse}".`
-				);
+				return;
 			} else {
 				//get all non-essential fields that do not match
 				for (const [f, value] of Object.entries(a)) {

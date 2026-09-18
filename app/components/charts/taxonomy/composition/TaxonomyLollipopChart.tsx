@@ -11,7 +11,6 @@ import useDaisyTheme from "@/app/hooks/useDaisyTheme";
 import chroma from "chroma-js";
 import type { TaxonomicRank } from "@/types/globals";
 import { aggregateByRank, TOP_N } from "./helpers";
-import { TaxonomicRanks } from "@/types/objects";
 import ChartCopyButton from "../../ChartCopyButton";
 import { Bar } from "react-chartjs-2";
 
@@ -19,10 +18,12 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Title);
 
 export default function TaxonomyLollipopChart({
 	assignsByFeatureid,
-	taxonomiesByName
+	taxonomiesByName,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const ref = useRef<ChartJS<"bar">>(null);
 	const { textColor, primaryColor } = useDaisyTheme();
@@ -72,7 +73,7 @@ export default function TaxonomyLollipopChart({
 					<legend className="fieldset-legend">Taxonomic Rank:</legend>
 
 					<select value={rank} onChange={(e) => setRank(e.target.value as TaxonomicRank)} className="select">
-						{TaxonomicRanks.map((r) => (
+						{taxaRanksWithData.map((r) => (
 							<option key={r}>{r}</option>
 						))}
 					</select>

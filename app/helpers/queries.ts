@@ -1,6 +1,7 @@
 import { getZodType, parseSchemaToObject } from "./schema";
 import type { ErrorPacket } from "@/types/globals";
 import { DeadBoolean, Prisma, type PrismaClient } from "@/app/generated/prisma/client";
+import type { Prisma as PrismaImage } from "@/app/generated/prismaImages/client";
 import type { AssayModel } from "@/app/generated/prisma/models/Assay";
 import { DeadBooleanToEnum } from "@/types/enums";
 import { parse } from "csv-parse";
@@ -10,6 +11,8 @@ import TableMetadata from "@/types/tableMetadata";
 import { capitalizeTable } from "./utils";
 import { getImplicitJoinTable } from "./withDb";
 import type { AssignmentModel, OccurrenceModel, ProjectModel } from "../generated/prisma/models";
+import type { $ZodIssue, ParseContext } from "zod/v4/core";
+import type { ZodError } from "zod";
 
 //Prisma prepared statements have a limit of 32,767
 const PARAM_LIMIT = 30000;
@@ -18,11 +21,10 @@ export function handlePrismaError(err: Prisma.PrismaClientKnownRequestError): Er
 	if (err.constructor?.name === Prisma.PrismaClientKnownRequestError.name) {
 		try {
 			if (err.code === "P2002") {
+				const meta = TableMetadata[err.meta!.modelName as Prisma.ModelName];
 				return {
 					statusMessage: "error",
-					error: `${err.meta?.modelName} with provided ${(err.meta?.target as string[]).join(
-						", "
-					)} already exists in database.`
+					error: `${err.meta!.modelName} with provided ${typeof meta.titleField === "string" ? meta.titleField : meta.titleField.join(", ")} already exists in database.`
 				};
 			} else if (err.code === "P2003") {
 				return {
@@ -390,4 +392,18 @@ export async function seedAssays(client: PrismaClient, assayMasterListUrl = proc
 	});
 
 	console.log("Seed successful");
+}
+
+export function schemaParseErrorFunction(iss: Parameters<NonNullable<ParseContext<$ZodIssue>["error"]>>[0]) {
+	return {
+		message: `Field: ${iss.path![0] as string}\nIssue: ${iss.code}\nValue: ${iss.input != null ? `${iss.code}\nValue: ${iss.input}` : "missing"}`
+	};
+}
+
+export function getSchemaParseError(error: ZodError, table: Prisma.ModelName | PrismaImage.ModelName, keys: string[]) {
+	return (
+		`Table: ${table}\n` +
+		keys?.map((k) => `Key: ${k}`).join("\n") +
+		`\n${error.issues.map((e) => e.message).join("\n\n")}`
+	);
 }

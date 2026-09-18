@@ -5,7 +5,7 @@ import { Bar } from "react-chartjs-2";
 import { useMemo, useRef, useState, useTransition } from "react";
 import distinctColors from "distinct-colors";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-import { RankPlurals, TaxonomicRanks } from "@/types/objects";
+import { RankPlurals } from "@/types/objects";
 import ChartCopyButton from "../ChartCopyButton";
 import zoomPlugin from "chartjs-plugin-zoom";
 import InfoButton from "@/app/components/InfoButton";
@@ -32,7 +32,8 @@ export default function TaxaBarChart({
 	libsWithSampleById,
 	sampFields,
 	userDefinedFields,
-	libraryLabels
+	libraryLabels,
+	taxaRanksWithData
 }: {
 	assignsByFeatureid: AssignsByFeatureid;
 	taxonomiesByName: TaxonomiesByName;
@@ -40,6 +41,7 @@ export default function TaxaBarChart({
 	sampFields: string[];
 	userDefinedFields?: Set<string>;
 	libraryLabels: Map<LibraryModel["id"], string>;
+	taxaRanksWithData: TaxonomicRank[];
 }) {
 	const ref = useRef<ChartJS<"bar", { x: string; y: number }[]>>(null);
 
@@ -225,7 +227,7 @@ export default function TaxaBarChart({
 						className="select"
 						disabled={loading}
 					>
-						{TaxonomicRanks.map((rank) => (
+						{taxaRanksWithData.map((rank) => (
 							<option key={rank}>{rank}</option>
 						))}
 					</select>

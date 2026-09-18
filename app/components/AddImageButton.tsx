@@ -6,14 +6,13 @@ import addImageAction from "@/app/actions/image/addImage";
 import { upload } from "@vercel/blob/client";
 import Modal from "./Modal";
 import type { ProjectModel, TaxonomyModel } from "@/app/generated/prisma/models";
+import ImageSubmitForm, { getAttributionFromForm, getImageFile, getImageFromForm } from "./ImageSubmitForm";
 
 export default function AddImageButton({
-	attributions,
 	title,
 	homePage,
 	target
 }: {
-	attributions: AttributionModel[];
 	title: string;
 	homePage?: true;
 	target?:
@@ -43,30 +42,26 @@ export default function AddImageButton({
 
 		setLoading(true);
 
-		const formData = new FormData(event.currentTarget);
-		if (!newAttribution && currAttribution) {
-			formData.set("attributionTitle", currAttribution.attributionTitle);
+		const form = event.currentTarget;
+		const imageFile = getImageFile(form)!;
+		if (!imageFile.type.startsWith("image")) {
+			setError("Image file must have type image/*");
 		}
-
-		const imageFile = formData.get("imageFile") as File;
-		const url = (
-			await upload(`${homePage ? "carousel" : "images"}/${encodeURIComponent(imageFile.name)}`, imageFile, {
-				access: "public",
-				handleUploadUrl: "/api/internal/file/upload",
-				multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
-			})
-		).url;
-		formData.set("url", url);
-		formData.delete("imageFile");
-
-		if (homePage) {
-			formData.set("homePage", "true");
-		} else {
-			formData.set("homePage", "false");
-		}
+		const image = {
+			...getImageFromForm(form, newAttribution, currAttribution),
+			homePage,
+			url: (
+				await upload(`${homePage ? "carousel" : "images"}/${imageFile.name}`, imageFile, {
+					access: "public",
+					handleUploadUrl: "/api/file/upload",
+					multipart: imageFile.size > 100 * 1000 * 1000 //only use multipart for files over 100 MB
+				})
+			).url
+		};
+		const attribution = getAttributionFromForm(form, newAttribution);
 
 		try {
-			const result = await addImageAction(formData, newAttribution, target);
+			const result = await addImageAction({ image, attribution, target });
 			if (result.statusMessage === "success") {
 				reset();
 				modalRef.current?.close();
@@ -95,114 +90,13 @@ export default function AddImageButton({
 				className="w-[85vw] max-w-3xl max-h-[75vh] overflow-y-auto my-8"
 			>
 				<form ref={formRef} onSubmit={handleSubmit}>
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Image name</legend>
-						<input name="name" type="text" className="input" placeholder="Image name" required />
-					</fieldset>
-
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Image file</legend>
-						<input name="imageFile" type="file" className="file-input" required accept="image/*" />
-					</fieldset>
-
-					<div className="border border-primary rounded-sm p-2 my-2">
-						<div className="grid grid-cols-2 gap-5">
-							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Attribution</legend>
-								<select
-									className="select"
-									disabled={newAttribution}
-									value={currAttribution?.attributionTitle}
-									onChange={(e) =>
-										setCurrAttribution(attributions.find((attr) => attr.attributionTitle === e.target.value))
-									}
-								>
-									<option value="">No attribution</option>
-									{attributions.map((attr) => (
-										<option key={attr.id}>{attr.attributionTitle}</option>
-									))}
-								</select>
-								<span className="label">Optional</span>
-							</fieldset>
-
-							<label className="label">
-								<input
-									type="checkbox"
-									className="toggle"
-									checked={newAttribution}
-									onChange={(e) => setNewAttribution(e.target.checked)}
-								/>
-								New attribution
-							</label>
-						</div>
-
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Attribution title</legend>
-							<input
-								name="attributionTitle"
-								type="text"
-								className="input"
-								placeholder="Attribution title"
-								disabled={!newAttribution}
-								required={!!currAttribution || newAttribution}
-								defaultValue={currAttribution && !newAttribution ? currAttribution.attributionTitle : undefined}
-							/>
-						</fieldset>
-
-						{/* TODO: add names inputs with add button */}
-
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Attribution URL</legend>
-							<input
-								name="attributionUrl"
-								type="text"
-								className="input"
-								placeholder="Attribution URL"
-								disabled={!newAttribution}
-								defaultValue={
-									currAttribution && !newAttribution && currAttribution.attributionUrl
-										? currAttribution.attributionUrl
-										: undefined
-								}
-							/>
-							<p className="label">Optional</p>
-						</fieldset>
-
-						<fieldset className="fieldset">
-							<legend className="fieldset-legend">Attribution Institution</legend>
-							<input
-								name="attributionInstitution"
-								type="text"
-								className="input"
-								placeholder="Attribution Institution"
-								disabled={!newAttribution}
-								defaultValue={
-									currAttribution && !newAttribution && currAttribution.attributionInstitution
-										? currAttribution.attributionInstitution
-										: undefined
-								}
-							/>
-							<p className="label">Optional</p>
-						</fieldset>
-					</div>
-
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Description</legend>
-						<input type="text" className="input" placeholder="Description" name="description" />
-						<p className="label">Optional</p>
-					</fieldset>
-
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Location</legend>
-						<input type="text" className="input" placeholder="Location" name="location" />
-						<p className="label">Optional</p>
-					</fieldset>
-
-					<fieldset className="fieldset">
-						<legend className="fieldset-legend">Date taken</legend>
-						<input type="date" className="input" placeholder="Date taken" name="dateTaken" />
-						<p className="label">Optional</p>
-					</fieldset>
+					<ImageSubmitForm
+						newAttribution={newAttribution}
+						setNewAttribution={setNewAttribution}
+						currAttribution={currAttribution}
+						setCurrAttribution={setCurrAttribution}
+						required
+					/>
 
 					<button className="btn btn-primary">Submit</button>
 				</form>
