@@ -47,8 +47,13 @@ const DocsSections = {
 				"searching-on-explore": { title: "Searching on Explore Pages" },
 				projects: { title: "Projects" },
 				samples: { title: "Samples" },
+				assays: { title: "Assays" },
+				"assay-preps": { title: "AssayPreps" },
+				libraries: { title: "Libraries" },
 				analyses: { title: "Analyses" },
+				occurrences: { title: "Occurrences" },
 				features: { title: "Features" },
+				assignments: { title: "Assignments" },
 				taxonomies: { title: "Taxonomies" }
 			}
 		},
