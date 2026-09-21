@@ -16,7 +16,10 @@ const docContentProseClassName =
 	"[&_h4]:text-lg [&_h4]:font-medium [&_h4]:text-base-content [&_h4]:mt-6 [&_h4]:mb-1.5 " +
 	"[&_div>h4:first-child]:!mt-0 " +
 	"[&_h5]:text-lg [&_h5]:font-medium [&_h5]:text-base-content [&_h5]:mt-6 [&_h5]:mb-1.5 " +
-	"[&_table_code]:text-base [&_table_code]:font-mono";
+	"[&_table_code]:text-base [&_table_code]:font-mono " +
+	//words in a sentence stay mono, without the chip background prose and page classes add
+	"[&_:not(pre)>code]:!bg-transparent [&_:not(pre)>code]:!p-0 [&_:not(pre)>code]:!rounded-none " +
+	"[&_:not(pre)>code]:!font-normal [&_:not(pre)>code]:font-mono [&_:not(pre)>code]:!text-inherit";
 
 export default function DocsPageSection<P extends DocsPage>({
 	page,
@@ -115,7 +118,7 @@ export default function DocsPageSection<P extends DocsPage>({
 
 function DocsPageSubsection({ id, title, children }: { id: string; title: string; children: ReactNode }) {
 	return (
-		<div id={id} className="pt-5">
+		<div id={id} className="pt-16">
 			<h2 className="text-3xl font-semibold tracking-tight text-base-content mb-2">{title}</h2>
 			<div className={docContentProseClassName}>{children}</div>
 		</div>

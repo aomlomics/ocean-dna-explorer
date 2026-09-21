@@ -11,13 +11,13 @@ export default function OptionSummary({
 	rules?: ReactNode;
 }) {
 	return (
-		<div className="mb-5 rounded-md border border-base-content/10 bg-base-200/40 p-4 space-y-2">
-			<div className="font-mono text-sm break-all whitespace-pre-line">{syntax}</div>
-			<div className="text-sm">
+		<div className="mb-5 w-fit max-w-3xl rounded-md bg-base-200/60 px-4 py-3 space-y-1">
+			<div className="font-mono break-all whitespace-pre-line">{syntax}</div>
+			<div>
 				<span className="font-semibold">Works on:</span> {worksOn}
 			</div>
 			{rules ? (
-				<div className="text-sm">
+				<div>
 					<span className="font-semibold">Rules:</span> {rules}
 				</div>
 			) : null}

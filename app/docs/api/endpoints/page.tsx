@@ -59,18 +59,37 @@ const optionSupport = [
 	}
 ];
 
+//white in the dark theme; base text color in light so the mark stays visible
+function EndpointOptionMark({ supported }: { supported: boolean }) {
+	return (
+		<>
+			<span
+				aria-hidden="true"
+				className={
+					supported
+						? "text-white [html[data-theme='light']_&]:text-base-content"
+						: "font-semibold text-error [html[data-theme='dark']_&]:text-red-400"
+				}
+			>
+				{supported ? "✓" : "✕"}
+			</span>
+			<span className="sr-only">{supported ? "Yes" : "No"}</span>
+		</>
+	);
+}
+
 //shared summary block so every endpoint is described the same way
 function EndpointSummary({ path, returns, options }: { path: string; returns: ReactNode; options: ReactNode }) {
 	return (
-		<div className="mb-5 rounded-md border border-base-content/10 bg-base-200/40 p-4 space-y-2">
-			<div className="flex flex-wrap items-baseline gap-2">
-				<span className="badge badge-sm badge-primary badge-outline font-mono">GET</span>
-				<span className="font-mono text-sm break-all">{path}</span>
+		<div className="mb-5 w-fit max-w-3xl rounded-md bg-base-200/60 px-4 py-3 space-y-1">
+			<div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-lg">
+				<span className="font-mono font-semibold">GET</span>
+				<span className="font-mono font-normal break-all">{path}</span>
 			</div>
-			<div className="text-sm">
+			<div>
 				<span className="font-semibold">Returns:</span> {returns}
 			</div>
-			<div className="text-sm">
+			<div>
 				<span className="font-semibold">Options:</span> {options}
 			</div>
 		</div>
@@ -505,9 +524,15 @@ export default async function ApiEndpointsPage() {
 														{row.option}
 													</Link>
 												</td>
-												<td>{row.table ? "Yes" : "No"}</td>
-												<td>{row.count ? "Yes" : "No"}</td>
-												<td>{row.id ? "Yes" : "No"}</td>
+												<td>
+													<EndpointOptionMark supported={row.table} />
+												</td>
+												<td>
+													<EndpointOptionMark supported={row.count} />
+												</td>
+												<td>
+													<EndpointOptionMark supported={row.id} />
+												</td>
 											</tr>
 										))}
 									</tbody>

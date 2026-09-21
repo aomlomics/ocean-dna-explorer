@@ -57,15 +57,18 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 		}
 	};
 
+	const lines = code.split("\n");
+	//only clip the preview when there is more than the three lines we show
+	const clipPreview = lines.length > 3;
+
 	// Determine width class based on content
 	const getWidthClass = () => {
-		// Single line (like URLs)
-		if (!code.includes("\n")) {
-			return "w-fit min-w-[300px]";
+		// Single line (like a count)
+		if (lines.length === 1) {
+			return "w-fit";
 		}
 
 		// Short multiline (like small JSON)
-		const lines = code.split("\n");
 		const maxLineLength = Math.max(...lines.map((line) => line.length));
 		if (maxLineLength < 50 && lines.length < 8) {
 			return "w-fit max-w-xl";
@@ -159,8 +162,7 @@ export default function ApiCodeBlock({ language, url }: { language: string; url:
 						margin: 0,
 						padding: "1rem",
 						paddingTop: 0,
-						height: "100px", // Limit height of the preview
-						overflow: "hidden"
+						...(clipPreview ? { height: "100px", overflow: "hidden" } : {})
 					}}
 					wrapLongLines={false}
 				>

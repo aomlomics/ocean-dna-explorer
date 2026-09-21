@@ -55,16 +55,12 @@ export default async function ApiIntroductionPage() {
 					id: "how-to-use-api",
 					title: "Making Your First API Query",
 					content: (
-						<div className="space-y-8 mt-10">
+						<div className="mt-10 space-y-10">
 							{/* Step 1 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">1</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
+							<div className="flex items-start gap-4">
+								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">1</span>
+								<div className="min-w-0">
+								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Find the Data You Need</h4>
 									<p>
 										Before you can ask for data, you need to know what&apos;s available. The best place to start is our{" "}
 										<Link href="/docs/api/schema" className="link link-primary">
@@ -84,18 +80,40 @@ export default async function ApiIntroductionPage() {
 							</div>
 
 							{/* Step 2 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">2</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Build a Basic Query</h4>
+							<div className="flex items-start gap-4">
+								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">2</span>
+								<div className="min-w-0">
+								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Build a Basic Query</h4>
 									<p>
-										The simplest query just retrieves data from a single table. Start with the table name (the{" "}
-										<strong>endpoint</strong>) and add <strong>parameters</strong> after the `?` to refine your search.
-										For example, you can limit the number of results or specify which fields to return.
+										The simplest query retrieves data from a single table. The table name in the path is the endpoint.
+									</p>
+									<ApiQueryDiagram
+										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+										endpoint={{
+											value: "/api/project",
+											label: "Get data from the Project table",
+											colorClass: "text-primary"
+										}}
+										description="This URL is only the endpoint. It asks for the project table and does not narrow the results yet."
+									/>
+								</div>
+							</div>
+
+							{/* Step 3 */}
+							<div className="flex items-start gap-4">
+								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">3</span>
+								<div className="min-w-0">
+								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Add Options</h4>
+									<p>
+										Options go after the ? and change the response.{" "}
+										<Link href="/docs/api/queryParameters#field-selection" className="link link-primary">
+											fields
+										</Link>{" "}
+										chooses which columns come back.{" "}
+										<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
+											limit
+										</Link>{" "}
+										caps how many records you get. A query works without either one.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -112,34 +130,61 @@ export default async function ApiIntroductionPage() {
 											},
 											{ value: "limit=5", label: "Return a maximum of 5 records", colorClass: "text-primary" }
 										]}
+										description="This query asks the project table for the id and project_name of the first 5 records."
+									/>
+								</div>
+							</div>
+
+							{/* Step 4 */}
+							<div className="flex items-start gap-4">
+								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">4</span>
+								<div className="min-w-0">
+								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Filter the Records</h4>
+									<p>
+										A filter keeps records that match a value. It sits after the ? like an option, but the name is a
+										field on the table. fields and limit change what comes back. A filter changes which records match.
+									</p>
+									<ApiQueryDiagram
+										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+										endpoint={{
+											value: "/api/project",
+											label: "Get data from the Project table",
+											colorClass: "text-primary"
+										}}
+										parameters={[
+											{
+												value: "project_id=gomecc4",
+												label: "Only records whose project_id is gomecc4",
+												colorClass: "text-primary"
+											}
+										]}
 										description={
 											<>
-												This query asks the <strong>project</strong> table for the <strong>id</strong> and{" "}
-												<strong>project_name</strong> of the first <strong>5</strong> records.
+												See{" "}
+												<Link href="/docs/api/searching" className="link link-primary">
+													Filtering and Searching
+												</Link>{" "}
+												for text search, locations, and the other ways to filter.
 											</>
 										}
 									/>
 								</div>
 							</div>
 
-							{/* Step 3 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">3</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Combine Data with Relations</h4>
+							{/* Step 5 */}
+							<div className="flex items-start gap-4">
+								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">5</span>
+								<div className="min-w-0">
+								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Combine Data with Relations</h4>
 									<p>
 										This is the most powerful feature of the API. Instead of fetching a project, then making a{" "}
 										<em>separate</em> request to find its samples, you can get it all in one go. By adding the{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">relations</code> parameter, you&apos;re telling
+										<code className="mx-1 font-mono !bg-transparent !rounded-none">relations</code> parameter, you&apos;re telling
 										the API: &quot;also give me the data from the related table.&quot;
 									</p>
 									<p className="mt-2">
 										In the example below, we get a specific project and also retrieve all the data from the{" "}
-										<code className="px-1 py-0.5 bg-base-300 rounded">Samples</code> table that are linked to it.
+										<code className="mx-1 font-mono !bg-transparent !rounded-none">Samples</code> table that are linked to it.
 									</p>
 									<ApiQueryDiagram
 										baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
@@ -158,8 +203,7 @@ export default async function ApiIntroductionPage() {
 										]}
 										description={
 											<>
-												This query retrieves one specific project and includes all of its related{" "}
-												<strong>Samples</strong>. See the{" "}
+												This query retrieves one specific project and includes all of its related Samples. See the{" "}
 												<Link href="/docs/api/queryParameters#relations" className="link link-primary">
 													Relations
 												</Link>{" "}
@@ -170,15 +214,11 @@ export default async function ApiIntroductionPage() {
 								</div>
 							</div>
 
-							{/* Step 4 */}
-							<div className="flex items-start space-x-6 p-6 rounded-lg">
-								<div className="shrink-0">
-									<div className="flex items-center justify-center h-16 w-16 rounded-lg bg-primary/10 text-primary border-2 border-base-content/20 shadow-sm">
-										<span className="text-3xl font-bold">4</span>
-									</div>
-								</div>
-								<div>
-									<h4 className="text-xl font-semibold leading-6 mb-2">Make the Request</h4>
+							{/* Step 6 */}
+							<div className="flex items-start gap-4">
+								<span className="w-8 shrink-0 text-4xl font-semibold leading-none text-primary">6</span>
+								<div className="min-w-0">
+								<h4 className="!mt-0 mb-2 !text-xl !font-semibold">Make the Request</h4>
 									<p>
 										Pasting the URL in your browser is a great way to quickly test a query. The text you see is in JSON
 										format, a standard way for computers to exchange data. The{" "}
@@ -198,12 +238,12 @@ export default async function ApiIntroductionPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								Any request whose path starts with <code className="px-1 py-0.5 bg-base-300 rounded">/api</code> counts toward a limit of{" "}
+								Any request whose path starts with <code className="mx-1 font-mono !bg-transparent !rounded-none">/api</code> counts toward a limit of{" "}
 								<strong>20 requests every 10 seconds</strong>, measured per IP address. Paths under{" "}
-								<code className="px-1 py-0.5 bg-base-300 rounded">/api/internal</code> are not counted.
+								<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/internal</code> are not counted.
 							</p>
 							<p className="mb-4">
-								Going over the limit returns <code className="px-1 py-0.5 bg-base-300 rounded">429 Too Many Requests</code>. Wait for the 10 second window to
+								Going over the limit returns <code className="mx-1 font-mono !bg-transparent !rounded-none">429 Too Many Requests</code>. Wait for the 10 second window to
 								reset, then retry. A short pause between calls in a loop is enough for normal use.
 							</p>
 							<p>
@@ -211,7 +251,8 @@ export default async function ApiIntroductionPage() {
 								<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
 									limit and page
 								</Link>{" "}
-								instead of one unbounded request. For a download that cannot fit in that pace, contact the ODE team.
+								instead of one unbounded request. We would be happy to accommodate large data retrieval requests if you
+								contact the ODE team.
 							</p>
 						</>
 					)
@@ -293,39 +334,43 @@ if (http_status(response)$category == "Success") {
 
 							<ul className="list-disc ml-6 space-y-3">
 								<li>
-									<strong>No sign in required.</strong> There is no API key and no account needed. See{" "}
+									No sign in required. There is no API key and no account needed. See{" "}
 									<Link href="#rate-limits" className="link link-primary">
 										Rate Limits
 									</Link>{" "}
 									before you loop over requests.
 								</li>
 								<li>
-									<strong>The API returns all data by default.</strong> The website shows only trusted data unless you
-									change the toggle. The API does the opposite. Add{" "}
+									The API returns all data by default. The website shows only trusted data unless you change the toggle.
+									The API does the opposite. Add{" "}
 									<Link href="/docs/api/queryParameters#trusted-data" className="link link-primary">
 										trusted=true
 									</Link>{" "}
 									to match what the website shows.
 								</li>
 								<li>
-									<strong>Table names are flexible.</strong> Singular or plural, any capitalization. So{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">/api/sample</code> and <code className="px-1 py-0.5 bg-base-300 rounded">/api/Samples</code> are the same request.
+									Table names are flexible. Singular or plural, any capitalization. So{" "}
+									<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/sample</code> and{" "}
+									<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/Samples</code> are the same request.
 								</li>
 								<li>
-									<strong>Each route accepts its own options.</strong> An option that works on one endpoint is not
-									guaranteed to work on another, and unsupported options return an error. Check the{" "}
+									Each route accepts its own options. An option that works on one endpoint is not guaranteed to work on
+									another, and unsupported options return an error. Check the{" "}
 									<Link href="/docs/api/endpoints#options-by-endpoint" className="link link-primary">
 										options by endpoint
 									</Link>{" "}
 									table.
 								</li>
 								<li>
-									<strong>Anything unrecognized is read as a field filter.</strong> A misspelled option name fails the
-									request, because no field by that name exists on the table.
+									Anything unrecognized is read as a field filter. A misspelled option name fails the request, because no
+									field by that name exists on the table.
 								</li>
 								<li>
-									<strong>Record IDs are database IDs.</strong> <code className="px-1 py-0.5 bg-base-300 rounded">/api/project/5</code> looks up the{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">id</code> field, not <code className="px-1 py-0.5 bg-base-300 rounded">project_id</code> or any other name in the data.
+									Record IDs are database IDs.{" "}
+									<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/project/5</code> looks up the{" "}
+									<code className="mx-1 font-mono !bg-transparent !rounded-none">id</code> field, not{" "}
+									<code className="mx-1 font-mono !bg-transparent !rounded-none">project_id</code> or any other name in the
+									data.
 								</li>
 							</ul>
 
@@ -333,7 +378,7 @@ if (http_status(response)$category == "Success") {
 								<p>
 									Pasting a URL into the address bar is a great way to test a query, with one catch. Your browser
 									sends the cookie that stores the trusted toggle from the website, and that cookie overrides{" "}
-									<code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> in the URL.
+									<code className="mx-1 font-mono !bg-transparent !rounded-none">trusted=true</code> in the URL.
 								</p>
 								<p>
 									If you are testing trusted data in a browser, switch the toggle on first. Requests from Python, R,
@@ -347,143 +392,104 @@ if (http_status(response)$category == "Success") {
 					id: "essential-information",
 					title: "Essential API Information",
 					content: (
-						<div className="space-y-6">
-							<p className="mb-4">
+						<div className="space-y-8">
+							<p>
 								Before diving into the API, here is some essential information that will help you use it effectively:
 							</p>
 
-							<div className="space-y-6">
-								<div>
-									<h4 className="font-medium mb-3 text-lg">1. Ways to Access Data</h4>
-									<p className="mb-3">There are multiple ways to access and explore data:</p>
-									<ul className="list-disc ml-6 space-y-3">
-										<li>
-											<Link href="/explore/project" className="link link-primary font-semibold">
-												Explore
-											</Link>{" "}
-											Pages : View all data from each table with filters. You can only filter on fields within the table
-											you are looking at. Click on any blue data field to view the detail page for that specific record.
-										</li>
-										<li>
-											<Link href="/search" className="link link-primary font-semibold">
-												Search
-											</Link>{" "}
-											page : Build complex queries using data from multiple tables, allowing you to filter on both
-											fields <em>and</em> relations. Filters are combined with AND logic by default. Click the + Add OR
-											button to add OR conditions.
-										</li>
-										<li>
-											<strong>Direct API Access</strong>: Paste API URLs directly in your browser (e.g.,{" "}
-											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>
-											) to get JSON responses. Great for testing queries before coding.
-										</li>
-										<li>
-											<strong>Code Examples</strong>: Use the{" "}
-											<Link href="#quick-start-code" className="link link-primary">
-												Quick Start Code Examples
-											</Link>{" "}
-											above to fetch data programmatically in Python or R for analysis and visualization.
-										</li>
-									</ul>
-								</div>
-
-								<div>
-									<h4 className="font-medium mb-3 text-lg">2. Combining Tables with Relations</h4>
-									<div className="mt-4 space-y-6">
-										<p>Here are some examples:</p>
-
-										<div>
-											<p className="mb-2">1. Getting all DNA sequences found in a specific sample</p>
-											<p className="mb-2 ml-4">
-												You want to query the feature table, but also get all related occurrences:
-											</p>
-											<div className="ml-4 space-y-2">
-												<div>
-													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/feature</code>
-												</div>
-												<div>
-													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=occurrences</code>
-												</div>
-											</div>
-										</div>
-
-										<div>
-											<p className="mb-2">2. Finding all samples collected during a specific project</p>
-											<p className="mb-2 ml-4">You want to query the project table and get all its samples:</p>
-											<div className="ml-4 space-y-2">
-												<div>
-													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code>
-												</div>
-												<div>
-													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Samples</code>
-												</div>
-											</div>
-										</div>
-
-										<div>
-											<p className="mb-2">3. Getting all sequencing analyses for a project</p>
-											<p className="mb-2 ml-4">
-												You want to query the project table and include its analyses:
-											</p>
-											<div className="ml-4 space-y-2">
-												<div>
-													Query the table:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/project</code>
-												</div>
-												<div>
-													Include related data:{" "}
-													<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">?relations=Analyses</code>
-												</div>
-											</div>
-										</div>
-
-										<p className="mt-6">
-											Pro tip: Use the{" "}
-											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/❮table❯/relations</code> endpoint
-											to see the exact relation names available for any table. Or check the{" "}
-											<Link href="/docs/api/schema#table-definitions" className="link link-primary">
-												Table Definitions
-											</Link>{" "}
-											section of the Database Schema page.
-										</p>
-									</div>
-								</div>
-
-								<div>
-									<h4 className="font-medium mb-3 text-lg">3. Do I Need to Sign In?</h4>
-									<p className="mb-2">
-										<strong>No authentication required</strong> for most features:
-									</p>
-									<ul className="list-disc ml-6 space-y-1 mb-3">
-										<li>Using the API</li>
-										<li>Using the Search page</li>
-										<li>Using the Explore pages</li>
-										<li>Viewing any data on the website</li>
-									</ul>
-									<p className="mb-3">
-										<strong>You DO need to sign in</strong> and request Contributor access to submit data.
-									</p>
-									<p>
-										See{" "}
-										<Link href="#rate-limits" className="link link-primary">
-											Rate Limits
+							<div>
+								<h4 className="mb-2">Ways to access data</h4>
+								<p className="mb-3">There are multiple ways to access and explore data:</p>
+								<ul className="list-disc ml-6 space-y-3">
+									<li>
+										<Link href="/explore/project" className="link link-primary">
+											Explore
 										</Link>{" "}
-										before you script a large download. For pulls that need more than that pace, please{" "}
-										<Link
-											href="https://github.com/aomlomics/node/issues"
-											className="link link-primary"
-											target="_blank"
-											rel="noreferrer"
-										>
-											contact our development team
-										</Link>
-										.
-									</p>
-								</div>
+										pages: View all data from each table with filters. You can only filter on fields within the table you
+										are looking at. Click on any blue data field to view the detail page for that specific record.
+									</li>
+									<li>
+										<Link href="/search" className="link link-primary">
+											Search
+										</Link>{" "}
+										page: Build complex queries using data from multiple tables, allowing you to filter on both fields
+										and relations. Filters are combined with AND logic by default. Click the + Add OR button to add OR
+										conditions.
+									</li>
+									<li>
+										Direct API access: Paste API URLs directly in your browser (e.g.,{" "}
+										<code className="mx-1 font-mono !bg-transparent !rounded-none">{`${process.env.NEXT_PUBLIC_URL}/api/project?limit=3`}</code>
+										) to get JSON responses. Great for testing queries before coding.
+									</li>
+									<li>
+										Code examples: Use the{" "}
+										<Link href="#quick-start-code" className="link link-primary">
+											Quick Start Code Examples
+										</Link>{" "}
+										above to fetch data programmatically in Python or R for analysis and visualization.
+									</li>
+								</ul>
+							</div>
+
+							<div>
+								<h4 className="mb-2">Combining tables with relations</h4>
+								<p className="mb-3">Here are some examples:</p>
+								<ul className="list-disc ml-6 space-y-3">
+									<li>
+										Getting all DNA sequences found in a specific sample. You want to query the feature table, but also
+										get all related occurrences. Query the table:{" "}
+										<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/feature</code>. Include related
+										data: <code className="mx-1 font-mono !bg-transparent !rounded-none">?relations=occurrences</code>.
+									</li>
+									<li>
+										Finding all samples collected during a specific project. You want to query the project table and get
+										all its samples. Query the table:{" "}
+										<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/project</code>. Include related
+										data: <code className="mx-1 font-mono !bg-transparent !rounded-none">?relations=Samples</code>.
+									</li>
+									<li>
+										Getting all sequencing analyses for a project. You want to query the project table and include its
+										analyses. Query the table:{" "}
+										<code className="mx-1 font-mono !bg-transparent !rounded-none">/api/project</code>. Include related
+										data: <code className="mx-1 font-mono !bg-transparent !rounded-none">?relations=Analyses</code>.
+									</li>
+								</ul>
+								<p className="mt-3">
+									Use the <code className="mx-1 font-mono !bg-transparent !rounded-none">/api/❮table❯/relations</code>{" "}
+									endpoint to see the exact relation names available for any table. Or check the{" "}
+									<Link href="/docs/api/schema#table-definitions" className="link link-primary">
+										Table Definitions
+									</Link>{" "}
+									section of the Database Schema page.
+								</p>
+							</div>
+
+							<div>
+								<h4 className="mb-2">Do I need to sign in?</h4>
+								<p className="mb-2">No authentication is required for most features:</p>
+								<ul className="list-disc ml-6 space-y-1 mb-3">
+									<li>Using the API</li>
+									<li>Using the Search page</li>
+									<li>Using the Explore pages</li>
+									<li>Viewing any data on the website</li>
+								</ul>
+								<p className="mb-3">You do need to sign in and request Contributor access to submit data.</p>
+								<p>
+									See{" "}
+									<Link href="#rate-limits" className="link link-primary">
+										Rate Limits
+									</Link>{" "}
+									before you script a large download. For pulls that need more than that pace, please{" "}
+									<Link
+										href="https://github.com/aomlomics/node/issues"
+										className="link link-primary"
+										target="_blank"
+										rel="noreferrer"
+									>
+										contact our development team
+									</Link>
+									.
+								</p>
 							</div>
 						</div>
 					)
