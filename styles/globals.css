@@ -135,12 +135,16 @@
 }
 
 /* Bottom-left FAB flower: daisyUI's arc is the top-left quadrant. Reuse their
-   RTL --flip-degree math so a left-corner FAB opens up and to the right. */
+   RTL --flip-degree math so a left-corner FAB opens up and to the right.
+   Viewport placement lives on the wrapper in TrustedFab, so undo daisyUI's
+   fixed/end-4/bottom-4 on this node. Skip the trigger and close control —
+   those stay at --position: 0 so the closed shield is not translated up the arc. */
 .fab.fab-start {
-	inset-inline-end: auto;
+	position: relative;
+	inset: auto;
 }
 
-.fab-flower.fab-start > * {
+.fab-flower.fab-start > *:not(:first-child):not(.fab-close) {
 	transform: translateX(calc(cos(var(--flip-degree)) * var(--position)))
 		translateY(calc(sin(var(--flip-degree)) * -1 * var(--position)));
 }

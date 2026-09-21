@@ -1,4 +1,5 @@
 import ApiQueryDiagram from "@/app/components/docs/ApiQueryDiagram";
+import Callout from "@/app/components/docs/Callout";
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import { prisma } from "@/app/helpers/prisma";
@@ -40,9 +41,12 @@ export default async function ApiIntroductionPage() {
 						you understand how to use the API to query and retrieve data from the Ocean DNA Explorer.
 					</p>
 					<p>
-						All you need is a web browser or a simple script to start fetching data. No authentication is required, and
-						there are currently no usage limits, please be reasonable. Reach out to the ODE team for large data
-						retrieval requests.
+						All you need is a web browser or a simple script to start fetching data. No authentication is required.
+						Requests are rate limited. See{" "}
+						<Link href="#rate-limits" className="link link-primary">
+							Rate Limits
+						</Link>
+						. Reach out to the ODE team for large data retrieval requests.
 					</p>
 				</div>
 			}
@@ -63,7 +67,7 @@ export default async function ApiIntroductionPage() {
 									<h4 className="text-xl font-semibold leading-6 mb-2">Find the Data You Need</h4>
 									<p>
 										Before you can ask for data, you need to know what&apos;s available. The best place to start is our{" "}
-										<Link href="#database-schema" className="link link-primary">
+										<Link href="/docs/api/schema" className="link link-primary">
 											Database Schema
 										</Link>
 										. The Entity Relationship Diagram (ERD) is a map of the database that shows you what tables are
@@ -71,7 +75,7 @@ export default async function ApiIntroductionPage() {
 									</p>
 									<p className="mt-2">
 										Once you know which table you&apos;re interested in (e.g., Project), look at the{" "}
-										<Link href="#table-definitions" className="link link-primary">
+										<Link href="/docs/api/schema#table-definitions" className="link link-primary">
 											Table Definitions
 										</Link>{" "}
 										to find the exact names of the data columns, or fields, that you can use in your queries.
@@ -106,12 +110,12 @@ export default async function ApiIntroductionPage() {
 												label: "Only include the id and project_name fields",
 												colorClass: "text-primary"
 											},
-											{ value: "limit=3", label: "Return a maximum of 3 records", colorClass: "text-primary" }
+											{ value: "limit=5", label: "Return a maximum of 5 records", colorClass: "text-primary" }
 										]}
 										description={
 											<>
 												This query asks the <strong>project</strong> table for the <strong>id</strong> and{" "}
-												<strong>project_name</strong> of the first <strong>3</strong> records.
+												<strong>project_name</strong> of the first <strong>5</strong> records.
 											</>
 										}
 									/>
@@ -156,7 +160,7 @@ export default async function ApiIntroductionPage() {
 											<>
 												This query retrieves one specific project and includes all of its related{" "}
 												<strong>Samples</strong>. See the{" "}
-												<Link href="#relations" className="link link-primary">
+												<Link href="/docs/api/queryParameters#relations" className="link link-primary">
 													Relations
 												</Link>{" "}
 												section for more.
@@ -189,6 +193,30 @@ export default async function ApiIntroductionPage() {
 					)
 				},
 				{
+					id: "rate-limits",
+					title: "Rate Limits",
+					content: (
+						<>
+							<p className="mb-4">
+								Any request whose path starts with <code className="px-1 py-0.5 bg-base-300 rounded">/api</code> counts toward a limit of{" "}
+								<strong>20 requests every 10 seconds</strong>, measured per IP address. Paths under{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">/api/internal</code> are not counted.
+							</p>
+							<p className="mb-4">
+								Going over the limit returns <code className="px-1 py-0.5 bg-base-300 rounded">429 Too Many Requests</code>. Wait for the 10 second window to
+								reset, then retry. A short pause between calls in a loop is enough for normal use.
+							</p>
+							<p>
+								Pull large tables with{" "}
+								<Link href="/docs/api/queryParameters#result-limiting" className="link link-primary">
+									limit and page
+								</Link>{" "}
+								instead of one unbounded request. For a download that cannot fit in that pace, contact the ODE team.
+							</p>
+						</>
+					)
+				},
+				{
 					id: "quick-start-code",
 					title: "Quick Start Code Examples",
 					content: (
@@ -203,7 +231,7 @@ import json
 import pandas as pd
 
 # Make API request to desired endpoint
-url = "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
+url = "${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_id,project_name&limit=5"  # <-- Replace this
 response = requests.get(url)
 
 # Check if request was successful
@@ -232,7 +260,7 @@ else:
 library(jsonlite)
 
 # Make API request
-url <- "${process.env.NEXT_PUBLIC_URL}/api/project"  # <-- Replace this
+url <- "${process.env.NEXT_PUBLIC_URL}/api/project?fields=id,project_id,project_name&limit=5"  # <-- Replace this
 response <- GET(url)
 
 # Check if request was successful
@@ -253,6 +281,65 @@ if (http_status(response)$category == "Success") {
 }`}
 								/>
 							</div>
+						</>
+					)
+				},
+				{
+					id: "api-rules",
+					title: "Rules to Know",
+					content: (
+						<>
+							<p className="mb-4">These apply to every endpoint and explain most surprises.</p>
+
+							<ul className="list-disc ml-6 space-y-3">
+								<li>
+									<strong>No sign in required.</strong> There is no API key and no account needed. See{" "}
+									<Link href="#rate-limits" className="link link-primary">
+										Rate Limits
+									</Link>{" "}
+									before you loop over requests.
+								</li>
+								<li>
+									<strong>The API returns all data by default.</strong> The website shows only trusted data unless you
+									change the toggle. The API does the opposite. Add{" "}
+									<Link href="/docs/api/queryParameters#trusted-data" className="link link-primary">
+										trusted=true
+									</Link>{" "}
+									to match what the website shows.
+								</li>
+								<li>
+									<strong>Table names are flexible.</strong> Singular or plural, any capitalization. So{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">/api/sample</code> and <code className="px-1 py-0.5 bg-base-300 rounded">/api/Samples</code> are the same request.
+								</li>
+								<li>
+									<strong>Each route accepts its own options.</strong> An option that works on one endpoint is not
+									guaranteed to work on another, and unsupported options return an error. Check the{" "}
+									<Link href="/docs/api/endpoints#options-by-endpoint" className="link link-primary">
+										options by endpoint
+									</Link>{" "}
+									table.
+								</li>
+								<li>
+									<strong>Anything unrecognized is read as a field filter.</strong> A misspelled option name fails the
+									request, because no field by that name exists on the table.
+								</li>
+								<li>
+									<strong>Record IDs are database IDs.</strong> <code className="px-1 py-0.5 bg-base-300 rounded">/api/project/5</code> looks up the{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">id</code> field, not <code className="px-1 py-0.5 bg-base-300 rounded">project_id</code> or any other name in the data.
+								</li>
+							</ul>
+
+							<Callout title="The API is built for code, not the browser">
+								<p>
+									Pasting a URL into the address bar is a great way to test a query, with one catch. Your browser
+									sends the cookie that stores the trusted toggle from the website, and that cookie overrides{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> in the URL.
+								</p>
+								<p>
+									If you are testing trusted data in a browser, switch the toggle on first. Requests from Python, R,
+									or any other script do not send the cookie and always behave as written.
+								</p>
+							</Callout>
 						</>
 					)
 				},
@@ -301,6 +388,7 @@ if (http_status(response)$category == "Success") {
 								</div>
 
 								<div>
+									<h4 className="font-medium mb-3 text-lg">2. Combining Tables with Relations</h4>
 									<div className="mt-4 space-y-6">
 										<p>Here are some examples:</p>
 
@@ -339,7 +427,7 @@ if (http_status(response)$category == "Success") {
 										<div>
 											<p className="mb-2">3. Getting all sequencing analyses for a project</p>
 											<p className="mb-2 ml-4">
-												You want to query the project table and include analyses (note the spelling!):
+												You want to query the project table and include its analyses:
 											</p>
 											<div className="ml-4 space-y-2">
 												<div>
@@ -357,10 +445,10 @@ if (http_status(response)$category == "Success") {
 											Pro tip: Use the{" "}
 											<code className="px-1.5 py-0.5 bg-base-300 rounded text-sm">/api/❮table❯/relations</code> endpoint
 											to see the exact relation names available for any table. Or check the{" "}
-											<Link href="#table-definitions" className="link link-primary">
+											<Link href="/docs/api/schema#table-definitions" className="link link-primary">
 												Table Definitions
 											</Link>{" "}
-											section of this API documentation page.
+											section of the Database Schema page.
 										</p>
 									</div>
 								</div>
@@ -380,8 +468,11 @@ if (http_status(response)$category == "Success") {
 										<strong>You DO need to sign in</strong> and request Contributor access to submit data.
 									</p>
 									<p>
-										While there are no strict rate limits, please be respectful with your API usage. For large-scale
-										automated data pulls, please{" "}
+										See{" "}
+										<Link href="#rate-limits" className="link link-primary">
+											Rate Limits
+										</Link>{" "}
+										before you script a large download. For pulls that need more than that pace, please{" "}
 										<Link
 											href="https://github.com/aomlomics/node/issues"
 											className="link link-primary"

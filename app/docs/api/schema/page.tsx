@@ -22,14 +22,13 @@ export default function ApiSchemaPage() {
 						This is a simplified database diagram which shows the relationships between tables in the database. The
 						fields available for each table are listed in the Table Definitions section beneath the diagram. This will
 						help you effectively{" "}
-						<a href="#relations" className="text-primary">
+						<Link href="/docs/api/queryParameters#relations" className="text-primary">
 							query relations across tables
-						</a>{" "}
-						and
-						<a href="#query-parameter-syntax" className="text-primary">
-							{" "}
+						</Link>{" "}
+						and{" "}
+						<Link href="/docs/api/searching#direct-field-filtering" className="text-primary">
 							filter by fields
-						</a>
+						</Link>
 						.
 					</p>
 				</>
@@ -50,9 +49,9 @@ export default function ApiSchemaPage() {
 
 							<p className="mb-4">
 								Use this diagram as a reference when constructing queries with the{" "}
-								<a href="#relations" className="text-primary">
+								<Link href="/docs/api/queryParameters#relations" className="text-primary">
 									relations
-								</a>{" "}
+								</Link>{" "}
 								parameter.
 							</p>
 						</>
@@ -85,16 +84,12 @@ export default function ApiSchemaPage() {
 									page, a record of the changes is stored in the `editHistory` field. This field contains a JSON array
 									of objects, where each object represents a set of edits made at a specific time.
 								</p>
-								<p className="mb-4">
-									Note: While the example shows an `id` for each edit, this is for illustrative purposes. The current
-									implementation does not yet include a unique ID for each edit record.
-								</p>
 							</div>
 							<h4 className="font-medium mb-2">Structure of an Edit Record:</h4>
 							<CodeBlock
 								language="json"
 								code={`{
-	"id": "a1b2c3d4-e5f6-7890-1234-567890abcdef", // Unique identifier for the edit
+	"id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
 	"dateEdited": "2025-10-26T14:30:00Z",
 	"changes": [
 		{

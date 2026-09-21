@@ -1,14 +1,28 @@
 import ApiCodeBlock from "@/app/components/docs/ApiCodeBlock";
+import Callout from "@/app/components/docs/Callout";
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Response Format | API",
 	description:
-		"Learn how to interpret successful and error responses from the Ocean DNA Explorer API, including response structure, result formats, HTTP errors, and common request errors."
+		"Learn how to interpret successful and error responses from the Ocean DNA Explorer API, including the response envelope, result shapes per endpoint, and common request errors."
 };
+
+const resultShapes = [
+	{ endpoint: "/api/tables", shape: "Array of table name strings." },
+	{ endpoint: "/api/deadValues", shape: "Object mapping placeholder labels to codes, and codes back to labels." },
+	{ endpoint: "/api/user", shape: "Array of user objects." },
+	{ endpoint: "/api/❮table❯/fields", shape: "Object keyed by field name, each with a type and an optional flag." },
+	{ endpoint: "/api/❮table❯/relations", shape: "Array of objects with field, table, and type." },
+	{ endpoint: "/api/❮table❯/fields/❮field❯", shape: "Array of distinct values." },
+	{ endpoint: "/api/❮table❯", shape: "Array of records. Empty array when nothing matches." },
+	{ endpoint: "/api/❮table❯/count", shape: "A single number." },
+	{ endpoint: "/api/❮table❯/❮id❯", shape: "A single record object." }
+];
 
 export default function ApiResponsesPage() {
 	return (
@@ -18,7 +32,8 @@ export default function ApiResponsesPage() {
 			header={
 				<div className="space-y-4">
 					<p>
-						This section explains the structure of API responses so you can properly parse and use the returned data.
+						Every endpoint returns JSON in the same envelope, whether the request succeeded or failed. Check{" "}
+						<code className="px-1 py-0.5 bg-base-300 rounded">statusMessage</code> first, then read <code className="px-1 py-0.5 bg-base-300 rounded">result</code> or <code className="px-1 py-0.5 bg-base-300 rounded">error</code>.
 					</p>
 				</div>
 			}
@@ -28,30 +43,78 @@ export default function ApiResponsesPage() {
 					title: "Success Structure",
 					content: (
 						<>
-							<p className="mb-4">Successful API responses have a consistent structure:</p>
+							<p className="mb-4">A successful response always has these two keys:</p>
+
+							<p className="mb-4">
+								The live examples on these pages show only <code className="px-1 py-0.5 bg-base-300 rounded">result</code>. A count of 3 is the number inside{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">result</code>, not the whole response.
+							</p>
 
 							<CodeBlock
 								language="json"
 								code={`{
-	"message": "Success",
+	"statusMessage": "success",
 	"result": [
-	// Array of results or single object
+		// array, object, or number depending on the endpoint
 	]
 }`}
 							/>
 
 							<p className="my-4">
-								The <code className="px-1 py-0.5 bg-base-200 rounded">message</code> field will always contain
-								&quot;Success&quot; for successful requests.
+								BLAST queries add two more keys at the top level: <code className="px-1 py-0.5 bg-base-300 rounded">BlastQueryResults</code> with the scores for
+								each sequence match, and <code className="px-1 py-0.5 bg-base-300 rounded">existingBlastDate</code> with the date if that exact query had already
+								been run. See{" "}
+								<Link href="/docs/api/searching#blast-search" className="link link-primary">
+									BLAST Search
+								</Link>
+								.
 							</p>
 
+							<Callout title="Check statusMessage, not the HTTP status">
+								<p>
+									Errors are returned with a normal 200 response and{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">&quot;statusMessage&quot;: &quot;error&quot;</code> in the body. Code that only checks the HTTP
+									status will treat a failed query as a success and then find no <code className="px-1 py-0.5 bg-base-300 rounded">result</code> key.
+								</p>
+							</Callout>
+						</>
+					)
+				},
+				{
+					id: "result-by-endpoint",
+					title: "Result Shape by Endpoint",
+					content: (
+						<>
 							<p className="mb-4">
-								The <code className="px-1 py-0.5 bg-base-200 rounded">result</code> field will contain either:
+								The envelope never changes, but what sits inside <code className="px-1 py-0.5 bg-base-300 rounded">result</code> does.
 							</p>
-							<ul className="list-disc ml-6 mb-4">
-								<li>An array of objects (for multiple results)</li>
-								<li>A single object (for single record requests)</li>
-							</ul>
+
+							<div className="overflow-x-auto">
+								<table className="table table-md table-zebra">
+									<thead>
+										<tr>
+											<th>Endpoint</th>
+											<th>Result</th>
+										</tr>
+									</thead>
+									<tbody>
+										{resultShapes.map((row) => (
+											<tr key={row.endpoint}>
+												<td className="font-mono text-sm">{row.endpoint}</td>
+												<td>{row.shape}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+
+							<p className="mt-4">
+								Live examples for each of these are on the{" "}
+								<Link href="/docs/api/endpoints" className="link link-primary">
+									API Endpoints
+								</Link>{" "}
+								page.
+							</p>
 						</>
 					)
 				},
@@ -61,52 +124,128 @@ export default function ApiResponsesPage() {
 					content: (
 						<>
 							<p className="mb-4">
-								If a request fails, the API will return an error response with a corresponding HTTP status code.
+								When a request fails, <code className="px-1 py-0.5 bg-base-300 rounded">result</code> is replaced by <code className="px-1 py-0.5 bg-base-300 rounded">error</code>, which holds a message
+								written for a person to read.
 							</p>
 
-							<h4 className="font-medium mt-6 mb-2">Error Response Body:</h4>
 							<CodeBlock
 								language="json"
 								code={`{
-	"message": "Error",
+	"statusMessage": "error",
 	"error": "A description of what went wrong."
 }`}
 							/>
-							<p className="my-4">
-								The <code className="px-1 py-0.5 bg-base-200 rounded">error</code> field contains a human-readable
-								description of the issue.
+
+							<Callout title="Rejected queries return a generic message">
+								<p>
+									The table, count, and single record endpoints report every rejected query as{" "}
+									<code className="px-1 py-0.5 bg-base-300 rounded">An unknown server error occurred.</code> The specific reason is logged on the server, not sent
+									back to you.
+								</p>
+								<p>
+									So when a query fails, work backwards from the causes listed below rather than from the message.
+								</p>
+							</Callout>
+
+							<div className="mb-4">
+								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
+							</div>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
+
+							<p className="mt-6">
+								Some endpoints do return a specific message. Asking for a field that does not exist on a table is one
+								of them.
 							</p>
 
-							<h4 className="font-medium mt-8 mb-2">Common Error Examples:</h4>
-							<div className="space-y-6">
-								<div className="flex flex-col gap-2 items-start">
-									<p>
-										<strong>Invalid Table:</strong> Requesting a table that does not exist.
-									</p>
-									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
-									<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/invalid_table`} />
-								</div>
-
-								<div className="flex flex-col gap-2 items-start">
-									<p>
-										<strong>Invalid Field:</strong> Using a field name that does not exist in a filter or field
-										selection.
-									</p>
-									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`} />
-									<ApiCodeBlock
-										language="json"
-										url={`${process.env.NEXT_PUBLIC_URL}/api/project?fields=non_existent_field`}
-									/>
-								</div>
-
-								<div className="flex flex-col gap-2 items-start">
-									<p>
-										<strong>Invalid Parameter Value:</strong> Providing an incorrect value for a parameter like `limit`.
-									</p>
-									<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`} />
-									<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?limit=invalid`} />
-								</div>
+							<div className="mb-4 mt-4">
+								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/not_a_field`} />
 							</div>
+							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/sample/fields/not_a_field`} />
+						</>
+					)
+				},
+				{
+					id: "common-errors",
+					title: "Common Errors",
+					content: (
+						<>
+							<p className="mb-4">
+								Check your URL against this list.
+							</p>
+
+							<div className="overflow-x-auto">
+								<table className="table table-md table-zebra">
+									<thead>
+										<tr>
+											<th>Cause</th>
+											<th>What to check</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td>Invalid table name</td>
+											<td>
+												The name in the path must be a real table. Get the list from{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">/api/tables</code>.
+											</td>
+										</tr>
+										<tr>
+											<td>Invalid field name</td>
+											<td>
+												Every name in <code className="px-1 py-0.5 bg-base-300 rounded">fields</code>, <code className="px-1 py-0.5 bg-base-300 rounded">distinct</code>, <code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code>, or a filter
+												must exist on the table. Get the list from <code className="px-1 py-0.5 bg-base-300 rounded">/api/❮table❯/fields</code>.
+											</td>
+										</tr>
+										<tr>
+											<td>Option not allowed here</td>
+											<td>
+												The option is real but this route rejects it. See{" "}
+												<Link href="/docs/api/endpoints#options-by-endpoint" className="link link-primary">
+													options by endpoint
+												</Link>
+												.
+											</td>
+										</tr>
+										<tr>
+											<td>Conflicting filters</td>
+											<td>
+												Field filters, <code className="px-1 py-0.5 bg-base-300 rounded">search</code>, <code className="px-1 py-0.5 bg-base-300 rounded">ids</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">advanced</code> cannot be
+												combined with each other.
+											</td>
+										</tr>
+										<tr>
+											<td>Missing companion option</td>
+											<td>
+												<code className="px-1 py-0.5 bg-base-300 rounded">page</code> requires <code className="px-1 py-0.5 bg-base-300 rounded">limit</code>. <code className="px-1 py-0.5 bg-base-300 rounded">relationsFields</code> and{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">relationsAllFields</code> require <code className="px-1 py-0.5 bg-base-300 rounded">relations</code>, and cannot be used together.
+											</td>
+										</tr>
+										<tr>
+											<td>Wrong value type</td>
+											<td>
+												<code className="px-1 py-0.5 bg-base-300 rounded">limit</code>, <code className="px-1 py-0.5 bg-base-300 rounded">page</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">ids</code> take integers.{" "}
+												<code className="px-1 py-0.5 bg-base-300 rounded">orderBy</code> takes a field and either asc or desc.
+											</td>
+										</tr>
+										<tr>
+											<td>Relation not reachable</td>
+											<td>
+												The table named in <code className="px-1 py-0.5 bg-base-300 rounded">relations</code> must be connected to the one you are querying. See
+												the{" "}
+												<Link href="/docs/api/schema" className="link link-primary">
+													Database Schema
+												</Link>
+												.
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<p className="mt-6">
+								An empty <code className="px-1 py-0.5 bg-base-300 rounded">result</code> array is not an error. It means the query was valid and nothing matched.
+								If you expected rows, check whether <code className="px-1 py-0.5 bg-base-300 rounded">trusted=true</code> is filtering them out.
+							</p>
 						</>
 					)
 				}

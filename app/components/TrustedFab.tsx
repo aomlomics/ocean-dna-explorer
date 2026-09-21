@@ -1,19 +1,16 @@
 "use client";
 
-import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { TrustedModeExplanation, TrustedShieldIcon } from "@/app/components/home/HomeTrustedIndicator";
 import { unfocus } from "@/app/helpers/utils";
 import { useTrusted } from "@/app/hooks/TrustedProvider";
 
-/** Same lift as ScrollToTop so both corners clear the footer together. */
+/** Same lift as ScrollToTop when buttons get too close to the footer */
 const BUTTON_ZONE_PX = 120;
 
-/** Above Leaflet controls/popups (max ~1000) so the FAB stays clickable over maps. */
-const BUTTON_Z_INDEX = 10050;
-
 const CIRCLE_BASE = "btn btn-xl btn-circle shadow-xl";
-const CIRCLE_CLASS = `${CIRCLE_BASE} bg-base-300 text-base-content hover:bg-base-content/10`;
+const CIRCLE_CLASS = `${CIRCLE_BASE} border-none bg-base-200/90 text-base-content hover:bg-base-300`;
 const CIRCLE_ACTIVE_CLASS = `${CIRCLE_BASE} btn-primary`;
 const FAB_TIP_CLASS =
 	"pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-10 -translate-y-1/2 whitespace-nowrap rounded-md border border-base-content/20 bg-base-200 px-3 py-2 text-sm leading-snug text-base-content opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100";
@@ -120,20 +117,7 @@ function getFooterOffset(): number {
 export default function TrustedFab() {
 	const { trusted, setTrusted } = useTrusted();
 	const explainRef = useRef<HTMLDialogElement | null>(null);
-	const [footerOffset, setFooterOffset] = useState(0);
-
-	useEffect(() => {
-		const updatePosition = () => setFooterOffset(getFooterOffset());
-
-		window.addEventListener("scroll", updatePosition, { passive: true });
-		window.addEventListener("resize", updatePosition);
-		updatePosition();
-
-		return () => {
-			window.removeEventListener("scroll", updatePosition);
-			window.removeEventListener("resize", updatePosition);
-		};
-	}, []);
+	const wrapRef = useRef<HTMLDivElement | null>(null);
 
 	const openExplanation = useCallback(() => {
 		explainRef.current?.showModal();
@@ -154,18 +138,36 @@ export default function TrustedFab() {
 		}
 	}, []);
 
+	useEffect(() => {
+		const el = wrapRef.current;
+		if (!el) return;
+
+		const updatePosition = () => {
+			const offset = getFooterOffset();
+			el.style.bottom = offset > 0 ? `${offset}px` : "2rem";
+		};
+
+		window.addEventListener("scroll", updatePosition, { passive: true });
+		window.addEventListener("resize", updatePosition);
+		updatePosition();
+
+		return () => {
+			window.removeEventListener("scroll", updatePosition);
+			window.removeEventListener("resize", updatePosition);
+		};
+	}, []);
+
 	const modeLabel = trusted ? "trusted data" : "all data";
 
 	return (
 		<>
+			{/* z level stays UNDERNEATH the loading screen */}
 			<div
-				className="fab fab-flower fab-start left-3 sm:left-8 end-auto"
-				style={{
-					bottom: footerOffset > 0 ? `${footerOffset}px` : "2rem",
-					zIndex: BUTTON_Z_INDEX
-				}}
+				ref={wrapRef}
+				className="fixed left-3 sm:left-8 z-popover"
+				style={{ bottom: "2rem" }}
 			>
-				{/* daisyUI: div+tabindex, not <button> — Safari still will not focus a button. */}
+				<div className="fab fab-flower fab-start">
 				<div
 					tabIndex={0}
 					role="button"
@@ -183,7 +185,7 @@ export default function TrustedFab() {
 					</span>
 				</div>
 
-				<FabAction tip="What is trusted data?" onClick={openExplanation}>
+				<FabAction tip="What is Trusted data?" onClick={openExplanation}>
 					<InfoIcon />
 				</FabAction>
 
@@ -199,8 +201,9 @@ export default function TrustedFab() {
 					<TrustedShieldIcon trusted={false} className="size-8 fill-current" />
 				</FabAction>
 			</div>
+			</div>
 
-			<dialog ref={explainRef} className="modal" style={{ zIndex: BUTTON_Z_INDEX + 50 }}>
+			<dialog ref={explainRef} className="modal z-modal">
 				<div className="modal-box">
 					<button
 						type="button"

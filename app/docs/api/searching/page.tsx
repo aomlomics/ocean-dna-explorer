@@ -1,17 +1,55 @@
 import ApiCodeBlock from "@/app/components/docs/ApiCodeBlock";
 import ApiQueryDiagram from "@/app/components/docs/ApiQueryDiagram";
+import Callout from "@/app/components/docs/Callout";
 import CodeBlock from "@/app/components/docs/CodeBlock";
 import DocsPageSection from "@/app/components/docs/DocsPageSection";
 import InlineCode from "@/app/components/docs/InlineCode";
+import OptionSummary from "@/app/components/docs/OptionSummary";
 import { prisma } from "@/app/helpers/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Searching and Filtering | API",
+	title: "Filtering and Searching | API",
 	description:
-		"Learn how to search and filter Ocean DNA Explorer data using standard searches, advanced queries, ID filtering, and direct field filters."
+		"Learn how to choose which Ocean DNA Explorer records come back using field filters, text search, ID lists, advanced queries, map shapes, and BLAST sequences."
 };
+
+const queryModes = [
+	{ mode: "contains", description: "Case-insensitive match anywhere in the text.", appliesTo: "Text" },
+	{ mode: "equals", description: "Exact match.", appliesTo: "Text, Numeric, Date" },
+	{ mode: "startsWith", description: "Case-insensitive match at the beginning of the text.", appliesTo: "Text" },
+	{ mode: "endsWith", description: "Case-insensitive match at the end of the text.", appliesTo: "Text" },
+	{ mode: "gt", description: "Greater than.", appliesTo: "Numeric, Date" },
+	{ mode: "gte", description: "Greater than or equal to.", appliesTo: "Numeric, Date" },
+	{ mode: "lt", description: "Less than.", appliesTo: "Numeric, Date" },
+	{ mode: "lte", description: "Less than or equal to.", appliesTo: "Numeric, Date" },
+	{ mode: "range", description: "Value is within the specified range, inclusive.", appliesTo: "Numeric, Date" },
+	{ mode: "in", description: "Value matches any entry in a list.", appliesTo: "Text, Numeric, Date" },
+	{ mode: "notIn", description: "Value matches no entry in a list.", appliesTo: "Text, Numeric, Date" },
+	{ mode: "null", description: "Field is empty. Takes no value, and only works on optional fields.", appliesTo: "Any" },
+	{
+		mode: "notNull",
+		description: "Field has a value. Takes no value, and only works on optional fields.",
+		appliesTo: "Any"
+	},
+	{
+		mode: "deadValue",
+		description: "Matches a placeholder such as not collected. Use any to match all placeholders.",
+		appliesTo: "Text, Numeric, Date"
+	},
+	{ mode: "boolean", description: "Exact match on a true or false field.", appliesTo: "Boolean" }
+];
+
+const blastOptions = [
+	{ option: "blastDatabase", description: "Name of the assay whose reference database should be searched." },
+	{ option: "task", description: "BLAST task to run. Defaults to blastn." },
+	{ option: "max_target_seqs", description: "Maximum number of matches to return. Must be an integer." },
+	{ option: "evalue", description: "Expect value cutoff. Must be a number." },
+	{ option: "perc_identity", description: "Minimum percent identity. Must be a number." },
+	{ option: "qcov_hsp_perc", description: "Minimum query coverage per match, as a percent. Must be a number." },
+	{ option: "blastSave", description: "Saves the query results. Requires a signed in contributor account." }
+];
 
 export default async function ApiSearchPage() {
 	const project = await prisma.project.findFirst({
@@ -30,75 +68,179 @@ export default async function ApiSearchPage() {
 			header={
 				<>
 					<p className="mb-4">
-						The API offers several powerful methods for searching and filtering data. You can perform broad text-based
-						searches, construct complex queries with multiple conditions, or filter records based on specific field
-						values.
+						These options choose which records come back. Once you have the right records, the{" "}
+						<Link href="/docs/api/queryParameters" className="link link-primary">
+							Query Options
+						</Link>{" "}
+						control what each one looks like.
 					</p>
-					<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
-						<h5 className="font-semibold mb-2 text-accent">Important Rule of Exclusivity</h5>
-						<p className="text-sm">
-							The primary search methods, <strong>Standard Search</strong> (`search`), <strong>Advanced Search</strong>{" "}
-							(`advanced`), and <strong>ID Filtering</strong> (`ids`), are mutually exclusive. You can only use{" "}
-							<strong>one</strong> of these parameters in a single API request. Additionally, when using any of these
-							three methods, you cannot add separate field filters (e.g., `project_name=Test`) to the same query.
+
+					<Callout title="Pick one way to filter">
+						<p>
+							Field filters, <code className="px-1 py-0.5 bg-base-300 rounded">search</code>, <code className="px-1 py-0.5 bg-base-300 rounded">ids</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">advanced</code> are mutually exclusive.
+							Using more than one of them in the same request returns an error.
 						</p>
-					</div>
+						<p>
+							Spatial and BLAST options are not part of that group. You can add them to any of the four, and to each
+							other.
+						</p>
+					</Callout>
 				</>
 			}
 			subsections={[
 				{
-					id: "standard-search",
-					title: "Standard Search Parameter",
+					id: "direct-field-filtering",
+					title: "Direct Field Filtering",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `search=❮query❯`</div>
+							<OptionSummary
+								syntax="❮field❯=❮value❯"
+								worksOn="Table and count endpoints."
+								rules="The name must be a field on the table. Several fields at once are combined with AND."
+							/>
+
 							<p className="mb-4">
-								This is the simplest way to search. It performs a case-insensitive search across all text-based fields
-								in a specified table for your query string.
+								The simplest way to filter. Text fields use a case-insensitive contains match, so{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">project_name=gomecc</code> also matches GOMECC4. Number fields match exactly.
 							</p>
-							<div className="mb-4">
-								<strong>Use Case:</strong> Ideal for quick, general searches when you&apos;re not sure which specific
-								field contains the information.
-							</div>
-							<div className="mb-4">
-								Example URL: <InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
-							</div>
-							<p className="mb-2">
-								This will return all projects where the string &quot;gomecc&quot; appears in any text field.
+
+							<p className="mb-4">
+								For ranges, dates, OR logic, or filtering on a related table, use{" "}
+								<Link href="#advanced-search" className="link link-primary">
+									advanced search
+								</Link>{" "}
+								instead.
 							</p>
-							<ApiCodeBlock language="json" url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc`} />
+
+							<div className="mb-4">
+								Example URL:{" "}
+								<InlineCode
+									code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa&fields=id,project_id,project_name&limit=5`}
+								/>
+							</div>
+
+							<p className="mb-4">
+								This returns projects where <code className="px-1 py-0.5 bg-base-300 rounded">project_name</code> contains gomecc and <code className="px-1 py-0.5 bg-base-300 rounded">institution</code>{" "}
+								contains noaa.
+							</p>
+
+							<p className="mb-4">Example response:</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa&fields=id,project_id,project_name&limit=5`}
+							/>
+
+							<Callout title="Unrecognized names are treated as fields">
+								<p>
+									Anything in the query string that is not a known option is read as a field filter. A typo in an
+									option name therefore fails the request, because no field by that name exists on the table.
+								</p>
+							</Callout>
+						</>
+					)
+				},
+				{
+					id: "standard-search",
+					title: "Standard Search",
+					content: (
+						<>
+							<OptionSummary
+								syntax="search=❮text❯"
+								worksOn="Table and count endpoints."
+								rules="Searches text fields only. Numbers, dates, and booleans are skipped."
+							/>
+
+							<p className="mb-4">
+								Looks for your text in every text field on the table and returns a record if any of them match. The
+								match is case-insensitive and does not need to be the whole value.
+							</p>
+
+							<p className="mb-4">
+								Use this when you know the term but not which field holds it. If you do know the field, a direct field
+								filter is faster and more precise.
+							</p>
+
+							<div className="mb-4">
+								Example URL:{" "}
+								<InlineCode
+									code={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc&fields=id,project_id,project_name&limit=5`}
+								/>
+							</div>
+
+							<p className="mb-4">Example response:</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?search=gomecc&fields=id,project_id,project_name&limit=5`}
+							/>
+						</>
+					)
+				},
+				{
+					id: "id-filtering",
+					title: "ID Filtering",
+					content: (
+						<>
+							<OptionSummary
+								syntax="ids=❮id1❯,❮id2❯"
+								worksOn="Table endpoint only."
+								rules="Integers only. These are database IDs, not project_id or samp_name."
+							/>
+
+							<p className="mb-4">
+								Fetches a known set of records in one request. IDs that do not exist are skipped rather than causing an
+								error, so a short response can simply mean some of the IDs were wrong.
+							</p>
+
+							<ApiQueryDiagram
+								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
+								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
+								parameters={[
+									{
+										value: `ids=${project?.id || 1}`,
+										label: "ID Filter",
+										colorClass: "text-primary"
+									}
+								]}
+								description={<>This query retrieves a specific project by its unique ID.</>}
+							/>
+
+							<p className="mb-2 mt-8">Example response:</p>
+							<ApiCodeBlock
+								language="json"
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?ids=${project?.id || 1}&fields=id,project_id,project_name`}
+							/>
 						</>
 					)
 				},
 				{
 					id: "advanced-search",
-					title: "Advanced Search Parameter",
+					title: "Advanced Search",
 					content: (
-						<div className="space-y-4">
-							<p>Query Parameter: `advanced=❮JSON_object❯`</p>
-							<p>
-								The `advanced` query parameter enables complex filtering with `AND`/`OR` logic and related table
-								queries. Add it to your API requests as `?advanced=[...]` after the table parameter.
+						<>
+							<OptionSummary
+								syntax="advanced=❮JSON array❯"
+								worksOn="Table and count endpoints."
+								rules="Conditions at the top level are combined with AND. A nested array becomes an OR group."
+							/>
+
+							<p className="mb-4">
+								The most capable filter. It supports comparisons, ranges, OR logic, and conditions on related tables.
 							</p>
-							<div className="my-6 px-4 py-3 bg-base-200/50 border-l-4 border-accent rounded-md shadow-sm">
-								<h5 className="font-semibold mb-2 text-accent">Build Queries with the UI</h5>
-								<p className="text-sm">
+
+							<Callout title="Build it with the UI">
+								<p>
 									Use the{" "}
 									<Link href="/search" className="link link-primary font-semibold">
 										Search
 									</Link>{" "}
-									page to build filters through a user interface (no code necessary!), then copy the API query from the
-									URL.
+									page to build a query by clicking, then copy the URL out of the address bar. No JSON by hand.
 								</p>
-							</div>
+							</Callout>
 
-							<div>
-								<strong>Use Case:</strong> Perfect for detailed data exploration, such as finding all samples from a
-								specific location collected after a certain date.
-							</div>
-
-							<h4 className="font-medium mt-6 mb-2">JSON Structure:</h4>
-							<p>The JSON object is an array of conditions. Nesting arrays creates an `OR` condition.</p>
+							<h4>JSON structure</h4>
+							<p className="mb-4">
+								Each condition is an array. Three values filter the current table, four values filter a related table.
+							</p>
 							<CodeBlock
 								language="json"
 								code={`[
@@ -112,145 +254,186 @@ export default async function ApiSearchPage() {
 ]`}
 							/>
 
-							<h4 className="font-medium mt-10 mb-2">Query Modes:</h4>
-							<div>
-								<p className="mb-2">The `query_mode` determines how the value is compared:</p>
-								<div className="overflow-x-auto">
-									<table className="table table-md table-zebra">
-										<thead>
-											<tr>
-												<th>Query Mode</th>
-												<th>Description</th>
-												<th>Applies To</th>
+							<h4>Query modes</h4>
+							<p className="mb-4">The query mode decides how the value is compared.</p>
+							<div className="overflow-x-auto">
+								<table className="table table-md table-zebra">
+									<thead>
+										<tr>
+											<th>Query Mode</th>
+											<th>Description</th>
+											<th>Applies To</th>
+										</tr>
+									</thead>
+									<tbody>
+										{queryModes.map((row) => (
+											<tr key={row.mode}>
+												<td className="font-mono text-primary">{row.mode}</td>
+												<td>{row.description}</td>
+												<td>{row.appliesTo}</td>
 											</tr>
-										</thead>
-										<tbody>
-											<tr>
-												<td className="text-lg text-primary">contains</td>
-												<td>Case-insensitive match anywhere in the text.</td>
-												<td>Text</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">equals</td>
-												<td>Exact match.</td>
-												<td>Text, Numeric, Date</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">startsWith</td>
-												<td>Case-insensitive match at the beginning of the text.</td>
-												<td>Text</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">endsWith</td>
-												<td>Case-insensitive match at the end of the text.</td>
-												<td>Text</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">gt</td>
-												<td>Greater than.</td>
-												<td>Numeric, Date</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">gte</td>
-												<td>Greater than or equal to.</td>
-												<td>Numeric, Date</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">lt</td>
-												<td>Less than.</td>
-												<td>Numeric, Date</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">lte</td>
-												<td>Less than or equal to.</td>
-												<td>Numeric, Date</td>
-											</tr>
-											<tr>
-												<td className="text-lg text-primary">range</td>
-												<td>Value is within the specified range (inclusive).</td>
-												<td>Numeric, Date</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
+										))}
+									</tbody>
+								</table>
 							</div>
+
+							<p className="mt-4 mb-4">
+								<code className="px-1 py-0.5 bg-base-300 rounded">range</code>, <code className="px-1 py-0.5 bg-base-300 rounded">in</code>, and <code className="px-1 py-0.5 bg-base-300 rounded">notIn</code> take an array as their value, for example{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">[&quot;minimumDepthInMeters&quot;, &quot;range&quot;, [0, 50]]</code>. <code className="px-1 py-0.5 bg-base-300 rounded">null</code> and{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">notNull</code> take no value at all, so the condition is only two items long.
+							</p>
 
 							<ApiQueryDiagram
 								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
 								endpoint={{ value: `/api/sample`, label: "Endpoint", colorClass: "text-primary" }}
 								parameters={[
 									{
-										value: `advanced=[["geo_loc_name","contains","Atlantic"],["collection_timestamp","gte","2019-01-01"]]`,
+										value: `advanced=[["geo_loc_name","contains","Atlantic"],["eventDate","gte","2019-01-01"]]`,
 										label: "Advanced Query",
 										colorClass: "text-primary"
 									}
 								]}
 								description={
 									<>
-										This query returns samples where the <strong>geo_loc_name</strong> contains &quot;Atlantic&quot; AND
-										the <strong>collection_timestamp</strong> is on or after January 1st, 2019.
+										This query returns samples where the <strong>geo_loc_name</strong> contains Atlantic AND the{" "}
+										<strong>eventDate</strong> is on or after January 1st, 2019.
 									</>
 								}
-							/>
-						</div>
-					)
-				},
-				{
-					id: "id-filtering",
-					title: "ID Filtering",
-					content: (
-						<>
-							<div className="mb-4">Parameter: `ids=❮id1❯,❮id2❯,...`</div>
-							<p className="mb-4">
-								Retrieves multiple records from a table by their specific IDs. Provide a comma-separated list of IDs.
-							</p>
-							<div className="mb-4">
-								<strong>Use Case:</strong> Useful when you have a specific list of records you want to fetch.
-							</div>
-							<ApiQueryDiagram
-								baseUrl={`${process.env.NEXT_PUBLIC_URL}`}
-								endpoint={{ value: `/api/project`, label: "Endpoint", colorClass: "text-primary" }}
-								parameters={[
-									{
-										value: `ids=${project?.id || 1}`,
-										label: "ID Filter",
-										colorClass: "text-primary"
-									}
-								]}
-								description={<>This query retrieves a specific project by its unique ID.</>}
-							/>
-							<p className="mb-2 mt-8">Example Response:</p>
-							<ApiCodeBlock
-								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?ids=${project?.id || 1}`}
 							/>
 						</>
 					)
 				},
 				{
-					id: "direct-field-filtering",
-					title: "Direct Field Filtering",
+					id: "spatial-search",
+					title: "Spatial Search",
 					content: (
 						<>
-							<div className="mb-4">Parameter: `❮fieldName❯=❮value❯`</div>
+							<OptionSummary
+								syntax={"polygon=❮lat❯/❮lng❯,❮lat❯/❮lng❯,❮lat❯/❮lng❯\ncircle=❮lat❯/❮lng❯,❮radius❯"}
+								worksOn="Table and count endpoints."
+								rules="A polygon needs at least three points. A circle radius is in meters. Both options can be repeated."
+							/>
+
 							<p className="mb-4">
-								This method allows you to filter results based on the value of one or more specific fields. This cannot
-								be combined with `advanced`, `search`, or `ids` parameters.
+								Limits results to records collected inside the shapes you provide. Providing several shapes matches
+								anything inside any of them.
 							</p>
-							<div className="mb-4">
-								<strong>Use Case:</strong> Good for simple, direct filtering on one or more known fields.
-							</div>
+
+							<p className="mb-4">
+								This works on any table, not just Sample. For tables without coordinates of their own, the API finds
+								the samples inside the shapes and filters through the relations to them.
+							</p>
+
 							<div className="mb-4">
 								Example URL:{" "}
-								<InlineCode code={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`} />
+								<InlineCode
+									code={`${process.env.NEXT_PUBLIC_URL}/api/project?circle=27.0/-83.0,200000&fields=project_id&limit=5`}
+								/>
 							</div>
-							<p className="mb-2">
-								This query returns projects where `project_name` contains &quot;gomecc&quot; AND `institution` contains
-								&quot;noaa&quot;.
-							</p>
+
+							<p className="mb-4">Example response:</p>
 							<ApiCodeBlock
 								language="json"
-								url={`${process.env.NEXT_PUBLIC_URL}/api/project?project_name=gomecc&institution=noaa`}
+								url={`${process.env.NEXT_PUBLIC_URL}/api/project?circle=27.0/-83.0,200000&fields=project_id&limit=5`}
+							/>
+
+							<Callout title="limit is ignored on tables that have their own coordinates">
+								<p>
+									Sample carries latitude and longitude directly, so the API filters those results in memory after the
+									database query. <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> is skipped in that case. On tables reached through Sample, such as
+									Project, the filter happens in the database and <code className="px-1 py-0.5 bg-base-300 rounded">limit</code> works normally.
+								</p>
+							</Callout>
+
+							<p className="mt-4">
+								Writing coordinates by hand is tedious. Drawing the shape on the map on the{" "}
+								<Link href="/search" className="link link-primary">
+									Search
+								</Link>{" "}
+								page and copying the URL is usually easier.
+							</p>
+						</>
+					)
+				},
+				{
+					id: "blast-search",
+					title: "BLAST Search",
+					content: (
+						<>
+							<OptionSummary
+								syntax={"blastQuery=❮sequence❯\nblastQuery=❮name❯,❮sequence❯"}
+								worksOn="Table and count endpoints."
+								rules="Every other BLAST option requires blastQuery. Repeat blastQuery for more sequences, in which case every sequence needs a name."
+							/>
+
+							<p className="mb-4">
+								Matches your DNA sequence against the features in the database and limits results to the records that
+								contain those features. Because the filter is applied through relations, it works on any table.
+							</p>
+
+							<div className="overflow-x-auto mb-4">
+								<table className="table table-md table-zebra">
+									<thead>
+										<tr>
+											<th>Option</th>
+											<th>Description</th>
+										</tr>
+									</thead>
+									<tbody>
+										{blastOptions.map((row) => (
+											<tr key={row.option}>
+												<td className="font-mono text-primary">{row.option}</td>
+												<td>{row.description}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
+
+							<div className="mb-4">
+								Example URL:{" "}
+								<InlineCode
+									code={`${process.env.NEXT_PUBLIC_URL}/api/feature?blastQuery=GACGAACTTTAGCCTGCTAA&perc_identity=97&limit=5`}
+								/>
+							</div>
+
+							<p className="mb-4">
+								A BLAST response carries two extra top level keys next to <code className="px-1 py-0.5 bg-base-300 rounded">result</code>:{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">BlastQueryResults</code> with one object per match, and <code className="px-1 py-0.5 bg-base-300 rounded">existingBlastDate</code> with the
+								date if that same query was run before.
+							</p>
+
+							<p className="mb-4">
+								This example is not a live response. The fields match{" "}
+								<code className="px-1 py-0.5 bg-base-300 rounded">BlastQueryResult</code>.
+							</p>
+
+							<CodeBlock
+								language="json"
+								code={`{
+	"statusMessage": "success",
+	"result": [],
+	"BlastQueryResults": [
+		{
+			"id": 1,
+			"query": "example",
+			"sequence": "GACGAACTTTAGCCTGCTAA",
+			"featureid": "feature-id",
+			"queryId": 1,
+			"percentIdentity": 100,
+			"alignmentLength": 20,
+			"mismatches": 0,
+			"gapOpens": 0,
+			"queryStart": 1,
+			"queryEnd": 20,
+			"subjectStart": 1,
+			"subjectEnd": 20,
+			"eValue": 0.001,
+			"bitScore": 40
+		}
+	],
+	"existingBlastDate": null
+}`}
 							/>
 						</>
 					)
